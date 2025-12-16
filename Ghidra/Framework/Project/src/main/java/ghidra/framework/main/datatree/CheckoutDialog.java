@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,6 +77,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BorderLayout());
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		innerPanel.getAccessibleContext().setAccessibleName("File Checkout");
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
 		msgPanel.add(
@@ -86,14 +87,17 @@ public class CheckoutDialog extends DialogComponentProvider {
 		MultiLineLabel msgText = new MultiLineLabel("Checkout selected file(s)?");
 		msgText.setMaximumSize(msgText.getPreferredSize());
 		msgPanel.add(msgText, BorderLayout.CENTER);
+		msgPanel.getAccessibleContext().setAccessibleName("Message");
 
 		innerPanel.add(msgPanel, BorderLayout.CENTER);
 
 		exclusiveCB = new GCheckBox("Request exclusive checkout");
+		exclusiveCB.getAccessibleContext().setAccessibleName("Exclusive Checkout Box");
 
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 		cbPanel.add(exclusiveCB);
+		cbPanel.getAccessibleContext().setAccessibleName("Options");
 		innerPanel.add(cbPanel, BorderLayout.SOUTH);
 
 		return innerPanel;

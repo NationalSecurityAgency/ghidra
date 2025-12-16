@@ -33,6 +33,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 
@@ -44,6 +45,8 @@ class SymbolProvider extends ComponentProviderAdapter {
 	private SymbolRenderer renderer;
 	private SymbolTableModel symbolKeyModel;
 	private SymbolPanel symbolPanel;
+
+	private boolean followIncomingLocationChanges;
 
 	SymbolProvider(SymbolTablePlugin plugin) {
 		super(plugin.getTool(), "Symbol Table", plugin.getName(), ProgramActionContext.class);
@@ -61,6 +64,19 @@ class SymbolProvider extends ComponentProviderAdapter {
 		symbolPanel = new SymbolPanel(this, symbolKeyModel, renderer, plugin.getTool());
 
 		addToTool();
+	}
+
+	void setFollowIncomingLocationChanges(boolean b) {
+		followIncomingLocationChanges = b;
+	}
+
+	void locationChanged(ProgramLocation location) {
+		if (!isVisible()) {
+			return;
+		}
+		if (followIncomingLocationChanges) {
+			symbolPanel.locationChanged(location);
+		}
 	}
 
 	void updateTitle() {

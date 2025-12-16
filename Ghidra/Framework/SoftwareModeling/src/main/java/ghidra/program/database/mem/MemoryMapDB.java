@@ -40,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * The database memory map manager.
  */
-public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
+public class MemoryMapDB implements Memory, ManagerDB {
 
 	private ProgramDB program;
 	private AddressMapDB addrMap;
@@ -68,7 +68,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private MemoryBlock lastBlock;// the last accessed block
-	private LiveMemoryHandler liveMemory;
 
 	// lazy hashmap of block names to blocks, must be reloaded if blocks are removed or added
 	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<>();
@@ -260,9 +259,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			initializeBlocks();
 			buildAddressSets(true);
 		}
-		if (liveMemory != null) {
-			liveMemory.clearCache();
-		}
 		addrMap.memoryMapChanged(this);
 	}
 
@@ -359,10 +355,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public AddressSetView getLoadedAndInitializedAddressSet() {
-		if (liveMemory != null) {
-			return this; // all memory is initialized!
-		}
-
 		MemoryAddressSetViews localAddrSetViews = buildAddressSets(false);
 		return new AddressSetViewAdapter(localAddrSetViews.initializedAndLoaded);
 	}
@@ -584,29 +576,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public boolean isBigEndian() {
 		return defaultEndian == BIG_ENDIAN;
-	}
-
-	@Override
-	public void setLiveMemoryHandler(LiveMemoryHandler handler) {
-		lock.acquire();
-		try {
-			if (liveMemory != null) {
-				liveMemory.removeLiveMemoryListener(this);
-			}
-			liveMemory = handler;
-			if (liveMemory != null) {
-				liveMemory.addLiveMemoryListener(this);
-			}
-			program.invalidate();
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	@Override
-	public LiveMemoryHandler getLiveMemoryHandler() {
-		return liveMemory;
 	}
 
 	@Override
@@ -972,14 +941,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
 			throws MemoryBlockException, MemoryConflictException, AddressOverflowException,
-			NotFoundException, LockException {
+			LockException {
 		lock.acquire();
 		try {
 			program.checkExclusiveAccess();
-			if (liveMemory != null) {
-				throw new MemoryBlockException(
-					"Memory move operation not permitted while live memory is active");
-			}
 			checkBlock(block);
 			MemoryBlockDB memBlock = (MemoryBlockDB) block;
 
@@ -1021,15 +986,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public void split(MemoryBlock block, Address addr)
-			throws MemoryBlockException, NotFoundException, LockException {
+	public void split(MemoryBlock block, Address addr) throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			program.checkExclusiveAccess();
-			if (liveMemory != null) {
-				throw new MemoryBlockException(
-					"Memory split operation not permitted while live memory is active");
-			}
 			checkBlock(block);
 			MemoryBlockDB memBlock = (MemoryBlockDB) block;
 			if (!memBlock.contains(addr)) {
@@ -1076,7 +1036,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			// swap if second block is before first block
@@ -1115,10 +1075,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			throws MemoryBlockException, LockException {
 
 		program.checkExclusiveAccess();
-		if (liveMemory != null) {
-			throw new MemoryBlockException(
-				"Memory join operation not permitted while live memory is active");
-		}
 
 		checkBlockForJoining(block1);
 		checkBlockForJoining(block2);
@@ -1154,7 +1110,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			checkBlock(uninitializedBlock);
@@ -1192,7 +1148,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock initializedBlock)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			program.checkExclusiveAccess();
@@ -1433,9 +1389,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public byte getByte(Address addr) throws MemoryAccessException {
-		if (liveMemory != null) {
-			return liveMemory.getByte(addr);
-		}
 		MemoryBlock block = getBlockDB(addr);
 		if (block == null) {
 			throw new MemoryAccessException(
@@ -1452,9 +1405,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public int getBytes(Address addr, byte[] dest, int dIndex, int size)
 			throws MemoryAccessException {
-		if (liveMemory != null) {
-			return liveMemory.getBytes(addr, dest, dIndex, size);
-		}
 		int numRead = 0;
 		long lastRead = 0;
 		while (numRead < size) {
@@ -1685,11 +1635,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public void setByte(Address addr, byte value) throws MemoryAccessException {
-		if (liveMemory != null) {
-			liveMemory.putByte(addr, value);
-			fireBytesChanged(addr, 1);
-			return;
-		}
 		lock.acquire();
 		try {
 			MemoryBlock block = getBlock(addr);
@@ -1714,12 +1659,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public void setBytes(Address address, byte[] source, int sIndex, int size)
 			throws MemoryAccessException {
-		if (liveMemory != null) {
-			int cnt = liveMemory.putBytes(address, source, sIndex, size);
-			fireBytesChanged(address, cnt);
-			return;
-		}
-
 		lock.acquire();
 		try {
 			Address addr = address;
@@ -2147,11 +2086,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
-	}
-
-	@Override
-	public void memoryChanged(Address addr, int size) {
-		fireBytesChanged(addr, size);
 	}
 
 	@Override

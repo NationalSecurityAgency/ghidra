@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,19 @@ public class GhidraColorChooser extends JColorChooser {
 	private static final String DEFAULT_TITLE = "Please Choose a Color";
 
 	private String title = DEFAULT_TITLE;
-	private RecentColorCache historyColorCache = new RecentColorCache();
-	private List<Color> recentColors = new ArrayList<>();
 	private String activeTabName;
+
+	/**
+	 * The history is for all color choices made by the user when pressing OK on the color chooser 
+	 */
+	private ColorHistoryCache historyColorCache = new ColorHistoryCache();
+
+	/**
+	 * The recent colors is populated as the user interacts with the chooser, before pressing OK.
+	 * Each color selected will be placed in the 'recent' section in the UI.  This allows the user
+	 * to go back to a previous color within one chooser session.
+	 */
+	private List<Color> recentColors = new ArrayList<>();
 
 	public GhidraColorChooser() {
 		super();
@@ -91,10 +101,12 @@ public class GhidraColorChooser extends JColorChooser {
 	}
 
 	public List<Color> getColorHistory() {
+
 		SettableColorSwatchChooserPanel swatchPanel = getCustomSwatchPanel();
 		if (swatchPanel != null) {
 			return swatchPanel.getHistoryColors();
 		}
+
 		if (historyColorCache != null) { // null during init
 			return historyColorCache.getMRUColorList();
 		}
@@ -149,6 +161,11 @@ public class GhidraColorChooser extends JColorChooser {
 
 	@SuppressWarnings("deprecation")
 	public Color showDialog(Component centerOverComponent) {
+
+		// The history panel does not update itself, so we have to update it ourselves.   The recent
+		// panel does track its own values, so we do not need to update that.
+		installHistoryColors();
+
 		OKListener okListener = new OKListener();
 		JDialog dialog = createDialog(centerOverComponent, title, true, this, okListener, null);
 		dialog.show(); // blocks until user brings dialog down...
@@ -157,6 +174,7 @@ public class GhidraColorChooser extends JColorChooser {
 		if (color != null) {
 			historyColorCache.addColor(color);
 		}
+
 		return color; // null if the user cancels
 	}
 
@@ -253,10 +271,10 @@ public class GhidraColorChooser extends JColorChooser {
 		}
 	}
 
-	private class RecentColorCache extends LinkedHashMap<Color, Color> implements Iterable<Color> {
+	private class ColorHistoryCache extends LinkedHashMap<Color, Color> implements Iterable<Color> {
 		private static final int MAX_SIZE = 35; // the number of squares in the UI
 
-		public RecentColorCache() {
+		public ColorHistoryCache() {
 			super(16, 0.75f, true);
 		}
 

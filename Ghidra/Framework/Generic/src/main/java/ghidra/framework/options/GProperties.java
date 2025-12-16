@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,12 +75,23 @@ public class GProperties {
 	private static final String GPROPERTIES_TAG = "GPROPERTIES";
 	private static final String PROPERTIES_NAME = "GPROPERTIES_NAME";
 	private static final String LEGACY_PROPERTIES_NAME = "SAVE_STATE_NAME";
-	private static final String STATE = "STATE";
-	protected static final String TYPE = "TYPE";
-	protected static final String NAME = "NAME";
-	private static final String VALUE = "VALUE";
+	protected static final String STATE = "STATE";
+
+	/** The xml attribute for the type of the property (e.g., int, String, etc)*/
+	protected static final String ATTRIBUTE_TYPE = "TYPE";
+
+	/** The xml attribute for the 'key' in the key/value mapping */
+	protected static final String ATTRIBUTE_KEY = "KEY";
+
+	/** The xml attribute for the optional save state 'name' */
+	protected static final String ATTRIBUTE_NAME = "NAME";
+
+	/** The xml attribute for the 'value' in the key/value mapping */
+	protected static final String ATTRIBUTE_VALUE = "VALUE";
+
 	public static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 	private static final String ARRAY_ELEMENT_NAME = "A";
+
 	protected TreeMap<String, Object> map; // use ordered map for deterministic serialization
 	private String propertiesName;
 
@@ -129,11 +140,15 @@ public class GProperties {
 		}
 	}
 
+	/**
+	 * Called to restore this class' properties when restoring from xml.
+	 * @param elem the element
+	 */
 	protected void processElement(Element elem) {
 		String tag = elem.getName();
-		String name = elem.getAttributeValue(NAME);
-		String type = elem.getAttributeValue(TYPE);
-		String value = elem.getAttributeValue(VALUE);
+		String name = elem.getAttributeValue(ATTRIBUTE_NAME);
+		String type = elem.getAttributeValue(ATTRIBUTE_TYPE);
+		String value = elem.getAttributeValue(ATTRIBUTE_VALUE);
 		if (tag.equals("XML")) {
 			map.put(name, elem.getChildren().get(0));
 		}
@@ -209,7 +224,7 @@ public class GProperties {
 					short[] vals = new short[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Short.parseShort(e.getAttributeValue(VALUE));
+						vals[i++] = Short.parseShort(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -217,7 +232,7 @@ public class GProperties {
 					int[] vals = new int[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Integer.parseInt(e.getAttributeValue(VALUE));
+						vals[i++] = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -225,7 +240,7 @@ public class GProperties {
 					long[] vals = new long[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Long.parseLong(e.getAttributeValue(VALUE));
+						vals[i++] = Long.parseLong(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -233,7 +248,7 @@ public class GProperties {
 					float[] vals = new float[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Float.parseFloat(e.getAttributeValue(VALUE));
+						vals[i++] = Float.parseFloat(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -241,7 +256,7 @@ public class GProperties {
 					double[] vals = new double[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Double.parseDouble(e.getAttributeValue(VALUE));
+						vals[i++] = Double.parseDouble(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -249,7 +264,8 @@ public class GProperties {
 					boolean[] vals = new boolean[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Boolean.valueOf(e.getAttributeValue(VALUE)).booleanValue();
+						vals[i++] =
+							Boolean.valueOf(e.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
 					}
 					map.put(name, vals);
 				}
@@ -257,7 +273,7 @@ public class GProperties {
 					String[] vals = new String[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = e.getAttributeValue(VALUE);
+						vals[i++] = e.getAttributeValue(ATTRIBUTE_VALUE);
 					}
 					map.put(name, vals);
 				}
@@ -428,7 +444,10 @@ public class GProperties {
 			}
 		}
 		catch (Exception e) {
-			Msg.warn(this, "Can't find field " + value + " in enum class " + enumClassName, e);
+			// This implies we have a saved enum value that no longer exists or we are in a branch
+			// that does not have the enum class that has been saved.  Just emit a debug message to 
+			// help the developer in the case that there may be a real issue.
+			Msg.debug(this, "Can't find field " + value + " in enum class " + enumClassName);
 		}
 		return null;
 	}
@@ -494,9 +513,7 @@ public class GProperties {
 	 */
 	public Element saveToXml() {
 		Element root = new Element(propertiesName);
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : map.keySet()) {
 			Object value = map.get(key);
 			Element elem = createElement(key, value);
 			root.addContent(elem);
@@ -504,128 +521,139 @@ public class GProperties {
 		return root;
 	}
 
-	protected Element createElement(String key, Object value) {
+	/**
+	 * Called to save this class' properties to xml.
+	 * 
+	 * @param propertyName the property name to save
+	 * @param value the property value
+	 * @return the xml element
+	 */
+	protected Element createElement(String propertyName, Object value) {
 		Element elem = null;
 		if (value instanceof Element) {
-			elem = createElementFromElement(key, (Element) value);
+			elem = createElementFromElement(propertyName, (Element) value);
 		}
 		else if (value instanceof Byte) {
-			elem = setAttributes(key, "byte", ((Byte) value).toString());
+			elem = setAttributes(propertyName, "byte", ((Byte) value).toString());
 		}
 		else if (value instanceof Short) {
-			elem = setAttributes(key, "short", ((Short) value).toString());
+			elem = setAttributes(propertyName, "short", ((Short) value).toString());
 		}
 		else if (value instanceof Integer) {
-			elem = setAttributes(key, "int", ((Integer) value).toString());
+			elem = setAttributes(propertyName, "int", ((Integer) value).toString());
 		}
 		else if (value instanceof Long) {
-			elem = setAttributes(key, "long", ((Long) value).toString());
+			elem = setAttributes(propertyName, "long", ((Long) value).toString());
 		}
 		else if (value instanceof Float) {
-			elem = setAttributes(key, "float", ((Float) value).toString());
+			elem = setAttributes(propertyName, "float", ((Float) value).toString());
 		}
 		else if (value instanceof Double) {
-			elem = setAttributes(key, "double", ((Double) value).toString());
+			elem = setAttributes(propertyName, "double", ((Double) value).toString());
 		}
 		else if (value instanceof Boolean) {
-			elem = setAttributes(key, "boolean", ((Boolean) value).toString());
+			elem = setAttributes(propertyName, "boolean", ((Boolean) value).toString());
 		}
 		else if (value instanceof String) {
-			elem = new Element(STATE);
-			elem.setAttribute(NAME, key);
-			elem.setAttribute(TYPE, "string");
+			elem = createElement(STATE, propertyName);
+			elem.setAttribute(ATTRIBUTE_TYPE, "string");
 			if (XmlUtilities.hasInvalidXMLCharacters((String) value)) {
 				elem.setAttribute("ENCODED_VALUE", NumericUtilities
 						.convertBytesToString(((String) value).getBytes(StandardCharsets.UTF_8)));
 			}
 			else {
-				elem.setAttribute(VALUE, (String) value);
+				elem.setAttribute(ATTRIBUTE_VALUE, (String) value);
 			}
 		}
 		else if (value instanceof Color) {
-			elem = setAttributes(key, "Color", Integer.toString(((Color) value).getRGB()));
+			elem = setAttributes(propertyName, "Color", Integer.toString(((Color) value).getRGB()));
 		}
 		else if (value instanceof Date) {
-			elem = setAttributes(key, "Date", DATE_FORMAT.format((Date) value));
+			elem = setAttributes(propertyName, "Date", DATE_FORMAT.format((Date) value));
 		}
 		else if (value instanceof File) {
-			elem = setAttributes(key, "File", ((File) value).getAbsolutePath());
+			elem = setAttributes(propertyName, "File", ((File) value).getAbsolutePath());
 		}
 		else if (value instanceof KeyStroke) {
-			elem = setAttributes(key, "KeyStroke", value.toString());
+			elem = setAttributes(propertyName, "KeyStroke", value.toString());
 		}
 		else if (value instanceof Font font) {
-			elem = setAttributes(key, "Font", toFontString(font));
+			elem = setAttributes(propertyName, "Font", toFontString(font));
 		}
 		else if (value instanceof byte[]) {
-			elem = new Element("BYTES");
-			elem.setAttribute(NAME, key);
-			elem.setAttribute(VALUE, NumericUtilities.convertBytesToString((byte[]) value));
+			elem = createElement("BYTES", propertyName);
+			elem.setAttribute(ATTRIBUTE_VALUE,
+				NumericUtilities.convertBytesToString((byte[]) value));
 		}
 		else if (value instanceof short[]) {
-			elem = setArrayAttributes(key, "short", value);
+			elem = setArrayAttributes(propertyName, "short", value);
 		}
 		else if (value instanceof int[]) {
-			elem = setArrayAttributes(key, "int", value);
+			elem = setArrayAttributes(propertyName, "int", value);
 		}
 		else if (value instanceof long[]) {
-			elem = setArrayAttributes(key, "long", value);
+			elem = setArrayAttributes(propertyName, "long", value);
 		}
 		else if (value instanceof float[]) {
-			elem = setArrayAttributes(key, "float", value);
+			elem = setArrayAttributes(propertyName, "float", value);
 		}
 		else if (value instanceof double[]) {
-			elem = setArrayAttributes(key, "double", value);
+			elem = setArrayAttributes(propertyName, "double", value);
 		}
 		else if (value instanceof boolean[]) {
-			elem = setArrayAttributes(key, "boolean", value);
+			elem = setArrayAttributes(propertyName, "boolean", value);
 		}
 		else if (value instanceof String[]) {
-			elem = setArrayAttributes(key, "string", value);
+			elem = setArrayAttributes(propertyName, "string", value);
 		}
 		else if (value instanceof Enum) {
 			Enum<?> e = (Enum<?>) value;
-			elem = new Element("ENUM");
-			elem.setAttribute(NAME, key);
-			elem.setAttribute(TYPE, "enum");
+			elem = createElement("ENUM", propertyName);
+			elem.setAttribute(ATTRIBUTE_TYPE, "enum");
 			elem.setAttribute("CLASS", e.getClass().getName());
-			elem.setAttribute(VALUE, e.name());
+			elem.setAttribute(ATTRIBUTE_VALUE, e.name());
 		}
 		else if (value instanceof GProperties) {
 			Element savedElement = ((GProperties) value).saveToXml();
-			elem = new Element(GPROPERTIES_TAG);
-			elem.setAttribute(NAME, key);
-			elem.setAttribute(TYPE, G_PROPERTIES_TYPE);
+			elem = createElement(GPROPERTIES_TAG, propertyName);
+			elem.setAttribute(ATTRIBUTE_TYPE, G_PROPERTIES_TYPE);
 			elem.addContent(savedElement);
 		}
 		else {
-			elem = new Element("NULL");
-			elem.setAttribute(NAME, key);
+			elem = createElement("NULL", propertyName);
 		}
 		return elem;
 	}
 
-	private <T> Element setArrayAttributes(String key, String type, Object values) {
-		Element elem = new Element("ARRAY");
-		elem.setAttribute(NAME, key);
-		elem.setAttribute(TYPE, type);
+	private <T> Element setArrayAttributes(String propertyName, String type, Object values) {
+		Element elem = createElement("ARRAY", propertyName);
+		elem.setAttribute(ATTRIBUTE_TYPE, type);
 		for (int i = 0; i < Array.getLength(values); i++) {
 			Object value = Array.get(values, i);
 			if (value != null) {
 				Element arrElem = new Element(ARRAY_ELEMENT_NAME);
-				arrElem.setAttribute(VALUE, value.toString());
+				arrElem.setAttribute(ATTRIBUTE_VALUE, value.toString());
 				elem.addContent(arrElem);
 			}
 		}
 		return elem;
 	}
 
-	private Element setAttributes(String key, String type, String value) {
-		Element elem;
-		elem = new Element(STATE);
-		elem.setAttribute(NAME, key);
-		elem.setAttribute(TYPE, type);
-		elem.setAttribute(VALUE, value);
+	protected Element createElement(String tag, String name) {
+		Element e = new Element(tag);
+		e.setAttribute(ATTRIBUTE_NAME, name);
+		initializeElement(e);
+		return e;
+	}
+
+	protected void initializeElement(Element e) {
+		// subclasses may override
+	}
+
+	private Element setAttributes(String propertyName, String type, String value) {
+		Element elem = createElement(STATE, propertyName);
+		elem.setAttribute(ATTRIBUTE_TYPE, type);
+		elem.setAttribute(ATTRIBUTE_VALUE, value);
 		return elem;
 	}
 
@@ -638,9 +666,7 @@ public class GProperties {
 		JsonObject types = new JsonObject();
 		JsonObject values = new JsonObject();
 		JsonObject enumClasses = new JsonObject();
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : map.keySet()) {
 			Object value = map.get(key);
 			if (value == null) {
 				types.addProperty(key, "null");
@@ -793,8 +819,7 @@ public class GProperties {
 	}
 
 	protected Element createElementFromElement(String internalKey, Element internalElement) {
-		Element newElement = new Element("XML");
-		newElement.setAttribute(NAME, internalKey);
+		Element newElement = createElement("XML", internalKey);
 
 		Element internalElementClone = (Element) internalElement.clone();
 		newElement.addContent(internalElementClone);
@@ -835,15 +860,22 @@ public class GProperties {
 	}
 
 	/**
-	 * Return the names of the properties in this GProperties.
-	 * @return the names of the properties in this GProperties.
+	 * Returns the name of this GProperties
+	 * @return the name of this GProperties
+	 */
+	public String getName() {
+		return propertiesName;
+	}
+
+	/**
+	 * Return the names of the properties in this GProperties
+	 * @return the names of the properties in this GProperties
 	 */
 	public String[] getNames() {
 		String[] names = new String[map.size()];
 		int idx = 0;
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			names[idx] = iter.next();
+		for (String element : map.keySet()) {
+			names[idx] = element;
 			++idx;
 		}
 		return names;
@@ -1414,11 +1446,11 @@ public class GProperties {
 		return true;
 	}
 
-	private String toFontString(Font font) {
+	private static String toFontString(Font font) {
 		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
 	}
 
-	private String getStyleString(Font font) {
+	private static String getStyleString(Font font) {
 		boolean bold = font.isBold();
 		boolean italic = font.isItalic();
 		if (bold && italic) {

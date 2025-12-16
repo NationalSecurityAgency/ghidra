@@ -21,10 +21,8 @@ import java.util.List;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitor;
 
 // Simple symbol test implementation
 public class StubSymbol implements Symbol {
@@ -98,43 +96,13 @@ public class StubSymbol implements Symbol {
 	}
 
 	@Override
-	public boolean isValidParent(Namespace parent) {
+	public boolean isValidParent(Namespace nsParent) {
 		return false;
 	}
 
 	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.LABEL;
-	}
-
-	@Override
-	public int getReferenceCount() {
-		return 0;
-	}
-
-	@Override
-	public boolean hasMultipleReferences() {
-		return false;
-	}
-
-	@Override
-	public boolean hasReferences() {
-		return false;
-	}
-
-	@Override
-	public Reference[] getReferences(TaskMonitor monitor) {
-		return null;
-	}
-
-	@Override
-	public Reference[] getReferences() {
-		return null;
-	}
-
-	@Override
-	public ProgramLocation getProgramLocation() {
-		return null;
 	}
 
 	@Override
@@ -161,16 +129,6 @@ public class StubSymbol implements Symbol {
 	}
 
 	@Override
-	public boolean isPinned() {
-		return false;
-	}
-
-	@Override
-	public void setPinned(boolean pinned) {
-		// nothing
-	}
-
-	@Override
 	public boolean isDynamic() {
 		return false;
 	}
@@ -187,11 +145,6 @@ public class StubSymbol implements Symbol {
 
 	@Override
 	public boolean setPrimary() {
-		return false;
-	}
-
-	@Override
-	public boolean isExternalEntryPoint() {
 		return false;
 	}
 

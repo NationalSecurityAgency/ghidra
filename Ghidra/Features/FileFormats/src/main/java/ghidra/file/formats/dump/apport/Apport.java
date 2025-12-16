@@ -22,6 +22,7 @@ import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.file.formats.dump.DumpFile;
 import ghidra.file.formats.dump.DumpFileReader;
 import ghidra.framework.store.LockException;
@@ -79,6 +80,7 @@ public class Apport extends DumpFile {
 	private void createBlocksFromElf(LoadSpec loadSpec, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
+		Object consumer = new Object();
 		try (
 			DecodedProvider provider =
 				new DecodedProvider(this, reader.getByteProvider(), monitor)) {
@@ -86,7 +88,13 @@ public class Apport extends DumpFile {
 			Option base = new Option(ElfLoaderOptionsFactory.IMAGE_BASE_OPTION_NAME,
 				Long.toHexString(header.getMemoryInfo(0).getBaseAddress()));
 			options.add(base);
-			elfLoader.load(provider, loadSpec, options, program, monitor, log);
+			program.addConsumer(consumer);
+			ImporterSettings settings = new ImporterSettings(provider, program.getName(), null,
+				null, false, loadSpec, options, consumer, log, monitor);
+			elfLoader.load(program, settings);
+		}
+		finally {
+			program.release(consumer);
 		}
 
 		Memory memory = program.getMemory();

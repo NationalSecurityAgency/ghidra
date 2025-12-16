@@ -27,14 +27,21 @@
 // General removal statements
 //
 
+// 
+// Note: some of these have been disabled.  Some binaries have a class namespace with the same name
+// in more than one namespace that may include these values.  In that case, if we drop these values,
+// then instead of 2 distinct namespaces, we will have only 1, which is incorrect.  If we decide that
+// these values are not desired, then we will have to figure out a way to create 2 distinct 
+// namespaces after we apply the simplification.
+// 
 // current tests show this is a non-leading mangled namespace placeholder
 ""		::__1
 
 // current tests show this is a non-leading mangled namespace placeholder
-""		::__cxx11
+//""		::__cxx11
 
 // current tests show this is only in the leading mangled namespace position
-""		__gnu_cxx::
+//""		__gnu_cxx::
 
 
 // speculative: pool_allocator has been spotted in some binaries; replace first so the cases below will match

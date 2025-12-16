@@ -102,10 +102,11 @@ public class FieldPanel extends JPanel
 
 		// initialize the focus traversal keys to control Tab to free up the tab key for internal
 		// field panel use. This is the same behavior that text components use.
-		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK);
+		KeyStroke ks =
+			KeyStroke.getKeyStroke(KeyEvent.VK_TAB, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Set.of(ks));
 		ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK);
 		setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, Set.of(ks));
 
 		addKeyListener(new FieldPanelKeyAdapter());
@@ -347,6 +348,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Returns true if the given field location is rendered on the screen; false if scrolled
 	 * offscreen
+	 * 
 	 * @param location the location
 	 * @return true if the location is on the screen
 	 */
@@ -689,8 +691,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns the Field at the given x,y coordinates. Note the x,y must currently be visible on the
-	 * screen or else this method will return null.
+	 * Returns the Field at the given x,y coordinates.
+	 * <p>
+	 * Note the x,y must currently be visible on the screen or else this method will return null.
 	 *
 	 * @param x the x mouse coordinate in the component.
 	 * @param y the y mouse coordinate in the component.
@@ -841,8 +844,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Sets the cursor on or off. When the cursor is turned off, there is no visible cursor
-	 * displayed on the screen.
+	 * Sets the cursor on or off.
+	 * <p>
+	 * When the cursor is turned off, there is no visible cursor displayed on the screen.
 	 *
 	 * @param cursorOn true turns the cursor on, false turns it off.
 	 */
@@ -945,8 +949,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns a ViewerPosition object which contains the top of screen information. The
-	 * ViewerPosition will have the index of the layout at the top of the screen and the yPos of
+	 * Returns a ViewerPosition object which contains the top of screen information.
+	 * <p>
+	 * The ViewerPosition will have the index of the layout at the top of the screen and the yPos of
 	 * that layout. For example, if the layout is completely displayed, yPos will be 0. If part of
 	 * the layout is off the top off the screen, then yPos will have a negative value (indicating
 	 * that it begins above the displayable part of the screen.
@@ -962,8 +967,10 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Scrolls the display to show the layout specified by index at the vertical position specified
-	 * by yPos. Generally, the index will be layout at the top of the screen and the yPos will be
-	 * &lt;= 0, meaning the layout may be partially off the top of the screen.
+	 * by yPos.
+	 * <p>
+	 * Generally, the index will be layout at the top of the screen and the yPos will be &lt;= 0,
+	 * meaning the layout may be partially off the top of the screen.
 	 *
 	 * @param index the index of the layout to show at the top of the screen.
 	 * @param xPos the x position to set.
@@ -1329,6 +1336,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Finds the layout containing the given y position.
+	 * 
 	 * @param y the y location
 	 * @return the layout.
 	 */

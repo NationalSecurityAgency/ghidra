@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.button.GRadioButton;
-import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GThemeDefaults.Colors.Palette;
@@ -50,8 +49,12 @@ import ghidra.util.layout.VerticalLayout;
 /**
  * Panel for editing a composite with a blank line at the bottom of the table
  * when in unlocked mode.
+ * 
+ * @param <T> Specific {@link Composite} type being edited
+ * @param <M> Specific {@link CompEditorModel} implementation which supports editing T
  */
-public class CompEditorPanel extends CompositeEditorPanel {
+public class CompEditorPanel<T extends Composite, M extends CompEditorModel<T>>
+		extends CompositeEditorPanel<T, M> {
 
 	protected final static Insets LEFT_INSETS = new Insets(2, 3, 1, 0);
 	protected final static Insets VERTICAL_INSETS = new Insets(2, 2, 1, 0);
@@ -93,7 +96,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * @param provider
 	 *            the editor provider furnishing this panel for editing.
 	 */
-	public CompEditorPanel(CompEditorModel model, CompositeEditorProvider provider) {
+	public CompEditorPanel(M model, CompositeEditorProvider<T, M> provider) {
 		super(model, provider);
 	}
 
@@ -356,6 +359,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					e.consume();
+					setStatus("");
 					// revert to model state when escape is hit
 					setCompositeName(model.getCompositeName());
 				}
@@ -406,6 +410,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					e.consume();
+					setStatus("");
 					// revert to model state when escape is hit
 					setDescription(model.getDescription());
 				}
@@ -523,7 +528,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"setting and the alignment of each component data type.</html>";
 
 		defaultAlignButton.addActionListener(e -> {
-			((CompEditorModel) model).setAlignmentType(AlignmentType.DEFAULT, -1);
+			model.setAlignmentType(AlignmentType.DEFAULT, -1);
 		});
 
 		defaultAlignButton.setToolTipText(alignmentToolTip);
@@ -532,7 +537,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	private void setupMachineMinAlignButton() {
 		DataOrganization dataOrganization =
-			((CompEditorModel) model).viewComposite.getDataOrganization();
+			model.viewComposite.getDataOrganization();
 		int machineAlignment = dataOrganization.getMachineAlignment();
 
 		machineAlignButton = new GRadioButton("machine: " + machineAlignment);
@@ -546,7 +551,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		machineAlignButton.setToolTipText(alignmentToolTip);
 
 		machineAlignButton.addActionListener(e -> {
-			((CompEditorModel) model).setAlignmentType(AlignmentType.MACHINE, -1);
+			model.setAlignmentType(AlignmentType.MACHINE, -1);
 		});
 
 		provider.registerHelp(machineAlignButton, "Align");
@@ -634,7 +639,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			return;
 		}
 		try {
-			((CompEditorModel) model).setAlignmentType(AlignmentType.EXPLICIT, minAlignment);
+			model.setAlignmentType(AlignmentType.EXPLICIT, minAlignment);
 			adjustCompositeInfo();
 		}
 		catch (IllegalArgumentException e1) {
@@ -664,7 +669,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(actualAlignmentPanel, gridBagConstraints);
 
 		actualAlignmentValueLabel = new JLabel();
-		int actualAlignment = ((CompEditorModel) model).getActualAlignment();
+		int actualAlignment = model.getActualAlignment();
 		actualAlignmentValueLabel.setText(Integer.toString(actualAlignment));
 		actualAlignmentValueLabel.setToolTipText(actualAlignmentToolTip);
 		actualAlignmentValueLabel.setBackground(getBackground());
@@ -765,7 +770,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				"<font color=\"" + Palette.BLUE.toHexString() +
 				"\" size=\"-2\">(&lt;F1&gt; for help)</font></html>";
 		packingEnablementButton.addActionListener(e -> {
-			((CompEditorModel) model).setPackingType(
+			model.setPackingType(
 				packingEnablementButton.isSelected() ? PackingType.DEFAULT : PackingType.DISABLED,
 				-1);
 		});
@@ -783,7 +788,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"<html>Indicates <B>default</B> compiler packing rules should be applied.</html>";
 
 		defaultPackingButton.addActionListener(e -> {
-			((CompEditorModel) model).setPackingType(PackingType.DEFAULT, -1);
+			model.setPackingType(PackingType.DEFAULT, -1);
 		});
 
 		defaultPackingButton.setToolTipText(packingToolTipText);
@@ -860,7 +865,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void chooseByValuePacking() {
-		((CompEditorModel) model).setPackingType(PackingType.EXPLICIT, 1);
+		model.setPackingType(PackingType.EXPLICIT, 1);
 		explicitPackingTextField.selectAll();
 		explicitPackingTextField.requestFocus();
 	}
@@ -873,7 +878,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		if (explicitPacking <= 0) {
 			return;
 		}
-		((CompEditorModel) model).setPackingType(PackingType.EXPLICIT, explicitPacking);
+		model.setPackingType(PackingType.EXPLICIT, explicitPacking);
 		adjustCompositeInfo();
 	}
 
@@ -881,7 +886,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * Sets the currently displayed structure packing value (maximum component alignment)
 	 */
 	public void refreshGUIPackingValue() {
-		PackingType packingType = ((CompEditorModel) model).getPackingType();
+		PackingType packingType = model.getPackingType();
 		String packingString = "";
 
 		boolean packingEnabled = packingType != PackingType.DISABLED;
@@ -895,7 +900,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			defaultPackingButton.setSelected(true);
 		}
 		else if (packingType == PackingType.EXPLICIT) {
-			int packValue = ((CompEditorModel) model).getExplicitPackingValue();
+			int packValue = model.getExplicitPackingValue();
 			packingString =
 				model.showHexNumbers ? CompositeViewerModel.getHexString(packValue, true)
 						: Integer.toString(packValue);
@@ -985,7 +990,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			return;
 		}
 
-		if (!((CompEditorModel) model).isSizeEditable()) {
+		if (!model.isSizeEditable()) {
 			return;
 		}
 
@@ -1022,13 +1027,13 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void chooseExplicitAlign() {
-		if (((CompEditorModel) model).getAlignmentType() != AlignmentType.EXPLICIT) {
-			Composite viewComposite = ((CompEditorModel) model).viewComposite;
+		if (model.getAlignmentType() != AlignmentType.EXPLICIT) {
+			Composite viewComposite = model.viewComposite;
 			int defaultValue = 1;
 			if (viewComposite.isPackingEnabled()) {
 				defaultValue = viewComposite.getDataOrganization().getMachineAlignment();
 			}
-			((CompEditorModel) model).setAlignmentType(AlignmentType.EXPLICIT, defaultValue);
+			model.setAlignmentType(AlignmentType.EXPLICIT, defaultValue);
 		}
 		explicitAlignTextField.selectAll();
 		explicitAlignTextField.requestFocus();
@@ -1118,6 +1123,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			return;
 		}
 
+		setStatus("");
+
 		// Adjust the value.
 		String newName = nameTextField.getText().trim();
 		if (!DataUtilities.isValidDataTypeName(newName)) {
@@ -1163,6 +1170,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			return;
 		}
 
+		setStatus("");
+
 		String newValue = this.descriptionTextField.getText().trim();
 		if (!newValue.equals(model.getDescription())) {
 			model.setDescription(newValue);
@@ -1197,7 +1206,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		nameTextField.setText(name);
 		nameTextField.setDefaultValue(name);
 		nameTextField.setIsError(false);
-		setStatus("");
 	}
 
 	/**
@@ -1209,12 +1217,11 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		descriptionTextField.setText(description);
 		descriptionTextField.setDefaultValue(description);
 		descriptionTextField.setIsError(false);
-		setStatus("");
 	}
 
 	public void refreshGUIMinimumAlignmentValue() {
 
-		AlignmentType alignmentType = ((CompEditorModel) model).getAlignmentType();
+		AlignmentType alignmentType = model.getAlignmentType();
 		String minimumAlignmentStr = "";
 		if (alignmentType == AlignmentType.DEFAULT) {
 			defaultAlignButton.setSelected(true);
@@ -1224,7 +1231,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		}
 		else {
 			explicitAlignButton.setSelected(true);
-			int minimumAlignment = ((CompEditorModel) model).getExplicitMinimumAlignment();
+			int minimumAlignment = model.getExplicitMinimumAlignment();
 			minimumAlignmentStr =
 				model.showHexNumbers ? CompositeViewerModel.getHexString(minimumAlignment, true)
 						: Integer.toString(minimumAlignment);
@@ -1238,7 +1245,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * Updates the GUI display of the actual alignment value.
 	 */
 	public void refreshGUIActualAlignmentValue() {
-		int actualAlignment = ((CompEditorModel) model).getActualAlignment();
+		int actualAlignment = model.getActualAlignment();
 		String alignmentStr =
 			model.showHexNumbers ? CompositeViewerModel.getHexString(actualAlignment, true)
 					: Integer.toString(actualAlignment);
@@ -1259,7 +1266,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * @param size the new size
 	 */
 	private void setCompositeSize(int size) {
-		boolean sizeIsEditable = ((CompEditorModel) model).isSizeEditable();
+		boolean sizeIsEditable = model.isSizeEditable();
 		if (sizeTextField.isEditable() != sizeIsEditable) {
 			setSizeEditable(sizeIsEditable);
 		}

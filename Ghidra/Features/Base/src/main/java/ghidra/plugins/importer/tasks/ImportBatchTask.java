@@ -26,6 +26,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
@@ -54,6 +55,7 @@ public class ImportBatchTask extends Task {
 	private DomainFolder destFolder;
 	private boolean stripLeadingPath = true;
 	private boolean stripAllContainerPath = false;
+	private boolean mirrorFs = false;
 	private ProgramManager programManager;
 	private int totalObjsImported;
 	private int totalAppsImported;
@@ -62,7 +64,7 @@ public class ImportBatchTask extends Task {
 	/**
 	 * Start a Batch Import session with an already populated {@link BatchInfo}
 	 * instance.
-	 * <p>
+	 * 
 	 * @param batchInfo {@link BatchInfo} state object
 	 * @param destFolder {@link DomainFolder} where to place imported files
 	 * @param programManager {@link ProgramManager} to use when opening newly imported files, null ok
@@ -71,9 +73,11 @@ public class ImportBatchTask extends Task {
 	 * @param stripAllContainerPath boolean true if each imported file's parent container
 	 * source path should be completely omitted when creating the destination project folder path.
 	 * (the imported file's path within its container is still used)
+	 * @param mirrorFs boolean true if the filesystem should be mirrored during import
 	 */
 	public ImportBatchTask(BatchInfo batchInfo, DomainFolder destFolder,
-			ProgramManager programManager, boolean stripLeading, boolean stripAllContainerPath) {
+			ProgramManager programManager, boolean stripLeading, boolean stripAllContainerPath,
+			boolean mirrorFs) {
 		super("Batch Import Task", true, true, false, false);
 
 		this.batchInfo = batchInfo;
@@ -82,6 +86,7 @@ public class ImportBatchTask extends Task {
 		this.programManager = programManager;
 		this.stripLeadingPath = stripLeading;
 		this.stripAllContainerPath = stripAllContainerPath;
+		this.mirrorFs = mirrorFs;
 	}
 
 	@Override
@@ -143,26 +148,23 @@ public class ImportBatchTask extends Task {
 			}
 			Pair<DomainFolder, String> destInfo = getDestinationInfo(batchLoadConfig, destFolder);
 
-			Object consumer = new Object();
 			try {
 				MessageLog messageLog = new MessageLog();
 				Project project = AppInfo.getActiveProject();
-				LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
-						.load(byteProvider, fixupProjectFilename(destInfo.second), project,
-							destInfo.first.getPathname(), loadSpec,
-							getOptionsFor(batchLoadConfig, loadSpec, byteProvider), messageLog,
-							consumer, monitor);
+				ImporterSettings settings = new ImporterSettings(byteProvider,
+					fixupProjectFilename(destInfo.second), project, destInfo.first.getPathname(),
+					mirrorFs, loadSpec, getOptionsFor(batchLoadConfig, loadSpec, byteProvider),
+					this, messageLog, monitor);
+				try (LoadResults<? extends DomainObject> loadResults =
+					loadSpec.getLoader().load(settings)) {
 
-				// TODO: accumulate batch results
-				if (loadResults != null) {
-					try {
-						loadResults.save(project, consumer, messageLog, monitor);
+					// TODO: accumulate batch results
+					if (loadResults != null) {
+						loadResults.save(monitor);
 						processImportResults(loadResults, batchLoadConfig, monitor);
 					}
-					finally {
-						loadResults.release(consumer);
-					}
 				}
+
 				totalAppsImported++;
 
 				Msg.info(this, "Imported " + destInfo.first + "/ " + destInfo.second + ", " +
@@ -174,7 +176,8 @@ public class ImportBatchTask extends Task {
 			catch (CancelledException e) {
 				Msg.debug(this, "Batch Import cancelled");
 			}
-			catch (IOException | VersionException | IllegalArgumentException e) {
+			catch (IOException | VersionException | IllegalArgumentException
+					| InvalidNameException e) {
 				Msg.error(this, "Import failed for " + batchLoadConfig.getPreferredFileName(), e);
 			}
 		}
@@ -197,14 +200,20 @@ public class ImportBatchTask extends Task {
 			BatchLoadConfig appInfo, TaskMonitor monitor) {
 
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
-			DomainObject obj = loaded.getDomainObject();
-			if (obj instanceof Program program) {
-				if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
-					programManager.openProgram(program,
-						totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT
-								: ProgramManager.OPEN_VISIBLE);
+			DomainObject obj = loaded.getDomainObject(this);
+			try {
+				if (obj instanceof Program program) {
+					if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
+						programManager.openProgram(program,
+							totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT
+									: ProgramManager.OPEN_VISIBLE);
+					}
 				}
 			}
+			finally {
+				obj.release(this);
+			}
+
 			totalObjsImported++;
 		}
 	}
@@ -232,13 +241,12 @@ public class ImportBatchTask extends Task {
 		String userSrcPath = userSrc.toPrettyFullpathString().replace('|', '/');
 		int filename = fullPath.lastIndexOf('/') + 1;
 		int uas = userSrcPath.length();
-		int container = uas + 1;
 
 		int leadStart = (stripLeadingPath == false) ? 0 : userSrcPath.lastIndexOf('/') + 1;
 		int leadEnd = Math.min(filename, userSrcPath.length());
 		String leading = (leadStart < filename) ? fullPath.substring(leadStart, leadEnd) : "";
-		String containerPath = container < filename && !stripInteriorContainerPath
-				? fullPath.substring(container, filename)
+		String containerPath = uas < filename && !stripInteriorContainerPath
+				? fullPath.substring(uas, filename)
 				: "";
 		String filenameStr = fullPath.substring(filename);
 		String result = FSUtilities.appendPath(leading, containerPath, filenameStr);
@@ -248,6 +256,23 @@ public class ImportBatchTask extends Task {
 	private Pair<DomainFolder, String> getDestinationInfo(BatchLoadConfig batchLoadConfig,
 			DomainFolder rootDestinationFolder) {
 		FSRL fsrl = batchLoadConfig.getFSRL();
+		
+		if (mirrorFs) {
+			FSRL containerFSRL = fsrl.getFS().getContainer();
+			String path = containerFSRL != null ? containerFSRL.toPrettyFullpathString() : "/";
+			path = path.replace('|', '/');
+			try {
+				DomainFolder batchDestFolder = ProjectDataUtils.createDomainFolderPath(
+					rootDestinationFolder, stripLeadingPath ? "" : path);
+				return new Pair<>(batchDestFolder, fsrl.getName());
+			}
+			catch (IOException | InvalidNameException e) {
+				Msg.error(this, "Problem creating project folder root: " +
+					rootDestinationFolder.getPathname() + ", subpath: " + path, e);
+			}
+			return new Pair<>(rootDestinationFolder, fsrl.getName());
+		}
+		
 		String pathStr = fsrlToPath(fsrl, batchLoadConfig.getUasi().getFSRL(), stripLeadingPath,
 			stripAllContainerPath);
 		String preferredName = batchLoadConfig.getPreferredFileName();
@@ -278,8 +303,8 @@ public class ImportBatchTask extends Task {
 
 	private List<Option> getOptionsFor(BatchLoadConfig batchLoadConfig, LoadSpec loadSpec,
 			ByteProvider byteProvider) {
-		List<Option> options =
-			batchLoadConfig.getLoader().getDefaultOptions(byteProvider, loadSpec, null, false);
+		List<Option> options = batchLoadConfig.getLoader()
+				.getDefaultOptions(byteProvider, loadSpec, null, false, false);
 		return options;
 	}
 }

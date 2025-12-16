@@ -15,6 +15,7 @@
  */
 #include "variable.hh"
 #include "op.hh"
+#include "expression.hh"
 #include "database.hh"
 
 namespace ghidra {

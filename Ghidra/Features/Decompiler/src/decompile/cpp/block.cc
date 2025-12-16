@@ -398,7 +398,7 @@ bool FlowBlock::dominates(const FlowBlock *subBlock) const
 /// We assume the given block has 2 out-edges and that \b this block is immediately reached by
 /// one of these two edges. Some condition holds when traversing the out-edge to \b this, and the complement
 /// of the condition holds for traversing the other out-edge. We verify that the condition holds for
-/// this entire block.  More specifically, we check that that there is no path to \b this through the
+/// this entire block.  More specifically, we check that there is no path to \b this through the
 /// sibling edge, where the complement of the condition holds (unless we loop back through the conditional block).
 /// \param cond is the conditional block with 2 out-edges
 /// \return \b true if the condition holds for this block
@@ -636,6 +636,17 @@ JumpTable *FlowBlock::getJumptable(void) const
   if (indop != (PcodeOp *)0)
     jt = indop->getParent()->getFuncdata()->findJumpTable(indop);
   return jt;
+}
+
+/// Print a single unique identifier for \b this block
+/// \param s is the output stream
+void FlowBlock::printShortHeader(ostream &s) const
+
+{
+  s << "Block_" << dec << index;
+  if (!getStart().isInvalid()) {
+    s << ':' << getStart();
+  }
 }
 
 /// Given a string describing a FlowBlock type, return the block_type.
@@ -1293,8 +1304,24 @@ void BlockGraph::printRaw(ostream &s) const
 
   printHeader(s);
   s << endl;
-  for(iter=list.begin();iter!=list.end();++iter)
-    (*iter)->printRaw(s);
+  if (list.empty()) return;
+  iter = list.begin();
+  FlowBlock *lastBl = *iter;
+  ++iter;
+  lastBl->printRaw(s);
+  for(;iter!=list.end();++iter) {
+    FlowBlock *curBl = *iter;
+    lastBl->printRawImpliedGoto(s, curBl);
+    curBl->printRaw(s);
+    lastBl = curBl;
+  }
+}
+
+void BlockGraph::printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const
+
+{
+  if (list.empty()) return;
+  list.back()->printRawImpliedGoto(s, nextBlock);
 }
 
 PcodeOp *BlockGraph::firstOp(void) const
@@ -2658,6 +2685,24 @@ void BlockBasic::printRaw(ostream &s) const
   }
 }
 
+void BlockBasic::printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const
+
+{
+  if (sizeOut() != 1) return;
+  const FlowBlock *outBlock = getOut(0);
+  if (nextBlock->getType() != t_basic) {
+    nextBlock = nextBlock->getFrontLeaf();
+    if (nextBlock == (const FlowBlock *)0) return;
+    nextBlock = nextBlock->subBlock(0);
+  }
+  if (getOut(0) == nextBlock) return;
+  if (!op.empty() && op.back()->isBranch()) return;
+  getStop().printRaw(s);
+  s << ":   \t[ goto ";
+  outBlock->printShortHeader(s);
+  s << " ]" << endl;
+}
+
 /// \brief Check for values created in \b this block that flow outside the block.
 ///
 /// The block can calculate a value for a BRANCHIND or CBRANCH and can copy values and this method will still
@@ -3479,7 +3524,7 @@ void BlockSwitch::addCase(FlowBlock *switchbl,FlowBlock *bl,uint4 gt)
 void BlockSwitch::grabCaseBasic(FlowBlock *switchbl,const vector<FlowBlock *> &cs)
 
 {
-  vector<int4> casemap(switchbl->sizeOut(),-1);	// Map from from switchtarget's outindex to position in caseblocks
+  vector<int4> casemap(switchbl->sizeOut(),-1);	// Map from switchtarget's outindex to position in caseblocks
   caseblocks.clear();
   for(int4 i=1;i<cs.size();++i) {
     FlowBlock *casebl = cs[i];

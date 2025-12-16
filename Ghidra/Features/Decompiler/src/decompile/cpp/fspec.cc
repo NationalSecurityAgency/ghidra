@@ -206,7 +206,7 @@ bool ParamEntry::containedBy(const Address &addr,int4 sz) const
   return (entryoff <= rangeoff);
 }
 
-/// If \b this a a \e join, each piece is tested for intersection.
+/// If \b this is a \e join, each piece is tested for intersection.
 /// Otherwise, \b this, considered as a single memory, is tested for intersection.
 /// \param addr is the starting address of the given memory range to test against
 /// \param sz is the number of bytes in the given memory range
@@ -431,7 +431,23 @@ int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
 /// \param sz is the size of the parameter to allocated
 /// \param typeAlign is the required byte alignment for the parameter
 /// \return the address of the new parameter (or an invalid address)
-Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign) const
+Address ParamEntry::getAddrBySlot(int4 &slotnum, int4 sz, int4 typeAlign) const
+
+{
+	return getAddrBySlot(slotnum, sz, typeAlign, !isLeftJustified());
+}
+
+/// \brief Calculate the storage address assigned when allocating a parameter of a given size
+///
+/// Assume \b slotnum slots have already been assigned and increment \b slotnum
+/// by the number of slots used.
+/// Return an invalid address if the size is too small or if there are not enough slots left.
+/// \param slotnum is a reference to used slots (which will be updated)
+/// \param sz is the size of the parameter to allocated
+/// \param typeAlign is the required byte alignment for the parameter
+/// \param justifyRight is true if initial bytes are padding for odd data-type sizes
+/// \return the address of the new parameter (or an invalid address)
+Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign, bool justifyRight) const
 
 {
   Address res;			// Start with an invalid result
@@ -471,7 +487,7 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign) const
     res = Address(spaceid, addressbase + index * alignment);
     slotnum += slotsused;	// Inform caller of number of slots used
   }
-  if (!isLeftJustified())   // Adjust for right justified (big endian)
+  if (justifyRight)   // Adjust for right justified (big endian)
     res = res + (spaceused - sz);
   return res;
 }
@@ -773,14 +789,19 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
 
   if (res.size() == 2) {	// Check for hidden parameters defined by the output list
     Datatype *dt = res.back().type;
-    type_class store;
-    if ((res.back().flags & ParameterPieces::hiddenretparm) != 0)
-      store = TYPECLASS_HIDDENRET;
-    else
-      store = metatype2typeclass(dt->getMetatype());
-    // Reserve first param for hidden return pointer
-    if (assignAddressFallback(store,dt,false,status,res.back()) == AssignAction::fail)
-      throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+    if ((res.back().flags & ParameterPieces::hiddenretparm) != 0) {
+      // Need to pull from registers marked as hiddenret 
+      if (assignAddressFallback(TYPECLASS_HIDDENRET,dt,false,status,res.back()) == AssignAction::fail) {
+        throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+      }
+    }
+    else {
+	  // Assign as a regular first input pointer parameter
+	  if (assignAddress(dt,proto,0,typefactory,status,res.back()) == AssignAction::fail) {
+        throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+	  }
+	}
+	
     res.back().flags |= ParameterPieces::hiddenretparm;
   }
   for(int4 i=0;i<proto.intypes.size();++i) {
@@ -1573,8 +1594,10 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
       res.back().type = typefactory.getTypeVoid();
     }
     else {
-      if (assignAddressFallback(TYPECLASS_PTR,pointertp,false,status,res.back()) == AssignAction::fail)
-	throw ParamUnassignedError("Cannot assign return value as a pointer");
+	  res.back().type = pointertp;
+	  if (assignAddress(pointertp,proto,-1,typefactory,status,res.back()) == AssignAction::fail) {
+	    throw ParamUnassignedError("Cannot assign return value as a pointer");
+	  }
     }
     res.back().flags = ParameterPieces::indirectstorage;
 
@@ -1894,19 +1917,19 @@ bool ParamTrial::operator<(const ParamTrial &b) const
 /// \param a trial
 /// \param b trial
 /// \return \b true if \b a should be ordered before \b b
-bool ParamTrial::fixedPositionCompare(const ParamTrial &a, const ParamTrial &b)
+bool ParamTrial::fixedPositionCompare(const ParamTrial &a,const ParamTrial &b)
 
 {
-	if (a.fixedPosition == -1 && b.fixedPosition == -1){
-		return a < b;
-	}
-	if (a.fixedPosition == -1){
-		return false;
-	}
-	if (b.fixedPosition == -1){
-		return true;
-	}
-	return a.fixedPosition < b.fixedPosition;
+  if (a.fixedPosition == -1 && b.fixedPosition == -1) {
+    return a < b;
+  }
+  if (a.fixedPosition == -1) {
+    return false;
+  }
+  if (b.fixedPosition == -1) {
+    return true;
+  }
+  return a.fixedPosition < b.fixedPosition;
 }
 
 /// \param recoversub selects whether a sub-function or the active function is being tested
@@ -1920,6 +1943,7 @@ ParamActive::ParamActive(bool recoversub)
   isfullychecked = false;
   needsfinalcheck = false;
   recoversubcall = recoversub;
+  joinReverse = false;
 }
 
 void ParamActive::clear(void)
@@ -1930,6 +1954,7 @@ void ParamActive::clear(void)
   stackplaceholder = -1;
   numpasses = 0;
   isfullychecked = false;
+  joinReverse = false;
 }
 
 /// A ParamTrial object is created and a slot is assigned.
@@ -2894,7 +2919,6 @@ void ProtoModelMerged::decode(Decoder &decoder)
   }
   decoder.closeElement(elemId);
   ((ParamListMerged *)input)->finalize();
-  ((ParamListMerged *)output)->finalize();
 }
 
 void ParameterBasic::setTypeLock(bool val)
@@ -5671,9 +5695,9 @@ void FuncCallSpecs::buildInputFromTrials(Funcdata &data)
   newparam.push_back(op->getIn(0)); // Preserve the fspec parameter
 
   if (isDotdotdot() && isInputLocked()){
-      //if varargs, move the fixed args to the beginning of the list in order
-	  //preserve relative order of variable args
-	  activeinput.sortFixedPosition();
+    // if varargs, move the fixed args to the beginning of the list in order to
+    // preserve relative order of variable args
+    activeinput.sortFixedPosition();
   }
 
   for(int4 i=0;i<activeinput.getNumTrials();++i) {
@@ -5780,8 +5804,15 @@ void FuncCallSpecs::buildOutputFromTrials(Funcdata &data,vector<Varnode *> &tria
     data.opSetOutput(op,finaloutvn); // Move varnode to its new position as output of call
   }
   else if (activeoutput.getNumTrials()==2) {
-    Varnode *hivn = finalvn[1];	// orderOutputPieces puts hi last
-    Varnode *lovn = finalvn[0];
+    Varnode *hivn,*lovn;
+    if (activeoutput.isJoinReverse()) {
+      hivn = finalvn[0];
+      lovn = finalvn[1];
+    }
+    else {
+      hivn = finalvn[1];
+      lovn = finalvn[0];
+    }
     if (data.isDoublePrecisOn()) {
       lovn->setPrecisLo();	// Mark that these varnodes are part of a larger precision whole
       hivn->setPrecisHi();

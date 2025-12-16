@@ -102,7 +102,7 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 
 		@Override
 		public void execute(PcodeExecutor<JitVal> executor, PcodeUseropLibrary<JitVal> library,
-				Varnode outVar, List<Varnode> inVars) {
+				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 			throw new AssertionError();
 		}
 
@@ -152,17 +152,13 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		 * Get the type behavior from the userop's Java method
 		 * 
 		 * <p>
-		 * If the userop is not backed by a Java method, or its return type is not supported, this
+		 * If the userop is not backed by a Java method, or its output type is not supported, this
 		 * return {@link JitTypeBehavior#ANY}.
 		 * 
 		 * @return the type behavior
 		 */
-		private JitTypeBehavior getReturnType() {
-			Method method = decOp.getJavaMethod();
-			if (method == null) {
-				return JitTypeBehavior.ANY;
-			}
-			return JitTypeBehavior.forJavaType(method.getReturnType());
+		private JitTypeBehavior getOutputTypeBehavior() {
+			return JitTypeBehavior.forJavaType(getOutputType());
 		}
 
 		/**
@@ -173,7 +169,7 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		 * of the invocation, not the actual run time invocation. This derives type information
 		 * about the userop from the Java method and selects the approparite {@link JitCallOtherOpIf
 		 * callother} op to enter into the use-def graph. If an output operand is given, then this
-		 * generates an output notes defined by a {@lnk JitCallOtherDefOp}. Otherwise, it generates
+		 * generates an output notes defined by a {@link JitCallOtherDefOp}. Otherwise, it generates
 		 * a (sink) {@link JitCallOtherOp}.
 		 * 
 		 * @implNote When inlining a userop, the decoder leaves the original callother op in place.
@@ -210,8 +206,8 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 			}
 			else {
 				JitOutVar out = dfm.generateOutVar(outVn);
-				dfm.notifyOp(new JitCallOtherDefOp(op, out, getReturnType(), decOp, inVals, inTypes,
-					state.captureState()));
+				dfm.notifyOp(new JitCallOtherDefOp(op, out, getOutputTypeBehavior(), decOp, inVals,
+					inTypes, state.captureState()));
 				state.setVar(outVn, out);
 			}
 		}
@@ -227,8 +223,18 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		}
 
 		@Override
+		public boolean modifiesContext() {
+			return decOp.modifiesContext();
+		}
+
+		@Override
 		public boolean canInlinePcode() {
 			return decOp.canInlinePcode();
+		}
+
+		@Override
+		public Class<?> getOutputType() {
+			return decOp.getOutputType();
 		}
 
 		@Override

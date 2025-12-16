@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -359,15 +359,25 @@ public class Ext4SuperBlock implements StructConverter {
 	}
 
 	public String getVolumeName() {
-		int i = 0;
-		while (i < s_volume_name.length && s_volume_name[i] != '\0') {
-			i++;
-		}
-		return new String(s_volume_name, 0, i, Ext4FileSystem.EXT4_DEFAULT_CHARSET);
+		return getSBString(s_volume_name);
 	}
 
 	public byte[] getS_last_mounted() {
 		return s_last_mounted;
+	}
+
+	public String getLastMountedString() {
+		return getSBString(s_last_mounted);
+	}
+
+	private String getSBString(byte[] bytes) {
+		try {
+			BinaryReader br = new BinaryReader(new ByteArrayProvider(bytes), true);
+			return br.readNextString(bytes.length, Ext4FileSystem.EXT4_DEFAULT_CHARSET, 1);
+		}
+		catch (IOException e) {
+			return "";
+		}
 	}
 
 	public int getS_algorithm_usage_bitmap() {

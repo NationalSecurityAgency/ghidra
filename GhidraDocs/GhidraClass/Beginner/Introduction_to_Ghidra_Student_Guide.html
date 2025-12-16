@@ -1534,12 +1534,11 @@ Before you can do anything else, you must first create a project. Projects are u
   <p>
   <b><u>Notes:</u></b>
   <ul>
-    
     <li>The <b>Convert</b> action only appears on the right mouse menu if the cursor is on a constant operand. It only works on the current scalar.</li>
     <li>The <b>Set Equate...</b> action only appears on right mouse menu if the cursor is on a constant operand. It works on the current scalar and if there is a selection on all matching scalars in the selection.</li>
     <li>To group Equates or Enums into a single Enum in the Data Type Manager, use the filter to group them (if possible), select them using click and drag, then do <b>right-click->Create Enum from Selection</b>.</li>
-    <li>The <b>Apply Enum...</b> action allows users to apply the enum names to multiple matching values in an instruction or selection of instructions. It only appears on the right mouse menu if the cursor is on a constant operand (no selection) or there are are constant operands in the current selection.</li>
-    <li>Applying Equates and Enums to the Listing will rename most in the decompiler, however...</li> 
+    <li>The <b>Apply Enum...</b> action allows users to apply the enum names to multiple matching values in an instruction or selection of instructions. It only appears on the right mouse menu if the cursor is on a constant operand (no selection) or there are constant operands in the current selection.</li>
+    <li>Applying Equates and Enums to the Listing will rename most in the decompiler, however...</li>
     <li><b>PREFERRED METHOD:</b> To apply Enum names to the decompiler view, find a variable being assigned or compared to the constants then do <b>right-click->Retype variable</b> or <b>right-click->Retype global</b>. Make sure that the Enum size (1,2,4,or 8 bytes) matches the size of the variable in the decompiler or it will not display the names.</li>
  </ul>
   </p>
@@ -1735,7 +1734,7 @@ Before you can do anything else, you must first create a project. Projects are u
  <li>In the Program Tree, right-click on a <b>CODE</b> segment and choose <b>Modularize By->:</b>
         <ul>
       <li><b>Subroutine-></b> This breaks code into segments by a chosen subroutine model.</li>
-	<li><b>Complexity Depth</b> This groups functions into folders Level 0 to n, where Level 0 contains the entry function(s), Level 1 contains functions called by entry functin(s), and so on. Level n contains functions that do not call any other functions within the current program but may call external functions.</li>
+	<li><b>Complexity Depth</b> This groups functions into folders Level 0 to n, where Level 0 contains the entry function(s), Level 1 contains functions called by entry function(s), and so on. Level n contains functions that do not call any other functions within the current program but may call external functions.</li>
 	<li><b>Dominance</b> This groups functions in folders according to which functions dominate other functions. Function A dominates Function B if every path from the entry to Function B must go through Function A.</li>
         </ul>
   </ul>

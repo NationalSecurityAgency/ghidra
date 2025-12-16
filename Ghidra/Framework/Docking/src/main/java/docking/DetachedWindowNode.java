@@ -37,13 +37,12 @@ import ghidra.util.bean.GGlassPane;
 class DetachedWindowNode extends WindowNode {
 
 	private Window window;
-	//private String title;
 	private Node child;
-	private Rectangle bounds;
 	private StatusBar statusBar;
 	private JComponent childComp;
 	private DropTargetHandler dropTargetHandler;
 	private DropTargetFactory dropTargetFactory;
+	private Rectangle restoreBounds = new Rectangle();
 
 	/**
 	 * Constructs a new WindowNode
@@ -59,7 +58,6 @@ class DetachedWindowNode extends WindowNode {
 		this.child = child;
 		this.dropTargetFactory = factory;
 		child.parent = this;
-		bounds = new Rectangle(0, 0, 0, 0);
 	}
 
 	/**
@@ -76,20 +74,36 @@ class DetachedWindowNode extends WindowNode {
 		this.parent = parent;
 		this.dropTargetFactory = factory;
 
-		//title = elem.getAttributeValue("TITLE");
 		int x = Integer.parseInt(elem.getAttributeValue("X_POS"));
 		int y = Integer.parseInt(elem.getAttributeValue("Y_POS"));
 		int width = Integer.parseInt(elem.getAttributeValue("WIDTH"));
 		int height = Integer.parseInt(elem.getAttributeValue("HEIGHT"));
-		bounds = new Rectangle(x, y, width, height);
+		restoreBounds = new Rectangle(x, y, width, height);
 		Element childElement = (Element) elem.getChildren().get(0);
 		child = processChildElement(childElement, mgr, this, list);
-
 	}
 
-	void setInitialLocation(int x, int y) {
-		bounds.x = x;
-		bounds.y = y;
+	// Set the bounds for the component that is being placed in this window when the window is first
+	// created.  This is useful when dragging a component provider out of an existing window into
+	// its own window.
+	void setWindowContentsBounds(Rectangle r) {
+		// The rectangle will be empty when there is no size information for the component being
+		// added to this window node.
+		if (r == null) {
+			r = new Rectangle();
+		}
+
+		if (!r.isEmpty()) {
+			// We need to create window bounds from the given component bounds.  The window has
+			// extra size for the toolbar and menus.
+			int nonComponentWidth = 12;
+			int nonComponentHeight = 120;
+
+			r.width += nonComponentWidth;
+			r.height += nonComponentHeight;
+		}
+
+		restoreBounds = r;
 	}
 
 	void updateTitle() {
@@ -366,32 +380,40 @@ class DetachedWindowNode extends WindowNode {
 			}
 		});
 
-		adjustBounds();
-
+		Rectangle bounds = getNewBounds(window);
 		window.setBounds(bounds);
 		window.setVisible(true);
 	}
 
-	/**
-	 * Ensures the bounds of this window have a valid location and size
-	 */
-	private void adjustBounds() {
+	private Rectangle getNewBounds(Window newWindow) {
 
-		if (bounds.height == 0 || bounds.width == 0) {
+		Rectangle updatedBounds = new Rectangle(restoreBounds);
+		restoreBounds = null;
+		if (updatedBounds.isEmpty()) {
+			// No bounds to restore; pick something reasonable
 			window.pack();
-			Dimension d = window.getSize();
-			bounds.height = d.height;
-			bounds.width = d.width;
+			Dimension d = newWindow.getSize();
+			updatedBounds.height = d.height;
+			updatedBounds.width = d.width;
 		}
+
+		ensureValidLocation(updatedBounds);
+		WindowUtilities.ensureEntirelyOnScreen(newWindow, updatedBounds);
+
+		return updatedBounds;
+	}
+
+	private void ensureValidLocation(Rectangle r) {
 
 		Window activeWindow = winMgr.getActiveWindow();
-		Point p = bounds.getLocation();
+		Point p = r.getLocation();
 		if (p.x == 0 && p.y == 0) {
-			p = WindowUtilities.centerOnScreen(activeWindow, bounds.getSize());
-			bounds.setLocation(p);
+			// assume that 0,0 means that we have not yet been placed at any preferred location
+			p = WindowUtilities.centerOnScreen(activeWindow, r.getSize());
+			r.setLocation(p);
 		}
 
-		WindowUtilities.ensureOnScreen(activeWindow, bounds);
+		WindowUtilities.ensureOnScreen(activeWindow, r);
 	}
 
 	private JFrame createFrame() {
@@ -434,7 +456,7 @@ class DetachedWindowNode extends WindowNode {
 	void updateDialog() {
 
 		if (window != null && childComp != null) {
-			bounds = window.getBounds();
+			restoreBounds = window.getBounds();
 			winMgr.getMainWindow().requestFocus();
 			getContentPane().remove(childComp);
 			window.dispose();
@@ -465,7 +487,7 @@ class DetachedWindowNode extends WindowNode {
 			}
 		}
 		else if (window != null) {
-			bounds = window.getBounds();
+			restoreBounds = window.getBounds();
 			window.setVisible(false);
 			window.dispose();
 			window = null;
@@ -557,14 +579,14 @@ class DetachedWindowNode extends WindowNode {
 	@Override
 	Element saveToXML() {
 		if (window != null) {
-			bounds = window.getBounds();
+			restoreBounds = window.getBounds();
 		}
 
 		Element root = new Element("WINDOW_NODE");
-		root.setAttribute("X_POS", "" + bounds.x);
-		root.setAttribute("Y_POS", "" + bounds.y);
-		root.setAttribute("WIDTH", "" + bounds.width);
-		root.setAttribute("HEIGHT", "" + bounds.height);
+		root.setAttribute("X_POS", "" + restoreBounds.x);
+		root.setAttribute("Y_POS", "" + restoreBounds.y);
+		root.setAttribute("WIDTH", "" + restoreBounds.width);
+		root.setAttribute("HEIGHT", "" + restoreBounds.height);
 		root.addContent(child.saveToXML());
 		return root;
 

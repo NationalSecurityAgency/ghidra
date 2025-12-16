@@ -53,7 +53,7 @@ dependencies {
 	// use this if you want slf4j log messages sent to log4j
 	//	runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.17.1" 
 	
-   	compileOnly "junit:junit:4.12"
+   	compileOnly "junit:junit:4.13.2"
 	
 	// These have abstract test classes and stubs needed by this module	
 	testImplementation project(path: ':Docking', configuration: 'testArtifacts')
@@ -123,7 +123,7 @@ task buildJavacc {
 	description = "  Compiles the JavaCC files\n"
 }
 
-// Note: this must happen before the standard buildHelp for Base
+// Note: this must happen before the standard buildModuleHelp for Base
 tasks.register('generateExtraHelpFiles') {
 	
 	group = 'private'
@@ -193,7 +193,7 @@ def createTipsHelpFile(input, output) {
 compileJava.dependsOn buildJavacc
 rootProject.prepDev.dependsOn buildJavacc
 
-// 'indexHelp' is defined in the buildHelp.gradle 'script plugin'
+// 'indexHelp' is defined in the helpProject.gradle 'script plugin'
 indexHelp.dependsOn generateExtraHelpFiles
 
 zipSourceSubproject.dependsOn buildCPPParser

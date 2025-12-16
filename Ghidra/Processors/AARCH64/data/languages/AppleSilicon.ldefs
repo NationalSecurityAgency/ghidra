@@ -10,7 +10,7 @@
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:LE:64:AppleSilicon">
     <description>AppleSilicon ARM v8.5-A LE instructions, LE data, AMX extensions</description>
-    <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <compiler name="default" spec="AARCH64_apple.cspec" id="default"/>
     <compiler name="Swift" spec="AARCH64_swift.cspec" id="swift"/>
     <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
     <external_name tool="gnu" name="aarch64"/>

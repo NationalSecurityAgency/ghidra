@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,8 +117,10 @@ public interface DataTypeComponent {
 	 *
 	 * @param fieldName the new field name for this component.
 	 *
-	 * @throws DuplicateNameException if another component of the parent has
-	 * the specified field name.
+	 * @throws DuplicateNameException This is actually never thrown anymore. All the other ways
+	 * of naming fields did not perform this check and it would cause quite a bit of churn to 
+	 * add that exception to all the other methods that affect field names. So to be consistent,
+	 * we no longer do the check in this method.
 	 */
 	public void setFieldName(String fieldName) throws DuplicateNameException;
 
@@ -135,6 +137,29 @@ public interface DataTypeComponent {
 			name += "_0x" + Integer.toHexString(getOffset());
 		}
 		return name;
+	}
+
+	/**
+	 * Returns true if the given string represents the default field name for this data type 
+	 * component.  This value returned from {@link #getDefaultFieldName()} may not be a default name
+	 * when this method returns true.  
+	 * 
+	 * @param s the string to check
+	 * @return true if the given string is the default name for this component
+	 */
+	public default boolean isDefaultFieldName(String s) {
+		if (isZeroBitFieldComponent()) {
+			return false;
+		}
+
+		String offset = "";
+		if (getParent() instanceof Structure) {
+			offset += "_0x" + Integer.toHexString(getOffset());
+		}
+
+		String newStyleName = DEFAULT_FIELD_NAME_PREFIX + getOrdinal() + offset;
+		String oldStyleName = DEFAULT_FIELD_NAME_PREFIX + offset;
+		return newStyleName.equals(s) || oldStyleName.equals(s);
 	}
 
 	/**
@@ -172,5 +197,11 @@ public interface DataTypeComponent {
 		}
 		return false;
 	}
+
+	/**
+	 * Returns true if this component is not defined. It is just a placeholder.
+	 * @return true if this component is not defined. It is just a placeholder.
+	 */
+	public boolean isUndefined();
 
 }

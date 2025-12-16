@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.task.*;
  */
 public class PasteFileTask extends Task {
 
-	private DomainFolderNode destNode;
+	private DomainFolder destFolder;
 	private List<GTreeNode> list;
 	private boolean isCut;
 	private RepositoryAdapter repository; // null if project is not shared
@@ -46,13 +46,13 @@ public class PasteFileTask extends Task {
 	/**
 	 * Constructor for PasteFileTask.
 	 *  
-	 * @param destNode destination folder
+	 * @param destFolder destination folder
 	 * @param list list of GTreeNodes being pasted
 	 * @param isCut boolean flag, true means source nodes were cut instead of copied.
 	 */
-	public PasteFileTask(DomainFolderNode destNode, List<GTreeNode> list, boolean isCut) {
+	public PasteFileTask(DomainFolder destFolder, List<GTreeNode> list, boolean isCut) {
 		super(list.size() > 1 ? "Paste Files" : "Paste File", true, true, true);
-		this.destNode = destNode;
+		this.destFolder = destFolder;
 		this.list = list;
 		this.isCut = isCut;
 		repository = AppInfo.getActiveProject().getRepository();
@@ -70,13 +70,14 @@ public class PasteFileTask extends Task {
 		for (GTreeNode node : list) {
 			monitor.checkCancelled();
 
-			if (node instanceof DomainFolderNode) {
+			if (node instanceof DomainFolderNode folderNode) {
 				monitor.setMessage("Pasting folder");
-				pasteFolder(((DomainFolderNode) node).getDomainFolder(), subMonitor);
+				pasteFolder(folderNode.getDomainFolder(), subMonitor);
 			}
-			else if (node instanceof DomainFileNode) {
+			else if (node instanceof DomainFileNode fileNode) {
 				monitor.setMessage("Pasting file");
-				pasteFile(((DomainFileNode) node).getDomainFile(), subMonitor);
+				// NOTE: This may be a link-file
+				pasteFile(fileNode.getDomainFile(), subMonitor);
 			}
 
 			monitor.incrementProgress(1);
@@ -96,10 +97,10 @@ public class PasteFileTask extends Task {
 	 */
 	private void pasteFile(DomainFile file, TaskMonitor monitor) {
 		if (isCut) {
-			moveFile(file, destNode.getDomainFolder());
+			moveFile(file, destFolder);
 		}
 		else {
-			copyFile(file, destNode.getDomainFolder(), monitor);
+			copyFile(file, destFolder, monitor);
 		}
 	}
 
@@ -108,10 +109,10 @@ public class PasteFileTask extends Task {
 	 */
 	private void pasteFolder(DomainFolder folder, TaskMonitor monitor) {
 		if (isCut) {
-			moveFolder(folder, destNode.getDomainFolder());
+			moveFolder(folder, destFolder);
 		}
 		else {
-			copyFolder(folder, destNode.getDomainFolder(), monitor);
+			copyFolder(folder, destFolder, monitor);
 		}
 	}
 

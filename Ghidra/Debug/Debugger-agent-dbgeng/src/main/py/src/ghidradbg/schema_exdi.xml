@@ -1,5 +1,6 @@
 <context>
 	<schema name="DbgRoot" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="EventScope" />
 		<attribute name="Sessions" schema="SessionContainer" required="yes" fixed="yes" />
 		<attribute name="Settings" schema="ANY" />
 		<attribute name="State" schema="ANY" />
@@ -16,7 +17,6 @@
 	</schema>
 	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Activatable" />
-		<interface name="EventScope" />
 		<interface name="FocusScope" />
 		<interface name="Aggregate" />
 		<element schema="VOID" />
@@ -270,7 +270,10 @@
 	</schema>
 	<schema name="RegisterBank" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="VOID" />
+		<attribute schema="Register" />
+	</schema>
+	<schema name="Register">
+		<interface name="Register" />
 	</schema>
 	
 	<schema name="ExdiProcessContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">

@@ -43,6 +43,10 @@ public enum Combiner {
 		this.function = function;
 	}
 
+	public boolean isMerge() {
+		return this != REPLACE;
+	}
+
 	public String getName() {
 		return name;
 	}

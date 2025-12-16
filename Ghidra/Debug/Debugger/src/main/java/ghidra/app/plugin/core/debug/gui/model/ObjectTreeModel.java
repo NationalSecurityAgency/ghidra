@@ -26,8 +26,8 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.framework.model.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointSpec;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointSpec;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.iface.*;
@@ -65,10 +65,10 @@ public class ObjectTreeModel implements DisplaysModified {
 			if (!value.getParent()
 					.getSchema()
 					.getInterfaces()
-					.contains(TraceObjectEventScope.class)) {
+					.contains(TraceEventScope.class)) {
 				return false;
 			}
-			if (!TraceObjectEventScope.KEY_EVENT_THREAD.equals(value.getEntryKey())) {
+			if (!TraceEventScope.KEY_EVENT_THREAD.equals(value.getEntryKey())) {
 				return false;
 			}
 			return true;
@@ -77,12 +77,12 @@ public class ObjectTreeModel implements DisplaysModified {
 		protected boolean isEnabledValue(TraceObjectValue value) {
 			Set<Class<? extends TraceObjectInterface>> interfaces =
 				value.getParent().getSchema().getInterfaces();
-			if (!interfaces.contains(TraceObjectBreakpointSpec.class) &&
-				!interfaces.contains(TraceObjectBreakpointLocation.class) &&
-				!interfaces.contains(TraceObjectTogglable.class)) {
+			if (!interfaces.contains(TraceBreakpointSpec.class) &&
+				!interfaces.contains(TraceBreakpointLocation.class) &&
+				!interfaces.contains(TraceTogglable.class)) {
 				return false;
 			}
-			if (!TraceObjectTogglable.KEY_ENABLED.equals(value.getEntryKey())) {
+			if (!TraceTogglable.KEY_ENABLED.equals(value.getEntryKey())) {
 				return false;
 			}
 			return true;
@@ -675,7 +675,7 @@ public class ObjectTreeModel implements DisplaysModified {
 
 	protected TraceObject getEventObject(TraceObject object) {
 		TraceObject scope = object
-				.findCanonicalAncestorsInterface(TraceObjectEventScope.class)
+				.findCanonicalAncestorsInterface(TraceEventScope.class)
 				.findFirst()
 				.orElse(null);
 		if (scope == null) {
@@ -685,7 +685,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			return null;
 		}
 		TraceObjectValue eventValue =
-			scope.getAttribute(snap, TraceObjectEventScope.KEY_EVENT_THREAD);
+			scope.getAttribute(snap, TraceEventScope.KEY_EVENT_THREAD);
 		if (eventValue == null || !eventValue.isObject()) {
 			return null;
 		}
@@ -712,7 +712,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		if (type.contains("Breakpoint") || type.contains("Watchpoint")) {
 			TraceObject object = edge.getChild();
 			TraceObjectValue en =
-				object.getAttribute(snap, TraceObjectTogglable.KEY_ENABLED);
+				object.getAttribute(snap, TraceTogglable.KEY_ENABLED);
 			// includes true or non-boolean values
 			if (en == null || !Objects.equals(false, en.getValue())) {
 				return DebuggerResources.ICON_SET_BREAKPOINT;

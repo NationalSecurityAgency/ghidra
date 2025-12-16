@@ -15,14 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.service.control;
 
-import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.debug.api.control.ControlMode;
@@ -31,11 +30,8 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.mem.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceProgramViewListener;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.util.datastruct.ListenerSet;
 
 @PluginInfo(
@@ -45,9 +41,7 @@ import ghidra.util.datastruct.ListenerSet;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		TraceOpenedPluginEvent.class,
 		TraceActivatedPluginEvent.class,
-		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
 		DebuggerTraceManagerService.class,
@@ -115,8 +109,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 		}
 	}
 
-	public class FollowsViewStateEditor extends AbstractStateEditor
-			implements StateEditingMemoryHandler {
+	public class FollowsViewStateEditor extends AbstractStateEditor {
 		private final TraceProgramView view;
 
 		public FollowsViewStateEditor(TraceProgramView view) {
@@ -132,80 +125,10 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 		public DebuggerCoordinates getCoordinates() {
 			return traceManager.resolveView(view);
 		}
-
-		@Override
-		public void clearCache() {
-			// Nothing to do
-		}
-
-		@Override
-		public byte getByte(Address addr) throws MemoryAccessException {
-			ByteBuffer buf = ByteBuffer.allocate(1);
-			view.getTrace().getMemoryManager().getViewBytes(view.getSnap(), addr, buf);
-			return buf.get(0);
-		}
-
-		@Override
-		public int getBytes(Address address, byte[] buffer, int startIndex, int size)
-				throws MemoryAccessException {
-			return view.getTrace()
-					.getMemoryManager()
-					.getViewBytes(view.getSnap(), address,
-						ByteBuffer.wrap(buffer, startIndex, size));
-		}
-
-		@Override
-		public void putByte(Address address, byte value) throws MemoryAccessException {
-			try {
-				setVariable(address, new byte[] { value }).get(1, TimeUnit.SECONDS);
-			}
-			catch (ExecutionException e) {
-				throw new MemoryAccessException("Failed to write " + address + ": " + e.getCause());
-			}
-			catch (TimeoutException | InterruptedException e) {
-				throw new MemoryAccessException("Failed to write " + address + ": " + e);
-			}
-		}
-
-		@Override
-		public int putBytes(Address address, byte[] source, int startIndex, int size)
-				throws MemoryAccessException {
-			try {
-				setVariable(address, Arrays.copyOfRange(source, startIndex, startIndex + size))
-						.get(1, TimeUnit.SECONDS);
-			}
-			catch (ExecutionException e) {
-				throw new MemoryAccessException("Failed to write " + address + ": " + e.getCause());
-			}
-			catch (TimeoutException | InterruptedException e) {
-				throw new MemoryAccessException("Failed to write " + address + ": " + e);
-			}
-			return size;
-		}
-
-		@Override
-		public void addLiveMemoryListener(LiveMemoryListener listener) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void removeLiveMemoryListener(LiveMemoryListener listener) {
-			throw new UnsupportedOperationException();
-		}
 	}
 
-	protected class ListenerForEditorInstallation implements TraceProgramViewListener {
-		@Override
-		public void viewCreated(TraceProgramView view) {
-			installMemoryEditor(view);
-		}
-	}
-
-	//@AutoServiceConsumed // via method
+	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
-
-	protected final ListenerForEditorInstallation listenerForEditorInstallation =
-		new ListenerForEditorInstallation();
 
 	private final Map<Trace, ControlMode> currentModes = new HashMap<>();
 
@@ -219,7 +142,6 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 	@Override
 	protected void dispose() {
 		super.dispose();
-		uninstallAllMemoryEditors();
 	}
 
 	@Override
@@ -265,7 +187,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 	}
 
 	@Override
-	public StateEditingMemoryHandler createStateEditor(TraceProgramView view) {
+	public StateEditor createStateEditor(TraceProgramView view) {
 		return new FollowsViewStateEditor(view);
 	}
 
@@ -292,78 +214,11 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 		}
 	}
 
-	protected void installMemoryEditor(TraceProgramView view) {
-		TraceProgramViewMemory memory = view.getMemory();
-		if (memory.getLiveMemoryHandler() != null) {
-			return;
-		}
-		memory.setLiveMemoryHandler(createStateEditor(view));
-	}
-
-	protected void uninstallMemoryEditor(TraceProgramView view) {
-		TraceProgramViewMemory memory = view.getMemory();
-		LiveMemoryHandler handler = memory.getLiveMemoryHandler();
-		if (!(handler instanceof StateEditingMemoryHandler)) {
-			return;
-		}
-		StateEditingMemoryHandler editor = (StateEditingMemoryHandler) handler;
-		if (editor.getService() != this) {
-			return;
-		}
-		memory.setLiveMemoryHandler(null);
-	}
-
-	protected void installAllMemoryEditors(Trace trace) {
-		trace.addProgramViewListener(listenerForEditorInstallation);
-		for (TraceProgramView view : trace.getAllProgramViews()) {
-			installMemoryEditor(view);
-		}
-	}
-
-	protected void installAllMemoryEditors() {
-		if (traceManager == null) {
-			return;
-		}
-
-		for (Trace trace : traceManager.getOpenTraces()) {
-			installAllMemoryEditors(trace);
-		}
-	}
-
-	protected void uninstallAllMemoryEditors(Trace trace) {
-		trace.removeProgramViewListener(listenerForEditorInstallation);
-		for (TraceProgramView view : trace.getAllProgramViews()) {
-			uninstallMemoryEditor(view);
-		}
-	}
-
-	protected void uninstallAllMemoryEditors() {
-		if (traceManager == null) {
-			return;
-		}
-		for (Trace trace : traceManager.getOpenTraces()) {
-			uninstallAllMemoryEditors(trace);
-		}
-	}
-
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceOpenedPluginEvent ev) {
-			installAllMemoryEditors(ev.getTrace());
-		}
-		else if (event instanceof TraceActivatedPluginEvent ev) {
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			coordinatesActivated(ev.getActiveCoordinates(), ev.getCause());
 		}
-		else if (event instanceof TraceClosedPluginEvent ev) {
-			uninstallAllMemoryEditors(ev.getTrace());
-		}
-	}
-
-	@AutoServiceConsumed
-	private void setTraceManager(DebuggerTraceManagerService traceManager) {
-		uninstallAllMemoryEditors();
-		this.traceManager = traceManager;
-		installAllMemoryEditors();
 	}
 }

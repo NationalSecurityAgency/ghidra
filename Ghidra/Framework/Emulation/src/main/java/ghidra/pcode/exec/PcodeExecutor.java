@@ -307,11 +307,24 @@ public class PcodeExecutor<T> {
 	/**
 	 * Extension point: logic preceding a load
 	 * 
+	 * @param op the op performing the load
 	 * @param space the address space to be loaded from
 	 * @param offset the offset about to be loaded from
 	 * @param size the size in bytes to be loaded
 	 */
-	protected void checkLoad(AddressSpace space, T offset, int size) {
+	protected void beforeLoad(PcodeOp op, AddressSpace space, T offset, int size) {
+	}
+
+	/**
+	 * Extension point: logic proceeding a load
+	 * 
+	 * @param op the op performing the load
+	 * @param space the address space loaded from
+	 * @param offset the offset about loaded from
+	 * @param size the size in bytes loaded
+	 * @param value the value loaded
+	 */
+	protected void afterLoad(PcodeOp op, AddressSpace space, T offset, int size, T value) {
 	}
 
 	/**
@@ -345,21 +358,35 @@ public class PcodeExecutor<T> {
 		Varnode inOffset = getLoadStoreOffset(op);
 		T offset = state.getVar(inOffset, reason);
 		Varnode outVar = op.getOutput();
-		checkLoad(space, offset, outVar.getSize());
+		beforeLoad(op, space, offset, outVar.getSize());
 
 		T out = state.getVar(space, offset, outVar.getSize(), true, reason);
 		T mod = arithmetic.modAfterLoad(op, space, offset, out);
 		state.setVar(outVar, mod);
+		afterLoad(op, space, offset, outVar.getSize(), mod);
 	}
 
 	/**
 	 * Extension point: logic preceding a store
 	 * 
+	 * @param op the op performing the store
 	 * @param space the address space to be stored to
 	 * @param offset the offset about to be stored to
 	 * @param size the size in bytes to be stored
 	 */
-	protected void checkStore(AddressSpace space, T offset, int size) {
+	protected void beforeStore(PcodeOp op, AddressSpace space, T offset, int size, T value) {
+	}
+
+	/**
+	 * Extension point: logic proceeding a store
+	 * 
+	 * @param op the op performing the store
+	 * @param space the address space to be stored to
+	 * @param offset the offset about to be stored to
+	 * @param size the size in bytes to be stored
+	 * @param value the value stored
+	 */
+	protected void afterStore(PcodeOp op, AddressSpace space, T offset, int size, T value) {
 	}
 
 	/**
@@ -382,11 +409,12 @@ public class PcodeExecutor<T> {
 		Varnode inOffset = getLoadStoreOffset(op);
 		T offset = state.getVar(inOffset, reason);
 		Varnode valVar = getStoreValue(op);
-		checkStore(space, offset, valVar.getSize());
-
 		T val = state.getVar(valVar, reason);
 		T mod = arithmetic.modBeforeStore(op, space, offset, val);
+		beforeStore(op, space, offset, valVar.getSize(), mod);
+
 		state.setVar(space, offset, valVar.getSize(), true, mod);
+		afterStore(op, space, offset, valVar.getSize(), mod);
 	}
 
 	/**
@@ -474,7 +502,7 @@ public class PcodeExecutor<T> {
 		}
 		else {
 			branchToOffset(op, target.getOffset(), frame);
-			branchToAddress(op, target);
+			branchToAddress(op, checkInjectedTarget(target));
 		}
 	}
 
@@ -531,6 +559,28 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Check and correct the given target address, if it resides in "NO ADDRESS" space.
+	 * 
+	 * <p>
+	 * At some point, we made a change to set the "target address" of compiled p-code userops to
+	 * {@link Address#NO_ADDRESS} instead of pretending its at {@code ram:00000000}. This is
+	 * philosophically cleaner, but leads to a practical issue in that the p-code compiler sets the
+	 * target address of any branch to be in the same space, which for injects, will wind up in "NO
+	 * ADDRESS." I don't know the use case for having target addresses anywhere but default space,
+	 * so I'll maintain that behavior, but if it ever lands in "NO ADDRESS," we're going to assume
+	 * it was an inject, and that the intended target was the default space.
+	 * 
+	 * @param target the proposed target address
+	 * @return the same or corrected target address
+	 */
+	protected Address checkInjectedTarget(Address target) {
+		if (target.getAddressSpace() != Address.NO_ADDRESS.getAddressSpace()) {
+			return target;
+		}
+		return language.getDefaultSpace().getAddress(target.getOffset());
+	}
+
+	/**
 	 * Perform the actual logic of an indirect branch p-code op
 	 * 
 	 * <p>
@@ -548,7 +598,7 @@ public class PcodeExecutor<T> {
 
 		long concrete = arithmetic.toLong(offset, Purpose.BRANCH);
 		Address target = op.getSeqnum().getTarget().getNewAddress(concrete, true);
-		branchToAddress(op, target);
+		branchToAddress(op, checkInjectedTarget(target));
 	}
 
 	/**
@@ -576,7 +626,7 @@ public class PcodeExecutor<T> {
 	public void executeCall(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		Address target = getBranchTarget(op);
 		branchToOffset(op, target.getOffset(), frame);
-		branchToAddress(op, target);
+		branchToAddress(op, checkInjectedTarget(target));
 	}
 
 	/**

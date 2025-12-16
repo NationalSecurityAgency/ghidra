@@ -4299,7 +4299,7 @@ to lowest.
   <td>Allocate object of type described by v0.</td>
 </tr>
 <tr>
-  <td><code><emphasis>USER_DEFINED</emphasis></code></td>
+  <td><code><emphasis>CALLOTHER</emphasis></code></td>
   <td><code><emphasis>ident</emphasis>(v0,...)</code></td>
   <td>User defined operator <emphasis>ident</emphasis>, with functional syntax.</td>
 </tr>
@@ -4355,7 +4355,7 @@ The following table lists the basic forms of a semantic statement.
   </td>
 </tr>
 <tr>
-  <td><code><emphasis>USER_DEFINED</emphasis></code></td>
+  <td><code><emphasis>CALLOTHER</emphasis></code></td>
   <td><code><emphasis>ident</emphasis>(v0,...);</code></td>
   <td>Invoke user-defined operation ident as a standalone statement, with no output.</td>
 </tr>

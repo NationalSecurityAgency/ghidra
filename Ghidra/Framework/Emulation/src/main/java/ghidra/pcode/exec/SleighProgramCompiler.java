@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
@@ -149,6 +150,9 @@ public enum SleighProgramCompiler {
 	 */
 	public static ConstructTpl compileTemplate(Language language, PcodeParser parser,
 			String sourceName, String source) {
+		if (source.isBlank()) {
+			return new ConstructTpl(new OpTpl[] {});
+		}
 		return parser.compilePcode(source, sourceName, 1);
 	}
 
@@ -285,7 +289,8 @@ public enum SleighProgramCompiler {
 	 * evaluator p-code program uses its own library as a means of capturing the result; however,
 	 * userop libraries are easily composed. It should be easy to add that feature if needed.
 	 * 
-	 * @param language the languge of the target p-code machine
+	 * @param parser a parser for the given language
+	 * @param language the language of the target p-code machine
 	 * @param expression the Sleigh expression to be evaluated
 	 * @return a p-code program whose {@link PcodeExpression#evaluate(PcodeExecutor)} method will
 	 *         evaluate the expression on the given executor and its state.

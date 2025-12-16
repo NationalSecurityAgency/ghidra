@@ -454,7 +454,9 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		// navigate incoming nodes on selection
 		//
 		navigateIncomingAction =
-			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName()) {
+			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName(),
+				KeyBindingType.SHARED) {
+
 				@Override
 				public void actionPerformed(ActionContext context) {
 					// handled later as we receive events
@@ -721,7 +723,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		//@formatter:off
 		showNamespaceAction = new ToggleActionBuilder("Show Namespace", plugin.getName())
 			.selected(false)
-			.description("Function nodes will include the funtion namespace when selected")
+			.description("Function nodes will include the function namespace when selected")
 			.helpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Show_Namespaces"))
 			.menuPath("Show Namespace")
 			.onAction(c -> {
@@ -873,16 +875,25 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 
 	private GTree createTree() {
 		GTree tree = new GTree(new EmptyRootNode()) {
+
 			@Override
-			protected boolean supportsPopupActions() {
-				// The base tree adds collapse/ expand actions, which we already provide, so signal
-				// that we do not want those actions.
-				return false;
+			protected boolean isAddToPopup(DockingAction action) {
+
+				String name = action.getName();
+				switch (name) {
+					case "Tree Expand All":
+					case "Tree Expand Node":
+					case "Tree Collapse Node":
+						// case "Tree Collapse All": // this action seems ok
+						return false;
+					default:
+						return true;
+				}
+
 			}
 		};
 		tree.setPaintHandlesForLeafNodes(false);
 		tree.setDoubleClickExpansionEnabled(false); // reserve double-click for navigation
-//		tree.setFilterVisible(false);
 		return tree;
 	}
 

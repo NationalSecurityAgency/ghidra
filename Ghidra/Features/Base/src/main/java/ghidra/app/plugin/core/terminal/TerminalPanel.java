@@ -40,7 +40,8 @@ import ghidra.app.plugin.core.terminal.vt.*;
 import ghidra.app.plugin.core.terminal.vt.VtHandler.*;
 import ghidra.app.services.ClipboardService;
 import ghidra.util.ColorUtils;
-import ghidra.util.Msg;
+import ghidra.util.Swing;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A VT100 terminal emulator in a panel.
@@ -181,7 +182,8 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	protected TerminalClipboardProvider clipboardProvider;
 	protected String selectedText;
 
-	protected final ArrayList<TerminalListener> terminalListeners = new ArrayList<>();
+	protected final ListenerSet<TerminalListener> terminalListeners =
+		new ListenerSet<TerminalListener>(TerminalListener.class, false);
 
 	protected VtOutput outputCb;
 	protected final TerminalAwtEventEncoder eventEncoder;
@@ -364,25 +366,15 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	}
 
 	protected void notifyTerminalResized(short cols, short rows) {
-		for (TerminalListener l : terminalListeners) {
-			try {
-				l.resized(cols, rows);
-			}
-			catch (Throwable t) {
-				Msg.showError(this, null, "Error", t.getMessage(), t);
-			}
-		}
+		terminalListeners.invoke().resized(cols, rows);
 	}
 
 	protected void notifyTerminalRetitled(String title) {
-		for (TerminalListener l : terminalListeners) {
-			try {
-				l.retitled(title);
-			}
-			catch (Throwable t) {
-				Msg.showError(this, null, "Error", t.getMessage(), t);
-			}
-		}
+		terminalListeners.invoke().retitled(title);
+	}
+
+	protected void notifyTerminalTerminated(int exitcode) {
+		terminalListeners.invoke().terminated(exitcode);
 	}
 
 	@Override
@@ -466,9 +458,13 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		 * Prevent the user from doing this. Cursor location is controlled by pty. While we've
 		 * prevented key strokes from causing this, we've not prevented mouse clicks from doing it.
 		 * Next best thing is to just move it back.
+		 * 
+		 * NOTE: We schedule the cursor re-placement for later, because the FieldPanel may be about
+		 * to scroll to the cursor. If we re-place immediately, it will likely scroll to the bottom
+		 * of the terminal. This is especially annoying when the user is trying to make a selection.
 		 */
 		if (trigger == EventTrigger.GUI_ACTION) {
-			placeCursor(false);
+			Swing.runLater(() -> placeCursor(false));
 		}
 	}
 

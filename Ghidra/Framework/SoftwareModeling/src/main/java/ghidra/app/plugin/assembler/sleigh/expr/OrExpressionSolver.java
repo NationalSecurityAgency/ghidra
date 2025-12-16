@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.expr.match.ExpressionMatcher;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.processors.sleigh.expression.*;
 import ghidra.util.Msg;
 
@@ -70,31 +69,26 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		long lo = 0;
 		PatternExpression fieldExp = null;
 		AssemblyResolvedPatterns result = factory.nop(description);
-		try (DbgCtx dc = dbg.start("Trying solution of field catenation")) {
-			dbg.println("Original: " + goal + ":= " + exp);
-			for (Map.Entry<Long, PatternExpression> ent : fields.entrySet()) {
-				long hi = ent.getKey();
-				if (hi == 0) {
-					fieldExp = ent.getValue();
-					continue;
-				}
-
-				dbg.println("Part(" + hi + ":" + lo + "]:= " + fieldExp);
-				MaskedLong part = goal.shiftLeft(64 - hi).shiftRightPositional(64 - hi + lo);
-				dbg.println("Solving: " + part + ":= " + fieldExp);
-				AssemblyResolution sol = solver.solve(factory, fieldExp, part, vals, cur, hints,
-					description + " with shift " + lo);
-				if (sol.isError()) {
-					return sol;
-				}
-				result = result.combine((AssemblyResolvedPatterns) sol);
-				if (result == null) {
-					throw new SolverException("Solutions to individual fields produced conflict");
-				}
-
-				lo = hi;
+		for (Map.Entry<Long, PatternExpression> ent : fields.entrySet()) {
+			long hi = ent.getKey();
+			if (hi == 0) {
 				fieldExp = ent.getValue();
+				continue;
 			}
+
+			MaskedLong part = goal.shiftLeft(64 - hi).shiftRightPositional(64 - hi + lo);
+			AssemblyResolution sol = solver.solve(factory, fieldExp, part, vals, cur, hints,
+				description + " with shift " + lo);
+			if (sol.isError()) {
+				return sol;
+			}
+			result = result.combine((AssemblyResolvedPatterns) sol);
+			if (result == null) {
+				throw new SolverException("Solutions to individual fields produced conflict");
+			}
+
+			lo = hi;
+			fieldExp = ent.getValue();
 		}
 		return result;
 	}
@@ -166,8 +160,6 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		}
 
 		// At this point, I know it's a circular shift
-		dbg.println("Identified circular shift: value:= " + expValu1 + ", shift:= " + expShift +
-			", size:= " + size + ", dir:= " + (dir == 1 ? "right" : "left"));
 		return solveLeftCircularShift(factory, expValu1, expShift, size, dir, goal, vals, cur,
 			hints, description);
 	}
@@ -181,15 +173,9 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		MaskedLong valShift = solver.getValue(expShift, vals, cur);
 
 		if (valValue != null && !valValue.isFullyDefined()) {
-			if (!valValue.isFullyUndefined()) {
-				dbg.println("Partially-defined f for left circular shift solver: " + valValue);
-			}
 			valValue = null;
 		}
 		if (valShift != null && valShift.isFullyDefined()) {
-			if (!valShift.isFullyUndefined()) {
-				dbg.println("Partially-defined g for left circular shift solver: " + valShift);
-			}
 			valShift = null;
 		}
 
@@ -278,16 +264,14 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			return tryCatenationExpression(factory, exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
-			dbg.println("while solving: " + goal + "=:" + exp);
-			dbg.println(e.getMessage());
+			// Will be reported later
 		}
 
 		try {
 			return tryCircularShiftExpression(factory, exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
-			dbg.println("while solving: " + goal + "=:" + exp);
-			dbg.println(e.getMessage());
+			// Will be reported later
 		}
 
 		Map<ExpressionMatcher<?>, PatternExpression> match = MATCHERS.neqConst.match(exp);

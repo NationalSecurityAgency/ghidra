@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,8 @@
  */
 package docking;
 
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.util.*;
 
 import docking.action.DockingActionIf;
@@ -184,24 +186,44 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 			}
 
 			WindowActionManager actionManager = windowToActionManagerMap.get(windowNode);
-			ActionContext localContext = getContext(windowNode);
+			ActionContext localContext = getComponentProviderContext(windowNode);
 			actionManager.contextChanged(defaultContextMap, localContext, focusedWindowActions);
 		}
 
 		// now update the focused window's actions
+		updateFocusedWindowActions(focusedWindowNode, defaultContextMap);
+	}
+
+	private void updateFocusedWindowActions(WindowNode focusedWindowNode,
+			Map<Class<? extends ActionContext>, ActionContext> defaultContextMap) {
+
+		ActionContext focusedContext = getFocusedWindowContext(focusedWindowNode);
 		WindowActionManager actionManager = windowToActionManagerMap.get(focusedWindowNode);
-		ActionContext focusedContext = getContext(focusedWindowNode);
 		if (actionManager != null) {
 			actionManager.contextChanged(defaultContextMap, focusedContext, Collections.emptySet());
 		}
 
-		// update the docking window manager ; no focused context when no window is focused
-		if (focusedContext != null) {
-			windowManager.doContextChanged(focusedContext);
-		}
+		// this is for non-action listeners that wish to do work when the context changes
+		windowManager.notifyContextListeners(focusedContext);
 	}
 
-	private ActionContext getContext(WindowNode windowNode) {
+	private ActionContext getFocusedWindowContext(WindowNode focusedWindowNode) {
+
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Window w = kfm.getFocusedWindow();
+		if (w instanceof DockingDialog dialog) {
+			// the provider can be null when the dialog has been closed, but the Java focus transfer
+			// has not yet completed
+			DialogComponentProvider provider = dialog.getDialogComponent();
+			if (provider != null) {
+				return provider.getActionContext(null);
+			}
+		}
+
+		return getComponentProviderContext(focusedWindowNode);
+	}
+
+	private ActionContext getComponentProviderContext(WindowNode windowNode) {
 		if (windowNode == null) {
 			return null;
 		}

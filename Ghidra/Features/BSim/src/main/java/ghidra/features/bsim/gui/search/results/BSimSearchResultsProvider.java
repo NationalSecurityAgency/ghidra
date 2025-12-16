@@ -127,6 +127,7 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 	public void componentHidden() {
 		super.componentHidden();
 		if (plugin != null) {
+			program.removeListener(listener);
 			plugin.providerClosed(this);
 		}
 	}

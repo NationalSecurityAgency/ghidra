@@ -21,8 +21,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 
 import javax.swing.*;
 
@@ -34,17 +36,18 @@ import docking.action.ToggleDockingAction;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.events.AbstractLocationPluginEvent;
+import ghidra.app.events.AbstractSelectionPluginEvent;
 import ghidra.app.plugin.core.byteviewer.*;
+import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
-import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
-import ghidra.app.plugin.core.format.ByteBlock;
-import ghidra.app.services.DebuggerControlService;
+import ghidra.app.plugin.core.format.*;
+import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
-import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.debug.api.action.GoToInput;
-import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.EmptyByteSource;
@@ -52,8 +55,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -62,7 +64,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
@@ -96,8 +97,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 		}
 
-		private void bytesChanged(TraceAddressSpace space) {
-			if (space.getAddressSpace().isMemorySpace()) {
+		private void bytesChanged(AddressSpace space) {
+			if (space.isMemorySpace()) {
 				currCache.invalidate();
 				prevCache.invalidate();
 			}
@@ -132,16 +133,19 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 
 		@Override
-		protected void locationTracked() {
-			doGoToTracked();
-		}
-
-		@Override
 		protected void specChanged(LocationTrackingSpec spec) {
+			if (isMainViewer()) {
+				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), spec));
+			}
 			updateTitle();
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
+		}
+
+		@Override
+		protected void locationTracked() {
+			doGoToTracked();
 		}
 	}
 
@@ -165,13 +169,58 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 	}
 
-	private final AutoReadMemorySpec defaultReadMemorySpec =
-		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+	protected class ForBytesClipboardProvider extends ByteViewerClipboardProvider {
+		protected class PasteIntoTargetCommand extends PasteByteStringCommand
+				implements PasteIntoTargetMixin {
+			protected PasteIntoTargetCommand(String string) {
+				super(string);
+			}
+
+			@Override
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+				return doHasEnoughSpace(program, address, byteCount);
+			}
+
+			@Override
+			protected boolean pasteBytes(Program program, byte[] bytes) {
+				return doPasteBytes(tool, controlService, consoleService, current, currentLocation,
+					bytes);
+			}
+		}
+
+		protected ForBytesClipboardProvider() {
+			super(DebuggerMemoryBytesProvider.this, DebuggerMemoryBytesProvider.this.tool);
+		}
+
+		@Override
+		public boolean canPaste(DataFlavor[] availableFlavors) {
+			if (controlService == null) {
+				return false;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return false;
+			}
+			if (!controlService.getCurrentMode(trace).canEdit(current)) {
+				return false;
+			}
+			return super.canPaste(availableFlavors);
+		}
+
+		@Override
+		protected boolean pasteByteString(String string) {
+			return tool.execute(new PasteIntoTargetCommand(string), currentProgram);
+		}
+	}
+
+	private final AutoReadMemorySpec defaultReadMemorySpec = BasicAutoReadMemorySpec.VIS_RO_ONCE;
 
 	private final DebuggerMemoryBytesPlugin myPlugin;
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
 	//@AutoServiceConsumed via method
 	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
@@ -272,23 +321,100 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		};
 	}
 
+	/**
+	 * Override where edits are allowed and direct sets through the control service.
+	 */
+	class TargetByteBlock extends MemoryByteBlock {
+		protected TargetByteBlock(Program program, Memory memory, MemoryBlock block) {
+			super(program, memory, block);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 * 
+		 * <p>
+		 * Overridden to ignore existing instructions. Let them be clobbered!
+		 */
+		@Override
+		protected boolean editAllowed(Address addr, long length) {
+			return controlService != null;
+		}
+
+		protected ByteBuffer alloc(int size) {
+			return ByteBuffer.allocate(size)
+					.order(isBigEndian()
+							? ByteOrder.BIG_ENDIAN
+							: ByteOrder.LITTLE_ENDIAN);
+		}
+
+		protected void doSet(Address address, ByteBuffer buffer) throws ByteBlockAccessException {
+			checkEditsAllowed(address, buffer.capacity());
+			try {
+				controlService.createStateEditor(current)
+						.setVariable(address, buffer.array())
+						.get(1, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException | ExecutionException | TimeoutException e) {
+				throw new ByteBlockAccessException("Could not set target memory", e);
+			}
+		}
+
+		@Override
+		public void setByte(BigInteger index, byte value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Byte.BYTES).put(value));
+		}
+
+		@Override
+		public void setShort(BigInteger index, short value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Short.BYTES).putShort(value));
+		}
+
+		@Override
+		public void setInt(BigInteger index, int value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Integer.BYTES).putInt(value));
+		}
+
+		@Override
+		public void setLong(BigInteger index, long value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Long.BYTES).putLong(value));
+		}
+	}
+
+	class TargetByteBlockSet extends ProgramByteBlockSet {
+		private final DebuggerMemoryBytesProvider provider;
+
+		protected TargetByteBlockSet(ByteBlockChangeManager changeManager) {
+			super(DebuggerMemoryBytesProvider.this, DebuggerMemoryBytesProvider.this.program,
+				changeManager);
+			this.provider = DebuggerMemoryBytesProvider.this;
+		}
+
+		@Override
+		protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
+			return new TargetByteBlock(program, memory, memBlock);
+		}
+
+		@Override
+		public AbstractLocationPluginEvent getPluginEvent(String source, ByteBlock block,
+				BigInteger offset, int column) {
+			ProgramLocation loc = provider.getLocation(block, offset, column);
+			return new TraceLocationPluginEvent(source, loc);
+		}
+
+		@Override
+		public AbstractSelectionPluginEvent getPluginEvent(String source,
+				ByteBlockSelection selection) {
+			ProgramSelection pSel = convertSelection(selection);
+			return new TraceSelectionPluginEvent(source, pSel, (TraceProgramView) program);
+		}
+	}
+
 	@Override
 	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
 		if (program == null) {
 			return null;
 		}
-		// A bit of work to get it to ignore existing instructions. Let them be clobbered!
-		return new ProgramByteBlockSet(this, program, changeManager) {
-			@Override
-			protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
-				return new MemoryByteBlock(program, memory, memBlock) {
-					@Override
-					protected boolean editAllowed(Address addr, long length) {
-						return true;
-					}
-				};
-			}
-		};
+		return new TargetByteBlockSet(changeManager);
 	}
 
 	/**
@@ -373,22 +499,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	@Override
 	protected ByteViewerClipboardProvider newClipboardProvider() {
-		return new ByteViewerClipboardProvider(this, tool) {
-			@Override
-			public boolean canPaste(DataFlavor[] availableFlavors) {
-				if (controlService == null) {
-					return false;
-				}
-				Trace trace = current.getTrace();
-				if (trace == null) {
-					return false;
-				}
-				if (!controlService.getCurrentMode(trace).canEdit(current)) {
-					return false;
-				}
-				return super.canPaste(availableFlavors);
-			}
-		};
+		return new ForBytesClipboardProvider();
 	}
 
 	@AutoServiceConsumed
@@ -508,6 +619,20 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	public void traceClosed(Trace trace) {
 		if (current.getTrace() == trace) {
 			goToCoordinates(DebuggerCoordinates.NOWHERE);
+		}
+	}
+
+	void doHandleTraceEvent(PluginEvent event) {
+		if (getByteBlocks() == null) {
+			return;
+		}
+		switch (event) {
+			case TraceLocationPluginEvent ev -> processLocationEvent(ev);
+			case TraceSelectionPluginEvent ev -> processSelectionEvent(ev);
+			case TraceHighlightPluginEvent ev -> processHighlightEvent(ev);
+			case TrackingChangedPluginEvent ev -> setTrackingSpec(ev.getLocationTrackingSpec());
+			default -> {
+			}
 		}
 	}
 

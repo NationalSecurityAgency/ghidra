@@ -33,6 +33,7 @@ import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
@@ -67,6 +68,8 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	}
 
 	public static final PlatDep PLAT = computePlat();
+
+	protected static boolean didSetupPython = false;
 
 	static PlatDep computePlat() {
 		return switch (System.getProperty("os.arch")) {
@@ -106,18 +109,28 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected static final int TIMEOUT_SECONDS = 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
+
 	protected TraceRmiService traceRmi;
 	private Path lldbPath;
 
-	// @BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle",
-			"Debugger-rmi-trace:assemblePyPackage",
-			"Debugger-agent-lldb:assemblePyPackage")
-					.directory(TestApplicationUtils.getInstallationDirectory())
-					.inheritIO()
-					.start()
-					.waitFor();
+		if (didSetupPython) {
+			// Only do this once when running the full suite.
+			return;
+		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
+		new ProcessBuilder("gradle", "assemblePyPackage")
+				.directory(TestApplicationUtils.getInstallationDirectory())
+				.inheritIO()
+				.start()
+				.waitFor();
+		didSetupPython = true;
 	}
 
 	protected void setPythonPath(Map<String, String> env) throws IOException {
@@ -181,7 +194,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	}
 
 	protected record ExecInLldb(Pty pty, PtySession lldb, CompletableFuture<LldbResult> future,
-			Thread pumper) {}
+			Thread pumper, ByteArrayOutputStream capture) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInLldb execInLldb(String script) throws IOException {
@@ -226,7 +239,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				lldbSession.destroyForcibly();
 				pumper.interrupt();
 			}
-		}), pumper);
+		}), pumper, capture);
 	}
 
 	public static class LldbError extends RuntimeException {
@@ -249,8 +262,20 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
 	}
 
-	protected record LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection)
-			implements AutoCloseable {
+	protected class LldbAndConnection implements AutoCloseable {
+		private final ExecInLldb exec;
+		private final TraceRmiConnection connection;
+		private boolean success = false;
+
+		public LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection) {
+			this.exec = exec;
+			this.connection = connection;
+		}
+
+		public TraceRmiConnection connection() {
+			return connection;
+		}
+
 		protected RemoteMethod getMethod(String name) {
 			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
@@ -280,6 +305,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			return pyeval.invoke(Map.of("expr", expr));
 		}
 
+		public void success() {
+			success = true;
+		}
+
 		@Override
 		public void close() throws Exception {
 			Msg.info(this, "Cleaning up lldb");
@@ -293,6 +322,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				waitForPass(() -> assertTrue(connection.isClosed()));
 			}
 			finally {
+				if (!success) {
+					Msg.info(this, "LLDB output:\n" + exec.capture.toString());
+				}
+
 				exec.pty.close();
 				exec.lldb.destroyForcibly();
 				exec.pumper.interrupt();
@@ -403,6 +436,12 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			buf.write(lineData);
 		}
 		return new MemDump(address, buf.toByteArray());
+	}
+
+	protected void waitDomainObjectClosed(String path) {
+		DomainFile df = env.getProject().getProjectData().getFile(path);
+		assertNotNull(df);
+		waitForPass(() -> assertFalse(df.isOpen()));
 	}
 
 	protected ManagedDomainObject openDomainObject(String path) throws Exception {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 //This script cleans up the disassembly for kext files by locating "Bad Instruction" bookmarks caused by incorrectly defined data in valid code flows.
 //@author 
-//@category iOS
+//@category Apple.iOS
 //@keybinding 
 //@menupath 
 //@toolbar 
@@ -56,7 +56,7 @@ public class BadInstructionCleanup extends GhidraScript {
 		}
 	}
 
-public void cleanup(Address ba) throws Exception {
+	public void cleanup(Address ba) throws Exception {
 
 		Program p = currentProgram;
 		BookmarkManager bmgr = p.getBookmarkManager();
@@ -79,8 +79,9 @@ public void cleanup(Address ba) throws Exception {
 				Address paddr = listing.getInstructionBefore(ba).getAddress();
 				RegisterValue rv;
 				if (paddr != null) {
-					rv = p.getProgramContext().getRegisterValue(contextReg,
-							paddr);
+					rv = p.getProgramContext()
+							.getRegisterValue(contextReg,
+								paddr);
 					p.getProgramContext().setRegisterValue(ba, ba_end, rv);
 				}
 			}
@@ -89,13 +90,14 @@ public void cleanup(Address ba) throws Exception {
 			Function f = getFunctionBefore(ba);
 			if (f != null) {
 				CreateFunctionCmd cf = new CreateFunctionCmd(f.getName(), f
-						.getEntryPoint(), null, f.getSymbol().getSource(),
-						true, true);
+						.getEntryPoint(),
+					null, f.getSymbol().getSource(),
+					true, true);
 				cf.applyTo(p);
 			}
 			bmgr.removeBookmark(bm);
 			bmgr.setBookmark(ba, "Analysis", "Cleanup",
-					"Converted invalid pointer to code");
+				"Converted invalid pointer to code");
 		}
 	}
 }

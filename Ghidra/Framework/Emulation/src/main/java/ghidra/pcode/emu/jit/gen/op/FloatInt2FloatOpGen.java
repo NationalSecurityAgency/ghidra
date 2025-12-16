@@ -36,6 +36,11 @@ public enum FloatInt2FloatOpGen implements UnOpGen<JitFloatInt2FloatOp> {
 	/** The generator singleton */
 	GEN;
 
+	@Override
+	public boolean isSigned() {
+		return false; // TODO: Is it signed? Test to figure it out.
+	}
+
 	private JitType gen(MethodVisitor rv, int opcode, JitType type) {
 		rv.visitInsn(opcode);
 		return type;

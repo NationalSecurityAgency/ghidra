@@ -20,6 +20,7 @@ import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.JitPassage.DecodeErrorPcodeOp;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
@@ -50,7 +51,7 @@ public enum UnimplementedOpGen implements OpGen<JitUnimplementedOp> {
 
 		String message = gen.getErrorMessage(op.op());
 		if (op.op() instanceof DecodeErrorPcodeOp) {
-			rv.visitVarInsn(ALOAD, 0);
+			RunFixedLocal.THIS.generateLoadCode(rv);
 			rv.visitLdcInsn(message);
 			rv.visitLdcInsn(counter);
 			rv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "createDecodeError",

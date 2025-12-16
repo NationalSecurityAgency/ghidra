@@ -1,19 +1,21 @@
 <golang>
 	<!-- see https://github.com/golang/go/blob/master/src/internal/abi/abi_amd64.go -->
-	<register_info versions="V1_17,V1_18,V1_19,V1_20,V1_21,V1_22,V1_23"> <!-- "all", or comma list of: V1_2,V1_16,etc -->
+	<register_info versions="1.17-"> <!-- "all", or comma list of versions or ranges of versions -->
 		<int_registers list="RAX,RBX,RCX,RDI,RSI,R8,R9,R10,R11"/>
 		<float_registers list="XMM0,XMM1,XMM2,XMM3,XMM4,XMM5,XMM6,XMM7,XMM8,XMM9,XMM10,XMM11,XMM12,XMM13,XMM14"/>
 		<stack initialoffset="8" maxalign="8"/>
 		<current_goroutine register="R14"/>
 		<zero_register register="XMM15"/>
 		<duffzero dest="RDI" />
+		<closurecontext register="RDX"/>
 	</register_info>
-	<register_info versions="V1_15,V1_16">
+	<register_info versions="-1.16">
 		<int_registers list=""/>
 		<float_registers list=""/>
 		<stack initialoffset="8" maxalign="8"/>
 		<current_goroutine register=""/>
 		<zero_register register=""/>
 		<duffzero dest="RDI" zero_arg="XMM0" zero_type="float"/>
+		<closurecontext register="RDX"/>
 	</register_info>
 </golang>

@@ -43,9 +43,9 @@ function showUsage() {
 	exit 1
 }
 
-VMARGS_FROM_CALLER=		 # Passed in from the outer script as one long string, no spaces
-VMARGS_FROM_LAUNCH_SH=()	# Defined in this script, added to array
-VMARGS_FROM_LAUNCH_PROPS=() # Retrieved from LaunchSupport, added to array
+VMARGS_FROM_CALLER=          # Passed in from the outer script as one long string, no spaces
+VMARGS_FROM_LAUNCH_SH=()     # Defined in this script, added to array
+VMARGS_FROM_LAUNCH_PROPS=()  # Retrieved from LaunchSupport, added to array
 
 ARGS=()
 INDEX=0
@@ -140,7 +140,7 @@ fi
 if [ "${JAVA_CMD}" == "" ]; then
 	echo
 	echo "ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME."
-	echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
+	echo "Please refer to the Getting Started document's Troubleshooting section."
 	exit 1
 fi
 
@@ -151,7 +151,7 @@ if [ ! $? -eq 0 ]; then
 	if [ ! -t 0 ]; then
 		echo
 		echo "ERROR: Unable to prompt user for JDK path, no TTY detected."
-		echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		echo "Please refer to the Getting Started document's Troubleshooting section."
 		exit 1
 	fi
 	
@@ -163,11 +163,20 @@ if [ ! $? -eq 0 ]; then
 	if [ ! $? -eq 0 ]; then
 		echo
 		echo "ERROR: Failed to find a supported JDK."
-		echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		echo "Please refer to the Getting Started document's Troubleshooting section."
 		exit 1
 	fi
 fi
 JAVA_CMD="${LS_JAVA_HOME}/bin/java"
+
+# Get the configurable environment variables from the launch properties
+# Only set them if they are currently unset or empty
+while IFS=$'\r\n' read -r line; do
+	IFS='=' read -r key value <<< "$line"
+	if [ -z ${!key} ]; then
+		export $key=$value
+	fi
+done < <("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -envvars)
 
 # Get the configurable VM arguments from the launch properties
 while IFS=$'\r\n' read -r line; do

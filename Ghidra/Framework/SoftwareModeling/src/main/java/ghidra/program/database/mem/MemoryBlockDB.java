@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -362,9 +362,6 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public byte getByte(Address addr) throws MemoryAccessException {
-		if (memMap.getLiveMemoryHandler() != null) {
-			return memMap.getByte(addr);
-		}
 		checkValid();
 		long offset = getBlockOffset(addr);
 		return getByte(offset);
@@ -378,10 +375,6 @@ public class MemoryBlockDB implements MemoryBlock {
 	@Override
 	public int getBytes(Address addr, byte[] b, int off, int len)
 			throws IndexOutOfBoundsException, MemoryAccessException {
-		if (memMap.getLiveMemoryHandler() != null) {
-			return memMap.getBytes(addr, b, off, len);
-		}
-
 		checkValid();
 		long offset = getBlockOffset(addr);
 		return getBytes(offset, b, off, len);
@@ -389,10 +382,6 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void putByte(Address addr, byte b) throws MemoryAccessException {
-		if (memMap.getLiveMemoryHandler() != null) {
-			memMap.setByte(addr, b);
-			return;
-		}
 		long offset = getBlockOffset(addr);
 		memMap.lock.acquire();
 		try {
@@ -414,10 +403,6 @@ public class MemoryBlockDB implements MemoryBlock {
 	@Override
 	public int putBytes(Address addr, byte[] b, int off, int len)
 			throws IndexOutOfBoundsException, MemoryAccessException {
-		if (memMap.getLiveMemoryHandler() != null) {
-			memMap.setBytes(addr, b, off, len);
-			return len;
-		}
 		memMap.lock.acquire();
 		try {
 			checkValid();

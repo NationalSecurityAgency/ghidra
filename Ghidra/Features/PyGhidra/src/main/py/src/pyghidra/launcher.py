@@ -29,7 +29,7 @@ import tempfile
 import threading
 from importlib.machinery import ModuleSpec
 from pathlib import Path
-from typing import List, NoReturn, Tuple, Union
+from typing import Generator, List, NoReturn, Tuple, Union
 
 import jpype
 from jpype import imports, _jpype
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
-def _silence_java_output(stdout=True, stderr=True):
+def _silence_java_output(stdout=True, stderr=True) -> Generator[None, None, None]:
     from java.io import OutputStream, PrintStream # type:ignore @UnresolvedImport
     from java.lang import System # type:ignore @UnresolvedImport
     out = System.out
@@ -113,12 +113,17 @@ class _GhidraBundleFinder(importlib.machinery.PathFinder):
     """ (internal) Used to find modules in Ghidra bundle locations """
     
     def find_spec(self, fullname, path=None, target=None):
+        from ghidra.framework import Application
         from ghidra.app.script import GhidraScriptUtil
-        GhidraScriptUtil.acquireBundleHostReference()
-        for directory in GhidraScriptUtil.getEnabledScriptSourceDirectories():
-            spec = super().find_spec(fullname, [directory.absolutePath], target)
-            if spec is not None:
-                return spec
+        if Application.isInitialized():
+            GhidraScriptUtil.acquireBundleHostReference()
+            try:
+                for directory in GhidraScriptUtil.getEnabledScriptSourceDirectories():
+                    spec = super().find_spec(fullname, [directory.absolutePath], target)
+                    if spec is not None:
+                        return spec
+            finally:
+                GhidraScriptUtil.releaseBundleHostReference()
         return None
 
 @contextlib.contextmanager
@@ -147,6 +152,29 @@ def _plugin_lock():
             # it will be removed by said process when done
             pass
 
+def _lastrun() -> Path:
+
+    lastrun_file: Path = None
+    lastrun_rel: Path = Path('ghidra/lastrun')
+    
+    # Check for XDG_CONFIG_HOME environment variable
+    xdg_config_home: str = os.environ.get('XDG_CONFIG_HOME')
+    if xdg_config_home:
+        lastrun_file = Path(xdg_config_home) / lastrun_rel
+    else:
+        # Default to platform-specific locations
+        if platform.system() == 'Windows':
+            lastrun_file = Path(os.environ['APPDATA']) / lastrun_rel
+        elif platform.system() == 'Darwin':
+            lastrun_file = Path.home() / 'Library' / lastrun_rel
+        else:
+            lastrun_file = Path.home() / '.config' / lastrun_rel
+            
+    if lastrun_file is not None and lastrun_file.is_file():
+        with open(lastrun_file, "r") as file:
+            return Path(file.readline().strip())
+        
+    return None
 
 class PyGhidraLauncher:
     """
@@ -159,7 +187,7 @@ class PyGhidraLauncher:
 
         :param verbose: True to enable verbose output when starting Ghidra.
         :param install_dir: Ghidra installation directory.
-            (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+            (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
         :raises ValueError: If the Ghidra installation directory is invalid.
         """
         self._layout = None
@@ -168,7 +196,7 @@ class PyGhidraLauncher:
         self._dev_mode = False
         self._extension_path = None
 
-        install_dir = install_dir or os.getenv("GHIDRA_INSTALL_DIR")
+        install_dir = install_dir or os.getenv("GHIDRA_INSTALL_DIR") or _lastrun()
         self._install_dir = self._validate_install_dir(install_dir)
 
         java_home_override = os.getenv("JAVA_HOME_OVERRIDE")
@@ -368,7 +396,8 @@ class PyGhidraLauncher:
         Checks if the currently installed Ghidra version is supported.
         The launcher will report the problem and terminate if it is not supported.
         """
-        if Version(self.app_info.version) < Version(MINIMUM_GHIDRA_VERSION):
+        base_version = self.app_info.version.split('-')[0] # remove things like "-BETA"
+        if Version(base_version) < Version(MINIMUM_GHIDRA_VERSION):
             msg = f"Ghidra version {self.app_info.version} is not supported" + os.linesep + \
                   f"The minimum required version is {MINIMUM_GHIDRA_VERSION}"
             self._report_fatal_error("Unsupported Version", msg, ValueError(msg))
@@ -388,10 +417,6 @@ class PyGhidraLauncher:
 
         # set the JAVA_HOME environment variable to the correct one so jpype uses it
         os.environ['JAVA_HOME'] = str(self.java_home)
-        
-        # add bin dir to DLL search path to help address JPype 1.5.1 issue
-        if sys.platform == "win32":
-            os.add_dll_directory(str(self.java_home) + "/bin")
 
         jpype_kwargs['ignoreUnrecognized'] = True
 
@@ -404,6 +429,14 @@ class PyGhidraLauncher:
             *self.vm_args,
             **jpype_kwargs
         )
+
+        # Remove CWD from sys.path so we don't try to import from unintentional directories
+        # (i.e, an unrelated "ghidra" directory the user may have created)
+        try:
+            sys.path.remove(os.getcwd())
+        except ValueError:
+            # CWD wasn't present on sys.path
+            pass
 
         # Install hooks into python importlib
         sys.meta_path.append(_PyGhidraImportLoader())
@@ -626,6 +659,7 @@ class _PyGhidraStdOut:
 
     def __init__(self, stream):
         self._stream = stream
+        self.is_error = stream == sys.stderr
 
     def _get_current_script(self) -> "PyGhidraScript":
         for entry in inspect.stack():
@@ -636,7 +670,7 @@ class _PyGhidraStdOut:
     def flush(self):
         script = self._get_current_script()
         if script is not None:
-            writer = script._script.writer
+            writer = script._script.errorWriter if self.is_error else script._script.writer
             if writer is not None:
                 writer.flush()
                 return
@@ -646,7 +680,7 @@ class _PyGhidraStdOut:
     def write(self, s: str) -> int:
         script = self._get_current_script()
         if script is not None:
-            writer = script._script.writer
+            writer = script._script.errorWriter if self.is_error else script._script.writer
             if writer is not None:
                 writer.write(s)
                 return len(s)
@@ -711,7 +745,7 @@ def _run_mac_app():
         return res
 
     CFRunLoopTimerCallback = CFUNCTYPE(None, c_void_p, c_void_p)
-    kCFRunLoopDefaultMode = c_void_p.in_dll(CoreFoundation, "kCFRunLoopDefaultMode")
+    kCFRunLoopDefaultMode = c_void_p.in_dll(CoreFoundation, "kCFRunLoopDefaultMode")  # @UndefinedVariable
     kCFRunLoopRunFinished = c_int32(1)
     NULL = c_void_p(0)
     INF_TIME = c_double(1.0e20)

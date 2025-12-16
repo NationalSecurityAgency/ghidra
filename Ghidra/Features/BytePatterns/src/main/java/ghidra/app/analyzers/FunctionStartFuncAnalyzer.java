@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class FunctionStartFuncAnalyzer extends FunctionStartAnalyzer {
 			throws CancelledException {
 
 		// check that the check function later property has been set at the functions start
-		//    before passing the cut down address set to the real search algorithm to to the correct action
+		//    before passing the cut down address set to the real search algorithm to take the correct action
 		AddressSet potentialPreMatches =
 			getOrCreatePotentialMatchPropertyMap(program).getAddressSet();
 		set = set.intersect(potentialPreMatches);

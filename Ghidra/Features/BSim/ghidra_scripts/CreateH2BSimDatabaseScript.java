@@ -24,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,13 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
- * A structure that represents a golang slice instance (similar to a java ArrayList).  Not to be
+ * A structure that represents a Go slice instance (similar to a java ArrayList).  Not to be
  * confused with a {@link GoSliceType}, which is RTTI info about a slice type.
  * <p>
- * An initialized static image of a slice found in a go binary will tend to have len==cap (full).
+ * An initialized static image of a slice found in a Go binary will tend to have len==cap (full).
  * <p>
- * Like java's type erasure for generics, a golang slice instance does not have type information 
+ * Like java's type erasure for generics, a Go slice instance does not have type information 
  * about the elements found in the array blob (nor the size of the blob).
- * <p>
  */
 @StructureMapping(structureName = "runtime.slice")
 public class GoSlice implements StructureMarkup<GoSlice> {
@@ -66,7 +65,7 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 	 * @param array offset of the slice's data
 	 * @param len number of initialized elements in the slice
 	 * @param cap total number of elements in the data array
-	 * @param programContext the go binary that contains the slice
+	 * @param programContext the Go binary that contains the slice
 	 */
 	public GoSlice(long array, long len, long cap, GoRttiMapper programContext) {
 		this.array = array;
@@ -110,19 +109,16 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 	}
 
 	/**
-	 * Returns true if this slice seems valid.
-	 * 
-	 * @return boolean true if array blob is a valid memory location
+	 * {@return boolean true if array blob is a valid memory location}
 	 */
 	public boolean isValid() {
 		return array != 0 && isValid(1);
 	}
 
 	/**
-	 * Returns true if this slice seems valid.
+	 * {@return boolean true if array blob is a valid memory location}
 	 * 
 	 * @param elementSize size of elements in this slice 
-	 * @return boolean true if array blob is a valid memory location
 	 */
 	public boolean isValid(int elementSize) {
 		try {
@@ -143,27 +139,23 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 	}
 
 	/**
-	 * Returns address of the array blob.
-	 * 
-	 * @return location of the array blob
+	 * {@return location of the array blob}
 	 */
 	public long getArrayOffset() {
 		return array;
 	}
 
 	/**
-	 * Returns the address of the array blob
-	 * @return address of the array blob
+	 * {@return address of the array blob}
 	 */
 	public Address getArrayAddress() {
 		return programContext.getDataAddress(array);
 	}
 
 	/**
-	 * Returns the address of the end of the array.
+	 * {@return the address of the end of the array blob}
 	 * 
 	 * @param elementClass structure mapped class
-	 * @return location of the end of the array blob
 	 */
 	public long getArrayEnd(Class<?> elementClass) {
 		StructureMappingInfo<?> elementSMI =
@@ -172,18 +164,14 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 	}
 
 	/**
-	 * Returns the number of initialized elements 
-	 * 
-	 * @return number of initialized elements
+	 * {@return the number of initialized elements} 
 	 */
 	public long getLen() {
 		return len;
 	}
 
 	/**
-	 * Returns the number of elements allocated in the array blob. (capacity)
-	 * 
-	 * @return number of allocated elements in the array blob
+	 * {@return the number of elements allocated in the array blob. (capacity)}
 	 */
 	public long getCap() {
 		return cap;
@@ -200,22 +188,20 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 	}
 
 	/**
-	 * Returns true if this slice contains the specified offset.
+	 * {@return true if this slice contains the specified offset}
 	 * 
 	 * @param offset memory offset in question
 	 * @param sizeofElement size of elements in this slice
-	 * @return true if this slice contains the specified offset
 	 */
 	public boolean containsOffset(long offset, int sizeofElement) {
 		return array <= offset && offset < getElementOffset(sizeofElement, cap);
 	}
 
 	/**
-	 * Returns the offset of the specified element
+	 * {@return the offset of the specified element}
 	 * 
 	 * @param elementSize size of elements in this slice
 	 * @param elementIndex index of desired element
-	 * @return offset of element
 	 */
 	public long getElementOffset(long elementSize, long elementIndex) {
 		return array + elementSize * elementIndex;
@@ -269,7 +255,7 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 
 	/**
 	 * Treats this slice as a array of unsigned integers, of the specified intSize.
-	 * <p>
+	 * 
 	 * @param intSize size of integer
 	 * @return array of longs, containing the (possibly smaller) integers contained in the slice
 	 * @throws IOException if error reading
@@ -292,11 +278,10 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 	}
 
 	/**
-	 * Returns a {@link BinaryReader} positioned at the specified slice element.
+	 * {@return a {@link BinaryReader} positioned at the specified slice element}
 	 * 
 	 * @param elementSize size of elements in this slice
 	 * @param elementIndex index of desired element
-	 * @return {@link BinaryReader} positioned at specified element
 	 */
 	public BinaryReader getElementReader(int elementSize, int elementIndex) {
 		BinaryReader reader = programContext.getReader(getElementOffset(elementSize, elementIndex));

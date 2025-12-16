@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class SegmentCommand extends LoadCommand {
 	private long filesize;
 	private int maxprot;
 	private int initprot;
-	private int nsects;
+	private long nsects;
 	private int flags;
 
 	private boolean is32bit;
@@ -69,10 +69,10 @@ public class SegmentCommand extends LoadCommand {
 		}
 		maxprot = reader.readNextInt();
 		initprot = reader.readNextInt();
-		nsects = reader.readNextInt();
+		nsects = checkCount(reader.readNextUnsignedInt());
 		flags = reader.readNextInt();
 
-		for (int i = 0; i < nsects; ++i) {
+		for (long i = 0; i < nsects; ++i) {
 			sections.add(new Section(reader, is32bit));
 		}
 	}
@@ -194,7 +194,7 @@ public class SegmentCommand extends LoadCommand {
 		return (initprot & SegmentConstants.PROTECTION_X) != 0;
 	}
 
-	public int getNumberOfSections() {
+	public long getNumberOfSections() {
 		return nsects;
 	}
 
@@ -204,6 +204,10 @@ public class SegmentCommand extends LoadCommand {
 
 	public boolean isAppleProtected() {
 		return (flags & SegmentConstants.FLAG_APPLE_PROTECTED) != 0;
+	}
+
+	public boolean is32bit() {
+		return is32bit;
 	}
 
 	/**
@@ -310,7 +314,9 @@ public class SegmentCommand extends LoadCommand {
 	}
 
 	/**
-	 * Creates a new segment command byte array
+	 * Creates a new segment command byte array.
+	 * <p>
+	 * NOTE: The new segment will have 0 sections.
 	 * 
 	 * @param magic The magic
 	 * @param name The name of the segment (must be less than or equal to 16 bytes)
@@ -320,15 +326,13 @@ public class SegmentCommand extends LoadCommand {
 	 * @param fileSize The size of the segment on disk
 	 * @param maxProt The maximum protections of the segment
 	 * @param initProt The initial protection of the segment
-	 * @param numSections The number of sections in the segment
 	 * @param flags The segment flags
 	 * @return The new segment in byte array form
 	 * @throws MachException if an invalid magic value was passed in (see {@link MachConstants}), or
 	 *   if the desired segment name exceeds 16 bytes
 	 */
 	public static byte[] create(int magic, String name, long vmAddr, long vmSize, long fileOffset,
-			long fileSize, int maxProt, int initProt, int numSections, int flags)
-			throws MachException {
+			long fileSize, int maxProt, int initProt, int flags) throws MachException {
 
 		if (name.length() > 16) {
 			throw new MachException("Segment name cannot exceed 16 bytes: " + name);
@@ -351,7 +355,7 @@ public class SegmentCommand extends LoadCommand {
 			conv.putLong(bytes, 0x30, fileSize);
 			conv.putInt(bytes, 0x38, maxProt);
 			conv.putInt(bytes, 0x3c, initProt);
-			conv.putInt(bytes, 0x40, numSections);
+			conv.putInt(bytes, 0x40, 0);
 			conv.putInt(bytes, 0x44, flags);
 		}
 		else {
@@ -361,7 +365,7 @@ public class SegmentCommand extends LoadCommand {
 			conv.putInt(bytes, 0x24, (int) fileSize);
 			conv.putInt(bytes, 0x28, maxProt);
 			conv.putInt(bytes, 0x2c, initProt);
-			conv.putInt(bytes, 0x30, numSections);
+			conv.putInt(bytes, 0x30, 0);
 			conv.putInt(bytes, 0x34, flags);
 		}
 

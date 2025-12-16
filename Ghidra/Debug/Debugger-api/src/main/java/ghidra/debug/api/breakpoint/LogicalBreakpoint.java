@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import resources.MultiIcon;
 
 /**
@@ -471,6 +471,8 @@ public interface LogicalBreakpoint {
 		 */
 		INCONSISTENT_MIXED(Mode.MIXED, Consistency.INCONSISTENT, NAME_MARKER_INCON_MIX, ICON_MARKER_INCON_MIX);
 
+		public static final List<State> VALUES = List.of(values());
+
 		public final Mode mode;
 		public final Consistency consistency;
 		public final String display;
@@ -540,7 +542,7 @@ public interface LogicalBreakpoint {
 			Mode mode = this.mode.sameAddress(that.mode);
 			Consistency consistency = this.consistency.sameAddress(that.consistency);
 			return fromFields(mode, consistency);
-		};
+		}
 
 		/**
 		 * For logical breakpoints which appear at the same address, compose their state
@@ -558,7 +560,7 @@ public interface LogicalBreakpoint {
 		}
 
 		/**
-		 * Get the desired state were the the logical breakpoint to be toggled
+		 * Get the desired state were the logical breakpoint to be toggled
 		 * 
 		 * <p>
 		 * The expected "action" when toggling a breakpoint may vary depending on whether or not the
@@ -658,7 +660,7 @@ public interface LogicalBreakpoint {
 	 * Get the sleigh injection when emulating this breakpoint
 	 * 
 	 * @return the sleigh injection
-	 * @see TraceBreakpoint#getEmuSleigh()
+	 * @see TraceBreakpointLocation#getEmuSleigh(long)
 	 */
 	String getEmuSleigh();
 
@@ -666,7 +668,7 @@ public interface LogicalBreakpoint {
 	 * Set the sleigh injection when emulating this breakpoint
 	 * 
 	 * @param sleigh the sleigh injection
-	 * @see TraceBreakpoint#setEmuSleigh(String)
+	 * @see TraceBreakpointLocation#setEmuSleigh(long,String)
 	 */
 	void setEmuSleigh(String sleigh);
 
@@ -699,7 +701,7 @@ public interface LogicalBreakpoint {
 	 * 
 	 * @return the set of trace breakpoints
 	 */
-	Set<TraceBreakpoint> getTraceBreakpoints();
+	Set<TraceBreakpointLocation> getTraceBreakpoints();
 
 	/**
 	 * Get all trace breakpoints for the given trace which map to this logical breakpoint.
@@ -707,15 +709,15 @@ public interface LogicalBreakpoint {
 	 * @param trace the trace
 	 * @return the set of trace breakpoints
 	 */
-	Set<TraceBreakpoint> getTraceBreakpoints(Trace trace);
+	Set<TraceBreakpointLocation> getTraceBreakpoints(Trace trace);
 
 	/**
 	 * Get the traces for which this logical breakpoint has an address.
 	 * 
 	 * <p>
-	 * Note, this does not necessarily indicate that a {@link TraceBreakpoint} is present for each
-	 * trace, but rather that for each returned trace, the logical breakpoint can be mapped to an
-	 * address in that trace. See {@link #getParticipatingTraces()}.
+	 * Note, this does not necessarily indicate that a {@link TraceBreakpointLocation} is present
+	 * for each trace, but rather that for each returned trace, the logical breakpoint can be mapped
+	 * to an address in that trace. See {@link #getParticipatingTraces()}.
 	 * 
 	 * @return a copy of the set of traces
 	 */
@@ -725,8 +727,8 @@ public interface LogicalBreakpoint {
 	 * Get the traces for which this logical breakpoint has a trace breakpoint.
 	 * 
 	 * <p>
-	 * Note, unlike {@link #getMappedTraces()}, this does indicate that a {@link TraceBreakpoint} is
-	 * present for each trace.
+	 * Note, unlike {@link #getMappedTraces()}, this does indicate that a
+	 * {@link TraceBreakpointLocation} is present for each trace.
 	 * 
 	 * @return the set of traces
 	 */
@@ -779,7 +781,7 @@ public interface LogicalBreakpoint {
 	 * @param loc the location
 	 * @return the state
 	 */
-	State computeStateForLocation(TraceBreakpoint loc);
+	State computeStateForLocation(TraceBreakpointLocation loc);
 
 	/**
 	 * Compute the state for all involved traces and program.

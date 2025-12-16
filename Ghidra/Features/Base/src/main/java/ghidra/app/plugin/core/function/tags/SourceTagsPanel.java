@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,7 @@ import ghidra.app.cmd.function.AddFunctionTagCmd;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionTag;
+import ghidra.program.model.listing.*;
 
 /**
  * List for displaying all tags in the programs
@@ -59,11 +58,11 @@ public class SourceTagsPanel extends TagListPanel {
 			// If the tag is one that has not yet been created (a temp tag), first create it,
 			// then add it to the function.
 			if (tag instanceof InMemoryFunctionTag) {
-				Command cmd = new CreateFunctionTagCmd(tag.getName(), tag.getComment());
+				Command<Program> cmd = new CreateFunctionTagCmd(tag.getName(), tag.getComment());
 				tool.execute(cmd, program);
 			}
 
-			Command cmd = new AddFunctionTagCmd(tag.getName(), function.getEntryPoint());
+			Command<Program> cmd = new AddFunctionTagCmd(tag.getName(), function.getEntryPoint());
 			tool.execute(cmd, program);
 		}
 	}

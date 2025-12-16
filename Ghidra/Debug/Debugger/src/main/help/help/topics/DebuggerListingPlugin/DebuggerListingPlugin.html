@@ -191,60 +191,6 @@
     manually using the <A href=
     "help/topics/DisassemblerPlugin/Disassembly.htm#Disassemble">Disassemble</A> command.</P>
 
-    <H3><A name="auto_sync_cursor_static"></A>Auto-Sync Cursor with Static Listing</H3>
-
-    <P>This action is always available, but only on the primary dynamic listing. It configures
-    location synchronization with the (primary) static listing. When enabled, navigation in either
-    listing &mdash; including automatic navigation &mdash; automatically navigates to the
-    corresponding location, if applicable, in the other. In general, "corresponding location" is
-    computed using information about loaded modules reported by the debugger. For the finer
-    details, see the <A href=
-    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
-    window. When you navigate to a location contained by a module, but there is no corresponding
-    static location, the listing logs a "missing module" to the console, offering either to import
-    the module or map it to an existing program. If the cursor cannot be mapped, the other
-    listing's location is left unchanged. If this does not seem correct. Check your module list and
-    static mappings.</P>
-
-    <H3><A name="auto_sync_selection_static"></A>Auto-Sync Selection with Static Listing</H3>
-
-    <P>This action is always available, but only on the primary dynamic listing. It configures
-    selection synchronization with the (primary) static listing. When enabled, selection in either
-    listing automatically selects the corresponding ranges, if applicable, in the other. In
-    general, "corresponding ranges" are computed using information about loaded modules reported by
-    the debugger. For the finer details, see the <A href=
-    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
-    window. Portions of the selection which cannot be mapped are omitted.</P>
-
-    <H3><A name="sync_selection_into_static"></A>Sync Selection Here into Static Listing</H3>
-
-    <P>This action is available whenever the current context is dynamic and has a selection. It
-    maps the current dynamic selection to corresponding static ranges and selects those in the
-    static listing. In general, "corresponding ranges" are computed using information about loaded
-    modules reported by the debugger. For the finer details, see the <A href=
-    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
-    window. Portions of the selection which cannot be mapped are omitted. If no part of the
-    selection is mappable, an error is displayed in the status bar. This can happen if the module
-    list is missing, or Ghidra could not find the program for the current module.</P>
-
-    <H3><A name="sync_selection_from_static"></A>Sync Selection Here from Static Listing</H3>
-
-    <P>This action is available whenever the current context is static and has a selection. It maps
-    the current static selection to corresponding dynamic ranges and selects those in the dynamic
-    listing. In general, "corresponding ranges" are computed using information about loaded modules
-    reported by the debugger. For the finer details, see the <A href=
-    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
-    window. Portions of the selection which cannot be mapped are omitted. If no part of the
-    selection is mappable, an error is displayed in the status bar. This can happen if the module
-    list is missing, or Ghidra could not find the program for the current module.</P>
-
-    <H3><A name="open_program"></A>Open Program</H3>
-
-    <P>This action is offered as a resolution whenever a module cannot be automatically opened.
-    This typically happens when the module's program database has crash data that can be recovered
-    and/or needs a version upgrade. It will attempt to open the program, allowing Ghidra to prompt
-    you about the situation.</P>
-
     <H3><A name="read_memory"></A>Read Memory</H3>
 
     <P>This action is available when the current trace is "at the present" with a live target. It

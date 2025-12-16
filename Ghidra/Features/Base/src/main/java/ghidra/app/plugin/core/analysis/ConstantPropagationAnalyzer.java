@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,6 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 	final static HashSet<String> handledProcessors = new HashSet<String>();
 	protected String processorName = "Basic";
-	protected AddressSetView EMPTY_ADDRESS_SET = new AddressSet();
 
 	public ConstantPropagationAnalyzer() {
 		this("Basic");
@@ -126,7 +125,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Called to to register a more specific analyzer.
+	 * Called to register a more specific analyzer.
 	 *
 	 * @param processorName
 	 */
@@ -189,7 +188,8 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			int locationCount = locations.size();
 			monitor.initialize(locationCount);
 			if (locationCount != 0) {
-				AddressSetView resultSet = runAddressAnalysis(program, locations, monitor);
+				monitor.setMessage(getName());
+				AddressSetView resultSet = runParallelAddressAnalysis(program, locations, null, maxThreadCount, monitor);
 				// get rid of any reached addresses
 				unanalyzedSet.delete(resultSet);
 			}
@@ -435,6 +435,11 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 				// now get rid of all the instructions that were analyzed
 				todoSet.delete(resultSet);
 			}
+			
+			// make sure todoSet removes start address if no results
+			if (resultSet == null || resultSet.isEmpty()) {
+				todoSet.delete(start,start);
+			}
 		}
 	}
 
@@ -449,6 +454,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	 * @return - set of addresses actually flowed to
 	 * @throws CancelledException
 	 */
+	@Override
 	public AddressSetView analyzeLocation(final Program program, Address start, AddressSetView set,
 			final TaskMonitor monitor) throws CancelledException {
 
@@ -471,7 +477,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			flowStart = func.getEntryPoint();
 		}
 
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropogator symEval = new SymbolicPropogator(program, false);
 		symEval.setParamRefCheck(checkParamRefsOption);
 
 		symEval.setParamPointerRefCheck(checkPointerParamRefsOption);

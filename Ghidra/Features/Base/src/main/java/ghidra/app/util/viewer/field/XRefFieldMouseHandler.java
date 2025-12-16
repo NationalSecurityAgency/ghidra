@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,8 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.event.MouseEvent;
-import java.util.Set;
+import java.util.Collection;
+import java.util.function.Supplier;
 
 import docking.widgets.fieldpanel.field.*;
 import ghidra.app.nav.Navigatable;
@@ -98,7 +99,7 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 	}
 
 	protected Address getFromReferenceAddress(ProgramLocation programLocation) {
-		return ((XRefFieldLocation) programLocation).getRefAddress();
+		return programLocation.getRefAddress();
 	}
 
 	protected void showXRefDialog(Navigatable navigatable, ProgramLocation location,
@@ -108,7 +109,7 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 			return;
 		}
 
-		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		Supplier<Collection<Reference>> refs = () -> XReferenceUtils.getAllXrefs(location);
 		XReferenceUtils.showXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 

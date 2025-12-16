@@ -59,6 +59,10 @@ public class ProjectLocator {
 	 * @throws IllegalArgumentException if an absolute path is not specified or invalid project name
 	 */
 	public ProjectLocator(String path, String name) {
+		this(path, name, null);
+	}
+
+	protected ProjectLocator(String path, String name, URL url) {
 		if (name.contains("/") || name.contains("\\")) {
 			throw new IllegalArgumentException("name contains path separator character: " + name);
 		}
@@ -71,7 +75,7 @@ public class ProjectLocator {
 			path = Application.getUserTempDirectory().getAbsolutePath();
 		}
 		this.location = checkAbsolutePath(path);
-		url = GhidraURL.makeURL(location, name);
+		this.url = url != null ? url : GhidraURL.makeURL(location, name);
 	}
 
 	/**
@@ -216,12 +220,12 @@ public class ProjectLocator {
 			return false;
 		}
 		ProjectLocator projectLocator = (ProjectLocator) obj;
-		return name.equals(projectLocator.name) && location.equals(projectLocator.location);
+		return url.equals(projectLocator.getURL());
 	}
 
 	@Override
 	public int hashCode() {
-		return name.hashCode() + location.hashCode();
+		return url.hashCode();
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.util.bin.format.elf.relocation;
+
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,8 +27,8 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
 
-public class AARCH64_ElfRelocationHandler
-		extends AbstractElfRelocationHandler<AARCH64_ElfRelocationType, ElfRelocationContext<?>> {
+public class AARCH64_ElfRelocationHandler extends
+		AbstractElfRelocationHandler<AARCH64_ElfRelocationType, AARCH64_ElfRelocationContext> {
 
 	/**
 	 * Constructor
@@ -46,11 +48,17 @@ public class AARCH64_ElfRelocationHandler
 	}
 
 	@Override
-	protected RelocationResult relocate(ElfRelocationContext<?> elfRelocationContext,
+	public AARCH64_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
+			Map<ElfSymbol, Address> symbolMap) {
+		return new AARCH64_ElfRelocationContext(this, loadHelper, symbolMap);
+	}
+
+	@Override
+	protected RelocationResult relocate(AARCH64_ElfRelocationContext elfRelocationContext,
 			ElfRelocation relocation, AARCH64_ElfRelocationType type, Address relocationAddress,
 			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
-		
+
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 		boolean isBigEndianInstructions =
@@ -58,13 +66,13 @@ public class AARCH64_ElfRelocationHandler
 
 		long addend = relocation.getAddend(); // will be 0 for REL case
 		long offset = relocationAddress.getOffset();
-		
+
 		int symbolIndex = relocation.getSymbolIndex();
 		boolean is64bit = true;
 		boolean overflowCheck = true; // *_NC type relocations specify "no overflow check"
 		long newValue = 0;
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
-		
+
 		// Handle relative relocations that do not require symbolAddr or symbolValue 
 		switch (type) {
 			case R_AARCH64_P32_RELATIVE:
@@ -84,7 +92,7 @@ public class AARCH64_ElfRelocationHandler
 			default:
 				break;
 		}
-		
+
 		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
 		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
 			return RelocationResult.FAILURE;
@@ -308,8 +316,7 @@ public class AARCH64_ElfRelocationHandler
 
 			// LD/ST64: (S+A) & 0xff8
 			case R_AARCH64_LDST64_ABS_LO12_NC:
-			case R_AARCH64_P32_LDST64_ABS_LO12_NC:
-			case R_AARCH64_LD64_GOT_LO12_NC: {
+			case R_AARCH64_P32_LDST64_ABS_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) ((symbolValue + addend) & 0xff8) >> 3;
 
@@ -326,6 +333,53 @@ public class AARCH64_ElfRelocationHandler
 
 				newValue = oldValue | (newValue << 10);
 
+				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
+				break;
+			}
+
+			// ADRP: Page(G(GDAT(S)))-Page(P)
+			// Page of GOT entry address for S minus page of relocation address
+			// Set the immediate value of an ADRP to bits [32:12] of X
+			case R_AARCH64_ADR_GOT_PAGE:
+			case R_AARCH64_P32_ADR_GOT_PAGE: {
+				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
+				Address symbolGotAddress = elfRelocationContext.getGotEntryAddress(sym);
+				if (symbolGotAddress == null) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"GOT allocation failure", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				newValue = page(symbolGotAddress.getOffset()) - page(relocationAddress.getOffset());
+				newValue = (newValue & 0x1fffff000L) >>> 12;
+				int loBits = (int) newValue & 0x3;
+				int hiBits = (int) newValue >>> 2;
+
+				newValue = (oldValue & 0x9f00001fL) | (loBits << 29) | (hiBits << 5);
+				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
+				break;
+			}
+
+			// LD/ST: G(GDAT(S))
+			case R_AARCH64_P32_LD32_GOT_LO12_NC: // Set the LD/ST immediate field to bits [11:2] of X
+			case R_AARCH64_LD64_GOT_LO12_NC:     // Set the LD/ST immediate field to bits [11:3] of X
+			{
+				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
+				Address symbolGotAddress = elfRelocationContext.getGotEntryAddress(sym);
+				if (symbolGotAddress == null) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"GOT allocation failure", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				int lo12bits = (int) (symbolGotAddress.getOffset() & 0xfff);
+				if (type == AARCH64_ElfRelocationType.R_AARCH64_P32_LD32_GOT_LO12_NC) {
+					lo12bits &= ~0x3;
+				}
+				else {
+					lo12bits &= ~0x7;
+				}
+
+				// Bits [21:10] — imm12: 12-bit unsigned immediate offset
+				newValue = (oldValue & 0xffc003ffL) | (lo12bits << 10);
 				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
 				break;
 			}
@@ -377,6 +431,10 @@ public class AARCH64_ElfRelocationHandler
 			}
 		}
 		return new RelocationResult(Status.APPLIED, byteLength);
+	}
+
+	private long page(long offset) {
+		return offset & ~0xfff;
 	}
 
 	/**

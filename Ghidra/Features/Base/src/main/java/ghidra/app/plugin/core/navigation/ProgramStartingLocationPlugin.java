@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -153,7 +153,7 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 			return;
 		}
 
-		if (autoRepositionIfNotMoved && isProgramAtStartingLocation()) {
+		if (autoRepositionIfNotMoved && isProgramAtDefaultMinimumLocation()) {
 			gotoLocation(symbol.getProgramLocation());
 		}
 		else if (shouldAskToRepostion && askToPositionProgram(symbol)) {
@@ -199,14 +199,11 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		gotoService.goTo(location);
 	}
 
-	private boolean isProgramAtStartingLocation() {
-		ProgramLocation startLocation = startLocationsMap.get(currentProgram);
-		if (startLocation == null || currentLocation == null) {
+	private boolean isProgramAtDefaultMinimumLocation() {
+		if (currentLocation == null) {
 			return true;
 		}
-		// just compare address, analysis may have tweaked the current location even
-		// the user didn't move
-		return startLocation.getAddress().equals(currentLocation.getAddress());
+		return currentLocation.getAddress().equals(currentProgram.getMinAddress());
 	}
 
 	private ProgramLocation getStartingProgramLocation(Program program) {

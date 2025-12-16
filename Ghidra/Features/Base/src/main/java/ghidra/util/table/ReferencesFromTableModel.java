@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,7 @@ package ghidra.util.table;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 import javax.swing.JLabel;
 
@@ -45,16 +44,21 @@ import ghidra.util.task.TaskMonitor;
  */
 public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEndpoint> {
 
-	private List<IncomingReferenceEndpoint> refs;
+	private Supplier<Collection<Reference>> refsSupplier;
 
 	public ReferencesFromTableModel(Collection<Reference> refs, ServiceProvider sp,
 			Program program) {
 		super("References", sp, program, null);
 
-		this.refs = refs.stream().map(r -> {
-			boolean offcut = ReferenceUtils.isOffcut(program, r.getToAddress());
-			return new IncomingReferenceEndpoint(r, offcut);
-		}).collect(Collectors.toList());
+		this.refsSupplier = () -> refs;
+
+		addTableColumn(new ReferenceTypeTableColumn());
+	}
+
+	public ReferencesFromTableModel(Supplier<Collection<Reference>> refsSupplier,
+			ServiceProvider sp, Program program) {
+		super("References", sp, program, null);
+		this.refsSupplier = refsSupplier;
 
 		addTableColumn(new ReferenceTypeTableColumn());
 	}
@@ -62,7 +66,13 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 	@Override
 	protected void doLoad(Accumulator<ReferenceEndpoint> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-		refs.forEach(r -> accumulator.add(r));
+
+		Collection<Reference> xrefs = refsSupplier.get();
+		for (Reference xref : xrefs) {
+			boolean offcut = ReferenceUtils.isOffcut(program, xref.getToAddress());
+			IncomingReferenceEndpoint endpoint = new IncomingReferenceEndpoint(xref, offcut);
+			accumulator.add(endpoint);
+		}
 	}
 
 	@Override

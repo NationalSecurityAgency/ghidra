@@ -162,7 +162,7 @@ public class GhidraLauncher {
 			boolean gradleDevMode = classpathList.isEmpty();
 			if (gradleDevMode) {
 				// Add the module jars Gradle built.
-				// Note: this finds Extensions' jar files so there is no need to to call
+				// Note: this finds Extensions' jar files so there is no need to call
 				// addExtensionJarPaths()
 				addModuleJarPaths(classpathList, modules);
 			}
@@ -404,11 +404,8 @@ public class GhidraLauncher {
 			if (external1 && external2) {
 				return nameComparison;
 			}
-			if (external1) {
-				return -1;
-			}
-			if (external2) {
-				return 1;
+			if (external1 || external2) {
+				return Boolean.compare(external1, external2);
 			}
 
 			// Now handle modules that are internal to the Ghidra installation.

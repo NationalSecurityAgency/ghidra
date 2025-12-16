@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import generic.hash.HashUtilities;
 import generic.test.*;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
@@ -51,9 +52,6 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.timer.GTimer;
 import utilities.util.FileUtilities;
 
-/**
- * 
- */
 public class ServerTestUtil {
 
 	public static final int GHIDRA_TEST_SERVER_PORT = 14100;
@@ -427,9 +425,9 @@ public class ServerTestUtil {
 			"     Enable Anonymous Login: " + enableAnonymousAuthentication);
 
 		// Force client-side use of newly generated CA certificates
-		System.setProperty(ApplicationTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY,
+		System.setProperty(DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY,
 			getTestPkiCACertsPath());
-		SSLContextInitializer.initialize(true);
+		DefaultSSLContextInitializer.initialize(true);
 
 		ArrayList<String> argList = new ArrayList<>();
 		String javaCommand =
@@ -444,11 +442,11 @@ public class ServerTestUtil {
 		argList.add("-Xdebug");
 		argList.add("-Xnoagent");
 		argList.add("-Djava.compiler=NONE");
-		argList.add("-D" + ApplicationTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY + "=" +
+		argList.add("-D" + DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY + "=" +
 			getTestPkiCACertsPath());
-		argList.add("-D" + ApplicationKeyManagerFactory.KEYSTORE_PATH_PROPERTY + "=" +
+		argList.add("-D" + DefaultKeyManagerFactory.KEYSTORE_PATH_PROPERTY + "=" +
 			getTestPkiServerKeystorePath());
-		argList.add("-D" + ApplicationKeyManagerFactory.KEYSTORE_PASSWORD_PROPERTY + "=" +
+		argList.add("-D" + DefaultKeyManagerFactory.KEYSTORE_PASSWORD_PROPERTY + "=" +
 			TEST_PKI_SERVER_PASSPHRASE);
 		argList.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:18202"); // *: for remote debug support
 		argList.add("-DSystemUtilities.isTesting=true");
@@ -625,7 +623,7 @@ public class ServerTestUtil {
 
 	public static synchronized void disposeServer() {
 
-		System.setProperty(ApplicationTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY, "");
+		System.setProperty(DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY, "");
 
 		if (serverProcess != null) {
 
@@ -942,23 +940,22 @@ public class ServerTestUtil {
 
 		// Generate CA certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating self-signed CA cert: " + caPath);
-		PrivateKeyEntry caEntry =
-			ApplicationKeyManagerUtils.createKeyEntry("test-CA", TEST_PKI_CA_DN, 2, null, null,
-				"PKCS12", null, ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
-		ApplicationKeyManagerUtils.exportX509Certificates(caEntry.getCertificateChain(), caFile);
+		PrivateKeyEntry caEntry = PKIUtils.createKeyEntry("test-CA", TEST_PKI_CA_DN, 2, null, null,
+			"PKCS12", null, DefaultKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
+		PKIUtils.exportX509Certificates(caEntry.getCertificateChain(), caFile);
 
 		// Generate User/Client certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test user key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_USER_PASSPHRASE + "): " + userKeystorePath);
-		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_USER_DN, 2, caEntry,
-			userKeystoreFile, "PKCS12", null, TEST_PKI_USER_PASSPHRASE.toCharArray());
+		PKIUtils.createKeyEntry("test-sig", TEST_PKI_USER_DN, 2, caEntry, userKeystoreFile,
+			"PKCS12", null, TEST_PKI_USER_PASSPHRASE.toCharArray());
 
 		// Generate Server certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test server key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_SERVER_PASSPHRASE + "): " + serverKeystorePath);
 
-		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_SERVER_DN, 2, caEntry,
-			serverKeystoreFile, "PKCS12", null, TEST_PKI_SERVER_PASSPHRASE.toCharArray());
+		PKIUtils.createKeyEntry("test-sig", TEST_PKI_SERVER_DN, 2, caEntry, serverKeystoreFile,
+			"PKCS12", null, TEST_PKI_SERVER_PASSPHRASE.toCharArray());
 	}
 
 	/**

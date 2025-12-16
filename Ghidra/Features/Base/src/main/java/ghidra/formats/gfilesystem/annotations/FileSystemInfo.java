@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,13 @@
  */
 package ghidra.formats.gfilesystem.annotations;
 
+import java.lang.annotation.*;
+
 import ghidra.formats.gfilesystem.GFileSystem;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactory;
 
-import java.lang.annotation.*;
-
 /**
  * Specifies the info needed of a {@link GFileSystem} implementation.
- * <p>
  * <ul>
  * <li>{@link #type()} is required.</li>
  * <li>{@link #description()} is optional.</li>
@@ -41,7 +40,7 @@ public @interface FileSystemInfo {
 
 	/**
 	 * A longer description of this filesystem.
-	 * <p>
+	 * 
 	 * @return Free form description string, defaults to empty string if not set.
 	 */
 	String description() default "";
@@ -58,7 +57,7 @@ public @interface FileSystemInfo {
 	 * The relative priority of filesystems during probing.
 	 * <p>
 	 * Higher numeric values are considered before lower values.
-	 * <p>
+	 * 
 	 * @return integer that specifies the relative ordering of filesystems during
 	 * probing.
 	 */

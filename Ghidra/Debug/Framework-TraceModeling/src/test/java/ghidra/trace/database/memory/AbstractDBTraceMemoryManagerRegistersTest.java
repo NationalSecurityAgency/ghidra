@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,20 +23,42 @@ import org.junit.Test;
 
 import db.Transaction;
 import ghidra.program.model.lang.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.TraceThread;
 
 public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		extends AbstractDBTraceMemoryManagerTest {
 
 	protected TraceThread getOrAddThread(String name, long creationSnap) {
-		return b.getOrAddThread(name, creationSnap);
+		TraceThread thread = b.getOrAddThread(name, creationSnap);
+		TraceObject obj = thread.getObject();
+		TraceObject objRegs = b.trace.getObjectManager()
+				.createObject(obj.getCanonicalPath().key("Registers"));
+		objRegs.insert(Lifespan.ALL, ConflictResolution.DENY);
+		return thread;
 	}
 
 	protected abstract boolean isRegistersPerFrame();
+
+	@Override
+	protected String getCtxXml() {
+		return isRegistersPerFrame() ? CTX_XML_REGS_PER_FRAME : CTX_XML_REGS_PER_THREAD;
+	}
+
+	protected void createRegs(TraceThread thread, int frameCount) {
+		if (isRegistersPerFrame()) {
+			b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, frameCount);
+		}
+		else {
+			b.createObjectsRegsForThread(thread, Lifespan.nowOn(0), b.host);
+		}
+	}
 
 	@Test
 	public void testRegisters() throws Exception {
@@ -47,6 +69,7 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		TraceThread thread;
 		try (Transaction tx = b.startTransaction()) {
 			thread = getOrAddThread("Threads[1]", 0);
+			createRegs(thread, 2);
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			regs.setValue(0, new RegisterValue(r0, new BigInteger("0123456789ABCDEF", 16)));
@@ -66,10 +89,10 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 			assertEquals(new BigInteger("FEDCBA98", 16), regs.getValue(0, r0l).getUnsignedValue());
 
 			TraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
-			stack.setDepth(2, true);
-			assertSame(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, false), false));
+			stack.setDepth(0, 2, true);
+			assertSame(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, 0, false), false));
 			DBTraceMemorySpace frame =
-				memory.getMemoryRegisterSpace(stack.getFrame(1, false), true);
+				memory.getMemoryRegisterSpace(stack.getFrame(0, 1, false), true);
 			if (isRegistersPerFrame()) {
 				assertNotSame(regs, frame);
 			}
@@ -98,6 +121,8 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		TraceThread thread;
 		try (Transaction tx = b.startTransaction()) {
 			thread = getOrAddThread("Threads[1]", 0);
+			createRegs(thread, 1);
+
 			waitForSwing();
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
@@ -132,6 +157,8 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 
 	/**
 	 * This test is based on the MWE submitted in GitHub issue #2760.
+	 * 
+	 * @throws Exception because
 	 */
 	@Test
 	public void testManyStateEntries() throws Exception {
@@ -139,6 +166,7 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		TraceThread thread;
 		try (Transaction tx = b.startTransaction()) {
 			thread = getOrAddThread("Threads[1]", 0);
+			createRegs(thread, 1);
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			for (int i = 1; i < 2000; i++) {

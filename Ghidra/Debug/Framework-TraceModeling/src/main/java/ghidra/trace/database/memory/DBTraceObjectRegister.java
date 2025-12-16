@@ -22,15 +22,15 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.memory.TraceObjectRegister;
+import ghidra.trace.model.memory.TraceRegister;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObjectInterface {
+public class DBTraceObjectRegister implements TraceRegister, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectRegister(DBTraceObject object) {
@@ -43,8 +43,8 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public TraceObjectThread getThread() {
-		return object.queryCanonicalAncestorsInterface(TraceObjectThread.class)
+	public TraceThread getThread() {
+		return object.queryCanonicalAncestorsInterface(TraceThread.class)
 				.findAny()
 				.orElseThrow();
 	}
@@ -56,35 +56,35 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public int getBitLength() {
-		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TraceObjectRegister.KEY_BITLENGTH, Integer.class, 0);
+	public int getBitLength(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceRegister.KEY_BITLENGTH,
+			Integer.class, 0);
 	}
 
 	@Override
 	public void setValue(Lifespan lifespan, byte[] value) {
-		int length = getByteLength();
+		int length = getByteLength(lifespan.lmin());
 		if (length != 0 && value.length != length) {
 			throw new IllegalArgumentException("Length must match the register");
 		}
-		object.setValue(lifespan, TraceObjectRegister.KEY_VALUE, value);
+		object.setValue(lifespan, TraceRegister.KEY_VALUE, value);
 	}
 
 	@Override
 	public byte[] getValue(long snap) {
-		TraceObjectValue ov = object.getValue(snap, TraceObjectRegister.KEY_VALUE);
+		TraceObjectValue ov = object.getValue(snap, TraceRegister.KEY_VALUE);
 		if (ov == null) {
 			return null;
 		}
 		Object val = ov.getValue();
-		if (val instanceof byte[]) {
+		if (val instanceof byte[] arr) {
 			// TODO: Should I correct mismatched size?
-			return (byte[]) val;
+			return arr;
 		}
-		if (val instanceof String) {
+		if (val instanceof String str) {
 			// Always base 16. Model API says byte array for register value is big endian.
-			BigInteger bigVal = new BigInteger((String) val, 16);
-			return Utils.bigIntegerToBytes(bigVal, getByteLength(), true);
+			BigInteger bigVal = new BigInteger(str, 16);
+			return Utils.bigIntegerToBytes(bigVal, getByteLength(snap), true);
 		}
 		throw new ClassCastException("Cannot convert " + val + " to byte array for register value");
 	}

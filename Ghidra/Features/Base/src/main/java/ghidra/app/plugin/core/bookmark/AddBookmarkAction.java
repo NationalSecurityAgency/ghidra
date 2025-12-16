@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.bookmark;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.program.model.address.Address;
@@ -44,7 +44,8 @@ class AddBookmarkAction extends DockingAction {
 		setDescription("Add Notes bookmark to current location");
 // ACTIONS - auto generated
 		setPopupMenuData(new MenuData(new String[] { "Bookmark..." }, null, "Bookmark"));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_D, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 	}
 

@@ -91,4 +91,8 @@ public abstract class AbstractFileSystem<METADATATYPE> implements GFileSystem {
 		return fsIndex.resolveSymlinks(file);
 	}
 
+	@Override
+	public String toString() {
+		return getName();
+	}
 }

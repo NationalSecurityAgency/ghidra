@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,8 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 	public PKIAuthenticationModule(boolean anonymousAllowed)
 			throws IOException, CertificateException {
 		this.anonymousAllowed = anonymousAllowed;
-		authorities = ApplicationKeyManagerUtils.getTrustedIssuers();
-		if (authorities == null) {
+		authorities = DefaultTrustManagerFactory.getTrustedIssuers();
+		if (authorities == null || authorities.length == 0) {
 			throw new IOException("trusted PKI Certificate Authorities have not been configured");
 		}
 	}
@@ -72,9 +72,9 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 		try {
 			byte[] token = TokenGenerator.getNewToken(TOKEN_SIZE);
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			SignedToken signedToken = ApplicationKeyManagerUtils.getSignedToken(
-				usingSelfSignedCert ? null : authorities, token);
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			SignedToken signedToken = DefaultKeyManagerFactory
+					.getSignedToken(usingSelfSignedCert ? null : authorities, token);
 			sigCb = new SignatureCallback(authorities, token, signedToken.signature);
 		}
 		catch (Throwable t) {
@@ -107,9 +107,9 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 
 		SignatureCallback sigCb = null;
 		if (callbacks != null) {
-			for (int i = 0; i < callbacks.length; i++) {
-				if (callbacks[i] instanceof SignatureCallback) {
-					sigCb = (SignatureCallback) callbacks[i];
+			for (Callback callback : callbacks) {
+				if (callback instanceof SignatureCallback) {
+					sigCb = (SignatureCallback) callback;
 					break;
 				}
 			}
@@ -127,8 +127,8 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 			}
 
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			if (!ApplicationKeyManagerUtils.isMySignature(usingSelfSignedCert ? null : authorities,
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			if (!DefaultKeyManagerFactory.isMySignature(usingSelfSignedCert ? null : authorities,
 				token, sigCb.getServerSignature())) {
 				throw new FailedLoginException("Invalid Signature callback");
 			}
@@ -138,8 +138,7 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 				throw new FailedLoginException("user certificate not provided");
 			}
 
-			ApplicationKeyManagerUtils.validateClient(certChain,
-				ApplicationKeyManagerUtils.RSA_TYPE);
+			DefaultTrustManagerFactory.validateClient(certChain, PKIUtils.RSA_TYPE);
 
 			byte[] sigBytes = sigCb.getSignature();
 			if (sigBytes != null) {

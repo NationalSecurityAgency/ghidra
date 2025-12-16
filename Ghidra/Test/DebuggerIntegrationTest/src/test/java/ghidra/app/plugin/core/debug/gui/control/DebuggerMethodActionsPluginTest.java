@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,11 +26,13 @@ import org.junit.Test;
 import db.Transaction;
 import docking.action.DockingActionIf;
 import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.*;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.target.ActionName;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema;
@@ -49,6 +51,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 
 	@Before
 	public void setUpMethodActionsTest() throws Exception {
+		addPlugin(tool, CodeBrowserPlugin.class);
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
 		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
 		methodsPlugin = addPlugin(tool, DebuggerMethodActionsPlugin.class);
@@ -57,7 +60,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 	protected void addMethods() {
 		TestRemoteMethodRegistry reg = rmiCx.getMethods();
 
-		rmiMethodAdvance = new TestRemoteMethod("advance", null, "Advance",
+		rmiMethodAdvance = new TestRemoteMethod("advance", ActionName.STEP_EXT, "Advance",
 			"Advance to the given address", PrimitiveTraceObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to advance"),
@@ -65,14 +68,15 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 				"Target", "The target address"));
 		reg.add(rmiMethodAdvance);
 
-		rmiMethodStepExt = new TestRemoteMethod("step_ext", null, "StepExt",
+		rmiMethodStepExt = new TestRemoteMethod("step_ext", ActionName.STEP_EXT, "StepExt",
 			"Step in some special way", PrimitiveTraceObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to step"));
 		reg.add(rmiMethodStepExt);
 
-		rmiMethodAdvanceWithFlag = new TestRemoteMethod("advance_flag", null, "Advance With Flag",
-			"Advance to the given address, with flag", PrimitiveTraceObjectSchema.VOID,
+		rmiMethodAdvanceWithFlag = new TestRemoteMethod("advance_flag", ActionName.STEP_EXT,
+			"Advance With Flag", "Advance to the given address, with flag",
+			PrimitiveTraceObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to advance"),
 			new TestRemoteParameter("target", PrimitiveTraceObjectSchema.ADDRESS, true, null,
@@ -81,7 +85,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 				"Flag", "The flag"));
 		reg.add(rmiMethodAdvanceWithFlag);
 
-		rmiMethodBetween = new TestRemoteMethod("between", null, "Between",
+		rmiMethodBetween = new TestRemoteMethod("between", ActionName.STEP_EXT, "Between",
 			"Advance between two given addresses", PrimitiveTraceObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to advance"),

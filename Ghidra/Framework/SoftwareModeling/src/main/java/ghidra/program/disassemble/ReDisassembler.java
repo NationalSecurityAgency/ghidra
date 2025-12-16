@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,8 @@ import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.util.Msg;
@@ -85,8 +86,7 @@ public class ReDisassembler {
 
 	protected class ReDisState {
 		protected final TaskMonitor monitor;
-		protected final MemBuffer progMemBuffer =
-			new DumbMemBufferImpl(program.getMemory(), program.getMemory().getMinAddress());
+		protected final Map<AddressSpace, MemBuffer> progMemBuffers = new HashMap<>();
 		protected final ProgramContext tempContext = new ProgramContextImpl(language);
 		protected final AddressSet visited = new AddressSet();
 		protected final Deque<Flow> queue = new LinkedList<>();
@@ -121,8 +121,9 @@ public class ReDisassembler {
 		}
 
 		protected MemBuffer createBuffer(Address at) {
-			return new WrappedMemBuffer(progMemBuffer, 20,
-				(int) at.subtract(progMemBuffer.getAddress()));
+			return progMemBuffers.computeIfAbsent(at.getAddressSpace(), space -> {
+				return new DumbMemBufferImpl(program.getMemory(), space.getMinAddress());
+			});
 		}
 
 		/**

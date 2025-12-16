@@ -294,6 +294,19 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 	}
 
 	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		synchronized (fsIndex) {
+			ISimpleInArchiveItem item = fsIndex.getMetadata(f);
+			try {
+				return item.isFolder() ? FileType.DIRECTORY : FileType.FILE;
+			}
+			catch (SevenZipException e) {
+				return FileType.UNKNOWN;
+			}
+		}
+	}
+
+	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try {
@@ -340,7 +353,6 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 	 * 3) lots of write()s, and then 4) setOperationResult().
 	 * <p>
 	 * This class writes the extracted bytes to the FileCache.
-	 * <p>
 	 */
 	private class SZExtractCallback
 			implements IArchiveExtractCallback, ISequentialOutStream, ICryptoGetTextPassword,
@@ -402,8 +414,9 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 			// In our case, we only handle extract operations.
 			if (!currentItem.isFolder() && extractAskMode == ExtractAskMode.EXTRACT) {
 				try {
-					currentCacheEntryBuilder = fsService.createTempFile(currentItem.getSize());
-					monitor.initialize(currentItem.getSize(), "Extracting " + currentName);
+					long size = Objects.requireNonNullElse(currentItem.getSize(), -1L);
+					currentCacheEntryBuilder = fsService.createTempFile(size);
+					monitor.initialize(size, "Extracting " + currentName);
 				}
 				catch (IOException e) {
 					throw new SevenZipException(e);

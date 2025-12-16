@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,9 @@ package ghidra.framework.protocol.ghidra;
 
 import java.net.URL;
 
+import ghidra.framework.data.ContentHandler;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -25,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class ContentTypeQueryTask extends GhidraURLQueryTask {
 
-	private String contentType = "Unknown";
+	private String contentType = ContentHandler.UNKNOWN_CONTENT;
 
 	/**
 	 * Construct a Ghidra URL content type query task
@@ -34,7 +36,7 @@ public class ContentTypeQueryTask extends GhidraURLQueryTask {
 	 * (see {@link GhidraURL}).
 	 */
 	public ContentTypeQueryTask(URL ghidraUrl) {
-		super("Query URL Content Type", ghidraUrl);
+		super("Query URL Content Type", ghidraUrl, null, LinkFileControl.NO_FOLLOW);
 	}
 
 	/**
@@ -53,4 +55,5 @@ public class ContentTypeQueryTask extends GhidraURLQueryTask {
 	public void processResult(DomainFile domainFile, URL url, TaskMonitor monitor) {
 		contentType = domainFile.getContentType();
 	}
+
 }

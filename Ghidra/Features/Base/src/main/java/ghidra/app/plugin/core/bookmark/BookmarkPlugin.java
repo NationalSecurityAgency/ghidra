@@ -202,7 +202,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 */
 	public void filterBookmarks() {
 		FilterDialog d = new FilterDialog(provider, currentProgram);
-		tool.showDialog(d, provider);
+		tool.showDialog(d, provider.getComponent());
 		provider.contextChanged();
 	}
 
@@ -282,9 +282,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	}
 
 	private void disposeAllBookmarkers() {
-		Iterator<BookmarkNavigator> it = bookmarkNavigators.values().iterator();
-		while (it.hasNext()) {
-			BookmarkNavigator nav = it.next();
+		for (BookmarkNavigator nav : bookmarkNavigators.values()) {
 			nav.dispose();
 		}
 		bookmarkNavigators.clear();
@@ -300,12 +298,16 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		if (type == null) {
 			return null;
 		}
+
 		String typeString = type.getTypeString();
 		BookmarkNavigator nav = bookmarkNavigators.get(typeString);
-		if (nav == null) {
-			nav = new BookmarkNavigator(markerService, currentProgram.getBookmarkManager(), type);
-			bookmarkNavigators.put(typeString, nav);
+		if (nav != null) {
+			return nav;
 		}
+
+		BookmarkManager bookmarkManager = currentProgram.getBookmarkManager();
+		nav = new BookmarkNavigator(markerService, bookmarkManager, type);
+		bookmarkNavigators.put(typeString, nav);
 		return nav;
 	}
 
@@ -513,7 +515,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 
 	/**
 	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the given
-	 * address. The list of actions will not exceed <tt>maxActionsCount</tt>
+	 * address. The list of actions will not exceed {@code maxActionsCount}
 	 * 
 	 * @param primaryAddress The address required to find the containing code unit.
 	 * @param maxActionsCount The maximum number of actions to include in the returned list.
@@ -544,7 +546,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 * @param primaryAddress The address required to find the containing code unit.
 	 * @param type The bookmark type to retrieve.
 	 * @param navigator The BookmarkNavigator used to determine whether there are bookmarks inside
-	 *            the code unit containing the given <tt>primaryAddress</tt>.
+	 *            the code unit containing the given {@code primaryAddress}.
 	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the given
 	 *         address <b>for the given <i>type</i> of bookmark</b>.
 	 */
@@ -579,8 +581,8 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	}
 
 	/**
-	 * Adds the actions in <tt>newActionList</tt> to <tt>actionList</tt> while the size of
-	 * <tt>actionList</tt> is less than the given {@link #MAX_DELETE_ACTIONS}.
+	 * Adds the actions in {@code newActionList} to {@code actionList} while the size of
+	 * {@code actionList} is less than the given {@link #MAX_DELETE_ACTIONS}.
 	 * 
 	 * @param actionList The list to add to
 	 * @param newActionList The list containing items to add
@@ -624,9 +626,8 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 				types.add(type);
 			}
 			else {
-				Iterator<String> it = bookmarkNavigators.keySet().iterator();
-				while (it.hasNext()) {
-					types.add(it.next());
+				for (String element : bookmarkNavigators.keySet()) {
+					types.add(element);
 				}
 			}
 			updateMgr.update();
@@ -655,9 +656,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 				running = true;
 			}
 			try {
-				Iterator<String> it = myTypes.iterator();
-				while (it.hasNext()) {
-					String type = it.next();
+				for (String type : myTypes) {
 					updateNav(type);
 				}
 			}

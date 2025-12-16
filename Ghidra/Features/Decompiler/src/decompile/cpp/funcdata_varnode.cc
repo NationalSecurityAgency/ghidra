@@ -610,11 +610,17 @@ void Funcdata::setHighLevel(void)
 /// Properties like boolean flags and \e consume bits are copied as appropriate.
 /// \param vn is the existing Varnode
 /// \param newVn is the new Varnode that has its properties set
-/// \param lsbOffset is the significance offset of the new Varnode within the exising
+/// \param lsbOffset is the significance offset of the new Varnode within the existing Varnode
 void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset)
 
 {
-  uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
+  uintb newConsume = ~((uintb)0);	// Make sure any bits shifted in above the precision of Varnode::consume are set
+  if (lsbOffset < sizeof(uintb)) {
+    uintb fillBits = 0;
+    if (lsbOffset != 0)
+      fillBits = newConsume << 8*(sizeof(uintb) - lsbOffset);
+    newConsume = ((vn->getConsume() >> 8*lsbOffset) | fillBits) & calc_mask(newVn->getSize());
+  }
 
   uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce);
 
@@ -1724,7 +1730,7 @@ void Funcdata::prepareThisPointer(void)
       return;		// Data-type will be obtained directly from symbol
   }
 
-  // Its possible that a recommendation for the "this" pointer has already been been collected.
+  // It's possible that a recommendation for the "this" pointer has already been collected.
   // Currently the only type recommendations are for the "this" pointer. If there any, it is for "this"
   if (localmap->hasTypeRecommendations())
     return;

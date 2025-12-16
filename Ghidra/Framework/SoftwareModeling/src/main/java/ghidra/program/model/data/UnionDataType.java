@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.Msg;
 import ghidra.util.UniversalID;
 
 /**
@@ -505,57 +504,26 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) throws IllegalArgumentException {
 		DataType replacementDt = newDt;
 		try {
-			validateDataType(replacementDt);
-			if (replacementDt.getDataTypeManager() != dataMgr) {
-				replacementDt = replacementDt.clone(dataMgr);
-			}
+			replacementDt = validateDataType(replacementDt); // blocks DEFAULT use
+			replacementDt = replacementDt.clone(dataMgr);
 			checkAncestry(replacementDt);
 		}
 		catch (Exception e) {
-			// TODO: should we use Undefined instead since we do not support
-			// DEFAULT in Unions
-			replacementDt = DataType.DEFAULT;
+			replacementDt = Undefined1DataType.dataType;
 		}
 		boolean changed = false;
 		for (int i = components.size() - 1; i >= 0; i--) {
-
 			DataTypeComponentImpl dtc = components.get(i);
-
-			boolean remove = false;
 			if (dtc.isBitFieldComponent()) {
-				try {
-					changed |= updateBitFieldDataType(dtc, oldDt, replacementDt);
-				}
-				catch (InvalidDataTypeException e) {
-					Msg.error(this,
-						"Invalid bitfield replacement type " + newDt.getName() +
-							", removing bitfield " + dtc.getDataType().getName() + ": " +
-							getPathName());
-					remove = true;
-				}
+				changed |= updateBitFieldDataType(dtc, oldDt, replacementDt);
 			}
 			else if (dtc.getDataType() == oldDt) {
-				if (replacementDt == DEFAULT) {
-					Msg.error(this,
-						"Invalid replacement type " + newDt.getName() + ", removing component " +
-							dtc.getDataType().getName() + ": " + getPathName());
-					remove = true;
-				}
-				else {
-					int len = getPreferredComponentLength(newDt, dtc.getLength());
-					oldDt.removeParent(this);
-					dtc.setLength(len);
-					dtc.setDataType(replacementDt);
-					dtc.invalidateSettings();
-					replacementDt.addParent(this);
-					changed = true;
-				}
-			}
-			if (remove) {
-				// error case - remove component
+				int len = getPreferredComponentLength(newDt, dtc.getLength());
 				oldDt.removeParent(this);
-				components.remove(i);
-				shiftOrdinals(i, -1);
+				dtc.setLength(len);
+				dtc.setDataType(replacementDt);
+				dtc.invalidateSettings();
+				replacementDt.addParent(this);
 				changed = true;
 			}
 		}
@@ -570,19 +538,22 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		boolean changed = false;
 		for (int i = components.size() - 1; i >= 0; i--) { // reverse order
 			DataTypeComponentImpl dtc = components.get(i);
-			boolean removeBitFieldComponent = false;
 			if (dtc.isBitFieldComponent()) {
+				// Do not allow bitfield to be destroyed
+				// If base type is removed - revert to primitive type
 				BitFieldDataType bitfieldDt = (BitFieldDataType) dtc.getDataType();
-				removeBitFieldComponent = bitfieldDt.getBaseDataType() == dt;
+				if (bitfieldDt.getBaseDataType() == dt &&
+					updateBitFieldDataType(dtc, dt, bitfieldDt.getPrimitiveBaseDataType())) {
+					changed = true;
+				}
 			}
-			if (removeBitFieldComponent || dtc.getDataType() == dt) {
+			else if (dtc.getDataType() == dt) {
 				dt.removeParent(this);
-				components.remove(i);
-				shiftOrdinals(i, -1);
+				dtc.setDataType(BadDataType.dataType); // updates record
 				changed = true;
 			}
 		}
-		if (changed && !repack(true) && isPackingEnabled()) {
+		if (changed && isPackingEnabled() && !repack(true)) {
 			// NOTE: Must assume alignment change since we are unable to determine
 			// without stored alignment
 			notifyAlignmentChanged();

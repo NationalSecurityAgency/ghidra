@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a Swift TargetClassDescriptor structure
  * 
- * @see <a href="https://github.com/apple/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
 public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 
@@ -34,6 +34,7 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 	private int metadataPositiveSizeInWords;
 	private int numImmediateMembers;
 	private int numFields;
+	private int fieldOffsetVectorOffset;
 
 	/**
 	 * Creates a new {@link TargetClassDescriptor}
@@ -48,6 +49,7 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 		metadataPositiveSizeInWords = reader.readNextInt();
 		numImmediateMembers = reader.readNextInt();
 		numFields = reader.readNextInt();
+		fieldOffsetVectorOffset = reader.readNextInt();
 	}
 
 	/**
@@ -93,7 +95,7 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 	public int getNumImmediateMembers() {
 		return numImmediateMembers;
 	}
-	
+
 	/**
 	 * Gets the number of stored properties in the class, not including its superclasses. If there 
 	 * is a field offset vector, this is its length.
@@ -103,6 +105,17 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 	 */
 	public int getNumFields() {
 		return numFields;
+	}
+
+	/**
+	 * Gets the offset of the field offset vector for this class's stored properties in its
+	 * metadata, in words. 0 means there is no field offset vector.
+	 *
+	 * @return THe offset of the field offset vector for this class's stored properties in its
+	 *   metadata, in words. 0 means there is no field offset vector.
+	 */
+	public int getFieldOffsetVectorOffset() {
+		return fieldOffsetVectorOffset;
 	}
 
 	@Override
@@ -129,6 +142,8 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 			"The number of additional members added by this class to the class metadata");
 		struct.add(DWORD, "NumFields",
 			"The number of stored properties in the class, not including its superclasses. If there is a field offset vector, this is its length.");
+		struct.add(DWORD, "FieldOffsetVectorOffset",
+			"The offset of the field offset vector for this class's stored properties in its metadata, in words. 0 means there is no field offset vector.");
 		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}

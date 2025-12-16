@@ -16,12 +16,10 @@
 package generic.test;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.runners.model.Statement;
 
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 import junit.framework.AssertionFailedError;
@@ -94,7 +92,6 @@ public class ConcurrentTestExceptionStatement extends Statement {
 	}
 
 	private boolean isRunningFromEclipse() {
-		// TODO: this may need adjustment for other Eclipse platforms/versions
 		return System.getProperty("java.class.path").endsWith(".cp");
 	}
 
@@ -197,17 +194,17 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		}
 	}
 
-	@SuppressWarnings({ "removal" })  // Thread.stop()
 	private void checkForTestTimeout(TestThread testThread) {
 
 		if (timoutMonitor == null || !timoutMonitor.didRun()) {
 			return;
 		}
 
-		if (SystemUtilities.isInDevelopmentMode()) {
-			throw new AssertionFailedError("Test timeout after " +
-				TimeUnit.MINUTES.convert(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS) + " mins");
-		}
+//		Not sure why we were doing this before
+//		if (SystemUtilities.isInDevelopmentMode()) {
+//			throw new AssertionFailedError("Test timeout after " +
+//				TimeUnit.MINUTES.convert(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS) + " mins");
+//		}
 
 		String vmTrace = AbstractGenericTest.createStackTraceForAllThreads();
 		Msg.error(ConcurrentTestExceptionStatement.class,
@@ -217,9 +214,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 
 		StackTraceElement[] trace = testThread.getStackTrace();
 
-		// if we get here, we are one step away from System.exit(1), so do the 
-		// bad thing and kill the thread
-		testThread.stop();
+		testThread.interrupt();
 		lastTestThread = null; // don't try to join
 		AssertionFailedError error =
 			new AssertionFailedError("Test locked-up--aborting!  See log for details");

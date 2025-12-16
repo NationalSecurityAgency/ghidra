@@ -346,9 +346,9 @@ define token instr(16)
 	N_1   = ( 9,11) # register id
 	N_2   = (10,11) # register id
 	FRN_0 = ( 8,11) # float register id
-        FRN_1 = ( 8,10) # float register id
-        FRN_2 = ( 8,10) # float register id
-        DRN_0 = ( 8,10) # double register id
+	FRN_1 = ( 9,11) # float register id
+	FRN_2 = ( 9,11) # float register id
+	DRN_0 = ( 9,11) # double register id
 	DRN_1 = ( 9,11) # double register id
 	XDN_1 = ( 9,11) # double register id
 	XDRN  = ( 8,11) # float register id
@@ -1286,7 +1286,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    # arch_sh2e_up
 :float FPUL,FRN_0t          is
        OP_0=0xf & OP_6 & FRN_0t & DRN_1t & OP_4=0x2d & FPUL {
-	# If bit 6 is set this this is an odd FP register number, so need to do single float operation.
+	# If bit 6 is set, this is an odd FP register number, so need to do single float operation.
 	# This is not in the manual but this seems to be the correct behavior.
 	if (!( $(FPSCR_PR) == 0 ) ) && (OP_6:1 == 0x0) goto <doublePrecision>;
 	FRN_0t = int2float( FPUL );

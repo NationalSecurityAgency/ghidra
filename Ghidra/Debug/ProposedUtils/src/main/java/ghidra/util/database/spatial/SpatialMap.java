@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,12 +113,13 @@ public interface SpatialMap<DS extends BoundedShape<?>, T, Q> {
 	/**
 	 * Put an entry into the map
 	 * 
+	 * <p>
 	 * Note that the map may copy, and possibly modify, the given value. The value returned is the
 	 * value actually stored by the map. This may be useful when the map's values are identical to
 	 * its records. This allows the creation of a "blank" entry with a given shape. The entry is
 	 * then populated by the user.
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 * class MyDBDataRecord extends DBTreeDataRecord<MyShape, MyNodeShape, MyDBDataRecord> {
 	 * 	&#64;Override
 	 * 	protected void setValue(MyDBDataRecord value) {
@@ -129,18 +130,17 @@ public interface SpatialMap<DS extends BoundedShape<?>, T, Q> {
 	 * 		return this; // The record is the value
 	 * 	}
 	 * }
-	 * </pre>
 	 * 
-	 * <pre>
 	 * MyDBDataRecord rec = map.put(MyShape.create(args), null);
 	 * rec.setSomething(6);
 	 * rec.setAnother("My user data");
-	 * </pre>
+	 * }</pre>
 	 * 
+	 * <p>
 	 * This practice is preferred when the values are not simple, and/or when the shape is a
 	 * property of the value. In other cases, e.g., when the value is an enum or a {@link Color},
-	 * then {@link DBTreeDataRecord#setValue(Object)} and {@link DBTreeDataRecord#getValue()} should
-	 * be implemented as field accessors.
+	 * then {@link DBTreeDataRecord#setRecordValue(Object)} and
+	 * {@link DBTreeDataRecord#getRecordValue()} should be implemented as field accessors.
 	 * 
 	 * @param shape the shape of the entry
 	 * @param value the value for the entry
@@ -151,6 +151,7 @@ public interface SpatialMap<DS extends BoundedShape<?>, T, Q> {
 	/**
 	 * Remove an entry from the map
 	 * 
+	 * <p>
 	 * Removes a single matching entry, if found, from the map. If you have a reference to an entry
 	 * obtained from this map, use {@link #remove(Entry)} instead. Otherwise, this is the preferred
 	 * method.
@@ -164,6 +165,7 @@ public interface SpatialMap<DS extends BoundedShape<?>, T, Q> {
 	/**
 	 * Remove an entry from the map
 	 * 
+	 * <p>
 	 * This method is preferred <em>only</em> when the given entry comes directly from this map.
 	 * This spares the implementation from having to search for a matching entry. If the entry does
 	 * not come from this map, it will behave like {@link #remove(BoundedShape, Object)}.
@@ -176,6 +178,7 @@ public interface SpatialMap<DS extends BoundedShape<?>, T, Q> {
 	/**
 	 * Get or compute the size of this map
 	 * 
+	 * <p>
 	 * Note that this may not necessarily be a quick operation, esp., if this map is the result of
 	 * {@link #reduce(Object)}. In the worst case, all elements in the reduced map will be visited.
 	 * 

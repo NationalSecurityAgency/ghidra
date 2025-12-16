@@ -62,27 +62,15 @@ public class AssociateDataTypeAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
-			return false;
-		}
-
-		return hasOnlyDtNodes(((DataTypesActionContext) context).getSelectedNodes());
-	}
-
-	private boolean hasOnlyDtNodes(List<GTreeNode> nodes) {
-		if (nodes.isEmpty()) {
-			return false;
-		}
-		for (GTreeNode node : nodes) {
-			if (!(node instanceof DataTypeNode)) {
-				return false;
-			}
-		}
-		return true;
+		// enable this action if any node is a non-built-in data type
+		return context instanceof DataTypesActionContext dtac &&
+			dtac.getSelectedNodes().stream().anyMatch(node -> {
+				return node instanceof DataTypeNode dtNode &&
+					!(dtNode.getDataType() instanceof BuiltInDataType);
+			});
 	}
 
 	private boolean isAlreadyAssociated(DataTypesActionContext dtContext) {
-
 		List<DataTypeNode> nodes = dtContext.getDisassociatableNodes();
 		return !nodes.isEmpty();
 	}
@@ -129,9 +117,12 @@ public class AssociateDataTypeAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		List<GTreeNode> nodes = ((DataTypesActionContext) context).getSelectedNodes();
+		List<GTreeNode> allNodes = ((DataTypesActionContext) context).getSelectedNodes();
+		List<GTreeNode> dtNodes = allNodes.stream()
+				.filter(n -> n instanceof DataTypeNode)
+				.collect(Collectors.toList());
 
-		Archive dtArchive = getSingleDTArchive(nodes);
+		Archive dtArchive = getSingleDTArchive(dtNodes);
 		if (dtArchive == null) {
 			Msg.showInfo(this, getProviderComponent(), "Multiple Data Type Archives",
 				"The currently selected nodes are from multiple archives.\n" +
@@ -169,7 +160,7 @@ public class AssociateDataTypeAction extends DockingAction {
 		Category destinationCategory = dialog.getCategory();
 
 		DataTypeTreeCopyMoveTask task =
-			new DataTypeTreeCopyMoveTask(destinationArchive, destinationCategory, nodes,
+			new DataTypeTreeCopyMoveTask(destinationArchive, destinationCategory, dtNodes,
 				ActionType.COPY, plugin.getProvider().getGTree(), plugin.getConflictHandler());
 		task.setPromptToAssociateTypes(false); // do not prompt the user; they have already decided
 		TaskLauncher.launch(task);

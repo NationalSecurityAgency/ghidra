@@ -31,6 +31,7 @@ import docking.test.AbstractDockingTest;
 import docking.tool.ToolConstants;
 import generic.jar.ResourceFile;
 import generic.test.*;
+import generic.theme.ThemeManager;
 import ghidra.app.events.CloseProgramPluginEvent;
 import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -75,7 +76,7 @@ public class TestEnv {
 	private static Set<TestEnv> instances = new HashSet<>();
 
 	private FrontEndTool frontEndTool;
-	private PluginTool tool;
+	protected PluginTool tool;
 
 	private static TestProgramManager programManager = new TestProgramManager();
 
@@ -252,6 +253,7 @@ public class TestEnv {
 	private void dipsoseTestTools() {
 		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
+			tool = null;
 
 			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
@@ -437,6 +439,7 @@ public class TestEnv {
 	}
 
 	private PluginTool lazyTool() {
+
 		if (tool != null) {
 			return tool;
 		}
@@ -557,18 +560,18 @@ public class TestEnv {
 		}
 
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
-		PrintWriter writer = new PrintWriter(System.out);
+		PrintWriter errWriter = new PrintWriter(System.err);
 		ResourceFile resourceFile = new ResourceFile(scriptFile);
 		GhidraScript script = null;
 		try {
-			script = scriptProvider.getScriptInstance(resourceFile, writer);
+			script = scriptProvider.getScriptInstance(resourceFile, errWriter);
 		}
 		catch (GhidraScriptLoadException e) {
 			Msg.error(TestEnv.class, "Problem creating script", e);
 
 		}
 		if (script == null) {
-			writer.flush();
+			errWriter.flush();
 			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 
@@ -590,9 +593,9 @@ public class TestEnv {
 	 * A convenience method to close and then reopen the default project created by this TestEnv
 	 * instance.  This will not delete the project between opening and closing and will restore
 	 * the project to its previous state.
-	 * @throws IOException if any exception occurs while saving and reopening
+	 * @throws Exception if any exception occurs while saving and reopening
 	 */
-	public void closeAndReopenProject() throws IOException {
+	public void closeAndReopenProject() throws Exception {
 		gp.setDeleteOnClose(false);
 		Project project = gp.getProject();
 		ProjectLocator projectLocator = project.getProjectLocator();
@@ -962,7 +965,7 @@ public class TestEnv {
 
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
-			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+			CancelledException, VersionException {
 		File file = AbstractGenericTest.getTestDataFile(programName);
 		if (file == null || !file.exists()) {
 			throw new FileNotFoundException("Can not find test program: " + programName);
@@ -971,8 +974,7 @@ public class TestEnv {
 	}
 
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
+			throws CancelledException, VersionException, IOException {
 		Language language =
 			DefaultLanguageService.getLanguageService().getDefaultLanguage(processor);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
@@ -1095,6 +1097,15 @@ public class TestEnv {
 		disposeAllSwingUpdateManagers();
 
 		deleteTestProject(projectName);
+
+		resetTheme();
+	}
+
+	private void resetTheme() {
+		Swing.runNow(() -> {
+			ThemeManager themeManager = ThemeManager.getInstance();
+			themeManager.restoreThemeValues();
+		});
 	}
 
 	private void deleteTestProject(String projectName) {

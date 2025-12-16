@@ -44,6 +44,7 @@ public class LaunchSupport {
 	 *   <li><b>-jdk_home_check: </b> Verify that the specified Java home directory contains a 
 	 *                           supported version of java.  No output is produced.</li>
 	 *   <li><b>-vmargs: </b> Get JVM arguments and output on stdout (one per line).</li>
+	 *   <li><b>-envvars: </b> Get environment variables and output on stdout (one per line).</li>
 	 * </ul>
 	 * Optional arguments supported by -java_home and -jdk_home:
 	 * <ul>
@@ -113,6 +114,9 @@ public class LaunchSupport {
 					break;
 				case "-vmargs":
 					exitCode = handleVmArgs(appConfig);
+					break;
+				case "-envvars":
+					exitCode = handleEnvVars(appConfig);
 					break;
 				default:
 					System.err.println("LaunchSupport received illegal argument: " + mode);
@@ -202,6 +206,9 @@ public class LaunchSupport {
 		if (javaHome != null) {
 			javaHomeDir = new File(javaHome);
 			if (appConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
+				if (save) {
+					appConfig.saveJavaHome(javaHomeDir);
+				}
 				System.out.println(javaHomeDir);
 				return EXIT_SUCCESS;
 			}
@@ -346,6 +353,26 @@ public class LaunchSupport {
 
 		// Force newline style to make cross-platform parsing consistent
 		appConfig.getLaunchProperties().getVmArgList().forEach(e -> System.out.print(e + "\r\n"));
+		return EXIT_SUCCESS;
+	}
+
+	/**
+	 * Handles getting the environment variables. If they are successfully determined, they are 
+	 * printed to STDOUT as a new-line delimited string that can be parsed and added to the 
+	 * environment, and an exit code that indicates success is returned. 
+	
+	 * @param appConfig The appConfig configuration that defines what we support.  
+	 * @return A suggested exit code based on whether or not the environment variables were 
+	 *   successfully gotten.
+	 */
+	private static int handleEnvVars(AppConfig appConfig) {
+		if (appConfig.getLaunchProperties() == null) {
+			System.err.println("Launch properties file was not specified!");
+			return EXIT_FAILURE;
+		}
+
+		// Force newline style to make cross-platform parsing consistent
+		appConfig.getLaunchProperties().getEnvVarList().forEach(e -> System.out.print(e + "\r\n"));
 		return EXIT_SUCCESS;
 	}
 }

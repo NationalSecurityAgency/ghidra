@@ -20,14 +20,12 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.GoConstants;
-import ghidra.app.util.bin.format.golang.rtti.types.GoMethod.GoMethodInfo;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.sourcemap.SourceFileManager;
@@ -36,7 +34,7 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 
 /**
- * A structure that golang generates that contains metadata about a function.
+ * A structure that Go generates that contains metadata about a function.
  */
 @StructureMapping(structureName = "runtime._func")
 public class GoFuncData implements StructureMarkup<GoFuncData> {
@@ -62,6 +60,10 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	private long nameoff;	// uint32
 
 	//private long args; // size of arguments
+
+	@FieldMapping
+	@MarkupReference("getDeferreturnAddress")
+	private long deferreturn;
 
 	@FieldMapping
 	private long pcfile;	// offset in moduledata.pctab where file info starts
@@ -117,9 +119,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns the address of this function.
-	 * 
-	 * @return the address of this function
+	 * {@return the address of this function}
 	 */
 	public Address getFuncAddress() {
 		return funcAddress;
@@ -148,13 +148,17 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns the Ghidra function that corresponds to this go function.
+	 * Returns the Ghidra function that corresponds to this Go function.
 	 * 
 	 * @return Ghidra {@link Function}, or null if there is no Ghidra function at the address
 	 */
 	public Function getFunction() {
 		Address addr = getFuncAddress();
 		return programContext.getProgram().getFunctionManager().getFunctionAt(addr);
+	}
+
+	public Address getDeferreturnAddress() {
+		return deferreturn != 0 ? getFuncAddress().add(deferreturn) : null;
 	}
 
 	private long getPcDataStartOffset(int tableIndex) {
@@ -246,23 +250,6 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Attempts to return a {@link GoMethodInfo} for this function, based on this
-	 * function's inclusion in a golang interface as a method.
-	 * 
-	 * @return {@link GoMethodInfo}
-	 */
-	public GoMethodInfo findMethodInfo() {
-		for (MethodInfo methodInfo : programContext.getMethodInfoForFunction(funcAddress)) {
-			if (methodInfo instanceof GoMethodInfo gmi) {
-				if (gmi.isTfn(funcAddress)) {
-					return gmi;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Returns the address of this function's name string.
 	 * <p>
 	 * Referenced from nameoff's markup annotation
@@ -282,9 +269,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns the name of this function.
-	 * 
-	 * @return String name of this function
+	 * {@return the name of this function}
 	 */
 	public String getName() {
 		GoModuledata moduledata = getModuledata();
@@ -305,9 +290,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns the name of this function, as a parsed symbol object.
-	 * 
-	 * @return {@link GoSymbolName} containing this function's name
+	 * {@return the name of this function, as a parsed {@link GoSymbolName} symbol object}
 	 */
 	public GoSymbolName getSymbolName() {
 		return GoSymbolName.parse(getName());
@@ -325,26 +308,21 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns true if this function is inline
-	 * @return true if this function is inline
+	 * {@return true if this function is inline}
 	 */
 	public boolean isInline() {
 		return entryoff == -1 || entryoff == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG;
 	}
 
 	/**
-	 * Returns the func flags for this function.
-	 * 
-	 * @return {@link GoFuncFlag}s
+	 * {@return the {@link GoFuncFlag} func flags for this function}
 	 */
 	public Set<GoFuncFlag> getFlags() {
 		return GoFuncFlag.parseFlags(flag);
 	}
 
 	/**
-	 * Returns true if this function is an ASM function
-	 * 
-	 * @return true if this function is an ASM function
+	 * {@return true if this function is an ASM function}
 	 */
 	public boolean isAsmFunction() {
 		return GoFuncFlag.ASM.isSet(flag);
@@ -409,11 +387,8 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 							sfman.addSourceFile(sourceFile);
 							sfman.addSourceMapEntry(sourceFile, lineNum, startAddr, len);
 						}
-						catch (AddressOverflowException e) {
-							Msg.error(this, "Failed to add source file mapping", e);
-						}
-						catch (IllegalArgumentException e) {
-							// overlapping entry
+						catch (AddressOverflowException | IllegalArgumentException e) {
+							Msg.error(this, "Failed to add source file mapping: " + e.getMessage());
 						}
 					}
 				}
@@ -446,9 +421,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns a reference to the {@link GoModuledata} that contains this function.
-	 * 
-	 * @return {@link GoModuledata} that contains this function
+	 * {@return a reference to the {@link GoModuledata} that contains this function}
 	 */
 	public GoModuledata getModuledata() {
 		return programContext.findContainingModuleByFuncData(context.getStructureStart());
@@ -461,29 +434,41 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 
 	@Override
 	public String getStructureName() throws IOException {
-		return getName();
+		return getSymbolName().asString();
 	}
-
+	
 	@Override
 	public String getStructureNamespace() throws IOException {
 		return getSymbolName().packagePath();
-	}	
+	}
+
+	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s___funcdata".formatted(getStructureName());
+	}
 	
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		if (npcdata > 0) {
-			ArrayDataType pcdataArrayDT = new ArrayDataType(programContext.getUint32DT(), npcdata,
+			ArrayDataType pcdataArrayDT = new ArrayDataType(goTypes.getDataType("uint32"), npcdata,
 				-1, programContext.getDTM());
 			Address addr = context.getStructureAddress().add(getPcDataStartOffset(0));
 			session.markupAddress(addr, pcdataArrayDT);
 			session.labelAddress(addr, getStructureLabel() + "___pcdata", getStructureNamespace());
 		}
 		if (nfuncdata > 0) {
-			ArrayDataType funcdataArrayDT = new ArrayDataType(programContext.getUint32DT(),
+			ArrayDataType funcdataArrayDT = new ArrayDataType(goTypes.getDataType("uint32"),
 				nfuncdata, -1, programContext.getDTM());
 			Address addr = context.getStructureAddress().add(getPcDataStartOffset(npcdata));
 			session.markupAddress(addr, funcdataArrayDT);
-			session.labelAddress(addr, getStructureLabel() + "___funcdata", getStructureNamespace());
+			session.labelAddress(addr, getStructureLabel() + "___array", getStructureNamespace());
+		}
+		Address deferreturnAddr = getDeferreturnAddress();
+		if (deferreturnAddr != null) {
+			GoSymbolName funcName = getSymbolName();
+			session.labelAddress(deferreturnAddr, funcName.asString() + "_deferreturn",
+				funcName.packagePath());
 		}
 	}
 
@@ -492,20 +477,19 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	/**
 	 * Represents approximate parameter signatures for a function.
 	 * <p>
-	 * Golang's exception/stack-trace metadata is mined to provide these approximate signatures,
-	 * and any limitation in the information recovered is due to what golang stores.
+	 * Go's exception/stack-trace metadata is mined to provide these approximate signatures,
+	 * and any limitation in the information recovered is due to what Go stores.
 	 * <p>
 	 * Instead of data types, only the size and limited grouping of structure/array parameters
 	 * is recoverable.
 	 *   
-	 * @param returnType return type of the function (currently just undefined) 
 	 * @param name name of the function
 	 * @param args list of recovered arguments
 	 * @param partial boolean flag, if true there was an argument that was marked as partial
 	 * @param error boolean flag, if true there was an error reading the argument info
 	 *
 	 */
-	record RecoveredSignature(DataType returnType, String name, List<RecoveredArg> args,
+	record RecoveredSignature(String name, List<RecoveredArg> args,
 			boolean partial, boolean error) {
 
 		private static final int ARGINFO_ENDSEQ = 0xff;
@@ -517,8 +501,8 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 		public static RecoveredSignature read(GoFuncData funcData, GoRttiMapper goBinary)
 				throws IOException {
 			RecoveredArg args = readArgs(funcData, goBinary);
-			return new RecoveredSignature(DataType.DEFAULT, funcData.getName(), args.subArgs,
-				args.hasPartialFlag(), args.partial);
+			return new RecoveredSignature(funcData.getName(), args.subArgs, args.hasPartialFlag(),
+				args.partial);
 		}
 
 		public static RecoveredArg readArgs(GoFuncData funcData, GoRttiMapper goBinary)
@@ -580,19 +564,17 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 				sb.append("[error] ");
 			}
 
-			sb.append(returnType != null ? returnType.getName() : "???");
-			sb.append(" ").append(name).append("(");
+			sb.append("func ").append(name).append("(");
 
-			boolean first = true;
-			for (RecoveredArg arg : args) {
-				if (!first) {
+			for (int i = 0; i < args.size(); i++) {
+				RecoveredArg arg = args.get(i);
+				if (i != 0) {
 					sb.append(", ");
 				}
-				first = false;
 				arg.concatString(sb);
 			}
 
-			sb.append(")");
+			sb.append(") ???");
 
 			return sb.toString();
 		}

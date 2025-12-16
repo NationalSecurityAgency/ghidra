@@ -58,7 +58,8 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	}
 
 	protected PcodeExecutor<byte[]> createBytesExecutor(SleighLanguage language) throws Exception {
-		PcodeExecutorState<byte[]> state = new BytesPcodeExecutorState(language);
+		PcodeExecutorState<byte[]> state =
+			new BytesPcodeExecutorState(language, PcodeStateCallbacks.NONE);
 		PcodeArithmetic<byte[]> arithmetic = BytesPcodeArithmetic.forLanguage(language);
 		return new PcodeExecutor<>(language, arithmetic, state, Reason.EXECUTE_READ);
 	}

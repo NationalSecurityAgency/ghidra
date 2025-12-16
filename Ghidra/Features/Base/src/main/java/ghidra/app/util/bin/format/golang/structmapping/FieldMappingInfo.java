@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -107,9 +107,9 @@ public class FieldMappingInfo<T> {
 	}
 
 	public DataTypeComponent findDtc(Structure struct) {
-		for (DataTypeComponent dtc : struct.getDefinedComponents()) {
-			if (dtcFieldName.equals(dtc.getFieldName())) {
-				return dtc;
+		for (DataTypeComponent testDtc : struct.getDefinedComponents()) {
+			if (dtcFieldName.equals(testDtc.getFieldName())) {
+				return testDtc;
 			}
 		}
 		return null;
@@ -173,19 +173,19 @@ public class FieldMappingInfo<T> {
 		if (pca != null) {
 			Method commentGetter =
 				ReflectionHelper.getCommentMethod(clazz, pca.value(), field.getName());
-			markupFuncs.add(createCommentMarkupFunc(commentGetter, CodeUnit.PLATE_COMMENT, "\n"));
+			markupFuncs.add(createCommentMarkupFunc(commentGetter, CommentType.PLATE, "\n"));
 		}
 
 		EOLComment eca = field.getAnnotation(EOLComment.class);
 		if (eca != null) {
 			Method commentGetter =
 				ReflectionHelper.getCommentMethod(clazz, eca.value(), field.getName());
-			markupFuncs.add(createCommentMarkupFunc(commentGetter, CodeUnit.EOL_COMMENT, ";"));
+			markupFuncs.add(createCommentMarkupFunc(commentGetter, CommentType.EOL, ";"));
 		}
 	}
 
-	private FieldMarkupFunction<T> createCommentMarkupFunc(Method commentGetter, int commentType,
-			String sep) {
+	private FieldMarkupFunction<T> createCommentMarkupFunc(Method commentGetter,
+			CommentType commentType, String sep) {
 		return (context, session) -> {
 			T obj = context.getStructureInstance();
 			Object val = ReflectionHelper.callGetter(commentGetter, obj);

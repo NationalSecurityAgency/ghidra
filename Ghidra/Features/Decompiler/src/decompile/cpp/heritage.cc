@@ -1083,7 +1083,7 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
 	      // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
 	      // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
 	      // This will likely get resolved in the next heritage pass, but we leave the
-	      // spacebaseptr mark on, so that that the indirects don't get removed
+	      // spacebaseptr mark on, so the indirects don't get removed
 	      fd->opMarkSpacebasePtr(op);
 	    }
 	  }
@@ -1739,15 +1739,16 @@ void Heritage::splitByRefinement(Varnode *vn,const Address &addr,const vector<in
   uint4 diff = (uint4)spc->wrapOffset(curaddr.getOffset() - addr.getOffset());
   int4 cutsz = refine[diff];
   if (sz <= cutsz) return;	// Already refined
+  split.push_back(fd->newVarnode(cutsz,curaddr));
+  sz -= cutsz;
   while(sz > 0) {
-    Varnode *vn2 = fd->newVarnode(cutsz,curaddr);
-    split.push_back(vn2);
     curaddr = curaddr + cutsz;
-    sz -= cutsz;
     diff = (uint4)spc->wrapOffset(curaddr.getOffset() - addr.getOffset());
     cutsz = refine[diff];
     if (cutsz > sz)
       cutsz = sz;		// Final piece
+    split.push_back(fd->newVarnode(cutsz,curaddr));
+    sz -= cutsz;
   }
 }
 
@@ -1892,10 +1893,11 @@ TaskList::iterator Heritage::refinement(TaskList::iterator memiter,const vector<
   int4 size = (*memiter).size;
   if (size > 1024) return disjoint.end();
   Address addr = (*memiter).addr;
-  vector<int4> refine(size+1,0);
+  vector<int4> refine(size+1,0);		// Add "fencepost" for size position
   buildRefinement(refine,addr,readvars);
   buildRefinement(refine,addr,writevars);
   buildRefinement(refine,addr,inputvars);
+  refine.pop_back();				// Remove the fencepost
   int4 lastpos = 0;
   for(int4 curpos=1;curpos < size;++curpos) { // Convert boundary points to partition sizes
     if (refine[curpos] != 0) {

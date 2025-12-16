@@ -60,7 +60,7 @@ import ghidra.program.model.pcode.Varnode;
  * Ignoring RAM, there are two varnodes at play, named for the registers they represent: {@code RAX}
  * and {@code RDX}. However, there are three variables. The first is an instance of {@code RAX},
  * defined by the first {@code MOV} instruction. The second is an instance of {@code RDX}, which is
- * implicitly defined as an input to the passage. The third is another instance of of {@code RAX},
+ * implicitly defined as an input to the passage. The third is another instance of {@code RAX},
  * defined by the {@code ADD} instruction. These could be given unique names
  * {@code RAX}<sub>1</sub>, {@code RDX}<sub>in</sub>, and {@code RAX}<sub>2</sub>, respectively.
  * Thus, the {@code ADD} instruction uses {@code RAX}<sub>1</sub> and {@code RDX}<sub>in</sub>, to

@@ -39,6 +39,11 @@ public enum TraceMemoryStatePcodeArithmetic implements PcodeArithmetic<TraceMemo
 	INSTANCE;
 
 	@Override
+	public Class<TraceMemoryState> getDomain() {
+		return TraceMemoryState.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return null;
 	}

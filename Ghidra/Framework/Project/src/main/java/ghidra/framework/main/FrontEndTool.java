@@ -129,7 +129,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	private DefaultLaunchMode defaultLaunchMode = DefaultLaunchMode.DEFAULT;
 
 	private ComponentProvider compProvider;
-	private LogComponentProvider logProvider;
+	private LogWindow logWindow;
 
 	private WindowListener windowListener;
 	private DockingAction configureToolAction;
@@ -169,8 +169,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public void dispose() {
 		super.dispose();
 
-		if (logProvider != null) {
-			logProvider.dispose();
+		if (logWindow != null) {
+			logWindow.dispose();
 		}
 		shutdown();
 	}
@@ -184,7 +184,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		if (!GhidraURL.isLocalProjectURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
 			return false;
 		}
-		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, plugin)));
+		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, true, plugin)));
 		return true;
 	}
 
@@ -355,8 +355,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
 
-		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help, "This controls whether" +
-			" text cursors blink when focused");
+		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help,
+			"This controls whether" + " text cursors blink when focused");
 
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
@@ -370,7 +370,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		AnimationUtils.setAnimationEnabled(animationEnabled);
 
 		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
-		DockingUtils.setTipWindowEnabled(showToolTips);
+		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
 
 		boolean compressDataBuffers =
 			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false);
@@ -397,7 +397,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			AnimationUtils.setAnimationEnabled((Boolean) newValue);
 		}
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
-			DockingUtils.setTipWindowEnabled((Boolean) newValue);
+			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
 		}
 		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
 			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);
@@ -844,7 +844,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public boolean canCloseDomainFile(DomainFile df) {
-		PluginTool[] tools = getProject().getToolManager().getRunningTools();
+		Project project = getProject();
+		ToolManager toolManager = project.getToolManager();
+		PluginTool[] tools = toolManager.getRunningTools();
 		for (PluginTool tool : tools) {
 			DomainFile[] files = tool.getDomainFiles();
 			for (DomainFile domainFile : files) {
@@ -862,59 +864,62 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			return;// something odd is going on; can't find log file
 		}
 
-		if (logProvider == null) {
-			logProvider = new LogComponentProvider(this, logFile);
-			showDialog(logProvider);
+		if (logWindow == null) {
+			logWindow = new LogWindow(logFile);
+			JFrame toolFrame = getToolFrame();
+			Point center = WindowUtilities.centerOnComponent(toolFrame, logWindow);
+			logWindow.setLocation(center);
+			logWindow.setVisible(true);
 			return;
 		}
 
-		if (logProvider.isShowing()) {
-			logProvider.toFront();
-		}
-		else {
-			showDialog(logProvider, getToolFrame());
-		}
+		logWindow.setVisible(true);
+		logWindow.toFront();
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	private static class LogComponentProvider extends ReusableDialogComponentProvider {
+	private class LogWindow extends JFrame {
+
+		private static final Dimension DEFAULT_SIZE = new Dimension(600, 400);
 
 		private final File logFile;
-		private Dimension defaultSize = new Dimension(600, 400);
-
 		private FileWatcher watcher;
 
-		LogComponentProvider(PluginTool tool, File logFile) {
-			super("Ghidra User Log", false, false, false, false);
+		LogWindow(File logFile) {
+			setTitle("Ghidra User Log");
+
+			JFrame toolFrame = getToolFrame();
+			setIconImage(toolFrame.getIconImage());
 
 			this.logFile = logFile;
 
-			addWorkPanel(buildWorkPanel());
-		}
+			JPanel panel = buildWorkPanel();
+			getContentPane().add(panel);
 
-		/**
-		 * Need to override this method so we can stop the file watcher when the
-		 * dialog is closed.
-		 */
-		@Override
-		protected void dialogClosed() {
-			if (watcher != null) {
-				watcher.stop();
-			}
-		}
+			HelpService help = Help.getHelpService();
+			help.registerHelp(panel, new HelpLocation("FrontEndPlugin", "StatusWindow"));
 
-		/**
-		 * Need to override this method so we can stop the file watcher when the
-		 * dialog is closed.
-		 */
-		@Override
-		protected void dialogShown() {
-			if (watcher != null) {
-				watcher.start();
-			}
+			addWindowListener(new WindowAdapter() {
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+					if (watcher != null) {
+						watcher.stop();
+					}
+				}
+
+				@Override
+				public void windowActivated(WindowEvent e) {
+					if (watcher != null) {
+						watcher.start();
+					}
+				}
+			});
+
+			pack();
 		}
 
 		private JPanel buildWorkPanel() {
@@ -922,7 +927,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			JPanel panel = new JPanel(new BorderLayout()) {
 				@Override
 				public Dimension getPreferredSize() {
-					return defaultSize;
+					return DEFAULT_SIZE;
 				}
 			};
 

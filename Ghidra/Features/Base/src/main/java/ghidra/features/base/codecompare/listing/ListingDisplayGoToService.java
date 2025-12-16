@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ class ListingDisplayGoToService implements GoToService {
 
 	/**
 	 * Constructs a goTo service for a dual listing panel.
+	 * 
 	 * @param listingPanel the listing panel to be navigated to
 	 */
 	ListingDisplayGoToService(ListingPanel listingPanel) {
@@ -154,9 +155,9 @@ class ListingDisplayGoToService implements GoToService {
 	}
 
 	/**
-	 * Checks the address to make sure the listing won't navigate outside the addresses
-	 * it currently has loaded. If it is not a valid address it will set a status message 
-	 * on the dual listing.
+	 * Checks the address to make sure the listing won't navigate outside the addresses it currently
+	 * has loaded. If it is not a valid address it will set a status message on the dual listing.
+	 * 
 	 * @param addr the address to check
 	 * @return true if the address is valid for navigation.
 	 */
@@ -167,8 +168,8 @@ class ListingDisplayGoToService implements GoToService {
 		AddressIndexMap map = listingPanel.getAddressIndexMap();
 		AddressSetView addresses = map.getOriginalAddressSet();
 		if (!addresses.contains(addr)) {
-			DockingWindowManager.getActiveInstance().setStatusText(
-				"\"" + addr.toString() + "\" is outside the current listing's view.");
+			DockingWindowManager.getActiveInstance().setStatusText("""
+					"%s" is outside the current listing's view""".formatted(addr));
 			return false;
 		}
 		return true;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class OldGenericNamespaceAddress extends GenericAddress {
 	}
 	
 	/**
-	 * Returns the namespace ID assigned to this address.
+	 * {@return the namespace ID assigned to this address.}
 	 * This namespace ID generally corresponds to a Function.
 	 */
 	public long getNamespaceID() {
@@ -55,7 +55,7 @@ public class OldGenericNamespaceAddress extends GenericAddress {
 	}
 	
 	/**
-	 * Returns global address (i.e., GenericAddress) for this address.
+	 * {@return global address (i.e., GenericAddress) for this address.}
 	 */
 	public Address getGlobalAddress() {
 		return addrSpace.getAddress(offset);
@@ -65,7 +65,7 @@ public class OldGenericNamespaceAddress extends GenericAddress {
 	 * Returns minimum namespace address within the specified address space for upgrade iterators.
 	 * A minimum offset of 0x0 is always assumed.  
 	 * @param addrSpace address space
-	 * @param namespaceID
+	 * @param namespaceID The namespace ID
 	 * @return minimum address
 	 */
 	public static Address getMinAddress(AddressSpace addrSpace, long namespaceID) {
@@ -77,7 +77,7 @@ public class OldGenericNamespaceAddress extends GenericAddress {
 	 * For a signed stack space, the negative region is treated as positive for the purpose of 
 	 * identifying the maximum address key encoding.
 	 * @param addrSpace address space
-	 * @param namespaceID
+	 * @param namespaceID The namespace ID
 	 * @return maximum address
 	 */
 	public static Address getMaxAddress(AddressSpace addrSpace, long namespaceID) {

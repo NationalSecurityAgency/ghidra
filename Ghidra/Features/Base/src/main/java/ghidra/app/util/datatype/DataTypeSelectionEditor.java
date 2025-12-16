@@ -15,9 +15,11 @@
  */
 package ghidra.app.util.datatype;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.TreePath;
 
@@ -141,16 +143,16 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 		selectionField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 
-		browseButton = new BrowseButton();
-		browseButton.setToolTipText("Browse the Data Manager");
-		browseButton.addActionListener(e -> showDataTypeBrowser());
+		JPanel browsePanel = buildBrowsePanel();
 
 		editorPanel = new JPanel();
+		editorPanel.setOpaque(false);
 		editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
 		editorPanel.add(selectionField);
-		editorPanel.add(Box.createHorizontalStrut(5));
-		editorPanel.add(browseButton);
+		editorPanel.add(browsePanel);
 
+		// This listener is not installed under certain conditions, such as when 
+		// setTabCommitsEdit(true) is called.  
 		keyListener = new KeyAdapter() {
 
 			@Override
@@ -169,6 +171,61 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 				}
 			}
 		};
+	}
+
+	private JPanel buildBrowsePanel() {
+
+		// We override the various sizes to make sure the button does not get too big or too small,
+		// which changes depending upon the theme being used.
+		JPanel browsePanel = new JPanel() {
+
+			@Override
+			public Dimension getPreferredSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			@Override
+			public Dimension getMinimumSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			@Override
+			public Dimension getMaximumSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			private int getBestWidth() {
+				Font f = getFont();
+				FontMetrics fm = getFontMetrics(f);
+				int width = fm.stringWidth(" . . . ");
+				return width;
+			}
+		};
+
+		browsePanel.setLayout(new BorderLayout());
+		browsePanel.setOpaque(false);
+
+		// Space the button so that it pops out visually.  This was chosen by trial-and-error and 
+		// looks reasonable on all themes.  
+		Border empty = BorderFactory.createEmptyBorder(2, 2, 1, 1);
+		browsePanel.setBorder(empty);
+
+		browseButton = new BrowseButton();
+		browseButton.setToolTipText("Browse the Data Manager");
+		browseButton.addActionListener(e -> showDataTypeBrowser());
+
+		browsePanel.add(browseButton);
+
+		return browsePanel;
 	}
 
 	@Override

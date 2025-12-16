@@ -82,7 +82,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -122,6 +122,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	// bookmark all constructor/destructor functions recognized by script
 	private static final boolean BOOKMARK_FOUND_FUNCTIONS = true;
+
+	// make vfunctions this calls
+	private static final boolean MAKE_VFUNCTIONS_THISCALLS = true;
 
 	// show a graph of class hierarchies after script is complete
 	// no parent = blue vertex
@@ -193,7 +196,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else if (isPE() && isGcc()) {
 
@@ -214,7 +217,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -242,7 +245,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");
@@ -381,7 +384,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		if (!GhidraProgramUtilities.isAnalyzed(currentProgram)) {
 			return ("The program has not been analyzed. Please run auto-analysis and make sure " +
-				"the RTTI analzer is one of the analyzers enabled.");
+				"the RTTI analyzer is one of the analyzers enabled.");
 		}
 
 		if (isRttiAnalyzed() && !hasRtti()) {
@@ -414,8 +417,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			// first check that there is even rtti by searching the special string in memory
-			if (!isStringInProgramMemory("class_type_info")) {
-				return ("This program does not contain RTTI.");
+			if (!isStringInProgramMemory("class_type_info") && !containsClassTypeinfoSymbol()) {
+				return ("This program does not appear to contain RTTI.");
 			}
 
 			// then check to see if the special typeinfo namespace is in external space
@@ -1612,9 +1615,25 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return false;
 	}
 
+	// assume that if there are any symbols containing "class_type_info" there is rtti in program
+	private boolean containsClassTypeinfoSymbol() {
+
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		SymbolIterator symbolIterator =
+			symbolTable.getSymbolIterator("*class_type_info*", true);
+		return symbolIterator.hasNext();
+
+	}
+
 	private boolean isExternalNamespace(String path) throws CancelledException {
 
-		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+		// try exact namespace path if there is one
+		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, false);
+
+		// if not, try to find path in another namespace
+		if (symbols.isEmpty()) {
+			symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+		}
 
 		for (Symbol symbol : symbols) {
 			monitor.checkCancelled();

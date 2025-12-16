@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,14 @@
  */
 package ghidra.app.plugin.core.register;
 
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.register.SetRegisterCmd;
@@ -110,7 +112,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		setRegisterAction.setPopupMenuData(
 			new MenuData(new String[] { "Set Register Values..." }, null, "Registers"));
 		setRegisterAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
+			new KeyBindingData(KeyEvent.VK_R, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		setRegisterAction.setDescription("Set register values in a program.");
 		setRegisterAction.setHelpLocation(new HelpLocation("RegisterPlugin", "SetRegisterValues"));
@@ -159,8 +161,10 @@ public class RegisterPlugin extends ProgramPlugin {
 							Address addr = loc.getAddress();
 							Register reg = loc.getRegister();
 							RegisterValue regVal =
-								context.getProgram().getProgramContext().getNonDefaultValue(reg,
-									addr);
+								context.getProgram()
+										.getProgramContext()
+										.getNonDefaultValue(reg,
+											addr);
 							return regVal != null && regVal.hasValue();
 						}
 					}
@@ -191,8 +195,10 @@ public class RegisterPlugin extends ProgramPlugin {
 							Address addr = loc.getAddress();
 							Register reg = loc.getRegister();
 							RegisterValue regVal =
-								context.getProgram().getProgramContext().getNonDefaultValue(reg,
-									addr);
+								context.getProgram()
+										.getProgramContext()
+										.getNonDefaultValue(reg,
+											addr);
 							return regVal != null && regVal.hasValue();
 						}
 					}
@@ -231,7 +237,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		while (it.hasNext()) {
 			AddressRange range = it.next();
 			if (range.contains(addr)) {
-				Command cmd = new SetRegisterCmd(register, range.getMinAddress(),
+				Command<Program> cmd = new SetRegisterCmd(register, range.getMinAddress(),
 					range.getMaxAddress(), null);
 				if (!tool.execute(cmd, context.getProgram())) {
 					Msg.showError(this, tool.getToolFrame(), "Register Context Error",
@@ -246,7 +252,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		RegisterFieldLocation location = (RegisterFieldLocation) context.getLocation();
 		Register register = location.getRegister();
 		Address addr = location.getAddress();
-		Command cmd = new SetRegisterCmd(register, addr, addr, null);
+		Command<Program> cmd = new SetRegisterCmd(register, addr, addr, null);
 		if (!tool.execute(cmd, context.getProgram())) {
 			Msg.showError(this, tool.getToolFrame(), "Register Context Error", cmd.getStatusMsg());
 		}
@@ -377,7 +383,7 @@ public class RegisterPlugin extends ProgramPlugin {
 			return;
 		}
 
-		CompoundCmd cmd = new CompoundCmd("Set Register Values");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Set Register Values");
 		for (AddressRange range : addressSet) {
 			SetRegisterCmd regCmd =
 				new SetRegisterCmd(register, range.getMinAddress(), range.getMaxAddress(), value);

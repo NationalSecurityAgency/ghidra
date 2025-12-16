@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,74 +15,32 @@
  */
 package ghidra.net;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.Socket;
+import java.io.*;
 import java.security.*;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
 import javax.net.ssl.*;
-import javax.security.auth.x500.X500Principal;
 
-import org.apache.commons.lang3.StringUtils;
-
-import ghidra.framework.preferences.Preferences;
+import generic.hash.HashUtilities;
 import ghidra.security.KeyStorePasswordProvider;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 
 /**
- * <code>ApplicationKeyManagerFactory</code> provides application keystore management
- * functionality and the ability to generate X509KeyManager's for use with an SSLContext
- * or other PKI related operations.  Access to keystore data (other than keystore path)
- * is restricted to package access.  Certain public operations are exposed via the
- * {@link ApplicationKeyManagerUtils} class.
+ * {@link ApplicationKeyManagerFactory} provides a factory for using and caching X509 keystores.
  */
 public class ApplicationKeyManagerFactory {
 
-	/**
-	 * Keystore path system property or user preference.  Setting the system
-	 * property will take precedence over the user preference.
-	 */
-	public static final String KEYSTORE_PATH_PROPERTY = "ghidra.keystore";
-
-	/**
-	 * Password system property may be set.  If set, this password will be used
-	 * when accessing the keystore before attempting to use <code>customPasswordProvider</code>
-	 * if it has been set.
-	 */
-	public static final String KEYSTORE_PASSWORD_PROPERTY = "ghidra.password";
-
-	public static final String DEFAULT_PASSWORD = "changeme";
-
-	private static final int SELF_SIGNED_DURATION_DAYS = 2 * 365; // 2-years
-
 	private static KeyStorePasswordProvider customPasswordProvider;
-	private static X500Principal defaultIdentity;
-	private static List<String> subjectAlternativeNames;
 
-	private static ApplicationKeyManagerFactory instance;
+	// X509KeyManager cached keyed by file hash concatenated with its canonical path
+	private static HashMap<String, X509KeyManager> keyStoreCache = new HashMap<>();
 
-	/**
-	 * Get ApplicationKeyManager singleton
-	 * @return application X509KeyManager
-	 */
-	static synchronized ApplicationKeyManagerFactory getInstance() {
-		if (instance == null) {
-			instance = new ApplicationKeyManagerFactory();
-		}
-		return instance;
-	}
-
-	/**
-	 * get the single key manager instance associated with the factory.
-	 * @return key manager instance
-	 */
-	private static ApplicationKeyManager getKeyManagerWrapper() {
-		return getInstance().keyManagerWrapper;
+	private ApplicationKeyManagerFactory() {
+		// no construct
 	}
 
 	/**
@@ -94,220 +52,49 @@ public class ApplicationKeyManagerFactory {
 	}
 
 	/**
-	 * Prune path to trim leading and trailing white space. A null will be
-	 * returned if the pruned path is null or the empty string.
-	 *
-	 * @param path
-	 * @return pruned path or null if path was null or pruned path was the empty
-	 *         string
+	 * Clear all cached key managers.
+	 * NOTE: This is primarily intended for test use only.
 	 */
-	private static String prunePath(String path) {
-		if (path != null) {
-			path = path.trim();
-			if (path.length() == 0) {
-				path = null;
-			}
-		}
-		return path;
+	public static synchronized void clearKeyManagerCache() {
+		keyStoreCache.clear();
 	}
 
 	/**
-	 * Set user keystore file path (e.g., certificate file with private key).
-	 * This method will have no effect if the keystore had been set via the system
-	 * property and an error will be displayed.  Otherwise, the keystore will
-	 * be updated and the key manager re-initialized.  The user preference will be
-	 * updated unless a failure occurred while attempting to open the keystore.
-	 * This change will take immediate effect for the current executing application,
-	 * however, it may still be superseded by a system property setting when running
-	 * the application in the future. See {@link #getKeyStore()}.
-	 * @param path keystore file path or null to clear current key store and preference.
-	 * @param savePreference if true will be saved as user preference
-	 * @return true if successful else false if error occured (see log).
-	 */
-	public static synchronized boolean setKeyStore(String path, boolean savePreference) {
-
-		if (System.getProperty(KEYSTORE_PATH_PROPERTY) != null) {
-			Msg.showError(ApplicationKeyManagerFactory.class, null, "Set KeyStore Failed",
-				"PKI KeyStore was set via system property and can not be changed");
-			return false;
-		}
-
-		path = prunePath(path);
-
-		try {
-			boolean keyInitialized = getKeyManagerWrapper().init(path);
-
-			if (savePreference && (path == null || keyInitialized)) {
-				Preferences.setProperty(KEYSTORE_PATH_PROPERTY, path);
-				Preferences.store();
-			}
-			return keyInitialized;
-		}
-		catch (CancelledException e) {
-			// ignore - keystore left unchanged
-			return false;
-		}
-	}
-
-	/**
-	 * Get the keystore path associated with the active key manager or the
-	 * preferred keystore path if not yet initialized.
-	 */
-	public static synchronized String getKeyStore() {
-		return getKeyManagerWrapper().getKeyStore();
-	}
-
-	/**
-	 * If the system property <i>ghidra.keystore</i> takes precedence in establishing 
-	 * the keystore.  If using a GUI and the system property has not been set, the 
-	 * user preference with the same name will be used.
-	 * @return active keystore path or null if currently not running with a keystore or
-	 * one has not been set.
-	 */
-	public static synchronized String getPreferredKeyStore() {
-		String path = prunePath(System.getProperty(KEYSTORE_PATH_PROPERTY));
-		if (path == null && !SystemUtilities.isInHeadlessMode()) {
-			path = prunePath(Preferences.getProperty(KEYSTORE_PATH_PROPERTY));
-		}
-		return path;
-	}
-
-	/**
-	 * Determine if active key manager is utilizing a generated self-signed certificate.
-	 * @return true if using self-signed certificate.
-	 */
-	public static synchronized boolean usingGeneratedSelfSignedCertificate() {
-		return getKeyManagerWrapper().usingGeneratedSelfSignedCertificate();
-	}
-
-	/**
-	 * Set the default self-signed principal identity to be used during initialization
-	 * if no keystore defined.  Current application key manager will be invalidated.
-	 * (NOTE: this is intended for server use only when client will not be performing
-	 * CA validation).
-	 * @param identity if not null and a KeyStore path has not be set, this
-	 * identity will be used to generate a self-signed certificate and private key
-	 */
-	public synchronized static void setDefaultIdentity(X500Principal identity) {
-		defaultIdentity = identity;
-		getKeyManagerWrapper().invalidateKey();
-	}
-
-	/**
-	 * Add the optional self-signed subject alternative name to be used during initialization
-	 * if no keystore defined.  Current application key manager will be invalidated.
-	 * (NOTE: this is intended for server use only when client will not be performing
-	 * CA validation).
-	 * @param subjectAltName name to be added to the current list of alternative subject names.
-	 * A null value will clear all names currently set.  
-	 * name will be used to generate a self-signed certificate and private key
-	 */
-	public synchronized static void addSubjectAlternativeName(String subjectAltName) {
-		if (subjectAltName == null) {
-			subjectAlternativeNames = null;
-		}
-		else {
-			if (subjectAlternativeNames == null) {
-				subjectAlternativeNames = new ArrayList<>();
-			}
-			subjectAlternativeNames.add(subjectAltName);
-		}
-		getKeyManagerWrapper().invalidateKey();
-	}
-
-	/**
-	 * Get the current list of subject alternative names to be used for a self-signed certificate
-	 * if no keystore defined.
-	 * @return list of subject alternative names to be used for a self-signed certificate
-	 * if no keystore defined.
-	 */
-	public synchronized static List<String> getSubjectAlternativeName() {
-		return Collections.unmodifiableList(subjectAlternativeNames);
-	}
-
-	/**
-	 * Initialize key manager if needed.  Doing this explicitly independent of an SSL connection
-	 * allows application to bail before initiating connection.  This will get handshake failure
-	 * if user forgets keystore password or other keystore problem.
-	 * @return true if key manager initialized, otherwise false
-	 */
-	public synchronized static boolean initialize() {
-		try {
-			return getKeyManagerWrapper().init();
-		}
-		catch (CancelledException e) {
-			return false;
-		}
-	}
-
-	/**
-	 * Invalidate the key managers associated with this factory
-	 */
-	public synchronized static void invalidateKeyManagers() {
-		getKeyManagerWrapper().invalidateKey();
-	}
-
-	// Factory maintains a single X509 key manager
-	private ApplicationKeyManager keyManagerWrapper = new ApplicationKeyManager();
-
-	/**
-	 * <code>ApplicationKeyManagerFactory</code> constructor
-	 */
-	private ApplicationKeyManagerFactory() {
-	}
-
-	/**
-	 * Get key managers
-	 * @return key managers
-	 */
-	KeyManager[] getKeyManagers() {
-		return new KeyManager[] { keyManagerWrapper };
-	}
-
-	/**
-	 * <code>ProtectedKeyStoreData</code> provides a container for a keystore
-	 * which has been successfully accessed using the specified password.
-	 */
-	private static class ProtectedKeyStoreData {
-		KeyStore keyStore;
-		char[] password;
-
-		ProtectedKeyStoreData(KeyStore keyStore, char[] password) {
-			this.keyStore = keyStore;
-			this.password = password != null ? password.clone() : null;
-		}
-
-		/**
-		 * Dispose this keystore data wrapper and the retained password
-		 */
-		void dispose() {
-			if (password != null) {
-				Arrays.fill(password, ' ');
-			}
-			keyStore = null;
-		}
-
-		@Override
-		protected void finalize() throws Throwable {
-			dispose();
-			super.finalize();
-		}
-	}
-
-	/**
-	 * Get protected keystore data for specified keystorePath.  Caller is responsible for
-	 * properly disposing returned object.
+	 * Get key manager for specified JKS or PKCS12 keystore file path.  The user may be prompted
+	 * for a password if required which will block the invocation of this synchronized method.  
+	 * If successfully opened, the resulting key manager instance will be cached for subsequent 
+	 * re-use of the same keystore.
+	 * 
 	 * @param keystorePath protected keystore path
-	 * @return protected keystore data
+	 * @param defaultPasswd default password (e.g., supplied by property) or null
+	 * @return key manager
 	 * @throws CancelledException password entry was cancelled by user
 	 * @throws KeyStoreException error occurred opening/processing keystore
 	 */
-	private static ProtectedKeyStoreData getProtectedKeyStoreData(String keystorePath)
-			throws CancelledException, KeyStoreException {
+	public synchronized static X509KeyManager getKeyManager(String keystorePath,
+			String defaultPasswd) throws CancelledException, KeyStoreException {
 
-		Msg.info(ApplicationKeyManagerFactory.class, "Using certificate keystore: " + keystorePath);
+		String hashKey;
 
-		String keystorePwd = System.getProperty(KEYSTORE_PASSWORD_PROPERTY);
+		try {
+			if (PKIUtils.detectKeyStoreType(keystorePath) == null) {
+				throw new KeyStoreException("Unsupported PKI key store file type: " + keystorePath);
+			}
+			// Obtain canonical path for cache use
+			File keystoreFile = new File(keystorePath);
+			keystorePath = (keystoreFile).getCanonicalPath();
+
+			hashKey = HashUtilities.getHash(HashUtilities.MD5_ALGORITHM, keystoreFile) + "_" +
+				keystorePath;
+
+			X509KeyManager keyManager = keyStoreCache.get(hashKey);
+			if (keyManager != null) {
+				return keyManager;
+			}
+		}
+		catch (IOException e) {
+			throw new KeyStoreException("Failed to examine keystore: " + keystorePath, e);
+		}
 
 		int tryCount = 0;
 
@@ -319,20 +106,12 @@ public class ApplicationKeyManagerFactory {
 					// try no password first
 				}
 				else if (tryCount == 1) {
-					// try default password
-					Msg.debug(ApplicationKeyManagerFactory.class,
-						"Attempting to load keystore without password...");
-					password = DEFAULT_PASSWORD.toCharArray();
-				}
-				else if (tryCount == 2) {
 					// try specified password
-					if (keystorePwd != null) {
-						Msg.debug(ApplicationKeyManagerFactory.class,
-							"Attempting to load keystore with property-based password...");
-						password = keystorePwd.toCharArray();
+					if (defaultPasswd != null) {
+						password = defaultPasswd.toCharArray();
 					}
 					else {
-						// no system property password provided
+						// no default password was provided
 						++tryCount;
 						continue;
 					}
@@ -341,7 +120,7 @@ public class ApplicationKeyManagerFactory {
 					disposePassword(oldPassword);
 					oldPassword = password;
 					password =
-						customPasswordProvider.getKeyStorePassword(keystorePath, tryCount != 3);
+						customPasswordProvider.getKeyStorePassword(keystorePath, tryCount != 2);
 					if (password == null) {
 						throw new CancelledException();
 					}
@@ -358,24 +137,24 @@ public class ApplicationKeyManagerFactory {
 				}
 				++tryCount;
 
-				// we only support a single password for both keystore and private key
-				KeyStore keyStore = ApplicationKeyStore.getKeyStoreInstance(keystorePath, password);
-				return new ProtectedKeyStoreData(keyStore, password);
+				// NOTE: we only support a single password for both keystore and private key
+				KeyStore keyStore = PKIUtils.getKeyStoreInstance(keystorePath, password);
+				X509KeyManager keyManager = getKeyManagerFromKeyStore(keyStore, password);
+				keyStoreCache.put(hashKey, keyManager);
+				return keyManager;
 			}
-			catch (NoSuchAlgorithmException | CertificateException | FileNotFoundException e) {
+			catch (UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException
+					| FileNotFoundException e) {
 				throw new KeyStoreException("Failed to process keystore: " + keystorePath, e);
 			}
 			catch (KeyStoreException | IOException e) {
 				// Java Bug: JDK-6974037 : PKCS12 Keystore load with invalid passwords generates different exceptions
 				Exception ioException = getIOException(e);
-				if (ioException != null) {
-					// Assume all IOExceptions are the result of improperly decrypted keystore
-					// since arbitrary and inconsistent errors are produced when attempting to 
-					// load an encrypted keystore without a password or with the wrong password.
-					continue;
+				if (ioException != null &&
+					ioException.getCause() instanceof UnrecoverableKeyException) {
+					continue; // Assume incorrect password was specified
 				}
-				throw new KeyStoreException(
-					"Failed to process keystore (" + tryCount + "): " + keystorePath, e);
+				throw new KeyStoreException("Failed to open keystore: " + keystorePath, e);
 			}
 			finally {
 				disposePassword(oldPassword);
@@ -383,6 +162,47 @@ public class ApplicationKeyManagerFactory {
 			}
 		}
 		throw new KeyStoreException("Failed to unlock key storage: " + keystorePath);
+	}
+
+	/**
+	 * Get key manager for specified JKS or PKCS12 keystore. The keystore must only contain a 
+	 * single X509 certificate and corresponding private key which has a usage of digital signing.
+	 * @param keyStore JKS or PKCS12 keystore file
+	 * @param password password for accessing keystore and private key.
+	 * @return X509 key manager instance
+	 * @throws NoSuchAlgorithmException if the specified algorithm is not available from the 
+	 * 			specified provider.
+	 * @throws UnrecoverableKeyException if the key cannot be recovered
+	 *          (e.g. the given password is wrong).
+	 * @throws KeyStoreException if a general failure occurs while accessing keystore
+	 */
+	static X509KeyManager getKeyManagerFromKeyStore(KeyStore keyStore, char[] password)
+			throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+
+		// Assume cert of interest is the first one
+		Enumeration<String> aliases = keyStore.aliases();
+		if (!aliases.hasMoreElements()) {
+			throw new KeyStoreException("PKI key store is empty");
+		}
+		Certificate certificate = keyStore.getCertificate(aliases.nextElement());
+		if (!(certificate instanceof X509Certificate x509Cert)) {
+			throw new KeyStoreException("PKI X509 Certificate not found");
+		}
+		boolean[] keyUsage = x509Cert.getKeyUsage();
+		if (!keyUsage[0]) {
+			throw new KeyStoreException("PKI key store must contain Digital Signing certificate");
+		}
+
+		KeyManagerFactory kmf =
+			KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		kmf.init(keyStore, password);
+
+		// Assume that one keystore will produce at most one KeyManager
+		KeyManager[] keyManagers = kmf.getKeyManagers();
+		if (keyManagers.length == 1 && (keyManagers[0] instanceof X509KeyManager)) {
+			return (X509KeyManager) keyManagers[0];
+		}
+		throw new KeyStoreException("Unsupported keystore");
 	}
 
 	private static void disposePassword(char[] password) {
@@ -401,239 +221,6 @@ public class ApplicationKeyManagerFactory {
 			cause = cause.getCause();
 		}
 		return null;
-	}
-
-	/**
-	 * <code>ApplicationKeyManager</code> provides a wrapper for the X509 wrappedKeyManager whose
-	 * instantiation is delayed until needed.  When a wrapper method is first invoked, the
-	 * {@link ApplicationKeyManagerFactory#init()} method is called to open the keystore
-	 * (which may require a password prompt) and establish the underlying X509KeyManager.
-	 */
-	private class ApplicationKeyManager extends X509ExtendedKeyManager {
-
-		private X509KeyManager wrappedKeyManager;
-		private String keystorePath;
-		private boolean isSelfSigned = false;
-
-		@Override
-		public String chooseEngineServerAlias(String keyType, Principal[] issuers,
-				SSLEngine engine) {
-			return super.chooseEngineServerAlias(keyType, issuers, engine);
-		}
-
-		@Override
-		public String chooseEngineClientAlias(String[] keyType, Principal[] issuers,
-				SSLEngine engine) {
-			return super.chooseEngineClientAlias(keyType, issuers, engine);
-		}
-
-		@Override
-		public synchronized String chooseClientAlias(String[] keyType, Principal[] issuers,
-				Socket socket) {
-			try {
-				init();
-			}
-			catch (CancelledException e) {
-				// ignore
-			}
-			if (wrappedKeyManager == null) {
-				return null;
-			}
-			return wrappedKeyManager.chooseClientAlias(keyType, issuers, socket);
-		}
-
-		@Override
-		public synchronized String chooseServerAlias(String keyType, Principal[] issuers,
-				Socket socket) {
-			try {
-				init();
-			}
-			catch (CancelledException e) {
-				// ignore
-			}
-			if (wrappedKeyManager == null) {
-				return null;
-			}
-			return wrappedKeyManager.chooseServerAlias(keyType, issuers, socket);
-		}
-
-		@Override
-		public String[] getClientAliases(String keyType, Principal[] issuers) {
-			try {
-				init();
-			}
-			catch (CancelledException e) {
-				// ignore
-			}
-			if (wrappedKeyManager == null) {
-				return null;
-			}
-			return wrappedKeyManager.getClientAliases(keyType, issuers);
-		}
-
-		@Override
-		public String[] getServerAliases(String keyType, Principal[] issuers) {
-			try {
-				init();
-			}
-			catch (CancelledException e) {
-				// ignore
-			}
-			if (wrappedKeyManager == null) {
-				return null;
-			}
-			return wrappedKeyManager.getServerAliases(keyType, issuers);
-		}
-
-		@Override
-		public X509Certificate[] getCertificateChain(String alias) {
-			if (wrappedKeyManager == null) {
-				return null;
-			}
-			return wrappedKeyManager.getCertificateChain(alias);
-		}
-
-		@Override
-		public PrivateKey getPrivateKey(String alias) {
-			if (wrappedKeyManager == null) {
-				return null;
-			}
-			return wrappedKeyManager.getPrivateKey(alias);
-		}
-
-		/**
-		 * Invalidate the active keystore and key manager
-		 */
-		private synchronized void invalidateKey() {
-			wrappedKeyManager = null;
-			keystorePath = null;
-			isSelfSigned = false;
-		}
-
-		/**
-		 * Return active keystore path or preferred keystore path if not yet initialized.
-		 * @return active keystore path or preferred keystore path if not yet initialized.
-		 */
-		private synchronized String getKeyStore() {
-			return wrappedKeyManager != null ? keystorePath : getPreferredKeyStore();
-		}
-
-		/**
-		 * Determine if active key manager is utilizing a generated self-signed certificate.
-		 * @return true if using self-signed certificate.
-		 */
-		private synchronized boolean usingGeneratedSelfSignedCertificate() {
-			return wrappedKeyManager != null && isSelfSigned;
-		}
-
-		/**
-		 * Initialize the x509KeyManager associated with the active keystore setting.
-		 * If the <code>x509KeyManager</code> already exists, this method has no affect.  If the
-		 * <code>keystorePath</code> has not already been set, the <code>getPreferredKeyStore()</code>
-		 * method will be invoked to obtain the keystore which should be used in establishing the
-		 * <code>wrappedKeyManager</code>.  If no keystore has been identified and the Default Identity
-		 * has been set, a self-signed certificate will be generated.  If nothing has been set, the
-		 * wrappedKeyManager will remain null and false will be returned.  If an error occurs it
-		 * will be logged and key managers will remain uninitialized.
-		 * @return true if key manager initialized successfully or was previously initialized, else
-		 * false if keystore path has not been set and default identity for self-signed certificate
-		 * has not be established (see {@link ApplicationKeyManagerFactory#setDefaultIdentity(X500Principal)}).
-		 * @throws CancelledException user cancelled keystore password entry request
-		 */
-		private synchronized boolean init() throws CancelledException {
-			if (wrappedKeyManager != null) {
-				return true;
-			}
-			return init(getPreferredKeyStore());
-		}
-
-		/**
-		 * Initialize the x509KeyManager.
-		 * If the <code>x509KeyManager</code> already exists for the specified keystore path,
-		 * this method has no affect.  If no keystore has been identified and the Default Identity
-		 * has been set, a self-signed certificate will be generated.  If nothing has been set, the
-		 * wrappedKeyManager will remain null and false will be returned.  If an error occurs it
-		 * will be logged and key managers will remain uninitialized.
-		 * @param newKeystorePath specifies the keystore to be opened or null for no keystore
-		 * @return true if key manager initialized successfully or was previously initialized, else
-		 * false if new keystore path was not specified and default identity for self-signed certificate
-		 * has not be established (see {@link ApplicationKeyManagerFactory#setDefaultIdentity(X500Principal)}).
-		 * @throws CancelledException user cancelled keystore password entry request
-		 */
-		private synchronized boolean init(String newKeystorePath) throws CancelledException {
-
-			if (wrappedKeyManager != null) {
-				if (StringUtils.equals(keystorePath, newKeystorePath)) {
-					return true;
-				}
-				invalidateKey();
-			}
-
-			ProtectedKeyStoreData keystoreData = null;
-			try {
-				if (newKeystorePath != null && newKeystorePath.length() != 0) {
-					keystoreData = getProtectedKeyStoreData(newKeystorePath);
-				}
-				else if (defaultIdentity != null) {
-					// use self-signed keystore as fallback (intended for server use only)
-					Msg.info(this, "Using self-signed certificate: " + defaultIdentity.getName());
-					char[] pwd = DEFAULT_PASSWORD.toCharArray();
-					KeyStore selfSignedKeyStore =
-						ApplicationKeyManagerUtils.createKeyStore("defaultSigKey",
-							defaultIdentity.getName(), SELF_SIGNED_DURATION_DAYS, null, null, "JKS",
-							subjectAlternativeNames, pwd);
-					keystoreData = new ProtectedKeyStoreData(selfSignedKeyStore, pwd);
-					isSelfSigned = true;
-				}
-				else {
-					return false;
-				}
-
-				ApplicationKeyStore.logCerts(keystoreData.keyStore);
-
-				KeyManagerFactory kmf =
-					KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-				kmf.init(keystoreData.keyStore, keystoreData.password);
-
-				// Assume that one keystore will produce at most one KeyManager
-				KeyManager[] keyManagers = kmf.getKeyManagers();
-				if (keyManagers.length == 1 && (keyManagers[0] instanceof X509KeyManager)) {
-					wrappedKeyManager = (X509KeyManager) keyManagers[0];
-					keystorePath = newKeystorePath; // update current keystore path
-					return true;
-				}
-
-				isSelfSigned = false;
-
-				if (keyManagers.length == 0) {
-					Msg.showError(this, null, "PKI Keystore Failure",
-						"Failed to create PKI key manager: failed to process keystore (no keys processed)");
-				}
-				else if (keyManagers.length == 1) {
-					Msg.showError(this, null, "PKI Keystore Failure",
-						"Failed to create PKI key manager: failed to process keystore (expected X.509)");
-				}
-				else {
-					// Unexpected condition
-					Msg.showError(this, null, "PKI Keystore Failure",
-						"Failed to create PKI key manager: unsupported keystore produced multiple KeyManagers");
-				}
-			}
-			catch (CancelledException e) {
-				throw e;
-			}
-			catch (Exception e) {
-				Msg.showError(this, null, "PKI Keystore Failure",
-					"Failed to create PKI key manager: " + e.getMessage(), e);
-			}
-			finally {
-				if (keystoreData != null) {
-					keystoreData.dispose();
-					keystoreData = null;
-				}
-			}
-			return false;
-		}
 	}
 
 }

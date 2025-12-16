@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,18 +45,17 @@ import ghidra.xml.XmlParseException;
  * (See {@link SpecExtension}) using
  * {@link SpecExtension#addReplaceCompilerSpecExtension(String, TaskMonitor)} or
  * {@link SpecExtension#removeCompilerSpecExtension(String, TaskMonitor)}.
- * 
+ * <p>
  * {@code ProgramCompilerSpec} allows the static evaluation models, described by the underlying
  * {@link BasicCompilerSpec} and returned by
  * {@link #getPrototypeEvaluationModel(EvaluationModelType)}, to be overridden by Program-specific
  * options.
- * 
+ * <p>
  * {@link #getDecompilerOutputLanguage()} queries the Program-specific language the decompiler
  * should use as output.
- * 
+ * <p>
  * {@link #installExtensions()} is the main entry point for integrating the Program Options with the
  * Language's base CompilerSpec and producing a complete in-memory CompilerSpec for the Program.
- * 
  */
 public class ProgramCompilerSpec extends BasicCompilerSpec {
 

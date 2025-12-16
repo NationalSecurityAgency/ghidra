@@ -17,8 +17,13 @@ package ghidra.app.util.datatype;
 
 import java.awt.Component;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
@@ -70,6 +75,11 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 	}
 
 	@Override
+	public List<SearchMode> getSupportedSearchModes() {
+		return List.of(SearchMode.STARTS_WITH, SearchMode.CONTAINS, SearchMode.WILDCARD);
+	}
+
+	@Override
 	public ListCellRenderer<DataType> getListRenderer() {
 		return new DataTypeDropDownRenderer();
 	}
@@ -86,13 +96,47 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 
 	@Override
 	public List<DataType> getMatchingData(String searchText) {
-		if (searchText == null || searchText.length() == 0) {
+		throw new UnsupportedOperationException(
+			"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+	}
+
+	@Override
+	public List<DataType> getMatchingData(String searchText, SearchMode mode) {
+		if (StringUtils.isBlank(searchText)) {
+			// full list results not supported since the data may be too large for user interaction
 			return Collections.emptyList();
 		}
 
-		List<DataType> dataTypeList =
+		if (!getSupportedSearchModes().contains(mode)) {
+			throw new IllegalArgumentException("Unsupported SearchMode: " + mode);
+		}
+
+		if (mode == SearchMode.STARTS_WITH) {
+			return getMatchDataStartsWith(searchText);
+		}
+
+		Pattern p = mode.createPattern(searchText);
+		return getMatchingDataRegex(p);
+	}
+
+	private List<DataType> getMatchDataStartsWith(String searchText) {
+		List<DataType> results =
 			DataTypeUtils.getStartsWithMatchingDataTypes(searchText, dataTypeService);
-		return filterDataTypeList(dataTypeList);
+		return filterDataTypeList(results);
+	}
+
+	private List<DataType> getMatchingDataRegex(Pattern p) {
+
+		List<DataType> results = new ArrayList<>();
+		List<DataType> allTypes = dataTypeService.getSortedDataTypeList();
+		for (DataType dt : allTypes) {
+			String name = dt.getName().toLowerCase();
+			Matcher m = p.matcher(name);
+			if (m.matches()) {
+				results.add(dt);
+			}
+		}
+		return filterDataTypeList(results);
 	}
 
 	/**
@@ -103,15 +147,17 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 		// another dtm.  In the second step, duplicate data types will be omitted from the
 		// final results, in favor of the data type that is already in the preferred dtm.
 		Set<UniversalID> preferredUids = new HashSet<>();
-		Set<Class<?>> preferredBuiltins = new HashSet<>();
+		Set<String> preferredBuiltinNames = new HashSet<>();
 		for (DataType dt : dtList) {
-			DataType baseDt = DataTypeUtilities.getBaseDataType(dt);
+			// only look at data types that are already in the preferred DTM
+			DataType baseDt = Objects.requireNonNullElse(DataTypeUtilities.getBaseDataType(dt), dt);
 			if (!isFromPreferredDtm(baseDt)) {
 				continue;
 			}
 
-			if (baseDt instanceof BuiltInDataType) {
-				preferredBuiltins.add(baseDt.getClass());
+			if (isBuiltinDataType(baseDt)) {
+				// add any builtin data types that are already in the pref DTM to this exclude list
+				preferredBuiltinNames.add(baseDt.getName());
 			}
 			else if (baseDt.getUniversalID() != null) {
 				preferredUids.add(baseDt.getUniversalID());
@@ -123,14 +169,14 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 			if (dt instanceof Array) {
 				continue;
 			}
-			DataType baseDt = DataTypeUtilities.getBaseDataType(dt);
+			DataType baseDt =
+				Objects.requireNonNullElse(DataTypeUtilities.getBaseDataType(dt), dt);
 			if (baseDt == null) {
 				continue;
 			}
 
 			if (preferredDtm != null && !isFromPreferredDtm(baseDt)) {
-				if (baseDt instanceof BuiltInDataType &&
-					preferredBuiltins.contains(baseDt.getClass())) {
+				if (isBuiltinDataType(baseDt) && preferredBuiltinNames.contains(baseDt.getName())) {
 					continue;
 				}
 				if (baseDt.getUniversalID() != null &&
@@ -158,6 +204,14 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 			return dtDtm == preferredDtm || dtDtm == altDtm;
 		}
 		return false;
+	}
+
+	private boolean isBuiltinDataType(DataType dt) {
+		// check for normal builtin data types, as well as any pointer (which will probably be a
+		// DataTypeDB that does not derive from Builtin) that does not point to anything.
+		// This ptr data type is equiv to the "pointer" built-in data type.  
+		return dt instanceof BuiltInDataType ||
+			(dt instanceof Pointer ptrDT && ptrDT.getDataType() == null);
 	}
 
 	@Override

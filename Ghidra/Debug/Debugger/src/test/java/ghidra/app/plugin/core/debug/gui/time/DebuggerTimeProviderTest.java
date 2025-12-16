@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.DateUtils;
 
 public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
@@ -80,17 +81,18 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		SnapshotRow firstRow = snapsDisplayed.get(0);
 		assertEquals(0, firstRow.getSnap());
 		assertEquals("First", firstRow.getDescription());
-		assertEquals("0", firstRow.getSchedule()); // Snap 0 has "0" schedule
-		assertEquals("Jan 01, 2020 09:00 AM", firstRow.getTimeStamp());
+		assertEquals("0", firstRow.getSchedule().toString()); // Snap 0 has "0" schedule
+		assertEquals("Jan 01, 2020 09:00 AM",
+			DateUtils.formatDateTimestamp(firstRow.getTimeStamp()));
 
 		SnapshotRow secondRow = snapsDisplayed.get(1);
 		assertEquals(10, secondRow.getSnap());
 		assertEquals("Snap 10", secondRow.getDescription());
-		assertEquals("0:5;t1-5", secondRow.getSchedule());
+		assertEquals("0:5;t1-5", secondRow.getSchedule().toString());
 		// Timestamp is left unchecked, since default is current time
 	}
 
-	@Test // TODO: Technically, this is a plugin action.... Different test case?
+	@Test // Technically, this is a plugin action.... Different test case?
 	public void testActionRenameSnapshot() throws Exception {
 		// More often than not, this action will be used from the dynamic listing
 		addPlugin(tool, DebuggerListingPlugin.class);
@@ -123,7 +125,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		DBTraceSnapshot snapshot = tb.trace.getTimeManager().getSnapshot(10, false);
 		assertEquals("My Snapshot", snapshot.getDescription());
 
-		// TODO: Test cancelled has no effect
+		// LATER?: Test cancelled has no effect
 	}
 
 	@Test
@@ -151,7 +153,8 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		createSnaplessTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			thread = tb.trace.getThreadManager().createThread("Thread 1", 0);
+			tb.createRootObject("Target");
+			thread = tb.trace.getThreadManager().createThread("Threads[1]", 0);
 		}
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
@@ -309,7 +312,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
-	public void testAddScratchThenActivateIsHidden() throws Exception {
+	public void testAddScratchThenActivateIsShown() throws Exception {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
@@ -319,15 +322,11 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
-		assertEquals(2, data.size());
-		for (SnapshotRow row : data) {
-			assertTrue(row.getSnap() >= 0);
-		}
+		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 
 	@Test
-	public void testActiveThenAddScratchIsHidden() throws Exception {
+	public void testActivateThenAddScratchIsShown() throws Exception {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
@@ -341,11 +340,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		addScratchSnapshot();
 		waitForDomainObject(tb.trace);
 
-		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
-		assertEquals(2, data.size());
-		for (SnapshotRow row : data) {
-			assertTrue(row.getSnap() >= 0);
-		}
+		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 
 	@Test
@@ -359,11 +354,6 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(true, timeProvider.hideScratch);
-		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
-
-		performAction(timeProvider.actionHideScratch);
-
 		assertEquals(false, timeProvider.hideScratch);
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
@@ -371,10 +361,15 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		assertEquals(true, timeProvider.hideScratch);
 		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
+
+		performAction(timeProvider.actionHideScratch);
+
+		assertEquals(false, timeProvider.hideScratch);
+		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 
 	@Test
-	public void testToggleThenAddScratchThenActivateIsShown() throws Exception {
+	public void testToggleThenAddScratchThenActivateIsHidden() throws Exception {
 		performAction(timeProvider.actionHideScratch);
 
 		createSnaplessTrace();
@@ -386,7 +381,11 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(false, timeProvider.hideScratch);
-		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
+		assertEquals(true, timeProvider.hideScratch);
+		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
+		assertEquals(2, data.size());
+		for (SnapshotRow row : data) {
+			assertTrue(row.getSnap() >= 0);
+		}
 	}
 }

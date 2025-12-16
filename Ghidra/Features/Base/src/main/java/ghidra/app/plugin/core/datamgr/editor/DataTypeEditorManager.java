@@ -126,23 +126,30 @@ public class DataTypeEditorManager implements EditorListener {
 	 * Displays a data type editor for editing the given Structure. If the structure is already 
 	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
 	 * displayed.
-	 * @param structure the structure.
+	 * @param composite the structure.
 	 * @param fieldName the optional name of the field to select in the editor.
 	 */
-	public void edit(Structure structure, String fieldName) {
+	@SuppressWarnings("rawtypes") // ignore on CompositeEditorProvider
+	public void edit(Composite composite, String fieldName) {
 
-		StructureEditorProvider editor = (StructureEditorProvider) getEditor(structure);
+		CompositeEditorProvider editor = (CompositeEditorProvider) getEditor(composite);
 		if (editor != null) {
-			reuseExistingEditor(structure);
+			reuseExistingEditor(composite);
 			editor.selectField(fieldName);
 			return;
 		}
+		if (composite instanceof Union) {
+			editor = new UnionEditorProvider(plugin, (Union) composite, showUnionNumbersInHex());
+		}
+		else if (composite instanceof Structure) {
+			editor = new StructureEditorProvider(plugin, (Structure) composite,
+				showStructureNumbersInHex());
+		}
 
-		editor = new StructureEditorProvider(plugin, structure,
-			showStructureNumbersInHex());
-		editor.selectField(fieldName);
 		editor.addEditorListener(this);
 		editorList.add(editor);
+
+		editor.selectField(fieldName);
 	}
 
 	private EditorProvider reuseExistingEditor(DataType dataType) {
@@ -622,14 +629,14 @@ public class DataTypeEditorManager implements EditorListener {
 		@Override
 		protected List<String> getCallingConventionNames() {
 			// can't rely on functionDefinition which may be null for new definition
-			DataTypeManager dtMgr = getDataTypeManager();
-			if (dtMgr instanceof CompositeViewerDataTypeManager) {
-				dtMgr = ((CompositeViewerDataTypeManager) dtMgr).getOriginalDataTypeManager();
+			DataTypeManager dtm = getDataTypeManager();
+			if (dtm instanceof CompositeViewerDataTypeManager cvdtm) {
+				dtm = cvdtm.getOriginalDataTypeManager();
 			}
 			ArrayList<String> list = new ArrayList<>();
 			list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 			list.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
-			list.addAll(dtMgr.getDefinedCallingConventionNames());
+			list.addAll(dtm.getDefinedCallingConventionNames());
 			return list;
 		}
 

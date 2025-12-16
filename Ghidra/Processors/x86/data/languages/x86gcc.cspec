@@ -48,6 +48,11 @@
         <pentry minsize="5" maxsize="8">
           <addr space="join" piece1="EDX" piece2="EAX"/>
         </pentry>
+        <!-- Any struct type is returned by pointer, regardless of size -->
+        <rule>
+        	<datatype name="struct"/>
+        	<hidden_return/>
+        </rule>
       </output>
       <unaffected>
         <register name="ESP"/>
@@ -371,6 +376,17 @@
     <pcode>
       <body><![CDATA[
       EDX = * ESP;
+      ESP = ESP + 4;
+      ]]></body>
+    </pcode>
+  </callfixup>
+  
+  <callfixup name="get_pc_thunk_di">
+    <target name="__i686.get_pc_thunk.di"/>
+    <target name="__x86.get_pc_thunk.di"/>
+    <pcode>
+      <body><![CDATA[
+      EDI = * ESP;
       ESP = ESP + 4;
       ]]></body>
     </pcode>

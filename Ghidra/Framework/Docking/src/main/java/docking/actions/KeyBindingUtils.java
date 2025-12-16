@@ -94,7 +94,7 @@ public class KeyBindingUtils {
 	public static ToolOptions importKeyBindings() {
 		// show a filechooser for the user to choose a location
 		InputStream inputStream = getInputStreamForFile(getStartingDir());
-		return createOptionsforKeybindings(inputStream);
+		return createOptionsforKeyBindings(inputStream);
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class KeyBindingUtils {
 	 * @return An options object that is composed of key binding names and their
 	 *         associated keystrokes.
 	 */
-	public static ToolOptions createOptionsforKeybindings(InputStream inputStream) {
+	public static ToolOptions createOptionsforKeyBindings(InputStream inputStream) {
 		if (inputStream == null) {
 			return null;
 		}
@@ -719,7 +719,8 @@ public class KeyBindingUtils {
 	// deprecated InputEvent mask types
 	@SuppressWarnings("deprecation")
 	private static boolean isControl(int mask) {
-		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0;
+		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0 ||
+			(mask & DockingUtils.CONTROL_KEY_MODIFIER_MASK) != 0;
 	}
 
 	// ignore the deprecated; remove when we are confident that all tool actions no longer use the

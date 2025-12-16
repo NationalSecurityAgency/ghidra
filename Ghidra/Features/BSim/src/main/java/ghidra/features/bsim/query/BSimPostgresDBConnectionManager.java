@@ -109,11 +109,11 @@ public class BSimPostgresDBConnectionManager {
 		private boolean successfulConnection = false;
 
 		private BasicDataSource bds = new BasicDataSource();
-		private BSimDBConnectTaskCoordinator taskCoordinator;
+		private BSimDBConnectTaskManager taskManager;
 
 		private BSimPostgresDataSource(BSimServerInfo serverInfo) {
 			this.serverInfo = serverInfo;
-			this.taskCoordinator = new BSimDBConnectTaskCoordinator(serverInfo);
+			this.taskManager = new BSimDBConnectTaskManager(serverInfo);
 		}
 
 		@Override
@@ -254,7 +254,7 @@ public class BSimPostgresDBConnectionManager {
 
 			setDefaultProperties();
 
-			return taskCoordinator.getConnection(() -> connect());
+			return taskManager.getConnection(() -> connect());
 		}
 
 		@Override
@@ -306,16 +306,18 @@ public class BSimPostgresDBConnectionManager {
 						loginError = "Access denied: " + serverInfo;
 						Msg.error(this, loginError);
 					}
+
 					// Use Ghidra's authentication infrastructure
-					connectionType = ConnectionType.SSL_Password_Authentication; // Try again with a password
-					// fallthru to second attempt at getConnection
+					// Try again with a password; fallthrough to second attempt at getConnection
+					connectionType = ConnectionType.SSL_Password_Authentication;
 				}
 				else if (e.getMessage().contains("SSL on") &&
 					e.getMessage().contains("no pg_hba.conf entry")) {
-					connectionType = ConnectionType.Unencrypted_No_Authentication; // Try again without any SSL
+
+					// Try again without any SSL; fallthrough to second attempt at getConnection
+					connectionType = ConnectionType.Unencrypted_No_Authentication;
 					bds.removeConnectionProperty("sslmode");
 					bds.removeConnectionProperty("sslfactory");
-					// fallthru to second attempt at getConnection
 				}
 				else {
 					throw e;
@@ -334,14 +336,16 @@ public class BSimPostgresDBConnectionManager {
 						throw new SQLException("No registered authenticator");
 					}
 					NameCallback nameCb = new NameCallback("User ID:", bds.getUsername());
+					boolean allowUserIDEntry = true;
 					if (!serverInfo.hasDefaultLogin()) {
 						nameCb.setName(bds.getUsername());
+						allowUserIDEntry = false;
 					}
 					PasswordCallback passCb = new PasswordCallback(" ", false); // force use of default prompting
 					try {
 						if (!clientAuthenticator.processPasswordCallbacks(
-							"BSim Database Authentication", "BSim Database Server",
-							serverInfo.toString(), nameCb, passCb, null, null, loginError)) {
+							"BSim Database Authentication", "BSim DB Server", serverInfo.toString(),
+							allowUserIDEntry, nameCb, passCb, null, null, loginError)) {
 							throw new CancelledException();
 						}
 						bds.setPassword(new String(passCb.getPassword()));
@@ -362,6 +366,7 @@ public class BSimPostgresDBConnectionManager {
 				catch (SQLException e) {
 					if ((clientAuthenticator instanceof DefaultClientAuthenticator) &&
 						e.getMessage().contains("password authentication failed")) {
+
 						// wrong password provided via popup dialog - try again
 						loginError = "Access denied: " + serverInfo;
 						continue;

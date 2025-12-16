@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.tracemgr;
 
-import static ghidra.framework.main.DataTreeDialogType.OPEN;
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -38,7 +38,6 @@ import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.async.*;
-import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.target.Target;
@@ -51,6 +50,7 @@ import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.AutoConfigState.BooleanAsyncConfigFieldCodec;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -223,9 +223,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		public void targetWithdrawn(Target target) {
 			Swing.runLater(() -> updateCurrentTarget());
 			boolean save = isSaveTracesByDefault();
-			CompletableFuture<Void> flush = save
-					? waitUnlockedDebounced(target)
-					: AsyncUtils.nil();
+			CompletableFuture<Void> flush = save ? waitUnlockedDebounced(target) : AsyncUtils.nil();
 			flush.thenRunAsync(() -> {
 				if (!isAutoCloseOnTerminate()) {
 					return;
@@ -416,20 +414,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	protected DataTreeDialog getTraceChooserDialog() {
-
-		DomainFileFilter filter = new DomainFileFilter() {
-
-			@Override
-			public boolean accept(DomainFile df) {
-				return Trace.class.isAssignableFrom(df.getDomainObjectClass());
-			}
-
-			@Override
-			public boolean followLinkedFolders() {
-				return false;
-			}
-		};
-
+		DomainFileFilter filter = new DefaultDomainFileFilter(Trace.class, false);
 		return new DataTreeDialog(null, OpenTraceAction.NAME, OPEN, filter);
 	}
 
@@ -454,11 +439,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeDeadTraces() {
-		checkCloseTraces(targetService == null
-				? getOpenTraces()
-				: getOpenTraces().stream()
-						.filter(t -> targetService.getTarget(t) == null)
-						.toList(),
+		checkCloseTraces(targetService == null ? getOpenTraces()
+				: getOpenTraces().stream().filter(t -> targetService.getTarget(t) == null).toList(),
 			false);
 	}
 
@@ -535,8 +517,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (mapper == null) {
 			return coordinates;
 		}
-		TracePlatform platform =
-			getPlatformForMapper(coordinates.getTrace(), coordinates.getObject(), mapper);
+		TracePlatform platform = mapper.addToTrace(coordinates.getObject(), coordinates.getSnap());
 		return coordinates.platform(platform);
 	}
 
@@ -598,22 +579,22 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return mode.followsPresent();
 	}
 
-	protected TracePlatform getPlatformForMapper(Trace trace, TraceObject object,
-			DebuggerPlatformMapper mapper) {
-		return trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(object));
-	}
-
 	protected void doPlatformMapperSelected(Trace trace, DebuggerPlatformMapper mapper) {
 		synchronized (listenersByTrace) {
 			if (!listenersByTrace.containsKey(trace)) {
 				return;
 			}
 			LastCoords cur = lastCoordsByTrace.getOrDefault(trace, LastCoords.NEVER);
-			DebuggerCoordinates adj =
-				cur.coords.platform(getPlatformForMapper(trace, cur.coords.getObject(), mapper));
+			TracePlatform platform =
+				mapper.addToTrace(cur.coords.getObject(), cur.coords.getSnap());
+			if (cur.coords.getPlatform() == platform) {
+				return;
+			}
+			DebuggerCoordinates adj = cur.coords.platform(platform);
 			lastCoordsByTrace.put(trace, cur.keepTime(adj));
 			if (trace == current.getTrace()) {
 				current = adj;
+				trace.getProgramView().setPlatform(adj.getPlatform());
 				fireLocationEvent(adj, ActivationCause.MAPPER_CHANGED);
 			}
 		}
@@ -726,33 +707,72 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
+		return materialize(DebuggerCoordinates.NOWHERE, coordinates, ActivationCause.USER_ALT);
+	}
+
+	protected CompletableFuture<Long> materialize(DebuggerCoordinates previous,
+			DebuggerCoordinates coordinates, ActivationCause cause) {
+		/**
+		 * NOTE: If we're requested the snapshot, we don't care if we can find the snapshot already
+		 * materialized. We're going to let the back end actually materialize and activate. When it
+		 * activates (check the cause), we'll look for the materialized snapshot.
+		 * 
+		 * If we go to a found snapshot on our request, the back-end may intermittently revert to
+		 * the another snapshot, because it may not realize what we've done at the front end, or it
+		 * may re-validate the request and go elsewhere, resulting in abrasive navigation. While we
+		 * could attempt some bookkeeping on the back-end, we don't control how the native debugger
+		 * issues events, so it's easier to just give it our request and then let it drive.
+		 */
+		ControlMode mode = getEffectiveControlMode(coordinates.getTrace());
+		Target target = coordinates.getTarget();
+		// NOTE: We've already validated at this point
+		if (mode.isTarget() && cause == ActivationCause.USER && target != null) {
+			// Yes, use getSnap for the materialized (view) snapshot
+			return target.activateAsync(previous, coordinates).thenApply(__ -> target.getSnap());
+		}
+
 		Long found = findSnapshot(coordinates);
 		if (found != null) {
 			return CompletableFuture.completedFuture(found);
 		}
+
+		/**
+		 * NOTE: We can actually reach this point in RO_TARGET mode, though ordinarily, it should
+		 * only reach here in RW_EMULATOR mode. The reason is because during many automated tests,
+		 * the "default" mode of RO_TARGET is taken as the effective mode, and the tests still
+		 * expect emulation behavior. So do it.
+		 */
+
 		if (emulationService == null) {
-			throw new IllegalStateException(
-				"Cannot navigate to coordinates with execution schedules, " +
-					"because the emulation service is not available.");
+			Msg.warn(this, "Cannot navigate to coordinates with execution schedules, " +
+				"because the emulation service is not available.");
+			return CompletableFuture.completedFuture(null);
 		}
 		return emulationService.backgroundEmulate(coordinates.getPlatform(), coordinates.getTime());
 	}
 
-	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates,
-			ActivationCause cause) {
+	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates previous,
+			DebuggerCoordinates coordinates, ActivationCause cause) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
 			fireLocationEvent(coordinates, cause);
 			return AsyncUtils.nil();
 		}
-		return materialize(coordinates).thenAcceptAsync(snap -> {
+		return materialize(previous, coordinates, cause).thenAcceptAsync(snap -> {
+			if (snap == null) {
+				/**
+				 * Either the tool is closing, or we're going to let the target materialize and
+				 * activate the actual snap.
+				 */
+				return;
+			}
 			if (!coordinates.equals(current)) {
 				return; // We navigated elsewhere before emulation completed
 			}
 			varView.setSnap(snap);
+			varView.setPlatform(coordinates.getPlatform());
 			fireLocationEvent(coordinates, cause);
-		}, cause == ActivationCause.EMU_STATE_EDIT
-				? SwingExecutorService.MAYBE_NOW // ProgramView may call .get on Swing thread
+		}, cause == ActivationCause.EMU_STATE_EDIT ? SwingExecutorService.MAYBE_NOW // ProgramView may call .get on Swing thread
 				: SwingExecutorService.LATER); // Respect event order
 	}
 
@@ -806,7 +826,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			// TODO: Support upgrading
 			e = new VersionException(e.getVersionIndicator(), false).combine(e);
 			VersionExceptionHandler.showVersionError(null, file.getName(), file.getContentType(),
-				"Open", e);
+				"Open", false, e);
 			return null;
 		}
 		catch (IOException e) {
@@ -1030,10 +1050,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void checkCloseTraces(Collection<Trace> traces, boolean noConfirm) {
 		List<Target> live =
-			traces.stream()
-					.map(t -> targetService.getTarget(t))
-					.filter(t -> t != null)
-					.toList();
+			traces.stream().map(t -> targetService.getTarget(t)).filter(t -> t != null).toList();
 		/**
 		 * A provider may be reading a trace, likely via the Swing thread, so schedule this on the
 		 * same thread to avoid a ClosedException.
@@ -1128,7 +1145,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (current.getTrace() != newTrace) {
 				// The snap needs to match upon re-activating this trace.
 				try {
-					newTrace.getProgramView().setSnap(coordinates.getViewSnap());
+					TraceVariableSnapProgramView view = newTrace.getProgramView();
+					view.setSnap(coordinates.getViewSnap());
+					view.setPlatform(coordinates.getPlatform());
 				}
 				catch (TraceClosedException e) {
 					// Presumably, a closed event is queued
@@ -1147,21 +1166,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return AsyncUtils.nil();
 		}
 		CompletableFuture<Void> future =
-			prepareViewAndFireEvent(resolved, cause).exceptionally(ex -> {
+			prepareViewAndFireEvent(prev, resolved, cause).exceptionally(ex -> {
 				// Emulation service will already display error
 				doSetCurrent(prev);
 				return null;
 			});
-
-		if (cause != ActivationCause.USER) {
-			return future;
-		}
-		Target target = resolved.getTarget();
-		if (target == null) {
-			return future;
-		}
-
-		return future.thenCompose(__ -> target.activateAsync(prev, resolved));
+		return future;
 	}
 
 	@Override

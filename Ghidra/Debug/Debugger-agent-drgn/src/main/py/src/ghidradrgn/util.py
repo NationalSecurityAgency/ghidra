@@ -14,9 +14,11 @@
 # limitations under the License.
 ##
 from collections import namedtuple
+from dataclasses import dataclass
 import os
 import re
 import sys
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import drgn
 import drgn.cli
@@ -29,7 +31,7 @@ selected_tid = 0
 selected_level = 0
 
 
-def _compute_drgn_ver():
+def _compute_drgn_ver() -> DrgnVersion:
     blurb = drgn.cli.version_header()
     top = blurb.split('\n')[0]
     full = top.split()[1]    # "drgn x.y.z"
@@ -38,7 +40,17 @@ def _compute_drgn_ver():
 
 DRGN_VERSION = _compute_drgn_ver()
 
-def full_mem(self):
+
+@dataclass(frozen=True)
+class Region:
+    start: int
+    end: int
+    offset: int
+    perms: Optional[str]
+    objfile: str
+
+
+def full_mem(self) -> Region:
     return Region(0, 1 << 64, 0, None, 'full memory')
 
 
@@ -46,49 +58,41 @@ def get_debugger():
     return drgn
 
 
-def get_target():
-    return commands.prog
-
-
-def get_process(name):
-    return get_target()[name]
-
-
-def selected_process():
+def selected_process() -> int:
     return selected_pid
 
 
-def selected_thread():
+def selected_thread() -> int:
     return selected_tid
 
 
-def selected_frame():
+def selected_frame() -> int:
     return selected_level
 
 
-def select_process(id: int):
+def select_process(id: int) -> int:
     global selected_pid
     selected_pid = id
     return selected_pid
 
 
-def select_thread(id: int):
+def select_thread(id: int) -> int:
     global selected_tid
     selected_tid = id
     return selected_tid
 
 
-def select_frame(id: int):
+def select_frame(id: int) -> int:
     global selected_level
     selected_level = id
     return selected_level
 
 
-conv_map = {}
+conv_map: Dict[str, Any] = {}
 
 
-def get_convenience_variable(id):
-    #val = get_target().GetEnvironment().Get(id)
+def get_convenience_variable(id: str):
+    # val = get_target().GetEnvironment().Get(id)
     if id not in conv_map:
         return "auto"
     val = conv_map[id]
@@ -97,18 +101,18 @@ def get_convenience_variable(id):
     return val
 
 
-def set_convenience_variable(id, value):
-    #env = get_target().GetEnvironment()
+def set_convenience_variable(id: str, value: Any) -> None:
+    # env = get_target().GetEnvironment()
     # return env.Set(id, value, True)
     conv_map[id] = value
 
 
-def escape_ansi(line):
+def escape_ansi(line: str) -> str:
     ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
 
 
-def debracket(init):
+def debracket(init: str) -> str:
     val = init
     val = val.replace("[", "(")
     val = val.replace("]", ")")

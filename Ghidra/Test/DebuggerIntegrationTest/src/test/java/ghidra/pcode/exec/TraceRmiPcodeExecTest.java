@@ -31,16 +31,16 @@ import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
 public class TraceRmiPcodeExecTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
 
 	Target target;
-	TraceObjectThread thread;
+	TraceThread thread;
 	SleighLanguage language;
 
 	protected void setupExecTest() throws Throwable {
@@ -50,7 +50,7 @@ public class TraceRmiPcodeExecTest extends AbstractGhidraHeadedDebuggerIntegrati
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			tb.createObjectsProcessAndThreads();
-			thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 		}
 		target = rmiCx.publishTarget(tool, tb.trace);
@@ -149,7 +149,7 @@ public class TraceRmiPcodeExecTest extends AbstractGhidraHeadedDebuggerIntegrati
 		});
 
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r2", 11);
 
 		waitOn(futResult);

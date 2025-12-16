@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import db.DBRecord;
 import db.StringField;
+import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.target.CachePerDBTraceObject.Cached;
 import ghidra.trace.database.target.DBTraceObjectValue.ValueLifespanSetter;
@@ -189,6 +190,16 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			LifeSet result = ensureCachedLife();
 			synchronized (result) {
 				return result.contains(snap);
+			}
+		}
+	}
+
+	@Override
+	public boolean isAlive(Lifespan span) {
+		try (LockHold hold = manager.trace.lockRead()) {
+			LifeSet result = ensureCachedLife();
+			synchronized (result) {
+				return result.intersects(span);
 			}
 		}
 	}
@@ -657,6 +668,14 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			}
 			return result;
 		}
+	}
+
+	static AddressSpace spaceForValue(Object value) {
+		return switch (value) {
+			case Address address -> address.getAddressSpace();
+			case AddressRange range -> range.getAddressSpace();
+			default -> null;
+		};
 	}
 
 	@Override

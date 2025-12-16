@@ -112,8 +112,9 @@ public class PreCommentFieldFactory extends FieldFactory {
 		String[] autoComment = getAutoPreComments(cu);
 
 		String[] comments = getDefinedPreComments(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.PRE);
 
-		return getTextField(comments, autoComment, proxy, x);
+		return getTextField(comments, autoComment, offcutComments, proxy, x);
 	}
 
 	private String[] getDefinedPreComments(CodeUnit cu) {
@@ -129,7 +130,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		return cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		return cu.getCommentAsArray(CommentType.PRE);
 	}
 
 	private String[] getAutoPreComments(CodeUnit cu) {
@@ -146,13 +147,13 @@ public class PreCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) obj;
-		String[] comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PRE);
 		int[] cpath = null;
 		if (cu instanceof Data) {
 			cpath = ((Data) cu).getComponentPath();
 		}
 		return new CommentFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, comment,
-			CodeUnit.PRE_COMMENT, row, col);
+			CommentType.PRE, row, col);
 	}
 
 	@Override
@@ -163,7 +164,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation loc = (CommentFieldLocation) programLoc;
-		if (loc.getCommentType() != CodeUnit.PRE_COMMENT) {
+		if (loc.getCommentType() != CommentType.PRE) {
 			return null;
 		}
 		return new FieldLocation(index, fieldNum, loc.getRow(), loc.getCharOffset());
@@ -353,7 +354,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	private ListingTextField getTextField(String[] comments, String[] autoComment,
-			ProxyObj<?> proxy, int xStart) {
+			List<String> offcutComments, ProxyObj<?> proxy, int xStart) {
 
 		if (comments == null) {
 			comments = EMPTY_STRING_ARRAY;
@@ -364,7 +365,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 		int nLinesAutoComment =
 			(comments.length == 0 || alwaysShowAutomatic) ? autoComment.length : 0;
-		if (comments.length == 0 && nLinesAutoComment == 0) {
+
+		if (comments.length == 0 && nLinesAutoComment == 0 && offcutComments.isEmpty()) {
 			return null;
 		}
 
@@ -382,6 +384,12 @@ public class PreCommentFieldFactory extends FieldFactory {
 			fields.add(CommentUtils.parseTextForAnnotations(comment, program, prototypeString,
 				fields.size()));
 		}
+		for (String offcutComment : offcutComments) {
+			AttributedString as = new AttributedString(offcutComment, CommentColors.OFFCUT,
+				getMetrics(style), false, null);
+			fields.add(new TextFieldElement(as, fields.size(), 0));
+		}
+
 		if (isWordWrap) {
 			fields = FieldUtils.wrap(fields, width);
 		}

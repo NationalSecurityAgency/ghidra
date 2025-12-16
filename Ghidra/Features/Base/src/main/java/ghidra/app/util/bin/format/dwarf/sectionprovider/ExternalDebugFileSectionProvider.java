@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,24 @@
  */
 package ghidra.app.util.bin.format.dwarf.sectionprovider;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.AccessMode;
 import java.util.List;
 
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.dwarf.external.*;
+import ghidra.app.util.bin.FileByteProvider;
+import ghidra.app.util.bin.format.dwarf.external.ExternalDebugFilesService;
+import ghidra.app.util.bin.format.dwarf.external.ExternalDebugInfo;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.formats.gfilesystem.*;
+import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.options.Options;
+import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
@@ -53,33 +61,41 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 			}
 			Msg.info(ExternalDebugFileSectionProvider.class,
 				"DWARF external debug information found: " + extDebugInfo);
-			ExternalDebugFilesService edfs =
-				DWARFExternalDebugFilesPlugin.getExternalDebugFilesService(
-					SearchLocationRegistry.getInstance().newContext(program));
-			FSRL extDebugFile = edfs.findDebugFile(extDebugInfo, monitor);
+			ExternalDebugFilesService edfs = ExternalDebugFilesService.forProgram(program);
+			File extDebugFile = edfs.find(extDebugInfo, monitor);
 			if (extDebugFile == null) {
 				return null;
 			}
 			Msg.info(ExternalDebugFileSectionProvider.class,
 				"DWARF External Debug File: found: " + extDebugFile);
-			FileSystemService fsService = FileSystemService.getInstance();
-			try (
-					RefdFile refdDebugFile = fsService.getRefdFile(extDebugFile, monitor);
-					ByteProvider debugFileByteProvider =
-						fsService.getByteProvider(refdDebugFile.file.getFSRL(), false, monitor);) {
+			FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(extDebugFile);
+			try (ByteProvider debugFileByteProvider =
+				new FileByteProvider(extDebugFile, fsrl, AccessMode.READ)) {
 				Object consumer = new Object();
 				Language lang = program.getLanguage();
-				CompilerSpec compSpec =
-					lang.getCompilerSpecByID(program.getCompilerSpec().getCompilerSpecID());
+				LoadSpec origLoadSpec = ImporterUtilities.getLoadSpec(program);
+				if (origLoadSpec == null) {
+					return null;
+				}
+
+				CompilerSpec compSpec = origLoadSpec.getLanguageCompilerSpec().getCompilerSpec();
+
 				Program debugProgram =
 					new ProgramDB("temp external debug info for " + program.getName(), lang,
 						compSpec, consumer);
+
+				Loader origLoader = origLoadSpec.getLoader();
+				List<Option> defaultOptions = origLoader.getDefaultOptions(debugFileByteProvider,
+					origLoadSpec, debugProgram, false, false);
+
 				ElfLoader elfLoader = new ElfLoader();
-				elfLoader.load(debugFileByteProvider, null, List.of(), debugProgram, monitor,
-					new MessageLog());
-				ExternalDebugFileSectionProvider result =
-					new ExternalDebugFileSectionProvider(debugProgram,
-						debugFileByteProvider.getFSRL());
+				ImporterSettings settings =
+					new ImporterSettings(debugFileByteProvider, debugProgram.getName(), null, null,
+						false, origLoadSpec, defaultOptions, consumer, new MessageLog(), monitor);
+				elfLoader.load(debugProgram, settings);
+
+				ExternalDebugFileSectionProvider result = new ExternalDebugFileSectionProvider(
+					debugProgram, debugFileByteProvider.getFSRL());
 				debugProgram.release(consumer);
 				return result;
 			}
@@ -106,12 +122,18 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 
 	@Override
 	public void close() {
+		// we close the parent class'es program instance here because we repurposed it from its
+		// normal use-case of referring to the main program 
 		if (program != null) {
 			program.release(this);
 		}
 		super.close();
 
 		program = null;
+	}
+
+	public Program getExternalProgram() {
+		return program;
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package ghidra.launch;
 import java.io.*;
 import java.text.ParseException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.launch.JavaFinder.Platform;
 
@@ -44,6 +45,16 @@ public class LaunchProperties {
 	 * The VM arguments to use to launch (current platform only).
 	 */
 	public static String VMARGS_PLATFORM = "VMARGS_" + JavaFinder.getCurrentPlatform();
+
+	/**
+	 * The environment variables to use to launch (all platforms).
+	 */
+	public static String ENVVARS = "ENVVARS";
+
+	/**
+	 * The environment variables to use to launch (current platform only).
+	 */
+	public static String ENVVARS_PLATFORM = "ENVVARS_" + JavaFinder.getCurrentPlatform();
 
 	private Map<String, List<String>> propertyMap;
 	private File launchPropertiesFile;
@@ -132,6 +143,26 @@ public class LaunchProperties {
 	}
 
 	/**
+	 * Gets a {@link List} of environment variables to use for the launch for the current 
+	 * {@link Platform platform}.
+	 * 
+	 * @return A {@link List} of environment variables to use for the launch for the current
+	 *   {@link Platform}
+	 */
+	public List<String> getEnvVarList() {
+		List<String> ret = new ArrayList<>();
+		List<String> envVarList = propertyMap.get(ENVVARS);
+		if (envVarList != null) {
+			ret.addAll(envVarList);
+		}
+		List<String> envVarPlatformList = propertyMap.get(ENVVARS_PLATFORM);
+		if (envVarPlatformList != null) {
+			ret.addAll(envVarPlatformList);
+		}
+		return ret;
+	}
+
+	/**
 	 * Parses and gets the launch properties from the given launch properties file.
 	 * 
 	 * @param launchPropertiesFile The file to get the launch properties from.
@@ -160,6 +191,7 @@ public class LaunchProperties {
 					}
 					String key = line.substring(0, equalsIndex).trim();
 					String value = line.substring(equalsIndex + 1, line.length()).trim();
+					value = expandEnvVars(value);
 					List<String> valueList = map.get(key);
 					if (valueList == null) {
 						valueList = new ArrayList<>();
@@ -172,5 +204,31 @@ public class LaunchProperties {
 			}
 		}
 		return map;
+	}
+
+	/**
+	 * Expands <code>${var}</code>-style environment variables in the given string. Expansion only
+	 * happens if the environment variable is set.
+	 * 
+	 * @param text The string to expand environment variables in
+	 * @return The given string, but with set environment variables expanded
+	 * @throws ParseException if there was a problem expanding an environment variable
+	 */
+	private static String expandEnvVars(String text) throws ParseException {
+		Map<String, String> envMap = System.getenv();
+		for (Entry<String, String> entry : envMap.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			try {
+				text = text.replaceAll("\\$\\{" + key + "\\}", value.replace("\\", "\\\\"));
+			}
+			catch (IllegalArgumentException e) {
+				String msg =
+					String.format("Error expanding environment variable in %s (env %s=%s) -- %s",
+						text, key, value, e.getMessage());
+				throw new ParseException(msg, 0);
+			}
+		}
+		return text;
 	}
 }

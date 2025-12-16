@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
@@ -199,6 +200,11 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 								return false;
 							}
 							return true;
+						}
+						else if (pcodeop == PcodeOp.STORE && instr.getMinAddress().add(8).equals(address)) {
+							// Most likely a store of the PC to the stack
+							// ARM PC is curInst+8
+							return false;
 						}
 					}
 					else if (refType.isCall() && refType.isComputed() && !address.isExternalAddress()) {
@@ -541,7 +547,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 			SymbolicPropogator targetEval = symEval;
 			// if this is a tbX instruction, don't assume any old values
 			if (targetInstr != null && targetInstr.getMnemonicString().startsWith("tb")) {
-				targetEval = new SymbolicPropogator(program);
+				targetEval = new SymbolicPropogator(program, false);
 			}
 
 			Address zeroAddr = targetInstr.getMinAddress().getNewAddress(0);
@@ -799,7 +805,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		if (tmodeRegister != null && listing.getUndefinedDataAt(addr) != null) {
 			boolean inThumbMode = false;
 			RegisterValue curvalue =
-				context.getRegisterValue(tmodeRegister, instruction.getMinAddress());
+				context.getRegisterValue(tmodeRegister);
 			if (curvalue != null && curvalue.hasValue()) {
 				inThumbMode = (curvalue.getUnsignedValue().intValue() == 1);
 			}

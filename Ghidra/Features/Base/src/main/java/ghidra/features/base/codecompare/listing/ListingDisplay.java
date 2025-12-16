@@ -18,6 +18,7 @@ package ghidra.features.base.codecompare.listing;
 import static ghidra.GhidraOptions.*;
 
 import java.awt.Color;
+import java.util.List;
 
 import javax.swing.Icon;
 
@@ -85,7 +86,7 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		listingPanel.addHoverService(new ReferenceListingHover(tool, () -> formatManager));
 		listingPanel.addHoverService(new DataTypeListingHover(tool));
 		listingPanel.addHoverService(new TruncatedTextListingHover(tool));
-		listingPanel.addHoverService(new FunctionNameListingHover(tool));
+		listingPanel.addHoverService(new LabelListingHover(tool));
 
 		listingDiff.addListingDiffChangeListener(this);
 		setHoverMode(true);
@@ -94,9 +95,12 @@ public class ListingDisplay implements ListingDiffChangeListener {
 	private void createMarkerManager(String owner) {
 		markerManager = new ListingDisplayMarkerManager(tool, owner);
 		markerManager.addChangeListener(e -> listingPanel.repaint());
-		MarginProvider marginProvider = markerManager.getMarginProvider();
+
+		// Manually install our custom margin provider.  We are not calling setMarginService(), 
+		// which means that many of the listing markers will not work in the compare view.
+		ListingMarginProvider marginProvider = markerManager.createMarginProvider();
 		listingPanel.addMarginProvider(marginProvider);
-		OverviewProvider overviewProvider = markerManager.getOverviewProvider();
+		ListingOverviewProvider overviewProvider = markerManager.createOverviewProvider();
 		listingPanel.addOverviewProvider(overviewProvider);
 	}
 
@@ -171,13 +175,19 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		markerManager.clearAll();
 		listingPanel.setView(view);
 		AddressIndexMap indexMap = listingPanel.getAddressIndexMap();
-		markerManager.getOverviewProvider().setProgram(program, indexMap);
+
+		List<ListingOverviewProvider> providers = listingPanel.getOverviewProviders();
+		for (ListingOverviewProvider provider : providers) {
+			provider.screenDataChanged(program, indexMap);
+		}
+
 		listingPanel.setBackgroundColorModel(
 			new MarkerServiceBackgroundColorModel(markerManager, program, indexMap));
+		setUpAreaMarkerSets(program, name);
 		repaint();
 	}
 
-	void setUpAreaMarkerSets(Program program, String name) {
+	private void setUpAreaMarkerSets(Program program, String name) {
 		if (program == null) {
 			return;
 		}

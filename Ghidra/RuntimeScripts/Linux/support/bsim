@@ -18,4 +18,4 @@ VMARG_LIST="-Djava.awt.headless=true "
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSim" "${MAXMEM}" "" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"
+${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSim" "${MAXMEM}" "${VMARG_LIST}" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"

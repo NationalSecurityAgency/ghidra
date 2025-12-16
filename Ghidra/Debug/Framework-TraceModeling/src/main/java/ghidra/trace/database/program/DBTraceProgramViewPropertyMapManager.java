@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,6 +49,15 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 		}
 
 		@Override
+		public void clear() {
+			AddressSetView view = getAddressSetView();
+			AddressRangeIterator addressRanges = view.getAddressRanges();
+			for (AddressRange range : addressRanges) {
+				removeRange(range.getMinAddress(), range.getMaxAddress());
+			}
+		}
+
+		@Override
 		public boolean intersects(Address start, Address end) {
 			return getAddressSetView().intersects(start, end);
 		}
@@ -62,7 +71,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 		public boolean removeRange(Address start, Address end) {
 			return map.clear(Lifespan.at(program.snap), new AddressRangeImpl(start, end));
 		}
-	
+
 		@Override
 		public boolean remove(Address addr) {
 			return removeRange(addr, addr);

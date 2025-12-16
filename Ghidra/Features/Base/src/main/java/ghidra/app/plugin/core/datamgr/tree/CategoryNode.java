@@ -22,8 +22,6 @@ import javax.swing.Icon;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.Function;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
@@ -53,6 +51,7 @@ public class CategoryNode extends DataTypeTreeNode {
 		if (category == null) {
 			return Collections.emptyList();
 		}
+
 		Category[] subCategories = category.getCategories();
 		DataType[] dataTypes = category.getDataTypes();
 		List<GTreeNode> list = new ArrayList<>(subCategories.length + dataTypes.length);
@@ -61,7 +60,7 @@ public class CategoryNode extends DataTypeTreeNode {
 		}
 
 		for (DataType dataType : dataTypes) {
-			if (!isFilteredType(dataType)) {
+			if (passesFilters(dataType)) {
 				list.add(new DataTypeNode(dataType));
 			}
 		}
@@ -71,33 +70,8 @@ public class CategoryNode extends DataTypeTreeNode {
 		return list;
 	}
 
-	private boolean isFilteredType(DataType dataType) {
-		if (!filterState.isShowArrays() && dataType instanceof Array) {
-			return true;
-		}
-
-		if (!filterState.isShowPointers() && (dataType instanceof Pointer) &&
-			!(dataType.getDataTypeManager() instanceof BuiltInDataTypeManager)) {
-			return true;
-		}
-
-		if (!filterState.isShowEnums() && (dataType instanceof Enum)) {
-			return true;
-		}
-
-		if (!filterState.isShowFunctions() && (dataType instanceof Function)) {
-			return true;
-		}
-
-		if (!filterState.isShowStructures() && (dataType instanceof Structure)) {
-			return true;
-		}
-
-		if (!filterState.isShowUnions() && (dataType instanceof Union)) {
-			return true;
-		}
-
-		return false;
+	private boolean passesFilters(DataType dataType) {
+		return filterState.passesFilters(dataType);
 	}
 
 	@Override
@@ -212,7 +186,7 @@ public class CategoryNode extends DataTypeTreeNode {
 			return;
 		}
 
-		if (isFilteredType(dataType)) {
+		if (!passesFilters(dataType)) {
 			return;
 		}
 

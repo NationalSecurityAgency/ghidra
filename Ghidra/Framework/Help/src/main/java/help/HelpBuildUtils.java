@@ -428,10 +428,10 @@ public class HelpBuildUtils {
 		return false;
 	}
 
-	private static final Path DEFAULT_FS_ROOT;
+	private static final Path DEFAULT_ROOT_DIR;
 	static {
 		try {
-			DEFAULT_FS_ROOT = Paths.get(".").toRealPath().getRoot();
+			DEFAULT_ROOT_DIR = Paths.get(".").toRealPath().getRoot();
 		}
 		catch (IOException e) {
 			throw new RuntimeException(
@@ -439,7 +439,7 @@ public class HelpBuildUtils {
 		}
 	}
 
-	private static Path toFSGivenRoot(Path root, Path path) {
+	private static Path relativeToRoot(Path root, Path path) {
 		if (path.getNameCount() == 0) {
 			if (path.isAbsolute()) {
 				return root;
@@ -459,12 +459,12 @@ public class HelpBuildUtils {
 		return temp;
 	}
 
-	public static Path toDefaultFS(Path path) {
-		return toFSGivenRoot(DEFAULT_FS_ROOT, path);
+	public static Path relativeToWorkingDir(Path path) {
+		return relativeToRoot(DEFAULT_ROOT_DIR, path);
 	}
 
-	public static Path toFS(Path targetFS, Path path) {
-		return toFSGivenRoot(targetFS.toAbsolutePath().getRoot(), path);
+	public static Path relativeTo(Path targetFS, Path path) {
+		return relativeToRoot(targetFS.toAbsolutePath().getRoot(), path);
 	}
 
 	public static Path createReferencePath(URI fileURI) {

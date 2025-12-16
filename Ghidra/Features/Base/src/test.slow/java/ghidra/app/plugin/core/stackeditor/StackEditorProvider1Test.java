@@ -19,12 +19,12 @@ import static org.junit.Assert.*;
 
 import java.awt.Window;
 
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import ghidra.app.plugin.core.compositeeditor.CompositeEditorProvider;
 import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
@@ -173,9 +173,10 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		Function f = program.getFunctionManager().getFunctionAt(addr("0x200"));
 		assertStackEditorShowing(f);
+		CompositeEditorProvider<?, ?> p = getComponentProvider(CompositeEditorProvider.class);
+		assertNotNull(p);
+		installProvider(p);
 
-		installProvider(stackEditorMgr.getProvider(program, "FUN_00000200"));
-		assertNotNull(provider);
 		model = ((StackEditorProvider) provider).getModel();
 		assertNotNull(model);
 
@@ -322,6 +323,8 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		int parameterIndex = 0;
 		Parameter parameter = renameParameterInListing(parameterIndex, "listing.test.name");
 
+		waitForSwing();
+
 		// Verify the provider's name for that parameter is updated
 		String modelParameterName = getParameterNameFromModel(parameterIndex);
 		assertEquals(parameter.getName(), modelParameterName);
@@ -340,6 +343,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		// Change the name of a parameter in the Listing
 		renameParameterInListing(parameterIndex, "listing.test.name");
 
+		JDialog reloadDialog = waitForJDialog("Reload Stack Editor?");
+		pressButton(reloadDialog, "No");
+
 		// Verify the name of the parameter in the provider is not changed from the original edit
 		String currentModelName = getParameterNameFromModel(parameterIndex);
 		assertEquals(newModelName, currentModelName);
@@ -357,6 +363,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		// Change the name of a parameter in the Listing
 		renameParameterInListing(parameterIndex, "listing.test.name");
+
+		JDialog reloadDialog = waitForJDialog("Reload Stack Editor?");
+		pressButton(reloadDialog, "No");
 
 		// Press Apply
 		apply();
@@ -383,6 +392,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		// Change the name of a parameter in the Listing
 		String newListingText = "listing.test.name";
 		renameParameterInListing(parameterIndex, newListingText);
+
+		JDialog reloadDialog = waitForJDialog("Reload Stack Editor?");
+		pressButton(reloadDialog, "No");
 
 		// Press Apply
 		apply();

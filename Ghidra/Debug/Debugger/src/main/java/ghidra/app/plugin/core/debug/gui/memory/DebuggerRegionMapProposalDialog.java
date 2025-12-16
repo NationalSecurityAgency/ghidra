@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,8 @@ public class DebuggerRegionMapProposalDialog
 	protected enum RegionMapTableColumns
 		implements EnumeratedTableColumn<RegionMapTableColumns, RegionMapEntry> {
 		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
-		REGION_NAME("Region", String.class, e -> e.getRegion().getName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getRegion().getMinAddress()),
+		REGION_NAME("Region", String.class, e -> e.getRegionName()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getRegionMinAddress()),
 		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),

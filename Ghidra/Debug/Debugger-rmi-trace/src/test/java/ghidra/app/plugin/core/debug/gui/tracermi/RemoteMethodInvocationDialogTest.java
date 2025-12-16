@@ -33,11 +33,12 @@ import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.Test
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteParameter;
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.ValStr;
+import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.debug.api.tracermi.RemoteParameter;
 import ghidra.framework.options.PropertyBoolean;
-import ghidra.trace.model.target.iface.TraceObjectMethod.Param;
-import ghidra.trace.model.target.iface.TraceObjectMethod.ParameterDescription;
+import ghidra.trace.model.target.iface.TraceMethod.Param;
+import ghidra.trace.model.target.iface.TraceMethod.ParameterDescription;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema.MinimalSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
@@ -52,7 +53,8 @@ public class RemoteMethodInvocationDialogTest extends AbstractGhidraHeadedDebugg
 			TestRemoteParameter parameter = createParameter(p);
 			params.put(parameter.name(), parameter);
 		}
-		return new TestRemoteMethod(m.getName(), null, "Test", "A test method", params,
+		return new TestRemoteMethod(m.getName(), ActionName.name(m.getName()), "Test",
+			"A test method", params,
 			PrimitiveTraceObjectSchema.schemaForPrimitive(m.getReturnType()));
 	}
 

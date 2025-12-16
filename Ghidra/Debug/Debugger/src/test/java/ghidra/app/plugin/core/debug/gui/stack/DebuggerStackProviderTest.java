@@ -41,9 +41,9 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectManager;
@@ -51,7 +51,7 @@ import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
 
@@ -167,7 +167,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		}
 	}
 
-	protected TraceObjectThread addThread(int n) {
+	protected TraceThread addThread(int n) {
 		PathPattern threadPattern = PathFilter.parse("Processes[1].Threads[]");
 		KeyPath threadPath = threadPattern.applyIntKeys(n).getSingletonPath();
 		try (Transaction tx = tb.startTransaction()) {
@@ -175,26 +175,26 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					.createObject(threadPath)
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectThread.class));
+					.queryInterface(TraceThread.class));
 		}
 	}
 
-	protected TraceObjectStack addStack(TraceObjectThread thread) {
+	protected TraceStack addStack(TraceThread thread) {
 		KeyPath stackPath = thread.getObject().getCanonicalPath().extend("Stack");
 		try (Transaction tx = tb.startTransaction()) {
 			return Objects.requireNonNull(tb.trace.getObjectManager()
 					.createObject(stackPath)
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectStack.class));
+					.queryInterface(TraceStack.class));
 		}
 	}
 
-	protected void addStackFrames(TraceObjectStack stack) {
+	protected void addStackFrames(TraceStack stack) {
 		addStackFrames(stack, 2);
 	}
 
-	protected void addStackFrames(TraceObjectStack stack, int count) {
+	protected void addStackFrames(TraceStack stack, int count) {
 		KeyPath stackPath = stack.getObject().getCanonicalPath();
 		TraceObjectManager om = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
@@ -202,7 +202,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 				TraceObject frame = om.createObject(stackPath.index(i))
 						.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 						.getDestination(null);
-				frame.setAttribute(Lifespan.nowOn(0), TraceObjectStackFrame.KEY_PC,
+				frame.setAttribute(Lifespan.nowOn(0), TraceStackFrame.KEY_PC,
 					tb.addr(0x00400100 + 0x100 * i));
 			}
 		}
@@ -262,7 +262,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testActivateThreadNoStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
+		TraceThread thread = addThread(1);
 		waitForDomainObject(tb.trace);
 
 		traceManager.activateObject(thread.getObject());
@@ -275,7 +275,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testActivateThreadThenAddEmptyStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
+		TraceThread thread = addThread(1);
 		addStack(thread);
 		waitForDomainObject(tb.trace);
 
@@ -289,9 +289,9 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testActivateThreadThenAddStackPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
+		TraceThread thread = addThread(1);
 		traceManager.activateObject(thread.getObject());
-		TraceObjectStack stack = addStack(thread);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 		waitForTasks();
@@ -303,8 +303,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testAddStackThenActivateThreadPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -316,12 +316,14 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	/**
 	 * Because keys are strings, we need to ensure they get sorted numerically
+	 * 
+	 * @throws Exception because
 	 */
 	@Test
 	public void testTableSortedCorrectly() throws Exception {
 		createAndOpenTrace();
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack, 15);
 		waitForDomainObject(tb.trace);
 
@@ -341,8 +343,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testAppendStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -356,7 +358,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					.createObject(stack.getObject().getCanonicalPath().index(2))
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null);
-			frame2.setAttribute(Lifespan.nowOn(0), TraceObjectStackFrame.KEY_PC,
+			frame2.setAttribute(Lifespan.nowOn(0), TraceStackFrame.KEY_PC,
 				tb.addr(0x00400300));
 		}
 		waitForDomainObject(tb.trace);
@@ -374,8 +376,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testRemoveFrameUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -400,8 +402,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testRemoveStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -423,9 +425,9 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testActivateOtherThreadEmptiesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread1 = addThread(1);
-		TraceObjectThread thread2 = addThread(2);
-		TraceObjectStack stack1 = addStack(thread1);
+		TraceThread thread1 = addThread(1);
+		TraceThread thread2 = addThread(2);
+		TraceStack stack1 = addStack(thread1);
 		addStackFrames(stack1);
 		waitForDomainObject(tb.trace);
 
@@ -444,8 +446,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testActivateSnap() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -477,8 +479,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testCloseCurrentTraceEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -497,8 +499,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testActivateFrameSelectsRow() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -524,8 +526,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testDoubleClickRowActivateFrame() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -557,8 +559,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.openTrace(tb.trace);
 		programManager.openProgram(program);
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -580,13 +582,13 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		waitForDomainObject(program);
 
 		try (Transaction tx = tb.startTransaction()) {
-			TraceObjectMemoryRegion region = Objects.requireNonNull(tb.trace.getObjectManager()
+			TraceMemoryRegion region = Objects.requireNonNull(tb.trace.getObjectManager()
 					.createObject(KeyPath.parse("Processes[1].Memory[bin:.text]"))
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectMemoryRegion.class));
+					.queryInterface(TraceMemoryRegion.class));
 			region.getObject()
-					.setAttribute(Lifespan.nowOn(0), TraceObjectMemoryRegion.KEY_RANGE,
+					.setAttribute(Lifespan.nowOn(0), TraceMemoryRegion.KEY_RANGE,
 						tb.drng(0x00400000, 0x00400fff));
 
 			TraceLocation dloc =

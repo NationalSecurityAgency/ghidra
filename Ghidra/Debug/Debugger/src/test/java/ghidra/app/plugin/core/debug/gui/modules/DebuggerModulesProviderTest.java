@@ -51,16 +51,15 @@ import ghidra.framework.main.DataTreeDialog;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.modules.TraceObjectModule;
-import ghidra.trace.model.modules.TraceStaticMapping;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectManager;
-import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.path.PathPattern;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
@@ -108,13 +107,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	DebuggerModulesProvider provider;
 
-	protected TraceObjectModule modExe;
-	protected TraceObjectSection secExeText;
-	protected TraceObjectSection secExeData;
+	protected TraceModule modExe;
+	protected TraceSection secExeText;
+	protected TraceSection secExeData;
 
-	protected TraceObjectModule modLib;
-	protected TraceObjectSection secLibText;
-	protected TraceObjectSection secLibData;
+	protected TraceModule modLib;
+	protected TraceSection secLibText;
+	protected TraceSection secLibData;
 
 	protected SchemaContext ctx;
 
@@ -144,13 +143,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		try (Transaction tx = tb.startTransaction()) {
 			TraceObject root = om.getRootObject();
 			for (TraceObject module : (Iterable<TraceObject>) () -> root
-					.findSuccessorsInterface(Lifespan.at(0), TraceObjectModule.class, true)
+					.findSuccessorsInterface(Lifespan.at(0), TraceModule.class, true)
 					.map(p -> p.getDestination(root))
 					.iterator()) {
 				String moduleName = module.getCanonicalPath().index();
 				Lifespan span = module.getLife().bound();
 				for (TraceObject section : (Iterable<TraceObject>) () -> module
-						.findSuccessorsInterface(Lifespan.at(0), TraceObjectSection.class,
+						.findSuccessorsInterface(Lifespan.at(0), TraceSection.class,
 							true)
 						.map(p -> p.getDestination(root))
 						.iterator()) {
@@ -160,42 +159,42 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 									.getSingletonPath())
 							.insert(span, ConflictResolution.TRUNCATE)
 							.getDestination(root);
-					region.setAttribute(span, TraceObjectMemoryRegion.KEY_RANGE,
-						section.getAttribute(0, TraceObjectSection.KEY_RANGE).getValue());
-					region.setAttribute(span, TraceObjectMemoryRegion.KEY_READABLE, true);
-					region.setAttribute(span, TraceObjectMemoryRegion.KEY_WRITABLE,
+					region.setAttribute(span, TraceMemoryRegion.KEY_RANGE,
+						section.getAttribute(0, TraceSection.KEY_RANGE).getValue());
+					region.setAttribute(span, TraceMemoryRegion.KEY_READABLE, true);
+					region.setAttribute(span, TraceMemoryRegion.KEY_WRITABLE,
 						".data".equals(sectionName));
-					region.setAttribute(span, TraceObjectMemoryRegion.KEY_EXECUTABLE,
+					region.setAttribute(span, TraceMemoryRegion.KEY_EXECUTABLE,
 						".text".equals(sectionName));
 				}
 			}
 		}
 	}
 
-	protected TraceObjectModule addModule(String name, AddressRange range, Lifespan span) {
+	protected TraceModule addModule(String name, AddressRange range, Lifespan span) {
 		PathPattern modulePattern = PathFilter.parse("Processes[1].Modules[]");
 		TraceObjectManager om = tb.trace.getObjectManager();
-		TraceObjectModule module = Objects.requireNonNull(
+		TraceModule module = Objects.requireNonNull(
 			om.createObject(modulePattern.applyKeys(name).getSingletonPath())
 					.insert(span, ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectModule.class));
-		module.getObject().setAttribute(span, TraceObjectModule.KEY_MODULE_NAME, name);
-		module.getObject().setAttribute(span, TraceObjectModule.KEY_RANGE, range);
+					.queryInterface(TraceModule.class));
+		module.getObject().setAttribute(span, TraceModule.KEY_MODULE_NAME, name);
+		module.getObject().setAttribute(span, TraceModule.KEY_RANGE, range);
 		return module;
 	}
 
-	protected TraceObjectSection addSection(TraceObjectModule module, String name,
+	protected TraceSection addSection(TraceModule module, String name,
 			AddressRange range) {
 		TraceObjectManager om = tb.trace.getObjectManager();
 		Lifespan span = module.getObject().getLife().bound();
-		TraceObjectSection section = Objects.requireNonNull(om
+		TraceSection section = Objects.requireNonNull(om
 				.createObject(
 					module.getObject().getCanonicalPath().key("Sections").index(name))
 				.insert(span, ConflictResolution.TRUNCATE)
 				.getDestination(null)
-				.queryInterface(TraceObjectSection.class));
-		section.getObject().setAttribute(span, TraceObjectSection.KEY_RANGE, range);
+				.queryInterface(TraceSection.class));
+		section.getObject().setAttribute(span, TraceSection.KEY_RANGE, range);
 		return section;
 	}
 
@@ -364,7 +363,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		MemoryBlock block = addBlock();
 		try (Transaction tx = program.openTransaction("Change name")) {
-			program.setName(modExe.getName());
+			program.setName(modExe.getName(0));
 		}
 		waitForDomainObject(program);
 		waitForPass(() -> assertSectionTableSize(4));
@@ -524,7 +523,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
-			program.setName(modExe.getName());
+			program.setName(modExe.getName(0));
 
 			addBlock(); // So the program has a size
 		}
@@ -591,7 +590,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		MemoryBlock block = addBlock();
 		try (Transaction tx = program.openTransaction("Change name")) {
-			program.setName(modExe.getName());
+			program.setName(modExe.getName(0));
 		}
 		waitForDomainObject(program);
 		waitForTasks();
@@ -680,7 +679,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		try (Transaction tx = tb.startTransaction()) {
-			modExe.setName("/bin/echo"); // File has to exist
+			modExe.setName(0, "/bin/echo"); // File has to exist
 		}
 		waitForPass(() -> assertModuleTableSize(2));
 
@@ -718,7 +717,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		for (ValueRow row : visibleSections()) {
 			assertEquals(modExe.getObject(), row.getValue()
 					.getChild()
-					.findCanonicalAncestorsInterface(TraceObjectModule.class)
+					.findCanonicalAncestorsInterface(TraceModule.class)
 					.findFirst()
 					.orElse(null));
 		}

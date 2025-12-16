@@ -88,7 +88,10 @@ public class PyGhidraLaunchDelegate extends RegularLaunchConfigurationDelegate {
 						.formatted(project.getName()));
 
 			// Set program arguments
-			wc.setAttribute(PyDevUtils.getAttrProgramArguments(), "-v -g");
+			wc.setAttribute(PyDevUtils.getAttrProgramArguments(),
+				"-v -g -D ghidra.external.modules=\"%s%s%s\"".formatted(
+					javaProject.getProject().getLocation(), File.pathSeparator,
+					GhidraProjectUtils.getProjectDependencyDirs(javaProject)));
 
 			// Set Python interpreter
 			String interpreterName = PyDevUtils.getInterpreterName(project);

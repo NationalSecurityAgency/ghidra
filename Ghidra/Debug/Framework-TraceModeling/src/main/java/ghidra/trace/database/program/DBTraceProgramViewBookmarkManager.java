@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import javax.swing.Icon;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.BookmarkType;
@@ -52,6 +52,11 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	@Override
 	public BookmarkType defineType(String type, Icon icon, Color color, int priority) {
 		return bookmarkManager.defineBookmarkType(type, icon, color, priority);
+	}
+
+	@Override
+	public boolean isDefinedType(String type) {
+		return bookmarkManager.isDefinedType(type);
 	}
 
 	@Override
@@ -310,7 +315,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	@Override
 	public Iterator<Bookmark> getBookmarksIterator() {
 		// TODO: This seems terribly inefficient. We'll have to see how/when it's used.
-		return NestedIterator.start(bookmarkManager.getActiveMemorySpaces().iterator(),
+		return FlattenedIterator.start(bookmarkManager.getActiveSpaces().iterator(),
 			space -> filteredIterator(space.getAllBookmarks().iterator(),
 				bm -> program.viewport.containsAnyUpper(bm.getLifespan())));
 	}
@@ -327,7 +332,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 		AddressSet allMemory = factory.getAddressSet();
 		AddressSet within = forward ? factory.getAddressSet(startAddress, allMemory.getMaxAddress())
 				: factory.getAddressSet(allMemory.getMinAddress(), startAddress);
-		return NestedIterator.start(within.iterator(forward), rng -> {
+		return FlattenedIterator.start(within.iterator(forward), rng -> {
 			DBTraceBookmarkSpace space =
 				bookmarkManager.getBookmarkSpace(rng.getAddressSpace(), false);
 			if (space == null) {
@@ -368,7 +373,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 		// Not doing so here causes a slight display error in the bookmark table.
 		// It will say "Row i of n", but n will be greater than the actual number of rows.
 		int sum = 0;
-		for (DBTraceBookmarkSpace space : bookmarkManager.getActiveMemorySpaces()) {
+		for (DBTraceBookmarkSpace space : bookmarkManager.getActiveSpaces()) {
 			sum += space.getAllBookmarks().size();
 		}
 		return sum;

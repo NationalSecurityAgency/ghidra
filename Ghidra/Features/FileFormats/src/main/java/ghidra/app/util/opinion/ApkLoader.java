@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.*;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
@@ -37,7 +36,6 @@ import ghidra.file.formats.android.xml.AndroidXmlFileSystem;
 import ghidra.file.formats.zip.ZipFileSystem;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.GFile;
-import ghidra.framework.model.Project;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -64,15 +62,15 @@ public class ApkLoader extends DexLoader {
 	}
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 		boolean success = false;
 		List<Loaded<Program>> allLoadedPrograms = new ArrayList<>();
 		int dexIndex = 1;//DEX file numbering starts at 1
-		try (ZipFileSystem zipFS = openAPK(provider, monitor)) {
+		try (ZipFileSystem zipFS = openAPK(settings.provider(), monitor)) {
 			while (!monitor.isCancelled()) {
 				GFile classesDexFile =
 					zipFS.lookup("/" + "classes" + (dexIndex == 1 ? "" : dexIndex) + ".dex");
@@ -81,16 +79,17 @@ public class ApkLoader extends DexLoader {
 					break;
 				}
 
-				monitor.setMessage(
-					"Loading " + classesDexFile.getName() + " from " + programName + "...");
+				monitor.setMessage("Loading " + classesDexFile.getName() + " from " +
+					settings.importName() + "...");
 
 				try (ByteProvider dexProvider =
 					zipFS.getByteProvider(classesDexFile, monitor)) {
 					// defer to the super class (DexLoader) to actually load the DEX file
-					List<Loaded<Program>> loadedPrograms =
-						super.loadProgram(dexProvider, classesDexFile.getName(), project,
-							concatenatePaths(programFolderPath, programName), loadSpec, options,
-							log, consumer, monitor);
+					ImporterSettings newSettings = new ImporterSettings(dexProvider,
+						classesDexFile.getName(), settings.project(), settings.projectRootPath(),
+						settings.mirrorFsLayout(), settings.loadSpec(), settings.options(),
+						settings.consumer(), settings.log(), settings.monitor());
+					List<Loaded<Program>> loadedPrograms = super.loadProgram(newSettings);
 
 					allLoadedPrograms.addAll(loadedPrograms);
 				}
@@ -103,13 +102,13 @@ public class ApkLoader extends DexLoader {
 		}
 		finally {
 			if (!success) {
-				release(allLoadedPrograms, consumer);
+				allLoadedPrograms.forEach(Loaded::close);
 			}
 		}
 		if (allLoadedPrograms.isEmpty()) {
 			throw new LoadException("Operation finished with no programs to load");
 		}
-		link(allLoadedPrograms.stream().map(e -> e.getDomainObject()).toList(), log, monitor);
+		link(allLoadedPrograms, log, monitor);
 		return allLoadedPrograms;
 	}
 
@@ -300,11 +299,9 @@ public class ApkLoader extends DexLoader {
 	 * @param log the message log
 	 * @param monitor the task monitor
 	 */
-	private void link(List<Program> programList, MessageLog log, TaskMonitor monitor) {
-		MultiDexLinker linker = new MultiDexLinker(programList);
-		try {
+	private void link(List<Loaded<Program>> programList, MessageLog log, TaskMonitor monitor) {
+		try (MultiDexLinker linker = new MultiDexLinker(programList)) {
 			linker.link(monitor);
-			linker.clear(monitor);
 		}
 		catch (Exception e) {
 			log.appendException(e);

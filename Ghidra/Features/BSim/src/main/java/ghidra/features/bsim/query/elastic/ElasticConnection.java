@@ -220,7 +220,7 @@ public class ElasticConnection {
 	/**
 	 * Execute an elasticsearch command where we are not expecting a response
 	 * @param command is the type of the command
-	 * @param path is the overarching index/type/<command>
+	 * @param path is the overarching {@code index/type/<command>}
 	 * @param body is the JSON document describing the request
 	 * @throws ElasticException for any problems with the connecting
 	 */
@@ -258,7 +258,7 @@ public class ElasticConnection {
 	/**
 	 * Execute an elastic search statement and return the JSON response to user
 	 * @param command is the type of command
-	 * @param path is the overarching index/type/<command>
+	 * @param path is the overarching {@code index/type/<command>}
 	 * @param body is JSON document describing the request
 	 * @return the parsed response as a JsonObject
 	 * @throws ElasticException for any problems with the connection
@@ -299,7 +299,7 @@ public class ElasticConnection {
 	 * Execute an elastic search statement and return the JSON response to user
 	 * Do not throw an exception on failure, just return the error response
 	 * @param command is the type of command
-	 * @param path is the overarching index/type/<command>
+	 * @param path is the overarching {@code index/type/<command>}
 	 * @param body is JSON document describing the request
 	 * @return the parsed response as a JsonObject
 	 * @throws ElasticException for any problems with the connection

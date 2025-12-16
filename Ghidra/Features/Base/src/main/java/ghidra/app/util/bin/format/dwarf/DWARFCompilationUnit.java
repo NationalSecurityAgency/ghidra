@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
+import ghidra.app.util.bin.format.dwarf.macro.DWARFMacroHeader;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -34,7 +35,6 @@ import ghidra.util.task.TaskMonitor;
  * The first DIE record must be a DW_TAG_compile_unit.
  * <p>
  * DIE records are identified by their byte offset in the .debug_info section.
- * <p>
  */
 public class DWARFCompilationUnit extends DWARFUnitHeader {
 	/**
@@ -232,6 +232,13 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 
 	public DWARFLine getLine() {
 		return line;
+	}
+
+	public DWARFMacroHeader getMacros() {
+		long macrosOffset = diea.getUnsignedLong(DW_AT_macros, -1);
+		return macrosOffset != -1
+				? diea.getProgram().getMacroHeader(macrosOffset, this)
+				: DWARFMacroHeader.EMTPY;
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,7 +163,7 @@ class TraceDAG {
   FlowBlock *finishblock;		///< Designated exit block for the DAG (or null)
   void removeTrace(BlockTrace *trace);	///< Remove the indicated BlockTrace
   void processExitConflict(list<BadEdgeScore>::iterator start,list<BadEdgeScore>::iterator end);
-  BlockTrace *selectBadEdge(void);	///< Select the the most likely unstructured edge from active BlockTraces
+  BlockTrace *selectBadEdge(void);	///< Select the most likely unstructured edge from active BlockTraces
   void insertActive(BlockTrace *trace);	///< Move a BlockTrace into the \e active category
   void removeActive(BlockTrace *trace);	///< Remove a BlockTrace from the \e active category
   bool checkOpen(BlockTrace *trace);	///< Check if we can push the given BlockTrace into its next node

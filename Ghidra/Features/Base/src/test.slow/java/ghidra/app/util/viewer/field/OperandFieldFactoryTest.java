@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -294,7 +294,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 		structure.add(IntegerDataType.dataType, "field3", "Comment 3");
 
 		Address arrayAddr = addr("01001888");
-		Command cmd = new CreateArrayCmd(arrayAddr, 3, structure, 12);
+		Command<Program> cmd = new CreateArrayCmd(arrayAddr, 3, structure, 12);
 		applyCmd(program, cmd);
 
 		String arrayName = "ArrayOfStructures";
@@ -330,7 +330,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 		structure.add(IntegerDataType.dataType, "field3", "Comment 3");
 
 		Address structAddr = addr("01001888");
-		Command cmd = new CreateStructureCmd(structure, structAddr);
+		Command<Program> cmd = new CreateStructureCmd(structure, structAddr);
 		applyCmd(program, cmd);
 
 		String structName = "Structure";
@@ -358,7 +358,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 //==================================================================================================
 
 	protected void disassembleAt(Address addr) {
-		Command cmd = new DisassembleCommand(addr, null, false);
+		Command<Program> cmd = new DisassembleCommand(addr, null, false);
 		applyCmd(program, cmd);
 		waitForSwing();
 	}

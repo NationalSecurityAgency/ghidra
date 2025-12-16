@@ -37,8 +37,7 @@ import docking.wizard.WizardDialog;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
 import ghidra.framework.Application;
-import ghidra.framework.data.DefaultProjectData;
-import ghidra.framework.data.GhidraFileData;
+import ghidra.framework.data.*;
 import ghidra.framework.main.*;
 import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.*;
@@ -56,10 +55,14 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.extensions.ExtensionDetails;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
+import resources.icons.TranslateIcon;
 
 public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
+
+	private static final String RIGHT_ARROW = "\u2192";
 	private static final String OTHER_PROJECT = "Other_Project";
-	Icon icon = (Icon) getInstanceField("CONVERT_ICON", ProjectChooseRepositoryWizardModel.class);
+	private Icon icon =
+		(Icon) getInstanceField("CONVERT_ICON", ProjectChooseRepositoryWizardModel.class);
 
 	public FrontEndPluginScreenShots() {
 		super();
@@ -139,8 +142,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		TestDummyWizardModel<ProjectWizardData> panelMgr =
 			new TestDummyWizardModel<ProjectWizardData>(panel, false, true, false,
-				"Change Shared Project Information", 600, 375,
-				new ProjectWizardData(), icon);
+				"Change Shared Project Information", 600, 375, new ProjectWizardData(), icon);
 
 		WizardDialog wizard = new WizardDialog(panelMgr, false);
 		wizard.show();
@@ -156,9 +158,8 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		ProjectWizardData data = new ProjectWizardData();
 		data.setServerInfo(new ServerInfo("server1", 13100));
-		TestDummyWizardModel<ProjectWizardData> panelMgr =
-			new TestDummyWizardModel<>(panel, false, true, false,
-				"Change Shared Project Information", 600, 180, data, icon);
+		TestDummyWizardModel<ProjectWizardData> panelMgr = new TestDummyWizardModel<>(panel, false,
+			true, false, "Change Shared Project Information", 600, 180, data, icon);
 
 		WizardDialog wizard = new WizardDialog(panelMgr, false);
 		wizard.show();
@@ -327,6 +328,40 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
+	public void testAbsoluteFileLinkIcon() {
+		Icon programIcon = ProgramContentHandler.PROGRAM_ICON;
+		MultiIcon multiIcon = new MultiIcon(programIcon);
+		multiIcon.addIcon(new TranslateIcon(LinkHandler.LINK_ICON, 0, 1));
+		captureIconAndText(multiIcon, "Example " + RIGHT_ARROW + " /data/Example");
+	}
+
+	@Test
+	public void testAbsoluteBrokenFileLinkIcon() {
+		Icon programIcon = ProgramContentHandler.PROGRAM_ICON;
+		MultiIcon multiIcon = new MultiIcon(programIcon);
+		multiIcon.addIcon(new TranslateIcon(LinkHandler.LINK_ICON, 0, 1));
+		Icon linkIcon = new BrokenLinkIcon(multiIcon);
+		captureIconAndText(linkIcon, "Example " + RIGHT_ARROW + " /data/Example");
+	}
+
+	@Test
+	public void testAbsoluteFolderLinkIcon() {
+		Icon folderIcon = DomainFolder.CLOSED_FOLDER_ICON;
+		MultiIcon multiIcon = new MultiIcon(folderIcon);
+		multiIcon.addIcon(new TranslateIcon(LinkHandler.LINK_ICON, 0, 1));
+		captureIconAndText(multiIcon, "Example " + RIGHT_ARROW + " /data/Example");
+	}
+
+	@Test
+	public void testAbsoluteBrokenFolderLinkIcon() {
+		Icon folderIcon = DomainFolder.CLOSED_FOLDER_ICON;
+		MultiIcon multiIcon = new MultiIcon(folderIcon);
+		multiIcon.addIcon(new TranslateIcon(LinkHandler.LINK_ICON, 0, 1));
+		Icon linkIcon = new BrokenLinkIcon(multiIcon);
+		captureIconAndText(linkIcon, "Example " + RIGHT_ARROW + " /data/Example");
+	}
+
+	@Test
 	public void testProjectDataTable()
 			throws CancelledException, IOException, InvalidNameException {
 		program = env.getProgram("WinHelloCPP.exe");
@@ -337,8 +372,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		FrontEndPlugin plugin = getPlugin(tool, FrontEndPlugin.class);
 		JComponent projectDataPanel = (JComponent) getInstanceField("projectDataPanel", plugin);
-		JTabbedPane tabbedPane =
-			(JTabbedPane) getInstanceField("projectTab", projectDataPanel);
+		JTabbedPane tabbedPane = (JTabbedPane) getInstanceField("projectTab", projectDataPanel);
 		tabbedPane.setSelectedIndex(1);
 		setToolSize(800, 600);
 		captureComponent(projectDataPanel);
@@ -407,8 +441,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		TestDummyWizardModel<ProjectWizardData> panelMgr =
 			new TestDummyWizardModel<ProjectWizardData>(panel, false, true, false,
-				"Specify Repository Name on Server1", 600, 375,
-				new ProjectWizardData(), icon);
+				"Specify Repository Name on Server1", 600, 375, new ProjectWizardData(), icon);
 
 		WizardDialog wizard = new WizardDialog(panelMgr, false);
 
@@ -694,13 +727,12 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 		ProjectTestUtils.deleteProject(TEMP_DIR, OTHER_PROJECT);
 		Project otherProject = ProjectTestUtils.getProject(TEMP_DIR, OTHER_PROJECT);
 		Language language = getZ80_LANGUAGE();
-		DomainFile otherFile =
-			ProjectTestUtils.createProgramFile(otherProject, "Program1", language,
-				language.getDefaultCompilerSpec(), null);
+		DomainFile otherFile = ProjectTestUtils.createProgramFile(otherProject, "Program1",
+			language, language.getDefaultCompilerSpec(), null);
 		ProjectTestUtils.createProgramFile(otherProject, "Program2", language,
 			language.getDefaultCompilerSpec(), null);
 
-		otherFile.copyToAsLink(projectData.getRootFolder());
+		otherFile.copyToAsLink(projectData.getRootFolder(), false);
 
 		otherProject.close();
 

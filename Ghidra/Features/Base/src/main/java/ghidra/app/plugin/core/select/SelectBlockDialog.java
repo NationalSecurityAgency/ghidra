@@ -78,7 +78,7 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 		mainPanel.add(methodPanel(), gbc);
 		gbc.gridx++;
 		mainPanel.add(buildBlockPanel(), gbc);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Select Block");
 		return mainPanel;
 	}
 
@@ -90,13 +90,16 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 
 		main.add(new GLabel("Ending Address:"));
 		toAddressField = new JTextField(10);
+		toAddressField.getAccessibleContext().setAccessibleName("To Address");
 		main.add(toAddressField);
 
 		main.add(new GLabel("Length: "));
 		numberInputField = new IntegerTextField(10);
+		numberInputField.getComponent().getAccessibleContext().setAccessibleName("Number Input");
 		numberInputField.setMaxValue(BigInteger.valueOf(Integer.MAX_VALUE));
 		numberInputField.setAllowNegativeValues(false);
 		main.add(numberInputField.getComponent());
+		main.getAccessibleContext().setAccessibleName("Block");
 		return main;
 	}
 
@@ -111,6 +114,7 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 
 		forwardButton = new GRadioButton("Select Forward", true);
 		forwardButton.setName("forwardButton");
+		forwardButton.getAccessibleContext().setAccessibleName("Forward");
 		forwardButton.addActionListener(ae -> {
 			setStatusText("Enter number of bytes to select");
 			setAddressFieldEnabled(false);
@@ -119,6 +123,7 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 		buttonGroup.add(forwardButton);
 		backwardButton = new GRadioButton("Select Backward");
 		backwardButton.setName("backwardButton");
+		backwardButton.getAccessibleContext().setAccessibleName("Backward");
 		backwardButton.addActionListener(ae -> {
 			setStatusText("Enter number of bytes to select");
 			setAddressFieldEnabled(false);
@@ -127,6 +132,7 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 		buttonGroup.add(backwardButton);
 		allButton = new GRadioButton("Select All");
 		allButton.setName("allButton");
+		allButton.getAccessibleContext().setAccessibleName("All");
 		allButton.addActionListener(ae -> {
 			setItemsEnabled(false);
 			clearStatusText();
@@ -135,6 +141,7 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 		buttonGroup.add(allButton);
 		toButton = new GRadioButton("To Address");
 		toButton.setName("toButton");
+		toButton.getAccessibleContext().setAccessibleName("To Address");
 		toButton.addActionListener(ae -> {
 			setStatusText("Enter an Address to go to");
 			setAddressFieldEnabled(true);
@@ -152,6 +159,7 @@ class SelectBlockDialog extends ReusableDialogComponentProvider {
 		gbc.gridy++;
 		main.add(backwardButton, gbc);
 		setStatusText("Enter number of bytes to select");
+		main.getAccessibleContext().setAccessibleName("Methods");
 		return main;
 	}
 

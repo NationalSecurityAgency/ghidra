@@ -31,11 +31,13 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
@@ -43,7 +45,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
-import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import utility.function.Callback;
 import utility.function.Dummy;
@@ -63,6 +64,9 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private String windowSubMenu;
 	private List<ComponentProviderActivationListener> activationListenerList = new ArrayList<>();
 	private Callback closedCallback = Dummy.callback();
+
+	// optional client listener
+	private DomainObjectListener programListener;
 
 	private Navigatable navigatable;
 	private SelectionNavigationAction selectionNavigationAction;
@@ -423,6 +427,15 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	}
 
 	@Override
+	public void componentHidden() {
+		// Note: this method will get called when this provider is closed.  Also, the provider will
+		// be closed if its program is closed.
+		if (programListener != null) {
+			program.removeListener(programListener);
+		}
+	}
+
+	@Override
 	public String getWindowSubMenuName() {
 		return windowSubMenu;
 	}
@@ -455,5 +468,23 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	 */
 	public void setClosedCallback(Callback c) {
 		this.closedCallback = Dummy.ifNull(c);
+	}
+
+	/**
+	 * Sets a program listener on this provider.  This class will add the listener to the program
+	 * and maintain a reference to the listener for the life of this provider.  This prevents the 
+	 * listener from getting garbage collected until this provider is disposed.
+	 * 
+	 * @param programListener the listener
+	 */
+	public void setProgramListener(DomainObjectListener programListener) {
+		if (this.programListener != null) {
+			program.removeListener(programListener);
+		}
+
+		this.programListener = programListener;
+		if (programListener != null) {
+			program.addListener(programListener);
+		}
 	}
 }

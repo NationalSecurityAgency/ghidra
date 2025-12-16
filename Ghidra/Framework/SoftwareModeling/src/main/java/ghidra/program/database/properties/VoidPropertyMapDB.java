@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class VoidPropertyMapDB extends PropertyMapDB<Boolean> implements VoidPropertyMap {
 
-	private static Object VOID_OBJECT = new Object();
+	private static Boolean TRUE = true;
 
 	/**
 	 * Construct an void object property map.
@@ -64,15 +64,17 @@ public class VoidPropertyMapDB extends PropertyMapDB<Boolean> implements VoidPro
 	public void add(Address addr) {
 		lock.acquire();
 		try {
-			long key = addrMap.getKey(addr, true);
+			checkDeleted();
+
+			long addrKey = addrMap.getKey(addr, true);
 			Boolean oldValue = hasProperty(addr);
 
 			if (propertyTable == null) {
 				createTable(null);
 			}
-			DBRecord rec = schema.createRecord(key);
+			DBRecord rec = schema.createRecord(addrKey);
 			propertyTable.putRecord(rec);
-			cache.put(key, VOID_OBJECT);
+			cache.put(addrKey, TRUE);
 			changeMgr.setPropertyChanged(name, addr, oldValue, true);
 		}
 		catch (IOException e) {

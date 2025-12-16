@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 ## ###
 # IP: GHIDRA
 #
@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@timeout 60000
 #@title gdb + gdbserver via ssh
 #@image-opt arg:1
 #@desc <html><body width="300px">
@@ -24,9 +23,10 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group gdb
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb_gdbserver_ssh
+#@help gdb#gdbserver_ssh
+#@depends Debugger-rmi-trace
 #@enum Endian:str auto big little
 #@arg :str! "Image" "The target binary executable image on the remote system"
 #@args "Arguments" "Command-line arguments to pass to the target"
@@ -39,31 +39,21 @@
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/gdbsetuputils.sh
 
-"$OPT_GDB_PATH" \
-  -q \
-  -ex "set pagination off" \
-  -ex "set confirm off" \
-  -ex "show version" \
-  -ex "python import ghidragdb" \
-  -ex "set architecture $OPT_ARCH" \
-  -ex "set endian $OPT_ENDIAN" \
-  -ex "target remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - $@" \
-  -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -ex "ghidra trace start" \
-  -ex "ghidra trace sync-enable" \
-  -ex "ghidra trace sync-synth-stopped" \
-  -ex "set confirm on" \
-  -ex "set pagination on"
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
+export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
+
+target_image="$1"
+shift
+
+function launch-gdb() {
+	local qargs
+	printf -v qargs '%q ' "$@"
+	local -a args
+	compute-gdb-remote-args "$target_image" "remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - '$target_image' $qargs" "$GHIDRA_TRACE_RMI_ADDR"
+
+	"${args[@]}"
+}
+launch-gdb "$@"

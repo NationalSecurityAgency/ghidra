@@ -479,6 +479,20 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
+	 * Returns true if the given provider is the last provider in its window.
+	 * @param provider the provider
+	 * @return true if the given provider is the last provider in its window.
+	 */
+	public boolean isLastComponentInWindow(ComponentProvider provider) {
+		Window providerWindow = getProviderWindow(provider);
+		WindowNode providerNode = root.getNodeForWindow(providerWindow);
+		if (providerNode != null) {
+			return providerNode.getComponentCount() == 1;
+		}
+		return false;
+	}
+
+	/**
 	 * Sets the visible state of the set of docking windows.
 	 *
 	 * @param state if true the main window and all sub-windows are set to be visible. If state is
@@ -915,7 +929,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
-
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			showComponent(placeholder, visibleState, true, shouldEmphasize);
@@ -979,7 +992,15 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private void movePlaceholderToFront(ComponentPlaceholder placeholder, boolean emphasisze) {
-		placeholder.toFront();
+
+		if (!placeholder.canTakeFocus()) {
+			// If we move the parent window to the front when the placeholder is not ready, then
+			// some other placeholder will get focus when the window is activated, which we do not
+			// want to happen.  Later, when the placeholder is fully constructed, the window will 
+			// brought to the front.
+			return;
+		}
+
 		toFront(root.getWindow(placeholder));
 		if (emphasisze) {
 			placeholder.emphasize();
@@ -1505,6 +1526,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (root == null) {
 			return;
 		}
+
 		actionToGuiMapper.setActive(active);
 		if (active) {
 			setActiveManager(this);
@@ -1526,6 +1548,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			pendingRequestFocusComponent = null; // only do it once so that we don't get stuck in this state
 			return;
 		}
+
 		pendingRequestFocusComponent = component;
 		pendingRequestFocusComponent.requestFocus();
 	}
@@ -2228,7 +2251,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * be grouped with a specific set of actions.
 	 * <p>
 	 * The default group for a cascaded submenu is the name of the submenu.
-	 * <p>
 	 *
 	 * @param menuPath menu name path where the last element corresponds to the specified group
 	 *            name.
@@ -2567,7 +2589,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 *
 	 * @param context the context
 	 */
-	void doContextChanged(ActionContext context) {
+	void notifyContextListeners(ActionContext context) {
+
+		if (context == null) {
+			return;
+		}
+
 		for (DockingContextListener listener : contextListeners) {
 			listener.contextChanged(context);
 		}

@@ -104,6 +104,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new BorderLayout());
 		createTableModel();
 		TableChooserDialogPanel tablePanel = new TableChooserDialogPanel(model);
+		tablePanel.getAccessibleContext().setAccessibleName("Table Dialog");
 
 		table = tablePanel.getTable();
 		table.setAccessibleNamePrefix("Chooser");
@@ -120,8 +121,10 @@ public class TableChooserDialog extends DialogComponentProvider
 
 		GhidraTableFilterPanel<AddressableRowObject> filterPanel =
 			new GhidraTableFilterPanel<>(table, model);
+		filterPanel.getAccessibleContext().setAccessibleName("Dialog");
 		panel.add(tablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("Table Chooser");
 		return panel;
 	}
 

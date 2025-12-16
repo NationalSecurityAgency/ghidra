@@ -473,6 +473,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false; // Dynamic shift
       sa = (int4)op->getIn(1)->getOffset();
+      if (sa >= sizeof(uintb)*8) return false;	// Beyond precision of mask
       newmask = (rvn->mask << sa) & calc_mask( outvn->getSize() );
       if (newmask == 0) break;	// Subvar is cleared, truncate flow
       if (rvn->mask != (newmask >> sa)) return false; // subvar is clipped
@@ -498,9 +499,12 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false;
       sa = (int4)op->getIn(1)->getOffset();
-      newmask = rvn->mask >> sa;
+      if (sa >= sizeof(uintb)*8)
+	newmask = 0;
+      else
+	newmask = rvn->mask >> sa;
       if (newmask == 0) {
-	if (op->code()==CPUI_INT_RIGHT) break; // subvar is set to zero, truncate flow
+	if (op->code()==CPUI_INT_RIGHT) break; // subvar does not pass thru, truncate flow
 	return false;
       }
       if (rvn->mask != (newmask << sa)) return false;
@@ -523,6 +527,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_SUBPIECE:
       sa = (int4)op->getIn(1)->getOffset() * 8;
+      if (sa >= sizeof(uintb)*8) break;
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
       if (rvn->mask != (newmask << sa)) {	// Some kind of truncation of the logical value
@@ -725,20 +730,30 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_LEFT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
-    newmask = rvn->mask >> sa;	// What mask looks like before shift
+    if (sa >= sizeof(uintb)*8)
+      newmask = 0;
+    else
+      newmask = rvn->mask >> sa;	// What mask looks like before shift
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
       addNewConstant(rop,0,(uintb)0);
       return true;
     }
-    if ((newmask<<sa) != rvn->mask)
-      break;			// subvariable is truncated by shift
-    rop = createOp(CPUI_COPY,1,rvn);
-    if (!createLink(rop,newmask,0,op->getIn(0))) return false;
+    if ((newmask<<sa) == rvn->mask) {
+      rop = createOp(CPUI_COPY,1,rvn);
+      if (!createLink(rop,newmask,0,op->getIn(0))) return false;
+      return true;
+    }
+    if ((rvn->mask & 1)==0) return false; // Can't assume zeroes are shifted into least sig bits
+    rop = createOp(CPUI_INT_LEFT,2,rvn);
+    if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
+    addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)); // Preserve the shift amount
     return true;
   case CPUI_INT_RIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
+    if (sa >= sizeof(uintb)*8)
+      break;			// Beyond precision of mask
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
@@ -753,6 +768,8 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_SRIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
+    if (sa >= sizeof(uintb)*8)
+      break;			// Beyond precision of mask
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if ((newmask>>sa) != rvn->mask)
       break;			// subvariable is truncated by shift
@@ -1576,8 +1593,11 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   Varnode *outvn = op->getOut();
   int4 flowsize = outvn->getSize();
+  int4 sa = op->getIn(1)->getOffset();
+  if (flowsize + sa > sizeof(uintb))	// Mask must fit in precision
+    return 0;
   uintb mask = calc_mask( flowsize );
-  mask <<= 8*((int4)op->getIn(1)->getOffset());
+  mask <<= 8*sa;
   bool aggressive = outvn->isPtrFlow();
   if (!aggressive) {
     if ((vn->getConsume() & mask) != vn->getConsume()) return 0;
@@ -2582,7 +2602,7 @@ void SplitDatatype::buildOutConcats(Varnode *rootVn,PcodeOp *previousOp,vector<V
     data.getMerge().registerProtoPartialRoot(rootVn);
 }
 
-/// \brief Build a a series of PTRSUB ops at different offsets, given a root pointer
+/// \brief Build a series of PTRSUB ops at different offsets, given a root pointer
 ///
 /// Offsets and data-types are based on \b dataTypePieces, taking input data-types if \b isInput is \b true,
 /// output data-types otherwise.  The data-types, relative to the root pointer, are assumed to start at
@@ -3695,13 +3715,11 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
   }
   TransformVar *basePtr = getPreexistingVarnode(origPtr);
   int4 ptrSize = origPtr->getSize();
-  Varnode *valueVn = op->getIn(2);
-  for(int4 i=0;i<numLanes;++i) {
+  // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
+  int8 bytePos = 0;	// Smallest pointer offset
+  for(int4 count=0;count<numLanes;++count) {
+    int4 i = spc->isBigEndian() ? numLanes -1 - count: count;	// little = least to most, big = most to least
     TransformOp *ropStore = newOpReplace(3, CPUI_STORE, op);
-    int4 bytePos = description.getPosition(skipLanes + i);
-    int4 sz = description.getSize(skipLanes + i);
-    if (spc->isBigEndian())
-      bytePos = valueVn->getSize() - (bytePos + sz);	// Convert position to address order
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3718,6 +3736,7 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
     opSetInput(ropStore,newConstant(spaceConstSize,0,spaceConst),0);
     opSetInput(ropStore,ptrVn,1);
     opSetInput(ropStore,inVars+i,2);
+    bytePos += description.getSize(skipLanes + i);
   }
   return true;
 }
@@ -3743,13 +3762,11 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
   }
   TransformVar *basePtr = getPreexistingVarnode(origPtr);
   int4 ptrSize = origPtr->getSize();
-  int4 outSize = op->getOut()->getSize();
-  for(int4 i=0;i<numLanes;++i) {
+  // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
+  int8 bytePos = 0;	// Smallest pointer offset
+  for(int4 count=0;count<numLanes;++count) {
     TransformOp *ropLoad = newOpReplace(2, CPUI_LOAD, op);
-    int4 bytePos = description.getPosition(skipLanes + i);
-    int4 sz = description.getSize(skipLanes + i);
-    if (spc->isBigEndian())
-      bytePos = outSize - (bytePos + sz);	// Convert position to address order
+    int4 i = spc->isBigEndian() ? numLanes - 1 - count : count;	// little = least to most, big = most to least
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3766,6 +3783,7 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
     opSetInput(ropLoad,newConstant(spaceConstSize,0,spaceConst),0);
     opSetInput(ropLoad,ptrVn,1);
     opSetOutput(ropLoad,outVars+i);
+    bytePos += description.getSize(skipLanes + i);
   }
   return true;
 }

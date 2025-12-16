@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public interface ArrayStringable extends DataType {
 	/**
 	 * For cases where an array of this type exists, determines if a String value
 	 * will be returned.
-	 * <p>
+	 * 
 	 * @param settings
 	 * @return true if array of this type with the specified settings will return
 	 * a String value.
@@ -88,7 +88,7 @@ public interface ArrayStringable extends DataType {
 	/**
 	 * Get the ArrayStringable for a specified data type. Not used on an Array DataType, but
 	 * on Array's element's type.
-	 * <p>
+	 * 
 	 * @param dt data type
 	 * @return ArrayStringable object, or null.
 	 */

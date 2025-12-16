@@ -494,7 +494,7 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	/**
-	 * Notification that that something may have changed (undo/redo/image base change) and we need
+	 * Notification that something may have changed (undo/redo/image base change) and we need
 	 * to invalidate our cache and possibly have a wrapping record again.
 	 */
 	public void invalidate() {

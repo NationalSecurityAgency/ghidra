@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -630,14 +630,14 @@ public class SarifProgramOptions {
 	}
 
 	/**
-	 * @param b trueif the processor-defined labels should be anchored
+	 * @param b true if the processor-defined labels should be anchored
 	 */
 	public void setAnchorProcDefinedLabels(boolean b) {
 		anchorProcDefinedLabels = b;
 	}
 
 	/**
-	 * @return true true if the processor-defined labels should be anchored
+	 * @return true if the processor-defined labels should be anchored
 	 */
 	public boolean anchorProcDefinedLabels() {
 		return anchorProcDefinedLabels;

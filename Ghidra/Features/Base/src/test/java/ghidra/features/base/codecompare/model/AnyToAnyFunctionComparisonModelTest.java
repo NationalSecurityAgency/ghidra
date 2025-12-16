@@ -25,8 +25,6 @@ import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.services.FunctionComparisonService;
-import ghidra.features.base.codecompare.model.AnyToAnyFunctionComparisonModel;
-import ghidra.features.base.codecompare.model.FunctionComparisonModelListener;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
@@ -95,6 +93,28 @@ public class AnyToAnyFunctionComparisonModelTest extends AbstractGhidraHeadedInt
 		assertEquals(List.of(b1, b2), model.getFunctions(RIGHT));
 		assertEquals(b1, model.getActiveFunction(LEFT));
 		assertEquals(b2, model.getActiveFunction(RIGHT));
+	}
+
+	@Test
+	public void testPairOfFunctionsInNaturalOrder() throws Exception {
+
+		model = new AnyToAnyFunctionComparisonModel(b1, b2);
+
+		assertEquals(List.of(b1, b2), model.getFunctions(LEFT));
+		assertEquals(List.of(b1, b2), model.getFunctions(RIGHT));
+		assertEquals(b1, model.getActiveFunction(LEFT));
+		assertEquals(b2, model.getActiveFunction(RIGHT));
+	}
+
+	@Test
+	public void testPairOfFunctionsOutOfNaturalOrder() throws Exception {
+
+		model = new AnyToAnyFunctionComparisonModel(b2, b1);
+
+		assertEquals(List.of(b1, b2), model.getFunctions(LEFT));
+		assertEquals(List.of(b1, b2), model.getFunctions(RIGHT));
+		assertEquals(b2, model.getActiveFunction(LEFT));
+		assertEquals(b1, model.getActiveFunction(RIGHT));
 	}
 
 	@Test

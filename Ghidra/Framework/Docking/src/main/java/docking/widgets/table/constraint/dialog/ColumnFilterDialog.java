@@ -105,6 +105,7 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 		JButton button = new JButton("Clear Filter");
 		button.addActionListener(e -> clearFilter());
 		button.setToolTipText("Clears any applied column filter and clears the dialog.");
+		button.getAccessibleContext().setAccessibleName("Clear Filter");
 		addButton(button);
 	}
 
@@ -201,6 +202,7 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 	private JComponent buildMainPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(buildFilterPanelContainer(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Column Filter");
 		return panel;
 	}
 
@@ -208,12 +210,13 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 
 		filterPanelContainer = new JPanel(new VerticalLayout(4));
 		filterPanelContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		filterPanelContainer.getAccessibleContext().setAccessibleName("Filter Container");
 		JScrollPane jScrollPane = new JScrollPane(filterPanelContainer);
 
 		jScrollPane.setColumnHeaderView(buildHeaderPanel());
 
 		loadFilterRows();
-
+		jScrollPane.getAccessibleContext().setAccessibleName("Filter Scroll");
 		return jScrollPane;
 	}
 
@@ -225,19 +228,21 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 			JButton addAndConditionButton = new JButton("Add AND condition", Icons.ADD_ICON);
 
 			addAndConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.AND));
+			addAndConditionButton.getAccessibleContext().setAccessibleName("Add AND Condition");
 			addAndConditionButton.setEnabled(true);
 
 			JButton addOrConditionButton = new JButton("Add  OR   condition", Icons.ADD_ICON);
 
 			addOrConditionButton.setHorizontalAlignment(SwingConstants.LEFT);
 			addOrConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.OR));
+			addOrConditionButton.getAccessibleContext().setAccessibleName("Add OR Condition");
 			addOrConditionButton.setEnabled(true);
 
 			innerPanel.add(addAndConditionButton);
 			innerPanel.add(addOrConditionButton);
 			bottomPanel.add(innerPanel, BorderLayout.EAST);
 		}
-
+		bottomPanel.getAccessibleContext().setAccessibleName("Conditions");
 		return bottomPanel;
 	}
 
@@ -387,6 +392,7 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 		headerPanel.setBorder(
 			new CompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.BORDER),
 				BorderFactory.createEmptyBorder(4, 0, 4, 0)));
+		headerPanel.getAccessibleContext().setAccessibleName("Headers");
 		return headerPanel;
 	}
 
@@ -463,18 +469,45 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 // TableFilterDialogModelListener methods
 //==================================================================================================
 
+	void filterRemoved(ColumnBasedTableFilter<R> filter) {
+		filterManager.updateSavedFilters(filter, false);
+	}
+
 	@Override
 	public void editorValueChanged(ColumnConstraintEditor<?> editor) {
 		updateStatus();
 	}
 
-	@Override
-	public void structureChanged() {
-		loadFilterRows();
-		updateStatus();
+	private ColumnFilterGridLocation getFocusedGridLocation() {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+
+		for (int row = 0; row < filterPanels.size(); row++) {
+			ColumnFilterPanel panel = filterPanels.get(row);
+			if (SwingUtilities.isDescendingFrom(focusOwner, panel)) {
+				return panel.getActiveGridLocation(focusOwner, row);
+			}
+		}
+
+		return null;
 	}
 
-	void filterRemoved(ColumnBasedTableFilter<R> filter) {
-		filterManager.updateSavedFilters(filter, false);
+	@Override
+	public void structureChanged() {
+
+		ColumnFilterGridLocation restoreLocation = getFocusedGridLocation();
+
+		loadFilterRows();
+		updateStatus();
+
+		if (restoreLocation != null) {
+			int dialogRow = restoreLocation.dialogRow();
+			if (filterPanels.size() <= dialogRow) {
+				return; // the UI was rebuilt in such a way that the old grid location is not valid
+			}
+
+			ColumnFilterPanel panel = filterPanels.get(dialogRow);
+			panel.restoreActiveGridLocation(restoreLocation);
+		}
 	}
 }

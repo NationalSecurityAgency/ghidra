@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 import org.jdom.Element;
 
 import docking.ComponentProvider;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
@@ -180,7 +181,7 @@ public class ReferencesPlugin extends Plugin {
 			new String[] { SUBMENU_NAME, CreateDefaultReferenceAction.DEFAULT_MENU_ITEM_NAME },
 			null, SHOW_REFS_GROUP));
 		createAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 
 		createAction.setDescription("Create default forward reference");
 		tool.addAction(createAction);
@@ -525,25 +526,27 @@ public class ReferencesPlugin extends Plugin {
 			}
 		}
 
-		BackgroundCommand cmd =
+		BackgroundCommand<Program> cmd =
 			new AddMemRefsCmd(cuAddr, set, rt, SourceType.USER_DEFINED, opIndex);
 		tool.executeBackgroundCommand(cmd, cu.getProgram());
 	}
 
 	boolean addDefaultReference(Program program, Address fromAddr, int opIndex, Address toAddr,
 			RefType refType) {
-		Command cmd =
+		Command<Program> cmd =
 			new AddMemRefCmd(fromAddr, toAddr, refType, SourceType.USER_DEFINED, opIndex, true);
 		return tool.execute(cmd, program);
 	}
 
 	boolean addDefaultReference(Program program, Address fromAddr, int opIndex, int stackOffset) {
-		Command cmd = new AddStackRefCmd(fromAddr, opIndex, stackOffset, SourceType.USER_DEFINED);
+		Command<Program> cmd =
+			new AddStackRefCmd(fromAddr, opIndex, stackOffset, SourceType.USER_DEFINED);
 		return tool.execute(cmd, program);
 	}
 
 	boolean addDefaultReference(Program program, Address fromAddr, int opIndex, Register reg) {
-		Command cmd = new AddRegisterRefCmd(fromAddr, opIndex, reg, SourceType.USER_DEFINED);
+		Command<Program> cmd =
+			new AddRegisterRefCmd(fromAddr, opIndex, reg, SourceType.USER_DEFINED);
 		return tool.execute(cmd, program);
 	}
 
@@ -559,7 +562,7 @@ public class ReferencesPlugin extends Plugin {
 	 * Remove specified set of references
 	 */
 	void deleteReferences(Program program, Reference[] refs) {
-		CompoundCmd cmd = new CompoundCmd("Remove Reference(s)");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Remove Reference(s)");
 		for (Reference ref : refs) {
 			cmd.add(new RemoveReferenceCmd(ref));
 		}
@@ -573,7 +576,7 @@ public class ReferencesPlugin extends Plugin {
 	 */
 	boolean updateReference(Reference editRef, CodeUnit fromCodeUnit, Address toAddr,
 			boolean isOffsetRef, long offset, RefType refType) {
-		CompoundCmd cmd = new CompoundCmd("Update Memory Reference");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Update Memory Reference");
 		int opIndex = editRef.getOperandIndex();
 		cmd.add(new RemoveReferenceCmd(editRef));
 		if (isOffsetRef) {
@@ -610,7 +613,7 @@ public class ReferencesPlugin extends Plugin {
 			return false;
 		}
 
-		Command cmd;
+		Command<Program> cmd;
 		if (isOffsetRef) {
 			cmd = new AddOffsetMemRefCmd(fromAddr, toAddr, false, refType, SourceType.USER_DEFINED,
 				opIndex, offset);
@@ -632,7 +635,7 @@ public class ReferencesPlugin extends Plugin {
 			return false;
 		}
 
-		CompoundCmd cmd = new CompoundCmd("Update Register Reference");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Update Register Reference");
 		cmd.add(new RemoveReferenceCmd(editRef));
 		cmd.add(new AddRegisterRefCmd(fromAddr, editRef.getOperandIndex(), reg, refType,
 			SourceType.USER_DEFINED));
@@ -670,7 +673,7 @@ public class ReferencesPlugin extends Plugin {
 			return false;
 		}
 
-		CompoundCmd cmd = new CompoundCmd("Update Stack Reference");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Update Stack Reference");
 		cmd.add(new RemoveReferenceCmd(editRef));
 		cmd.add(new AddStackRefCmd(fromAddr, editRef.getOperandIndex(), stackOffset, refType,
 			SourceType.USER_DEFINED));
@@ -699,7 +702,8 @@ public class ReferencesPlugin extends Plugin {
 		return tool.execute(cmd, p);
 	}
 
-	private void buildAddExtRefCmd(CompoundCmd cmd, Program p, Address fromAddr, int opIndex,
+	private void buildAddExtRefCmd(CompoundCmd<Program> cmd, Program p, Address fromAddr,
+			int opIndex,
 			String extName, String path, Address addr, String label, RefType refType) {
 
 		cmd.add(new SetExternalRefCmd(fromAddr, opIndex, extName, label, addr, refType,
@@ -721,7 +725,7 @@ public class ReferencesPlugin extends Plugin {
 		ExternalLocation oldExtLoc = editRef.getExternalLocation();
 		String oldExtName = oldExtLoc.getLibraryName();
 
-		CompoundCmd cmd = new CompoundCmd("Update External Reference");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Update External Reference");
 
 		// TODO: Add RefType entry to External Reference editor panel (assume unchanged to avoid merge conflict)
 
@@ -730,8 +734,10 @@ public class ReferencesPlugin extends Plugin {
 			path, addr, label, editRef.getReferenceType());
 
 		if (tool.execute(cmd, p)) {
-			if (!p.getReferenceManager().getReferencesTo(
-				oldExtLoc.getExternalSpaceAddress()).hasNext() &&
+			if (!p.getReferenceManager()
+					.getReferencesTo(
+						oldExtLoc.getExternalSpaceAddress())
+					.hasNext() &&
 				OptionDialog.YES_OPTION == OptionDialog.showYesNoDialog(tool.getActiveWindow(),
 					"Delete Unused External Location?",
 					"Remove unused external location symbol '" + oldExtLoc.toString() + "'?")) {
@@ -790,7 +796,7 @@ public class ReferencesPlugin extends Plugin {
 			}
 		}
 
-		CompoundCmd cmd = new CompoundCmd("Add External Reference");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Add External Reference");
 		buildAddExtRefCmd(cmd, p, fromCodeUnit.getMinAddress(), opIndex, extName, path, addr, label,
 			refType);
 
@@ -801,8 +807,10 @@ public class ReferencesPlugin extends Plugin {
 			Reference oldRef) {
 
 		if (oldRef == null) {
-			Reference[] refs = fromCodeUnit.getProgram().getReferenceManager().getReferencesFrom(
-				fromCodeUnit.getMinAddress(), opIndex);
+			Reference[] refs = fromCodeUnit.getProgram()
+					.getReferenceManager()
+					.getReferencesFrom(
+						fromCodeUnit.getMinAddress(), opIndex);
 			if (refs.length != 0) {
 				oldRef = refs[0];
 			}

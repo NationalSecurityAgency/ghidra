@@ -88,7 +88,7 @@ import ghidra.util.Msg;
  * <p>
  * For example, the Cursor Position sequence is documented as:
  * <p>
- * <tt>CSI <em>n</em> ; <em>m</em> H</tt>
+ * {@code CSI <em>n</em> ; <em>m</em> H}
  * <p>
  * Supposing {@code n} is 13 and {@code m} is 40, this sequence would be encoded as the string
  * {@code "\033[13;40H"}. The parser will handle decoding the CSI, parameters, and final byte
@@ -682,7 +682,7 @@ public interface VtHandler {
 	}
 
 	/**
-	 * Parse a sequence of integers in the form <tt><em>n</em> ; <em>m</em> ;</tt> ....
+	 * Parse a sequence of integers in the form {@code <em>n</em> ; <em>m</em> ;} ....
 	 * 
 	 * <p>
 	 * This is designed to replace the {@link String#split(String)} and

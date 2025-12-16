@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.Set;
 
+import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.DataType;
@@ -37,24 +38,23 @@ public class GoPointerType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the element's type.
-	 * 
-	 * @return reference to the element's type
+	 * {@return a reference to the element's type}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
 	public GoType getElement() throws IOException {
-		return programContext.getGoType(elem);
+		return programContext.getGoTypes().getType(elem);
 	}
 
 	@Override
 	public DataType recoverDataType() throws IOException {
-		DataType elementDT = programContext.getRecoveredType(getElement());
-		DataType self = programContext.getCachedRecoveredDataType(this);
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType elementDT = goTypes.getDataType(getElement());
+		DataType self = goTypes.getDataType(this, DataType.class, true);
 		if (self != null) {
 			return self;
 		}
-		return new PointerDataType(elementDT, programContext.getDTM());
+		return new PointerDataType(elementDT, goTypes.getDTM());
 	}
 
 	@Override
@@ -97,12 +97,17 @@ public class GoPointerType extends GoType {
 	protected String getTypeDeclString() throws IOException {
 		// type PointerTypeName *elementType
 		String selfName = getName();
-		String elemName = programContext.getGoTypeName(elem);
+		String elemName = programContext.getGoTypes().getTypeName(elem);
 		String defStr = "*" + elemName;
 		String defStrWithLinks =
 			"*" + AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName);
 		boolean hasName = !defStr.equals(selfName);
 		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
+	}
+
+	@Override
+	public boolean isValid() {
+		return super.isValid() && typ.getSize() == programContext.getPtrSize();
 	}
 
 }

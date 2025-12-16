@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import docking.widgets.search.SearchLocationContext;
 import docking.widgets.table.*;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -142,12 +142,12 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 	}
 
 	private class ContextTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<TextMatch, LocationReferenceContext> {
+			extends AbstractProgramBasedDynamicTableColumn<TextMatch, SearchLocationContext> {
 
 		private ContextCellRenderer renderer = new ContextCellRenderer();
 
 		@Override
-		public LocationReferenceContext getValue(TextMatch rowObject, Settings settings, Program p,
+		public SearchLocationContext getValue(TextMatch rowObject, Settings settings, Program p,
 				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getContext();
 		}
@@ -158,13 +158,13 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 		}
 
 		@Override
-		public GColumnRenderer<LocationReferenceContext> getColumnRenderer() {
+		public GColumnRenderer<SearchLocationContext> getColumnRenderer() {
 			return renderer;
 		}
 	}
 
 	private class ContextCellRenderer
-			extends AbstractGhidraColumnRenderer<LocationReferenceContext> {
+			extends AbstractGhidraColumnRenderer<SearchLocationContext> {
 
 		{
 			// the context uses html
@@ -178,7 +178,7 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 			super.getTableCellRendererComponent(data);
 
 			TextMatch match = (TextMatch) data.getRowObject();
-			LocationReferenceContext context = match.getContext();
+			SearchLocationContext context = match.getContext();
 			String text;
 			if (match.isMultiLine()) {
 				// multi-line matches create visual noise when showing colors, as of much of the 
@@ -193,7 +193,7 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 		}
 
 		@Override
-		public String getFilterString(LocationReferenceContext context, Settings settings) {
+		public String getFilterString(SearchLocationContext context, Settings settings) {
 			return context.getPlainText();
 		}
 	}

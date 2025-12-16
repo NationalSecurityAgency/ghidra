@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import javax.security.auth.login.LoginException;
 import ghidra.framework.Application;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.*;
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -130,7 +130,7 @@ class ServerConnectTask extends Task {
 
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
-			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
+			if (DefaultKeyManagerFactory.getPreferredKeyStore() == null) {
 				throw new IOException("User PKI Certificate not installed", e);
 			}
 			// assume user cancelled connect attempt when prompted for cert password
@@ -168,13 +168,14 @@ class ServerConnectTask extends Task {
 			monitor.setCancelEnabled(false);
 			monitor.setMessage("Connecting...");
 
-			Registry reg =
-				LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
-					new SslRMIClientSocketFactory());
+			Registry reg = LocateRegistry.getRegistry(server.getServerName(),
+				server.getPortNumber(), new SslRMIClientSocketFactory());
 			checkServerBindNames(reg);
 
 			gsh = (GhidraServerHandle) reg.lookup(GhidraServerHandle.BIND_NAME);
-			gsh.checkCompatibility(GhidraServerHandle.INTERFACE_VERSION);
+
+			// Check interface compatibility with the minimum supported version
+			gsh.checkCompatibility(GhidraServerHandle.MINIMUM_INTERFACE_VERSION);
 		}
 		catch (NotBoundException e) {
 			throw new IOException(e.getMessage());
@@ -237,8 +238,7 @@ class ServerConnectTask extends Task {
 	 * @throws LoginException  login failure
 	 */
 	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID,
-			TaskMonitor monitor)
-			throws IOException, LoginException, CancelledException {
+			TaskMonitor monitor) throws IOException, LoginException, CancelledException {
 
 		GhidraServerHandle gsh = getGhidraServerHandle(server, monitor);
 
@@ -291,12 +291,12 @@ class ServerConnectTask extends Task {
 							// if anonymous access allowed, let server validate certificate
 							// first and assume anonymous access if user unknown but cert is valid
 
-							if (!ApplicationKeyManagerFactory.initialize()) {
+							if (!DefaultKeyManagerFactory.initialize()) {
 								throw new IOException(
 									"Client PKI certificate has not been installed");
 							}
 
-							if (ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate()) {
+							if (DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate()) {
 								Msg.warn(this,
 									"Server connect - client is using self-signed PKI certificate");
 							}
@@ -368,6 +368,7 @@ class ServerConnectTask extends Task {
 			super(host, port);
 		}
 
+		@Override
 		public void connect(SocketAddress endpoint) throws IOException {
 			connect(endpoint, LIVENESS_CHECK_TIMEOUT_MS);
 		}
@@ -393,7 +394,7 @@ class ServerConnectTask extends Task {
 
 		monitor.setCancelEnabled(true);
 		monitor.setMessage("Checking Server Liveness...");
-		
+
 		// Perform simple socket test connection with short timeout to verify connectivity.
 		try (Socket socket = new FastConnectionFailSocket(serverName, sslRmiPort);
 				ConnectCancelledListener cancelListener =

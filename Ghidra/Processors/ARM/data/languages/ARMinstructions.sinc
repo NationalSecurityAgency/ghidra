@@ -2317,7 +2317,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24			is $(AMODE) &  CALLoverride=0 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1);
+  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
   call HAddr24;
   # don't do causes decompiler trouble  TB = 0;
 } # Always changes to THUMB mode
@@ -2325,7 +2325,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24			is $(AMODE) &  CALLoverride=1 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1);
+  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
   goto HAddr24;
 } # Always changes to THUMB mode
 
@@ -2333,7 +2333,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=0 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1);
+  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
   call HAddr24;
   # don't do causes decompiler trouble  TB = 0;
 }   # Always changes to THUMB mode
@@ -2341,7 +2341,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=1 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1);
+  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
   goto HAddr24;
 }   # Always changes to THUMB mode
 
@@ -2565,12 +2565,28 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @if defined(VERSION_6)
 
 # cpy is a pre-UAL synonym for mov
-:cpy^COND pc,rm 	is $(AMODE) & ARMcond=1 & COND & pc & c2027=0x1a & c1619=0 & c0411=0 & Rd=15 & rm
+:cpy^COND pc,rm 	is $(AMODE) & ARMcond=1 & LRset=0 & COND & pc & c2027=0x1a & c1619=0 & c0411=0 & Rd=15 & rm
 {
   build COND;
   build rm;
   BXWritePC(rm);
   goto [pc];
+}
+
+:cpy^COND pc,lr 		is $(AMODE) & ARMcond=1 & LRset=0 & COND & pc & c2527=0 & S20=0 & c2124=13 & c1619=0 & Rd=15 & sftimm=0 & c0406=0 & Rm=14 & lr
+{
+  build COND;
+  dest:4 = lr;
+  ALUWritePC(dest);
+  return [pc];
+}
+
+:cpy^COND pc,rm 	is $(AMODE) & ARMcond=1 & LRset=1 & COND & pc & c2027=0x1a & c1619=0 & c0411=0 & Rd=15 & rm
+{
+  build COND;
+  build rm;
+  BXWritePC(rm);
+  call [pc];
 }
 
 :cpy^COND lr,rm 	is $(AMODE) & ARMcond=1 & COND & c2027=0x1a & c1619=0 & c0411=0 & Rd=14 & lr & rm & Rm2=15
@@ -3571,14 +3587,6 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
                     [ LRset=1; globalset(inst_next,LRset); ]
 {
   lr = rm;
-}
-
-:mov^COND pc,lr 		is $(AMODE) & pc & ARMcond=1 & COND & c2527=0 & S20=0 & c2124=13 & c1619=0 & Rd=15 & sftimm=0 & c0406=0 & Rm=14 & lr
-{
-  build COND;
-  dest:4 = lr;
-  ALUWritePC(dest);
-  return [pc];
 }
 
 @if defined(VERSION_6T2)

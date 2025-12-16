@@ -77,7 +77,6 @@ public class DecompilerTextFinderDialog extends ReusableDialogComponentProvider 
 
 		textCombo = new GhidraComboBox<>();
 		textCombo.setEditable(true);
-		textCombo.addActionListener(e -> doSearch());
 
 		textCombo.setColumns(20);
 		textCombo.addDocumentListener(new DocumentListener() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -140,7 +140,7 @@ public class ToolUtils {
 		File[] toolFiles = USER_TOOLS_DIR.listFiles(filter);
 		if (toolFiles != null) {
 			for (File toolFile : toolFiles) {
-				ToolTemplate template = ToolUtils.readToolTemplate(toolFile);
+				ToolTemplate template = readToolTemplate(toolFile);
 				if (template != null) {
 					map.put(template.getName(), template);
 				}
@@ -202,9 +202,9 @@ public class ToolUtils {
 	}
 
 	public static void renameToolTemplate(ToolTemplate toolTemplate, String newName) {
-		ToolUtils.deleteTool(toolTemplate);
+		deleteTool(toolTemplate);
 		toolTemplate.setName(newName);
-		ToolUtils.writeToolTemplate(toolTemplate);
+		writeToolTemplate(toolTemplate);
 	}
 
 	public static boolean writeToolTemplate(ToolTemplate template) {
@@ -232,6 +232,8 @@ public class ToolUtils {
 	}
 
 	public static ToolTemplate readToolTemplate(File toolFile) {
+
+		LOGGER.trace("Loading tool file {}", toolFile);
 		GhidraToolTemplate toolTemplate = null;
 		try (FileInputStream is = new FileInputStream(toolFile)) {
 
@@ -331,7 +333,7 @@ public class ToolUtils {
 	public static String getUniqueToolName(ToolTemplate template) {
 		String name = template.getName();
 		int n = 1;
-		while (ToolUtils.getToolFile(name).exists()) {
+		while (getToolFile(name).exists()) {
 			name = name + "_" + n++;
 		}
 		return name;

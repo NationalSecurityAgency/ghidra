@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,6 @@ class FilePromptDialog extends DialogComponentProvider {
 	/**
 	 * Prompts the user to entry the path to a file and/or directory,
 	 * or to pick it using a browser dialog.
-	 * <p>
 	 *
 	 * @param title the dialog title
 	 * @param prompt HTML enabled prompt
@@ -108,7 +107,9 @@ class FilePromptDialog extends DialogComponentProvider {
 	private void build(String prompt) {
 
 		GHtmlLabel promptLabel = new GHtmlLabel(prompt);
+		promptLabel.getAccessibleContext().setAccessibleName(prompt);
 		filePathTextField = new JTextField(file != null ? file.getPath() : null, 40);
+		filePathTextField.getAccessibleContext().setAccessibleName("File Path");
 		filePathTextField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void removeUpdate(DocumentEvent e) {
@@ -127,21 +128,24 @@ class FilePromptDialog extends DialogComponentProvider {
 		});
 		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browse());
-
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		JPanel textFieldWithButtonPanel = new JPanel(new BorderLayout());
+		textFieldWithButtonPanel.getAccessibleContext()
+				.setAccessibleName("File Path Text Field and Browse Button");
 		textFieldWithButtonPanel.add(filePathTextField, BorderLayout.CENTER);
 		textFieldWithButtonPanel.add(browseButton, BorderLayout.EAST);
 
 		JPanel mainPanel = new JPanel(new PairLayout());
 		mainPanel.add(promptLabel);
 		mainPanel.add(textFieldWithButtonPanel);
+		mainPanel.getAccessibleContext().setAccessibleName("File Prompt");
 		Dimension size = mainPanel.getPreferredSize();
 		size.width = Math.max(size.width, 500);
 		mainPanel.setPreferredSize(size);
 		mainPanel.setMinimumSize(size);
 		JPanel newMain = new JPanel(new BorderLayout());
 		newMain.add(mainPanel, BorderLayout.CENTER);
-
+		newMain.getAccessibleContext().setAccessibleName("File Prompt");
 		addWorkPanel(newMain);
 		addOKButton();
 		addCancelButton();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.io.File;
 import java.security.*;
 import java.security.cert.X509Certificate;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 
 import org.junit.*;
@@ -73,8 +72,8 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 		keystoreFile = createTempFile("test-key", ".p12");
 		keystoreFile.delete();
 
-		ApplicationKeyManagerUtils.createKeyStore(ALIAS, TEST_IDENTITY, 2, null, keystoreFile,
-			"PKCS12", null, TEST_PWD.toCharArray());
+		PKIUtils.createKeyStore(ALIAS, TEST_IDENTITY, 2, null, keystoreFile, "PKCS12", null,
+			TEST_PWD.toCharArray());
 
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(passwordProvider);
 	}
@@ -89,12 +88,9 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 	@Test
 	public void testCancelledPasswordOnSetCertificate() throws Exception {
 
-		assertNull(ApplicationKeyManagerFactory.getKeyStore());
-		ApplicationKeyManagerFactory instance = ApplicationKeyManagerFactory.getInstance();
-		KeyManager[] keyManagers = instance.getKeyManagers();
-		assertEquals(1, keyManagers.length);
-		assertTrue("", keyManagers[0] instanceof X509ExtendedKeyManager);
-		X509ExtendedKeyManager keyManager = (X509ExtendedKeyManager) keyManagers[0];
+		assertNull(DefaultKeyManagerFactory.getKeyStore());
+		X509ExtendedKeyManager keyManager = DefaultKeyManagerFactory.getKeyManager();
+		assertNotNull(keyManager);
 
 		// verify that no certs are installed
 		assertNull(keyManager.getCertificateChain(ALIAS));
@@ -102,10 +98,10 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 
 		passwordProvider.cancelNextEntry();
 
-		ApplicationKeyManagerFactory.setKeyStore(keystoreFile.getAbsolutePath(), false);
+		DefaultKeyManagerFactory.setDefaultKeyStore(keystoreFile.getAbsolutePath(), false);
 
 		// verify that no certs are installed
-		assertEquals(null, ApplicationKeyManagerFactory.getKeyStore());
+		assertEquals(null, DefaultKeyManagerFactory.getKeyStore());
 		assertNull(keyManager.getCertificateChain(ALIAS));
 		assertNull(keyManager.getClientAliases("RSA", null));
 	}
@@ -113,21 +109,18 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 	@Test
 	public void testSetClearCertificate() throws Exception {
 
-		assertNull(ApplicationKeyManagerFactory.getKeyStore());
-		ApplicationKeyManagerFactory instance = ApplicationKeyManagerFactory.getInstance();
-		KeyManager[] keyManagers = instance.getKeyManagers();
-		assertEquals(1, keyManagers.length);
-		assertTrue("", keyManagers[0] instanceof X509ExtendedKeyManager);
-		X509ExtendedKeyManager keyManager = (X509ExtendedKeyManager) keyManagers[0];
+		assertNull(DefaultKeyManagerFactory.getKeyStore());
+		X509ExtendedKeyManager keyManager = DefaultKeyManagerFactory.getKeyManager();
+		assertNotNull(keyManager);
 
 		// verify that no certs are installed
 		assertNull(keyManager.getCertificateChain(ALIAS));
 		assertNull(keyManager.getClientAliases("RSA", null));
 
-		ApplicationKeyManagerFactory.setKeyStore(keystoreFile.getAbsolutePath(), false);
+		DefaultKeyManagerFactory.setDefaultKeyStore(keystoreFile.getAbsolutePath(), false);
 
 		// verify that generated cert is installed
-		assertEquals(keystoreFile.getAbsolutePath(), ApplicationKeyManagerFactory.getKeyStore());
+		assertEquals(keystoreFile.getAbsolutePath(), DefaultKeyManagerFactory.getKeyStore());
 		X509Certificate[] chain = keyManager.getCertificateChain(ALIAS);
 		assertNotNull(chain);
 		String[] aliases = keyManager.getClientAliases("RSA", new Principal[0]); // any CA allowed
@@ -158,10 +151,10 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 		}
 
 		// clear keystore
-		ApplicationKeyManagerFactory.setKeyStore(null, false);
+		DefaultKeyManagerFactory.setDefaultKeyStore(null, false);
 
 		// verify that no certs are installed
-		assertNull(ApplicationKeyManagerFactory.getKeyStore());
+		assertNull(DefaultKeyManagerFactory.getKeyStore());
 		assertNull(keyManager.getCertificateChain(ALIAS));
 		assertNull(keyManager.getClientAliases("RSA", null));
 

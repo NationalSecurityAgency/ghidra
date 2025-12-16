@@ -20,8 +20,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
 import ghidra.app.util.importer.MessageLog;
@@ -84,8 +85,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
+	public void load(Program prog, ImporterSettings settings)
+			throws IOException, CancelledException {
+
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (monitor.isCancelled()) {
 			return;
@@ -94,10 +98,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 		initVars();
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, settings.provider(), monitor);
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
+		NewExecutable ne =
+			new NewExecutable(settings.provider(), space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -171,13 +176,9 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	@Override
-	protected boolean isOptionalLibraryFilenameExtensions() {
-		return true;
-	}
-
-	@Override
-	protected boolean isCaseInsensitiveLibraryFilenames() {
-		return true;
+	protected Comparator<String> getLibraryNameComparator() {
+		return (s1, s2) -> String.CASE_INSENSITIVE_ORDER.compare(FilenameUtils.getBaseName(s1),
+			FilenameUtils.getBaseName(s2));
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -233,7 +234,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		buffer.append("Other Flags:       " + Conv.toHexString(ib.getOtherFlags()) + "\n");
 		buffer.append(ib.getOtherFlagsAsString());
 
-		firstCU.setComment(CodeUnit.PLATE_COMMENT, buffer.toString());
+		firstCU.setComment(CommentType.PLATE, buffer.toString());
 	}
 
 	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
@@ -268,7 +269,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 						try {
 							block = program.getMemory().join(block, zeroBlock); // expand
 						}
-						catch (MemoryBlockException | LockException | NotFoundException e) {
+						catch (MemoryBlockException | LockException e) {
 							throw new IOException(e);
 						}
 					}
@@ -314,7 +315,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buff.append((segments[i].isReadOnly() ? TAB + "Read Only" + "\n" : ""));
 				buff.append((segments[i].is32bit() ? TAB + "Use 32 Bit" + "\n" : ""));
 				CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-				cu.setComment(CodeUnit.PRE_COMMENT, buff.toString());
+				cu.setComment(CommentType.PRE, buff.toString());
 			}
 
 			for (Segment segment : segments) {
@@ -392,7 +393,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buf.append("Usage:          " + Conv.toHexString(resource.getUsage()) + "\n");
 				CodeUnit cu = listing.getCodeUnitAt(addr);
 				if (cu != null) {
-					cu.setComment(CodeUnit.PRE_COMMENT, buf.toString());
+					cu.setComment(CommentType.PRE, buf.toString());
 				}
 
 				//if this resource is a string table,

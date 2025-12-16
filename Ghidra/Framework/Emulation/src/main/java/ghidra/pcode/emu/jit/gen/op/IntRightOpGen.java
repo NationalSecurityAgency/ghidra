@@ -30,6 +30,11 @@ public enum IntRightOpGen implements ShiftIntBinOpGen<JitIntRightOp> {
 	GEN;
 
 	@Override
+	public boolean isSigned() {
+		return false;
+	}
+
+	@Override
 	public String methodName() {
 		return "intRight";
 	}

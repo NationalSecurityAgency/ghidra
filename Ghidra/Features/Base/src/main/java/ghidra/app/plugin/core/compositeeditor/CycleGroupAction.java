@@ -30,7 +30,7 @@ public class CycleGroupAction extends CompositeEditorTableAction {
 	private final static String GROUP_NAME = DATA_ACTION_GROUP;
 	private CycleGroup cycleGroup;
 
-	public CycleGroupAction(CompositeEditorProvider provider, CycleGroup cycleGroup) {
+	public CycleGroupAction(CompositeEditorProvider<?, ?> provider, CycleGroup cycleGroup) {
 		super(provider, cycleGroup.getName());
 
 		setMenuBarData(

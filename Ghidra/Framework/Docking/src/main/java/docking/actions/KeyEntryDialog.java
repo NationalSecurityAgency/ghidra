@@ -73,9 +73,11 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		defaultPanel = new JPanel(new BorderLayout());
 		defaultPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
+		defaultPanel.getAccessibleContext().setAccessibleName("Default");
 
 		JLabel imageLabel = new GIconLabel(Icons.INFO_ICON);
 		bgColor = imageLabel.getBackground();
+		imageLabel.getAccessibleContext().setAccessibleName("Image");
 		JTextPane pane = new JTextPane();
 		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 2, 5));
 		pane.setBackground(bgColor);
@@ -92,6 +94,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		labelPanel.getAccessibleContext().setAccessibleName("Label");
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
@@ -110,6 +113,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		p.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 		p.add(keyEntryPanel);
+		p.getAccessibleContext().setAccessibleName("Key Entry");
 		KeyStroke keyBinding = action.getKeyBinding();
 		if (keyBinding != null) {
 			keyEntryPanel.setKeyStroke(keyBinding);
@@ -120,6 +124,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(defaultPanel, BorderLayout.NORTH);
 		mainPanel.add(createCollisionPanel(), BorderLayout.CENTER);
+		mainPanel.getAccessibleContext().setAccessibleName("Key Entry");
 		return mainPanel;
 	}
 
@@ -133,9 +138,11 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		doc = collisionPane.getStyledDocument();
 		noWrapPanel.add(collisionPane, BorderLayout.CENTER);
 		JScrollPane sp = new JScrollPane(noWrapPanel);
+		sp.getAccessibleContext().setAccessibleName("Scroll");
 		Dimension d = defaultPanel.getPreferredSize();
 		sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, d.height));
 		parent.add(sp, BorderLayout.CENTER);
+		parent.getAccessibleContext().setAccessibleName("Collision");
 		return parent;
 	}
 

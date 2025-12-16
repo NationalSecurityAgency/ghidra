@@ -54,7 +54,6 @@ Release
 *.aps
 *.vcproj.*
 *.vcxproj.*
-# dump files
 *.mdmp
 .vs/
 .editorconfig/
@@ -77,10 +76,8 @@ Release
 */*/*/*/test-bin
 
 # Ignore Intellij metadata
-**/*.iml
-**/.idea
 *.iml
-.idea
+.idea/
 
 # Ignore logs and core dumps
 *.log

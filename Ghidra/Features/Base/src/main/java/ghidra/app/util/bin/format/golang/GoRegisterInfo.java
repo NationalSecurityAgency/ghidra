@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Immutable information about registers, alignment sizes, etc needed to allocate storage
  * for parameters during a function call.
- * <p>
  */
 public class GoRegisterInfo {
 
 	public enum RegType { INT, FLOAT }
 
+	private final GoVerSet validVersions;
 	private final List<Register> intRegisters;
 	private final List<Register> floatRegisters;
 	private final int stackInitialOffset;
@@ -48,10 +48,14 @@ public class GoRegisterInfo {
 	private final Register duffzeroZeroParam;	// if duffzero has 2nd param
 	private final RegType duffzeroZeroParamType;
 
+	private final Register closureContextRegister;
+
 	GoRegisterInfo(List<Register> intRegisters, List<Register> floatRegisters,
 			int stackInitialOffset, int maxAlign, Register currentGoroutineRegister,
 			Register zeroRegister, boolean zeroRegisterIsBuiltin, Register duffzeroDestParam,
-			Register duffzeroZeroParam, RegType duffzeroZeroParamType) {
+			Register duffzeroZeroParam, RegType duffzeroZeroParamType,
+			Register closureContextRegister, GoVerSet validVersions) {
+		this.validVersions = validVersions;
 		this.intRegisters = intRegisters;
 		this.floatRegisters = floatRegisters;
 		this.stackInitialOffset = stackInitialOffset;
@@ -63,6 +67,12 @@ public class GoRegisterInfo {
 		this.duffzeroDestParam = duffzeroDestParam;
 		this.duffzeroZeroParam = duffzeroZeroParam;
 		this.duffzeroZeroParamType = duffzeroZeroParamType;
+
+		this.closureContextRegister = closureContextRegister;
+	}
+	
+	public GoVerSet getValidVersions() {
+		return validVersions;
 	}
 
 	public int getIntRegisterSize() {
@@ -97,6 +107,10 @@ public class GoRegisterInfo {
 		return stackInitialOffset;
 	}
 
+	public boolean hasAbiInternalParamRegisters() {
+		return !intRegisters.isEmpty() || !floatRegisters.isEmpty();
+	}
+
 	public List<Variable> getDuffzeroParams(Program program) {
 		if (duffzeroDestParam == null) {
 			return List.of();
@@ -126,7 +140,10 @@ public class GoRegisterInfo {
 		catch (InvalidInputException e) {
 			return List.of();
 		}
+	}
 
+	public Register getClosureContextRegister() {
+		return closureContextRegister;
 	}
 
 	private VariableStorage getStorageForReg(Program program, Register reg, int len)
@@ -148,7 +165,7 @@ public class GoRegisterInfo {
 		if (isIntType(dt) && isIntrinsicSize(dt.getLength())) {
 			return Math.min(maxAlign, dt.getLength());
 		}
-		if (dt instanceof Complex8DataType /* golang complex64 */ ) {
+		if (dt instanceof Complex8DataType /* Go complex64 */ ) {
 			return 4;
 		}
 		if (dt instanceof AbstractFloatDataType) {

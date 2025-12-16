@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,8 @@ public class FunctionIDHeadlessPrescript extends GhidraScript {
 	private static final String LIBRARY_IDENTIFICATION = "Library Identification";
 	private static final String DEMANGLER_MS_ANALYZER = "Demangler Microsoft";
 	private static final String DEMANGLER_GNU_ANALYZER = "Demangler GNU";
+	private static final String DEMANGLER_RUST_ANALYZER = "Demangler Rust";
+	private static final String DEMANGLER_SWIFT_ANALYZER = "Demangler Swift";
 	private static final String SCALAR_OPERAND_ANALYZER = "Scalar Operand References";
 
 	@Override
@@ -50,6 +52,12 @@ public class FunctionIDHeadlessPrescript extends GhidraScript {
 		}
 		if (options.containsKey(DEMANGLER_GNU_ANALYZER)) {
 			setAnalysisOption(currentProgram, DEMANGLER_GNU_ANALYZER, "false");
+		}
+		if (options.containsKey(DEMANGLER_RUST_ANALYZER)) {
+			setAnalysisOption(currentProgram, DEMANGLER_RUST_ANALYZER, "false");
+		}
+		if (options.containsKey(DEMANGLER_SWIFT_ANALYZER)) {
+			setAnalysisOption(currentProgram, DEMANGLER_SWIFT_ANALYZER, "false");
 		}
 		if (options.containsKey(SCALAR_OPERAND_ANALYZER)) {
 			setAnalysisOption(currentProgram, SCALAR_OPERAND_ANALYZER, "true");

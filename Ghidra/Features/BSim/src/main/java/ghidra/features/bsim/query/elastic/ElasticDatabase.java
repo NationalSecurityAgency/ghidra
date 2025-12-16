@@ -3527,7 +3527,7 @@ public class ElasticDatabase implements FunctionDatabase {
 
 	/**
 	 * Entry point for Elasticsearch version of the QueryChildren command:
-	 *   Query for the child functins of submitted functions
+	 *   Query for the child functions of submitted functions
 	 * @param query is command parameters
 	 * @throws LSHException for problems adding records to the response
 	 * @throws ElasticException for communication problems with the server

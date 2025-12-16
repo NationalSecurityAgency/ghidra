@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 	private final int ordinal; // position in parent
 	private final String comment; // comment about this component.
 	private final int length; // my length
-	
+
 	private String fieldName; // name of this prototype in the component
 	private Settings defaultSettings;
-	
+
 	/**
 	 * Create a new DataTypeComponent
 	 * @param dataType the dataType for this component
@@ -193,6 +193,11 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 			return s2 == null;
 		}
 		return s1.equals(s2);
+	}
+
+	@Override
+	public boolean isUndefined() {
+		return dataType == DataType.DEFAULT;
 	}
 
 }

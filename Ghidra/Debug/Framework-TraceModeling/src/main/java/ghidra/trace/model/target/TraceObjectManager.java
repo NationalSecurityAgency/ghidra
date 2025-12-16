@@ -62,9 +62,16 @@ public interface TraceObjectManager {
 	/**
 	 * Get the schema of the root object
 	 * 
-	 * @return the schema
+	 * @return the schema or null
 	 */
 	TraceObjectSchema getRootSchema();
+
+	/**
+	 * Get the schema of the root object, failing if no root object exists
+	 * 
+	 * @return the schema
+	 */
+	TraceObjectSchema requireRootSchema();
 
 	/**
 	 * Get the root object, if it has been created

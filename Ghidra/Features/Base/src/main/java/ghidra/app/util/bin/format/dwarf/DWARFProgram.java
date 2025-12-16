@@ -19,8 +19,11 @@ import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -31,6 +34,8 @@ import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf.external.ExternalDebugInfo;
 import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
+import ghidra.app.util.bin.format.dwarf.macro.DWARFMacroHeader;
+import ghidra.app.util.bin.format.dwarf.macro.entry.DWARFMacroInfoEntry;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.*;
 import ghidra.app.util.bin.format.golang.rtti.GoSymbolName;
 import ghidra.app.util.opinion.*;
@@ -71,23 +76,20 @@ public class DWARFProgram implements Closeable {
 	 * If the program is a MachO binary (Mac), it must have a ".dSYM" directory co-located 
 	 * next to the original binary file on the native filesystem (outside of Ghidra).  See the 
 	 * DSymSectionProvider for more info.
-	 * <p>
+	 * 
 	 * @param program {@link Program} to test
 	 * @return boolean true if program probably has DWARF info, false if not
 	 */
 	public static boolean isDWARF(Program program) {
 		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
 
-		switch (format) {
-			case ElfLoader.ELF_NAME:
-			case PeLoader.PE_NAME:
-				return hasExpectedDWARFSections(program) ||
-					ExternalDebugInfo.fromProgram(program) != null;
-			case MachoLoader.MACH_O_NAME:
-				return hasExpectedDWARFSections(program) ||
-					DSymSectionProvider.getDSYMForProgram(program) != null;
-		}
-		return false;
+		return switch (format) {
+			case ElfLoader.ELF_NAME, PeLoader.PE_NAME -> hasExpectedDWARFSections(program) ||
+				ExternalDebugInfo.fromProgram(program) != null;
+			case MachoLoader.MACH_O_NAME -> hasExpectedDWARFSections(program) ||
+				DSymSectionProvider.getDSYMForProgram(program) != null;
+			default -> false;
+		};
 	}
 
 	private static boolean hasExpectedDWARFSections(Program program) {
@@ -104,7 +106,6 @@ public class DWARFProgram implements Closeable {
 	 * <p>
 	 * This is similar to {@link #isDWARF(Program)}, but is a stronger check that is more
 	 * expensive as it could involve searching for external files.
-	 * <p>
 	 * 
 	 * @param program {@link Program} to test
 	 * @param monitor {@link TaskMonitor} that can be used to cancel
@@ -130,6 +131,7 @@ public class DWARFProgram implements Closeable {
 	private DWARFSectionProvider sectionProvider;
 	private StringTable debugStrings;
 	private StringTable lineStrings;
+	private Charset charset;
 	private int totalAggregateCount;
 	private long programBaseAddressFixup;
 
@@ -155,6 +157,7 @@ public class DWARFProgram implements Closeable {
 	private BinaryReader debugAbbrBR;
 	private BinaryReader debugAddr; // v5+
 	private BinaryReader debugStrOffsets; // v5+
+	private BinaryReader debugMacros; // v5+
 
 	// dieOffsets, siblingIndexes, parentIndexes contain for each DIE the information needed 
 	// to read each DIE and to navigate to parent / child / sibling elements.
@@ -187,10 +190,12 @@ public class DWARFProgram implements Closeable {
 	protected WeakValueHashMap<Long, DebugInfoEntry> diesByOffset = new WeakValueHashMap<>();
 	private WeakValueHashMap<Long, DIEAggregate> aggsByOffset = new WeakValueHashMap<>();
 
-	// Map of DIE offsets of {@link DIEAggregate}s that are being pointed to by
-	// other {@link DIEAggregate}s with a DW_AT_type property.
+	// Map of DIE offsets of DIEAggregates that are being pointed to by
+	// other DIEAggregates with a DW_AT_type property.
 	// In other words, a map of inbound links to a DIEA.
 	private ListValuedMap<Long, Long> typeReferers = new ArrayListValuedHashMap<>();
+
+	private Map<Long, DWARFLine> cachedDWARFLines = new HashMap<>();
 
 	/**
 	 * Main constructor for DWARFProgram.
@@ -247,6 +252,8 @@ public class DWARFProgram implements Closeable {
 		this.debugAddr = getBinaryReaderFor(DWARFSectionNames.DEBUG_ADDR, monitor);
 		this.debugStrOffsets = getBinaryReaderFor(DWARFSectionNames.DEBUG_STROFFSETS, monitor);
 
+		this.debugMacros = getBinaryReaderFor(DWARFSectionNames.DEBUG_MACRO, monitor);
+
 		this.rangeListTable =
 			new DWARFIndirectTable(this.debugRngLists, DWARFCompilationUnit::getRangeListsBase);
 		this.addressListTable =
@@ -256,10 +263,11 @@ public class DWARFProgram implements Closeable {
 		this.locationListTable =
 			new DWARFIndirectTable(this.debugLocLists, DWARFCompilationUnit::getLocListsBase);
 
+		this.charset = importOptions.getCharset(StandardCharsets.UTF_8);
 		this.debugStrings =
-			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_STR, monitor));
+			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_STR, monitor), charset);
 		this.lineStrings =
-			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE_STR, monitor));
+			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE_STR, monitor), charset);
 
 		// if there are relocations (already handled by the ghidra loader) anywhere in the 
 		// debuginfo or debugrange sections, then we don't need to manually fix up addresses
@@ -370,7 +378,7 @@ public class DWARFProgram implements Closeable {
 				typeReferers.put(typeRef.getOffset(), diea.getOffset());
 			}
 		}
-
+		monitor.initialize(0, "");
 	}
 
 	protected void indexDIEAggregates(LongArrayList aggrTargets, TaskMonitor monitor)
@@ -562,7 +570,10 @@ public class DWARFProgram implements Closeable {
 		}
 		ByteProvider bp = br.getByteProvider();
 		if (bp instanceof MemoryByteProvider mbp && !mbp.isEmpty()) {
-			if (program.getRelocationTable().getRelocations(mbp.getAddressSet()).hasNext()) {
+			Program providerProgram = mbp.getMemory().getProgram();
+			if (providerProgram.getRelocationTable()
+					.getRelocations(mbp.getAddressSet())
+					.hasNext()) {
 				return true;
 			}
 		}
@@ -681,7 +692,8 @@ public class DWARFProgram implements Closeable {
 					name = "lexical_block" + getLexicalBlockNameWorker(diea.getHeadFragment());
 					break;
 				case DW_TAG_formal_parameter:
-					name = "param_%d".formatted(diea.getHeadFragment().getPositionInParent());
+					name = "param_%d".formatted(getPositionInParent(diea.getHeadFragment(),
+						dietag -> dietag == DW_TAG_formal_parameter));
 					isAnon = true;
 					break;
 				case DW_TAG_subprogram:
@@ -762,12 +774,16 @@ public class DWARFProgram implements Closeable {
 		return "%s.dwarf_%x".formatted(baseName, diea.getOffset());
 	}
 
-	private static String getLexicalBlockNameWorker(DebugInfoEntry die) {
-		if (die.getTag() == DW_TAG_lexical_block || die.getTag() == DW_TAG_inlined_subroutine) {
+	private String getLexicalBlockNameWorker(DebugInfoEntry die) {
+		if (isLexicalBlockTag(die.getTag())) {
 			return "%s_%d".formatted(getLexicalBlockNameWorker(die.getParent()),
-				die.getPositionInParent());
+				getPositionInParent(die, this::isLexicalBlockTag));
 		}
 		return "";
+	}
+
+	private boolean isLexicalBlockTag(DWARFTag tag) {
+		return tag == DW_TAG_lexical_block || tag == DW_TAG_inlined_subroutine;
 	}
 
 	private String getReferringMemberFieldNames(List<DIEAggregate> referringMembers) {
@@ -784,7 +800,8 @@ public class DWARFProgram implements Closeable {
 			}
 			String memberName = referringMember.getName();
 			if (memberName == null) {
-				int positionInParent = referringMember.getHeadFragment().getPositionInParent();
+				int positionInParent =
+					getPositionInParent(referringMember.getHeadFragment(), x -> true);
 				if (positionInParent == -1) {
 					continue;
 				}
@@ -883,7 +900,7 @@ public class DWARFProgram implements Closeable {
 	 * @param dieIndex index of a DIE record
 	 * @return index of the parent of specified DIE, or -1 if no parent (eg. root DIE)
 	 */
-	public int getParentIndex(int dieIndex) {
+	private int getParentIndex(int dieIndex) {
 		return parentIndexes[dieIndex];
 	}
 
@@ -926,13 +943,25 @@ public class DWARFProgram implements Closeable {
 	 * @param dieIndex index of a DIE record
 	 * @return list of DIE indexes that are children of the specified DIE
 	 */
-	public IntArrayList getDIEChildIndexes(int dieIndex) {
+	private IntArrayList getDIEChildIndexes(int dieIndex) {
 		IntArrayList result = new IntArrayList(true);
 		if (dieIndex >= 0) {
 			int parentSiblingIndex = siblingIndexes[dieIndex];
 			for (int index = dieIndex + 1; index < parentSiblingIndex; index =
 				siblingIndexes[index]) {
 				result.add(index);
+			}
+		}
+		return result;
+	}
+
+	public int getChildCount(int dieIndex) {
+		int result = 0;
+		if (dieIndex >= 0) {
+			int parentSiblingIndex = siblingIndexes[dieIndex];
+			for (int index = dieIndex + 1; index < parentSiblingIndex; index =
+				siblingIndexes[index]) {
+				result++;
 			}
 		}
 		return result;
@@ -1038,6 +1067,13 @@ public class DWARFProgram implements Closeable {
 		}
 		DebugInfoEntry die = getDIEByOffset(dieOffset);
 		return getAggregate(die);
+	}
+
+	/**
+	 * {@return charset to use when decoding debug strings}
+	 */
+	public Charset getCharset() {
+		return charset;
 	}
 
 	/**
@@ -1252,9 +1288,39 @@ public class DWARFProgram implements Closeable {
 			return DWARFLine.empty();
 		}
 		long stmtListOffset = attrib.getUnsignedValue();
-		DWARFLine result = DWARFLine.read(debugLineBR.clone(stmtListOffset), getDefaultIntSize(),
-			diea.getCompilationUnit());
+		return getLine(stmtListOffset, diea.getCompilationUnit(), true);
+	}
+
+	public DWARFLine getLine(long offset, DWARFCompilationUnit cu, boolean readIfMissing)
+			throws IOException {
+		DWARFLine result = cachedDWARFLines.get(offset);
+		if (result == null && readIfMissing) {
+			result = DWARFLine.read(debugLineBR.clone(offset), getDefaultIntSize(), cu);
+			cachedDWARFLines.put(offset, result);
+		}
 		return result;
+	}
+
+	public DWARFMacroHeader getMacroHeader(long offset, DWARFCompilationUnit cu) {
+		if (debugMacros != null) {
+			try {
+				return DWARFMacroHeader.readV5(debugMacros.clone(offset), cu);
+			}
+			catch (IOException e) {
+				// ignore, fall thru return emtpy
+			}
+		}
+		return DWARFMacroHeader.EMTPY;
+	}
+
+	public List<DWARFMacroInfoEntry> getMacroEntries(DWARFMacroHeader macroHeader)
+			throws IOException {
+		if (debugMacros == null) {
+			return List.of();
+		}
+
+		return DWARFMacroHeader.readMacroEntries(
+			debugMacros.clone(macroHeader.getEntriesStartOffset()), macroHeader);
 	}
 
 	/**
@@ -1336,7 +1402,7 @@ public class DWARFProgram implements Closeable {
 	 * A fixup value that needs to be applied to static addresses of the program.
 	 * <p>
 	 * This value is necessary if the program's built-in base address is overridden at import time.
-	 * <p>
+	 * 
 	 * @return long value to add to static addresses discovered in DWARF to make it agree with
 	 * Ghidra's imported program.
 	 */
@@ -1398,6 +1464,27 @@ public class DWARFProgram implements Closeable {
 
 	/* for testing */ public void setStringTable(StringTable st) {
 		this.debugStrings = st;
+	}
+
+	private int getPositionInParent(DebugInfoEntry die, Predicate<DWARFTag> dwTagFilter) {
+		int dieIndex = die.getIndex();
+		int parentIndex = getParentIndex(dieIndex);
+		if (parentIndex < 0) {
+			return -1;
+		}
+		IntArrayList childIndexes = getDIEChildIndexes(parentIndex);
+		for (int i = 0, positionNum = 0; i < childIndexes.size(); i++) {
+			int childDIEIndex = childIndexes.get(i);
+			if (childDIEIndex == dieIndex) {
+				return positionNum;
+			}
+			DebugInfoEntry childDIE = getDIEByIndex(childDIEIndex);
+			if (childDIE != null && dwTagFilter.test(childDIE.getTag())) {
+				positionNum++;
+			}
+		}
+		// only way to get here is if our in-memory indexes are corrupt / incorrect
+		throw new RuntimeException("DWARF DIE index failure.");
 	}
 
 	//---------------------------------------------------------------------------------------------

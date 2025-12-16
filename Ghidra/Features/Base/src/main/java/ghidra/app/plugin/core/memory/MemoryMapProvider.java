@@ -25,9 +25,10 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
+import docking.DockingUtils;
+import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField.MaxLengthField;
@@ -40,12 +41,13 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.program.util.ProgramLocation;
+import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
+import resources.Icons;
 
 /**
  * Provider for the memory map Component.
@@ -71,6 +73,9 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	private Program program;
 	private MemoryMapManager memManager;
+
+	private boolean followLocationChanges;
+	private ToggleDockingAction toggleNavigateAction;
 
 	MemoryMapProvider(MemoryMapPlugin plugin) {
 		super(plugin.getTool(), "Memory Map", plugin.getName(), ProgramActionContext.class);
@@ -102,6 +107,17 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			return null;
 		}
 		return new ProgramActionContext(this, program, table);
+	}
+
+	void locationChanged(ProgramLocation location) {
+		if (!followLocationChanges || location == null || location.getAddress() == null) {
+			return;
+		}
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(location.getAddress());
+		if (block != null) {
+			filterPanel.setSelectedItem(block);
+		}
 	}
 
 	void setStatusText(String msg) {
@@ -320,6 +336,17 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		MakeProgramSelectionAction action = new MakeProgramSelectionAction(plugin, table);
 		action.getToolBarData().setToolBarGroup("B"); // the other actions are in group 'A'
 		tool.addLocalAction(this, action);
+
+		toggleNavigateAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", plugin.getName())
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.selected(false)
+					.sharedKeyBinding()
+					.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
+					.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
+						" that contains the current location"))
+					.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
+					.buildAndInstallLocal(this);
 	}
 
 	private boolean checkExclusiveAccess() {
@@ -473,41 +500,55 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		TableColumn column = table.getColumn(MemoryMapModel.READ_COL);
 		int width = 25;
 		int maxWidth = resizable ? Integer.MAX_VALUE : width;
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.WRITE_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
 		width = 65;
 		maxWidth = resizable ? Integer.MAX_VALUE : width;
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.ARTIFICIAL_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
 		width = 25;
 		maxWidth = resizable ? Integer.MAX_VALUE : width;
-		column.setMinWidth(width);
+		if (column != null) {
+			column.setMinWidth(width);
+		}
 
 		column = table.getColumn(MemoryMapModel.INIT_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 	}
 
@@ -525,7 +566,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			setStatusText("");
 			if (!e.isPopupTrigger()) {
 				if ((e.getModifiersEx() &
-					(InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
+					(DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
 					navigateToAddress();
 				}
 			}

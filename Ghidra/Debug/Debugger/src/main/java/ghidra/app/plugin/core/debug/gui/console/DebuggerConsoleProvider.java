@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -400,9 +400,9 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined(
-			name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
-			description = "The maximum number of entries in the console log (0 or less for unlimited)",
-			help = @HelpInfo(anchor = "buffer_limit"))
+		name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
+		description = "The maximum number of entries in the console log (0 or less for unlimited)",
+		help = @HelpInfo(anchor = "buffer_limit"))
 	private int logBufferLimit = DebuggerResources.DEFAULT_LOG_BUFFER_LIMIT;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
@@ -517,11 +517,15 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 				.buildAndInstallLocal(this);
 	}
 
-	private void activatedClear(ActionContext ctx) {
+	public void clear() {
 		synchronized (buffer) {
 			logTableModel.deleteItemsWith(r -> !(r instanceof MonitorLogRow));
 			buffer.removeIf(r -> !(r instanceof MonitorLogRow));
 		}
+	}
+
+	private void activatedClear(ActionContext ctx) {
+		clear();
 	}
 
 	private void activatedSelectNone(ActionContext ctx) {

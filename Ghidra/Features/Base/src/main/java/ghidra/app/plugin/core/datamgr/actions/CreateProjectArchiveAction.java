@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -52,19 +51,15 @@ public class CreateProjectArchiveAction extends DockingAction {
 	}
 
 	private void selectNewArchive(final Archive archive, final DataTypeArchiveGTree gTree) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				// start an edit on the new temporary node name
-				GTreeNode node = gTree.getViewRoot();
-				final GTreeNode child = node.getChild(archive.getName());
-				if (child != null) {
-					gTree.expandPath(node);
-					TreePath path = child.getTreePath();
-					gTree.scrollPathToVisible(path);
-					gTree.setSelectedNode(child);
-				}
-			}
+
+		GTreeNode root = gTree.getViewRoot();
+		gTree.whenNodeIsReady(root, archive.getName(), archiveNode -> {
+
+			gTree.expandPath(root);
+
+			TreePath path = archiveNode.getTreePath();
+			gTree.scrollPathToVisible(path);
+			gTree.setSelectedNode(archiveNode);
 		});
 	}
 }

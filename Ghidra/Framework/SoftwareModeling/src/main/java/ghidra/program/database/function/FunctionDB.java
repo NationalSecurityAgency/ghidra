@@ -20,6 +20,8 @@ import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
 import java.io.IOException;
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
 import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
@@ -49,7 +51,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private ProgramDB program;
 	private Address entryPoint;
-	private Symbol functionSymbol;
+	private FunctionSymbol functionSymbol;
 	private DBRecord rec;
 
 	private FunctionStackFrame frame;
@@ -108,7 +110,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private void init() {
 		thunkedFunction = manager.getThunkedFunction(this);
-		functionSymbol = program.getSymbolTable().getSymbol(key);
+		functionSymbol = (FunctionSymbol) program.getSymbolTable().getSymbol(key);
 		entryPoint = functionSymbol.getAddress();
 	}
 
@@ -120,37 +122,29 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public boolean isThunk() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			return thunkedFunction != null;
-		}
-		finally {
-			manager.lock.release();
-		}
+		validate(manager.lock);
+		return thunkedFunction != null;
 	}
 
 	@Override
 	public Function getThunkedFunction(boolean recursive) {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (!recursive || thunkedFunction == null) {
-				return thunkedFunction;
-			}
-			FunctionDB endFunction = thunkedFunction;
-			while (endFunction.thunkedFunction != null) {
-				endFunction = endFunction.thunkedFunction;
-			}
-			return endFunction;
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (!recursive || localThunkFunc == null) {
+			return localThunkFunc;
 		}
-		finally {
-			manager.lock.release();
+		FunctionDB endFunction = localThunkFunc;
+		while ((localThunkFunc = endFunction.thunkedFunction) != null) {
+			endFunction = localThunkFunc;
 		}
+		return endFunction;
 	}
 
 	@Override
 	public void setThunkedFunction(Function referencedFunction) {
+		if (isExternal()) {
+			throw new UnsupportedOperationException("External functions may not be a thunk");
+		}
 		if ((referencedFunction != null) && !(referencedFunction instanceof FunctionDB)) {
 			throw new IllegalArgumentException("FunctionDB expected for referenced function");
 		}
@@ -273,7 +267,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager().getComment(CodeUnit.PLATE_COMMENT, getEntryPoint());
+			return manager.getCodeManager().getComment(CommentType.PLATE, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -291,7 +285,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		try {
 			startUpdate();
 			checkDeleted();
-			manager.getCodeManager().setComment(getEntryPoint(), CodeUnit.PLATE_COMMENT, comment);
+			manager.getCodeManager().setComment(getEntryPoint(), CommentType.PLATE, comment);
 		}
 		finally {
 			endUpdate();
@@ -304,8 +298,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager()
-					.getComment(CodeUnit.REPEATABLE_COMMENT, getEntryPoint());
+			return manager.getCodeManager().getComment(CommentType.REPEATABLE, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -322,8 +315,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkDeleted();
-			manager.getCodeManager()
-					.setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT, comment);
+			manager.getCodeManager().setComment(getEntryPoint(), CommentType.REPEATABLE, comment);
 		}
 		finally {
 			manager.lock.release();
@@ -332,14 +324,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public Address getEntryPoint() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			return entryPoint;
-		}
-		finally {
-			manager.lock.release();
-		}
+		validate(manager.lock);
+		return entryPoint;
 	}
 
 	@Override
@@ -378,12 +364,18 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public ReturnParameterDB getReturn() {
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getReturn();
+		}
+		ReturnParameterDB rp = returnParam;
+		if (rp != null) {
+			return rp;
+		}
 		manager.lock.acquire();
 		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.getReturn();
-			}
+			// NOTE: lock required to avoid returning null returnParam
 			loadVariables();
 			return returnParam;
 		}
@@ -593,12 +585,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		if (Undefined.isUndefined(variableDataType)) {
 			return;
 		}
-		SourceType type = SourceType.ANALYSIS;
-		if (variableSourceType != type && variableSourceType.isHigherPriorityThan(type)) {
-			type = variableSourceType;
-		}
-		if (type.isHigherPriorityThan(getStoredSignatureSource())) {
-			setSignatureSource(type);
+		// TODO: It seems that the lowest parameter priority should win out (see GP-6013)
+		if (variableSourceType.isHigherPriorityThan(getStoredSignatureSource())) {
+			setSignatureSource(variableSourceType);
 		}
 	}
 
@@ -612,14 +601,14 @@ public class FunctionDB extends DatabaseObject implements Function {
 		boolean isReturnUndefined = Undefined.isUndefined(returnType);
 		SourceType type = isReturnUndefined ? SourceType.DEFAULT : SourceType.ANALYSIS;
 
+		// TODO: It seems that the lowest parameter priority should win out (see GP-6013)
 		Parameter[] parameters = getParameters();
 		for (Parameter parameter : parameters) {
 			if (Undefined.isUndefined(parameter.getDataType())) {
 				continue;
 			}
 			SourceType paramSourceType = parameter.getSource();
-			if (paramSourceType != SourceType.ANALYSIS &&
-				paramSourceType.isHigherPriorityThan(SourceType.ANALYSIS)) {
+			if (paramSourceType.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				type = paramSourceType;
 			}
 			else {
@@ -634,32 +623,22 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 */
 	@Override
 	public StackFrame getStackFrame() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.frame;
-			}
-			return frame;
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return thunkedFunction.getStackFrame();
 		}
-		finally {
-			manager.lock.release();
-		}
+		return frame;
 	}
 
 	@Override
 	public int getStackPurgeSize() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.getStackPurgeSize();
-			}
-			return rec.getIntValue(FunctionAdapter.STACK_PURGE_COL);
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getStackPurgeSize();
 		}
-		finally {
-			manager.lock.release();
-		}
+		return rec.getIntValue(FunctionAdapter.STACK_PURGE_COL);
 	}
 
 	@Override
@@ -693,20 +672,12 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public boolean isStackPurgeSizeValid() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.isStackPurgeSizeValid();
-			}
-			if (getStackPurgeSize() > 0xffffff) {
-				return false;
-			}
-			return true;
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.isStackPurgeSizeValid();
 		}
-		finally {
-			manager.lock.release();
-		}
+		return getStackPurgeSize() <= 0xffffff;
 	}
 
 	@Override
@@ -1005,7 +976,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					symbolMap.put(v.symbol, v);
 				}
 				if (var.getComment() != null) {
-					v.symbol.setSymbolStringData(var.getComment());
+					v.symbol.setSymbolComment(var.getComment());
 				}
 				manager.functionChanged(this, null);
 				return v;
@@ -1484,7 +1455,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				symbolMap.put(s, paramDb);
 			}
 
-			if (source.isHigherPriorityThan(getStoredSignatureSource())) {
+			if (source != getStoredSignatureSource()) {
 				setSignatureSource(source);
 			}
 
@@ -1698,7 +1669,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					manager.functionChanged(this, PARAMETERS_CHANGED);
 				}
 				if (var.getComment() != null) {
-					p.symbol.setSymbolStringData(var.getComment());
+					p.symbol.setSymbolComment(var.getComment());
 				}
 				updateSignatureSourceAfterVariableChange(source, p.getDataType());
 				return p;
@@ -2417,18 +2388,13 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 * @return true if the indicated flag is set
 	 */
 	private boolean isFunctionFlagSet(byte functionFlagIndicator) {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.isFunctionFlagSet(functionFlagIndicator);
-			}
-			byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
-			return ((flags & functionFlagIndicator) != 0);
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.isFunctionFlagSet(functionFlagIndicator);
 		}
-		finally {
-			manager.lock.release();
-		}
+		byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
+		return ((flags & functionFlagIndicator) != 0);
 	}
 
 	/**
@@ -2479,9 +2445,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	SourceType getStoredSignatureSource() {
 		byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
-		int typeOrdinal = (flags &
+		int sourceTypeId = (flags &
 			FunctionAdapter.FUNCTION_SIGNATURE_SOURCE) >>> FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT;
-		return SourceType.values()[typeOrdinal];
+		return SourceType.getSourceType(sourceTypeId);
 	}
 
 	@Override
@@ -2529,29 +2495,20 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public String getCallingConventionName() {
-		manager.lock.acquire();
-		try {
-			if (!checkIsValid()) {
-				return null;
-			}
-			if (thunkedFunction != null) {
-				return thunkedFunction.getCallingConventionName();
-			}
-			byte callingConventionID = rec.getByteValue(FunctionAdapter.CALLING_CONVENTION_ID_COL);
-			if (callingConventionID == DataTypeManagerDB.UNKNOWN_CALLING_CONVENTION_ID) {
-				return Function.UNKNOWN_CALLING_CONVENTION_STRING;
-			}
-			if (callingConventionID == DataTypeManagerDB.DEFAULT_CALLING_CONVENTION_ID) {
-				return Function.DEFAULT_CALLING_CONVENTION_STRING;
-			}
-			return program.getDataTypeManager().getCallingConventionName(callingConventionID);
+		if (!validate(manager.lock)) {
+			return UNKNOWN_CALLING_CONVENTION_STRING;
 		}
-		finally {
-			manager.lock.release();
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getCallingConventionName();
 		}
+		byte callingConventionID = rec.getByteValue(FunctionAdapter.CALLING_CONVENTION_ID_COL);
+		// NOTE: If ID is invalid unknown calling convention name will be returned
+		return program.getDataTypeManager().getCallingConventionName(callingConventionID);
 	}
 
 	private String getRealCallingConventionName() {
+		// NOTE: Method only invoked from locked-block
 		if (thunkedFunction != null) {
 			return thunkedFunction.getRealCallingConventionName();
 		}
@@ -2651,21 +2608,18 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public String getCallFixup() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.getCallFixup();
-			}
-			StringPropertyMap callFixupMap = manager.getCallFixupMap(false);
-			if (callFixupMap == null) {
-				return null;
-			}
-			return callFixupMap.getString(entryPoint);
+		if (!validate(manager.lock)) {
+			return null;
 		}
-		finally {
-			manager.lock.release();
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getCallFixup();
 		}
+		StringPropertyMap callFixupMap = manager.getCallFixupMap(false);
+		if (callFixupMap == null) {
+			return null;
+		}
+		return callFixupMap.getString(entryPoint);
 	}
 
 	@Override

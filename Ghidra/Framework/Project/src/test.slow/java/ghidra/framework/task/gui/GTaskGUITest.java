@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -587,10 +587,10 @@ public class GTaskGUITest extends AbstractDockingTest {
 			//
 			// Unusual Code: We can't call taskMgr.waitForHigherPriorityTasks() without first
 			// releasing the 'work finished' latch, as that will cause a deadlock.  So, we have
-			// to release that lock, be still be able to block the advance() method so that the
+			// to release that lock, to still be able to block the advance() method so that the
 			// test does not keep going until we let our 'higher priority task' get
 			// scheduled.   So, signal that our work is done, but then wait for the sub-work
-			// to be be scheduled.
+			// to be scheduled.
 			//
 			debug(getName() + ": release workFinished latch early");
 			workFinishedLatch.countDown();

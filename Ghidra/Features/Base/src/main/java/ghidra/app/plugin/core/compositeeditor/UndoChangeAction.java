@@ -32,7 +32,7 @@ public class UndoChangeAction extends CompositeEditorTableAction {
 	private final static Icon ICON = new GIcon("icon.undo");
 	private final static String[] POPUP_PATH = new String[] { DESCRIPTION };
 
-	public UndoChangeAction(CompositeEditorProvider provider) {
+	public UndoChangeAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setKeyBindingData(new KeyBindingData("ctrl Z"));
 		setDescription(DESCRIPTION);
@@ -43,8 +43,10 @@ public class UndoChangeAction extends CompositeEditorTableAction {
 		if (!isEnabledForContext(context)) {
 			return;
 		}
-		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		CompositeViewerDataTypeManager<?> viewDTM = model.getViewDataTypeManager();
 		viewDTM.undo();
+
+		model.clearStatus();
 	}
 
 	@Override
@@ -52,7 +54,7 @@ public class UndoChangeAction extends CompositeEditorTableAction {
 		if (hasIncompleteFieldEntry()) {
 			return false;
 		}
-		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		CompositeViewerDataTypeManager<?> viewDTM = model.getViewDataTypeManager();
 		boolean canUndo = viewDTM.canUndo();
 		setEnabled(canUndo);
 		String description = DESCRIPTION + (canUndo ? (": " + viewDTM.getUndoName()) : "");

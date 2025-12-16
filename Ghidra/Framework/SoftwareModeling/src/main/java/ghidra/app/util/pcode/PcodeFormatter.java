@@ -16,6 +16,7 @@
 package ghidra.app.util.pcode;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.program.model.address.AddressFactory;
@@ -59,6 +60,35 @@ public interface PcodeFormatter<T> {
 	T formatTemplates(Language language, List<OpTpl> pcodeOpTemplates);
 
 	/**
+	 * Convert one p-code op into a template, without re-writing relative branches.
+	 * 
+	 * @param addrFactory the language's address factory
+	 * @param pcodeOp the p-code op to convert
+	 * @return p-code op template
+	 */
+	public static OpTpl getPcodeOpTemplateLog(AddressFactory addrFactory, PcodeOp pcodeOp) {
+		int opcode = pcodeOp.getOpcode();
+		Varnode v = pcodeOp.getOutput();
+		VarnodeTpl outputTpl = v == null ? null : getVarnodeTpl(addrFactory, v);
+		VarnodeTpl[] inputTpls = Stream.of(pcodeOp.getInputs())
+				.map(i -> getVarnodeTpl(addrFactory, i))
+				.toArray(VarnodeTpl[]::new);
+		return new OpTpl(opcode, outputTpl, inputTpls);
+	}
+
+	/**
+	 * Convert flattened p-code ops into templates, without re-writing relative branches.
+	 * 
+	 * @param addrFactory the language's address factory
+	 * @param pcodeOps the p-code ops to convert
+	 * @return p-code op templates
+	 */
+	public static List<OpTpl> getPcodeOpTemplatesLog(AddressFactory addrFactory,
+			List<PcodeOp> pcodeOps) {
+		return pcodeOps.stream().map(op -> getPcodeOpTemplateLog(addrFactory, op)).toList();
+	}
+
+	/**
 	 * Convert flattened p-code ops into templates.
 	 * 
 	 * @param addrFactory the language's address factory
@@ -68,17 +98,15 @@ public interface PcodeFormatter<T> {
 	public static List<OpTpl> getPcodeOpTemplates(AddressFactory addrFactory,
 			List<PcodeOp> pcodeOps) {
 		ArrayList<OpTpl> list = new ArrayList<OpTpl>();
-		HashMap<Integer, Integer> labelMap = new HashMap<Integer, Integer>(); // label offset to index map
+		// label offset to index map
+		HashMap<Integer, Integer> labelMap = new HashMap<Integer, Integer>();
 
 		for (int seq = 0; seq < pcodeOps.size(); seq++) {
 			PcodeOp pcodeOp = pcodeOps.get(seq);
 			int opcode = pcodeOp.getOpcode();
 
-			VarnodeTpl outputTpl = null;
 			Varnode v = pcodeOp.getOutput();
-			if (v != null) {
-				outputTpl = getVarnodeTpl(addrFactory, v);
-			}
+			VarnodeTpl outputTpl = v == null ? null : getVarnodeTpl(addrFactory, v);
 
 			Varnode[] inputs = pcodeOp.getInputs();
 			VarnodeTpl[] inputTpls = new VarnodeTpl[inputs.length];
@@ -143,7 +171,7 @@ public interface PcodeFormatter<T> {
 		return new OpTpl(PcodeOp.PTRADD, null, new VarnodeTpl[] { input });
 	}
 
-	private static VarnodeTpl getVarnodeTpl(AddressFactory addrFactory, Varnode v) {
+	public static VarnodeTpl getVarnodeTpl(AddressFactory addrFactory, Varnode v) {
 		ConstTpl offsetTpl = new ConstTpl(ConstTpl.REAL, v.getOffset());
 		ConstTpl spaceTpl = new ConstTpl(v.getAddress().getAddressSpace());
 		ConstTpl sizeTpl = new ConstTpl(ConstTpl.REAL, v.getSize());

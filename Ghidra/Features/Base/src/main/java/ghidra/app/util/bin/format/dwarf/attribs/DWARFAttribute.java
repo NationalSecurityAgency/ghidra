@@ -229,7 +229,7 @@ public enum DWARFAttribute {
 		 * Reads a {@link DWARFAttribute.AttrDef} instance from the {@link BinaryReader reader}.
 		 * <p>
 		 * Returns a null if its a end-of-list marker.
-		 * <p>
+		 * 
 		 * @param reader {@link BinaryReader} abbr stream
 		 * @return new {@link AttrDef}, or null if end-of-list
 		 * @throws IOException if error reading

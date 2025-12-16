@@ -896,9 +896,10 @@
             alt=""> Pointer to XYZ</B></I>. A new pointer will be created to the <I>XYZ</I> data
             type in the same category as the original data type.<SUP>*</SUP></P>
 
-            <P><IMG src="help/shared/note.png" alt=""><SUP>*</SUP>If you create a typedef or
-            pointer to a data type in the <B>Built-in Data Type Manager</B>, the newly created type
-            will be placed in program's data type manager at the root category.</P>
+            <P><IMG src="help/shared/note.png" alt=""><SUP>*</SUP>A pointer will always be created 
+				within the same category where the base datatype is defined.  When defining a 
+				pointer or typedef for a selected datatype from the <B>Built-in Data Type Manager</B>
+				it will be created within the root category of the active program's datatype manager.</P>
 
           <P>Structures can also be created directly in the <A href=
           "../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing</A> view. See <A href=
@@ -1133,7 +1134,7 @@
         <BLOCKQUOTE>
         <P>On occasion there may be the need to add stipulate additional attributes on a pointer
         type to stipulate how the associated pointer should be interpreted or processed during analysis.
-        Such pointer attributes may only be specified when such a pointer in in the form of a Typedef
+        Such pointer attributes may only be specified when such a pointer in the form of a Typedef
         which enables the datatype to preserve these attributes during type resolution and propagation. 
         This includes preservation of such Typedef Settings within a data type archive, and through 
         merge processing, which normal Data Settings do not support.</P>

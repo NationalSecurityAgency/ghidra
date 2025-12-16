@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
@@ -33,10 +32,9 @@ import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A low-level structure embedded in golang binaries that contains useful bootstrapping
- * information.
+ * A low-level structure embedded in Go binaries that contains useful bootstrapping information.
  * <p>
- * Introduced in golang 1.16
+ * Introduced in Go 1.16
  * 
  */
 @StructureMapping(structureName = GoPcHeader.GO_STRUCTURE_NAME)
@@ -47,12 +45,13 @@ public class GoPcHeader {
 	public static final int GO_1_2_MAGIC = 0xfffffffb;
 	public static final int GO_1_16_MAGIC = 0xfffffffa;
 	public static final int GO_1_18_MAGIC = 0xfffffff0;
+	public static final int GO_1_20_MAGIC = 0xfffffff1;
 
 	/**
-	 * Returns the {@link Address} (if present) of the go pclntab section or symbol.
+	 * Returns the {@link Address} (if present) of the Go pclntab section or symbol.
 	 *  
 	 * @param program {@link Program}
-	 * @return {@link Address} of go pclntab, or null if not present
+	 * @return {@link Address} of Go pclntab, or null if not present
 	 */
 	public static Address getPcHeaderAddress(Program program) {
 		MemoryBlock pclntabBlock = GoRttiMapper.getGoSection(program, GOPCLNTAB_SECTION_NAME);
@@ -112,15 +111,18 @@ public class GoPcHeader {
 			(byte) 0xff // ptrSize 
 		};
 		Memory memory = programContext.getProgram().getMemory();
-		Address pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
-			searchBytes, searchMask, true, monitor);
-		if (pcHeaderAddr == null) {
-			return null;
+		Address pcHeaderAddr;
+		while ((pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, searchMask, true, monitor)) != null) {
+			try (MemoryByteProvider bp =
+				new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
+				if (isPcHeader(bp)) {
+					return pcHeaderAddr;
+				}
+			}
+			range = new AddressRangeImpl(pcHeaderAddr.next(), range.getMaxAddress());
 		}
-		try (MemoryByteProvider bp =
-			new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
-			return isPcHeader(bp) ? pcHeaderAddr : null;
-		}
+		return null;
 	}
 
 	/**
@@ -200,37 +202,25 @@ public class GoPcHeader {
 	private long pclnOffset;
 
 	public GoVer getGoVersion() {
-		// TODO: this might be better as a static helper method that can be used by multiple
-		// GoPcHeader struct versions (if necessary)
-		GoVer ver = switch (magic) {
-			case GO_1_2_MAGIC -> GoVer.V1_2;
-			case GO_1_16_MAGIC -> GoVer.V1_16;
-			case GO_1_18_MAGIC -> GoVer.V1_18;
-			default -> GoVer.INVALID;
-		};
-		return ver;
+		return magicToVer(magic);
 	}
 
 	/**
-	 * Returns true if this pcln structure contains a textStart value (only present >= 1.18)
-	 * @return
+	 * {@return true if this pcln structure contains a textStart value (only present >= 1.18)}
 	 */
 	public boolean hasTextStart() {
 		return textStart != 0;
 	}
 
 	/**
-	 * Returns the address of where the text area starts.
-	 * 
-	 * @return address of text starts
+	 * {@return the address of where the text area starts}
 	 */
 	public Address getTextStart() {
 		return programContext.getDataAddress(textStart);
 	}
 
 	/**
-	 * Returns address of the func name slice
-	 * @return address of func name slice
+	 * {@return address of the func name slice}
 	 */
 	public Address getFuncnameAddress() {
 		return funcnameOffset != 0
@@ -279,19 +269,21 @@ public class GoPcHeader {
 	}
 
 	/**
-	 * Returns the min lc, used as the GoPcValueEvaluator's pcquantum
-	 * @return minLc
+	 * {@return the min lc, used as the GoPcValueEvaluator's pcquantum}
 	 */
 	public byte getMinLC() {
 		return minLC;
 	}
 
 	/**
-	 * Returns the pointer size
-	 * @return pointer size
+	 * {@return the pointer size}
 	 */
 	public byte getPtrSize() {
 		return ptrSize;
+	}
+
+	public int getMagic() {
+		return magic;
 	}
 
 	//--------------------------------------------------------------------------------------------
@@ -303,19 +295,29 @@ public class GoPcHeader {
 
 	private static GoVerEndian readMagic(ByteProvider provider) throws IOException {
 		BinaryReader reader = new BinaryReader(provider, true);
-		int leMagic = reader.readInt(LittleEndianDataConverter.INSTANCE, 0);
-		int beMagic = reader.readInt(BigEndianDataConverter.INSTANCE, 0);
-
-		if (leMagic == GO_1_2_MAGIC || beMagic == GO_1_2_MAGIC) {
-			return new GoVerEndian(GoVer.V1_2, leMagic == GO_1_2_MAGIC);
+		
+		int magicInt = reader.readInt(LittleEndianDataConverter.INSTANCE, 0);
+		GoVer ver = magicToVer(magicInt);
+		if ( ver != GoVer.INVALID ) {
+			return new GoVerEndian(ver, Endian.LITTLE);
 		}
-		else if (leMagic == GO_1_16_MAGIC || beMagic == GO_1_16_MAGIC) {
-			return new GoVerEndian(GoVer.V1_16, leMagic == GO_1_16_MAGIC);
-		}
-		else if (leMagic == GO_1_18_MAGIC || beMagic == GO_1_18_MAGIC) {
-			return new GoVerEndian(GoVer.V1_18, leMagic == GO_1_18_MAGIC);
+		magicInt = reader.readInt(BigEndianDataConverter.INSTANCE, 0);
+		ver = magicToVer(magicInt);
+		if ( ver != GoVer.INVALID ) {
+			return new GoVerEndian(ver, Endian.BIG);
 		}
 		return null;
+	}
+	
+	private static GoVer magicToVer(int magicInt) {
+		return switch ( magicInt ) {
+			case GO_1_2_MAGIC -> new GoVer(1, 2, 0);
+			case GO_1_16_MAGIC -> new GoVer(1, 16, 0);
+			case GO_1_18_MAGIC -> new GoVer(1, 18, 0);
+			case GO_1_20_MAGIC -> new GoVer(1, 20, 0);
+			default -> GoVer.INVALID;
+		};
+		
 	}
 
 }

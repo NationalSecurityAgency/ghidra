@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
@@ -219,21 +219,22 @@ public class DebuggerCopyPlan {
 			@Override
 			public void copy(TraceProgramView from, AddressRange fromRange, Program into,
 					Address intoAddress, TaskMonitor monitor) throws Exception {
-				for (TraceBreakpoint bpt : from.getTrace()
+				long snap = from.getSnap();
+				for (TraceBreakpointLocation bpt : from.getTrace()
 						.getBreakpointManager()
 						.getBreakpointsIntersecting(Lifespan.at(from.getSnap()), fromRange)) {
 					monitor.checkCancelled();
-					long off = bpt.getMinAddress().subtract(fromRange.getMinAddress());
+					long off = bpt.getMinAddress(snap).subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					ProgramBreakpoint pb =
-						new ProgramBreakpoint(into, dest, bpt.getLength(), bpt.getKinds());
+						new ProgramBreakpoint(into, dest, bpt.getLength(snap), bpt.getKinds(snap));
 					if (bpt.isEnabled(from.getSnap())) {
 						pb.enable();
 					}
 					else {
 						pb.disable();
 					}
-					pb.setEmuSleigh(bpt.getEmuSleigh());
+					pb.setEmuSleigh(bpt.getEmuSleigh(snap));
 				}
 			}
 		},
@@ -308,12 +309,11 @@ public class DebuggerCopyPlan {
 					long off = addr.subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					// Ugly, but there's not MAX/MIN_COMMENT_TYPE
-					for (int i = CodeUnit.EOL_COMMENT; i <= CodeUnit.REPEATABLE_COMMENT; i++) {
-						String comment = fromListing.getComment(i, addr);
-						if (comment == null) {
-							continue;
+					for (CommentType type : CommentType.values()) {
+						String comment = fromListing.getComment(type, addr);
+						if (comment != null) {
+							intoListing.setComment(dest, type, comment);
 						}
-						intoListing.setComment(dest, i, comment);
 					}
 				}
 			}

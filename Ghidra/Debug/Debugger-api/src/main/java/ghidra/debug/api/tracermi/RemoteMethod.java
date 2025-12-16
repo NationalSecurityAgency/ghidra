@@ -20,6 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
+import javax.swing.Icon;
+
 import ghidra.async.AsyncUtils;
 import ghidra.debug.api.target.ActionName;
 import ghidra.trace.model.Trace;
@@ -63,6 +65,20 @@ public interface RemoteMethod {
 	String display();
 
 	/**
+	 * The icon to display in menu's and in the prompt dialog.
+	 * 
+	 * @return the icon
+	 */
+	Icon icon();
+
+	/**
+	 * Text to display in the OK button of any prompt dialog.
+	 * 
+	 * @return the text
+	 */
+	String okText();
+
+	/**
 	 * A description of the method.
 	 * 
 	 * <p>
@@ -101,7 +117,7 @@ public interface RemoteMethod {
 	 * Check the type of an argument.
 	 * 
 	 * <p>
-	 * This is a hack, because {@link TraceObjectSchema} expects {@link TargetObject}, or a
+	 * This is a hack, because {@link TraceObjectSchema} expects {@link TraceObject}, or a
 	 * primitive. We instead need {@link TraceObject}. I'd add the method to the schema, except that
 	 * trace stuff is not in its dependencies.
 	 * 

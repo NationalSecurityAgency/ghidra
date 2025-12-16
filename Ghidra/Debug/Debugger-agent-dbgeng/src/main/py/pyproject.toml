@@ -4,20 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidradbg"
-version = "11.3"
+version = "12.0"
 authors = [
   { name="Ghidra Development Team" },
 ]
 description = "Ghidra's Plugin for dbgeng"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ghidratrace==11.3",
+    "ghidratrace==12.0",
     "pybag>=2.2.12"
 ]
 
@@ -26,7 +26,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"
 
 [tool.setuptools.package-data]
-ghidradbg = ["*.tlb"]
+ghidradbg = ["*.tlb", "py.typed"]
 
 [tool.setuptools]
 include-package-data = true

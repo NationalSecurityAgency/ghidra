@@ -24,6 +24,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.Icon;
+
 import db.Transaction;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.async.*;
@@ -56,6 +58,11 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 			String description, Map<String, RemoteParameter> parameters, SchemaName retType,
 			AsyncPairingQueue<Map<String, Object>> argQueue, AsyncPairingQueue<Object> retQueue)
 			implements RemoteMethod {
+
+		public TestRemoteMethod {
+			Objects.requireNonNull(action);
+		}
+
 		public TestRemoteMethod(String name, ActionName action, String display, String description,
 				Map<String, RemoteParameter> parameters, SchemaName retType) {
 			this(name, action, display, description, parameters, retType, new AsyncPairingQueue<>(),
@@ -105,6 +112,16 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 			var result = argQueue().take().thenApply(a -> new ArgsRet(a, impl.apply(a)));
 			result.thenApply(ar -> ar.ret).handle(AsyncUtils.copyTo(retQueue().give()));
 			return result.thenApply(ar -> ar.args);
+		}
+
+		@Override
+		public String okText() {
+			return "OK";
+		}
+
+		@Override
+		public Icon icon() {
+			return null;
 		}
 	}
 
@@ -249,5 +266,19 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 	public void synthActivate(TraceObject object) {
 		Trace trace = object.getTrace();
 		doActivate(object, trace, snapshots.get(trace));
+	}
+
+	@Override
+	public boolean isBusy() {
+		return false;
+	}
+
+	@Override
+	public boolean isBusy(Target target) {
+		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
 	}
 }

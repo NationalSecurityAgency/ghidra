@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,8 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -96,25 +97,21 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 	}
 
 	@Override
-	public void highlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
-		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
-		if (highlightMarkers != null) {
-			highlightMarkers.clearAll();
-		}
-		if (highlight != null && currentProgram != null) {
-			if (highlightMarkers != null) {
-				highlightMarkers.add(highlight);
-			}
-		}
+	public void broadcastHighlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
 		if (provider == connectedProvider) {
 			tool.firePluginEvent(new ProgramHighlightPluginEvent(getName(), highlight,
 				connectedProvider.getProgram()));
 		}
 	}
 
-	/**
-	 * Interface method called to process a plugin event.
-	 */
+	@Override
+	public void broadcastLocationChanged(CodeViewerProvider provider, ProgramLocation location) {
+		if (provider == connectedProvider) {
+			tool.firePluginEvent(new ProgramLocationPluginEvent(getName(), location,
+				connectedProvider.getProgram()));
+		}
+	}
+
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProgramClosedPluginEvent) {
@@ -127,7 +124,7 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 				currentProgram.removeListener(this);
 			}
 			ProgramActivatedPluginEvent evt = (ProgramActivatedPluginEvent) event;
-			clearMarkers(currentProgram); // do this just before changing the program
+			connectedProvider.clearMarkers(currentProgram); // do this before changing the program
 
 			currentProgram = evt.getActiveProgram();
 			if (currentProgram != null) {
@@ -137,21 +134,21 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 			else {
 				currentView = new AddressSet();
 			}
+
 			connectedProvider.doSetProgram(currentProgram);
 
-			updateHighlightProvider();
-			updateBackgroundColorModel();
-			setHighlight(new FieldSelection());
-			AddressFactory currentAddressFactory =
-				(currentProgram != null) ? currentProgram.getAddressFactory() : null;
-			setSelection(new ProgramSelection(currentAddressFactory));
+			connectedProvider.updateHighlightProvider();
+			updateBackgroundColorModel(connectedProvider);
+			setConnectedProviderHighlight(new FieldSelection());
+			setConnectedProviderSelection(new ProgramSelection());
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			ProgramLocationPluginEvent evt = (ProgramLocationPluginEvent) event;
 			ProgramLocation location = evt.getLocation();
 			if (!connectedProvider.setLocation(location)) {
 				if (viewManager != null) {
-					connectedProvider.setView(viewManager.addToView(location));
+					AddressSetView updatedView = viewManager.addToView(location);
+					setView(updatedView);
 					ListingPanel lp = connectedProvider.getListingPanel();
 					lp.goTo(location, true);
 				}
@@ -159,17 +156,17 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		}
 		else if (event instanceof ProgramSelectionPluginEvent) {
 			ProgramSelectionPluginEvent evt = (ProgramSelectionPluginEvent) event;
-			setSelection(evt.getSelection());
+			setConnectedProviderSelection(evt.getSelection());
 		}
 		else if (event instanceof ProgramHighlightPluginEvent) {
 			ProgramHighlightPluginEvent evt = (ProgramHighlightPluginEvent) event;
 			if (evt.getProgram() == currentProgram) {
-				setHighlight(evt.getHighlight());
+				connectedProvider.setHighlight(evt.getHighlight());
 			}
 		}
 		else if (event instanceof ViewChangedPluginEvent) {
 			AddressSet view = ((ViewChangedPluginEvent) event).getView();
-			viewChanged(view);
+			setView(view);
 		}
 	}
 
@@ -204,15 +201,18 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		ProgramSelection highlight = (ProgramSelection) state[2];
 		ProgramSelection selection = (ProgramSelection) state[3];
 
-		viewChanged((AddressSetView) state[4]);
+		setView((AddressSetView) state[4]);
 
 		if (location != null) {
 			connectedProvider.setLocation(location);
 		}
-		setHighlight(highlight);
+
+		connectedProvider.setHighlight(highlight);
+
 		if (selection != null) {
 			connectedProvider.setSelection(selection);
 		}
+
 		if (vp != null) {
 			FieldPanel fieldPanel = connectedProvider.getListingPanel().getFieldPanel();
 			fieldPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
@@ -271,33 +271,22 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		FieldSelection highlight = new FieldSelection();
 		highlight.load(saveState);
 		if (!highlight.isEmpty()) {
-			setHighlight(highlight);
+			setConnectedProviderHighlight(highlight);
 		}
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
+		super.writeConfigState(saveState);
 		formatMgr.saveState(saveState);
 		connectedProvider.saveState(saveState);
 	}
 
 	@Override
 	public void readConfigState(SaveState saveState) {
+		super.readConfigState(saveState);
 		formatMgr.readState(saveState);
 		connectedProvider.readState(saveState);
-	}
-
-	@Override
-	public void locationChanged(CodeViewerProvider provider, ProgramLocation location) {
-		if (provider == connectedProvider) {
-			MarkerSet cursorMarkers = getCursorMarkers(currentProgram);
-			if (cursorMarkers != null) {
-				cursorMarkers.clearAll();
-				cursorMarkers.add(location.getAddress());
-			}
-			tool.firePluginEvent(new ProgramLocationPluginEvent(getName(), location,
-				connectedProvider.getProgram()));
-		}
 	}
 
 	@Override

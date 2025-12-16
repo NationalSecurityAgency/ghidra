@@ -32,7 +32,7 @@ import ghidra.pcode.emu.jit.op.JitFloatDivOp;
  * This uses the binary operator generator and simply emits {@link #FDIV} or {@link #DDIV} depending
  * on the type.
  */
-public enum FloatDivOpGen implements BinOpGen<JitFloatDivOp> {
+public enum FloatDivOpGen implements FloatBinOpGen<JitFloatDivOp> {
 	/** The generator singleton */
 	GEN;
 

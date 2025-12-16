@@ -33,6 +33,7 @@ import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.decompiler.component.margin.DecompilerMarginProvider;
+import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
@@ -252,7 +253,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public boolean goTo(Program gotoProgram, ProgramLocation location) {
-
 		if (!isConnected()) {
 			if (program == null) {
 				// Special Case: this 'disconnected' provider is waiting to be initialized
@@ -294,13 +294,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 //==================================================================================================
 
 	@Override
-	public DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
-		return getDecompilerPanel().createHighlighter(tm);
+	public DecompilerHighlighter createHighlighter(Function f, CTokenHighlightMatcher tm) {
+		return getDecompilerPanel().createHighlighter(f, tm);
 	}
 
 	@Override
-	public DecompilerHighlighter createHighlighter(String id, CTokenHighlightMatcher tm) {
-		return getDecompilerPanel().createHighlighter(id, tm);
+	public DecompilerHighlighter createHighlighter(String id, Function f,
+			CTokenHighlightMatcher tm) {
+		return getDecompilerPanel().createHighlighter(id, f, tm);
 	}
 
 //==================================================================================================
@@ -435,6 +436,20 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		}
 
 		clipboardProvider.setSelection(selection);
+		notifySelectionChanged(selection);
+	}
+
+	private void notifySelectionChanged(ProgramSelection selection) {
+		if (!isConnected()) {
+			return;
+		}
+
+		if (selection == null) {
+			return;
+		}
+
+		plugin.firePluginEvent(
+			new ProgramSelectionPluginEvent(plugin.getName(), selection, getProgram()));
 	}
 
 	@Override
@@ -960,6 +975,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		EditDataTypeAction editDataTypeAction = new EditDataTypeAction();
 		setGroupInfo(editDataTypeAction, variableGroup, subGroupPosition++);
 
+		// shows the quick editor dialog
+		EditFieldAction editFieldAction = new EditFieldAction();
+		setGroupInfo(editFieldAction, variableGroup, subGroupPosition++);
+
 		//
 		// Listing action for Creating Structure on a Variable
 		//
@@ -1150,6 +1169,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(decompilerCreateStructureAction);
 		tool.addAction(listingCreateStructureAction);
 		addLocalAction(editDataTypeAction);
+		addLocalAction(editFieldAction);
 		addLocalAction(specifyCProtoAction);
 		addLocalAction(overrideSigAction);
 		addLocalAction(editOverrideSigAction);

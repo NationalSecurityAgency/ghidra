@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,7 @@ import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
-import docking.Tool;
 import docking.action.*;
-import docking.actions.PopupActionProvider;
 import generic.theme.GColor;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.decompiler.*;
@@ -87,9 +85,9 @@ import ghidra.util.Msg;
 	servicesRequired = {
 		DebuggerLogicalBreakpointService.class,
 		MarkerService.class,
-	})
-public class DebuggerBreakpointMarkerPlugin extends Plugin
-		implements PopupActionProvider {
+	}
+)
+public class DebuggerBreakpointMarkerPlugin extends Plugin {
 
 	private static final Color COLOR_BREAKPOINT_ENABLED_MARKER =
 		new GColor("color.debugger.plugin.resources.breakpoint.marker.enabled");
@@ -499,7 +497,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				new ProgramLocationActionContext(null, location.getProgram(),
 					new ProgramLocation(location.getProgram(), location.getAddr()), null, null);
 			if (contextCanManipulateBreakpoints(context)) {
-				doToggleBreakpointsAt(ToggleBreakpointAction.NAME, context);
+				doToggleBreakpointsAt(AbstractToggleBreakpointAction.NAME, context);
 			}
 		}
 	}
@@ -756,28 +754,32 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at an enabled breakpoint",
-		help = @HelpInfo(anchor = "colors"))
+		help = @HelpInfo(anchor = "colors")
+	)
 	private boolean breakpointEnabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at a disabled breakpoint",
-		help = @HelpInfo(anchor = "colors"))
+		help = @HelpInfo(anchor = "colors")
+	)
 	private boolean breakpointDisabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint",
-		help = @HelpInfo(anchor = "colors"))
+		help = @HelpInfo(anchor = "colors")
+	)
 	private boolean breakpointIneffEnColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint",
-		help = @HelpInfo(anchor = "colors"))
+		help = @HelpInfo(anchor = "colors")
+	)
 	private boolean breakpointIneffDisColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND;
 
@@ -818,8 +820,6 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		this.autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		updateDebouncer.addListener(__ -> SwingUtilities.invokeLater(() -> updateAllMarks()));
-
-		tool.addPopupActionProvider(this);
 	}
 
 	@Override
@@ -828,8 +828,17 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		createActions();
 	}
 
+	@Override
+	protected void dispose() {
+		super.dispose();
+		if (markerService != null) {
+			markerService.setMarkerClickedListener(null);
+		}
+	}
+
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND)
+		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND
+	)
 	private void setEnabledBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setEnabledColoringBackground(breakpointColoringBackground);
@@ -837,7 +846,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND)
+		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND
+	)
 	private void setDisabledBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setDisabledColoringBackground(breakpointColoringBackground);
@@ -845,7 +855,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND
+	)
 	private void setIneffectiveEBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveEnabledColoringBackground(breakpointColoringBackground);
@@ -853,7 +864,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND
+	)
 	private void setIneffectiveDBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveDisabledColoringBackground(breakpointColoringBackground);
@@ -1041,7 +1053,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 		this.breakpointService = breakpointService;
 		if (this.breakpointService != null) {
-			breakpointService.addChangeListener(updateMarksListener);
+			this.breakpointService.addChangeListener(updateMarksListener);
 			updateAllMarks();
 		}
 	}
@@ -1086,12 +1098,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		actionDisableBreakpoint = new DisableBreakpointAction();
 		actionClearBreakpoint = new ClearBreakpointAction();
 
-		tool.setMenuGroup(new String[] { SetBreakpointAction.NAME }, SetBreakpointAction.GROUP);
-	}
-
-	@Override
-	public List<DockingActionIf> getPopupActions(Tool __, ActionContext context) {
-		return List.of(); // TODO: Actions by individual breakpoint?
+		tool.setMenuGroup(new String[] { AbstractSetBreakpointAction.NAME },
+			SetBreakpointAction.GROUP);
 	}
 
 	@Override

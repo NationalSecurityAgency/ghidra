@@ -144,4 +144,13 @@
      <funcstart label="__break" validcode="function" noreturn="true"/>  <!-- must be defined at an existing function -->
   </pattern>
   
+  <pattern> <!-- This can most likely be removed when VS2022 FID files are added __security_check_cookie -->
+    <data>  0x3b 0x0d 0x.. 0x.. 0x.. 0x..
+            0x75 0x01 
+            0xc3 
+            0xe9 
+            </data>
+     <funcstart label="__security_check_cookie" validcode="function"/>
+   </pattern>
+  
 </patternlist>

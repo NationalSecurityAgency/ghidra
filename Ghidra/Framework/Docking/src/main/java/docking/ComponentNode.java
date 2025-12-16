@@ -27,10 +27,8 @@ import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import help.HelpService;
-import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Node object for managing one or more components. If more that one managed component
@@ -39,6 +37,7 @@ import utilities.util.reflection.ReflectionUtilities;
 class ComponentNode extends Node {
 
 	private ComponentPlaceholder top;
+	private int lastActiveTabIndex;
 	private List<ComponentPlaceholder> windowPlaceholders;
 	private JComponent comp;
 	private boolean isDisposed;
@@ -167,6 +166,7 @@ class ComponentNode extends Node {
 	void add(ComponentPlaceholder placeholder) {
 		windowPlaceholders.add(placeholder);
 		placeholder.setNode(this);
+
 		if (placeholder.isActive()) {
 			top = placeholder;
 			invalidate();
@@ -209,7 +209,7 @@ class ComponentNode extends Node {
 	 * Removes the component from this node (and the manager), but possibly keeps an empty object as
 	 * a placeholder.
 	 * @param placeholder the placeholder object to be removed.
-	 * @param keepEmptyPlaceholder flag indicating to keep a placeholder placeholder object.
+	 * @param keepEmptyPlaceholder flag indicating to keep a placeholder object.
 	 */
 	void remove(ComponentPlaceholder placeholder, boolean keepEmptyPlaceholder) {
 		if (placeholder.isActive()) {
@@ -238,9 +238,7 @@ class ComponentNode extends Node {
 	@Override
 	void close() {
 		List<ComponentPlaceholder> list = new ArrayList<>(windowPlaceholders);
-		Iterator<ComponentPlaceholder> it = list.iterator();
-		while (it.hasNext()) {
-			ComponentPlaceholder placeholder = it.next();
+		for (ComponentPlaceholder placeholder : list) {
 			placeholder.close();
 		}
 	}
@@ -265,18 +263,6 @@ class ComponentNode extends Node {
 		populateActiveComponents(activeComponents);
 		int count = activeComponents.size();
 		if (count == 1) {
-
-			//
-			// TODO Hack Alert!  (When this is removed, also update ComponentPlaceholder)
-			// 
-			ComponentPlaceholder nextTop = activeComponents.get(0);
-			if (nextTop.isDisposed()) {
-				// This should not happen!  We have seen this bug recently
-				Msg.debug(this, "Found disposed component that was not removed from the active " +
-					"list: " + nextTop, ReflectionUtilities.createJavaFilteredThrowable());
-				return null;
-			}
-
 			top = activeComponents.get(0);
 			comp = top.getComponent();
 			comp.setBorder(BorderFactory.createRaisedBevelBorder());
@@ -293,6 +279,7 @@ class ComponentNode extends Node {
 
 			DockableComponent activeComp =
 				(DockableComponent) tabbedPane.getComponentAt(activeIndex);
+
 			top = activeComp.getComponentWindowingPlaceholder();
 			tabbedPane.setSelectedComponent(activeComp);
 		}
@@ -302,20 +289,31 @@ class ComponentNode extends Node {
 
 	private int addComponentsToTabbedPane(List<ComponentPlaceholder> activeComponents,
 			JTabbedPane tabbedPane) {
+
+		// When rebuilding tabs, we wish to restore the tab location for users so the UI doesn't 
+		// jump around.  How we do this depends on if the user has closed or opened a new view.
+		// We will use the last active tab index to restore the active tab after the user has closed
+		// a tab.  We use the 'top' variable to find the active tab when the user opens a new tab.
 		int count = activeComponents.size();
-		int activeIndex = 0;
+		int activeIndex = lastActiveTabIndex;
+		if (activeIndex >= count) {
+			activeIndex = count - 1;
+		}
+
 		for (int i = 0; i < count; i++) {
 			ComponentPlaceholder placeholder = activeComponents.get(i);
 			DockableComponent c = placeholder.getComponent();
 			c.setBorder(BorderFactory.createEmptyBorder());
-			String title = placeholder.getTitle();
+
+			// The renderer uses use the full title as the tooltip for the tab
+			String fullTitle = placeholder.getFullTitle();
 			String tabText = placeholder.getTabText();
 
-			final DockableComponent component = placeholder.getComponent();
-			tabbedPane.add(component, title);
+			DockableComponent component = placeholder.getComponent();
+			tabbedPane.add(fullTitle, component);
 
 			DockingTabRenderer tabRenderer =
-				createTabRenderer(tabbedPane, placeholder, title, tabText, component);
+				createTabRenderer(tabbedPane, placeholder, fullTitle, tabText, component);
 
 			c.installDragDropTarget(tabbedPane);
 
@@ -329,6 +327,7 @@ class ComponentNode extends Node {
 				activeIndex = i;
 			}
 		}
+
 		return activeIndex;
 	}
 
@@ -475,11 +474,15 @@ class ComponentNode extends Node {
 		}
 
 		DockableComponent dc = placeholder.getComponent();
-		if (dc != null) {
-			JTabbedPane tab = (JTabbedPane) comp;
-			if (tab.getSelectedComponent() != dc) {
-				tab.setSelectedComponent(dc);
-			}
+		if (dc == null) {
+			return;
+		}
+
+		top = placeholder;
+		JTabbedPane tab = (JTabbedPane) comp;
+		if (tab.getSelectedComponent() != dc) {
+			tab.setSelectedComponent(dc);
+			lastActiveTabIndex = tab.getSelectedIndex();
 		}
 	}
 
@@ -497,10 +500,7 @@ class ComponentNode extends Node {
 			}
 		}
 		root.setAttribute("TOP_INFO", "" + topIndex);
-		Iterator<ComponentPlaceholder> it = windowPlaceholders.iterator();
-		while (it.hasNext()) {
-
-			ComponentPlaceholder placeholder = it.next();
+		for (ComponentPlaceholder placeholder : windowPlaceholders) {
 
 			Element elem = new Element("COMPONENT_INFO");
 			elem.setAttribute("NAME", placeholder.getName());

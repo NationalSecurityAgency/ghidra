@@ -18,15 +18,15 @@ package ghidra.app.plugin.core.analysis;
 import java.io.IOException;
 import java.util.function.Predicate;
 
-import ghidra.app.services.*;
+import ghidra.app.services.AbstractAnalyzer;
+import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.bin.format.golang.GoParamStorageAllocator;
 import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.OperandType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -39,12 +39,12 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
- * Analyzer that finds Golang strings (and optionally slices) and marks up the found instances.
+ * Analyzer that finds Go strings (and optionally slices) and marks up the found instances.
  * <p>
- * The char[] data for Golang strings does not contain null terminators, so the normal logic already
+ * The char[] data for Go strings does not contain null terminators, so the normal logic already
  * built into Ghidra to find terminated strings doesn't work.
  * <p>
- * This implementation looks for data that matches what a Golang string 
+ * This implementation looks for data that matches what a Go string 
  * struct { char* data, long len } would look like, and follows the pointer to the char[] data 
  * and creates a fixed-length string at that location using the length info from the struct.
  * <p>
@@ -53,7 +53,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * 	<li>References from an instruction (see markupStaticStructRefsInFunction)</li>
  *  <li>Iterating through data segments and making educated guesses (see markupDataSegmentStructs)</li>
  * </ul>
- * Some char[] data is only referenced from Golang string structs that exist temporarily
+ * Some char[] data is only referenced from Go string structs that exist temporarily
  * in registers after being set by an instruction that statically references the char[] data,
  * and an instruction that statically contains the length. (see tryCreateInlineString) 
  * <p>
@@ -64,16 +64,19 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  */
 public class GolangStringAnalyzer extends AbstractAnalyzer {
 	private final static String NAME = "Golang Strings";
-	private final static String DESCRIPTION = "Finds and labels Golang string structures.";
+	private final static String DESCRIPTION = "Finds and labels Go string structures.";
 
 	private GolangStringAnalyzerOptions analyzerOptions = new GolangStringAnalyzerOptions();
 	private GoRttiMapper goBinary;
+	private Program program;
 	private MarkupSession markupSession;
 	private GoParamStorageAllocator storageAllocator;
+	private int stringStructLen; // 8 + 8 = 16
+	private int sliceStructLen; // 8 + 8 + 8 = 24
 
 	public GolangStringAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
-		setPriority(AnalysisPriority.REFERENCE_ANALYSIS.after());
+		setPriority(GolangSymbolAnalyzer.STRINGS_PRIORITY);
 		setDefaultEnablement(true);
 	}
 
@@ -96,26 +99,33 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
+		this.program = program;
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
-			Msg.error(this, "Golang string analyzer error: unable to get GoRttiMapper");
+			Msg.error(this, "Go string analyzer error: unable to get GoRttiMapper");
 			return false;
 		}
+
+		sliceStructLen = goBinary.getStructureMappingInfo(GoSlice.class).getStructureLength();
+		stringStructLen = goBinary.getStructureMappingInfo(GoString.class).getStructureLength();
+
 		markupSession = goBinary.createMarkupSession(monitor);
 		storageAllocator = goBinary.newStorageAllocator();
 
-		try {
-			goBinary.initTypeInfoIfNeeded(monitor);
+		int stringCount = 0;
 
-			markupStaticStructRefsInFunctions(set, monitor);
+		try {
+			stringCount = markupStaticStructRefsInFunctions(set, monitor);
 
 			if (analyzerOptions.markupDataSegmentStructs) {
-				markupDataSegmentStructs(monitor);
+				stringCount += markupDataSegmentStructs(monitor);
 			}
 		}
 		catch (IOException e) {
-			Msg.error(this, "Golang analysis failure", e);
+			Msg.error(this, "Go analysis failure", e);
 		}
+
+		Msg.info(this, "Go strings found: %d".formatted(stringCount));
 
 		return true;
 	}
@@ -134,24 +144,30 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 		return false;
 	}
 
-	private void markupStaticStructRefsInFunctions(AddressSetView set, TaskMonitor monitor)
+	private int markupStaticStructRefsInFunctions(AddressSetView set, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		monitor = new UnknownProgressWrappingTaskMonitor(monitor);
-		monitor.initialize(1, "Searching for Golang structure references in functions");
+		monitor.initialize(1, "Searching for Go structure references in functions");
 
 		FunctionManager funcManager = goBinary.getProgram().getFunctionManager();
 
+		int stringCount = 0;
+
 		for (Function function : funcManager.getFunctions(set, true)) {
 			monitor.checkCancelled();
-			markupStaticStructRefsInFunction(function, monitor);
+			stringCount += markupStaticStructRefsInFunction(function, monitor);
 		}
+
+		return stringCount;
 	}
 
-	private void markupStaticStructRefsInFunction(Function function, TaskMonitor monitor)
+	private int markupStaticStructRefsInFunction(Function function, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		ReferenceManager refManager = goBinary.getProgram().getReferenceManager();
 		Listing listing = goBinary.getProgram().getListing();
+
+		int stringCount = 0;
 
 		AddressSet stringDataRange = new AddressSet(goBinary.getStringDataRange());
 		AddressSetView validStructRange = goBinary.getStringStructRange();
@@ -169,8 +185,10 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 			}
 			if (validStructRange.contains(addr) && canCreateStructAt(addr)) {
 				if (tryCreateStruct(stringDataRange, addr) != null) {
+					stringCount++;
 					continue;
 				}
+
 				if (!stringDataRange.contains(addr)) {
 					continue;
 				}
@@ -181,9 +199,12 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 				if (inlineStr != null) {
 					// just markup the char data, there is no struct body
 					inlineStr.additionalMarkup(markupSession);
+					stringCount++;
 				}
 			}
 		}
+
+		return stringCount;
 	}
 
 	private GoString tryCreateInlineString(AddressSetView funcBody, AddressSet stringDataRange,
@@ -236,7 +257,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 				: -1;
 	}
 
-	private void markupDataSegmentStructs(TaskMonitor monitor)
+	private int markupDataSegmentStructs(TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		AddressSet structDataRange = new AddressSet(goBinary.getStringStructRange());
@@ -245,26 +266,17 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 		AddressSet stringDataRange = new AddressSet(goBinary.getStringDataRange());
 
 		long initAddrCount = structDataRange.getNumAddresses();
-		monitor.initialize(initAddrCount,
-			"Searching for Golang strings & structures in data segments");
+		monitor.initialize(initAddrCount, "Searching for Go strings & structures in data segments");
 
 		int stringCount = 0;
 		int sliceCount = 0;
 
-		int align = goBinary.getPtrSize();
+		int align = goBinary.getPtrSize(); // TODO: hack
 		while (alignStartOfSet(structDataRange, align)) {
 			monitor.setProgress(initAddrCount - structDataRange.getNumAddresses());
 			monitor.checkCancelled();
 
 			Address addr = structDataRange.getMinAddress();
-			if (!canCreateStructAt(addr)) {
-				Data data = goBinary.getProgram().getListing().getDataContaining(addr);
-				if (data != null) {
-					structDataRange.deleteFromMin(data.getMaxAddress());
-				}
-				continue;
-			}
-
 			structDataRange.deleteFromMin(addr);
 
 			Object newObj = tryCreateStruct(stringDataRange, addr);
@@ -272,18 +284,31 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 				structDataRange.deleteFromMin(goBinary.getMaxAddressOfStructure(newObj));
 				stringCount += newObj instanceof GoString ? 1 : 0;
 				sliceCount += newObj instanceof GoSlice ? 1 : 0;
-				monitor.setMessage("Searching for Golang strings & slices in data segments: %d+%d"
+				monitor.setMessage("Searching for Go strings & slices in data segments: %d+%d"
 						.formatted(stringCount, sliceCount));
 			}
+			else {
+				Data data = goBinary.getProgram().getListing().getDataContaining(addr);
+				if (data != null) {
+					structDataRange.deleteFromMin(data.getMaxAddress());
+				}
+			}
 		}
+
+		return stringCount;
 	}
 
 	private Object tryCreateStruct(AddressSet stringDataRange, Address addr)
 			throws IOException, CancelledException {
 		// test to see if its a slice first because strings can kinda look like slices (a pointer
 		// then a length field).
-		Object newObj = tryReadSliceStruct(addr);
-		if (newObj == null) {
+		boolean isUndefined3x =
+			DataUtilities.isUndefinedRange(program, addr, addr.add(sliceStructLen));
+		boolean isUndefined2x = isUndefined3x ||
+			DataUtilities.isUndefinedRange(program, addr, addr.add(stringStructLen));
+
+		Object newObj = isUndefined3x ? tryReadSliceStruct(addr) : null;
+		if (newObj == null && isUndefined2x) {
 			newObj = tryReadStringStruct(stringDataRange, addr);
 		}
 		if (newObj != null) {

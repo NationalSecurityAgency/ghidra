@@ -306,8 +306,6 @@ public class BitFieldEditorPanel extends JPanel {
 			}
 		});
 
-		dtChoiceEditor.getBrowseButton().setFocusable(false);
-
 		JComponent editorComponent = dtChoiceEditor.getEditorComponent();
 		Dimension preferredSize = editorComponent.getPreferredSize();
 		editorComponent.setPreferredSize(new Dimension(200, preferredSize.height));
@@ -751,7 +749,7 @@ public class BitFieldEditorPanel extends JPanel {
 	}
 
 	ActionContext getActionContext(MouseEvent event) {
-		if (placementComponent == event.getSource()) {
+		if (event != null && placementComponent == event.getSource()) {
 			Point p = event.getPoint();
 			return new BitFieldEditorContext(getDataTypeComponent(p),
 				placementComponent.getBitOffset(p));

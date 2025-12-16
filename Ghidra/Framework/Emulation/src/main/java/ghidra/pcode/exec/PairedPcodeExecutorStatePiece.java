@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.pcode.exec;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -92,6 +93,11 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	}
 
 	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(left, right).flatMap(p -> p.streamPieces());
+	}
+
+	@Override
 	public Map<Register, Pair<L, R>> getRegisterValues() {
 		Map<Register, L> leftRVs = left.getRegisterValues();
 		Map<Register, R> rightRVs = right.getRegisterValues();
@@ -106,8 +112,8 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	}
 
 	@Override
-	public PairedPcodeExecutorStatePiece<A, L, R> fork() {
-		return new PairedPcodeExecutorStatePiece<>(left.fork(), right.fork(), addressArithmetic,
+	public PairedPcodeExecutorStatePiece<A, L, R> fork(PcodeStateCallbacks cb) {
+		return new PairedPcodeExecutorStatePiece<>(left.fork(cb), right.fork(cb), addressArithmetic,
 			arithmetic);
 	}
 
@@ -118,11 +124,52 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, A offset, int size, Pair<L, R> val) {
+		left.setVarInternal(space, offset, size, val.getLeft());
+		right.setVarInternal(space, offset, size, val.getRight());
+	}
+
+	@Override
+	public void setVar(AddressSpace space, long offset, int size, boolean quantize,
+			Pair<L, R> val) {
+		left.setVar(space, offset, size, quantize, val.getLeft());
+		right.setVar(space, offset, size, quantize, val.getRight());
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, long offset, int size, Pair<L, R> val) {
+		left.setVarInternal(space, offset, size, val.getLeft());
+		right.setVarInternal(space, offset, size, val.getRight());
+	}
+
+	@Override
 	public Pair<L, R> getVar(AddressSpace space, A offset, int size, boolean quantize,
 			Reason reason) {
 		return Pair.of(
 			left.getVar(space, offset, size, quantize, reason),
 			right.getVar(space, offset, size, quantize, reason));
+	}
+
+	@Override
+	public Pair<L, R> getVarInternal(AddressSpace space, A offset, int size, Reason reason) {
+		return Pair.of(
+			left.getVarInternal(space, offset, size, reason),
+			right.getVarInternal(space, offset, size, reason));
+	}
+
+	@Override
+	public Pair<L, R> getVar(AddressSpace space, long offset, int size, boolean quantize,
+			Reason reason) {
+		return Pair.of(
+			left.getVar(space, offset, size, quantize, reason),
+			right.getVar(space, offset, size, quantize, reason));
+	}
+
+	@Override
+	public Pair<L, R> getVarInternal(AddressSpace space, long offset, int size, Reason reason) {
+		return Pair.of(
+			left.getVarInternal(space, offset, size, reason),
+			right.getVarInternal(space, offset, size, reason));
 	}
 
 	@Override

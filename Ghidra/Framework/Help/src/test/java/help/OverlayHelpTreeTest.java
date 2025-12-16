@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,8 @@ import help.validator.model.*;
 
 public class OverlayHelpTreeTest {
 
+	private int sortCounter;
+
 	@Test
 	public void testSourceTOCFileThatDependsUponPreBuiltHelp() {
 		//
@@ -43,24 +45,24 @@ public class OverlayHelpTreeTest {
 		// in a help <TOCITEM> that lives inside of a pre-built jar file.
 		//
 		/*
-
+		
 		 	Example makeup we will create:
-
+		
 			  	PreBuild_TOC.xml
-
+		
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake" />
 			  		</tocitem>
-
-
+		
+		
 			 	TOC_Source.xml
-
+		
 			 		<tocref id="root">
 			 			<tocref="child_1">
 			 				<tocdef id="child_2" target="fake" />
 			 			</tocref>
 			 		</tocref>
-
+		
 		 */
 
 		TOCItemExternal root = externalItem("root");
@@ -92,26 +94,26 @@ public class OverlayHelpTreeTest {
 	public void testSourceTOCFileThatDependsAnotherTOCSourceFile() {
 
 		/*
-
+		
 		 The first source file defines attributes that the second file references.
-
+		
 		 Example makeup we will create:
-
+		
 		  	TOC_Source.xml
-
+		
 		  		<tocdef id="root" target="fake">
 		  			<tocdef id="child_1" target="fake" />
 		  		</tocdef>
-
-
+		
+		
 		 	Another TOC_Source.xml
-
+		
 		 		<tocref id="root">
 		 			<tocref="child_1">
 		 				<tocdef id="child_2" target="fake" />
 		 			</tocref>
 		 		</tocref>
-
+		
 		*/
 
 		Path toc_1 = Paths.get("/fake/path_1/TOC_Source.xml");
@@ -147,34 +149,34 @@ public class OverlayHelpTreeTest {
 		// in a help <TOCITEM> that lives inside of multiple pre-built jar files.
 		//
 		/*
-
+		
 		 	Example makeup we will create:
-
+		
 			  	PreBuild_TOC.xml
-
+		
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake">
 			  				<tocitem="prebuilt_a_child" target="fake" />
 			  			</tocitem>
 			  		</tocitem>
-
+		
 				Another PreBuild_TOC.xml
-
+		
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake">
 			  				<tocitem="prebuilt_b_child" target="fake" />
 			  			</tocitem>
 			  		</tocitem>
-
-
+		
+		
 			 	TOC_Source.xml
-
+		
 			 		<tocref id="root">
 			 			<tocref="child_1">
 			 				<tocdef id="child_2" target="fake" />
 			 			</tocref>
 			 		</tocref>
-
+		
 		 */
 
 		TOCItemExternal root_a = externalItem("root");
@@ -212,44 +214,43 @@ public class OverlayHelpTreeTest {
 
 		// note: prebuilt_a_child and prebuilt_b_child don't get output, since they do not have
 		//       the same TOC file ID as the help file being processed (in other words, they don't
-		//       live in the TOC_Source.xml being processes, so they are not part of the output).
 	}
 
 	@Test
 	public void testSourceTOCFileThatHasNodeWithSameTextAttributeAsOneOfItsExternalModluleDependencies() {
 
 		/*
-
+		
 		 The first source file defines attributes that the second file references.   Both files
 		 will have multiple nodes that coincidentally share 'text' attribute values.
-
+		
 		 Note: the 'id' attributes have to be unique; the 'text' attributes do not have to be unique
-
+		
 		 Example makeup we will create:
-
+		
 		  	PreBuild_TOC.xml
-
+		
 		  		<tocitem id="root" target="fake">
 		  			<tocitem id="child_1_1" text="Child 1" target="fake" />
 		  		</tocitem>
-
+		
 			Another PreBuild_TOC.xml
-
+		
 		  		<tocitem id="root" target="fake">
 		  			<tocitem id="child_2_1" text=Child 1" target="fake" />
 		  			<tocitem id="child_2_2" text=Child 2" target="fake" />
 		  		</tocitem>
-
-
+		
+		
 		 	Another TOC_Source.xml
-
+		
 		 		<tocref id="root">
 		 			<tocref="child_1_1">
 		 				<tocdef id="child_2_1a" text="Child 1a" target="fake" />
 		 			</tocref>
 		 			<tocdef id="child_3_2" text="Child 2" target="fake" />
 		 		</tocref>
-
+		
 		*/
 
 		TOCItemExternal root_a = externalItem("root");
@@ -288,7 +289,7 @@ public class OverlayHelpTreeTest {
 
 		// note: prebuilt_a_child and prebuilt_b_child don't get output, since they do not have
 		//       the same TOC file ID as the help file being processed (in other words, they don't
-		//       live in the TOC_Source.xml being processes, so they are not part of the output).
+		//       live in the TOC_Source.xml being processed, so they are not part of the output).
 	}
 
 //==================================================================================================
@@ -327,7 +328,7 @@ public class OverlayHelpTreeTest {
 
 	private TOCItemDefinition tocdef(TOCItem parent, String ID, String text, Path tocSourceFile) {
 		String target = "fake";
-		String sort = "";
+		String sort = Integer.toString(++sortCounter);
 		int line = 1;
 		return new TOCItemDefinition(parent, tocSourceFile, ID, text, target, sort, line);
 	}
@@ -351,7 +352,7 @@ public class OverlayHelpTreeTest {
 	private TOCItemExternal externalItem(TOCItem parent, String ID, String text) {
 		Path tocFile = Paths.get("/fake/path_1/PreBuild_TOC.xml");
 		String target = "fake";
-		String sort = "";
+		String sort = Integer.toString(++sortCounter);
 		int line = 1;
 		return new TOCItemExternal(parent, tocFile, ID, text, target, sort, line);
 	}

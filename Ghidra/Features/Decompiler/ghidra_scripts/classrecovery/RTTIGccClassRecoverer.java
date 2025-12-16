@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -31,7 +32,6 @@ import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
@@ -107,10 +107,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIGccClassRecoverer(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean isDwarfLoaded, TaskMonitor monitor) throws Exception {
+			boolean nameVfunctions, boolean makeVfunctionsThisCalls, boolean isDwarfLoaded,
+			TaskMonitor monitor) throws Exception {
 
 		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
-			isDwarfLoaded, monitor);
+			makeVfunctionsThisCalls, isDwarfLoaded, monitor);
 
 		this.isDwarfLoaded = isDwarfLoaded;
 
@@ -211,6 +212,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Msg.debug(this, "Processing constructors and destructors");
 		processConstructorAndDestructors();
+
+		identifyPureVirtualFunction(recoveredClasses);
 
 		Msg.debug(this, "Creating vftable order maps");
 		createVftableOrderMap(recoveredClasses);
@@ -2285,7 +2288,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 
 			if (specialTypeinfo.isInProgramMemory()) {
-				applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				Data struct =
+					applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				if (struct == null) {
+					Msg.error(this,
+						specialTypeinfo.getNamespace().getName() + ": cannot apply structure");
+					continue;
+				}
 				typeinfoToStructuretypeMap.put(specialTypeinfo.getAddress(),
 					SI_CLASS_TYPE_INFO_STRUCTURE);
 			}
@@ -2335,6 +2344,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 
+				// test to see if there is a string at the typeinfo name location in the would be
+				// typeinfo structure
+				if (!hasStringAtTypeinfoNameLocation(typeinfoAddress)) {
+					continue;
+				}
+
 				Data newStructure = null;
 				String specialTypeinfoNamespaceName = null;
 
@@ -2371,6 +2386,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				if (newStructure == null) {
 					// is a typeinfo that inherits a non class typeinfo so skip it
+					// or there was an issue creating it so skip it
 					continue;
 				}
 
@@ -2427,6 +2443,36 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		updateTypeinfosWithBases(typeinfos, typeinfoMap);
 
 		return typeinfos;
+	}
+
+	/**
+	 * Method to validate the second member of the typeinfo struct is a string
+	 * @param typeinfoAddress the address of the potential typeinfo struct
+	 * @return true if what is pointed to by the typeinfoName pointer is a valid string, false otherwise
+	 */
+	private boolean hasStringAtTypeinfoNameLocation(Address typeinfoAddress) {
+
+		// first get the referenced address and verify it is an address
+		Address typeinfoNameAddress =
+			extendedFlatAPI.getPointer(typeinfoAddress.add(defaultPointerSize));
+		if (typeinfoNameAddress == null) {
+			return false;
+		}
+
+		// get defined string if defined already
+		String definedString = getDefinedStringAt(typeinfoNameAddress);
+		if (definedString != null) {
+			return true;
+		}
+
+		// get string from memory if not defined to see if ascii there
+		String stringInMem = getStringFromMemory(typeinfoNameAddress);
+		if (stringInMem != null) {
+			return true;
+		}
+
+		return false;
+
 	}
 
 	private GccTypeinfo getTypeinfo(String namespaceName, List<GccTypeinfo> typeinfos)
@@ -2724,13 +2770,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)
-			throws CancelledException, AddressOutOfBoundsException, Exception {
+	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress) {
 
-		api.clearListing(typeinfoAddress, typeinfoAddress.add(typeInfoStructure.getLength() - 1));
-		Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+		try {
+			api.clearListing(typeinfoAddress,
+				typeinfoAddress.add(typeInfoStructure.getLength() - 1));
+			Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+			return newStructure;
+		}
+		catch (CodeUnitInsertionException | CancelledException e) {
+			Msg.warn(this, "Could not apply typeinfo struct at " + typeinfoAddress.toString());
+			return null;
+		}
 
-		return newStructure;
 	}
 
 	private Structure getOrCreateVmiTypeinfoStructure(Address typeinfoAddress,
@@ -2741,6 +2793,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		int numBases;
 		try {
 			numBases = api.getInt(typeinfoAddress.add(offsetOfNumBases));
+
+			if (numBases <= 0) {
+				Msg.debug(this, typeinfoAddress.toString() +
+					": VmiTypeinfoStructure has invalid number of bases: " + numBases);
+				return null;
+			}
 		}
 		// if there isn't enough memory to get the int then return null
 		catch (MemoryAccessException | AddressOutOfBoundsException e) {
@@ -3382,7 +3440,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Function calledFunction =
 					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
-				if (calledFunction.getName().equals(expectedCalledFunctionName)) {
+
+				if (calledFunction != null &&
+					calledFunction.getName().equals(expectedCalledFunctionName)) {
 					return instruction.getAddress();
 				}
 			}
@@ -4376,68 +4436,59 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private boolean isPossibleFunctionPointer(Address address) throws CancelledException {
 
-		// TODO: make one that works for all casea in helper
-
-		long longValue = extendedFlatAPI.getLongValueAt(address);
-
-		Register lowBitCodeMode = program.getRegister("LowBitCodeMode");
-		if (lowBitCodeMode != null) {
-			longValue = longValue & ~0x1;
-		}
-
-		Address possibleFunctionPointer = null;
-
-		try {
-			possibleFunctionPointer = address.getNewAddress(longValue);
-		}
-		catch (AddressOutOfBoundsException e) {
+		Address referencedAddress = extendedFlatAPI.getSingleReferencedAddress(address);
+		if (referencedAddress == null) {
 			return false;
 		}
 
-		if (possibleFunctionPointer == null) {
+		Address normalizedReferencedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, referencedAddress);
+
+		if (normalizedReferencedAddress == null) {
 			return false;
 		}
 
-		Function function = api.getFunctionAt(possibleFunctionPointer);
+		Function function = api.getFunctionAt(normalizedReferencedAddress);
 		if (function != null) {
 			return true;
 		}
 
 		AddressSetView executeSet = program.getMemory().getExecuteSet();
 
-		if (!executeSet.contains(possibleFunctionPointer)) {
+		if (!executeSet.contains(normalizedReferencedAddress)) {
 			return false;
 		}
 
-		Instruction instruction = api.getInstructionAt(possibleFunctionPointer);
+		Instruction instruction = api.getInstructionAt(normalizedReferencedAddress);
 		if (instruction != null) {
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 
 		}
 
-		boolean disassemble = api.disassemble(possibleFunctionPointer);
+		boolean disassemble = api.disassemble(normalizedReferencedAddress);
 		if (disassemble) {
 
 			// check for the case where there is conflicting data at the thumb offset function
 			// pointer and if so clear the data and redisassemble and remove the bad bookmark
-			long originalLongValue = extendedFlatAPI.getLongValueAt(address);
-			if (originalLongValue != longValue) {
-				Address offsetPointer = address.getNewAddress(originalLongValue);
-				Data dataAt = listing.getDataAt(offsetPointer);
+			//	long originalLongValue = extendedFlatAPI.getLongValueAt(address);
+			if (!referencedAddress.equals(normalizedReferencedAddress)) {
+
+				Data dataAt = listing.getDataAt(referencedAddress);
 				if (dataAt != null && dataAt.isDefined()) {
-					api.clearListing(offsetPointer);
+					api.clearListing(referencedAddress);
 					disassemble = api.disassemble(address);
 
-					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR,
-						"Bad Instruction", "conflicting data");
+					Bookmark bookmark =
+						getBookmarkAt(normalizedReferencedAddress, BookmarkType.ERROR,
+							"Bad Instruction", "conflicting data");
 					if (bookmark != null) {
 						api.removeBookmark(bookmark);
 					}
 				}
 			}
 
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 		}
 		return false;

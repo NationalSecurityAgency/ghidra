@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -507,6 +507,10 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		return (FGController) TestUtils.getInstanceField("controller", graphProvider);
 	}
 
+	protected FGProvider getProvider() {
+		return graphProvider;
+	}
+
 	protected FGComponent getGraphComponent() {
 		FGController controller =
 			(FGController) TestUtils.getInstanceField("controller", graphProvider);
@@ -783,7 +787,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		waitForSwing();
 
-		int tryCount = 3;
+		int tryCount = 0;
 		while (tryCount++ < 5 && updater.isBusy()) {
 			waitForConditionWithoutFailing(() -> !updater.isBusy());
 		}
@@ -799,8 +803,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	@SuppressWarnings("unchecked")
 	protected DockingAction getCopyAction() {
-		FGController controller = getFunctionGraphController();
-		FGProvider provider = controller.getProvider();
+		FGProvider provider = getProvider();
 
 		FGClipboardProvider clipboarProvider =
 			(FGClipboardProvider) getInstanceField("clipboardProvider", provider);
@@ -885,11 +888,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected boolean isSatelliteVisible() {
-		return isSatelliteVisible(getFunctionGraphController());
+		return isSatelliteVisible(graphProvider);
 	}
 
-	protected boolean isSatelliteVisible(FGController controller) {
+	protected boolean isSatelliteVisible(FGProvider fgProvider) {
 
+		FGController controller = fgProvider.getController();
 		FGView view = controller.getView();
 		GraphComponent<FGVertex, FGEdge, FunctionGraph> gc = view.getGraphComponent();
 		if (gc == null) {
@@ -898,7 +902,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		// Note: we cannot rely on 'gc.isSatelliteShowing()', as when the application does not
 		//       have focus, isShowing() will return false :(
-		ComponentProvider satellite = controller.getProvider().getSatelliteProvider();
+		ComponentProvider satellite = fgProvider.getSatelliteProvider();
 		boolean satelliteProviderVisible =
 			runSwing(() -> satellite != null && satellite.isVisible());
 
@@ -1206,7 +1210,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		runSwing(() -> controller.invalidateAllCacheForProgram(program));
 	}
 
-	protected FGController cloneGraph() {
+	protected FGProvider cloneGraph() {
 
 		DockingActionIf snapshotAction =
 			AbstractDockingTest.getAction(tool, graphPlugin.getName(), "Function Graph Clone");
@@ -1222,7 +1226,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		waitForBusyRunManager(controllerClone);
 		waitForAnimation(controllerClone);
 
-		return controllerClone;
+		return providerClone;
 	}
 
 	protected void color(final FGVertex v1, final Color color) {
@@ -1405,7 +1409,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
 
-		// -1 because one one of the edges was between two of the vertices being grouped
+		// -1 because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex =
 			validateNewGroupedVertexFromVertices(functionGraph, ungroupedVertices,
@@ -2139,9 +2143,9 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertUndockedProviderShowing(provider);
 	}
 
-	protected void assertUndockedProviderShowing(ComponentProvider satellite) {
-		assertNotNull("Undocked provider is not installed when it should be", satellite);
-		assertTrue("Undocked provider is not showing after being undocked", satellite.isVisible());
+	protected void assertUndockedProviderShowing(ComponentProvider provider) {
+		assertNotNull("Undocked provider is not installed when it should be", provider);
+		assertTrue("Undocked provider is not showing after being undocked", provider.isVisible());
 	}
 
 	protected void assertZoomedIn() {

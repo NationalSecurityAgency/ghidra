@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.references;
-
-import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
@@ -34,7 +32,7 @@ import generic.theme.GIcon;
 import ghidra.app.cmd.refs.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -49,7 +47,6 @@ import resources.Icons;
 
 /**
  * ComponentProvider that displays a table of External Programs.
- * <p>
  */
 public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private static Icon ADD_ICON = Icons.ADD_ICON;
@@ -158,11 +155,18 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		JPanel panel = new JPanel(new BorderLayout());
 		tableModel = new ExternalNamesTableModel();
 		table = new GhidraTable(tableModel);
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
 
-		JScrollPane sp = new JScrollPane(table);
+			contextChanged();
+		});
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		ToolTipManager.sharedInstance().registerComponent(table);
+
+		JScrollPane sp = new JScrollPane(table);
 		panel.add(sp, BorderLayout.CENTER);
 
 		String namePrefix = "External Programs";
@@ -213,7 +217,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private void deleteExternalProgram() {
 		ExternalManager externalManager = program.getExternalManager();
 		StringBuilder buf = new StringBuilder();
-		CompoundCmd cmd = new CompoundCmd("Delete External Program Name");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Delete External Program Name");
 		for (String externalName : getSelectedExternalNames()) {
 			boolean hasLocations = externalManager.getExternalLocations(externalName).hasNext();
 			if (hasLocations) {
@@ -237,8 +241,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private void setExternalProgramAssociation() {
 		List<String> selectedExternalNames = getSelectedExternalNames();
 		String externalName = selectedExternalNames.get(0);	// must be exactly one for us to be enabled.
-		DataTreeDialog dialog = new DataTreeDialog(mainPanel,
-			"Choose External Program (" + externalName + ")", OPEN);
+		DataTreeDialog dialog = new ProgramFileChooser(mainPanel,
+			"Choose External Program (" + externalName + ")", AppInfo.getActiveProject());
 
 		dialog.setSearchText(externalName);
 
@@ -252,7 +256,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 			ExternalManager externalManager = program.getExternalManager();
 			String externalLibraryPath = externalManager.getExternalLibraryPath(externalName);
 			if (!pathName.equals(externalLibraryPath)) {
-				Command cmd = new SetExternalNameCmd(externalName, domainFile.getPathname());
+				Command<Program> cmd =
+					new SetExternalNameCmd(externalName, domainFile.getPathname());
 				getTool().execute(cmd, program);
 			}
 		});
@@ -261,7 +266,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	}
 
 	private void clearExternalAssociation() {
-		CompoundCmd cmd = new CompoundCmd("Clear External Program Associations");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Clear External Program Associations");
 		for (String externalName : getSelectedExternalNames()) {
 			cmd.add(new ClearExternalNameCmd(externalName));
 		}
@@ -436,7 +441,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 			rowToHighlightDuringNextReload = newName;
 			String oldName = path.getName();
-			Command cmd = new UpdateExternalNameCmd(oldName, newName, SourceType.USER_DEFINED);
+			Command<Program> cmd =
+				new UpdateExternalNameCmd(oldName, newName, SourceType.USER_DEFINED);
 			if (!tool.execute(cmd, program)) {
 				tool.setStatusInfo(cmd.getStatusMsg());
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.util;
 
 import java.io.*;
 import java.util.List;
+
+import generic.hash.HashUtilities;
 
 public class MD5Utilities {
 
@@ -54,11 +56,7 @@ public class MD5Utilities {
 	 * returned as a prefix to the hash
 	 */
 	public static char[] getSaltedMD5Hash(char[] msg) {
-		char[] salt = new char[HashUtilities.SALT_LENGTH];
-		for (int i = 0; i < salt.length; i++) {
-			salt[i] = HashUtilities.getRandomLetterOrDigit();
-		}
-		return getSaltedMD5Hash(salt, msg);
+		return HashUtilities.getSaltedHash(HashUtilities.MD5_ALGORITHM, msg);
 	}
 
 	/**

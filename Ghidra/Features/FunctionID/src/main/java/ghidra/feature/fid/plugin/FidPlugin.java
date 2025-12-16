@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -67,23 +64,13 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	private FidService service;
 	private FidFileManager fidFileManager;
 
-	private DockingAction chooseAction;
-	private DockingAction createAction;
-	private DockingAction attachAction;
-	private DockingAction detachAction;
-	private DockingAction populateAction;
-
 	public FidPlugin(PluginTool tool) {
 		super(tool);
 	}
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		SwingUtilities.invokeLater(() -> updateActions());
-	}
-
-	private void updateActions() {
-		enableActions();
+		tool.contextChanged(null); // update fid action enablement
 	}
 
 	@Override
@@ -93,13 +80,12 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 		fidFileManager.addChangeListener(this);
 		service = new FidService();
 		createStandardActions();
-		enableActions();
 	}
 
 	@Override
-	protected void cleanup() {
+	protected void dispose() {
 		fidFileManager.removeChangeListener(this);
-		super.cleanup();
+		super.dispose();
 	}
 
 	/**
@@ -107,80 +93,73 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * FID databases would want to use.
 	 */
 	private void createStandardActions() {
-		DockingAction action;
+		new ActionBuilder("Choose Active FidDbs", getName())
+				.enabledWhen(ac -> enabledForAnyFidFiles())
+				.onAction(ac -> chooseActiveFidDbs())
+				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Choose active FidDbs...")
+				.menuGroup(MENU_GROUP_1, "1")
+				.description("Select which FidDbs are used during Fid Search")
+				.helpLocation(new HelpLocation(FID_HELP, "chooseactivemenu"))
+				.buildAndInstall(tool);
 
-		action = new DockingAction("Choose Active FidDbs", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				chooseActiveFidDbs();
-			}
-		};
-		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Choose active FidDbs..." },
-			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "1"));
-		action.setDescription("Select which FidDbs are used during Fid Search");
-		action.setHelpLocation(new HelpLocation(FID_HELP, "chooseactivemenu"));
-		tool.addAction(action);
-		chooseAction = action;
+		new ActionBuilder("Create new empty FidDb", getName())
+				.enabledWhen(ac -> true)
+				.onAction(ac -> createFidDb())
+				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Create new empty FidDb...")
+				.menuGroup(MENU_GROUP_1, "2")
+				.description("Create a new, empty FidDb file in your file system")
+				.helpLocation(new HelpLocation(FID_HELP, "createemptyfid"))
+				.buildAndInstall(tool);
 
-		action = new DockingAction("Create new empty FidDb", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				createFidDb();
-			}
-		};
-		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
-				"Create new empty FidDb..." }, null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "2"));
-		action.setDescription("Create a new, empty FidDb file in your file system");
-		action.setHelpLocation(new HelpLocation(FID_HELP, "createemptyfid"));
-		tool.addAction(action);
-		createAction = action;
+		new ActionBuilder("Attach existing FidDb", getName())
+				.enabledWhen(ac -> true)
+				.onAction(ac -> attachFidDb())
+				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Attach existing FidDb...")
+				.menuGroup(MENU_GROUP_1, "3")
+				.description("Attach an existing FidDb file from your file system")
+				.helpLocation(new HelpLocation(FID_HELP, "attachfid"))
+				.buildAndInstall(tool);
 
-		action = new DockingAction("Attach existing FidDb", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				attachFidDb();
-			}
-		};
-		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Attach existing FidDb..." },
-			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "3"));
-		action.setDescription("Attach an existing FidDb file from your file system");
-		action.setHelpLocation(new HelpLocation(FID_HELP, "attachfid"));
-		tool.addAction(action);
-		attachAction = action;
+		new ActionBuilder("Detach attached FidDb", getName())
+				.enabledWhen(ac -> enabledForUserFidFiles())
+				.onAction(ac -> removeFidFile())
+				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Detach attached FidDb...")
+				.menuGroup(MENU_GROUP_1, "4")
+				.description("Detach an already attached FidDb")
+				.helpLocation(new HelpLocation(FID_HELP, "detachfid"))
+				.buildAndInstall(tool);
 
-		action = new DockingAction("Detach attached FidDb", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				removeFidFile();
-			}
-		};
-		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Detach attached FidDb..." },
-			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "4"));
-		action.setDescription("Detach an already attached FidDb");
-		action.setHelpLocation(new HelpLocation(FID_HELP, "detachfid"));
-		tool.addAction(action);
-		detachAction = action;
+		new ActionBuilder("Populate FidDb from programs", getName())
+				.enabledWhen(ac -> enabledForUserFidFiles())
+				.onAction(ac -> {
+					fidFileManager.load();
+					PopulateFidDialog populateFidDialog = new PopulateFidDialog(tool, service);
+					tool.showDialog(populateFidDialog);
+				})
+				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
+					"Populate FidDb from programs...")
+				.menuGroup(MENU_GROUP_1, "5")
+				.description("Populate an existing FidDb with all programs under a domain folder")
+				.helpLocation(new HelpLocation(FID_HELP, "populatedialog"))
+				.buildAndInstall(tool);
+	}
 
-		action = new DockingAction("Populate FidDb from programs", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				PopulateFidDialog populateFidDialog = new PopulateFidDialog(tool, service);
-				tool.showDialog(populateFidDialog);
-			}
-		};
-		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
-				"Populate FidDb from programs..." },
-			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "5"));
-		action.setDescription("Populate an existing FidDb with all programs under a domain folder");
-		action.setHelpLocation(new HelpLocation(FID_HELP, "populatedialog"));
-		tool.addAction(action);
-		populateAction = action;
+	private boolean enabledForAnyFidFiles() {
+		if (!fidFileManager.hasLoadedFidFiles()) {
+			// We haven't loaded Fid files yet.  Since we don't know if we can enable, return true
+			// so users can at least try to perform the action.
+			return true;
+		}
+		return fidFileManager.hasFidFiles();
+	}
 
+	private boolean enabledForUserFidFiles() {
+		if (!fidFileManager.hasLoadedFidFiles()) {
+			// We haven't loaded Fid files yet.  Since we don't know if we can enable, return true
+			// so users can at least try to perform the action.
+			return true;
+		}
+		return fidFileManager.hasUserFidFiles();
 	}
 
 	/**
@@ -188,6 +167,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * during search.
 	 */
 	private synchronized void chooseActiveFidDbs() {
+		fidFileManager.load();
 		ActiveFidConfigureDialog dialog =
 			new ActiveFidConfigureDialog(fidFileManager.getFidFiles());
 		tool.showDialog(dialog);
@@ -199,6 +179,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * extension (.fidb).  If they don't, we will add it for them.
 	 */
 	private void createFidDb() {
+		fidFileManager.load();
 		File dbFile = askFile("Create new FidDb file", "Create");
 		if (dbFile == null) {
 			return;
@@ -226,6 +207,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * Method to attach an already-created (but heretofore unknown) database.
 	 */
 	private void attachFidDb() {
+		fidFileManager.load();
 		File dbFile = askFile("Attach existing FidDb file", "Attach");
 		if (dbFile != null) {
 			fidFileManager.addUserFidFile(dbFile);
@@ -236,24 +218,13 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * Method to "forget" about (close and stop trying to re-open next session) a FID database.
 	 */
 	private void removeFidFile() {
+		fidFileManager.load();
+
 		FidFile fidFile = askChoice("Choose FidDb to detach", "Please choose the FidDb to detach",
 			fidFileManager.getUserAddedFiles(), null);
 		if (fidFile != null) {
 			fidFileManager.removeUserFile(fidFile);
 		}
-	}
-
-	/**
-	 * Method to properly set action enablement based upon appropriate business logic.
-	 */
-	private void enableActions() {
-		boolean atLeastOneFidDb = fidFileManager.getFidFiles().size() > 0;
-		boolean atLeastOneUserFidDb = fidFileManager.getUserAddedFiles().size() > 0;
-		chooseAction.setEnabled(atLeastOneFidDb);
-		createAction.setEnabled(true);
-		attachAction.setEnabled(true);
-		detachAction.setEnabled(atLeastOneUserFidDb);
-		populateAction.setEnabled(atLeastOneUserFidDb);
 	}
 
 	/**

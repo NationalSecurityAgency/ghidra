@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,6 +36,7 @@ import generic.util.WindowUtilities;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
+import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.layout.PairLayout;
 import resources.Icons;
@@ -88,35 +89,38 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 
 	private void createActions() {
 		// we don't automatically refresh the list of components in a window if it changes
-		DockingAction refreshAction = new ActionBuilder("Refresh", ACTION_OWNER)
-				.toolBarIcon(Icons.REFRESH_ICON)
-				.onAction(c -> refreshModelData())
-				.build();
+		DockingAction refreshAction =
+			new ActionBuilder("Refresh", ACTION_OWNER).toolBarIcon(Icons.REFRESH_ICON)
+					.onAction(c -> refreshModelData())
+					.build();
 		addAction(refreshAction);
 
 		// this action also just calls the refreshModelData() method, but since it is a toggle
 		// action, the refresh model data will rebuild with the filter option toggled.
-		filterAction = new ToggleActionBuilder("Filter", ACTION_OWNER)
-				.toolBarIcon(Icons.CONFIGURE_FILTER_ICON)
-				.description("Filters out most non-focusable components")
-				.onAction(c -> refreshModelData())
-				.selected(true)
-				.build();
+		filterAction =
+			new ToggleActionBuilder("Filter", ACTION_OWNER).toolBarIcon(Icons.CONFIGURE_FILTER_ICON)
+					.description("Filters out most non-focusable components")
+					.onAction(c -> refreshModelData())
+					.selected(true)
+					.build();
 		addAction(filterAction);
 
-		eventAction = new ToggleActionBuilder("Show Events", ACTION_OWNER)
-				.toolBarIcon(Icons.INFO_ICON)
-				.description("Shows focus events")
-				.onAction(c -> toggleShowEvents())
-				.build();
+		eventAction =
+			new ToggleActionBuilder("Show Events", ACTION_OWNER).toolBarIcon(Icons.INFO_ICON)
+					.description("Shows focus events")
+					.onAction(c -> toggleShowEvents())
+					.build();
 		addAction(eventAction);
 
-		toggleFollowFocusAction = new ToggleActionBuilder("Follow Focus", ACTION_OWNER)
-				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
-				.description("On causes component table to constant repopulate as focus changes")
-				.onAction(c -> toggleFollowFocus())
-				.selected(true)
-				.build();
+		toggleFollowFocusAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", ACTION_OWNER)
+					.sharedKeyBinding()
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.description(
+						"On causes component table to constant repopulate as focus changes")
+					.onAction(c -> toggleFollowFocus())
+					.selected(true)
+					.build();
 		addAction(toggleFollowFocusAction);
 	}
 
@@ -158,6 +162,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(buildCenterPanel(), BorderLayout.CENTER);
 		panel.add(buildInfoPanel(), BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("Component Info");
 		return panel;
 
 	}
@@ -165,6 +170,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 	private JComponent buildCenterPanel() {
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		splitPane.setTopComponent(buildTablePanel());
+		splitPane.getAccessibleContext().setAccessibleName("Filter");
 		return splitPane;
 	}
 
@@ -172,6 +178,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		model = new ComponentTableModel();
 		filterTable = new GFilterTable<ComponentInfo>(model);
 		filterTable.setAccessibleNamePrefix("Component Info");
+		filterTable.getAccessibleContext().setAccessibleName("Filter");
 		return filterTable;
 	}
 
@@ -196,6 +203,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		panel.add(buildTextPair(newProviderTextField, oldProviderTextField));
 		panel.add(new JLabel("Focused Component (new/old): ", SwingConstants.RIGHT));
 		panel.add(buildTextPair(newComponentTextField, oldComponentTextField));
+		panel.getAccessibleContext().setAccessibleName("Info Previews");
 		return panel;
 	}
 
@@ -203,6 +211,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		JPanel panel = new JPanel(new GridLayout(1, 2, 10, 10));
 		panel.add(comp1);
 		panel.add(comp2);
+		panel.getAccessibleContext().setAccessibleName("Filter Comparison");
 		return panel;
 	}
 
@@ -238,8 +247,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		newComponentTextField.setText(getName(currentComponent));
 
 		oldProviderTextField.setText(newProviderTextField.getText());
-		currentProvider = DockingWindowManager.getActiveInstance()
-				.getProvider(newFocusComponent);
+		currentProvider = DockingWindowManager.getActiveInstance().getProvider(newFocusComponent);
 		newProviderTextField.setText(currentProvider == null ? "" : currentProvider.getName());
 
 		oldWindowTextField.setText(newWindowTextField.getText());
@@ -255,8 +263,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		String name = comp.getName();
 		StringBuilder buf = new StringBuilder(name == null ? "" : name);
 		buf.append(" (");
-		buf.append(comp.getClass()
-				.getSimpleName());
+		buf.append(comp.getClass().getSimpleName());
 		buf.append(")");
 		return buf.toString();
 	}
@@ -336,7 +343,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		if (!component.isFocusable()) {
 			return false;
 		}
-		if (component instanceof JPanel jPanel) {
+		if (component instanceof JPanel) {
 			if (info.getCycleRootIndex() == null) {
 				return false;
 			}
@@ -581,8 +588,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 			public String getValue(ComponentInfo info, Settings settings, Object data,
 					ServiceProvider provider) throws IllegalArgumentException {
 				Set<AWTKeyStroke> keys = info.getComponent()
-						.getFocusTraversalKeys(
-							KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
+						.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
 				return keys == null ? "" : keys.toString();
 			}
 
@@ -721,6 +727,16 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		}
 
 		private List<Component> computeTraversalComps() {
+			try {
+				return doComputeTraversalComps();
+			}
+			catch (IllegalArgumentException e) {
+				Msg.error(this, "Unable to determine focus traversal components for " + component);
+			}
+			return List.of();
+		}
+
+		private List<Component> doComputeTraversalComps() {
 			List<Component> traversals = new ArrayList<>();
 			Container container = (Container) component;
 			FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
@@ -760,8 +776,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		}
 
 		public String getClassSimpleName() {
-			String name = component.getClass()
-					.getName();
+			String name = component.getClass().getName();
 			int lastIndexOf = name.lastIndexOf(".");
 			if (lastIndexOf < 0) {
 				return name;

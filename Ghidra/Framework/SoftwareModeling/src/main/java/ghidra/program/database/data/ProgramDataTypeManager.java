@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -266,6 +266,10 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 		// use could be an issue.
 		try {
 			// TODO: Should use replacement type instead of clearing
+
+			// Note: use of DUMMY here is intentional, since we do not want to interrupt the 
+			// deleting of these types, as they may have a relationship that we wish to preserve.
+			// All need to be deleted to remain in a consistent state.
 			program.getCodeManager().clearData(deletedIds, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
@@ -296,9 +300,8 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
-		program.endTransaction(transactionID, commit);
-
+	public boolean endTransaction(int transactionID, boolean commit) {
+		return program.endTransaction(transactionID, commit);
 	}
 
 	@Override

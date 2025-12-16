@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.ConcurrentModificationException;
 import java.util.Objects;
 
 import db.DBRecord;
@@ -24,6 +25,7 @@ import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Msg;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
 
@@ -156,25 +158,23 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * @param oldDt             affected datatype which has been removed or replaced
 	 * @param newDt             replacement datatype
 	 * @return                  true if bitfield component was modified
-	 * @throws InvalidDataTypeException if bitfield was based upon oldDt but new
-	 *                                  datatype is invalid for a bitfield
 	 */
 	protected boolean updateBitFieldDataType(DataTypeComponentDB bitfieldComponent, DataType oldDt,
-			DataType newDt) throws InvalidDataTypeException {
+			DataType newDt) {
 		if (!bitfieldComponent.isBitFieldComponent()) {
 			throw new AssertException("expected bitfield component");
 		}
 
 		BitFieldDBDataType bitfieldDt = (BitFieldDBDataType) bitfieldComponent.getDataType();
-		if (bitfieldDt.getBaseDataType() != oldDt) {
+		if (bitfieldDt.getBaseDataType() != oldDt || !BitFieldDataType.isValidBaseDataType(newDt)) {
 			return false;
 		}
 
 		if (newDt != null) {
-			BitFieldDataType.checkBaseDataType(newDt);
 			int maxBitSize = 8 * newDt.getLength();
 			if (bitfieldDt.getBitSize() > maxBitSize) {
-				throw new InvalidDataTypeException("Replacement datatype too small for bitfield");
+				// Replacement datatype too small for bitfield
+				return false;
 			}
 		}
 
@@ -186,7 +186,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 			newDt.addParent(this);
 		}
 		catch (InvalidDataTypeException e) {
-			throw new AssertException("unexpected");
+			throw new AssertException(e); // unexpected
 		}
 
 		return true;
@@ -699,7 +699,13 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		DataTypeComponent[] definedComponents = composite.getDefinedComponents();
 		DataTypeComponentDB[] myDefinedComponents = getDefinedComponents();
 		if (definedComponents.length != myDefinedComponents.length) {
-			throw new IllegalArgumentException("mismatched definition datatype");
+			Msg.error(this,
+				"Resolve failure: unexpected component count detected\nDefinition Type:\n" +
+					definitionDt.toString() + "\nResolving Type:\n" + this.toString());
+			throw new ConcurrentModificationException(
+				"Resolve failure: unexpected component count detected for '" +
+					definitionDt.getPathName() + "' (" + definedComponents.length + " vs " +
+					myDefinedComponents.length + ")");
 		}
 		for (int i = 0; i < definedComponents.length; i++) {
 			DataTypeComponent dtc = definedComponents[i];

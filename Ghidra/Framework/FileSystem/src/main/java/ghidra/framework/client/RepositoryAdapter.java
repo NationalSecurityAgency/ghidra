@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,6 +81,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * Returns true if connection recently was lost unexpectedly
+	 * @return true if connection recently was lost unexpectedly
 	 */
 	public boolean hadUnexpectedDisconnect() {
 		return unexpectedDisconnect;
@@ -151,6 +152,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * Returns true if connected.
+	 * @return true if connected.
 	 */
 	public boolean isConnected() {
 		return repository != null;
@@ -177,7 +179,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 			if (repository == null) {
 				serverAdapter.connect(); // may cause auto-reconnect of repository
 			}
-			if (repository == null) {
+			if (repository == null && serverAdapter.isConnected()) {
 				repository = serverAdapter.getRepositoryHandle(name);
 				unexpectedDisconnect = false;
 				if (repository == null) {
@@ -193,8 +195,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * Event reader for change dispatcher.
-	 * @return
-	 * @throws IOException 
+	 * @return events
 	 * @throws InterruptedIOException if repository handle is closed
 	 */
 	RepositoryChangeEvent[] getEvents() throws InterruptedIOException {
@@ -227,21 +228,24 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	}
 
 	/**
-	 * Returns repository name
+	 * Get the associated repository name
+	 * @return repository name
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * Returns server adapter 
+	 * Get the associated server adapter 
+	 * @return server adapter
 	 */
 	public RepositoryServerAdapter getServer() {
 		return serverAdapter;
 	}
 
 	/**
-	 * Returns server information
+	 * Returns associated server information
+	 * @return server information
 	 */
 	public ServerInfo getServerInfo() {
 		return serverAdapter.getServerInfo();
@@ -280,9 +284,11 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	}
 
 	/**
-	 * Returns repository user object.
+	 * Returns repository connected user object.
+	 * @return connected user object
 	 * @throws UserAccessException user no longer has any permission to use repository.
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
+	 * @throws IOException if an IO error occurs
 	 * @see ghidra.framework.remote.RemoteRepositoryHandle#getUser()
 	 */
 	public User getUser() throws IOException {
@@ -305,7 +311,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * @return true if anonymous access allowed by this repository
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public boolean anonymousAccessAllowed() throws IOException {
 		synchronized (serverAdapter) {
@@ -323,10 +329,11 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	}
 
 	/**
-	 * Returns list of repository users.
-	 * @throws IOException
+	 * Returns list of repository users with repository access permission
+	 * @return return users with repository access permission
 	 * @throws UserAccessException user no longer has any permission to use repository.
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
+	 * @throws IOException if an IO error occurs
 	 * @see RemoteRepositoryHandle#getUserList()
 	 */
 	public User[] getUserList() throws IOException {
@@ -345,10 +352,11 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	}
 
 	/**
-	 * Returns list of all users known to server.
-	 * @throws IOException
+	 * Returns list of all user names known to server.
+	 * @return list of all user names known to server.
 	 * @throws UserAccessException user no longer has any permission to use repository.
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
+	 * @throws IOException if an IO error occurs
 	 * @see RemoteRepositoryHandle#getServerUserList()
 	 */
 	public String[] getServerUserList() throws IOException {
@@ -371,8 +379,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	 * @param users list of user and access permissions.
 	 * @param anonymousAccessAllowed true to permit anonymous access (also requires anonymous
 	 * access to be enabled for server)
-	 * @throws UserAccessException
-	 * @throws IOException
+	 * @throws UserAccessException user is not a repository Admin
+	 * @throws IOException if an IO error occurs
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
 	 * @see RemoteRepositoryHandle#setUserList(User[], boolean)
 	 */
@@ -392,7 +400,36 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 		}
 	}
 
-	/**
+	/*
+	 * @see RepositoryHandle#createTextDataFile(String, String, String, String, String, String)
+	 */
+	public void createTextDataFile(String parentPath, String itemName, String fileID,
+			String contentType, String textData, String comment)
+			throws IOException, InvalidNameException {
+		synchronized (serverAdapter) {
+			checkRepository();
+			try {
+				repository.createTextDataFile(parentPath, itemName, fileID, contentType, textData,
+					comment);
+			}
+			catch (NotConnectedException | RemoteException e) {
+				checkUnmarshalException(e, "createTextDataFile");
+				if (recoverConnection(e)) {
+					try {
+						repository.createTextDataFile(parentPath, itemName, fileID, contentType,
+							textData, comment);
+					}
+					catch (RemoteException e1) {
+						checkUnmarshalException(e1, "createTextDataFile");
+						throw e1;
+					}
+				}
+				throw e;
+			}
+		}
+	}
+
+	/*
 	 * @see RepositoryHandle#createDatabase(String, String, String, int, String, String)
 	 */
 	public ManagedBufferFileAdapter createDatabase(String parentPath, String itemName,
@@ -410,8 +447,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 			catch (NotConnectedException | RemoteException e) {
 				if (recoverConnection(e)) {
 					ManagedBufferFileAdapter bf =
-						new ManagedBufferFileAdapter(repository.createDatabase(parentPath,
-							itemName, fileID, bufferSize, contentType, projectPath));
+						new ManagedBufferFileAdapter(repository.createDatabase(parentPath, itemName,
+							fileID, bufferSize, contentType, projectPath));
 					fileOpened();
 					return bf;
 				}
@@ -428,17 +465,15 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 		synchronized (serverAdapter) {
 			checkRepository();
 			try {
-				ManagedBufferFileAdapter bf =
-					new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-						version, minChangeDataVer));
+				ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+					repository.openDatabase(parentPath, itemName, version, minChangeDataVer));
 				fileOpened();
 				return bf;
 			}
 			catch (NotConnectedException | RemoteException e) {
 				if (recoverConnection(e)) {
-					ManagedBufferFileAdapter bf =
-						new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-							version, minChangeDataVer));
+					ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+						repository.openDatabase(parentPath, itemName, version, minChangeDataVer));
 					fileOpened();
 					return bf;
 				}
@@ -450,22 +485,20 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	/*
 	 * @see ghidra.framework.remote.RepositoryHandle#openDatabase(java.lang.String, java.lang.String, long)
 	 */
-	public ManagedBufferFileAdapter openDatabase(String parentPath, String itemName, long checkoutId)
-			throws IOException {
+	public ManagedBufferFileAdapter openDatabase(String parentPath, String itemName,
+			long checkoutId) throws IOException {
 		synchronized (serverAdapter) {
 			checkRepository();
 			try {
-				ManagedBufferFileAdapter bf =
-					new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-						checkoutId));
+				ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+					repository.openDatabase(parentPath, itemName, checkoutId));
 				fileOpened();
 				return bf;
 			}
 			catch (NotConnectedException | RemoteException e) {
 				if (recoverConnection(e)) {
-					ManagedBufferFileAdapter bf =
-						new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-							checkoutId));
+					ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+						repository.openDatabase(parentPath, itemName, checkoutId));
 					fileOpened();
 					return bf;
 				}
@@ -534,8 +567,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * Convert UnmarshalException into UnsupportedOperationException
-	 * @param e
-	 * @throws UnsupportedOperationException
+	 * @param e IOException to be converted if appropriate
+	 * @throws UnsupportedOperationException unsupported operation exception
 	 */
 	private void checkUnmarshalException(IOException e, String operation)
 			throws UnsupportedOperationException {
@@ -745,7 +778,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	/*
 	 * @see ghidra.framework.remote.RepositoryHandle#getCheckout(java.lang.String, java.lang.String)
 	 */
-	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName) throws IOException {
+	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName)
+			throws IOException {
 		synchronized (serverAdapter) {
 			checkRepository();
 			try {
@@ -934,5 +968,4 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	public int getOpenFileHandleCount() {
 		return openFileHandleCount;
 	}
-
 }

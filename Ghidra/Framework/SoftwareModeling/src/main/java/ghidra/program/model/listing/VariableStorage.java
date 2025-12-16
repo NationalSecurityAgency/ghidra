@@ -26,7 +26,7 @@ import ghidra.program.util.LanguageTranslator;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * <code></code> encapsulates the ordered list of storage varnodes which correspond to a 
+ * Encapsulates the ordered list of storage varnodes which correspond to a 
  * function parameter or local variable.  For big-endian the first element corresponds 
  * to the most-significant varnode, while for little-endian the first element 
  * corresponds to the least-significant varnode.

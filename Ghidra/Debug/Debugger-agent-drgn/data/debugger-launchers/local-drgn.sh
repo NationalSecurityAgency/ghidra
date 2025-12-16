@@ -24,7 +24,8 @@
 #@desc </body></html>
 #@menu-group drgn
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#drgn
+#@help drgn#attach
+#@depends Debugger-rmi-trace
 #@env OPT_TARGET_PID:int=44068 "PID" "The target's process id"
 
 export OPT_TARGET_KIND="user" 

@@ -26,7 +26,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 
 /**
  * The manager for trace code units, i.e., the equivalent of {@link Listing}
@@ -53,15 +52,6 @@ import ghidra.trace.util.TraceAddressSpace;
  * {@link TraceDefinedDataView#create(Lifespan, Register, DataType)}.
  */
 public interface TraceCodeManager extends TraceCodeOperations {
-
-	/**
-	 * Get the code space for the memory or registers of the given trace address space
-	 * 
-	 * @param space the trace address space (thread, stack frame, address space)
-	 * @param createIfAbsent true to create the space if it's not already present
-	 * @return the space, of {@code null} if absent and not created
-	 */
-	TraceCodeSpace getCodeSpace(TraceAddressSpace space, boolean createIfAbsent);
 
 	/**
 	 * Get the code space for the memory of the given address space

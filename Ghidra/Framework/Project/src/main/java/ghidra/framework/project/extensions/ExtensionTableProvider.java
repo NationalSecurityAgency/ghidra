@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,12 +72,15 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		extensionTablePanel = new ExtensionTablePanel(tool);
+		extensionTablePanel.getAccessibleContext().setAccessibleName("Extenstion Table");
 		ExtensionDetailsPanel extensionDetailsPanel =
 			new ExtensionDetailsPanel(extensionTablePanel);
+		extensionDetailsPanel.getAccessibleContext().setAccessibleName("Extension Details");
 
 		final JSplitPane splitPane =
 			new JSplitPane(JSplitPane.VERTICAL_SPLIT, extensionTablePanel, extensionDetailsPanel);
 		splitPane.setResizeWeight(.75);
+		splitPane.getAccessibleContext().setAccessibleName("Extension Table and Details");
 		panel.add(splitPane, BorderLayout.CENTER);
 
 		splitPane.setDividerLocation(.75);
@@ -86,7 +89,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		createRefreshAction(extensionTablePanel, extensionDetailsPanel);
 
 		addOKButton();
-
+		panel.getAccessibleContext().setAccessibleName("Extension Table Provider");
 		return panel;
 	}
 
@@ -119,6 +122,15 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	private void createAddAction(ExtensionTablePanel panel) {
 		Icon addIcon = Icons.ADD_ICON;
 		DockingAction addAction = new DockingAction("ExtensionTools", "AddExtension") {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (Application.inSingleJarMode()) {
+					return false;
+				}
+				Object contextObject = context.getContextObject();
+				return ExtensionTableProvider.this == contextObject;
+			}
 
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -160,7 +172,6 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		addAction.setToolBarData(new ToolBarData(addIcon, group));
 		addAction.setHelpLocation(new HelpLocation(GenericHelpTopics.FRONT_END, "ExtensionTools"));
 		addAction.setDescription("Add extension");
-		addAction.setEnabled(!Application.inSingleJarMode());
 		addAction(addAction);
 	}
 
@@ -171,9 +182,10 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 			// A sanity check for users that try to install an extension from a source folder
 			// instead of a fully built extension.
 			if (new File(file, "build.gradle").isFile()) {
-				Msg.showWarn(this, null, "Invalid Extension", "The selected extension " +
-					"contains a 'build.gradle' file.\nGhidra does not support installing " +
-					"extensions in source form.\nPlease build the extension and try again.");
+				Msg.showWarn(this, null, "Invalid Extension",
+					"The selected extension " +
+						"contains a 'build.gradle' file.\nGhidra does not support installing " +
+						"extensions in source form.\nPlease build the extension and try again.");
 				continue;
 			}
 
@@ -196,6 +208,12 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		DockingAction refreshAction = new DockingAction("ExtensionTools", "RefreshExtensions") {
 
 			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				Object contextObject = context.getContextObject();
+				return ExtensionTableProvider.this == contextObject;
+			}
+
+			@Override
 			public void actionPerformed(ActionContext context) {
 				tablePanel.refreshTable();
 			}
@@ -204,8 +222,8 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		group = "extensionTools";
 		refreshAction.setMenuBarData(new MenuData(new String[] { "Refresh" }, refreshIcon, group));
 		refreshAction.setToolBarData(new ToolBarData(refreshIcon, group));
-		refreshAction.setHelpLocation(
-			new HelpLocation(GenericHelpTopics.FRONT_END, "ExtensionTools"));
+		refreshAction
+				.setHelpLocation(new HelpLocation(GenericHelpTopics.FRONT_END, "ExtensionTools"));
 		refreshAction.setDescription("Refresh extension list");
 		addAction(refreshAction);
 	}

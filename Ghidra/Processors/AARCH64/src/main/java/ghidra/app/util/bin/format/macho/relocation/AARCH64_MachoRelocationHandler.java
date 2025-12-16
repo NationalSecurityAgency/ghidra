@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.util.Conv;
 
 /** 
  * A {@link MachoRelocationHandler} for AARCH64
@@ -133,7 +132,7 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 				break;
 			}
 			case ARM64_RELOC_AUTHENTICATED_POINTER: {
-				long addend = orig & Conv.INT_MASK;
+				long addend = orig & 0x00000000ffffffffL;
 				long value = targetAddr.getOffset() + addend;
 				byteLength = write(relocation, value);
 				break;

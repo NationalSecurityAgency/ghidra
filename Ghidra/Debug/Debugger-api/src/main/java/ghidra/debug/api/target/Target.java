@@ -18,23 +18,27 @@ package ghidra.debug.api.target;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
+
+import javax.swing.Icon;
 
 import docking.ActionContext;
+import ghidra.debug.api.target.ActionName.Show;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.TraceExecutionState;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -58,28 +62,72 @@ public interface Target {
 	 * just invoked implicitly. Often, the two suppliers are implemented using lambda functions, and
 	 * those functions will keep whatever some means of querying UI and/or target context in their
 	 * closures.
-	 * 
-	 * @param display the text to display on UI actions associated with this entry
-	 * @param name the name of a common debugger command this action implements
-	 * @param details text providing more details, usually displayed in a tool tip
-	 * @param requiresPrompt true if invoking the action requires further user interaction
-	 * @param specificity a relative score of specificity. These are only meaningful when compared
-	 *            among entries returned in the same collection.
-	 * @param enabled a supplier to determine whether an associated action in the UI is enabled.
-	 * @param action a function for invoking this action asynchronously
 	 */
-	record ActionEntry(String display, ActionName name, String details, boolean requiresPrompt,
-			long specificity, BooleanSupplier enabled,
-			Function<Boolean, CompletableFuture<?>> action) {
+	interface ActionEntry {
+
+		/**
+		 * Get the text to display on UI actions associated with this entry
+		 * 
+		 * @return the display
+		 */
+		String display();
+
+		/**
+		 * Get the name of a common debugger command this action implements
+		 * 
+		 * @return the name
+		 */
+		ActionName name();
+
+		/**
+		 * Get the icon to display in menus and dialogs
+		 * 
+		 * @return the icon
+		 */
+		Icon icon();
+
+		/**
+		 * Get the text providing more details, usually displayed in a tool tip
+		 * 
+		 * @return the details
+		 */
+		String details();
+
+		/**
+		 * Check whether invoking the action requires further user interaction
+		 * 
+		 * @return true if prompting is required
+		 */
+		boolean requiresPrompt();
+
+		/**
+		 * Get a relative score of specificity.
+		 * 
+		 * <p>
+		 * These are only meaningful when compared among entries returned in the same collection.
+		 * 
+		 * @return the specificity
+		 */
+		long specificity();
+
+		/**
+		 * Invoke the action asynchronously, prompting if desired.
+		 * 
+		 * <p>
+		 * The implementation is not required to provide a timeout; however, downstream components
+		 * may.
+		 * 
+		 * @param prompt whether or not to prompt the user for arguments
+		 * @return the future result, often {@link Void}
+		 */
+		CompletableFuture<?> invokeAsyncWithoutTimeout(boolean prompt);
 
 		/**
 		 * Check if this action is currently enabled
 		 * 
 		 * @return true if enabled
 		 */
-		public boolean isEnabled() {
-			return enabled.getAsBoolean();
-		}
+		boolean isEnabled();
 
 		/**
 		 * Invoke the action asynchronously, prompting if desired
@@ -90,8 +138,9 @@ public interface Target {
 		 * @param prompt whether or not to prompt the user for arguments
 		 * @return the future result, often {@link Void}
 		 */
-		public CompletableFuture<?> invokeAsync(boolean prompt) {
-			return action.apply(prompt).orTimeout(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		default CompletableFuture<?> invokeAsync(boolean prompt) {
+			return invokeAsyncWithoutTimeout(prompt).orTimeout(TIMEOUT_MILLIS,
+				TimeUnit.MILLISECONDS);
 		}
 
 		/**
@@ -103,7 +152,7 @@ public interface Target {
 		 * 
 		 * @param prompt whether or not to prompt the user for arguments
 		 */
-		public void run(boolean prompt) {
+		default void run(boolean prompt) {
 			get(prompt);
 		}
 
@@ -113,7 +162,7 @@ public interface Target {
 		 * @param prompt whether or not to prompt the user for arguments
 		 * @return the resulting value, if applicable
 		 */
-		public Object get(boolean prompt) {
+		default Object get(boolean prompt) {
 			if (Swing.isSwingThread()) {
 				throw new AssertionError("Refusing to block the Swing thread. Use a Task.");
 			}
@@ -130,9 +179,81 @@ public interface Target {
 		 * 
 		 * @return true if built in.
 		 */
-		public boolean builtIn() {
-			return name != null && name.builtIn();
+		default Show getShow() {
+			return name() == null ? Show.EXTENDED : name().show();
 		}
+	}
+
+	/**
+	 * Specifies how object arguments are derived
+	 */
+	public enum ObjectArgumentPolicy {
+		/**
+		 * The object should be taken exactly from the action context, if applicable, present, and
+		 * matching in schema.
+		 */
+		CONTEXT_ONLY {
+			@Override
+			public boolean allowContextObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return false;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return false;
+			}
+		},
+		/**
+		 * The object should be taken from the current (active) object in the tool, or a suitable
+		 * relative having the correct schema.
+		 */
+		CURRENT_AND_RELATED {
+			@Override
+			public boolean allowContextObject() {
+				return false;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return true;
+			}
+		},
+		/**
+		 * The object can be taken from the given context, or the current (active) object in the
+		 * tool, or a suitable relative having the correct schema.
+		 */
+		EITHER_AND_RELATED {
+			@Override
+			public boolean allowContextObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return true;
+			}
+		};
+
+		public abstract boolean allowContextObject();
+
+		public abstract boolean allowCoordsObject();
+
+		public abstract boolean allowSuitableRelative();
 	}
 
 	/**
@@ -160,21 +281,65 @@ public interface Target {
 	 * Get the current snapshot key for the target
 	 * 
 	 * <p>
-	 * For most targets, this is the most recently created snapshot.
+	 * For most targets, this is the most recently created snapshot. For time-traveling targets, if
+	 * may not be. If this returns a negative number, then it refers to a scratch snapshot and
+	 * almost certainly indicates time travel with instruction steps. Use {@link #getTime()} in that
+	 * case to get a more precise schedule.
 	 * 
 	 * @return the snapshot
 	 */
-	// TODO: Should this be TraceSchedule getTime()?
 	long getSnap();
+
+	/**
+	 * Get the current time
+	 * 
+	 * @return the current time
+	 */
+	default TraceSchedule getTime() {
+		long snap = getSnap();
+		if (snap >= 0) {
+			return TraceSchedule.snap(snap);
+		}
+		TraceSnapshot snapshot = getTrace().getTimeManager().getSnapshot(snap, false);
+		if (snapshot == null) {
+			return null;
+		}
+		return snapshot.getSchedule();
+	}
+
+	/**
+	 * Get the form of schedules supported by "activate" on the back end
+	 * 
+	 * <p>
+	 * A non-null return value indicates the back end supports time travel. If it does, the return
+	 * value indicates the form of schedules that can be activated, (i.e., via some "go to time"
+	 * command). NOTE: Switching threads is considered an event by every time-traveling back end
+	 * that we know of. Events are usually mapped to a Ghidra trace's snapshots, and so most back
+	 * ends are constrained to schedules of the form {@link ScheduleForm#SNAP_EVT_STEPS}. A back-end
+	 * based on emulation may support thread switching. To support p-code op stepping, the back-end
+	 * will certainly have to be based on p-code emulation, and it must be using the same Sleigh
+	 * language as Ghidra.
+	 * 
+	 * @param obj the object (or an ancestor) that may support time travel
+	 * @param snap the <em>destination</em> snapshot
+	 * @return the form
+	 */
+	public ScheduleForm getSupportedTimeForm(TraceObject obj, long snap);
 
 	/**
 	 * Collect all actions that implement the given common debugger command
 	 * 
+	 * <p>
+	 * Note that if the context provides a program location (i.e., address), the object policy is
+	 * ignored. It will use current and related objects.
+	 * 
 	 * @param name the action name
 	 * @param context applicable context from the UI
+	 * @param policy determines how objects may be found
 	 * @return the collected actions
 	 */
-	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context);
+	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy);
 
 	/**
 	 * @see #execute(String, boolean)
@@ -354,8 +519,10 @@ public interface Target {
 	 * be recorded into the trace <em>before</em> this method returns. If the request is
 	 * unsuccessful, this method throw an exception.
 	 * 
-	 * @param address the starting address
-	 * @param data the bytes to write
+	 * @param platform the platform whose language defines the registers
+	 * @param thread the thread whose register to write
+	 * @param frame the frame level, usually 0.
+	 * @param value the register and value to write
 	 */
 	void writeRegister(TracePlatform platform, TraceThread thread, int frame, RegisterValue value);
 
@@ -383,7 +550,7 @@ public interface Target {
 	 * @param thread if a register, the thread whose registers to examine
 	 * @param frame the frame level, usually 0.
 	 * @param address the address of the variable
-	 * @param size the size of the variable. Ignored for memory
+	 * @param length the size of the variable. Ignored for memory
 	 * @return true if the variable can be mapped to the target
 	 */
 	boolean isVariableExists(TracePlatform platform, TraceThread thread, int frame, Address address,
@@ -393,8 +560,7 @@ public interface Target {
 	 * @see #writeVariable(TracePlatform, TraceThread, int, Address, byte[])
 	 */
 	CompletableFuture<Void> writeVariableAsync(TracePlatform platform, TraceThread thread,
-			int frame,
-			Address address, byte[] data);
+			int frame, Address address, byte[] data);
 
 	/**
 	 * Write a variable (memory or register) of the given thread or the process
@@ -406,7 +572,7 @@ public interface Target {
 	 * {@link #writeMemory(Address, byte[])}.
 	 * 
 	 * @param thread the thread. Ignored (may be null) if address is in memory
-	 * @param frameLevel the frame, usually 0. Ignored if address is in memory
+	 * @param frame the frame, usually 0. Ignored if address is in memory
 	 * @param address the starting address
 	 * @param data the value to write
 	 */
@@ -451,12 +617,12 @@ public interface Target {
 	 * @param breakpoint the breakpoint
 	 * @return true if valid
 	 */
-	boolean isBreakpointValid(TraceBreakpoint breakpoint);
+	boolean isBreakpointValid(TraceBreakpointLocation breakpoint);
 
 	/**
-	 * @see #deleteBreakpoint(TraceBreakpoint)
+	 * @see #deleteBreakpoint(TraceBreakpointCommon)
 	 */
-	CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpoint breakpoint);
+	CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpointCommon breakpoint);
 
 	/**
 	 * Delete the given breakpoint from the target
@@ -467,12 +633,13 @@ public interface Target {
 	 * 
 	 * @param breakpoint the breakpoint to delete
 	 */
-	void deleteBreakpoint(TraceBreakpoint breakpoint);
+	void deleteBreakpoint(TraceBreakpointCommon breakpoint);
 
 	/**
-	 * @see #toggleBreakpoint(TraceBreakpoint, boolean)
+	 * @see #toggleBreakpoint(TraceBreakpointLocation, boolean)
 	 */
-	CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpoint breakpoint, boolean enabled);
+	CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpointCommon breakpoint,
+			boolean enabled);
 
 	/**
 	 * Toggle the given breakpoint on the target
@@ -485,7 +652,7 @@ public interface Target {
 	 * @param breakpoint the breakpoint to toggle
 	 * @param enabled true to enable, false to disable
 	 */
-	void toggleBreakpoint(TraceBreakpoint breakpoint, boolean enabled);
+	void toggleBreakpoint(TraceBreakpointCommon breakpoint, boolean enabled);
 
 	/**
 	 * @see #forceTerminate()
@@ -499,7 +666,8 @@ public interface Target {
 	 * This will first attempt to kill the target gracefully. In addition, and whether or not the
 	 * target is successfully terminated, the target will be dissociated from its trace, and the
 	 * target will be invalidated. To attempt only a graceful termination, check
-	 * {@link #collectActions(ActionName, ActionContext)} with {@link ActionName#KILL}.
+	 * {@link #collectActions(ActionName, ActionContext, ObjectArgumentPolicy)} with
+	 * {@link ActionName#KILL}.
 	 */
 	void forceTerminate();
 
@@ -523,4 +691,26 @@ public interface Target {
 	 * @see #disconnectAsync()
 	 */
 	void disconnect();
+
+	/**
+	 * Check if the target is busy updating the trace
+	 * 
+	 * <p>
+	 * This generally means the connection has an open transaction. If <em>does not</em> indicate
+	 * the execution state of the target/debuggee.
+	 * 
+	 * @return true if busy
+	 */
+	boolean isBusy();
+
+	/**
+	 * Forcibly commit all of the back-ends transactions on this target's trace.
+	 * 
+	 * <p>
+	 * This is generally not a recommended course of action, except that sometimes the back-end
+	 * crashes and fails to close a transaction. It should only be invoked by a relatively hidden
+	 * menu option, and mediated by a warning of some sort. Closing a transaction prematurely, when
+	 * the back-end actually <em>does</em> still need it may cause a host of other problems.
+	 */
+	void forciblyCloseTransactions();
 }

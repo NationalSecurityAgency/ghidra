@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -166,7 +166,7 @@ public final class DWARFLineProgramExecutor implements Closeable {
 			case DW_LNE_define_file: {
 				// this instruction is deprecated in v5+, and not fully supported in this
 				// impl
-				String sourceFilename = reader.readNextUtf8String();
+				String sourceFilename = reader.readNextUtf8String(); // TODO: this is not used, but to be 100% should use dwarfprog's charset 
 				int dirIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				long lastMod = reader.readNext(LEB128::unsigned);
 				long fileLen = reader.readNext(LEB128::unsigned);
@@ -244,7 +244,7 @@ public final class DWARFLineProgramExecutor implements Closeable {
 			case DW_LNS_const_add_pc: {
 				int adjustedOpcode = 255 - opcodeBase;
 				int addressIncrement = adjustedOpcode / lineRange;
-				state.address += (addressIncrement & 0xff);
+				state.address += minInstrLen * (addressIncrement & 0xff);
 				break;
 			}
 			case DW_LNS_fixed_advanced_pc: {

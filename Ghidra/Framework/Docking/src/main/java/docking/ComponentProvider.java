@@ -22,6 +22,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.action.*;
+import docking.util.AnimationUtils;
 import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -774,7 +775,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the name of a cascading sub-menu name to use when when showing this provider in the
+	 * Returns the name of a cascading sub-menu name to use when showing this provider in the
 	 * "Window" menu. If the group name is null, the item will appear in the top-level menu.
 	 * @return the menu group for this provider or null if this provider should appear in the
 	 * top-level menu.
@@ -922,7 +923,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *
 	 * @param group the group for this provider.
 	 */
-	protected void setWindowGroup(String group) {
+	public void setWindowGroup(String group) {
 		this.group = group;
 	}
 
@@ -1104,21 +1105,33 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
 			boolean isFrustrated = isFrustrated();
 			boolean isFocused = isFocused();
 			if (isFocused && !isFrustrated) {
-				// the user has decided to hide this component and is not madly clicking
-				setVisible(false);
+				// the user has decided to hide this component and is not madly clicking; also, we
+				// don't allow the last component in a window to be closed in order to prevent an
+				// empty window.
+				if (!myDwm.isLastComponentInWindow(ComponentProvider.this)) {
+					setVisible(false);
+				}
 				return;
 			}
 
 			boolean emphasize = getComponent().isShowing() && isFrustrated;
-			Tool tool = getTool();
-			DockingWindowManager myDwm = tool.getWindowManager();
 			myDwm.showComponent(ComponentProvider.this, true, emphasize);
 		}
 
 		private boolean isFrustrated() {
+
+			if (!AnimationUtils.isAnimationEnabled()) {
+				// The use of being frustrated is to emphasize (animate) the window for the user in
+				// order to draw attention to the window.  If animation is off, then no need to 
+				// check for frustration.
+				return false;
+			}
+
 			long time = System.currentTimeMillis();
 			clickTimes.add(time);
 

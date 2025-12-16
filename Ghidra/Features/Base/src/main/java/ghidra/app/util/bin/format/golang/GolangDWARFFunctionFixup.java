@@ -17,8 +17,6 @@ package ghidra.app.util.bin.format.golang;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.analysis.TransientProgramProperties;
-import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
 import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
 import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
@@ -34,18 +32,17 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Fixups for golang functions found during DWARF processing.
+ * Fixups for Go functions found during DWARF processing.
  * <p>
- * Fixes storage of parameters to match the go callspec and modifies parameter lists to match
+ * Fixes storage of parameters to match the Go callspec and modifies parameter lists to match
  * Ghidra's capabilities.
  * <p>
- * Special characters used by golang in symbol names (middle dot \u00B7, weird slash \u2215) are 
+ * Special characters used by Go in symbol names (middle dot \u00B7, weird slash \u2215) are 
  * fixed up in DWARFProgram.getDWARFNameInfo() by calling 
  * GoSymbolName.fixGolangSpecialSymbolnameChars().
  * <p>
  * Go's 'unique' usage of DW_TAG_subroutine_type to define its ptr-to-ptr-to-func is handled in
  * DWARFDataTypeImporter.makeDataTypeForFunctionDefinition().
- * <p>
  */
 @ExtensionPointProperties(priority = DWARFFunctionFixup.PRIORITY_NORMAL_EARLY)
 public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
@@ -105,9 +102,12 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 			storageAllocator.setAbi0Mode();
 		}
 
-		dfunc.callingConventionName =
-			storageAllocator.isAbi0Mode() ? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
-					: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+		String ccName = storageAllocator.isAbi0Mode()
+				? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
+				: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+		if (goBinary.hasCallingConvention(ccName)) {
+			dfunc.callingConventionName = ccName;
+		}
 
 		GoFunctionMultiReturn multiReturnInfo = fixupFormalFuncDef(dfunc, storageAllocator, dtm);
 		fixupCustomStorage(dfunc, storageAllocator, dtm, multiReturnInfo);
@@ -146,12 +146,13 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 			returnType = returnParams.get(0).type;
 		}
 		else if (returnParams.size() > 1) {
-			multiReturn = new GoFunctionMultiReturn(returnParams, dfunc, dtm, storageAllocator);
+			multiReturn = new GoFunctionMultiReturn(GoConstants.GOLANG_CATEGORYPATH, returnParams,
+				dfunc, dtm, storageAllocator);
 			returnType = multiReturn.getStruct();
 		}
 		dfunc.retval = DWARFVariable.fromDataType(dfunc, returnType);
 		dfunc.params = realParams;
-		dfunc.varArg = false;	// golang varargs are implemented via slice parameter, so this is always false
+		dfunc.varArg = false;	// Go varargs are implemented via slice parameter, so this is always false
 
 		return multiReturn;
 	}
@@ -162,6 +163,10 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		// This method implements the pseudo-code in
 		// https://github.com/golang/go/blob/master/src/cmd/compile/abi-internal.md.
 		//
+
+		// WARNING: this code should be kept in sync with GoFunctionFixup
+
+		Program program = goBinary.getProgram();
 
 		// Allocate custom storage for each parameter
 		List<DWARFVariable> spillVars = new ArrayList<>();
@@ -174,7 +179,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 					dvar.getStorageSize() != dvar.type.getLength()) {
 					dfunc.getProgram()
 							.logWarningAt(dfunc.address, dfunc.name.getName(),
-								"Golang known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
+								"Go known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
 										.formatted(dvar.name.getName()));
 				}
 			}
@@ -187,7 +192,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 					if (dvar.isEmptyArray()) {
 						dvar.type = GoFunctionFixup.makeEmptyArrayDataType(dvar.type);
 					}
-					Address zerobaseAddress = getZerobaseAddress(dfunc);
+					Address zerobaseAddress = GoRttiMapper.getZerobaseAddress(program);
 					dvar.setRamStorage(zerobaseAddress.getOffset());
 				}
 			}
@@ -204,21 +209,12 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				// originally separate return values.
 				// Also turn off endianness fixups in the registers that are fetched
 				// because we will do it manually
-				for (DataTypeComponent dtc : multiReturn.getNormalStorageComponents()) {
+				for (DataTypeComponent dtc : multiReturn.getComponentsInOriginalOrder()) {
 					allocateReturnStorage(dfunc, dfunc.retval,
 						dtc.getFieldName() + "_return_result_alias", dtc.getDataType(),
 						storageAllocator, false);
 				}
 
-				// do items marked as "stack" last (because their order was modified to match
-				// the decompiler's expectations for storage layout)
-				for (DataTypeComponent dtc : multiReturn.getStackStorageComponents()) {
-					allocateReturnStorage(dfunc, dfunc.retval,
-						dtc.getFieldName() + "_return_result_alias", dtc.getDataType(),
-						storageAllocator, false);
-				}
-
-				Program program = goBinary.getProgram();
 				if (!program.getMemory().isBigEndian()) {
 					// Reverse the ordering of the storage varnodes when little-endian
 					List<Varnode> varnodes = dfunc.retval.getVarnodes();
@@ -236,12 +232,12 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				dfunc.retval.type = GoFunctionFixup.makeEmptyArrayDataType(dfunc.retval.type);
 			}
 			if (!dfunc.retval.isVoidType()) {
-				dfunc.retval.setRamStorage(getZerobaseAddress(dfunc).getOffset());
+				dfunc.retval.setRamStorage(GoRttiMapper.getZerobaseAddress(program).getOffset());
 			}
 		}
 		storageAllocator.alignStack();
 
-		// For any parameters that were passed as registers, the golang caller pre-allocates
+		// For any parameters that were passed as registers, the Go caller pre-allocates
 		// space on the stack for the parameter value to be used when the register is overwritten.
 		// Ghidra decompilation results are improved if those storage locations are covered
 		// by variables that we create artificially.
@@ -284,16 +280,6 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		return returnResultVar;
 	}
 
-	private static final String GOLANG_ZEROBASE_ADDR = "GOLANG_ZEROBASE_ADDR";
-
-	private Address getZerobaseAddress(DWARFFunction dfunc) {
-		DWARFProgram dprog = dfunc.getProgram();
-		Program program = dprog.getGhidraProgram();
-		Address zerobaseAddr = TransientProgramProperties.getProperty(program, GOLANG_ZEROBASE_ADDR,
-			SCOPE.ANALYSIS_SESSION, Address.class, () -> GoRttiMapper.getZerobaseAddress(program));
-		return zerobaseAddr;
-	}
-
 	private boolean initGoBinaryContext(DWARFFunction dfunc, TaskMonitor monitor) {
 		if (goBinary == null) {
 			Program program = dfunc.getProgram().getGhidraProgram();
@@ -303,7 +289,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 	}
 
 	private void appendComment(Function func, String prefix, String comment) {
-		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CommentType.PLATE,
 			prefix, comment, "\n");
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,23 +41,12 @@ class ProgramSaveManager {
 	private ProgramManager programMgr;
 	private PluginTool tool;
 	private boolean treeDialogCancelled;
-	private DomainFileFilter domainFileFilter;
+	private DomainFileFilter programFileFilter;
 
 	ProgramSaveManager(PluginTool tool, ProgramManager programMgr) {
 		this.tool = tool;
 		this.programMgr = programMgr;
-		domainFileFilter = new DomainFileFilter() {
-
-			@Override
-			public boolean accept(DomainFile df) {
-				return Program.class.isAssignableFrom(df.getDomainObjectClass());
-			}
-
-			@Override
-			public boolean followLinkedFolders() {
-				return false; // can't save to linked-folder (read-only)
-			}
-		};
+		programFileFilter = new DefaultDomainFileFilter(Program.class, true);
 	}
 
 	/**
@@ -443,8 +432,7 @@ class ProgramSaveManager {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		DataTreeDialog dialog =
-			new DataTreeDialog(null, "Save As", SAVE, domainFileFilter);
+		DataTreeDialog dialog = new DataTreeDialog(null, "Save As", SAVE, programFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();

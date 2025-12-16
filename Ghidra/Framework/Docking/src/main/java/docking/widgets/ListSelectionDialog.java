@@ -134,12 +134,15 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 
 		JLabel jLabel = new GLabel(label);
 		jLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+		jLabel.getAccessibleContext().setAccessibleName(label);
 		panel.add(jLabel, BorderLayout.WEST);
 		panel.add(field, BorderLayout.CENTER);
 
 		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browse());
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("List Selection");
 		return panel;
 	}
 

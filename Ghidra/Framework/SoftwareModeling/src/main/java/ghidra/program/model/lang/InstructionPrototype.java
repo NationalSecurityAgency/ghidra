@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -194,10 +194,9 @@ public interface InstructionPrototype {
 	 * The separator string for numOperands+1 are the characters after the last operand.
 	 * 
 	 * @param opIndex valid values are 0 thru numOperands+1
-	 * @param context the instruction context
 	 * @return separator string, or null if there is no string
 	 */
-	public String getSeparator(int opIndex, InstructionContext context);
+	public String getSeparator(int opIndex);
 
 	/**
 	 * Get a List of Objects that can be used to render an operands representation.

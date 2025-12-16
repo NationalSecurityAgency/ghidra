@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingActionIf;
@@ -31,10 +32,13 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.LayeredColorModel;
+import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
-import ghidra.app.services.ButtonPressedListener;
+import ghidra.app.services.*;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldHeader;
@@ -44,14 +48,15 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.layout.HorizontalLayout;
 
 public class ListingPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
 		FieldSelectionListener, LayoutListener {
 
 	public static final int DEFAULT_DIVIDER_LOCATION = 70;
+	private static final Icon CURSOR_LOC_ICON =
+		new GIcon("icon.plugin.codebrowser.cursor.location");
 
 	private FormatManager formatManager;
 	private ListingModelAdapter layoutModel;
@@ -61,6 +66,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	private JSplitPane splitPane;
 	private int splitPaneDividerLocation = DEFAULT_DIVIDER_LOCATION;
 
+	private FocusingMouseListener focusingMouseListener = new FocusingMouseListener();
 	private ProgramLocationListener programLocationListener;
 	private ProgramSelectionListener programSelectionListener;
 	private ProgramSelectionListener liveProgramSelectionListener;
@@ -84,8 +90,21 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	private ListingHoverProvider listingHoverHandler;
 
-	private List<MarginProvider> marginProviders = new ArrayList<>();
-	private List<OverviewProvider> overviewProviders = new ArrayList<>();
+	private List<ListingMarginProvider> marginProviders = new ArrayList<>();
+	private List<ListingOverviewProvider> overviewProviders = new ArrayList<>();
+
+	private String currentTextSelection;
+	private boolean useMarkerNameSuffix;
+	private UniversalID marginOwnerId = UniversalIdGenerator.nextID();
+
+	private ChangeListener markerChangeListener;
+	private MarkerService markerService;
+	private Color cursorLineHighlightColor;
+	private boolean isHighlightCursorLineEnabled;
+	private MarkerSet selectionMarkers;
+	private MarkerSet highlightMarkers;
+	private MarkerSet cursorMarkers;
+
 	private VerticalPixelAddressMapImpl pixmap;
 	private PropertyBasedBackgroundColorModel propertyBasedColorModel;
 	private LayeredColorModel layeredColorModel;
@@ -103,10 +122,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	};
 	private List<AddressSetDisplayListener> displayListeners = new ArrayList<>();
 
-	private String currentTextSelection;
-
 	/**
-	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
+	 * Constructs a new ListingPanel using the given FormatManager
 	 *
 	 * @param manager the FormatManager to use.
 	 */
@@ -128,7 +145,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		fieldPanel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				for (MarginProvider provider : marginProviders) {
+				for (ListingMarginProvider provider : marginProviders) {
 					provider.getComponent().invalidate();
 				}
 				validate();
@@ -138,6 +155,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		String viewName = "Assembly Listing View";
 		fieldPanel.setName(viewName);
 		fieldPanel.getAccessibleContext().setAccessibleName(viewName);
+
+		markerChangeListener = new MarkerChangeListener();
 	}
 
 	/**
@@ -152,10 +171,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Constructs a new ListingPanel with the given FormatManager and ListingLayoutModel
+	 * Constructs a new ListingPanel with the given FormatManager and ListingModel
 	 *
 	 * @param mgr the FormatManager to use
-	 * @param model the ListingLayoutModel to use.
+	 * @param model the ListingModel to use.
 	 */
 	public ListingPanel(FormatManager mgr, ListingModel model) {
 		this(mgr);
@@ -171,8 +190,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return preferredSize;
 	}
 
-	/** 
+	/**
 	 * A width for new windows that shows a reasonable amount of the Listing
+	 * 
 	 * @return the width
 	 */
 	protected int getNewWindowDefaultWidth() {
@@ -203,7 +223,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ProgramLocationListener. Only one listener is supported
+	 * Sets the ProgramLocationListener.
+	 * <p>
+	 * Only one listener is supported
 	 *
 	 * @param listener the ProgramLocationListener to use.
 	 */
@@ -212,7 +234,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ProgramSelectionListener. Only one listener is supported
+	 * Sets the ProgramSelectionListener.
+	 * <p>
+	 * Only one listener is supported
 	 *
 	 * @param listener the ProgramSelectionListener to use.
 	 */
@@ -221,8 +245,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ProgramSelectionListener for selection changes while dragging. Only one listener is 
-	 * supported
+	 * Sets the ProgramSelectionListener for selection changes while dragging.
+	 * <p>
+	 * Only one listener is supported
 	 *
 	 * @param listener the ProgramSelectionListener to use.
 	 */
@@ -235,7 +260,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ListingLayoutModel to use.
+	 * Sets the ListingModel to use.
 	 *
 	 * @param newModel the model to use.
 	 */
@@ -249,6 +274,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current ListingModel used by this panel.
+	 * 
 	 * @return the model
 	 */
 	public ListingModel getListingModel() {
@@ -285,6 +311,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if the field header component is showing.
+	 * 
 	 * @return true if showing
 	 */
 	public boolean isHeaderShowing() {
@@ -293,8 +320,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	private void updateProviders() {
 		AddressIndexMap addressIndexMap = layoutModel.getAddressIndexMap();
-		for (OverviewProvider element : overviewProviders) {
-			element.setProgram(getProgram(), addressIndexMap);
+		for (ListingMarginProvider provider : marginProviders) {
+			provider.screenDataChanged(this, addressIndexMap, pixmap);
+		}
+		for (ListingOverviewProvider provider : overviewProviders) {
+			provider.screenDataChanged(getProgram(), addressIndexMap);
 		}
 		for (ChangeListener indexMapChangeListener : indexMapChangeListeners) {
 			indexMapChangeListener.stateChanged(null);
@@ -315,20 +345,99 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		layoutModel.dataChanged(updateImmediately);
 	}
 
+	public void removeMarginService(ListingMarginProviderService service) {
+		for (ListingMarginProvider provider : marginProviders) {
+			if (service.isOwner(provider)) {
+				removeMarginProvider(provider);
+				provider.dispose();
+				return;
+			}
+		}
+	}
+
+	public void addMarginService(ListingMarginProviderService service, boolean isConnected) {
+		if (containsMarginProviver(service)) {
+			return;
+		}
+
+		ListingMarginProvider provider = service.createMarginProvider();
+		provider.setOwnerId(marginOwnerId);
+		addMarginProvider(provider);
+	}
+
+	private boolean containsMarginProviver(ListingMarginProviderService service) {
+		for (ListingMarginProvider provider : marginProviders) {
+			if (service.isOwner(provider)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void removeOverviewService(ListingOverviewProviderService service) {
+		for (ListingOverviewProvider provider : overviewProviders) {
+			if (service.isOwner(provider)) {
+				removeOverviewProvider(provider);
+				provider.dispose();
+				return;
+			}
+		}
+	}
+
+	public void addOverviewService(ListingOverviewProviderService service, Navigatable navigatable,
+			boolean connected) {
+		if (containsOverviewProvider(service)) {
+			return;
+		}
+
+		ListingOverviewProvider provider = service.createOverviewProvider();
+		provider.setNavigatable(navigatable);
+		addOverviewProvider(provider);
+	}
+
+	private boolean containsOverviewProvider(ListingOverviewProviderService service) {
+		for (ListingOverviewProvider provider : overviewProviders) {
+			if (service.isOwner(provider)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
-	 * Adds the MarginProvider to this panel
+	 * Removes the given margin provider from this panel
 	 *
-	 * @param provider the MarginProvider that will provide components to display in this panel's
-	 *            left margin area.
+	 * @param provider the MarginProvider to remove.
 	 */
-	public void addMarginProvider(MarginProvider provider) {
+	public void removeMarginProvider(ListingMarginProvider provider) {
+		JComponent component = provider.getComponent();
+		component.removeMouseListener(focusingMouseListener);
+
+		marginProviders.remove(provider);
+		buildPanels();
+	}
+
+	/**
+	 * Adds the margin provider to this panel.
+	 * <p>
+	 * This method is for clients that create and manage their own listing panels that are not the
+	 * main listing panel.
+	 *
+	 * @param provider the provider that will  display in this listing panel's left margin area
+	 */
+	public void addMarginProvider(ListingMarginProvider provider) {
+
+		JComponent component = provider.getComponent();
+		component.removeMouseListener(focusingMouseListener);
+		component.addMouseListener(focusingMouseListener);
+
 		if (provider.isResizeable()) {
 			marginProviders.add(0, provider);
 		}
 		else {
 			marginProviders.add(provider);
 		}
-		provider.setProgram(getProgram(), layoutModel.getAddressIndexMap(), pixmap);
+		provider.screenDataChanged(this, layoutModel.getAddressIndexMap(), pixmap);
 		buildPanels();
 	}
 
@@ -355,26 +464,26 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			return null;
 		}
 		JPanel rightPanel = new JPanel(new HorizontalLayout(0));
-		for (OverviewProvider overviewProvider : overviewProviders) {
+		for (ListingOverviewProvider overviewProvider : overviewProviders) {
 			rightPanel.add(overviewProvider.getComponent());
 		}
 		return rightPanel;
 	}
 
 	private JComponent buildLeftComponent() {
-		List<MarginProvider> marginProviderList = getNonResizeableMarginProviders();
+		List<ListingMarginProvider> marginProviderList = getNonResizeableMarginProviders();
 		JPanel leftPanel = new JPanel(new ScrollpaneAlignedHorizontalLayout(scroller));
-		for (MarginProvider marginProvider : marginProviderList) {
+		for (ListingMarginProvider marginProvider : marginProviderList) {
 			leftPanel.add(marginProvider.getComponent());
 		}
 		return leftPanel;
 	}
 
-	private List<MarginProvider> getNonResizeableMarginProviders() {
+	private List<ListingMarginProvider> getNonResizeableMarginProviders() {
 		if (marginProviders.isEmpty()) {
 			return marginProviders;
 		}
-		MarginProvider firstMarginProvider = marginProviders.get(0);
+		ListingMarginProvider firstMarginProvider = marginProviders.get(0);
 		if (firstMarginProvider.isResizeable()) {
 			return marginProviders.subList(1, marginProviders.size());
 		}
@@ -383,7 +492,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	private JComponent buildCenterComponent() {
 		JComponent centerComponent = scroller;
-		MarginProvider resizeableMarginProvider = getResizeableMarginProvider();
+		ListingMarginProvider resizeableMarginProvider = getResizeableMarginProvider();
 		if (resizeableMarginProvider != null) {
 			if (splitPane != null) {
 				splitPaneDividerLocation = splitPane.getDividerLocation();
@@ -406,11 +515,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return centerComponent;
 	}
 
-	private MarginProvider getResizeableMarginProvider() {
+	private ListingMarginProvider getResizeableMarginProvider() {
 		if (marginProviders.isEmpty()) {
 			return null;
 		}
-		MarginProvider marginProvider = marginProviders.get(0);
+		ListingMarginProvider marginProvider = marginProviders.get(0);
 		return marginProvider.isResizeable() ? marginProvider : null;
 	}
 
@@ -433,23 +542,21 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Removes the given margin provider from this panel
-	 *
-	 * @param provider the MarginProvider to remove.
-	 */
-	public void removeMarginProvider(MarginProvider provider) {
-		marginProviders.remove(provider);
-		buildPanels();
-	}
-
-	/**
 	 * Adds the given OverviewProvider with will be displayed in this panels right margin area.
+	 * <p>
+	 * This method is for clients that create and manage their own listing panels that are not the
+	 * main listing panel.
 	 *
 	 * @param provider the OverviewProvider to display.
 	 */
-	public void addOverviewProvider(OverviewProvider provider) {
+	public void addOverviewProvider(ListingOverviewProvider provider) {
+
+		JComponent component = provider.getComponent();
+		component.removeMouseListener(focusingMouseListener);
+		component.addMouseListener(focusingMouseListener);
+
 		overviewProviders.add(provider);
-		provider.setProgram(getProgram(), layoutModel.getAddressIndexMap());
+		provider.screenDataChanged(getProgram(), layoutModel.getAddressIndexMap());
 		buildPanels();
 	}
 
@@ -458,7 +565,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 *
 	 * @param provider the OverviewProvider to remove.
 	 */
-	public void removeOverviewProvider(OverviewProvider provider) {
+	public void removeOverviewProvider(ListingOverviewProvider provider) {
+
+		JComponent component = provider.getComponent();
+		component.removeMouseListener(focusingMouseListener);
+
 		overviewProviders.remove(provider);
 		buildPanels();
 	}
@@ -493,8 +604,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Adds a {@link ListingHighlightProvider} to this listing. This highlight provider will be used with
-	 * any other registered providers to paint all the highlights for this listing.
+	 * Adds a {@link ListingHighlightProvider} to this listing.
+	 * <p>
+	 * This highlight provider will be used with any other registered providers to paint all the
+	 * highlights for this listing.
 	 *
 	 * @param highlightProvider The provider to add
 	 */
@@ -504,6 +617,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the FieldPanel used by this ListingPanel.
+	 * 
 	 * @return the field panel
 	 */
 	public FieldPanel getFieldPanel() {
@@ -514,8 +628,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	public void layoutsChanged(List<AnchoredLayout> layouts) {
 		AddressIndexMap addrMap = layoutModel.getAddressIndexMap();
 		this.pixmap = new VerticalPixelAddressMapImpl(layouts, addrMap);
-		for (MarginProvider element : marginProviders) {
-			element.setProgram(getProgram(), addrMap, pixmap);
+		for (ListingMarginProvider provider : marginProviders) {
+			provider.screenDataChanged(this, addrMap, pixmap);
 		}
 
 		for (AddressSetDisplayListener listener : displayListeners) {
@@ -536,6 +650,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the divider location between the left margin areas and the main display.
+	 * 
 	 * @return the location
 	 */
 	public int getDividerLocation() {
@@ -582,6 +697,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 		setListingModel(null);
 
+		for (ListingMarginProvider provider : marginProviders) {
+			provider.dispose();
+		}
+
 		removeAll();
 		listingHoverHandler.dispose();
 		layoutModel.dispose();
@@ -604,8 +723,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Moves the cursor to the given program location. Also, repositions the scrollbar to show that
-	 * location, if the location is not on the screen.
+	 * Moves the cursor to the given program location.
+	 * <p>
+	 * Also, repositions the scrollbar to show that location, if the location is not on the screen.
 	 *
 	 * @param loc the location to move to.
 	 * @param centerWhenNotVisible this variable only has an effect if the given location is not on
@@ -615,7 +735,6 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @return true if successful
 	 */
 	public boolean goTo(ProgramLocation loc, boolean centerWhenNotVisible) {
-
 		Swing.assertSwingThread("goTo() must be called on the Swing thread");
 
 		final FieldLocation floc = getFieldLocation(loc);
@@ -635,11 +754,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return true;
 	}
 
-	/** 
+	/**
 	 * Scroll the view of the listing to the given location.
 	 * 
 	 * <p>
 	 * If the given location is not displayed, this has no effect.
+	 * 
 	 * @param location the location
 	 */
 	public void scrollTo(ProgramLocation location) {
@@ -650,8 +770,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		fieldPanel.scrollTo(fieldLocation);
 	}
 
-	/** 
+	/**
 	 * Center the view of the listing around the given location.
+	 * 
 	 * @param location the location
 	 */
 	public void center(ProgramLocation location) {
@@ -665,7 +786,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			return null;
 		}
 
-		openDataAsNeeded(loc);
+		openDataOrFunctionAsNeeded(loc);
 
 		FieldLocation floc = layoutModel.getFieldLocation(loc);
 		if (floc != null) {
@@ -705,15 +826,40 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return layoutModel.getFieldLocation(new ProgramLocation(program, address));
 	}
 
-	private void openDataAsNeeded(ProgramLocation location) {
+	private void openDataOrFunctionAsNeeded(ProgramLocation location) {
+		if (location instanceof CollapsedCodeLocation) {
+			return;
+		}
 		Address address = location.getByteAddress();
 		Program program = getProgram();
 		CodeUnit cu = program.getListing().getCodeUnitContaining(address);
-		if (!(cu instanceof Data)) {
-			return;
+		if (cu instanceof Data data) {
+			openData(data, address);
+		}
+		else if (cu instanceof Instruction instruction) {
+			openFunction(instruction);
 		}
 
-		Data data = (Data) cu;
+	}
+
+	private void openFunction(Instruction instruction) {
+		Address address = instruction.getMinAddress();
+		Program program = instruction.getProgram();
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function == null) {
+			return;
+		}
+		Address functionAddress = function.getEntryPoint();
+		// don't auto-open entry point addresses
+		if (address.equals(functionAddress)) {
+			return;
+		}
+		if (!listingModel.isFunctionOpen(functionAddress)) {
+			listingModel.setFunctionOpen(functionAddress, true);
+		}
+	}
+
+	private void openData(Data data, Address address) {
 		if (data.getComponent(0) == null) {
 			// not sub data to open
 			return;
@@ -727,6 +873,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (openAllData(subData)) {
 			layoutModel.dataChanged(true);
 		}
+
 	}
 
 	private FieldLocation getFieldLocationForDataAndOpenAsNeeded(Data data, Address address) {
@@ -845,11 +992,19 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			headerPanel.setTabLock(false);
 		}
 
+		ProgramLocation pLoc = layoutModel.getProgramLocation(location, field);
+		if (pLoc == null) {
+			return;
+		}
+
 		if (programLocationListener != null) {
-			ProgramLocation pLoc = layoutModel.getProgramLocation(location, field);
-			if (pLoc != null) {
-				programLocationListener.programLocationChanged(pLoc, trigger);
-			}
+			programLocationListener.programLocationChanged(pLoc, trigger);
+		}
+
+		setCursorMarkerAddress(pLoc.getAddress());
+
+		for (ListingMarginProvider provider : marginProviders) {
+			provider.setLocation(pLoc);
 		}
 	}
 
@@ -859,6 +1014,15 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @param view the set of address to include in the view.
 	 */
 	public void setView(AddressSetView view) {
+
+		view = ImmutableAddressSet.asImmutable(view);
+
+		AddressIndexMap currentMap = layoutModel.getAddressIndexMap();
+		AddressSetView originalView = currentMap.getOriginalAddressSet();
+		if (view.hasSameAddresses(originalView)) {
+			return;
+		}
+
 		layoutModel.setAddressSet(view);
 		updateProviders();
 	}
@@ -866,6 +1030,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Gets the view of this listing panel (meant to be used in conjunction with
 	 * {@link #setView(AddressSetView)}.
+	 * 
 	 * @return the addresses
 	 */
 	public AddressSetView getView() {
@@ -893,8 +1058,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the background color for the listing panel. This will set the background for the main
-	 * listing display.
+	 * Sets the background color for the listing panel.
+	 * <p>
+	 * This will set the background for the main listing display.
+	 * 
 	 * @param c the color
 	 */
 	public void setTextBackgroundColor(Color c) {
@@ -912,6 +1079,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if this component has focus.
+	 * 
 	 * @return true if this component has focus.
 	 */
 	public boolean isActive() {
@@ -920,6 +1088,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current program location of the cursor.
+	 * 
 	 * @return the location
 	 */
 	public ProgramLocation getProgramLocation() {
@@ -933,6 +1102,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get a program location for the given point.
+	 * 
 	 * @param point the point
 	 * @return program location, or null if point does not correspond to a program location
 	 */
@@ -947,22 +1117,25 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get the margin providers in this ListingPanel.
+	 * 
 	 * @return the providers
 	 */
-	public List<MarginProvider> getMarginProviders() {
+	public List<ListingMarginProvider> getMarginProviders() {
 		return marginProviders;
 	}
 
 	/**
 	 * Get the overview providers in this ListingPanel.
+	 * 
 	 * @return the providers
 	 */
-	public List<OverviewProvider> getOverviewProviders() {
+	public List<ListingOverviewProvider> getOverviewProviders() {
 		return overviewProviders;
 	}
 
 	/**
 	 * Returns true if the mouse is at a location that can be dragged.
+	 * 
 	 * @return true if the mouse is at a location that can be dragged.
 	 */
 	public boolean isStartDragOk() {
@@ -980,7 +1153,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the cursor to the given program location with a given trigger
-	 *
+	 * <p>
 	 * This method should only be used in automated testing to programmatically simulate a user
 	 * navigating within the listing panel.
 	 *
@@ -1013,6 +1186,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the AddressIndexMap currently used by this listing panel.
+	 * 
 	 * @return the map
 	 */
 	public AddressIndexMap getAddressIndexMap() {
@@ -1021,6 +1195,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the vertical scrollbar used by this panel.
+	 * 
 	 * @return the scroll bar
 	 */
 	public JScrollBar getVerticalScrollBar() {
@@ -1029,6 +1204,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the FormatManager used by this listing panel.
+	 * 
 	 * @return the format manager
 	 */
 	public FormatManager getFormatManager() {
@@ -1070,6 +1246,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current program selection.
+	 * 
 	 * @return the selection
 	 */
 	public ProgramSelection getProgramSelection() {
@@ -1091,6 +1268,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the selection to the complement of the current selection in the listing view.
+	 * 
 	 * @return the addresses
 	 */
 	public AddressSet selectComplement() {
@@ -1119,8 +1297,16 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @param trigger the cause of the change
 	 */
 	public void setSelection(ProgramSelection sel, EventTrigger trigger) {
+
+		Program program = getProgram();
+		MarkerSet markers = getSelectionMarkers(program);
+
 		if (sel == null) {
 			fieldPanel.setSelection(layoutModel.getFieldSelection(null), trigger);
+
+			if (markers != null) {
+				markers.clearAll();
+			}
 			return;
 		}
 
@@ -1153,6 +1339,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			}
 		}
 		fieldPanel.setSelection(layoutModel.getFieldSelection(sel), trigger);
+
+		if (markers != null) {
+			markers.clearAll();
+			markers.add(sel);
+		}
 	}
 
 	/**
@@ -1162,6 +1353,19 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 */
 	public void setHighlight(ProgramSelection highlight) {
 		fieldPanel.setHighlight(layoutModel.getFieldSelection(highlight));
+
+		Program program = getProgram();
+		MarkerSet markers = getHighlightMarkers(program);
+		if (markers == null) {
+			return;
+		}
+
+		markers.clearAll();
+
+		if (highlight != null && program != null) {
+			markers.setAddressSet(highlight);
+		}
+
 	}
 
 	public ProgramSelection getProgramHighlight() {
@@ -1196,8 +1400,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Returns the currently selected text. The value will only be non-null for selections within a
-	 * single field.
+	 * Returns the currently selected text.
+	 * <p>
+	 * The value will only be non-null for selections within a single field.
 	 * 
 	 * @return the selected text or null
 	 */
@@ -1210,8 +1415,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets listing panel to never show scroll bars. This is useful when you want this listing's
-	 * parent to always be as big as this listing.
+	 * Sets listing panel to never show scroll bars.
+	 * <p>
+	 * This is useful when you want this listing's parent to always be as big as this listing.
 	 */
 	public void setNeverSroll() {
 		scroller.setNeverScroll(true);
@@ -1254,5 +1460,193 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	public synchronized void removeFocusListener(FocusListener l) {
 		// we are not focusable, defer to contained field panel
 		fieldPanel.removeFocusListener(l);
+	}
+
+//==================================================================================================
+// Markers
+//==================================================================================================
+
+	public void setUseMarkerNameSuffix(boolean b) {
+		// Note: this happens just after construction, so no need to recreate the markers
+		this.useMarkerNameSuffix = b;
+	}
+
+	public void setMarkerService(MarkerService markerService) {
+
+		if (this.markerService != null) {
+			this.markerService.removeChangeListener(markerChangeListener);
+		}
+
+		if (markerService != null) {
+			markerService.addChangeListener(markerChangeListener);
+		}
+		else {
+			doClearMarkers(getProgram());
+		}
+
+		this.markerService = markerService;
+	}
+
+	public void clearMarkers(Program program) {
+		doClearMarkers(program);
+	}
+
+	private void doClearMarkers(Program program) {
+		if (markerService == null) {
+			return;
+		}
+
+		if (program == null) {
+			return; // can happen during dispose after a programDeactivated()
+		}
+
+		if (selectionMarkers != null) {
+			markerService.removeMarker(selectionMarkers, program);
+			selectionMarkers = null;
+		}
+
+		if (highlightMarkers != null) {
+			markerService.removeMarker(highlightMarkers, program);
+			highlightMarkers = null;
+		}
+
+		if (cursorMarkers != null) {
+			markerService.removeMarker(cursorMarkers, program);
+			cursorMarkers = null;
+		}
+	}
+
+	public void setSelectionColor(Color color) {
+
+		fieldPanel.setSelectionColor(color);
+		if (selectionMarkers != null) {
+			selectionMarkers.setMarkerColor(color);
+		}
+	}
+
+	public void setHighlightColor(Color color) {
+		fieldPanel.setHighlightColor(color);
+		if (highlightMarkers != null) {
+			highlightMarkers.setMarkerColor(color);
+		}
+	}
+
+	private String getMarkerName(String baseName) {
+		if (useMarkerNameSuffix) {
+			return baseName + ' ' + marginOwnerId.toString();
+		}
+		return baseName;
+	}
+
+	private MarkerSet getSelectionMarkers(Program program) {
+		if (markerService == null || program == null) {
+			return null;
+		}
+
+		// already created
+		if (selectionMarkers != null) {
+			return selectionMarkers;
+		}
+
+		String markerName = getMarkerName("Selection");
+		Color color = fieldPanel.getSelectionColor();
+		selectionMarkers = markerService.createAreaMarker(markerName, "Selection Display",
+			program, MarkerService.SELECTION_PRIORITY, false, true, false, color);
+		selectionMarkers.setOwnerId(marginOwnerId);
+
+		return selectionMarkers;
+	}
+
+	private MarkerSet getHighlightMarkers(Program program) {
+		if (markerService == null || program == null) {
+			return null;
+		}
+
+		// already created
+		if (highlightMarkers != null) {
+			return highlightMarkers;
+		}
+
+		String markerName = getMarkerName("Highlight");
+		Color color = fieldPanel.getHighlightColor();
+		highlightMarkers = markerService.createAreaMarker(markerName, "Highlight Display ",
+			program, MarkerService.HIGHLIGHT_PRIORITY, false, true, false, color);
+		highlightMarkers.setOwnerId(marginOwnerId);
+
+		return highlightMarkers;
+	}
+
+	private MarkerSet getCursorMarkers(Program program) {
+		if (markerService == null || program == null) {
+			return null;
+		}
+
+		// already created
+		if (cursorMarkers != null) {
+			return cursorMarkers;
+		}
+
+		String markerName = getMarkerName("Cursor");
+		cursorMarkers = markerService.createPointMarker(markerName, "Cursor Location",
+			program, MarkerService.CURSOR_PRIORITY, true, true, isHighlightCursorLineEnabled,
+			cursorLineHighlightColor, CURSOR_LOC_ICON);
+		cursorMarkers.setOwnerId(marginOwnerId);
+
+		return cursorMarkers;
+	}
+
+	public void setCursorHighlightColor(Color cursorHighlightColor) {
+		this.cursorLineHighlightColor = cursorHighlightColor;
+		if (cursorMarkers != null) {
+			cursorMarkers.setMarkerColor(cursorHighlightColor);
+		}
+	}
+
+	public void setHighlightCursorLineEnabled(boolean b) {
+		this.isHighlightCursorLineEnabled = b;
+		if (cursorMarkers != null) {
+			cursorMarkers.setColoringBackground(b);
+		}
+	}
+
+	public void setCursorMarkerAddress(Address address) {
+		MarkerSet markers = getCursorMarkers(getProgram());
+		if (markers != null) {
+			markers.clearAll();
+			markers.add(address);
+		}
+	}
+
+	public void updateBackgroundColorModel() {
+		if (markerService == null) {
+			setBackgroundColorModel(null);
+		}
+		else {
+			AddressIndexMap indexMap = getAddressIndexMap();
+			setBackgroundColorModel(
+				new MarkerServiceBackgroundColorModel(markerService, indexMap));
+		}
+	}
+//==================================================================================================
+// End Markers
+//==================================================================================================
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
+	private class MarkerChangeListener implements ChangeListener {
+
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			fieldPanel.repaint();
+		}
+	}
+
+	private class FocusingMouseListener extends MouseAdapter {
+		@Override
+		public void mousePressed(MouseEvent e) {
+			fieldPanel.requestFocus();
+		}
 	}
 }

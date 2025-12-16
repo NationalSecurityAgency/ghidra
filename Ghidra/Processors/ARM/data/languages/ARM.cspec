@@ -58,6 +58,30 @@
         <pentry minsize="1" maxsize="4" metatype="float">
           <register name="s7"/>
         </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s13"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s15"/>
+        </pentry>
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="r0"/>
         </pentry>
@@ -73,17 +97,92 @@
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="0" space="stack"/>
         </pentry>
+        <!-- Variadic calls do not use floating-point registers -->
+        <rule>
+          <datatype name="float"/>
+          <varargs/>
+          <join align="true"/>
+        </rule>
+        <!-- Homogeneous float aggregates become regular structs in variadic calls -->
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <varargs/>
+          <join align="true"/>
+        </rule>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <join storage="float" align="true" stackspill="false"/>
+        </rule>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <goto_stack/>                	<!-- Don't consume general purpose registers -->
+          <consume_extra storage="float"/> <!-- Once the stack has been used, don't go back to registers -->
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <join storage="float" align="true" backfill="true" stackspill="false"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <goto_stack/>					<!-- Don't consume general purpose registers -->
+          <consume_extra storage="float"/> <!-- Once the stack has been used, don't go back to registers -->
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join align="true"/>          <!-- Chunk from general purpose registers -->
+        </rule>
       </input>
       <output>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d0"/>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s7"/>
         </pentry>
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="r0"/>
         </pentry>
-        <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r1" piece2="r0"/>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r1"/>
         </pentry>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <join storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <join storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="struct" minsize="5"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="union" minsize="5"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
       </output>
       <unaffected>
         <register name="r4"/>
@@ -103,9 +202,15 @@
         <register name="d14"/>
         <register name="d15"/>
         <register name="sp"/>
+        <register name="lr"/>
+        <register name="pc"/>
       </unaffected>
       <killedbycall>
+          <register name="r0"/>
           <register name="r1"/>
+          <register name="r2"/>
+          <register name="r3"/>
+          <register name="r12"/>
           <register name="d0"/>
           <register name="d1"/>
           <register name="d2"/>
@@ -117,6 +222,69 @@
       </killedbycall>
     </prototype>
   </default_proto>
+  <prototype name="__stdcall_softfp" extrapop="0" stackshift="0">
+  <!-- For binaries without hardware floating-point support (-mfloat-abi=soft),
+       or binaries with soft-float compatible interfaces (-mfloat-abi=softfp) -->
+      <input>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0" space="stack"/>
+        </pentry>
+        <rule>
+          <datatype name="any"/>
+          <join align="true"/>          <!-- Chunk from general purpose registers -->
+        </rule>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r0"/>
+        </pentry>
+       <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r1"/>
+        </pentry>
+        <rule>
+          <datatype name="struct" minsize="5"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="union" minsize="5"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
+      </output>
+      <unaffected>
+        <register name="r4"/>
+        <register name="r5"/>
+        <register name="r6"/>
+        <register name="r7"/>
+        <register name="r8"/>
+        <register name="r9"/>
+        <register name="r10"/>
+        <register name="r11"/>
+        <register name="sp"/>
+      </unaffected>
+      <killedbycall>
+          <register name="r0"/>
+          <register name="r1"/>
+          <register name="r2"/>
+          <register name="r3"/>
+          <register name="r12"/>
+      </killedbycall>
+    </prototype>
   <prototype name="processEntry" extrapop="0" stackshift="0">
     <input pointermax="4">
       <pentry minsize="1" maxsize="4">
@@ -135,6 +303,15 @@
         <register name="sp"/>
       </unaffected>
     </prototype>
+  
+  <callotherfixup targetop="setISAMode">
+    <pcode incidentalcopy="true">
+      <!-- NOP -->
+      <body><![CDATA[
+        r0 = r0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
   
   <callfixup name="switch8_r3">
     <target name="switch8_r3"/>

@@ -4,6 +4,8 @@
 Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/drgn/drgn.html||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|

@@ -15,6 +15,11 @@ src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/KeyboardNavigation/KeyboardNavigation.html||GHIDRA||||END|
 src/main/help/help/topics/KeyboardNavigation/images/ActionsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Misc/Welcome_to_Help.htm||GHIDRA||||END|
+src/main/help/help/topics/Search/Regular_Expressions.htm||GHIDRA||||END|
+src/main/help/help/topics/Tables/GhidraTableHeaders.html||GHIDRA||||END|
+src/main/help/help/topics/Tables/images/BytesSettingsDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Tables/images/MultipleColumnSortDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Tables/images/SelectColumnsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingDeveloperDocs.html||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingInternals.html||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingOverview.html||GHIDRA||||END|
@@ -24,11 +29,17 @@ src/main/help/help/topics/Theming/images/FontEditor.png||GHIDRA||||END|
 src/main/help/help/topics/Theming/images/IconEditor.png||GHIDRA||||END|
 src/main/help/help/topics/Theming/images/ThemeChooserDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Theming/images/ThemeEditorDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Trees/GhidraTreeFilter.html||GHIDRA||||END|
+src/main/help/help/topics/Trees/images/Filter.png||GHIDRA||||END|
+src/main/help/help/topics/Trees/images/FilterClearButton.png||GHIDRA||||END|
+src/main/help/help/topics/Trees/images/FilterOptions.png||GHIDRA||||END|
+src/main/help/help/topics/Trees/images/TableColumnFilter.png||GHIDRA||||END|
+src/main/help/help/topics/Trees/images/TableColumnFilterAfterFilterApplied.png||GHIDRA||||END|
+src/main/help/help/topics/Trees/images/TableColumnFilterDialog.png||GHIDRA||||END|
 src/main/java/docking/dnd/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/options/editor/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/widgets/fieldpanel/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/widgets/filechooser/package.html||GHIDRA||reviewed||END|
-src/main/java/docking/wizard/package.html||GHIDRA||reviewed||END|
 src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/Plus.png||GHIDRA||reviewed||END|
 src/main/resources/images/StackFrameElement.png||GHIDRA||reviewed||END|
@@ -84,6 +95,7 @@ src/main/resources/images/mail-folder-outbox.png||Oxygen Icons - LGPL 3.0|||Oxyg
 src/main/resources/images/mail-receive.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/media-playback-start.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/menu16.gif||GHIDRA||reviewed||END|
+src/main/resources/images/move.png||GHIDRA||||END|
 src/main/resources/images/oxygen-edit-redo.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/page_code.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_excel.png||FAMFAMFAM Icons - CC 2.5||||END|
@@ -94,6 +106,7 @@ src/main/resources/images/play.png||GHIDRA||||END|
 src/main/resources/images/preferences-system-windows.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/software-update-available.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/tag.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,16 @@
  */
 package ghidra.trace.database.program;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
+import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.LockHold;
-import ghidra.util.MathUtilities;
 import ghidra.util.exception.*;
 
 public class DBTraceProgramViewRootModule implements ProgramModule {
@@ -105,9 +104,9 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 		// NOTE: Would flush on snap change
 		try (LockHold hold = LockHold.lock(program.trace.getReadWriteLock().readLock())) {
 			List<DBTraceProgramViewFragment> frags = new ArrayList<>();
-			program.memory.forVisibleRegions(region -> {
-				frags.add(listing.fragmentsByRegion.computeIfAbsent(region,
-					r -> new DBTraceProgramViewFragment(listing, r)));
+			program.memory.forVisibleRegions(e -> {
+				frags.add(listing.fragmentsByRegion.computeIfAbsent(e.region,
+					r -> new DBTraceProgramViewFragment(listing, r, e.snap)));
 			});
 			return frags.toArray(new DBTraceProgramViewFragment[frags.size()]);
 		}
@@ -118,7 +117,7 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 		// TODO: This isn't pretty at all. Really should database these.
 		List<String> names = new ArrayList<>();
 		try (LockHold hold = LockHold.lock(program.trace.getReadWriteLock().readLock())) {
-			program.memory.forVisibleRegions(region -> names.add(region.getName()));
+			program.memory.forVisibleRegions(e -> names.add(e.region.getName(e.snap)));
 		}
 		return names.indexOf(name);
 	}
@@ -189,24 +188,20 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 
 	@Override
 	public Address getMinAddress() {
-		if (!program.viewport.isForked()) {
-			return program.trace.getMemoryManager()
-					.getRegionsAddressSet(program.snap)
-					.getMinAddress();
+		NavigableMap<Address, RegionEntry> regionsByAddress = program.memory.getRegionsByAddress();
+		if (regionsByAddress.isEmpty()) {
+			return null;
 		}
-		// TODO: There has got to be a better way
-		return reduceRegions(TraceMemoryRegion::getMinAddress, MathUtilities::cmin);
+		return regionsByAddress.firstKey();
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		if (!program.viewport.isForked()) {
-			return program.trace.getMemoryManager()
-					.getRegionsAddressSet(program.snap)
-					.getMaxAddress();
+		NavigableMap<Address, RegionEntry> regionsByAddress = program.memory.getRegionsByAddress();
+		if (regionsByAddress.isEmpty()) {
+			return null;
 		}
-		// TODO: There has got to be a better way
-		return reduceRegions(TraceMemoryRegion::getMaxAddress, MathUtilities::cmax);
+		return regionsByAddress.lastEntry().getValue().range.getMaxAddress();
 	}
 
 	@Override
@@ -238,5 +233,10 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 	@Override
 	public long getTreeID() {
 		return 0;
+	}
+
+	@Override
+	public boolean isDeleted() {
+		return false;
 	}
 }

@@ -488,6 +488,7 @@ public class DialogComponentProvider
 		okButton = new JButton("OK");
 		okButton.setMnemonic('K');
 		okButton.setName("OK");
+		okButton.getAccessibleContext().setAccessibleName("OK");
 		okButton.addActionListener(e -> okCallback());
 		addButton(okButton);
 	}
@@ -500,6 +501,7 @@ public class DialogComponentProvider
 		cancelButton = new JButton("Cancel");
 		cancelButton.setMnemonic('C');
 		cancelButton.setName("Cancel");
+		cancelButton.getAccessibleContext().setAccessibleName("Cancel");
 		cancelButton.addActionListener(e -> cancelCallback());
 		addButton(cancelButton);
 	}
@@ -512,6 +514,7 @@ public class DialogComponentProvider
 		dismissButton = new JButton("Dismiss");
 		dismissButton.setMnemonic('D');
 		dismissButton.setName("Dismiss");
+		dismissButton.getAccessibleContext().setAccessibleName("Dismiss");
 		dismissButton.addActionListener(e -> dismissCallback());
 		addButton(dismissButton);
 	}
@@ -524,6 +527,7 @@ public class DialogComponentProvider
 		applyButton = new JButton("Apply");
 		applyButton.setMnemonic('A');
 		applyButton.setName("Apply");
+		applyButton.getAccessibleContext().setAccessibleName("Apply");
 		applyButton.addActionListener(e -> applyCallback());
 		addButton(applyButton);
 	}
@@ -1323,7 +1327,7 @@ public class DialogComponentProvider
 
 	private void addKeyBindingAction(DockingActionIf action) {
 
-		DialogActionProxy proxy = new DialogActionProxy(action);
+		DialogActionProxy proxy = new DialogActionProxy(this, action);
 		keyBindingProxyActions.add(proxy);
 
 		// The tool will be null when clients add actions to this dialog before it has been shown.
@@ -1477,8 +1481,11 @@ public class DialogComponentProvider
 	 */
 	private class DialogActionProxy extends DockingActionProxy {
 
-		public DialogActionProxy(DockingActionIf dockingAction) {
+		private DialogComponentProvider provider;
+
+		public DialogActionProxy(DialogComponentProvider provider, DockingActionIf dockingAction) {
 			super(dockingAction);
+			this.provider = provider;
 		}
 
 		@Override
@@ -1489,6 +1496,19 @@ public class DialogComponentProvider
 		@Override
 		public ToolBarData getToolBarData() {
 			return null;
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			if (context instanceof DialogActionContext dialogContext) {
+				DialogComponentProvider contextProvider =
+					dialogContext.getDialogComponentProvider();
+				if (provider != contextProvider) {
+					return false;
+				}
+				return dockingAction.isEnabledForContext(context);
+			}
+			return false;
 		}
 	}
 }

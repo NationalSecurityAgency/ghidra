@@ -15,16 +15,13 @@
  */
 package ghidra.trace.model.target.iface;
 
-import ghidra.lifecycle.Transitional;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.info.TraceObjectInfo;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A common interface for object-based implementations of other trace manager entries, e.g.,
- * {@link TraceObjectThread}.
+ * {@link TraceThread}.
  */
 @TraceObjectInfo(
 	schemaName = "OBJECT",
@@ -52,36 +49,4 @@ public interface TraceObjectInterface {
 	 * @return the object
 	 */
 	TraceObject getObject();
-
-	/**
-	 * Compute the lifespan of this object
-	 * 
-	 * @return the span of all lifespans
-	 */
-	@Transitional
-	default Lifespan computeSpan() {
-		LifeSet life = getObject().getLife();
-		if (life.isEmpty()) {
-			return null;
-		}
-		return life.bound();
-	}
-
-	@Transitional
-	default long computeMinSnap() {
-		Lifespan span = computeSpan();
-		if (span == null) {
-			return 0;
-		}
-		return span.lmin();
-	}
-
-	@Transitional
-	default long computeMaxSnap() {
-		Lifespan span = computeSpan();
-		if (span == null) {
-			return 0;
-		}
-		return span.lmax();
-	}
 }

@@ -78,7 +78,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -151,6 +150,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	protected enum WatchTableColumns
 		implements EnumeratedTableColumn<WatchTableColumns, DefaultWatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
+		COMMENT("Comment", String.class, WatchRow::getComment, WatchRow::setComment),
 		ADDRESS("Address", Address.class, WatchRow::getAddress),
 		SYMBOL("Symbol", Symbol.class, WatchRow::getSymbol),
 		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, //
@@ -251,17 +251,23 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			addChanged(current.getView().getMemory());
+			for (AddressSpace space : current.getTrace()
+					.getBaseAddressFactory()
+					.getAllAddressSpaces()) {
+				if (space.isRegisterSpace() || space.isMemorySpace()) {
+					addChanged(new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()));
+				}
+			}
 		}
 
-		private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-			if (space.getThread() == current.getThread() || space.getThread() == null) {
+		private void bytesChanged(AddressSpace space, TraceAddressSnapRange range) {
+			if (space.isMemorySpace() || current.isRegisterSpace(space)) {
 				addChanged(range.getRange());
 			}
 		}
 
-		private void stateChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-			if (space.getThread() == current.getThread() || space.getThread() == null) {
+		private void stateChanged(AddressSpace space, TraceAddressSnapRange range) {
+			if (space.isMemorySpace() || current.isRegisterSpace(space)) {
 				addChanged(range.getRange());
 			}
 		}
@@ -388,13 +394,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		contextChanged();
 
 		changeDebouncer.addListener(__ -> doCheckDepsAndReevaluate());
-	}
-
-	private void addChanged(AddressSetView toAdd) {
-		synchronized (changed) {
-			changed.add(toAdd);
-			changeDebouncer.contact(null);
-		}
 	}
 
 	private void addChanged(AddressRange toAdd) {

@@ -20,7 +20,6 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -31,16 +30,19 @@ import javax.swing.event.ChangeListener;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.dnd.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.fieldpanel.internal.FieldPanelScrollCoordinator;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.tab.GTabPanel;
 import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.nav.LocationMemento;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
@@ -60,15 +62,15 @@ import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		implements ProgramLocationListener, ProgramSelectionListener, Draggable, Droppable,
 		ChangeListener, StringSelectionListener, PopupActionProvider {
 
-	private static final String OLD_NAME = "CodeBrowserPlugin";
+	private static final String SHOW_FUNCITON_VARS_OPTIONS_NAME = "SHOW_FUNCITON_VARS";
 	private static final String NAME = "Listing";
 	private static final String TITLE = NAME + ": ";
 
@@ -104,12 +106,11 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private ListingPanel otherPanel;
 	private CoordinatedListingPanelListener coordinatedListingPanelListener;
 	private FormatManager formatMgr;
-	private FieldPanelCoordinator coordinator;
+	private FieldPanelScrollCoordinator coordinator;
 	private ProgramSelectionListener liveProgramSelectionListener = (selection, trigger) -> {
 		liveSelection = selection;
 		updateSubTitle();
 	};
-	private FocusingMouseListener focusingMouseListener;
 
 	private CodeBrowserClipboardProvider codeViewerClipboardProvider;
 	private ClipboardService clipboardService;
@@ -126,6 +127,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private FieldNavigator fieldNavigator;
 
 	private MultiListingLayoutModel multiModel;
+	private ToggleDockingAction toggleVariablesAction;
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
 			boolean isConnected) {
@@ -134,9 +136,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		this.plugin = plugin;
 		this.formatMgr = formatMgr;
 
-		// note: the owner has not changed, just the name; remove sometime after version 10
-		String owner = plugin.getName();
-		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
 		registerAdjustableFontId(ListingDisplayOptionsEditor.DEFAULT_FONT_ID);
 		setConnected(isConnected);
 		setIcon(new GIcon("icon.plugin.codebrowser.provider"));
@@ -150,7 +149,13 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 
 		listingPanel = new ListingPanel(formatMgr);
+		if (!isConnected) {
+			// update the marker set names to be unique so that each listing can have its own 
+			listingPanel.setUseMarkerNameSuffix(true);
+		}
+
 		listingPanel.enablePropertyBasedColorModel(true);
+
 		decorationPanel = new ListingPanelContainer(listingPanel, isConnected);
 		ListingMiddleMouseHighlightProvider listingHighlighter =
 			createListingHighlighter(listingPanel, tool, decorationPanel);
@@ -251,6 +256,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	public void dispose() {
 		super.dispose();
 
+		clearMarkers(program);
+
 		tool.removePopupActionProvider(this);
 
 		if (clipboardService != null) {
@@ -322,8 +329,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private Object getContextForMarginPanels(ListingPanel lp, MouseEvent event) {
 		Object source = event.getSource();
-		List<MarginProvider> marginProviders = lp.getMarginProviders();
-		for (MarginProvider marginProvider : marginProviders) {
+		List<ListingMarginProvider> marginProviders = lp.getMarginProviders();
+		for (ListingMarginProvider marginProvider : marginProviders) {
 			JComponent c = marginProvider.getComponent();
 			if (c == source) {
 				MarkerLocation loc = marginProvider.getMarkerLocation(event.getX(), event.getY());
@@ -335,8 +342,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 				}
 			}
 		}
-		List<OverviewProvider> overviewProviders = lp.getOverviewProviders();
-		for (OverviewProvider overviewProvider : overviewProviders) {
+		List<ListingOverviewProvider> overviewProviders = lp.getOverviewProviders();
+		for (ListingOverviewProvider overviewProvider : overviewProviders) {
 			JComponent c = overviewProvider.getComponent();
 			if (c == source) {
 				return source;
@@ -429,12 +436,21 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		updateTitle();
 
 		listingPanel.setProgram(program);
+		ListingModel listingModel = listingPanel.getListingModel();
+		if (listingModel != null) {
+			boolean shouldShowVariables = toggleVariablesAction.isSelected();
+			listingModel.setAllFunctionVariablesOpen(shouldShowVariables);
+		}
 		codeViewerClipboardProvider.setProgram(program);
 		codeViewerClipboardProvider.setListingLayoutModel(listingPanel.getListingModel());
 		if (coordinatedListingPanelListener != null) {
 			coordinatedListingPanelListener.activeProgramChanged(newProgram);
 		}
 		contextChanged();
+	}
+
+	void clearMarkers(Program p) {
+		listingPanel.clearMarkers(p);
 	}
 
 	protected void updateTitle() {
@@ -470,21 +486,159 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		action = new GotoNextFunctionAction(tool, plugin.getName());
 		tool.addAction(action);
 
+		new ActionBuilder("Open All Functions", plugin.getName())
+				.popupMenuPath("Function", "Open All Functions")
+				.popupMenuGroup("Visibility", "1")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Open_All_Functions"))
+				.withContext(ProgramLocationActionContext.class)
+				.onAction(c -> showAllFunctions(true))
+				.buildAndInstallLocal(this);
+		new ActionBuilder("Close All Functions", plugin.getName())
+				.popupMenuPath("Function", "Close All Functions")
+				.popupMenuGroup("Visibility", "2")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Close_All_Functions"))
+				.withContext(ProgramLocationActionContext.class)
+				.onAction(c -> showAllFunctions(false))
+				.buildAndInstallLocal(this);
+		new ActionBuilder("Toggle Open Function", plugin.getName())
+				.popupMenuPath("Function", "Open/Close Function")
+				.popupMenuGroup("Visibility", "3")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Toggle_Function"))
+				.keyBinding("SPACE")
+				.withContext(ProgramLocationActionContext.class)
+				.validWhen(this::isInCollapsableCodeArea)
+				.enabledWhen(this::isInCollapsableCodeArea)
+				.onAction(c -> toggleShowFunction(c))
+				.buildAndInstallLocal(this);
+
+		toggleVariablesAction =
+			new ToggleActionBuilder("Show Function Variables By Default", plugin.getName())
+					.popupMenuPath("Function", "Show Variables By Default")
+					.popupMenuGroup("Visibility", "5")
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Variables"))
+					.selected(true)
+					.withContext(ProgramLocationActionContext.class)
+					.onAction(c -> showVariablesForAllFunctions(toggleVariablesAction.isSelected()))
+					.buildAndInstallLocal(this);
+
+		new ActionBuilder("Show/Hide Function Variables", plugin.getName())
+				.popupMenuPath("Function", "Show/Hide Variables")
+				.popupMenuGroup("Visibility", "4")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Variables"))
+				.keyBinding("SPACE")
+				.withContext(ProgramLocationActionContext.class)
+				.validWhen(this::isInFunctionVariablesArea)
+				.enabledWhen(this::isInFunctionVariablesArea)
+				.onAction(c -> toggleShowVariables(c.getAddress()))
+				.buildAndInstallLocal(this);
+
+		buildQuickTogleFieldActions();
+
 	}
 
-	void fieldOptionChanged(String fieldName, Object newValue) {
-		//TODO		if (name.startsWith(OPERAND_OPTIONS_PREFIX) && (newValue instanceof Boolean)) {
-		//			for (int i = 0; i < toggleOperandMarkupActions.length; i++) {
-		//				ToggleOperandMarkupAction action = toggleOperandMarkupActions[i];
-		//				if (name.equals(action.getOptionName())) {
-		//					boolean newState = ((Boolean)newValue).booleanValue();
-		//					if (action.isSelected() != newState) {
-		//						action.setSelected(newState);
-		//					}
-		//					break;
-		//				}
-		//			}
-		//		}
+	private void showAllFunctions(boolean selected) {
+		ListingModel model = listingPanel.getListingModel();
+		model.setAllFunctionsOpen(selected);
+	}
+
+	private void toggleShowFunction(ProgramLocationActionContext context) {
+		Address cuAddress = context.getAddress();
+		Function function = program.getListing().getFunctionContaining(cuAddress);
+		if (function == null) {
+			return;
+		}
+		ListingModel model = listingPanel.getListingModel();
+		Address functionAddress = function.getEntryPoint();
+		boolean open = model.isFunctionOpen(functionAddress);
+
+		model.setFunctionOpen(functionAddress, !open);
+		if (context.getLocation() instanceof FunctionSignatureFieldLocation) {
+			// no need to move cursor
+			return;
+		}
+		if (!open) {
+			setLocation(new ProgramLocation(program, cuAddress));
+		}
+		else {
+			// We have to use the CollapsedCodeLocation in this case, any other goto to 
+			// an address that is collapse will open it up, which we don't want since
+			// we just closed it. Also, we need to correct to the start of the range since
+			// that is the address that will have the CollapsedField
+			Address corrected = adjustToStartOfContainingRange(function, cuAddress);
+			setLocation(new CollapsedCodeLocation(program, corrected));
+		}
+	}
+
+	private Address adjustToStartOfContainingRange(Function function, Address cuAddress) {
+		AddressSetView body = function.getBody();
+		AddressRange range = body.getRangeContaining(cuAddress);
+		return range == null ? function.getEntryPoint() : range.getMinAddress();
+	}
+
+	private void toggleShowVariables(Address address) {
+		ListingModel model = listingPanel.getListingModel();
+		boolean open = model.areFunctionVariablesOpen(address);
+		model.setFunctionVariablesOpen(address, !open);
+		setLocation(new VariablesOpenCloseLocation(program, address));
+	}
+
+	private void showVariablesForAllFunctions(boolean selected) {
+		ListingModel model = listingPanel.getListingModel();
+		model.setAllFunctionVariablesOpen(selected);
+	}
+
+	private boolean isInFunctionVariablesArea(ProgramLocationActionContext context) {
+		ProgramLocation location = context.getLocation();
+		return location instanceof VariableLocation ||
+			location instanceof VariablesOpenCloseLocation;
+	}
+
+	private boolean isInCollapsableCodeArea(ProgramLocationActionContext context) {
+		ProgramLocation location = context.getLocation();
+
+		// this allows the code collapse to be toggled on instructions in the body of a function,
+		// but we have to exclude the variable locations so as to not interfere with the 
+		// open/close variables action which also is mapped to <SPACE> 
+		if (location instanceof CodeUnitLocation && !(location instanceof VariableLocation) &&
+			!(location instanceof VariablesOpenCloseLocation)) {
+			return true;
+		}
+
+		return location instanceof FunctionSignatureFieldLocation ||
+			location instanceof FunctionOpenCloseLocation ||
+			location instanceof CollapsedCodeLocation;
+	}
+
+	private void buildQuickTogleFieldActions() {
+		List<String> quickToggleFieldNames = formatMgr.getQuickToggleFieldNames();
+		int count = 0;
+		for (String fieldName : quickToggleFieldNames) {
+			String keyBinding = null;
+			if (count < 5) {
+				char c = (char) ('1' + count);
+				keyBinding = "control shift " + c;
+			}
+			else {
+				Msg.debug(this,
+					"Excessive Field Toggle actions . No keybinding assigned for field: " +
+						fieldName);
+			}
+
+			new ActionBuilder("Toggle " + fieldName, plugin.getName())
+					.popupMenuPath("Toggle Field", fieldName)
+					.popupMenuGroup("Field", "" + count)
+					.keyBinding(keyBinding)
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Toggle_Field"))
+					// only show this action when over the listing field header
+					.popupWhen(c -> c.getContextObject() instanceof FieldHeaderLocation)
+					.onAction(c -> formatMgr.toggleField(fieldName))
+					.buildAndInstallLocal(this);
+
+			// automatically assign keybindings to the first 5 toggle fields. 
+			count++;
+		}
+		tool.setMenuGroup(new String[] { "Toggle Field" }, "Disassembly");
+
 	}
 
 	public ListingPanel getListingPanel() {
@@ -512,6 +666,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 	}
 
+	// events coming from the ListingPanel
 	@Override
 	public void programLocationChanged(ProgramLocation loc, EventTrigger trigger) {
 		if (plugin.isDisposed()) {
@@ -520,7 +675,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		if (!loc.equals(currentLocation)) {
 			codeViewerClipboardProvider.setLocation(loc);
 			currentLocation = loc;
-			plugin.locationChanged(this, loc);
+			plugin.broadcastLocationChanged(this, loc);
 			contextChanged();
 		}
 	}
@@ -551,7 +706,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		currentSelection = selection;
 		codeViewerClipboardProvider.setSelection(currentSelection);
 		listingPanel.setSelection(currentSelection);
-		plugin.selectionChanged(this, currentSelection);
+		plugin.broadcastSelectionChanged(this, currentSelection);
 		contextChanged();
 		updateSubTitle();
 	}
@@ -647,7 +802,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private void doSetHighlight(ProgramSelection highlight) {
 		listingPanel.setHighlight(highlight);
 		currentHighlight = highlight;
-		plugin.highlightChanged(this, highlight);
+		plugin.broadcastHighlightChanged(this, highlight);
 		contextChanged();
 	}
 
@@ -752,7 +907,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ListingModel otherAlignedModel = multiModel.getAlignedModel(1);
 		listingPanel.setListingModel(myAlignedModel);
 		lp.setListingModel(otherAlignedModel);
-		coordinator = new FieldPanelCoordinator(
+		coordinator = new FieldPanelScrollCoordinator(
 			new FieldPanel[] { listingPanel.getFieldPanel(), lp.getFieldPanel() });
 		addHoverServices(otherPanel);
 		HoverHandler hoverHandler = listingPanel.getFieldPanel().getHoverHandler();
@@ -804,12 +959,19 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	void saveState(SaveState saveState) {
 		saveState.putInt(DIVIDER_LOCATION, getListingPanel().getDividerLocation());
 		saveState.putBoolean(HOVER_MODE, toggleHoverAction.isSelected());
+		saveState.putBoolean(SHOW_FUNCITON_VARS_OPTIONS_NAME, toggleVariablesAction.isSelected());
 	}
 
 	void readState(SaveState saveState) {
 		getListingPanel().setDividerLocation(
 			saveState.getInt(DIVIDER_LOCATION, ListingPanel.DEFAULT_DIVIDER_LOCATION));
 		toggleHoverAction.setSelected(saveState.getBoolean(HOVER_MODE, true));
+		boolean showVariables = saveState.getBoolean(SHOW_FUNCITON_VARS_OPTIONS_NAME, true);
+		toggleVariablesAction.setSelected(showVariables);
+		ListingModel listingModel = listingPanel.getListingModel();
+		if (listingModel != null) {
+			listingModel.setAllFunctionVariablesOpen(showVariables);
+		}
 	}
 
 	private void setHoverEnabled(boolean enabled) {
@@ -935,22 +1097,25 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		// (its done in an invoke later)
 		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
+			SaveState saveState = new SaveState();
+			saveState(saveState);
+			newProvider.readState(saveState);
+			newProvider.setLocation(currentLocation);
 			newProvider.listingPanel.getFieldPanel()
 					.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
-			newProvider.setLocation(currentLocation);
 		});
 	}
 
 	public void selectAll() {
 		listingPanel.getFieldPanel().requestFocus();
-		ProgramSelection sel = new ProgramSelection(program.getAddressFactory(),
+		ProgramSelection sel = new ProgramSelection(
 			listingPanel.getAddressIndexMap().getOriginalAddressSet());
 		doSetSelection(sel);
 	}
 
 	public void selectComplement() {
 		AddressSet complement = listingPanel.selectComplement();
-		ProgramSelection sel = new ProgramSelection(program.getAddressFactory(), complement);
+		ProgramSelection sel = new ProgramSelection(complement);
 		doSetSelection(sel);
 	}
 
@@ -958,25 +1123,26 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return fieldNavigator;
 	}
 
-	public void setView(AddressSetView view) {
+	void setView(AddressSetView view) {
+
 		// If we are using a MultiListingLayoutModel then adjust the view address set.
 		AddressSetView adjustedView = view;
 
 		if (multiModel != null) {
-			if ((program != null) && view.contains(new AddressSet(program.getMemory()))) {
-				Program otherProgram = otherPanel.getProgram();
+			Program otherProgram = otherPanel.getProgram();
+			Memory memory = program.getMemory();
+			if (view.contains(memory)) {
 				adjustedView = ProgramMemoryComparator.getCombinedAddresses(program, otherProgram);
 			}
+
 			multiModel.setAddressSet(adjustedView);
+
+			// convert the view addresses to ones compatible with the otherPanel's model
+			AddressSet diffAddrs = DiffUtility.getCompatibleAddressSet(adjustedView, otherProgram);
+			otherPanel.setView(diffAddrs);
 		}
 
 		listingPanel.setView(adjustedView);
-		if (otherPanel != null) {
-			// Convert the view addresses to ones compatible with the otherPanel's model.
-			AddressSet compatibleAddressSet =
-				DiffUtility.getCompatibleAddressSet(adjustedView, otherPanel.getProgram());
-			otherPanel.setView(compatibleAddressSet);
-		}
 	}
 
 	@Override
@@ -1005,43 +1171,49 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		listingPanel.removeDisplayListener(listener);
 	}
 
-	private synchronized void createFocusingMouseListener() {
-		if (focusingMouseListener == null) {
-			focusingMouseListener = new FocusingMouseListener();
-		}
-	}
-
-	public void addOverviewProvider(OverviewProvider overviewProvider) {
-		createFocusingMouseListener();
-		JComponent component = overviewProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
+	public void addOverviewProvider(ListingOverviewProvider overviewProvider) {
 		overviewProvider.setNavigatable(this);
 		getListingPanel().addOverviewProvider(overviewProvider);
 	}
 
-	public void addMarginProvider(MarginProvider marginProvider) {
-		createFocusingMouseListener();
-		JComponent component = marginProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
-		getListingPanel().addMarginProvider(marginProvider);
-	}
-
-	public void removeOverviewProvider(OverviewProvider overviewProvider) {
-		JComponent component = overviewProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
+	public void removeOverviewProvider(ListingOverviewProvider overviewProvider) {
 		getListingPanel().removeOverviewProvider(overviewProvider);
 	}
 
-	public void removeMarginProvider(MarginProvider marginProvider) {
-		JComponent component = marginProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
+	public void addMarginProvider(ListingMarginProvider marginProvider) {
+		getListingPanel().addMarginProvider(marginProvider);
+	}
+
+	public void removeMarginProvider(ListingMarginProvider marginProvider) {
 		getListingPanel().removeMarginProvider(marginProvider);
+	}
+
+	public void addMarginService(ListingMarginProviderService service) {
+		getListingPanel().addMarginService(service, isConnected());
+	}
+
+	public void addOverviewService(ListingOverviewProviderService service) {
+		getListingPanel().addOverviewService(service, this, isConnected());
+	}
+
+	public void removeOverviewService(ListingOverviewProviderService service) {
+		getListingPanel().removeOverviewService(service);
+	}
+
+	public void removeMarginService(ListingMarginProviderService service) {
+		getListingPanel().removeMarginService(service);
+	}
+
+	public void addHoverService(ListingHoverService hoverService) {
+		getListingPanel().addHoverService(hoverService);
+	}
+
+	public void removeHoverService(ListingHoverService hoverService) {
+		getListingPanel().removeHoverService(hoverService);
+
+		if (otherPanel != null) {
+			otherPanel.removeHoverService(hoverService);
+		}
 	}
 
 //==================================================================================================
@@ -1122,13 +1294,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			}
 
 			return list.toArray(new Highlight[list.size()]);
-		}
-	}
-
-	private class FocusingMouseListener extends MouseAdapter {
-		@Override
-		public void mousePressed(MouseEvent e) {
-			getListingPanel().getFieldPanel().requestFocus();
 		}
 	}
 }

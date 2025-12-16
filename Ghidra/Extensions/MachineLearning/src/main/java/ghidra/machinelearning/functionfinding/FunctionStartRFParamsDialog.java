@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.machinelearning.functionfinding;
-
-import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.BorderLayout;
 import java.util.*;
@@ -35,10 +33,10 @@ import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.services.ProgramManager;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.preferences.Preferences;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -99,6 +97,10 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	private static final String ALIGNMENT_MODULUS_TIP =
 		"Use to define the alignment for restricted search";
 
+	private static final String MIN_UNDEFINED_RANGE_SIZE_TEXT = "Minimum Undefined Range Size";
+	private static final String MIN_UNDEFINED_RANGE_SIZE_TIP =
+		"Minimum size of an undefined range of addresses to search over for function starts";
+
 	private static final String DEFAULT_INITIAL_BYTES = "8,16";
 	private static final String INITIAL_BYTES_PROPERTY = "functionStartRFParams_initialBytes";
 	private static final String DEFAULT_PRE_BYTES = "2,8";
@@ -125,16 +127,23 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 
 	private static final String APPLY_MODEL_ACTION_NAME = "ApplyModel";
 	private static final String APPLY_MODEL_MENU_TEXT = "Apply Model";
-	private static final String APPLY_MODEL_TO_ACTION_NAME = "ApplyModelTo";
-	private static final String APPLY_MODEL_TO_MENU_TEXT = "Apply Model To...";
+	private static final String APPLY_MODEL_TO_ACTION_NAME = "ApplyModelToOtherProgram";
+	private static final String APPLY_MODEL_TO_MENU_TEXT = "Apply Model To Other Program...";
+	private static final String APPLY_MODEL_SELECTION_ACTION_NAME = "ApplyModelToSelection";
+	private static final String APPLY_MODEL_SELECTION_MENU_TEXT = "Apply Model To Selection";
 	private static final String DEBUG_MODEL_ACTION_NAME = "DebugModel";
-	private static final String DEBUG_MODEL_MENU_TEXT = "DEBUG - Show test set errors";
+	private static final String DEBUG_MODEL_MENU_TEXT = "DEBUG - Show Test Set Errors";
+
+	private static final String ACTION_GROUP_APPLY_LOCAL = "A0_ApplyLocal";
+	private static final String ACTION_GROUP_APPLY_OTHER = "A1_ApplyOther";
+	private static final String ACTION_GROUP_DEBUG = "A2_Debug";
 
 	private JTextField initialBytesField;
 	private JTextField preBytesField;
 	private JTextField factorField;
 	private IntegerTextField minimumSizeField;
 	private IntegerTextField maxStartsField;
+	private IntegerTextField minUndefRangeField;
 	private JTextField contextRegistersField;
 	private JLabel numFuncsField;
 	private JScrollPane tableScrollPane;
@@ -145,7 +154,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	private RandomForestTableModel tableModel;
 	private Program trainingSource;
 	private FunctionStartRFParams params;
-	private Vector<Long> moduli = new Vector<>(Arrays.asList(new Long[] { 4l, 8l, 16l, 32l }));
+	private List<Long> moduli = Arrays.asList(new Long[] { 4l, 8l, 16l, 32l });
 	private GComboBox<Long> modBox;
 	private JButton trainButton;
 	private JCheckBox includeBeforeAndAfterBox;
@@ -286,12 +295,27 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 				.popupWhen(c -> trainingSource != null)
 				.enabledWhen(c -> tableModel.getLastSelectedObjects().size() == 1)
 				.popupMenuPath(APPLY_MODEL_MENU_TEXT)
+				.popupMenuGroup(ACTION_GROUP_APPLY_LOCAL)
 				.inWindow(ActionBuilder.When.ALWAYS)
 				.onAction(c -> {
-					searchTrainingProgram(tableModel.getLastSelectedObjects().get(0));
+					searchTrainingProgram(tableModel.getLastSelectedObjects().get(0), false);
 				})
 				.build();
 		addAction(applyAction);
+
+		DockingAction applySelectionAction =
+			new ActionBuilder(APPLY_MODEL_SELECTION_ACTION_NAME, plugin.getName())
+					.description("Apply Model to Current Program Selection")
+					.popupWhen(c -> trainingSource != null)
+					.enabledWhen(c -> tableModel.getLastSelectedObjects().size() == 1)
+					.popupMenuPath(APPLY_MODEL_SELECTION_MENU_TEXT)
+					.popupMenuGroup(ACTION_GROUP_APPLY_LOCAL)
+					.inWindow(ActionBuilder.When.ALWAYS)
+					.onAction(c -> {
+						searchTrainingProgram(tableModel.getLastSelectedObjects().get(0), true);
+					})
+					.build();
+		addAction(applySelectionAction);
 
 		DockingAction applyToAction =
 			new ActionBuilder(APPLY_MODEL_TO_ACTION_NAME, plugin.getName())
@@ -299,6 +323,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 					.popupWhen(c -> trainingSource != null)
 					.enabledWhen(c -> tableModel.getLastSelectedObjects().size() == 1)
 					.popupMenuPath(APPLY_MODEL_TO_MENU_TEXT)
+					.popupMenuGroup(ACTION_GROUP_APPLY_OTHER)
 					.inWindow(ActionBuilder.When.ALWAYS)
 					.onAction(c -> {
 						searchOtherProgram(tableModel.getLastSelectedObjects().get(0));
@@ -311,6 +336,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 				.popupWhen(c -> trainingSource != null)
 				.enabledWhen(c -> tableModel.getLastSelectedObjects().size() == 1)
 				.popupMenuPath(DEBUG_MODEL_MENU_TEXT)
+				.popupMenuGroup(ACTION_GROUP_DEBUG)
 				.inWindow(ActionBuilder.When.ALWAYS)
 				.onAction(c -> {
 					showTestErrors(tableModel.getLastSelectedObjects().get(0));
@@ -408,6 +434,14 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		updateNumFuncsField();
 		funcDataPanel.add(numFuncsField);
 
+		JLabel minUndefRangeLabel = new GDLabel(MIN_UNDEFINED_RANGE_SIZE_TEXT);
+		minUndefRangeLabel.setToolTipText(MIN_UNDEFINED_RANGE_SIZE_TIP);
+		funcDataPanel.add(minUndefRangeLabel);
+		minUndefRangeField = new IntegerTextField();
+		minUndefRangeField.setAllowNegativeValues(false);
+		minUndefRangeField.setValue(plugin.getMinUndefinedRangeSize());
+		funcDataPanel.add(minUndefRangeField.getComponent());
+
 		JLabel restrictLabel = new GDLabel(RESTRICT_SEARCH_TEXT);
 		restrictLabel.setToolTipText(RESTRICT_SEARCH_TIP);
 		funcDataPanel.add(restrictLabel);
@@ -480,16 +514,12 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		numFuncsField.setText(Integer.toString(numFuncs));
 	}
 
-	private void searchTrainingProgram(RandomForestRowObject modelRow) {
-		searchProgram(trainingSource, modelRow);
+	private void searchTrainingProgram(RandomForestRowObject modelRow, boolean useSelection) {
+		searchProgram(trainingSource, modelRow, useSelection);
 	}
 
 	private void searchOtherProgram(RandomForestRowObject modelRow) {
-		DataTreeDialog dtd =
-			new DataTreeDialog(null, "Select Program", OPEN, f -> {
-				Class<?> c = f.getDomainObjectClass();
-				return Program.class.isAssignableFrom(c);
-			});
+		ProgramFileChooser dtd = new ProgramFileChooser(null, "Select Program");
 		dtd.show();
 		DomainFile dFile = dtd.getDomainFile();
 		if (dFile == null) {
@@ -505,7 +535,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 				" is not compatible with training source program " + trainingSource.getName());
 			return;
 		}
-		searchProgram(p, modelRow);
+		searchProgram(p, modelRow, false);
 	}
 
 	private void showTestErrors(RandomForestRowObject modelRow) {
@@ -514,21 +544,32 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		addGeneralActions(provider, trainingSource);
 	}
 
-	private void searchProgram(Program targetProgram, RandomForestRowObject modelRow) {
-		GetAddressesToClassifyTask getTask =
-			new GetAddressesToClassifyTask(targetProgram, plugin.getMinUndefinedRangeSize());
+	private void searchProgram(Program targetProgram, RandomForestRowObject modelRow,
+			boolean useSelection) {
+
+		GetAddressesToClassifyTask getTask = null;
+		if (useSelection) {
+			getTask =
+				new GetAddressesToClassifyTask(targetProgram, 1, plugin.getProgramSelection());
+		}
+		else {
+			getTask =
+				new GetAddressesToClassifyTask(targetProgram, minUndefRangeField.getLongValue());
+		}
+
 		//don't want to use the dialog's progress bar
 		TaskLauncher.launchModal("Gathering Addresses To Classify", getTask);
 		if (getTask.isCancelled()) {
 			return;
 		}
-		AddressSet execNonFunc = null;
+		AddressSetView execNonFunc = null;
 		if (restrictBox.isSelected()) {
 			execNonFunc = getTask.getAddressesToClassify((long) modBox.getSelectedItem());
 		}
 		else {
 			execNonFunc = getTask.getAddressesToClassify();
 		}
+
 		FunctionStartTableProvider provider =
 			new FunctionStartTableProvider(plugin, targetProgram, execNonFunc, modelRow, false);
 		addGeneralActions(provider, targetProgram);

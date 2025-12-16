@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title drgn-kernel
+#@title drgn kernel
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>drgn-kernel</tt></h3>
 #@desc   <p>
@@ -24,7 +24,8 @@
 #@desc </body></html>
 #@menu-group drgn
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#drgn-kernel
+#@help drgn#linux_kernel
+#@depends Debugger-rmi-trace
 
 export OPT_TARGET_KIND="kernel" 
 sudo -E drgn ../support/local-drgn.py

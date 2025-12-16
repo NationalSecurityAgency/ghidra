@@ -217,7 +217,7 @@ public class DiffController {
 
 	/**
 	 * Ignore any differences in the specified address set.
-	 * @param p1AddressSet address set set of differences
+	 * @param p1AddressSet address set of differences
 	 * The addresses in this set should be derived from the p1 program.
 	 */
 	void ignore(AddressSetView p1AddressSet, TaskMonitor monitor) {

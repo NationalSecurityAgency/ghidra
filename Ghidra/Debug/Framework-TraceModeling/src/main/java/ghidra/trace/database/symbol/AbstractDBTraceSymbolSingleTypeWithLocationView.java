@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.trace.database.DBTraceCacheForContainingQueries;
 import ghidra.trace.database.DBTraceCacheForContainingQueries.GetKey;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceSymbolIDEntry;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -120,7 +119,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		protected Collection<? extends T> doGetContaining(GetSymbolsKey key) {
 			if (key.thread != null) {
 				List<T> result =
-					new ArrayList<>(getIntersecting(Lifespan.at(key.snap), key.thread,
+					new ArrayList<>(getIntersecting(Lifespan.at(key.snap),
 						new AddressRangeImpl(key.addr, key.addr), key.includeDynamic, true));
 				result.sort(TraceSymbolManager.PRIMALITY_COMPARATOR);
 				return result;
@@ -138,12 +137,12 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		super(manager, typeID, store);
 	}
 
-	public T getChildWithNameAt(String name, long snap, TraceThread thread, Address address,
+	public T getChildWithNameAt(String name, long snap, Address address,
 			TraceNamespaceSymbol parent) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			DBTraceNamespaceSymbol dbnsParent = manager.assertIsMine((Namespace) parent);
 			// TODO: Does this include dynamic symbols?
-			for (T symbol : getIntersecting(Lifespan.at(snap), thread,
+			for (T symbol : getIntersecting(Lifespan.at(snap),
 				new AddressRangeImpl(address, address), false, true)) {
 				if (symbol.parentID != dbnsParent.getID()) {
 					continue;
@@ -160,42 +159,33 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 	/**
 	 * Get the symbols at the given snap and address, starting with the primary
 	 * 
-	 * TODO: Document me
-	 * 
-	 * @param snap
-	 * @param thread
-	 * @param address
-	 * @param includeDynamicSymbols
-	 * @return
+	 * @param snap the snapshot key
+	 * @param address the address
+	 * @param includeDynamicSymbols true to include dynamic symbols
+	 * @return the collection
 	 */
-	public Collection<? extends T> getAt(long snap, TraceThread thread, Address address,
+	public Collection<? extends T> getAt(long snap, Address address,
 			boolean includeDynamicSymbols) {
 		try (LockHold hold = getManager().getTrace().lockRead()) {
 			// TODO: Does "at" here work like "containing"? I suspect not....
 			return cacheForAt
-					.getContaining(new GetSymbolsKey(thread, snap, address, includeDynamicSymbols));
+					.getContaining(new GetSymbolsKey(null, snap, address, includeDynamicSymbols));
 		}
 	}
 
 	/**
-	 * TODO: Document me
-	 * 
 	 * Get intersecting things in no particular order
 	 * 
-	 * @param span
-	 * @param thread
-	 * @param range
-	 * @param includeDynamicSymbols
-	 * @return
+	 * @param span the span of snapshots
+	 * @param range the range of addresses
+	 * @param includeDynamicSymbols true to include dynamic symbols
+	 * @return the collection
 	 */
-	public Collection<? extends T> getIntersecting(Lifespan span, TraceThread thread,
-			AddressRange range, boolean includeDynamicSymbols) {
+	public Collection<? extends T> getIntersecting(Lifespan span, AddressRange range,
+			boolean includeDynamicSymbols) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			manager.trace.getThreadManager().assertIsMine(thread);
-			manager.assertValidThreadAddress(thread, range.getMinAddress()); // Only examines space
 			DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space =
-				manager.idMap.get(DBTraceSpaceKey.create(range.getAddressSpace(), thread, 0),
-					false);
+				manager.idMap.get(range.getAddressSpace(), false);
 			if (space == null) {
 				return Collections.emptyList();
 			}
@@ -209,14 +199,11 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		}
 	}
 
-	public Collection<? extends T> getIntersecting(Lifespan span, TraceThread thread,
-			AddressRange range, boolean includeDynamicSymbols, boolean forward) {
+	public Collection<? extends T> getIntersecting(Lifespan span, AddressRange range,
+			boolean includeDynamicSymbols, boolean forward) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			manager.trace.getThreadManager().assertIsMine(thread);
-			manager.assertValidThreadAddress(thread, range.getMinAddress()); // Only examines space
 			DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space =
-				manager.idMap.get(DBTraceSpaceKey.create(range.getAddressSpace(), thread, 0),
-					false);
+				manager.idMap.get(range.getAddressSpace(), false);
 			if (space == null) {
 				return Collections.emptyList();
 			}

@@ -16,7 +16,6 @@
 package ghidra.plugins.fsbrowser;
 
 import java.awt.Component;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +23,7 @@ import java.util.*;
 
 import javax.swing.KeyStroke;
 
+import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
@@ -36,7 +36,8 @@ import ghidra.app.services.FileSystemBrowserService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ProjectListener;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugin.importer.ImporterUtilities;
@@ -100,7 +101,8 @@ public class FileSystemBrowserPlugin extends Plugin
 				.enabledWhen(ac -> tool.getProject() != null)
 				.menuPath(ToolConstants.MENU_FILE, "Open File System...")
 				.menuGroup("Import", "z")
-				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK))
+				.keyBinding(
+					KeyStroke.getKeyStroke(KeyEvent.VK_I, DockingUtils.CONTROL_KEY_MODIFIER_MASK))
 				.onAction(ac -> doOpenFileSystem())
 				.buildAndInstall(tool);
 	}
@@ -139,27 +141,40 @@ public class FileSystemBrowserPlugin extends Plugin
 	 * method).
 	 *
 	 * @param fsRef {@link FileSystemRef} of open {@link GFileSystem}
+	 * @param rootDir directory to use as the root of the filesystem's tree, or {@code null} to
+	 * specify the filesystem's actual rootdir
 	 * @param show boolean true if the new browser component should be shown
 	 */
-	public void createNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
-		Swing.runIfSwingOrRunLater(() -> doCreateNewFileSystemBrowser(fsRef, show));
+	public void createNewFileSystemBrowser(FileSystemRef fsRef, GFile rootDir, boolean show) {
+		if (rootDir == null) {
+			rootDir = fsRef.getFilesystem().getRootDir();
+		}
+		RefdFile refdRootDir = new RefdFile(fsRef, rootDir);
+		Swing.runIfSwingOrRunLater(() -> doCreateNewFileSystemBrowser(refdRootDir, show));
 	}
 
-	private void doCreateNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
-		FSRLRoot fsFSRL = fsRef.getFilesystem().getFSRL();
-		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
+	private void doCreateNewFileSystemBrowser(RefdFile rootFile, boolean show) {
+		FSRL rootFSRL = rootFile.file.getFSRL();
+		FSBComponentProvider provider = currentBrowsers.get(rootFSRL);
 		if (provider != null) {
-			Msg.info(this, "Filesystem browser already open for " + fsFSRL);
-			fsRef.close();
+			Msg.info(this, "Filesystem browser already open for " + rootFSRL);
+			FSUtilities.uncheckedClose(rootFile, null);
 		}
 		else {
-			provider = new FSBComponentProvider(this, fsRef);
-			currentBrowsers.put(fsFSRL, provider);
+			provider = new FSBComponentProvider(this, rootFile);
+			currentBrowsers.put(rootFSRL, provider);
 			getTool().addComponentProvider(provider, false);
 			provider.afterAddedToTool();
+			provider.contextChanged();
 		}
 
 		if (show) {
+			showProvider(provider);
+		}
+	}
+
+	public void showProvider(FSBComponentProvider provider) {
+		if (provider != null) {
 			getTool().showComponentProvider(provider, true);
 			getTool().toFront(provider);
 			provider.contextChanged();
@@ -200,32 +215,6 @@ public class FileSystemBrowserPlugin extends Plugin
 	}
 
 	/**
-	 * Worker function for doOpenFilesystem, meant to be called in a task thread.
-	 *
-	 * @param containerFSRL {@link FSRL} of the container to open
-	 * @param parent parent {@link Component} for error dialogs, null ok
-	 * @param monitor {@link TaskMonitor} to watch and update.
-	 */
-	private void doOpenFilesystem(FSRL containerFSRL, Component parent, TaskMonitor monitor) {
-		try {
-			monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
-			FileSystemRef ref = fsService().probeFileForFilesystem(containerFSRL, monitor,
-				FileSystemProbeConflictResolver.GUI_PICKER);
-			if (ref == null) {
-				Msg.showWarn(this, parent, "Open Filesystem",
-					"No filesystem provider for " + containerFSRL.getName());
-				return;
-			}
-
-			createNewFileSystemBrowser(ref, true);
-		}
-		catch (IOException | CancelledException e) {
-			FSUtilities.displayException(this, parent, "Open Filesystem Error",
-				"Error opening filesystem for " + containerFSRL.getName(), e);
-		}
-	}
-
-	/**
 	 * Prompts the user to pick a file system container file to open using a local
 	 * filesystem browser and then displays that filesystem in a new fsb browser.
 	 */
@@ -253,10 +242,43 @@ public class FileSystemBrowserPlugin extends Plugin
 			return;
 		}
 
-		FSRL containerFSRL = fsService().getLocalFSRL(file);
+		LocalFileSystem localFS = fsService().getLocalFS();
+		if (file.isDirectory()) {
+			createNewFileSystemBrowser(localFS.getRefManager().create(), localFS.getGFile(file),
+				true);
+			return;
+		}
+
 		TaskLauncher.launchModal("Open File System", (monitor) -> {
+			FSRL containerFSRL = localFS.getLocalFSRL(file);
 			doOpenFilesystem(containerFSRL, parent, monitor);
 		});
+	}
+
+	/**
+	 * Worker function for doOpenFilesystem, meant to be called in a task thread.
+	 *
+	 * @param containerFSRL {@link FSRL} of the container to open
+	 * @param parent parent {@link Component} for error dialogs, null ok
+	 * @param monitor {@link TaskMonitor} to watch and update.
+	 */
+	private void doOpenFilesystem(FSRL containerFSRL, Component parent, TaskMonitor monitor) {
+		try {
+			monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
+			FileSystemRef ref = fsService().probeFileForFilesystem(containerFSRL, monitor,
+				FileSystemProbeConflictResolver.GUI_PICKER);
+			if (ref == null) {
+				Msg.showWarn(this, parent, "Open Filesystem",
+					"No filesystem provider for " + containerFSRL.getName());
+				return;
+			}
+
+			createNewFileSystemBrowser(ref, null, true);
+		}
+		catch (IOException | CancelledException e) {
+			FSUtilities.displayException(this, parent, "Open Filesystem Error",
+				"Error opening filesystem for " + containerFSRL.getName(), e);
+		}
 	}
 
 	private FileSystemService fsService() {
@@ -268,18 +290,22 @@ public class FileSystemBrowserPlugin extends Plugin
 	}
 
 	/**
-	 * For testing access only.
+	 * Returns an already opened provider for the specified FSRL. 
 	 *
-	 * @param fsFSRL {@link FSRLRoot} of browser component to fetch.
+	 * @param fsrl {@link FSRL} of root dir of browser component to fetch.
 	 * @return provider or null if not found.
 	 */
-	/* package */ FSBComponentProvider getProviderFor(FSRLRoot fsFSRL) {
-		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
+	public FSBComponentProvider getProviderFor(FSRL fsrl) {
+		FSBComponentProvider provider = currentBrowsers.get(fsrl);
 		if (provider == null) {
-			Msg.info(this, "Could not find browser for " + fsFSRL);
+			Msg.info(this, "Could not find browser for " + fsrl);
 			return null;
 		}
 		return provider;
+	}
+
+	public List<FSRL> getCurrentlyOpenBrowsers() {
+		return List.copyOf(currentBrowsers.keySet());
 	}
 
 	//--------------------------------------------------------------------------------------------
@@ -294,7 +320,7 @@ public class FileSystemBrowserPlugin extends Plugin
 		if (FileSystemService.isInitialized()) {
 			fsService().closeUnusedFileSystems();
 		}
-		ProjectIndexService.getInstance().clearProject();
+		ProjectIndexService.projectClosed(project);
 	}
 
 	@Override
@@ -302,16 +328,6 @@ public class FileSystemBrowserPlugin extends Plugin
 		// there shouldn't be any fsb components open because the previous projectClosed would have
 		// removed all fsb trees, therefore, we don't need to update any of the components
 		// to tell them about the new project
-	}
-
-	public boolean isOpen(DomainFile df) {
-		Object tmp = new Object();
-		DomainObject openDF = df.getOpenedDomainObject(tmp);
-		if (openDF != null) {
-			openDF.release(tmp);
-			return true;
-		}
-		return false;
 	}
 
 	public File getLastExportDirectory() {

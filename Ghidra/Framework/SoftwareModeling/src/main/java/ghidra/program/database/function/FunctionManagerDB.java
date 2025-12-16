@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,6 @@ import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.data.DataTypeManagerDB;
-import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.symbol.*;
 import ghidra.program.model.address.*;
@@ -80,12 +79,6 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 		return false;
 	};
-
-	/**
-	 * TODO: use of StringPropertyMap for callFixupMap lacks the ability to listen for changes
-	 * which may be made to the map directly (e.g., diff/merge)
-	 */
-	private StringPropertyMap callFixupMap;
 
 	private long lastFuncID = -1;
 
@@ -156,38 +149,40 @@ public class FunctionManagerDB implements FunctionManager {
 
 	/**
 	 * Transform an existing external symbol into an external function.
-	 * This method should only be invoked by an ExternalSymbol
+	 * This method should only be invoked by the Function Manager.
+	 * The {@link ExternalLocation#getOriginalImportedName() original imported name} will initially 
+	 * be null.
+	 * 
 	 * @param extSpaceAddr the external space address to use when creating this external.  Any 
 	 * other symbol using this address must first be deleted.  Results are unpredictable if this is 
 	 * not done.
 	 * @param name the external function name
 	 * @param nameSpace the external function namespace
-	 * @param extData the external data string to store additional info (see {@link ExternalLocationDB})
+	 * @param externalProgramAddress the external program address (may be null)
+	 * @param originalImportName the original imported name if different from name (may be null)
 	 * @param source the source of this external.
 	 * @return external function
 	 * @throws InvalidInputException if the name is invalid
 	 */
-	public Function createExternalFunction(Address extSpaceAddr, String name, Namespace nameSpace,
-			String extData, SourceType source) throws InvalidInputException {
+	public FunctionDB createExternalFunction(Address extSpaceAddr, String name, Namespace nameSpace,
+			String originalImportName, Address externalProgramAddress, SourceType source)
+			throws InvalidInputException {
 		lock.acquire();
 		try {
-			Symbol symbol =
-				symbolMgr.createFunctionSymbol(extSpaceAddr, name, nameSpace, source, extData);
+			FunctionSymbol symbol = symbolMgr.createExternalFunctionSymbol(extSpaceAddr, name,
+				nameSpace, source, originalImportName, externalProgramAddress);
 
 			long returnDataTypeId = program.getDataTypeManager().getResolvedID(DataType.DEFAULT);
 
-			try {
-				DBRecord rec = adapter.createFunctionRecord(symbol.getID(), returnDataTypeId);
+			DBRecord rec = adapter.createFunctionRecord(symbol.getID(), returnDataTypeId);
 
-				FunctionDB funcDB = new FunctionDB(this, cache, addrMap, rec);
+			FunctionDB funcDB = new FunctionDB(this, cache, addrMap, rec);
 
-				program.setObjChanged(ProgramEvent.FUNCTION_ADDED, extSpaceAddr, funcDB, null,
-					null);
-				return funcDB;
-			}
-			catch (IOException e) {
-				dbError(e);
-			}
+			program.setObjChanged(ProgramEvent.FUNCTION_ADDED, extSpaceAddr, funcDB, null, null);
+			return funcDB;
+		}
+		catch (IOException e) {
+			dbError(e); // will not return
 			return null;
 		}
 		finally {
@@ -284,12 +279,13 @@ public class FunctionManagerDB implements FunctionManager {
 				}
 			}
 
-			Symbol symbol = symbolMgr.createFunctionSymbol(entryPoint, name, nameSpace, source,
-				((thunkedFunction != null) ? thunkedFunction.getEntryPoint().toString() : null));
-
-			long returnDataTypeId = program.getDataTypeManager().getResolvedID(DataType.DEFAULT);
-
 			try {
+				Symbol symbol =
+					symbolMgr.createMemoryFunctionSymbol(entryPoint, name, nameSpace, source);
+
+				long returnDataTypeId =
+					program.getDataTypeManager().getResolvedID(DataType.DEFAULT);
+
 				if (refFunc != null) {
 
 					String oldName = symbol.getName();
@@ -610,9 +606,9 @@ public class FunctionManagerDB implements FunctionManager {
 		return getFunctionContaining(addr) != null;
 	}
 
-	/////////////////////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------------------------------
 	//    ManagerDB methods
-	////////////////////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------------------------------
 
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
@@ -825,7 +821,6 @@ public class FunctionManagerDB implements FunctionManager {
 		lock.acquire();
 		try {
 			functionTagManager.invalidateCache();
-			callFixupMap = null;
 			lastFuncID = -1;
 			cache.invalidate();
 		}
@@ -835,11 +830,8 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	StringPropertyMap getCallFixupMap(boolean create) {
-		if (callFixupMap != null) {
-			return callFixupMap;
-		}
 		PropertyMapManager usrPropertyManager = program.getUsrPropertyManager();
-		callFixupMap = usrPropertyManager.getStringPropertyMap(CALLFIXUP_MAP);
+		StringPropertyMap callFixupMap = usrPropertyManager.getStringPropertyMap(CALLFIXUP_MAP);
 		if (callFixupMap == null && create) {
 			try {
 				callFixupMap = usrPropertyManager.createStringPropertyMap(CALLFIXUP_MAP);

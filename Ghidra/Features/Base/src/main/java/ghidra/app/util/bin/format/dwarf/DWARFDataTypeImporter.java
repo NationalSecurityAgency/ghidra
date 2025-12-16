@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,6 @@ import ghidra.util.exception.InvalidInputException;
  * <p>
  * Create a new instance of this class for each {@link DIEAggregate} datatype that you wish
  * to convert into a DataType.
- * <p>
  */
 public class DWARFDataTypeImporter {
 	private DWARFProgram prog;
@@ -121,8 +120,8 @@ public class DWARFDataTypeImporter {
 	 * @param defaultValue value to return if the specified DIEA is null or there is a problem
 	 * with the DWARF debug data.
 	 * @return a {@link DWARFDataType} wrapper around the new Ghidra {@link DataType}.
-	 * @throws IOException
-	 * @throws DWARFExpressionException
+	 * @throws IOException if error
+	 * @throws DWARFExpressionException if error with dwarf expression
 	 */
 	public DWARFDataType getDataType(DIEAggregate diea, DWARFDataType defaultValue)
 			throws IOException, DWARFExpressionException {
@@ -174,6 +173,7 @@ public class DWARFDataTypeImporter {
 			case DW_TAG_restrict_type:
 			case DW_TAG_shared_type:
 			case DW_TAG_APPLE_ptrauth_type:
+			case DW_TAG_atomic_type:
 				result = makeDataTypeForConst(diea);
 				break;
 			case DW_TAG_enumeration_type:
@@ -342,12 +342,8 @@ public class DWARFDataTypeImporter {
 		return result;
 	}
 
-	/**
+	/*
 	 * Gets the corresponding Ghidra base type.
-	 * <p>
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private DWARFDataType makeDataTypeForBaseType(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -401,7 +397,7 @@ public class DWARFDataTypeImporter {
 
 	/**
 	 * Simple passthru, returns whatever type this "const" modifier applies to.
-	 * <p>
+	 * 
 	 * @param diea
 	 * @throws IOException
 	 * @throws DWARFExpressionException
@@ -424,7 +420,6 @@ public class DWARFDataTypeImporter {
 	 * <p>
 	 * This method takes liberties with the normal{@literal DWARF->Ghidra Impl DataType->Ghidra DB DataType}
 	 * workflow to be able to merge values into previous db enum datatypes.
-	 * <p>
 	 *
 	 * @param diea
 	 * @return
@@ -1085,10 +1080,15 @@ public class DWARFDataTypeImporter {
 		if (self != null) {
 			return self;
 		}
-		DataType elementDT = fixupDataTypeInconsistencies(elementType);
 
+		if (elementType == voidDDT) {
+			// there was no info about the array's element, cheese something else
+			return new DWARFDataType(dwarfDTM.getUnspecifiedArrayType(), null, diea.getOffset());
+		}
+
+		DataType elementDT = fixupDataTypeInconsistencies(elementType);
 		long explictArraySize = diea.getUnsignedLong(DW_AT_byte_size, -1);
-		if (elementType.dataType.isZeroLength() || explictArraySize == 0) {
+		if (DWARFUtil.isZeroByteDataType(elementType.dataType) || explictArraySize == 0) {
 			// don't bother checking range info, we are going to force a zero-element array
 			DataType zeroLenArray = new ArrayDataType(elementDT, 0, -1, dataTypeManager);
 			return new DWARFDataType(zeroLenArray, null, diea.getOffset());

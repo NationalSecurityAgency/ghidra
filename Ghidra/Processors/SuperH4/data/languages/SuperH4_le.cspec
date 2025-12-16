@@ -30,28 +30,28 @@
     <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
     <input>
       <pentry minsize="1" maxsize="4" metatype="float">
-        <register name="fr5"/>
-      </pentry>
-      <pentry minsize="1" maxsize="4" metatype="float">
         <register name="fr4"/>
       </pentry>
       <pentry minsize="1" maxsize="4" metatype="float">
-        <register name="fr7"/>
+        <register name="fr5"/>
       </pentry>
       <pentry minsize="1" maxsize="4" metatype="float">
         <register name="fr6"/>
       </pentry>
       <pentry minsize="1" maxsize="4" metatype="float">
-        <register name="fr9"/>
+        <register name="fr7"/>
       </pentry>
       <pentry minsize="1" maxsize="4" metatype="float">
         <register name="fr8"/>
       </pentry>
       <pentry minsize="1" maxsize="4" metatype="float">
-        <register name="fr11"/>
+        <register name="fr9"/>
       </pentry>
       <pentry minsize="1" maxsize="4" metatype="float">
         <register name="fr10"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr11"/>
       </pentry>
       <pentry minsize="5" maxsize="8" metatype="float">
         <register name="dr4"/>

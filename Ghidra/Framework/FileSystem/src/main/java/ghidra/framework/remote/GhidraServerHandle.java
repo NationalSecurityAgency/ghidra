@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,20 @@ public interface GhidraServerHandle extends Remote {
 	 *       - version 9.1 switched to using SSL/TLS for RMI registry connection preventing
 	 *         older clients the ability to connect to the server.  Remote interface remained
 	 *         unchanged allowing 9.1 clients to connect to 9.0 server.
+	 *   12: Revised RepositoryFile serialization to facilitate support for text-data used
+	 *       for link-file storage.
 	 */
-	public static final int INTERFACE_VERSION = 11;
+
+	/**
+	 * The server interface version that the server will use and is the maximum version that the
+	 * client can operate with.
+	 */
+	public static final int INTERFACE_VERSION = 12;
+
+	/**
+	 * The minimum server interface version that the client can operate with.
+	 */
+	public static final int MINIMUM_INTERFACE_VERSION = 11;
 
 	/**
 	 * Minimum version of Ghidra which utilized the current INTERFACE_VERSION

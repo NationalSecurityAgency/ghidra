@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,9 @@ import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 
@@ -33,6 +35,8 @@ import docking.dnd.*;
 import docking.tool.ToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.EmptyBorderButton;
+import ghidra.framework.data.LinkHandler;
+import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -469,7 +473,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 		// Create our animation code: a zooming effect and an effect to move where the image is
 		// painted.  These effects are independent code-wise, but work together in that the
-		// mover will set the location and size, and the zoomer will will paint the image with
+		// mover will set the location and size, and the zoomer will paint the image with
 		// a transparency and a zoom level, which is affected by the movers bounds changing.
 		Image image = ZoomedImagePainter.createIconImage(icon);
 		final ZoomedImagePainter painter = new ZoomedImagePainter(startBounds, image);
@@ -507,7 +511,33 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			plugin.getActiveWorkspace().runTool(template);
 		}
 		else {
-			PluginTool tool = toolServices.launchTool(template.getName(), domainFiles);
+			List<DomainFile> files = new ArrayList<>();
+			domainFiles.forEach(file -> {
+				if (file.isLink()) {
+					if (file.getLinkInfo().isFolderLink()) {
+						return; // ignore folder links
+					}
+					AtomicReference<String> errorMsg = new AtomicReference<>();
+					LinkStatus status =
+						LinkHandler.getLinkFileStatus(file, error -> errorMsg.set(error));
+					if (status == LinkStatus.BROKEN) {
+						String msg = errorMsg.get();
+						String pathname = file.getPathname();
+						if (!msg.contains(pathname)) {
+							msg += ": " + pathname;
+						}
+						Msg.showError(this, getParent(), "Failed to Open File",
+							msg + ": " + file.getPathname());
+						return;
+					}
+				}
+				files.add(file);
+			});
+			if (files.isEmpty()) {
+				return;
+			}
+
+			PluginTool tool = toolServices.launchTool(template.getName(), files);
 			if (tool == null) {
 				Msg.showError(this, getParent(), "Failed to Launch Tool",
 					"Failed to launch " + template.getName() + " tool.\nSee log for details.");

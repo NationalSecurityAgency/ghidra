@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -548,7 +548,7 @@ public class DecompileCallback {
 
 	private void encodeHeaderComment(Encoder encoder, Function func) throws IOException {
 		Address addr = func.getEntryPoint();
-		String text = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
+		String text = listing.getComment(CommentType.PLATE, addr);
 		if (text != null) {
 			encoder.openElement(ELEM_COMMENT);
 			encoder.writeString(ATTRIB_TYPE, "header");
@@ -574,19 +574,19 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeCommentsType(Encoder encoder, AddressSetView addrset, Address addr,
-			int commenttype) throws IOException {
+			CommentType commenttype) throws IOException {
 		String typename;
 		switch (commenttype) {
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				typename = "user1";
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case PRE:
 				typename = "user2";
 				break;
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				typename = "user3";
 				break;
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				typename = "header";
 				break;
 			default:
@@ -598,7 +598,7 @@ public class DecompileCallback {
 			Address commaddr = iter.next();
 			String text = listing.getComment(commenttype, commaddr);
 			if (text != null) {
-				if (commenttype == CodeUnit.PLATE_COMMENT) {
+				if (commenttype == CommentType.PLATE) {
 					// Plate comments on the function entry
 					// address are considered part of the header
 					if (commaddr.equals(addr)) {
@@ -626,16 +626,16 @@ public class DecompileCallback {
 			encodeHeaderComment(encoder, func);
 		}
 		if ((flags & 1) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.EOL_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.EOL);
 		}
 		if ((flags & 2) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.PRE_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.PRE);
 		}
 		if ((flags & 4) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.POST_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.POST);
 		}
 		if ((flags & 8) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.PLATE_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.PLATE);
 		}
 		encoder.closeElement(ELEM_COMMENTDB);
 	}

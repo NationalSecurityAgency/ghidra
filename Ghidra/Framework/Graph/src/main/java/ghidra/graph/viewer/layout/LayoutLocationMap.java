@@ -180,7 +180,7 @@ public class LayoutLocationMap<V, E> {
 		return row;
 	}
 
-	public int gridX(Column col) {
+	public int gridX(Column<V> col) {
 		return col.index;
 	}
 

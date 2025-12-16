@@ -111,8 +111,11 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	}
 
 	public static enum TaintFormat {
-		ALL("all", "sarif+all"), GRAPHS("graphs", "sarif+graphs"), 
-		INSTS("insts", "sarif+instructions"), PATHS("paths", "sarif");
+		ALL("all", "sarif+all"), 
+		GRAPHS("graphs", "sarif+graphs"), 
+		INSTS("insts", "sarif+instructions"),
+		PATHS("paths", "sarif"),
+		NONE("none", "none");
 
 		private String label;
 		private String optionString;
@@ -163,8 +166,6 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	public static final Icon PROVIDER_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
 	public static final Icon FUNCTION_ICON = new GIcon("icon.plugin.calltree.function");
 	public static final Icon RECURSIVE_ICON = new GIcon("icon.plugin.calltree.recursive");
-	public static final Icon TAINT_TREE_ICON =
-		new GIcon("icon.plugin.functiongraph.layout.nested.code");
 
 	// You may want MANY slice tree gui elements to explore different slices within a program.
 	// This list should keep track of them all.
@@ -175,7 +176,6 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	public TaintPlugin(PluginTool tool) {
 		super(tool);
-		state = TaintState.newInstance(this);
 		taintProvider = new TaintProvider(this);
 		taintDecompMarginProvider = new TaintDecompilerMarginProvider(this);
 		createActions();
@@ -353,9 +353,11 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 				GhidraState ghidraState = new GhidraState(tool, null, currentProgram,
 					currentLocation, currentHighlight, currentHighlight);
 				GhidraScript exportScript = state.getExportScript(consoleService, false);
-				RunPCodeExportScriptTask export_task =
-					new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
-				tool.execute(export_task);
+				if (exportScript != null) {
+					RunPCodeExportScriptTask export_task =
+						new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
+					tool.execute(export_task);
+				}
 			}
 
 			@Override
@@ -431,6 +433,10 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	public TaintState getTaintState() {
 		return state;
+	}
+
+	public void setTaintState(TaintState state) {
+		this.state = state;
 	}
 
 	public TaintProvider getProvider() {

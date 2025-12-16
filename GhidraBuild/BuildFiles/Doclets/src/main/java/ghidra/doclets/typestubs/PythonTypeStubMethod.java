@@ -225,6 +225,10 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 			};
 		}
 
+		if (type.getKind() == TypeKind.VOID) {
+			return "None";
+		}
+
 		if (type instanceof DeclaredType dt) {
 			Element element = dt.asElement();
 			if (element instanceof QualifiedNameable nameable) {
@@ -314,15 +318,13 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 		printer.print(")");
 
 		TypeMirror res = el.getReturnType();
-		if (res.getKind() != TypeKind.VOID) {
-			printer.print(" -> ");
-			String convertedType = convertResultType(res);
-			if (convertedType != null) {
-				printer.print(convertedType);
-			}
-			else {
-				printer.print(sanitizeQualifiedName(res));
-			}
+		printer.print(" -> ");
+		String convertedType = convertResultType(res);
+		if (convertedType != null) {
+			printer.print(convertedType);
+		}
+		else {
+			printer.print(sanitizeQualifiedName(res));
 		}
 	}
 

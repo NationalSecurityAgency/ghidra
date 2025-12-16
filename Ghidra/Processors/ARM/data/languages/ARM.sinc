@@ -23,7 +23,7 @@ define register offset=0x0078 size=1 [ ISAModeSwitch ];  # generic name for TB T
 @define FPSCR_V "fpscr[28,1]"
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
-define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 ];
+define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 mvfr2 fpinst fpinst2 ];
 @endif
 define register offset=0x0100 size=10 [ fp0 fp1 fp2 fp3 fp4 fp5 fp6 fp7 ];	# eight 80-bit floating registers
 
@@ -74,6 +74,10 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 @endif # ENDIAN = "big"
 
 @endif # SIMD
+
+@if defined(CORTEX)
+  define register offset=0x400 size=4  [ msplim psplim ];
+@endif
 
 # Define context bits
 # WARNING: when adjusting context keep compiler packing in mind
@@ -189,6 +193,9 @@ define pcodeop ReverseBitOrder;
 define pcodeop SendEvent;
 define pcodeop setEndianState;
 
+# Copies ISAModeSwitch to TMode
+define pcodeop setISAMode;
+
 macro affectflags() {
   CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV;
 }
@@ -197,9 +204,14 @@ macro affect_resflags() {
   ZR = tmpZR; NG = tmpNG;
 }
 
-macro SetThumbMode(value) {
+macro SetISAModeSwitch(value) {
   ISAModeSwitch = value;
   TB = ISAModeSwitch;
+}
+
+macro SetThumbMode(value) {
+  SetISAModeSwitch(value);
+  setISAMode();
 }
 
 #

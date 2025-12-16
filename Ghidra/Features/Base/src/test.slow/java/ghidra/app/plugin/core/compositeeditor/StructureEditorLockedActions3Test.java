@@ -353,7 +353,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorTe
 	@Test
 	public void testShowNumbersInHex() {
 		init(complexStructure, pgmTestCat);
-		CompEditorPanel panel = (CompEditorPanel) provider.getComponent();
+		StructureEditorPanel panel = (StructureEditorPanel) provider.getComponent();
 
 		assertEquals("", model.getStatus());
 

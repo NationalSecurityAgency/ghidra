@@ -32,14 +32,14 @@ import ghidra.pcode.emu.jit.JitCompiler.Diag;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
 import ghidra.pcode.emu.jit.analysis.*;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmLocal;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.VarHandler;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.*;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.op.OpGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.ExitSlot;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.var.ValGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
@@ -217,9 +217,6 @@ public class JitCodeGenerator {
 	private final MethodVisitor initMv;
 	private final MethodVisitor runMv;
 
-	private final Label startLocals = new Label();
-	private final Label endLocals = new Label();
-
 	/**
 	 * Construct a code generator for the given passage's target classfile
 	 * 
@@ -303,7 +300,7 @@ public class JitCodeGenerator {
 			Type.getMethodDescriptor(Type.getType(JitPcodeThread.class)), null, null);
 		gtMv.visitCode();
 		// []
-		gtMv.visitVarInsn(ALOAD, 0);
+		RunFixedLocal.THIS.generateLoadCode(gtMv);
 		// [this]
 		gtMv.visitFieldInsn(GETFIELD, nameThis, "thread", TDESC_JIT_PCODE_THREAD);
 		// [thread]
@@ -408,7 +405,7 @@ public class JitCodeGenerator {
 		initMv.visitCode();
 		// Object.super()
 		// []
-		initMv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(initMv);
 		// [this]
 		initMv.visitMethodInsn(INVOKESPECIAL, NAME_OBJECT, "<init>",
 			Type.getMethodDescriptor(Type.VOID_TYPE), false);
@@ -416,18 +413,18 @@ public class JitCodeGenerator {
 
 		// this.thread = thread
 		// []
-		initMv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(initMv);
 		// [this]
-		initMv.visitVarInsn(ALOAD, 1);
-		// [this,state]
+		InitFixedLocal.THREAD.generateLoadCode(initMv);
+		// [this,thread]
 		initMv.visitFieldInsn(PUTFIELD, nameThis, "thread", TDESC_JIT_PCODE_THREAD);
 		// []
 
 		// this.state = thread.getState()
 		// []
-		initMv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(initMv);
 		// [this]
-		initMv.visitVarInsn(ALOAD, 1);
+		InitFixedLocal.THREAD.generateLoadCode(initMv);
 		// [this,thread]
 		initMv.visitMethodInsn(INVOKEVIRTUAL, NAME_JIT_PCODE_THREAD, "getState",
 			MDESC_JIT_PCODE_THREAD__GET_STATE, false);
@@ -453,8 +450,7 @@ public class JitCodeGenerator {
 		 * this.spaceInd_`space` =
 		 * this.state.getForSpace(ADDRESS_FACTORY.getAddressSpace(`space.getSpaceID()`);
 		 */
-
-		iv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(initMv);
 		// [...,this]
 		iv.visitFieldInsn(GETFIELD, nameThis, "state",
 			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE);
@@ -596,10 +592,11 @@ public class JitCodeGenerator {
 	 * 
 	 * @param v the value to read
 	 * @param typeReq the required type of the value
+	 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
 	 * @return the actual type of the value on the stack
 	 */
-	public JitType generateValReadCode(JitVal v, JitTypeBehavior typeReq) {
-		return ValGen.lookup(v).generateValReadCode(this, v, typeReq, runMv);
+	public JitType generateValReadCode(JitVal v, JitTypeBehavior typeReq, Ext ext) {
+		return ValGen.lookup(v).generateValReadCode(this, v, typeReq, ext, runMv);
 	}
 
 	/**
@@ -613,9 +610,10 @@ public class JitCodeGenerator {
 	 * 
 	 * @param v the variable to write
 	 * @param type the actual type of the value on the stack
+	 * @param ext the kind of extension to apply when adjusting from varnode size to JVM size
 	 */
-	public void generateVarWriteCode(JitVar v, JitType type) {
-		VarGen.lookup(v).generateVarWriteCode(this, v, type, runMv);
+	public void generateVarWriteCode(JitVar v, JitType type, Ext ext) {
+		VarGen.lookup(v).generateVarWriteCode(this, v, type, ext, runMv);
 	}
 
 	/**
@@ -726,7 +724,7 @@ public class JitCodeGenerator {
 				requestExceptionHandler(first, block).label(), NAME_THROWABLE);
 
 			runMv.visitLabel(tryStart);
-			runMv.visitVarInsn(ALOAD, 0);
+			RunFixedLocal.THIS.generateLoadCode(runMv);
 			runMv.visitLdcInsn(block.instructionCount());
 			runMv.visitLdcInsn(block.trailingOpCount());
 			runMv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "count",
@@ -860,20 +858,9 @@ public class JitCodeGenerator {
 	 */
 	protected void generateRunCode() {
 		runMv.visitCode();
+		final Label startLocals = new Label();
 		runMv.visitLabel(startLocals);
 
-		runMv.visitLocalVariable("this", "L" + nameThis + ";", null, startLocals, endLocals, 0);
-		runMv.visitLocalVariable("blockId", Type.getDescriptor(int.class), null, startLocals,
-			endLocals, 1);
-
-		for (JvmLocal local : am.allLocals()) {
-			local.generateDeclCode(this, startLocals, endLocals, runMv);
-		}
-		// TODO: This for loop doesn't actually do anything....
-		for (JitVal v : dfm.allValuesSorted()) {
-			VarHandler handler = am.getHandler(v);
-			handler.generateDeclCode(this, startLocals, endLocals, runMv);
-		}
 		/**
 		 * NB. opIdx starts at 1, because JVM will ignore "Line number 0"
 		 */
@@ -888,8 +875,12 @@ public class JitCodeGenerator {
 			}
 		}
 
+		for (FixedLocal fixed : RunFixedLocal.ALL) {
+			fixed.generateInitCode(runMv, nameThis);
+		}
+
 		// []
-		runMv.visitVarInsn(ILOAD, 1);
+		RunFixedLocal.BLOCK_ID.generateLoadCode(runMv);
 		// [blockId]
 		Label lblBadEntry = new Label();
 		runMv.visitTableSwitchInsn(0, entries.size() - 1, lblBadEntry,
@@ -931,6 +922,22 @@ public class JitCodeGenerator {
 		for (ExceptionHandler handler : excHandlers.values()) {
 			handler.generateRunCode(this, runMv);
 		}
+
+		final Label endLocals = new Label();
+		runMv.visitLabel(endLocals);
+
+		for (FixedLocal fixed : RunFixedLocal.ALL) {
+			fixed.generateDeclCode(runMv, nameThis, startLocals, endLocals);
+		}
+
+		for (JvmLocal local : am.allLocals()) {
+			local.generateDeclCode(this, startLocals, endLocals, runMv);
+		}
+		// TODO: This for loop doesn't actually do anything....
+		for (JitVal v : dfm.allValuesSorted()) {
+			VarHandler handler = am.getHandler(v);
+			handler.generateDeclCode(this, startLocals, endLocals, runMv);
+		}
 	}
 
 	/**
@@ -955,8 +962,9 @@ public class JitCodeGenerator {
 		dest.getParentFile().mkdirs();
 		try (OutputStream os = new FileOutputStream(dest)) {
 			os.write(bytes);
+			new ProcessBuilder("javap", "-c", "-l", dest.getPath()).inheritIO().start().waitFor();
 		}
-		catch (IOException e) {
+		catch (IOException | InterruptedException e) {
 			Msg.warn(this, "Could not dump class file: " + nameThis + " (" + e + ")");
 		}
 		return bytes;
@@ -991,7 +999,6 @@ public class JitCodeGenerator {
 		initMv.visitMaxs(20, 20);
 		initMv.visitEnd();
 
-		runMv.visitLabel(endLocals);
 		try {
 			runMv.visitMaxs(20, 20);
 		}
@@ -1042,6 +1049,32 @@ public class JitCodeGenerator {
 	}
 
 	/**
+	 * The manners in which the program counter and decode context can be "retired."
+	 */
+	public enum RetireMode {
+		/**
+		 * Retire into the emulator's counter/context and its machine state
+		 * 
+		 * @see JitCompiledPassage#writeCounterAndContext(long, RegisterValue)
+		 */
+		WRITE(MDESC_JIT_COMPILED_PASSAGE__WRITE_COUNTER_AND_CONTEXT, "writeCounterAndContext"),
+		/**
+		 * Retire into the emulator's counter/context, but not its machine state
+		 * 
+		 * @see JitCompiledPassage#setCounterAndContext(long, RegisterValue)
+		 */
+		SET(MDESC_JIT_COMPILED_PASSAGE__SET_COUNTER_AND_CONTEXT, "setCounterAndContext");
+
+		private String mdesc;
+		private String mname;
+
+		private RetireMode(String mdesc, String mname) {
+			this.mdesc = mdesc;
+			this.mname = mname;
+		}
+	}
+
+	/**
 	 * Emit bytecode to set the emulator's counter and contextreg.
 	 * 
 	 * <p>
@@ -1057,12 +1090,13 @@ public class JitCodeGenerator {
 	 *            branch target, which may be loaded from a varnode for an indirect branch.
 	 * @param ctx the contextreg value. For errors, this is the decode context of the op causing the
 	 *            error. For branches, this is the decode context at the target.
+	 * @param mode whether to set the machine state, too
 	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 	 */
-	public void generateRetirePcCtx(Runnable pcGen, RegisterValue ctx,
+	public void generateRetirePcCtx(Runnable pcGen, RegisterValue ctx, RetireMode mode,
 			MethodVisitor rv) {
 		// []
-		rv.visitVarInsn(ALOAD, 0);
+		RunFixedLocal.THIS.generateLoadCode(rv);
 		// [this]
 		pcGen.run();
 		// [this,pc:LONG]
@@ -1073,8 +1107,8 @@ public class JitCodeGenerator {
 			requestStaticFieldForContext(ctx).generateLoadCode(this, rv);
 		}
 		// [this,pc:LONG,ctx:RV]
-		rv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "retireCounterAndContext",
-			MDESC_JIT_COMPILED_PASSAGE__RETIRE_COUNTER_AND_CONTEXT, true);
+		rv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, mode.mname,
+			mode.mdesc, true);
 	}
 
 	/**
@@ -1082,18 +1116,20 @@ public class JitCodeGenerator {
 	 * 
 	 * <p>
 	 * This retires all the variables of the current block as well as the program counter and decode
-	 * coontext. It does not generate the actual {@link Opcodes#ARETURN areturn} or
+	 * context. It does not generate the actual {@link Opcodes#ARETURN areturn} or
 	 * {@link Opcodes#ATHROW athrow}, but everything required up to that point.
 	 * 
 	 * @param block the block containing the op at which we are exiting
-	 * @param pcGen as in {@link #generateRetirePcCtx(Runnable, RegisterValue, MethodVisitor)}
-	 * @param ctx as in {@link #generateRetirePcCtx(Runnable, RegisterValue, MethodVisitor)}
+	 * @param pcGen as in
+	 *            {@link #generateRetirePcCtx(Runnable, RegisterValue, RetireMode, MethodVisitor)}
+	 * @param ctx as in
+	 *            {@link #generateRetirePcCtx(Runnable, RegisterValue, RetireMode, MethodVisitor)}
 	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 	 */
 	public void generatePassageExit(JitBlock block, Runnable pcGen, RegisterValue ctx,
 			MethodVisitor rv) {
 		VarGen.computeBlockTransition(this, block, null).generate(rv);
-		generateRetirePcCtx(pcGen, ctx, rv);
+		generateRetirePcCtx(pcGen, ctx, RetireMode.WRITE, rv);
 	}
 
 	/**

@@ -20,6 +20,7 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.app.services.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -173,7 +174,7 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be a
+	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
 	 * {@link Composite} to search for a field.
 	 * @param program The program from within which to find references.
 	 * @param monitor A task monitor to be updated as data is searched; if this is null, then a
@@ -198,7 +199,7 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be a
+	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
 	 * {@link Composite} to search for a field.
 	 * @param program The program from within which to find references.
 	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service will be used to
@@ -343,7 +344,7 @@ public final class ReferenceUtils {
 
 		Consumer<DataTypeReference> callback = ref -> {
 
-			LocationReferenceContext context = ref.getContext();
+			SearchLocationContext context = ref.getContext();
 			LocationReference locationReference = new LocationReference(ref.getAddress(), context);
 			accumulator.add(locationReference);
 		};
@@ -1395,7 +1396,7 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		Address[] thunkAddrs = func.getFunctionThunkAddresses();
+		Address[] thunkAddrs = func.getFunctionThunkAddresses(false);
 		if (thunkAddrs == null) {
 			return;
 		}

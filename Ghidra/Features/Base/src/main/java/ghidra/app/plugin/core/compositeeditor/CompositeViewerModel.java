@@ -27,11 +27,17 @@ import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 import utility.function.Callback;
 
-abstract class CompositeViewerModel extends AbstractTableModel
+/**
+ * {@link CompositeViewerModel} provides the base composite viewer/editor implementation
+ *
+ * @param <T> Specific {@link Composite} type being managed
+ */
+abstract class CompositeViewerModel<T extends Composite> extends AbstractTableModel
 		implements DataTypeManagerChangeListener {
 
 	/**
@@ -40,13 +46,13 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	 */
 	protected boolean updatingSelection = false;
 
-	protected Composite originalComposite;
+	protected T originalComposite;
 	protected DataTypePath originalDataTypePath;
 	protected long originalCompositeId;
 	protected DataTypeManager originalDTM;
 
-	protected Composite viewComposite;
-	protected CompositeViewerDataTypeManager viewDTM;
+	protected T viewComposite;
+	protected CompositeViewerDataTypeManager<T> viewDTM;
 
 	private List<CompositeViewerModelListener> modelListeners = new ArrayList<>();
 
@@ -79,10 +85,11 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	protected int currentEditRow = -1;
 	/** the current column for a field edit */
 	protected int currentEditColumn = -1;
-	protected CompositeEditorProvider provider;
 	protected boolean showHexNumbers = false;
 
-	CompositeViewerModel(CompositeEditorProvider provider) {
+	protected final CompositeEditorProvider<T, ?> provider;
+
+	CompositeViewerModel(CompositeEditorProvider<T, ?> provider) {
 		this.provider = provider;
 		selection = new FieldSelection();
 		adjustWidth();
@@ -165,7 +172,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	 *
 	 * @param dataType the composite date type to be viewed.
 	 */
-	protected abstract void load(Composite dataType);
+	protected abstract void load(T dataType);
 
 	/**
 	 * Unloads the currently loaded composite data type.
@@ -192,35 +199,35 @@ abstract class CompositeViewerModel extends AbstractTableModel
 		}
 	}
 
-	/**
-	 * Resolves the data type against the indicated data type manager using the specified
-	 * conflictHandler.  In general, a transaction should have already been initiated prior to 
-	 * calling this method so that the true nature of the transaction may be established for
-	 * use with undo/redo (e.g., Set Datatype).
-	 *
-	 * @param dataType the data type to be resolved
-	 * @param resolveDtm the data type manager to resolve the data type against
-	 * @param conflictHandler the handler to be used for any conflicts encountered while resolving
-	 * @return the resolved data type
-	 */
-	protected final DataType resolveDataType(DataType dataType, DataTypeManager resolveDtm,
-			DataTypeConflictHandler conflictHandler) {
-		if (resolveDtm == null || dataType == DataType.DEFAULT) {
-			return DataType.DEFAULT;
-		}
-		return resolveDtm.withTransaction("Resolve " + dataType.getPathName(), () -> {
-			return resolveDtm.resolve(dataType, conflictHandler);
-		});
-	}
-
-	/**
-	 * Resolves the indicated data type against the working copy in the viewer's data type manager.
-	 * @param dataType the data type
-	 * @return the working copy of the data type.
-	 */
-	public DataType resolve(DataType dataType) {
-		return resolveDataType(dataType, viewDTM, null);
-	}
+//	/**
+//	 * Resolves the data type against the indicated data type manager using the specified
+//	 * conflictHandler.  In general, a transaction should have already been initiated prior to 
+//	 * calling this method so that the true nature of the transaction may be established for
+//	 * use with undo/redo (e.g., Set Datatype).
+//	 *
+//	 * @param dataType the data type to be resolved
+//	 * @param resolveDtm the data type manager to resolve the data type against
+//	 * @param conflictHandler the handler to be used for any conflicts encountered while resolving
+//	 * @return the resolved data type
+//	 */
+//	protected final DataType resolveDataType(DataType dataType, DataTypeManager resolveDtm,
+//			DataTypeConflictHandler conflictHandler) {
+//		if (resolveDtm == null || dataType == DataType.DEFAULT) {
+//			return DataType.DEFAULT;
+//		}
+//		return resolveDtm.withTransaction("Resolve " + dataType.getPathName(), () -> {
+//			return resolveDtm.resolve(dataType, conflictHandler);
+//		});
+//	}
+//
+//	/**
+//	 * Resolves the indicated data type against the working copy in the viewer's data type manager.
+//	 * @param dataType the data type
+//	 * @return the working copy of the data type.
+//	 */
+//	public DataType resolve(DataType dataType) {
+//		return resolveDataType(dataType, viewDTM, null);
+//	}
 
 	/**
 	 * Gets the current row
@@ -276,8 +283,8 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	 * @return the original composite being viewed or null if nothing is currently loaded in
 	 * the model.
 	 */
-	protected Composite getOriginalComposite() {
-		Composite existingOriginal = getExistingOriginalComposite();
+	protected T getOriginalComposite() {
+		T existingOriginal = getExistingOriginalComposite();
 		return existingOriginal != null ? existingOriginal : originalComposite;
 	}
 
@@ -292,14 +299,15 @@ abstract class CompositeViewerModel extends AbstractTableModel
 		return getExistingOriginalComposite() != null;
 	}
 
-	private Composite getExistingOriginalComposite() {
+	@SuppressWarnings("unchecked")
+	private T getExistingOriginalComposite() {
 		long originalId = getCompositeID();
 		if (originalId != DataTypeManager.NULL_DATATYPE_ID && originalDataTypePath != null &&
 			originalDTM != null) {
 			DataType dt = originalDTM.getDataType(originalId);
 			if (dt instanceof Composite &&
 				DataTypeUtilities.isSameKindDataType(originalComposite, dt)) {
-				return (Composite) dt;
+				return (T) dt;
 			}
 		}
 		return null;
@@ -729,7 +737,10 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	@Override
 	public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
+		}
+		if (!isLoaded()) {
+			return;
 		}
 		if (originalDataTypePath.isAncestor(path)) {
 			String msg = "\"" + originalDataTypePath.getDataTypeName() + "\" had its category \"" +
@@ -754,7 +765,10 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	@Override
 	public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
+		}
+		if (!isLoaded()) {
+			return;
 		}
 		if (!viewDTM.containsCategory(oldPath)) {
 			return;
@@ -782,7 +796,10 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	@Override
 	public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
+		}
+		if (!isLoaded()) {
+			return;
 		}
 		if (!viewDTM.containsCategory(oldPath)) {
 			return;
@@ -1162,13 +1179,13 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	 * A notify method to take the listens to notify, along with the method that should be called
 	 * on each listener.
 	 * 
-	 * @param <T> the type of the listener
+	 * @param <L> the type of the listener
 	 * @param listeners the listeners
 	 * @param method the method to call
 	 */
-	protected <T> void notify(List<T> listeners, Consumer<T> method) {
+	protected <L> void notify(List<L> listeners, Consumer<L> method) {
 		swing(() -> {
-			for (T listener : listeners) {
+			for (L listener : listeners) {
 				method.accept(listener);
 			}
 		});

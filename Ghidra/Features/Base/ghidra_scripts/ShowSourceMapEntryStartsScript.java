@@ -16,7 +16,7 @@
 
 // This script displays a table showing the base address of each source map entry
 // in the program along with a count of the number of entries starting at the address.
-// @category SourceMapping
+// @category Source Mapping
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,7 +27,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.sourcemap.SourceMapEntry;
 import ghidra.program.model.sourcemap.SourceMapEntryIterator;
 import ghidra.util.datastruct.Counter;
-
 
 public class ShowSourceMapEntryStartsScript extends GhidraScript {
 

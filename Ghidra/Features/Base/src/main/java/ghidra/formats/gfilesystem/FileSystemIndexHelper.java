@@ -28,7 +28,7 @@ import ghidra.util.Msg;
  * <p>
  * This class also provides filename 'unique-ifying' (per directory) where an auto-incrementing
  * number will be added to a file's filename if it is not unique in the directory.
- * <p>
+ * 
  * @param <METADATATYPE> the filesystem specific native file object that the user of this
  * class wants to be able to correlate with Ghidra {@link GFile} instances.
  */
@@ -63,7 +63,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Creates a new {@link FileSystemIndexHelper} for the specified {@link GFileSystem}.
 	 * <p>
 	 * A "root" directory GFile will be auto-created for the filesystem.
-	 * <p>
+	 * 
 	 * @param fs the {@link GFileSystem} that this index will be for.
 	 * @param fsFSRL the {@link FSRLRoot fsrl} of the filesystem itself.
 	 * (this parameter is explicitly passed here so there is no possibility of trying to call
@@ -177,7 +177,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 */
 	public synchronized GFile lookup(GFile baseDir, String path, Comparator<String> nameComp) {
 		try {
-			return lookup(baseDir, path, false, nameComp);
+			FileData<METADATATYPE> baseDirData = getFileData(baseDir);
+			FileData<METADATATYPE> fileData =
+				lookup(baseDirData, FSUtilities.splitPath(path), -1, false, nameComp);
+			return (fileData != null) ? fileData.file : null;
 		}
 		catch (IOException e) {
 			// shouldn't happen, fall thru
@@ -185,42 +188,15 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		return null;
 	}
 
-	protected GFile lookup(GFile baseDir, String path, boolean followSymlinks,
-			Comparator<String> nameComp) throws IOException {
-		FileData<METADATATYPE> baseDirData = getFileData(baseDir);
-		FileData<METADATATYPE> fileData =
-			lookup(baseDirData, splitPath(path), -1, false, followSymlinks, 0, null, nameComp);
-		return (fileData != null) ? fileData.file : null;
-	}
-
 	protected FileData<METADATATYPE> lookup(FileData<METADATATYPE> baseDir, String[] nameparts,
-			int maxpart, boolean createIfMissing, boolean followSymlinks, int depth,
-			StringBuilder symlinkPathDebug, Comparator<String> nameComp) throws IOException {
-		symlinkPathDebug = Objects.requireNonNullElseGet(symlinkPathDebug, StringBuilder::new);
+			int maxpart, boolean createIfMissing, Comparator<String> nameComp) {
 		maxpart = maxpart < 0 ? nameparts.length : maxpart;
 
-		if (depth > MAX_SYMLINK_RECURSE_DEPTH) {
-			throw new IOException(
-				"Too many symlinks: %s, %s".formatted(symlinkPathDebug, Arrays.asList(nameparts)));
-		}
-
-		symlinkPathDebug.append("[");
 		FileData<METADATATYPE> currentFile = Objects.requireNonNullElse(baseDir, rootDir);
 		for (int i = 0; i < maxpart && currentFile != null; i++) {
 			String name = nameparts[i];
-			symlinkPathDebug.append(i != 0 ? "," : "").append(name);
 			if (name.isEmpty()) {
 				continue;
-			}
-			if (followSymlinks) {
-				// otherwise "." and ".." are valid path elements that need to be matched exactly
-				if (".".equals(name)) {
-					continue;
-				}
-				if ("..".equals(name)) {
-					currentFile = getParentFileData(currentFile);
-					continue;
-				}
 			}
 
 			Map<String, FileData<METADATATYPE>> currentDirContents =
@@ -229,9 +205,46 @@ public class FileSystemIndexHelper<METADATATYPE> {
 			if (next == null && createIfMissing) {
 				next = doStoreMissingDir(name, currentFile.file);
 			}
-			if (next != null && next.symlinkPath != null && followSymlinks) {
-				next = lookup(currentFile, splitPath(next.symlinkPath), -1, createIfMissing,
-					followSymlinks, depth + 1, symlinkPathDebug, nameComp);
+			currentFile = next;
+		}
+
+		return currentFile;
+	}
+
+	protected FileData<METADATATYPE> resolveSymlinkPath(FileData<METADATATYPE> baseDir, String path,
+			int depth, StringBuilder symlinkPathDebug, Comparator<String> nameComp)
+			throws IOException {
+		symlinkPathDebug = Objects.requireNonNullElseGet(symlinkPathDebug, StringBuilder::new);
+
+		if (depth > MAX_SYMLINK_RECURSE_DEPTH) {
+			throw new IOException("Too many symlinks: %s, %s".formatted(symlinkPathDebug, path));
+		}
+
+		symlinkPathDebug.append("[");
+		FileData<METADATATYPE> currentFile = Objects.requireNonNullElse(baseDir, rootDir);
+		String[] pathparts = FSUtilities.splitPath(path);
+		for (int i = 0; i < pathparts.length && currentFile != null; i++) {
+			String name = pathparts[i];
+			symlinkPathDebug.append(i != 0 ? "," : "").append(name);
+			if (i == 0 && name.isEmpty()) {
+				// leading '/' was present in the path, it overrides the current location
+				currentFile = rootDir;
+				continue;
+			}
+			if (name.isEmpty() || ".".equals(name)) {
+				continue;
+			}
+			if ("..".equals(name)) {
+				currentFile = getParentFileData(currentFile);
+				continue;
+			}
+
+			Map<String, FileData<METADATATYPE>> currentDirContents =
+				getDirectoryContents(currentFile.file, false);
+			FileData<METADATATYPE> next = lookupFileInDir(currentDirContents, name, nameComp);
+			if (next != null && next.symlinkPath != null) {
+				next = resolveSymlinkPath(currentFile, next.symlinkPath, depth + 1,
+					symlinkPathDebug, nameComp);
 			}
 			currentFile = next;
 		}
@@ -252,10 +265,14 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	public synchronized GFile resolveSymlinks(GFile file) throws IOException {
 		FileData<METADATATYPE> fd = getFileData(file);
 		if (fd.symlinkPath != null) {
-			fd = lookup(getParentFileData(fd), splitPath(fd.symlinkPath), -1, false, true, 0, null,
-				null);
+			fd = resolveSymlinkPath(getParentFileData(fd), fd.symlinkPath, 0, null, null);
 		}
 		return fd != null ? fd.file : null;
+	}
+
+	public synchronized String getSymlinkPath(GFile file) {
+		FileData<METADATATYPE> fd = file == null ? rootDir : fileToEntryMap.get(file);
+		return fd != null ? fd.symlinkPath : null;
 	}
 
 	private FileData<METADATATYPE> getFileData(GFile f) throws IOException {
@@ -283,7 +300,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param path string path and filename of the file being added to the index.  Back
 	 * slashes are normalized to forward slashes
@@ -298,7 +314,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	public synchronized GFile storeFile(String path, long fileIndex, boolean isDirectory,
 			long length, METADATATYPE metadata) {
 
-		String[] nameparts = splitPath(path);
+		String[] nameparts = FSUtilities.splitPath(path);
 		if (nameparts.length == 0) {
 			return rootDir.file;
 		}
@@ -318,7 +334,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param filename the new file's name
 	 * @param parent the new file's parent directory
@@ -346,7 +361,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param path string path and filename of the file being added to the index.  Back
 	 * slashes are normalized to forward slashes
@@ -360,7 +374,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 */
 	public synchronized GFile storeSymlink(String path, long fileIndex, String symlinkPath,
 			long length, METADATATYPE metadata) {
-		String[] nameparts = splitPath(path);
+		String[] nameparts = FSUtilities.splitPath(path);
 		if (nameparts.length == 0) {
 			Msg.warn(this,
 				"Unable to create invalid symlink file [%s] -> [%s]".formatted(path, symlinkPath));
@@ -384,7 +398,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param filename the new file's name
 	 * @param parent the new file's parent directory
@@ -476,7 +489,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Superfluous slashes in the original filename (ie. name/sub//subafter_extra_slash) will
 	 * be represented as empty string elements in the nameparts array and will be skipped
 	 * as if they were not there.
-	 * <p>
+	 * 
 	 * @param nameparts String[] containing the elements of a path
 	 * for them
 	 * @param nameComp optional comparator that will compare names, usually case-sensitive vs case
@@ -485,20 +498,9 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 */
 	protected GFile lookupParent(String[] nameparts, Comparator<String> nameComp) {
 
-		try {
-			FileData<METADATATYPE> parent =
-				lookup(rootDir, nameparts, nameparts.length - 1, true, false, 0, null, nameComp);
-			return parent.file;
-		}
-		catch (IOException e) {
-			// fall thru, return rootdir
-		}
-
-		return rootDir.file;
-	}
-
-	protected String[] splitPath(String path) {
-		return Objects.requireNonNullElse(path, "").replace('\\', '/').split("/");
+		FileData<METADATATYPE> parent =
+			lookup(rootDir, nameparts, nameparts.length - 1, true, nameComp);
+		return parent.file;
 	}
 
 	protected FileData<METADATATYPE> lookupFileInDir(
@@ -527,7 +529,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 	/**
 	 * Creates a new GFile instance, using per-filesystem custom logic.
-	 * <p>
 	 *
 	 * @param parentFile the parent file of the new instance.  Never null.
 	 * @param name the name of the file

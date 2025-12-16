@@ -16,7 +16,6 @@
 package ghidra.plugin.importer;
 
 import java.awt.Window;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
@@ -29,6 +28,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
@@ -43,6 +43,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.CryptoException;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
@@ -131,34 +132,30 @@ public class ImporterUtilities {
 
 		Objects.requireNonNull(monitor);
 
-		RefdFile referencedFile = null;
-		try {
-			referencedFile = fsService.getRefdFile(fsrl, monitor);
-
-			FSRL fullFsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
-			boolean isFSContainer = fsService.isFileFilesystemContainer(fullFsrl, monitor);
-			if (referencedFile.file.getLength() == 0) {
-				Msg.showError(ImporterUtilities.class, null, "File is empty",
-					"File " + fsrl.getPath() + " is empty, nothing to import");
+		try (RefdFile referencedFile = fsService.getRefdFile(fsrl, monitor)) {
+			if (!ensureFileImportable(referencedFile, monitor)) {
 				return;
 			}
 
+			FSRL fullFsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
 			GFileSystem fs = referencedFile.fsRef.getFilesystem();
 			if (fs instanceof GFileSystemProgramProvider) {
 				doFsImport(referencedFile, fullFsrl, destinationFolder, programManager, tool);
 				return;
 			}
 
-			if (!isFSContainer) {
+			if (fsService.isFileFilesystemContainer(fullFsrl, monitor)) {
+				// file is a container, ask user to pick single import, batch import or fs browser
+				importFromContainer(tool, programManager, destinationFolder, suggestedPath, monitor,
+					referencedFile, fullFsrl);
+			}
+			else {
 				// normal file; do a single-file import
 				showImportSingleFileDialog(fullFsrl, destinationFolder, suggestedPath, tool,
 					programManager, monitor);
 				return;
 			}
 
-			// file is a container, ask user to pick single import, batch import or fs browser
-			importFromContainer(tool, programManager, destinationFolder, suggestedPath, monitor,
-				referencedFile, fullFsrl);
 		}
 		catch (IOException ioe) {
 			String message = ioe.getMessage();
@@ -167,20 +164,6 @@ public class ImporterUtilities {
 		}
 		catch (CancelledException e) {
 			Msg.info(ImporterUtilities.class, "Show Import Dialog canceled");
-		}
-		finally {
-			close(referencedFile);
-		}
-	}
-
-	private static void close(Closeable c) {
-		if (c != null) {
-			try {
-				c.close();
-			}
-			catch (IOException e) {
-				// ignore
-			}
 		}
 	}
 
@@ -265,8 +248,16 @@ public class ImporterUtilities {
 
 	}
 
-	public static void showLoadLibrariesDialog(Program program, PluginTool tool,
-			ProgramManager manager, TaskMonitor monitor) {
+	/**
+	 * Constructs a {@link LoadLibrariesOptionsDialog} and shows it in the swing thread. If the 
+	 * given {@link Program} does not support library loading, a warning message will be shown
+	 * instead.
+	 * 
+	 * @param program The {@link Program}
+	 * @param tool The {@link PluginTool}
+	 * @param monitor {@link TaskMonitor}
+	 */
+	public static void showLoadLibrariesDialog(Program program, PluginTool tool,TaskMonitor monitor) {
 
 		Objects.requireNonNull(monitor);
 
@@ -279,9 +270,25 @@ public class ImporterUtilities {
 
 		try {
 			ByteProvider provider = getProvider(program);
+			if (provider == null) {
+				Msg.showWarn(null, null, LoadLibrariesOptionsDialog.TITLE,
+					"Cannot Load Libraries. Program does not have file bytes associated with it.");
+				return;
+			}
 			LoadSpec loadSpec = getLoadSpec(provider, program);
+			if (loadSpec == null || loadSpec.getLoader()
+					.getDefaultOptions(provider, loadSpec, null, false, false)
+					.stream()
+					.noneMatch(e -> e.getName()
+							.equals(
+								AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME))) {
+				Msg.showWarn(null, null, LoadLibrariesOptionsDialog.TITLE,
+					"Cannot Load Libraries. Program does not support library loading.");
+				return;
+			}
 			AddressFactory addressFactory =
 				loadSpec.getLanguageCompilerSpec().getLanguage().getAddressFactory();
+
 			SystemUtilities.runSwingLater(() -> {
 				OptionsDialog dialog = new LoadLibrariesOptionsDialog(provider, program, tool,
 					loadSpec, () -> addressFactory);
@@ -345,20 +352,13 @@ public class ImporterUtilities {
 				Program program =
 					doFSImportHelper((GFileSystemProgramProvider) refdFile.fsRef.getFilesystem(),
 						gfile, destFolder, consumer, monitor);
-				if (program != null) {
-					LoadResults<? extends DomainObject> loadResults = new LoadResults<>(program,
-						program.getName(), destFolder.getPathname());
-					boolean success = false;
-					try {
-						doPostImportProcessing(tool, programManager, fsrl, loadResults, consumer,
-							"", monitor);
-						success = true;
-					}
-					finally {
-						if (!success) {
-							program.release(consumer);
-						}
-					}
+				if (program == null) {
+					return;
+				}
+				try (LoadResults<? extends DomainObject> loadResults =
+					new LoadResults<>(new Loaded<>(program, program.getName(), fsrl,
+						tool.getProject(), destFolder.getPathname(), false, consumer))) {
+					doPostImportProcessing(tool, programManager, loadResults, "", monitor);
 				}
 			}
 			catch (Exception e) {
@@ -404,71 +404,82 @@ public class ImporterUtilities {
 	 * @param tool tool to which popup dialogs should be associated
 	 * @param programManager program manager to open imported file with or null
 	 * @param fsrl import file location
-	 * @param destFolder project destination folder
+	 * @param projectRootPath The project folder path that all imported things will be saved 
+	 *   relative to. If {@code null}, "/" will be used.
+	 * @param mirrorFsLayout True if the filesystem layout should be mirrored when loading;
+	 *   otherwise, false
 	 * @param loadSpec import {@link LoadSpec}
-	 * @param programName program name
+	 * @param importName The import name. Path information that appears at the beginning the name 
+	 *   will be appended to the {@code projectRootPath} during the saving process.
 	 * @param options import options
 	 * @param monitor task monitor
 	 */
 	public static void importSingleFile(PluginTool tool, ProgramManager programManager, FSRL fsrl,
-			DomainFolder destFolder, LoadSpec loadSpec, String programName, List<Option> options,
-			TaskMonitor monitor) {
+			String projectRootPath, boolean mirrorFsLayout, LoadSpec loadSpec, String importName,
+			List<Option> options, TaskMonitor monitor) {
 
 		Objects.requireNonNull(monitor);
 
 		try (ByteProvider bp = fsService.getByteProvider(fsrl, false, monitor)) {
-
-			Object consumer = new Object();
 			MessageLog messageLog = new MessageLog();
-			LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
-					.load(bp, programName, tool.getProject(), destFolder.getPathname(), loadSpec,
-						options, messageLog, consumer, monitor);
 
-			loadResults.save(tool.getProject(), consumer, messageLog, monitor);
+			ImporterSettings settings = new ImporterSettings(bp, importName, tool.getProject(),
+				projectRootPath, mirrorFsLayout, loadSpec, options, new Object(), messageLog,
+				monitor);
 
-			doPostImportProcessing(tool, programManager, fsrl, loadResults, consumer,
-				messageLog.toString(), monitor);
+			try (LoadResults<? extends DomainObject> loadResults =
+				loadSpec.getLoader().load(settings)) {
+				loadResults.save(monitor);
+				doPostImportProcessing(tool, programManager, loadResults, messageLog.toString(),
+					monitor);
+			}
+
 		}
 		catch (CancelledException e) {
 			// no need to show a message
 		}
 		catch (Exception e) {
+			Throwable cause = e.getCause() != null ? e.getCause() : e;
 			Msg.showError(ImporterUtilities.class, tool.getActiveWindow(), "Error Importing File",
-				"Error importing file: " + fsrl.getName(), e);
+				"Error importing file: %s (%s)".formatted(fsrl.getName(), cause.getMessage()),
+				cause);
 		}
 	}
 
 	private static Set<DomainFile> doPostImportProcessing(PluginTool pluginTool,
-			ProgramManager programManager, FSRL fsrl,
-			LoadResults<? extends DomainObject> loadResults, Object consumer, String importMessages,
-			TaskMonitor monitor) throws CancelledException {
+			ProgramManager programManager, LoadResults<? extends DomainObject> loadResults,
+			String importMessages, TaskMonitor monitor) throws CancelledException {
 
 		boolean firstProgram = true;
 		Set<DomainFile> importedFilesSet = new HashSet<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
 			monitor.checkCancelled();
-
-			if (loaded.getDomainObject() instanceof Program program) {
-				if (programManager != null) {
-					int openState = firstProgram
-							? ProgramManager.OPEN_CURRENT
-							: ProgramManager.OPEN_VISIBLE;
-					programManager.openProgram(program, openState);
+			Object consumer = new Object();
+			DomainObject obj = loaded.getDomainObject(consumer);
+			try {
+				if (obj instanceof Program) {
+					if (programManager != null) {
+						int openState = firstProgram
+								? ProgramManager.OPEN_CURRENT
+								: ProgramManager.OPEN_VISIBLE;
+						programManager.openProgram((Program) obj, openState);
+					}
+					importedFilesSet.add(obj.getDomainFile());
 				}
-				importedFilesSet.add(program.getDomainFile());
-			}
-			if (firstProgram) {
-				// currently we only show results for the imported program, not any libraries
-				displayResults(pluginTool, loaded.getDomainObject(),
-					loaded.getDomainObject().getDomainFile(), importMessages);
+				if (firstProgram) {
+					// currently we only show results for the imported program, not any libraries
+					displayResults(pluginTool, obj, obj.getDomainFile(), importMessages);
 
-				// Optionally echo loader message log to application.log
-				if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
-					Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
+					// Optionally echo loader message log to application.log
+					if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
+						Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
+					}
 				}
+				firstProgram = false;
 			}
-			loaded.release(consumer);
-			firstProgram = false;
+			finally {
+				obj.release(consumer);
+			}
 		}
 
 		selectFiles(importedFilesSet);
@@ -488,8 +499,13 @@ public class ImporterUtilities {
 		Objects.requireNonNull(monitor);
 
 		MessageLog messageLog = new MessageLog();
+		Object consumer = new Object();
+		program.addConsumer(consumer);
 		try (ByteProvider bp = fsService.getByteProvider(fsrl, false, monitor)) {
-			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor);
+			ImporterSettings settings = new ImporterSettings(bp, bp.getName(), tool.getProject(),
+				program.getDomainFile().getPathname(), false, loadSpec, options, consumer,
+				messageLog, monitor);
+			loadSpec.getLoader().loadInto(program, settings);
 			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
 
 			// Optionally echo loader message log to application.log
@@ -503,6 +519,9 @@ public class ImporterUtilities {
 		catch (IOException e) {
 			Msg.showError(ImporterUtilities.class, null, "Error Importing File",
 				"Error importing file " + fsrl.getName(), e);
+		}
+		finally {
+			program.release(consumer);
 		}
 
 	}
@@ -565,4 +584,51 @@ public class ImporterUtilities {
 				.findFirst()
 				.orElse(null);
 	}
+	
+	/**
+	 * Get's the {@link LoadSpec} that was used to import the given {@link Program}
+	 * 
+	 * @param program The {@link Program}
+	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
+	 *   it could not be determined
+	 */
+	public static LoadSpec getLoadSpec(Program program) {
+		ByteProvider provider;
+		if (program == null || (provider = getProvider(program)) == null) {
+			return null;
+		}
+		return getLoadSpec(provider, program);
+	}
+	
+	private static boolean ensureFileImportable(RefdFile refdFile, TaskMonitor monitor) {
+		GFile f = refdFile.file;
+		GFileSystem fs = refdFile.fsRef.getFilesystem();
+
+		monitor.initialize(0);
+		monitor.setMessage("Testing file access: " + f.getName());
+		try (ByteProvider bp = fs.getByteProvider(f, monitor)) {
+			if (bp.length() == 0) {
+				Msg.showError(ImporterUtilities.class, null, "File is empty",
+					"File %s is empty, nothing to import".formatted(f.getPath()));
+				return false;
+			}
+			return true;
+		}
+		catch (CryptoException e) {
+			Msg.showError(ImporterUtilities.class, null, "Crypto / Password Error",
+				"Unable to access the specified file.\n" +
+					"This could be caused by not entering the correct password or " +
+					"because of missing crypto information.\n\n" + e.getMessage());
+			return false;
+		}
+		catch (IOException e) {
+			Msg.showError(ImporterUtilities.class, null, "File IO Error",
+				"Unable to access the specified file.\n\n" + e.getMessage());
+			return false;
+		}
+		catch (CancelledException e) {
+			return false;
+		}
+	}
+
 }

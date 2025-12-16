@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 import db.DBRecord;
 import db.Field;
@@ -241,7 +240,10 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		ParameterDefinition[] definedArguments = funcDef.getArguments();
 		ParameterDefinitionDB[] myArguments = getArguments();
 		if (definedArguments.length != myArguments.length) {
-			throw new IllegalArgumentException("mismatched definition datatype");
+			throw new ConcurrentModificationException(
+				"Resolve failure: unexpected argument count detected for '" +
+					definitionDt.getPathName() + "' (" + definedArguments.length + " vs " +
+					myArguments.length + ")");
 		}
 		for (int i = 0; i < definedArguments.length; i++) {
 			ParameterDefinition arg = definedArguments[i];
@@ -321,7 +323,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public void setArguments(ParameterDefinition[] args) {
+	public void setArguments(ParameterDefinition... args) {
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -413,15 +415,26 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		lock.acquire();
 		try {
 			checkDeleted();
+			boolean changed = false;
 			int n = parameters.size();
 			for (int i = 0; i < n; i++) {
 				ParameterDefinitionDB param = parameters.get(i);
 				if (param.getDataType() == dt) {
-					param.setDataType(DataType.DEFAULT);
+					param.doSetDataType(DataType.DEFAULT, false);
+					param.doSetComment(
+						prependComment("Type '" + dt.getDisplayName() + "' was deleted",
+							param.getComment()),
+						false);
+					changed = true;
 				}
 			}
 			if (dt == getReturnType()) {
-				setReturnType(DataType.DEFAULT);
+				// NOTE: Not sure how to reflect in a comment
+				doSetReturnType(DataType.DEFAULT, false, false);
+				changed = true;
+			}
+			if (changed) {
+				dataMgr.dataTypeChanged(this, true);
 			}
 		}
 		finally {

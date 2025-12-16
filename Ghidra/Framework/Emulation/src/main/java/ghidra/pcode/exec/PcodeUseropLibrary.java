@@ -21,6 +21,7 @@ import java.util.*;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.pcode.PcodeOp;
@@ -130,8 +131,25 @@ public interface PcodeUseropLibrary<T> {
 		 * @param inVars the input varnodes as ordered in the source.
 		 * @see AnnotatedPcodeUseropLibrary.AnnotatedPcodeUseropDefinition
 		 */
-		void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library, Varnode outVar,
-				List<Varnode> inVars);
+		default void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
+				Varnode outVar, List<Varnode> inVars) {
+			execute(executor, library, null, outVar, inVars);
+		}
+
+		/**
+		 * Invoke/execute the userop.
+		 * 
+		 * @param executor the executor invoking this userop.
+		 * @param library the complete library for this execution. Note the library may have been
+		 *            composed from more than the one defining this userop.
+		 * @param op the CALLOTHER p-code op
+		 * @param outVar if invoked as an rval, the destination varnode for the userop's output.
+		 *            Otherwise, {@code null}.
+		 * @param inVars the input varnodes as ordered in the source.
+		 * @see AnnotatedPcodeUseropLibrary.AnnotatedPcodeUseropDefinition
+		 */
+		void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library, PcodeOp op,
+				Varnode outVar, List<Varnode> inVars);
 
 		/**
 		 * Invoke/execute the raw userop.
@@ -146,7 +164,7 @@ public interface PcodeUseropLibrary<T> {
 		 * @param op the {@link PcodeOp#CALLOTHER} op
 		 */
 		default void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library, PcodeOp op) {
-			execute(executor, library, op.getOutput(),
+			execute(executor, library, op, op.getOutput(),
 				Arrays.asList(op.getInputs()).subList(1, op.getNumInputs()));
 		}
 
@@ -188,6 +206,19 @@ public interface PcodeUseropLibrary<T> {
 		boolean hasSideEffects();
 
 		/**
+		 * Indicates that this userop may modify the decode context.
+		 * 
+		 * <p>
+		 * This means that the userop may set a field in {@code contextreg}, which could thus affect
+		 * how subsequent instructions are decoded. Executors which decode ahead will have to
+		 * consider this effect.
+		 * 
+		 * @return true if this can modify the context.
+		 * @see PcodeUserop#modifiesContext()
+		 */
+		boolean modifiesContext();
+
+		/**
 		 * Indicates whether or not this userop definition produces p-code suitable for inlining in
 		 * place of its invocation.
 		 * 
@@ -205,6 +236,17 @@ public interface PcodeUseropLibrary<T> {
 		 * @see PcodeUserop#canInline()
 		 */
 		boolean canInlinePcode();
+
+		/**
+		 * If this userop is defined as a java callback, get the type of the output
+		 * 
+		 * <p>
+		 * If the method has a {@code @}{@link OpOutput} annotation, this is the type of the output
+		 * parameter. Otherwise, this is the method's return type.
+		 * 
+		 * @return the output type
+		 */
+		Class<?> getOutputType();
 
 		/**
 		 * If this userop is defined as a java callback, get the method

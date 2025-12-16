@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,13 @@
  */
 package generic.jar;
 
-import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
-
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationSettings;
 
@@ -85,7 +84,12 @@ public class JarResource implements Resource {
 
 	@Override
 	public URL toURL() throws MalformedURLException {
-		return new URL(getAbsolutePath());
+		try {
+			return new URI(getAbsolutePath()).toURL();
+		}
+		catch (URISyntaxException e) {
+			throw new MalformedURLException(e.getMessage());
+		}
 	}
 
 	@Override

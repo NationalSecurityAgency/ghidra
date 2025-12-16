@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -418,15 +418,14 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		AddressSetView addresses = focusedVertex.getAddresses();
 		Address address = addresses.getMinAddress();
 		ProgramSelection selection =
-			new ProgramSelection(program.getAddressFactory(), address, address.add(8));
+			new ProgramSelection(address, address.add(8));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		//
 		// Validate and execute the action
 		//
 		DockingAction copyAction = getCopyAction();
-		FGController controller = getFunctionGraphController();
-		ComponentProvider provider = controller.getProvider();
+		ComponentProvider provider = getProvider();
 		assertTrue(copyAction.isEnabledForContext(provider.getActionContext(null)));
 
 		performAction(copyAction, provider, false);
@@ -478,8 +477,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		//
 		// Validate and execute the action
 		//		
-		FGController controller = getFunctionGraphController();
-		ComponentProvider provider = controller.getProvider();
+		ComponentProvider provider = getProvider();
 		ActionContext actionContext = provider.getActionContext(null);
 		boolean isEnabled = copyAction.isEnabledForContext(actionContext);
 		debugAction(copyAction, actionContext);
@@ -585,14 +583,14 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testGraphNodesCreated() throws Exception {
+
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
 		Collection<FGVertex> vertices = functionGraph.getVertices();
 
-		BlockModelService blockService = tool.getService(BlockModelService.class);
-		CodeBlockModel blockModel = blockService.getActiveBlockModel(program);
+		CodeBlockModel blockModel = new BasicBlockModel(program);
 		FunctionManager functionManager = program.getFunctionManager();
 		Function function = functionManager.getFunctionContaining(getAddress(startAddressString));
 		CodeBlockIterator iterator =

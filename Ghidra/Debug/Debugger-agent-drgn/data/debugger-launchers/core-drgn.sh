@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title drgn-core
+#@title drgn core
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>drgn-core</tt></h3>
 #@desc   <p>
@@ -24,7 +24,8 @@
 #@desc </body></html>
 #@menu-group drgn
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#drgn-core
+#@help drgn#core
+#@depends Debugger-rmi-trace
 #@env OPT_TARGET_IMG:file!="" "Core dump" "The target core dump"
 
 export OPT_TARGET_KIND="coredump" 

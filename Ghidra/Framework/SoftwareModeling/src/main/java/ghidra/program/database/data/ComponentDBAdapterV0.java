@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.model.data.InternalDataTypeComponent;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -79,7 +80,8 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 		record.setLongValue(ComponentDBAdapter.COMPONENT_PARENT_ID_COL, parentID);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataTypeID);
-		record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+		record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL,
+			InternalDataTypeComponent.cleanupFieldName(name));
 		record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 		record.setIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL, length);
 		record.setIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL, ordinal);
@@ -107,5 +109,4 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 		return componentTable.findRecords(new LongField(compositeID),
 			ComponentDBAdapter.COMPONENT_PARENT_ID_COL);
 	}
-
 }

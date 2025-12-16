@@ -24,11 +24,10 @@ import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod.GoIMethodInfo;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinition;
 import ghidra.util.Msg;
 
 /**
- * Represents a mapping between a golang interface and a type that implements the methods of
+ * Represents a mapping between a Go interface and a type that implements the methods of
  * the interface.
  */
 @PlateComment
@@ -52,32 +51,26 @@ public class GoItab implements StructureMarkup<GoItab> {
 	long fun;	// inline varlen array, specd as uintptr[1], we are treating as simple long 
 
 	/**
-	 * Returns the interface implemented by the specified type.
-	 * 
-	 * @return interface implemented by the specified type
+	 * {@return the interface implemented by the specified type}
 	 * @throws IOException if error reading ref'd interface structure
 	 */
 	@Markup
 	public GoInterfaceType getInterfaceType() throws IOException {
-		GoType result = programContext.getGoType(inter);
+		GoType result = programContext.getGoTypes().getType(inter);
 		return result instanceof GoInterfaceType ifaceType ? ifaceType : null;
 	}
 
 	/**
-	 * Returns the type that implements the specified interface.
-	 * 
-	 * @return type that implements the specified interface
+	 * {@return the type that implements the specified interface}
 	 * @throws IOException if error reading the ref'd type structure
 	 */
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.getGoType(_type);
+		return programContext.getGoTypes().getType(_type);
 	}
 
 	/**
-	 * Return the number of methods implemented.
-	 * 
-	 * @return number of methods implemented
+	 * {@return the number of methods implemented}
 	 * @throws IOException if error reading interface structure
 	 */
 	public long getFuncCount() throws IOException {
@@ -87,11 +80,8 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	/**
-	 * Returns an artificial slice that contains the address of the functions that implement
-	 * the interface methods.
-	 * 
-	 * @return artificial slice that contains the address of the functions that implement
-	 * the interface methods
+	 * {@return an artificial slice that contains the address of the functions that implement
+	 * the interface methods}
 	 * @throws IOException if error reading method info
 	 */
 	public GoSlice getFunSlice() throws IOException {
@@ -129,10 +119,8 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	/**
-	 * Returns list of {@link GoIMethodInfo} instances, that represent the methods implemented by
-	 * the specified type / interface.
-	 * 
-	 * @return list of {@link GoIMethodInfo} instances
+	 * {@return list of {@link GoIMethodInfo} instances, that represent the methods implemented by
+	 * the specified type / interface}
 	 * @throws IOException if error reading interface method list
 	 */
 	public List<GoIMethodInfo> getMethodInfoList() throws IOException {
@@ -143,28 +131,9 @@ public class GoItab implements StructureMarkup<GoItab> {
 		return results;
 	}
 
-	/**
-	 * Returns a {@link FunctionDefinition} for the specified method of this itab.
-	 * 
-	 * @param imethod info about an interface method
-	 * @return {@link FunctionDefinition} for the specified method of this itab
-	 * @throws IOException if error reading required info
-	 */
-	public FunctionDefinition getSignatureFor(GoIMethod imethod) throws IOException {
-		GoType receiverType = getType();
-		DataType receiverDT = programContext.getRecoveredType(receiverType);
-
-		GoType methodType = imethod.getType();
-		if (methodType == null) {
-			return null;
-		}
-		return programContext.getSpecializedMethodSignature(imethod.getName(), methodType,
-			receiverDT, false);
-	}
-
 	@Override
 	public String getStructureName() throws IOException {
-		return "%s__implements__%s".formatted(getType().getName(),
+		return "%s__implements__%s".formatted(getType().getSymbolName().asString(),
 			getInterfaceType().getName());
 	}
 
@@ -174,12 +143,20 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s__itab".formatted(getStructureName());
+	}
+
+	@Override
 	public String getStructureNamespace() throws IOException {
 		return getType().getStructureNamespace();
 	}
-	
+
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException {
+		// TODO: would be nice if we could override the base structure data type used to markup
+		// ourself, and use a specialized itab (as created by the GoInterfaceType).
+
 		GoSlice funSlice = getFunSlice();
 		List<Address> funcAddrs = Arrays.stream(funSlice.readUIntList(programContext.getPtrSize()))
 				.mapToObj(offset -> programContext.getCodeAddress(offset))
@@ -213,15 +190,21 @@ public class GoItab implements StructureMarkup<GoItab> {
 		}
 	}
 
+	public void discoverGoTypes(Set<Long> discoveredTypes) {
+		try {
+			GoInterfaceType ifaceType = getInterfaceType();
+			if (ifaceType != null) {
+				ifaceType.discoverGoTypes(discoveredTypes);
+			}
+			GoType type = getType();
+			if (type != null) {
+				type.discoverGoTypes(discoveredTypes);
+			}
+		}
+		catch (IOException e) {
+			// fail, don't discover the ref'd types
+		}
+	}
+
 }
-/*
-struct runtime.itab  
-Length: 20  Alignment: 4
-{ 
-  runtime.interfacetype *  inter    
-  runtime._type *                _type   
-  uint32                                hash    
-  uint8[4]                             _          
-  uintptr[1]                         fun       
-} pack()
-*/
+

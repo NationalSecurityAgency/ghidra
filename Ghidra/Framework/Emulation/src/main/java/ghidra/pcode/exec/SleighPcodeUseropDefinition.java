@@ -20,6 +20,7 @@ import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -170,7 +171,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 
 	@Override
 	public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-			Varnode outArg, List<Varnode> inArgs) {
+			PcodeOp op, Varnode outArg, List<Varnode> inArgs) {
 		PcodeProgram program = programFor(outArg, inArgs, library);
 		executor.execute(program, library);
 	}
@@ -203,9 +204,27 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote We could scan the p-code ops for any that write to the contextreg; however, at the
+	 *           moment, that is highly unconventional and perhaps even considered an error. If that
+	 *           becomes more common, or even recommended, then we can detect it and behave
+	 *           accordingly during interpretation (whether for execution or translation).
+	 */
+	@Override
+	public boolean modifiesContext() {
+		return false;
+	}
+
 	@Override
 	public boolean canInlinePcode() {
 		return true;
+	}
+
+	@Override
+	public Class<?> getOutputType() {
+		return void.class;
 	}
 
 	@Override

@@ -15,19 +15,26 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
+import ghidra.app.util.bin.format.dwarf.expression.DWARFExpression;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
+import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -133,20 +140,6 @@ public class DWARFFunctionImporter {
 					th);
 				Msg.info(this, "DIE info:\n" + diea.toString());
 			}
-		}
-		logImportErrorSummary();
-
-
-	}
-
-	private void logImportErrorSummary() {
-		if (!importSummary.unknownRegistersEncountered.isEmpty()) {
-			Msg.error(this, "Found %d unknown registers referenced in DWARF expression operands:"
-					.formatted(importSummary.unknownRegistersEncountered.size()));
-			List<Integer> sortedUnknownRegs =
-				new ArrayList<>(importSummary.unknownRegistersEncountered);
-			Collections.sort(sortedUnknownRegs);
-			Msg.error(this, "  unknown registers: %s".formatted(sortedUnknownRegs));
 		}
 	}
 
@@ -269,6 +262,33 @@ public class DWARFFunctionImporter {
 			appendPlateComment(dfunc.address, "DWARF signature update mode: ",
 				dfunc.signatureCommitMode.toString());
 		}
+		if (importOptions.isShowVariableStorageInfo()) {
+			try {
+				DWARFLocationList frameBaseLocs = dfunc.diea.getLocationList(DW_AT_frame_base);
+				if (!frameBaseLocs.isEmpty()) {
+					DWARFLocation frameLoc =
+						frameBaseLocs.getLocationContaining(dfunc.getEntryPc());
+					// get the framebase register, find where the frame is finally setup.
+					if (frameLoc != null) {
+						DWARFCompilationUnit cu = dfunc.diea.getCompilationUnit();
+						DWARFExpression expr = DWARFExpression.read(frameLoc.getExpr(), cu);
+						Varnode frameBaseVal = dfunc.funcEntryFrameBaseLoc != null
+								? dfunc.funcEntryFrameBaseLoc.getResolvedValue()
+								: null;
+						AddressBasedLocation abl = frameBaseVal != null
+								? new AddressBasedLocation(currentProgram,
+									frameBaseVal.getAddress())
+								: null;
+						String fbDestStr = abl != null ? abl.toString() : "???";
+						appendPlateComment(dfunc.address, "DWARF frame base: ",
+							expr.toString(cu) + "=" + fbDestStr);
+					}
+				}
+			}
+			catch (DWARFExpressionException | IOException e) {
+				// skip
+			}
+		}
 
 		if (dfunc.name.isNameModified()) {
 			appendPlateComment(dfunc.address, "DWARF original name: ",
@@ -281,6 +301,25 @@ public class DWARFFunctionImporter {
 			// if the prototype of the function was modified during the fixup phase, append
 			// the original version (according to dwarf) to the comment
 			appendPlateComment(dfunc.address, "DWARF original prototype: ", origFuncDefStr);
+		}
+
+		if (dfunc.getBody().getNumAddressRanges() > 1) {
+			String mainFuncAnnotate = AddressAnnotatedStringHandler
+					.createAddressAnnotationString(dfunc.address.getOffset(), dfunc.name.getName());
+			int rngNum = 0;
+			for (AddressRange rng : dfunc.getBody().getAddressRanges()) {
+				String rngMinAnnotate = AddressAnnotatedStringHandler.createAddressAnnotationString(
+					rng.getMinAddress().getOffset(), rng.getMinAddress().toString());
+				String comment = rngMinAnnotate + " (" + rng.getLength() + " bytes)";
+				appendPlateComment(dfunc.address, "DWARF func body range[" + rngNum + "]: ",
+					comment);
+				if (rngNum != 0) {
+					appendPlateComment(rng.getMinAddress(), "DWARF: ",
+						mainFuncAnnotate + " disjoint block " + rngNum);
+				}
+				rngNum++;
+			}
+
 		}
 
 
@@ -299,12 +338,22 @@ public class DWARFFunctionImporter {
 					if (offsetFromFuncStart >= 0) {
 						DWARFVariable localVar =
 							DWARFVariable.readLocalVariable(childDIEA, dfunc, offsetFromFuncStart);
-						if (localVar != null) {
+						if (!localVar.isMissingStorage()) {
 							if (prog.getImportOptions().isImportLocalVariables() ||
 								localVar.isRamStorage()) {
 								// only retain the local var if option is turned on, or global/static variable
 								dfunc.localVars.add(localVar);
 							}
+						}
+						else {
+							String s = "%s %s@[%s]".formatted(localVar.type.getName(),
+								localVar.name.getName(),
+								localVar.comment != null && !localVar.comment.isEmpty()
+										? localVar.comment
+										: "???");
+							DWARFUtil.appendComment(currentProgram,
+								dfunc.address.add(offsetFromFuncStart), CommentType.PRE,
+								"Unresolved local var: ", s, "\n");
 						}
 					}
 					break;
@@ -367,7 +416,7 @@ public class DWARFFunctionImporter {
 			// because this is a zero-length data type (ie. array[0]),
 			// don't create a variable at the location since it will prevent other elements
 			// from occupying the same offset
-			appendComment(address, CodeUnit.PRE_COMMENT,
+			appendComment(address, CommentType.PRE,
 				"Zero length variable: %s: %s".formatted(name, dataType.getDisplayName()), "\n");
 
 			return;
@@ -384,13 +433,13 @@ public class DWARFFunctionImporter {
 		}
 
 		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-			appendComment(address, CodeUnit.EOL_COMMENT,
+			appendComment(address, CommentType.EOL,
 				"Unsupported dynamic data type: " + dataType, "\n");
 			dataType = Undefined.getUndefinedDataType(1);
 		}
 		DWARFDataInstanceHelper dih = new DWARFDataInstanceHelper(currentProgram);
 		if (!dih.isDataTypeCompatibleWithAddress(dataType, address)) {
-			appendComment(address, CodeUnit.EOL_COMMENT,
+			appendComment(address, CommentType.EOL,
 				"Could not place DWARF static variable %s: %s @%s because existing data type conflicts."
 						.formatted(name, dataType.getName(), address),
 				"\n");
@@ -414,8 +463,7 @@ public class DWARFFunctionImporter {
 		}
 
 		if (globalVar.sourceInfo != null) {
-			appendComment(address, CodeUnit.EOL_COMMENT, globalVar.sourceInfo.getDescriptionStr(),
-				"\n");
+			appendComment(address, CommentType.EOL, globalVar.sourceInfo.getDescriptionStr(), "\n");
 		}
 	}
 
@@ -437,7 +485,7 @@ public class DWARFFunctionImporter {
 			if (importOptions.isOutputLexicalBlockComments()) {
 				boolean disjoint = blockRanges.getListCount() > 1;
 				DWARFName dni = prog.getName(diea);
-				appendComment(blockStart, CodeUnit.PRE_COMMENT,
+				appendComment(blockStart, CommentType.PRE,
 					"Begin: %s%s".formatted(dni.getName(), disjoint ? " - Disjoint" : ""), "\n");
 			}
 		}
@@ -471,22 +519,23 @@ public class DWARFFunctionImporter {
 			long inlineFuncLen = range.getLength();
 			boolean isShort = inlineFuncLen < INLINE_FUNC_SHORT_LEN;
 			if (isShort) {
-				appendComment(range.getMinAddress(), CodeUnit.EOL_COMMENT,
+				appendComment(range.getMinAddress(), CommentType.EOL,
 					"inline " + funcDef.getPrototypeString(), "; ");
 			}
 			else {
-				appendComment(range.getMinAddress(), CodeUnit.PRE_COMMENT,
+				appendComment(range.getMinAddress(), CommentType.PRE,
 					"Begin: inline " + funcDef.getPrototypeString(), "\n");
 			}
 		}
 	}
 
-	private void appendComment(Address address, int commentType, String comment, String sep) {
+	private void appendComment(Address address, CommentType commentType, String comment,
+			String sep) {
 		DWARFUtil.appendComment(currentProgram, address, commentType, "", comment, sep);
 	}
 
 	private void appendPlateComment(Address address, String prefix, String comment) {
-		DWARFUtil.appendComment(currentProgram, address, CodeUnit.PLATE_COMMENT, prefix, comment,
+		DWARFUtil.appendComment(currentProgram, address, CommentType.PLATE, prefix, comment,
 			"\n");
 	}
 
@@ -507,13 +556,11 @@ public class DWARFFunctionImporter {
 
 	/**
 	 * Move an address range into a fragment.
-	 * @param cu current compile unit
 	 * @param name name of the fragment
-	 * @param start start address of the fragment
-	 * @param end end address of the fragment
-	 * @param fileID offset of the file name in the debug_line section
+	 * @param addrs set of addresses that belong to the item
+	 * @param fileName source filename that contained the item 
 	 */
-	private void moveIntoFragment(String name, AddressSetView range, String fileName) {
+	private void moveIntoFragment(String name, AddressSetView addrs, String fileName) {
 		if (fileName != null) {
 			ProgramModule module = null;
 			int index = rootModule.getIndex(fileName);
@@ -522,7 +569,7 @@ public class DWARFFunctionImporter {
 					module = rootModule.createModule(fileName);
 				}
 				catch (DuplicateNameException e) {
-					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, range),
+					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, addrs),
 						e);
 					return;
 				}
@@ -542,10 +589,12 @@ public class DWARFFunctionImporter {
 						Group[] children = module.getChildren();//TODO add a getChildAt(index) method...
 						frag = (ProgramFragment) children[index];
 					}
-					frag.move(range.getMinAddress(), range.getMaxAddress());
+					for (AddressRange rng : addrs.getAddressRanges()) {
+						frag.move(rng.getMinAddress(), rng.getMaxAddress());
+					}
 				}
 				catch (NotFoundException e) {
-					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, range),
+					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, addrs),
 						e);
 					return;
 				}
@@ -572,7 +621,7 @@ public class DWARFFunctionImporter {
 
 				String locationInfo = DWARFSourceInfo.getDescriptionStr(diea);
 				if (locationInfo != null) {
-					appendComment(address, CodeUnit.EOL_COMMENT, locationInfo, "; ");
+					appendComment(address, CommentType.EOL, locationInfo, "; ");
 				}
 			}
 			catch (InvalidInputException e) {

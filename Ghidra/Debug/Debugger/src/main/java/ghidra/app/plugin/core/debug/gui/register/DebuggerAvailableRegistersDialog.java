@@ -64,8 +64,7 @@ public class DebuggerAvailableRegistersDialog extends ReusableDialogComponentPro
 		@SuppressWarnings("unchecked")
 		<T> AvailableRegisterTableColumns(String header, Class<T> cls,
 				Function<AvailableRegisterRow, T> getter,
-				BiConsumer<AvailableRegisterRow, T> setter,
-				boolean sortable) {
+				BiConsumer<AvailableRegisterRow, T> setter, boolean sortable) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
@@ -145,12 +144,14 @@ public class DebuggerAvailableRegistersDialog extends ReusableDialogComponentPro
 		availableTable = new GTable(availableTableModel);
 		// Selection is actually via checkboxes
 		availableTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		availableTable.getAccessibleContext().setAccessibleName("Selection Choices");
 		panel.add(new JScrollPane(availableTable));
 		availableTable.setAutoLookupColumn(AvailableRegisterTableColumns.NAME.ordinal());
 
 		availableFilterPanel = new GhidraTableFilterPanel<>(availableTable, availableTableModel);
+		availableFilterPanel.getAccessibleContext().setAccessibleName("Available Filters");
 		panel.add(availableFilterPanel, BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Available Debugger Registers");
 		addWorkPanel(panel);
 
 		TableColumnModel columnModel = availableTable.getColumnModel();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.util.List;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
@@ -64,9 +63,8 @@ public class Vtable {
 	DataTypeManager dataTypeManager;
 	Listing listing;
 
-	
-
-	public Vtable(Program program, Address vtableAddress, GccTypeinfoRef typeinfoRef, boolean isSpecial, boolean inExternalMemory,
+	public Vtable(Program program, Address vtableAddress, GccTypeinfoRef typeinfoRef,
+			boolean isSpecial, boolean inExternalMemory,
 			Vtable primaryVtable, Boolean isConstruction, TaskMonitor monitor)
 			throws CancelledException {
 
@@ -92,21 +90,24 @@ public class Vtable {
 		functionManager = program.getFunctionManager();
 		dataTypeManager = program.getDataTypeManager();
 		listing = program.getListing();
-	
+
 		setup();
 	}
-	
-	public Vtable(Program program, Address vtableAddress, GccTypeinfoRef typeinfoRef, boolean isSpecial, boolean inExternalMemory, TaskMonitor monitor)
+
+	public Vtable(Program program, Address vtableAddress, GccTypeinfoRef typeinfoRef,
+			boolean isSpecial, boolean inExternalMemory, TaskMonitor monitor)
 			throws CancelledException {
 		this(program, vtableAddress, typeinfoRef, isSpecial, inExternalMemory, null, null, monitor);
 	}
 
-	public Vtable(Program program, Address vtableAddress, GccTypeinfoRef typeinfoRef, boolean isSpecial, boolean inExternalMemory, boolean isConstruction,
+	public Vtable(Program program, Address vtableAddress, GccTypeinfoRef typeinfoRef,
+			boolean isSpecial, boolean inExternalMemory, boolean isConstruction,
 			TaskMonitor monitor) throws CancelledException {
-		this(program, vtableAddress, typeinfoRef, isSpecial, inExternalMemory, null, isConstruction, monitor);
+		this(program, vtableAddress, typeinfoRef, isSpecial, inExternalMemory, null, isConstruction,
+			monitor);
 	}
 
-	protected void setup() throws CancelledException  {
+	protected void setup() throws CancelledException {
 
 		checkValidTop();
 
@@ -127,7 +128,7 @@ public class Vtable {
 		}
 
 		figureOutNamespace();
-		
+
 		setHasVfunctions();
 
 		if (!isValid) {
@@ -143,10 +144,11 @@ public class Vtable {
 		if (!isValid) {
 			return;
 		}
-		
+
 		try {
 			applyVtableData();
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			isValid = false;
 		}
 
@@ -196,16 +198,15 @@ public class Vtable {
 		return isValid;
 	}
 
-
 	public Address getTypeinfoRefAddress() {
 		return typeinfoRef.getAddress();
 	}
-	
+
 	public GccTypeinfo getReferencedTypeinfo() {
 		return (GccTypeinfo) typeinfoRef.getReferencedTypeinfo();
 	}
 
-	protected void setTypeinfoAddress()  {
+	protected void setTypeinfoAddress() {
 
 		typeinfoAddress = typeinfo.getAddress();
 		typeinfoNamespace = typeinfo.getNamespace();
@@ -221,13 +222,14 @@ public class Vtable {
 		try {
 			Address topOffset = typeinfoRefAddress.subtract(defaultPointerSize);
 			if (topOffset.getOffset() < vtableAddress.getOffset()) {
-				Msg.debug(this,"No offset field in vtable at " + vtableAddress.toString());
+				Msg.debug(this, "No offset field in vtable at " + vtableAddress.toString());
 				isValid = false;
 				return;
 			}
 
 			topOffsetValue = extendedFlatAPI.getLongValueAt(topOffset);
-		} catch (IllegalArgumentException e) {
+		}
+		catch (IllegalArgumentException e) {
 			Msg.debug(this, "Invalid vtable: " + vtableAddress.toString() + " No offset field");
 			isValid = false;
 		}
@@ -252,7 +254,8 @@ public class Vtable {
 		// otherwise, use the topOffsetValue to figure it out
 		if (topOffsetValue == 0L) {
 			isPrimary = true;
-		} else {
+		}
+		else {
 			isPrimary = false;
 		}
 	}
@@ -289,15 +292,17 @@ public class Vtable {
 
 		try {
 			Address possVfunctionTop = typeinfoRefAddress.add(defaultPointerSize);
-			
+
 			numVfunctions = getNumFunctionPointers(possVfunctionTop, true, false);
 			if (numVfunctions == 0) {
 				hasVfunctions = false;
-			} else {
+			}
+			else {
 				hasVfunctions = true;
 				vfunctionTop = possVfunctionTop;
 			}
-		} catch (AddressOutOfBoundsException e) {
+		}
+		catch (AddressOutOfBoundsException e) {
 			hasVfunctions = false;
 		}
 
@@ -308,17 +313,19 @@ public class Vtable {
 
 		int numFunctionPointers = 0;
 		Address address = topAddress;
-		
+
 		// if it has a primary non-default symbol and it isn't "vftable" then it isn't a vftable
 		Symbol primarySymbol = symbolTable.getPrimarySymbol(topAddress);
-		if(primarySymbol != null && primarySymbol.getSource() != SourceType.DEFAULT && !primarySymbol.getName().contains("vftable")) {
+		if (primarySymbol != null && primarySymbol.getSource() != SourceType.DEFAULT &&
+			!primarySymbol.getName().contains("vftable")) {
 			return numFunctionPointers;
 		}
 		MemoryBlock currentBlock = program.getMemory().getBlock(topAddress);
 
 		boolean stillInCurrentTable = true;
-		while (address != null && currentBlock.contains(address) && stillInCurrentTable
-				&& (isPossibleFunctionPointer(address) || (allowNullFunctionPtrs && isPossibleNullPointer(address)))) {
+		while (address != null && currentBlock.contains(address) && stillInCurrentTable &&
+			(extendedFlatAPI.isPossibleFunctionPointer(program, address) ||
+				(allowNullFunctionPtrs && isPossibleNullPointer(address)))) {
 
 			numFunctionPointers++;
 			address = address.add(defaultPointerSize);
@@ -336,33 +343,34 @@ public class Vtable {
 				stillInCurrentTable = false;
 			}
 		}
-		
+
 		//NEW: TESTING Don't allow single null pointer at top of vftable
 		//OR test to see if nulls then typeinfo ptr
 //		if(isPossibleNullPointer(topAddress) && numFunctionPointers == 1) {
 //				return 0;
 //		}
-		
+
 		// check to see if last is null ptr and next addr after that is typeinfo ref - indicating the null is really top of next vtable
-		Address lastAddress = topAddress.add((numFunctionPointers-1)*defaultPointerSize);
-		if(isPossibleNullPointer(lastAddress) && (isTypeinfoRef(lastAddress.add(defaultPointerSize)))){
+		Address lastAddress = topAddress.add((numFunctionPointers - 1) * defaultPointerSize);
+		if (isPossibleNullPointer(lastAddress) &&
+			(isTypeinfoRef(lastAddress.add(defaultPointerSize)))) {
 			numFunctionPointers--;
 		}
 		return numFunctionPointers;
 	}
-	
+
 	private boolean isTypeinfoRef(Address addr) {
-		
+
 		Address referencedAddress = getReferencedAddress(addr);
-		if(referencedAddress == null) {
+		if (referencedAddress == null) {
 			return false;
 		}
 		Data data = program.getListing().getDataAt(referencedAddress);
-		if(data == null) {
+		if (data == null) {
 			return false;
 		}
-		
-		if(data.getBaseDataType().getName().contains("ClassTypeInfoStructure")) {
+
+		if (data.getBaseDataType().getName().contains("ClassTypeInfoStructure")) {
 			return true;
 		}
 		return false;
@@ -380,97 +388,6 @@ public class Vtable {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Method to determine if the given address contains a possible function pointer
-	 * 
-	 * @param address the given address
-	 * @return true if the given address contains a possible function pointer or
-	 *         false otherwise
-	 * @throws CancelledException if cancelled
-	 */
-	private boolean isPossibleFunctionPointer(Address address) throws CancelledException {
-
-		long longValue = extendedFlatAPI.getLongValueAt(address);
-
-		Register lowBitCodeMode = program.getRegister("LowBitCodeMode");
-		if (lowBitCodeMode != null) {
-			longValue = longValue & ~0x1;
-		}
-
-		Address possibleFunctionPointer = null;
-
-		try {
-			possibleFunctionPointer = address.getNewAddress(longValue);
-		} catch (AddressOutOfBoundsException e) {
-			return false;
-		}
-
-		if (possibleFunctionPointer == null) {
-			return false;
-		}
-
-		Function function = extendedFlatAPI.getFunctionAt(possibleFunctionPointer);
-		if (function != null) {
-			return true;
-		}
-
-		AddressSetView executeSet = program.getMemory().getExecuteSet();
-
-		if (!executeSet.contains(possibleFunctionPointer)) {
-			return false;
-		}
-
-		Instruction instruction = extendedFlatAPI.getInstructionAt(possibleFunctionPointer);
-		if (instruction != null) {
-			extendedFlatAPI.createFunction(possibleFunctionPointer, null);
-			return true;
-
-		}
-
-		boolean disassemble = extendedFlatAPI.disassemble(possibleFunctionPointer);
-		if (disassemble) {
-
-			// check for the case where there is conflicting data at the thumb offset
-			// function
-			// pointer and if so clear the data and redisassemble and remove the bad
-			// bookmark
-			long originalLongValue = extendedFlatAPI.getLongValueAt(address);
-			if (originalLongValue != longValue) {
-				Address offsetPointer = address.getNewAddress(originalLongValue);
-				if (extendedFlatAPI.getDataAt(offsetPointer) != null) {
-					extendedFlatAPI.clearListing(offsetPointer);
-					disassemble = extendedFlatAPI.disassemble(address);
-
-					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR, "Bad Instruction",
-							"conflicting data");
-					if (bookmark != null) {
-						extendedFlatAPI.removeBookmark(bookmark);
-					}
-				}
-			}
-
-			extendedFlatAPI.createFunction(possibleFunctionPointer, null);
-			return true;
-		}
-		return false;
-	}
-
-	private Bookmark getBookmarkAt(Address address, String bookmarkType, String category, String commentContains)
-			throws CancelledException {
-
-		Bookmark[] bookmarks = program.getBookmarkManager().getBookmarks(address);
-
-		for (Bookmark bookmark : bookmarks) {
-			monitor.checkCancelled();
-
-			if (bookmark.getType().getTypeString().equals(bookmarkType) && bookmark.getCategory().equals(category)
-					&& bookmark.getComment().contains(commentContains)) {
-				return bookmark;
-			}
-		}
-		return null;
 	}
 
 	public void setHasVfunctions(boolean flag) {
@@ -492,7 +409,8 @@ public class Vtable {
 			return;
 		}
 		if (!hasVfunctions) {
-			length = (int) (typeinfoRefAddress.getOffset() + defaultPointerSize - vtableAddress.getOffset());
+			length = (int) (typeinfoRefAddress.getOffset() + defaultPointerSize -
+				vtableAddress.getOffset());
 			return;
 		}
 
@@ -539,7 +457,7 @@ public class Vtable {
 		}
 
 		boolean keepChecking = true;
-		
+
 		int limit = length;
 
 		while (keepChecking) {
@@ -547,20 +465,22 @@ public class Vtable {
 			monitor.checkCancelled();
 
 			Address nextAddr = vtableAddress.add(length);
-			
-			
+
 			Address typeinfoAddr = typeinfo.getAddress();
-			
-			int alignment = nextAddr.getSize()/8;
-			Address nextTypeinfoRefAddr = getNextReferenceTo(nextAddr, typeinfoAddr, alignment, limit);
-			if(nextTypeinfoRefAddr == null) {
+
+			int alignment = nextAddr.getSize() / 8;
+			Address nextTypeinfoRefAddr =
+				getNextReferenceTo(nextAddr, typeinfoAddr, alignment, limit);
+			if (nextTypeinfoRefAddr == null) {
 				keepChecking = false;
 				continue;
 			}
-			
-			GccTypeinfoRef internalTypenfoRef = new GccTypeinfoRef(nextTypeinfoRefAddr, typeinfo, true);
 
-			Vtable possibleInternalVtable = new Vtable(program, nextAddr,internalTypenfoRef, isSpecial, inExternalMemory,
+			GccTypeinfoRef internalTypenfoRef =
+				new GccTypeinfoRef(nextTypeinfoRefAddr, typeinfo, true);
+
+			Vtable possibleInternalVtable =
+				new Vtable(program, nextAddr, internalTypenfoRef, isSpecial, inExternalMemory,
 					this, isConstruction, monitor);
 			if (!possibleInternalVtable.isValid()) {
 				keepChecking = false;
@@ -575,20 +495,22 @@ public class Vtable {
 			Namespace internalVtableNamespace = possibleInternalVtable.getNamespace();
 			if (internalVtableNamespace != null && internalVtableNamespace.equals(classNamespace)) {
 				addInternalVtable(possibleInternalVtable);
-			} else {
+			}
+			else {
 				keepChecking = false;
 			}
 
 		}
 	}
-	
-	private Address getNextReferenceTo(Address startAddress, Address refdAddress, int alignment, int limit) {
-		
+
+	private Address getNextReferenceTo(Address startAddress, Address refdAddress, int alignment,
+			int limit) {
+
 		int offset = alignment;
-		while(offset < limit) {
+		while (offset < limit) {
 			Address addr = startAddress.add(offset);
 			Address referencedAddress = getReferencedAddress(addr);
-			if(referencedAddress != null && referencedAddress.equals(refdAddress)) {
+			if (referencedAddress != null && referencedAddress.equals(refdAddress)) {
 				return addr;
 			}
 			offset += alignment;
@@ -604,7 +526,7 @@ public class Vtable {
 	public List<Vtable> getInternalVtables() {
 		return internalVtables;
 	}
-	
+
 	public void setIsConstructionVtable(Boolean setting) {
 		isConstruction = setting;
 	}
@@ -614,8 +536,8 @@ public class Vtable {
 	}
 
 	private void figureOutNamespace() {
-		
-		if(isConstruction == null) {
+
+		if (isConstruction == null) {
 			setNamespace(globalNamespace);
 			return;
 		}
@@ -635,7 +557,8 @@ public class Vtable {
 		// if not primary and the primary has same namespace then it is an internal
 		// vtable and can
 		// set the namespace to the typeinfo namespace
-		if (!primaryVtable.getNamespace().isGlobal() && primaryVtable.getNamespace().equals(typeinfoNamespace)) {
+		if (!primaryVtable.getNamespace().isGlobal() &&
+			primaryVtable.getNamespace().equals(typeinfoNamespace)) {
 			setNamespace(typeinfoNamespace);
 			return;
 		}
@@ -647,7 +570,7 @@ public class Vtable {
 	public void setNamespace(Namespace namespace) {
 
 		classNamespace = namespace;
-		for(Vtable internalVtable : internalVtables) {
+		for (Vtable internalVtable : internalVtables) {
 			internalVtable.setNamespace(namespace);
 		}
 	}
@@ -657,7 +580,7 @@ public class Vtable {
 	}
 
 	protected boolean applyVtableData() throws CancelledException, Exception {
-		
+
 		Data dataAt = listing.getDataAt(vtableAddress);
 
 		// first check to see it is an erroneous vtable that has been made a byte array
@@ -699,15 +622,16 @@ public class Vtable {
 			throws AddressOutOfBoundsException {
 
 		listing.clearCodeUnits(vftableAddress,
-				vftableAddress.add((numFunctionPointers * defaultPointerSize - 1)), false);
+			vftableAddress.add((numFunctionPointers * defaultPointerSize - 1)), false);
 
 		DataType pointerDataType = dataTypeManager.getPointer(null);
 		ArrayDataType vftableArrayDataType = new ArrayDataType(pointerDataType, numFunctionPointers,
-				defaultPointerSize);
+			defaultPointerSize);
 		try {
 			Data vftableArrayData = listing.createData(vftableAddress, vftableArrayDataType);
 			return vftableArrayData;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			return null;
 		}
 
@@ -725,21 +649,21 @@ public class Vtable {
 	private void createLongs(Address start, Address end) throws CancelledException, Exception {
 
 		DataType longDT = new LongDataType(dataTypeManager);
-		if (defaultPointerSize == 8) {	
+		if (defaultPointerSize == 8) {
 			longDT = new LongLongDataType();
 		}
 		int offset = 0;
 		Address address = start;
 		while (address != null && !address.equals(end)) {
 
-			listing.clearCodeUnits(address, address.add(defaultPointerSize - 1),false);
+			listing.clearCodeUnits(address, address.add(defaultPointerSize - 1), false);
 			listing.createData(address, longDT);
 			offset += defaultPointerSize;
 			address = getAddress(start, offset);
 		}
 
 	}
-	
+
 	/**
 	 * Method to get address at address + offset
 	 * 
@@ -751,21 +675,22 @@ public class Vtable {
 		try {
 			Address newAddress = address.add(offset);
 			return newAddress;
-		} catch (AddressOutOfBoundsException e) {
+		}
+		catch (AddressOutOfBoundsException e) {
 			return null;
 		}
 	}
-	
+
 	private Address getReferencedAddress(Address address) {
-		
+
 		int addressSize = address.getSize();
 		Memory memory = program.getMemory();
 		try {
-			
+
 			if (addressSize == 32) {
 				long offset32 = memory.getInt(address);
 				Address newAddr = address.getNewAddress(offset32);
-				if(memory.contains(newAddr)) {
+				if (memory.contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -775,7 +700,7 @@ public class Vtable {
 
 				long offset64 = memory.getLong(address);
 				Address newAddr = address.getNewAddress(offset64);
-				if(memory.contains(newAddr)) {
+				if (memory.contains(newAddr)) {
 					return newAddr;
 				}
 				return null;

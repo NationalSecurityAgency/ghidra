@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.attribs.*;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.AttrDef;
 import ghidra.program.model.data.LEB128;
-import ghidra.util.datastruct.IntArrayList;
 
 /**
  * A DWARF Debug Info Entry is a collection of {@link DWARFAttributeValue attributes}
@@ -132,7 +131,7 @@ public class DebugInfoEntry {
 
 	/**
 	 * Return a list of children that are of a specific DWARF type.
-	 * <p>
+	 * 
 	 * @param childTag DIE tag used to filter the child DIEs
 	 * @return list of matching child DIE records
 	 */
@@ -245,27 +244,6 @@ public class DebugInfoEntry {
 		return abbreviation == null;
 	}
 
-	/**
-	 * Returns the ordinal position of this DIE record in its parent's list of children.
-	 * 
-	 * @return index of ourself in our parent, or -1 if root DIE
-	 */
-	public int getPositionInParent() {
-		DWARFProgram dprog = getProgram();
-		int parentIndex = dprog.getParentIndex(dieIndex);
-		if (parentIndex < 0) {
-			return -1;
-		}
-		IntArrayList childIndexes = dprog.getDIEChildIndexes(parentIndex);
-		for (int i = 0; i < childIndexes.size(); i++) {
-			if (childIndexes.get(i) == dieIndex) {
-				return i;
-			}
-		}
-		// only way to get here is if our in-memory indexes are corrupt / incorrect
-		throw new RuntimeException("DWARF DIE index failure.");
-	}
-
 	public DWARFCompilationUnit getCompilationUnit() {
 		return compilationUnit;
 	}
@@ -302,7 +280,7 @@ public class DebugInfoEntry {
 		DWARFTag tag = getTag();
 		int tagNum = tag != null ? tag.getId() : 0;
 		int abbrNum = abbreviation != null ? abbreviation.getAbbreviationCode() : 0;
-		int childCount = getProgram().getDIEChildIndexes(dieIndex).size();
+		int childCount = getProgram().getChildCount(dieIndex);
 
 		buffer.append("<%d><%x>: %s [abbrev %d, tag %d, index %d, children %d]\n".formatted(
 			getDepth(), offset, tag, abbrNum, tagNum, dieIndex, childCount));

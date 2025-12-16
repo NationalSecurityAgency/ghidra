@@ -114,7 +114,7 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 		Location loc = tfl.getLocation();
 		LogicalLocation ll = SarifUtils.getLogicalLocation(run, loc);
 		String name = ll.getName();
-		String fqname = ll.getFullyQualifiedName();
+		String fqname = ll.getDecoratedName();
 		String displayName = SarifUtils.extractDisplayName(ll);
 		map.put("originalName", name);
 		map.put("name", displayName);
@@ -138,7 +138,7 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 				operation = path_index == 1 ? "Source" : "Sink";
 				break;
 
-			case "instruction":
+			case "member":
 				// instruction address.
 				map.put("Address",
 					SarifUtils.extractFQNameAddrPair(controller.getProgram(), fqname).get(1));

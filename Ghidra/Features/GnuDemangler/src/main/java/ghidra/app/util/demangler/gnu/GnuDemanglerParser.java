@@ -59,6 +59,7 @@ public class GnuDemanglerParser {
 	private static final String TYPEINFO_NAME_FOR = "typeinfo name for ";
 	private static final String TYPEINFO_FN_FOR = "typeinfo fn for ";
 	private static final String TYPEINFO_FOR = "typeinfo for ";
+	private static final String TLS_INIT_FOR = "TLS init function for ";
 	private static final String COVARIANT_RETURN_THUNK = "covariant return thunk";
 
 	private static final Set<String> ADDRESS_TABLE_PREFIXES =
@@ -500,6 +501,10 @@ public class GnuDemanglerParser {
 
 			if (prefix.startsWith(TYPEINFO_NAME_FOR)) {
 				return new TypeInfoNameHandler(demangled, TYPEINFO_NAME_FOR);
+			}
+
+			if (prefix.startsWith(TLS_INIT_FOR)) {
+				return new TlsInitHandler(demangled, TLS_INIT_FOR, type);
 			}
 
 			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
@@ -1550,17 +1555,16 @@ public class GnuDemanglerParser {
 		for (ResourceFile file : files) {
 			List<String> lines = getReplacementLines(file);
 			for (String line : lines) {
-				GnuDemanglerReplacement replacement = parseReplacement(line, file);
-				if (replacement != null) {
-					results.add(replacement);
-				}
+				parseReplacement(line, file, results);
 			}
 		}
 
 		return results;
 	}
 
-	private static GnuDemanglerReplacement parseReplacement(String line, ResourceFile file) {
+	private static void parseReplacement(String line, ResourceFile file,
+			List<GnuDemanglerReplacement> results) {
+
 		for (int i = 0; i < line.length(); i++) {
 			char c = line.charAt(i);
 			if (Character.isWhitespace(c)) {
@@ -1572,13 +1576,35 @@ public class GnuDemanglerParser {
 				}
 
 				String find = line.substring(i).trim();
-				return new GnuDemanglerReplacement(find, replace, file);
+				results.add(new GnuDemanglerReplacement(find, replace, file));
+
+				// 
+				// We have disabled some global text replacements.  Instead of globally replacing
+				// them, we will update each replacement to handle the special case when it starts
+				// at the beginning of the replacement.
+				//
+				createAlternateReplacement("std::__cxx11::", find, replace, file, results);
+				createAlternateReplacement("__gnu_cxx::", find, replace, file, results);
+
+				return;
 			}
 		}
 
 		Msg.warn(GnuDemanglerParser.class,
 			"Malformed replacement line.  No spaces found: " + line + ". In file: " + file);
-		return null;
+	}
+
+	private static void createAlternateReplacement(String alternate, String find, String replace,
+			ResourceFile file, List<GnuDemanglerReplacement> results) {
+
+		if (!(find.startsWith("std::") && replace.startsWith("std::"))) {
+			return;
+		}
+
+		String altFind = find.replaceFirst("std::", alternate);
+		String altReplace = replace.replaceFirst("std::", alternate);
+		results.add(new GnuDemanglerReplacement(altFind, altReplace, file));
+
 	}
 
 	private static List<String> getReplacementLines(ResourceFile file) {
@@ -1635,6 +1661,12 @@ public class GnuDemanglerParser {
 			super(demangled);
 		}
 
+		SpecialPrefixHandler(String demangled, String prefix, String type) {
+			super(demangled);
+			this.prefix = prefix;
+			this.type = type;
+		}
+
 		@Override
 		DemangledObject build() {
 
@@ -1656,17 +1688,41 @@ public class GnuDemanglerParser {
 		}
 	}
 
+	/**
+	 * Thread Local Storage init function
+	 */
+	private class TlsInitHandler extends SpecialPrefixHandler {
+
+		TlsInitHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
+		}
+
+		@Override
+		DemangledObject doBuild(Demangled namespace) {
+
+			/*	
+			 	Create a function named '__tls_init' in the given namespace:
+			 		Foo::__tls_init			 	
+			 */
+			String functionName = "__tls_init";
+
+			DemangledObject demangledFunction =
+				new DemangledFunction(mangledSource, demangledSource, functionName);
+			demangledFunction.setOriginalDemangled(demangled);
+			demangledFunction.setNamespace(namespace);
+			return demangledFunction;
+		}
+
+	}
+
 	private class ItemInNamespaceHandler extends SpecialPrefixHandler {
 
 		ItemInNamespaceHandler(String demangled) {
-			super(demangled);
-			this.type = demangled;
+			this(demangled, null, demangled);
 		}
 
-		ItemInNamespaceHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.prefix = prefix;
-			this.type = item;
+		ItemInNamespaceHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 		}
 
 		@Override
@@ -1678,10 +1734,8 @@ public class GnuDemanglerParser {
 
 	private class GlobalCtorDtorHandler extends SpecialPrefixHandler {
 
-		GlobalCtorDtorHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.prefix = prefix;
-			this.type = item;
+		GlobalCtorDtorHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 		}
 
 		@Override
@@ -1714,11 +1768,8 @@ public class GnuDemanglerParser {
 
 		private String arrayType;
 
-		ArrayHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.demangled = demangled;
-			this.prefix = prefix;
-			this.type = item;
+		ArrayHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 
 			//
 			// Handle array data definitions here for now.  If we see this in non-specialized prefix
@@ -1727,8 +1778,8 @@ public class GnuDemanglerParser {
 			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
 			if (arrayMatcher.matches()) {
 				// keep only the type information, dropping the array definition
-				type = arrayMatcher.group(1);
-				arrayType = arrayMatcher.group(2).trim();
+				this.type = arrayMatcher.group(1);
+				this.arrayType = arrayMatcher.group(2).trim();
 			}
 
 		}
@@ -1757,11 +1808,8 @@ public class GnuDemanglerParser {
 
 	private class ThunkHandler extends SpecialPrefixHandler {
 
-		ThunkHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.demangled = demangled;
-			this.prefix = prefix;
-			this.type = item;
+		ThunkHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 		}
 
 		@Override
@@ -1784,7 +1832,6 @@ public class GnuDemanglerParser {
 
 		TypeInfoNameHandler(String demangled, String prefix) {
 			super(demangled);
-			this.demangled = demangled;
 			this.prefix = prefix;
 
 			String classname = demangled.substring(prefix.length()).trim();
@@ -1805,10 +1852,7 @@ public class GnuDemanglerParser {
 	private class AddressTableHandler extends SpecialPrefixHandler {
 
 		AddressTableHandler(String demangled, String prefix, String type) {
-			super(demangled);
-			this.demangled = demangled;
-			this.prefix = prefix;
-			this.type = type;
+			super(demangled, prefix, type);
 
 			/*
 			 Samples:

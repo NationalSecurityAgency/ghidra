@@ -92,5 +92,4 @@ public interface OverviewColorService extends ExtensionPoint {
 	 * @return the current program used by the service.
 	 */
 	public Program getProgram();
-
 }

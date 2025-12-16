@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,12 @@ import javax.swing.Icon;
 import generic.theme.GColor;
 import generic.theme.GIcon;
 import ghidra.app.services.DataTypeQueryService;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import resources.MultiIcon;
@@ -467,6 +471,30 @@ public class DataTypeUtils {
 			index = findTrueStartIndex(searchItem, data, index, comparator);
 		}
 		return index;
+	}
+
+	/**
+	 * Finds the DataTypeComponent at an address and component path in a program.
+	 * @param program the program to look for a datatype component
+	 * @param address the address to look for a datatype component
+	 * @param componentPath the component path (an array of indexes into hierarchy of nested
+	 * datatypes)
+	 * @return The datatype component at that address and component path or null if there is
+	 * none at that location.
+	 */
+	public static DataTypeComponent getDataTypeComponent(Program program, Address address,
+			int[] componentPath) {
+		Data data = program.getListing().getDataContaining(address);
+		DataType dt = data.getDataType();
+		DataTypeComponent comp = null;
+		for (int i = 0; i < componentPath.length; i++) {
+			if (!(dt instanceof Composite composite)) {
+				return null;
+			}
+			comp = composite.getComponent(componentPath[i]);
+			dt = comp.getDataType();
+		}
+		return comp;
 	}
 
 	// finds the index of the first element in the given list--this is used in conjunction with

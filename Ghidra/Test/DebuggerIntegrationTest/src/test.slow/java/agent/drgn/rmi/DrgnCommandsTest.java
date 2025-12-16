@@ -17,7 +17,7 @@ package agent.drgn.rmi;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,7 +54,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
 public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
-	
+
 	//@Test
 	public void testManual() throws Exception {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
@@ -156,7 +156,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 		}
 	}
 
-	@Test 
+	@Test
 	public void testStopTrace() throws Exception {
 		runThrowError(addr -> """
 				%s
@@ -220,26 +220,25 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			extractOutSection(out, "---Disconnect---"));
 	}
 
-	@Test 
+	@Test
 	public void testLcsp() throws Exception {
-		String out = runThrowError(addr ->
-					"""
-					%s
-					ghidra_trace_connect('%s')
-					print('---Import---')
-					ghidra_trace_info_lcsp()
-					print('---Create---')
-					ghidra_trace_create()
-					print('---File---')
-					ghidra_trace_info_lcsp()
-					util.set_convenience_variable('ghidra-language','DATA:BE:64:default')
-					print('---Language---')
-					ghidra_trace_info_lcsp()
-					util.set_convenience_variable('ghidra-compiler','posStack')
-					print('---Compiler---')
-					ghidra_trace_info_lcsp()
-					quit()
-					""".formatted(PREAMBLE, addr));
+		String out = runThrowError(addr -> """
+				%s
+				ghidra_trace_connect('%s')
+				print('---Import---')
+				ghidra_trace_info_lcsp()
+				print('---Create---')
+				ghidra_trace_create()
+				print('---File---')
+				ghidra_trace_info_lcsp()
+				util.set_convenience_variable('ghidra-language','DATA:BE:64:default')
+				print('---Language---')
+				ghidra_trace_info_lcsp()
+				util.set_convenience_variable('ghidra-compiler','posStack')
+				print('---Compiler---')
+				ghidra_trace_info_lcsp()
+				quit()
+				""".formatted(PREAMBLE, addr));
 
 		assertEquals("""
 				Selected Ghidra language: x86:LE:64:default
@@ -304,7 +303,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
 
 			RegisterValue rip = regs.getValue(snap, tb.reg("rip"));
-			assertEquals("3a40cdf7ff7f0000", rip.getUnsignedValue().toString(16));
+			assertEquals("7ffff7cd403a", rip.getUnsignedValue().toString(16));
 
 			try (Transaction tx = tb.trace.openTransaction("Float80 unit")) {
 				TraceCodeSpace code = tb.trace.getCodeManager().getCodeSpace(t1f0, true);
@@ -408,7 +407,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
-				ghidra_trace_set_snap(1)
+				ghidra_trace_new_snap("Snap 1", time=1)
 				ghidra_trace_remove_obj('Test.Objects[1]')
 				ghidra_trace_txcommit()
 				quit()
@@ -586,7 +585,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 				ghidra_trace_set_value('Test.Objects[1]', '[1]', '"A"', 'STRING')
 				ghidra_trace_set_value('Test.Objects[1]', '[2]', '"B"', 'STRING')
 				ghidra_trace_set_value('Test.Objects[1]', '[3]', '"C"', 'STRING')
-				ghidra_trace_set_snap(10)
+				ghidra_trace_new_snap("Snap 10", time=10)
 				ghidra_trace_retain_values('Test.Objects[1]', '[1] [3]')
 				ghidra_trace_txcommit()
 				quit()
@@ -762,10 +761,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			String extract = extractOutSection(out, "---Disassemble---");
 			String[] split = extract.split("\r\n");
 			// NB: core.12137 has no memory
-			//assertEquals("Disassembled %d bytes".formatted(total),
-			//	split[0]);
-			assertEquals(0, total);
-			assertEquals("", split[0]);
+			assertEquals("Disassembled %d bytes".formatted(total), split[0]);
 		}
 	}
 
@@ -858,8 +854,8 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modBash =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("helloWorld")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("helloWorld")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 		}
 	}
 

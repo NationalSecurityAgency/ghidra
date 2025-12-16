@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -176,8 +176,14 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
 
 		// if we don't have to loadChildren and we are not loaded get out.
-		if (!loadChildren && !isLoaded()) {
+		if ((!isLoaded() && !loadChildren) || monitor.isCancelled()) {
 			return null;
+		}
+
+		// see if the given node is the node we want
+		Symbol searchSymbol = key.getSymbol();
+		if (getSymbol() == searchSymbol) {
+			return this;
 		}
 
 		List<GTreeNode> children = getChildren();
@@ -185,9 +191,8 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 		if (index >= 0) {
 			GTreeNode node = children.get(index);
 			SymbolTreeNode symbolNode = (SymbolTreeNode) node;
-			Symbol searchSymbol = key.getSymbol();
 			if (symbolNode.getSymbol() == searchSymbol) {
-				return node;
+				return symbolNode;
 			}
 
 			// At this point we know that the given child is not itself a symbol node, but it 
@@ -199,7 +204,9 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 			return node;
 		}
 
-		// Brute-force lookup in each child.  This will not typically be called.
+		// Brute-force lookup in each child.  This will not typically be called.  Category nodes 
+		// that support large numbers of children have overridden this method to perform smarter
+		// searching.
 		for (GTreeNode childNode : children) {
 			if (monitor.isCancelled()) {
 				return null;
@@ -216,5 +223,49 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Searches for the given node 'key' inside of the given parent.   This method performs an 
+	 * efficient search and does not recurse below the given node.
+	 * 
+	 * @param parent the node whose children will be searched
+	 * @param key the token node to search for
+	 * @param loadChildren true to load children; false signals to search only if already loaded
+	 * @param monitor the monitor
+	 * @return the node or null
+	 */
+	protected GTreeNode findNode(GTreeNode parent, SymbolNode key, boolean loadChildren,
+			TaskMonitor monitor) {
+
+		if ((!isLoaded() && !loadChildren) || monitor.isCancelled()) {
+			return null;
+		}
+
+		// see if the given node is the node we want
+		Symbol searchSymbol = key.getSymbol();
+		if (parent instanceof SymbolTreeNode symbolNode) {
+			if (symbolNode.getSymbol() == searchSymbol) {
+				return symbolNode;
+			}
+		}
+
+		Comparator<GTreeNode> comparator = ((SymbolTreeNode) parent).getChildrenComparator();
+		List<GTreeNode> children = parent.getChildren();
+		int index = Collections.binarySearch(children, key, comparator);
+		if (index >= 0) {
+			GTreeNode node = children.get(index);
+			SymbolTreeNode symbolNode = (SymbolTreeNode) node;
+
+			// Some parent nodes may contain OrganizationNodes, which will return as a match when 
+			// the symbol does not match.  We expect the symbol to always match for clients of this 
+			// method.  
+			if (symbolNode.getSymbol() == searchSymbol) {
+				return symbolNode;
+			}
+		}
+
+		return null;
+
 	}
 }

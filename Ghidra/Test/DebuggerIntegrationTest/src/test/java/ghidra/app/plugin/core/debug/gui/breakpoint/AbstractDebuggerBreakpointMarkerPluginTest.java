@@ -19,12 +19,10 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
@@ -47,6 +45,8 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
+import ghidra.app.plugin.core.functiongraph.FGProvider;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
@@ -61,9 +61,9 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
@@ -76,7 +76,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
 	protected static final Map<State, Color> COLOR_FOR_STATE =
-		Stream.of(State.values()).collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
+		State.VALUES.stream().collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
 
 	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractSetBreakpointAction.NAME,
 		AbstractToggleBreakpointAction.NAME, AbstractEnableBreakpointAction.NAME,
@@ -88,6 +88,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	protected DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
 	protected DebuggerListingPlugin listingPlugin;
 	protected CodeBrowserPlugin codeBrowserPlugin;
+	protected FunctionGraphPlugin functionGraphPlugin; // Not initialized in setup
 
 	protected DebuggerLogicalBreakpointService breakpointService;
 	protected DebuggerStaticMappingService mappingService;
@@ -107,7 +108,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	 */
 	protected void hackMarkerBackgroundColors(Program p) throws Exception {
 		SwingUtilities.invokeAndWait(() -> {
-			for (State state : State.values()) {
+			for (State state : State.VALUES) {
 				if (state == State.NONE) {
 					continue;
 				}
@@ -151,11 +152,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	protected abstract void handleSetBreakpointInvocation(Set<TraceBreakpointKind> expectedKinds,
 			long dynOffset) throws Throwable;
 
-	protected abstract void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
-			boolean expectedEn) throws Throwable;
+	protected abstract void handleToggleBreakpointInvocation(
+			TraceBreakpointLocation expectedBreakpoint, boolean expectedEn) throws Throwable;
 
-	protected abstract void handleDeleteBreakpointInvocation(TraceBreakpoint expectedBreakpoint)
-			throws Throwable;
+	protected abstract void handleDeleteBreakpointInvocation(
+			TraceBreakpointLocation expectedBreakpoint) throws Throwable;
 
 	@Before
 	public void setUpBreakpointMarkerPluginTest() throws Exception {
@@ -482,7 +483,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
-			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
 			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
 			waitOn(delete);
@@ -521,7 +522,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
-			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
 			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
 			waitOn(delete);
@@ -804,7 +805,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 
 		ProgramLocationActionContext ctx = staticCtx(addr(program, 0x00400123));
 		assertTrue(breakpointMarkerPlugin.actionClearBreakpoint.isAddToPopup(ctx));
-		TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint, ctx, true);
 		handleDeleteBreakpointInvocation(brk);
 
@@ -819,7 +820,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 
 		ProgramLocationActionContext ctx = dynamicCtx(trace, addr(trace, 0x55550123));
 		assertTrue(breakpointMarkerPlugin.actionClearBreakpoint.isAddToPopup(ctx));
-		TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint, ctx, true);
 		handleDeleteBreakpointInvocation(brk);
 
@@ -906,5 +907,65 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 				assertEquals(State.INEFFECTIVE_DISABLED, lb.computeState());
 			}
 		});
+	}
+
+	@Test
+	public void testWithFunctionGraphPlugin() throws Throwable {
+		functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+
+		tool.removePlugins(List.of(breakpointMarkerPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+
+		tool.removePlugins(List.of(functionGraphPlugin));
+	}
+
+	protected void toggleInstallFunctionGraphPlugin() throws Throwable {
+		if (functionGraphPlugin == null) {
+			functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+		}
+		else {
+			tool.removePlugins(List.of(functionGraphPlugin));
+			functionGraphPlugin = null;
+		}
+	}
+
+	protected void toggleInstallBreakointMarkerPlugin() throws Throwable {
+		if (breakpointMarkerPlugin == null) {
+			breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		}
+		else {
+			tool.removePlugins(List.of(breakpointMarkerPlugin));
+			breakpointMarkerPlugin = null;
+		}
+	}
+
+	@Test
+	public void testWithFunctionGraphPluginFrenetically() throws Throwable {
+		Random rnd = new Random();
+		for (int i = 0; i < 100; i++) {
+			if (rnd.nextBoolean()) {
+				toggleInstallFunctionGraphPlugin();
+			}
+			else {
+				toggleInstallBreakointMarkerPlugin();
+			}
+		}
+	}
+
+	@Test
+	public void testWithFunctionGraphPluginAndOpenProgram() throws Throwable {
+		functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+		tool.removePlugins(List.of(breakpointMarkerPlugin));
+
+		FGProvider functionGraphProvider = waitForComponentProvider(FGProvider.class);
+		prepareDecompiler(); // Just to get a minimally meaningful program
+		functionGraphProvider.setVisible(true);
+
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
 	}
 }

@@ -41,6 +41,12 @@ will be stored at `$HOME/.gradle/`.
 gradle prepdev
 ```
 
+Clean up repository build files.  In rare circumstances this may be necessary after a `git pull` to
+fix unexplainable compilation errors.
+```
+gradle clean
+```
+
 Generate nested Eclipse project files which can then be imported into Eclipse as "existing 
 projects".
 ```
@@ -410,7 +416,7 @@ issues in Eclipse:
 
 [java]: https://dev.java
 [cpp]: https://isocpp.org
-[sleigh]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/languages/index.html
+[sleigh]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/stable/GhidraDocs/languages/index.html
 [python]: https://www.python.org
 [venv]: https://docs.python.org/3/tutorial/venv.html
 [jython]: https://www.jython.org

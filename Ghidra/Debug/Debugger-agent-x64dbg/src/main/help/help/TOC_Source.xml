@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!-- See Base's TOC_Source.xml for help -->
+<tocroot>
+	<tocref id="TraceRmiLauncherServicePlugin">
+		<tocdef id="x64dbg" text="x64dbg integration via x64dbg_automate"
+			target="help/topics/x64dbg/x64dbg.html">
+
+			<tocdef id="x64dbg_local" text="Local"
+				target="help/topics/x64dbg/x64dbg.html#local" />
+
+			<tocdef id="x64dbg_attach" text="Attach"
+				target="help/topics/x64dbg/x64dbg.html#attach" />
+
+		</tocdef>
+	</tocref>
+</tocroot>

@@ -17,8 +17,6 @@ package ghidra.pcode.exec.trace;
 
 import java.util.*;
 
-import javax.help.UnsupportedOperationException;
-
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
@@ -40,10 +38,18 @@ import ghidra.program.model.mem.MemBuffer;
  */
 public class AddressesReadTracePcodeExecutorStatePiece
 		extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], AddressSetView, AddressSpace>
-		implements TracePcodeExecutorStatePiece<byte[], AddressSetView> {
+		implements PcodeExecutorStatePiece<byte[], AddressSetView> {
 
 	protected final PcodeTraceDataAccess data;
 	private final Map<Long, AddressSetView> unique;
+
+	protected AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			Map<Long, AddressSetView> unique) {
+		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			AddressesReadPcodeArithmetic.INSTANCE, PcodeStateCallbacks.NONE);
+		this.data = data;
+		this.unique = unique;
+	}
 
 	/**
 	 * Construct the state piece
@@ -51,18 +57,12 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	 * @param data the trace data access shim
 	 */
 	public AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
-		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
-			AddressesReadPcodeArithmetic.INSTANCE);
-		this.data = data;
-		this.unique = new HashMap<>();
+		this(data, new HashMap<>());
 	}
 
-	protected AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
-			Map<Long, AddressSetView> unique) {
-		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
-			AddressesReadPcodeArithmetic.INSTANCE);
-		this.data = data;
-		this.unique = unique;
+	@Override
+	protected AddressSetView checkSize(int size, AddressSetView val) {
+		return val;
 	}
 
 	@Override
@@ -71,18 +71,8 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	public PcodeTraceDataAccess getData() {
-		return data;
-	}
-
-	@Override
-	public AddressesReadTracePcodeExecutorStatePiece fork() {
+	public AddressesReadTracePcodeExecutorStatePiece fork(PcodeStateCallbacks cb) {
 		return new AddressesReadTracePcodeExecutorStatePiece(data, new HashMap<>(unique));
-	}
-
-	@Override
-	public void writeDown(PcodeTraceDataAccess into) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -102,7 +92,8 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	protected void setInSpace(AddressSpace space, long offset, int size, AddressSetView val) {
+	protected void setInSpace(AddressSpace space, long offset, int size, AddressSetView val,
+			PcodeStateCallbacks cb) {
 		if (!space.isUniqueSpace()) {
 			return;
 		}
@@ -112,7 +103,7 @@ public class AddressesReadTracePcodeExecutorStatePiece
 
 	@Override
 	protected AddressSetView getFromSpace(AddressSpace space, long offset, int size,
-			Reason reason) {
+			Reason reason, PcodeStateCallbacks cb) {
 		if (space.isUniqueSpace()) {
 			AddressSetView result = unique.get(offset);
 			if (result == null) {

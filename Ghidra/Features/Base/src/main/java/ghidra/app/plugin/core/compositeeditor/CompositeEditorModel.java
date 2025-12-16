@@ -43,8 +43,12 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Model for editing a composite data type. Specific composite data type editors
  * should extend this class.
+ * 
+ * @param <T> Specific {@link Composite} type being managed
  */
-abstract public class CompositeEditorModel extends CompositeViewerModel {
+abstract public class CompositeEditorModel<T extends Composite> extends CompositeViewerModel<T> {
+
+	// TODO: This class should be combined with CompositeViewerModel since we only support editor use
 
 	/**
 	 * Whether or not an apply is occurring. Need to ignore changes to the
@@ -71,7 +75,8 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * Construct abstract composite editor model
 	 * @param provider composite editor provider
 	 */
-	protected CompositeEditorModel(CompositeEditorProvider provider) {
+	protected CompositeEditorModel(
+			CompositeEditorProvider<T, ? extends CompositeEditorModel<T>> provider) {
 		super(provider);
 	}
 
@@ -88,7 +93,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 			endFieldEditing();
 		}
 
-		CompositeViewerDataTypeManager oldViewDTM = viewDTM;
+		CompositeViewerDataTypeManager<T> oldViewDTM = viewDTM;
 
 		originalComposite = viewDTM.getResolvedViewComposite();
 		originalCompositeId = DataTypeManager.NULL_DATATYPE_ID;
@@ -96,8 +101,8 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		currentName = originalComposite.getName();
 
 		// Use temporary standalone view datatype manager
-		viewDTM = new CompositeViewerDataTypeManager(viewDTM.getName(),
-			viewDTM.getResolvedViewComposite(), () -> restoreEditor());
+		viewDTM = new CompositeViewerDataTypeManager<>(viewDTM.getName(),
+			viewDTM.getResolvedViewComposite(), this::componentEdited, this::restoreEditor);
 
 		viewComposite = viewDTM.getResolvedViewComposite();
 
@@ -108,7 +113,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
-		cloneAllComponentSettings(originalComposite, viewComposite);
+		viewDTM.withTransaction("Load Settings",
+			() -> cloneAllComponentSettings(originalComposite, viewComposite));
+		viewDTM.clearUndo();
 
 		// Dispose previous view DTM
 		oldViewDTM.close();
@@ -124,13 +131,24 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	}
 
 	@Override
-	public void load(Composite dataType) {
+	public void load(T dataType) {
 		Objects.requireNonNull(dataType);
 
 		DataTypeManager dtm = dataType.getDataTypeManager();
 		if (dtm == null) {
 			throw new IllegalArgumentException(
 				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
+		}
+
+		if (dataType.isDeleted()) {
+			// This can occur when mayny events get lumped together and a change event triggers
+			// a delayed reload prior to datatype removal and its event
+			if (dataType == originalComposite) {
+				// Re-route to dataTypeRemoved callback after restoring listener.
+				originalDTM.addDataTypeManagerListener(this);
+				dataTypeRemoved(originalDTM, originalDataTypePath);
+			}
+			return;
 		}
 
 		long lastCompositeId = originalCompositeId;
@@ -150,7 +168,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		originalDataTypePath = originalComposite.getDataTypePath();
 		currentName = dataType.getName();
 
-		createViewCompositeFromOriginalComposite(originalComposite);
+		createViewCompositeFromOriginalComposite();
 
 		// Listen so we can update editor if name changes for this structure.
 		originalDTM.addDataTypeManagerListener(this);
@@ -179,19 +197,28 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		currentName = viewComposite.getName();
 		updateAndCheckChangeState();
 
-		clearStatus();
 		compositeInfoChanged();
 		fireTableDataChanged();
 		componentDataChanged();
 	}
 
+	protected void componentEdited() {
+
+		// NOTE: This method relies heavily on the viewDTM with transaction support
+		// and this method specified as the changeCallback method.  If viewDTM has been
+		// instantiated with a single open transaction this method will never be used
+		// and provisions must be made for proper notification when changes are made.
+
+		updateAndCheckChangeState(); // Update the composite's change state information.
+		fireTableDataChanged();
+		componentDataChanged();
+	}
+
 	/**
-	 * Create  {@code viewComposite} and associated view datatype manager ({@code viewDTM}) and
-	 * changes listener(s) if required.
-	 *
-	 * @param original original composite being loaded
+	 * Create {@code viewComposite} and {@link CompositeViewerDataTypeManager viewDTM} for this
+	 * editor and the {@code originalComposite}.
 	 */
-	protected void createViewCompositeFromOriginalComposite(Composite original) {
+	protected void createViewCompositeFromOriginalComposite() {
 
 		if (viewDTM != null) {
 			viewDTM.close();
@@ -199,8 +226,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		}
 
 		// Use temporary standalone view datatype manager
-		viewDTM = new CompositeViewerDataTypeManager(original.getDataTypeManager().getName(),
-			original, () -> restoreEditor());
+		viewDTM =
+			new CompositeViewerDataTypeManager<>(originalComposite.getDataTypeManager().getName(),
+				originalComposite, this::componentEdited, this::restoreEditor);
 
 		viewComposite = viewDTM.getResolvedViewComposite();
 
@@ -211,7 +239,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
-		cloneAllComponentSettings(original, viewComposite);
+		viewDTM.withTransaction("Load Settings",
+			() -> cloneAllComponentSettings(originalComposite, viewComposite));
+		viewDTM.clearUndo();
 	}
 
 	String getOriginType() {
@@ -234,7 +264,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * Returns the docking windows component provider associated with this edit model.
 	 * @return the component provider
 	 */
-	protected CompositeEditorProvider getProvider() {
+	protected CompositeEditorProvider<T, ?> getProvider() {
 		return provider;
 	}
 
@@ -297,7 +327,6 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 			throw new InvalidDataTypeException("Data types of size 0 are not allowed.");
 		}
 
-		// TODO: Need to handle proper placement for big-endian within a larger component (i.e., right-justified)
 		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen,
 			viewComposite.isPackingEnabled());
 	}
@@ -461,13 +490,13 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 				dtName = previousDt.getDisplayName();
 			}
 			DataType newDt = null;
-			int newLength = -1;
+			int newLength;
 			if (dataTypeObject instanceof DataTypeInstance dti) {
-				newDt = resolve(dti.getDataType());
+				newDt = dti.getDataType();
 				newLength = dti.getLength();
 			}
 			else if (dataTypeObject instanceof DataType dt) {
-				newDt = resolve(dt);
+				newDt = dt;
 				newLength = newDt.getLength();
 			}
 			else if (dataTypeObject instanceof String dtString) {
@@ -485,6 +514,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 			if (DataTypeComponent.usesZeroLengthComponent(newDt)) {
 				newLength = 0;
 			}
+
+			newDt = newDt.clone(viewDTM);
+			newLength = newDt.getLength();
 
 			checkIsAllowableDataType(newDt);
 
@@ -515,8 +547,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 			}
 
 			// Set component datatype and length on view composite
-			DataType dataType = resolve(newDt); // probably already resolved
-			setComponentDataTypeInstance(rowIndex, dataType, newLength);
+			setComponentDataTypeInstance(rowIndex, newDt, newLength);
 			return true;
 		});
 
@@ -692,7 +723,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		if (!isArrayAllowed()) {
 			throw new UsrException("Array not permitted in current context");
 		}
-		int min = 1;
+		int min = allowsZeroLengthComponents() ? 0 : 1;
 		int max = getMaxElements();
 		if (isSingleRowSelection()) {
 			if (max != 0) {
@@ -1414,51 +1445,51 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * @return a valid data type instance or null if at blank line with no data type name.
 	 * @throws UsrException indicating that the data type is not valid.
 	 */
-	protected DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
-			throws UsrException {
-		DataType dt = null;
-		String dtName = "";
-		dtString = DataTypeHelper.stripWhiteSpace(dtString);
-		DataTypeComponent element = getComponent(rowIndex);
-		if (element != null) {
-			dt = element.getDataType();
-			dtName = dt.getDisplayName();
-			if (dtString.equals(dtName)) {
-				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength(), usesAlignedLengthComponents());
-			}
-		}
-
-		int newLength = 0;
-		DataType newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
-			provider.dtmService);
-		if (newDt == null) {
-			if (dt != null) {
-				throw new UsrException("No data type was specified.");
-			}
-			throw new AssertException("Can't set data type to null.");
-		}
-
-		checkIsAllowableDataType(newDt);
-
-		newLength = newDt.getLength();
-		if (newLength < 0) {
-			DataTypeInstance sizedDataType = DataTypeHelper.getSizedDataType(provider, newDt,
-				lastNumBytes, getMaxReplaceLength(rowIndex));
-			newLength = sizedDataType.getLength();
-		}
-
-		newDt = viewDTM.resolve(newDt, null);
-		int maxLength = getMaxReplaceLength(rowIndex);
-		if (newLength <= 0) {
-			throw new UsrException("Can't currently add this data type.");
-		}
-		if (maxLength > 0 && newLength > maxLength) {
-			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
-		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
-			usesAlignedLengthComponents());
-	}
+//	protected DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
+//			throws UsrException {
+//		DataType dt = null;
+//		String dtName = "";
+//		dtString = DataTypeHelper.stripWhiteSpace(dtString);
+//		DataTypeComponent element = getComponent(rowIndex);
+//		if (element != null) {
+//			dt = element.getDataType();
+//			dtName = dt.getDisplayName();
+//			if (dtString.equals(dtName)) {
+//				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
+//					element.getLength(), usesAlignedLengthComponents());
+//			}
+//		}
+//
+//		int newLength = 0;
+//		DataType newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
+//			provider.dtmService);
+//		if (newDt == null) {
+//			if (dt != null) {
+//				throw new UsrException("No data type was specified.");
+//			}
+//			throw new AssertException("Can't set data type to null.");
+//		}
+//
+//		checkIsAllowableDataType(newDt);
+//
+//		newLength = newDt.getLength();
+//		if (newLength < 0) {
+//			DataTypeInstance sizedDataType = DataTypeHelper.getSizedDataType(provider, newDt,
+//				lastNumBytes, getMaxReplaceLength(rowIndex));
+//			newLength = sizedDataType.getLength();
+//		}
+//
+//		newDt = viewDTM.resolve(newDt, null);
+//		int maxLength = getMaxReplaceLength(rowIndex);
+//		if (newLength <= 0) {
+//			throw new UsrException("Can't currently add this data type.");
+//		}
+//		if (maxLength > 0 && newLength > maxLength) {
+//			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
+//		}
+//		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
+//			usesAlignedLengthComponents());
+//	}
 
 	@SuppressWarnings("unused") // the exception is thrown by subclasses
 	protected void validateComponentName(int rowIndex, String name) throws UsrException {
@@ -1483,7 +1514,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * Get the composite edtor's datatype manager
 	 * @return composite edtor's datatype manager
 	 */
-	public CompositeViewerDataTypeManager getViewDataTypeManager() {
+	public CompositeViewerDataTypeManager<T> getViewDataTypeManager() {
 		return viewDTM;
 	}
 

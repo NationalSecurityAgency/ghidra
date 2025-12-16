@@ -24,6 +24,7 @@ import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
 import ghidra.program.model.pcode.Varnode;
@@ -36,7 +37,6 @@ import ghidra.program.model.pcode.Varnode;
  * {@link #lookup(JitVal)} and each output operand {@link VarGen#lookup(JitVar)}. The op generator
  * has already retrieved the {@link JitOp} whose operands are of the {@link JitVal} class.
  * 
- * <p>
  * <table border="1">
  * <tr>
  * <th>Varnode Type</th>
@@ -119,6 +119,7 @@ public interface ValGen<V extends JitVal> {
 	static <V extends JitVal> ValGen<V> lookup(V v) {
 		return (ValGen<V>) switch (v) {
 			case JitConstVal c -> ConstValGen.GEN;
+			case JitFailVal m -> FailValGen.GEN;
 			case JitVar vv -> VarGen.lookup(vv);
 			default -> throw new AssertionError();
 		};
@@ -143,9 +144,10 @@ public interface ValGen<V extends JitVal> {
 	 * @param gen the code generator
 	 * @param v the value to read
 	 * @param typeReq the required type of the value
+	 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
 	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 	 * @return the actual p-code type (which determines the JVM type) of the value on the stack
 	 */
-	JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq,
+	JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq, Ext ext,
 			MethodVisitor rv);
 }

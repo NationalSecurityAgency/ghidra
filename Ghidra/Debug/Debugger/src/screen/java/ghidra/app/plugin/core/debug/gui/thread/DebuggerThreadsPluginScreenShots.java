@@ -45,7 +45,6 @@ import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -94,10 +93,6 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		return set;
 	}
 
-	protected boolean nullOrDead(TraceThread thread) {
-		return thread == null || !thread.isAlive();
-	}
-
 	private void populateTrace() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceObjectManager om = tb.trace.getObjectManager();
@@ -108,14 +103,10 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 			sm.getSnapshot(13, true);
 
 			DBTraceThreadManager tm = tb.trace.getThreadManager();
-			TraceObjectThread t1 =
-				(TraceObjectThread) tm.addThread("Threads[1]", "main", Lifespan.nowOn(0));
-			TraceObjectThread t2 =
-				(TraceObjectThread) tm.addThread("Threads[2]", "server", Lifespan.nowOn(2));
-			TraceObjectThread t3 =
-				(TraceObjectThread) tm.addThread("Threads[3]", "handler 1", Lifespan.span(5, 10));
-			TraceObjectThread t4 =
-				(TraceObjectThread) tm.addThread("Threads[4]", "handler 2", Lifespan.span(8, 13));
+			TraceThread t1 = tm.addThread("Threads[1]", "main", Lifespan.nowOn(0));
+			TraceThread t2 = tm.addThread("Threads[2]", "server", Lifespan.nowOn(2));
+			TraceThread t3 = tm.addThread("Threads[3]", "handler 1", Lifespan.span(5, 10));
+			TraceThread t4 = tm.addThread("Threads[4]", "handler 2", Lifespan.span(8, 13));
 
 			t1.getObject().setValue(Lifespan.nowOn(0), "_state", "STOPPED");
 			t2.getObject().setValue(Lifespan.nowOn(0), "_state", "STOPPED");
