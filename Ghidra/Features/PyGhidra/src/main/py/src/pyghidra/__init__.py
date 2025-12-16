@@ -32,10 +32,10 @@ def debug_callback(suspend=False, **kwargs):
 def _debug_callback(fun=None, *, suspend=False, **pydevd_kwargs):
     import functools
     import sys
-    
+
     if not fun:
         return functools.partial(_debug_callback, suspend=suspend, **pydevd_kwargs)
-    
+
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         # NOTE: sys.modules is used directly to prevent errors in settrace
@@ -46,7 +46,7 @@ def _debug_callback(fun=None, *, suspend=False, **pydevd_kwargs):
             pydevd_kwargs["suspend"] = suspend
             pydevd.settrace(**pydevd_kwargs)
         return fun(*args, **kwargs)
-    
+
     return wrapper
 
 
@@ -65,10 +65,10 @@ from pyghidra.version import ApplicationInfo, ExtensionDetails
 
 
 __all__ = [
-    "debug_callback", "get_current_interpreter", "open_program", "run_script", "ApplicationInfo", 
-    "DeferredPyGhidraLauncher", "ExtensionDetails", "GuiPyGhidraLauncher", 
-    "HeadlessPyGhidraLauncher", "start", "started", "open_project", "open_filesystem", 
-    "consume_program", "program_conext", "analyze", "ghidra_script", "transaction", 
-    "analysis_properties", "program_info", "program_loader", "task_monitor", "walk_project", 
+    "debug_callback", "get_current_interpreter", "open_program", "run_script", "ApplicationInfo",
+    "DeferredPyGhidraLauncher", "ExtensionDetails", "GuiPyGhidraLauncher",
+    "HeadlessPyGhidraLauncher", "start", "started", "open_project", "open_filesystem",
+    "consume_program", "program_context", "analyze", "ghidra_script", "transaction",
+    "analysis_properties", "program_info", "program_loader", "task_monitor", "walk_project",
     "walk_programs"
 ]
