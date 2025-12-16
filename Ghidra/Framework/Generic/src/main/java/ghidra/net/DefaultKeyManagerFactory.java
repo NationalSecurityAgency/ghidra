@@ -38,7 +38,6 @@ import ghidra.util.exception.CancelledException;
  * associated with the preferred keystore file specified by the {@link #KEYSTORE_PATH_PROPERTY}
  * system property or set with {@link #setDefaultKeyStore(String, boolean)}.  
  * <p>
- * <p>
  * NOTE: Since {@link SslRMIClientSocketFactory} and {@link SSLServerSocketFactory} employ a
  * static cache of a default {@link SSLSocketFactory}, with its default {@link SSLContext}, we
  * must utilize a wrapped implementation of the associated {@link X509ExtendedKeyManager} so that 
