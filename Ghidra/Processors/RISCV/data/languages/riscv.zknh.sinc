@@ -1,0 +1,55 @@
+#sha256sig0 - Implements the Sigma0 transformation function as used in the SHA2-256 hash function
+define pcodeop sha256sig0;
+:sha256sig0 rd, rs1 is op2531=0x08 & op2024=0x02 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha256sig0(rs1);}
+
+#sha256sig1 - Implements the Sigma1 transformation function as used in the SHA2-256 hash function
+define pcodeop sha256sig1;
+:sha256sig1 rd, rs1 is op2531=0x08 & op2024=0x03 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha256sig1(rs1);}
+
+#sha256sum0 - Implements the Sum0 transformation function as used in the SHA2-256 hash function
+define pcodeop sha256sum0;
+:sha256sum0 rd, rs1 is op2531=0x08 & op2024=0x00 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha256sum0(rs1);}
+
+#sha256sum1 - Implements the Sum1 transformation function as used in the SHA2-256 hash function
+define pcodeop sha256sum1;
+:sha256sum1 rd, rs1 is op2531=0x08 & op2024=0x01 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha256sum1(rs1);}
+
+# sha512sig0h - Implements the high half of the Sigma0 transformation, as used in the SHA2-512 hash function
+define pcodeop sha512sig0h;
+:sha512sig0h rd, rs1, rs2 is op2531=0x2e & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=sha512sig0h(rs1,rs2);}
+
+# sha512sig0l - Implements the low half of the Sigma0 transformation, as used in the SHA2-512 hash function
+define pcodeop sha512sig0l;
+:sha512sig0l rd, rs1, rs2 is op2531=0x2a & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=sha512sig0l(rs1,rs2);}
+
+# sha512sig1h - Implements the high half of the Sigma1 transformation, as used in the SHA2-512 hash function
+define pcodeop sha512sig1h;
+:sha512sig1h rd, rs1, rs2 is op2531=0x2f & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=sha512sig1h(rs1,rs2);}
+
+# sha512sig1l - Implements the low half of the Sigma1 transformation, as used in the SHA2-512 hash function
+define pcodeop sha512sig1l;
+:sha512sig1l rd, rs1, rs2 is op2531=0x2b & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=sha512sig1l(rs1,rs2);}
+
+# sha512sum0r - Implements the the Sum0 transformation, as used in the SHA2-512 hash function
+define pcodeop sha512sum0r;
+:sha512sum0r rd, rs1, rs2 is op2531=0x28 & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=sha512sum0r(rs1,rs2);}
+
+# sha512sum1r - Implements the the Sum1 transformation, as used in the SHA2-512 hash function
+define pcodeop sha512sum1r;
+:sha512sum1r rd, rs1, rs2 is op2531=0x29 & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=sha512sum1r(rs1,rs2);}
+
+# sha512sig0 - Implements the Sigma0 transformation function as used in the SHA2-512 hash function
+define pcodeop sha512sig0;
+:sha512sig0 rd, rs1 is op2531=0x08 & op2024=0x06 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha512sig0(rs1);}
+
+# sha512sig1 - Implements the Sigma1 transformation function as used in the SHA2-512 hash function
+define pcodeop sha512sig1;
+:sha512sig1 rd, rs1 is op2531=0x08 & op2024=0x07 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha512sig1(rs1);}
+
+# sha512sum0 - Implements the Sum0 transformation function as used in the SHA2-512 hash function
+define pcodeop sha512sum0;
+:sha512sum0 rd, rs1 is op2531=0x08 & op2024=0x04 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha512sum0(rs1);}
+
+# sha512sum1 - Implements the Sum1 transformation function as used in the SHA2-512 hash function
+define pcodeop sha512sum1;
+:sha512sum1 rd, rs1 is op2531=0x08 & op2024=0x05 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=sha512sum1(rs1);}

@@ -33,5 +33,30 @@
     <external_name tool="qemu" name="qemu-riscv32"/>
     <external_name tool="qemu_system" name="qemu-system-riscv32"/>
   </language>
-
+  <language processor="RISCV"
+            endian="little"
+            size="32"
+            variant="THEAD"
+            version="1.3"
+            slafile="riscv.ilp32d_thead.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:thead">
+    <description>RISC-V 32 little with THead extensions</description>
+    <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+  </language>
+  <language processor="RISCV"
+            endian="little"
+            size="64"
+            variant="THEAD"
+            version="1.3"
+            slafile="riscv.lp64d_thead.sla"
+            processorspec="RV64.pspec"
+            id="RISCV:LE:64:thead">
+    <description>RISC-V 64 little with THead extensions</description>
+    <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+  </language>
 </language_definitions>

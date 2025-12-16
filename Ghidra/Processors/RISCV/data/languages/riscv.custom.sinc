@@ -1,4 +1,4 @@
-# custom
+# generic custom
 
 define pcodeop custom0;
 define pcodeop custom0.rs1;
