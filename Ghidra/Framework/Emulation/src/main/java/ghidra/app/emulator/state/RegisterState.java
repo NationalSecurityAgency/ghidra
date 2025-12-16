@@ -18,6 +18,7 @@ package ghidra.app.emulator.state;
 import java.util.List;
 import java.util.Set;
 
+@Deprecated(since = "12.1", forRemoval = true)
 public interface RegisterState {
 
 	public Set<String> getKeys();
