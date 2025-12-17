@@ -557,6 +557,10 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.0.1__
+* Fixed `AttributeError: module 'pyghidra' has no attribute 'program_conext'` when performing a
+  `from pyghidra import *`.
+
 __3.0.0:__
 * Revised the PyGhidra API. See the [API section](#api) for more details.
 * PyGhidra 3.0.0 requires Ghidra 12.0 or later to run.
