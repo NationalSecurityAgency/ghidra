@@ -240,7 +240,7 @@ def main() -> None:
         # If in dev mode, launch PyGhidra from the source tree using the development virtual environment
         if not venv_dir.is_dir():
             print('Virtual environment not found!')
-            print('Run "gradle prepdev" and try again.')
+            print('Run "gradle prepPyGhidra" and try again.')
             sys.exit(1)
         python_cmd = get_venv_exe(venv_dir)
         print(f'Switching to Ghidra virtual environment: {venv_dir}')
