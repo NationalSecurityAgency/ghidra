@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 # stub for documentation and typing
 # this is mostly to hide the function parameter
@@ -68,7 +68,7 @@ __all__ = [
     "debug_callback", "get_current_interpreter", "open_program", "run_script", "ApplicationInfo", 
     "DeferredPyGhidraLauncher", "ExtensionDetails", "GuiPyGhidraLauncher", 
     "HeadlessPyGhidraLauncher", "start", "started", "open_project", "open_filesystem", 
-    "consume_program", "program_conext", "analyze", "ghidra_script", "transaction", 
+    "consume_program", "program_context", "analyze", "ghidra_script", "transaction", 
     "analysis_properties", "program_info", "program_loader", "task_monitor", "walk_project", 
     "walk_programs"
 ]
