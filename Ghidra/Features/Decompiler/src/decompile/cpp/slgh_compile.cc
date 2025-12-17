@@ -3548,73 +3548,77 @@ bool SleighCompile::forceExportSize(ConstructTpl *ct)
   return true;
 }
 
-/// \brief If the given Varnode is in the \e unique space, shift its offset up by \b sa bits
+/// \brief Insert a region of zero bits into an address offset
+///
+/// \param addr is the address offset
+/// \return the modified offset
+uintb SleighCompile::insertCrossBuildRegion(uintb addr)
+
+{
+  uintb upperbits = (addr >> UNIQUE_CROSSBUILD_POSITION) << (UNIQUE_CROSSBUILD_POSITION + UNIQUE_CROSSBUILD_NUMBITS);
+  uintb lowerbits = (addr << (8*sizeof(uintb) - UNIQUE_CROSSBUILD_POSITION)) >> (8*sizeof(uintb) - UNIQUE_CROSSBUILD_POSITION);
+  return upperbits | lowerbits;
+}
+
+/// \brief If the given Varnode is in the \e unique space, insert a region of zero bits
 ///
 /// \param vn is the given Varnode
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueVn(VarnodeTpl *vn,int4 sa)
+void SleighCompile::shiftUniqueVn(VarnodeTpl *vn)
 
 {
   if (vn->getSpace().isUniqueSpace() && (vn->getOffset().getType() == ConstTpl::real)) {
-    uintb val = vn->getOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(vn->getOffset().getReal());
     vn->setOffset(val);
   }
 }
 
-/// \brief Shift the offset up by \b sa bits for any Varnode used by the given op in the \e unique space
+/// \brief Insert a region of zero bits for any Varnode used by the given op in the \e unique space
 ///
 /// \param op is the given op
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueOp(OpTpl *op,int4 sa)
+void SleighCompile::shiftUniqueOp(OpTpl *op)
 
 {
   VarnodeTpl *outvn = op->getOut();
   if (outvn != (VarnodeTpl *)0)
-    shiftUniqueVn(outvn,sa);
+    shiftUniqueVn(outvn);
   for(int4 i=0;i<op->numInput();++i)
-    shiftUniqueVn(op->getIn(i),sa);
+    shiftUniqueVn(op->getIn(i));
 }
 
-/// \brief Shift the offset up for both \e dynamic or \e static Varnode aspects in the \e unique space
+/// \brief Insert a region of zero bits for both \e dynamic or \e static Varnode aspects in the \e unique space
 ///
 /// \param hand is a handle template whose aspects should be modified
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueHandle(HandleTpl *hand,int4 sa)
+void SleighCompile::shiftUniqueHandle(HandleTpl *hand)
 
 {
   if (hand->getSpace().isUniqueSpace() && (hand->getPtrSpace().getType() == ConstTpl::real)
       && (hand->getPtrOffset().getType() == ConstTpl::real)) {
-    uintb val = hand->getPtrOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(hand->getPtrOffset().getReal());
     hand->setPtrOffset(val);
   }
   else if (hand->getPtrSpace().isUniqueSpace() && (hand->getPtrOffset().getType() == ConstTpl::real)) {
-    uintb val = hand->getPtrOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(hand->getPtrOffset().getReal());
     hand->setPtrOffset(val);
   }
   
   if (hand->getTempSpace().isUniqueSpace() && (hand->getTempOffset().getType() == ConstTpl::real)) {
-    uintb val = hand->getTempOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(hand->getTempOffset().getReal());
     hand->setTempOffset(val);
   }
 }
 
-/// \brief Shift the offset up for any Varnode in the \e unique space for all p-code in the given section
+/// \brief Insert a region of zero bits for any Varnode in the \e unique space for all p-code in the given section
 ///
 /// \param tpl is the given p-code section
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueConstruct(ConstructTpl *tpl,int4 sa)
+void SleighCompile::shiftUniqueConstruct(ConstructTpl *tpl)
 
 {
   HandleTpl *result = tpl->getResult();
   if (result != (HandleTpl *)0)
-    shiftUniqueHandle(result,sa);
+    shiftUniqueHandle(result);
   const vector<OpTpl *> &vec( tpl->getOpvec() );
   for(int4 i=0;i<vec.size();++i)
-    shiftUniqueOp(vec[i],sa);
+    shiftUniqueOp(vec[i]);
 }
 
 /// With \b crossbuilds, temporaries may need to survive across instructions in a packet, so here we
@@ -3626,7 +3630,6 @@ void SleighCompile::checkUniqueAllocation(void)
   if (unique_allocatemask == 0) return;	// We don't have any crossbuild directives
 
   unique_allocatemask = 0xff;	// Provide 8 bits of free space
-  int4 sa = 8;
   int4 secsize = sections.size(); // This is the upper bound for section numbers
   SubtableSymbol *sym = root; // Start with the instruction table
   int4 i = -1;
@@ -3636,11 +3639,11 @@ void SleighCompile::checkUniqueAllocation(void)
       Constructor *ct = sym->getConstructor(j);
       ConstructTpl *tpl = ct->getTempl();
       if (tpl != (ConstructTpl *)0)
-	shiftUniqueConstruct(tpl,sa);
+	shiftUniqueConstruct(tpl);
       for(int4 k=0;k<secsize;++k) {
 	ConstructTpl *namedtpl = ct->getNamedTempl(k);
 	if (namedtpl != (ConstructTpl *)0)
-	  shiftUniqueConstruct(namedtpl,sa);
+	  shiftUniqueConstruct(namedtpl);
       }
     }
     i+=1;
@@ -3648,7 +3651,8 @@ void SleighCompile::checkUniqueAllocation(void)
     sym = tables[i];
   }
   uint4 ubase = getUniqueBase(); // We have to adjust the unique base
-  ubase <<= sa;
+  ubase += 1 << UNIQUE_CROSSBUILD_POSITION;
+  ubase <<= UNIQUE_CROSSBUILD_NUMBITS;
   setUniqueBase(ubase);
 }
 
