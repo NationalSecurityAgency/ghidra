@@ -1103,9 +1103,11 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	}
 
 	private static String makeTitleString(AddressSetView addrs) {
-		return "Search For Encoded Strings - %s (%s - %s)".formatted(
-			formatLength(addrs.getNumAddresses(), "addresses"), addrs.getMinAddress(),
-			addrs.getMaxAddress());
+		String addrRangeStr = !addrs.isEmpty()
+				? "(%s - %s)".formatted(addrs.getMinAddress(), addrs.getMaxAddress())
+				: "";
+		return "Search For Encoded Strings - %s %s"
+				.formatted(formatLength(addrs.getNumAddresses(), "addresses"), addrRangeStr);
 	}
 
 	private static boolean charsetExists(String charsetName) {
