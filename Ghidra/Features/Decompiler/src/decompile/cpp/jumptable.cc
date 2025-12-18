@@ -1030,6 +1030,21 @@ PcodeOp *PathMeld::getEarliestOp(int4 pos) const
   return (PcodeOp *)0;
 }
 
+/// Search for a Varnode in the common path, prior to the given point, defined by a LOAD operation.
+/// \param i is the given point in the path
+/// \return \b true if a LOAD is present
+bool PathMeld::isLoadInPath(int4 i) const
+
+{
+  while(i > 0) {
+    i -= 1;
+    Varnode *vn = commonVn[i];
+    if (!vn->isWritten()) continue;
+    if (vn->getDef()->code() == CPUI_LOAD) return true;
+  }
+  return false;
+}
+
 /// \brief Analyze CBRANCHs leading up to the given basic-block as a potential switch \e guard.
 ///
 /// In general there is only one path to the switch, and the given basic-block will
@@ -1180,8 +1195,10 @@ void JumpBasic::findSmallestNormal(uint4 matchsize)
     calcRange(pathMeld.getVarnode(i),rng);
     sz = rng.getSize();
     if (sz < maxsize) {
-      // Don't let a 1-byte switch variable get thru without a guard
-      if ((sz != 256)||(pathMeld.getVarnode(i)->getSize()!=1)) {
+      // Don't accept a 1-byte switch variable unless there is an explicit guard
+      // or a table lookup between the byte and the indirect jump.
+      // "goto *(#const + byteVar)" should not be interpreted as 256 case switch
+      if (sz != 256 || pathMeld.getVarnode(i)->getSize()!=1 || pathMeld.isLoadInPath(i)) {
 	varnodeIndex = i;
 	maxsize = sz;
 	jrange->setRange(rng);

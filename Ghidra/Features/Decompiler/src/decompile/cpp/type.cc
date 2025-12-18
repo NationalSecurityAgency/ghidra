@@ -4630,6 +4630,9 @@ void TypeFactory::decodeAlignmentMap(Decoder &decoder)
     alignMap[sz] = val;
     decoder.closeElement(mapId);
   }
+  if (alignMap.empty())
+    throw LowlevelError("Alignment map empty");
+  alignMap[0] = 1;
   int4 curAlign = 1;
   for(int4 sz=1;sz < alignMap.size();++sz) {
     int4 tmpAlign = alignMap[sz];
@@ -4644,7 +4647,7 @@ void TypeFactory::decodeAlignmentMap(Decoder &decoder)
 void TypeFactory::setDefaultAlignmentMap(void)
 
 {
-  alignMap.resize(9,0);
+  alignMap.resize(9,1);
   alignMap[1] = 1;
   alignMap[2] = 2;
   alignMap[3] = 2;
