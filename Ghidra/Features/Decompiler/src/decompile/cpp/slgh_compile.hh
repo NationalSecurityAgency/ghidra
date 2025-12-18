@@ -301,6 +301,8 @@ public:
 /// various set*() methods prior to calling run_compilation.
 class SleighCompile : public SleighBase {
   friend class SleighPcode;
+  static const int4 UNIQUE_CROSSBUILD_POSITION = 8;
+  static const int4 UNIQUE_CROSSBUILD_NUMBITS = 8;
 public:
   SleighPcode pcode;			///< The p-code parsing (sub)engine
 private:
@@ -351,10 +353,11 @@ private:
   bool finalizeSections(Constructor *big,SectionVector *vec);	///< Do final checks, expansions, and linking for p-code sections
   static VarnodeTpl *findSize(const ConstTpl &offset,const ConstructTpl *ct);
   static bool forceExportSize(ConstructTpl *ct);
-  static void shiftUniqueVn(VarnodeTpl *vn,int4 sa);
-  static void shiftUniqueOp(OpTpl *op,int4 sa);
-  static void shiftUniqueHandle(HandleTpl *hand,int4 sa);
-  static void shiftUniqueConstruct(ConstructTpl *tpl,int4 sa);
+  static uintb insertCrossBuildRegion(uintb addr);
+  static void shiftUniqueVn(VarnodeTpl *vn);
+  static void shiftUniqueOp(OpTpl *op);
+  static void shiftUniqueHandle(HandleTpl *hand);
+  static void shiftUniqueConstruct(ConstructTpl *tpl);
   static string formatStatusMessage(const Location* loc, const string &msg);
   void checkUniqueAllocation(void);	///< Modify temporary Varnode offsets to support \b crossbuilds
   void process(void);			///< Do all post processing on the parsed data structures

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,9 @@ import utilities.util.FileUtilities;
 public class SleighCompile extends SleighBase {
 
 	static boolean yydebug = false;
+
+	private static int UNIQUE_CROSSBUILD_POSITION = 8;	// Starting bit with a unique address for crossbuild collision region
+	private static int UNIQUE_CROSSBUILD_NUMBITS = 8;	// Number of bits within a unique address for crossbuild collision region
 
 	private static boolean isLocationIsh(Object o) {
 		if (o instanceof Location) {
@@ -1589,64 +1592,74 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
-	private static void shiftUniqueVn(VarnodeTpl vn, int sa) {
-		entry("shiftUniqueVn", vn, sa);
+	/**
+	 * Insert a region of zero bits into an address offset
+	 * @param addr is the address offset
+	 * @return the modified offset
+	 */
+	private static long insertCrossBuildRegion(long addr) {
+		long upperbits = (addr >> UNIQUE_CROSSBUILD_POSITION) << (UNIQUE_CROSSBUILD_POSITION +
+			UNIQUE_CROSSBUILD_NUMBITS);
+		long lowerbits =
+			(addr << (64 - UNIQUE_CROSSBUILD_POSITION)) >>> (64 - UNIQUE_CROSSBUILD_POSITION);
+		return upperbits | lowerbits;
+	}
+
+	private static void shiftUniqueVn(VarnodeTpl vn) {
+		entry("shiftUniqueVn", vn);
 		// If the varnode is in the unique space, shift its offset up by -sa- bits
 		if (vn.getSpace().isUniqueSpace() &&
 			(vn.getOffset().getType() == ConstTpl.const_type.real)) {
-			long val = vn.getOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(vn.getOffset().getReal());
+
 			vn.setOffset(val);
 		}
 	}
 
-	private static void shiftUniqueOp(OpTpl op, int sa) {
-		entry("shiftUniqueOp", op, sa);
+	private static void shiftUniqueOp(OpTpl op) {
+		entry("shiftUniqueOp", op);
 		// Shift the offset up by -sa- bits for any varnode used by this -op- in the unique space
 		VarnodeTpl outvn = op.getOut();
 		if (outvn != null) {
-			shiftUniqueVn(outvn, sa);
+			shiftUniqueVn(outvn);
 		}
 		for (int i = 0; i < op.numInput(); ++i) {
-			shiftUniqueVn(op.getIn(i), sa);
+			shiftUniqueVn(op.getIn(i));
 		}
 	}
 
-	private static void shiftUniqueHandle(HandleTpl hand, int sa) {
-		entry("shiftUniqueHandle", hand, sa);
+	private static void shiftUniqueHandle(HandleTpl hand) {
+		entry("shiftUniqueHandle", hand);
 		// Shift the offset up by -sa- bits, for either the dynamic or static varnode aspects that are in the unique space
 		if (hand.getSpace().isUniqueSpace() &&
 			(hand.getPtrSpace().getType() == ConstTpl.const_type.real) &&
 			(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
-			long val = hand.getPtrOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(hand.getPtrOffset().getReal());
 			hand.setPtrOffset(val);
 		}
 		else if (hand.getPtrSpace().isUniqueSpace() &&
 			(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
-			long val = hand.getPtrOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(hand.getPtrOffset().getReal());
 			hand.setPtrOffset(val);
 		}
 
 		if (hand.getTempSpace().isUniqueSpace() &&
 			(hand.getTempOffset().getType() == ConstTpl.const_type.real)) {
-			long val = hand.getTempOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(hand.getTempOffset().getReal());
 			hand.setTempOffset(val);
 		}
 	}
 
-	private static void shiftUniqueConstruct(ConstructTpl tpl, int sa) {
-		entry("shiftUniqueConstruct", tpl, sa);
+	private static void shiftUniqueConstruct(ConstructTpl tpl) {
+		entry("shiftUniqueConstruct", tpl);
 		// Shift the offset up by -sa- bits, for any varnode in the unique space associated with this template
 		HandleTpl result = tpl.getResult();
 		if (result != null) {
-			shiftUniqueHandle(result, sa);
+			shiftUniqueHandle(result);
 		}
 		VectorSTL<OpTpl> vec = tpl.getOpvec();
 		for (int i = 0; i < vec.size(); ++i) {
-			shiftUniqueOp(vec.get(i), sa);
+			shiftUniqueOp(vec.get(i));
 		}
 	}
 
@@ -1659,7 +1672,6 @@ public class SleighCompile extends SleighBase {
 		}
 
 		unique_allocatemask = 0xff;	// Provide 8 bits of free space
-		int sa = 8;
 		int secsize = sections.size(); // This is the upper bound for section numbers
 		SubtableSymbol sym = root; // Start with the instruction table
 		int i = -1;
@@ -1669,12 +1681,12 @@ public class SleighCompile extends SleighBase {
 				Constructor ct = sym.getConstructor(j);
 				ConstructTpl tpl = ct.getTempl();
 				if (tpl != null) {
-					shiftUniqueConstruct(tpl, sa);
+					shiftUniqueConstruct(tpl);
 				}
 				for (int k = 0; k < secsize; ++k) {
 					ConstructTpl namedtpl = ct.getNamedTempl(k);
 					if (namedtpl != null) {
-						shiftUniqueConstruct(namedtpl, sa);
+						shiftUniqueConstruct(namedtpl);
 					}
 				}
 			}
@@ -1685,7 +1697,8 @@ public class SleighCompile extends SleighBase {
 			sym = tables.get(i);
 		}
 		long ubase = getUniqueBase(); // We have to adjust the unique base
-		ubase <<= sa;
+		ubase += 1 << UNIQUE_CROSSBUILD_POSITION;
+		ubase <<= UNIQUE_CROSSBUILD_NUMBITS;
 		setUniqueBase(ubase);
 	}
 
