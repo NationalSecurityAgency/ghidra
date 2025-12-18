@@ -65,11 +65,10 @@ SymbolRange::subsorttype SymbolRange::getSubsort(void) const
 SymbolEntry::SymbolEntry(Symbol *sym)
   : symbol(sym)
 {
+  properties = 0;
   extraflags = 0;
   offset = 0;
   size = -1;
-  entrytype = map_entry;
-  is_piece = false;
 }
 
 /// \param sym is the Symbol \b this will be a map for
@@ -82,11 +81,10 @@ SymbolEntry::SymbolEntry(Symbol *sym,uint4 exflags,int4 sz,int4 off,const RangeL
 {
   size = sz;
   symbol = sym;
+  properties = 0;
   extraflags = exflags;
   offset = off;
   uselimit = use;
-  entrytype = map_entry;
-  is_piece = false;
 }
 
 /// This storage location may only hold the Symbol value for a limited portion of the code.
@@ -133,6 +131,7 @@ bool SymbolEntry::updateType(Varnode *vn) const
 MapEntry::MapEntry(Symbol *sym,uint4 exflags,const Address &ad,int4 sz,int4 off,const RangeList &use)
   : SymbolEntry(sym,exflags,sz,off,use), addr(ad)
 {
+  properties |= map_entry;
 }
 
 Datatype *MapEntry::getSizedType(const Address &inaddr,int4 sz) const
@@ -168,8 +167,6 @@ void MapEntry::decode(Decoder &decoder)
 
 {
   addr = Address::decode(decoder);
-  if (addr.isInvalid())
-    throw LowlevelError("Invalid address decoding MapEntry");
   uselimit.decode(decoder);
 }
 
@@ -184,7 +181,7 @@ MapEntryConflict::MapEntryConflict(Symbol *sym,Varnode *vn)
   uniq = seqNum.getTime();
 
   uselimit.insertRange(seqNum.getAddr().getSpace(),seqNum.getAddr().getOffset(),seqNum.getAddr().getOffset());
-  entrytype = conflict_entry;
+  properties |= conflict_entry;
 }
 
 void MapEntryConflict::printEntry(ostream &s) const
@@ -223,7 +220,7 @@ DynamicEntry::DynamicEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const
   : SymbolEntry(sym,exfl,sz,off,rnglist)
 {
   hash = h;
-  entrytype = dynamic_entry;
+  properties |= dynamic_entry;
 }
 
 Datatype *DynamicEntry::getSizedType(const Address &inaddr,int4 sz) const
@@ -261,6 +258,44 @@ void DynamicEntry::decode(Decoder &decoder)
   hash = decoder.readUnsignedInteger(ATTRIB_VAL);
   decoder.closeElement(elemId);
   uselimit.decode(decoder);
+}
+
+UnassignedEntry::UnassignedEntry(Symbol *sym)
+  : SymbolEntry(sym)
+{
+  // uselimit not relevent
+  properties |= unassigned_entry;
+  size = sym->getBytesConsumed();
+}
+
+Datatype *UnassignedEntry::getSizedType(const Address &addr,int4 sz) const
+
+{
+  Datatype *cur = symbol->getType();
+  return symbol->getScope()->getArch()->types->getExactPiece(cur, offset, sz);
+}
+
+void UnassignedEntry::printEntry(ostream &s) const
+
+{
+  s << symbol->getName() << " : <unassigned>:";
+  s << dec << (uint4) symbol->getType()->getSize();
+  s << ' ';
+  symbol->getType()->printRaw(s);
+}
+
+void UnassignedEntry::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_ADDR);
+  encoder.closeElement(ELEM_ADDR);
+  uselimit.encode(encoder);
+}
+
+void UnassignedEntry::decode(Decoder &decoder)
+
+{
+  throw LowlevelError("Cannot decode UnassignedEntry directly");
 }
 
 Symbol::~Symbol(void)
@@ -332,7 +367,7 @@ MapEntry *Symbol::getMapEntry(const Address &addr) const
 {
   for(int4 i=0;i<mapentry.size();++i) {
     SymbolEntry *tmp = mapentry[i];
-    if (tmp->isDynamic()) continue;
+    if (!tmp->isMapEntry()) continue;
     MapEntry *res = (MapEntry *)tmp;
     const Address &entryaddr( res->getAddr() );
     if (addr.getSpace() != entryaddr.getSpace()) continue;
@@ -1179,6 +1214,10 @@ void Scope::removeRange(AddrSpace *spc,uintb first,uintb last)
 void Scope::addMap(MapEntry *entry)
 
 {
+  if (entry->addr.isInvalid()) {
+    addUnassigned(entry);
+    return;
+  }
   // First set properties of this symbol based on scope
   //  entry.symbol->flags |= Varnode::mapped;
   if (isGlobal())
@@ -1212,19 +1251,21 @@ void Scope::addMap(MapEntry *entry)
     for(int4 j=0;j<num;++j) {
       int4 i = bigendian ? j : (num-1-j); // Take pieces in endian order
       const VarnodeData &vdat(rec->getPiece(i));
-      exfl = 0;
-      if (entry->symbol->getType()->isPrimitiveWhole()) {
-	if (i==0)		// i==0 is most signif
-	  exfl = Varnode::precishi;
-	else if (i==num-1)
-	  exfl = Varnode::precislo;
-	else
-	  exfl = Varnode::precislo | Varnode::precishi; // Middle pieces have both flags set
+      if (vdat.space->getType() != IPTR_CONSTANT) {
+	exfl = 0;
+	if (entry->symbol->getType()->isPrimitiveWhole()) {
+	  if (i==0)		// i==0 is most signif
+	    exfl = Varnode::precishi;
+	  else if (i==num-1)
+	    exfl = Varnode::precislo;
+	  else
+	    exfl = Varnode::precislo | Varnode::precishi; // Middle pieces have both flags set
+	}
+	// NOTE: we do not turn on the mapped flag for the pieces
+	MapEntry *piece = new MapEntry(entry->symbol,exfl,vdat.getAddr(),vdat.size,off,entry->uselimit);
+	piece->properties |= SymbolEntry::piece;
+	addMapInternal(entry->symbol,piece);
       }
-      // NOTE: we do not turn on the mapped flag for the pieces
-      MapEntry *piece = new MapEntry(entry->symbol,exfl,vdat.getAddr(),vdat.size,off,entry->uselimit);
-      piece->is_piece = true;
-      addMapInternal(entry->symbol,piece);
       off += vdat.size;
     }
   }
@@ -1244,6 +1285,18 @@ void Scope::addDynamic(DynamicEntry *entry)
   entry->extraflags = Varnode::mapped;
   entry->offset = 0;
   addDynamicMapInternal(entry->symbol,entry);
+}
+
+void Scope::addUnassigned(MapEntry *entry)
+
+{
+  Symbol *sym = entry->symbol;
+  delete entry;
+  UnassignedEntry *unassignedEntry = new UnassignedEntry(sym);
+  if (isGlobal())
+    entry->symbol->flags |= Varnode::persist;
+
+  unassignedEntry->symbol->mapentry.push_back(unassignedEntry);
 }
 
 Scope::~Scope(void)
@@ -1872,7 +1925,7 @@ string Scope::buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const
   if (sym->numEntries() != 0) {
     Address addr;
     SymbolEntry *entry = sym->getMapEntry(0);
-    if (!entry->isDynamic())
+    if (entry->isMapEntry())
       addr = ((MapEntry *)entry)->getAddr();
     Address usepoint = entry->getFirstUseAddress();
     uint4 flags = usepoint.isInvalid() ? Varnode::addrtied : 0;
@@ -2220,12 +2273,12 @@ void ScopeInternal::removeSymbolMappings(Symbol *symbol)
   // Remove each mapping of the symbol
   for(iter=symbol->mapentry.begin();iter!=symbol->mapentry.end();++iter) {
     SymbolEntry *entry = *iter;
-    if (!entry->isDynamic()) {
+    if (entry->isMapEntry()) {
       AddrSpace *spc = ((MapEntry *)entry)->getAddr().getSpace();
       EntryMap *rangemap = maptable[spc->getIndex()];
       rangemap->erase( ((MapEntry *)entry)->mapIterator );
     }
-    else
+    else if (entry->isDynamic())
       dynamicentry.erase( ((DynamicEntry *)entry)->dynIterator );
     delete entry;
   }
@@ -2274,7 +2327,7 @@ void ScopeInternal::retypeSymbol(Symbol *sym,Datatype *ct)
   }
   if (sym->mapentry.size()==1) {
     SymbolEntry *entry = sym->mapentry.back();
-    if (!entry->isDynamic() && entry->isAddrTied()) {
+    if (entry->isMapEntry() && entry->isAddrTied()) {
       Address addr(((MapEntry *)entry)->getAddr());		// Save the starting address of map
 
       EntryMap *rangemap = maptable[ addr.getSpace()->getIndex() ];	// Find the correct rangemap
@@ -2567,7 +2620,10 @@ string ScopeInternal::buildVariableName(const Address &addr,
   ostringstream s;
   int4 sz = (ct == (Datatype *)0) ? 1 : ct->getSize();
 
-  if ((flags & Varnode::unaffected)!=0) {
+  if (addr.isInvalid()) {
+    s << "unassigned_";
+  }
+  else if ((flags & Varnode::unaffected)!=0) {
     if ((flags & Varnode::return_address)!=0)
       s << "unaff_retaddr";
     else {
@@ -2889,7 +2945,7 @@ void ScopeInternal::decode(Decoder &decoder)
 	Symbol *sym = addMapSym(decoder);
 	if (rangeequalssymbols) {
 	  SymbolEntry *e = sym->getFirstWholeMap();
-	  if (!e->isDynamic()) {
+	  if (e->isMapEntry()) {
 	    MapEntry *map = (MapEntry *)e;
 	    glb->symboltab->addRange(this,map->getAddr().getSpace(),map->getFirst(),map->getLast());
 	  }
@@ -2897,7 +2953,7 @@ void ScopeInternal::decode(Decoder &decoder)
 	uint4 props = sym->getFlags() & (Varnode::readonly | Varnode::volatil);
 	if (props != 0) {
 	  SymbolEntry *e = sym->getFirstWholeMap();
-	  if (!e->isDynamic()) {
+	  if (e->isMapEntry()) {
 	    MapEntry *map = (MapEntry *)e;
 	    Range rng(map->getAddr().getSpace(),map->getFirst(),map->getLast());
 	    glb->symboltab->setPropertyRange(props,rng);

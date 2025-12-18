@@ -75,12 +75,33 @@ public class HomogeneousAggregate extends SizeRestrictedFilter {
 	}
 
 	@Override
+	public boolean isEquivalent(DatatypeFilter op) {
+		if (this.getClass() != op.getClass()) {
+			return false;
+		}
+		HomogeneousAggregate otherFilter = (HomogeneousAggregate) op;
+		if (!super.isEquivalent(otherFilter)) {
+			return false;
+		}
+		if (!name.equals(otherFilter.name)) {
+			return false;
+		}
+		if (metaType != otherFilter.metaType) {
+			return false;
+		}
+		if (maxPrimitives != otherFilter.maxPrimitives) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
 	public boolean filter(DataType dt) {
 		int meta = PcodeDataTypeManager.getMetatype(dt);
 		if (meta != PcodeDataTypeManager.TYPE_ARRAY && meta != PcodeDataTypeManager.TYPE_STRUCT) {
 			return false;
 		}
-		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, true, 0, maxPrimitives);
+		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, true, false, 0, maxPrimitives);
 		if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown() ||
 			!primitives.isAligned() || primitives.containsHoles()) {
 			return false;

@@ -213,11 +213,12 @@ public class LocalSymbolMap {
 		boolean internalInvalid = false;
 		for (int i = 0; i < p.length; ++i) {
 			Parameter var = p[i];
-			if (!var.isValid()) {
-				internalInvalid = true;
+			DataType dt = var.getDataType();
+			if (!var.isValid() && (!dt.isZeroLength() || dt.isNotYetDefined())) {
+				// If storage is invalid and data-type does not formally have zero-length
+				internalInvalid = true;	// We don't trust storage for the entire prototype
 				break;
 			}
-			DataType dt = var.getDataType();
 			String name = var.getName();
 			if (name.length() > 2 && name.charAt(name.length() - 2) == '$') {
 				// An indication of names like "name", "name@1", "name@2"
@@ -481,8 +482,11 @@ public class LocalSymbolMap {
 			}
 		}
 		if (sym.entryList[0] instanceof MappedEntry) {
-			MappedVarKey key = new MappedVarKey(sym.getStorage(), sym.getPCAddress());
-			addrMappedSymbols.put(key, sym);
+			VariableStorage storage = sym.getStorage();
+			if (storage.getVarnodeCount() != 0) {
+				MappedVarKey key = new MappedVarKey(storage, sym.getPCAddress());
+				addrMappedSymbols.put(key, sym);
+			}
 		}
 		symbolMap.put(uniqueId, sym);
 	}

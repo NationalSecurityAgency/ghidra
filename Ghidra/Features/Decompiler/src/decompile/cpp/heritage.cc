@@ -2173,32 +2173,38 @@ void Heritage::splitJoinWrite(Varnode *vn,JoinRecord *joinrec)
       Varnode *mosthalf = nextlev[2*i];
       Varnode *leasthalf = nextlev[2*i+1];
       if (leasthalf == (Varnode *)0) continue; // Varnode didn't get split this level
-      PcodeOp *split;
-      if (vn->isInput())
-	split = fd->newOp(2,bb->getStart());
-      else
-	split = fd->newOp(2,op->getAddr());
-      fd->opSetOpcode(split,CPUI_SUBPIECE);
-      fd->opSetOutput(split,mosthalf);
-      fd->opSetInput(split,curvn,0);
-      fd->opSetInput(split,fd->newConstant(4,leasthalf->getSize()),1);
-      if (op == (PcodeOp *)0) 
-	fd->opInsertBegin(split,bb);
-      else
-	fd->opInsertAfter(split,op);
-      op = split;		// Keep -op- as the latest op in the split construction
-
-      split = fd->newOp(2,op->getAddr());
-      fd->opSetOpcode(split,CPUI_SUBPIECE);
-      fd->opSetOutput(split,leasthalf);
-      fd->opSetInput(split,curvn,0);
-      fd->opSetInput(split,fd->newConstant(4,0),1);
-      fd->opInsertAfter(split,op);
-      if (isPrimitive) {
-	mosthalf->setPrecisHi();	// Make sure we set the precision flags to trigger "double precision" rules
-	leasthalf->setPrecisLo();
+      if (!mosthalf->isConstant()) {
+	PcodeOp *split;
+	if (vn->isInput())
+	  split = fd->newOp(2,bb->getStart());
+	else
+	  split = fd->newOp(2,op->getAddr());
+	fd->opSetOpcode(split,CPUI_SUBPIECE);
+	fd->opSetOutput(split,mosthalf);
+	fd->opSetInput(split,curvn,0);
+	fd->opSetInput(split,fd->newConstant(4,leasthalf->getSize()),1);
+	if (op == (PcodeOp *)0)
+	  fd->opInsertBegin(split,bb);
+	else
+	  fd->opInsertAfter(split,op);
+	op = split;		// Keep -op- as the latest op in the split construction
       }
-      op = split;		// Keep -op- as the latest op in the split construction
+      if (!leasthalf->isConstant()) {
+	PcodeOp *split = fd->newOp(2,op->getAddr());
+	fd->opSetOpcode(split,CPUI_SUBPIECE);
+	fd->opSetOutput(split,leasthalf);
+	fd->opSetInput(split,curvn,0);
+	fd->opSetInput(split,fd->newConstant(4,0),1);
+	if (op == (PcodeOp *)0)
+	  fd->opInsertBegin(split,bb);
+	else
+	  fd->opInsertAfter(split,op);
+	if (isPrimitive) {
+	  mosthalf->setPrecisHi();	// Make sure we set the precision flags to trigger "double precision" rules
+	  leasthalf->setPrecisLo();
+	}
+	op = split;		// Keep -op- as the latest op in the split construction
+      }
     }
 
     lastcombo.clear();
@@ -2281,6 +2287,7 @@ void Heritage::processJoins(void)
     if (joinrec->getUnified().size != vn->getSize())
       throw LowlevelError("Joined varnode does not match size of record");
     if (vn->isFree()) {
+      if (vn->hasNoDescend()) continue;		// Its possible vn is dead
       if (joinrec->isFloatExtension())
 	floatExtensionRead(vn,joinrec);
       else

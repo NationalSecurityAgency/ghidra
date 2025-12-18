@@ -132,6 +132,7 @@ public:
   bool hideShadows(HighVariable *high);
   void processCopyTrims(void);
   void markInternalCopies(void);
+  void markPurePaddingCopies(void);
   void registerProtoPartialRoot(Varnode *vn);
 #ifdef MERGEMULTI_DEBUG
   void verifyHighCovers(void);

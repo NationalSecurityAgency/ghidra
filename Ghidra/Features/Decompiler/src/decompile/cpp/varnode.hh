@@ -214,7 +214,7 @@ public:
   void clearConsumeVacuous(void) { addlflags &= ~Varnode::vacconsume; } ///< Clear marker used by dead-code algorithm
   PcodeOp *loneDescend(void) const; ///< Return unique reading PcodeOp, or \b null if there are zero or more than 1
   Address getUsePoint(const Funcdata &fd) const; ///< Get Address when this Varnode first comes into scope
-  int4 printRawNoMarkup(ostream &s) const; ///< Print a simple identifier for the Varnode
+  int4 printRawNoMarkup(ostream &s) const { return loc.printRaw(s,size); }	///< Print a simple identifier for the Varnode
   void printRaw(ostream &s) const; ///< Print a simple identifier plus additional info identifying Varnode with SSA form
   void printCover(ostream &s) const; ///< Print raw coverage info about the Varnode
   void printInfo(ostream &s) const; ///< Print raw attribute info about the Varnode

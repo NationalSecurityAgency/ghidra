@@ -1294,6 +1294,8 @@ Varnode *Funcdata::findLinkedVarnode(SymbolEntry *entry) const
       return (Varnode *)0;
     return vn;
   }
+  if (!entry->isMapEntry())
+    return (Varnode *)0;
 
   MapEntry *mapentry = (MapEntry *)entry;
   VarnodeLocSet::const_iterator iter,enditer;
@@ -1333,7 +1335,7 @@ void Funcdata::findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) con
     if (vn != (Varnode *)0)
       res.push_back(vn);
   }
-  else {
+  else if (entry->isMapEntry()) {
     VarnodeLocSet::const_iterator iter = beginLoc(entry->getSize(),((MapEntry *)entry)->getAddr());
     VarnodeLocSet::const_iterator enditer = endLoc(entry->getSize(),((MapEntry *)entry)->getAddr());
     for(;iter!=enditer;++iter) {

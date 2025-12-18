@@ -1541,6 +1541,39 @@ void Merge::markInternalCopies(void)
 #endif
 }
 
+/// \brief Mark COPYs to \e join space padding
+///
+/// Search for any COPY of #0 to a Varnode with an address marked a pure padding
+/// and mark the COPY as \e non-printing.
+void Merge::markPurePaddingCopies(void)
+
+{
+  AddrSpaceManager *glb = data.getArch();
+  set<JoinRecord *,JoinRecordCompare>::const_iterator iter = glb->beginJoinPadding();
+  while(iter != glb->endJoin()) {
+    JoinRecord *joinRec = *iter;
+    if (!joinRec->isPurePadding()) break;
+    ++iter;
+    Address addr = joinRec->getUnified().getAddr();
+    int4 size = joinRec->getUnified().size;
+    VarnodeLocSet::const_iterator viter = data.beginLoc(size,addr);
+    VarnodeLocSet::const_iterator venditer = data.endLoc(size,addr);
+    while(viter != venditer) {
+      Varnode *vn = *viter;
+      ++viter;
+      if (vn->isWritten()) {
+	PcodeOp *copy = vn->getDef();
+	if (copy->code() == CPUI_COPY) {
+	  Varnode *cvn = copy->getIn(0);
+	  if (cvn->isConstant() && cvn->getOffset() == 0) {
+	    data.opMarkNonPrinting(copy);
+	  }
+	}
+      }
+    }
+  }
+}
+
 /// \brief Register an unmapped CONCAT stack with the merge process
 ///
 /// The given Varnode must be the root of a tree of CPUI_PIECE operations as produced by

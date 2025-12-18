@@ -121,24 +121,26 @@ class SymbolEntry {
   /// \brief The type (derived class) of SymbolEntry
 protected:
   enum {
-    map_entry = 0,		///< Is a MapEntry
-    conflict_entry = 1,		///< Is a MapEntryConflict
-    dynamic_entry = 2		///< Is a DynamicEntry
+    map_entry = 1,		///< Is a MapEntry
+    conflict_entry = 2,		///< Is a MapEntryConflict
+    dynamic_entry = 4,		///< Is a DynamicEntry
+    unassigned_entry = 8,	///< Is an UnassignedEntry
+    piece = 16			///< Is a proper piece of whole Symbol
   };
   Symbol *symbol;		///< Symbol object being mapped
   RangeList uselimit;		///< Code address ranges where this storage is valid
+  uint4 properties;		///< Boolean properties of \b this entry
   uint4 extraflags;		///< Varnode flags specific to this storage location
   int4 offset;			///< Offset into the Symbol that \b this covers
   int4 size;			///< Number of bytes consumed by \b this (piece of the) storage
-  uint2 entrytype;		///< Type of SymbolEntry
-  bool is_piece;		///< Is \b this a piece of the whole symbol
 public:
   SymbolEntry(Symbol *sym);	///< Construct an uninitialized SymbolEntry
   SymbolEntry(Symbol *sym,uint4 exflags,int4 sz,int4 off,const RangeList &use);		///< Constructor
   virtual ~SymbolEntry(void) {}
-  bool isPiece(void) const { return is_piece; }		///< Is \b this a proper piece of the whole Symbol
-  bool isDynamic(void) const { return (entrytype == dynamic_entry); }	///< Is \b storage \e dynamic
-  bool isConflict(void) const { return (entrytype == conflict_entry); }	///< Does storage have potential Symbol conflicts
+  bool isPiece(void) const { return ((properties & piece)!=0); }	///< Is \b this a proper piece of the whole Symbol
+  bool isMapEntry(void) const { return ((properties & map_entry)!=0); }	///< Is \b this a MapEntry
+  bool isDynamic(void) const { return ((properties & dynamic_entry)!=0); }	///< Is \b this a DynamicEntry
+  bool isConflict(void) const { return ((properties & conflict_entry)!=0); }	///< Does storage have potential Symbol conflicts
 
   /// \brief  Get the data-type associated with (a piece of) \b this
   ///
@@ -177,7 +179,7 @@ protected:
   list<SymbolRange>::iterator mapIterator;		///< Position within container
 public:
   MapEntry(Symbol *sym,uint4 exflags,const Address &ad,int4 sz,int4 off,const RangeList &use);	///< Constructor
-  MapEntry(Symbol *sym) : SymbolEntry(sym) {}		///< Construct and uninitialized MapEntry for use with decode()
+  MapEntry(Symbol *sym) : SymbolEntry(sym) { properties |= map_entry; }	///< Construct and uninitialized MapEntry for use with decode()
   virtual Datatype *getSizedType(const Address &addr,int4 sz) const;
   virtual void printEntry(ostream &s) const;
   virtual void encode(Encoder &encoder) const;
@@ -214,12 +216,23 @@ class DynamicEntry : public SymbolEntry {
   list<DynamicEntry *>::iterator dynIterator;		///< Position within container
 public:
   DynamicEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const RangeList &rnglist);	///< Constructor
-  DynamicEntry(Symbol *sym) : SymbolEntry(sym) { hash = 0; entrytype = dynamic_entry; }	///< Constructor for use with decode()
+  DynamicEntry(Symbol *sym) : SymbolEntry(sym) { hash = 0; properties |= dynamic_entry; }	///< Constructor for use with decode()
   virtual Datatype *getSizedType(const Address &addr,int4 sz) const;
   virtual void printEntry(ostream &s) const;
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder);
   uint8 getHash(void) const { return hash; }			///< Get the hash used to identify \b this storage
+};
+
+/// \brief A placeholder mapping for a Symbol that is not mapped or \e unassigned
+///
+class UnassignedEntry : public SymbolEntry {
+public:
+  UnassignedEntry(Symbol *sym);	///< Constructor
+  virtual Datatype *getSizedType(const Address &addr,int4 sz) const;
+  virtual void printEntry(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief The base class for a symbol in a symbol table or scope
@@ -598,8 +611,10 @@ protected:
   /// \param sym is the given Symbol being mapped
   /// \param entry is the DynamicEntry to add
   virtual void addDynamicMapInternal(Symbol *sym,DynamicEntry *entry)=0;
+
   void addMap(MapEntry *entry);				///< Integrate a MapEntry into the range maps
   void addDynamic(DynamicEntry *entry);			///< Integrate a DynamicEntry into the Scope
+  void addUnassigned(MapEntry *entry);			///< Mark a symbol as unassigned
   void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
   void setDisplayName(const string &nm) { displayName = nm; }		///< Change name displayed in output
 public:

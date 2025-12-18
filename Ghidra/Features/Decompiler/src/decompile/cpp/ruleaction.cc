@@ -787,6 +787,8 @@ Varnode *RulePullsubMulti::buildSubpiece(Varnode *basevn,uint4 outsize,uint4 shi
       uint4 skipleft = shift;
       for(int4 i=joinrec->numPieces()-1;i>=0;--i) { // Move from least significant to most
 	const VarnodeData &vdata(joinrec->getPiece(i));
+	if (vdata.space->getType() == IPTR_CONSTANT)
+	  throw LowlevelError("Join space padding is propagating");
 	if (skipleft >= vdata.size) {
 	  skipleft -= vdata.size;
 	}
@@ -7356,7 +7358,7 @@ Datatype *RulePieceStructure::determineDatatype(Varnode *vn,int4 &baseOffset)
 
   if (ct->getSize() != vn->getSize()) {			// vn is a partial
     SymbolEntry *entry = vn->getSymbolEntry();
-    if (entry->isDynamic())
+    if (!entry->isMapEntry())
       return (Datatype *)0;
     baseOffset = vn->getAddr().overlap(0,((MapEntry *)entry)->getAddr(),ct->getSize());
     if (baseOffset < 0)

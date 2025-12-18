@@ -101,6 +101,35 @@ Address::Address(mach_extreme ex)
   }
 }
 
+/// If there is a register container of the given region print a description of the region
+/// using the register name.  Otherwise just print region as an address.
+/// Return the size of the register or the \e expected size for the region.
+/// \param s is the stream to print to
+/// \param size is the number of bytes in the region
+/// \return the size of the expected size
+int4 Address::printRaw(ostream &s,int4 size) const
+
+{
+  const Translate *trans = base->getTrans();
+  int4 expect;
+
+  string name = trans->getRegisterName(base, offset, size);
+  if (name.size() != 0) {
+    const VarnodeData &point(trans->getRegister(name));
+    uintb off = offset - point.offset;
+    s << name;
+    expect = point.size;
+    if (off != 0)
+      s << '+' << dec << off;
+  }
+  else {
+    s << base->getShortcut();
+    expect = trans->getDefaultSize();
+    base->printRaw(s,offset);
+  }
+  return expect;
+}
+
 /// Return \b true if the range starting at \b this extending the given number of bytes
 /// is contained by the second given range.
 /// \param sz is the given number of bytes in \b this range

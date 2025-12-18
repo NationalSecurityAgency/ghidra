@@ -85,7 +85,12 @@ public interface DatatypeFilter {
 		else {
 			// If no other name matches, assume this is a decompiler metatype
 			int meta = PcodeDataTypeManager.getMetatype(nm);
-			filter = new MetaTypeFilter(meta);
+			if (meta == PcodeDataTypeManager.TYPE_ARRAY) {
+				filter = new ArrayFilter();
+			}
+			else {
+				filter = new MetaTypeFilter(meta);
+			}
 		}
 		filter.restoreXml(parser);
 		return filter;
