@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.time;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,6 +27,7 @@ import javax.swing.table.*;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import generic.theme.GColor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObjectEvent;
@@ -46,6 +47,10 @@ import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerSnapshotTablePanel extends JPanel {
+	private static final Color COLOR_FOREGROUND_STALE =
+		new GColor("color.debugger.plugin.resources.register.stale");
+	private static final Color COLOR_FOREGROUND_STALE_SEL =
+		new GColor("color.debugger.plugin.resources.register.stale.selected");
 
 	protected enum SnapshotTableColumns
 		implements EnumeratedTableColumn<SnapshotTableColumns, SnapshotRow> {
@@ -221,6 +226,19 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			else if (current.getSnap() == row.getSnap()) {
 				setItalic();
 			}
+
+			TraceSnapshot snapshot = row.getSnapshot();
+			if (snapshot.getSchedule().isSnapOnly() ||
+				snapshot.getVersion() >= current.getTrace().getEmulatorCacheVersion()) {
+				JTable table = data.getTable();
+				setForeground(
+					data.isSelected() ? table.getSelectionForeground() : table.getForeground());
+			}
+			else {
+				setForeground(
+					data.isSelected() ? COLOR_FOREGROUND_STALE_SEL : COLOR_FOREGROUND_STALE);
+			}
+
 			return this;
 		}
 	};
