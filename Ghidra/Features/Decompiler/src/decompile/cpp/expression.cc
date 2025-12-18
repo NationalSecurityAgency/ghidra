@@ -412,7 +412,7 @@ static int4 functionalEqualityLevel0(Varnode *vn1,Varnode *vn2)
     }
     return -1;
   }
-  if (vn2->isConstant()) return -1;
+  if (vn1->isFree() || vn2->isFree()) return -1;
   return 1;
 }
 

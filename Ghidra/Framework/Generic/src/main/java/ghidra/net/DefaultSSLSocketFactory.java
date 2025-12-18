@@ -25,7 +25,7 @@ import javax.net.ssl.SSLSocketFactory;
 import ghidra.util.Msg;
 
 /**
- * <code>ApplicationSSLSocketFactory</code> provides a replacement for the default
+ * <code>DefaultSSLSocketFactory</code> provides a replacement for the default
  * <code>SSLSocketFactory</code> which utilizes the default SSLContext established
  * by {@link DefaultSSLContextInitializer}.
  */
@@ -34,7 +34,7 @@ public class DefaultSSLSocketFactory extends SSLSocketFactory {
 	private final SSLSocketFactory socketFactory;
 
 	/**
-	 * ApplicationSSLSocketFactory constructor.  
+	 * <code>DefaultSSLSocketFactory</code> constructor.  
 	 * SSLContext initialization will be performed using {@link DefaultSSLContextInitializer}.
 	 */
 	public DefaultSSLSocketFactory() {
