@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <default_symbols>
+    <symbol name="entry" address="rom:0000" entry="true"/>
+    <!-- 0x3FF * 3 -->
+    <symbol name="ISR" address="rom:0xBDF"/>
+  </default_symbols>
+</processor_spec>
