@@ -417,19 +417,21 @@ public class DIEAggregate {
 	}
 
 	private DebugInfoEntry getRefDIE(DWARFAttribute attribute) {
-		DWARFNumericAttribute val = getAttribute(attribute, DWARFNumericAttribute.class);
-		if (val == null) {
+		FoundAttribute foundAttr = findAttribute(attribute);
+		if (foundAttr == null || !(foundAttr.attr instanceof DWARFNumericAttribute val)) {
 			return null;
 		}
 
-		long offset = val.getUnsignedValue();
-
-		DebugInfoEntry result = getProgram().getDIEByOffset(offset);
-		if (result == null) {
-			Msg.warn(this, "Invalid reference value [%x]".formatted(offset));
-			Msg.warn(this, this.toString());
+		try {
+			return getProgram().getDIE(val.getAttributeForm(), val.getUnsignedValue(),
+				foundAttr.die.getCompilationUnit());
 		}
-		return result;
+		catch (IOException e) {
+			Msg.warn(this, "Invalid reference from DIE 0x%x to 0x%x (%s)".formatted(
+				foundAttr.die.getOffset(), val.getUnsignedValue(), val.getAttributeForm()));
+			Msg.debug(this, this.toString());
+		}
+		return null;
 	}
 
 	/**
