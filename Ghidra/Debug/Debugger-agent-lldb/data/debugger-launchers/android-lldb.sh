@@ -15,7 +15,6 @@
 # limitations under the License.
 ##
 #@title lldb Android
-#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>lldb</tt> and connect to an Android target.</h3>
 #@desc   <p>
