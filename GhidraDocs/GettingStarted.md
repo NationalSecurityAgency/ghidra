@@ -165,7 +165,7 @@ The Debugger now uses Python to connect to the host platform's native debuggers.
 a [supported](#minimum-requirements) version of Python and some additional packages. These packages
 are included in the distribution, but you may still install them from PyPI if you prefer:
 * psutil
-* protobuf==3.20.3
+* protobuf>=3.20.3
 * Pybag>=2.2.12 (for WinDbg support)
 
 Different native debuggers have varying requirements, so you do not necessarily have to install all
