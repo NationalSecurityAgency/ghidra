@@ -217,7 +217,7 @@ public class BSimPostgresDBConnectionManager {
 
 		private void setSSLProperties() {
 			bds.addConnectionProperty("sslmode", "require");
-			bds.addConnectionProperty("sslfactory", "ghidra.net.ApplicationSSLSocketFactory");
+			bds.addConnectionProperty("sslfactory", "ghidra.net.DefaultSSLSocketFactory");
 		}
 
 		@Override
