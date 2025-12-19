@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import docking.widgets.fieldpanel.support.*;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.*;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.pty.*;
 import ghidra.util.SystemUtilities;
@@ -70,6 +72,41 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			Map<String, String> env = new HashMap<>(System.getenv());
 			env.put("TERM", "xterm-256color");
 			PtySession session = pty.getChild().session(new String[] { "/usr/bin/bash" }, env);
+
+			PtyParent parent = pty.getParent();
+			PtyChild child = pty.getChild();
+			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
+				parent.getInputStream(), parent.getOutputStream())) {
+				term.addTerminalListener(new TerminalListener() {
+					@Override
+					public void resized(short cols, short rows) {
+						System.err.println("resized: " + cols + "x" + rows);
+						child.setWindowSize(cols, rows);
+					}
+				});
+				session.waitExited();
+				pty.close();
+			}
+		}
+	}
+
+	@Test
+	public void testTermmines() throws Exception {
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+		assumeFalse(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+
+		env.showFrontEndTool();
+
+		PtyFactory factory = PtyFactory.local();
+		File termmines = Application.getModuleDataFile("TestResources", "termmines").getFile(false);
+		try (Pty pty = factory.openpty()) {
+			Map<String, String> env = new HashMap<>(System.getenv());
+			env.put("TERM", "xterm-256color");
+			PtySession session =
+				pty.getChild().session(new String[] { termmines.getAbsolutePath() }, env);
 
 			PtyParent parent = pty.getParent();
 			PtyChild child = pty.getChild();
