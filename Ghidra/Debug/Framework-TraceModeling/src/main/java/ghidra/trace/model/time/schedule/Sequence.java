@@ -200,6 +200,35 @@ public class Sequence implements Comparable<Sequence> {
 		return Long.max(0, count);
 	}
 
+	/**
+	 * Drop the last step from this sequence
+	 * 
+	 * @return the sequence with the last step removed
+	 */
+	public Sequence dropLast() {
+		if (steps.isEmpty()) {
+			throw new NoSuchElementException();
+		}
+		return new Sequence(new ArrayList<>(steps.subList(0, steps.size() - 1)));
+	}
+
+	/**
+	 * {@return the last step}
+	 */
+	public Step last() {
+		return steps.getLast();
+	}
+
+	/**
+	 * Truncate this sequence to the first count steps
+	 * 
+	 * @param count the count
+	 * @return the new sequence
+	 */
+	public Sequence truncate(int count) {
+		return new Sequence(new ArrayList<>(steps.subList(0, count)));
+	}
+
 	@Override
 	public Sequence clone() {
 		return new Sequence(
@@ -280,24 +309,22 @@ public class Sequence implements Comparable<Sequence> {
 			Step s2 = that.steps.get(i);
 			result = s1.compareStep(s2);
 			switch (result) {
-				case UNREL_LT:
-				case UNREL_GT:
+				case UNREL_LT, UNREL_GT -> {
 					return result;
-				case REL_LT:
-					if (i + 1 == this.steps.size()) {
-						return CompareResult.REL_LT;
-					}
-					else {
-						return CompareResult.UNREL_LT;
-					}
-				case REL_GT:
-					if (i + 1 == that.steps.size()) {
-						return CompareResult.REL_GT;
-					}
-					else {
-						return CompareResult.UNREL_GT;
-					}
-				default: // EQUALS, next step
+				}
+				case REL_LT -> {
+					return i + 1 == this.steps.size()
+							? CompareResult.REL_LT
+							: CompareResult.UNREL_LT;
+				}
+				case REL_GT -> {
+					return i + 1 == that.steps.size()
+							? CompareResult.REL_GT
+							: CompareResult.UNREL_GT;
+				}
+				default -> {
+					// EQUALS, next step
+				}
 			}
 		}
 		if (that.steps.size() > min) {
@@ -358,6 +385,10 @@ public class Sequence implements Comparable<Sequence> {
 			count += step.getTickCount();
 		}
 		return count;
+	}
+
+	public int count() {
+		return steps.size();
 	}
 
 	public long totalSkipCount() {
