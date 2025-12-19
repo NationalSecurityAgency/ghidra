@@ -127,6 +127,9 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 */
 	protected T getUnique(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		S s = getForSpace(uniqueSpace, false);
+		if (s == null) {
+			return getFromNullSpace(size, reason, cb);
+		}
 		return getFromSpace(s, offset, size, reason, cb);
 	}
 
