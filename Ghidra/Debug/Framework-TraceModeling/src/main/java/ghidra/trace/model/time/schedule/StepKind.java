@@ -17,16 +17,27 @@ package ghidra.trace.model.time.schedule;
 
 import ghidra.pcode.emu.PcodeThread;
 
-public interface Stepper {
-	static Stepper instruction() {
-		return StepKind.INSTRUCTION;
-	}
+public enum StepKind implements Stepper {
+	INSTRUCTION {
+		@Override
+		public void tick(PcodeThread<?> thread) {
+			thread.stepInstruction();
+		}
 
-	static Stepper pcode() {
-		return StepKind.PCODE;
-	}
+		@Override
+		public void skip(PcodeThread<?> thread) {
+			thread.skipInstruction();
+		}
+	},
+	PCODE {
+		@Override
+		public void tick(PcodeThread<?> thread) {
+			thread.stepPcodeOp();
+		}
 
-	void tick(PcodeThread<?> thread);
-
-	void skip(PcodeThread<?> thread);
+		@Override
+		public void skip(PcodeThread<?> thread) {
+			thread.skipPcodeOp();
+		}
+	};
 }
