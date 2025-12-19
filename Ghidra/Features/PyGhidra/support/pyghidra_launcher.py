@@ -21,7 +21,6 @@ import subprocess
 import sysconfig
 from pathlib import Path
 from itertools import chain
-from importlib import metadata
 from typing import List, Dict, Tuple, Optional  
 
 def get_application_properties(install_dir: Path) -> Dict[str, str]:
@@ -140,14 +139,10 @@ def version_tuple(v: str) -> Tuple[str, ...]:
         filled.append(point.zfill(8))
     return tuple(filled)
 
-def get_package_version(package: str) -> Optional[str]:
-    """
-    Checks for an installed package version.
-    """
-    try:
-        return metadata.version(package)
-    except metadata.PackageNotFoundError:
-        return None
+def get_package_version(python_cmd: List[str], package: str) -> Optional[str]:
+    source = f'import importlib.metadata as m; print(m.version("{package}"))'
+    result = subprocess.run(python_cmd + ['-c', source], capture_output=True, text=True)
+    return result.stdout.strip() if result.returncode == 0 else None
 
 def get_saved_python_cmd(install_dir: Path, dev: bool) -> List[str]:
     user_settings_dir: Path = get_user_settings_dir(install_dir, dev)
@@ -200,6 +195,10 @@ def upgrade(python_cmd: List[str], pip_args: List[str], dist_dir: Path, current_
     included_version = included_pyghidra.name.split('-')[1]
     current_version = current_pyghidra_version
     if version_tuple(included_version) > version_tuple(current_version):
+        print(f'PyGhidra upgrade available: {current_version} -> {included_version}')
+        if is_externally_managed():
+            print(f'Automated upgrade is not supported in an externally managed environment')
+            return False
         choice: str = input(f'Do you wish to upgrade PyGhidra {current_version} to {included_version} (y/n)? ')
         if choice.lower() in ('y', 'yes'):
             pip_args.append('-U')
@@ -238,11 +237,11 @@ def main() -> None:
     if args.dev:
         # If in dev mode, launch PyGhidra from the source tree using the development virtual environment
         if not venv_dir.is_dir():
-            print('Virtual environment not found!')
+            print('Development virtual environment not found!')
             print('Run "gradle prepPyGhidra" and try again.')
             sys.exit(1)
         python_cmd = get_venv_exe(venv_dir)
-        print(f'Switching to Ghidra virtual environment: {venv_dir}')
+        print(f'Switching to Ghidra development virtual environment: {venv_dir}')
     else:
         # If in release mode, offer to install or upgrade PyGhidra before launching from user-controlled environment
         pip_args: List[str] = ['-m', 'pip', 'install', '--no-index', '-f', str(dist_dir), 'pyghidra']
@@ -251,7 +250,7 @@ def main() -> None:
         # 1) If we are already in a virtual environment, use that
         # 2) If the Ghidra user settings virtual environment exists, use that
         # 3) If we are "externally managed", automatically create/use the Ghidra user settings virtual environment
-        offer_venv: bool = False
+        offer_venv = False
         if in_venv():
             # If we are already in a virtual environment, assume that's where the user wants to be
             python_cmd = get_venv_exe(Path(sys.prefix))
@@ -261,16 +260,21 @@ def main() -> None:
             python_cmd = get_venv_exe(venv_dir)
             print(f'Switching to Ghidra virtual environment: {venv_dir}')
         elif is_externally_managed():
-            print('Externally managed environment detected!')
-            create_ghidra_venv(python_cmd, venv_dir)
-            python_cmd = get_venv_exe(venv_dir)
-            print(f'Switching to Ghidra virtual environment: {venv_dir}')
+            print('Externally managed environment detected')
+            current_pyghidra_version = get_package_version(python_cmd, 'pyghidra')
+            if current_pyghidra_version is None:
+                create_ghidra_venv(python_cmd, venv_dir)
+                python_cmd = get_venv_exe(venv_dir)
+                print(f'Switching to Ghidra virtual environment: {venv_dir}')
+            else:
+                print(f'Using externally managed PyGhidra {current_pyghidra_version}')
+
         else:
             offer_venv = True
 
         # If PyGhidra is not installed in the execution environment, offer to install it
         # If it's already installed, offer to upgrade (if applicable)
-        current_pyghidra_version = get_package_version('pyghidra')
+        current_pyghidra_version = get_package_version(python_cmd, 'pyghidra')
         if current_pyghidra_version is None:
             python_cmd = install(install_dir, python_cmd, pip_args, offer_venv)
             if not python_cmd:
