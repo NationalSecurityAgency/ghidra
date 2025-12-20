@@ -10,6 +10,7 @@
   <data_space space="ram"/>
 			
   <default_memory_blocks>
+    <memory_block name="CSFRs" start_address="0x0" length="0x1FFFF" mode="rwv" initialized="false"/>
     <memory_block name="CPU2_DSPR" start_address="0x50000000" length="0x1E000" mode="rwv" initialized="false"/>
     <memory_block name="CPU2_PSPR" start_address="0x50100000" length="0x8000" mode="rwv" initialized="false"/>
     <memory_block name="CPU1_DSPR" start_address="0x60000000" length="0x1E000" mode="rwv" initialized="false"/>
@@ -99,6 +100,140 @@
   </default_memory_blocks>
 
   <default_symbols>
+    <symbol name="CSFR_BIV" address="0xfe20" entry="false">
+    <symbol name="CSFR_BTV" address="0xfe24" entry="false">
+    <symbol name="CSFR_CCNT" address="0xfc04" entry="false">
+    <symbol name="CSFR_CCTRL" address="0xfc00" entry="false">
+    <symbol name="CSFR_COMPAT" address="0x9400" entry="false">
+    <symbol name="CSFR_CORE_ID" address="0xfe1c" entry="false">
+    <symbol name="CSFR_CPR0_L" address="0xd000" entry="false">
+    <symbol name="CSFR_CPR0_U" address="0xd004" entry="false">
+    <symbol name="CSFR_CPR1_L" address="0xd008" entry="false">
+    <symbol name="CSFR_CPR1_U" address="0xd00c" entry="false">
+    <symbol name="CSFR_CPR2_L" address="0xd010" entry="false">
+    <symbol name="CSFR_CPR2_U" address="0xd014" entry="false">
+    <symbol name="CSFR_CPR3_L" address="0xd018" entry="false">
+    <symbol name="CSFR_CPR3_U" address="0xd01c" entry="false">
+    <symbol name="CSFR_CPR4_L" address="0xd020" entry="false">
+    <symbol name="CSFR_CPR4_U" address="0xd024" entry="false">
+    <symbol name="CSFR_CPR5_L" address="0xd028" entry="false">
+    <symbol name="CSFR_CPR5_U" address="0xd02c" entry="false">
+    <symbol name="CSFR_CPR6_L" address="0xd030" entry="false">
+    <symbol name="CSFR_CPR6_U" address="0xd034" entry="false">
+    <symbol name="CSFR_CPR7_L" address="0xd038" entry="false">
+    <symbol name="CSFR_CPR7_U" address="0xd03c" entry="false">
+    <symbol name="CSFR_CPU_ID" address="0xfe18" entry="false">
+    <symbol name="CSFR_CPXE0" address="0xe000" entry="false">
+    <symbol name="CSFR_CPXE1" address="0xe004" entry="false">
+    <symbol name="CSFR_CPXE2" address="0xe008" entry="false">
+    <symbol name="CSFR_CPXE3" address="0xe00c" entry="false">
+    <symbol name="CSFR_CREVT" address="0xfd0c" entry="false">
+    <symbol name="CSFR_CUS_ID" address="0xfe50" entry="false">
+    <symbol name="CSFR_DATR" address="0x9018" entry="false">
+    <symbol name="CSFR_DBGSR" address="0xfd00" entry="false">
+    <symbol name="CSFR_DBGTCR" address="0xfd48" entry="false">
+    <symbol name="CSFR_DCON0" address="0x9040" entry="false">
+    <symbol name="CSFR_DCON2" address="0x9000" entry="false">
+    <symbol name="CSFR_DCX" address="0xfd44" entry="false">
+    <symbol name="CSFR_DEADD" address="0x901c" entry="false">
+    <symbol name="CSFR_DIEAR" address="0x9020" entry="false">
+    <symbol name="CSFR_DIETR" address="0x9024" entry="false">
+    <symbol name="CSFR_DMS" address="0xfd40" entry="false">
+    <symbol name="CSFR_DPR0_L" address="0xc000" entry="false">
+    <symbol name="CSFR_DPR0_U" address="0xc004" entry="false">
+    <symbol name="CSFR_DPR10_L" address="0xc050" entry="false">
+    <symbol name="CSFR_DPR10_U" address="0xc054" entry="false">
+    <symbol name="CSFR_DPR11_L" address="0xc058" entry="false">
+    <symbol name="CSFR_DPR11_U" address="0xc05c" entry="false">
+    <symbol name="CSFR_DPR12_L" address="0xc060" entry="false">
+    <symbol name="CSFR_DPR12_U" address="0xc064" entry="false">
+    <symbol name="CSFR_DPR13_L" address="0xc068" entry="false">
+    <symbol name="CSFR_DPR13_U" address="0xc06c" entry="false">
+    <symbol name="CSFR_DPR14_L" address="0xc070" entry="false">
+    <symbol name="CSFR_DPR14_U" address="0xc074" entry="false">
+    <symbol name="CSFR_DPR15_L" address="0xc078" entry="false">
+    <symbol name="CSFR_DPR15_U" address="0xc07c" entry="false">
+    <symbol name="CSFR_DPR1_L" address="0xc008" entry="false">
+    <symbol name="CSFR_DPR1_U" address="0xc00c" entry="false">
+    <symbol name="CSFR_DPR2_L" address="0xc010" entry="false">
+    <symbol name="CSFR_DPR2_U" address="0xc014" entry="false">
+    <symbol name="CSFR_DPR3_L" address="0xc018" entry="false">
+    <symbol name="CSFR_DPR3_U" address="0xc01c" entry="false">
+    <symbol name="CSFR_DPR4_L" address="0xc020" entry="false">
+    <symbol name="CSFR_DPR4_U" address="0xc024" entry="false">
+    <symbol name="CSFR_DPR5_L" address="0xc028" entry="false">
+    <symbol name="CSFR_DPR5_U" address="0xc02c" entry="false">
+    <symbol name="CSFR_DPR6_L" address="0xc030" entry="false">
+    <symbol name="CSFR_DPR6_U" address="0xc034" entry="false">
+    <symbol name="CSFR_DPR7_L" address="0xc038" entry="false">
+    <symbol name="CSFR_DPR7_U" address="0xc03c" entry="false">
+    <symbol name="CSFR_DPR8_L" address="0xc040" entry="false">
+    <symbol name="CSFR_DPR8_U" address="0xc044" entry="false">
+    <symbol name="CSFR_DPR9_L" address="0xc048" entry="false">
+    <symbol name="CSFR_DPR9_U" address="0xc04c" entry="false">
+    <symbol name="CSFR_DPRE0" address="0xe010" entry="false">
+    <symbol name="CSFR_DPRE1" address="0xe014" entry="false">
+    <symbol name="CSFR_DPRE2" address="0xe018" entry="false">
+    <symbol name="CSFR_DPRE3" address="0xe01c" entry="false">
+    <symbol name="CSFR_DPWE0" address="0xe020" entry="false">
+    <symbol name="CSFR_DPWE1" address="0xe024" entry="false">
+    <symbol name="CSFR_DPWE2" address="0xe028" entry="false">
+    <symbol name="CSFR_DPWE3" address="0xe02c" entry="false">
+    <symbol name="CSFR_DSTR" address="0x9010" entry="false">
+    <symbol name="CSFR_EXEVT" address="0xfd08" entry="false">
+    <symbol name="CSFR_FCX" address="0xfe38" entry="false">
+    <symbol name="CSFR_FPU_TRAP_CON" address="0xa000" entry="false">
+    <symbol name="CSFR_FPU_TRAP_OPC" address="0xa008" entry="false">
+    <symbol name="CSFR_FPU_TRAP_PC" address="0xa004" entry="false">
+    <symbol name="CSFR_FPU_TRAP_SRC1" address="0xa010" entry="false">
+    <symbol name="CSFR_FPU_TRAP_SRC2" address="0xa014" entry="false">
+    <symbol name="CSFR_FPU_TRAP_SRC3" address="0xa018" entry="false">
+    <symbol name="CSFR_ICNT" address="0xfc08" entry="false">
+    <symbol name="CSFR_ICR" address="0xfe2c" entry="false">
+    <symbol name="CSFR_ISP" address="0xfe28" entry="false">
+    <symbol name="CSFR_LCX" address="0xfe3c" entry="false">
+    <symbol name="CSFR_M1CNT" address="0xfc0c" entry="false">
+    <symbol name="CSFR_M2CNT" address="0xfc10" entry="false">
+    <symbol name="CSFR_M3CNT" address="0xfc14" entry="false">
+    <symbol name="CSFR_PC" address="0xfe08" entry="false">
+    <symbol name="CSFR_PCON0" address="0x920c" entry="false">
+    <symbol name="CSFR_PCON1" address="0x9204" entry="false">
+    <symbol name="CSFR_PCON2" address="0x9208" entry="false">
+    <symbol name="CSFR_PCXI" address="0xfe00" entry="false">
+    <symbol name="CSFR_PIEAR" address="0x9210" entry="false">
+    <symbol name="CSFR_PIETR" address="0x9214" entry="false">
+    <symbol name="CSFR_PMA0" address="0x8100" entry="false">
+    <symbol name="CSFR_PMA1" address="0x8104" entry="false">
+    <symbol name="CSFR_PMA2" address="0x8108" entry="false">
+    <symbol name="CSFR_PSTR" address="0x9200" entry="false">
+    <symbol name="CSFR_PSW" address="0xfe04" entry="false">
+    <symbol name="CSFR_SEGEN" address="0x1030" entry="false">
+    <symbol name="CSFR_SMACON" address="0x900c" entry="false">
+    <symbol name="CSFR_SR" address="0x0xf0036114" entry="false">
+    <symbol name="CSFR_SWEVT" address="0xfd10" entry="false">
+    <symbol name="CSFR_SYSCON" address="0xfe14" entry="false">
+    <symbol name="CSFR_TASK_ASI" address="0x8004" entry="false">
+    <symbol name="CSFR_TPS_CON" address="0xe400" entry="false">
+    <symbol name="CSFR_TPS_TIMER0" address="0xe404" entry="false">
+    <symbol name="CSFR_TPS_TIMER1" address="0xe408" entry="false">
+    <symbol name="CSFR_TPS_TIMER2" address="0xe40c" entry="false">
+    <symbol name="CSFR_TR0_ADR" address="0xf004" entry="false">
+    <symbol name="CSFR_TR0_EVT" address="0xf000" entry="false">
+    <symbol name="CSFR_TR1_ADR" address="0xf00c" entry="false">
+    <symbol name="CSFR_TR1_EVT" address="0xf008" entry="false">
+    <symbol name="CSFR_TR2_ADR" address="0xf014" entry="false">
+    <symbol name="CSFR_TR2_EVT" address="0xf010" entry="false">
+    <symbol name="CSFR_TR3_ADR" address="0xf01c" entry="false">
+    <symbol name="CSFR_TR3_EVT" address="0xf018" entry="false">
+    <symbol name="CSFR_TR4_ADR" address="0xf024" entry="false">
+    <symbol name="CSFR_TR4_EVT" address="0xf020" entry="false">
+    <symbol name="CSFR_TR5_ADR" address="0xf02c" entry="false">
+    <symbol name="CSFR_TR5_EVT" address="0xf028" entry="false">
+    <symbol name="CSFR_TR6_ADR" address="0xf034" entry="false">
+    <symbol name="CSFR_TR6_EVT" address="0xf030" entry="false">
+    <symbol name="CSFR_TR7_ADR" address="0xf03c" entry="false">
+    <symbol name="CSFR_TR7_EVT" address="0xf038" entry="false">
+    <symbol name="CSFR_TRIG_ACC" address="0xfd30" entry="false">
     <symbol name="STM0_CLC" address="0xf0000000" entry="false"/>
     <symbol name="STM0_ID" address="0xf0000008" entry="false"/>
     <symbol name="STM0_TIM0" address="0xf0000010" entry="false"/>
