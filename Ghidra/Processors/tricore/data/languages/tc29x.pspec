@@ -10,7 +10,7 @@
   <data_space space="ram"/>
 			
   <default_memory_blocks>
-    <memory_block name="CSFRs" start_address="0x0" length="0x1FFFF" mode="rwv" initialized="false"/>
+    <memory_block name="CSFRs" start_address="0x0" length="0x10000" mode="rwv" initialized="false"/>
     <memory_block name="CPU2_DSPR" start_address="0x50000000" length="0x1E000" mode="rwv" initialized="false"/>
     <memory_block name="CPU2_PSPR" start_address="0x50100000" length="0x8000" mode="rwv" initialized="false"/>
     <memory_block name="CPU1_DSPR" start_address="0x60000000" length="0x1E000" mode="rwv" initialized="false"/>
