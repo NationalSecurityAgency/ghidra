@@ -65,7 +65,7 @@
             version="1.7"
             slafile="tricore.sla"
             processorspec="tc36x.pspec"
-      manualindexfile=""
+      manualindexfile="../manuals/tricore3.idx"
             id="tricore:LE:32:tc36x">
     <description>Infineon Tricore Embedded Processor TC36x</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
