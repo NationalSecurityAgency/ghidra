@@ -26,11 +26,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.objectweb.asm.tree.MethodInsnNode;
 
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcodeOpKey;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
 import ghidra.pcode.exec.SleighLinkException;
 import ghidra.pcode.floatformat.FloatFormat;
-import ghidra.program.model.lang.Endian;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGeneratorTest {
@@ -434,10 +437,21 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 		Translation tr = translateSleigh(getLanguageID(), """
 				r0 = java_userop(6:8, 2:8);
 				""");
+		AddressFactory factory = tr.program().getLanguage().getAddressFactory();
+		Register regR0 = tr.program().getLanguage().getRegister("r0");
+
 		assertFalse(tr.library().gotJavaUseropCall);
 		tr.runFallthrough();
 		assertTrue(tr.library().gotJavaUseropCall);
 		assertEquals(14, tr.getLongRegVal("r0"));
+
+		int opNo = tr.program().getUseropNumber("java_userop");
+		PcodeOp exp = new PcodeOp(Address.NO_ADDRESS, 0, PcodeOp.CALLOTHER, new Varnode[] {
+			new Varnode(factory.getConstantAddress(opNo), 4),
+			new Varnode(factory.getConstantAddress(6), 8),
+			new Varnode(factory.getConstantAddress(2), 8)
+		}, new Varnode(regR0.getAddress(), regR0.getNumBytes()));
+		assertEquals(new PcodeOpKey(exp), new PcodeOpKey(tr.library().recordedOp));
 	}
 
 	@Test
@@ -445,10 +459,20 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 		Translation tr = translateSleigh(getLanguageID(), """
 				java_userop(6:8, 2:8);
 				""");
+		AddressFactory factory = tr.program().getLanguage().getAddressFactory();
+
 		assertFalse(tr.library().gotJavaUseropCall);
 		tr.runFallthrough();
 		assertTrue(tr.library().gotJavaUseropCall);
 		assertEquals(0, tr.getLongRegVal("r0"));
+
+		int opNo = tr.program().getUseropNumber("java_userop");
+		PcodeOp exp = new PcodeOp(Address.NO_ADDRESS, 0, PcodeOp.CALLOTHER, new Varnode[] {
+			new Varnode(factory.getConstantAddress(opNo), 4),
+			new Varnode(factory.getConstantAddress(6), 8),
+			new Varnode(factory.getConstantAddress(2), 8)
+		}, null);
+		assertEquals(new PcodeOpKey(exp), new PcodeOpKey(tr.library().recordedOp));
 	}
 
 	@Test

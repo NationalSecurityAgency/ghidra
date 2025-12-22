@@ -28,6 +28,7 @@ import ghidra.pcode.emu.jit.gen.util.Types.BNonVoid;
  * @param <T> the JVM type of the field
  */
 public interface StaticFieldReq<T extends BNonVoid> extends FieldReq<T> {
+
 	/**
 	 * Emit the field declaration and its initialization bytecode
 	 * 

@@ -34,8 +34,7 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.program.util.DefaultLanguageService;
 
 /**
@@ -2078,6 +2077,22 @@ public interface JitCompiledPassage {
 	}
 
 	/**
+	 * Construct a p-code op
+	 * 
+	 * @param factory the language's address factory
+	 * @param space the name of the space of the op's sequence number
+	 * @param offset the address offset of the op's sequence number
+	 * @param index the index of the op's sequence number
+	 * @param op the opcode
+	 * @param inputs the inputs
+	 * @param output the output
+	 * @return the op
+	 */
+	static PcodeOp createOp(Address target, int sq, int opcode, Varnode[] inputs, Varnode output) {
+		return new PcodeOp(new SequenceNumber(target, sq), opcode, inputs, output);
+	}
+
+	/**
 	 * Get this instance's bound thread.
 	 * 
 	 * <p>
@@ -2148,15 +2163,12 @@ public interface JitCompiledPassage {
 	 * via the Standard strategy.
 	 * 
 	 * @param userop the userop definition
-	 * @param output an optional output operand
-	 * @param inputs the input operands
+	 * @param op the {@link PcodeOp#CALLOTHER} op
 	 * @see JitDataFlowUseropLibrary
-	 * @see PcodeUseropDefinition#execute(PcodeExecutor, PcodeUseropLibrary, Varnode, List)
+	 * @see PcodeUseropDefinition#execute(PcodeExecutor, PcodeUseropLibrary, PcodeOp)
 	 */
-	default void invokeUserop(PcodeUseropDefinition<byte[]> userop, Varnode output,
-			Varnode[] inputs) {
-		userop.execute(thread().getExecutor(), thread().getUseropLibrary(), output,
-			Arrays.asList(inputs));
+	default void invokeUserop(PcodeUseropDefinition<byte[]> userop, PcodeOp op) {
+		userop.execute(thread().getExecutor(), thread().getUseropLibrary(), op);
 	}
 
 	/**

@@ -39,8 +39,8 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
  * @param userop the definition to pre-fetch
  * @see JitDataFlowUseropLibrary
  */
-public record FieldForUserop(PcodeUseropDefinition<?> userop)
-		implements InstanceFieldReq<TRef<PcodeUseropDefinition<?>>> {
+public record FieldForUserop(PcodeUseropDefinition<byte[]> userop)
+		implements InstanceFieldReq<TRef<PcodeUseropDefinition<byte[]>>> {
 	@Override
 	public String name() {
 		return "userop_" + userop.getName();
@@ -81,10 +81,10 @@ public record FieldForUserop(PcodeUseropDefinition<?> userop)
 
 	@Override
 	public <THIS extends JitCompiledPassage, N extends Next>
-			Emitter<Ent<N, TRef<PcodeUseropDefinition<?>>>>
+			Emitter<Ent<N, TRef<PcodeUseropDefinition<byte[]>>>>
 			genLoad(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
 		return em
 				.emit(Op::aload, localThis)
-				.emit(Op::getfield, gen.typeThis, name(), T_PCODE_USEROP_DEFINITION);
+				.emit(Op::getfield, gen.typeThis, name(), T_PCODE_USEROP_DEFINITION__BYTEARR);
 	}
 }

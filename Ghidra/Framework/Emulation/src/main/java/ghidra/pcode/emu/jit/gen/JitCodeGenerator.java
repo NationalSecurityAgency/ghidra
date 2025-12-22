@@ -21,6 +21,7 @@ import static org.objectweb.asm.Opcodes.*;
 import java.io.*;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.objectweb.asm.*;
@@ -198,7 +199,23 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 		 * @param vn the varnode
 		 */
 		public VarnodeKey(Varnode vn) {
-			this(vn.getSpace(), vn.getOffset(), vn.getSize());
+			this(vn == null ? 0 : vn.getSpace(), vn == null ? 0 : vn.getOffset(),
+				vn == null ? 0 : vn.getSize());
+		}
+	}
+
+	/**
+	 * The key for a p-code op, to ensure we control "equality"
+	 */
+	record PcodeOpKey(VarnodeKey out, int opcode, List<VarnodeKey> ins) {
+		/**
+		 * Extract/construct thhe key for a given op
+		 * 
+		 * @param op the p-code op
+		 */
+		public PcodeOpKey(PcodeOp op) {
+			this(new VarnodeKey(op.getOutput()), op.getOpcode(),
+				Stream.of(op.getInputs()).map(VarnodeKey::new).toList());
 		}
 	}
 
@@ -219,6 +236,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	private final Map<Address, FieldForArrDirect> fieldsForArrDirect = new HashMap<>();
 	private final Map<RegisterValue, FieldForContext> fieldsForContext = new HashMap<>();
 	private final Map<VarnodeKey, FieldForVarnode> fieldsForVarnode = new HashMap<>();
+	private final Map<PcodeOpKey, FieldForPcodeOp> fieldsForOp = new HashMap<>();
 	private final Map<String, FieldForUserop> fieldsForUserop = new HashMap<>();
 	private final Map<AddrCtx, FieldForExitSlot> fieldsForExitSlot = new HashMap<>();
 
@@ -508,12 +526,24 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	}
 
 	/**
+	 * Request a field for the given p-code op
+	 * <p>
+	 * This will request fields for each varnode for the op's operands
+	 * 
+	 * @param op the p-code op
+	 * @return the field request
+	 */
+	public FieldForPcodeOp requestStaticFieldForOp(PcodeOp op) {
+		return fieldsForOp.computeIfAbsent(new PcodeOpKey(op), ok -> new FieldForPcodeOp(this, op));
+	}
+
+	/**
 	 * Request a field for the given userop
 	 * 
 	 * @param userop the userop
 	 * @return the field request
 	 */
-	public FieldForUserop requestFieldForUserop(PcodeUseropDefinition<?> userop) {
+	public FieldForUserop requestFieldForUserop(PcodeUseropDefinition<byte[]> userop) {
 		return fieldsForUserop.computeIfAbsent(userop.getName(), n -> {
 			FieldForUserop f = new FieldForUserop(userop);
 			return f;
@@ -989,6 +1019,9 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 		}
 		for (FieldForVarnode fVn : fieldsForVarnode.values()) {
 			em = fVn.genClInitCode(em, this, cv);
+		}
+		for (FieldForPcodeOp fOp : fieldsForOp.values()) {
+			em = fOp.genClInitCode(em, this, cv);
 		}
 		return em;
 	}
