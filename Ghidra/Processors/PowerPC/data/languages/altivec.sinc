@@ -381,11 +381,10 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
     vrD_32_3 = vrA_32_3 + vrB_32_3;
 }
 
-# Collides with vadduws
-# :vadduws vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=640
-# {   # TODO definition
-# 	vrD = vectorAddUnsignedWordSaturate(vrA,vrB);
-# }
+:vadduws vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=640
+{   # TODO definition
+	vrD = vectorAddUnsignedWordSaturate(vrA,vrB);
+}
 
 :vand vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1028
 {   # TODO definition
