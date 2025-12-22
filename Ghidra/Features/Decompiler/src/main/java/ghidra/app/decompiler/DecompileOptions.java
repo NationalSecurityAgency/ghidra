@@ -970,7 +970,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the brace formatting style for function bodies
+	 * {@return the brace formatting style for function bodies.}
 	 */
 	public BraceStyle getFunctionBraceFormat() {
 		return braceFunction;
@@ -985,7 +985,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the brace formatting style for if/else code blocks
+	 * {@return the brace formatting style for if/else code blocks.}
 	 */
 	public BraceStyle getIfElseBraceFormat() {
 		return braceIfElse;
@@ -1000,7 +1000,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the brace formatting style for loop bodies
+	 * {@return the brace formatting style for loop bodies.}
 	 */
 	public BraceStyle getLoopBraceFormat() {
 		return braceLoop;
@@ -1015,7 +1015,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the brace formatting style for switch blocks
+	 * {@return the brace formatting style for switch blocks.}
 	 */
 	public BraceStyle getSwitchBraceFormat() {
 		return braceSwitch;
@@ -1030,7 +1030,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the maximum number of characters the decompiler displays in a single line of output
+	 * {@return the maximum number of characters the decompiler displays in a single line of output.}
 	 */
 	public int getMaxWidth() {
 		return maxwidth;
@@ -1045,84 +1045,84 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return color associated with keyword tokens
+	 * {@return color associated with keyword tokens.}
 	 */
 	public Color getKeywordColor() {
 		return HIGHLIGHT_KEYWORD_COLOR;
 	}
 
 	/**
-	 * @return color associated with data-type tokens
+	 * {@return color associated with data-type tokens.}
 	 */
 	public Color getTypeColor() {
 		return HIGHLIGHT_TYPE_COLOR;
 	}
 
 	/**
-	 * @return color used to display comments
+	 * {@return color used to display comments.}
 	 */
 	public Color getCommentColor() {
 		return HIGHLIGHT_COMMENT_COLOR;
 	}
 
 	/**
-	 * @return color associated with constant tokens
+	 * {@return color associated with constant tokens.}
 	 */
 	public Color getConstantColor() {
 		return HIGHLIGHT_CONST_COLOR;
 	}
 
 	/**
-	 * @return color associated with (local) variable tokens
+	 * {@return color associated with (local) variable tokens.}
 	 */
 	public Color getVariableColor() {
 		return HIGHLIGHT_VARIABLE_COLOR;
 	}
 
 	/**
-	 * @return color associated with parameter tokens
+	 * {@return color associated with parameter tokens.}
 	 */
 	public Color getParameterColor() {
 		return HIGHLIGHT_PARAMETER_COLOR;
 	}
 
 	/**
-	 * @return color associated with global variable tokens
+	 * {@return color associated with global variable tokens.}
 	 */
 	public Color getGlobalColor() {
 		return HIGHLIGHT_GLOBAL_COLOR;
 	}
 
 	/**
-	 * @return color associated with volatile variables or other special tokens
+	 * {@return color associated with volatile variables or other special tokens.}
 	 */
 	public Color getSpecialColor() {
 		return HIGHLIGHT_SPECIAL_COLOR;
 	}
 
 	/**
-	 * @return color for generic syntax or other unspecified tokens
+	 * {@return color for generic syntax or other unspecified tokens.}
 	 */
 	public Color getDefaultColor() {
 		return HIGHLIGHT_DEFAULT_COLOR;
 	}
 
 	/**
-	 * @return color used on tokens that need to warn of an error or other unusual conditions
+	 * {@return color used on tokens that need to warn of an error or other unusual conditions.}
 	 */
 	public Color getErrorColor() {
 		return ERROR_COLOR;
 	}
 
 	/**
-	 * @return the background color for the decompiler window
+	 * {@return the background color for the decompiler window.}
 	 */
 	public Color getBackgroundColor() {
 		return BACKGROUND_COLOR;
 	}
 
 	/**
-	 * @return the color used display the current highlighted variable
+	 * {@return the color used display the current highlighted variable.}
 	 */
 	public Color getCurrentVariableHighlightColor() {
 		return HIGHLIGHT_CURRENT_VARIABLE_COLOR;
@@ -1143,21 +1143,21 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return color used to highlight search results
+	 * {@return color used to highlight search results.}
 	 */
 	public Color getSearchHighlightColor() {
 		return SEARCH_HIGHLIGHT_COLOR;
 	}
 
 	/**
-	 * @return the mouse button that should be used to toggle the primary token highlight
+	 * {@return the mouse button that should be used to toggle the primary token highlight.}
 	 */
 	public int getMiddleMouseHighlightButton() {
 		return middleMouseHighlightButton;
 	}
 
 	/**
-	 * @return true if Pre comments are included as part of decompiler output
+	 * {@return true if Pre comments are included as part of decompiler output.}
 	 */
 	public boolean isPRECommentIncluded() {
 		return commentPREInclude;
@@ -1172,7 +1172,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if Plate comments are included as part of decompiler output
+	 * {@return true if Plate comments are included as part of decompiler output.}
 	 */
 	public boolean isPLATECommentIncluded() {
 		return commentPLATEInclude;
@@ -1187,7 +1187,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if Post comments are included as part of decompiler output
+	 * {@return true if Post comments are included as part of decompiler output.}
 	 */
 	public boolean isPOSTCommentIncluded() {
 		return commentPOSTInclude;
@@ -1202,7 +1202,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if End-of-line comments are included as part of decompiler output
+	 * {@return true if End-of-line comments are included as part of decompiler output.}
 	 */
 	public boolean isEOLCommentIncluded() {
 		return commentEOLInclude;
@@ -1217,7 +1217,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if WARNING comments are included as part of decompiler output
+	 * {@return true if WARNING comments are included as part of decompiler output.}
 	 */
 	public boolean isWARNCommentIncluded() {
 		return commentWARNInclude;
@@ -1233,7 +1233,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if function header comments are included as part of decompiler output
+	 * {@return true if function header comments are included as part of decompiler output.}
 	 */
 	public boolean isHeadCommentIncluded() {
 		return commentHeadInclude;
@@ -1248,7 +1248,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if the decompiler currently eliminates unreachable code
+	 * {@return true if the decompiler currently eliminates unreachable code.}
 	 */
 	public boolean isEliminateUnreachable() {
 		return eliminateUnreachable;
@@ -1263,7 +1263,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if the decompiler currently respects read-only flags
+	 * {@return true if the decompiler currently respects read-only flags.}
 	 */
 	public boolean isRespectReadOnly() {
 		return readOnly;
@@ -1296,14 +1296,14 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if line numbers should be displayed with decompiler output.
+	 * {@return true if line numbers should be displayed with decompiler output.}
 	 */
 	public boolean isDisplayLineNumbers() {
 		return displayLineNumbers;
 	}
 
 	/**
-	 * @return the source programming language that decompiler output is rendered in
+	 * {@return the source programming language that decompiler output is rendered in.}
 	 */
 	public DecompilerLanguage getDisplayLanguage() {
 		return displayLanguage;
@@ -1331,7 +1331,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if calling convention names are displayed as part of function signatures
+	 * {@return true if calling convention names are displayed as part of function signatures.}
 	 */
 	public boolean isConventionPrint() {
 		return conventionPrint;
@@ -1370,7 +1370,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the font that should be used to render decompiler output
+	 * {@return the font that should be used to render decompiler output.}
 	 */
 	public Font getDefaultFont() {
 		return Gui.getFont(DEFAULT_FONT_ID);
@@ -1453,7 +1453,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the style in which comments are printed in decompiler output
+	 * {@return the style in which comments are printed in decompiler output.}
 	 */
 	public CommentStyleEnum getCommentStyle() {
 		return commentStyle;
@@ -1477,7 +1477,8 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if the decompiler currently simplifies predication
+	 * {@return true if predicate simplification is enabled.}
+	 * @see #PREDICATE_OPTIONDESCRIPTION
 	 */
 	public boolean isPredicate() {
 		return predicate;
@@ -1487,13 +1488,15 @@ public class DecompileOptions {
 	 * Set whether the decompiler should simplify predication (combine conditional execution
 	 * into if/else constructs).
 	 * @param predicate true to enable predication simplification
+	 * @see #PREDICATE_OPTIONDESCRIPTION
 	 */
 	public void setPredicate(boolean predicate) {
 		this.predicate = predicate;
 	}
 
 	/**
-	 * @return true if instructions with no p-code implementation are treated as NOP
+	 * {@return true if instructions with no p-code implementation are treated as NOP.}
+	 * @see #IGNOREUNIMPL_OPTIONDESCRIPTION
 	 */
 	public boolean isIgnoreUnimplemented() {
 		return ignoreunimpl;
@@ -1502,13 +1505,15 @@ public class DecompileOptions {
 	/**
 	 * Set whether instructions without p-code implementations should be treated as NOP.
 	 * @param ignore true to ignore unimplemented instructions
+	 * @see #IGNOREUNIMPL_OPTIONDESCRIPTION
 	 */
 	public void setIgnoreUnimplemented(boolean ignore) {
 		this.ignoreunimpl = ignore;
 	}
 
 	/**
-	 * @return true if constants that look like addresses are inferred as pointers
+	 * {@return true if constants that look like addresses are inferred as pointers.}
+	 * @see #INFERCONSTPTR_OPTIONDESCRIPTION
 	 */
 	public boolean isInferConstantPointers() {
 		return inferconstptr;
@@ -1517,13 +1522,15 @@ public class DecompileOptions {
 	/**
 	 * Set whether constants that can be interpreted as addresses should be treated as pointers.
 	 * @param infer true to infer constant pointers
+	 * @see #INFERCONSTPTR_OPTIONDESCRIPTION
 	 */
 	public void setInferConstantPointers(boolean infer) {
 		this.inferconstptr = infer;
 	}
 
 	/**
-	 * @return true if the decompiler attempts to recover for-loops
+	 * {@return true if the decompiler attempts to recover for-loops.}
+	 * @see #ANALYZEFORLOOPS_OPTIONDESCRIPTION
 	 */
 	public boolean isAnalyzeForLoops() {
 		return analyzeForLoops;
@@ -1532,13 +1539,15 @@ public class DecompileOptions {
 	/**
 	 * Set whether the decompiler should try to recover for-loop constructs.
 	 * @param analyze true to enable for-loop recovery
+	 * @see #ANALYZEFORLOOPS_OPTIONDESCRIPTION 
 	 */
 	public void setAnalyzeForLoops(boolean analyze) {
 		this.analyzeForLoops = analyze;
 	}
 
 	/**
-	 * @return true if combined structure field copies are split
+	 * {@return true if combined structure field copies are split.}
+	 * @see #SPLITSTRUCTURES_OPTIONDESCRIPTION
 	 */
 	public boolean isSplitStructures() {
 		return splitStructures;
@@ -1547,13 +1556,15 @@ public class DecompileOptions {
 	/**
 	 * Set whether copies to/from structures that touch multiple fields should be split.
 	 * @param split true to split combined structure field copies
+	 * @see #SPLITSTRUCTURES_OPTIONDESCRIPTION
 	 */
 	public void setSplitStructures(boolean split) {
 		this.splitStructures = split;
 	}
 
 	/**
-	 * @return true if combined array element copies are split
+	 * {@return true if combined array element copies are split.}
+	 * @see #SPLITARRAYS_OPTIONDESCRIPTION
 	 */
 	public boolean isSplitArrays() {
 		return splitArrays;
@@ -1562,13 +1573,15 @@ public class DecompileOptions {
 	/**
 	 * Set whether copies to/from arrays that touch multiple elements should be split.
 	 * @param split true to split combined array element copies
+	 * @see #SPLITARRAYS_OPTIONDESCRIPTION
 	 */
 	public void setSplitArrays(boolean split) {
 		this.splitArrays = split;
 	}
 
 	/**
-	 * @return true if pointer copies to combined elements are split
+	 * {@return true if pointer copies to combined elements are split.}
+	 * @see #SPLITPOINTERS_OPTIONDESCRIPTION
 	 */
 	public boolean isSplitPointers() {
 		return splitPointers;
@@ -1577,13 +1590,15 @@ public class DecompileOptions {
 	/**
 	 * Set whether pointer copies that access multiple elements/fields should be split.
 	 * @param split true to split pointer copies
+	 * @see #SPLITPOINTERS_OPTIONDESCRIPTION
 	 */
 	public void setSplitPointers(boolean split) {
 		this.splitPointers = split;
 	}
 
 	/**
-	 * @return the current policy for ignoring NaN operations
+	 * {@return the current policy for ignoring NaN operations.}
+	 * @see #NANIGNORE_OPTIONDESCRIPTION
 	 */
 	public NanIgnoreEnum getNanIgnore() {
 		return nanIgnore;
@@ -1592,13 +1607,15 @@ public class DecompileOptions {
 	/**
 	 * Set the policy for ignoring NaN operations in decompiler output.
 	 * @param nanIgnore the NanIgnoreEnum value to set
+	 * @see #NANIGNORE_OPTIONDESCRIPTION
 	 */
 	public void setNanIgnore(NanIgnoreEnum nanIgnore) {
 		this.nanIgnore = nanIgnore;
 	}
 
 	/**
-	 * @return true if null pointers are printed as the token 'NULL'
+	 * {@return true if null pointers are printed as the token 'NULL'.}
+	 * @see #NULLTOKEN_OPTIONDESCRIPTION
 	 */
 	public boolean isNullToken() {
 		return nullToken;
@@ -1607,28 +1624,32 @@ public class DecompileOptions {
 	/**
 	 * Set whether null pointers should be displayed using the 'NULL' token.
 	 * @param nullToken true to print 'NULL' for null pointers
+	 * @see #NULLTOKEN_OPTIONDESCRIPTION
 	 */
 	public void setNullToken(boolean nullToken) {
 		this.nullToken = nullToken;
 	}
 
 	/**
-	 * @return true if inplace assignment tokens (+=, *=, etc.) are used
+	 * {@return true if inplace assignment tokens (e.g., +=, *=, etc.) are used.}
+	 * @see #INPLACEOP_OPTIONDESCRIPTION
 	 */
 	public boolean isInplaceTokens() {
 		return inplaceTokens;
 	}
 
 	/**
-	 * Set whether inplace assignment tokens should be used in output.
+	 * Set whether inplace assignment tokens (e.g., +=, *=, etc.) are used.
 	 * @param inplace true to enable inplace tokens
+	 * @see #INPLACEOP_OPTIONDESCRIPTION
 	 */
 	public void setInplaceTokens(boolean inplace) {
 		this.inplaceTokens = inplace;
 	}
 
 	/**
-	 * @return the current alias blocking policy
+	 * {@return the current alias blocking policy.}
+	 * @see #ALIASBLOCK_OPTIONDESCRIPTION
 	 */
 	public AliasBlockEnum getAliasBlock() {
 		return aliasBlock;
@@ -1637,13 +1658,14 @@ public class DecompileOptions {
 	/**
 	 * Set which data-types block pointer aliasing across stack boundaries.
 	 * @param aliasBlock the AliasBlockEnum value to set
+	 * @see #ALIASBLOCK_OPTIONDESCRIPTION
 	 */
 	public void setAliasBlock(AliasBlockEnum aliasBlock) {
 		this.aliasBlock = aliasBlock;
 	}
 
 	/**
-	 * @return number of characters per indent level
+	 * {@return number of characters per indent level.}
 	 */
 	public int getIndentWidth() {
 		return indentwidth;
@@ -1658,7 +1680,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return comment line indent level (number of characters)
+	 * {@return comment line indent level (number of characters).}
 	 */
 	public int getCommentIndent() {
 		return commentindent;
@@ -1673,7 +1695,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return strategy for displaying namespaces
+	 * {@return strategy for displaying namespaces.}
 	 */
 	public NamespaceStrategy getNamespaceStrategy() {
 		return namespaceStrategy;
@@ -1688,7 +1710,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return how integers are formatted in output
+	 * {@return how integers are formatted in output.}
 	 */
 	public IntegerFormatEnum getIntegerFormat() {
 		return integerFormat;
