@@ -167,6 +167,24 @@ public interface Methods {
 		}
 
 		/**
+		 * Begin building an instance method descriptor derived from the given method reference
+		 * <p>
+		 * This implicitly drops the object reference that is normally included in static references
+		 * to instance methods.
+		 * 
+		 * @see #derive(Function)
+		 * @param <R> the return type, boxed
+		 * @param <A0> the object reference type, dropped
+		 * @param <A1> another argument type, boxed
+		 * @param func the method reference
+		 * @return the checked builder
+		 */
+		public static <R, A0, A1> MthDescCheckedBuilderR<R, CkEnt<CkBot, A1>>
+				deriveInst(BiFunction<A0, A1, R> func) {
+			return new MthDescCheckedBuilderR<>();
+		}
+
+		/**
 		 * Begin building a method descriptor derived from the given method reference
 		 * 
 		 * @see #derive(Function)
@@ -203,6 +221,21 @@ public interface Methods {
 		 * Begin building a method descriptor derived from the given method reference
 		 * 
 		 * @see #derive(Function)
+		 * @param <A0> the object type, dropped
+		 * @param <A1> another argument type, boxed
+		 * @param <A2> another argument type, boxed
+		 * @param func the method reference
+		 * @return the checked builder
+		 */
+		public static <A0, A1, A2> MthDescCheckedBuilderR<Void, CkEnt<CkEnt<CkBot, A2>, A1>>
+				deriveInst(A3Consumer<A0, A1, A2> func) {
+			return new MthDescCheckedBuilderR<>();
+		}
+
+		/**
+		 * Begin building a method descriptor derived from the given method reference
+		 * 
+		 * @see #derive(Function)
 		 * @param <R> the return type, boxed
 		 * @param <A0> the first argument type, boxed
 		 * @param <A1> another argument type, boxed
@@ -231,6 +264,61 @@ public interface Methods {
 		public static <A0, A1, A2, A3>
 				MthDescCheckedBuilderR<Void, CkEnt<CkEnt<CkEnt<CkEnt<CkBot, A3>, A2>, A1>, A0>>
 				derive(A4Consumer<A0, A1, A2, A3> func) {
+			return new MthDescCheckedBuilderR<>();
+		}
+
+		/**
+		 * Begin building an instance method descriptor derived from the given method reference
+		 * 
+		 * @see #derive(Function)
+		 * @param <A0> the object reference
+		 * @param <A1> another argument type, boxed
+		 * @param <A2> another argument type, boxed
+		 * @param <A3> another argument type, boxed
+		 * @param func the method reference
+		 * @return the checked builder
+		 */
+		public static <A0, A1, A2, A3>
+				MthDescCheckedBuilderR<Void, CkEnt<CkEnt<CkEnt<CkBot, A3>, A2>, A1>>
+				deriveInst(A4Consumer<A0, A1, A2, A3> func) {
+			return new MthDescCheckedBuilderR<>();
+		}
+
+		/**
+		 * Begin building a method descriptor derived from the given method reference
+		 * 
+		 * @see #derive(Function)
+		 * @param <R> the return type, boxed
+		 * @param <A0> the first argument type, boxed
+		 * @param <A1> another argument type, boxed
+		 * @param <A2> another argument type, boxed
+		 * @param <A3> another argument type, boxed
+		 * @param func the method reference
+		 * @return the checked builder
+		 */
+		public static <R, A0, A1, A2, A3, A4>
+				MthDescCheckedBuilderR<R,
+					CkEnt<CkEnt<CkEnt<CkEnt<CkEnt<CkBot, A4>, A3>, A2>, A1>, A0>>
+				derive(A5Function<A0, A1, A2, A3, A4, R> func) {
+			return new MthDescCheckedBuilderR<>();
+		}
+
+		/**
+		 * Begin building a method descriptor derived from the given method reference
+		 * 
+		 * @see #derive(Function)
+		 * @param <R> the return type, boxed
+		 * @param <A0> the first argument type, boxed
+		 * @param <A1> another argument type, boxed
+		 * @param <A2> another argument type, boxed
+		 * @param <A3> another argument type, boxed
+		 * @param func the method reference
+		 * @return the checked builder
+		 */
+		public static <R, A0, A1, A2, A3, A4, A5,
+			A6> MthDescCheckedBuilderR<R,
+				CkEnt<CkEnt<CkEnt<CkEnt<CkEnt<CkEnt<CkEnt<CkBot, A6>, A5>, A4>, A3>, A2>, A1>, A0>>
+				derive(A7Function<A0, A1, A2, A3, A4, A5, A6, R> func) {
 			return new MthDescCheckedBuilderR<>();
 		}
 

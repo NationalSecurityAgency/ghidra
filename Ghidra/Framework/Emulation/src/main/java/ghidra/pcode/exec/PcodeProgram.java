@@ -17,6 +17,7 @@ package ghidra.pcode.exec;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
@@ -253,5 +254,27 @@ public class PcodeProgram {
 			return language.getUserDefinedOpName(opNo);
 		}
 		return useropNames.get(opNo);
+	}
+
+	/**
+	 * For testing/debug only: Get the userop number for a given name
+	 * 
+	 * @implNote There is no index by name, so this exhaustively searches the language- and
+	 *           library-defined userops.
+	 * @param name the name
+	 * @return the number, or -1 if not found
+	 */
+	public int getUseropNumber(String name) {
+		for (int i = 0; i < language.getNumberOfUserDefinedOpNames(); i++) {
+			if (name.equals(language.getUserDefinedOpName(i))) {
+				return i;
+			}
+		}
+		for (Entry<Integer, String> ent : useropNames.entrySet()) {
+			if (name.equals(ent.getValue())) {
+				return ent.getKey();
+			}
+		}
+		return -1;
 	}
 }

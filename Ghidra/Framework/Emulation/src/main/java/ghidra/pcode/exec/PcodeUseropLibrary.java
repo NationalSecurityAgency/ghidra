@@ -126,23 +126,7 @@ public interface PcodeUseropLibrary<T> {
 		 * @param executor the executor invoking this userop.
 		 * @param library the complete library for this execution. Note the library may have been
 		 *            composed from more than the one defining this userop.
-		 * @param outVar if invoked as an rval, the destination varnode for the userop's output.
-		 *            Otherwise, {@code null}.
-		 * @param inVars the input varnodes as ordered in the source.
-		 * @see AnnotatedPcodeUseropLibrary.AnnotatedPcodeUseropDefinition
-		 */
-		default void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-				Varnode outVar, List<Varnode> inVars) {
-			execute(executor, library, null, outVar, inVars);
-		}
-
-		/**
-		 * Invoke/execute the userop.
-		 * 
-		 * @param executor the executor invoking this userop.
-		 * @param library the complete library for this execution. Note the library may have been
-		 *            composed from more than the one defining this userop.
-		 * @param op the CALLOTHER p-code op
+		 * @param op the {@link PcodeOp#CALLOTHER} op
 		 * @param outVar if invoked as an rval, the destination varnode for the userop's output.
 		 *            Otherwise, {@code null}.
 		 * @param inVars the input varnodes as ordered in the source.

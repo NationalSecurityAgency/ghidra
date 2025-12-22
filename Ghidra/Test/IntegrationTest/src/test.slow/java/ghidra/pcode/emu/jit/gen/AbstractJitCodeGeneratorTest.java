@@ -49,6 +49,7 @@ import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.NumericUtilities;
@@ -220,12 +221,14 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 
 	public static class TestUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> {
 		boolean gotJavaUseropCall = false;
+		PcodeOp recordedOp = null;
 		boolean gotFuncUseropCall = false;
 		boolean gotSleighUseropCall = false;
 
 		@PcodeUserop
-		public long java_userop(long a, long b) {
+		public long java_userop(long a, long b, @OpOp PcodeOp op) {
 			gotJavaUseropCall = true;
+			recordedOp = op;
 			return 2 * a + b;
 		}
 

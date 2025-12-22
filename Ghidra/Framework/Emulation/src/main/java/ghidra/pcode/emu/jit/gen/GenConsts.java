@@ -39,6 +39,7 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -86,9 +87,13 @@ public interface GenConsts {
 	public static final TRef<LowlevelError> T_LOWLEVEL_ERROR = Types.refOf(LowlevelError.class);
 	public static final TRef<Math> T_MATH = Types.refOf(Math.class);
 	public static final TRef<Object> T_OBJECT = Types.refOf(Object.class);
+	public static final TRef<PcodeOp> T_PCODE_OP = Types.refOf(PcodeOp.class);
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static final TRef<PcodeUseropDefinition<?>> T_PCODE_USEROP_DEFINITION =
 		(TRef) Types.refOf(PcodeUseropDefinition.class);
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static final TRef<PcodeUseropDefinition<byte[]>> T_PCODE_USEROP_DEFINITION__BYTEARR =
+		(TRef) T_PCODE_USEROP_DEFINITION;
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static final TRef<PcodeUseropLibrary<?>> T_PCODE_USEROP_LIBRARY =
 		(TRef) Types.refOf(PcodeUseropLibrary.class);
@@ -189,6 +194,17 @@ public interface GenConsts {
 	public static final MthDesc<TRef<ExitSlot>,
 		Ent<Ent<Bot, TLong>, TRef<RegisterValue>>> MDESC_JIT_COMPILED_PASSAGE__CREATE_EXIT_SLOT =
 			MthDesc.returns(T_EXIT_SLOT).param(Types.T_LONG).param(T_REGISTER_VALUE).build();
+	public static final MthDesc<TRef<PcodeOp>,
+		Ent<Ent<Ent<Ent<Ent<Bot, TRef<Address>>, TInt>, TInt>, TRef<Varnode[]>>,
+			TRef<Varnode>>> MDESC_JIT_COMPILED_PASSAGE__CREATE_OP =
+				MthDesc.derive(JitCompiledPassage::createOp)
+						.check(MthDesc::returns, T_PCODE_OP)
+						.check(MthDesc::param, T_ADDRESS)
+						.check(MthDesc::param, Types.T_INT)
+						.check(MthDesc::param, Types.T_INT)
+						.check(MthDesc::param, TARR_VARNODE)
+						.check(MthDesc::param, T_VARNODE)
+						.check(MthDesc::build);
 	public static final MthDesc<TRef<Varnode>,
 		Ent<Ent<Ent<Ent<Bot, TRef<AddressFactory>>, TRef<String>>, TLong>,
 			TInt>> MDESC_JIT_COMPILED_PASSAGE__CREATE_VARNODE =
@@ -204,17 +220,20 @@ public interface GenConsts {
 	public static final MthDesc<TRef<Language>,
 		Ent<Bot, TRef<String>>> MDESC_JIT_COMPILED_PASSAGE__GET_LANGUAGE =
 			MthDesc.returns(T_LANGUAGE).param(T_STRING).build();
-	public static final MthDesc<TRef<PcodeUseropDefinition<?>>,
+	public static final MthDesc<TRef<PcodeUseropDefinition<byte[]>>,
 		Ent<Bot, TRef<String>>> MDESC_JIT_COMPILED_PASSAGE__GET_USEROP_DEFINITION =
-			MthDesc.returns(T_PCODE_USEROP_DEFINITION).param(T_STRING).build();
+			MthDesc.deriveInst(JitCompiledPassage::getUseropDefinition)
+					.check(MthDesc::returns, T_PCODE_USEROP_DEFINITION__BYTEARR)
+					.check(MthDesc::param, T_STRING)
+					.check(MthDesc::build);
 	public static final MthDesc<TVoid,
-		Ent<Ent<Ent<Bot, TRef<PcodeUseropDefinition<?>>>, TRef<Varnode>>,
-			TRef<Varnode[]>>> MDESC_JIT_COMPILED_PASSAGE__INVOKE_USEROP =
-				MthDesc.returns(Types.T_VOID)
-						.param(T_PCODE_USEROP_DEFINITION)
-						.param(T_VARNODE)
-						.param(TARR_VARNODE)
-						.build();
+		Ent<Ent<Bot, TRef<PcodeUseropDefinition<byte[]>>>,
+			TRef<PcodeOp>>> MDESC_JIT_COMPILED_PASSAGE__INVOKE_USEROP =
+				MthDesc.deriveInst(JitCompiledPassage::invokeUserop)
+						.check(MthDesc::returns, Types.T_VOID)
+						.check(MthDesc::param, T_PCODE_USEROP_DEFINITION__BYTEARR)
+						.check(MthDesc::param, T_PCODE_OP)
+						.check(MthDesc::build);
 	public static final MthDesc<TVoid,
 		Ent<Ent<Ent<Bot, TRef<int[]>>, TRef<int[]>>,
 			TRef<int[]>>> MDESC_JIT_COMPILED_PASSAGE__MP_INT_BINOP =
@@ -346,7 +365,6 @@ public interface GenConsts {
 		MthDesc.returns(Types.T_VOID).param(T_STRING).build();
 	public static final MthDesc<TRef<String>, Ent<Bot, TRef<Object[]>>> MDESC_STRING__FORMATTED =
 		MthDesc.returns(T_STRING).param(TARR_OBJECT).build();
-
 	public static final MthDesc<TDouble, Ent<Bot, TDouble>> MDESC_$DOUBLE_UNOP =
 		MthDesc.returns(Types.T_DOUBLE).param(Types.T_DOUBLE).build();
 	public static final MthDesc<TFloat, Ent<Bot, TFloat>> MDESC_$FLOAT_UNOP =

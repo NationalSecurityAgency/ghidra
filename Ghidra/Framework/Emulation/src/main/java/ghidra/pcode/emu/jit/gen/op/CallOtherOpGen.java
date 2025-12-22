@@ -48,7 +48,6 @@ import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
 
 /**
  * The generator for a {@link JitCallOtherOpIf callother}.
@@ -66,12 +65,10 @@ import ghidra.program.model.pcode.Varnode;
  * 
  * <p>
  * For the Standard strategy, we emit code to retire the program counter, decode context, and all
- * live variables. We then request a field to hold the userop and emit code to load it. We then emit
- * code to prepare its arguments and place them on the stack, namely the output varnode and an array
- * for the input varnodes. We request a field for each varnode and emit code to load them as needed.
- * For the array, we emit code to construct and fill it. We then emit code to invoke
- * {@link JitCompiledPassage#invokeUserop(PcodeUseropDefinition, Varnode, Varnode[])}. The userop
- * definition handles retrieving all of its inputs and writing the output, directly to the
+ * live variables. We then request a field to hold the {@link PcodeOp#CALLOTHER} p-code op and the
+ * userop, and emit code to load them. We then emit code to invoke
+ * {@link JitCompiledPassage#invokeUserop(PcodeUseropDefinition, PcodeOp)}. The userop definition
+ * handles retrieving all of its inputs and writing the output, directly to the
  * {@link JitBytesPcodeExecutorState state}. Thus, we now need only to emit code to re-birth all the
  * live variables. If any errors occur, execution is interrupted as usual, and our state is
  * consistent.
@@ -91,16 +88,6 @@ import ghidra.program.model.pcode.Varnode;
 public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	/** The generator singleton */
 	GEN;
-
-	private static <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<Varnode>>>
-			genLoadVarnodeOrNull(Emitter<N> em, Local<TRef<THIS>> localThis,
-					JitCodeGenerator<THIS> gen, Varnode vn) {
-		if (vn == null) {
-			return em.emit(Op::aconst_null, T_VARNODE);
-		}
-		FieldForVarnode field = gen.requestStaticFieldForVarnode(vn);
-		return em.emit(field::genLoad, gen);
-	}
 
 	/**
 	 * Emit code to implement the Standard strategy (see the class documentation)
@@ -127,33 +114,23 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		 * NOTE: The output variable should be "alive", so we need not store it into a local. It'll
 		 * be made alive in the return block transition.
 		 */
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		FieldForUserop useropField = gen.requestFieldForUserop((PcodeUseropDefinition) userop);
+		FieldForPcodeOp opField = gen.requestStaticFieldForOp(op);
+
 		BlockTransition<THIS> transition =
 			VarGen.computeBlockTransition(localThis, gen, block, null);
 
 		PcGen pcGen = PcGen.loadOffset(gen.getAddressForOp(op));
 
-		var emArr = em
+		return new LiveOpResult(em
 				.emit(transition::genFwd)
-				.emit(gen::genRetirePcCtx, localThis, pcGen, gen.getExitContext(op),
-					RetireMode.SET)
+				.emit(gen::genRetirePcCtx, localThis, pcGen, gen.getExitContext(op), RetireMode.SET)
 				.emit(Op::aload, localThis)
-				.emit(gen.requestFieldForUserop(userop)::genLoad, localThis, gen)
-				.emit(CallOtherOpGen::genLoadVarnodeOrNull, localThis, gen, op.getOutput())
-				.emit(Op::ldc__i, op.getNumInputs() - 1)
-				.emit(Op::anewarray, T_VARNODE);
-
-		for (int i = 1; i < op.getNumInputs(); i++) {
-			emArr = emArr
-					.emit(Op::dup)
-					.emit(Op::ldc__i, i - 1)
-					.emit(CallOtherOpGen::genLoadVarnodeOrNull, localThis, gen, op.getInput(i))
-					.emit(Op::aastore);
-		}
-
-		return new LiveOpResult(emArr
+				.emit(useropField::genLoad, localThis, gen)
+				.emit(opField::genLoad, gen)
 				.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "invokeUserop",
 					MDESC_JIT_COMPILED_PASSAGE__INVOKE_USEROP)
-				.step(Inv::takeArg)
 				.step(Inv::takeArg)
 				.step(Inv::takeArg)
 				.step(Inv::takeObjRef)
@@ -199,10 +176,10 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	 * @return the result of emitting the userop's bytecode
 	 */
 	public static <THIS extends JitCompiledPassage, LIB extends PcodeUseropLibrary<?>> OpResult
-			genRunDirectStrategy(Emitter<Bot> em,
-					Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitCallOtherOpIf op,
-					JitBlock block, Scope scope) {
-		FieldForUserop useropField = gen.requestFieldForUserop(op.userop());
+			genRunDirectStrategy(Emitter<Bot> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitCallOtherOpIf op, JitBlock block, Scope scope) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		FieldForUserop useropField = gen.requestFieldForUserop((PcodeUseropDefinition) op.userop());
 
 		// Set<Varnode> live = gen.vsm.getLiveVars(block);
 		/**
