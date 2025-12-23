@@ -1771,37 +1771,37 @@ r2mfl0: { r2mfl1}		is mvm15=0 & r2mfl1			{ }
 
 
   # Register to memory, backward direction, via word
-r2mbwf: A7w				is A7w & mvm0=1				{ movemptr = movemptr - 4; *movemptr = A7w; }
+r2mbwf: A7w				is A7w & mvm0=1				{ movemptr = movemptr - 2; *movemptr = A7w; }
 r2mbwf:					is mvm0=0					{ }
-r2mbwe: r2mbwf" "A6w	is A6w & mvm1=1 & r2mbwf	{ movemptr = movemptr - 4; *movemptr = A6w; }
+r2mbwe: r2mbwf" "A6w	is A6w & mvm1=1 & r2mbwf	{ movemptr = movemptr - 2; *movemptr = A6w; }
 r2mbwe: r2mbwf			is mvm1=0 & r2mbwf			{ }
-r2mbwd: r2mbwe" "A5w	is A5w & mvm2=1 & r2mbwe	{ movemptr = movemptr - 4; *movemptr = A5w; }
+r2mbwd: r2mbwe" "A5w	is A5w & mvm2=1 & r2mbwe	{ movemptr = movemptr - 2; *movemptr = A5w; }
 r2mbwd: r2mbwe			is mvm2=0 & r2mbwe			{ }
-r2mbwc: r2mbwd" "A4w	is A4w & mvm3=1 & r2mbwd	{ movemptr = movemptr - 4; *movemptr = A4w; }
+r2mbwc: r2mbwd" "A4w	is A4w & mvm3=1 & r2mbwd	{ movemptr = movemptr - 2; *movemptr = A4w; }
 r2mbwc: r2mbwd			is mvm3=0 & r2mbwd			{ }
-r2mbwb: r2mbwc" "A3w	is A3w & mvm4=1 & r2mbwc	{  movemptr = movemptr - 4; *movemptr = A3w; }
+r2mbwb: r2mbwc" "A3w	is A3w & mvm4=1 & r2mbwc	{  movemptr = movemptr - 2; *movemptr = A3w; }
 r2mbwb: r2mbwc			is mvm4=0 & r2mbwc			{ }
-r2mbwa: r2mbwb" "A2w	is A2w & mvm5=1 & r2mbwb	{ movemptr = movemptr - 4; *movemptr = A2w; }
+r2mbwa: r2mbwb" "A2w	is A2w & mvm5=1 & r2mbwb	{ movemptr = movemptr - 2; *movemptr = A2w; }
 r2mbwa: r2mbwb			is mvm5=0 & r2mbwb			{ }
-r2mbw9: r2mbwa" "A1w	is A1w & mvm6=1 & r2mbwa	{ movemptr = movemptr - 4; *movemptr = A1w; }
+r2mbw9: r2mbwa" "A1w	is A1w & mvm6=1 & r2mbwa	{ movemptr = movemptr - 2; *movemptr = A1w; }
 r2mbw9: r2mbwa			is mvm6=0 & r2mbwa			{ }
-r2mbw8: r2mbw9" "A0w	is A0w & mvm7=1 & r2mbw9	{ movemptr = movemptr - 4; *movemptr = A0w; }
+r2mbw8: r2mbw9" "A0w	is A0w & mvm7=1 & r2mbw9	{ movemptr = movemptr - 2; *movemptr = A0w; }
 r2mbw8: r2mbw9			is mvm7=0 & r2mbw9			{ }
-r2mbw7: r2mbw8" "D7w	is D7w & mvm8=1	& r2mbw8	{ movemptr = movemptr - 4; *movemptr = D7w; }
+r2mbw7: r2mbw8" "D7w	is D7w & mvm8=1	& r2mbw8	{ movemptr = movemptr - 2; *movemptr = D7w; }
 r2mbw7:	r2mbw8			is mvm8=0 & r2mbw8			{ }
-r2mbw6: r2mbw7" "D6w	is D6w & mvm9=1 & r2mbw7	{ movemptr = movemptr - 4; *movemptr = D6w; }
+r2mbw6: r2mbw7" "D6w	is D6w & mvm9=1 & r2mbw7	{ movemptr = movemptr - 2; *movemptr = D6w; }
 r2mbw6: r2mbw7			is mvm9=0 & r2mbw7			{ }
-r2mbw5: r2mbw6" "D5w	is D5w & mvm10=1 & r2mbw6	{ movemptr = movemptr - 4; *movemptr = D5w; }
+r2mbw5: r2mbw6" "D5w	is D5w & mvm10=1 & r2mbw6	{ movemptr = movemptr - 2; *movemptr = D5w; }
 r2mbw5: r2mbw6			is mvm10=0 & r2mbw6			{ }
-r2mbw4: r2mbw5" "D4w	is D4w & mvm11=1 & r2mbw5	{ movemptr = movemptr - 4; *movemptr = D4w; }
+r2mbw4: r2mbw5" "D4w	is D4w & mvm11=1 & r2mbw5	{ movemptr = movemptr - 2; *movemptr = D4w; }
 r2mbw4: r2mbw5			is mvm11=0 & r2mbw5			{ }
-r2mbw3: r2mbw4" "D3w	is D3w & mvm12=1 & r2mbw4	{ movemptr = movemptr - 4; *movemptr = D3w; }
+r2mbw3: r2mbw4" "D3w	is D3w & mvm12=1 & r2mbw4	{ movemptr = movemptr - 2; *movemptr = D3w; }
 r2mbw3: r2mbw4			is mvm12=0 & r2mbw4			{ }
-r2mbw2: r2mbw3" "D2w	is D2w & mvm13=1 & r2mbw3	{ movemptr = movemptr - 4; *movemptr = D2w; }
+r2mbw2: r2mbw3" "D2w	is D2w & mvm13=1 & r2mbw3	{ movemptr = movemptr - 2; *movemptr = D2w; }
 r2mbw2: r2mbw3			is mvm13=0 & r2mbw3			{ }
-r2mbw1: r2mbw2" "D1w	is D1w & mvm14=1 & r2mbw2	{ movemptr = movemptr - 4; *movemptr = D1w; }
+r2mbw1: r2mbw2" "D1w	is D1w & mvm14=1 & r2mbw2	{ movemptr = movemptr - 2; *movemptr = D1w; }
 r2mbw1: r2mbw2			is mvm14=0 & r2mbw2			{ }
-r2mbw0: { r2mbw1" "D0w}	is D0w & mvm15=1 & r2mbw1	{ movemptr = movemptr - 4; *movemptr = D0w; }
+r2mbw0: { r2mbw1" "D0w}	is D0w & mvm15=1 & r2mbw1	{ movemptr = movemptr - 2; *movemptr = D0w; }
 r2mbw0: { r2mbw1}		is mvm15=0 & r2mbw1			{ }
 
 
