@@ -26,6 +26,7 @@ function Add-Gdb-Init-Args {
 	$ArgList.Value+=("-ex", "`"python if not 'ghidragdb' in locals(): exit(253)`"")
 	$ArgList.Value+=("-ex", "`"set architecture $Env:OPT_ARCH`"")
 	$ArgList.Value+=("-ex", "`"set endian $Env:OPT_ENDIAN`"")
+	$ArgList.Value+=($Env:OPT_GDB_ARGS)
 }
 
 function Add-Gdb-Image-And-Args {

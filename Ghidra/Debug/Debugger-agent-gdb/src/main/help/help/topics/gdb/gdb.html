@@ -102,6 +102,9 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
       <LI><B><TT>gdb</TT> command</B>: This is the command or path to GDB. We recommend version 13
       or later. We require version 8 or later.</LI>
 
+	  <LI><B><TT>gdb</TT> cmd args</B>: Arguments passed directly to GDB (versus the target).
+	  Note: these arguments may override user arguments passed to the cmd.</LI>
+
       <LI><B>Run command</B>: This is the GDB command to actually launch the target. In most cases
       this should be "<TT>starti,</TT>" since this will assure you an initial break and a chance to
       enable your breakpoints.</LI>

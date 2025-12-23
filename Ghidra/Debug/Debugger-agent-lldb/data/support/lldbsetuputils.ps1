@@ -24,6 +24,7 @@ function Add-Lldb-Init-Args {
 	if ("$Env:OPT_ARCH" -ne "") {
 		$ArgList.Value+=("-o", "`"settings set target.default-arch $Env:OPT_ARCH`"")
 	}
+	$ArgList.Value+=($Env:OPT_LLDB_ARGS)
 }
 
 function Add-Lldb-Image-And-Args {

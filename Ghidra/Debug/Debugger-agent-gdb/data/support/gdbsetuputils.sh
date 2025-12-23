@@ -24,6 +24,7 @@ add-gdb-init-args() {
 	args+=(-ex "python if not 'ghidragdb' in locals(): exit(253)")
 	args+=(-ex "set architecture $OPT_ARCH")
 	args+=(-ex "set endian $OPT_ENDIAN")
+	args+=($OPT_GDB_ARGS)
 }
 
 add-gdb-image-and-args() {
