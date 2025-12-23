@@ -62,9 +62,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getField(ProxyObj, int)
-	 */
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 
@@ -206,13 +203,13 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		String type = "";
 		if (blockType != MemoryBlockType.DEFAULT) {
 			if (block.isMapped()) {
-				type = "(" + block.getSourceInfos().get(0).getDescription() + ")";
+				type = " (" + block.getSourceInfos().get(0).getDescription() + ")";
 			}
 			else {
-				type = "(" + blockType + ")";
+				type = " (" + blockType + ")";
 			}
 		}
-		String line1 = block.getName() + " " + type;
+		String line1 = block.getName() + type;
 		String line2 = block.getComment();
 		String line3 = block.getStart().toString(true) + "-" + block.getEnd().toString(true);
 		Color color = ListingColors.BLOCK_START;
