@@ -1476,4 +1476,255 @@ public class DecompileOptions {
 		return cachedResultsSize;
 	}
 
+	/**
+	 * @return true if the decompiler currently simplifies predication
+	 */
+	public boolean isPredicate() {
+		return predicate;
+	}
+
+	/**
+	 * Set whether the decompiler should simplify predication (combine conditional execution
+	 * into if/else constructs).
+	 * @param predicate true to enable predication simplification
+	 */
+	public void setPredicate(boolean predicate) {
+		this.predicate = predicate;
+	}
+
+	/**
+	 * @return true if instructions with no p-code implementation are treated as NOP
+	 */
+	public boolean isIgnoreUnimplemented() {
+		return ignoreunimpl;
+	}
+
+	/**
+	 * Set whether instructions without p-code implementations should be treated as NOP.
+	 * @param ignore true to ignore unimplemented instructions
+	 */
+	public void setIgnoreUnimplemented(boolean ignore) {
+		this.ignoreunimpl = ignore;
+	}
+
+	/**
+	 * @return true if constants that look like addresses are inferred as pointers
+	 */
+	public boolean isInferConstantPointers() {
+		return inferconstptr;
+	}
+
+	/**
+	 * Set whether constants that can be interpreted as addresses should be treated as pointers.
+	 * @param infer true to infer constant pointers
+	 */
+	public void setInferConstantPointers(boolean infer) {
+		this.inferconstptr = infer;
+	}
+
+	/**
+	 * @return true if the decompiler attempts to recover for-loops
+	 */
+	public boolean isAnalyzeForLoops() {
+		return analyzeForLoops;
+	}
+
+	/**
+	 * Set whether the decompiler should try to recover for-loop constructs.
+	 * @param analyze true to enable for-loop recovery
+	 */
+	public void setAnalyzeForLoops(boolean analyze) {
+		this.analyzeForLoops = analyze;
+	}
+
+	/**
+	 * @return true if combined structure field copies are split
+	 */
+	public boolean isSplitStructures() {
+		return splitStructures;
+	}
+
+	/**
+	 * Set whether copies to/from structures that touch multiple fields should be split.
+	 * @param split true to split combined structure field copies
+	 */
+	public void setSplitStructures(boolean split) {
+		this.splitStructures = split;
+	}
+
+	/**
+	 * @return true if combined array element copies are split
+	 */
+	public boolean isSplitArrays() {
+		return splitArrays;
+	}
+
+	/**
+	 * Set whether copies to/from arrays that touch multiple elements should be split.
+	 * @param split true to split combined array element copies
+	 */
+	public void setSplitArrays(boolean split) {
+		this.splitArrays = split;
+	}
+
+	/**
+	 * @return true if pointer copies to combined elements are split
+	 */
+	public boolean isSplitPointers() {
+		return splitPointers;
+	}
+
+	/**
+	 * Set whether pointer copies that access multiple elements/fields should be split.
+	 * @param split true to split pointer copies
+	 */
+	public void setSplitPointers(boolean split) {
+		this.splitPointers = split;
+	}
+
+	/**
+	 * @return the current policy for ignoring NaN operations
+	 */
+	public NanIgnoreEnum getNanIgnore() {
+		return nanIgnore;
+	}
+
+	/**
+	 * Set the policy for ignoring NaN operations in decompiler output.
+	 * @param nanIgnore the NanIgnoreEnum value to set
+	 */
+	public void setNanIgnore(NanIgnoreEnum nanIgnore) {
+		this.nanIgnore = nanIgnore;
+	}
+
+	/**
+	 * @return true if null pointers are printed as the token 'NULL'
+	 */
+	public boolean isNullToken() {
+		return nullToken;
+	}
+
+	/**
+	 * Set whether null pointers should be displayed using the 'NULL' token.
+	 * @param nullToken true to print 'NULL' for null pointers
+	 */
+	public void setNullToken(boolean nullToken) {
+		this.nullToken = nullToken;
+	}
+
+	/**
+	 * @return true if inplace assignment tokens (+=, *=, etc.) are used
+	 */
+	public boolean isInplaceTokens() {
+		return inplaceTokens;
+	}
+
+	/**
+	 * Set whether inplace assignment tokens should be used in output.
+	 * @param inplace true to enable inplace tokens
+	 */
+	public void setInplaceTokens(boolean inplace) {
+		this.inplaceTokens = inplace;
+	}
+
+	/**
+	 * @return the current alias blocking policy
+	 */
+	public AliasBlockEnum getAliasBlock() {
+		return aliasBlock;
+	}
+
+	/**
+	 * Set which data-types block pointer aliasing across stack boundaries.
+	 * @param aliasBlock the AliasBlockEnum value to set
+	 */
+	public void setAliasBlock(AliasBlockEnum aliasBlock) {
+		this.aliasBlock = aliasBlock;
+	}
+
+	/**
+	 * @return number of characters per indent level
+	 */
+	public int getIndentWidth() {
+		return indentwidth;
+	}
+
+	/**
+	 * Set the number of characters to indent per level.
+	 * @param indentwidth number of characters per indent level
+	 */
+	public void setIndentWidth(int indentwidth) {
+		this.indentwidth = indentwidth;
+	}
+
+	/**
+	 * @return comment line indent level (number of characters)
+	 */
+	public int getCommentIndent() {
+		return commentindent;
+	}
+
+	/**
+	 * Set the number of characters each comment line is indented.
+	 * @param commentindent number of characters to indent comment lines
+	 */
+	public void setCommentIndent(int commentindent) {
+		this.commentindent = commentindent;
+	}
+
+	/**
+	 * @return strategy for displaying namespaces
+	 */
+	public NamespaceStrategy getNamespaceStrategy() {
+		return namespaceStrategy;
+	}
+
+	/**
+	 * Set how/if namespace tokens should be displayed.
+	 * @param namespaceStrategy the NamespaceStrategy to use
+	 */
+	public void setNamespaceStrategy(NamespaceStrategy namespaceStrategy) {
+		this.namespaceStrategy = namespaceStrategy;
+	}
+
+	/**
+	 * @return how integers are formatted in output
+	 */
+	public IntegerFormatEnum getIntegerFormat() {
+		return integerFormat;
+	}
+
+	/**
+	 * Set how integers should be displayed (hex, dec, best fit).
+	 * @param integerFormat the IntegerFormatEnum to use
+	 */
+	public void setIntegerFormat(IntegerFormatEnum integerFormat) {
+		this.integerFormat = integerFormat;
+	}
+
+	/**
+	 * Set whether line numbers should be displayed with decompiler output.
+	 * @param displayLineNumbers true to show line numbers
+	 */
+	public void setDisplayLineNumbers(boolean displayLineNumbers) {
+		this.displayLineNumbers = displayLineNumbers;
+	}
+
+	/**
+	 * Set which mouse button toggles the primary token highlight.
+	 * @param button MouseEvent button id (MouseEvent.BUTTON1 etc.)
+	 */
+	public void setMiddleMouseHighlightButton(int button) {
+		this.middleMouseHighlightButton = button;
+	}
+
+	/**
+	 * Set the maximum number of decompiled function results that should be cached
+	 * by the controller of the decompiler process.
+	 * @param cachedResultsSize number of functions to cache
+	 */
+	public void setCacheSize(int cachedResultsSize) {
+		this.cachedResultsSize = cachedResultsSize;
+	}
+
 }
