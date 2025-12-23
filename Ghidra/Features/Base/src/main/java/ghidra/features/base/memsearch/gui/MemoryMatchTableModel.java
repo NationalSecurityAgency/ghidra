@@ -75,6 +75,11 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 		loader = null;
 	}
 
+	@Override
+	protected void startInitialLoad() {
+		// Don't start up a load
+	}
+	
 	void setLoader(MemoryMatchTableLoader loader) {
 		this.loader = loader;
 		reload();
