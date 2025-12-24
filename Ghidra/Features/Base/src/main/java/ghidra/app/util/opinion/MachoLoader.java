@@ -531,7 +531,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * Attempts to detect a more specific compiler from the Mach-O
 	 * 
 	 * @param machHeader The {@link MachHeader}
-	 * @return The detected compiler name, or {@code null} if one could be detected
+	 * @return The detected compiler name, or {@code null} if one couldn't be detected
 	 * @throws IOException if an IO-related error occurred
 	 */
 	private String detectCompilerName(MachHeader machHeader) throws IOException {
