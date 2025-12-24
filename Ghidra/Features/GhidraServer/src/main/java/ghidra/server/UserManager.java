@@ -92,7 +92,8 @@ public class UserManager {
 		try {
 			readUserListIfNeeded();
 			clearExpiredPasswords();
-			log.info("User file contains " + userList.size() + " entries");
+			int size = userList.size();
+			log.info("User file contains " + size + " entr" + (size == 1 ? "y" : "ies"));
 		}
 		catch (FileNotFoundException e) {
 			log.error("Existing User file not found.");

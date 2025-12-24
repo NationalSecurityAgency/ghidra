@@ -209,8 +209,10 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 
 		filter.setSecondaryFilter(new ScalarTableSecondaryFilter());
 
-		scalarModel.addTableModelListener(
-			e -> setSubTitle(primarySubTitle + ' ' + scalarModel.getRowCount() + " items"));
+		scalarModel.addTableModelListener(e -> {
+			int rowCount = scalarModel.getRowCount();
+			setSubTitle(primarySubTitle + ' ' + rowCount + " item" + (rowCount == 1 ? "" : "s"));
+		});
 
 		scalarTable.installNavigation(tool);
 
