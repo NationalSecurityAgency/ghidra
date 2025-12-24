@@ -696,7 +696,7 @@ and <emphasis>attributes</emphasis> looks like zero or more of the
 following lines:
 <informalexample>
 <programlisting>
-type=(ram_space|rom_space|register_space)
+type=(ram_space|register_space)
 size=<emphasis role="bold">integer</emphasis>
 default
 wordsize=<emphasis role="bold">integer</emphasis>
@@ -756,11 +756,6 @@ with <emphasis role="bold">register_space</emphasis>.
   </listitem>
 </itemizedlist>
 </informalexample>
-</para>
-<para>
-A space of type <emphasis role="bold">rom_space</emphasis> has seen
-little use so far but is intended to be the same as
-a <emphasis role="bold">ram_space</emphasis> that is not writable.
 </para>
 <para>
 At least one space needs to be labeled with
