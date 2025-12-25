@@ -180,6 +180,9 @@ public class SymbolTable {
 		else if (el == ELEM_NEXT2_SYM_HEAD.id()) {
 			sym = new Next2Symbol();
 		}
+		else if (el == ELEM_SEG_SYM_HEAD.id()) {
+			sym = new SegSymbol();
+		}
 		else if (el == ELEM_SUBTABLE_SYM_HEAD.id()) {
 			sym = new SubtableSymbol();
 		}

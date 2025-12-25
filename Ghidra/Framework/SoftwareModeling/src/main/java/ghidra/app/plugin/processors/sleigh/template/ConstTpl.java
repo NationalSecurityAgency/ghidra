@@ -38,14 +38,15 @@ public class ConstTpl {
 	public static final int J_START = 2;
 	public static final int J_NEXT = 3;
 	public static final int J_NEXT2 = 4;
-	public static final int J_CURSPACE = 5;
-	public static final int J_CURSPACE_SIZE = 6;
-	public static final int SPACEID = 7;
-	public static final int J_RELATIVE = 8;
-	public static final int J_FLOWREF = 9;
-	public static final int J_FLOWREF_SIZE = 10;
-	public static final int J_FLOWDEST = 11;
-	public static final int J_FLOWDEST_SIZE = 12;
+	public static final int J_SEG = 5;
+	public static final int J_CURSPACE = 6;
+	public static final int J_CURSPACE_SIZE = 7;
+	public static final int SPACEID = 8;
+	public static final int J_RELATIVE = 9;
+	public static final int J_FLOWREF = 10;
+	public static final int J_FLOWREF_SIZE = 11;
+	public static final int J_FLOWDEST = 12;
+	public static final int J_FLOWDEST_SIZE = 13;
 
 	public static final int V_SPACE = 0;
 	public static final int V_OFFSET = 1;
@@ -144,6 +145,8 @@ public class ConstTpl {
 				return walker.getNaddr().getOffset();
 			case J_NEXT2:
 				return walker.getN2addr().getOffset();
+			case J_SEG:
+				return walker.getSegaddr().getOffset();
 			case J_FLOWREF:
 				return walker.getFlowRefAddr().getOffset();
 			case J_FLOWREF_SIZE:
@@ -308,6 +311,9 @@ public class ConstTpl {
 		else if (el == ELEM_CONST_NEXT2.id()) {
 			type = J_NEXT2;
 		}
+		else if (el == ELEM_CONST_SEG.id()) {
+			type = J_SEG;
+		}
 		else if (el == ELEM_CONST_CURSPACE.id()) {
 			type = J_CURSPACE;
 		}
@@ -374,6 +380,8 @@ public class ConstTpl {
 				return "[next]";
 			case J_NEXT2:
 				return "[next2]";
+			case J_SEG:
+				return "[seg]";
 			case J_START:
 				return "[start]";
 			case J_RELATIVE:

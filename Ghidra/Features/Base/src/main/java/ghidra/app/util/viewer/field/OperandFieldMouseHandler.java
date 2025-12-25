@@ -26,10 +26,12 @@ import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.PseudoDisassembler;
+import ghidra.app.util.SegmentedAddressHelper;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.SegmentedAddressSpace;
 import ghidra.program.model.data.Playable;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -443,7 +445,14 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 		Address minAddress = codeUnit.getMinAddress();
 		Address address = null;
 		try {
-			address = minAddress.getNewAddress(scalar.getUnsignedValue(), true);
+			// Enhanced segmented address support: Check if we're in a segmented space
+			// and should use DS register to resolve immediate values
+			AddressSpace space = minAddress.getAddressSpace();
+			if (space instanceof SegmentedAddressSpace) {
+				address = createSegmentedAddressFromScalar(codeUnit, (SegmentedAddressSpace) space, scalar);
+			} else {
+				address = minAddress.getNewAddress(scalar.getUnsignedValue(), true);
+			}
 		}
 		catch (Exception e) {
 			// ignore
@@ -452,12 +461,34 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 		if (address == null || !program.getMemory().contains(address)) {
 			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 			try {
-				address = space.getAddress(scalar.getUnsignedValue(), true);
+				// Try with segmented address space handling  
+				if (space instanceof SegmentedAddressSpace) {
+					address = createSegmentedAddressFromScalar(codeUnit, (SegmentedAddressSpace) space, scalar);
+				} else {
+					address = space.getAddress(scalar.getUnsignedValue(), true);
+				}
 			}
 			catch (Exception e) {
 				// ignore
 			}
 		}
 		return address;
+	}
+
+	/**
+	 * Creates a segmented address from a scalar operand using the processor's
+	 * constresolve register (automatically determined from processor specification).
+	 * For immediate operands in segmented architectures, this treats the scalar 
+	 * as an offset within the appropriate segment (e.g., DS:offset for x86).
+	 * 
+	 * @param codeUnit the code unit containing the scalar operand
+	 * @param segSpace the segmented address space
+	 * @param scalar the scalar operand value
+	 * @return segmented address using processor-appropriate segment register
+	 */
+	private Address createSegmentedAddressFromScalar(CodeUnit codeUnit, 
+			SegmentedAddressSpace segSpace, Scalar scalar) {
+		return SegmentedAddressHelper.createSegmentedAddress(codeUnit.getProgram(), 
+			codeUnit.getMinAddress(), segSpace, scalar.getUnsignedValue());
 	}
 }
