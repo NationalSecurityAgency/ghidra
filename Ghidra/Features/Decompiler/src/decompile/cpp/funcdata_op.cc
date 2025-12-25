@@ -1031,7 +1031,8 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
 {
   Varnode *vn;
   int4 i;
-  intb val,diff;
+  uintb val;
+  intb diff;
   
   if ((vn=op->getIn(0))->isConstant()) {
     diff = -1;
@@ -1044,15 +1045,16 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
   else
     return false;
 
-  val = sign_extend(vn->getOffset(),8*vn->getSize()-1);
+  val = vn->getOffset();
   if (op->code() == CPUI_INT_SLESSEQUAL) {
-    if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
-    if ((val>0)&&(val+diff<0)) return false;
+    // Check for signed overflow
+    if ((diff == -1) && (val == calc_int_min(vn->getSize()))) return false;
+    if ((diff ==  1) && (val == calc_int_max(vn->getSize()))) return false;
     opSetOpcode(op,CPUI_INT_SLESS);
   }
   else {			// Check for unsigned overflow
-    if ((diff==-1)&&(val==0)) return false;
-    if ((diff==1)&&(val==-1)) return false;
+    if ((diff == -1) && (val == 0)) return false;
+    if ((diff ==  1) && (val == calc_uint_max(vn->getSize()))) return false;
     opSetOpcode(op,CPUI_INT_LESS);
   }
   uintb res = (val+diff) & calc_mask(vn->getSize());

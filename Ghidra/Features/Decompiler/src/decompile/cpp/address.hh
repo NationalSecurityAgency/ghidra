@@ -498,6 +498,18 @@ inline bool Range::contains(const Address &addr) const {
 /// \return a value appropriate for masking off the first \e size bytes
 inline uintb calc_mask(int4 size) { return uintbmasks[((uint4)size) < 8  ? size : 8]; }
 
+/// \param size of the integer in bytes
+/// \return largest unsigned integer value for given size
+inline uintb calc_uint_max(int4 size) { return calc_mask(size); }
+
+/// \param size of the integer in bytes
+/// \return largest signed integer value for given size
+inline uintb calc_int_max(int4 size) { return calc_mask(size) >> 1; }
+
+/// \param size of the integer in bytes
+/// \return smallest signed integer value for given size
+inline uintb calc_int_min(int4 size) { return (uintb)1 << (size * 8 - 1); }
+
 /// Perform a CPUI_INT_RIGHT on the given val
 /// \param val is the value to shift
 /// \param sa is the number of bits to shift
