@@ -180,7 +180,7 @@ done < <("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -envvars
 
 # Get the configurable VM arguments from the launch properties
 while IFS=$'\r\n' read -r line; do
-	VMARGS_FROM_LAUNCH_PROPS+=("$line")
+	VMARGS_FROM_LAUNCH_PROPS+=($line)
 done < <("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)
 
 # Add extra macOS VM arguments

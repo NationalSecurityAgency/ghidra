@@ -94,6 +94,7 @@
     <compiler name="Visual Studio" spec="x86-64-win.cspec" id="windows"/>
     <compiler name="clang" spec="x86-64-win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86-64-gcc.cspec" id="gcc"/>
+    <compiler name="plan9" spec="x86-64-plan9.cspec" id="plan9"/>
     <compiler name="golang" spec="x86-64-golang.cspec" id="golang"/>
     <compiler name="Swift" spec="x86-64-swift.cspec" id="swift"/>
     <external_name tool="gnu" name="i386:x86-64:intel"/>

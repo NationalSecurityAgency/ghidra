@@ -75,6 +75,7 @@ data/languages/x86-64-compat32.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.register.info||GHIDRA||||END|
+data/languages/x86-64-plan9.cspec||GHIDRA||||END|
 data/languages/x86-64-swift.cspec||GHIDRA||||END|
 data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
@@ -94,6 +95,7 @@ data/patterns/patternconstraints.xml||GHIDRA||||END|
 data/patterns/prepatternconstraints.xml||GHIDRA||||END|
 data/patterns/x86-16_default_patterns.xml||GHIDRA||||END|
 data/patterns/x86-64gcc_patterns.xml||GHIDRA||||END|
+data/patterns/x86-64plan9_patterns.xml||GHIDRA||||END|
 data/patterns/x86-64win_patterns.xml||GHIDRA||||END|
 data/patterns/x86delphi_patterns.xml||GHIDRA||||END|
 data/patterns/x86gcc_patterns.xml||GHIDRA||||END|

@@ -21,6 +21,9 @@
     <compiler id="gcc">
       <patternfile>x86-64gcc_patterns.xml</patternfile>
     </compiler>
+    <compiler id="plan9">
+      <patternfile>x86-64plan9_patterns.xml</patternfile>
+    </compiler>
   </language>
   
   <language id="x86:LE:16:Real Mode">
