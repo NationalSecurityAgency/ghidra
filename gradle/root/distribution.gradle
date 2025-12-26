@@ -540,29 +540,29 @@ task assembleSource (type: Copy) {
 
 /************************************************************************************
  *
- * Copies a markdown file and a generaterated html file into the distribution folder.
+ * Copies markdown files and generaterate html files into the distribution folder.
  *
  ************************************************************************************/
 task assembleMarkdownToHtml (type: Copy) {
 	group = 'private'
-	description = "Copies a markdown file and a generaterated html file into the distribution folder"
+	description = "Copies markdown files and generaterate html files into the distribution folder"
 	
 	dependsOn ':MarkdownSupport:classes'
 	outputs.upToDateWhen {false}
 	destinationDir = file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
 	
-	def markdownSuppportProject = project(':MarkdownSupport')
-	
-	eachFile { f ->
-		def htmlName = f.sourceName[0..-3] + "html"
-		def htmlPath = f.relativePath.replaceLastName(htmlName).pathString 
-		
-		providers.javaexec {		
-			classpath = markdownSuppportProject.sourceSets.main.runtimeClasspath
-			mainClass = 'ghidra.markdown.MarkdownToHtml'
-			args f.file
-			args file("${destinationDir.path}/${htmlPath}")
-		}.result.get()
+	doLast {
+		eachFile { f ->
+			def htmlName = f.sourceName[0..-3] + "html"
+			def htmlPath = f.relativePath.replaceLastName(htmlName).pathString
+			[
+				'java',
+				'-cp', project.files(rootProject.ext.mdDeps).asPath,
+				'ghidra.markdown.MarkdownToHtml',
+				f.file,
+				file("${destinationDir.path}/${htmlPath}")
+			].execute()
+		}
 	}
 }
 
