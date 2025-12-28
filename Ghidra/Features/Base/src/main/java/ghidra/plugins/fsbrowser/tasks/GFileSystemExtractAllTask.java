@@ -72,9 +72,7 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 		long files = getTotalFilesExportedCount();
 		long dirs = getTotalDirsExportedCount();
 		long bytes = getTotalBytesExportedCount();
-		Msg.info(this, "Exported " + files + " file" + (files == 1 ? "" : "s") + ", " + dirs +
-			" director" + (dirs == 1 ? "y" : "ies") + ", " + bytes + " byte" +
-			(bytes == 1 ? "" : "s"));
+		Msg.info(this, "Number of files exported: " + files + ", number of directories: " + dirs + ", number of bytes: " + bytes);
 
 		long elapsed = System.currentTimeMillis() - start_ts;
 
