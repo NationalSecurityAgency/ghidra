@@ -86,6 +86,7 @@ public:
   /// \brief The possible types of operator token
   enum tokentype {
     binary,			///< Binary operator form (printed between its inputs)
+    binary_trailspace,	///< Binary operator (printed between its inputs), only space after operator
     unary_prefix,		///< Unary operator form (printed before its input)
     postsurround,		///< Function or array operator form
     presurround,		///< Modifier form (like a cast operation)
