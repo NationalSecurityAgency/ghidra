@@ -475,13 +475,10 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 #define pcodeop FloatingPointMaximum;
 :efsmax D,A,B is OP=4 & D & A & B & XOP_0_10=0x2B0
 {
-   local result:4;
-   if ( A:4 f>= B:4 ) goto <use_a>;
-      result = B:4;
-      goto <done>;
-   <use_a>
-      result = A:4;
-   <done>
+   local inA:4 = A:4;
+   local inB:4 = B:4;
+   local cond:1 = inA f>= inB;
+   local result:4 = (zext(cond) * inA) + (zext(!cond) * inB);
    # assign to lower word of D
    D = ( D & 0xFFFFFFFF00000000 ) | zext( result );
    setFPRF( result );
@@ -492,13 +489,10 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 #define pcodeop FloatingPointMinimum;
 :efsmin D,A,B is OP=4 & D & A & B & XOP_0_10=0x2B1
 {
-   local result:4;
-   if ( A:4 f<= B:4 ) goto <use_a>;
-      result = B:4;
-      goto <done>;
-   <use_a>
-      result = A:4;
-   <done>
+   local inA:4 = A:4;
+   local inB:4 = B:4;
+   local cond:1 = inA f<= inB;
+   local result:4 = (zext(cond) * inA) + (zext(!cond) * inB);
    # assign to lower word of D
    D = ( D & 0xFFFFFFFF00000000 ) | zext( result );
    setFPRF( result );
