@@ -1014,7 +1014,7 @@ public class SymbolicPropogator {
 										// make sure we aren't replacing a read ref with a call to the same place
 										if (refs.length == 0 ||
 											!refExisted) {
-											
+
 											target = makeReference(vContext, instruction, Reference.MNEMONIC,
 												//  Use target in case location has shifted (external...)
 												target.getAddressSpace().getSpaceID(),
