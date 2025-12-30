@@ -1002,10 +1002,19 @@ public class SymbolicPropogator {
 									// if the value didn't get changed, then the real value isn't in here, don't make a reference
 									if (target != null) {
 										Reference[] refs = instruction.getReferencesFrom();
+										
+										boolean refExisted = false;
+										for (Reference ref: refs) {
+											if (ref.getToAddress().equals(target)) {
+												refExisted = true;
+												break;
+											}
+										}
+										
 										// make sure we aren't replacing a read ref with a call to the same place
-										if (refs.length <= 0 ||
-											!refs[0].getToAddress().equals(target)) {
-	
+										if (refs.length == 0 ||
+											!refExisted) {
+											
 											target = makeReference(vContext, instruction, Reference.MNEMONIC,
 												//  Use target in case location has shifted (external...)
 												target.getAddressSpace().getSpaceID(),
