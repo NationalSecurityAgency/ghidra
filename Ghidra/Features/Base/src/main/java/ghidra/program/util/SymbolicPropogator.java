@@ -1010,7 +1010,7 @@ public class SymbolicPropogator {
 												break;
 											}
 										}
-										
+
 										// make sure we aren't replacing a read ref with a call to the same place
 										if (refs.length == 0 ||
 											!refExisted) {
