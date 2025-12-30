@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -292,7 +292,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -351,7 +351,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -410,7 +410,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -469,7 +469,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -519,7 +519,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT, fg);
 		}
 	}
 
@@ -568,7 +568,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT, fg);
 		}
 	}
 
@@ -613,7 +613,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			intComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 		// color should indicate the edit
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) intComp.getCurrentField()).getForeground());
 	}
 
@@ -930,7 +930,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		Component[] c = container.getComponents();
 		for (Component element : c) {
 			if (element instanceof JLabel) {
-				if (name.equals(((JLabel) element).getName())) {
+				if (name.equals(element.getName())) {
 					return ((JLabel) element).getText();
 				}
 			}

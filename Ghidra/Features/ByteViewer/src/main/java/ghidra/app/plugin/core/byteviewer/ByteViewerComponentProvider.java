@@ -25,7 +25,8 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import docking.action.ToggleDockingAction;
-import generic.theme.*;
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
@@ -63,10 +64,12 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	static final String CURSOR = "byteviewer.color.cursor";
 
 	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator");
-	static final GColor CHANGED_VALUE_COLOR = new GColor("color.fg.byteviewer.changed");
-	static final GColor CURSOR_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.active");
-	static final GColor CURSOR_NON_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.not.active");
-	static final GColor CURSOR_NOT_FOCUSED_COLOR = new GColor("color.cursor.byteviewer.unfocused");
+	
+	static final GColor EDITED_TEXT_COLOR = new GColor("color.fg.byteviewer.changed");
+	static final GColor CURSOR_COLOR_FOCUSED_EDIT = new GColor("color.cursor.byteviewer.focused.edit");
+	static final GColor CURSOR_COLOR_UNFOCUSED_EDIT = new GColor("color.cursor.byteviewer.unfocused.edit");
+	static final GColor CURSOR_COLOR_FOCUSED_NON_EDIT = new GColor("color.cursor.byteviewer.focused.non.edit");
+	static final GColor CURSOR_COLOR_UNFOCUSED_NON_EDIT = new GColor("color.cursor.byteviewer.unfocused.non.edit");
 
 	static final GColor CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	//@formatter:on
@@ -74,10 +77,11 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	static final String INDEX_COLUMN_NAME = "Addresses";
 
 	static final String SEPARATOR_COLOR_OPTION_NAME = "Block Separator Color";
-	static final String CHANGED_VALUE_COLOR_OPTION_NAME = "Changed Values Color";
-	static final String CURSOR_ACTIVE_COLOR_OPTION_NAME = "Active Cursor Color";
-	static final String CURSOR_NON_ACTIVE_COLOR_OPTION_NAME = "Non-Active Cursor Color";
-	static final String CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME = "Non-Focused Cursor Color";
+	static final String EDIT_TEXT_COLOR_OPTION_NAME = "Edited Text Color";
+	static final String CURSOR_FOCUSED_COLOR_OPTION_NAME = "Cursor Color Focused";
+	static final String CURSOR_UNFOCUSED_COLOR_OPTION_NAME = "Cursor Color Unfocused";
+	static final String CURSOR_FOCUSED_EDIT_COLOR_OPTION_NAME = "Cursor Color Focused Edit";
+	static final String CURSOR_UNFOCUSED_EDIT_COLOR_OPTION_NAME = "Cursor Color Unfocused Edit";
 
 	static final String OPTION_FONT = "Font";
 
@@ -185,9 +189,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 				CURSOR_MOUSE_BUTTON_NAMES mouseButton = (CURSOR_MOUSE_BUTTON_NAMES) newValue;
 				panel.setHighlightButton(mouseButton.getMouseEventID());
 			}
-			else if (optionName.equals(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME)) {
-				panel.setMouseButtonHighlightColor((Color) newValue);
-			}
 		}
 	}
 
@@ -206,19 +207,25 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		opt.registerThemeColorBinding(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR.getId(), help,
 			"Color used for separator shown between memory blocks.");
 
-		opt.registerThemeColorBinding(CHANGED_VALUE_COLOR_OPTION_NAME, CHANGED_VALUE_COLOR.getId(),
+		opt.registerThemeColorBinding(EDIT_TEXT_COLOR_OPTION_NAME, EDITED_TEXT_COLOR.getId(),
 			new HelpLocation("ByteViewerPlugin", "EditColor"),
 			"Color of changed bytes when editing.");
 
-		opt.registerThemeColorBinding(CURSOR_ACTIVE_COLOR_OPTION_NAME, CURSOR_ACTIVE_COLOR.getId(),
-			help, "Color of cursor in the active view.");
+		opt.registerThemeColorBinding(CURSOR_FOCUSED_COLOR_OPTION_NAME,
+			CURSOR_COLOR_FOCUSED_NON_EDIT.getId(),
+			help, "Color of cursor in the focused view.");
 
-		opt.registerThemeColorBinding(CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
-			CURSOR_NON_ACTIVE_COLOR.getId(), help, "Color of cursor in the non-active views.");
+		opt.registerThemeColorBinding(CURSOR_UNFOCUSED_COLOR_OPTION_NAME,
+			CURSOR_COLOR_UNFOCUSED_NON_EDIT.getId(), help,
+			"Color of cursor in the unfocused views.");
 
-		opt.registerThemeColorBinding(CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
-			CURSOR_NOT_FOCUSED_COLOR.getId(), help,
-			"Color of cursor when the byteview does not have focus.");
+		opt.registerThemeColorBinding(CURSOR_FOCUSED_EDIT_COLOR_OPTION_NAME,
+			CURSOR_COLOR_FOCUSED_EDIT.getId(), help,
+			"Color of the cursor in the focused view when editing.");
+
+		opt.registerThemeColorBinding(CURSOR_UNFOCUSED_EDIT_COLOR_OPTION_NAME,
+			CURSOR_COLOR_UNFOCUSED_EDIT.getId(), help,
+			"Color of the cursor in the unfocused view when editing.");
 
 		opt.registerThemeColorBinding(CURRENT_LINE_COLOR_OPTION_NAME,
 			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR.getId(), help,
@@ -237,16 +244,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		Color middleMouseColor =
 			opt.getColor(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME, HIGHLIGHT_MIDDLE_MOUSE_COLOR);
 		panel.setMouseButtonHighlightColor(middleMouseColor);
-
-		panel.setCurrentCursorColor(CURSOR_ACTIVE_COLOR);
-		panel.setNonFocusCursorColor(CURSOR_NOT_FOCUSED_COLOR);
-		panel.setCursorColor(CURSOR_NON_ACTIVE_COLOR);
-		panel.setCurrentCursorLineColor(CURRENT_LINE_COLOR);
-
-		Font font = Gui.getFont(DEFAULT_FONT_ID);
-		FontMetrics fm = panel.getFontMetrics(font);
-
-		panel.restoreConfigState(fm, CHANGED_VALUE_COLOR);
 
 		opt.addOptionsChangeListener(this);
 
@@ -308,8 +305,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		return offset;
 	}
 
-	Color getCursorColor() {
-		return CURSOR_NON_ACTIVE_COLOR;
+	Color getFocusedNonEditCursorColor() {
+		return CURSOR_COLOR_FOCUSED_NON_EDIT;
 	}
 
 	int getGroupSize() {
@@ -530,4 +527,5 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	public void removeDisplayListener(AddressSetDisplayListener listener) {
 		panel.removeDisplayListener(listener);
 	}
+
 }

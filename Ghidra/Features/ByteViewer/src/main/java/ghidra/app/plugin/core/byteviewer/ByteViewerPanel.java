@@ -63,16 +63,13 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 	private IndexMap indexMap; // maps indexes to the correct block and offset
 	private int blockOffset;
 	private ByteViewerComponent currentView;
-	private Color editColor;
-	private Color currentCursorColor;
-	private Color currentCursorLineColor;
+
 	private Color highlightColor;
 	private int highlightButton;
 	private List<LayoutModelListener> layoutListeners = new ArrayList<>(1);
-	private boolean addingView; // don't respond to cursor location
-	// changes while this flag is true
-	private final ByteViewerComponentProvider provider;
+	private boolean addingView; // don't respond to cursor location changes while this flag is true
 
+	private final ByteViewerComponentProvider provider;
 	private List<AddressSetDisplayListener> displayListeners = new ArrayList<>();
 	private ByteViewerIndexedView indexedView;
 
@@ -83,7 +80,6 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		viewList = new ArrayList<>();
 		indexMap = new IndexMap();
 		create();
-		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
 	}
 
 	@Override
@@ -115,20 +111,6 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		super.paintComponent(g);
 	}
 
-	void setCurrentCursorColor(Color c) {
-		currentCursorColor = c;
-		for (ByteViewerComponent comp : viewList) {
-			comp.setCurrentCursorColor(c);
-		}
-	}
-
-	void setCurrentCursorLineColor(Color c) {
-		currentCursorLineColor = c;
-		for (ByteViewerComponent comp : viewList) {
-			comp.setCurrentCursorLineColor(c);
-		}
-	}
-
 	void setHighlightButton(int highlightButton) {
 		this.highlightButton = highlightButton;
 		for (ByteViewerComponent comp : viewList) {
@@ -143,22 +125,10 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		}
 	}
 
-	void setCursorColor(Color c) {
-		for (ByteViewerComponent comp : viewList) {
-			comp.setNonFocusCursorColor(c);
-		}
-	}
-
 	void setSeparatorColor(Color c) {
 		indexFactory.setMissingValueColor(c);
 		for (ByteViewerComponent comp : viewList) {
 			comp.setSeparatorColor(c);
-		}
-	}
-
-	void setNonFocusCursorColor(Color c) {
-		for (ByteViewerComponent comp : viewList) {
-			comp.setNonFocusCursorColor(c);
 		}
 	}
 
@@ -307,15 +277,11 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		if (viewList.size() != 0) {
 			addingView = true;
 		}
-		final ViewerPosition vp = getViewerPosition();
 
-		// create new ByteViewerComponent
+		ViewerPosition vp = getViewerPosition();
 
 		ByteViewerComponent c = newByteViewerComponent(model);
-		c.setEditColor(editColor);
-		c.setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
-		c.setCurrentCursorColor(currentCursorColor);
-		c.setCurrentCursorLineColor(currentCursorLineColor);
+
 		c.setEditMode(editMode);
 		c.setIndexMap(indexMap);
 		c.setMouseButtonHighlightColor(highlightColor);
@@ -375,9 +341,6 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 	}
 
 	void setCurrentView(ByteViewerComponent c) {
-		if (currentView != null && currentView != c) {
-			currentView.setFocusedCursorColor(provider.getCursorColor());
-		}
 		currentView = c;
 	}
 
@@ -565,17 +528,6 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		indexPanel.setViewerPosition(vpos.getIndex(), vpos.getXOffset(), vpos.getYOffset());
 	}
 
-	/**
-	 * Restore the configuration of the plugin.
-	 * 
-	 * @param metrics font metrics
-	 * @param newEditColor color for showing edits
-	 */
-	void restoreConfigState(FontMetrics metrics, Color newEditColor) {
-		setFontMetrics(metrics);
-		setEditColor(newEditColor);
-	}
-
 	void restoreConfigState(int newBytesPerLine, int offset) {
 		if (blockOffset != offset) {
 			blockOffset = offset;
@@ -601,13 +553,6 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		indexFactory.setSize(getIndexSizeInChars());
 		updateIndexMap();
 		indexPanel.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
-	}
-
-	void setEditColor(Color editColor) {
-		this.editColor = editColor;
-		for (ByteViewerComponent c : viewList) {
-			c.setEditColor(editColor);
-		}
 	}
 
 	protected FontMetrics getFontMetrics() {

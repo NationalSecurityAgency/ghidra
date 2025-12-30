@@ -20,8 +20,6 @@ import java.awt.FontMetrics;
 import java.awt.event.*;
 import java.math.BigInteger;
 
-import javax.swing.SwingUtilities;
-
 import docking.DockingUtils;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -33,6 +31,7 @@ import generic.theme.GColor;
 import ghidra.app.plugin.core.format.*;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import help.Help;
 import help.HelpService;
 
@@ -52,11 +51,17 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	private ProgramByteBlockSet blockSet;
 
 	private boolean consumeKeyStrokes;
-	private boolean editMode; // true if this component is in edit mode;
-	// cursor is different color.
-	private Color editColor;
-	private Color currentCursorColor;
-	private Color currentCursorLineColor;
+	private boolean editMode; // true if this component is in edit mode; cursor is different color.
+
+	//@formatter:off
+	private Color editedTextColor = ByteViewerComponentProvider.EDITED_TEXT_COLOR;
+	private Color focusedEditCursorColor = ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_EDIT;
+	private Color unfocusedEditCursorColor = ByteViewerComponentProvider.CURSOR_COLOR_UNFOCUSED_EDIT;
+	private Color focusedNonEditCursorColor = ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT;
+	private Color unfocusedNonEditCursorColor = ByteViewerComponentProvider.CURSOR_COLOR_UNFOCUSED_NON_EDIT;
+	private Color currentCursorLineColor = ByteViewerComponentProvider.CURRENT_LINE_COLOR;
+	//@formatter:on
+
 	private ByteViewerLayoutModel layoutModel;
 	private boolean doingRefresh;
 	private boolean doingEdit;
@@ -151,9 +156,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		}
 	}
 
-	/**
-	 * Called from the parent FieldPanel whenever the cursor position changes.
-	 */
 	@Override
 	public void fieldLocationChanged(FieldLocation loc, Field field, EventTrigger trigger) {
 		fieldLocationChanged(loc, field, false, trigger == EventTrigger.GUI_ACTION);
@@ -174,10 +176,10 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			//Set this component as the current view in the panel
 			panel.setCurrentView(ByteViewerComponent.this);
 		}
-		// do the color update later because the field panel
-		// listener is called after this one, and sets the
+
+		// Update later because the field panel listener is called after this one, and sets the
 		// colors incorrectly
-		SwingUtilities.invokeLater(updateColorRunner);
+		Swing.runLater(updateColorRunner);
 
 		lastFieldLoc = loc;
 
@@ -308,7 +310,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 				getToolkit().beep();
 			}
 		}
-		catch (ByteBlockAccessException exc) {
+		catch (ByteBlockAccessException | NumberFormatException exc) {
 			panel.setStatusMessage("Editing not allowed: " + exc.getMessage());
 			getToolkit().beep();
 
@@ -358,44 +360,12 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		layoutModel.setIndexMap(indexMap);
 	}
 
-	/**
-	 * Set the color used to denote changes in the byte block.
-	 * @param c the color for unsaved changed byte values
-	 */
-	void setEditColor(Color c) {
-		editColor = c;
-		for (FieldFactory fieldFactorie : fieldFactories) {
-			fieldFactorie.setEditColor(c);
-		}
-		layoutModel.layoutChanged();
-		updateColor();
-	}
-
 	void setHighlightButton(int highlightButton) {
 		this.highlightButton = highlightButton;
 	}
 
 	void setMouseButtonHighlightColor(Color color) {
 		highlightProvider.setHighlightColor(color);
-	}
-
-	/**
-	 * Set the color for the component that has focus.
-	 *
-	 * @param c the color to set
-	 */
-	void setCurrentCursorColor(Color c) {
-		currentCursorColor = c;
-		updateColor();
-	}
-
-	/**
-	 * Set the background color for the line containing the cursor.
-	 *
-	 * @param c the color to set
-	 */
-	void setCurrentCursorLineColor(Color c) {
-		currentCursorLineColor = c;
 	}
 
 	/**
@@ -414,8 +384,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 * Get the color of unsaved byte changes
 	 * @return the color of unsaved byte changes
 	 */
-	Color getEditColor() {
-		return editColor;
+	Color getEditedTextColor() {
+		return editedTextColor;
 	}
 
 	void setIndexMap(IndexMap map) {
@@ -677,18 +647,24 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			return;
 		}
 		this.editMode = editMode;
-		updateColor();
+		updateFocusedColor();
+		udpateNonFocusedColor();
 	}
 
-	private void updateColor() {
+	private void updateFocusedColor() {
 		if (panel.getCurrentComponent() == this) {
 			if (editMode) {
-				setFocusedCursorColor(editColor);
+				setFocusedCursorColor(focusedEditCursorColor);
 			}
 			else {
-				setFocusedCursorColor(currentCursorColor);
+				setFocusedCursorColor(focusedNonEditCursorColor);
 			}
 		}
+	}
+
+	private void udpateNonFocusedColor() {
+		Color c = editMode ? unfocusedEditCursorColor : unfocusedNonEditCursorColor;
+		setNonFocusCursorColor(c);
 	}
 
 	boolean getEditMode() {
@@ -735,12 +711,12 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		createFields();
 
 		setCursorOn(true);
-		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
-		currentCursorColor = ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR;
-		setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
-		setFocusedCursorColor(currentCursorColor);
+		editedTextColor = ByteViewerComponentProvider.EDITED_TEXT_COLOR;
 
-		updateColorRunner = () -> updateColor();
+		setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_COLOR_UNFOCUSED_NON_EDIT);
+		setFocusedCursorColor(ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT);
+
+		updateColorRunner = () -> updateFocusedColor();
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -779,7 +755,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			fieldFactories[i] =
 				new FieldFactory(model, bytesPerLine, fieldOffset, fm, highlightProvider);
 			fieldOffset += model.getUnitByteSize();
-			fieldFactories[i].setEditColor(editColor);
+			fieldFactories[i].setEditColor(editedTextColor);
 			fieldFactories[i].setIndexMap(indexMap);
 		}
 		layoutModel.setFactorys(fieldFactories, model, charWidth);
@@ -979,4 +955,5 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		}
 
 	}
+
 }
