@@ -247,7 +247,7 @@ class GhidraBuiltinsBuilder {
 	 * @return A new {@link List} of filtered methods
 	 */
 	private List<PythonTypeStubMethod> filter(List<PythonTypeStubMethod> methods) {
-		final Set<String> EXCLUDES = Set.of("set");
+		final Set<String> EXCLUDES = Set.of("set", "print");
 		return methods.stream().filter(m -> !EXCLUDES.contains(m.getName())).toList();
 	}
 }
