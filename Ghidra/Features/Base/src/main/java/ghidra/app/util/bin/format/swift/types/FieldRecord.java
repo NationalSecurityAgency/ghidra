@@ -20,11 +20,12 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift FieldRecord structure
+ * Represents a Swift {@code FieldRecord} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
@@ -53,27 +54,21 @@ public final class FieldRecord extends SwiftTypeMetadataStructure {
 	}
 
 	/**
-	 * Gets the flags
-	 * 
-	 * @return The flags
+	 * {@return the flags}
 	 */
 	public int getFlags() {
 		return flags;
 	}
 
 	/**
-	 * Gets the mangled type name
-	 * 
-	 * @return The mangled type name
+	 * {@return the mangled type name}
 	 */
 	public String getMangledTypeName() {
 		return mangledTypeName;
 	}
 
 	/**
-	 * Gets the field name
-	 * 
-	 * @return The field name
+	 * {@return the field name}
 	 */
 	public String getFieldName() {
 		return fieldName;
@@ -91,11 +86,10 @@ public final class FieldRecord extends SwiftTypeMetadataStructure {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
 		struct.add(DWORD, "Flags", "");
 		struct.add(SwiftUtils.PTR_STRING, "MangledTypeName", "");
 		struct.add(SwiftUtils.PTR_STRING, "FieldName", "");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

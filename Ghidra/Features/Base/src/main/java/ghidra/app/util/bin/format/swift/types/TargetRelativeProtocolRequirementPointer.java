@@ -19,53 +19,54 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift entry point 
+ * Represents a Swift {@code TargetRelativeContextPointer} structure
+ * 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public final class EntryPoint extends SwiftTypeMetadataStructure {
+public class TargetRelativeProtocolRequirementPointer extends SwiftTypeMetadataStructure {
+
+	public static final TypeDef dataType =
+		new PointerTypedefBuilder(Pointer32DataType.dataType, null)
+				.type(PointerType.RELATIVE)
+				.bitMask(~1)
+				.build();
+
+	private int value;
 
 	/**
-	 * The size (in bytes) of an {@link EntryPoint} structure
-	 */
-	public static final int SIZE = 4;
-
-	private int entryPoint;
-
-	/**
-	 * Creates a new {@link EntryPoint}
+	 * Creates a new {@link TargetRelativeProtocolRequirementPointer}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
-	public EntryPoint(BinaryReader reader) throws IOException {
+	public TargetRelativeProtocolRequirementPointer(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
-		entryPoint = reader.readNextInt();
+		value = reader.readNextInt();
 	}
 
 	/**
-	 * {@return the entry point}
+	 * {@return the pointer value}
 	 */
-	public int getEntryPoint() {
-		return entryPoint;
+	public long getValue() {
+		return value;
 	}
 
 	@Override
 	public String getStructureName() {
-		return EntryPoint.class.getSimpleName();
+		return TargetRelativeProtocolRequirementPointer.class.getSimpleName();
 	}
 
 	@Override
 	public String getDescription() {
-		return "entry point";
+		return "relative protocol requirement pointer";
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		return SwiftUtils.PTR_RELATIVE;
+		return dataType;
 	}
-
 }

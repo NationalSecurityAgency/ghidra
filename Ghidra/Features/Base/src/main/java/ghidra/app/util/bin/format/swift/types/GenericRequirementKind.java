@@ -25,61 +25,28 @@ import ghidra.program.model.data.EnumDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Swift {@code ContextDescriptorKind} values
+ * Swift {@code GenericRequirementKind} values
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/MetadataValues.h">swift/ABI/MetadataValues.h</a> 
  */
-public enum ContextDescriptorKind implements StructConverter {
-	
-	/**
-	 * This context descriptor represents a module
-	 */
-	Module(0),
+public enum GenericRequirementKind implements StructConverter {
 
-	/**
-	 * This context descriptor represents an extension
-	 */
-	Extension(1),
-
-	/**
-	 * This context descriptor represents an anonymous possibly-generic context such as a function
-	 * body
-	 */
-	Anonymous(2),
-
-	/**
-	 * This context descriptor represents a protocol context
-	 */
-	Protocol(3),
-
-	/**
-	 * This context descriptor represents an opaque type alias
-	 */
-	OpaqueType(4),
-
-	/**
-	 * This context descriptor represents a class
-	 */
-	Class(16),
-
-	/**
-	 * This context descriptor represents a struct
-	 */
-	Struct(17),
-
-	/**
-	 * This context descriptor represents an enum
-	 */
-	Enum(18);
+	Protocol(0),
+	SameType(1),
+	BaseClass(2),
+	SameConformance(3),
+	SameShape(4),
+	IntertedProtocol(5),
+	Layout(0x1f);
 
 	private int value;
 
 	/**
-	 * Creates a new {@link ContextDescriptorKind}
+	 * Creates a new {@link GenericRequirementKind}
 	 * 
 	 * @param value The kind value
 	 */
-	private ContextDescriptorKind(int value) {
+	private GenericRequirementKind(int value) {
 		this.value = value;
 	}
 
@@ -91,20 +58,20 @@ public enum ContextDescriptorKind implements StructConverter {
 	}
 
 	/**
-	 * {@return the {@link ContextDescriptorKind} with the given kind value, or {@code null} if it 
+	 * {@return the {@link GenericRequirementKind} with the given kind value, or {@code null} if it 
 	 * does not exist}
 	 * 
 	 * @param value The kind value to get the value of
 	 */
-	public static ContextDescriptorKind valueOf(int value) {
+	public static GenericRequirementKind valueOf(int value) {
 		return Arrays.stream(values()).filter(e -> e.getValue() == value).findFirst().orElse(null);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		EnumDataType dt = new EnumDataType(SwiftTypeMetadataStructure.CATEGORY_PATH,
-			ContextDescriptorKind.class.getSimpleName(), 1);
-		for (ContextDescriptorKind kind : values()) {
+			GenericRequirementKind.class.getSimpleName(), 1);
+		for (GenericRequirementKind kind : values()) {
 			dt.add(kind.name(), kind.getValue());
 		}
 		return dt;

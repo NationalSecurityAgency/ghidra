@@ -19,68 +19,53 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift {@code AssociatedTypeRecord} structure
+ * Represents a Swift {@code TargetOverrideTableHeader} structure
  * 
- * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public final class AssociatedTypeRecord extends SwiftTypeMetadataStructure {
+public class TargetOverrideTableHeader extends SwiftTypeMetadataStructure {
+
+	private long numEntries;
 
 	/**
-	 * The size (in bytes) of an {@link AssociatedTypeRecord} structure
-	 */
-	public static final int SIZE = 8;
-
-	private String name;
-	private String substitutedTypeName;
-
-	/**
-	 * Creates a new {@link AssociatedTypeRecord}
+	 * Creates a new {@link TargetOverrideTableHeader}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
-	public AssociatedTypeRecord(BinaryReader reader) throws IOException {
+	public TargetOverrideTableHeader(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
-		name = reader.readNext(SwiftUtils::relativeString);
-		substitutedTypeName = reader.readNext(SwiftUtils::relativeString);
+		numEntries = reader.readNextUnsignedInt();
 	}
 
 	/**
-	 * {@return the name}
+	 * {@return the number of MethodOverrideDescriptor records following the vtable override header
+	 * in the class's nominal type descriptor}
 	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * {@return the substituted type name}
-	 */
-	public String getSubstitutedTypeName() {
-		return substitutedTypeName;
+	public long getNumEntries() {
+		return numEntries;
 	}
 
 	@Override
 	public String getStructureName() {
-		return AssociatedTypeRecord.class.getSimpleName();
+		return TargetOverrideTableHeader.class.getSimpleName();
 	}
 
 	@Override
 	public String getDescription() {
-		return "associated type record";
+		return "override table header";
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
-		struct.add(SwiftUtils.PTR_STRING, "Name", "");
-		struct.add(SwiftUtils.PTR_STRING, "SubstitutedTypeName", "");
+		struct.add(DWORD, "NumEntries",
+			"The number of MethodOverrideDescriptor records following the vtable override header in the class's nominal type descriptor.");
 		return struct;
 	}
-
 }

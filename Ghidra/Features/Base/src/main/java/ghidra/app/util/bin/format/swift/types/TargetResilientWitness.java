@@ -20,67 +20,60 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-/**
- * Represents a Swift {@code AssociatedTypeRecord} structure
- * 
- * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
- */
-public final class AssociatedTypeRecord extends SwiftTypeMetadataStructure {
+public class TargetResilientWitness extends SwiftTypeMetadataStructure {
+
+	private TargetRelativeProtocolRequirementPointer requirement;
+	private int impl;
 
 	/**
-	 * The size (in bytes) of an {@link AssociatedTypeRecord} structure
-	 */
-	public static final int SIZE = 8;
-
-	private String name;
-	private String substitutedTypeName;
-
-	/**
-	 * Creates a new {@link AssociatedTypeRecord}
+	 * Creates a new {@link TargetResilientWitness}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
-	public AssociatedTypeRecord(BinaryReader reader) throws IOException {
+	public TargetResilientWitness(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
-		name = reader.readNext(SwiftUtils::relativeString);
-		substitutedTypeName = reader.readNext(SwiftUtils::relativeString);
+		requirement = new TargetRelativeProtocolRequirementPointer(reader);
+		impl = reader.readNextInt();
 	}
 
 	/**
-	 * {@return the name}
+	 * {@return the requirement}
 	 */
-	public String getName() {
-		return name;
+	public TargetRelativeProtocolRequirementPointer getRequirement() {
+		return requirement;
 	}
 
 	/**
-	 * {@return the substituted type name}
+	 * {@return the implementation}
 	 */
-	public String getSubstitutedTypeName() {
-		return substitutedTypeName;
+	public int getImpl() {
+		return impl;
 	}
 
 	@Override
 	public String getStructureName() {
-		return AssociatedTypeRecord.class.getSimpleName();
+		return TargetResilientWitness.class.getSimpleName();
 	}
 
 	@Override
 	public String getDescription() {
-		return "associated type record";
+		return "resilient witness";
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
+		UnionDataType union = new UnionDataType(CATEGORY_PATH,
+			"Union_Impl_FuncImpl");
+		union.add(SwiftUtils.PTR_RELATIVE, "Impl", null);
+		union.add(SwiftUtils.PTR_RELATIVE, "FuncImpl", null);
+
 		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
-		struct.add(SwiftUtils.PTR_STRING, "Name", "");
-		struct.add(SwiftUtils.PTR_STRING, "SubstitutedTypeName", "");
+		struct.add(TargetRelativeProtocolRequirementPointer.dataType, "Requirement", null);
+		struct.add(union, "Implementation", null);
 		return struct;
 	}
-
 }
