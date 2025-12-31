@@ -64,4 +64,21 @@
     <external_name tool="IDA-PRO" name="avr"/>
   </language>
   
+  <language processor="AVR8"
+            endian="little"
+            size="16"
+            variant="atmega8535"
+            version="1.1"
+            slafile="avr8small.sla"
+            processorspec="atmega8535.pspec"
+            manualindexfile="../manuals/AVR8.idx"
+            id="avr8:LE:16:atmega8535">
+    <description>AVR8 with 16-bit word addressable code space</description>
+    <compiler name="gcc"        spec="avr8gcc.cspec"        id="gcc"/>
+    <compiler name="iarV1"      spec="avr8iarV1.cspec"      id="iarV1"/>
+    <compiler name="imgCraftV8" spec="avr8imgCraftV8.cspec" id="imgCraftV8"/>
+    <external_name tool="gnu" name="avr:31"/>
+    <external_name tool="IDA-PRO" name="avr"/>
+  </language>
+
 </language_definitions>
