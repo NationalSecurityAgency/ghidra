@@ -2,7 +2,140 @@
 # NOTE: v1.0.0
 # Reference: https://docs.riscv.org/reference/isa/unpriv/b-st-ext.html
 
-:andn rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x20 & rd & rs1 & rs2 unimpl
+# ==============================================================================
+# Zba Instructions
+# ==============================================================================
+
+# 0010000 rs2 rs1 010 rd 0110011
+:sh1add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x2 & rd & op0006=0x33
+{
+    rd = rs2 + (rs1 << 1);
+}
+
+# 0010000 rs2 rs1 100 rd 0110011
+:sh2add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33
+{
+    rd = rs2 + (rs1 << 2);
+}
+
+# 0010000 rs2 rs1 110 rd 0110011
+:sh3add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x6 & rd & op0006=0x33
+{
+    rd = rs2 + (rs1 << 3);
+}
+
+# ==============================================================================
+# Zbb Instructions
+# ==============================================================================
+
+# 0100000 rs2 rs1 111 rd 0110011
+:andn rd, rs1, rs2      is op2531=0x20 & rs2 & rs1 & op1214=0x7 & rd & op0006=0x33
+{
+    rd = rs1 & ~rs2;
+}
+
+# 0100000 rs2 rs1 110 rd 0110011
+:orn rd, rs1, rs2       is op2531=0x20 & rs2 & rs1 & op1214=0x6 & rd & op0006=0x33
+{
+    rd = rs1 | ~rs2;
+}
+
+# 0100000 rs2 rs1 100 rd 0110011
+:xnor rd, rs1, rs2      is op2531=0x20 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33
+{
+    rd = ~(rs1 ^ rs2);
+}
+
+# 0110000 00000 rs1 001 rd 0010011
+:clz rd, rs1            is op2531=0x30 & op2024=0x0 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
+
+# 0110000 00001 rs1 001 rd 0010011
+:ctz rd, rs1            is op2531=0x30 & op2024=0x1 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
+
+# 0110000 00010 rs1 001 rd 0010011
+:cpop rd, rs1           is op2531=0x30 & op2024=0x2 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = popcount(rs1);
+}
+
+# 0000101 rs2 rs1 110 rd 0110011
+:max rd, rs1, rs2       is op2531=0x5 & rs2 & rs1 & op1214=0x6 & rd & op0006=0x33
+{
+    if (rs1 s< rs2) goto <src2>;
+    rd = rs1;
+    goto <done>;
+    <src2>
+    rd = rs2;
+    <done>
+}
+
+# 0000101 rs2 rs1 111 rd 0110011
+:maxu rd, rs1, rs2      is op2531=0x5 & rs2 & rs1 & op1214=0x7 & rd & op0006=0x33
+{
+    if (rs1 < rs2) goto <src2>;
+    rd = rs1;
+    goto <done>;
+    <src2>
+    rd = rs2;
+    <done>
+}
+
+# 0000101 rs2 rs1 100 rd 0110011
+:min rd, rs1, rs2       is op2531=0x5 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33
+{
+    if (rs1 s< rs2) goto <src1>;
+    rd = rs2;
+    goto <done>;
+    <src1>
+    rd = rs1;
+    <done>
+}
+
+# 0000101 rs2 rs1 101 rd 0110011
+:minu rd, rs1, rs2      is op2531=0x5 & rs2 & rs1 & op1214=0x5 & rd & op0006=0x33
+{
+    if (rs1 < rs2) goto <src1>;
+    rd = rs2;
+    goto <done>;
+    <src1>
+    rd = rs1;
+    <done>
+}
+
+# 0110000 00100 rs1 001 rd 0010011
+:sext.b rd, rs1         is op2531=0x30 & op2024=0x4 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = sext(rs1:1);
+}
+
+# 0110000 00101 rs1 001 rd 0010011
+:sext.h rd, rs1         is op2531=0x30 & op2024=0x5 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = sext(rs1:2);
+}
+
+# 0000100 00000 rs1 100 rd 0110011
+:zext.h rd, rs1         is op2531=0x4 & op2024=0x0 & rs1 & op1214=0x4 & rd & op0006=0x33
+{
+    rd = zext(rs1:2);
+}
+
+# 0010100 00111 rs1 101 rd 0010011
+:orc.b rd, rs1          is op2031=0x287 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = (zext((rs1 & 0xFF) != 0) * 0xFF) |
+         (zext((rs1 & 0xFF00) != 0) * 0xFF00) |
+         (zext((rs1 & 0xFF0000) != 0) * 0xFF0000) |
+         (zext((rs1 & 0xFF000000) != 0) * 0xFF000000) |
+         (zext((rs1 & 0xFF00000000) != 0) * 0xFF00000000) |
+         (zext((rs1 & 0xFF0000000000) != 0) * 0xFF0000000000) |
+         (zext((rs1 & 0xFF000000000000) != 0) * 0xFF000000000000) |
+         (zext((rs1 & 0xFF00000000000000) != 0) * 0xFF00000000000000);
+}
+
+# ==============================================================================
+# Unimpl Instructions
+# ==============================================================================
 
 :bdep rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x24 & rd & rs1 & rs2 unimpl
 
@@ -15,8 +148,6 @@
 :clmulh rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
 :clmulr rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:clz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x0 & op2531=0x30 & rd & rs1 unimpl
 
 :cmix rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x1 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
 
@@ -33,8 +164,6 @@
 :crc32c.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x19 & op2531=0x30 & rd & rs1 unimpl
 
 :crc32c.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1a & op2531=0x30 & rd & rs1 unimpl
-
-:ctz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1 & op2531=0x30 & rd & rs1 unimpl
 
 :fsl  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x1 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
 
@@ -53,16 +182,6 @@
 
 #TODO  fix op2026
 :grevi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026 & rd & rs1 unimpl
-
-:max  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:maxu rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:min  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:minu rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:orn  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x20 & rd & rs1 & rs2 unimpl
 
 :pack  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
@@ -99,32 +218,6 @@
 #TODO  fix op2026
 :sbseti rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x5 & op2026 & rd & rs1 unimpl
 
-:sext.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x4 & op2531=0x30 & rd & rs1 unimpl
-
-:sext.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x5 & op2531=0x30 & rd & rs1 unimpl
-
-# ==============================================================================
-# Zba Instructions
-# ==============================================================================
-
-# 0010000 rs2 rs1 010 rd 0110011
-:sh1add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x2 & rd & op0006=0x33
-{
-    rd = rs2 + (rs1 << 1);
-}
-
-# 0010000 rs2 rs1 100 rd 0110011
-:sh2add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33
-{
-    rd = rs2 + (rs1 << 2);
-}
-
-# 0010000 rs2 rs1 110 rd 0110011
-:sh3add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x6 & rd & op0006=0x33
-{
-    rd = rs2 + (rs1 << 3);
-}
-
 :shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
 #TODO  fix op2025
@@ -144,6 +237,4 @@
 
 #TODO  fix op2025
 :unshfli rd, rs1, op2025 is op0006=0x13 & op1214=0x5 & op2631=0x2 & op2025 & rd & rs1 unimpl
-
-:xnor rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x20 & rd & rs1 & rs2 unimpl
 
