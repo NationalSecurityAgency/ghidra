@@ -361,7 +361,11 @@ public class SwiftTypeMetadata {
 				Address blockStart = block.getStart();
 				reader.setPointerIndex(blockStart.getOffset());
 				int i = skipZeroEntries(reader, 0, block.getSize());
-				while (i < block.getSize()) {
+				while (i + MultiPayloadEnumDescriptor.PEEK_SIZE <= block.getSize()) {
+					int contentsSize = MultiPayloadEnumDescriptor.peekContentsSize(reader);
+					if (i + MultiPayloadEnumDescriptor.SIZE + contentsSize > block.getSize()) {
+						break;
+					}
 					monitor.checkCancelled();
 					MultiPayloadEnumDescriptor descriptor = new MultiPayloadEnumDescriptor(reader);
 					mpEnumDescriptors.add(descriptor);

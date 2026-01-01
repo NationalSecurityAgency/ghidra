@@ -38,6 +38,11 @@ public final class MultiPayloadEnumDescriptor extends SwiftTypeMetadataStructure
 	 */
 	public static final int SIZE = 4;
 
+	/**
+	 * How many bytes it requires to peek at size of the {@code contents} array
+	 */
+	public static final int PEEK_SIZE = 8;
+
 	private String typeName;
 	private int[] contents;
 
@@ -70,10 +75,29 @@ public final class MultiPayloadEnumDescriptor extends SwiftTypeMetadataStructure
 	}
 
 	/**
-	 * {@return The size of the contents in bytes}
+	 * {@return the size of the contents in bytes}
 	 */
 	public long getContentsSize() {
 		return contents.length * Integer.BYTES;
+	}
+
+	/**
+	 * {@return the size of the contents in bytes, without reading the contents}
+	 * <p>
+	 * This method will leave the {@link BinaryReader}'s position unaffected.
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the structure
+	 * @throws IOException if there was an IO-related problem creating the structure
+	 */
+	public static int peekContentsSize(BinaryReader reader) throws IOException {
+		long origIndex = reader.getPointerIndex();
+		try {
+			reader.readNext(SwiftUtils::relativeString);
+			return (reader.readNextInt() >> 16) & 0xffff;
+		}
+		finally {
+			reader.setPointerIndex(origIndex);
+		}
 	}
 
 	@Override

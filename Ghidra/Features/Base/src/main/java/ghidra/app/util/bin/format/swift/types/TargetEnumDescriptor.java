@@ -39,6 +39,7 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 	private TargetTypeGenericContextDescriptorHeader genericHeader;
 	private TargetSingletonMetadataInitialization singleton;
 	private TargetForeignMetadataInitialization foreign;
+	private InvertibleProtocolSet invertibleProtocolSet;
 
 	/**
 	 * Creates a new {@link TargetEnumDescriptor}
@@ -72,7 +73,7 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 		}
 
 		if (flags.hasInvertableProtocols()) {
-			throw new IOException("Unimplemented InvertibleProtocolSet detected.");
+			invertibleProtocolSet = new InvertibleProtocolSet(reader);
 		}
 
 		if (!flags.isGeneric() &&
@@ -122,6 +123,13 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 		return foreign;
 	}
 
+	/**
+	 * {@return the {@link InvertibleProtocolSet}, or {@code null} if it doens't exist}
+	 */
+	public InvertibleProtocolSet getInvertibleProtocolSet() {
+		return invertibleProtocolSet;
+	}
+
 	@Override
 	public List<SwiftTypeMetadataStructure> getTrailingObjects() {
 		List<SwiftTypeMetadataStructure> ret = new ArrayList<>();
@@ -134,6 +142,9 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 		}
 		if (foreign != null) {
 			ret.add(foreign);
+		}
+		if (invertibleProtocolSet != null) {
+			ret.add(invertibleProtocolSet);
 		}
 		return ret;
 	}

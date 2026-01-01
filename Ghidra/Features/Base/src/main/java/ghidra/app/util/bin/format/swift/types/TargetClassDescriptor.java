@@ -51,6 +51,7 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 	private TargetOverrideTableHeader overrideHeader;
 	private List<TargetMethodOverrideDescriptor> methodOverrideDescriptors = new ArrayList<>();
 	private TargetObjCResilientClassStubInfo objcResilientClassStub;
+	private InvertibleProtocolSet invertibleProtocolSet;
 
 	/**
 	 * Creates a new {@link TargetClassDescriptor}
@@ -113,7 +114,7 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 		}
 
 		if (flags.hasInvertableProtocols()) {
-			throw new IOException("Unimplemented InvertibleProtocolSet detected.");
+			invertibleProtocolSet = new InvertibleProtocolSet(reader);
 		}
 
 		if (!flags.isGeneric() &&
@@ -256,6 +257,13 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 		return objcResilientClassStub;
 	}
 
+	/**
+	 * {@return the {@link InvertibleProtocolSet}, or {@code null} if it doens't exist}
+	 */
+	public InvertibleProtocolSet getInvertibleProtocolSet() {
+		return invertibleProtocolSet;
+	}
+
 	@Override
 	public List<SwiftTypeMetadataStructure> getTrailingObjects() {
 		List<SwiftTypeMetadataStructure> ret = new ArrayList<>();
@@ -282,6 +290,9 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 		}
 		if (objcResilientClassStub != null) {
 			ret.add(objcResilientClassStub);
+		}
+		if (invertibleProtocolSet != null) {
+			ret.add(invertibleProtocolSet);
 		}
 		return ret;
 	}
