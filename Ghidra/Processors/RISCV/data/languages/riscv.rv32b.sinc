@@ -1,4 +1,6 @@
-# RV32 Bitmanip Extension
+# RV32 Zb Extension (Bit Manipulation)
+# NOTE: v1.0.0
+# Reference: https://docs.riscv.org/reference/isa/unpriv/b-st-ext.html
 
 :andn rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x20 & rd & rs1 & rs2 unimpl
 
@@ -101,11 +103,27 @@
 
 :sext.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x5 & op2531=0x30 & rd & rs1 unimpl
 
-:sh1add rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
+# ==============================================================================
+# Zba Instructions
+# ==============================================================================
 
-:sh2add rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
+# 0010000 rs2 rs1 010 rd 0110011
+:sh1add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x2 & rd & op0006=0x33
+{
+    rd = rs2 + (rs1 << 1);
+}
 
-:sh3add rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
+# 0010000 rs2 rs1 100 rd 0110011
+:sh2add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33
+{
+    rd = rs2 + (rs1 << 2);
+}
+
+# 0010000 rs2 rs1 110 rd 0110011
+:sh3add rd, rs1, rs2    is op2531=0x10 & rs2 & rs1 & op1214=0x6 & rd & op0006=0x33
+{
+    rd = rs2 + (rs1 << 3);
+}
 
 :shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
