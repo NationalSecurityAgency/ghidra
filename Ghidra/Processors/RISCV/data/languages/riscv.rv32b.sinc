@@ -134,6 +134,58 @@
 }
 
 # ==============================================================================
+# Zbs Instructions
+# ==============================================================================
+
+# 0100100 rs2 rs1 001 rd 0110011
+:bclr rd, rs1, rs2      is op2531=0x24 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x33
+{
+    rd = rs1 & ~(1:$(XLEN) << (rs2 & (($(XLEN) << 3) - 1)));
+}
+
+# 0100100 shamt rs1 001 rd 0010011
+:bclri rd, rs1, op2024  is op2531=0x24 & op2024 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = rs1 & ~(1:$(XLEN) << op2024);
+}
+
+# 0100100 rs2 rs1 101 rd 0110011
+:bext rd, rs1, rs2      is op2531=0x24 & rs2 & rs1 & op1214=0x5 & rd & op0006=0x33
+{
+    rd = (rs1 >> (rs2 & (($(XLEN) << 3) - 1))) & 1;
+}
+
+# 0100100 shamt rs1 101 rd 0010011
+:bexti rd, rs1, op2024  is op2531=0x24 & op2024 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = (rs1 >> op2024) & 1;
+}
+
+# 0110100 rs2 rs1 001 rd 0110011
+:binv rd, rs1, rs2      is op2531=0x34 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x33
+{
+    rd = rs1 ^ (1:$(XLEN) << (rs2 & (($(XLEN) << 3) - 1)));
+}
+
+# 0110100 shamt rs1 001 rd 0010011
+:binvi rd, rs1, op2024  is op2531=0x34 & op2024 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = rs1 ^ (1:$(XLEN) << op2024);
+}
+
+# 0010100 rs2 rs1 001 rd 0110011
+:bset rd, rs1, rs2      is op2531=0x14 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x33
+{
+    rd = rs1 | (1:$(XLEN) << (rs2 & (($(XLEN) << 3) - 1)));
+}
+
+# 0010100 shamt rs1 001 rd 0010011
+:bseti rd, rs1, op2024  is op2531=0x14 & op2024 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = rs1 | (1:$(XLEN) << op2024);
+}
+
+# ==============================================================================
 # Unimpl Instructions
 # ==============================================================================
 
@@ -197,26 +249,6 @@
 
 #TODO  fix op2026
 :rori rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xc & op2026 & rd & rs1 unimpl
-
-:sbclr  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sbclri rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x9 & op2026 & rd & rs1 unimpl
-
-:sbext  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sbexti rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x9 & op2026 & rd & rs1 unimpl
-
-:sbinv  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x34 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sbinvi rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0xd & op2026 & rd & rs1 unimpl
-
-:sbset  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sbseti rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x5 & op2026 & rd & rs1 unimpl
 
 :shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
