@@ -15,6 +15,7 @@
  */
 #include "override.hh"
 #include "funcdata.hh"
+#include <memory>
 
 namespace ghidra {
 
@@ -367,10 +368,10 @@ void Override::decode(Decoder &decoder,Architecture *glb)
     }
     else if (subId == ELEM_PROTOOVERRIDE) {
       Address callpoint = Address::decode(decoder);
-      FuncProto *fp = new FuncProto();
+      std::unique_ptr<FuncProto> fp(new FuncProto());
       fp->setInternal(glb->defaultfp,glb->types->getTypeVoid());
       fp->decode(decoder,glb);
-      insertProtoOverride(callpoint,fp);
+      insertProtoOverride(callpoint,fp.release());
     }
     else if (subId == ELEM_FORCEGOTO) {
       Address targetpc = Address::decode(decoder);
