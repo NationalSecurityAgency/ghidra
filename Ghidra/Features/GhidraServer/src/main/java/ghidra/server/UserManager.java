@@ -28,7 +28,8 @@ import org.apache.logging.log4j.Logger;
 import generic.hash.HashUtilities;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.*;
+import ghidra.util.NamingUtilities;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -92,7 +93,8 @@ public class UserManager {
 		try {
 			readUserListIfNeeded();
 			clearExpiredPasswords();
-			log.info("User file contains " + userList.size() + " entries");
+			int size = userList.size();
+			log.info("User file contains " + size + (size == 1 ? "entry" : "entries"));
 		}
 		catch (FileNotFoundException e) {
 			log.error("Existing User file not found.");
