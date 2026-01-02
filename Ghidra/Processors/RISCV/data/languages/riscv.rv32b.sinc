@@ -236,68 +236,6 @@
 # Unimpl Instructions
 # ==============================================================================
 
-:bdep rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:bext rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-:bfp rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:cmix rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x1 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
-
-:cmov rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x5 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
-
-:crc32.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x10 & op2531=0x30 & rd & rs1 unimpl
-
-:crc32.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x11 & op2531=0x30 & rd & rs1 unimpl
-
-:crc32.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x12 & op2531=0x30 & rd & rs1 unimpl
-
-:crc32c.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x18 & op2531=0x30 & rd & rs1 unimpl
-
-:crc32c.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x19 & op2531=0x30 & rd & rs1 unimpl
-
-:crc32c.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1a & op2531=0x30 & rd & rs1 unimpl
-
-:fsl  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x1 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
-
-:fsr  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x5 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
-
-#TODO  fix op2025
-#TODO  this looks like a typo in 0.92
-:fsri rd, rs1, rs3, op2025 is op0006=0x33 & op1214=0x5 & op2626=0x1 & op2025 & rd & rs1 & rs3 unimpl
-
-:gorc  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x14 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:gorci rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x5 & op2026 & rd & rs1 unimpl
-
-:grev  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x34 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:grevi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026 & rd & rs1 unimpl
-
-:packu rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2025
-:shfli   rd, rs1, op2025 is op0006=0x13 & op1214=0x1 & op2631=0x2 & op2025 & rd & rs1 unimpl
-
-:slo  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sloi rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x4 & op2026 & rd & rs1 unimpl
-
-:sro  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sroi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x4 & op2026 & rd & rs1 unimpl
-
-:unshfl  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2025
-:unshfli rd, rs1, op2025 is op0006=0x13 & op1214=0x5 & op2631=0x2 & op2025 & rd & rs1 unimpl
-
 # 0110000 00000 rs1 001 rd 0010011
 :clz rd, rs1            is op2531=0x30 & op2024=0x0 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
 
@@ -318,3 +256,9 @@
 
 # 0000100 01111 rs1 101 rd 0010011
 :unzip rd, rs1          is op2531=0x4 & op2024=0xf & rs1 & op1214=0x5 & rd & op0006=0x13 unimpl
+
+# 0010100 rs2 rs1 010 rd 0110011
+:xperm4 rd, rs1, rs2    is op2531=0x14 & rs2 & rs1 & op1214=0x2 & rd & op0006=0x33 unimpl
+
+# 0010100 rs2 rs1 100 rd 0110011
+:xperm8 rd, rs1, rs2    is op2531=0x14 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33 unimpl
