@@ -1,6 +1,6 @@
 define endian=little;
 
-@define HXLEN 4
+@define HXLEN 4 # Half-XLEN 
 @define XLEN 8
 @define XLEN2 16
 @define FLEN 8
