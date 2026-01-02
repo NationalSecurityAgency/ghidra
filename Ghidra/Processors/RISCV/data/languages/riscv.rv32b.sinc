@@ -46,12 +46,6 @@
     rd = ~(rs1 ^ rs2);
 }
 
-# 0110000 00000 rs1 001 rd 0010011
-:clz rd, rs1            is op2531=0x30 & op2024=0x0 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
-
-# 0110000 00001 rs1 001 rd 0010011
-:ctz rd, rs1            is op2531=0x30 & op2024=0x1 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
-
 # 0110000 00010 rs1 001 rd 0010011
 :cpop rd, rs1           is op2531=0x30 & op2024=0x2 & rs1 & op1214=0x1 & rd & op0006=0x13
 {
@@ -186,6 +180,59 @@
 }
 
 # ==============================================================================
+# Zbkb Instructions
+# ==============================================================================
+
+# 0110000 rs2 rs1 001 rd 0110011
+:rol rd, rs1, rs2       is op2531=0x30 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x33
+{
+    rd = (rs1 << (rs2 & (($(XLEN) << 3) - 1))) |
+         (rs1 >> (($(XLEN) << 3) - (rs2 & (($(XLEN) << 3) - 1))));
+}
+
+# 0110000 rs2 rs1 101 rd 0110011
+:ror rd, rs1, rs2       is op2531=0x30 & rs2 & rs1 & op1214=0x5 & rd & op0006=0x33
+{
+    rd = (rs1 >> (rs2 & (($(XLEN) << 3) - 1))) |
+         (rs1 << (($(XLEN) << 3) - (rs2 & (($(XLEN) << 3) - 1))));
+}
+
+# 0110000 shamt rs1 101 rd 0010011
+:rori rd, rs1, op2024   is op2531=0x30 & op2024 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = (rs1 >> op2024) | (rs1 << (($(XLEN) << 3) - op2024));
+}
+
+# 0110100 11000 rs1 101 rd 0010011
+:rev8 rd, rs1           is op2031=0x698 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = ((rs1 & 0xFF) << 24) |
+         ((rs1 & 0xFF00) << 8) |
+         ((rs1 >> 8) & 0xFF00) |
+         ((rs1 >> 24) & 0xFF);
+}
+
+# 0000100 rs2 rs1 100 rd 0110011
+:pack rd, rs1, rs2      is op2531=0x4 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x33
+{
+    rd = (zext(rs2:$(HXLEN)) << ($(XLEN) << 2)) | zext(rs1:$(HXLEN));
+}
+
+# 0000100 rs2 rs1 111 rd 0110011
+:packh rd, rs1, rs2     is op2531=0x4 & rs2 & rs1 & op1214=0x7 & rd & op0006=0x33
+{
+    rd = (zext(rs2:1) << 8) | zext(rs1:1);
+}
+
+# 0110100 00111 rs1 101 rd 0010011
+:brev8 rd, rs1          is op2031=0x687 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    local tmp = ((rs1 & 0x5555555555555555) << 1) | ((rs1 >> 1) & 0x5555555555555555);
+    tmp =       ((tmp & 0x3333333333333333) << 2) | ((tmp >> 2) & 0x3333333333333333);
+    rd =        ((tmp & 0x0F0F0F0F0F0F0F0F) << 4) | ((tmp >> 4) & 0x0F0F0F0F0F0F0F0F);
+}
+
+# ==============================================================================
 # Unimpl Instructions
 # ==============================================================================
 
@@ -194,12 +241,6 @@
 :bext rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
 :bfp rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:clmul  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:clmulh rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x5 & rd & rs1 & rs2 unimpl
-
-:clmulr rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
 :cmix rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x1 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
 
@@ -235,20 +276,7 @@
 #TODO  fix op2026
 :grevi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026 & rd & rs1 unimpl
 
-:pack  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-:packh rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
 :packu rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:pcnt rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 unimpl
-
-:rol  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 unimpl
-
-:ror  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:rori rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xc & op2026 & rd & rs1 unimpl
 
 :shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
@@ -270,3 +298,23 @@
 #TODO  fix op2025
 :unshfli rd, rs1, op2025 is op0006=0x13 & op1214=0x5 & op2631=0x2 & op2025 & rd & rs1 unimpl
 
+# 0110000 00000 rs1 001 rd 0010011
+:clz rd, rs1            is op2531=0x30 & op2024=0x0 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
+
+# 0110000 00001 rs1 001 rd 0010011
+:ctz rd, rs1            is op2531=0x30 & op2024=0x1 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
+
+# 0000101 rs2 rs1 001 rd 0110011
+:clmul rd, rs1, rs2     is op2531=0x5 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x33 unimpl
+
+# 0000101 rs2 rs1 011 rd 0110011
+:clmulh rd, rs1, rs2    is op2531=0x5 & rs2 & rs1 & op1214=0x3 & rd & op0006=0x33 unimpl
+
+# 0000101 rs2 rs1 010 rd 0110011
+:clmulr rd, rs1, rs2    is op2531=0x5 & rs2 & rs1 & op1214=0x2 & rd & op0006=0x33 unimpl
+
+# 0000100 01111 rs1 001 rd 0010011
+:zip rd, rs1            is op2531=0x4 & op2024=0xf & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
+
+# 0000100 01111 rs1 101 rd 0010011
+:unzip rd, rs1          is op2531=0x4 & op2024=0xf & rs1 & op1214=0x5 & rd & op0006=0x13 unimpl
