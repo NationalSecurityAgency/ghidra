@@ -110,11 +110,10 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 		};
 		
 		String includeFiles[] = {
-			headerFilePath+"/VC/VS22/10.0.190141.0",
-			headerFilePath+"/VC/VS22/10.0.19041.0/um",
+			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.29.30133/include",
 			headerFilePath+"/VC/VS22/10.0.19041.0/shared",
 			headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
-			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.30.30705/include",			
+			headerFilePath+"/VC/VS22/10.0.19041.0/um",
 		};
 		
 		String args[] = {
