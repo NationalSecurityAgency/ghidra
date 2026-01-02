@@ -76,7 +76,7 @@ public class DWARFImporter {
 	 * <p>
 	 * After moving each DataType, if the folder is empty, remove the folder.
 	 *
-	 * @throws CancelledException
+	 * @throws CancelledException if the user cancelled the operation
 	 */
 	private void moveTypesIntoSourceFolders() throws CancelledException {
 
@@ -252,11 +252,12 @@ public class DWARFImporter {
 			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu, reader));
 		}
 
-		monitor.setIndeterminate(true);
 		int sourceInfoSize = sourceInfo.size();
-		monitor.setMessage("Sorting " + sourceInfoSize + " entr" +
-			(sourceInfoSize == 1 ? "y" : "ies"));
-		sourceInfo.sort((i, j) -> Long.compareUnsigned(i.address(), j.address()));
+		if (sourceInfoSize > 1) {
+			monitor.setIndeterminate(true);
+			monitor.setMessage("Sorting " + sourceInfoSize + "entries");
+			sourceInfo.sort((i, j) -> Long.compareUnsigned(i.address(), j.address()));
+		}
 		monitor.setIndeterminate(false);
 		monitor.initialize(sourceInfo.size(), "DWARF: Applying Source Map Info");
 
@@ -385,10 +386,10 @@ public class DWARFImporter {
 
 	/**
 	 * Imports DWARF information according to the {@link DWARFImportOptions} set.
-	 * @return
-	 * @throws IOException
-	 * @throws DWARFException
-	 * @throws CancelledException
+	 * @return A {@link DWARFImportSummary}
+	 * @throws IOException if an IO-related error occurred
+	 * @throws DWARFException if a DWARF-related error occurred
+	 * @throws CancelledException if the user cancelled the operation
 	 */
 	public DWARFImportSummary performImport()
 			throws IOException, DWARFException, CancelledException {
