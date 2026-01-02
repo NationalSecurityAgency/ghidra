@@ -43,7 +43,8 @@
 # 0110000 00010 rs1 001 rd 0011011
 :cpopw rd, rs1          is op2531=0x30 & op2024=0x2 & rs1 & op1214=0x1 & rd & op0006=0x1b
 {
-    rd = zext(popcount(rs1:4));
+    local tmp:4 = popcount(rs1:4);
+    rd = zext(tmp);
 }
 
 # 0000100 00000 rs1 100 rd 0111011
@@ -96,7 +97,8 @@
 # 0000100 rs2 rs1 100 rd 0111011
 :packw rd, rs1, rs2     is op2531=0x4 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x3b
 {
-    rd = sext(((zext(rs2:2) << 16) | zext(rs1:2)):4);
+    local tmp:4 = (zext(rs2:2) << 16) | zext(rs1:2);
+    rd = sext(tmp);
 }
 
 # 0110000 rs2 rs1 001 rd 0111011
