@@ -120,7 +120,7 @@ def consume_program(
         object was provided, the same consumer object is returned. Otherwise, a new consumer object
         is created and returned.
     :raises FileNotFoundError: If the path does not exist in the project.
-    :raises TypeError: If the path in the project exists but is not a Program.
+    :raises pyghidra.ProgramTypeError: If the path in the project exists but is not a Program.
     """
 ```
 
@@ -139,7 +139,7 @@ def program_context(
     :param path: The project path of the program (should start with "/").
     :return: The Ghidra program.
     :raises FileNotFoundError: If the path does not exist in the project.
-    :raises TypeError: If the path in the project exists but is not a Program.
+    :raises pyghidra.ProgramTypeError: If the path in the project exists but is not a Program.
     """
 ```
 
@@ -275,6 +275,12 @@ def walk_programs(
     :param program_filter: A filter used to limit what programs get processed.
     :raises FileNotFoundError: If the starting folder is not found in the project.
     """
+```
+
+### pyghidra.ProgramTypeError
+```python
+class ProgramTypeError(TypeError):
+    """Custom exception for when a Program was expected but not received."""
 ```
 
 ## Example
@@ -564,6 +570,7 @@ import pdb_  # imports Ghidra's pdb
 __3.0.2__
 * Fixed an issue that prevented [`pyghidra.analysis_properties()`](#pyghidraanalysis_properties)
   from having access to all of the analysis properties.
+* Fixed issues related to the PyGhidra API inadvertently squashing exceptions
 
 __3.0.1__
 * Fixed `AttributeError: module 'pyghidra' has no attribute 'program_conext'` when performing a
