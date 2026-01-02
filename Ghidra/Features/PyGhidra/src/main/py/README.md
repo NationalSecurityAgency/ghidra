@@ -31,7 +31,11 @@ To install the PyGhidra Python library:
    Python editor supports it). The type stubs module is specific to each version of Ghidra:
    * Online: `pip install ghidra-stubs==<version>`
    * Offline: `python3 -m pip install --no-index -f <GhidraInstallDir>/docs/ghidra_stubs ghidra-stubs`
-4. Optionally point PyGhidra at your Ghidra installation by setting the `GHIDRA_INSTALL_DIR` 
+4. Optionally install the Java type stubs to improve your development experience (assuming your
+   Python editor supports it):
+   * Online: `pip install java-stubs-converted-strings`
+   * Offline: Not available
+5. Optionally point PyGhidra at your Ghidra installation by setting the `GHIDRA_INSTALL_DIR` 
    environment variable. If not set, PyGhidra will point itself at the last used installation of
    Ghidra. Alternatively, you can point PyGhidra at a Ghidra installation with
    `pyghidra.start(install_dir=<GhidraInstallDir>)` (see below).
@@ -557,6 +561,10 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.0.2__
+* Fixed an issue that prevented [`pyghidra.analysis_properties()`](#pyghidraanalysis_properties)
+  from having access to all of the analysis properties.
+
 __3.0.1__
 * Fixed `AttributeError: module 'pyghidra' has no attribute 'program_conext'` when performing a
   `from pyghidra import *`.

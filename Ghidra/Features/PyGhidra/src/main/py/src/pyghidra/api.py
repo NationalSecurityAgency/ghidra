@@ -280,6 +280,8 @@ def analysis_properties(program: "Program") -> "Options":
     :return: the Ghidra "Program.ANALYSIS_PROPERTIES" options.
     """
     from ghidra.program.model.listing import Program
+    from ghidra.app.plugin.core.analysis import AutoAnalysisManager
+    AutoAnalysisManager.getAnalysisManager(program).initializeOptions()
     return program.getOptions(Program.ANALYSIS_PROPERTIES)
 
 def program_info(program: "Program") -> "Options":
