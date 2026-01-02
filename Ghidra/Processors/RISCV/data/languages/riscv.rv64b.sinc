@@ -53,6 +53,34 @@
 }
 
 # ==============================================================================
+# Zbs Instructions
+# ==============================================================================
+
+# 010010 shamt rs1 001 rd 0010011
+:bclri rd, rs1, op2025  is op2631=0x12 & op2025 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = rs1 & ~(1:$(XLEN) << op2025);
+}
+
+# 010010 shamt rs1 101 rd 0010011
+:bexti rd, rs1, op2025  is op2531=0x12 & op2025 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = (rs1 >> op2025) & 1;
+}
+
+# 011010 shamt rs1 001 rd 0010011
+:binvi rd, rs1, op2025  is op2531=0x1a & op2025 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = rs1 ^ (1:$(XLEN) << op2025);
+}
+
+# 001010 shamt rs1 001 rd 0010011
+:bseti rd, rs1, op2025  is op2531=0xa & op2025 & rs1 & op1214=0x1 & rd & op0006=0x13
+{
+    rd = rs1 | (1:$(XLEN) << op2025);
+}
+
+# ==============================================================================
 # Unimpl Instructions
 # ==============================================================================
 
@@ -110,23 +138,6 @@
 :roriw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x30 & op2024 & rd & rs1 unimpl
 
 :rorw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2024
-:sbclriw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x24 & op2024 & rd & rs1 unimpl
-
-:sbclrw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:sbextw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2024
-:sbinviw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x34 & op2024 & rd & rs1 unimpl
-
-:sbinvw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x34 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2024
-:sbsetiw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x14 & op2024 & rd & rs1 unimpl
-
-:sbsetw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
 
 :shflw    rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
