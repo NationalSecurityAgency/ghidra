@@ -23,3 +23,14 @@ dependencies {
 	implementation 'org.commonmark:commonmark-ext-footnotes:0.23.0'
 	implementation 'org.commonmark:commonmark-ext-gfm-tables:0.23.0'
 }
+
+project.afterEvaluate {
+	rootProject.ext.mdDeps.clear()
+	configurations.runtimeClasspath.resolve().each { File f ->
+		rootProject.ext.mdDeps.add(f.getAbsolutePath())
+	}
+
+	sourceSets.main.output.files.each { File f ->
+		rootProject.ext.mdDeps.add(f.getAbsolutePath())
+	}
+}
