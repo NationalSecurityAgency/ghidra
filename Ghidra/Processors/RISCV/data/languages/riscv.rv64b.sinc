@@ -1,9 +1,47 @@
-# RV64 Bitmanip Extension
+# RISC-V Zc & Zb Extensions (RV64 Specifics)
+# NOTE: v1.0.0
+# Reference: https://docs.riscv.org/reference/isa/unpriv/b-st-ext.html
+
+# ==============================================================================
+# Zba Instructions
+# ==============================================================================
+
+# 0000100 rs2 rs1 000 rd 0111011
+:add.uw rd, rs1, rs2    is op2531=0x4 & rs2 & rs1 & op1214=0x0 & rd & op0006=0x3b
+{
+    rd = rs2 + zext(rs1:4);
+}
+
+# 0010000 rs2 rs1 010 rd 0111011
+:sh1add.uw rd, rs1, rs2 is op2531=0x10 & rs2 & rs1 & op1214=0x2 & rd & op0006=0x3b
+{
+    rd = rs2 + (zext(rs1:4) << 1);
+}
+
+# 0010000 rs2 rs1 100 rd 0111011
+:sh2add.uw rd, rs1, rs2 is op2531=0x10 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x3b
+{
+    rd = rs2 + (zext(rs1:4) << 2);
+}
+
+# 0010000 rs2 rs1 110 rd 0111011
+:sh3add.uw rd, rs1, rs2 is op2531=0x10 & rs2 & rs1 & op1214=0x6 & rd & op0006=0x3b
+{
+    rd = rs2 + (zext(rs1:4) << 3);
+}
+
+# 000010 shamt rs1 001 rd 0011011
+:slli.uw rd, rs1, op2025 is op2631=0x2 & op2025 & rs1 & op1214=0x1 & rd & op0006=0x1b
+{
+    rd = zext(rs1:4) << op2025;
+}
+
+# ==============================================================================
+# Unimpl Instructions
+# ==============================================================================
 
 #TODO  fix op2031
 :addiwu rd, rs1, op2031 is op0006=0x1b & op1214=0x4 & rd & op2031 & rs1 unimpl
-
-:addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
 :addwu rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
@@ -80,16 +118,7 @@
 
 :sbsetw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
 
-:sh1addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
-:sh2addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
-:sh3addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
 :shflw    rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:slliu.w rd, rs1, op2026 is op0006=0x1b & op1214=0x1 & op2731=0x1 & op2026 & rd & rs1 unimpl
 
 #TODO  fix op2024
 :sloiw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x10 & op2024 & rd & rs1 unimpl
