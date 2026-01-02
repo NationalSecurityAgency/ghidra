@@ -81,6 +81,49 @@
 }
 
 # ==============================================================================
+# Zbkb Instructions
+# ==============================================================================
+
+# 011010 111000 rs1 101 rd 0010011
+:rev8 rd, rs1           is op2031=0x6b8 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = ((rs1 & 0xFF) << 56) | ((rs1 & 0xFF00) << 40) |
+         ((rs1 & 0xFF0000) << 24) | ((rs1 & 0xFF000000) << 8) |
+         ((rs1 >> 8) & 0xFF000000) | ((rs1 >> 24) & 0xFF0000) |
+         ((rs1 >> 40) & 0xFF00) | ((rs1 >> 56) & 0xFF);
+}
+
+# 0000100 rs2 rs1 100 rd 0111011
+:packw rd, rs1, rs2     is op2531=0x4 & rs2 & rs1 & op1214=0x4 & rd & op0006=0x3b
+{
+    rd = sext(((zext(rs2:2) << 16) | zext(rs1:2)):4);
+}
+
+# 0110000 rs2 rs1 001 rd 0111011
+:rolw rd, rs1, rs2      is op2531=0x30 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x3b
+{
+    rd = sext((rs1:4 << (rs2 & 0x1F)) | (rs1:4 >> (32 - (rs2 & 0x1F))));
+}
+
+# 0110000 rs2 rs1 101 rd 0111011
+:rorw rd, rs1, rs2      is op2531=0x30 & rs2 & rs1 & op1214=0x5 & rd & op0006=0x3b
+{
+    rd = sext( (rs1:4 >> (rs2 & 0x1F)) | (rs1:4 << (32 - (rs2 & 0x1F))) );
+}
+
+# 011000 shamt rs1 101 rd 0010011
+:rori rd, rs1, op2025   is op2631=0x18 & op2025 & rs1 & op1214=0x5 & rd & op0006=0x13
+{
+    rd = (rs1 >> op2025) | (rs1 << (($(XLEN) << 3) - op2025));
+}
+
+# 0110000 shamt rs1 101 rd 0011011
+:roriw rd, rs1, op2024  is op2531=0x30 & op2024 & rs1 & op1214=0x5 & rd & op0006=0x1b
+{
+    rd = sext((rs1:4 >> op2024) | (rs1:4 << (32 - op2024)));
+}
+
+# ==============================================================================
 # Unimpl Instructions
 # ==============================================================================
 
@@ -127,17 +170,6 @@
 :greviw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x34 & op2024 & rd & rs1 unimpl
 
 :grevw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x34 & rd & rs1 & rs2 unimpl
-
-:packuw rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
-
-:packw  rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-:rolw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2024
-:roriw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x30 & op2024 & rd & rs1 unimpl
-
-:rorw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 unimpl
 
 :shflw    rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
