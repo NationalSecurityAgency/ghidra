@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="rom"/>
+  </global>
+  <stackpointer register="SP" space="stack_buffer"/>
+  
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
+      <input>
+      </input>
+      <output>
+      </output>
+    </prototype>
+  </default_proto>
+</compiler_spec>
