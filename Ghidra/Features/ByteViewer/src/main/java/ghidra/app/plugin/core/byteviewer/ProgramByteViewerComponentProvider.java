@@ -27,7 +27,7 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.DockingUtils;
-import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import generic.theme.GIcon;
 import ghidra.app.events.*;
@@ -58,8 +58,6 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	protected DecoratorPanel decorationComponent;
 	private WeakSet<NavigatableRemovalListener> navigationListeners =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
-
-	private CloneByteViewerAction cloneByteViewerAction;
 
 	protected Program program;
 	protected ProgramSelection currentSelection;
@@ -105,8 +103,16 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	public void createProgramActions() {
-		cloneByteViewerAction = new CloneByteViewerAction();
-		tool.addLocalAction(this, cloneByteViewerAction);
+		new ActionBuilder("ByteViewer Clone", plugin.getName())
+				.toolBarIcon(new GIcon("icon.provider.clone"))
+				.toolBarGroup("ZZZ")
+				.description("Create a snapshot (disconnected) copy of this Bytes window ")
+				.helpLocation(new HelpLocation("Snapshots", "Snapshots_Start"))
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_T,
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.enabledWhen(ac -> blockSet != null && blockSet.isValid())
+				.onAction(ac -> cloneWindow())
+				.buildAndInstallLocal(this);
 	}
 
 	@Override
@@ -150,7 +156,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	protected ByteViewerActionContext newByteViewerActionContext() {
-		return new ByteViewerActionContext(this);
+		return new ByteViewerActionContext(this, panel.getCurrentComponent());
 	}
 
 	@Override
@@ -233,9 +239,6 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	protected void doSetProgram(Program newProgram) {
-		setOptionsAction.setEnabled(newProgram != null);
-		cloneByteViewerAction.setEnabled(newProgram != null);
-
 		if (program != null) {
 			program.removeListener(this);
 		}
@@ -244,8 +247,8 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		clipboardProvider.setProgram(newProgram);
 		for (ByteViewerComponent byteViewerComponent : viewMap.values()) {
 			DataFormatModel dataModel = byteViewerComponent.getDataModel();
-			if (dataModel instanceof ProgramDataFormatModel) {
-				((ProgramDataFormatModel) dataModel).setProgram(newProgram);
+			if (dataModel instanceof ProgramDataFormatModel pdfm) {
+				pdfm.setProgram(newProgram);
 			}
 		}
 
@@ -254,6 +257,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 		setByteBlocks(null);
 		updateTitle();
+		contextChanged();
 	}
 
 	protected void updateTitle() {
@@ -615,9 +619,12 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	@Override
 	protected void updateLiveSelection(ByteBlockSelection selection) {
-		AbstractSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
-		liveSelection = event.getSelection();
-		updateTitle();
+		if (blockSet != null) {
+			AbstractSelectionPluginEvent event =
+				blockSet.getPluginEvent(plugin.getName(), selection);
+			liveSelection = event.getSelection();
+			updateTitle();
+		}
 	}
 
 	@Override
@@ -758,29 +765,6 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		newProvider.setHighlight(currentHighlight);
 		ViewerPosition viewerPosition = panel.getViewerPosition();
 		newProvider.panel.setViewerPosition(viewerPosition);
-	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	private class CloneByteViewerAction extends DockingAction {
-
-		public CloneByteViewerAction() {
-			super("ByteViewer Clone", plugin.getName());
-			Icon image = new GIcon("icon.provider.clone");
-			setToolBarData(new ToolBarData(image, "ZZZ"));
-
-			setDescription("Create a snapshot (disconnected) copy of this Bytes window ");
-			setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
-			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
-				DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK));
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			cloneWindow();
-		}
 	}
 
 	@Override

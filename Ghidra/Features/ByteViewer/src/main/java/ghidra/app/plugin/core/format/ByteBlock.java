@@ -52,6 +52,17 @@ public interface ByteBlock {
 	public byte getByte(BigInteger index) throws ByteBlockAccessException;
 
 	/**
+	 * Get bytes from given index.
+	 * 
+	 * @param bytes destination
+	 * @param index byte index
+	 * @param count number of bytes to get
+	 * @return actual number of bytes copied into destination
+	 * @throws ByteBlockAccessException if error
+	 */
+	public int getBytes(byte[] bytes, BigInteger index, int count) throws ByteBlockAccessException;
+
+	/**
 	 * Returns true if this ByteBlock has byte values at the specified index.
 	 *
 	 * @param index byte index

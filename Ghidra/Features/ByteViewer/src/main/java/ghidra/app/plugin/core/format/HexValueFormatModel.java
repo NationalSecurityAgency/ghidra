@@ -20,19 +20,21 @@ import java.math.BigInteger;
 import ghidra.util.HelpLocation;
 
 /**
- * Converts byte values to value represented as a 2, 4, 8, or 16-byte hex number.
+ * Common base class for 2, 4, 8, or 16-byte hex number formats.
  */
-public abstract class HexValueFormatModel implements UniversalDataFormatModel {
+public abstract class HexValueFormatModel
+		implements UniversalDataFormatModel, MutableDataFormatModel {
 
-	protected String name;
-
-	private int symbolSize;
-	protected int nbytes;
+	protected final String name;
+	protected final int symbolSize;
+	protected final int nbytes;
+	protected final String fullSymbolErrorStr;
 
 	public HexValueFormatModel(String name, int nbytes) {
 		this.name = name;
 		this.nbytes = nbytes;
-		symbolSize = nbytes * 2;
+		this.symbolSize = nbytes * 2;
+		this.fullSymbolErrorStr = "??".repeat(nbytes);
 	}
 
 	@Override
@@ -77,11 +79,6 @@ public abstract class HexValueFormatModel implements UniversalDataFormatModel {
 			throws ByteBlockAccessException;
 
 	@Override
-	public boolean isEditable() {
-		return true;
-	}
-
-	@Override
 	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c)
 			throws ByteBlockAccessException {
 
@@ -101,41 +98,8 @@ public abstract class HexValueFormatModel implements UniversalDataFormatModel {
 	}
 
 	@Override
-	public int getGroupSize() {
-		return 1;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 */
-	@Override
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
-
-	@Override
 	public int getUnitDelimiterSize() {
 		return 1;
-	}
-
-	@Override
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return bytesPerLine % nbytes == 0;
-	}
-
-	/**
-	 * Returns value with leading zeros.
-	 */
-	protected String pad(String value) {
-		StringBuffer sb = new StringBuffer();
-		int len = symbolSize - value.length();
-
-		for (int i = 0; i < len; i++) {
-			sb.append("0");
-		}
-		sb.append(value);
-		return sb.toString();
 	}
 
 	/**
@@ -157,12 +121,6 @@ public abstract class HexValueFormatModel implements UniversalDataFormatModel {
 
 	@Override
 	public HelpLocation getHelpLocation() {
-		String anchor = name.replaceAll("\\s", "");
-		return new HelpLocation("ByteViewerPlugin", anchor);
+		return new HelpLocation("ByteViewerPlugin", name.replaceAll(" ", "")); // "Hex Long" -> "HexLong"
 	}
-
-	@Override
-	public void dispose() {
-	}
-
 }
