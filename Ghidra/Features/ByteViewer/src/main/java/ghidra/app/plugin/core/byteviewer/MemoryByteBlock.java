@@ -19,7 +19,6 @@ import java.math.BigInteger;
 
 import ghidra.app.plugin.core.format.ByteBlock;
 import ghidra.app.plugin.core.format.ByteBlockAccessException;
-import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -33,7 +32,6 @@ public class MemoryByteBlock implements ByteBlock {
 	private Memory memory;
 	private Address start;
 	private boolean bigEndian;
-	private Address mAddr;
 	private Program program;
 
 	/**
@@ -47,9 +45,8 @@ public class MemoryByteBlock implements ByteBlock {
 		this.program = program;
 		this.memory = memory;
 		this.block = block;
-		start = block.getStart();
-		bigEndian = memory.isBigEndian();
-		mAddr = start;
+		this.start = block.getStart();
+		this.bigEndian = memory.isBigEndian();
 	}
 
 	/**
@@ -126,6 +123,17 @@ public class MemoryByteBlock implements ByteBlock {
 		Address addr = getAddress(index);
 		try {
 			return memory.getByte(addr);
+		}
+		catch (MemoryAccessException e) {
+			throw new ByteBlockAccessException(e.getMessage());
+		}
+	}
+
+	@Override
+	public int getBytes(byte[] bytes, BigInteger index, int count) throws ByteBlockAccessException {
+		try {
+			Address addr = getAddress(index);
+			return memory.getBytes(addr, bytes, 0, count);
 		}
 		catch (MemoryAccessException e) {
 			throw new ByteBlockAccessException(e.getMessage());
@@ -293,35 +301,20 @@ public class MemoryByteBlock implements ByteBlock {
 		return (int) (start.getOffset() % radix);
 	}
 
-	private Address getMappedAddress(Address addr) {
-		MemoryBlock memBlock = memory.getBlock(addr);
-		if (memBlock != null && memBlock.getType() == MemoryBlockType.BYTE_MAPPED) {
-			try {
-				MemoryBlockSourceInfo info = memBlock.getSourceInfos().get(0);
-				AddressRange mappedRange = info.getMappedRange().get();
-				ByteMappingScheme byteMappingScheme = info.getByteMappingScheme().get();
-				addr = byteMappingScheme.getMappedSourceAddress(mappedRange.getMinAddress(),
-					addr.subtract(memBlock.getStart()));
-			}
-			catch (AddressOverflowException e) {
-				// ignore
-			}
-		}
-		return addr;
-	}
-
 	/**
 	 * Get the address based on the index.
 	 */
 	public Address getAddress(BigInteger index) {
 		try {
-			mAddr = start;
-			mAddr = mAddr.addNoWrap(index);
-			return mAddr;
+			return start.addNoWrap(index);
 		}
 		catch (AddressOverflowException e) {
 			throw new IndexOutOfBoundsException("Index " + index + " is not in this block");
 		}
+	}
+
+	public BigInteger getIndex(Address addr) {
+		return addr.getOffsetAsBigInteger().subtract(start.getOffsetAsBigInteger());
 	}
 
 	/**

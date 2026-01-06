@@ -17,16 +17,22 @@ package ghidra.app.plugin.core.byteviewer;
 
 import static ghidra.GhidraOptions.*;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 
-import docking.action.ToggleDockingAction;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import docking.*;
+import docking.action.*;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
+import docking.actions.PopupActionProvider;
+import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.*;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
@@ -37,11 +43,12 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.charset.CharsetInfo;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.SwingUpdateManager;
 
 public abstract class ByteViewerComponentProvider extends ComponentProviderAdapter
-		implements OptionsChangeListener {
+		implements OptionsChangeListener, PopupActionProvider {
 
 	protected static final String BLOCK_NUM = "Block Num";
 	protected static final String BLOCK_OFFSET = "Block Offset";
@@ -51,18 +58,16 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	protected static final String Y_OFFSET = "Y Offset";
 	private static final String VIEW_NAMES = "View Names";
 	private static final String VIEW_WIDTHS = "View_Widths";
-	private static final String HEX_VIEW_GROUPSIZE = "Hex view groupsize";
-	private static final String BYTES_PER_LINE_NAME = "Bytes Per Line";
-	private static final String OFFSET_NAME = "Offset";
 	static final int DEFAULT_NUMBER_OF_CHARS = 8;
 
 	static final String DEFAULT_FONT_ID = "font.byteviewer";
-	static final int DEFAULT_BYTES_PER_LINE = 16;
+	static final Font DEFAULT_FONT = Gui.getFont(DEFAULT_FONT_ID);
+	static final String HEADER_FONT_ID = "font.byteviewer.header";
+	static final Font HEADER_FONT = Gui.getFont(HEADER_FONT_ID);
 
 	//@formatter:off
-	static final String FG = "byteviewer.color.fg";
-	static final String CURSOR = "byteviewer.color.cursor";
-
+	static final GColor FG_COLOR = new GColor("color.fg");
+	static final GColor BG_COLOR = new GColor("color.bg.byteviewer");
 	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator");
 	
 	static final GColor EDITED_TEXT_COLOR = new GColor("color.fg.byteviewer.changed");
@@ -72,6 +77,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	static final GColor CURSOR_COLOR_UNFOCUSED_NON_EDIT = new GColor("color.cursor.byteviewer.unfocused.non.edit");
 
 	static final GColor CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
+	static final GColor HIGHLIGHT_COLOR = new GColor("color.bg.byteviewer.highlight");
+	static final GColor HIGHLIGHT_MIDDLE_MOUSE_COLOR = new GColor("color.bg.byteviewer.highlight.middle.mouse");
 	//@formatter:on
 
 	static final String INDEX_COLUMN_NAME = "Addresses";
@@ -91,19 +98,14 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	private static final String OPTION_HIGHLIGHT_CURSOR_LINE =
 		GhidraOptions.HIGHLIGHT_CURSOR_LINE_OPTION_NAME;
 	private static final String OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME = "Middle Mouse Color";
-	private static final GColor HIGHLIGHT_MIDDLE_MOUSE_COLOR =
-		new GColor("color.bg.byteviewer.highlight.middle.mouse");
 
 	protected ByteViewerPanel panel;
 
-	private int bytesPerLine;
-	private int offset;
-	private int hexGroupSize = 1;
+	private ByteViewerConfigOptions configOptions = new ByteViewerConfigOptions();
 
 	protected Map<String, ByteViewerComponent> viewMap = new HashMap<>();
 
 	protected ToggleDockingAction editModeAction;
-	protected OptionsAction setOptionsAction;
 
 	protected ProgramByteBlockSet blockSet;
 
@@ -112,6 +114,9 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	protected SwingUpdateManager updateManager;
 
 	private Map<String, Class<? extends DataFormatModel>> dataFormatModelClassMap;
+	private DockingAction shiftLeftAction;
+	private DockingAction shiftRightAction;
+	private DockingAction optionsAction;
 
 	protected ByteViewerComponentProvider(PluginTool tool, AbstractByteViewerPlugin<?> plugin,
 			String name, Class<?> contextType) {
@@ -122,8 +127,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		initializedDataFormatModelClassMap();
 
 		panel = newByteViewerPanel();
-		bytesPerLine = DEFAULT_BYTES_PER_LINE;
 		setIcon(new GIcon("icon.plugin.byteviewer.provider"));
+
 		setOptions();
 
 		createActions();
@@ -132,6 +137,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 		addView(DEFAULT_VIEW);
 		setWindowMenuGroup("Byte Viewer");
+		tool.addPopupActionProvider(this);
 	}
 
 	protected ByteViewerPanel newByteViewerPanel() {
@@ -146,12 +152,75 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		}
 	}
 
-	private void createActions() {
-		editModeAction = new ToggleEditAction(this, plugin);
-		setOptionsAction = new OptionsAction(this, plugin);
+	ToggleDockingAction getEditModeAction() {
+		// for junit
+		return editModeAction;
+	}
 
-		addLocalAction(editModeAction);
-		addLocalAction(setOptionsAction);
+	DockingAction getShiftLeftAction() {
+		// for junit
+		return shiftLeftAction;
+	}
+
+	DockingAction getShiftRightAction() {
+		// for junit
+		return shiftRightAction;
+	}
+
+	DockingAction getOptionsAction() {
+		// for junit
+		return optionsAction;
+	}
+
+	private void createActions() {
+		editModeAction =
+			new ToggleActionBuilder("Enable/Disable Byteviewer Editing", plugin.getName())
+					.selected(false)
+					.description("Enable/Disable editing of bytes in Byte Viewer panels.")
+					.toolBarIcon(new GIcon("icon.base.edit.bytes"))
+					.toolBarGroup("Byteviewer")
+					.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_E,
+						DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK))
+					.enabledWhen(ac -> blockSet != null && blockSet.isValid())
+					.onAction(ac -> setEditMode(editModeAction.isSelected()))
+					.buildAndInstallLocal(this);
+
+		optionsAction = new ActionBuilder("Byte Viewer Options", plugin.getName())
+				.description("Set Byte Viewer Options")
+				.toolBarIcon(new GIcon("icon.plugin.byteviewer.options"))
+				.toolBarGroup("ZSettings")
+				.enabledWhen(ac -> blockSet != null && blockSet.isValid())
+				.onAction(ac -> tool.showDialog(
+					new ByteViewerOptionsDialog(ByteViewerComponentProvider.this),
+					ByteViewerComponentProvider.this))
+				.buildAndInstallLocal(this);
+
+		shiftLeftAction = new ActionBuilder("Shift Alignment Offset Left", plugin.getName())
+				.description("Shift Alignment Offset Left")
+				.popupMenuGroup("ByteOffsetShift")
+				.popupMenuPath("Shift Bytes Left")
+				.keyBinding("ctrl-comma")
+				.enabledWhen(ac -> blockSet != null && blockSet.isValid())
+				.onAction(ac -> adjustOffset(-1))
+				.buildAndInstallLocal(this);
+
+		shiftRightAction = new ActionBuilder("Shift Alignment Offset Right", plugin.getName())
+				.description("Shift Alignment Offset Right")
+				.popupMenuGroup("ByteOffsetShift")
+				.popupMenuPath("Shift Bytes Right")
+				.keyBinding("ctrl-period")
+				.enabledWhen(ac -> blockSet != null && blockSet.isValid())
+				.onAction(ac -> adjustOffset(+1))
+				.buildAndInstallLocal(this);
+	}
+
+	@Override
+	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+		if (context instanceof ByteViewerActionContext bvContext &&
+			bvContext.getComponentProvider() == this) {
+			return bvContext.getActiveColumn().getPopupActions(tool, bvContext);
+		}
+		return null;
 	}
 
 	@Override
@@ -179,23 +248,12 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		if (options.getName().equals("ByteViewer")) {
-			if (optionName.equals(OPTION_FONT)) {
-				setFont((Font) newValue);
-			}
-		}
-		else if (options.getName().equals(CATEGORY_BROWSER_FIELDS)) {
+		if (options.getName().equals(CATEGORY_BROWSER_FIELDS)) {
 			if (optionName.equals(CURSOR_HIGHLIGHT_BUTTON_NAME)) {
 				CURSOR_MOUSE_BUTTON_NAMES mouseButton = (CURSOR_MOUSE_BUTTON_NAMES) newValue;
 				panel.setHighlightButton(mouseButton.getMouseEventID());
 			}
 		}
-	}
-
-	private void setFont(Font font) {
-		FontMetrics fm = panel.getFontMetrics(font);
-		panel.setFontMetrics(fm);
-		tool.setConfigChanged(true);
 	}
 
 	// Options.getStringEnum() is deprecated
@@ -238,13 +296,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
 			"Toggles highlighting background color of line containing the cursor.");
 
-		Color separatorColor = opt.getColor(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR);
-		panel.setSeparatorColor(separatorColor);
-
-		Color middleMouseColor =
-			opt.getColor(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME, HIGHLIGHT_MIDDLE_MOUSE_COLOR);
-		panel.setMouseButtonHighlightColor(middleMouseColor);
-
 		opt.addOptionsChangeListener(this);
 
 		// cursor highlight options
@@ -257,20 +308,24 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	/**
-	 * Set the offset that is applied to each block.
-	 * @param blockOffset the new block offset
+	 * Set the display offset that is applied to bytes in each block.
+	 * <p>
+	 * Changing this adjusts which byte appears first on each line of the grid.
+	 * 
+	 * @param newOffset the new block offset (0..bytesPerLine-1)
 	 */
-	void setBlockOffset(int blockOffset) {
-		if (blockOffset == offset) {
-			return;
+	public void setOffset(int newOffset) {
+		if (configOptions.calcNormalizedOffset(newOffset) != configOptions.getOffset()) {
+			configOptions.setOffset(newOffset);
+			ViewerPosition vp = panel.getViewerPosition();
+			panel.updateLayoutConfigOptions(configOptions);
+			tool.setConfigChanged(true);
+			panel.setViewerPosition(vp);
 		}
-		int newOffset = blockOffset;
-		if (newOffset > bytesPerLine) {
-			newOffset = newOffset % bytesPerLine;
-		}
-		this.offset = newOffset;
-		panel.setOffset(newOffset);
-		tool.setConfigChanged(true);
+	}
+
+	void adjustOffset(int delta) {
+		setOffset(configOptions.getOffset() + delta);
 	}
 
 	ByteBlockInfo getCursorLocation() {
@@ -289,48 +344,105 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		return blockSet;
 	}
 
-	/**
-	 * Get the number of bytes displayed in a line.
-	 * @return the number of bytes displayed in a line
-	 */
-	int getBytesPerLine() {
-		return bytesPerLine;
+	public ByteViewerConfigOptions getConfigOptions() {
+		return configOptions;
 	}
 
-	/**
-	 * Get the offset that should be applied to each byte block.
-	 * @return the offset that should be applied to each byte block
-	 */
-	int getOffset() {
-		return offset;
-	}
+	public void updateConfigOptions(ByteViewerConfigOptions newOptions, Set<String> selectedViews) {
 
-	Color getFocusedNonEditCursorColor() {
-		return CURSOR_COLOR_FOCUSED_NON_EDIT;
-	}
+		boolean changed = removeDeletedViews(selectedViews);
+		if (!configOptions.areOptionsEqual(newOptions)) {
+			changed = true;
 
-	int getGroupSize() {
-		return hexGroupSize;
-	}
+			boolean layoutChanged = configOptions.areLayoutParamsChanged(newOptions);
+			boolean widthsChanged = configOptions.areDislayWidthsChanged(newOptions);
 
-	void setGroupSize(int groupSize) {
-		if (groupSize == hexGroupSize) {
-			return;
-		}
-		hexGroupSize = groupSize;
-		ByteViewerComponent component = viewMap.get(HexFormatModel.NAME);
-		if (component != null) {
-			component.setGroupSize(groupSize);
-			component.invalidate();
+			configOptions = newOptions;
+
+			for (ByteViewerComponent bvc : viewMap.values()) {
+				bvc.getDataModel().setByteViewerConfigOptions(configOptions);
+				bvc.invalidateModelFields();
+			}
+
+			if (layoutChanged || widthsChanged) {
+				panel.updateLayoutConfigOptions(configOptions);
+			}
+			if (widthsChanged) {
+				panel.resetColumnsToDefaultWidths();
+			}
+			panel.invalidate();
+			panel.validate();
 			panel.repaint();
 		}
-		tool.setConfigChanged(true);
+
+
+		changed |= addNewViews(selectedViews);
+
+		if (changed) {
+			refreshView();
+			tool.setConfigChanged(true);
+		}
 	}
 
-	void setBytesPerLine(int bytesPerLine) {
-		if (this.bytesPerLine != bytesPerLine) {
-			this.bytesPerLine = bytesPerLine;
-			panel.setBytesPerLine(bytesPerLine);
+	private boolean removeDeletedViews(Set<String> selectedViews) {
+		if (selectedViews == null) {
+			return false;
+		}
+		boolean changed = false;
+		for (String viewName : getCurrentViews()) {
+			if (!selectedViews.contains(viewName)) {
+				removeView(viewName, true);
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	private boolean addNewViews(Set<String> selectedViews) {
+		if (selectedViews == null) {
+			return false;
+		}
+		boolean changed = false;
+		Set<String> currentViews = getCurrentViews();
+
+		// add any missing views
+		for (String viewName : selectedViews) {
+			if (!currentViews.contains(viewName)) {
+				addView(viewName);
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	private void updateModelConfig(String modelName) {
+		ByteViewerComponent bvc = viewMap.get(modelName);
+		if (bvc != null) {
+			bvc.getDataModel().setByteViewerConfigOptions(configOptions);
+			bvc.invalidateModelFields();
+			panel.repaint();
+		}
+	}
+
+	public void setCharsetInfo(CharsetInfo newCSI) {
+		CharsetInfo oldCSI = configOptions.getCharsetInfo();
+		if (!oldCSI.equals(newCSI)) {
+			configOptions.setCharsetInfo(newCSI);
+			// we know only Chars format cares about this setting
+			updateModelConfig(CharacterFormatModel.NAME);
+			if (oldCSI.getAlignment() != newCSI.getAlignment()) {
+				panel.resetColumnsToDefaultWidths();
+			}
+			tool.setConfigChanged(true);
+		}
+	}
+
+	public void setCompactChars(boolean newCompactChars) {
+		if (configOptions.isCompactChars() != newCompactChars) {
+			configOptions.setCompactChars(newCompactChars);
+			// we know only Chars format cares about this setting, and that it will change column width
+			updateModelConfig(CharacterFormatModel.NAME);
+			panel.resetColumnsToDefaultWidths();
 			tool.setConfigChanged(true);
 		}
 	}
@@ -338,9 +450,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	protected void writeConfigState(SaveState saveState) {
 		List<String> viewNames = panel.getViewNamesInDisplayOrder();
 		saveState.putStrings(VIEW_NAMES, viewNames.toArray(new String[viewNames.size()]));
-		saveState.putInt(HEX_VIEW_GROUPSIZE, hexGroupSize);
-		saveState.putInt(BYTES_PER_LINE_NAME, bytesPerLine);
-		saveState.putInt(OFFSET_NAME, offset);
+		configOptions.write(saveState);
 		SaveState columnState = new SaveState(VIEW_WIDTHS);
 		int indexWidth = panel.getViewWidth(INDEX_COLUMN_NAME);
 		columnState.putInt(INDEX_COLUMN_NAME, indexWidth);
@@ -352,12 +462,13 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	protected void readConfigState(SaveState saveState) {
+		configOptions.read(saveState);
+
 		String[] names = saveState.getStrings(VIEW_NAMES, new String[0]);
-		hexGroupSize = saveState.getInt(HEX_VIEW_GROUPSIZE, 1);
 		restoreViews(names, false);
-		bytesPerLine = saveState.getInt(BYTES_PER_LINE_NAME, DEFAULT_BYTES_PER_LINE);
-		offset = saveState.getInt(OFFSET_NAME, 0);
-		panel.restoreConfigState(bytesPerLine, offset);
+
+		panel.restoreConfigState(configOptions);
+
 		SaveState viewWidths = saveState.getSaveState(VIEW_WIDTHS);
 		if (viewWidths != null) {
 			String[] viewNames = viewWidths.getNames();
@@ -366,7 +477,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 				if (width > 0) {
 					panel.setViewWidth(viewName, width);
 				}
-
 			}
 		}
 	}
@@ -376,7 +486,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	 */
 	private void restoreViews(String[] viewNames, boolean updateViewPosition) {
 		// clear existing views
-		for (String viewName : viewMap.keySet()) {
+		for (String viewName : List.copyOf(viewMap.keySet())) {
 			removeView(viewName, false);
 		}
 		for (String viewName : viewNames) {
@@ -400,9 +510,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	private ByteViewerComponent addView(DataFormatModel model, boolean configChanged,
 			boolean updateViewPosition) {
 
-		if (model.getName().equals(HexFormatModel.NAME)) {
-			model.setGroupSize(hexGroupSize);
-		}
+		model.setByteViewerConfigOptions(configOptions);
 
 		String viewName = model.getName();
 		ByteViewerComponent bvc =
@@ -436,8 +544,11 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	protected abstract void updateLiveSelection(ByteBlockSelection selection);
 
 	void dispose() {
+		tool.removePopupActionProvider(this);
 		updateManager.dispose();
 		updateManager = null;
+
+		panel.dispose();
 
 		if (blockSet != null) {
 			blockSet.dispose();
@@ -491,6 +602,12 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		return names;
 	}
 
+	/**
+	 * Factory, creates instances of DataFormatModel.
+	 * 
+	 * @param formatName name
+	 * @return new instance of the requested DataFormatModel
+	 */
 	public DataFormatModel getDataFormatModel(String formatName) {
 		Class<? extends DataFormatModel> classy = dataFormatModelClassMap.get(formatName);
 		if (classy == null) {

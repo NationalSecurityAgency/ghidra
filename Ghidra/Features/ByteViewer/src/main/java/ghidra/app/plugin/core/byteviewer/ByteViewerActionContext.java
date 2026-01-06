@@ -22,8 +22,25 @@ import ghidra.program.model.listing.Function;
 
 public class ByteViewerActionContext extends NavigatableActionContext {
 
+	private ByteViewerComponent activeColumn;
+
 	public ByteViewerActionContext(ProgramByteViewerComponentProvider provider) {
+		this(provider, null);
+	}
+
+	public ByteViewerActionContext(ProgramByteViewerComponentProvider provider,
+			ByteViewerComponent activeColumn) {
 		super(provider, provider);
+		this.activeColumn = activeColumn;
+	}
+
+	@Override
+	public ByteViewerComponentProvider getComponentProvider() {
+		return (ByteViewerComponentProvider) super.getComponentProvider();
+	}
+
+	public ByteViewerComponent getActiveColumn() {
+		return activeColumn;
 	}
 
 	@Override

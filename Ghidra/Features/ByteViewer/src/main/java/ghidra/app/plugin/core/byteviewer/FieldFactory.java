@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import java.awt.Color;
 import java.awt.FontMetrics;
 import java.math.BigInteger;
 
@@ -26,36 +25,41 @@ import ghidra.app.plugin.core.format.*;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 
 /**
- * Implementation of Field for showing dated formatted according to a
- * DataFormatModel.
+ * Implementation of Field for showing data formatted according to a
+ * {@link DataFormatModel}.
+ * <p>
+ * An instance of this class will be created for each independent position in a byteviewer
+ * row (typically 16). 
  */
 class FieldFactory {
 
 	private IndexMap indexMap; // maps index to a block and offset into the block
 	private ByteBlockSet blockSet;
 	private DataFormatModel model;
-	private int charWidth; // width in pixels
+	private final int charWidth; // width in pixels
 	private int fieldOffset;
 	private FontMetrics fm;
 	private int width; // field width
 	private String noValueStr;
 	private String readErrorStr; // string to use when there is a read-only exception
 	private int startX;
-	private Color editColor;
-	private Color separatorColor;
 	private int unitByteSize;
 	private FieldHighlightFactory highlightFactory;
 
-	FieldFactory(DataFormatModel model, int bytesPerLine, int fieldOffset, FontMetrics fm,
-			ByteViewerHighlighter highlightProvider) {
+	/**
+	 * Constructor
+	 * @param model data format model that knows how to represent the data
+	 * @param fieldCount number of fields in a row
+	 * @param label label that is used as a renderer in the field viewer
+	 */
+	FieldFactory(DataFormatModel model, int bytesPerLine, int fieldOffset, int charWidth,
+			FontMetrics fm, ByteViewerHighlighter highlightProvider) {
 		this.model = model;
 		this.fieldOffset = fieldOffset;
 		this.fm = fm;
 		this.highlightFactory = new SimpleHighlightFactory(highlightProvider);
-		charWidth = fm.charWidth('W');
+		this.charWidth = charWidth;
 		width = charWidth * model.getDataUnitSymbolSize();
-		editColor = ByteViewerComponentProvider.EDITED_TEXT_COLOR;
-		separatorColor = ByteViewerComponentProvider.SEPARATOR_COLOR;
 		unitByteSize = model.getUnitByteSize();
 	}
 
@@ -98,9 +102,9 @@ class FieldFactory {
 		ByteBlockInfo info = indexMap.getBlockInfo(index, fieldOffset);
 		if (info == null) {
 			if (indexMap.isBlockSeparatorIndex(index)) {
-				ByteField bf = new ByteField(noValueStr, fm, startX, width, false, fieldOffset,
-					index, highlightFactory);
-				bf.setForeground(separatorColor);
+				ByteField bf = new ByteField(noValueStr, fm, startX, width, charWidth, false,
+					fieldOffset, index, highlightFactory);
+				bf.setForeground(ByteViewerComponentProvider.SEPARATOR_COLOR);
 				return bf;
 			}
 			return null;
@@ -116,10 +120,10 @@ class FieldFactory {
 				return getByteField(readErrorStr, index);
 			}
 			String str = model.getDataRepresentation(block, offset);
-			ByteField bf =
-				new ByteField(str, fm, startX, width, false, fieldOffset, index, highlightFactory);
+			ByteField bf = new ByteField(str, fm, startX, width, charWidth, false, fieldOffset,
+				index, highlightFactory);
 			if (blockSet.isChanged(block, offset, unitByteSize)) {
-				bf.setForeground(editColor);
+				bf.setForeground(ByteViewerComponentProvider.EDITED_TEXT_COLOR);
 			}
 			return bf;
 		}
@@ -150,8 +154,8 @@ class FieldFactory {
 	void setIndexMap(IndexMap indexMap) {
 		this.indexMap = indexMap;
 		if (indexMap != null) {
-			noValueStr = getString(".");
-			readErrorStr = getString("?");
+			noValueStr = ".".repeat(model.getDataUnitSymbolSize());
+			readErrorStr = "?".repeat(model.getDataUnitSymbolSize());
 			blockSet = indexMap.getByteBlockSet();
 		}
 		else {
@@ -174,32 +178,9 @@ class FieldFactory {
 		return model.getColumnPosition(block, byteOffset);
 	}
 
-	/**
-	 * Set the color used to denote changes.
-	 * @param c the color
-	 */
-	void setEditColor(Color c) {
-		editColor = c;
-	}
-
-	void setSeparatorColor(Color c) {
-		separatorColor = c;
-	}
-
-	/**
-	 * Get the padded string that has the given char value.
-	 */
-	private String getString(String value) {
-		StringBuffer sb = new StringBuffer();
-		int count = model.getDataUnitSymbolSize();
-		for (int i = 0; i < count; i++) {
-			sb.append(value);
-		}
-		return sb.toString();
-	}
-
 	private ByteField getByteField(String value, BigInteger index) {
-		return new ByteField(value, fm, startX, width, false, fieldOffset, index, highlightFactory);
+		return new ByteField(value, fm, startX, width, charWidth, false, fieldOffset, index,
+			highlightFactory);
 	}
 
 	static class SimpleHighlightFactory implements FieldHighlightFactory {
