@@ -41,7 +41,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 initscript {
 	repositories { mavenCentral() }
-	dependencies { classpath 'commons-io:commons-io:2.11.0' }
+	dependencies { classpath 'commons-io:commons-io:2.21.0' }
 }
 
 ext.NUM_RETRIES = 3 // # of times to try to download a file before failing
