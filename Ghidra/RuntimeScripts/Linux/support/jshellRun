@@ -4,9 +4,16 @@
 # Ghidra JShell launch
 #----------------------------------------
 
-# Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
-# the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
-#MAXMEM=2G
+# Optionally override the default Java heap memory, which is typically 1/4 of system RAM.
+# Supported values are of the regular expression form "\d+[gGmMkK]", allowing the value to be 
+# specified in gigabytes, megabytes, or kilobytes (for example: 8G, 4096m, etc).
+MAXMEM_DEFAULT=
+
+# Allow the above MAXMEM_DEFAULT to be overridden by externally set environment variables
+# - GHIDRA_MAXMEM: Desired maximum heap memory for all Ghidra instances
+# - GHIDRA_JSHELL_MAXMEM: Desired maximum heap memory only for Ghidra JShell instances
+GHIDRA_MAXMEM=${GHIDRA_MAXMEM:=${MAXMEM_DEFAULT}}
+GHIDRA_JSHELL_MAXMEM=${GHIDRA_JSHELL_MAXMEM:=${GHIDRA_MAXMEM}}
 
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
@@ -16,4 +23,4 @@ SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra
-"${SCRIPT_DIR}"/launch.sh fg jdk Ghidra-JShell "${MAXMEM}" "" ghidra.JShellRun "$@"
+"${SCRIPT_DIR}"/launch.sh fg jdk Ghidra-JShell "${GHIDRA_JSHELL_MAXMEM}" "" ghidra.JShellRun "$@"

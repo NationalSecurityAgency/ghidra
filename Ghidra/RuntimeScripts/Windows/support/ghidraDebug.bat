@@ -18,9 +18,16 @@
 @echo off
 setlocal
 
-:: Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
-:: the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
-::set MAXMEM=2G
+:: Optionally override the default Java heap memory, which is typically 1/4 of system RAM.
+:: Supported values are of the regular expression form "\d+[gGmMkK]", allowing the value to be 
+:: specified in gigabytes, megabytes, or kilobytes (for example: 8G, 4096m, etc).
+set MAXMEM_DEFAULT=
+
+:: Allow the above MAXMEM_DEFAULT to be overridden by externally set environment variables
+:: - GHIDRA_MAXMEM: Desired maximum heap memory for all Ghidra instances
+:: - GHIDRA_GUI_MAXMEM: Desired maximum heap memory only for Ghidra GUI instances
+if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
+if not defined GHIDRA_GUI_MAXMEM set "GHIDRA_GUI_MAXMEM=%GHIDRA_MAXMEM%"
 
 :: Debug launch mode can be changed to one of the following:
 ::    debug, debug-suspend
@@ -30,4 +37,4 @@ set LAUNCH_MODE=debug
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:18001
 
-call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra "%MAXMEM%" "" ghidra.GhidraRun %*
+call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra "%GHIDRA_GUI_MAXMEM%" "" ghidra.GhidraRun %*
