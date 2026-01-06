@@ -567,6 +567,13 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.1.0__
+* PyGhidra will now, by default, restore `sys.modules` to its prior state after a PyGhidra script is
+  run (or the interactive interpreter is reset) so the next time a script is run, it freshly loads
+  all of its imported modules again. This default behavior can be disabled by setting the
+  `pyghidra.sys.modules.restore.disable` Java system property to `true`, which can be done in the
+  `support/launch.properties` file.
+
 __3.0.2__
 * Fixed an issue that prevented [`pyghidra.analysis_properties()`](#pyghidraanalysis_properties)
   from having access to all of the analysis properties.
