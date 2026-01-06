@@ -97,6 +97,32 @@ In-depth new-value restrictions analysis (18KB)
 
 ---
 
+### 📙 [HexagonConditionalNewValue.md](HexagonConditionalNewValue.md)
+Conditional execution and new-value interactions (19KB)
+
+**Contents:**
+1. Executive summary answering key questions
+2. Architectural background on predicated execution
+3. **Conditional instructions and new-value stores**
+   - Core rules from Arch Spec 5.4.2.3
+   - Predicate matching requirements
+   - Valid and invalid examples
+4. **Opposite predicates in same packet**
+   - Complement predicate rules
+   - The critical corner case
+   - Transitive dependency limitations
+5. **Accessing new values with conditional instructions**
+   - Hardware handling mechanisms
+   - Execution scenarios
+   - Why mismatched predicates fail
+6. Summary of all rules with quick reference table
+7. **Practical examples** with detailed explanations
+8. Implementation guidance for Ghidra
+
+**Use this for:** Understanding how conditional execution interacts with new-value forwarding, especially for complex predicated scenarios.
+
+---
+
 ## Quick Reference
 
 ### Key Questions Answered
@@ -109,6 +135,12 @@ In-depth new-value restrictions analysis (18KB)
 
 **Q: Can new-value stores coexist with other stores?**  
 **A: NO.** Only one store per packet when using new-value stores. (See HexagonNewValueRestrictions.md §3.4)
+
+**Q: When a conditional instruction updates a scalar register, does the new value store get updated?**  
+**A: YES, but only if both instructions have matching predicates** (same register, sense, and .new/.old form). (See HexagonConditionalNewValue.md §2)
+
+**Q: Can two instructions with opposite conditions update the same register in one packet?**  
+**A: YES, if they use complement predicates** (same register, opposite sense, same .new/.old form), but they cannot both feed new-value operations. (See HexagonConditionalNewValue.md §3)
 
 **Q: What are the main new-value restrictions?**  
 **A: See summary table in HexagonNewValueRestrictions.md §10**
@@ -149,11 +181,17 @@ Hexagon Documentation/
 │   ├── SLEIGH templates
 │   └── Implementation checklist
 │
-└── HexagonNewValueRestrictions.md  ← New-value deep dive
-    ├── Scalar restrictions
-    ├── Vector restrictions
-    ├── Practical examples
-    └── Guidelines
+├── HexagonNewValueRestrictions.md  ← New-value deep dive
+│   ├── Scalar restrictions
+│   ├── Vector restrictions
+│   ├── Practical examples
+│   └── Guidelines
+│
+└── HexagonConditionalNewValue.md   ← Conditional execution
+    ├── Predicated instruction rules
+    ├── Complement predicates
+    ├── Matching requirements
+    └── Corner cases
 ```
 
 ## How to Use This Documentation
@@ -177,8 +215,9 @@ Hexagon Documentation/
 ### For Understanding New-Value Mechanism:
 1. Read **HexagonNewValueRestrictions.md** sections 1-2
 2. Study restrictions in sections 3-4
-3. Review examples in section 11
-4. Check summary tables in section 10
+3. For conditional cases, read **HexagonConditionalNewValue.md**
+4. Review examples in both documents
+5. Check summary tables
 
 ## Source Information
 
