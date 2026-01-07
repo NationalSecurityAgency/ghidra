@@ -86,7 +86,7 @@ public class ReDisassembler {
 
 	protected class ReDisState {
 		protected final TaskMonitor monitor;
-		protected final Map<AddressSpace, MemBuffer> progMemBuffers = new HashMap<>();
+		protected final Map<AddressSpace, DumbMemBufferImpl> progMemBuffers = new HashMap<>();
 		protected final ProgramContext tempContext = new ProgramContextImpl(language);
 		protected final AddressSet visited = new AddressSet();
 		protected final Deque<Flow> queue = new LinkedList<>();
@@ -121,9 +121,10 @@ public class ReDisassembler {
 		}
 
 		protected MemBuffer createBuffer(Address at) {
-			return progMemBuffers.computeIfAbsent(at.getAddressSpace(), space -> {
-				return new DumbMemBufferImpl(program.getMemory(), space.getMinAddress());
-			});
+			DumbMemBufferImpl buffer = progMemBuffers.computeIfAbsent(at.getAddressSpace(),
+				space -> new DumbMemBufferImpl(program.getMemory(), space.getMinAddress()));
+			buffer.setPosition(at);
+			return buffer;
 		}
 
 		/**
@@ -253,6 +254,11 @@ public class ReDisassembler {
 			ReDisassemblerContext ctx = new ReDisassemblerContext(state, flow);
 			try {
 				InstructionPrototype prototype = language.parse(buffer, ctx, false);
+				Instruction exists = program.getListing().getInstructionAt(flow.to);
+				if (exists != null && exists.getPrototype().equals(prototype) &&
+					flow.type != FlowType.SEED) {
+					return null;
+				}
 				return createInstruction(flow.to, prototype, buffer, ctx);
 			}
 			catch (UnknownInstructionException e) {
