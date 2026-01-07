@@ -21,15 +21,27 @@
 # fcvt.l.d d,S,m c2200053 fff0007f SIMPLE (64, 0) 
 :fcvt.l.d rdL,frs1D,FRM is frs1D & FRM & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x2
 {
-	rdL = trunc(frs1D);
+	local low:8 = 0xC3E0000000000000;
+	local high:8 = 0x43E0000000000000;
+	if (frs1D f>= low && frs1D f<= high) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
+	local tmp:$(DXLEN) = trunc(frs1D);
+	rdL = zext(tmp);
 }
 
 
 # fcvt.lu.d d,S,m c2300053 fff0007f SIMPLE (64, 0) 
 :fcvt.lu.d rdL,frs1D,FRM is frs1D & FRM & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x3
 {
+	local low:8 = 0x0;
+	local high:8 = 0x43F0000000000000;
+	if (frs1D f>= low && frs1D f<= high) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
 	#TODO  unsigned
-	rdL = trunc(frs1D);
+	local tmp:$(DXLEN) = trunc(frs1D);
+	rdL = zext(tmp);
 }
 
 
