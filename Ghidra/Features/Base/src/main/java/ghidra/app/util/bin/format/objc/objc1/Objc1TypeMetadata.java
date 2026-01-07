@@ -123,7 +123,7 @@ public class Objc1TypeMetadata extends AbstractObjcTypeMetadata {
 				module.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup module: " + module.getName());
+				log("Failed to markup: " + module.getName());
 			}
 		}
 		for (Objc1Protocol protocol : protocols) {
@@ -131,7 +131,7 @@ public class Objc1TypeMetadata extends AbstractObjcTypeMetadata {
 				protocol.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup protocol: " + protocol.getName());
+				log("Failed to markup: " + protocol.getName());
 			}
 		}
 

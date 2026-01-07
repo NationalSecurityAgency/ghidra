@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.analysis.objc;
+package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.objc.AbstractObjcTypeMetadata;
