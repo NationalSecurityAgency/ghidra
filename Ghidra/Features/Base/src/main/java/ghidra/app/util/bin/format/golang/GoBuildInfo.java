@@ -46,6 +46,8 @@ public class GoBuildInfo implements ElfInfoItem {
 	public static final String ELF_SECTION_NAME = ".go.buildinfo";
 	public static final String MACHO_SECTION_NAME = "go_buildinfo";
 
+	public static final String FALLBACK_GOVER_OPTION = "Go version fallback";
+
 	// Defined in Go's src/debug/buildinfo/buildinfo.go
 	// NOTE: ISO_8859_1 charset is required to not mangle the \u00ff when converting to bytes
 	private static final byte[] GO_BUILDINF_MAGIC =
@@ -145,6 +147,21 @@ public class GoBuildInfo implements ElfInfoItem {
 		struct.add(BYTE, "flags", null);
 
 		return readStringInfo(reader, inlineStr, program, pointerSize, struct);
+	}
+
+	public static void setFallbackVersion(Program program, String fallbackGoVerStr) {
+		program.getOptions(Program.PROGRAM_INFO).setString(FALLBACK_GOVER_OPTION, fallbackGoVerStr);
+	}
+
+	public static GoBuildInfo fromFallbackInfo(Program program) {
+		String fallbackGoVerStr =
+			program.getOptions(Program.PROGRAM_INFO).getString(FALLBACK_GOVER_OPTION, "");
+		if (fallbackGoVerStr.isEmpty() || GoVer.parse(fallbackGoVerStr).isInvalid()) {
+			return null;
+		}
+		return new GoBuildInfo(program.getDefaultPointerSize(),
+			program.getMemory().isBigEndian() ? Endian.BIG : Endian.LITTLE, fallbackGoVerStr,
+			"unknown path", null, List.of(), List.of(), null);
 	}
 
 	/**

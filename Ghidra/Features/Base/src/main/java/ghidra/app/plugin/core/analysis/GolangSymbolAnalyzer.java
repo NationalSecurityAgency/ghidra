@@ -43,6 +43,8 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
+import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.MultEntSubModel;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Language;
@@ -123,6 +125,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		this.program = program;
 		aam = AutoAnalysisManager.getAnalysisManager(program);
+
+		if (!analyzerOptions.fallbackGoVer.isEmpty()) {
+			GoBuildInfo.setFallbackVersion(program, analyzerOptions.fallbackGoVer);
+		}
 
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
@@ -613,7 +619,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 			String ccName = duffFunc.getCallingConventionName();
 			Namespace funcNS = duffFunc.getParentNamespace();
-			AddressSet funcBody = new AddressSet(funcData.getBody());
+
+			// need to use our own logic instead of relying on possibly obfuscated go metadata
+			AddressSet funcBody = getDuffBody(duffFunc, monitor);
+
 			String duffComment = program.getListing()
 					.getCodeUnitAt(duffFunc.getEntryPoint())
 					.getComment(CommentType.PLATE);
@@ -645,6 +654,19 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				}
 			}
 			return true;
+		}
+
+		private AddressSet getDuffBody(Function func, TaskMonitor monitor) {
+			MultEntSubModel bm = new MultEntSubModel(func.getProgram());
+			CodeBlock cb;
+			try {
+				cb = bm.getCodeBlockAt(func.getEntryPoint(), monitor);
+				return new AddressSet(cb);
+			}
+			catch (CancelledException e) {
+				// fail, fall thru, return 1 byte range
+			}
+			return new AddressSet(func.getBody());
 		}
 
 	}
@@ -1283,19 +1305,24 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		public boolean fixupGcWriteBarrierFlag = true;
 
+		static final String FALLBACK_GOVER_OPTIONNAME = "Fallback Go Version";
+		static final String FALLBACK_GOVER_DESC = """
+				Go version to use if the Go metadata has been obfuscated.
+				""";
+
+		public String fallbackGoVer;
+
 		void registerOptions(Options options, Program program) {
-			options.registerOption(GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_OPTIONNAME,
-				outputSourceInfo, null, GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_DESC);
-			options.registerOption(GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_OPTIONNAME,
-				fixupDuffFunctions, null, GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_DESC);
-			options.registerOption(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME, propagateRtti, null,
-				GolangAnalyzerOptions.PROP_RTTI_DESC);
-			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME,
-				fixupGcWriteBarrierFunctions, null,
-				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FUNCS_DESC);
-			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME,
-				fixupGcWriteBarrierFlag, null,
-				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_DESC);
+			options.registerOption(OUTPUT_SOURCE_INFO_OPTIONNAME, outputSourceInfo, null,
+				OUTPUT_SOURCE_INFO_DESC);
+			options.registerOption(FIXUP_DUFF_FUNCS_OPTIONNAME, fixupDuffFunctions, null,
+				FIXUP_DUFF_FUNCS_DESC);
+			options.registerOption(PROP_RTTI_OPTIONNAME, propagateRtti, null, PROP_RTTI_DESC);
+			options.registerOption(FIXUP_GCWRITEBARRIER_OPTIONNAME, fixupGcWriteBarrierFunctions,
+				null, FIXUP_GCWRITEBARRIER_FUNCS_DESC);
+			options.registerOption(FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME, fixupGcWriteBarrierFlag,
+				null, FIXUP_GCWRITEBARRIER_FLAG_DESC);
+			options.registerOption(FALLBACK_GOVER_OPTIONNAME, "", null, FALLBACK_GOVER_DESC);
 		}
 
 		void optionsChanged(Options options, Program program) {
@@ -1312,6 +1339,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			fixupGcWriteBarrierFlag =
 				options.getBoolean(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME,
 					fixupGcWriteBarrierFlag);
+			fallbackGoVer = options.getString(FALLBACK_GOVER_OPTIONNAME, "");
 		}
 
 	}
@@ -1326,4 +1354,5 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Options options = program.getOptions(Program.PROGRAM_INFO);
 		return options.getBoolean(ANALYZED_FLAG_OPTION_NAME, false);
 	}
+
 }
