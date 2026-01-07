@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 	public DoubleSearchFormatTest() {
@@ -58,7 +58,7 @@ public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testDotOnly() {
-		ByteMatcher byteMatcher = format.parse(".", settings);
+		UserInputByteMatcher byteMatcher = format.parse(".", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete floating point number", byteMatcher.getDescription());
@@ -66,7 +66,7 @@ public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testEndE() {
-		ByteMatcher byteMatcher = format.parse("2.1e", settings);
+		UserInputByteMatcher byteMatcher = format.parse("2.1e", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete floating point number", byteMatcher.getDescription());
@@ -74,7 +74,7 @@ public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testEndNegativeE() {
-		ByteMatcher byteMatcher = format.parse("2.1-e", settings);
+		UserInputByteMatcher byteMatcher = format.parse("2.1-e", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete floating point number", byteMatcher.getDescription());
@@ -82,7 +82,7 @@ public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testNegativeSignOnly() {
-		ByteMatcher byteMatcher = format.parse("-", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete negative floating point number", byteMatcher.getDescription());
@@ -90,7 +90,7 @@ public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testNegativeDotSignOnly() {
-		ByteMatcher byteMatcher = format.parse("-.", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-.", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete negative floating point number", byteMatcher.getDescription());
@@ -98,7 +98,7 @@ public class DoubleSearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testBadChars() {
-		ByteMatcher byteMatcher = format.parse("12.z", settings);
+		UserInputByteMatcher byteMatcher = format.parse("12.z", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Floating point parse error: For input string: \"12.z\"",

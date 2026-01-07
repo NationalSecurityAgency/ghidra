@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,7 +121,7 @@ public class ClipboardPanel extends JPanel {
 					MatchAction[] actions = getMatchActions(funcStartAnalyzer, pattern);
 					pattern.setMatchActions(actions);
 				}
-				SequenceSearchState root = SequenceSearchState.buildStateMachine(patternList);
+				SequenceSearchState<Pattern> root = SequenceSearchState.buildStateMachine(patternList);
 				funcStartAnalyzer.setExplicitState(root);
 				AutoAnalysisManager autoManager =
 					AutoAnalysisManager.getAnalysisManager(currentProgram);
@@ -214,7 +214,7 @@ public class ClipboardPanel extends JPanel {
 			Msg.showWarn(this, this, "Only Pre-Patterns",
 				"Only Pre-Patterns in selection: no true/false positive information will be calculated.");
 		}
-		SequenceSearchState root = SequenceSearchState.buildStateMachine(patternList);
+		SequenceSearchState<Pattern> root = SequenceSearchState.buildStateMachine(patternList);
 		indexToSize.clear();
 		for (Pattern pattern : patternList) {
 			indexToSize.put(pattern.getIndex(), pattern.getSize());
@@ -235,9 +235,9 @@ public class ClipboardPanel extends JPanel {
 		return matchStats;
 	}
 
-	private void searchBlock(SequenceSearchState root, MemoryBlock block,
+	private void searchBlock(SequenceSearchState<Pattern> root, MemoryBlock block,
 			PatternEvaluationStats matchStats, Program program, TaskMonitor monitor) {
-		ArrayList<Match> mymatches = new ArrayList<>();
+		ArrayList<Match<Pattern>> mymatches = new ArrayList<>();
 
 		try {
 			root.apply(block.getData(), mymatches, monitor);
@@ -250,7 +250,7 @@ public class ClipboardPanel extends JPanel {
 		}
 
 		for (int i = 0; i < mymatches.size(); ++i) {
-			Match match = mymatches.get(i);
+			Match<Pattern> match = mymatches.get(i);
 			if (onlyPrePatterns) {
 				evaluatePrePatternMatch(match, program, block, matchStats);
 			}
@@ -262,16 +262,17 @@ public class ClipboardPanel extends JPanel {
 
 //Only pre-patterns: don't compute the various kinds of false positives
 //just show where all of the matches are and warn the user
-	private void evaluatePrePatternMatch(Match match, Program program, MemoryBlock block,
+	private void evaluatePrePatternMatch(Match<Pattern> match, Program program, MemoryBlock block,
 			PatternEvaluationStats matchStats) {
 		Address blockStart = block.getStart();
-		Address matchStart = blockStart.add(match.getMatchStart());
-		Address funcStart = matchStart.add(indexToSize.get(match.getSequenceIndex()));
+		Pattern pattern = match.getPattern();
+		Address matchStart = blockStart.add(match.getStart());
+		Address funcStart = matchStart.add(indexToSize.get(pattern.getIndex()));
 		Address patternEnd = funcStart.add(-1);
-		int totalBits = match.getSequence().getNumFixedBits();
+		int totalBits = pattern.getNumFixedBits();
 		int postBits = 0;
 		PatternEvalRowObject rowObject = new PatternEvalRowObject(PatternMatchType.PRE_PATTERN_HIT,
-			new AddressSet(matchStart, patternEnd), match.getHexString(), funcStart, postBits,
+			new AddressSet(matchStart, patternEnd), pattern.getHexString(), funcStart, postBits,
 			totalBits);
 		matchStats.addRowObject(rowObject);
 		return;
@@ -280,34 +281,41 @@ public class ClipboardPanel extends JPanel {
 
 //if something falls through to it: not a function start
 //if there is just a jump to it: possibly a function start
-	private void evaluateMatch(Match match, Program program, MemoryBlock block,
+	private void evaluateMatch(Match<Pattern> match, Program program, MemoryBlock block,
 			PatternEvaluationStats matchStats) {
 		Address blockStart = block.getStart();
 		int alignment = program.getLanguage().getInstructionAlignment();
-		Address matchStart = blockStart.add(match.getMatchStart());
+		Address matchStart = blockStart.add(match.getStart());
 		if (matchStart.getOffset() % alignment != 0) {
 			return; //inconsistent with instruction alignment for language
 		}
 		long streamoffset = blockStart.getOffset();
-		if (!match.checkPostRules(streamoffset)) {
+		Pattern pattern = match.getPattern();
+		if (!pattern.checkPostRules(streamoffset)) {
 			return;
 		}
-		Address matchEnd = matchStart.add(indexToSize.get(match.getSequenceIndex()) - 1);
-		Address funcStart = blockStart.add(match.getMarkOffset());
+		Address matchEnd = matchStart.add(indexToSize.get(pattern.getIndex()) - 1);
+		Address funcStart = blockStart.add(match.getStart() + pattern.getMarkOffset());
 
 		//see whether the pattern conflict with any existing context
 		//perhaps this should be after?
-		ContextRegisterFilter cRegFilter = sequenceToCRegFilter.get(match.getSequence());
-		int totalBits = match.getSequence().getNumFixedBits();
-		int postBits = match.getNumPostBits();
+		ContextRegisterFilter cRegFilter = sequenceToCRegFilter.get(pattern);
+		int totalBits = pattern.getNumFixedBits();
+		int postBits = getNumPostBits(pattern);
 		int index = (totalBits - postBits) / BITS_PER_BYTE - 1;
 		PatternMatchType type = getMatchType(program, funcStart, cRegFilter);
 		PatternEvalRowObject rowObject =
 			new PatternEvalRowObject(type, new AddressSet(matchStart, matchEnd),
-				addSeparator(match.getHexString(), index), funcStart, postBits, totalBits);
+				addSeparator(pattern.getHexString(), index), funcStart, postBits, totalBits);
 		matchStats.addRowObject(rowObject);
 	}
-
+	private int getNumPostBits(Pattern pattern) {
+		int marked = pattern.getMarkOffset();
+		if (marked == 0) {
+			return pattern.getNumFixedBits();
+		}
+		return pattern.getNumFixedBits() - pattern.getNumInitialFixedBits(marked);
+	}
 	private PatternMatchType getMatchType(Program program, Address funcStart,
 			ContextRegisterFilter cRegFilter) {
 		if (cRegFilter != null) {

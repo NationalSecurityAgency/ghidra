@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
 public class MemoryBytePatternSearcher {
 	private static final long RESTRICTED_PATTERN_BYTE_RANGE = 32;
 
-	SequenceSearchState root = null;
+	SequenceSearchState<Pattern> root = null;
 
 	ArrayList<Pattern> patternList;
 
@@ -62,7 +62,7 @@ public class MemoryBytePatternSearcher {
 	 * @param searchName name of search
 	 * @param root search state pre-initialized
 	 */
-	public MemoryBytePatternSearcher(String searchName, SequenceSearchState root) {
+	public MemoryBytePatternSearcher(String searchName, SequenceSearchState<Pattern> root) {
 		this.searchName = searchName;
 		this.root = root;
 	}
@@ -164,7 +164,7 @@ public class MemoryBytePatternSearcher {
 	 * @throws IOException exception during read of memory
 	 * @throws CancelledException canceled search
 	 */
-	private void searchBlock(SequenceSearchState rootState, Program program, MemoryBlock block,
+	private void searchBlock(SequenceSearchState<Pattern> rootState, Program program, MemoryBlock block,
 			AddressSetView restrictSet, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
@@ -193,7 +193,7 @@ public class MemoryBytePatternSearcher {
 			AddressRange addressRange = addressRanges.next();
 			long numAddressesInRange = addressRange.getLength();
 
-			ArrayList<Match> mymatches = new ArrayList<>();
+			ArrayList<Match<Pattern>> mymatches = new ArrayList<>();
 
 			long streamoffset = blockStartAddr.getOffset();
 
@@ -228,13 +228,15 @@ public class MemoryBytePatternSearcher {
 				monitor.checkCancelled();
 				monitor.setProgress(
 					matchProgress + (long) (numAddressesInRange * ((float) i / mymatches.size())));
-				Match match = mymatches.get(i);
-				Address addr = blockStartAddr.add(match.getMarkOffset() + blockOffset);
-				if (!match.checkPostRules(streamoffset + blockOffset)) {
+				Match<Pattern> match = mymatches.get(i);
+				Pattern pattern = match.getPattern();
+				Address addr = blockStartAddr.add(pattern.getMarkOffset()+match.getStart() + blockOffset);
+				long totalOffset = streamoffset + blockOffset + match.getStart();
+				if (!pattern.checkPostRules(totalOffset)) {
 					continue;
 				}
 
-				MatchAction[] matchactions = match.getMatchActions();
+				MatchAction[] matchactions = pattern.getMatchActions();
 				preMatchApply(matchactions, addr);
 				for (MatchAction matchaction : matchactions) {
 					matchaction.apply(program, addr, match);

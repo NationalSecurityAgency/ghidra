@@ -61,8 +61,8 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 	private static ProgramDecisionTree patternDecisitionTree;
 	// always need to initialize the root.
-	SequenceSearchState rootState = null;
-	SequenceSearchState explicitState = null;  //for use during dynamic function start pattern discovery
+	SequenceSearchState<Pattern> rootState = null;
+	SequenceSearchState<Pattern> explicitState = null;  //for use during dynamic function start pattern discovery
 
 	private boolean executableBlocksOnly = true; // true if we only analyze executable blocks
 
@@ -120,7 +120,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	 * {@link SequenceSearchState#initialize}
 	 * @param explicit
 	 */
-	public void setExplicitState(SequenceSearchState explicit) {
+	public void setExplicitState(SequenceSearchState<Pattern> explicit) {
 		explicitState = explicit;
 	}
 
@@ -173,7 +173,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	public class CodeBoundaryAction implements MatchAction {
 
 		@Override
-		public void apply(Program program, Address addr, Match match) {
+		public void apply(Program program, Address addr, Match<Pattern> match) {
 			Listing listing = program.getListing();
 			CodeUnit cu = listing.getCodeUnitContaining(addr);
 			if (cu != null) {
@@ -215,7 +215,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		private boolean contiguous = true;  // require validcode instructions be contiguous
 
 		@Override
-		public void apply(Program program, Address addr, Match match) {
+		public void apply(Program program, Address addr, Match<Pattern> match) {
 			if (!checkPreRequisites(program, addr)) {
 				// didn't match, get rid of contextValueList
 				contextValueList = null;
@@ -291,7 +291,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 		protected void applyActionToSet(Program program, Address addr, AddressSet resultSet,
-				Match match) {
+				Match<Pattern> match) {
 
 			if ((addr.getOffset() % program.getLanguage().getInstructionAlignment()) != 0) {
 				return; // addr is not properly aligned
@@ -548,11 +548,11 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			return func;
 		}
 
-		void bookmarkAction(Program program, Address addr, Match match) {
+		void bookmarkAction(Program program, Address addr, Match<Pattern> match) {
 			if (setbookmark) {
 				BookmarkManager bookmarkManager = program.getBookmarkManager();
 				bookmarkManager.setBookmark(addr, BookmarkType.ANALYSIS, getName(),
-					"Match pattern " + match.getSequenceIndex());
+					"Match pattern " + match.getPattern().getIndex());
 			}
 		}
 
@@ -682,7 +682,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 	public class PossibleFunctionStartAction extends FunctionStartAction {
 		@Override
-		public void apply(Program program, Address addr, Match match) {
+		public void apply(Program program, Address addr, Match<Pattern> match) {
 			if (!checkPreRequisites(program, addr)) {
 				return;
 			}
@@ -690,11 +690,11 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 		@Override
-		void bookmarkAction(Program program, Address addr, Match match) {
+		void bookmarkAction(Program program, Address addr, Match<Pattern> match) {
 			if (setbookmark) {
 				BookmarkManager bookmarkManager = program.getBookmarkManager();
 				bookmarkManager.setBookmark(addr, BookmarkType.ANALYSIS, "Possible " + getName(),
-					"Match pattern " + match.getSequenceIndex());
+					"Match pattern " + match.getPattern().getIndex());
 			}
 		}
 
@@ -720,7 +720,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 		@Override
-		public void apply(Program program, Address addr, Match match) {
+		public void apply(Program program, Address addr, Match<Pattern> match) {
 			Listing listing = program.getListing();
 			CodeUnit cu = listing.getCodeUnitContaining(addr);
 			if (cu != null) {
@@ -795,7 +795,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		SequenceSearchState root = initialize(program);
+		SequenceSearchState<Pattern> root = initialize(program);
 		if (root == null) {
 			String message = "Could not initialize a search state.";
 			log.appendMsg(getName(), message);
@@ -930,7 +930,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			return null;
 		}
 
-		SequenceSearchState root = SequenceSearchState.buildStateMachine(patternlist);
+		SequenceSearchState<Pattern> root = SequenceSearchState.buildStateMachine(patternlist);
 
 		return root;
 	}

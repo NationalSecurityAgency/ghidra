@@ -127,13 +127,13 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		SequenceSearchState sequenceSearchState = SequenceSearchState.buildStateMachine(
+		SequenceSearchState<Pattern> sequenceSearchState = SequenceSearchState.buildStateMachine(
 				leThunkPatterns);
 		
 		monitor.setIndeterminate(true);
 		monitor.setProgress(0);
 		
-		ArrayList<Match> matches = new ArrayList<>();
+		ArrayList<Match<Pattern>> matches = new ArrayList<>();
 		
 		try {
 			for (AddressRange range : set.getAddressRanges()) {
@@ -147,9 +147,10 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 				matches.clear();
 				sequenceSearchState.apply(bytes, matches);
 				
-				for (Match match : matches) {
-					Address addr = range.getMinAddress().add(match.getMarkOffset());
-					analyzePltThunk(program, addr, match.getSequenceSize(), monitor);
+				for (Match<Pattern> match : matches) {
+					Pattern pattern = match.getPattern();
+					Address addr = range.getMinAddress().add(match.getStart() + pattern.getMarkOffset());
+					analyzePltThunk(program, addr, match.getLength(), monitor);
 				}
 				
 			}

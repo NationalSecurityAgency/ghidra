@@ -227,4 +227,20 @@ public class Pattern extends DittedBitSequence {
 		parser.end();
 
 	}
+
+	/**
+	 * Check that the possible post rules are satisfied
+	 * 
+	 * @param offset offset in stream to check postrules.
+	 * 
+	 * @return true if post rules are satisfied
+	 */
+	public boolean checkPostRules(long offset) {
+		for (PostRule postRule : postrule) {
+			if (!postRule.apply(this, offset)) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

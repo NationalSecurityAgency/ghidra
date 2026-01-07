@@ -15,124 +15,19 @@
  */
 package ghidra.features.base.memsearch.matcher;
 
-import java.util.Objects;
-
 import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
-import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.util.bytesearch.Match;
 
 /**
  * ByteMatcher is the base class for an object that be used to scan bytes looking for sequences
  * that match some criteria. As a convenience, it also stores the input string and settings that
  * were used to generated this ByteMatcher.
+ * @param <T> The type of object used by the client to identify the matched pattern
  */
-public abstract class ByteMatcher {
+public interface ByteMatcher<T> {
 
-	private final String name;
-	private final String input;
-	private final SearchSettings settings;
+	public Iterable<Match<T>> match(ExtendedByteSequence bytes);
 
-	protected ByteMatcher(String name, String input, SearchSettings settings) {
-		this.name = name;
-		this.input = input;
-		this.settings = settings;
-	}
-
-	/**
-	 * {@return the name of this byte matcher.}
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns the original input text that generated this ByteMatacher.
-	 * @return the original input text that generated this BytesMatcher
-	 */
-	public final String getInput() {
-		return input == null ? "" : input;
-	}
-
-	/**
-	 * Returns the settings used to generate this ByteMatcher.
-	 * @return the settings used to generate this ByteMatcher
-	 */
-	public SearchSettings getSettings() {
-		return settings;
-	}
-
-	/**
-	 * Returns an {@link Iterable} for returning matches within the given byte sequence.
-	 * @param bytes the byte sequence to search
-	 * @return an iterable for return matches in the given sequence
-	 */
-	public abstract Iterable<ByteMatch> match(ExtendedByteSequence bytes);
-
-	/**
-	 * Returns a description of what this byte matcher matches. (Typically a sequence of bytes)
-	 * @return a description of what this byte matcher matches
-	 */
-	public abstract String getDescription();
-
-	/**
-	 * Returns additional information about this byte matcher. (Typically the mask bytes)
-	 * @return additional information about this byte matcher
-	 */
-	public abstract String getToolTip();
-
-	/**
-	 * Returns true if this byte matcher is valid and can be used to perform a search. If false,
-	 * the description will return an error message explaining why this byte matcher is
-	 * invalid.
-	 * @return true if this byte matcher is valid and can be used to perform a search.
-	 */
-	public boolean isValidSearch() {
-		return true;
-	}
-
-	/**
-	 * Returns true if this byte matcher has valid (but possibly incomplete) input text. For 
-	 * example, when entering decimal values, the input could be just "-" as the user starts
-	 * to enter a negative number. In this case the input is valid, but the {@link #isValidSearch()}
-	 * would return false.
-	 * @return true if this byte matcher has valid text
-	 */
-	public boolean isValidInput() {
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return input;
-	}
-
-	@Override
-	public int hashCode() {
-		return input.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		ByteMatcher other = (ByteMatcher) obj;
-		return Objects.equals(input, other.input) &&
-			settings.getSearchFormat() == other.settings.getSearchFormat();
-	}
-
-	/**
-	 * Record class to contain a match specification.
-	 * @param start the offset in the buffer where the match starts
-	 * @param length the length of the match
-	 * @param matcher the matcher the found the match
-	 */
-	public record ByteMatch(int start, int length, ByteMatcher matcher) {}
+	public String getDescription();
 
 }

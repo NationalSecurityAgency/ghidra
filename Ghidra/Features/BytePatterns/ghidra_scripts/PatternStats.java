@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 	private MatchActionMarker codeBoundary = new MatchActionMarker(MatchActionMarker.CODE_BOUNDARY);
 	private MatchActionMarker context = new MatchActionMarker(MatchActionMarker.CONTEXT);
 
-	private SequenceSearchState root;
+	private SequenceSearchState<Pattern> root;
 	private ArrayList<PatternAccumulate> accumList;
 	private FunctionManager functionManager;
 	private Listing listing;
@@ -75,7 +75,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 		}
 
 		@Override
-		public void apply(Program program, Address addr, Match match) {
+		public void apply(Program program, Address addr, Match<Pattern> match) {
 		}
 
 		@Override
@@ -327,7 +327,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 		taskMonitor.setMessage("Byte Search");
 		taskMonitor.setMaximum((int) block.getSize());
 		taskMonitor.setProgress(0);
-		ArrayList<Match> mymatches = new ArrayList<>();
+		ArrayList<Match<Pattern>> mymatches = new ArrayList<>();
 		long streamoffset = block.getStart().getOffset();
 		root.apply(block.getData(), mymatches, taskMonitor);
 		if (taskMonitor.isCancelled()) {
@@ -335,13 +335,15 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 		}
 		Address start = block.getStart();
 		for (int i = 0; i < mymatches.size(); ++i) {
-			Match match = mymatches.get(i);
-			Address addr = start.add(match.getMarkOffset());
-			if (!match.checkPostRules(streamoffset)) {
+			Match<Pattern> match = mymatches.get(i);
+			Pattern pattern = match.getPattern();
+			Address addr = start.add(match.getStart() + pattern.getMarkOffset());
+			long totalOffset = streamoffset + match.getStart();
+			if (!pattern.checkPostRules(totalOffset)) {
 				continue;
 			}
-			PatternAccumulate accum = accumList.get(match.getSequenceIndex());
-			MatchAction[] matchActions = match.getMatchActions();
+			PatternAccumulate accum = accumList.get(pattern.getIndex());
+			MatchAction[] matchActions = pattern.getMatchActions();
 			for (MatchAction matchAction : matchActions) {
 				boolean isFalse = collectStats(accum, (MatchActionMarker) matchAction, addr);
 				if (isFalse) {

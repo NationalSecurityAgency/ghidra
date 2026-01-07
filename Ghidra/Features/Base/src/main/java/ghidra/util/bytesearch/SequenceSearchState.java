@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.util.bytesearch;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.*;
 
 import ghidra.util.task.TaskMonitor;
@@ -25,22 +26,22 @@ import ghidra.util.task.TaskMonitor;
  * SeqenceSearchState holds the state of a search for a DittedBitSequence within a byte
  * sequence.
  */
-public class SequenceSearchState implements Comparable<SequenceSearchState> {
+public class SequenceSearchState<T extends DittedBitSequence> implements Comparable<SequenceSearchState<T>> {
 
 	private static final int PATTERN_ENDED = Integer.MAX_VALUE;
-	private SequenceSearchState parent;
-	private ArrayList<DittedBitSequence> possible;		// Patterns that could still match in this state
-	private ArrayList<DittedBitSequence> success;		// Patterns that have matched successfully if we reached this state
-	private SequenceSearchState[] trans;				// State transitions based on next byte
+	private SequenceSearchState<T> parent;
+	private ArrayList<T> possible;		// Patterns that could still match in this state
+	private ArrayList<T> success;		// Patterns that have matched successfully if we reached this state
+	private SequenceSearchState<T>[] trans;				// State transitions based on next byte
 
 	/**
 	 * Construct a sub sequence state with a parent sequence
 	 * 
 	 * @param parent parent SequenceSearchState
 	 */
-	public SequenceSearchState(SequenceSearchState parent) {
+	public SequenceSearchState(SequenceSearchState<T> parent) {
 		this.parent = parent;
-		possible = new ArrayList<DittedBitSequence>();
+		possible = new ArrayList<T>();
 		success = null;
 		trans = null;
 	}
@@ -65,11 +66,11 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param pat pattern to add
 	 * @param pos position within the current set of patterns to add this pattern
 	 */
-	public void addSequence(DittedBitSequence pat, int pos) {
+	public void addSequence(T pat, int pos) {
 		possible.add(pat);
 		if (pos == pat.getSize()) {
 			if (success == null) {
-				success = new ArrayList<DittedBitSequence>();
+				success = new ArrayList<T>();
 			}
 			success.add(pat);
 		}
@@ -92,7 +93,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	}
 
 	@Override
-	public int compareTo(SequenceSearchState o) {
+	public int compareTo(SequenceSearchState<T> o) {
 		int i = 0;
 		for (;;) {
 			if (possible.size() <= i) {
@@ -113,12 +114,12 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		}
 	}
 
-	private void buildSingleTransition(ArrayList<SequenceSearchState> all, int pos, int val) {
-		SequenceSearchState newstate = null;
-		for (DittedBitSequence curpat : possible) {
+	private void buildSingleTransition(ArrayList<SequenceSearchState<T>> all, int pos, int val) {
+		SequenceSearchState<T> newstate = null;
+		for (T curpat : possible) {
 			if (curpat.isMatch(pos, val)) {
 				if (newstate == null) {
-					newstate = new SequenceSearchState(this);
+					newstate = new SequenceSearchState<>(this);
 				}
 				newstate.addSequence(curpat, pos + 1);
 			}
@@ -130,9 +131,9 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		}
 	}
 
-	private void exportSuccess(ArrayList<Match> match, int offset) {
-		for (DittedBitSequence succes : success) {		// If we found matches
-			Match newmatch = new Match(succes, offset);
+	private void exportSuccess(ArrayList<Match<T>> match, int offset) {
+		for (T succes : success) {		// If we found matches
+			Match<T> newmatch = new Match<T>(succes, offset, succes.getSize());
 			match.add(newmatch);
 		}
 	}
@@ -141,8 +142,8 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * Merge in -op- and this as a single state
 	 * @param op
 	 */
-	private void merge(SequenceSearchState op) {
-		SequenceSearchState parent = op.parent;
+	private void merge(SequenceSearchState<T> op) {
+		SequenceSearchState<T> parent = op.parent;
 		for (int i = 0; i < 256; ++i) {
 			if (parent.trans[i] == op) {
 				parent.trans[i] = this;			// Should be replaced with this
@@ -153,7 +154,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 				success = op.success;
 			}
 			else {
-				ArrayList<DittedBitSequence> tmp = new ArrayList<DittedBitSequence>();
+				ArrayList<T> tmp = new ArrayList<>();
 				int i = 0;
 				int j = 0;
 				int curpat = -1;
@@ -200,9 +201,9 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param numbytes retrict number of bytes to allow to match
 	 * @param match list of matches, the result
 	 */
-	public void sequenceMatch(byte[] bytearray, int numbytes, ArrayList<Match> match) {
+	public void sequenceMatch(byte[] bytearray, int numbytes, ArrayList<Match<T>> match) {
 		int subindex = 0;
-		SequenceSearchState curstate = this;
+		SequenceSearchState<T> curstate = this;
 
 		do {
 			if (curstate.success != null) {
@@ -223,8 +224,8 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param buffer is the array of bytes to search
 	 * @param match is populated with a Match object for each pattern and position that matches 
 	 */
-	public void apply(byte[] buffer, ArrayList<Match> match) {
-		SequenceSearchState curstate;
+	public void apply(byte[] buffer, ArrayList<Match<T>> match) {
+		SequenceSearchState<T> curstate;
 		int subindex;
 		for (int offset = 0; offset < buffer.length; ++offset) {
 			curstate = this;			// New starting offset -> Root state
@@ -250,7 +251,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param monitor - if non-null, check for user cancel, and maintain progress info
 	 * @throws IOException
 	 */
-	public void apply(InputStream in, ArrayList<Match> match, TaskMonitor monitor)
+	public void apply(InputStream in, ArrayList<Match<T>> match, TaskMonitor monitor)
 			throws IOException {
 		apply(in, -1L, match, monitor);
 	}
@@ -263,7 +264,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param monitor - if non-null, check for user cancel, and maintain progress info
 	 * @throws IOException
 	 */
-	public void apply(InputStream in, long maxBytes, ArrayList<Match> match, TaskMonitor monitor)
+	public void apply(InputStream in, long maxBytes, ArrayList<Match<T>> match, TaskMonitor monitor)
 			throws IOException {
 		long progress = monitor.getProgress();
 
@@ -277,7 +278,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		byte[] firstBuf = new byte[maxSize];
 		byte[] secondBuf = new byte[maxSize];
 		byte[] curBuf;
-		SequenceSearchState curState;
+		SequenceSearchState<T> curState;
 		int fullBuffers;				// Number of buffers that are completely full
 		int ra = in.read(firstBuf);
 		if (ra == firstBuf.length) {
@@ -405,13 +406,14 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param pos position within the search sequence state for this level
 	 * @return list of possible new search states to be added to the state machine
 	 */
-	static ArrayList<SequenceSearchState> buildTransitionLevel(ArrayList<SequenceSearchState> prev,
+	@SuppressWarnings("unchecked")
+	static <T extends DittedBitSequence> ArrayList<SequenceSearchState<T>> buildTransitionLevel(ArrayList<SequenceSearchState<T>> prev,
 			int pos) {
-		ArrayList<SequenceSearchState> res = new ArrayList<SequenceSearchState>();
-		Iterator<SequenceSearchState> iterator = prev.iterator();
+		ArrayList<SequenceSearchState<T>> res = new ArrayList<SequenceSearchState<T>>();
+		Iterator<SequenceSearchState<T>> iterator = prev.iterator();
 		while (iterator.hasNext()) {			// For each current state
-			SequenceSearchState next = iterator.next();
-			next.trans = new SequenceSearchState[256];
+			SequenceSearchState<T> next = iterator.next();
+			next.trans = (SequenceSearchState<T>[]) Array.newInstance(next.getClass(), 256);
 			for (int i = 0; i < 256; ++i) {		// Try every byte transition
 				next.buildSingleTransition(res, pos, i);
 			}
@@ -421,12 +423,12 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		}
 		// Prepare to dedup the states
 		Collections.sort(res);
-		ArrayList<SequenceSearchState> finalres = new ArrayList<SequenceSearchState>();
-		Iterator<SequenceSearchState> iter = res.iterator();
-		SequenceSearchState curpat = iter.next();
+		ArrayList<SequenceSearchState<T>> finalres = new ArrayList<SequenceSearchState<T>>();
+		Iterator<SequenceSearchState<T>> iter = res.iterator();
+		SequenceSearchState<T> curpat = iter.next();
 		finalres.add(curpat);
 		while (iter.hasNext()) {
-			SequenceSearchState nextpat = iter.next();
+			SequenceSearchState<T> nextpat = iter.next();
 			int comp = curpat.compareTo(nextpat);
 			if (comp == 0) {		// Identical states
 				curpat.merge(nextpat);
@@ -444,16 +446,16 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 * @param patterns bit sequence patterns
 	 * @return search state the will match the given sequences
 	 */
-	static public SequenceSearchState buildStateMachine(
-			ArrayList<? extends DittedBitSequence> patterns) {
-		SequenceSearchState root = new SequenceSearchState(null);
+	static public <T extends DittedBitSequence> SequenceSearchState<T> buildStateMachine(
+			ArrayList<T> patterns) {
+		SequenceSearchState<T> root = new SequenceSearchState<>(null);
 		for (int i = 0; i < patterns.size(); ++i) {
-			DittedBitSequence pat = patterns.get(i);
+			T pat = patterns.get(i);
 			pat.setIndex(i);
 			root.addSequence(pat, 0);
 		}
 		root.sortSequences();
-		ArrayList<SequenceSearchState> statelevel = new ArrayList<SequenceSearchState>();
+		ArrayList<SequenceSearchState<T>> statelevel = new ArrayList<SequenceSearchState<T>>();
 		statelevel.add(root);
 		int level = 0;
 		do {

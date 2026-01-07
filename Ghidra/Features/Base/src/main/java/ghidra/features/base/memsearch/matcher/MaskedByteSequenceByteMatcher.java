@@ -22,12 +22,13 @@ import org.bouncycastle.util.Arrays;
 import ghidra.features.base.memsearch.bytesequence.ByteSequence;
 import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.util.bytesearch.Match;
 
 /**
  * {@link ByteMatcher} where the user search input has been parsed into a sequence of bytes and
  * masks to be used for searching a byte sequence.
  */
-public class MaskedByteSequenceByteMatcher extends ByteMatcher {
+public class MaskedByteSequenceByteMatcher extends UserInputByteMatcher {
 
 	private final byte[] searchBytes;
 	private final byte[] masks;
@@ -68,7 +69,7 @@ public class MaskedByteSequenceByteMatcher extends ByteMatcher {
 	}
 
 	@Override
-	public Iterable<ByteMatch> match(ExtendedByteSequence byteSequence) {
+	public Iterable<Match<SearchData>> match(ExtendedByteSequence byteSequence) {
 		return new MatchIterator(byteSequence);
 	}
 
@@ -109,11 +110,12 @@ public class MaskedByteSequenceByteMatcher extends ByteMatcher {
 //==================================================================================================
 // Inner classes
 //==================================================================================================
-	private class MatchIterator implements Iterator<ByteMatch>, Iterable<ByteMatch> {
+	private class MatchIterator
+			implements Iterator<Match<SearchData>>, Iterable<Match<SearchData>> {
 
 		private ByteSequence byteSequence;
 		private int startIndex = 0;
-		private ByteMatch nextMatch;
+		private Match<SearchData> nextMatch;
 
 		public MatchIterator(ByteSequence byteSequence) {
 			this.byteSequence = byteSequence;
@@ -121,7 +123,7 @@ public class MaskedByteSequenceByteMatcher extends ByteMatcher {
 		}
 
 		@Override
-		public Iterator<ByteMatch> iterator() {
+		public Iterator<Match<SearchData>> iterator() {
 			return this;
 		}
 
@@ -131,22 +133,21 @@ public class MaskedByteSequenceByteMatcher extends ByteMatcher {
 		}
 
 		@Override
-		public ByteMatch next() {
+		public Match<SearchData> next() {
 			if (nextMatch == null) {
 				return null;
 			}
-			ByteMatch returnValue = nextMatch;
+			Match<SearchData> returnValue = nextMatch;
 			nextMatch = findNextMatch();
 			return returnValue;
 		}
 
-		private ByteMatch findNextMatch() {
+		private Match<SearchData> findNextMatch() {
 			int nextPossibleStart = findNextPossibleStart(startIndex);
 			while (nextPossibleStart >= 0) {
 				startIndex = nextPossibleStart + 1;
 				if (isValidMatch(nextPossibleStart)) {
-					return new ByteMatch(nextPossibleStart, searchBytes.length,
-						MaskedByteSequenceByteMatcher.this);
+					return new Match<>(searchData, nextPossibleStart, searchBytes.length);
 				}
 				nextPossibleStart = findNextPossibleStart(startIndex);
 			}

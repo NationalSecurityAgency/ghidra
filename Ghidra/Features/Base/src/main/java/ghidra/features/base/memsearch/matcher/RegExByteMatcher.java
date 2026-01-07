@@ -23,11 +23,12 @@ import javax.help.UnsupportedOperationException;
 
 import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.util.bytesearch.Match;
 
 /**
  * {@link ByteMatcher} where the user search input has been parsed as a regular expression.
  */
-public class RegExByteMatcher extends ByteMatcher {
+public class RegExByteMatcher extends UserInputByteMatcher {
 
 	private final Pattern pattern;
 
@@ -43,7 +44,7 @@ public class RegExByteMatcher extends ByteMatcher {
 	}
 
 	@Override
-	public Iterable<ByteMatch> match(ExtendedByteSequence byteSequence) {
+	public Iterable<Match<SearchData>> match(ExtendedByteSequence byteSequence) {
 		return new PatternMatchIterator(byteSequence);
 	}
 
@@ -93,12 +94,13 @@ public class RegExByteMatcher extends ByteMatcher {
 
 	/**
 	 * Adapter class for converting java {@link Pattern} matching into an iterator of
-	 * {@link ByteMatch}s.
+	 * {@link Match}s.
 	 */
-	private class PatternMatchIterator implements Iterable<ByteMatch>, Iterator<ByteMatch> {
+	private class PatternMatchIterator
+			implements Iterable<Match<SearchData>>, Iterator<Match<SearchData>> {
 
 		private Matcher matcher;
-		private ByteMatch nextMatch;
+		private Match<SearchData> nextMatch;
 		private ExtendedByteSequence byteSequence;
 
 		public PatternMatchIterator(ExtendedByteSequence byteSequence) {
@@ -113,22 +115,22 @@ public class RegExByteMatcher extends ByteMatcher {
 		}
 
 		@Override
-		public ByteMatch next() {
+		public Match<SearchData> next() {
 			if (nextMatch == null) {
 				return null;
 			}
-			ByteMatch returnValue = nextMatch;
+			Match<SearchData> returnValue = nextMatch;
 			nextMatch = findNextMatch();
 			return returnValue;
 
 		}
 
 		@Override
-		public Iterator<ByteMatch> iterator() {
+		public Iterator<Match<SearchData>> iterator() {
 			return this;
 		}
 
-		private ByteMatch findNextMatch() {
+		private Match<SearchData> findNextMatch() {
 			if (!matcher.find()) {
 				return null;
 			}
@@ -137,7 +139,7 @@ public class RegExByteMatcher extends ByteMatcher {
 			if (start >= byteSequence.getLength()) {
 				return null;
 			}
-			return new ByteMatch(start, end - start, RegExByteMatcher.this);
+			return new Match<>(searchData, start, end - start);
 		}
 	}
 
