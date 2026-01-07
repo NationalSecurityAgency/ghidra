@@ -795,6 +795,9 @@ public enum TraceEmulationIntegration {
 				return set;
 			}
 			AddressSpace space = set.getMinAddress().getAddressSpace();
+			if (space.isUniqueSpace()) {
+				return set;
+			}
 			PcodeTraceDataAccess acc = space.isRegisterSpace() ? getRegAccess(thread) : memAccess;
 			return handlerFor(piece).readUninitialized(acc, thread, piece, set);
 		}
