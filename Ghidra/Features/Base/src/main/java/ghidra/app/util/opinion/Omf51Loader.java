@@ -23,6 +23,7 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.omf.*;
+import ghidra.app.util.bin.format.omf.omf166.Omf166DepList;
 import ghidra.app.util.bin.format.omf.omf51.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
@@ -381,9 +382,21 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 
 			for (OmfRecord record : records) {
 				try {
-					Data d = DataUtilities.createData(program, start.add(record.getRecordOffset()),
-						record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					Address addr = start.add(record.getRecordOffset());
+					Data d = DataUtilities.createData(program, addr, record.toDataType(), -1,
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 					StructConverter.setEndian(d, false);
+
+					if (record instanceof Omf166DepList depList) {
+						String comment = depList.getInfo()
+								.stream()
+								.map(Omf166DepList.InfoEntry::name)
+								.map(OmfString::str)
+								.collect(Collectors.joining(System.lineSeparator()));
+						if (!comment.isEmpty()) {
+							program.getListing().setComment(addr, CommentType.PLATE, comment);
+						}
+					}
 				}
 				catch (Exception e) {
 					log.appendMsg("Failed to markup record type 0x%x at offset 0x%x. %s."

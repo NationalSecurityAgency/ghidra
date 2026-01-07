@@ -26,12 +26,19 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class Omf166DepList extends OmfRecord {
 
-	private record Info(byte type, Byte mark, Integer time, OmfString name, OmfString bigName) {}
+	public record InfoEntry(byte type, Byte mark, Integer time, OmfString name) {}
 
-	private List<Info> infoList = new ArrayList<>();
+	private List<InfoEntry> info = new ArrayList<>();
 
 	public Omf166DepList(BinaryReader reader) throws IOException {
 		super(reader);
+	}
+
+	/**
+	 * {@return the {@link Omf166DepList} "info"}
+	 */
+	public List<InfoEntry> getInfo() {
+		return info;
 	}
 
 	@Override
@@ -47,16 +54,15 @@ public class Omf166DepList extends OmfRecord {
 					byte mark = dataReader.readNextByte();
 					int time = dataReader.readNextInt();
 					OmfString name = OmfUtils.readString(dataReader);
-					infoList.add(new Info(iTyp, mark, time, name, null));
+					info.add(new InfoEntry(iTyp, mark, time, name));
 					break;
 				case (byte) 0xff:
 					OmfString invocation = OmfUtils.readString(dataReader);
-					OmfString bigName = null;
 					if (invocation.length() == 0) {
 						// We assume that a "big string" follows
-						bigName = OmfUtils.readBigString(dataReader);
+						invocation = OmfUtils.readBigString(dataReader);
 					}
-					infoList.add(new Info(iTyp, null, null, invocation, bigName));
+					info.add(new InfoEntry(iTyp, null, null, invocation));
 					break;
 				default:
 					throw new OmfException("Unexpected DEPLST iTyp: 0x%x".formatted(iTyp));
@@ -69,19 +75,19 @@ public class Omf166DepList extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf166RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		for (Info info : infoList) {
+		for (InfoEntry entry : info) {
 			struct.add(BYTE, "iTyp", null);
-			if (info.mark != null) {
+			if (entry.mark != null) {
 				struct.add(BYTE, "mark8", null);
 			}
-			if (info.time != null) {
+			if (entry.time != null) {
 				struct.add(DWORD, "time32", null);
 			}
-			struct.add(info.name.toDataType(), info.name.getDataTypeSize(), "name", null);
-			if (info.bigName != null) {
-				struct.add(info.bigName.toDataType(), info.bigName.getDataTypeSize(), "bigName",
-					null);
+			if (entry.name().isBig()) {
+				OmfString empty = new OmfString(0, "", false);
+				struct.add(empty.toDataType(), empty.getDataTypeSize(), "empty", null);
 			}
+			struct.add(entry.name.toDataType(), entry.name.getDataTypeSize(), "name", null);
 		}
 		struct.add(BYTE, "checksum", null);
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
