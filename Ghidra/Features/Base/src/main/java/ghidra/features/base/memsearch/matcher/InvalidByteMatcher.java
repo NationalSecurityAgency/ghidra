@@ -19,6 +19,7 @@ import org.apache.commons.collections4.iterators.EmptyIterator;
 
 import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.format.SearchFormat;
+import ghidra.util.bytesearch.Match;
 import util.CollectionUtils;
 
 /**
@@ -29,7 +30,7 @@ import util.CollectionUtils;
  * but not complete so that a fully valid byte matcher could not be created. In this case, the
  * search is still invalid, but the input is valid. The description will reflect this situation.
  */
-public class InvalidByteMatcher extends ByteMatcher {
+public class InvalidByteMatcher extends UserInputByteMatcher {
 
 	private final String errorMessage;
 	private final boolean isValidInput;
@@ -50,13 +51,13 @@ public class InvalidByteMatcher extends ByteMatcher {
 	 * a negative number.
 	 */
 	public InvalidByteMatcher(String errorMessage, boolean isValidInput) {
-		super("Invalid", null, null);
+		super("Invalid", "", null);
 		this.errorMessage = errorMessage;
 		this.isValidInput = isValidInput;
 	}
 
 	@Override
-	public Iterable<ByteMatch> match(ExtendedByteSequence bytes) {
+	public Iterable<Match<SearchData>> match(ExtendedByteSequence bytes) {
 		return CollectionUtils.asIterable(EmptyIterator.emptyIterator());
 	}
 

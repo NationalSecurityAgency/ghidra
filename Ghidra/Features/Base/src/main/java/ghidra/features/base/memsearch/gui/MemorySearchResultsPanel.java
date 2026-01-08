@@ -26,6 +26,7 @@ import javax.swing.event.TableModelEvent;
 import ghidra.app.nav.Navigatable;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.combiner.Combiner;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.scan.Scanner;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
@@ -42,8 +43,8 @@ import ghidra.util.task.*;
  * table for showing the results.
  */
 public class MemorySearchResultsPanel extends JPanel {
-	private GhidraThreadedTablePanel<MemoryMatch> threadedTablePanel;
-	private GhidraTableFilterPanel<MemoryMatch> tableFilterPanel;
+	private GhidraThreadedTablePanel<MemoryMatch<SearchData>> threadedTablePanel;
+	private GhidraTableFilterPanel<MemoryMatch<SearchData>> tableFilterPanel;
 	private GhidraTable table;
 	private MemoryMatchTableModel tableModel;
 	private MemorySearchProvider provider;
@@ -101,7 +102,7 @@ public class MemorySearchResultsPanel extends JPanel {
 		return tableFilterPanel;
 	}
 
-	public void search(MemorySearcher searcher, Combiner combiner) {
+	public void search(MemorySearcher<SearchData> searcher, Combiner combiner) {
 		MemoryMatchTableLoader loader = createLoader(searcher, combiner);
 		tableModel.addInitialLoadListener(
 			cancelled -> provider.searchAllCompleted(loader.hasResults(), cancelled,
@@ -109,7 +110,7 @@ public class MemorySearchResultsPanel extends JPanel {
 		tableModel.setLoader(loader);
 	}
 
-	public void searchOnce(MemorySearcher searcher, Address address, boolean forward) {
+	public void searchOnce(MemorySearcher<SearchData> searcher, Address address, boolean forward) {
 		SearchOnceTask task = new SearchOnceTask(forward, searcher, address);
 		TaskLauncher.launch(task);
 	}
@@ -119,12 +120,14 @@ public class MemorySearchResultsPanel extends JPanel {
 		TaskLauncher.launch(task);
 	}
 
-	public void refreshAndMaybeScanForChanges(AddressableByteSource byteSource, Scanner scanner, List<MemoryMatch> previousResults) {
+	public void refreshAndMaybeScanForChanges(AddressableByteSource byteSource, Scanner scanner,
+			List<MemoryMatch<SearchData>> previousResults) {
 		RefreshAndScanTask task = new RefreshAndScanTask(byteSource, scanner, previousResults);
 		TaskLauncher.launch(task);
 	}
 
-	private MemoryMatchTableLoader createLoader(MemorySearcher searcher, Combiner combiner) {
+	private MemoryMatchTableLoader createLoader(MemorySearcher<SearchData> searcher,
+			Combiner combiner) {
 		if (!hasResults()) {
 			hasDeleted = false;
 			return new NewSearchTableLoader(searcher);
@@ -141,7 +144,7 @@ public class MemorySearchResultsPanel extends JPanel {
 			// loader as if doing an initial search because you get incremental loading and also
 			// don't need to copy the existing results to feed to a combiner.
 			hasCombined = true;
-			List<MemoryMatch> previousResults = tableModel.getModelData();
+			List<MemoryMatch<SearchData>> previousResults = tableModel.getModelData();
 			return new CombinedMatchTableLoader(searcher, previousResults, combiner);
 		}
 
@@ -164,7 +167,7 @@ public class MemorySearchResultsPanel extends JPanel {
 		return tableModel.getRowCount();
 	}
 
-	void select(MemoryMatch match) {
+	void select(MemoryMatch<SearchData> match) {
 		int rowIndex = tableModel.getRowIndex(match);
 		if (rowIndex >= 0) {
 			threadedTablePanel.getTable().selectRow(rowIndex);
@@ -175,7 +178,7 @@ public class MemorySearchResultsPanel extends JPanel {
 		return table;
 	}
 
-	public MemoryMatch getSelectedMatch() {
+	public MemoryMatch<SearchData> getSelectedMatch() {
 		int row = table.getSelectedRow();
 		return row < 0 ? null : tableModel.getRowObject(row);
 	}
@@ -192,17 +195,17 @@ public class MemorySearchResultsPanel extends JPanel {
 	private class SearchOnceTask extends Task {
 
 		private boolean forward;
-		private MemorySearcher searcher;
+		private MemorySearcher<SearchData> searcher;
 		private Address start;
 
-		public SearchOnceTask(boolean forward, MemorySearcher searcher, Address start) {
+		public SearchOnceTask(boolean forward, MemorySearcher<SearchData> searcher, Address start) {
 			super(forward ? "Search Next" : "Search Previous", true, true, true);
 			this.forward = forward;
 			this.searcher = searcher;
 			this.start = start;
 		}
 
-		private void tableLoadComplete(MemoryMatch match, boolean wasCancelled) {
+		private void tableLoadComplete(MemoryMatch<SearchData> match, boolean wasCancelled) {
 			int rowIndex = tableModel.getRowIndex(match);
 			if (rowIndex >= 0) {
 				table.selectRow(rowIndex);
@@ -214,7 +217,7 @@ public class MemorySearchResultsPanel extends JPanel {
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 			try {
-				MemoryMatch match = searcher.findOnce(start, forward, monitor);
+				MemoryMatch<SearchData> match = searcher.findOnce(start, forward, monitor);
 				if (match != null) {
 					tableModel.addInitialLoadListener(b -> tableLoadComplete(match, b));
 					tableModel.addObject(match);
@@ -234,20 +237,21 @@ public class MemorySearchResultsPanel extends JPanel {
 
 		private AddressableByteSource byteSource;
 		private Scanner scanner;
-		private List<MemoryMatch> matchList;
+		private List<MemoryMatch<SearchData>> matchList;
 
 		public RefreshAndScanTask(AddressableByteSource byteSource, Scanner scanner) {
 			this(byteSource, scanner, tableModel.getModelData());
 		}
 
-		public RefreshAndScanTask(AddressableByteSource byteSource, Scanner scanner, List<MemoryMatch> matches) {
+		public RefreshAndScanTask(AddressableByteSource byteSource, Scanner scanner,
+				List<MemoryMatch<SearchData>> matches) {
 			super("Refreshing", true, true, true);
 			this.byteSource = byteSource;
 			this.scanner = scanner;
 			this.matchList = matches;
 		}
 
-		private void tableLoadComplete(MemoryMatch match) {
+		private void tableLoadComplete(MemoryMatch<SearchData> match) {
 			if (match == null) {
 				provider.refreshAndScanCompleted(null);
 			}
@@ -270,11 +274,12 @@ public class MemorySearchResultsPanel extends JPanel {
 			}
 		}
 
-		private boolean refreshByteValues(TaskMonitor monitor, List<MemoryMatch> matches) {
+		private boolean refreshByteValues(TaskMonitor monitor,
+				List<MemoryMatch<SearchData>> matches) {
 			try {
 				byteSource.invalidate();	// clear any caches before refreshing byte values
 				monitor.initialize(matches.size(), "Refreshing...");
-				for (MemoryMatch match : matches) {
+				for (MemoryMatch<SearchData> match : matches) {
 					byte[] bytes = new byte[match.getLength()];
 					byteSource.getBytes(match.getAddress(), bytes, bytes.length);
 					match.updateBytes(bytes);
@@ -293,10 +298,11 @@ public class MemorySearchResultsPanel extends JPanel {
 			return false;
 		}
 
-		private void performScanFiltering(TaskMonitor monitor, List<MemoryMatch> matches) {
+		private void performScanFiltering(TaskMonitor monitor,
+				List<MemoryMatch<SearchData>> matches) {
 			monitor.initialize(matches.size(), "Scanning for changes...");
-			List<MemoryMatch> scanResults = new ArrayList<>();
-			for (MemoryMatch match : matches) {
+			List<MemoryMatch<SearchData>> scanResults = new ArrayList<>();
+			for (MemoryMatch<SearchData> match : matches) {
 				if (scanner.accept(match)) {
 					scanResults.add(match);
 				}
@@ -305,14 +311,15 @@ public class MemorySearchResultsPanel extends JPanel {
 				}
 			}
 
-			MemoryMatch firstIfReduced = getFirstMatchIfReduced(matches, scanResults);
+			MemoryMatch<SearchData> firstIfReduced = getFirstMatchIfReduced(matches, scanResults);
 			tableModel.addInitialLoadListener(b -> tableLoadComplete(firstIfReduced));
 			tableModel.setLoader(new RefreshResultsTableLoader(scanResults));
 		}
 
-		private MemoryMatch getFirstMatchIfReduced(List<MemoryMatch> matches,
-				List<MemoryMatch> scanResults) {
-			MemoryMatch firstIfReduced = null;
+		private MemoryMatch<SearchData> getFirstMatchIfReduced(
+				List<MemoryMatch<SearchData>> matches,
+				List<MemoryMatch<SearchData>> scanResults) {
+			MemoryMatch<SearchData> firstIfReduced = null;
 			if (!scanResults.isEmpty() && scanResults.size() != matches.size()) {
 				firstIfReduced = scanResults.isEmpty() ? null : scanResults.getFirst();
 			}

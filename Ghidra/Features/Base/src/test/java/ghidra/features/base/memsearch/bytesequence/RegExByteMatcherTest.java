@@ -22,9 +22,8 @@ import java.util.Iterator;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
-import ghidra.features.base.memsearch.matcher.ByteMatcher.ByteMatch;
-import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
+import ghidra.features.base.memsearch.matcher.*;
+import ghidra.util.bytesearch.Match;
 
 public class RegExByteMatcherTest {
 	private ExtendedByteSequence byteSequence;
@@ -40,15 +39,16 @@ public class RegExByteMatcherTest {
 	@Test
 	public void testSimplePatternWithOneMatchCrossingBoundary() {
 
-		ByteMatcher byteMatcher = new RegExByteMatcher("two", null);
+		RegExByteMatcher byteMatcher = new RegExByteMatcher("two", null);
+		SearchData searchData = byteMatcher.getSearchData();
 
-		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
-
-		assertTrue(it.hasNext());
-		assertEquals(new ByteMatch(4, 3, byteMatcher), it.next());
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
 
 		assertTrue(it.hasNext());
-		assertEquals(new ByteMatch(14, 3, byteMatcher), it.next());
+		assertEquals(new Match<>(searchData, 4, 3), it.next());
+
+		assertTrue(it.hasNext());
+		assertEquals(new Match<>(searchData, 14, 3), it.next());
 
 		assertFalse(it.hasNext());
 
@@ -57,21 +57,22 @@ public class RegExByteMatcherTest {
 	@Test
 	public void testSimplePatternWithOneMatchCrossingBoundaryNoHasNextCalls() {
 
-		ByteMatcher byteMatcher = new RegExByteMatcher("two", null);
+		RegExByteMatcher byteMatcher = new RegExByteMatcher("two", null);
+		SearchData searchData = byteMatcher.getSearchData();
 
-		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
 
-		assertEquals(new ByteMatch(4, 3, byteMatcher), it.next());
-		assertEquals(new ByteMatch(14, 3, byteMatcher), it.next());
+		assertEquals(new Match<>(searchData, 4, 3), it.next());
+		assertEquals(new Match<>(searchData, 14, 3), it.next());
 		assertNull(it.next());
 	}
 
 	@Test
 	public void testNoMatch() {
 
-		ByteMatcher byteMatcher = new RegExByteMatcher("apple", null);
+		ByteMatcher<SearchData> byteMatcher = new RegExByteMatcher("apple", null);
 
-		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
 		assertFalse(it.hasNext());
 	}
 

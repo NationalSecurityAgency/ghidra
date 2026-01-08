@@ -22,6 +22,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.program.model.address.*;
 
@@ -29,18 +30,18 @@ public class MemoryMatchCombinerTest {
 
 	private GenericAddressSpace space;
 
-	private MemoryMatch m1;
-	private MemoryMatch m2;
-	private MemoryMatch m3;
-	private MemoryMatch m4;
-	private MemoryMatch m5;
-	private MemoryMatch m6;
-	private MemoryMatch m7;
-	private MemoryMatch m8;
+	private MemoryMatch<SearchData> m1;
+	private MemoryMatch<SearchData> m2;
+	private MemoryMatch<SearchData> m3;
+	private MemoryMatch<SearchData> m4;
+	private MemoryMatch<SearchData> m5;
+	private MemoryMatch<SearchData> m6;
+	private MemoryMatch<SearchData> m7;
+	private MemoryMatch<SearchData> m8;
 
-	List<MemoryMatch> list1;
-	List<MemoryMatch> list2;
-	List<MemoryMatch> result;
+	List<MemoryMatch<SearchData>> list1;
+	List<MemoryMatch<SearchData>> list2;
+	List<MemoryMatch<SearchData>> result;
 
 	@Before
 	public void setUp() {
@@ -88,8 +89,8 @@ public class MemoryMatchCombinerTest {
 
 	@Test
 	public void testUnionWithDupsKeepsLonger() {
-		MemoryMatch m3_short = createMatch(3, 2);
-		MemoryMatch m3_long = createMatch(3, 8);
+		MemoryMatch<SearchData> m3_short = createMatch(3, 2);
+		MemoryMatch<SearchData> m3_long = createMatch(3, 8);
 
 		list1 = list(m1, m2, m3);
 		list2 = list(m3_short, m4, m5);
@@ -127,8 +128,8 @@ public class MemoryMatchCombinerTest {
 
 	@Test
 	public void testIntersectionKeepsLonger() {
-		MemoryMatch m4_long = createMatch(4, 8);
-		MemoryMatch m3_long = createMatch(3, 8);
+		MemoryMatch<SearchData> m4_long = createMatch(4, 8);
+		MemoryMatch<SearchData> m3_long = createMatch(3, 8);
 		list1 = list(m1, m2, m3, m4_long);
 		list2 = list(m1, m2, m3_long, m4);
 		result = intersect(list1, list2);
@@ -174,8 +175,8 @@ public class MemoryMatchCombinerTest {
 
 	@Test
 	public void testXorLengthDontMatter() {
-		MemoryMatch m4_long = createMatch(4, 8);
-		MemoryMatch m3_short = createMatch(3, 2);
+		MemoryMatch<SearchData> m4_long = createMatch(4, 8);
+		MemoryMatch<SearchData> m3_short = createMatch(3, 2);
 
 		list1 = list(m1, m2, m3, m4);
 		list2 = list(m3_short, m4_long, m5);
@@ -227,8 +228,8 @@ public class MemoryMatchCombinerTest {
 
 	@Test
 	public void testAMinusBLengthDontMatter() {
-		MemoryMatch m4_long = createMatch(4, 8);
-		MemoryMatch m3_short = createMatch(3, 2);
+		MemoryMatch<SearchData> m4_long = createMatch(4, 8);
+		MemoryMatch<SearchData> m3_short = createMatch(3, 2);
 
 		list1 = list(m1, m2, m3, m4);
 		list2 = list(m3_short, m4_long, m5);
@@ -280,8 +281,8 @@ public class MemoryMatchCombinerTest {
 
 	@Test
 	public void testBMinusALengthDontMatter() {
-		MemoryMatch m4_long = createMatch(4, 8);
-		MemoryMatch m3_short = createMatch(3, 2);
+		MemoryMatch<SearchData> m4_long = createMatch(4, 8);
+		MemoryMatch<SearchData> m3_short = createMatch(3, 2);
 
 		list1 = list(m1, m2, m3, m4);
 		list2 = list(m3_short, m4_long, m5);
@@ -294,42 +295,53 @@ public class MemoryMatchCombinerTest {
 		assertEquals(list(m5), result);
 	}
 
-	private List<MemoryMatch> xor(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
+	private List<MemoryMatch<SearchData>> xor(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		Combiner combiner = Combiner.XOR;
-		List<MemoryMatch> results = new ArrayList<>(combiner.combine(matches1, matches2));
+		List<MemoryMatch<SearchData>> results =
+			new ArrayList<>(combiner.combine(matches1, matches2));
 		Collections.sort(results);
 		return results;
 	}
 
-	private List<MemoryMatch> union(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
+	private List<MemoryMatch<SearchData>> union(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		Combiner combiner = Combiner.UNION;
-		List<MemoryMatch> results = new ArrayList<>(combiner.combine(matches1, matches2));
+		List<MemoryMatch<SearchData>> results =
+			new ArrayList<>(combiner.combine(matches1, matches2));
 		Collections.sort(results);
 		return results;
 	}
 
-	private List<MemoryMatch> intersect(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
+	private List<MemoryMatch<SearchData>> intersect(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		Combiner combiner = Combiner.INTERSECT;
-		List<MemoryMatch> results = new ArrayList<>(combiner.combine(matches1, matches2));
+		List<MemoryMatch<SearchData>> results =
+			new ArrayList<>(combiner.combine(matches1, matches2));
 		Collections.sort(results);
 		return results;
 	}
 
-	private List<MemoryMatch> aMinusB(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
+	private List<MemoryMatch<SearchData>> aMinusB(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		Combiner combiner = Combiner.A_MINUS_B;
-		List<MemoryMatch> results = new ArrayList<>(combiner.combine(matches1, matches2));
+		List<MemoryMatch<SearchData>> results =
+			new ArrayList<>(combiner.combine(matches1, matches2));
 		Collections.sort(results);
 		return results;
 	}
 
-	private List<MemoryMatch> BMinusA(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
+	private List<MemoryMatch<SearchData>> BMinusA(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		Combiner combiner = Combiner.B_MINUS_A;
-		List<MemoryMatch> results = new ArrayList<>(combiner.combine(matches1, matches2));
+		List<MemoryMatch<SearchData>> results =
+			new ArrayList<>(combiner.combine(matches1, matches2));
 		Collections.sort(results);
 		return results;
 	}
 
-	private List<MemoryMatch> list(MemoryMatch... matches) {
+	@SafeVarargs
+	private List<MemoryMatch<SearchData>> list(MemoryMatch<SearchData>... matches) {
 		return Arrays.asList(matches);
 	}
 
@@ -337,9 +349,9 @@ public class MemoryMatchCombinerTest {
 		return space.getAddress(offset);
 	}
 
-	private MemoryMatch createMatch(int offset, int length) {
+	private MemoryMatch<SearchData> createMatch(int offset, int length) {
 		Address address = addr(offset);
 		byte[] bytes = new byte[length];
-		return new MemoryMatch(address, bytes, null);
+		return new MemoryMatch<>(address, bytes, null);
 	}
 }
