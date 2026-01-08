@@ -618,13 +618,17 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	@Override
-	protected void updateLiveSelection(ByteBlockSelection selection) {
-		if (blockSet != null) {
-			AbstractSelectionPluginEvent event =
-				blockSet.getPluginEvent(plugin.getName(), selection);
-			liveSelection = event.getSelection();
-			updateTitle();
+	protected void updateLiveSelection(ByteViewerComponent sourceComponent,
+			ByteBlockSelection blockSelection) {
+
+		if (blockSet == null) {
+			return;
 		}
+
+		AbstractSelectionPluginEvent event =
+			blockSet.getPluginEvent(plugin.getName(), blockSelection);
+		liveSelection = event.getSelection();
+		updateTitle();
 	}
 
 	@Override

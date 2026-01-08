@@ -65,6 +65,9 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 	private IndexMap indexMap; // maps indexes to the correct block and offset
 	private int blockOffset;
 	private ByteViewerComponent currentView;
+
+	private boolean highlightCurrentLine;
+
 	private int highlightButton;
 	private ListenerSet<LayoutModelListener> layoutListeners =
 		new ListenerSet<>(LayoutModelListener.class, false);
@@ -115,6 +118,15 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 
 	int getHighlightButton() {
 		return highlightButton;
+	}
+
+	void setHighlightCurrentLineEnabled(boolean b) {
+		highlightCurrentLine = b;
+		repaint();
+	}
+
+	boolean isHighlightCurrentLine() {
+		return highlightCurrentLine;
 	}
 
 	void setHighlightButton(int highlightButton) {
@@ -269,11 +281,10 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 	 * 
 	 * @param viewName name of the format, e.g., Hex, Ascii, etc.
 	 * @param model model that understands the format
-	 * @param editMode true if edit mode is on
 	 * @param updateViewPosition true if the view position should be set
 	 * @return the new component
 	 */
-	ByteViewerComponent addView(String viewName, DataFormatModel model, boolean editMode,
+	ByteViewerComponent addView(String viewName, DataFormatModel model,
 			boolean updateViewPosition) {
 
 		if (viewList.size() != 0) {
@@ -447,8 +458,17 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		}
 	}
 
-	void updateLiveSelection(ByteViewerComponent source, ByteBlockSelection selection) {
-		provider.updateLiveSelection(selection);
+	void updateLiveSelection(ByteViewerComponent bvc, ByteBlockSelection selection) {
+
+		provider.updateLiveSelection(bvc, selection);
+
+		for (ByteViewerComponent c : viewList) {
+			if (c == bvc) {
+				continue;
+			}
+			c.setViewerSelection(selection);
+		}
+
 		updateIndexColumnCurrentLine();
 	}
 
@@ -514,7 +534,7 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 
 		setLayout(new BorderLayout(10, 0));
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-		
+
 		setFont(ByteViewerComponentProvider.DEFAULT_FONT); // side-effect sets fontMetrics
 
 		// for the index/address column
@@ -526,8 +546,7 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		indexPanel.setFocusable(false);
 		indexPanel.addLayoutListener(this);
 		indexPanel.setBackgroundColor(ByteViewerComponentProvider.BG_COLOR);
-		indexPanel.setBackgroundColorModel(
-			new ByteViewerBGColorModel(() -> getCurrentComponent().getCursorLocation().getIndex()));
+		indexPanel.setBackgroundColorModel(new ByteViewerBGColorModel(this));
 
 		indexedView = new ByteViewerIndexedView(indexPanel);
 		IndexedScrollPane indexedScrollPane = new IndexedScrollPane(indexedView);
