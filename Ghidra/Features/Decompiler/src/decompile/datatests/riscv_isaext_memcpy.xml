@@ -1,0 +1,30 @@
+<decompilertest>
+  <!-- Verify basic handling of memcpy on a RISCV-64 processor with vector 1.0+ and compressed instruction capability -->
+  <!-- Note that the binary is built with march=rv64gcv, not march=RV64GC -->
+  <binaryimage arch="RISCV:LE:64:RV64GC">
+    <bytechunk space="ram" offset="0x100672" readonly="true">
+      d777370c070406021d8f3e9627840602
+      be967df78280
+    </bytechunk>
+    <!-- establish the function name as a symbol so that we can later load it as a function -->
+    <symbol name="memcpy_255" space="ram" offset="0x100672" />
+  </binaryimage>
+  <script>
+    <!-- set the function signature -->
+    <com>parse line extern void memcpy_255(void * dest, void* src, int8 n);</com>
+    <!-- mark the function for decompilation -->
+    <com>load function memcpy_255</com>
+    <!-- perform the decompilation -->
+    <com>dec</com>
+    <!-- generate decompilation as C -->
+    <com>print C</com>
+    <!-- exit the decompiler, preserving the decompilation C output -->
+    <com>quit</com>
+  </script>
+  <!-- Verify that the vector context is set and displayed -->
+  <stringmatch name="vsetvli" min="1" max="1">vsetvli_e8m8tama</stringmatch>
+  <!-- Verify that one vector load is present -->
+  <stringmatch name="vle8" min="1" max="1">vle8_v</stringmatch>
+  <!-- Verify that one vector store is present -->
+  <stringmatch name="vse8" min="1" max="1">vse8_v</stringmatch>
+</decompilertest>
