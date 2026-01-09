@@ -172,8 +172,8 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 				yield temp.set(endian.isBigEndian() ? sizeout - sizein2 : 0, in2);
 			}
 			default -> {
-				TaintVec temp = in1.zipUnion(in2);
-				yield temp.setCopies(temp.union());
+				TaintSet u = in1.union().union(in2.union());
+				yield TaintVec.copies(u, sizeout);
 			}
 		};
 	}
