@@ -39,8 +39,8 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import docking.widgets.textfield.HexOrDecimalInput;
-import docking.widgets.textfield.HintTextField;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
@@ -127,7 +127,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private GCheckBox overridePdbUniqueIdCheckBox;
 	private HexOrDecimalInput pdbAgeTextField;
 	private GCheckBox overridePdbAgeCheckBox;
-	private HintTextField pdbLocationTextField;
+	private ElidingFilePathTextField pdbLocationTextField;
 	private GIconLabel exactMatchIconLabel;
 
 	private JButton configButton;
@@ -467,7 +467,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	}
 
 	private JPanel buildPdbLocationPanel() {
-		pdbLocationTextField = new HintTextField("Browse [...] for PDB file or use 'Advanced'");
+		pdbLocationTextField =
+			new ElidingFilePathTextField(null, "Browse [...] for PDB file or use 'Advanced'");
 		pdbLocationTextField.setEditable(false);
 		pdbLocationTextField.getAccessibleContext().setAccessibleName("PDB Location");
 

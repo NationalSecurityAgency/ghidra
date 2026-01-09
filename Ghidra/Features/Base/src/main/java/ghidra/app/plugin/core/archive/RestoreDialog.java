@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,11 @@ import java.io.File;
 import javax.swing.*;
 
 import docking.ReusableDialogComponentProvider;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import generic.theme.Gui;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
@@ -79,12 +81,12 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 		// Create the individual components that make up the panel.
 		archiveLabel = new GDLabel(" Archive File ");
 		archiveLabel.getAccessibleContext().setAccessibleName("Archive File");
-		archiveField = new JTextField();
+		archiveField = new ElidingFilePathTextField();
 		archiveField.setColumns(NUM_TEXT_COLUMNS);
 		archiveField.setName("archiveField");
 		archiveField.getAccessibleContext().setAccessibleName("Archive");
 
-		archiveBrowse = new JButton(ArchivePlugin.DOT_DOT_DOT);
+		archiveBrowse = new BrowseButton();
 		archiveBrowse.setName("archiveButton");
 		archiveBrowse.getAccessibleContext().setAccessibleName("Archive");
 		archiveBrowse.addActionListener(new ActionListener() {
@@ -121,12 +123,12 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 
 		restoreLabel = new GDLabel(" Restore Directory ");
 		restoreLabel.getAccessibleContext().setAccessibleName("Restore Directory");
-		restoreField = new JTextField();
+		restoreField = new ElidingFilePathTextField();
 		restoreField.setName("restoreField");
 		restoreField.getAccessibleContext().setAccessibleName("Restore");
 		restoreField.setColumns(RestoreDialog.NUM_TEXT_COLUMNS);
 
-		restoreBrowse = new JButton(ArchivePlugin.DOT_DOT_DOT);
+		restoreBrowse = new BrowseButton();
 		restoreBrowse.setName("restoreButton");
 		restoreBrowse.getAccessibleContext().setAccessibleName("Restore Browse");
 		restoreBrowse.addActionListener(e -> {
