@@ -60,6 +60,7 @@ public class ByteViewerComponent extends FieldPanel
 	private int charWidth;
 	private IndexMap indexMap;
 	private ProgramByteBlockSet blockSet;
+
 	private ByteViewerLayoutModel layoutModel;
 	private boolean doingRefresh;
 	private boolean doingEdit;
@@ -71,24 +72,24 @@ public class ByteViewerComponent extends FieldPanel
 
 	private FieldSelectionListener liveSelectionListener = (selection, trigger) -> {
 		ByteBlockSelection sel = processFieldSelection(selection);
-		panel.updateLiveSelection(ByteViewerComponent.this, sel);
+		panel.updateLiveSelection(this, sel);
 	};
 	private ByteViewerHoverProvider byteViewerHoverProvider;
 
 	/**
 	 * Constructor
 	 *
-	 * @param vpanel the byte viewer panel that this component lives in
+	 * @param panel the byte viewer panel that this component lives in
 	 * @param layoutModel the layout model for this component
 	 * @param model data format model that knows how the data should be displayed
 	 * @param bytesPerLine number of bytes displayed in a row
 	 */
-	protected ByteViewerComponent(ByteViewerPanel vpanel, ByteViewerLayoutModel layoutModel,
+	protected ByteViewerComponent(ByteViewerPanel panel, ByteViewerLayoutModel layoutModel,
 			DataFormatModel model, int bytesPerLine) {
 		super(layoutModel, "Byte Viewer");
 		setFieldDescriptionProvider((l, f) -> getFieldDescription(l, f));
 
-		this.panel = vpanel;
+		this.panel = panel;
 		this.model = model;
 		this.bytesPerLine = bytesPerLine;
 		this.layoutModel = layoutModel;
@@ -693,8 +694,9 @@ public class ByteViewerComponent extends FieldPanel
 		});
 
 		setBackgroundColor(ByteViewerComponentProvider.BG_COLOR);
+
 		// specialized line coloring
-		setBackgroundColorModel(new ByteViewerBGColorModel(() -> getCursorLocation().getIndex()));
+		setBackgroundColorModel(new ByteViewerBGColorModel(panel));
 
 		Gui.registerFont(this, ByteViewerComponentProvider.DEFAULT_FONT_ID);
 
@@ -705,6 +707,11 @@ public class ByteViewerComponent extends FieldPanel
 		byteViewerHoverProvider =
 			new ByteViewerHoverProvider("ByteViewer" + model.getName() + "Hover");
 		setHoverProvider(byteViewerHoverProvider);
+	}
+
+	@Override
+	public boolean isDragging() { // open access 
+		return super.isDragging();
 	}
 
 	/**
@@ -950,7 +957,7 @@ public class ByteViewerComponent extends FieldPanel
 			// WARNING: unusual situation.  This method signature is the same between both
 			// AbstractHoverProvider and the HoverService interface.
 			// AbstractHoverProvider calls the scroll() on the service, but when
-			// both calls end up at the same method, you will get a stackoverflow.
+			// both calls end up at the same method, you will get a stack overflow.
 			// We implement a do-nothing here that prevents that.
 		}
 	}

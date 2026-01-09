@@ -930,6 +930,10 @@ public class FieldPanel extends JPanel
 		return !selectionHandler.isInProgress();
 	}
 
+	protected boolean isDragging() {
+		return mouseHandler.isDragging();
+	}
+
 	/**
 	 * Sets the selection color
 	 *
@@ -1939,7 +1943,13 @@ public class FieldPanel extends JPanel
 			else if (!selectionHandler.isInProgress()) {
 				selectionHandler.clearSelection();
 			}
+
 			selectionHandler.endSelectionSequence();
+			didDrag = false;
+		}
+
+		boolean isDragging() {
+			return didDrag;
 		}
 
 		/**

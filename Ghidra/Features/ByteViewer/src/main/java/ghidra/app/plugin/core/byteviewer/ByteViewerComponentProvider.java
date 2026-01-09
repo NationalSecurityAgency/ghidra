@@ -93,8 +93,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	static final String OPTION_FONT = "Font";
 
 	private static final String DEFAULT_VIEW = "Hex";
-	private static final String CURRENT_LINE_COLOR_OPTION_NAME =
-		GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR_OPTION_NAME;
 	private static final String OPTION_HIGHLIGHT_CURSOR_LINE =
 		GhidraOptions.HIGHLIGHT_CURSOR_LINE_OPTION_NAME;
 	private static final String OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME = "Middle Mouse Color";
@@ -215,10 +213,10 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool t, ActionContext context) {
 		if (context instanceof ByteViewerActionContext bvContext &&
 			bvContext.getComponentProvider() == this) {
-			return bvContext.getActiveColumn().getPopupActions(tool, bvContext);
+			return bvContext.getActiveColumn().getPopupActions(t, bvContext);
 		}
 		return null;
 	}
@@ -248,12 +246,19 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
+
 		if (options.getName().equals(CATEGORY_BROWSER_FIELDS)) {
 			if (optionName.equals(CURSOR_HIGHLIGHT_BUTTON_NAME)) {
 				CURSOR_MOUSE_BUTTON_NAMES mouseButton = (CURSOR_MOUSE_BUTTON_NAMES) newValue;
 				panel.setHighlightButton(mouseButton.getMouseEventID());
 			}
 		}
+		else if (options.getName().equals("ByteViewer")) {
+			if (optionName.equals(OPTION_HIGHLIGHT_CURSOR_LINE)) {
+				panel.setHighlightCurrentLineEnabled((Boolean) newValue);
+			}
+		}
+
 	}
 
 	// Options.getStringEnum() is deprecated
@@ -285,16 +290,15 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			CURSOR_COLOR_UNFOCUSED_EDIT.getId(), help,
 			"Color of the cursor in the unfocused view when editing.");
 
-		opt.registerThemeColorBinding(CURRENT_LINE_COLOR_OPTION_NAME,
-			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR.getId(), help,
-			"Color of the line containing the cursor.");
-
 		opt.registerThemeColorBinding(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME,
 			HIGHLIGHT_MIDDLE_MOUSE_COLOR.getId(), help, "The middle-mouse highlight color.");
 
 		opt.registerThemeFontBinding(OPTION_FONT, DEFAULT_FONT_ID, help, "Font used in the views.");
-		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
+
+		boolean highlightCurrentLine = true;
+		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, highlightCurrentLine, help,
 			"Toggles highlighting background color of line containing the cursor.");
+		panel.setHighlightCurrentLineEnabled(highlightCurrentLine);
 
 		opt.addOptionsChangeListener(this);
 
@@ -332,14 +336,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		return panel.getCursorLocation();
 	}
 
-	ByteBlockSelection getBlockSelection() {
-		return panel.getViewerSelection();
-	}
-
-	void setBlockSelection(ByteBlockSelection selection) {
-		panel.setViewerSelection(selection);
-	}
-
 	ByteBlockSet getByteBlockSet() {
 		return blockSet;
 	}
@@ -374,7 +370,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			panel.validate();
 			panel.repaint();
 		}
-
 
 		changed |= addNewViews(selectedViews);
 
@@ -513,8 +508,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		model.setByteViewerConfigOptions(configOptions);
 
 		String viewName = model.getName();
-		ByteViewerComponent bvc =
-			panel.addView(viewName, model, editModeAction.isSelected(), updateViewPosition);
+		ByteViewerComponent bvc = panel.addView(viewName, model, updateViewPosition);
 		viewMap.put(viewName, bvc);
 		if (configChanged) {
 			tool.setConfigChanged(true);
@@ -528,6 +522,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		if (bvc == null) {
 			return;
 		}
+
 		panel.removeView(bvc);
 
 		if (configChanged) {
@@ -541,7 +536,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	protected abstract void updateSelection(ByteBlockSelection selection);
 
-	protected abstract void updateLiveSelection(ByteBlockSelection selection);
+	protected abstract void updateLiveSelection(ByteViewerComponent bvc,
+			ByteBlockSelection selection);
 
 	void dispose() {
 		tool.removePopupActionProvider(this);

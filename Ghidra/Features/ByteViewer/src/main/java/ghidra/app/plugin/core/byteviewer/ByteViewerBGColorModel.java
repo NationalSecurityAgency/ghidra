@@ -17,32 +17,40 @@ package ghidra.app.plugin.core.byteviewer;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.function.Supplier;
 
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import docking.widgets.fieldpanel.support.FieldLocation;
 
 /**
- * {@link BackgroundColorModel} that changes the color for the currently focused byteviewer row
+ * {@link BackgroundColorModel} that changes the color for the currently focused byte viewer row
  */
 public class ByteViewerBGColorModel implements BackgroundColorModel {
 	private Color bgColor = ByteViewerComponentProvider.BG_COLOR;
-	private Supplier<BigInteger> cursorLocSupplier;
+	private ByteViewerPanel panel;
 
 	/**
-	 * Creates new model.
+	 * Creates a new model.
 	 * 
-	 * @param cursorLocSupplier provides the index of the byteviewer-global cursor
+	 * @param panel the byte viewer used to synchronize the current line across components
 	 */
-	public ByteViewerBGColorModel(Supplier<BigInteger> cursorLocSupplier) {
-		this.cursorLocSupplier = cursorLocSupplier;
+	public ByteViewerBGColorModel(ByteViewerPanel panel) {
+		this.panel = panel;
 	}
 
 	@Override
 	public Color getBackgroundColor(BigInteger index) {
-		BigInteger cursorIndex = cursorLocSupplier.get();
-		return cursorIndex.equals(index)
-				? ByteViewerComponentProvider.CURRENT_LINE_COLOR
-				: bgColor;
+
+		if (!panel.isHighlightCurrentLine()) {
+			return bgColor;
+		}
+
+		ByteViewerComponent c = panel.getCurrentComponent();
+		FieldLocation loc = c.getCursorLocation();
+		BigInteger cursorIndex = loc.getIndex();
+		if (index.equals(cursorIndex)) {
+			return ByteViewerComponentProvider.CURRENT_LINE_COLOR;
+		}
+		return bgColor;
 	}
 
 	@Override
