@@ -235,13 +235,14 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	@Override
 	public TraceSnapshot findSnapshotWithNearestPrefix(TraceSchedule schedule) {
 		long version = trace.getEmulatorCacheVersion();
-		Optional<? extends TraceSnapshot> exists = getSnapshotsWithSchedule(schedule).stream()
+		TraceSchedule noPSteps = schedule.dropPSteps();
+		Optional<? extends TraceSnapshot> exists = getSnapshotsWithSchedule(noPSteps).stream()
 				.filter(s -> s.getVersion() >= version)
 				.findFirst();
 		if (exists.isPresent()) {
 			return exists.get();
 		}
-		return doFindNearest(schedule.dropPSteps(), version);
+		return doFindNearest(noPSteps, version);
 	}
 
 	@Override
