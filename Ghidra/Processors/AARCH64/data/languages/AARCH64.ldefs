@@ -13,6 +13,7 @@
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <compiler name="Visual Studio" spec="AARCH64_win.cspec" id="windows"/>
     <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
+    <compiler name="Swift" spec="AARCH64_swift.cspec" id="swift"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
     <external_name tool="Golang.register.info.file" name="AARCH64_golang.register.info"/>

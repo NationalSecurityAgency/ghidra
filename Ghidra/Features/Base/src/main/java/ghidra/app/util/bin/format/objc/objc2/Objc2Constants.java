@@ -44,6 +44,7 @@ public final class Objc2Constants {
 	public final static String OBJC2_PROTOCOL_REFS = "__objc_protorefs";
 	public final static String OBJC2_SELECTOR_REFS = "__objc_selrefs";
 	public final static String OBJC2_SUPER_REFS = "__objc_superrefs";
+	public final static String OBJC2_STUBS = "__objc_stubs";
 
 	/**
 	 * Returns a list containing valid Objective-C 2.0 section names.

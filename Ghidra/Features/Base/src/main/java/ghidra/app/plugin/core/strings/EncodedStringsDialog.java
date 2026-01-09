@@ -58,6 +58,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
+import ghidra.util.charset.CharsetInfoManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.table.GhidraTable;
@@ -69,10 +70,10 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private static final Map<String, AbstractStringDataType> CHARSET_TO_DT_MAP = Map.ofEntries(
 		// charsets not in this map will use StringDataType and will
 		// set the charset setting at the memory location of the string to be created
-		Map.entry(CharsetInfo.USASCII, StringDataType.dataType),
-		Map.entry(CharsetInfo.UTF8, StringUTF8DataType.dataType),
-		Map.entry(CharsetInfo.UTF16, UnicodeDataType.dataType),
-		Map.entry(CharsetInfo.UTF32, Unicode32DataType.dataType));
+		Map.entry(CharsetInfoManager.USASCII, StringDataType.dataType),
+		Map.entry(CharsetInfoManager.UTF8, StringUTF8DataType.dataType),
+		Map.entry(CharsetInfoManager.UTF16, UnicodeDataType.dataType),
+		Map.entry(CharsetInfoManager.UTF32, Unicode32DataType.dataType));
 
 	private static final String BUTTON_FONT_ID = "font.plugin.strings.buttons";
 
@@ -443,7 +444,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private void buildCharsetPickerComponents() {
 		charsetComboBox = new GhidraComboBox<>();
 		charsetComboBox.getAccessibleContext().setAccessibleName("Charset Checkboxes");
-		for (String charsetName : CharsetInfo.getInstance().getCharsetNames()) {
+		for (String charsetName : CharsetInfoManager.getInstance().getCharsetNames()) {
 			charsetComboBox.addToModel(charsetName);
 		}
 		charsetComboBox.setSelectedItem(getDefault(EncodedStringsPlugin.CHARSET_OPTIONNAME,
@@ -908,7 +909,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private void updateOptions() {
 		String charsetName = charsetComboBox.getSelectedItem().toString();
 		if (!charsetExists(charsetName)) {
-			charsetName = CharsetInfo.USASCII;
+			charsetName = CharsetInfoManager.USASCII;
 		}
 
 		boolean scriptOptions = showScriptOptionsButton.isSelected();
@@ -930,7 +931,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			settings = new SettingsImpl();
 			CharsetSettingsDefinition.CHARSET.setCharset(settings, charsetName);
 		}
-		int charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
+		int charSize = CharsetInfoManager.getInstance().getCharsetCharSize(charsetName);
 
 		updateTrigramStringValidator(stringModelFilenameComboBox.getText());
 		boolean requireValidStrings = requireValidStringCB.isSelected();

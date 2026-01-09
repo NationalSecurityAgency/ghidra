@@ -27,6 +27,7 @@ import ghidra.features.base.memsearch.bytesource.SearchRegion;
 import ghidra.features.base.memsearch.matcher.ByteMatcher;
 import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
 import ghidra.program.model.address.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.task.TaskMonitor;
@@ -328,6 +329,16 @@ public class MemSearcherTest {
 		@Override
 		public void invalidate() {
 			// ignore
+		}
+		
+		@Override
+		public ProgramLocation getCanonicalLocation(Address address) {
+			return AddressableByteSource.generateProgramLocation(null, address);
+		}
+
+		@Override
+		public Address rebaseFromCanonical(ProgramLocation location) {
+			return location.getAddress();
 		}
 	}
 

@@ -248,7 +248,7 @@ public class Objc2TypeMetadata extends AbstractObjcTypeMetadata {
 				imageInfo.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup image info: " + imageInfo);
+				log("Failed to markup: " + imageInfo);
 			}
 		}
 		for (Objc2Category category : categories) {
@@ -256,7 +256,7 @@ public class Objc2TypeMetadata extends AbstractObjcTypeMetadata {
 				category.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup category: " + category);
+				log("Failed to markup: " + category);
 			}
 		}
 		for (Objc2Class cls : classes) {
@@ -264,7 +264,7 @@ public class Objc2TypeMetadata extends AbstractObjcTypeMetadata {
 				cls.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup class: " + cls);
+				log("Failed to markup: " + cls);
 			}
 		}
 		for (Objc2Protocol protocol : protocols) {
@@ -274,7 +274,7 @@ public class Objc2TypeMetadata extends AbstractObjcTypeMetadata {
 				protocol.applyTo(namespace, monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup protocol: " + protocol);
+				log("Failed to markup: " + protocol);
 			}
 		}
 		for (Objc2MessageReference messageRef : messageRefs) {
@@ -282,7 +282,7 @@ public class Objc2TypeMetadata extends AbstractObjcTypeMetadata {
 				messageRef.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup message reference: " + messageRef);
+				log("Failed to markup: " + messageRef);
 			}
 		}
 

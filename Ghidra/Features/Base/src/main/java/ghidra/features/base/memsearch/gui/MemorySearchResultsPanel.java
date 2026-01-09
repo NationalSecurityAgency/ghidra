@@ -119,6 +119,11 @@ public class MemorySearchResultsPanel extends JPanel {
 		TaskLauncher.launch(task);
 	}
 
+	public void refreshAndMaybeScanForChanges(AddressableByteSource byteSource, Scanner scanner, List<MemoryMatch> previousResults) {
+		RefreshAndScanTask task = new RefreshAndScanTask(byteSource, scanner, previousResults);
+		TaskLauncher.launch(task);
+	}
+
 	private MemoryMatchTableLoader createLoader(MemorySearcher searcher, Combiner combiner) {
 		if (!hasResults()) {
 			hasDeleted = false;
@@ -229,11 +234,17 @@ public class MemorySearchResultsPanel extends JPanel {
 
 		private AddressableByteSource byteSource;
 		private Scanner scanner;
+		private List<MemoryMatch> matchList;
 
 		public RefreshAndScanTask(AddressableByteSource byteSource, Scanner scanner) {
+			this(byteSource, scanner, tableModel.getModelData());
+		}
+
+		public RefreshAndScanTask(AddressableByteSource byteSource, Scanner scanner, List<MemoryMatch> matches) {
 			super("Refreshing", true, true, true);
 			this.byteSource = byteSource;
 			this.scanner = scanner;
+			this.matchList = matches;
 		}
 
 		private void tableLoadComplete(MemoryMatch match) {
@@ -250,16 +261,13 @@ public class MemorySearchResultsPanel extends JPanel {
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			List<MemoryMatch> matches = tableModel.getModelData();
-
-			if (refreshByteValues(monitor, matches) && scanner != null) {
-				performScanFiltering(monitor, matches);
+			if (refreshByteValues(monitor, matchList) && scanner != null) {
+				performScanFiltering(monitor, matchList);
 			}
 			else {
 				tableModel.fireTableDataChanged();  // some data bytes may have changed, repaint
 				provider.refreshAndScanCompleted(null);
 			}
-
 		}
 
 		private boolean refreshByteValues(TaskMonitor monitor, List<MemoryMatch> matches) {

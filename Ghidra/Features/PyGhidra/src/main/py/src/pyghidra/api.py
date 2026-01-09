@@ -121,7 +121,7 @@ def consume_program(
         object was provided, the same consumer object is returned. Otherwise, a new consumer object
         is created and returned.
     :raises FileNotFoundError: If the path does not exist in the project.
-    :raises TypeError: If the path in the project exists but is not a Program.
+    :raises pyghidra.ProgramTypeError: If the path in the project exists but is not a Program.
     """
     from ghidra.program.model.listing import Program
     from java.lang import Object # type:ignore @UnresolvedImport
@@ -135,7 +135,7 @@ def consume_program(
     program_cls = Program.class_
     if not program_cls.isAssignableFrom(dobj.getClass()):
         dobj.release(consumer)
-        raise TypeError(f'"{path}" exists but is not a Program')
+        raise ProgramTypeError(f'"{path}" exists but is not a Program')
     return dobj, consumer
 
 @contextlib.contextmanager
@@ -151,7 +151,7 @@ def program_context(
     :param path: The project path of the program (should start with "/").
     :return: The Ghidra program.
     :raises FileNotFoundError: If the path does not exist in the project.
-    :raises TypeError: If the path in the project exists but is not a Program.
+    :raises pyghidra.ProgramTypeError: If the path in the project exists but is not a Program.
     """
     program, consumer = consume_program(project, path)    
     try:
@@ -270,6 +270,7 @@ def transaction(
         yield transaction_id
     except:
         success = False
+        raise
     finally:
         program.endTransaction(transaction_id, success)
 
@@ -280,6 +281,8 @@ def analysis_properties(program: "Program") -> "Options":
     :return: the Ghidra "Program.ANALYSIS_PROPERTIES" options.
     """
     from ghidra.program.model.listing import Program
+    from ghidra.app.plugin.core.analysis import AutoAnalysisManager
+    AutoAnalysisManager.getAnalysisManager(program).initializeOptions()
     return program.getOptions(Program.ANALYSIS_PROPERTIES)
 
 def program_info(program: "Program") -> "Options":
@@ -359,7 +362,11 @@ def walk_programs(
             with program_context(project, file.getPathname()) as program:
                 if program_filter(file, program):
                     callback(file, program)
-        except TypeError:
-            pass # skip over non-programs
+        except ProgramTypeError:
+            pass # skip over non-programs 
     
     walk_project(project, process, start=start)
+    
+class ProgramTypeError(TypeError):
+    """Custom exception for when a Program was expected but not received."""
+    pass

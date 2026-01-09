@@ -64,7 +64,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		implements ClipboardContentProviderService, OptionsChangeListener {
 
 	protected static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static int[] COMMENT_TYPESx = CommentTypes.getTypes();
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
@@ -493,6 +492,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	protected Transferable copyCode(TaskMonitor monitor) {
 
 		AddressSetView addressSet = getSelectedAddresses();
+
 		ListingModel listingModel = getListingModel();
 		TextLayoutGraphics g = new TextLayoutGraphics();
 		LayoutBackgroundColorManager colorMap =

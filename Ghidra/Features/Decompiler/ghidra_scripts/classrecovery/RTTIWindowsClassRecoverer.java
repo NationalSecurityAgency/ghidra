@@ -2381,19 +2381,23 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Map<Integer, Address> classOffsetToVftableMap =
 				recoveredClass.getClassOffsetToVftableMap();
 			Set<Integer> classVftableOffsets = classOffsetToVftableMap.keySet();
-			List<Integer> sortedOffsets = new ArrayList<Integer>(classVftableOffsets);
-			Collections.sort(sortedOffsets);
 
-			Integer offset = sortedOffsets.get(0);
+			if (!classVftableOffsets.isEmpty()) {
 
-			Address vftableAddress = classOffsetToVftableMap.get(offset);
+				List<Integer> sortedOffsets = new ArrayList<Integer>(classVftableOffsets);
+				Collections.sort(sortedOffsets);
 
-			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
+				Integer offset = sortedOffsets.get(0);
 
-			// if it fits at offset or is at the end and class structure can be grown, 
-			// copy the whole baseClass structure to the class Structure at the given offset
-			EditStructureUtils.addDataTypeToStructure(classStructureDataType, offset.intValue(),
-				classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+				Address vftableAddress = classOffsetToVftableMap.get(offset);
+
+				DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
+
+				// if it fits at offset or is at the end and class structure can be grown, 
+				// copy the whole baseClass structure to the class Structure at the given offset
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, offset.intValue(),
+					classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+			}
 		}
 
 		// add the vbtable structure for single inheritance/virt parent case

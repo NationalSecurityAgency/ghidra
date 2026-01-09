@@ -2079,11 +2079,9 @@ public interface JitCompiledPassage {
 	/**
 	 * Construct a p-code op
 	 * 
-	 * @param factory the language's address factory
-	 * @param space the name of the space of the op's sequence number
-	 * @param offset the address offset of the op's sequence number
-	 * @param index the index of the op's sequence number
-	 * @param op the opcode
+	 * @param target address of instruction
+	 * @param sq sequence of pcode op with an instructions pcode ops
+	 * @param opcode pcode operation
 	 * @param inputs the inputs
 	 * @param output the output
 	 * @return the op
@@ -2144,7 +2142,7 @@ public interface JitCompiledPassage {
 	 * This is invoked by generated constructors to retain a userop reference for later invocation.
 	 * Note that it is the userop as defined by the user or emulator, not any wrapper used during
 	 * decode or translation. Depending on the invocation strategy, this reference may be saved and
-	 * later used with {@link #invokeUserop(PcodeUseropDefinition, Varnode, Varnode[])}, or its
+	 * later used with {@link #invokeUserop(PcodeUseropDefinition, PcodeOp)}, or its
 	 * method and instance may be extracted and saved for Direct invocation later.
 	 * 
 	 * @param name the name of the userop

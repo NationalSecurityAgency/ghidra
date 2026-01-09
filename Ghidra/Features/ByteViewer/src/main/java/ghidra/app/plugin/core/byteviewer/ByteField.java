@@ -45,19 +45,20 @@ public class ByteField extends SimpleTextField {
 	 * @param startX the starting horizontal position of the field.
 	 * @param startY the starting vertical position of the field.
 	 * @param width the width of the field.
+	 * @param charWidth width of a single character (and the cursor that will cover the character) 
 	 * @param allowCursorAtEnd if true, the cursor will be allowed at the end of the field.
 	 * @param fieldOffset the column position of the fieldFactory that generated this field.
 	 * @param index the field's index
 	 * @param hlFactory the factory used to create highlights
 	 */
-	public ByteField(String text, FontMetrics fontMetrics, int startX, int width,
+	public ByteField(String text, FontMetrics fontMetrics, int startX, int width, int charWidth,
 			boolean allowCursorAtEnd, int fieldOffset, BigInteger index,
 			FieldHighlightFactory hlFactory) {
 
 		super(text, fontMetrics, startX, width, allowCursorAtEnd, hlFactory);
 		this.fieldOffset = fieldOffset;
 		this.index = index;
-		this.cursorWidth = fontMetrics.charWidth('W');
+		this.cursorWidth = charWidth;
 	}
 
 	@Override
@@ -89,6 +90,7 @@ public class ByteField extends SimpleTextField {
 
 		g.setColor(cursorColor);
 
+		// we don't use getCursorBounds() so that we can specify a fixed, full-width cursor
 		int x = startX + metrics.stringWidth(text.substring(0, cursorLoc.col()));
 		g.fillRect(x, -heightAbove, cursorWidth, heightAbove + heightBelow);
 

@@ -88,7 +88,6 @@ public interface TraceTimeManager {
 	 * this will ignore any snapshots whose version is less than the emulator cache version.
 	 * 
 	 * @param schedule the desired schedule
-	 * @param allowOpSteps whether to include snapshots with p-code op steps
 	 * @return the found snapshot, or null
 	 * @see Trace#getEmulatorCacheVersion()
 	 */

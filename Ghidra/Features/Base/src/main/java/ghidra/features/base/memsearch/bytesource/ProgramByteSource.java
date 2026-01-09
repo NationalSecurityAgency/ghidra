@@ -21,6 +21,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * {@link AddressableByteSource} implementation for a Ghidra {@link Program}
@@ -53,4 +54,18 @@ public class ProgramByteSource implements AddressableByteSource {
 		// nothing to do in the static case
 	}
 
+	@Override
+	public ProgramLocation getCanonicalLocation(Address address) {
+		return AddressableByteSource.generateProgramLocation(getProgram(), address);
+	}
+
+	@Override
+	public Address rebaseFromCanonical(ProgramLocation location) {
+		long offset = location.getByteAddress().subtract(location.getProgram().getImageBase());
+		return getProgram().getImageBase().add(offset);
+	}
+	
+	public Program getProgram() {
+		return memory.getProgram();
+	}
 }

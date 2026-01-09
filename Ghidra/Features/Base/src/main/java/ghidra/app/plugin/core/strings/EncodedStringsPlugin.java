@@ -30,9 +30,9 @@ import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.CharsetInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.charset.CharsetInfoManager;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -52,7 +52,7 @@ public class EncodedStringsPlugin extends ProgramPlugin {
 	private static final String ACTIONNAME = "Search For Encoded Strings";
 	static final String STRINGS_OPTION_NAME = "Strings";
 	static final String CHARSET_OPTIONNAME = "Default Charset";
-	static final String CHARSET_DEFAULT_VALUE = CharsetInfo.USASCII;
+	static final String CHARSET_DEFAULT_VALUE = CharsetInfoManager.USASCII;
 	static final String TRANSLATE_SERVICE_OPTIONNAME = "Default Translation Service Name";
 	static final String STRINGMODEL_FILENAME_OPTIONNAME = "Default String Model Filename";
 	static final String STRINGMODEL_FILENAME_DEFAULT = "stringngrams/StringModel.sng";

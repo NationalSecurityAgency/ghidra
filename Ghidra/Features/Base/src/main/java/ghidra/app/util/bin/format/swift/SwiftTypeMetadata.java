@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,19 +168,19 @@ public class SwiftTypeMetadata {
 			throws CancelledException {
 		monitor.setMessage("Parsing Swift entry point(s)...");
 		monitor.setIndeterminate(true);
-		try {
-			for (MemoryBlock block : SwiftUtils.getSwiftBlocks(section, program)) {
-				monitor.checkCancelled();
-				Address blockStart = block.getStart();
+		for (MemoryBlock block : SwiftUtils.getSwiftBlocks(section, program)) {
+			monitor.checkCancelled();
+			Address blockStart = block.getStart();
+			try {
 				reader.setPointerIndex(blockStart.getOffset());
 				EntryPoint entryPoint = new EntryPoint(reader);
 				entryPoints.add(entryPoint);
 				markupList.add(new SwiftStructureInfo(entryPoint,
 					new SwiftStructureAddress(blockStart, null)));
 			}
-		}
-		catch (IOException e) {
-			log("Failed to parse entry point(s) from section '" + section + "'");
+			catch (IOException e) {
+				log("Failed to parse entry point  at %s: %s".formatted(blockStart, e.getMessage()));
+			}
 		}
 	}
 
@@ -361,7 +361,11 @@ public class SwiftTypeMetadata {
 				Address blockStart = block.getStart();
 				reader.setPointerIndex(blockStart.getOffset());
 				int i = skipZeroEntries(reader, 0, block.getSize());
-				while (i < block.getSize()) {
+				while (i + MultiPayloadEnumDescriptor.PEEK_SIZE <= block.getSize()) {
+					int contentsSize = MultiPayloadEnumDescriptor.peekContentsSize(reader);
+					if (i + MultiPayloadEnumDescriptor.SIZE + contentsSize > block.getSize()) {
+						break;
+					}
 					monitor.checkCancelled();
 					MultiPayloadEnumDescriptor descriptor = new MultiPayloadEnumDescriptor(reader);
 					mpEnumDescriptors.add(descriptor);
@@ -386,20 +390,20 @@ public class SwiftTypeMetadata {
 	 */
 	private void parseProtocolDescriptors(SwiftSection section, BinaryReader reader)
 			throws CancelledException {
-		monitor.setMessage("Parsing Swift protocol descriptors...");
-		monitor.setIndeterminate(true);
-		try {
-			List<SwiftStructureAddress> addrPairs = parsePointerTable(section, reader);
-			for (SwiftStructureAddress addrPair : addrPairs) {
-				reader.setPointerIndex(addrPair.structAddr().getOffset());
+		List<SwiftStructureAddress> addrPairs = parsePointerTable(section, reader);
+		monitor.initialize(addrPairs.size(), "Parsing Swift protocol descriptors...");
+		for (SwiftStructureAddress addrPair : addrPairs) {
+			monitor.increment();
+			reader.setPointerIndex(addrPair.structAddr().getOffset());
+			try {
 				TargetProtocolDescriptor descriptor = new TargetProtocolDescriptor(reader);
 				protocolDescriptors.add(descriptor);
-				markupList.add(new SwiftStructureInfo(descriptor,
-					new SwiftStructureAddress(addrPair.structAddr(), addrPair.pointerAddr())));
+				markupList.add(new SwiftStructureInfo(descriptor, addrPair));
 			}
-		}
-		catch (IOException e) {
-			log("Failed to parse protocol descriptors from section '" + section + "'");
+			catch (IOException e) {
+				log("Failed to parse protocol descriptors at %s: %s"
+						.formatted(addrPair.structAddr(), e.getMessage()));
+			}
 		}
 	}
 
@@ -412,23 +416,21 @@ public class SwiftTypeMetadata {
 	 */
 	private void parseProtocolConformanceDescriptors(SwiftSection section, BinaryReader reader)
 			throws CancelledException {
-		monitor.setMessage("Parsing Swift protocol conformance descriptors...");
-		monitor.setIndeterminate(true);
-		try {
-			List<SwiftStructureAddress> addrPairs = parsePointerTable(section, reader);
-			for (SwiftStructureAddress addrPair : addrPairs) {
+		List<SwiftStructureAddress> addrPairs = parsePointerTable(section, reader);
+		monitor.initialize(addrPairs.size(), "Parsing Swift protocol conformance descriptors...");
+		for (SwiftStructureAddress addrPair : addrPairs) {
+			monitor.increment();
+			try {
 				reader.setPointerIndex(addrPair.structAddr().getOffset());
 				TargetProtocolConformanceDescriptor descriptor =
 					new TargetProtocolConformanceDescriptor(reader);
 				protocolConformanceDescriptors.add(descriptor);
-				markupList.add(new SwiftStructureInfo(descriptor,
-					new SwiftStructureAddress(addrPair.structAddr(),
-						addrPair.pointerAddr())));
+				markupList.add(new SwiftStructureInfo(descriptor, addrPair));
 			}
-		}
-		catch (IOException e) {
-			log("Failed to parse protocol conformance descriptors from section '" + section +
-				"'");
+			catch (IOException e) {
+				log("Failed to parse protocol conformance descriptor at %s: %s"
+						.formatted(addrPair.structAddr(), e.getMessage()));
+			}
 		}
 	}
 
@@ -441,37 +443,37 @@ public class SwiftTypeMetadata {
 	 */
 	private void parseTypeDescriptors(SwiftSection section, BinaryReader reader)
 			throws CancelledException {
-		monitor.setMessage("Parsing Swift type descriptors...");
-		monitor.setIndeterminate(true);
-		try {
-			List<SwiftStructureAddress> addrPairs = parsePointerTable(section, reader);
-			for (SwiftStructureAddress addrPair : addrPairs) {
+		List<SwiftStructureAddress> addrPairs = parsePointerTable(section, reader);
+		monitor.initialize(addrPairs.size(), "Parsing Swift type descriptors...");
+		for (SwiftStructureAddress addrPair : addrPairs) {
+			monitor.increment();
+			try {
 				reader.setPointerIndex(addrPair.structAddr().getOffset());
 				long origIndex = reader.getPointerIndex();
 				TargetTypeContextDescriptor descriptor = new TargetTypeContextDescriptor(reader);
 				reader.setPointerIndex(origIndex);
-				int contextDescriptorKind = ContextDescriptorKind.getKind(descriptor.getFlags());
-				descriptor = switch (contextDescriptorKind) {
-					case ContextDescriptorKind.CLASS:
+				ContextDescriptorKind kind = descriptor.getFlags().getKind();
+				descriptor = switch (kind) {
+					case Class:
 						yield new TargetClassDescriptor(reader);
-					case ContextDescriptorKind.STRUCT:
+					case Struct:
 						yield new TargetStructDescriptor(reader);
-					case ContextDescriptorKind.ENUM:
+					case Enum:
 						yield new TargetEnumDescriptor(reader);
 					default:
 						log("Unrecognized type descriptor %d at index: 0x%x"
-								.formatted(contextDescriptorKind, origIndex));
+								.formatted(kind.getValue(), origIndex));
 						yield null;
 				};
 				if (descriptor != null) {
 					typeDescriptors.put(descriptor.getName(), descriptor);
-					markupList.add(new SwiftStructureInfo(descriptor,
-						new SwiftStructureAddress(addrPair.structAddr(), addrPair.pointerAddr())));
+					markupList.add(new SwiftStructureInfo(descriptor, addrPair));
 				}
 			}
-		}
-		catch (IOException e) {
-			log("Failed to parse type descriptors from section '" + section + "'");
+			catch (IOException e) {
+				log("Failed to parse type descriptor at %s: %s".formatted(addrPair,
+					e.getMessage()));
+			}
 		}
 	}
 
@@ -487,6 +489,8 @@ public class SwiftTypeMetadata {
 			throws CancelledException {
 		final int POINTER_SIZE = 4;
 		List<SwiftStructureAddress> result = new ArrayList<>();
+		monitor.setMessage("Parsing Swift protocol conformance descriptors...");
+		monitor.setIndeterminate(true);
 		try {
 			for (MemoryBlock block : SwiftUtils.getSwiftBlocks(section, program)) {
 				Address blockAddr = block.getStart();
@@ -503,7 +507,7 @@ public class SwiftTypeMetadata {
 			}
 		}
 		catch (IOException e) {
-			log("Failed to parse Swift struction pointers from section '" + section + "'");
+			log("Failed to parse Swift structure pointers from section '" + section + "'");
 		}
 		return result;
 	}
@@ -514,27 +518,45 @@ public class SwiftTypeMetadata {
 	 * @throws CancelledException if the user cancelled the operation
 	 */
 	public void markup() throws CancelledException {
-		monitor.setMessage("Marking up Swift structures...");
-		monitor.initialize(markupList.size());
+		monitor.initialize(markupList.size(), "Marking up Swift structures...");
 		for (SwiftStructureInfo structInfo : markupList) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
+			monitor.increment();
 			try {
 				SwiftTypeMetadataStructure struct = structInfo.struct();
 				DataType dt = struct.toDataType();
-				DataUtilities.createData(program, structInfo.addr().structAddr(), dt, -1,
-					ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
+				try {
+					DataUtilities.createData(program, structInfo.addr().structAddr(), dt, -1,
+						ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
+				}
+				catch (CodeUnitInsertionException e) {
+					// Probably multiple pointers to same structure
+				}
+				for (SwiftTypeMetadataStructure trailingStruct : struct.getTrailingObjects()) {
+					Address trailingAddr = structInfo.addr()
+							.structAddr()
+							.add(trailingStruct.getBase() - struct.getBase());
+					DataType trailingDt = trailingStruct.toDataType();
+					try {
+						DataUtilities.createData(program, trailingAddr, trailingDt, -1,
+							ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
+					}
+					catch (CodeUnitInsertionException e) {
+						// Probably multiple pointers to same structure
+					}
+				}
 				if (structInfo.addr().pointerAddr() != null) {
 					PointerTypedef relativePtrDataType =
 						new PointerTypedef(null, dt, 4, null, PointerType.RELATIVE);
-					DataUtilities.createData(program, structInfo.addr().pointerAddr(),
-						relativePtrDataType, -1, ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
+					try {
+						DataUtilities.createData(program, structInfo.addr().pointerAddr(),
+							relativePtrDataType, -1, ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
+					}
+					catch (CodeUnitInsertionException e) {
+						// Unexpected, but safe to ignore
+					}
 				}
 			}
-			catch (CodeUnitInsertionException e) {
-				// Probably just called more than once
-			}
-			catch (DuplicateNameException | IOException e) {
+			catch (IllegalArgumentException | DuplicateNameException | IOException e) {
 				log("Failed to markup: " + structInfo);
 			}
 		}

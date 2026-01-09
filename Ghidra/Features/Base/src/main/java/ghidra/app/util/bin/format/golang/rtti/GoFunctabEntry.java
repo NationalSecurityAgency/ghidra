@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
@@ -86,9 +87,19 @@ public class GoFunctabEntry {
 	@Markup
 	public GoFuncData getFuncData() throws IOException {
 		GoModuledata moduledata = getModuledata();
-		return funcoff != 0 && moduledata != null
+		GoFuncData result = funcoff != 0 && moduledata != null
 				? moduledata.getFuncDataInstance(funcoff)
 				: null;
+		if (result != null && !Objects.equals(funcAddress, result.getFuncAddress())) {
+			// defeat obfuscated GoFuncData func address values with good addr from ftab entry
+			if (programContext.getProgram()
+					.getMemory()
+					.getLoadedAndInitializedAddressSet()
+					.contains(funcAddress)) {
+				result.setFuncAddressOverride(funcAddress);
+			}
+		}
+		return result;
 	}
 
 	/**
