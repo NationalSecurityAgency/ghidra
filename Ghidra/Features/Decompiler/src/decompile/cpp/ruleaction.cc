@@ -4919,7 +4919,6 @@ int4 RuleShiftAnd::applyOp(PcodeOp *op,Funcdata &data)
   if (!shiftin->isWritten()) return 0;
   PcodeOp *andop = shiftin->getDef();
   if (andop->code() != CPUI_INT_AND) return 0;
-  if (shiftin->loneDescend() != op) return 0;
   Varnode *maskvn = andop->getIn(1);
   if (!maskvn->isConstant()) return 0;
   uintb mask = maskvn->getOffset();
