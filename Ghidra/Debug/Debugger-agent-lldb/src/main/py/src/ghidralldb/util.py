@@ -178,6 +178,40 @@ def _choose_region_info_reader() -> RegionInfoReader:
 REGION_INFO_READER = _choose_region_info_reader()
 
 
+@dataclass
+class Available:
+    pid: int
+    name: str
+    command: str
+
+
+class AvailableInfoReader(object):
+    def available_from_sbprocinfo(self, info: lldb.SBProcessInfo) -> Available:
+        pid = info.GetProcessID()
+        name = info.GetName()
+        command = info.GetExecutableFile()
+        return Available(pid, name, command)
+
+    def get_availables(self) -> List[Available]:
+        availables = []
+        platform = get_debugger().GetPlatformAtIndex(0)
+        err = lldb.SBError()
+        proclist = platform.GetAllProcesses(err)
+        for i in range(0, proclist.GetSize()):
+            info = lldb.SBProcessInfo()
+            success = proclist.GetProcessInfoAtIndex(i, info)
+            if success:
+                a = self.available_from_sbprocinfo(info)
+                availables.append(a)
+        return availables
+
+
+def _choose_available_info_reader() -> AvailableInfoReader:
+    return AvailableInfoReader()
+
+
+AVAILABLE_INFO_READER = _choose_available_info_reader()
+
 BREAK_LOCS_CMD = 'breakpoint list {}'
 BREAK_PATTERN = re.compile('')
 BREAK_LOC_PATTERN = re.compile('')
