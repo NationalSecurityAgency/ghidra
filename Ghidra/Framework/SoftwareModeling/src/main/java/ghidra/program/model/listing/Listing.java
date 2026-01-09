@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.listing;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -1038,5 +1039,26 @@ public interface Listing {
 	 * @return the number of addresses where at least one comment type has been applied
 	 */
 	public long getCommentAddressCount();
+
+	/**
+	 * Anonymize all comment history records by replacing usernames with a given identifier.
+	 *
+	 * @param anonymousName the replacement name
+	 * @return the number of records updated
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	public int anonymizeCommentHistory(String anonymousName)
+		throws IOException;
+
+	/**
+	 * Anonymize comment history records for a specific address and comment type by replacing usernames with a given identifier.
+	 *
+	 * @param anonymousName the replacement name
+	 * @param addr the address of the comment to anonymize
+	 * @return the number of records updated
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	public int anonymizeCommentHistory(String anonymousName, Address addr)
+		throws IOException;
 
 }
