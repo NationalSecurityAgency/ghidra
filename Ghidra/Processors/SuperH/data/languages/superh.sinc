@@ -1214,7 +1214,9 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 :mac.w  @rm_04_07+,@rn_08_11+  is opcode_12_15=0b0100 & rn_08_11 & rm_04_07 & opcode_00_03=0b1111 
 {
     # FIXME: review this instruction
-    
+
+	local loadm:2;
+	local loadn:2;
     local tempm:4;
     local tempn:4;
     local dest;
@@ -1222,13 +1224,13 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     local ans;
     local templ:4;
     
-    tempn = *:2 rn_08_11;
+    loadn = * rn_08_11;
     rn_08_11 = rn_08_11 + 2;    
-    tempm = *:2 rm_04_07;
+    loadm = * rm_04_07;
     rm_04_07 = rm_04_07 + 2;
     
     templ = macl;
-    tempm = sext(tempn:2) * sext(tempm:2);
+    tempm = sext(loadn) * sext(loadm);
     
     dest = (macl s< 0);
     
