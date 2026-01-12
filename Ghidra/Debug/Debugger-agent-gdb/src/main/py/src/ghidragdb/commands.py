@@ -17,6 +17,7 @@ from concurrent.futures import Future
 from contextlib import contextmanager
 import inspect
 import os.path
+import re
 import socket
 import time
 from typing import (Any, Callable, Dict, Generator, List, Optional, Sequence,
@@ -282,7 +283,7 @@ def compute_name() -> str:
     if progname is None:
         return 'gdb/noname'
     else:
-        return 'gdb/' + progname.split('/')[-1]
+        return 'gdb/' + re.split(r'(/|\\)', progname)[-1]
 
 
 def start_trace(name: str) -> None:

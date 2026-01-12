@@ -164,7 +164,6 @@ __NOTE:__ Do not extract Ghidra on top of an existing installation.
 The Debugger uses Python to connect to the host platform's native debuggers. This requires
 a [supported](#minimum-requirements) version of Python and some additional packages. These packages
 are included in the distribution, but you may still install them from PyPI if you prefer:
-* psutil
 * protobuf>=3.20.3
 * Pybag>=2.2.16 (for WinDbg support)
 
