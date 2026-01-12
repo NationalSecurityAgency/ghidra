@@ -114,7 +114,7 @@ class SubvariableFlow {
   void addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn);
   void addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
   void addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
-  void addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa);
+  void addExtensionPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa);
   void addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,PcodeOp *op);
   ReplaceVarnode *addConstant(ReplaceOp *rop,uintb mask,uint4 slot,Varnode *constvn);
   ReplaceVarnode *addNewConstant(ReplaceOp *rop,uint4 slot,uintb val);
