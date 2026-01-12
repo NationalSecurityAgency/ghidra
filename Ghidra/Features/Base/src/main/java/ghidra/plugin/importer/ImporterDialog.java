@@ -39,6 +39,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GComboBoxCellRenderer;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.app.services.ProgramManager;
@@ -86,7 +87,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	protected JTextField languageTextField;
 	protected JCheckBox mirrorFsCheckBox;
 	protected JButton optionsButton;
-	protected JTextField folderNameTextField;
+	protected ElidingFilePathTextField folderNameTextField;
 	protected GhidraComboBox<Loader> loaderComboBox;
 
 	/**
@@ -228,7 +229,8 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private Component buildFolderNameField() {
-		folderNameTextField = new JTextField();
+		folderNameTextField = new ElidingFilePathTextField();
+		folderNameTextField.setColumns(20);
 		folderNameTextField.setEditable(false);
 		folderNameTextField.setFocusable(false);
 		folderNameTextField.getAccessibleContext().setAccessibleName("Folder Name");

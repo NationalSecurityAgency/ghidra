@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,6 @@ public class ArchivePlugin extends Plugin implements ApplicationLevelOnlyPlugin,
 	static final String TOOL_RUNNING_TITLE = "Cannot Archive while Tools are Running";
 	static final String GROUP_NAME = "Archiving";
 	static final String ARCHIVE_EXTENSION = ".gar";
-	static final String DOT_DOT_DOT = ". . .";
 	static final String TOOLS_FOLDER_NAME = "tools";
 	static final String GROUPS_FOLDER_NAME = "groups";
 	static final String SAVE_FOLDER_NAME = "save";

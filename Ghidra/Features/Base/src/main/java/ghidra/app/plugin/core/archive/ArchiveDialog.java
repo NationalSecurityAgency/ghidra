@@ -22,9 +22,11 @@ import javax.swing.*;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import generic.theme.Gui;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
@@ -76,11 +78,11 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 		JPanel outerPanel = new JPanel(gbl);
 		outerPanel.getAccessibleContext().setAccessibleName("Archive");
 		archiveLabel = new GDLabel(" Archive File ");
-		archiveField = new JTextField();
+		archiveField = new ElidingFilePathTextField();
 		archiveField.setName("archiveField");
 		archiveField.getAccessibleContext().setAccessibleName("Archive Field");
 		archiveField.setColumns(NUM_TEXT_COLUMNS);
-		archiveBrowse = new JButton(ArchivePlugin.DOT_DOT_DOT);
+		archiveBrowse = new BrowseButton();
 		archiveBrowse.addActionListener(e -> {
 			archivePathName = archiveField.getText().trim();
 			String archName = chooseArchiveFile("Choose archive file", "Selects the archive file");
