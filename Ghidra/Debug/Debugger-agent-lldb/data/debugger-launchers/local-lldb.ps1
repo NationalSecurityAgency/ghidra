@@ -30,6 +30,7 @@
 #@arg :file "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 
 . ..\support\lldbsetuputils.ps1

@@ -101,8 +101,10 @@ import ghidra.util.task.TaskMonitor;
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
 	protected static final int MAX_CACHE_SIZE = 5;
 
-	private static final AutoConfigState.ClassHandler<DebuggerEmulationServicePlugin> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerEmulationServicePlugin.class, MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerEmulationServicePlugin> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(DebuggerEmulationServicePlugin.class,
+				MethodHandles.lookup());
 
 	public interface EmulateProgramAction {
 		String NAME = "Emulate Program in new Trace";
@@ -299,7 +301,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@AutoConfigStateField
-	private String defaultEmulator;
+	private String defaultEmulator = DefaultEmulatorFactory.TITLE;
 	protected EmulatorFactory emulatorFactory =
 		new DefaultEmulatorFactory();
 

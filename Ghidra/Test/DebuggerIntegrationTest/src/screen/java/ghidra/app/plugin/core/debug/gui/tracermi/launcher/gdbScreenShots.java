@@ -15,8 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
+import java.awt.Window;
 import java.nio.file.Paths;
 import java.util.Map;
+
+import javax.swing.SwingUtilities;
 
 import org.junit.Test;
 
@@ -27,7 +30,8 @@ import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.test.ToyProgramBuilder;
 import help.screenshot.GhidraScreenShotGenerator;
 
-public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGenerator {
+// Class name must be <topic>ScreenShots, and topic is "gdb", so yeah, lowercase!
+public class gdbScreenShots extends GhidraScreenShotGenerator {
 	TraceRmiLauncherServicePlugin servicePlugin;
 
 	protected void captureLauncherByTitle(String title, Map<String, ValStr<?>> args)
@@ -47,7 +51,10 @@ public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGe
 
 		runSwingLater(() -> servicePlugin.configureAndLaunch(offer));
 
-		captureDialog(TraceRmiLaunchDialog.class);
+		TraceRmiLaunchDialog dialog = waitForDialogComponent(TraceRmiLaunchDialog.class);
+		Window window = SwingUtilities.windowForComponent(dialog.getComponent());
+		window.requestFocus();
+		captureDialog(dialog);
 	}
 
 	protected ValStr<PathIsFile> fileArg(String path) {

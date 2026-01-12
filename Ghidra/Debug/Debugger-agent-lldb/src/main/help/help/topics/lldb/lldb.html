@@ -94,6 +94,9 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
       <LI><B><TT>lldb</TT> command</B>: This is the command or path to LLDB. We recommend version
       15 or later.</LI>
 
+	  <LI><B><TT>lldb</TT> cmd args</B>: Arguments passed directly to LLDB (versus the target).
+	  Note: these arguments may override user arguments passed to the cmd.</LI>
+	  
       <LI><B>Run command</B>: This is the LLDB command to actually launch the target. In most cases
       this should include "<TT>--stop-at-entry</TT>", since this will assure you an initial break
       and a chance to enable your breakpoints.</LI>

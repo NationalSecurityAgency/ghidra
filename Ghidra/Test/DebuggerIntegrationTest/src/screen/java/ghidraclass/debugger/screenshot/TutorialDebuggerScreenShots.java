@@ -18,6 +18,7 @@ package ghidraclass.debugger.screenshot;
 import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.io.*;
 import java.nio.charset.Charset;
@@ -25,6 +26,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.SwingUtilities;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -277,7 +280,10 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 			}
 		}));
 
-		captureDialog(TraceRmiLaunchDialog.class);
+		TraceRmiLaunchDialog dialog = waitForDialogComponent(TraceRmiLaunchDialog.class);
+		Window window = SwingUtilities.windowForComponent(dialog.getComponent());
+		window.requestFocus();
+		captureDialog(dialog);
 	}
 
 	@Test
@@ -382,9 +388,9 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		Program prog = null;
 		long snap = flatDbg.getCurrentSnap();
 		try (LoadResults<Program> result = ProgramLoader.builder()
-					.source(new File(module.getName(snap)))
-					.project(env.getProject())
-					.monitor(monitor)
+				.source(new File(module.getName(snap)))
+				.project(env.getProject())
+				.monitor(monitor)
 				.load()) {
 
 			result.save(monitor);
