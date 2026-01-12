@@ -228,12 +228,12 @@ def program_loader() -> "ProgramLoader.Builder":
 ```python
 def task_monitor(
         timeout: Optional[int] = None
-    ) -> "PyGhidraTaskMonitor":
+    ) -> "TaskMonitor":
     """
-    Convenience function to get a "PyGhidraTaskMonitor" object.
+    Convenience function to get a "TaskMonitor" object.
 
     :param timeout: An optional number of seconds to wait before canceling the monitor.
-    :return: A "PyGhidraTaskMonitor"  object.
+    :return: A "TaskMonitor" object.
     """
 ```
 
@@ -577,7 +577,9 @@ __3.1.0__
 __3.0.2__
 * Fixed an issue that prevented [`pyghidra.analysis_properties()`](#pyghidraanalysis_properties)
   from having access to all of the analysis properties.
-* Fixed issues related to the PyGhidra API inadvertently squashing exceptions
+* Fixed issues related to the PyGhidra API inadvertently squashing exceptions.
+* Calling [`pyghidra.task_monitor()`](#pyghidratask_monitor) with no `timeout` parameter will now
+  return a `TaskMonitor.DUMMY` instead of a `PyGhidraTaskMonitor`. 
 
 __3.0.1__
 * Fixed `AttributeError: module 'pyghidra' has no attribute 'program_conext'` when performing a

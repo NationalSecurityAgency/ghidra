@@ -305,17 +305,20 @@ def program_loader() -> "ProgramLoader.Builder":
 
 def task_monitor(
         timeout: Optional[int] = None
-    ) -> "PyGhidraTaskMonitor":
+    ) -> "TaskMonitor":
     """
-    Convenience function to get a "PyGhidraTaskMonitor" object.
+    Convenience function to get a "TaskMonitor" object.
 
     :param timeout: An optional number of seconds to wait before canceling the monitor.
-    :return: A "PyGhidraTaskMonitor"  object.
+    :return: A "TaskMonitor" object.
     """
+    from ghidra.util.task import TaskMonitor
     from ghidra.pyghidra import PyGhidraTaskMonitor
     from jpype.types import JInt
-    t = None if timeout is None else JInt(timeout)
-    return PyGhidraTaskMonitor(t, None)
+    if timeout is None:
+        return TaskMonitor.DUMMY
+    else:
+        return PyGhidraTaskMonitor(JInt(timeout), None)
 
 def walk_project(
         project: "Project",
