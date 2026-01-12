@@ -188,10 +188,8 @@ private:
   int4 unnecessarypcode;	///< Count of unnecessary extension/truncation operations
   int4 readnowrite;		///< Count of temporary registers that are read but not written
   int4 writenoread;		///< Count of temporary registers that are written but not read
-  int4 largetemp;		///< Count of temporary registers that are too large
   bool printextwarning;		///< Set to \b true if warning emitted for each unnecessary truncation/extension
   bool printdeadwarning;	///< Set to \b true if warning emitted for each written but not read temporary
-  bool printlargetempwarning;	///< Set to \b true if warning emitted for each too large temporary
   SubtableSymbol *root_symbol;	///< The root symbol table for the parsed SLEIGH file
   vector<SubtableSymbol *> postorder;	///< Subtables sorted into \e post order (dependent tables listed earlier)
   map<SubtableSymbol *,int4> sizemap;	///< Sizes associated with table \e exports
@@ -223,7 +221,7 @@ private:
   void checkLargeTemporaries(Constructor *ct,ConstructTpl *ctpl);
   void optimize(Constructor *ct);
 public:
-  ConsistencyChecker(SleighCompile *sleigh, SubtableSymbol *rt,bool unnecessary,bool warndead, bool warnlargetemp);
+  ConsistencyChecker(SleighCompile *sleigh, SubtableSymbol *rt,bool unnecessary,bool warndead);
   bool testSizeRestrictions(void);		///< Test size consistency of all p-code
   bool testTruncations(void);			///< Test truncation validity of all p-code
   void testLargeTemporary(void);		///< Test for temporary Varnodes that are too large
@@ -231,7 +229,6 @@ public:
   int4 getNumUnnecessaryPcode(void) const { return unnecessarypcode; }	///< Return the number of unnecessary extensions and truncations
   int4 getNumReadNoWrite(void) const { return readnowrite; }	///< Return the number of temporaries read but not written
   int4 getNumWriteNoRead(void) const { return writenoread; }	///< Return the number of temporaries written but not read
-  int4 getNumLargeTemporaries(void) const {return largetemp;}	///< Return the number of \e too large temporaries
 };
 
 /// \brief Helper function holding properties of a \e context field prior to calculating the context layout
@@ -325,7 +322,6 @@ private:
   bool warnunnecessarypcode;		///< \b true if we warn of unnecessary ZEXT or SEXT
   bool warndeadtemps;			///< \b true if we warn of temporaries that are written but not read
   bool lenientconflicterrors;		///< \b true if we ignore most pattern conflict errors
-  bool largetemporarywarning;   	///< \b true if we warn about temporaries larger than SleighBase::MAX_UNIQUE_SIZE
   bool warnalllocalcollisions;		///< \b true if local export collisions generate individual warnings
   bool warnallnops;			///< \b true if pcode NOPs generate individual warnings
   bool failinsensitivedups;		///< \b true if case insensitive register duplicates cause error
@@ -387,11 +383,6 @@ public:
   ///
   /// \param val is \b true if the \b local keyword must always be used. The default is \b false.
   void setEnforceLocalKeyWord(bool val) { pcode.setEnforceLocalKey(val); }
-
-  /// \brief Set whether too large temporary registers generate warnings individually
-  ///
-  /// \param val is \b true if warnings are generated individually.  The default is \b false.
-  void setLargeTemporaryWarning (bool val) {largetemporarywarning = val;}
 
   /// \brief Set whether indistinguishable Constructor patterns generate fatal errors
   ///
@@ -484,7 +475,7 @@ public:
   void setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 		     bool lenientConflict, bool allCollisionWarning,
 		     bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
-		     bool largeTemporaryWarning, bool caseSensitiveRegisterNames,bool debugOutput);
+		     bool caseSensitiveRegisterNames,bool debugOutput);
   int4 run_compilation(const string &filein,const string &fileout);
 };
 
