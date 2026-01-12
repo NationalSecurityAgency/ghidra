@@ -23,6 +23,7 @@ import org.jdom.Document;
 import org.jdom.output.XMLOutputter;
 
 import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
@@ -59,6 +60,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.xml.GenericXMLOutputter;
 
 public class VTSubToolManager implements VTControllerListener, OptionsChangeListener {
+	private final static String SAVED_MARKER_NAME = "HAS_BEEN_SAVED";
 	private final static String SOURCE_TOOL_NAME = "Version Tracking (SOURCE TOOL)";
 	private final static String DESTINATION_TOOL_NAME = "Version Tracking (DESTINATION TOOL)";
 
@@ -74,6 +76,46 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		this.plugin = plugin;
 		this.controller = plugin.getController();
 		controller.addListener(this);
+
+		refreshTools();
+
+	}
+
+	/**
+	 * Checks to see if the primary Version Tracking tool is new (meaning that it has not yet been
+	 * saved).  If the tool is new, we will delete any saved sub-tools.  This behavior allows users
+	 * to have the sub-tools also reset to the default state after the re-import their default 
+	 * Version Tracking tool. 
+	 */
+	private void refreshTools() {
+
+		// We add a PreferenceState to the tool that will get saved to the tool's xml.   This value
+		// is not part of the default Version Tracking tool.  Thus, if we preference exists, then
+		// we know the tool has previously been saved.
+		PluginTool tool = plugin.getTool();
+		DockingWindowManager dwm = tool.getWindowManager();
+		PreferenceState state = dwm.getPreferenceState(SAVED_MARKER_NAME);
+		if (state != null) {
+			Msg.trace(this, "Found a saved Version Tracking tool.");
+			return;
+		}
+
+		Msg.trace(this, "Found a new Version Tracking tool.  Deleting saved sub-tools.");
+		deleteSubTool(SOURCE_TOOL_NAME);
+		deleteSubTool(DESTINATION_TOOL_NAME);
+
+		PreferenceState newState = new PreferenceState();
+		dwm.putPreferenceState(SAVED_MARKER_NAME, newState);
+	}
+
+	private void deleteSubTool(String name) {
+
+		String toolFileName = name + ".tool";
+		File toolFile = new File(ToolUtils.getApplicationToolDirPath(), toolFileName);
+		if (toolFile.exists()) {
+			Msg.trace(this, "Deleting sub-tool: " + toolFile);
+			toolFile.delete();
+		}
 	}
 
 	Program openDestinationProgram(DomainFile domainFile, Component parent) {
