@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -350,7 +350,7 @@ rtl: rtlmid { $$ = $1; if ($$->getOpvec().empty() && ($$->getResult() == (Handle
   | rtlmid EXPORT_KEY STRING		{ string errmsg="Unknown export varnode: "+*$3; delete $3; slgh->reportError(errmsg); YYERROR; }
   | rtlmid EXPORT_KEY sizedstar STRING	{ string errmsg="Unknown pointer varnode: "+*$4; delete $3; delete $4; slgh->reportError(errmsg); YYERROR; }
   ;
-rtlmid: /* EMPTY */			{ $$ = new ConstructTpl(); }
+rtlmid: /* EMPTY */			{ $$ = slgh->enterSection(); }
   | rtlmid statement			{ $$ = $1; if (!$$->addOpList(*$2)) { delete $2; slgh->reportError("Multiple delayslot declarations"); YYERROR; } delete $2; }
   | rtlmid LOCAL_KEY STRING ';' { $$ = $1; slgh->pcode.newLocalDefinition($3); }
   | rtlmid LOCAL_KEY STRING ':' INTEGER ';' { $$ = $1; slgh->pcode.newLocalDefinition($3,*$5); delete $5; }

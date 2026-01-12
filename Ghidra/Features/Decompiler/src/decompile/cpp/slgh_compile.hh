@@ -466,6 +466,7 @@ public:
   SectionVector *nextNamedSection(SectionVector *vec,ConstructTpl *section,SectionSymbol *sym);
   SectionVector *finalNamedSection(SectionVector *vec,ConstructTpl *section);
   vector<OpTpl *> *createCrossBuild(VarnodeTpl *addr,SectionSymbol *sym);
+  ConstructTpl *enterSection(void);
   Constructor *createConstructor(SubtableSymbol *sym);
   bool isInRoot(Constructor *ct) const { return (root == ct->getParent()); }	///< Is the Constructor in the root table?
   void resetConstructors(void);
