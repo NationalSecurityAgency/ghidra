@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
 public class MemoryBytePatternSearcher {
 	private static final long RESTRICTED_PATTERN_BYTE_RANGE = 32;
 
-	SequenceSearchState<Pattern> root = null;
+	BulkPatternSearcher<Pattern> patternSearcher = null;
 
 	ArrayList<Pattern> patternList;
 
@@ -58,13 +58,13 @@ public class MemoryBytePatternSearcher {
 	}
 
 	/**
-	 * Create with an initialized SequenceSearchState
+	 * Create with an initialized BulkPatternSearcher
 	 * @param searchName name of search
-	 * @param root search state pre-initialized
+	 * @param searcher search state pre-initialized
 	 */
-	public MemoryBytePatternSearcher(String searchName, SequenceSearchState<Pattern> root) {
+	public MemoryBytePatternSearcher(String searchName, BulkPatternSearcher<Pattern> searcher) {
 		this.searchName = searchName;
-		this.root = root;
+		this.patternSearcher = searcher;
 	}
 
 	/**
@@ -101,8 +101,8 @@ public class MemoryBytePatternSearcher {
 	 */
 	public void search(Program program, AddressSetView searchSet, TaskMonitor monitor)
 			throws CancelledException {
-		if (root == null) {
-			root = SequenceSearchState.buildStateMachine(patternList);
+		if (patternSearcher == null) {
+			patternSearcher = new BulkPatternSearcher<>(patternList);
 		}
 
 		numToSearch = getNumToSearch(program, searchSet);
@@ -125,7 +125,7 @@ public class MemoryBytePatternSearcher {
 			}
 
 			try {
-				searchBlock(root, program, block, searchSet, monitor);
+				searchBlock(patternSearcher, program, block, searchSet, monitor);
 			}
 			catch (IOException e) {
 				Msg.error(this, "Unable to scan block " + block.getName() + " for " + searchName);
@@ -155,7 +155,7 @@ public class MemoryBytePatternSearcher {
 	}
 
 	/**
-	 * Search through bytes of a memory block using the finite state machine -root-
+	 * Search through bytes of a memory block using the finite state machine (BulkPatterMatcher)
 	 * Apply any additional rules for matching patterns.
 	 * 
 	 * @param program is the Program being searched
@@ -164,8 +164,8 @@ public class MemoryBytePatternSearcher {
 	 * @throws IOException exception during read of memory
 	 * @throws CancelledException canceled search
 	 */
-	private void searchBlock(SequenceSearchState<Pattern> rootState, Program program, MemoryBlock block,
-			AddressSetView restrictSet, TaskMonitor monitor)
+	private void searchBlock(BulkPatternSearcher<Pattern> searcher, Program program,
+			MemoryBlock block, AddressSetView restrictSet, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		// if no restricted set, make restrict set the full block
@@ -216,7 +216,7 @@ public class MemoryBytePatternSearcher {
 			InputStream data = block.getData();
 			data.skip(blockOffset);
 
-			rootState.apply(data, maxBlockSearchLength, mymatches, monitor);
+			searcher.search(data, maxBlockSearchLength, mymatches, monitor);
 			monitor.checkCancelled();
 
 			monitor.setMessage(searchName + " (Examine Matches)");
@@ -230,7 +230,8 @@ public class MemoryBytePatternSearcher {
 					matchProgress + (long) (numAddressesInRange * ((float) i / mymatches.size())));
 				Match<Pattern> match = mymatches.get(i);
 				Pattern pattern = match.getPattern();
-				Address addr = blockStartAddr.add(pattern.getMarkOffset()+match.getStart() + blockOffset);
+				Address addr =
+					blockStartAddr.add(pattern.getMarkOffset() + match.getStart() + blockOffset);
 				long totalOffset = streamoffset + blockOffset + match.getStart();
 				if (!pattern.checkPostRules(totalOffset)) {
 					continue;

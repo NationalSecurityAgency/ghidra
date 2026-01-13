@@ -17,11 +17,10 @@ package ghidra.features.base.memsearch.searcher;
 
 import java.util.function.Predicate;
 
-import ghidra.features.base.memsearch.bytesequence.*;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.matcher.ByteMatcher;
 import ghidra.program.model.address.*;
-import ghidra.util.bytesearch.Match;
+import ghidra.util.bytesearch.*;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.task.TaskMonitor;
 

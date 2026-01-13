@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.features.base.memsearch.matcher.*;
-import ghidra.util.bytesearch.Match;
+import ghidra.util.bytesearch.*;
 
 public class MaskedBytesSequenceByteMatcherTest {
 

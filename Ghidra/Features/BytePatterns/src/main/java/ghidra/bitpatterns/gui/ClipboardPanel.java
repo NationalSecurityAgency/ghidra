@@ -65,10 +65,6 @@ public class ClipboardPanel extends JPanel {
 
 	private boolean onlyPrePatterns;
 
-	/**
-	 * Class for building the pattern clipboard
-	 * @param plugin
-	 */
 	public ClipboardPanel(FunctionBitPatternsExplorerPlugin plugin) {
 		super();
 		BoxLayout mainLayout = new BoxLayout(this, BoxLayout.Y_AXIS);
@@ -121,8 +117,8 @@ public class ClipboardPanel extends JPanel {
 					MatchAction[] actions = getMatchActions(funcStartAnalyzer, pattern);
 					pattern.setMatchActions(actions);
 				}
-				SequenceSearchState<Pattern> root = SequenceSearchState.buildStateMachine(patternList);
-				funcStartAnalyzer.setExplicitState(root);
+				BulkPatternSearcher<Pattern> searcher = new BulkPatternSearcher<>(patternList);
+				funcStartAnalyzer.setExplicitState(searcher);
 				AutoAnalysisManager autoManager =
 					AutoAnalysisManager.getAnalysisManager(currentProgram);
 				autoManager.scheduleOneTimeAnalysis(funcStartAnalyzer,
@@ -214,7 +210,7 @@ public class ClipboardPanel extends JPanel {
 			Msg.showWarn(this, this, "Only Pre-Patterns",
 				"Only Pre-Patterns in selection: no true/false positive information will be calculated.");
 		}
-		SequenceSearchState<Pattern> root = SequenceSearchState.buildStateMachine(patternList);
+		BulkPatternSearcher<Pattern> searcher = new BulkPatternSearcher<>(patternList);
 		indexToSize.clear();
 		for (Pattern pattern : patternList) {
 			indexToSize.put(pattern.getIndex(), pattern.getSize());
@@ -230,17 +226,17 @@ public class ClipboardPanel extends JPanel {
 			if (!block.isExecute()) {
 				continue;
 			}
-			searchBlock(root, block, matchStats, currentProgram, TaskMonitor.DUMMY);
+			searchBlock(searcher, block, matchStats, currentProgram, TaskMonitor.DUMMY);
 		}
 		return matchStats;
 	}
 
-	private void searchBlock(SequenceSearchState<Pattern> root, MemoryBlock block,
+	private void searchBlock(BulkPatternSearcher<Pattern> searcher, MemoryBlock block,
 			PatternEvaluationStats matchStats, Program program, TaskMonitor monitor) {
 		ArrayList<Match<Pattern>> mymatches = new ArrayList<>();
 
 		try {
-			root.apply(block.getData(), mymatches, monitor);
+			searcher.search(block.getData(), mymatches, monitor);
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -309,6 +305,7 @@ public class ClipboardPanel extends JPanel {
 				addSeparator(pattern.getHexString(), index), funcStart, postBits, totalBits);
 		matchStats.addRowObject(rowObject);
 	}
+
 	private int getNumPostBits(Pattern pattern) {
 		int marked = pattern.getMarkOffset();
 		if (marked == 0) {
@@ -316,6 +313,7 @@ public class ClipboardPanel extends JPanel {
 		}
 		return pattern.getNumFixedBits() - pattern.getNumInitialFixedBits(marked);
 	}
+
 	private PatternMatchType getMatchType(Program program, Address funcStart,
 			ContextRegisterFilter cRegFilter) {
 		if (cRegFilter != null) {

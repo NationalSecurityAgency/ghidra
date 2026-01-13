@@ -17,8 +17,8 @@ package ghidra.features.base.memsearch.matcher;
 
 import org.apache.commons.collections4.iterators.EmptyIterator;
 
-import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.format.SearchFormat;
+import ghidra.util.bytesearch.ExtendedByteSequence;
 import ghidra.util.bytesearch.Match;
 import util.CollectionUtils;
 

@@ -19,10 +19,8 @@ import java.util.Iterator;
 
 import org.bouncycastle.util.Arrays;
 
-import ghidra.features.base.memsearch.bytesequence.ByteSequence;
-import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.gui.SearchSettings;
-import ghidra.util.bytesearch.Match;
+import ghidra.util.bytesearch.*;
 
 /**
  * {@link ByteMatcher} where the user search input has been parsed into a sequence of bytes and

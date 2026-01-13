@@ -15,6 +15,8 @@
  */
 package ghidra.features.base.memsearch.bytesequence;
 
+import ghidra.util.bytesearch.ByteSequence;
+
 public class ByteArrayByteSequence implements ByteSequence {
 
 	private final byte[] bytes;
