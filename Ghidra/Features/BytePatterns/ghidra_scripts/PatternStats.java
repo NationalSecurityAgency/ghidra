@@ -52,7 +52,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 	private MatchActionMarker codeBoundary = new MatchActionMarker(MatchActionMarker.CODE_BOUNDARY);
 	private MatchActionMarker context = new MatchActionMarker(MatchActionMarker.CONTEXT);
 
-	private SequenceSearchState<Pattern> root;
+	private BulkPatternSearcher<Pattern> patternSearcher;
 	private ArrayList<PatternAccumulate> accumList;
 	private FunctionManager functionManager;
 	private Listing listing;
@@ -76,6 +76,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 
 		@Override
 		public void apply(Program program, Address addr, Match<Pattern> match) {
+			// do nothing
 		}
 
 		@Override
@@ -255,7 +256,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 		if (patternlist.size() == 0) {
 			return;
 		}
-		root = SequenceSearchState.buildStateMachine(patternlist);
+		patternSearcher = new BulkPatternSearcher<>(patternlist);
 		accumList = new ArrayList<>();
 		for (int i = 0; i < patternlist.size(); ++i) {
 			accumList.add(new PatternAccumulate(patternlist.get(i)));
@@ -329,7 +330,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 		taskMonitor.setProgress(0);
 		ArrayList<Match<Pattern>> mymatches = new ArrayList<>();
 		long streamoffset = block.getStart().getOffset();
-		root.apply(block.getData(), mymatches, taskMonitor);
+		patternSearcher.search(block.getData(), mymatches, taskMonitor);
 		if (taskMonitor.isCancelled()) {
 			return;
 		}

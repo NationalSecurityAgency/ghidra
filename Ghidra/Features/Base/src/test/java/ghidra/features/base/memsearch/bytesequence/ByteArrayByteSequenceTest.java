@@ -19,6 +19,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import ghidra.util.bytesearch.ByteSequence;
+import ghidra.util.bytesearch.ExtendedByteSequence;
+
 public class ByteArrayByteSequenceTest {
 	private ByteSequence main = new ByteArrayByteSequence((byte) 0, (byte) 1, (byte) 2, (byte) 3);
 	private ByteSequence extra = new ByteArrayByteSequence((byte) 4, (byte) 5);

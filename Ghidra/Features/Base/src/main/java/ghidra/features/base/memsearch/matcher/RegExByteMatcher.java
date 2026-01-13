@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.util.bytesearch.ExtendedByteSequence;
 import ghidra.util.bytesearch.Match;
 
 /**

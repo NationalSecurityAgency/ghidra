@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.features.base.memsearch.bytesequence;
+package ghidra.util.bytesearch;
 
 /**
  * A class for accessing a contiguous sequence of bytes from some underlying byte source to 

@@ -15,7 +15,7 @@
  */
 package ghidra.features.base.memsearch.matcher;
 
-import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
+import ghidra.util.bytesearch.ExtendedByteSequence;
 import ghidra.util.bytesearch.Match;
 
 /**

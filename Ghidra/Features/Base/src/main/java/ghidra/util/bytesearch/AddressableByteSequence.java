@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.features.base.memsearch.bytesequence;
+package ghidra.util.bytesearch;
 
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.program.model.address.Address;

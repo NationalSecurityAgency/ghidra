@@ -17,8 +17,8 @@ package ghidra.features.base.memsearch.matcher;
 
 import java.util.Objects;
 
-import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.util.bytesearch.ExtendedByteSequence;
 import ghidra.util.bytesearch.Match;
 
 public abstract class UserInputByteMatcher implements ByteMatcher<SearchData> {
