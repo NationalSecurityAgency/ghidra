@@ -228,15 +228,14 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			}
 
 			TraceSnapshot snapshot = row.getSnapshot();
-			if (snapshot.getSchedule().isSnapOnly() ||
-				snapshot.getVersion() >= current.getTrace().getEmulatorCacheVersion()) {
+			if (snapshot.isStale(true)) {
+				setForeground(
+					data.isSelected() ? COLOR_FOREGROUND_STALE_SEL : COLOR_FOREGROUND_STALE);
+			}
+			else {
 				JTable table = data.getTable();
 				setForeground(
 					data.isSelected() ? table.getSelectionForeground() : table.getForeground());
-			}
-			else {
-				setForeground(
-					data.isSelected() ? COLOR_FOREGROUND_STALE_SEL : COLOR_FOREGROUND_STALE);
 			}
 
 			return this;
