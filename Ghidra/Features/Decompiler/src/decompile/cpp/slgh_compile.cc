@@ -255,7 +255,6 @@ void ConsistencyChecker::OptimizeRecord::updateCombine(ConsistencyChecker::Optim
 /// \param rt is the root subtable of the SLEIGH spec
 /// \param un is \b true to request "Unnecessary extension" warnings
 /// \param warndead is \b true to request warnings for written but not read temporaries
-/// \param warnlargetemp is \b true to request warnings for temporaries that are too large
 ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead)
 
 {
