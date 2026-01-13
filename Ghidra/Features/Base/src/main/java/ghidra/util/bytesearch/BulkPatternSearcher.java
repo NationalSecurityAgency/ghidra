@@ -197,34 +197,37 @@ public class BulkPatternSearcher<T extends BytePattern> {
 		// patterns will matched in any data in the stream past that point, but data past that point
 		// may be used to complete a pattern.
 
-		InputStreamBufferByteSequence bufA = new InputStreamBufferByteSequence(bufSize);
-		InputStreamBufferByteSequence bufB = new InputStreamBufferByteSequence(bufSize);
-		InputStreamBufferByteSequence buf1 = bufA;
-		InputStreamBufferByteSequence buf2 = bufB;
-		buf1.load(restrictedStream, bufSize);
-		buf2.load(restrictedStream, bufSize);
+		InputStreamBufferByteSequence pre = new InputStreamBufferByteSequence(bufSize);
+		InputStreamBufferByteSequence main = new InputStreamBufferByteSequence(bufSize);
+		InputStreamBufferByteSequence post = new InputStreamBufferByteSequence(bufSize);
+		main.load(restrictedStream, bufSize);
+		post.load(restrictedStream, bufSize);
 
-		while (buf1.getLength() > 0 && buf2.getLength() > 0) {
+		while (main.getLength() > 0 && post.getLength() > 0) {
 			if (monitor.isCancelled()) {
 				return;
 			}
 
-			ExtendedByteSequence combined = new ExtendedByteSequence(buf1, buf2, maxPatternLength);
+			ExtendedByteSequence combined =
+				new ExtendedByteSequence(main, pre, post, maxPatternLength);
 			search(combined, results, offset);
-			monitor.incrementProgress(buf1.getLength());
-			offset += buf1.getLength();
+			monitor.incrementProgress(main.getLength());
+			offset += main.getLength();
 
-			// swap buffers and load data into second buffer
-			buf1 = buf2;
-			buf2 = buf1 == bufA ? bufB : bufA;
-			buf2.load(restrictedStream, bufSize);
+			// rotate buffers and load data into second buffer
+			InputStreamBufferByteSequence tmp = pre;
+			pre = main;
+			main = post;
+			post = tmp;
+			post.load(restrictedStream, bufSize);
 		}
 		// just have to read a bit more to finish last pattern and we go beyond restricted maxRead
 		// so use unrestricted stream
-		buf2.load(inputStream, maxPatternLength);
-		ExtendedByteSequence combined = new ExtendedByteSequence(buf1, buf2, maxPatternLength);
+		post.load(inputStream, maxPatternLength);
+		ExtendedByteSequence combined =
+			new ExtendedByteSequence(main, pre, post, maxPatternLength);
 		search(combined, results, offset);
-		monitor.incrementProgress(buf1.getLength());
+		monitor.incrementProgress(main.getLength());
 	}
 
 	/**

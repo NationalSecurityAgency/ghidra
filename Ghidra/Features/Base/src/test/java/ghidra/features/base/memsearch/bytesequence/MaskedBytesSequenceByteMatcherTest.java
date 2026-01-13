@@ -34,8 +34,9 @@ public class MaskedBytesSequenceByteMatcherTest {
 
 		ByteSequence main = new ByteArrayByteSequence(makeBytes(1, 2, 3, 2, 4, 5, 2, 6, 2, 3, 2));
 		ByteSequence extra = new ByteArrayByteSequence(makeBytes(4, 1, 1, 3, 2, 4));
+		ByteSequence pre = new ByteArrayByteSequence(makeBytes(4, 1, 1, 3, 2, 4));
 
-		byteSequence = new ExtendedByteSequence(main, extra, 100);
+		byteSequence = new ExtendedByteSequence(main, pre, extra, 100);
 
 	}
 

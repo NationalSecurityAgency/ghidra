@@ -23,9 +23,10 @@ import ghidra.util.bytesearch.ByteSequence;
 import ghidra.util.bytesearch.ExtendedByteSequence;
 
 public class ByteArrayByteSequenceTest {
+	private ByteSequence pre = new ByteArrayByteSequence((byte) 0, (byte) 1, (byte) 2, (byte) 3);
 	private ByteSequence main = new ByteArrayByteSequence((byte) 0, (byte) 1, (byte) 2, (byte) 3);
 	private ByteSequence extra = new ByteArrayByteSequence((byte) 4, (byte) 5);
-	private ByteSequence extended = new ExtendedByteSequence(main, extra, 100);
+	private ByteSequence extended = new ExtendedByteSequence(main, pre, extra, 100);
 
 	@Test
 	public void testSimpleByteSeqeunce() {

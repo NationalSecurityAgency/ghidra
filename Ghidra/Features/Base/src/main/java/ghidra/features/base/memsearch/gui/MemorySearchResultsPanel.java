@@ -227,7 +227,8 @@ public class MemorySearchResultsPanel extends JPanel {
 			catch (Throwable t) {
 				// Catch any runtime errors so that we exit task gracefully and don't leave
 				// the provider in a stuck "busy" state.
-				Msg.showError(this, null, "Unexpected error refreshing bytes", t);
+				Msg.showError(this, null, "Error Searching Memory",
+					"Unexpected error searching for bytes", t);
 			}
 			Swing.runLater(() -> provider.searchOnceCompleted(null, monitor.isCancelled()));
 		}
