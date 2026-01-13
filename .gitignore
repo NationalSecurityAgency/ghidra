@@ -88,3 +88,9 @@ core.*
 # python files
 *.egg-info
 __pycache__
+
+# Ignore temporary PR and workflow instruction files
+FINAL_STEPS.md
+PR_INSTRUCTIONS.md
+PUSH_AND_PR.sh
+run_these_commands.sh
