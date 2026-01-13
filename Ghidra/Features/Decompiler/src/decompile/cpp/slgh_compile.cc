@@ -255,8 +255,7 @@ void ConsistencyChecker::OptimizeRecord::updateCombine(ConsistencyChecker::Optim
 /// \param rt is the root subtable of the SLEIGH spec
 /// \param un is \b true to request "Unnecessary extension" warnings
 /// \param warndead is \b true to request warnings for written but not read temporaries
-/// \param warnlargetemp is \b true to request warnings for temporaries that are too large
-ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead, bool warnlargetemp)
+ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead)
 
 {
   compiler = sleigh;
@@ -264,10 +263,8 @@ ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,
   unnecessarypcode = 0;
   readnowrite = 0;
   writenoread = 0;
-  largetemp = 0;        ///<Number of constructors using at least one temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
   printextwarning = un;
   printdeadwarning = warndead;
-  printlargetempwarning = warnlargetemp; ///< If true, prints a warning about each constructor using a temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
 }
 
 /// \brief Recover a specific value for the size associated with a Varnode template
@@ -1632,12 +1629,9 @@ void ConsistencyChecker::checkLargeTemporaries(Constructor *ct,ConstructTpl *ctp
   vector<OpTpl*> ops = ctpl->getOpvec();
   for(vector<OpTpl*>::iterator iter = ops.begin();iter != ops.end();++iter) {
     if (hasLargeTemporary(*iter)) {
-      if (printlargetempwarning) {
-	compiler->reportWarning(
-	    compiler->getLocation(ct),
-	    "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
-      }
-      largetemp++;
+      compiler->reportError(
+	  compiler->getLocation(ct),
+	  "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
       return;
     }
   }
@@ -1959,7 +1953,6 @@ SleighCompile::SleighCompile(void)
   warnunnecessarypcode = false;
   warndeadtemps = false;
   lenientconflicterrors = true;
-  largetemporarywarning = false;
   warnalllocalcollisions = false;
   warnallnops = false;
   failinsensitivedups = true;
@@ -2141,7 +2134,7 @@ void SleighCompile::buildPatterns(void)
 void SleighCompile::checkConsistency(void)
 
 {
-  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps,largetemporarywarning);
+  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps);
 
   if (!checker.testSizeRestrictions()) {
     errors += 1;
@@ -2171,14 +2164,6 @@ void SleighCompile::checkConsistency(void)
     reportWarning("Use -t switch to list each individually");
   }
   checker.testLargeTemporary();
-  if ((!largetemporarywarning) && (checker.getNumLargeTemporaries() > 0)) {
-	ostringstream msg;
-	msg << dec << checker.getNumLargeTemporaries();
-	msg << " constructors contain temporaries larger than ";
-	msg << SleighBase::MAX_UNIQUE_SIZE << " bytes";
-	reportWarning(msg.str());
-	reportWarning("Use -o switch to list each individually.");
-  }
 }
 
 /// \brief Search for offset matches between a previous set and the given current set
@@ -3345,6 +3330,18 @@ vector<OpTpl *> *SleighCompile::createCrossBuild(VarnodeTpl *addr,SectionSymbol 
   return res;
 }
 
+/// \brief Prepare for a new section of p-code templates
+///
+/// Create the ConstructTpl to hold the templates and reset counters.
+/// \return the new ConstructTpl
+ConstructTpl *SleighCompile::enterSection(void)
+
+{
+  ConstructTpl *tpl = new ConstructTpl();
+  pcode.resetLabelCount();	// Macros have their own labels
+  return tpl;
+}
+
 /// \brief Create a new Constructor under the given subtable
 ///
 /// Create the object and initialize parsing for the new definition
@@ -3882,13 +3879,12 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 /// \param allNopWarning is \b true for individual warnings about NOP constructors
 /// \param deadTempWarning is \b true for individual warnings about dead temporary varnodes
 /// \param enforceLocalKeyWord is \b true to force all local variable definitions to use the \b local keyword
-/// \param largeTemporaryWarning is \b true for individual warnings about temporary varnodes that are too large
 /// \param caseSensitiveRegisterNames is \b true if register names are allowed to be case sensitive
 /// \param debugOutput is \b true if the output file is written using the debug (XML) form of the .sla format
 void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 				  bool lenientConflict, bool allCollisionWarning,
 				  bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
-				  bool largeTemporaryWarning, bool caseSensitiveRegisterNames,bool debugOutput)
+				  bool caseSensitiveRegisterNames,bool debugOutput)
 {
   map<string,string>::const_iterator iter = defines.begin();
   for (iter = defines.begin(); iter != defines.end(); iter++) {
@@ -3900,7 +3896,6 @@ void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnece
   setAllNopWarning( allNopWarning );
   setDeadTempWarning(deadTempWarning);
   setEnforceLocalKeyWord(enforceLocalKeyWord);
-  setLargeTemporaryWarning(largeTemporaryWarning);
   setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
   setDebugOutput(debugOutput);
 }
@@ -3935,7 +3930,6 @@ int main(int argc,char **argv)
     cerr << "   -t              print warnings for dead temporaries" << endl;
     cerr << "   -e              enforce use of 'local' keyword for temporaries" << endl;
     cerr << "   -c              print warnings for all constructors with colliding operands" << endl;
-    cerr << "   -o              print warnings for temporaries which are too large" << endl;
     cerr << "   -s              treat register names as case sensitive" << endl;
     cerr << "   -DNAME=VALUE    defines a preprocessor macro NAME with value VALUE" << endl;
     exit(2);
@@ -3950,7 +3944,6 @@ int main(int argc,char **argv)
   bool allNopWarning = false;
   bool deadTempWarning = false;
   bool enforceLocalKeyWord = false;
-  bool largeTemporaryWarning = false;
   bool caseSensitiveRegisterNames = false;
   bool debugOutput = false;
   
@@ -3984,8 +3977,6 @@ int main(int argc,char **argv)
       deadTempWarning = true;
     else if (argv[i][1] == 'e')
       enforceLocalKeyWord = true;
-    else if (argv[i][1] == 'o')
-      largeTemporaryWarning = true;
     else if (argv[i][1] == 's')
       caseSensitiveRegisterNames = true;
     else if (argv[i][1] == 'y')
@@ -4021,8 +4012,7 @@ int main(int argc,char **argv)
       sla.replace(slaspec.length() - slaspecExtLen, slaspecExtLen, SLAEXT);
       SleighCompile compiler;
       compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
-			     deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning, caseSensitiveRegisterNames,
-			     debugOutput);
+			     deadTempWarning, enforceLocalKeyWord, caseSensitiveRegisterNames, debugOutput);
       retval = compiler.run_compilation(slaspec,sla);
       if (retval != 0) {
 	return retval; // stop on first error
@@ -4058,8 +4048,7 @@ int main(int argc,char **argv)
     
     SleighCompile compiler;
     compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
-			   deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning,caseSensitiveRegisterNames,
-			   debugOutput);
+			   deadTempWarning, enforceLocalKeyWord,caseSensitiveRegisterNames,debugOutput);
     
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);

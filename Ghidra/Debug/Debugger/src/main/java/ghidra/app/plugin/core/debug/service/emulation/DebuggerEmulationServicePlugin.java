@@ -699,7 +699,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		TraceSchedule time = key.time;
 
 		TraceSnapshot tracePrefix = trace.getTimeManager().findSnapshotWithNearestPrefix(time);
-		if (tracePrefix.getSchedule().isSnapOnly()) {
+		if (tracePrefix != null && tracePrefix.isSnapOnly(true)) {
 			tracePrefix = null;
 		}
 		Map.Entry<CacheKey, CachedEmulator> cachePrefix = findNearestPrefix(key);
