@@ -257,8 +257,10 @@ public class GoFunctionFixup {
 			return null;
 		}
 		if (DWARFUtil.isVoid(returnDT)) {
-			return new ReturnParameterImpl(VoidDataType.dataType, VariableStorage.VOID_STORAGE,
-				program);
+			ReturnParameterImpl result = new ReturnParameterImpl(VoidDataType.dataType,
+				VariableStorage.VOID_STORAGE, program);
+			result.setName(result.getName(), SourceType.IMPORTED);
+			return result;
 		}
 
 		GoFunctionMultiReturn multiReturn;
@@ -294,7 +296,9 @@ public class GoFunctionFixup {
 			return null;
 		}
 		VariableStorage varStorage = new VariableStorage(program, varnodes.toArray(Varnode[]::new));
-		return new ReturnParameterImpl(returnDT, varStorage, true, program);
+		ReturnParameterImpl result = new ReturnParameterImpl(returnDT, varStorage, true, program);
+		result.setName(result.getName(), SourceType.IMPORTED);
+		return result;
 	}
 
 	private void allocateReturnStorage(String name_unused, DataType dt, List<Varnode> varnodes,

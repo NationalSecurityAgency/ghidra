@@ -1160,8 +1160,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			SectionHeader dataSection = pe.getNTHeader().getFileHeader().getSectionHeader(".data");
 			if (dataSection != null) {
-				try (InputStream is = dataSection.getDataStream()) {
-					buildInfoPresent = GoBuildInfo.isPresent(is);
+				try (ByteProvider bp = dataSection.getDataByteProvider()) {
+					buildInfoPresent = GoBuildInfo.findGoBuildInfoOffset(bp, 512) != -1;
 				}
 				catch (IOException e) {
 					// fail
