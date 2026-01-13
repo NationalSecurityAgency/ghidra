@@ -35,10 +35,8 @@ class ConsistencyChecker {
 	private int readnowrite;
 	private int writenoread;
 
-	private int largetemp;			// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
 	private boolean printextwarning;
 	private boolean printdeadwarning;
-	private boolean printlargetempwarning;	// if true, warning about temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
 	private SleighCompile compiler;
 	private SubtableSymbol root_symbol;
 	private List<SubtableSymbol> postorder = new ArrayList<>();
@@ -1261,12 +1259,9 @@ class ConsistencyChecker {
 		VectorSTL<OpTpl> ops = ctpl.getOpvec();
 		for (IteratorSTL<OpTpl> iter = ops.begin(); !iter.isEnd(); iter.increment()) {
 			if (hasLargeTemporary(iter.get())) {
-				if (printlargetempwarning) {
-					compiler.reportWarning(ct.location,
-						"Constructor uses temporary varnode larger than " +
-							SleighBase.MAX_UNIQUE_SIZE + " bytes.");
-				}
-				largetemp++;
+				compiler.reportError(ct.location,
+					"Constructor uses temporary varnode larger than " +
+						SleighBase.MAX_UNIQUE_SIZE + " bytes.");
 				return;
 			}
 		}
@@ -1298,12 +1293,8 @@ class ConsistencyChecker {
 		unnecessarypcode = 0;
 		readnowrite = 0;
 		writenoread = 0;
-		//number of constructors which reference a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
-		largetemp = 0;
 		printextwarning = unnecessary;
 		printdeadwarning = warndead;
-		//whether to print information about constructors which reference large temporary varnodes
-		printlargetempwarning = warnlargetemp;
 	}
 
 	// Main entry point for size consistency check
@@ -1400,15 +1391,5 @@ class ConsistencyChecker {
 
 	public int getNumWriteNoRead() {
 		return writenoread;
-	}
-
-	/**
-	 * Returns the number of constructors which reference a varnode in the unique space with size
-	 * larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
-	 * 
-	 * @return num constructors with large temp varnodes
-	 */
-	public int getNumLargeTemporaries() {
-		return largetemp;
 	}
 }

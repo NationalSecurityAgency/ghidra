@@ -17,7 +17,7 @@
 
 namespace ghidra {
 
-const uint4 SleighBase::MAX_UNIQUE_SIZE = 128;
+const uint4 SleighBase::MAX_UNIQUE_SIZE = 256;
 
 int4 SourceFileIndexer::index(const string filename){
 	auto it = fileToIndex.find(filename);
