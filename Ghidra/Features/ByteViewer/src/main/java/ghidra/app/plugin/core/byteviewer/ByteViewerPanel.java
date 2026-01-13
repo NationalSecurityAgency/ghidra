@@ -683,7 +683,8 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 	@Override
 	public Layout getLayout(BigInteger index) {
 		// creates the field layout for the specified index line in the Address column
-		if (index.compareTo(getNumIndexes()) >= 0) {
+		BigInteger numIndexes = getNumIndexes();
+		if (numIndexes.compareTo(BigInteger.ZERO) > 0 && index.compareTo(numIndexes) >= 0) {
 			return null;
 		}
 
