@@ -3345,6 +3345,18 @@ vector<OpTpl *> *SleighCompile::createCrossBuild(VarnodeTpl *addr,SectionSymbol 
   return res;
 }
 
+/// \brief Prepare for a new section of p-code templates
+///
+/// Create the ConstructTpl to hold the templates and reset counters.
+/// \return the new ConstructTpl
+ConstructTpl *SleighCompile::enterSection(void)
+
+{
+  ConstructTpl *tpl = new ConstructTpl();
+  pcode.resetLabelCount();	// Macros have their own labels
+  return tpl;
+}
+
 /// \brief Create a new Constructor under the given subtable
 ///
 /// Create the object and initialize parsing for the new definition

@@ -168,6 +168,11 @@ public class SleighCompile extends SleighBase {
 		}
 
 		@Override
+		public ConstructTpl enterSection(Location where) {
+			return SleighCompile.this.enterSection(where);
+		}
+
+		@Override
 		public SectionVector standaloneSection(ConstructTpl c) {
 			return SleighCompile.this.standaloneSection(c);
 		}
@@ -331,6 +336,12 @@ public class SleighCompile extends SleighBase {
 		res.push_back(op);
 		sym.incrementRefCount();	// Keep track of the references to the section symbol
 		return res;
+	}
+
+	protected ConstructTpl enterSection(Location where) {
+		entry("enterSection", where);
+		pcode.resetLabelCount();
+		return new ConstructTpl(where);
 	}
 
 	protected SectionVector standaloneSection(ConstructTpl main) {
