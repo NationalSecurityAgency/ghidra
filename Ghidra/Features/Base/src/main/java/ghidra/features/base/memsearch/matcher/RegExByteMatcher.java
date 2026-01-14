@@ -69,19 +69,24 @@ public class RegExByteMatcher extends UserInputByteMatcher {
 	private class ByteCharSequence implements CharSequence {
 
 		private ExtendedByteSequence byteSequence;
+		private int preLength;
 
 		ByteCharSequence(ExtendedByteSequence byteSequence) {
 			this.byteSequence = byteSequence;
+			preLength = byteSequence.getPreLength();
 		}
 
 		@Override
 		public int length() {
-			return byteSequence.getExtendedLength();
+			return byteSequence.getExtendedLength() + preLength;
 		}
 
 		@Override
 		public char charAt(int index) {
-			byte b = byteSequence.getByte(index);
+			// Our charSequence starts at the beginning of any pre-bytes.
+			// The iterator using this sequence will have to make the opposite translation when
+			// interpreting offsets into this sequence as reported by the pattern matcher.
+			byte b = byteSequence.getByte(index - preLength);
 			return (char) (b & 0xff);
 		}
 
@@ -131,15 +136,22 @@ public class RegExByteMatcher extends UserInputByteMatcher {
 		}
 
 		private Match<SearchData> findNextMatch() {
-			if (!matcher.find()) {
-				return null;
+			int preLength = byteSequence.getPreLength();
+
+			// loop until we find a match that starts past the pre-bytes.
+			// we are scanning the pre-bytes in case the regEx has any look-behind, but we
+			// really only want matches that start in the main range.
+			while (matcher.find()) {
+				int start = matcher.start() - preLength;
+				int end = matcher.end() - preLength;
+				if (start >= 0) {
+					if (start >= byteSequence.getLength()) {
+						return null;	// we are past the end of the main byte sequence, so done
+					}
+					return new Match<>(searchData, start, end - start);
+				}
 			}
-			int start = matcher.start();
-			int end = matcher.end();
-			if (start >= byteSequence.getLength()) {
-				return null;
-			}
-			return new Match<>(searchData, start, end - start);
+			return null; // no matches so we are done with this buffer
 		}
 	}
 

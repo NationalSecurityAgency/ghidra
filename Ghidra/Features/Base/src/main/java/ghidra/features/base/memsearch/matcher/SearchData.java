@@ -43,6 +43,11 @@ public class SearchData {
 	}
 
 	@Override
+	public String toString() {
+		return input;
+	}
+
+	@Override
 	public int hashCode() {
 		return Objects.hash(input, settings);
 	}

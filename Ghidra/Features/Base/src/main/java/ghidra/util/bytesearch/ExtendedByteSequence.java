@@ -15,41 +15,54 @@
  */
 package ghidra.util.bytesearch;
 
+import java.util.Objects;
+
 /**
  * A class for accessing a contiguous sequence of bytes from some underlying byte source to 
  * be used for searching for a byte pattern within the byte source. This sequence of bytes 
- * consists of two parts; the primary sequence and an extended sequence. Search matches
- * must begin in the primary sequence, but may extend into the extended sequence.
+ * consists of three parts; the primary sequence, a pre sequence, and an extended sequence. 
+ * Search matches must begin in the primary sequence, but may extend into the extended sequence. The
+ * pre-sequence is used for searching that supports look-behind such as some regular expressions. 
  * <P>
  * Searching large ranges of memory can be partitioned into searching smaller chunks. But
- * to handle search sequences that span chunks, two chunks are presented at a time, with the second
- * chunk being the extended bytes. On the next iteration of the search loop, the extended chunk
- * will become the primary chunk, with the next chunk after that becoming the extended sequence
- * and so on.
+ * to handle search sequences that span chunks, three chunks are presented at a time. Look-behind
+ * patterns can use the pre-chunk to see the bytes before the main chunk. Actual matches must start
+ * in the main chunk, but can extend into the extended chunk. On the next iteration of the search
+ * loop, the main chunk becomes the pre-chunk and the extended chunk becomes the main chunk and a 
+ * new post-chunk is read from the input source.
  */
 public class ExtendedByteSequence implements ByteSequence {
-
-	private ByteSequence main;
-	private ByteSequence extended;
+	private static final ByteSequence EMPTY = new EmptyByteSequence();
+	private ByteSequence mainSequence;
+	private ByteSequence postSequence;
+	private ByteSequence preSequence;
+	private int mainLength;
 	private int extendedLength;
+	private int preLength;
 
 	/**
 	 * Constructs an extended byte sequence from two {@link ByteSequence}s.
 	 * @param main the byte sequence where search matches may start
-	 * @param extended the byte sequence where search matches may extend into
-	 * @param extendedLimit specifies how much of the extended byte sequence to allow search
+	 * @param pre the byte sequence bytes before the main byte sequence used by searchers
+	 * that support "look behind"
+	 * @param post the byte sequence where search matches may extend into
+	 * @param overlap specifies how much of the extended byte sequence to allow search
 	 * matches to extend into. (The extended buffer will be the primary buffer next time, so
 	 * it is a full size buffer, but we only need to use a portion of it to support overlap.
 	 */
-	public ExtendedByteSequence(ByteSequence main, ByteSequence extended, int extendedLimit) {
-		this.main = main;
-		this.extended = extended;
-		this.extendedLength = main.getLength() + Math.min(extendedLimit, extended.getLength());
+	public ExtendedByteSequence(ByteSequence main, ByteSequence pre,
+			ByteSequence post, int overlap) {
+		this.mainSequence = Objects.requireNonNull(main);
+		this.preSequence = Objects.requireNonNullElse(pre, EMPTY);
+		this.postSequence = Objects.requireNonNullElse(post, EMPTY);
+		this.mainLength = mainSequence.getLength();
+		this.extendedLength = main.getLength() + Math.min(overlap, postSequence.getLength());
+		this.preLength = Math.min(overlap, preSequence.getLength());
 	}
 
 	@Override
 	public int getLength() {
-		return main.getLength();
+		return mainSequence.getLength();
 	}
 
 	/**
@@ -62,26 +75,34 @@ public class ExtendedByteSequence implements ByteSequence {
 		return extendedLength;
 	}
 
+	public int getPreLength() {
+		return preLength;
+	}
+
 	@Override
 	public byte getByte(int i) {
-		int mainLength = main.getLength();
-		if (i >= mainLength) {
-			return extended.getByte(i - mainLength);
+		if (i < 0) {
+			return preSequence.getByte(i + preLength);
 		}
-		return main.getByte(i);
+		if (i >= mainLength) {
+			return postSequence.getByte(i - mainLength);
+		}
+		return mainSequence.getByte(i);
 	}
 
 	@Override
 	public byte[] getBytes(int index, int size) {
-		if (index < 0 || index + size > extendedLength) {
+		if (index < -preLength || index + size > extendedLength) {
 			throw new IndexOutOfBoundsException();
 		}
-		int length = main.getLength();
-		if (index + size < length) {
-			return main.getBytes(index, size);
+		if (index < 0 && index + size <= 0) {
+			return preSequence.getBytes(index + preLength, size);
 		}
-		if (index >= length) {
-			return extended.getBytes(index - length, size);
+		if (index + size < mainLength) {
+			return mainSequence.getBytes(index, size);
+		}
+		if (index >= mainLength) {
+			return postSequence.getBytes(index - mainLength, size);
 		}
 		// otherwise it spans
 		byte[] results = new byte[size];
@@ -93,6 +114,30 @@ public class ExtendedByteSequence implements ByteSequence {
 
 	@Override
 	public boolean hasAvailableBytes(int index, int length) {
-		return index >= 0 && index + length <= getExtendedLength();
+		return index >= -preLength && index + length <= extendedLength;
+	}
+
+	private static class EmptyByteSequence implements ByteSequence {
+
+		@Override
+		public int getLength() {
+			return 0;
+		}
+
+		@Override
+		public byte getByte(int index) {
+			return 0;
+		}
+
+		@Override
+		public boolean hasAvailableBytes(int index, int length) {
+			return false;
+		}
+
+		@Override
+		public byte[] getBytes(int start, int length) {
+			return new byte[0];
+		}
+
 	}
 }

@@ -30,9 +30,10 @@ public class RegExByteMatcherTest {
 
 	@Before
 	public void setUp() {
+		ByteSequence pre = new ByteArrayByteSequence(makeBytes(""));
 		ByteSequence main = new ByteArrayByteSequence(makeBytes("one two three tw"));
 		ByteSequence extra = new ByteArrayByteSequence(makeBytes("o four two five"));
-		byteSequence = new ExtendedByteSequence(main, extra, 100);
+		byteSequence = new ExtendedByteSequence(main, pre, extra, 100);
 
 	}
 
@@ -73,6 +74,66 @@ public class RegExByteMatcherTest {
 		ByteMatcher<SearchData> byteMatcher = new RegExByteMatcher("apple", null);
 
 		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
+		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void testPositiveLookBehindAcrossBuffers() {
+		ByteSequence pre = new ByteArrayByteSequence(makeBytes("bbb bob bob aaa"));
+		ByteSequence main = new ByteArrayByteSequence(makeBytes(" bob bob aaa bob"));
+		ByteSequence post = null;
+
+		byteSequence = new ExtendedByteSequence(main, pre, post, 100);
+		RegExByteMatcher byteMatcher = new RegExByteMatcher("(?<=aaa )bob", null);
+		SearchData searchData = byteMatcher.getSearchData();
+
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
+		assertTrue(it.hasNext());
+		assertEquals(new Match<>(searchData, 1, 3), it.next());
+		assertEquals(new Match<>(searchData, 13, 3), it.next());
+		assertFalse(it.hasNext());
+
+	}
+
+	@Test
+	public void testPositiveLookBehindAcrossBuffers_ThatStartBeforeMainAreIgnored() {
+		ByteSequence pre = new ByteArrayByteSequence(makeBytes("aaa joe aaa bo"));
+		ByteSequence main = new ByteArrayByteSequence(makeBytes("b bob bob bob"));
+		ByteSequence post = null;
+
+		byteSequence = new ExtendedByteSequence(main, pre, post, 100);
+		RegExByteMatcher byteMatcher = new RegExByteMatcher("(?<=aaa )bob", null);
+
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
+		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void testPositiveLookBehindAcrossBuffers_ThatStartInPostAreIgnored() {
+		ByteSequence pre = null;
+		ByteSequence main = new ByteArrayByteSequence(makeBytes("bbb bob bob aaa "));
+		ByteSequence post = new ByteArrayByteSequence(makeBytes("bob bob aaa bob"));
+
+		byteSequence = new ExtendedByteSequence(main, pre, post, 100);
+		RegExByteMatcher byteMatcher = new RegExByteMatcher("(?<=aaa )bob", null);
+
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
+		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void testNegativeLookBehindAcrossBuffers() {
+		ByteSequence pre = new ByteArrayByteSequence(makeBytes("aaa bob bob aaa"));
+		ByteSequence main = new ByteArrayByteSequence(makeBytes(" bob bob aaa bob"));
+		ByteSequence post = null;
+
+		byteSequence = new ExtendedByteSequence(main, pre, post, 100);
+		RegExByteMatcher byteMatcher = new RegExByteMatcher("(?<!aaa )bob", null);
+		SearchData searchData = byteMatcher.getSearchData();
+
+		Iterator<Match<SearchData>> it = byteMatcher.match(byteSequence).iterator();
+		assertTrue(it.hasNext());
+		assertEquals(new Match<>(searchData, 5, 3), it.next());
 		assertFalse(it.hasNext());
 	}
 
