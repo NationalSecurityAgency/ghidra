@@ -4,20 +4,21 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.lang;
-
-import generic.jar.ResourceFile;
+package ghidra.app.plugin.processors.sleigh;
 
 import java.util.*;
+
+import generic.jar.ResourceFile;
+import ghidra.program.model.lang.*;
 
 /**
  * Class for holding Language identifiers
@@ -25,9 +26,9 @@ import java.util.*;
 public class SleighLanguageDescription extends BasicLanguageDescription {
 
 	private ResourceFile defsFile; // defs file
-	private ResourceFile specFile; // specification file
-	private ResourceFile slaFile; // just cramming this in here until major cleanup
+	private ResourceFile specFile; // pspec specification file
 	private ResourceFile manualIndexFile; // the manual index file
+	private SleighLanguageFile languageFile; // sla, slaspec file
 
 	private Map<String, Integer> truncatedSpaceMap;
 
@@ -36,8 +37,8 @@ public class SleighLanguageDescription extends BasicLanguageDescription {
 	 * @param id the name of the language
 	 * @param description language description text
 	 * @param processor processor name/family
-	 * @param endian data endianness
-	 * @param instructionEndian instruction endianness
+	 * @param endian data endianess
+	 * @param instructionEndian instruction endianess
 	 * @param size processor size 
 	 * @param variant processor variant name
 	 * @param version the major version of the language.
@@ -54,19 +55,15 @@ public class SleighLanguageDescription extends BasicLanguageDescription {
 			Map<String, List<String>> externalNames) {
 		super(id, processor, endian, instructionEndian, size, variant, description, version,
 			minorVersion, deprecated, compilerSpecDescriptions, externalNames);
-		this.specFile = null;
-		this.slaFile = null;
-		this.manualIndexFile = null;
 		this.truncatedSpaceMap = spaceTruncations;
 	}
 
 	/**
 	 * @return set of address space names which have been identified for truncation
 	 */
-	@SuppressWarnings("unchecked")
 	public Set<String> getTruncatedSpaceNames() {
 		if (truncatedSpaceMap == null) {
-			return Collections.EMPTY_SET;
+			return Set.of();
 		}
 		return truncatedSpaceMap.keySet();
 	}
@@ -107,33 +104,37 @@ public class SleighLanguageDescription extends BasicLanguageDescription {
 	 * Set the (optional) specification file associated with this language
 	 * 
 	 * @param specFile
-	 *            the specFile to associate with this description.
+	 *            the specFile (.pspec) to associate with this description.
 	 */
 	public void setSpecFile(ResourceFile specFile) {
 		this.specFile = specFile;
 	}
 
 	/**
-	 * Get the specification file (if it exists)
+	 * Get the specification (.pspec) file (if it exists)
 	 * 
-	 * @return specification file
+	 * @return specification file (.pspec)
 	 */
 	public ResourceFile getSpecFile() {
 		return specFile;
 	}
 
 	/**
-	 * @param slaFile
+	 * Sets the {@link SleighLanguageFile} which represents the .sla and .slaspec files.
+	 * 
+	 * @param langFile {@link SleighLanguageFile} which represents the .sla and .slaspec files
 	 */
-	public void setSlaFile(ResourceFile slaFile) {
-		this.slaFile = slaFile;
+	void setLanguageFile(SleighLanguageFile langFile) {
+		this.languageFile = langFile;
 	}
 
 	/**
-	 * @return
+	 * Returns the {@link SleighLanguageFile} which represents the .sla and .slaspec files.
+	 * 
+	 * @return {@link SleighLanguageFile} which represents the .sla and .slaspec files
 	 */
-	public ResourceFile getSlaFile() {
-		return slaFile;
+	public SleighLanguageFile getLanguageFile() {
+		return languageFile;
 	}
 
 	public ResourceFile getManualIndexFile() {
@@ -143,4 +144,16 @@ public class SleighLanguageDescription extends BasicLanguageDescription {
 	public void setManualIndexFile(ResourceFile manualIndexFile) {
 		this.manualIndexFile = manualIndexFile;
 	}
+
+	/**
+	 * Tests if two Sleigh languages are based on the same .sla file.
+	 * 
+	 * @param other {@link SleighLanguageDescription}
+	 * @return true if the other {@link SleighLanguageDescription} uses the same .sla file
+	 */
+	public boolean isSameSleighLanguageFile(SleighLanguageDescription other) {
+		return other != null &&
+			languageFile.getSlaFile().equals(other.getLanguageFile().getSlaFile());
+	}
+
 }

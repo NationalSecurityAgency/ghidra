@@ -25,29 +25,78 @@ import utilities.util.reflection.ReflectionUtilities;
 import utility.function.Dummy;
 
 /**
- * Class to pass to a thread pool that will consume all output from an external process.  This is
- * a {@link Runnable} that get submitted to a thread pool.  This class records the data it reads
+ * {@link Runnable} that will consume all text output from an {@link InputStream} tied to an 
+ * external processes (stdout / stderr).
+ * <p>
+ * The output can be inspected line-by-line by providing a string {@link Consumer}, or the entire
+ * output of the process can be inspected by calling {@link #getOutput()} or 
+ * {@link #getOutputAsString()}. 
  */
 public class IOResult implements Runnable {
 
 	public static final String THREAD_POOL_NAME = "I/O Thread Pool";
 
-	private List<String> outputLines = new ArrayList<>();
+	private final List<String> outputLines;
 	private BufferedReader commandOutput;
 	private final Throwable inception;
-	private Consumer<String> consumer = Dummy.consumer();
+	private final Consumer<String> consumer;
 
+	/**
+	 * Creates a {@link IOResult} that consumes the specified {@link InputStream}, saving it
+	 * as text lines.
+	 * 
+	 * @param input {@link InputStream}
+	 */
 	public IOResult(InputStream input) {
-		this(ReflectionUtilities.createThrowableWithStackOlderThan(IOResult.class), input);
+		this(input, null, true,
+			ReflectionUtilities.createThrowableWithStackOlderThan(IOResult.class));
 	}
 
-	public IOResult(Throwable inception, InputStream input) {
+	/**
+	 * Creates a {@link IOResult} that consumes the specified {@link InputStream}, saving it
+	 * as text lines.
+	 * 
+	 * @param input {@link InputStream}
+	 * @param inception information about where this object was created
+	 */
+	public IOResult(InputStream input, Throwable inception) {
+		this(input, null, true, inception);
+	}
+
+	/**
+	 * Creates a {@link IOResult} that consumes the specified {@link InputStream}, handing each
+	 * line to the {@link Consumer}.
+	 * <p>
+	 * Example: {@code new IOResult(process.getInputStream(), s -> System.out.println(s), null);}
+	 * 
+	 * @param input {@link InputStream}
+	 * @param lineConsumer {@link Consumer string consumer}
+	 * @param inception information about where this object was created
+	 */
+	public IOResult(InputStream input, Consumer<String> lineConsumer, Throwable inception) {
+		this(input, lineConsumer, false, inception);
+	}
+
+	/**
+	 * Creates a {@link IOResult} that consumes the specified {@link InputStream}, handing each
+	 * line to the {@link Consumer} and optionally storing each line for later retrieval.
+	 * 
+	 * @param input {@link InputStream}
+	 * @param lineConsumer {@link Consumer string consumer}, optional
+	 * @param retainLines boolean flag, if true, the contents read from the InputStream will be
+	 * available via {@link #getOutput()} and {@link #getOutputAsString()}
+	 * @param inception information about where this object was created
+	 */
+	public IOResult(InputStream input, Consumer<String> lineConsumer, boolean retainLines,
+			Throwable inception) {
+		this.outputLines = retainLines ? new ArrayList<>() : List.of();
+		if (retainLines) {
+			lineConsumer = Dummy.ifNull(lineConsumer).andThen(outputLines::add);
+		}
+		this.consumer = lineConsumer;
 		this.inception = inception;
-		commandOutput = new BufferedReader(new InputStreamReader(input));
-	}
 
-	public void setConsumer(Consumer<String> consumer) {
-		this.consumer = consumer;
+		commandOutput = new BufferedReader(new InputStreamReader(input));
 	}
 
 	public String getOutputAsString() {
@@ -68,8 +117,7 @@ public class IOResult implements Runnable {
 
 		try {
 			while ((line = commandOutput.readLine()) != null) {
-				consumer.accept(line);
-				outputLines.add(line);
+				consumer.accept(line); // this both adds to outputLines and calls the upstream consumer
 			}
 		}
 		catch (Exception e) {

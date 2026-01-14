@@ -1784,6 +1784,22 @@ public class SleighCompile extends SleighBase {
 		return 0;
 	}
 
+	public void setOptions(SleighCompileOptions options) {
+		Set<Entry<String, String>> entrySet = options.preprocs.entrySet();
+		for (Entry<String, String> entry : entrySet) {
+			setPreprocValue(entry.getKey(), entry.getValue());
+		}
+		setUnnecessaryPcodeWarning(options.unnecessaryPcodeWarning);
+		setLenientConflict(options.lenientConflict);
+		setLocalCollisionWarning(options.allCollisionWarning);
+		setAllNopWarning(options.allNopWarning);
+		setDeadTempWarning(options.deadTempWarning);
+		setUnusedFieldWarning(options.unusedFieldWarning);
+		setEnforceLocalKeyWord(options.enforceLocalKeyWord);
+		setInsensitiveDuplicateError(!options.caseSensitiveRegisterNames);
+		setDebugOutput(options.debugOutput);
+	}
+
 	public void setAllOptions(Map<String, String> preprocs, boolean unnecessaryPcodeWarning,
 			boolean lenientConflict, boolean allCollisionWarning, boolean allNopWarning,
 			boolean deadTempWarning, boolean unusedFieldWarning, boolean enforceLocalKeyWord,
