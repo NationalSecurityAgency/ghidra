@@ -21,6 +21,7 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 
@@ -196,9 +197,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 			return sharedHighlightProvider;
 		}
 
-		JComponent centerOverComponent = view.getPrimaryGraphViewer();
-		sharedHighlightProvider =
-			new FgHighlightProvider(env.getTool(), centerOverComponent);
+		// At the time of construction, the view has not yet built the graph viewer.  We will use a
+		// supplier to access the viewer on demand.  It should be valid at that point.
+		Supplier<Component> repaintSupplier = () -> view.getPrimaryGraphViewer();
+		sharedHighlightProvider = new FgHighlightProvider(env.getTool(), repaintSupplier);
 		return sharedHighlightProvider;
 	}
 
@@ -1157,10 +1159,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	private static class FgHighlightProvider
 			implements ListingHighlightProvider, ButtonPressedListener {
-		private ListingMiddleMouseHighlightProvider highlighter;
+		private FgMiddleMouseHighlightProvider highlighter;
 
-		FgHighlightProvider(PluginTool tool, Component repaintComponent) {
-			highlighter = new ListingMiddleMouseHighlightProvider(tool, repaintComponent);
+		FgHighlightProvider(PluginTool tool, Supplier<Component> repaintSupplier) {
+			highlighter = new FgMiddleMouseHighlightProvider(tool, repaintSupplier);
 		}
 
 		@Override
@@ -1172,6 +1174,25 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		public void buttonPressed(ProgramLocation location, FieldLocation fieldLocation,
 				ListingField field, MouseEvent event) {
 			highlighter.buttonPressed(location, fieldLocation, field, event);
+		}
+
+		private class FgMiddleMouseHighlightProvider extends ListingMiddleMouseHighlightProvider {
+
+			private Supplier<Component> repaintSupplier;
+
+			public FgMiddleMouseHighlightProvider(PluginTool tool,
+					Supplier<Component> repaintSupplier) {
+				super(tool, null);
+				this.repaintSupplier = repaintSupplier;
+			}
+
+			@Override
+			protected void repaint() {
+				Component c = repaintSupplier.get();
+				if (c != null) {
+					c.repaint();
+				}
+			}
 		}
 	}
 }

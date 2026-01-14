@@ -41,7 +41,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 initscript {
 	repositories { mavenCentral() }
-	dependencies { classpath 'commons-io:commons-io:2.11.0' }
+	dependencies { classpath 'commons-io:commons-io:2.21.0' }
 }
 
 ext.NUM_RETRIES = 3 // # of times to try to download a file before failing
@@ -224,15 +224,15 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
 	],
 	[
-		name: "setuptools-68.0.0-py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/c7/42/be1c7bbdd83e1bfb160c94b9cafd8e25efc7400346cf7ccdbdb452c467fa/setuptools-68.0.0-py3-none-any.whl",
-		sha256: "11e52c67415a381d10d6b462ced9cfb97066179f0e871399e006c4ab101fc85f",
+		name: "setuptools-80.9.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl",
+		sha256: "062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922",
 		destination: [file("${DEPS_DIR}/Debugger-rmi-trace/"), file("${DEPS_DIR}/PyGhidra/")]
 	],
 	[
-		name: "wheel-0.37.1-py2.py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/27/d6/003e593296a85fd6ed616ed962795b2f87709c3eee2bca4f6d0fe55c6d00/wheel-0.37.1-py2.py3-none-any.whl",
-		sha256: "4bdcd7d840138086126cd09254dc6195fb4fc6f01c050a1d7236f2630db1d22a",
+		name: "wheel-0.45.1-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/0b/2c/87f3254fd8ffd29e4c02732eee68a83a1d3c346ae39bc6822dcbcb697f2b/wheel-0.45.1-py3-none-any.whl",
+		sha256: "708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248",
 		destination: [file("${DEPS_DIR}/Debugger-rmi-trace/"), file("${DEPS_DIR}/PyGhidra/")]
 	],
 	[
@@ -260,9 +260,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
-		name: "packaging-23.2-py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/ec/1a/610693ac4ee14fcdf2d9bf3c493370e4f2ef7ae2e19217d7a237ff42367d/packaging-23.2-py3-none-any.whl",
-		sha256: "8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7",
+		name: "packaging-25.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl",
+		sha256: "29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484",
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	], 
 	[

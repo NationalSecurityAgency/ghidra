@@ -26,6 +26,7 @@ import java.util.Hashtable;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
 
+import generic.hash.HashUtilities;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.*;
 import ghidra.framework.remote.security.SSHKeyManager;
@@ -444,7 +445,7 @@ public class ClientUtil {
 	static void processSignatureCallback(String serverName, SignatureCallback sigCb)
 			throws IOException {
 		try {
-			SignedToken signedToken = ApplicationKeyManagerUtils
+			SignedToken signedToken = DefaultKeyManagerFactory
 					.getSignedToken(sigCb.getRecognizedAuthorities(), sigCb.getToken());
 			sigCb.sign(signedToken.certChain, signedToken.signature);
 			Msg.info(ClientUtil.class, "PKI Authenticating to " + serverName + " as user '" +

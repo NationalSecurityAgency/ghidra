@@ -68,6 +68,8 @@ public abstract class PcodeCompile {
 	public abstract VectorSTL<OpTpl> createCrossBuild(Location find, VarnodeTpl v,
 			SectionSymbol second);
 
+	public abstract ConstructTpl enterSection(Location where);
+
 	public abstract SectionVector standaloneSection(ConstructTpl c);
 
 	public abstract SectionVector firstNamedSection(ConstructTpl main, SectionSymbol sym);

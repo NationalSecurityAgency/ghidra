@@ -228,6 +228,28 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	}
 
 	@Override
+	public boolean isSnapOnly(boolean whenInconsistent) {
+		if (schedule == null && key < 0) {
+			return whenInconsistent;
+		}
+		return schedule == null || schedule.isSnapOnly();
+	}
+
+	@Override
+	public boolean isStale(boolean whenInconsistent) {
+		if (schedule == null) {
+			if (key < 0) {
+				return whenInconsistent;
+			}
+			return false; // A recorded snapshot
+		}
+		if (schedule.isSnapOnly()) {
+			return false;
+		}
+		return version < manager.trace.getEmulatorCacheVersion();
+	}
+
+	@Override
 	public void delete() {
 		manager.deleteSnapshot(this);
 	}

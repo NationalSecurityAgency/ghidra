@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,9 +75,9 @@ public class SSHAuthenticationModule {
 		byte[] token = TokenGenerator.getNewToken(TOKEN_SIZE);
 		try {
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			SignedToken signedToken = ApplicationKeyManagerUtils.getSignedToken(
-				usingSelfSignedCert ? null : ApplicationKeyManagerUtils.getTrustedIssuers(), token);
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			SignedToken signedToken = DefaultKeyManagerFactory.getSignedToken(
+				usingSelfSignedCert ? null : DefaultTrustManagerFactory.getTrustedIssuers(), token);
 			list.add(new SSHSignatureCallback(token, signedToken.signature));
 		}
 		catch (Exception e) {
@@ -88,9 +88,9 @@ public class SSHAuthenticationModule {
 
 	public boolean hasSignedSSHCallback(Callback[] callbacks) {
 		if (callbacks != null) {
-			for (int i = 0; i < callbacks.length; i++) {
-				if (callbacks[i] instanceof SSHSignatureCallback) {
-					SSHSignatureCallback sshCb = (SSHSignatureCallback) callbacks[i];
+			for (Callback callback : callbacks) {
+				if (callback instanceof SSHSignatureCallback) {
+					SSHSignatureCallback sshCb = (SSHSignatureCallback) callback;
 					return sshCb.isSigned();
 				}
 			}
@@ -154,12 +154,12 @@ public class SSHAuthenticationModule {
 		NameCallback nameCb = null;
 		SSHSignatureCallback sshCb = null;
 		if (callbacks != null) {
-			for (int i = 0; i < callbacks.length; i++) {
-				if (callbacks[i] instanceof NameCallback) {
-					nameCb = (NameCallback) callbacks[i];
+			for (Callback callback : callbacks) {
+				if (callback instanceof NameCallback) {
+					nameCb = (NameCallback) callback;
 				}
-				if (callbacks[i] instanceof SSHSignatureCallback) {
-					sshCb = (SSHSignatureCallback) callbacks[i];
+				if (callback instanceof SSHSignatureCallback) {
+					sshCb = (SSHSignatureCallback) callback;
 				}
 			}
 		}
@@ -197,9 +197,9 @@ public class SSHAuthenticationModule {
 		boolean isValid = false;
 		try {
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			isValid = ApplicationKeyManagerUtils.isMySignature(
-				usingSelfSignedCert ? null : ApplicationKeyManagerUtils.getTrustedIssuers(), token,
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			isValid = DefaultKeyManagerFactory.isMySignature(
+				usingSelfSignedCert ? null : DefaultTrustManagerFactory.getTrustedIssuers(), token,
 				sshCb.getServerSignature());
 		}
 		catch (Exception e) {

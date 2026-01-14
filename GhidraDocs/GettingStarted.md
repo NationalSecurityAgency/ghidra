@@ -458,6 +458,9 @@ There are several ways you can get help with using Ghidra:
 * GUI icons may not render correctly in some configurations of Linux. Setting 
   `VMARGS=-Dsun.java2d.opengl` to `true` in `<GhidraInstallDir>/support/launch.properties` may fix 
   this issue.
+* Non-reparenting window managers such as Xmonad and Sway may render Ghidra windows as blank. This
+  is a known java issue (https://bugs.openjdk.org/browse/JDK-8058197) which can only be addressed
+  by setting the environment variable `_JAVA_AWT_WM_NONREPARENTING=1` prior to launching Ghidra.
 
 ### macOS
 * Building new Ghidra module extensions on macOS (OS X) using a network drive (including a

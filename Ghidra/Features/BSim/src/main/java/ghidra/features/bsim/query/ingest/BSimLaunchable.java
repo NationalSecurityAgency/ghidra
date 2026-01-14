@@ -34,7 +34,7 @@ import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.HeadlessClientAuthenticator;
 import ghidra.framework.protocol.ghidra.GhidraURL;
-import ghidra.net.SSLContextInitializer;
+import ghidra.net.DefaultSSLContextInitializer;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
@@ -1111,7 +1111,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 		Application.initializeApplication(layout, config);
 
-		SSLContextInitializer.initialize();
+		DefaultSSLContextInitializer.initialize();
 		ghidra.framework.protocol.ghidra.Handler.registerHandler();
 		ghidra.features.bsim.query.postgresql.Handler.registerHandler();
 

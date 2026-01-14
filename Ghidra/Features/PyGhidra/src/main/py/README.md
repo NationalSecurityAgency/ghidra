@@ -31,7 +31,11 @@ To install the PyGhidra Python library:
    Python editor supports it). The type stubs module is specific to each version of Ghidra:
    * Online: `pip install ghidra-stubs==<version>`
    * Offline: `python3 -m pip install --no-index -f <GhidraInstallDir>/docs/ghidra_stubs ghidra-stubs`
-4. Optionally point PyGhidra at your Ghidra installation by setting the `GHIDRA_INSTALL_DIR` 
+4. Optionally install the Java type stubs to improve your development experience (assuming your
+   Python editor supports it):
+   * Online: `pip install java-stubs-converted-strings`
+   * Offline: Not available
+5. Optionally point PyGhidra at your Ghidra installation by setting the `GHIDRA_INSTALL_DIR` 
    environment variable. If not set, PyGhidra will point itself at the last used installation of
    Ghidra. Alternatively, you can point PyGhidra at a Ghidra installation with
    `pyghidra.start(install_dir=<GhidraInstallDir>)` (see below).
@@ -116,7 +120,7 @@ def consume_program(
         object was provided, the same consumer object is returned. Otherwise, a new consumer object
         is created and returned.
     :raises FileNotFoundError: If the path does not exist in the project.
-    :raises TypeError: If the path in the project exists but is not a Program.
+    :raises pyghidra.ProgramTypeError: If the path in the project exists but is not a Program.
     """
 ```
 
@@ -135,7 +139,7 @@ def program_context(
     :param path: The project path of the program (should start with "/").
     :return: The Ghidra program.
     :raises FileNotFoundError: If the path does not exist in the project.
-    :raises TypeError: If the path in the project exists but is not a Program.
+    :raises pyghidra.ProgramTypeError: If the path in the project exists but is not a Program.
     """
 ```
 
@@ -224,12 +228,12 @@ def program_loader() -> "ProgramLoader.Builder":
 ```python
 def task_monitor(
         timeout: Optional[int] = None
-    ) -> "PyGhidraTaskMonitor":
+    ) -> "TaskMonitor":
     """
-    Convenience function to get a "PyGhidraTaskMonitor" object.
+    Convenience function to get a "TaskMonitor" object.
 
     :param timeout: An optional number of seconds to wait before canceling the monitor.
-    :return: A "PyGhidraTaskMonitor"  object.
+    :return: A "TaskMonitor" object.
     """
 ```
 
@@ -271,6 +275,12 @@ def walk_programs(
     :param program_filter: A filter used to limit what programs get processed.
     :raises FileNotFoundError: If the starting folder is not found in the project.
     """
+```
+
+### pyghidra.ProgramTypeError
+```python
+class ProgramTypeError(TypeError):
+    """Custom exception for when a Program was expected but not received."""
 ```
 
 ## Example
@@ -557,6 +567,17 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.0.2__
+* Fixed an issue that prevented [`pyghidra.analysis_properties()`](#pyghidraanalysis_properties)
+  from having access to all of the analysis properties.
+* Fixed issues related to the PyGhidra API inadvertently squashing exceptions.
+* Calling [`pyghidra.task_monitor()`](#pyghidratask_monitor) with no `timeout` parameter will now
+  return a `TaskMonitor.DUMMY` instead of a `PyGhidraTaskMonitor`. 
+
+__3.0.1__
+* Fixed `AttributeError: module 'pyghidra' has no attribute 'program_conext'` when performing a
+  `from pyghidra import *`.
+
 __3.0.0:__
 * Revised the PyGhidra API. See the [API section](#api) for more details.
 * PyGhidra 3.0.0 requires Ghidra 12.0 or later to run.

@@ -466,15 +466,19 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
+		long snapBefore = traceManager.getCurrent().getViewSnap();
 		Instruction ins =
 			helper.patchInstructionAt(tb.addr(0x00400123), "imm r0,#0x0", "imm r0,#0x3d2");
 		assertEquals(2, ins.getLength());
 
+		waitForPass(() -> assertNotEquals(snapBefore, traceManager.getCurrent().getViewSnap()));
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
-		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
+		waitForPass(noExc(() -> {
+			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
+			assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
+		}));
 	}
 
 	@Test
@@ -517,6 +521,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		goTo(listingProvider.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		assertTrue(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
+		long snapBefore = traceManager.getCurrent().getViewSnap();
 
 		/**
 		 * TODO: There's a bug in the trace forking: Data units are not replaced when bytes changed.
@@ -525,11 +530,14 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		/*Data data =*/ helper.patchDataAt(tb.addr(0x00400123), "0h", "5h");
 		// assertEquals(2, data.getLength());
 
+		waitForPass(() -> assertNotEquals(snapBefore, traceManager.getCurrent().getViewSnap()));
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
-		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0, 5), bytes);
+		waitForPass(noExc(() -> {
+			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
+			assertArrayEquals(tb.arr(0, 5), bytes);
+		}));
 	}
 
 	@Test

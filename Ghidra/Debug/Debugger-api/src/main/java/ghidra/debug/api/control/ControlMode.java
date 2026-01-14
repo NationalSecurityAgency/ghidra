@@ -24,7 +24,6 @@ import javax.swing.Icon;
 
 import db.Transaction;
 import generic.theme.GIcon;
-import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.debug.api.target.Target;
@@ -45,8 +44,6 @@ import ghidra.trace.model.time.schedule.PatchStep;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * The control / state editing modes
@@ -332,22 +329,7 @@ public enum ControlMode {
 			DebuggerTraceManagerService traceManager =
 				Objects.requireNonNull(tool.getService(DebuggerTraceManagerService.class),
 					"No trace manager service");
-			Long found = traceManager.findSnapshot(withTime);
-			// Materialize it on the same thread (even if swing)
-			// It shouldn't take long, since we're only appending one step.
-			if (found == null) {
-				// TODO: Could still do it async on another thread, no?
-				// Not sure it buys anything, since program view will call .get on swing thread
-				DebuggerEmulationService emulationService = Objects.requireNonNull(
-					tool.getService(DebuggerEmulationService.class), "No emulation service");
-				try {
-					emulationService.emulate(coordinates.getPlatform(), time,
-						TaskMonitor.DUMMY);
-				}
-				catch (CancelledException e) {
-					throw new AssertionError(e);
-				}
-			}
+
 			return traceManager.activateAndNotify(withTime, ActivationCause.EMU_STATE_EDIT);
 		}
 

@@ -45,8 +45,8 @@ import generic.random.SecureRandomFactory;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.remote.*;
-import ghidra.net.ApplicationKeyManagerFactory;
-import ghidra.net.SSLContextInitializer;
+import ghidra.net.DefaultKeyManagerFactory;
+import ghidra.net.DefaultSSLContextInitializer;
 import ghidra.server.RepositoryManager;
 import ghidra.server.UserManager;
 import ghidra.server.security.*;
@@ -731,7 +731,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		Application.initializeLogging(serverLogFile, serverLogFile);
 
 		// In the absence of module initialization - we must invoke directly
-		SSLContextInitializer.initialize();
+		DefaultSSLContextInitializer.initialize();
 
 		log = LogManager.getLogger(GhidraServer.class); // init log *after* initializing log system
 
@@ -752,13 +752,12 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// Ensure that remote access hostname is properly set for RMI registration
 			String hostname = initRemoteAccessHostname();
 
-			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
+			if (DefaultKeyManagerFactory.getPreferredKeyStore() == null) {
 				// keystore has not been identified - use self-signed certificate
-				ApplicationKeyManagerFactory
-						.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
-				ApplicationKeyManagerFactory.addSubjectAlternativeName(hostname);
+				DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
+				DefaultKeyManagerFactory.addSubjectAlternativeName(hostname);
 			}
-			if (!ApplicationKeyManagerFactory.initialize()) {
+			if (!DefaultKeyManagerFactory.initialize()) {
 				log.fatal("Failed to initialize PKI/SSL keystore");
 				System.exit(0);
 				return;

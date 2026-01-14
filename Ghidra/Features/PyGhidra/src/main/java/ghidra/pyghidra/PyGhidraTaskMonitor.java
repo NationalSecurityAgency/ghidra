@@ -38,7 +38,7 @@ public class PyGhidraTaskMonitor implements TaskMonitor {
 	private boolean isIndeterminate;
 	private volatile boolean isCancelled;
 
-	private Timer timer = new Timer();
+	private Timer timer;
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
 	private TriConsumer<String, Long, Long> changeCallback;
@@ -55,6 +55,7 @@ public class PyGhidraTaskMonitor implements TaskMonitor {
 			TriConsumer<String, Long, Long> changeCallback) {
 		isCancelled = false;
 		if (timeoutSecs != null) {
+			timer = new Timer(true);
 			timer.schedule(new PyGhidraTimeOutTask(), timeoutSecs * 1000);
 		}
 		this.changeCallback = changeCallback;
@@ -143,7 +144,9 @@ public class PyGhidraTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void cancel() {
-		timer.cancel(); // Terminate the timer thread
+		if (timer != null) {
+			timer.cancel(); // Terminate the timer thread
+		}
 		isCancelled = true;
 	}
 

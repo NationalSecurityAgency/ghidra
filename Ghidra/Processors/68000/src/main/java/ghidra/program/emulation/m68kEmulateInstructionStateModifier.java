@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,12 +116,12 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 				throw new LowlevelError("CALLOTHER: Find First One op missing required output");
 			}
 
-			if (inputs.length != 2 || inputs[1].getSize() == 0 || !inputs[1].isRegister()) {
+			if (inputs.length != 1 || inputs[0].getSize() == 0 || !inputs[0].isRegister()) {
 				throw new LowlevelError(
 					"CALLOTHER: Find First One op requires one register varnode input");
 			}
 
-			Varnode in = inputs[1];
+			Varnode in = inputs[0];
 			MemoryState memoryState = emu.getMemoryState();
 
 			long value = memoryState.getValue(in);
