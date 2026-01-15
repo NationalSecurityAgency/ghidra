@@ -826,6 +826,25 @@ public interface Methods {
 		}
 
 		/**
+		 * Pop an argument and a parameter without checking
+		 * <p>
+		 * NOTE: This should only be used with {@link MthDesc#reflect(Method)}. When dealing with a
+		 * parameter list whose length is only known at runtime, recursion should be favored, so
+		 * that each argument pushed by the emitter is provably paired with a parameter denoted by
+		 * calling this method.
+		 * 
+		 * @param <MR> the return type
+		 * @param <SN1> the new remaining stack contents
+		 * @param <SN0> the current stack contents having the popped argument on top
+		 * @param inv the invocation object
+		 * @return the invocation object with remaining parameters and stack contents
+		 */
+		public static <MR extends BType, SN1 extends Next, SN0 extends Ent<SN1, ?>> Inv<MR, SN1, ?>
+				takeQArg(Inv<MR, SN0, ?> inv) {
+			return (Inv) inv;
+		}
+
+		/**
 		 * Pop a polymorphic reference argument and match/check it against the next (right-most
 		 * unmatched parameter)
 		 * 
@@ -976,7 +995,7 @@ public interface Methods {
 		 * @param inv the invocation object
 		 * @return the emitter typed with the resulting stack
 		 */
-		public static <SN extends Next> Emitter<SN> retQVoid(Inv<?, SN, Bot> inv) {
+		public static <SN extends Next> Emitter<SN> retQVoid(Inv<?, SN, ?> inv) {
 			return inv.em;
 		}
 
@@ -1007,7 +1026,7 @@ public interface Methods {
 		 *         value
 		 */
 		public static <RT extends BNonVoid, SN extends Next> Emitter<Ent<SN, RT>>
-				retQ(Inv<?, SN, Bot> inv, RT returnType) {
+				retQ(Inv<?, SN, ?> inv, RT returnType) {
 			return (Emitter) inv.em;
 		}
 

@@ -17,8 +17,7 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -163,6 +162,12 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		};
 	}
 
+	static <E> List<E> tail(List<E> list) {
+		return list.subList(1, list.size());
+	}
+
+	record PlacedParam<N>(Emitter<N> em, List<JitVal> args, List<Parameter> params) {}
+
 	/**
 	 * Emit code to implement the Direct strategy (see the class documentation)
 	 * 
@@ -244,7 +249,33 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 				};
 			}
 
-			<N extends Next> ObjInv<?, LIB, N, ?> doInv(Emitter<N> em, List<JitVal> args,
+			<N extends Next> PlacedParam<? extends Ent<N, ?>> placeNextParam(Emitter<N> em,
+					List<JitVal> args, List<Parameter> params) {
+				Parameter param = params.getFirst();
+				if (param == outputParameter) {
+					var emNext = em.emit(Op::aload, localOut);
+					return new PlacedParam<>(emNext, args, tail(params));
+				}
+				JitVal arg = args.getFirst();
+				var emNext = doReadArg(em, arg, param);
+				return new PlacedParam<>(emNext, tail(args), tail(params));
+			}
+
+			<N extends Next> Inv<?, N, Bot> doInvVirtual(Emitter<N> em, List<JitVal> args,
+					List<Parameter> params) {
+				var emLib = em
+						.emit(useropField::genLoad, localThis, gen)
+						.emit(Op::invokeinterface, T_PCODE_USEROP_DEFINITION, "getDefiningLibrary",
+							MDESC_PCODE_USEROP_DEFINITION__GET_DEFINING_LIBRARY)
+						.step(Inv::takeObjRef)
+						.step(Inv::ret)
+						.emit(Op::checkcast, libType);
+				var inv = doInvVirtualRec(emLib, args, params)
+						.step(Inv::takeQObjRef);
+				return inv;
+			}
+
+			<N extends Next> ObjInv<?, LIB, N, ?> doInvVirtualRec(Emitter<N> em, List<JitVal> args,
 					List<Parameter> params) {
 				if (params.isEmpty()) {
 					/**
@@ -254,19 +285,27 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 					return Op.invokevirtual(em, libType, method.getName(), MthDesc.reflect(method),
 						false);
 				}
-				Parameter param = params.getFirst();
-				if (param == outputParameter) {
-					var emOut = em.emit(Op::aload, localOut);
-					var inv = doInv(emOut, args, params.subList(1, params.size()));
-					return Inv.takeQArg(inv);
-				}
-				JitVal arg = args.getFirst();
-				// TODO: Annotation/attribute to describe signedness?
-				// TODO: Or a way to receive the byte size
-				var emRead = doReadArg(em, arg, param);
-				var inv =
-					doInv(emRead, args.subList(1, args.size()), params.subList(1, params.size()));
+				PlacedParam<? extends Ent<N, ?>> next = placeNextParam(em, args, params);
+				ObjInv<?, LIB, ? extends Ent<N, ?>, ?> inv =
+					doInvVirtualRec(next.em, next.args, next.params);
 				return Inv.takeQArg(inv);
+			}
+
+			<N extends Next> Inv<?, N, ?> doInvStaticRec(Emitter<N> em, List<JitVal> args,
+					List<Parameter> params) {
+				if (params.isEmpty()) {
+					return Op.invokestatic(em, libType, method.getName(), MthDesc.reflect(method),
+						false);
+				}
+				PlacedParam<? extends Ent<N, ?>> next = placeNextParam(em, args, params);
+				Inv<?, ? extends Ent<N, ?>, ?> inv =
+					doInvStaticRec(next.em, next.args, next.params);
+				return Inv.takeQArg(inv);
+			}
+
+			<N extends Next> Inv<?, N, ?> doInvStatic(Emitter<N> em, List<JitVal> args,
+					List<Parameter> params) {
+				return doInvStaticRec(em, args, params);
 			}
 		};
 
@@ -275,16 +314,9 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 			GenConsts.T_THROWABLE);
 		em = tryCatchBlock.em();
 
-		var emLib = em
-				.emit(useropField::genLoad, localThis, gen)
-				.emit(Op::invokeinterface, T_PCODE_USEROP_DEFINITION, "getDefiningLibrary",
-					MDESC_PCODE_USEROP_DEFINITION__GET_DEFINING_LIBRARY)
-				.step(Inv::takeObjRef)
-				.step(Inv::ret)
-				.emit(Op::checkcast, libType);
-		var inv = rec
-				.doInv(emLib, op.args(), Arrays.asList(parameters))
-				.step(Inv::takeQObjRef);
+		var inv = Modifier.isStatic(method.getModifiers())
+				? rec.doInvStatic(em, op.args(), Arrays.asList(parameters))
+				: rec.doInvVirtual(em, op.args(), Arrays.asList(parameters));
 
 		if (outputParameter != null) {
 			if (outMpType != null && op instanceof JitCallOtherDefOp defOp) {
@@ -300,7 +332,7 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 			// TODO: Can annotation specify signedness of return value?
 			var write = new Object() {
 				public <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> Emitter<Bot> doWrite(
-						Inv<?, Bot, Bot> inv, Class<?> returnType) {
+						Inv<?, Bot, ?> inv, Class<?> returnType) {
 					JT type = SimpleJitType.forJavaType(returnType);
 					return inv
 							.step(Inv::retQ, type.bType())

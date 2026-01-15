@@ -498,6 +498,17 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 	}
 
 	@Test
+	public void testCallOtherFuncJavaDefStatic() throws Exception {
+		Translation tr = translateSleigh(getLanguageID(), """
+				r0 = func_st_userop(6:8, 2:8);
+				""");
+		assertFalse(tr.library().gotFuncUseropCall);
+		tr.runFallthrough();
+		assertFalse(tr.library().gotFuncUseropCall);
+		assertEquals(20, tr.getLongRegVal("r0"));
+	}
+
+	@Test
 	public void testCallOtherFuncJavaDefMpInt() throws Exception {
 		Translation tr = translateSleigh(getLanguageID(), """
 				temp1:9 = zext(6:8);
@@ -522,6 +533,20 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 		tr.runFallthrough();
 		assertTrue(tr.library().gotFuncUseropCall);
 		assertEquals(0, tr.getLongRegVal("r0"));
+	}
+
+	@Test
+	public void testCallOtherFuncJavaDefStaticMpInt() throws Exception {
+		Translation tr = translateSleigh(getLanguageID(), """
+				temp1:9 = zext(6:8);
+				temp2:9 = zext(2:8);
+				temp0:9 = func_st_mpUserop(temp1, temp2);
+				r0 = temp0(0);
+				""");
+		assertFalse(tr.library().gotFuncUseropCall);
+		tr.runFallthrough();
+		assertFalse(tr.library().gotFuncUseropCall);
+		assertEquals(0x0606060602020202L, tr.getLongRegVal("r0"));
 	}
 
 	/**
