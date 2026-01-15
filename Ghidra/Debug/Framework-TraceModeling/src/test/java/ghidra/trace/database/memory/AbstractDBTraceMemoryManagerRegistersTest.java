@@ -18,10 +18,13 @@ package ghidra.trace.database.memory;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import org.junit.Test;
 
 import db.Transaction;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
@@ -62,9 +65,9 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 
 	@Test
 	public void testRegisters() throws Exception {
-		Register r0 = b.language.getRegister("r0");
-		Register r0h = b.language.getRegister("r0h");
-		Register r0l = b.language.getRegister("r0l");
+		Register r0 = b.reg("r0");
+		Register r0h = b.reg("r0h");
+		Register r0l = b.reg("r0l");
 
 		TraceThread thread;
 		try (Transaction tx = b.startTransaction()) {
@@ -103,6 +106,13 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 			frame.setValue(0, new RegisterValue(r0, new BigInteger("1032547698BADCFE", 16)));
 			assertEquals(new BigInteger("1032547698BADCFE", 16),
 				frame.getValue(0, r0).getUnsignedValue());
+
+			Address aR0 = b.host.getConventionalRegisterRange(frame.space, r0).getMinAddress();
+			ByteBuffer buf = ByteBuffer.allocate(r0.getNumBytes());
+			memory.getBytes(0, aR0, buf);
+			buf.flip();
+			buf.order(b.language.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+			assertEquals(0x1032547698BADCFEL, buf.getLong(0));
 		}
 	}
 
