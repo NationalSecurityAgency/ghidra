@@ -65,22 +65,6 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 		return new DBTraceReferenceSpace(this, dbh, space, ent);
 	}
 
-	/**
-	 * Ensures that a "from" address is in memory
-	 * 
-	 * <p>
-	 * NOTE: To manage references from registers, you must use
-	 * {@link #getReferenceRegisterSpace(TraceThread, boolean)}, which requires a thread.
-	 * 
-	 * @param space the space of the address to check
-	 */
-	@Override
-	public void checkIsInMemory(AddressSpace space) {
-		if (!space.isMemorySpace()) {
-			throw new IllegalArgumentException("Address must be in memory.");
-		}
-	}
-
 	@Override
 	public DBTraceReferenceSpace getForSpace(AddressSpace space, boolean createIfAbsent) {
 		return super.getForSpace(space, createIfAbsent);

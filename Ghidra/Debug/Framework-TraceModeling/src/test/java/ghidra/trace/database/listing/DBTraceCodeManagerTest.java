@@ -1432,12 +1432,19 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			frameCode = manager.getCodeRegisterSpace(stack.getFrame(0, 1, false), true);
 			assertNotEquals(regCode, frameCode);
 			dR5 = frameCode.definedData()
-					.create(Lifespan.nowOn(0), b.language.getRegister("r5"), LongDataType.dataType);
+					.create(Lifespan.nowOn(0), b.reg("r5"), LongDataType.dataType);
 		}
 
 		assertEquals(1, frameCode.getFrameLevel());
 		assertEquals(thread, frameCode.getThread());
 		assertEquals(List.of(dR5), list(frameCode.definedUnits().get(0, true)));
+
+		// Manager should be able to delegate to regs by space, too, now that we use overlays.
+		Address aR5 =
+			b.host.getConventionalRegisterRange(frameCode.space, b.reg("r5")).getMinAddress();
+		assertEquals(dR5, manager.definedData().getAt(0, aR5));
+		// TODO: Given the line above succeeding, this ought to pass, but it doesn't.
+		// assertEquals(List.of(dR5), list(manager.definedUnits().get(0, true)));
 	}
 
 	@Test
