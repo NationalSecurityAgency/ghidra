@@ -239,6 +239,11 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		}
 
 		@PcodeUserop(functional = true)
+		public static long func_st_userop(long a, long b) {
+			return 3 * a + b;
+		}
+
+		@PcodeUserop(functional = true)
 		public void func_mpUserop(@OpOutput int[] out, int[] a, int[] b) {
 			gotFuncUseropCall = true;
 
@@ -251,6 +256,20 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 			for (int i = 0; i < 8; i++) {
 				out[0] |= out[0] << 4;
 				out[1] |= out[1] << 4;
+			}
+		}
+
+		@PcodeUserop(functional = true)
+		public static void func_st_mpUserop(@OpOutput int[] out, int[] a, int[] b) {
+			if (out == null) {
+				return;
+			}
+
+			out[0] = b[0];
+			out[1] = a[0];
+			for (int i = 0; i < 8; i++) {
+				out[0] |= out[0] << 8;
+				out[1] |= out[1] << 8;
 			}
 		}
 
