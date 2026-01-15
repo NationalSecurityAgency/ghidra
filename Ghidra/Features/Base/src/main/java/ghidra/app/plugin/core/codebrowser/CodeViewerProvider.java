@@ -236,9 +236,18 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return WindowPosition.RIGHT;
 	}
 
+	/**
+	 * The primary provider cannot be removed, only hidden
+	 * 
+	 * @return true if primary
+	 */
+	public boolean isPrimary() {
+		return isConnected();
+	}
+
 	@Override
 	public void closeComponent() {
-		if (!isConnected()) {
+		if (!isPrimary()) {
 			plugin.providerClosed(this);
 			return;
 		}
