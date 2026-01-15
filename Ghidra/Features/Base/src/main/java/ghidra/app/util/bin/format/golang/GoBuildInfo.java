@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.golang;
 import static ghidra.app.util.bin.StructConverter.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -92,23 +91,59 @@ public class GoBuildInfo implements ElfInfoItem {
 	 */
 	public static ItemWithAddress<GoBuildInfo> findBuildInfo(Program program) {
 		ItemWithAddress<GoBuildInfo> wrappedItem = readItemFromSection(program,
-			GoRttiMapper.getFirstGoSection(program, SECTION_NAME, MACHO_SECTION_NAME));
+			GoRttiMapper.getFirstGoSection(program, SECTION_NAME, MACHO_SECTION_NAME), 0);
 		if (wrappedItem == null) {
 			// if not present, try common PE location for buildinfo
-			wrappedItem = readItemFromSection(program, GoRttiMapper.getGoSection(program, "data"));
+			MemoryBlock dataMB = GoRttiMapper.getGoSection(program, "data");
+			if (dataMB != null) {
+				MemoryByteProvider dataBP =
+					MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), dataMB);
+				long offset = findGoBuildInfoOffset(dataBP, 512);
+				if (offset != -1) {
+					wrappedItem = readItemFromSection(program, dataMB, offset);
+				}
+			}
 		}
 		return wrappedItem;
 	}
 
+	/**
+	 * Searches for the offset of the GoBuildInfo magic string.
+	 * 
+	 * @param bp {@link ByteProvider} to search
+	 * @param maxSearchLength max number of bytes to search
+	 * @return offset of the magic string, or -1 if not found
+	 */
+	public static long findGoBuildInfoOffset(ByteProvider bp, int maxSearchLength) {
+		try {
+			long pos = 0;
+			while (pos < maxSearchLength && pos < bp.length()) {
+				byte b = bp.readByte(pos);
+				if (b == GO_BUILDINF_MAGIC[0]) {
+					byte[] bytes = bp.readBytes(pos, GO_BUILDINF_MAGIC.length);
+					if (Arrays.equals(GO_BUILDINF_MAGIC, bytes)) {
+						return pos;
+					}
+				}
+				pos++;
+			}
+		}
+		catch (IOException e) {
+			// fail, return -1
+		}
+		return -1;
+	}
+
 	private static ItemWithAddress<GoBuildInfo> readItemFromSection(Program program,
-			MemoryBlock memBlock) {
+			MemoryBlock memBlock, long offset) {
 		if (memBlock != null) {
 			try (ByteProvider bp =
 				MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), memBlock)) {
 				BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
+				br.setPointerIndex(offset);
 
 				GoBuildInfo item = read(br, program);
-				return new ItemWithAddress<>(item, memBlock.getStart());
+				return new ItemWithAddress<>(item, memBlock.getStart().add(offset));
 			}
 			catch (IOException e) {
 				// fall thru, return null
@@ -126,6 +161,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	 * @throws IOException if error reading or bad data
 	 */
 	public static GoBuildInfo read(BinaryReader reader, Program program) throws IOException {
+		long startOffset = reader.getPointerIndex();
 		byte[] magicBytes = reader.readNextByteArray(GO_BUILDINF_MAGIC.length /* 14 */);
 		if (!Arrays.equals(magicBytes, GO_BUILDINF_MAGIC)) {
 			throw new IOException("Missing GoBuildInfo magic");
@@ -146,7 +182,7 @@ public class GoBuildInfo implements ElfInfoItem {
 		struct.add(BYTE, "ptrSize", null);
 		struct.add(BYTE, "flags", null);
 
-		return readStringInfo(reader, inlineStr, program, pointerSize, struct);
+		return readStringInfo(reader, startOffset, inlineStr, program, pointerSize, struct);
 	}
 
 	public static void setFallbackVersion(Program program, String fallbackGoVerStr) {
@@ -162,26 +198,6 @@ public class GoBuildInfo implements ElfInfoItem {
 		return new GoBuildInfo(program.getDefaultPointerSize(),
 			program.getMemory().isBigEndian() ? Endian.BIG : Endian.LITTLE, fallbackGoVerStr,
 			"unknown path", null, List.of(), List.of(), null);
-	}
-
-	/**
-	 * Probes the specified InputStream and returns true if it starts with a Go buildinfo magic
-	 * signature.
-	 * 
-	 * @param is InputStream
-	 * @return true if starts with buildinfo magic signature
-	 */
-	public static boolean isPresent(InputStream is) {
-		try {
-			byte[] buffer = new byte[GO_BUILDINF_MAGIC.length];
-			int bytesRead = is.read(buffer);
-			return bytesRead == GO_BUILDINF_MAGIC.length &&
-				Arrays.equals(buffer, GO_BUILDINF_MAGIC);
-		}
-		catch (IOException e) {
-			// fall thru
-		}
-		return false;
 	}
 
 	private final int pointerSize;
@@ -364,15 +380,16 @@ public class GoBuildInfo implements ElfInfoItem {
 
 	//---------------------------------------------------------------------------------------------
 
-	private static GoBuildInfo readStringInfo(BinaryReader reader, boolean inlineStr,
-			Program program, int ptrSize, StructureDataType struct) throws IOException {
+	private static GoBuildInfo readStringInfo(BinaryReader reader, long startOffset,
+			boolean inlineStr, Program program, int ptrSize, StructureDataType struct)
+			throws IOException {
 
 		DataTypeManager dtm = program.getDataTypeManager();
 		String moduleString;
 		String versionString;
 
 		if (inlineStr) {
-			reader.setPointerIndex(32 /* static start of inline strings */);
+			reader.setPointerIndex(startOffset + 32 /* static start of inline strings */);
 
 			LEB128Info verStrLen = reader.readNext(LEB128Info::unsigned);
 			byte[] versionStringBytes = reader.readNextByteArray(verStrLen.asInt32());
@@ -398,7 +415,7 @@ public class GoBuildInfo implements ElfInfoItem {
 			}
 		}
 		else {
-			reader.setPointerIndex(16 /* static start of 2 string pointers */);
+			reader.setPointerIndex(startOffset + 16 /* static start of 2 string pointers */);
 			long versionStrOffset = reader.readNextUnsignedValue(ptrSize);
 			long moduleStrOffset = reader.readNextUnsignedValue(ptrSize);
 
