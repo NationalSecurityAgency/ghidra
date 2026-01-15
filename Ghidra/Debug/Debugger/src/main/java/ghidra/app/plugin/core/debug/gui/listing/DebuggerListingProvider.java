@@ -93,8 +93,9 @@ import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerListingProvider extends CodeViewerProvider {
 
-	private static final AutoConfigState.ClassHandler<DebuggerListingProvider> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerListingProvider> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
@@ -441,6 +442,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	 */
 	public boolean isMainListing() {
 		return isMainListing;
+	}
+
+	@Override
+	public boolean isPrimary() {
+		return isMainListing();
 	}
 
 	@Override
