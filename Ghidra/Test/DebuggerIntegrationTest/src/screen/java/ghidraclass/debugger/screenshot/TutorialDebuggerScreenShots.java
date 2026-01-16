@@ -263,6 +263,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	@Test
 	public void testGettingStarted_ToolWSpecimen() {
+		tool.getActiveWindow().requestFocus();
 		captureToolWindow(1920, 1080);
 	}
 
@@ -315,7 +316,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	public void testGettingStarted_DisassemblyAfterLaunch() throws Throwable {
 		launchProgramInGdb();
 
-		Thread.sleep(7000);
+		tool.getActiveWindow().requestFocus();
 		captureToolWindow(1920, 1080);
 	}
 
@@ -448,6 +449,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		// Just to be sure.
 		goTo(tool, progLibC, flatDbg.translateDynamicToStatic(dynAddr));
 
+		tool.getActiveWindow().requestFocus();
 		captureToolWindow(1920, 1080);
 	}
 
