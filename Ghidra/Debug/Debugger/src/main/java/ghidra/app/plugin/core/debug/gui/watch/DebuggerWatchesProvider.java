@@ -85,6 +85,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		implements DebuggerWatchesService {
@@ -151,12 +152,24 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		implements EnumeratedTableColumn<WatchTableColumns, DefaultWatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
 		COMMENT("Comment", String.class, WatchRow::getComment, WatchRow::setComment),
-		ADDRESS("Address", Address.class, WatchRow::getAddress),
+		ADDRESS("Address", Address.class, WatchRow::getAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
 		SYMBOL("Symbol", Symbol.class, WatchRow::getSymbol),
-		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, //
-				WatchRow::isRawValueEditable),
+		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString,
+				WatchRow::isRawValueEditable) {
+			private static final WatchValueCellRenderer RENDERER = new WatchValueCellRenderer();
+
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return RENDERER;
+			}
+		},
 		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
-		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString, //
+		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString,
 				WatchRow::isValueEditable),
 		ERROR("Error", String.class, WatchRow::getErrorMessage);
 
@@ -292,10 +305,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class WatchValueCellRenderer extends AbstractGColumnRenderer<String> {
+	static class WatchValueCellRenderer extends AbstractGColumnRenderer<String> {
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
+			setFont(getFixedWidthFont());
 			WatchRow row = (WatchRow) data.getRowObject();
 			if (!row.isKnown()) {
 				if (data.isSelected()) {
@@ -453,10 +467,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		});
 
 		TableColumnModel columnModel = watchTable.getColumnModel();
-		TableColumn addrCol = columnModel.getColumn(WatchTableColumns.ADDRESS.ordinal());
-		addrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		TableColumn valCol = columnModel.getColumn(WatchTableColumns.VALUE.ordinal());
-		valCol.setCellRenderer(new WatchValueCellRenderer());
 		TableColumn typeCol = columnModel.getColumn(WatchTableColumns.TYPE.ordinal());
 		typeCol.setCellEditor(new WatchDataTypeEditor());
 	}
