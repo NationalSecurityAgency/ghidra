@@ -15,7 +15,7 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -149,7 +149,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
 		try {
-			lldbPath = Paths.get(DummyProc.which("lldb-16"));
+			lldbPath = Paths.get(DummyProc.which("lldb-20"));
 		}
 		catch (RuntimeException e) {
 			lldbPath = Paths.get(DummyProc.which("lldb"));
