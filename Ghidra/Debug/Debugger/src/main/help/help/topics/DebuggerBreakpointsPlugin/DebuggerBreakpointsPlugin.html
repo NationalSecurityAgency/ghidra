@@ -149,8 +149,11 @@
       <LI>Threads - (hidden by default) if the breakpoint applies to a limited set of threads,
       gives the list of threads.</LI>
 
-      <LI>Comment - gives a user comment &mdash; the specification's expression by default. This
-      field is user modifiable.</LI>
+      <LI>Comment - gives a user comment. This field is user modifiable.</LI>
+
+      <LI>Expression - the expression given by the user when placing the breakpoint. This ought to
+      echo back what was typed into the CLI, if applicable. When placed via a Listing, this often
+      refers to the dynamic address.</LI>
 
       <LI>Sleigh - indicates whether or not the location has a customized Sleigh configuration.
       This is only relevant for emulation.</LI>
@@ -319,7 +322,7 @@ emu_exec_decoded();
         Alternatively, suppose the example instruction is <CODE>JZ 0x00401234</CODE>. Then, the
         injection can jump straight to the target: 
 <PRE>
-goto [0x00401234];
+goto 0x00401234;
 </PRE>
       </LI>
 

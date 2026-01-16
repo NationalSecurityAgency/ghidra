@@ -70,8 +70,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum LogicalBreakpointTableColumns
 		implements EnumeratedTableColumn<LogicalBreakpointTableColumns, LogicalBreakpointRow> {
-		STATE("State", State.class, LogicalBreakpointRow::getState, LogicalBreakpointRow::setState, true),
-		NAME("Name", String.class, LogicalBreakpointRow::getName, LogicalBreakpointRow::setName, //
+		STATE("State", State.class, LogicalBreakpointRow::getState, LogicalBreakpointRow::setState,
+				true),
+		NAME("Name", String.class, LogicalBreakpointRow::getName, LogicalBreakpointRow::setName,
 				LogicalBreakpointRow::isNamable, true),
 		ADDRESS("Address", Address.class, LogicalBreakpointRow::getAddress, true),
 		IMAGE("Image", String.class, LogicalBreakpointRow::getImageName, true),
@@ -142,8 +143,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class LogicalBreakpointTableModel extends RowWrappedEnumeratedColumnTableModel< //
-			LogicalBreakpointTableColumns, LogicalBreakpoint, LogicalBreakpointRow, LogicalBreakpoint> {
+	protected static class LogicalBreakpointTableModel extends RowWrappedEnumeratedColumnTableModel<
+		LogicalBreakpointTableColumns, LogicalBreakpoint, LogicalBreakpointRow, LogicalBreakpoint> {
 
 		public LogicalBreakpointTableModel(DebuggerBreakpointsProvider provider) {
 			super(provider.getTool(), "Breakpoints", LogicalBreakpointTableColumns.class, lb -> lb,
@@ -160,12 +161,16 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum BreakpointLocationTableColumns
 		implements EnumeratedTableColumn<BreakpointLocationTableColumns, BreakpointLocationRow> {
-		STATE("State", State.class, BreakpointLocationRow::getState, BreakpointLocationRow::setState, true, true),
-		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName, true, true),
+		STATE("State", State.class, BreakpointLocationRow::getState,
+				BreakpointLocationRow::setState, true, true),
+		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName,
+				true, true),
 		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true, true),
 		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true, true),
 		THREADS("Threads", String.class, BreakpointLocationRow::getThreads, true, false),
-		COMMENT("Comment", String.class, BreakpointLocationRow::getComment, BreakpointLocationRow::setComment, true, true),
+		COMMENT("Comment", String.class, BreakpointLocationRow::getComment,
+				BreakpointLocationRow::setComment, true, true),
+		EXPRESSION("Expression", String.class, BreakpointLocationRow::getExpression, true, true),
 		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh, true, true);
 
 		private final String header;
@@ -229,9 +234,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	protected static class BreakpointLocationTableModel
-			extends RowWrappedEnumeratedColumnTableModel< //
-					BreakpointLocationTableColumns, ObjectKey, BreakpointLocationRow, //
-					TraceBreakpointLocation> {
+			extends RowWrappedEnumeratedColumnTableModel<BreakpointLocationTableColumns, ObjectKey,
+				BreakpointLocationRow, TraceBreakpointLocation> {
 
 		public BreakpointLocationTableModel(DebuggerBreakpointsProvider provider) {
 			super(provider.getTool(), "Locations", BreakpointLocationTableColumns.class,
