@@ -166,7 +166,7 @@ a [supported](#minimum-requirements) version of Python and some additional packa
 are included in the distribution, but you may still install them from PyPI if you prefer:
 * psutil
 * protobuf>=3.20.3
-* Pybag>=2.2.16 (for WinDbg support)
+* Pybag>=2.2.12 (for WinDbg support)
 
 Different native debuggers have varying requirements, so you do not necessarily have to install all
 of the above packages. Each connector will inform you of its specific requirements and where they
