@@ -56,7 +56,7 @@ a specific need.
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
     * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
 * Python3 (3.9 to 3.13)
-  * Python 3.7 to 3.13 for [Debugger support](#debugger-notes)
+  * Python 3.9 to 3.13 for [Debugger support](#debugger-notes)
   * Python 3.9 to 3.13 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
@@ -161,17 +161,17 @@ __NOTE:__ Do not extract Ghidra on top of an existing installation.
   environment variable in order for Ghidra to use the `JAVA_HOME_OVERRIDE` property.
 
 ### Debugger Notes
-The Debugger now uses Python to connect to the host platform's native debuggers. This requires
+The Debugger uses Python to connect to the host platform's native debuggers. This requires
 a [supported](#minimum-requirements) version of Python and some additional packages. These packages
 are included in the distribution, but you may still install them from PyPI if you prefer:
 * psutil
 * protobuf>=3.20.3
-* Pybag>=2.2.12 (for WinDbg support)
+* Pybag>=2.2.16 (for WinDbg support)
 
 Different native debuggers have varying requirements, so you do not necessarily have to install all
 of the above packages. Each connector will inform you of its specific requirements and where they
 must be installed. In some cases, you may need to install packages on the target system.  
-For more information, see `<GhidraInstallDir>/docs/GhidraClass/Debugger/A1=GettingStarted.html`
+For more information, see `<GhidraInstallDir>/docs/GhidraClass/Debugger/A1-GettingStarted.html`
 
 ## Ghidra Installation Directory Layout
 When Ghidra is installed, the runnable software gets extracted to a new directory we will refer
