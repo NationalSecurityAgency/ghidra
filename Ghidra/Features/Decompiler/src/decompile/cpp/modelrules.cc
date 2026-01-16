@@ -190,6 +190,7 @@ bool PrimitiveExtractor::extract(Datatype *dt,int4 max,int4 offset)
     case TYPE_FLOAT:
     case TYPE_PTR:
     case TYPE_PTRREL:
+    case TYPE_PTROFF:
       if (primitives.size() >= max)
 	return false;
       primitives.emplace_back(dt,offset);
