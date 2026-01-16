@@ -1,0 +1,7 @@
+# Motorola's CPU32 processor
+
+@define CPU32 ""
+@define MC68332 ""
+@define MC68336 ""
+
+@include "68000.sinc"
