@@ -741,6 +741,7 @@ int4 PcodeSnippet::lex(void)
 	yylval.operandsym = (OperandSymbol *)sym;
 	return OPERANDSYM;
       case SleighSymbol::start_symbol:
+      case SleighSymbol::offset_symbol:
       case SleighSymbol::end_symbol:
       case SleighSymbol::next2_symbol:
       case SleighSymbol::flowdest_symbol:

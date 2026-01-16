@@ -191,6 +191,10 @@ public class SlaFormat {
 	public static final ElementId ELEM_CONST_FLOWDEST = new ElementId("const_flowdest", 87);
 	public static final ElementId ELEM_CONST_FLOWDEST_SIZE =
 		new ElementId("const_flowdest_size", 88);
+	public static final ElementId ELEM_OFFSET_EXP = new ElementId("offset_exp", 89);
+	public static final ElementId ELEM_OFFSET_SYM = new ElementId("offset_sym", 90);
+	public static final ElementId ELEM_OFFSET_SYM_HEAD = new ElementId("offset_sym_head",91);
+	public static final ElementId ELEM_CONST_OFFSET = new ElementId("const_offset",92);
 
 	/**
 	 * Try to read the header bytes of the .sla format from the given stream. If the header bytes
