@@ -210,8 +210,8 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	@Override
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
 		// NOTE: There are a variety of naming conventions for fixed-length floats
-		// so we will just use our name and rely on user to edit to suit there needs.
-		return hasLanguageDependantLength() ? null : name;
+		// so we will just not provide a declaration and rely on the user to declare their own.
+		return null;
 	}
 
 	private static TreeMap<Integer, AbstractFloatDataType> floatTypes; // fixed-size float types
