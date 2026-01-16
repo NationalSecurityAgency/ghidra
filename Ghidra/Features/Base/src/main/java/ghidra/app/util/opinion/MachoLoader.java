@@ -639,8 +639,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 						.map(lib.getSymbolTable()::getPrimarySymbol)
 						.filter(Objects::nonNull)
 						.toList();
-				Address addr = AbstractProgramLoader.addExternalBlock(program,
-					reexportedSymbols.size() * 8, log);
+				Address addr =
+					MemoryBlockUtils.addExternalBlock(program, reexportedSymbols.size() * 8, log);
 				monitor.initialize(reexportedSymbols.size(), "Reexporting symbols...");
 				for (Symbol symbol : reexportedSymbols) {
 					monitor.increment();

@@ -553,7 +553,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		long forwardedCount = Arrays.stream(exports).filter(ExportInfo::isForwarded).count();
 		if (forwardedCount > 0) {
 			try {
-				extAddr = AbstractProgramLoader.addExternalBlock(program,
+				extAddr = MemoryBlockUtils.addExternalBlock(program,
 					forwardedCount * program.getDefaultPointerSize(), log);
 			}
 			catch (Exception e) {
