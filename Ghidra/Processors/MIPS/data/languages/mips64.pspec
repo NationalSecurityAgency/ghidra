@@ -6,6 +6,10 @@
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.MIPSEmulateInstructionStateModifier"/>
     <property key="assemblyRating:MIPS:BE:64:64-32addr" value="PLATINUM"/>
     <property key="assemblyRating:MIPS:BE:64:default" value="PLATINUM"/>
+    <!-- Enable enhanced MIPS analyzers for switch tables, inline handlers, and function pointers -->
+    <property key="Analyzers.MIPS Switch Table Analyzer" value="true"/>
+    <property key="Analyzers.MIPS Inline Code Analyzer" value="true"/>
+    <property key="Analyzers.MIPS Function Pointer Analyzer" value="true"/>
   </properties>
   <programcounter register="pc"/>
   <context_data>
