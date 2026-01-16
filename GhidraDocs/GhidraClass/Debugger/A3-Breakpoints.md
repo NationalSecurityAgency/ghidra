@@ -88,7 +88,7 @@ The State, Address, and Sleigh columns are the same as the top, but for the indi
 * The **Trace** column indicates which target contains the location.
   The text here should match one of the tabs from the Dynamic Listing panel.
 * The **Comment** column is a user-defined comment.
-  Its default value is the specification that generated it, e.g., `srand`.
+* The **Expression** column is the expression given when specifying the breakpoint, e.g., `srand`.
 
 ### Toggling the Breakpoints
 
@@ -195,7 +195,7 @@ The advantages of a dynamic session along side static analysis should become mor
 
 ### Exercise: Diagram the Mines
 
-You goal is to capture the location of all the mines.
+Your goal is to capture the location of all the mines.
 You will probably want to disable the breakpoints on `rand` and `srand` for now.
 Devise a strategy using breakpoints and the control buttons (Step, Resume, etc.) so that you can observe the location of each mine.
 Use pen and paper to draw a diagram of the board, and mark the location of each mine as you observe the algorithm placing it.
