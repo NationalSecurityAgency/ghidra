@@ -24,6 +24,7 @@ import org.junit.*;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.*;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.linux.AbstractEmuLinuxSyscallUseropLibrary;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest;
@@ -32,8 +33,9 @@ import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.emu.taint.TaintPcodeEmulator;
 import ghidra.pcode.emu.taint.lib.TaintEmuUnixFileSystem;
 import ghidra.pcode.emu.taint.lib.TaintFileReadsLinuxAmd64SyscallLibrary;
+import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -126,6 +128,74 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	}
 
 	@Test
+	public void testSwi() throws Exception {
+		PcodeThread<Pair<byte[], TaintVec>> thread = emulator.newThread();
+		AddressSpace dyn = language.getDefaultSpace();
+
+		Address entry = dyn.getAddress(0x00400000);
+		Assembler asm = Assemblers.getAssembler(language);
+		AssemblyBuffer buffer = new AssemblyBuffer(asm, entry);
+
+		buffer.assemble("MOV RAX, 1");
+		Address brk = buffer.getNext();
+		buffer.assemble("ADD RAX, 1");
+		byte[] prog = buffer.getBytes();
+
+		Register regRAX = language.getRegister("RAX");
+		emulator.getSharedState().getLeft().setVar(entry, prog.length, true, prog);
+
+		thread.overrideCounter(entry);
+		thread.overrideContextWithDefault();
+		emulator.addBreakpoint(brk, "1:1");
+
+		try {
+			thread.run();
+			fail("Should have interrupted on breakpoint");
+		}
+		catch (InterruptPcodeExecutionException e) {
+		}
+
+		var arithmetic = emulator.getArithmetic();
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(regRAX, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(brk, thread.getCounter());
+	}
+
+	@Test
+	public void testInjectionError() throws Exception {
+		PcodeThread<Pair<byte[], TaintVec>> thread = emulator.newThread();
+		AddressSpace dyn = language.getDefaultSpace();
+
+		Address entry = dyn.getAddress(0x00400000);
+		Assembler asm = Assemblers.getAssembler(language);
+		AssemblyBuffer buffer = new AssemblyBuffer(asm, entry);
+
+		buffer.assemble("MOV RAX, 1");
+		Address inject = buffer.getNext();
+		buffer.assemble("ADD RAX, 1");
+		byte[] prog = buffer.getBytes();
+
+		Register regRAX = language.getRegister("RAX");
+		emulator.getSharedState().getLeft().setVar(entry, prog.length, true, prog);
+
+		thread.overrideCounter(entry);
+		thread.overrideContextWithDefault();
+		emulator.inject(inject, "emu_injection_err();");
+
+		try {
+			thread.run();
+			fail("Should have interrupted on injection error");
+		}
+		catch (InjectionErrorPcodeExecutionException e) {
+		}
+
+		var arithmetic = emulator.getArithmetic();
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(regRAX, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(inject, thread.getCounter());
+	}
+
+	@Test
 	public void testZeroByXor()
 			throws AssemblySyntaxException, AssemblySemanticException, IOException {
 		PcodeThread<Pair<byte[], TaintVec>> thread = emulator.newThread();
@@ -142,7 +212,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 			Pair.of(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, TaintVec.array("RAX", 0, 8));
 		thread.getState().setVar(regRAX, initRAX);
 
-		emulator.getSharedState().getLeft().setVar(dyn, 0x00400000, prog.length, true, prog);
+		emulator.getSharedState().getLeft().setVar(entry, prog.length, true, prog);
 
 		thread.overrideCounter(entry);
 		thread.overrideContextWithDefault();
