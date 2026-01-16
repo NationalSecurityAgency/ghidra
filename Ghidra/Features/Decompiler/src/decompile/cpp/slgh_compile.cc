@@ -1989,6 +1989,8 @@ void SleighCompile::predefinedSymbols(void)
   symtab.addSymbol(endsym);
   Next2Symbol *next2sym = new Next2Symbol("inst_next2",getConstantSpace());
   symtab.addSymbol(next2sym);
+  SegSymbol *segsym = new SegSymbol("seg_next",getConstantSpace());
+  symtab.addSymbol(segsym);
   EpsilonSymbol *epsilon = new EpsilonSymbol("epsilon",getConstantSpace());
   symtab.addSymbol(epsilon);
   pcode.setConstantSpace(getConstantSpace());

@@ -302,6 +302,8 @@ public class SleighCompile extends SleighBase {
 		symtab.addSymbol(endsym);
 		Next2Symbol next2sym = new Next2Symbol(location, "inst_next2", getConstantSpace());
 		symtab.addSymbol(next2sym);
+		SegSymbol segsym = new SegSymbol(location, "seg_next", getConstantSpace());
+		symtab.addSymbol(segsym);
 		EpsilonSymbol epsilon = new EpsilonSymbol(location, "epsilon", getConstantSpace());
 		symtab.addSymbol(epsilon);
 	}

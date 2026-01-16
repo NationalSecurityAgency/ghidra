@@ -31,12 +31,13 @@ public class SlaFormat {
 	 * FORMAT_VERSION will be incremented whenever the format of the .sla
 	 * files change.
 	 * <p>
+	 * Version 5: Added seg_next support for segmented memory architectures
 	 * Version 4: Compressed and packed file format
 	 * Version 3: January 2021: added source file information for each constructor. <br>
 	 * Version 2: April 2019: Changed numbering of Overlay spaces.<br>
 	 * Version 1: Initial version.<br>
 	 */
-	public static final int FORMAT_VERSION = 4;
+	public static final int FORMAT_VERSION = 5;
 
 	/**
 	 * Absolute limit on the number of bytes in a .sla file
@@ -161,36 +162,40 @@ public class SlaFormat {
 	public static final ElementId ELEM_INTB = new ElementId("intb", 58);
 	public static final ElementId ELEM_END_EXP = new ElementId("end_exp", 59);
 	public static final ElementId ELEM_NEXT2_EXP = new ElementId("next2_exp", 60);
-	public static final ElementId ELEM_START_EXP = new ElementId("start_exp", 61);
-	public static final ElementId ELEM_EPSILON_SYM = new ElementId("epsilon_sym", 62);
-	public static final ElementId ELEM_EPSILON_SYM_HEAD = new ElementId("epsilon_sym_head", 63);
-	public static final ElementId ELEM_NAME_SYM = new ElementId("name_sym", 64);
-	public static final ElementId ELEM_NAME_SYM_HEAD = new ElementId("name_sym_head", 65);
-	public static final ElementId ELEM_NAMETAB = new ElementId("nametab", 66);
-	public static final ElementId ELEM_NEXT2_SYM = new ElementId("next2_sym", 67);
-	public static final ElementId ELEM_NEXT2_SYM_HEAD = new ElementId("next2_sym_head", 68);
-	public static final ElementId ELEM_START_SYM = new ElementId("start_sym", 69);
-	public static final ElementId ELEM_START_SYM_HEAD = new ElementId("start_sym_head", 70);
-	public static final ElementId ELEM_SUBTABLE_SYM = new ElementId("subtable_sym", 71);
-	public static final ElementId ELEM_SUBTABLE_SYM_HEAD = new ElementId("subtable_sym_head", 72);
-	public static final ElementId ELEM_VALUEMAP_SYM = new ElementId("valuemap_sym", 73);
-	public static final ElementId ELEM_VALUEMAP_SYM_HEAD = new ElementId("valuemap_sym_head", 74);
-	public static final ElementId ELEM_VALUETAB = new ElementId("valuetab", 75);
-	public static final ElementId ELEM_VARLIST_SYM = new ElementId("varlist_sym", 76);
-	public static final ElementId ELEM_VARLIST_SYM_HEAD = new ElementId("varlist_sym_head", 77);
-	public static final ElementId ELEM_OR_PAT = new ElementId("or_pat", 78);
-	public static final ElementId ELEM_COMMIT = new ElementId("commit", 79);
-	public static final ElementId ELEM_CONST_START = new ElementId("const_start", 80);
-	public static final ElementId ELEM_CONST_NEXT = new ElementId("const_next", 81);
-	public static final ElementId ELEM_CONST_NEXT2 = new ElementId("const_next2", 82);
-	public static final ElementId ELEM_CONST_CURSPACE = new ElementId("const_curspace", 83);
+	public static final ElementId ELEM_SEG_EXP = new ElementId("seg_exp", 61);
+	public static final ElementId ELEM_START_EXP = new ElementId("start_exp", 62);
+	public static final ElementId ELEM_EPSILON_SYM = new ElementId("epsilon_sym", 63);
+	public static final ElementId ELEM_EPSILON_SYM_HEAD = new ElementId("epsilon_sym_head", 64);
+	public static final ElementId ELEM_NAME_SYM = new ElementId("name_sym", 65);
+	public static final ElementId ELEM_NAME_SYM_HEAD = new ElementId("name_sym_head", 66);
+	public static final ElementId ELEM_NAMETAB = new ElementId("nametab", 67);
+	public static final ElementId ELEM_NEXT2_SYM = new ElementId("next2_sym", 68);
+	public static final ElementId ELEM_NEXT2_SYM_HEAD = new ElementId("next2_sym_head", 69);
+	public static final ElementId ELEM_SEG_SYM = new ElementId("seg_sym", 70);
+	public static final ElementId ELEM_SEG_SYM_HEAD = new ElementId("seg_sym_head", 71);
+	public static final ElementId ELEM_START_SYM = new ElementId("start_sym", 72);
+	public static final ElementId ELEM_START_SYM_HEAD = new ElementId("start_sym_head", 73);
+	public static final ElementId ELEM_SUBTABLE_SYM = new ElementId("subtable_sym", 74);
+	public static final ElementId ELEM_SUBTABLE_SYM_HEAD = new ElementId("subtable_sym_head", 75);
+	public static final ElementId ELEM_VALUEMAP_SYM = new ElementId("valuemap_sym", 76);
+	public static final ElementId ELEM_VALUEMAP_SYM_HEAD = new ElementId("valuemap_sym_head", 77);
+	public static final ElementId ELEM_VALUETAB = new ElementId("valuetab", 78);
+	public static final ElementId ELEM_VARLIST_SYM = new ElementId("varlist_sym", 79);
+	public static final ElementId ELEM_VARLIST_SYM_HEAD = new ElementId("varlist_sym_head", 80);
+	public static final ElementId ELEM_OR_PAT = new ElementId("or_pat", 81);
+	public static final ElementId ELEM_COMMIT = new ElementId("commit", 82);
+	public static final ElementId ELEM_CONST_START = new ElementId("const_start", 83);
+	public static final ElementId ELEM_CONST_NEXT = new ElementId("const_next", 84);
+	public static final ElementId ELEM_CONST_NEXT2 = new ElementId("const_next2", 85);
+	public static final ElementId ELEM_CONST_SEG = new ElementId("const_seg", 86);
+	public static final ElementId ELEM_CONST_CURSPACE = new ElementId("const_curspace", 87);
 	public static final ElementId ELEM_CONST_CURSPACE_SIZE =
-		new ElementId("const_curspace_size", 84);
-	public static final ElementId ELEM_CONST_FLOWREF = new ElementId("const_flowref", 85);
-	public static final ElementId ELEM_CONST_FLOWREF_SIZE = new ElementId("const_flowref_size", 86);
-	public static final ElementId ELEM_CONST_FLOWDEST = new ElementId("const_flowdest", 87);
+		new ElementId("const_curspace_size", 88);
+	public static final ElementId ELEM_CONST_FLOWREF = new ElementId("const_flowref", 89);
+	public static final ElementId ELEM_CONST_FLOWREF_SIZE = new ElementId("const_flowref_size", 90);
+	public static final ElementId ELEM_CONST_FLOWDEST = new ElementId("const_flowdest", 91);
 	public static final ElementId ELEM_CONST_FLOWDEST_SIZE =
-		new ElementId("const_flowdest_size", 88);
+		new ElementId("const_flowdest_size", 92);
 
 	/**
 	 * Try to read the header bytes of the .sla format from the given stream. If the header bytes
