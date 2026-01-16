@@ -108,6 +108,14 @@ macro pop16(ret16) {
 	SP = SP + 2; 
 }
 
+# NB: copied from z80.slaspec#L178
+macro setParity(in_byte) {
+	local tmp = in_byte ^ (in_byte >> 1);
+	tmp =  tmp ^ (tmp >> 2);
+	tmp = (tmp ^ (tmp >> 4)) & 1;
+	P_flag = (tmp == 0);
+}
+
 ################################################################
 
 Mem8: (imm16)		is imm16									{ export *:1 imm16; }
@@ -299,6 +307,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A & reg0_3;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :ANI imm8  is op0_8=0xe6; imm8 {
@@ -307,6 +316,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A & imm8;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :ANA (HL)  is op0_8=0xa6 & HL {
@@ -315,6 +325,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A & *:1 HL;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :ORA reg0_3  is op6_2=0x2 & bits3_3=0x6 & reg0_3 {
@@ -323,6 +334,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A | reg0_3;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :ORI imm8  is op0_8=0xf6; imm8 {
@@ -331,6 +343,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A | imm8;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :ORA (HL)  is op0_8=0xb6 & HL {
@@ -339,6 +352,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A | *:1 HL;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :XRA reg0_3  is op6_2=0x2 & bits3_3=0x5 & reg0_3 {
@@ -347,6 +361,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A ^ reg0_3;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :XRA (HL)  is op0_8=0xae & HL {
@@ -355,6 +370,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A ^ *:1 HL;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :XRI imm8  is op0_8=0xee; imm8 {
@@ -363,6 +379,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	P_flag = 0;
 	A = A ^ imm8;
 	setResultFlags(A);
+	setParity(A);
 }
 
 :CMP reg0_3  is op6_2=0x2 & bits3_3=0x7 & reg0_3 {
