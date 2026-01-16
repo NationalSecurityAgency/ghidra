@@ -3409,6 +3409,56 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		return new CommentHistory[0];
 	}
 
+	/**
+	 * Anonymize all comment history records by replacing usernames with a given identifier.
+	 *
+	 * @param anonymousName the replacement name (e.g., "anonymous" or "user")
+	 * @return the number of records updated
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	public int anonymizeCommentHistory(String anonymousName) throws IOException {
+		lock.acquire();
+		try {
+			if (historyAdapter == null) {
+				return 0;
+			}
+			historyAdapter.anonymizeAllRecords(anonymousName);
+			return historyAdapter.getRecordCount();
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	/**
+	 * Anonymize comment history records for a specific address by replacing usernames with a given identifier.
+	 *
+	 * @param addr the address to anonymize
+	 * @param anonymousName the replacement name
+	 * @return the number of records updated
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	public int anonymizeCommentHistory(String anonymousName, Address addr) throws IOException {
+		lock.acquire();
+		try {
+			if (historyAdapter == null) {
+				return 0;
+			}
+			historyAdapter.anonymizeRecordsByAddress(anonymousName, addr);
+			// Count records for this address
+			int count = 0;
+			RecordIterator it = historyAdapter.getRecordsByAddress(addr);
+			while (it.hasNext()) {
+				it.next();
+				count++;
+			}
+			return count;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
 	// note: you must have the lock when calling this method
 	private List<DBRecord> getHistoryRecords(Address addr, CommentType commentType)
 			throws IOException {

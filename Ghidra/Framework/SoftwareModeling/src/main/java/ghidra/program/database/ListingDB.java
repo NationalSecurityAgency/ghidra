@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.database.code.CodeManager;
@@ -466,6 +467,16 @@ class ListingDB implements Listing {
 	@Override
 	public CommentHistory[] getCommentHistory(Address addr, CommentType commentType) {
 		return codeMgr.getCommentHistory(addr, commentType);
+	}
+
+	@Override
+	public int anonymizeCommentHistory(String anonymousName) throws IOException {
+		return codeMgr.anonymizeCommentHistory(anonymousName);
+	}
+
+	@Override
+	public int anonymizeCommentHistory(String anonymousName, Address addr) throws IOException {
+		return codeMgr.anonymizeCommentHistory(anonymousName, addr);
 	}
 
 	@Override
