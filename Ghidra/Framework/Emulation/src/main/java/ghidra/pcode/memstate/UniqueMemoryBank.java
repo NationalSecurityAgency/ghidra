@@ -132,7 +132,7 @@ public class UniqueMemoryBank extends MemoryBank {
 				word = new WordInfo();
 				map.put(offset & ALIGNMENT_MASK, word);
 			}
-			for (int i = adjustment; i < WORD_SIZE; ++i) {
+			for (int i = adjustment; i < WORD_SIZE && size > currentPosition; ++i) {
 				word.setByte(src[currentPosition], i);
 				offset += 1;
 				currentPosition += 1;

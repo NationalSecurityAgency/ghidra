@@ -153,6 +153,16 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOneByteNonAlignedWrite() {
+		byte[] oneByte = new byte[] { 0x11 };
+		uniqueBank.setChunk(0x1001, 1, oneByte);
+		byte[] dest = new byte[1];
+		int numBytes = uniqueBank.getChunk(0x1001, 1, dest, true);
+		assertEquals(1, numBytes);
+		assertTrue(Arrays.equals(oneByte, dest));
+	}
+
+	@Test
 	public void testOverlappingReadWrite() {
 		uniqueBank.setChunk(0x1000, 16, sixteenTestBytes);
 		uniqueBank.setChunk(0x1004, 8, eightZeroBytes);
