@@ -35,6 +35,7 @@ import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
+import docking.widgets.AbstractGCellRenderer;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -411,28 +412,32 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
+	public static void applyStateColors(AbstractGCellRenderer renderer,
+			GTableCellRenderingData data, Predicate<RegisterRow> isChanged) {
+		RegisterRow row = (RegisterRow) data.getRowObject();
+		if (!row.isKnown()) {
+			if (data.isSelected()) {
+				renderer.setForeground(COLOR_FOREGROUND_STALE_SEL);
+			}
+			else {
+				renderer.setForeground(COLOR_FOREGROUND_STALE);
+			}
+		}
+		else if (isChanged.test(row)) {
+			if (data.isSelected()) {
+				renderer.setForeground(COLOR_FOREGROUND_CHANGED_SEL);
+			}
+			else {
+				renderer.setForeground(COLOR_FOREGROUND_CHANGED);
+			}
+		}
+	}
+
 	static class RegisterValueCellRenderer extends HexDefaultGColumnRenderer<BigInteger> {
 		@Override
 		public final Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
-			setFont(getFixedWidthFont());
-			RegisterRow row = (RegisterRow) data.getRowObject();
-			if (!row.isKnown()) {
-				if (data.isSelected()) {
-					setForeground(COLOR_FOREGROUND_STALE_SEL);
-				}
-				else {
-					setForeground(COLOR_FOREGROUND_STALE);
-				}
-			}
-			else if (row.isChanged()) {
-				if (data.isSelected()) {
-					setForeground(COLOR_FOREGROUND_CHANGED_SEL);
-				}
-				else {
-					setForeground(COLOR_FOREGROUND_CHANGED);
-				}
-			}
+			applyStateColors(this, data, RegisterRow::isChanged);
 			return this;
 		}
 	}
@@ -1055,7 +1060,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (previous.getThread() == null || current.getThread() == null) {
 			return false;
 		}
-		if (previous.getPlatform().getLanguage() != current.getPlatform().getLanguage()) {
+		if (previous.getLanguage() != current.getLanguage()) {
 			return false;
 		}
 		if (!isRegisterKnown(register)) {
@@ -1326,6 +1331,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	public DebuggerCoordinates getCurrent() {
 		return current;
+	}
+
+	public DebuggerCoordinates getPrevious() {
+		return previous;
 	}
 
 	private void reportError(String title, String message, Throwable ex) {
