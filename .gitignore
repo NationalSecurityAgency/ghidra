@@ -88,3 +88,18 @@ core.*
 # python files
 *.egg-info
 __pycache__
+
+# custom
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
