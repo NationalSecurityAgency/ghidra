@@ -194,6 +194,9 @@ public class GTabPanel<T> extends JPanel {
 		}
 
 		GTab<T> tab = getTab(selectedValue);
+		if (tab == null) {
+			return GTab.BG_COLOR_UNSELECTED;
+		}
 		return tab.getBackgroundColor(false);
 	}
 
