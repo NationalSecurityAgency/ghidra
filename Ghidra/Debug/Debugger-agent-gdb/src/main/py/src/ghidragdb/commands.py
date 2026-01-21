@@ -1065,14 +1065,9 @@ def ghidra_trace_put_inferiors(*, is_mi: bool, **kwargs) -> None:
         put_inferiors()
 
 
-def put_available(availables: Optional[List[util.Available]] = None) -> List[util.Available]:
+def put_available() -> List[util.Available]:
     trace = STATE.require_trace()
-    inf = gdb.selected_inferior()
-    if availables is None:
-        try:
-            availables = util.AVAILABLE_INFO_READER.get_availables()
-        except Exception:
-            availables = []
+    availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
     for proc in availables:
         ppath = AVAILABLE_PATTERN.format(pid=proc.pid)
