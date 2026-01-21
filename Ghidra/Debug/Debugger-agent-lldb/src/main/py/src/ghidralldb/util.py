@@ -43,6 +43,8 @@ def _compute_lldb_ver() -> LldbVersion:
 
 
 LLDB_VERSION = _compute_lldb_ver()
+if LLDB_VERSION.major < 18:
+    import psutil
 
 GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for "
 
@@ -196,14 +198,18 @@ class AvailableInfoReader(object):
         availables = []
         platform = get_debugger().GetPlatformAtIndex(0)
         err = lldb.SBError()
-        proclist = platform.GetAllProcesses(err)
-        for i in range(0, proclist.GetSize()):
-            info = lldb.SBProcessInfo()
-            success = proclist.GetProcessInfoAtIndex(i, info)
-            if success:
-                a = self.available_from_sbprocinfo(info)
-                availables.append(a)
-        return availables
+        # Quite a hack, but only needed for type annotations
+        if hasattr(platform, 'GetAllProcesses'):
+	        proclist = platform.GetAllProcesses(err)
+	        for i in range(0, proclist.GetSize()):
+	            info = lldb.SBProcessInfo()
+	            success = proclist.GetProcessInfoAtIndex(i, info)
+	            if success:
+	                a = self.available_from_sbprocinfo(info)
+	                availables.append(a)
+	        return availables
+        else:
+	        return psutil.process_iter()
 
 
 def _choose_available_info_reader() -> AvailableInfoReader:

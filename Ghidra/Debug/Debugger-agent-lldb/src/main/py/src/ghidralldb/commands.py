@@ -1473,7 +1473,7 @@ def ghidra_trace_put_processes(debugger: lldb.SBDebugger, command: str,
         put_processes()
 
 
-def put_available(availables: Optional[List[util.Available]] = None) -> List[util.Available]:
+def put_available() -> List[util.Available]:
     trace = STATE.require_trace()
     availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
@@ -1482,8 +1482,12 @@ def put_available(availables: Optional[List[util.Available]] = None) -> List[uti
         procobj = trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
         procobj.set_value('PID', proc.pid)
-        procobj.set_value('Name', proc.name)
-        procobj.set_value('_display', f'{proc.pid} {proc.command}')
+        if isinstance(proc, util.Available):
+        	procobj.set_value('Name', proc.name)
+        	procobj.set_value('_display', f'{proc.pid} {proc.command}')
+        else:
+        	procobj.set_value('Name', proc.name())
+        	procobj.set_value('_display', f'{proc.pid} {proc.name()}')
         procobj.insert()
     trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 
