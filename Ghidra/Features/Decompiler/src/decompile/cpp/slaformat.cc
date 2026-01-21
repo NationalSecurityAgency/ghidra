@@ -18,7 +18,7 @@
 namespace ghidra {
 namespace sla {
 const int4 FORMAT_SCOPE = 1;
-const int4 FORMAT_VERSION = 4;
+const int4 FORMAT_VERSION = 5;
 
 // ATTRIB_CONTEXT = 1 is reserved
 AttributeId ATTRIB_VAL = AttributeId("val", 2, FORMAT_SCOPE);
@@ -138,34 +138,38 @@ ElementId ELEM_XOR_EXP = ElementId("xor_exp", 57, FORMAT_SCOPE);
 ElementId ELEM_INTB = ElementId("intb", 58, FORMAT_SCOPE);
 ElementId ELEM_END_EXP = ElementId("end_exp", 59, FORMAT_SCOPE);
 ElementId ELEM_NEXT2_EXP = ElementId("next2_exp", 60, FORMAT_SCOPE);
-ElementId ELEM_START_EXP = ElementId("start_exp", 61, FORMAT_SCOPE);
-ElementId ELEM_EPSILON_SYM = ElementId("epsilon_sym", 62, FORMAT_SCOPE);
-ElementId ELEM_EPSILON_SYM_HEAD = ElementId("epsilon_sym_head", 63, FORMAT_SCOPE);
-ElementId ELEM_NAME_SYM = ElementId("name_sym", 64, FORMAT_SCOPE);
-ElementId ELEM_NAME_SYM_HEAD = ElementId("name_sym_head", 65, FORMAT_SCOPE);
-ElementId ELEM_NAMETAB = ElementId("nametab", 66, FORMAT_SCOPE);
-ElementId ELEM_NEXT2_SYM = ElementId("next2_sym", 67, FORMAT_SCOPE);
-ElementId ELEM_NEXT2_SYM_HEAD = ElementId("next2_sym_head", 68, FORMAT_SCOPE);
-ElementId ELEM_START_SYM = ElementId("start_sym", 69, FORMAT_SCOPE);
-ElementId ELEM_START_SYM_HEAD = ElementId("start_sym_head", 70, FORMAT_SCOPE);
-ElementId ELEM_SUBTABLE_SYM = ElementId("subtable_sym", 71, FORMAT_SCOPE);
-ElementId ELEM_SUBTABLE_SYM_HEAD = ElementId("subtable_sym_head", 72, FORMAT_SCOPE);
-ElementId ELEM_VALUEMAP_SYM = ElementId("valuemap_sym", 73, FORMAT_SCOPE);
-ElementId ELEM_VALUEMAP_SYM_HEAD = ElementId("valuemap_sym_head", 74, FORMAT_SCOPE);
-ElementId ELEM_VALUETAB = ElementId("valuetab", 75, FORMAT_SCOPE);
-ElementId ELEM_VARLIST_SYM = ElementId("varlist_sym", 76, FORMAT_SCOPE);
-ElementId ELEM_VARLIST_SYM_HEAD = ElementId("varlist_sym_head", 77, FORMAT_SCOPE);
-ElementId ELEM_OR_PAT = ElementId("or_pat", 78, FORMAT_SCOPE);
-ElementId ELEM_COMMIT = ElementId("commit", 79, FORMAT_SCOPE);
-ElementId ELEM_CONST_START = ElementId("const_start", 80, FORMAT_SCOPE);
-ElementId ELEM_CONST_NEXT = ElementId("const_next", 81, FORMAT_SCOPE);
-ElementId ELEM_CONST_NEXT2 = ElementId("const_next2", 82, FORMAT_SCOPE);
-ElementId ELEM_CONST_CURSPACE = ElementId("const_curspace", 83, FORMAT_SCOPE);
-ElementId ELEM_CONST_CURSPACE_SIZE = ElementId("const_curspace_size", 84, FORMAT_SCOPE);
-ElementId ELEM_CONST_FLOWREF = ElementId("const_flowref", 85, FORMAT_SCOPE);
-ElementId ELEM_CONST_FLOWREF_SIZE = ElementId("const_flowref_size", 86, FORMAT_SCOPE);
-ElementId ELEM_CONST_FLOWDEST = ElementId("const_flowdest", 87, FORMAT_SCOPE);
-ElementId ELEM_CONST_FLOWDEST_SIZE = ElementId("const_flowdest_size", 88, FORMAT_SCOPE);
+ElementId ELEM_SEG_EXP = ElementId("seg_exp", 61, FORMAT_SCOPE);
+ElementId ELEM_START_EXP = ElementId("start_exp", 62, FORMAT_SCOPE);
+ElementId ELEM_EPSILON_SYM = ElementId("epsilon_sym", 63, FORMAT_SCOPE);
+ElementId ELEM_EPSILON_SYM_HEAD = ElementId("epsilon_sym_head", 64, FORMAT_SCOPE);
+ElementId ELEM_NAME_SYM = ElementId("name_sym", 65, FORMAT_SCOPE);
+ElementId ELEM_NAME_SYM_HEAD = ElementId("name_sym_head", 66, FORMAT_SCOPE);
+ElementId ELEM_NAMETAB = ElementId("nametab", 67, FORMAT_SCOPE);
+ElementId ELEM_NEXT2_SYM = ElementId("next2_sym", 68, FORMAT_SCOPE);
+ElementId ELEM_NEXT2_SYM_HEAD = ElementId("next2_sym_head", 69, FORMAT_SCOPE);
+ElementId ELEM_SEG_SYM = ElementId("seg_sym", 70, FORMAT_SCOPE);
+ElementId ELEM_SEG_SYM_HEAD = ElementId("seg_sym_head", 71, FORMAT_SCOPE);
+ElementId ELEM_START_SYM = ElementId("start_sym", 72, FORMAT_SCOPE);
+ElementId ELEM_START_SYM_HEAD = ElementId("start_sym_head", 73, FORMAT_SCOPE);
+ElementId ELEM_SUBTABLE_SYM = ElementId("subtable_sym", 74, FORMAT_SCOPE);
+ElementId ELEM_SUBTABLE_SYM_HEAD = ElementId("subtable_sym_head", 75, FORMAT_SCOPE);
+ElementId ELEM_VALUEMAP_SYM = ElementId("valuemap_sym", 76, FORMAT_SCOPE);
+ElementId ELEM_VALUEMAP_SYM_HEAD = ElementId("valuemap_sym_head", 77, FORMAT_SCOPE);
+ElementId ELEM_VALUETAB = ElementId("valuetab", 78, FORMAT_SCOPE);
+ElementId ELEM_VARLIST_SYM = ElementId("varlist_sym", 79, FORMAT_SCOPE);
+ElementId ELEM_VARLIST_SYM_HEAD = ElementId("varlist_sym_head", 80, FORMAT_SCOPE);
+ElementId ELEM_OR_PAT = ElementId("or_pat", 81, FORMAT_SCOPE);
+ElementId ELEM_COMMIT = ElementId("commit", 82, FORMAT_SCOPE);
+ElementId ELEM_CONST_START = ElementId("const_start", 83, FORMAT_SCOPE);
+ElementId ELEM_CONST_NEXT = ElementId("const_next", 84, FORMAT_SCOPE);
+ElementId ELEM_CONST_NEXT2 = ElementId("const_next2", 85, FORMAT_SCOPE);
+ElementId ELEM_CONST_SEG = ElementId("const_seg", 86, FORMAT_SCOPE);
+ElementId ELEM_CONST_CURSPACE = ElementId("const_curspace", 87, FORMAT_SCOPE);
+ElementId ELEM_CONST_CURSPACE_SIZE = ElementId("const_curspace_size", 88, FORMAT_SCOPE);
+ElementId ELEM_CONST_FLOWREF = ElementId("const_flowref", 89, FORMAT_SCOPE);
+ElementId ELEM_CONST_FLOWREF_SIZE = ElementId("const_flowref_size", 90, FORMAT_SCOPE);
+ElementId ELEM_CONST_FLOWDEST = ElementId("const_flowdest", 91, FORMAT_SCOPE);
+ElementId ELEM_CONST_FLOWDEST_SIZE = ElementId("const_flowdest_size", 92, FORMAT_SCOPE);
 
 /// The bytes of the header are read from the stream and verified against the required form and current version.
 /// If the form matches, \b true is returned.  No additional bytes are read.

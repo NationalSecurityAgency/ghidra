@@ -228,6 +228,8 @@ void SymbolTable::decodeSymbolHeader(Decoder &decoder)
     sym = new EndSymbol();
   else if (el == sla::ELEM_NEXT2_SYM_HEAD)
     sym = new Next2Symbol();
+  else if (el == sla::ELEM_SEG_SYM_HEAD)
+    sym = new SegSymbol();
   else if (el == sla::ELEM_SUBTABLE_SYM_HEAD)
     sym = new SubtableSymbol();
   else
@@ -1265,6 +1267,71 @@ void Next2Symbol::decode(Decoder &decoder,SleighBase *trans)
   patexp = new Next2InstructionValue();
   patexp->layClaim();
   decoder.closeElement(sla::ELEM_NEXT2_SYM.getId());
+}
+
+SegSymbol::SegSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
+
+{
+  const_space = cspc;
+  patexp = new SegInstructionValue();
+  patexp->layClaim();
+}
+
+SegSymbol::~SegSymbol(void)
+
+{
+  if (patexp != (PatternExpression *)0)
+    PatternExpression::release(patexp);
+}
+
+VarnodeTpl *SegSymbol::getVarnode(void) const
+
+{ // Return segment value as a constant
+  ConstTpl spc(const_space);
+  ConstTpl off(ConstTpl::j_seg);
+  ConstTpl sz_zero;
+  return new VarnodeTpl(spc,off,sz_zero);
+}
+
+void SegSymbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
+
+{
+  hand.space = walker.getCurSpace();
+  hand.offset_space = (AddrSpace *)0;
+  hand.offset_offset = walker.getSegaddr().getOffset(); // Get segment address
+  hand.size = hand.space->getAddrSize();
+}
+
+void SegSymbol::print(ostream &s,ParserWalker &walker) const
+
+{
+  intb val = (intb) walker.getSegaddr().getOffset();
+  s << "0x" << hex << val;
+}
+
+void SegSymbol::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_SEG_SYM);
+  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
+  encoder.closeElement(sla::ELEM_SEG_SYM);
+}
+
+void SegSymbol::encodeHeader(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_SEG_SYM_HEAD);
+  SleighSymbol::encodeHeader(encoder);
+  encoder.closeElement(sla::ELEM_SEG_SYM_HEAD);
+}
+
+void SegSymbol::decode(Decoder &decoder,SleighBase *trans)
+
+{
+  const_space = trans->getConstantSpace();
+  patexp = new SegInstructionValue();
+  patexp->layClaim();
+  decoder.closeElement(sla::ELEM_SEG_SYM.getId());
 }
 
 FlowDestSymbol::FlowDestSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
