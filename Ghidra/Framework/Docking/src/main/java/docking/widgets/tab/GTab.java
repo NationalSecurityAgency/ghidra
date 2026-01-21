@@ -41,25 +41,28 @@ public class GTab<T> extends JPanel {
 	private final static Icon EMPTY16_ICON = Icons.EMPTY_ICON;
 	private final static Icon CLOSE_ICON = new GIcon("icon.widget.tabs.close");
 	private final static Icon HIGHLIGHT_CLOSE_ICON = new GIcon("icon.widget.tabs.close.highlight");
-	private final static Color TAB_FG_COLOR = new GColor("color.fg.widget.tabs.unselected");
-	private final static Color SELECTED_TAB_FG_COLOR = new GColor("color.fg.widget.tabs.selected");
-	private final static Color HIGHLIGHTED_TAB_BG_COLOR =
-		new GColor("color.bg.widget.tabs.highlighted");
 
-	final static Color TAB_BG_COLOR = new GColor("color.bg.widget.tabs.unselected");
-	final static Color SELECTED_TAB_BG_COLOR = new GColor("color.bg.widget.tabs.selected");
+	//@formatter:off
+	private final static Color FG_COLOR_UNSELECTED = new GColor("color.fg.widget.tabs.unselected");
+	private final static Color FG_COLOR_SELECTED_INACTIVE = new GColor("color.fg.widget.tabs.selected.inactive");
+	private final static Color FG_COLOR_SELECTED_ACTIVE = new GColor("color.fg.widget.tabs.selected.active");
+	
+	private final static Color BG_COLOR_HIGHLIGHTED = new GColor("color.bg.widget.tabs.highlighted");
+	final static Color BG_COLOR_UNSELECTED = new GColor("color.bg.widget.tabs.unselected");
+	final static Color BG_COLOR_SELECTED_INACTIVE = new GColor("color.bg.widget.tabs.selected.inactive");
+	final static Color BG_COLOR_SELECTED_ACTIVE = new GColor("color.bg.widget.tabs.selected.active");
+	//@formatter:on
 
 	private GTabPanel<T> tabPanel;
 	private T value;
-	private boolean selected;
 	private JLabel closeLabel;
 	private JLabel nameLabel;
+	private boolean isSelected;
 
 	GTab(GTabPanel<T> gTabPanel, T value, boolean selected) {
 		super(new HorizontalLayout(10));
 		this.tabPanel = gTabPanel;
 		this.value = value;
-		this.selected = selected;
 
 		setBorder(selected ? SELECTED_TAB_BORDER : TAB_BORDER);
 
@@ -87,8 +90,12 @@ public class GTab<T> extends JPanel {
 		return value;
 	}
 
-	public void setSelected(boolean selected) {
-		this.selected = selected;
+	boolean isSelected() {
+		return isSelected;
+	}
+
+	void setSelected(boolean selected) {
+		this.isSelected = selected;
 		initializeTabColors(false);
 		setBorder(selected ? SELECTED_TAB_BORDER : TAB_BORDER);
 	}
@@ -100,8 +107,8 @@ public class GTab<T> extends JPanel {
 		repaint();
 	}
 
-	void setHighlight(boolean b) {
-		initializeTabColors(b);
+	void setHighlight(boolean isHighlighted) {
+		initializeTabColors(isHighlighted);
 	}
 
 	private void installMouseListener(Container c, GTabMouseListener listener) {
@@ -129,18 +136,30 @@ public class GTab<T> extends JPanel {
 		closeLabel.setBackground(bg);
 	}
 
-	private Color getBackgroundColor(boolean isHighlighted) {
+	Color getBackgroundColor(boolean isHighlighted) {
 		if (isHighlighted) {
-			return HIGHLIGHTED_TAB_BG_COLOR;
+			return BG_COLOR_HIGHLIGHTED;
 		}
-		return selected ? SELECTED_TAB_BG_COLOR : TAB_BG_COLOR;
+
+		if (!isSelected) {
+			return BG_COLOR_UNSELECTED;
+		}
+
+		boolean isActive = tabPanel.isActive();
+		return isActive ? BG_COLOR_SELECTED_ACTIVE : BG_COLOR_SELECTED_INACTIVE;
 	}
 
 	private Color getForegroundColor(boolean isHighlighted) {
-		if (isHighlighted || selected) {
-			return SELECTED_TAB_FG_COLOR;
+		if (isHighlighted) {
+			return FG_COLOR_SELECTED_ACTIVE;
 		}
-		return TAB_FG_COLOR;
+
+		if (!isSelected) {
+			return FG_COLOR_UNSELECTED;
+		}
+
+		boolean isActive = tabPanel.isActive();
+		return isActive ? FG_COLOR_SELECTED_ACTIVE : FG_COLOR_SELECTED_INACTIVE;
 	}
 
 	private class GTabMouseListener extends MouseAdapter {
@@ -151,7 +170,7 @@ public class GTab<T> extends JPanel {
 
 		@Override
 		public void mouseExited(MouseEvent e) {
-			closeLabel.setIcon(selected ? CLOSE_ICON : EMPTY16_ICON);
+			closeLabel.setIcon(isSelected ? CLOSE_ICON : EMPTY16_ICON);
 		}
 
 		@Override
@@ -169,9 +188,8 @@ public class GTab<T> extends JPanel {
 				tabPanel.closeTab(value);
 				return;
 			}
-			if (!selected) {
-				tabPanel.selectTab(value);
-			}
+
+			tabPanel.selectTab(value);
 		}
 
 		@Override
