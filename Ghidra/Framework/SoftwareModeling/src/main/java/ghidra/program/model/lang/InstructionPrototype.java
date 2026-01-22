@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.VariableOffset;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;
@@ -27,295 +28,291 @@ import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
 
 /**
- * InstructionPrototype is designed to describe one machine level instruction.
- * A language parser can return the same InstructionProtoype object for the 
- * same type node. Prototypes for instructions will normally be fixed for a node.
+ * InstructionPrototype is designed to describe one machine level instruction. A language parser can
+ * return the same InstructionProtoype object for the same type node. Prototypes for instructions
+ * will normally be fixed for a node.
  */
 public interface InstructionPrototype {
-	public static final int INVALID_DEPTH_CHANGE = 16777216; // 2^24
+	/** Sentinel value to indicate an invalid depth change */
+	public static final int INVALID_DEPTH_CHANGE = 1 << 24;
 
 	/**
-	 * Get a new instance of a ParserContext.
-	 * @param buf
-	 * @param processorContext
-	 * @return instruction ParserContext
-	 * @throws MemoryAccessException
+	 * {@return a new instance of an instruction {@link ParserContext}}
+	 * 
+	 * @param buf the memory from which this prototype was parsed, or an equivalent cache
+	 * @param processorContext the (incoming) processor context during parse
+	 * @throws MemoryAccessException if the memory buffer cannot be accessed
 	 */
 	public ParserContext getParserContext(MemBuffer buf, ProcessorContextView processorContext)
 			throws MemoryAccessException;
 
 	/**
-	 * Get a ParserContext by parsing bytes outside of the normal disassembly process
-	 * @param addr where the ParserContext is needed
+	 * {@return a ParserContext by parsing bytes outside of the normal disassembly process}
+	 * 
+	 * @param address where the ParserContext is needed, i.e., the first address of an instruction
+	 *            to be parsed
 	 * @param buffer of actual bytes
-	 * @param processorContext
-	 * @return
-	 * @throws InsufficientBytesException
-	 * @throws UnknownInstructionException
-	 * @throws UnknownContextException
-	 * @throws MemoryAccessException
+	 * @param processorContext the (incoming) processor context
+	 * @throws InsufficientBytesException if not enough bytes are in the buffer
+	 * @throws UnknownInstructionException if the bytes do not constitute a valid instruction
+	 * @throws UnknownContextException if contextual dependencies, e.g. {@code crossbuild}
+	 *             instructions, are not available
+	 * @throws MemoryAccessException if the memory buffer cannot be accessed
 	 */
-	public ParserContext getPseudoParserContext(Address addr, MemBuffer buffer,
+	public ParserContext getPseudoParserContext(Address address, MemBuffer buffer,
 			ProcessorContextView processorContext) throws InsufficientBytesException,
 			UnknownInstructionException, UnknownContextException, MemoryAccessException;
 
 	/**
-	 * @return true if instruction prototype expects one or more delay slotted
-	 * instructions to exist.
+	 * {@return true if instruction prototype expects one or more delay slotted instructions to
+	 * exist}
 	 */
 	public boolean hasDelaySlots();
 
 	/**
-	 * @return true if instruction semantics have a CrossBuild instruction
-	 * dependency which may require a robust InstructionContext with access
-	 * to preceding instructions  
+	 * {@return true if instruction semantics have a {@code crossbuild} instruction dependency which
+	 * may require a robust {@link InstructionContext} with access to preceding instructions}
 	 */
 	public boolean hasCrossBuildDependency();
 
 	/**
-	 * Get the mnemonic for this CodeProtype.  Examples: "MOV" and
-	 * "CALL" for instructions and "DB" and "DA" for data.
+	 * {@return true if instruction semantics contain a reference to {@code inst_next2}}.
+	 */
+	public boolean hasNext2Dependency();
+
+	/**
+	 * {@return the mnemonic for this prototype}
+	 * <p>
+	 * Examples: "{@code MOV}" and "{@code CALL}"
+	 * 
 	 * @param context the instruction context
-	 * @return the mnemonic for this CodePrototype.
 	 */
 	public String getMnemonic(InstructionContext context);
 
 	/**
-	 * Get the length of this CodeProtoype. 
-	 *
-	 * @return the length of this CodeProtoype.
+	 * {@return the length in bytes of this prototype}
 	 */
 	public int getLength();
 
 	/**
-	 * Get a Mask that describe which bits of this instruction determine
-	 * the opcode.
-	 *
-	 * @return a Mask for the opcode bits or null if unknown.
+	 * {@return the {@link Mask} that describe which bits of this instruction determine the opcode,
+	 * or null if unknown}
 	 */
 	public Mask getInstructionMask();
 
 	/**
-	 * Get a Mask that describe which bits of this instruction determine
-	 * the operand value.
-	 *
-	 * @return a Mask for the operand bits or null if unknown.
+	 * {@return the {@link Mask} that describe which bits of this instruction determine a specific
+	 * operand's value, or null if unknown}
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 */
 	public Mask getOperandValueMask(int operandIndex);
 
 	/**
-	 * Get the flow type of this instruction. Used
-	 * for analysis purposes. i.e., how this
-	 * instruction flows to the next instruction.
+	 * {@return the flow type of this instruction}
+	 * <p>
+	 * This is used for analysis purposes. i.e., how this instruction flows to the next instruction.
 	 *
 	 * @param context the instruction context
-	 * @return flow type.
 	 */
 	public FlowType getFlowType(InstructionContext context);
 
 	/**
-	 * Get the number of delay slot instructions for this
-	 * argument. This should be 0 for instructions which don't have a
-	 * delay slot.  This is used to support the delay slots found on
-	 * some RISC processors such as SPARC and the PA-RISC. This
-	 * returns an integer instead of a boolean in case some other
-	 * processor executes more than one instruction from a delay slot.
+	 * {@return the number of delay slot instructions following this instruction}
+	 * <p>
+	 * This should be 0 for instructions which don't have a delay slot. This is used to support the
+	 * delay slots found on some RISC processors such as SPARC and the PA-RISC. This returns an
+	 * integer instead of a boolean in case some other processor executes more than one instruction
+	 * from a delay slot.
 	 *
 	 * @param context the instruction context
-	 * 
-	 * @return the number of delay slot instructions for this instruction.
 	 */
 	public int getDelaySlotDepth(InstructionContext context);
 
 	/**
-	 * @return the number of delay-slot instruction bytes which correspond
-	 * to this prototype.
+	 * {@return the number of delay-slot instruction bytes which correspond to this prototype}
 	 */
 	public int getDelaySlotByteCount();
 
 	/**
-	 * Return true if this prototype was disassembled in a delay slot.
+	 * {@return true if this prototype was disassembled in a delay slot}
 	 */
 	boolean isInDelaySlot();
 
 	/**
-	 *  Return the number of operands in this instruction.
-	 *
+	 * {@return the number of operands in this instruction}
 	 */
 	public int getNumOperands();
 
 	/**
-	 * Get the type of a specific operand.
+	 * {@return the type of a specific operand}
 	 *
-	 * @param opIndex the index of the operand. (zero based)
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context.
-	 * @return the type of the operand.
 	 */
-	public int getOpType(int opIndex, InstructionContext context);
+	public int getOpType(int operandIndex, InstructionContext context);
 
 	/**
-	 * Get the Address for default flow after instruction.
+	 * {@return the {@link Address} for fall-through flow after this instruction, or null if flow
+	 * cannot fall through this instruction}
 	 *
 	 * @param context the instruction context
-	 *
-	 * @return Address of fall through flow or null if flow
-	 * does not fall through this instruction.
 	 */
 	public Address getFallThrough(InstructionContext context);
 
 	/**
-	 * Get the byte offset to the default flow after instruction.
-	 * If this instruction does not have a fall-through due to flow
-	 * behavior, this method will still return an offset which accounts for 
-	 * the instruction length including delay slotted instructions if 
-	 * applicable.
+	 * {@return the byte offset to the fall-through flow after this instruction}
+	 * <p>
+	 * Ordinarily, this is just the length (in bytes) of this instruction. However, if this
+	 * instruction has delay-slotted instruction(s), their lengths are included. Even if flow cannot
+	 * fall through this instruction, this method will still return a the fall-through offset.
 	 * 
 	 * @param context the instruction context
-	 * 
-	 * @return int how much to add to the current address to get
-	 * the fall through address.
 	 */
 	public int getFallThroughOffset(InstructionContext context);
 
 	/**
-	 * Get an array of Address objects for all flows other than
-	 * a fall-through, null if no flows.
+	 * {@return the {@link Address}es for all flows other than a fall-through, or null if no flows}
+	 * <p>
+	 * A null return is equivalent to an empty array. Note the result may include
+	 * {@link Address#NO_ADDRESS} to indicate flow to an address that could not be evaluated, e.g.,
+	 * to {@code inst_next2} when the skipped instruction could not be parsed.
 	 *
 	 * @param context the instruction context.
-	 * @return an array of Address objects for all flows other than
-	 *  a fall-through, null if no flows.
 	 */
 	public Address[] getFlows(InstructionContext context);
 
 	/**
-	 * Get the separator strings between an operand.
+	 * {@return the separator string before a specific operand, or null}
+	 * <p>
+	 * In particular, the separator string for operand 0 are the characters <em>before</em> the
+	 * first operand. The separator string for {@code numOperands} are the characters <em>after</em>
+	 * the last operand. A null return value is equivalent to an empty string.
 	 * 
-	 * The separator string for 0 are the characters before the first operand.
-	 * The separator string for numOperands+1 are the characters after the last operand.
-	 * 
-	 * @param opIndex valid values are 0 thru numOperands+1
-	 * @return separator string, or null if there is no string
+	 * @param operandIndex valid values are 0 thru {@code numOperands}, inclusive
 	 */
-	public String getSeparator(int opIndex);
+	public String getSeparator(int operandIndex);
 
 	/**
-	 * Get a List of Objects that can be used to render an operands representation.
+	 * {@return a the objects for rendering an operand's representation}
+	 * <p>
+	 * Each element is one of {@link Address}, {@link Register}, {@link Scalar},
+	 * {@link VariableOffset}, {@link Character}, or null. This method may also return null (as in
+	 * no list at all) if the operation is not supported. Nulls should be rendered as empty strings.
 	 * 
-	 * @param opIndex operand to get the Representation List
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context
-	 * 
-	 * @return ArrayList of Register, Address, Scalar, VariableOffset and Character objects
-	 *         of null if the operation isn't supported
 	 */
-	public ArrayList<Object> getOpRepresentationList(int opIndex, InstructionContext context);
+	public ArrayList<Object> getOpRepresentationList(int operandIndex, InstructionContext context);
 
 	/**
-	 * If the indicated operand is an address, this gets the address value for 
-	 * that operand
-	 * @param opIndex index of the operand.
+	 * {@return the {@link Address} value of a specific operand, or null if its value is not an
+	 * {@link Address}}
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context.
-	 * @return the address indicated by the operand
 	 */
-	public Address getAddress(int opIndex, InstructionContext context);
+	public Address getAddress(int operandIndex, InstructionContext context);
 
 	/**
-	 * If the indicated operand is a scalar, this gets the scalar value for 
-	 * that operand
-	 * @param opIndex index of the operand.
+	 * {@return the {@link Register} value of a specific operand, or null if its value is not an
+	 * {@link Register}}
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context
-	 * @return the scalar for the indicated operand
 	 */
-	public Scalar getScalar(int opIndex, InstructionContext context);
+	public Register getRegister(int operandIndex, InstructionContext context);
 
 	/**
-	 * If the indicated operand is a register, this gets the register value 
-	 * for that operand
-	 * @param opIndex index of the operand.
+	 * {@return the {@link Scalar} value of a specific operand, or null if its value is not an
+	 * {@link Scalar}}
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context
-	 * @return a register description for the indicated operand
 	 */
-	public Register getRegister(int opIndex, InstructionContext context);
+	public Scalar getScalar(int operandIndex, InstructionContext context);
 
 	/**
-	 * Get objects used by this operand (Address, Scalar, Register ...)
-	 * @param opIndex the index of the operand. (zero based)
+	 * {@return the objects used by a specific operand}
+	 * <p>
+	 * Each element is one of {@link Address}, {@link Register}, {@link Scalar}, or
+	 * {@link VariableOffset}.
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context
-	 * @return an array of objects found at this operand.
 	 */
-	public Object[] getOpObjects(int opIndex, InstructionContext context);
+	public Object[] getOpObjects(int operandIndex, InstructionContext context);
 
 	/**
-	 * Get the suggested operand reference type.
-	 * @param opIndex the index of the operand. (zero based)
+	 * {@return the suggested reference type for a specific operand}
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 * @param context the instruction context
-	 * @param override if not null, steers local overrides of pcode generation
-	 * @return reference type.
+	 * @param override if not null, steers local overrides of p-code generation
 	 */
-	public RefType getOperandRefType(int opIndex, InstructionContext context,
+	public RefType getOperandRefType(int operandIndex, InstructionContext context,
 			PcodeOverride override);
 
 	/**
-	 * Return true if the operand at opIndex should have a delimiter following it.
-	 * @param opIndex the index of the operand to test for having a delimiter.
+	 * {@return true if a specific operand ought to have a delimiter following it}
+	 * 
+	 * @param operandIndex the 0-up index of the operand
 	 */
-	public boolean hasDelimeter(int opIndex);
+	public boolean hasDelimeter(int operandIndex);
 
 	/**
-	 * Get the Result objects produced/affected by this instruction
-	 * These would probably only be Register or Address
+	 * {@return the objects used as input by this instruction}
+	 * <p>
+	 * Each element should probably only be one of {@link Address} or {@link Register}.
 	 * 
 	 * @param context the instruction context
-	 * 
-	 * @return an array of objects that are used by this instruction
 	 */
 	public Object[] getInputObjects(InstructionContext context);
 
 	/**
-	 * Get the Result objects produced/affected by this instruction
-	 * These would probably only be Register or Address
+	 * {@return the objects affected by this instruction}
+	 * <p>
+	 * Each element should probably only be one of {@link Address} or {@link Register}.
 	 * 
 	 * @param context the instruction context
-	 * 
-	 * @return an array of objects that are affected by this instruction
 	 */
 	public Object[] getResultObjects(InstructionContext context);
 
 	/**
-	 * Get an array of PCode operations (micro code) that this instruction
-	 * performs.
+	 * {@return the p-code operations (micro code) that this instruction performs}
+	 * <p>
+	 * This will return an empty array if the language does not support p-code for this instruction.
 	 * 
 	 * @param context the instruction context
-	 * @param override if not null, may indicate that different elements of the pcode generation are overridden
-	 * @return array of PCODE,
-	 *         zero length array if language doesn't support PCODE for this instruction
+	 * @param override if not null, may indicate that different elements of the pcode generation are
+	 *            overridden
 	 */
 	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override);
 
 	/**
-	 * Same as getPcode but emits the operations directly to an encoder to optimize transfer to other processes
+	 * Does the same as {@link #getPcode(InstructionContext, PcodeOverride)} but emits the
+	 * operations directly to an encoder to optimize transfer to other processes}
+	 * 
 	 * @param encoder is the encoder receiving the operations
 	 * @param context the instruction context
-	 * @param override if not null, may indicate that different elements of the pcode generation are overridden
+	 * @param override if not null, may indicate that different elements of the pcode generation are
+	 *            overridden
 	 * @throws IOException for errors writing to any stream underlying the encoder
 	 */
 	public void getPcodePacked(PatchEncoder encoder, InstructionContext context,
 			PcodeOverride override) throws IOException;
 
 	/**
-	 * Get an array of PCode operations (micro code) that a particular operand
-	 * performs to compute its value.
+	 * {@return the p-code operations (micro code) that perform the computation of a particular
+	 * operand's value}
 	 *
 	 * @param context the instruction context
-	 * @param opIndex the index of the operand for which to get PCode.
-	 * 
-	 * @return array of PCODE,
-	 *         zero length array if language doesn't support PCODE for this instruction
+	 * @param operandIndex the 0-up index of the operand
 	 */
-	public PcodeOp[] getPcode(InstructionContext context, int opIndex);
+	public PcodeOp[] getPcode(InstructionContext context, int operandIndex);
 
 	/**
-	 * Get processor language module associated with this prototype.
-	 * @return language module
+	 * {@return the processor language module associated with this prototype}
 	 */
 	public Language getLanguage();
 }
