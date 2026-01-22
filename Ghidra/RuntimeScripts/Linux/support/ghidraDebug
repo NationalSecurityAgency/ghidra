@@ -15,6 +15,9 @@ MAXMEM_DEFAULT=
 GHIDRA_MAXMEM=${GHIDRA_MAXMEM:=${MAXMEM_DEFAULT}}
 GHIDRA_GUI_MAXMEM=${GHIDRA_GUI_MAXMEM:=${GHIDRA_MAXMEM}}
 
+# Apply Java options from externally set environment variables
+VMARG_LIST="${GHIDRA_JAVA_OPTIONS} ${GHIDRA_GUI_JAVA_OPTIONS} "
+
 # Debug launch mode can be changed to one of the following: debug, debug-suspend
 LAUNCH_MODE=debug
 
@@ -31,4 +34,4 @@ SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra in debug mode
 # DEBUG_ADDRESS set via environment for launch.sh
-DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk Ghidra "${GHIDRA_GUI_MAXMEM}" "" ghidra.GhidraRun "$@"
+DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk Ghidra "${GHIDRA_GUI_MAXMEM}" "${VMARG_LIST}" ghidra.GhidraRun "$@"

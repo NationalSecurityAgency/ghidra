@@ -30,6 +30,14 @@ set MAXMEM_DEFAULT=2G
 if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
 if not defined GHIDRA_HEADLESS_MAXMEM set "GHIDRA_HEADLESS_MAXMEM=%GHIDRA_MAXMEM%"
 
+:: Limit the # of garbage collection and JIT compiler threads in case many headless
+:: instances are run in parallel.  By default, Java will assign one thread per core
+:: which does not scale well on servers with many cores.
+set VMARG_LIST=-XX:ParallelGCThreads=2 -XX:CICompilerCount=2
+
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%VMARG_LIST% %GHIDRA_JAVA_OPTIONS% %GHIDRA_HEADLESS_JAVA_OPTIONS%
+
 :: Launch mode can be changed to one of the following:
 ::    fg, debug, debug-suspend
 set LAUNCH_MODE=fg
@@ -37,11 +45,6 @@ set LAUNCH_MODE=fg
 :: Set the debug address to listen on.
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:13002
-
-:: Limit the # of garbage collection and JIT compiler threads in case many headless
-:: instances are run in parallel.  By default, Java will assign one thread per core
-:: which does not scale well on servers with many cores.
-set VMARG_LIST=-XX:ParallelGCThreads=2 -XX:CICompilerCount=2
 
 :: Store current path (%0 gets modified below by SHIFT)
 set "SCRIPT_DIR=%~dp0"

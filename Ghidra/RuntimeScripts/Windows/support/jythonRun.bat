@@ -29,6 +29,14 @@ set MAXMEM_DEFAULT=
 if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
 if not defined GHIDRA_JYTHON_MAXMEM set "GHIDRA_JYTHON_MAXMEM=%GHIDRA_MAXMEM%"
 
+:: Limit the # of garbage collection and JIT compiler threads in case many headless
+:: instances are run in parallel.  By default, Java will assign one thread per core
+:: which does not scale well on servers with many cores.
+set VMARG_LIST=-XX:ParallelGCThreads=2 -XX:CICompilerCount=2
+
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%VMARG_LIST% %GHIDRA_JAVA_OPTIONS% %GHIDRA_JYTHON_JAVA_OPTIONS%
+
 :: Launch mode can be changed to one of the following:
 ::    fg, debug, debug-suspend
 set LAUNCH_MODE=fg
@@ -36,11 +44,5 @@ set LAUNCH_MODE=fg
 :: Set the debug address to listen on.
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:13002
-
-:: Limit the # of garbage collection and JIT compiler threads in case many headless
-:: instances are run in parallel.  By default, Java will assign one thread per core
-:: which does not scale well on servers with many cores.
-set VMARG_LIST=-XX:ParallelGCThreads=2
-set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
 call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra-Jython "%GHIDRA_JYTHON_MAXMEM%" "%VMARG_LIST%" ghidra.jython.JythonRun %*

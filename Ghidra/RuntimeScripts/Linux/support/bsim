@@ -13,10 +13,14 @@ MAXMEM_DEFAULT=
 GHIDRA_MAXMEM=${GHIDRA_MAXMEM:=${MAXMEM_DEFAULT}}
 GHIDRA_BSIM_MAXMEM=${GHIDRA_BSIM_MAXMEM:=${GHIDRA_MAXMEM}}
 
+# Force Java headless mode
+VMARG_LIST="-Djava.awt.headless=true"
+
+# Apply Java options from externally set environment variables
+VMARG_LIST="${VMARG_LIST} ${GHIDRA_JAVA_OPTIONS} ${GHIDRA_BSIM_JAVA_OPTIONS}"
+
 # launch mode  (fg, bg, debug, debug-suspend)
 LAUNCH_MODE=fg
-
-VMARG_LIST="-Djava.awt.headless=true "
 
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
