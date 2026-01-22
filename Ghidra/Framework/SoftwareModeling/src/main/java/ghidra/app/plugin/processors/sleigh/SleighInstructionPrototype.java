@@ -62,12 +62,14 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	static public class FlowSummary {
 		public int delay;
 		public boolean hasCrossBuilds;
+		public boolean hasNext2;
 		public ArrayList<FlowRecord> flowState;
 		public OpTpl lastop;
 
 		public FlowSummary() {
 			delay = 0;
 			hasCrossBuilds = false;
+			hasNext2 = false;
 			flowState = null;
 			lastop = null;
 		}
@@ -82,6 +84,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	private int delaySlotByteCnt;
 
 	private boolean hasCrossBuilds;
+	private boolean hasNext2;
 	private ArrayList<ArrayList<FlowRecord>> flowStateListNamed;
 
 	private final static PcodeOp[] emptyPCode = new PcodeOp[0];
@@ -153,6 +156,11 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		return hasCrossBuilds;
 	}
 
+	@Override
+	public boolean hasNext2Dependency() {
+		return hasNext2;
+	}
+
 	private static void addExplicitFlow(ConstructState state, OpTpl op, int flags,
 			FlowSummary summary) {
 		if (summary.flowState == null) {
@@ -207,14 +215,14 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 			res.lastop = (OpTpl) state;
 			switch (res.lastop.getOpcode()) {
-				case PcodeOp.PTRSUB:			// encoded crossbuild directive
+				case PcodeOp.PTRSUB -> {			// encoded crossbuild directive
 					res.hasCrossBuilds = true;
 					addExplicitFlow(walker.getState(), res.lastop, CROSSBUILD, res);
-					break;
-				case PcodeOp.BRANCHIND:
+				}
+				case PcodeOp.BRANCHIND -> {
 					addExplicitFlow(null, res.lastop, BRANCH_INDIRECT | NO_FALLTHRU, res);
-					break;
-				case PcodeOp.BRANCH:
+				}
+				case PcodeOp.BRANCH -> {
 					destType = res.lastop.getInput()[0].getOffset().getType();
 					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
@@ -229,8 +237,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 						flags = JUMPOUT | NO_FALLTHRU;
 					}
 					addExplicitFlow(walker.getState(), res.lastop, flags, res);
-					break;
-				case PcodeOp.CBRANCH:
+				}
+				case PcodeOp.CBRANCH -> {
 					destType = res.lastop.getInput()[0].getOffset().getType();
 					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
@@ -245,27 +253,32 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 						flags = 0;
 					}
 					addExplicitFlow(walker.getState(), res.lastop, flags, res);
-					break;
-				case PcodeOp.CALL:
+				}
+				case PcodeOp.CALL -> {
 					addExplicitFlow(walker.getState(), res.lastop, CALL, res);
-					break;
-				case PcodeOp.CALLIND:
+				}
+				case PcodeOp.CALLIND -> {
 					addExplicitFlow(null, res.lastop, CALL_INDIRECT, res);
-					break;
-				case PcodeOp.RETURN:
+				}
+				case PcodeOp.RETURN -> {
 					addExplicitFlow(null, res.lastop, RETURN | NO_FALLTHRU, res);
-					break;
-				case PcodeOp.PTRADD:			// Encoded label build directive
+				}
+				case PcodeOp.PTRADD -> {			// Encoded label build directive
 					addExplicitFlow(null, res.lastop, LABEL, res);
-					break;
-				case PcodeOp.INDIRECT:			// Encode delayslot
+				}
+				case PcodeOp.INDIRECT -> {			// Encode delayslot
 					destType = (int) res.lastop.getInput()[0].getOffset().getReal();
 					if (destType > res.delay) {
 						res.delay = destType;
 					}
-				default:
-					break;
-
+				}
+				default -> {
+				}
+			}
+			for (VarnodeTpl input : res.lastop.getInput()) {
+				if (input.getOffset().getType() == ConstTpl.J_NEXT2) {
+					res.hasNext2 = true;
+				}
 			}
 		}
 		return res;
@@ -293,6 +306,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 		delaySlotByteCnt = summary.delay;
 		hasCrossBuilds = summary.hasCrossBuilds;
+		hasNext2 = summary.hasNext2;
 		if (summary.flowState != null) {
 			flowStateList = summary.flowState;
 			flowType = flowListToFlowType(summary.flowState);
@@ -1461,11 +1475,11 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Reconstruct the ParserContext's internal packed context array and its list of global 
+	 * Reconstruct the ParserContext's internal packed context array and its list of global
 	 * ContextSet directives by walking a previously resolved ConstructState tree
 	 * 
 	 * @param protoContext is the SleighParserContext containing the tree and holding the context
-	 *   results
+	 *            results
 	 * @param debug (optional) logger for collecting information about the recovered context
 	 * @throws MemoryAccessException if memory errors occur trying to recover context
 	 */
