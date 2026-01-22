@@ -584,7 +584,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		}
 
 		repack(false);
-		notifySizeChanged(); // assume size and/or alignment changed
+		notifySizeChanged(); // simplified assumption to force parents to update
 	}
 
 	@Override

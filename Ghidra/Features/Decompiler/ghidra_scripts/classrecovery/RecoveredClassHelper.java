@@ -474,6 +474,7 @@ public class RecoveredClassHelper {
 				//TODO: the above continue is preventing the nulls and exts here - do we want this?
 				// or do we want another map/option?
 				functionCallMap.put(instruction.getMinAddress(), calledFunction);
+				continue;
 			}
 			if (instruction.getFlowOverride().equals(FlowOverride.CALL_RETURN)) {
 				Reference reference = instruction.getPrimaryReference(0);
