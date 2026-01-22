@@ -15,6 +15,9 @@ MAXMEM_DEFAULT=
 GHIDRA_MAXMEM=${GHIDRA_MAXMEM:=${MAXMEM_DEFAULT}}
 GHIDRA_JSHELL_MAXMEM=${GHIDRA_JSHELL_MAXMEM:=${GHIDRA_MAXMEM}}
 
+# Apply Java options from externally set environment variables
+VMARG_LIST="${GHIDRA_JAVA_OPTIONS} ${GHIDRA_JSHELL_JAVA_OPTIONS} "
+
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
 # contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
@@ -23,4 +26,4 @@ SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra
-"${SCRIPT_DIR}"/launch.sh fg jdk Ghidra-JShell "${GHIDRA_JSHELL_MAXMEM}" "" ghidra.JShellRun "$@"
+"${SCRIPT_DIR}"/launch.sh fg jdk Ghidra-JShell "${GHIDRA_JSHELL_MAXMEM}" "${VMARG_LIST}" ghidra.JShellRun "$@"

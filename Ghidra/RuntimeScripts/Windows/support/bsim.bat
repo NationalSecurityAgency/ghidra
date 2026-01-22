@@ -29,6 +29,9 @@ set MAXMEM_DEFAULT=
 if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
 if not defined GHIDRA_BSIM_MAXMEM set "GHIDRA_BSIM_MAXMEM=%GHIDRA_MAXMEM%"
 
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%GHIDRA_JAVA_OPTIONS% %GHIDRA_BSIM_JAVA_OPTIONS%
+
 :: launch mode  (fg, bg, debug, debug-suspend)
 set LAUNCH_MODE=fg
 
@@ -42,4 +45,4 @@ set LAUNCH_MODE=fg
 set "LAUNCH_DIR=%~dp0"
 set "LAUNCH_DIR=%LAUNCH_DIR:~0,-1%"
 
-call "%LAUNCH_DIR%\launch.bat" %LAUNCH_MODE% jdk BSim "%GHIDRA_BSIM_MAXMEM%" "" ghidra.features.bsim.query.ingest.BSimLaunchable %*
+call "%LAUNCH_DIR%\launch.bat" %LAUNCH_MODE% jdk BSim "%GHIDRA_BSIM_MAXMEM%" "%VMARG_LIST%" ghidra.features.bsim.query.ingest.BSimLaunchable %*

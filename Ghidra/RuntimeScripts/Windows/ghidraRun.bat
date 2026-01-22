@@ -29,5 +29,8 @@ set MAXMEM_DEFAULT=
 if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
 if not defined GHIDRA_GUI_MAXMEM set "GHIDRA_GUI_MAXMEM=%GHIDRA_MAXMEM%"
 
-call "%~dp0support\launch.bat" bg jdk Ghidra "%GHIDRA_GUI_MAXMEM%" "" ghidra.GhidraRun %*
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%GHIDRA_JAVA_OPTIONS% %GHIDRA_GUI_JAVA_OPTIONS%
+
+call "%~dp0support\launch.bat" bg jdk Ghidra "%GHIDRA_GUI_MAXMEM%" "%VMARG_LIST%" ghidra.GhidraRun %*
 

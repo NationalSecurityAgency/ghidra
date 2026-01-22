@@ -29,6 +29,9 @@ set MAXMEM_DEFAULT=
 if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
 if not defined GHIDRA_GUI_MAXMEM set "GHIDRA_GUI_MAXMEM=%GHIDRA_MAXMEM%"
 
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%GHIDRA_JAVA_OPTIONS% %GHIDRA_GUI_JAVA_OPTIONS%
+
 :: Debug launch mode can be changed to one of the following:
 ::    debug, debug-suspend
 set LAUNCH_MODE=debug
@@ -37,4 +40,4 @@ set LAUNCH_MODE=debug
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:18001
 
-call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra "%GHIDRA_GUI_MAXMEM%" "" ghidra.GhidraRun %*
+call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra "%GHIDRA_GUI_MAXMEM%" "%VMARG_LIST%" ghidra.GhidraRun %*
