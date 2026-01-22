@@ -496,6 +496,43 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	}
 
 	/**
+	 * Returns the offset of the specified register, in the varnode storage, based on the
+	 * endianness of the storage.  If the searched-for register is a sub-register of a storage
+	 * location, it will be found and its offset inside the containing register will be included.
+	 * 
+	 * @param reg {@link Register} to search for
+	 * @return offset of specified register, or -1 if not found
+	 */
+	public long getRegisterOffset(Register reg) {
+		Address regAddrMin = reg.getAddress();
+		Address regAddrMax = regAddrMin.add(reg.getMinimumByteSize() - 1);
+		long offset = 0;
+		if (programArch.getLanguage().isBigEndian()) {
+			for (int i = 0; i < varnodes.length; i++) {
+				Varnode varnode = varnodes[i];
+				if (varnode.isRegister() && varnode.contains(regAddrMin) &&
+					varnode.contains(regAddrMax)) {
+					return offset + (regAddrMin.subtract(varnode.getAddress()));
+				}
+				offset += varnode.getSize();
+			}
+		}
+		else {
+			for (int i = varnodes.length - 1; i >= 0; i--) {
+				Varnode varnode = varnodes[i];
+				if (varnode.isRegister() && varnode.contains(regAddrMin) &&
+					varnode.contains(regAddrMax)) {
+					long varnodeEndOffset =
+						varnode.getAddress().getOffset() + (varnode.getSize() - 1);
+					return offset + (varnodeEndOffset - regAddrMax.getOffset());
+				}
+				offset += varnode.getSize();
+			}
+		}
+		return -1;
+	}
+
+	/**
 	 * @return the stack offset associated with simple stack storage or compound 
 	 * storage where the last varnode is stack, see {@link #hasStackStorage()}. 
 	 * @throws UnsupportedOperationException if storage does not have a stack varnode
