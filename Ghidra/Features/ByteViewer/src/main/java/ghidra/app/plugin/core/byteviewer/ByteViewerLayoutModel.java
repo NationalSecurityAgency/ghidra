@@ -122,9 +122,11 @@ public class ByteViewerLayoutModel implements LayoutModel {
 		if (fields.size() == 0) {
 			if (factorys.length > 0) {
 				FontMetrics fm = factorys[0].getMetrics();
-				int height = fm.getMaxAscent() + fm.getMaxDescent();
-				fields.add(
-					new EmptyTextField(height, factorys[0].getStartX(), 0, factorys[0].getWidth()));
+				int heightAbove = fm.getMaxAscent();
+				int heightBelow = fm.getMaxDescent();
+				int x = factorys[0].getStartX();
+				int w = factorys[0].getWidth();
+				fields.add(new EmptyTextField(heightAbove, heightBelow, x, w));
 			}
 			else {
 				fields.add(new EmptyTextField(20, 0, 0, 10));
