@@ -132,6 +132,15 @@ public class DataTypeTreeCopyMoveTask extends Task {
 			}
 
 			if (needToCreateAssociation()) {
+
+				// Warning! (See GP-6367): association should not really be made before copy
+				// which may return an equivalent datatype with the same name and category path
+				// and a different UniversalID. This condition results in an ORPHANed association.
+
+				// NOTE: The resulting copied datatype may end up with a different name due to a
+				// conflict (same UniversalID).  This name difference will persist without apparent 
+				// impact to the association or anyway to know this is the case.
+
 				associateDataTypes(monitor);
 			}
 
@@ -367,7 +376,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager nodeDtm = dataType.getDataTypeManager();
 		boolean sameManager = (dtm == nodeDtm);
 
-		DataType newDt = !sameManager ? dataType.clone(nodeDtm) : dataType.copy(nodeDtm);
+		DataType newDt = !sameManager ? dataType : dataType.copy(nodeDtm);
 
 		if (!sameManager && toCategory.isRoot()) {
 			// preserve use of source category when copy to root
