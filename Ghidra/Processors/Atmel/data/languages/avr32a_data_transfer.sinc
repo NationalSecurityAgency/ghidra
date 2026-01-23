@@ -609,10 +609,10 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # ST.B{cond4} Format I
 # 111p ppp1 1111 ssss   cccc 111n nnnn nnnn
 
-:ST.B^{COND_e12} RPwDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
-                                      eop9_3=0x7 & COND_e12) & RPwDisp9 { 
+:ST.B^{COND_e12} RPbDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
+                                      eop9_3=0x7 & COND_e12) & RPbDisp9 { 
         build COND_e12;
-        *:4 RPwDisp9 = rs0:1;
+        *:1 RPbDisp9 = rs0:1;
 }
 
 #---------------------------------------------------------------------
