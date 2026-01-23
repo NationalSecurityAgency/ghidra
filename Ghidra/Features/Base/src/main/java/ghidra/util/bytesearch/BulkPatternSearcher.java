@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
  * stating how many of the bytes in the buffer are searchable. (The buffer is not full).
  * Also, the input stream method has a variation where the max bytes to read from the stream
  * is given.
- * <P>
+ *
  * @param <T> The specific pattern type
  */
 public class BulkPatternSearcher<T extends BytePattern> {
@@ -171,7 +171,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 	/**
 	 * Searches for the patterns in the given input stream, adding match results to the given
 	 * list of results. 
-	 * <P>
+	 *
 	 * @param inputStream the input stream of bytes to scan for patterns
 	 * @param maxRead the maximum offset into the input stream where a match can start. Additional
 	 * bytes can be read from the stream to complete patterns
