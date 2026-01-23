@@ -90,9 +90,9 @@ ext.deps = [
 		destination: FLAT_REPO_DIR
 	],
 	[
-		name: "yajsw-stable-13.12.zip",
-		url: "https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-13.12/yajsw-stable-13.12.zip",
-		sha256: "c6fc59815d3800d14ec977926a8afd3f606a0ebd74d2cfd60601677466edeaa2",
+		name: "yajsw-stable-13.18.zip",
+		url: "https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-13.18/yajsw-stable-13.18.zip",
+		sha256: "50b34e9817c54b2970fa511ff4584f6556c179f69833aa8b9b1ff6485b61684f",
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[

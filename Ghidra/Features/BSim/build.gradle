@@ -32,7 +32,7 @@ dependencies {
 	api project(":Decompiler")
 	api project(":CodeCompare")
 
-	api "org.postgresql:postgresql:42.7.6"
+	api "org.postgresql:postgresql:42.7.9"
     api "org.apache.commons:commons-dbcp2:2.9.0"
     api "org.apache.commons:commons-pool2:2.11.1"
     api "commons-logging:commons-logging:1.2"
