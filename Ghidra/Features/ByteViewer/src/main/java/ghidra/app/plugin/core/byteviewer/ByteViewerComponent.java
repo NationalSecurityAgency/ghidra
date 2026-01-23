@@ -762,7 +762,7 @@ public class ByteViewerComponent extends FieldPanel
 		// if the selection ends on a separator line, go back to the end of the previous line
 		if (indexMap.isBlockSeparatorIndex(lineIndex)) {
 			lineIndex = lineIndex.subtract(BigInteger.ONE);
-			fieldNum = fieldFactories.length - 1; // set to end of line factory
+			fieldNum = fieldFactories.length; // set to end of line factory
 		}
 
 		// if the selection is before the characters in this field, the selection doesn't include
