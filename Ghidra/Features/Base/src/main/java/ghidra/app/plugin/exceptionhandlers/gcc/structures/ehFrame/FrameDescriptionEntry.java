@@ -633,7 +633,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		createAndCommentData(program, augmentationDataAddr, lsdaDecoder.getDataType(program),
 			lsdaComment, CommentType.EOL);
 
-		if (augmentationDataAddr.equals(lsdaAddr)) {
+		if (augmentationDataAddr.equals(lsdaAddr) || lsdaAddr.getOffset() == 0) {
 			// decoded a reference that returned here -- a null reference
 			return;
 		}
