@@ -23,7 +23,7 @@ import java.util.*;
  * A line of C code. This is an independent grouping
  * of C tokens from the statement, vardecl retype groups
  */
-public class ClangLine {
+public class ClangLine implements Comparable<ClangLine> {
 	private int indent_level;
 	private List<ClangToken> tokens;
 	private int lineNumber;
@@ -103,5 +103,10 @@ public class ClangLine {
 	@Override
 	public String toString() {
 		return toDebugString(Collections.emptyList());
+	}
+
+	@Override
+	public int compareTo(ClangLine o) {
+		return Integer.compare(lineNumber, o.lineNumber);
 	}
 }
