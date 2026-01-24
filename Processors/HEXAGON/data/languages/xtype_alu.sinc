@@ -1,0 +1,920 @@
+# XTYPE/ALU
+# XTYPE/ALU:Abs dword
+with slot: iclass=0b1000  {
+    :D5_pair "=abs(" S5_pair ")" is imm_21_27=0b0000100 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b110 & D5_pair {
+        if (S5_pairi s< 0) goto <neg>;
+        D5_pair = S5_pairi;
+        goto <end>;
+    <neg>
+        D5_pair = -S5_pairi;
+    <end>
+    }
+}
+
+# XTYPE/ALU:Abs word
+define pcodeop abs_sat;
+with slot: iclass=0b1000  {
+    :D5 "=abs(" S5 ")" is imm_21_27=0b1100100 & S5 & S5i & imm_8_13=0 & imm_5_7=0b100 & D5 & OUTPUT_D5 {
+        if (S5i s< 0) goto <neg>;
+        D5 = S5i;
+        goto <end>;
+    <neg>
+        D5 = -S5i;
+    <end>
+    }
+
+    :D5 "=abs(" S5 "):sat" is imm_21_27=0b1100100 & S5 & S5i & imm_8_13=0 & imm_5_7=0b101 & D5 & OUTPUT_D5 {
+        D5 = abs_sat(S5i);
+    }
+}
+
+EXT_XTYPE_ALU_ADDACC_s6: s6 is imm_5_7u & imm_13u & imm_21_22 & IS_NOT_EXT [ s6 = imm_5_7u | (imm_13u << 3) | (imm_21_22 << 4);] { export *[const]:4 s6;}
+EXT_XTYPE_ALU_ADDACC_s6: s6 is imm_5_7u & imm_13u & imm_21_22u & IS_EXT0 & immext0 [ s6 = imm_5_7u | (imm_13u << 3) | (imm_21_22u << 4) | immext0;] { export *[const]:4 s6;}
+EXT_XTYPE_ALU_ADDACC_s6: s6 is imm_5_7u & imm_13u & imm_21_22u & IS_EXT1 & immext1 [ s6 = imm_5_7u | (imm_13u << 3) | (imm_21_22u << 4) | immext1;] { export *[const]:4 s6;}
+
+# XTYPE/ALU:Add acc
+with slot: iclass=0b1101 {
+    
+        :T5 "=add(" S5 ", add(" D5 "," EXT_XTYPE_ALU_ADDACC_s6 "))" is imm_23_27=0b10110 & imm_21_22 & S5 & S5i & imm_13u & T5 & T5i & imm_5_7u & D5 & D5i & EXT_XTYPE_ALU_ADDACC_s6 & OUTPUT_T5 {
+        local EA:4 = D5i + EXT_XTYPE_ALU_ADDACC_s6;
+        T5 = EA + S5i;
+        }
+        :T5 "=add(" S5 ", sub(" EXT_XTYPE_ALU_ADDACC_s6 "," D5 "))" is imm_23_27=0b10111 & imm_21_22 & S5 & S5i & imm_13u & T5 & T5i & imm_5_7u & D5 & D5i & EXT_XTYPE_ALU_ADDACC_s6 & OUTPUT_T5 {
+        local EA:4 = EXT_XTYPE_ALU_ADDACC_s6 - D5i;
+        T5 = EA + S5i;
+        }
+    
+}
+with slot: iclass=0b1110  {
+    :D5 "+=add(" S5 "," EXT_imm_5_12 ")" is imm_23_27=0b00100 & imm_21_22=0b00 & S5 & S5i & imm_13=0 & imm_5_12 & D5 & D5i & EXT_imm_5_12 & OUTPUT_D5 {
+        local EA:4 = S5i + EXT_imm_5_12;
+        D5 = D5i + EA;
+    }
+    :D5"-=add("S5", "EXT_imm_5_12")" is imm_23_27=0b00101 & imm_21_22=0b00 & S5 & S5i & imm_13=0 & imm_5_12 & D5 & D5i & EXT_imm_5_12 & OUTPUT_D5 {
+        local tmp:4 = S5i+EXT_imm_5_12;
+        D5 = D5i - tmp;
+    }
+
+    :D5 "+=add(" S5 "," T5 ")" is imm_21_27=0b1111000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & D5i & OUTPUT_D5 {
+        local EA:4 = S5i + T5i;
+        D5 = D5i + EA;
+    }
+    :D5 "-=add(" S5 "," T5 ")" is imm_21_27=0b1111100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & D5i & OUTPUT_D5 {
+        local EA:4 = S5i + T5i;
+        D5 = D5i - EA;
+    }
+}
+# XTYPE/ALU:Add dword
+define pcodeop add_sat;
+define pcodeop add_sat_deprecated;
+with slot: iclass=0b1101  {
+    :D5_pair "=add(" S5_pair "," T5_pair ")" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b111 & D5_pair {
+        D5_pair = S5_pairi + T5_pairi;
+    }
+    :D5_pair "=add(" S5_pair "," T5_pair "):sat" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = add_sat(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=add(" S5_pair "," T5_pair "):raw:lo" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = T5_pairi + sext(S5_pairi:4);
+    }
+    :D5_pair "=add(" S5_pair "," T5_pair "):raw:hi" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b111 & D5_pair {
+        local tmp:4 = S5_pairi(4);
+        D5_pair = T5_pairi + sext(tmp);
+    }
+
+    :D5 "=add(" S5 "," T5 "):sat:deprecated" is imm_21_27=0b0101100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=0 & imm_5_6=0 & D5 & OUTPUT_D5 {
+        D5 = add_sat_deprecated(S5i, T5i);
+    }
+}
+
+# XTYPE/ALU:Add hword
+with slot: iclass=0b1101  {
+    :D5 "=add(" T5".L" "," S5".L" ")" is imm_21_27=0b0101000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b00 & imm_5=0 & D5 & OUTPUT_D5 {
+        local E:2 = T5i:2 + S5i:2;
+        D5 = sext(E);
+    }
+    :D5 "=add(" T5".L" "," S5".H" ")" is imm_21_27=0b0101000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b01 & imm_5=0 & D5 & OUTPUT_D5 {
+        local E:2 = T5i:2 + S5i(2);
+        D5 = sext(E);
+    }
+    :D5 "=add(" T5".L" "," S5".L" "):sat" is imm_21_27=0b0101000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b10 & imm_5=0 & D5 & OUTPUT_D5 {
+           local E:2 = add_sat(T5i:2, S5i:2);
+        D5 = sext(E);
+    }
+    :D5 "=add(" T5".L" "," S5".H" "):sat" is imm_21_27=0b0101000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b11 & imm_5=0 & D5 & OUTPUT_D5 {
+        local tmp:2 = S5i(2);
+           local E:2 = add_sat(T5i:2, tmp);
+        D5 = sext(E);
+    }
+    :D5 "=add(" T5".L" "," S5".L" "):<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+           local E:2 = T5i:2 + S5i:2;
+        D5 = sext(E) << 16;
+    }
+    :D5 "=add(" T5".L" "," S5".H" "):<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+           local E:2 = T5i:2 + S5i(2);
+        D5 = sext(E) << 16;
+    }
+    :D5 "=add(" T5".H" "," S5".L" "):<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b010 & D5 & OUTPUT_D5 {
+           local E:2 = T5i(2) + S5i:2;
+        D5 = sext(E) << 16;
+    }
+    :D5 "=add(" T5".H" "," S5".H" "):<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & D5 & OUTPUT_D5 {
+           local E:2 = T5i(2) + S5i(2);
+        D5 = sext(E) << 16;
+    }
+
+    :D5 "=add(" T5".L" "," S5".L" "):sat:<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b100 & D5 & OUTPUT_D5 {
+           local E:2 = add_sat(T5i:2, S5i:2);
+        D5 = sext(E) << 16;
+    }
+    :D5 "=add(" T5".L" "," S5".H" "):sat:<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b101 & D5 & OUTPUT_D5 {
+        local tmp:2 = S5i(2);
+           local E:2 = add_sat(T5i:2, tmp);
+        local tmp2:4 = sext(E);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=add(" T5".H" "," S5".L" "):sat:<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b110 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i(2);
+           local E:2 = add_sat(tmp, S5i:2);
+        local tmp2:4 = sext(E);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=add(" T5".H" "," S5".H" "):sat:<<16" is imm_21_27=0b0101010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b111 & D5 & OUTPUT_D5 {
+        local tmpa:2 = S5i(2);
+        local tmpb:2 = T5i(2);
+           local E:2 = add_sat(tmpb, tmpa);
+        local tmp2:4 = sext(E);
+        D5 = tmp2 << 16;
+    }
+}
+
+# XTYPE/ALU:Add or sub dword w/ cary
+define pcodeop sub_carry;
+with slot: iclass=0b1100  {
+    :D5_pair "=add(" S5_pair "," T5_pair "," U2_5_6 "):carry"  is imm_21_27=0b0010110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_7=0 & U2_5_6 & U2_5_6i & D5_pair {
+        local tmp:9 = zext(S5_pairi) + zext(T5_pairi) + zext(U2_5_6i);
+        D5_pair = tmp:8;
+        U2_5_6 = PTRUE * ((tmp >> 64) != 0);
+    }
+    :D5_pair "=sub(" S5_pair "," T5_pair "," U2_5_6 "):carry" is imm_21_27=0b0010111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_7=0 & U2_5_6 & U2_5_6i & D5_pair {
+
+        D5_pair = sub_carry(S5_pairi, T5_pairi, U2_5_6i);
+    }
+}
+
+# XTYPE/ALU:Clip unsign, not in v79
+define pcodeop clip;
+with slot: iclass=0b1000  {
+    :D5 "=clip(" S5 "," imm_8_12u ")" is imm_21_27=0b1000110 & S5 & S5i & imm_13=0 & imm_8_12u & imm_5_7=0b101 & D5 & OUTPUT_D5 {
+        D5 = clip(S5i, imm_8_12u:1);
+    }
+}
+
+# XTYPE/ALU:logical dword
+with slot: iclass=0b1000  {
+    :D5_pair "=not(" S5_pair ")" is imm_21_27=0b0000100 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b100 & D5_pair {
+        D5_pair = ~S5_pairi;
+    }
+}
+with slot: iclass=0b1101  {
+    :D5_pair "=and(" S5_pair "," T5_pair ")" is imm_21_27=0b0011111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = S5_pairi & T5_pairi;
+    }
+    :D5_pair "=and(" S5_pair ",~" T5_pair ")" is imm_21_27=0b0011111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = S5_pairi & (~T5_pairi);
+    }
+    :D5_pair "=or(" S5_pair "," T5_pair ")" is imm_21_27=0b0011111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = S5_pairi | T5_pairi;
+    }
+    :D5_pair "=or(" S5_pair ",~" T5_pair ")" is imm_21_27=0b0011111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = S5_pairi | (~T5_pairi);
+    }
+    :D5_pair "=xor(" S5_pair "," T5_pair ")" is imm_21_27=0b0011111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        D5_pair = S5_pairi ^ T5_pairi;
+    }
+}
+
+# XTYPE/ALU:logical logical dword
+with slot: iclass=0b1100  {
+    :D5_pair "^=xor(" S5_pair "," T5_pair ")" is imm_22_27=0b101010 & imm_21=0 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair & D5_pairi {
+        D5_pair = D5_pairi ^ (S5_pairi ^ T5_pairi);
+    }
+}
+
+XTYPE_ALU_LOG_S10:"GP+"v is imm_5_13u & imm_21 & IS_NOT_EXT [v = imm_5_13u | (imm_21 << 9);] { export *[const]:4 v; }
+XTYPE_ALU_LOG_S10:v is IS_EXT0 & immext0 & imm_0_5u [v = imm_0_5u | immext0; ] { export *[const]:4 v; }
+XTYPE_ALU_LOG_S10:v is IS_EXT1 & immext1 & imm_0_5u [v = imm_0_5u | immext1; ] { export *[const]:4 v; }
+
+# XTYPE/ALU:logical logical word
+
+with slot: iclass=0b1101 {
+    :D5"|=and("S5", "XTYPE_ALU_LOG_S10"))" is imm_22_27=0b101000 & imm_21 & S5 & S5i & imm_5_13u & D5 & D5i & XTYPE_ALU_LOG_S10 & OUTPUT_D5 {
+        local EA:4 = S5i & XTYPE_ALU_LOG_S10;
+        D5 = D5i | EA;
+    }
+    :S5"=or("D5",and("S5_dup","XTYPE_ALU_LOG_S10"))" is imm_22_27=0b101001 & imm_21 & S5 & S5i & S5_dup & imm_5_13u & D5 & D5i & XTYPE_ALU_LOG_S10 & OUTPUT_S5 {
+        local EA:4 = S5i & XTYPE_ALU_LOG_S10;
+        S5 = D5i | EA;
+    }
+    :D5"|=or("S5","XTYPE_ALU_LOG_S10")" is imm_22_27=0b101010 & imm_21 & S5 & S5i & imm_5_13u & D5 & D5i & XTYPE_ALU_LOG_S10 & OUTPUT_D5 {
+        local EA:4 = S5i | XTYPE_ALU_LOG_S10;
+        D5 = D5i | EA;
+    }
+}
+
+with slot: iclass=0b1110  {
+    :D5"|=and("S5","T5")" is imm_21_27=0b1111001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i & T5i;
+        D5 = D5i | EA;
+    }
+    :D5"&=and("S5","T5")" is imm_21_27=0b1111001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i & T5i;
+        D5 = D5i & EA;
+    }
+    :D5"^=and("S5","T5")" is imm_21_27=0b1111001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b010 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i & T5i;
+        D5 = D5i ^ EA;
+    }
+
+    :D5"&=and("S5","T5")" is imm_21_27=0b1111010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i & T5i;
+        D5 = D5i & EA;
+    }
+    :D5"&=or("S5","T5")" is imm_21_27=0b1111010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i | T5i;
+        D5 = D5i & EA;
+    }
+    :D5"&=xor("S5","T5")" is imm_21_27=0b1111010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b010 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i ^ T5i;
+        D5 = D5i & EA;
+    }
+    :D5"|=and("S5","T5")" is imm_21_27=0b1111010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i & T5i;
+        D5 = D5i | EA;
+    }
+    :D5"^=xor("S5","T5")" is imm_21_27=0b1111100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i ^ T5i;
+        D5 = D5i ^ EA;
+    }
+    :D5"|=or("S5","T5")" is imm_21_27=0b1111110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i | T5i;
+        D5 = D5i | EA;
+    }
+    :D5"|=xor("S5","T5")" is imm_21_27=0b1111110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i ^ T5i;
+        D5 = D5i | EA;
+    }
+    :D5"^=and("S5","T5")" is imm_21_27=0b1111110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b010 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i & T5i;
+        D5 = D5i ^ EA;
+    }
+    :D5"^=or("S5","T5")" is imm_21_27=0b1111110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & D5 & D5i & OUTPUT_D5  {
+        local EA:4 = S5i | T5i;
+        D5 = D5i ^ EA;
+    }
+
+}
+
+# XTYPE/ALU:max word
+with slot: iclass=0b1101  {
+    :D5 "=max(" T5 "," S5 ")" is imm_21_27=0b0101110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=0 & imm_5_6=0 & D5 & OUTPUT_D5 {
+        if (T5i s> S5i) goto <p2>;
+        D5 = S5i;
+        goto <end>;
+        <p2>
+        D5 = T5i;
+        <end>
+    }
+    :D5 "=maxu(" T5 "," S5 ")" is imm_21_27=0b0101110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=1 & imm_5_6=0 & D5 & OUTPUT_D5 {
+        if (T5i > S5i) goto <p2>;
+        D5 = S5i;
+        goto <end>;
+        <p2>
+        D5 = T5i;
+        <end>
+    }
+}
+
+# XTYPE/ALU:max dword
+with slot: iclass=0b1101  {
+    :D5_pair "=max(" S5_pair "," T5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        if (T5_pairi s> S5_pairi) goto <p2>;
+        D5_pair = S5_pairi;
+        goto <end>;
+        <p2>
+        D5_pair = T5_pairi;
+        <end>
+    }
+    :D5_pair "=maxu(" S5_pair "," T5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        if (T5_pairi > S5_pairi) goto <p2>;
+        D5_pair = S5_pairi;
+        goto <end>;
+        <p2>
+        D5_pair = T5_pairi;
+        <end>
+    }
+}
+
+# XTYPE/ALU:min word
+with slot: iclass=0b1101  {
+    :D5 "=min(" T5 "," S5 ")" is imm_21_27=0b0101101 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=0 & imm_5_6=0 & D5 & OUTPUT_D5 {
+        if (T5i s< S5i) goto <p2>;
+        D5 = S5i;
+        goto <end>;
+        <p2>
+        D5 = T5i;
+        <end>
+    }
+    :D5 "=minu(" T5 "," S5 ")" is imm_21_27=0b0101101 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=1 & imm_5_6=0 & D5 & OUTPUT_D5 {
+        if (T5i s< S5i) goto <p2>;
+        D5 = S5i;
+        goto <end>;
+        <p2>
+        D5 = T5i;
+        <end>
+    }
+}
+
+# XTYPE/ALU:min dword
+define pcodeop min;
+with slot: iclass=0b1101  {
+    :D5_pair "=min(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = min(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=minu(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b111 & D5_pair {
+        if (T5_pairi < S5_pairi) goto <p2>;
+        D5_pair = S5_pairi;
+        goto <end>;
+        <p2>
+        D5_pair = T5_pairi;
+        <end>
+    }
+}
+
+# XTYPE/ALU:mod wrap
+define pcodeop modwrap;
+with slot: iclass=0b1101  {
+    :D5 "=modwrap(" S5 "," T5 ")" is imm_21_27=0b0011111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b111 & D5 & OUTPUT_D5 {
+        D5 = modwrap(S5i, T5i);
+    }
+}
+
+# XTYPE/ALU:neg
+define pcodeop neg_sat;
+with slot: iclass=0b1000  {
+    :D5_pair "=neg(" S5_pair ")" is imm_21_27=0b0000100 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b101 & D5_pair {
+        D5_pair = -S5_pairi;
+    }
+    :D5 "=neg(" S5 "):sat" is imm_21_27=0b1100100 & S5 & S5i & imm_8_13=0 & imm_5_7=0b110 & D5 & OUTPUT_D5 {
+    D5 = neg_sat(S5i);
+    }
+}
+
+# XTYPE/ALU:round
+define pcodeop round_sat;
+define pcodeop cround;
+define pcodeop round_;
+
+with slot: iclass=0b1000  {
+    :D5 "=round(" S5_pair "):sat" is imm_21_27=0b1000110 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = round_sat(S5_pairi);
+    }
+    :D5 "=cround(" S5 "," imm_8_12u ")" is imm_21_27=0b1000111 & S5 & S5i & imm_13=0 & imm_8_12u & imm_6_7=0b00 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = cround(S5i, imm_8_12u:1);
+    }
+    :D5 "=round(" S5 "," imm_8_12u ")" is imm_21_27=0b1000111 & S5 & S5i & imm_13=0 & imm_8_12u & imm_6_7=0b10 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = round_(S5i, imm_8_12u:1);
+    }
+    :D5 "=cround(" S5 "," imm_8_12u "):sat" is imm_21_27=0b1000111 & S5 & S5i & imm_13=0 & imm_8_12u & imm_6_7=0b11 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = cround(S5i, imm_8_12u:1);
+    }
+    :D5_pair "=cround(" S5_pair "," imm_8_13u ")"  is imm_21_27=0b1000111 & S5_pair & S5_pairi & imm_8_13u & imm_6_7=0b01 & imm_5=0 & D5_pair {
+        D5_pair = cround(S5_pairi, imm_8_13u:1);
+    }
+}
+with slot: iclass=0b1100  {
+    :D5 "=round(" S5 "," T5 ")" is imm_22_27=0b011011 & imm_21=0 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b00 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = round_(S5i, T5i);
+    }
+    :D5 "=cround(" S5_pair "," T5 ")" is imm_22_27=0b011011 & imm_21=0 & S5_pair & S5_pairi & imm_13=0 & T5 & T5i & imm_6_7=0b01 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = cround(S5_pairi, T5i);
+    }
+    :D5 "=round(" S5 "," T5 ")" is imm_22_27=0b011011 & imm_21=0 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b10 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = round_(S5i, T5i);
+    }
+    :D5 "=round(" S5 "," T5 "):sat" is imm_22_27=0b011011 & imm_21=0 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b11 & imm_5=0 & D5 & OUTPUT_D5 {
+        D5 = round_sat(S5i, T5i);
+    }
+}
+
+# XTYPE/ALU:sub dword
+define pcodeop sub_sat_deprecated;
+with slot: iclass=0b1101  {
+    :D5_pair "=sub(" T5_pair "," S5_pair ")" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b111 & D5_pair {
+        D5_pair = T5_pairi - S5_pairi;
+    }
+    :D5 "=sub(" T5 "," S5 "):sat:deprecated" is imm_21_27=0b0101100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=1 & imm_5_6=0 & D5 & OUTPUT_D5 {
+        D5 =sub_sat_deprecated(T5i, S5i);
+    }
+}
+
+# XTYPE/ALU:sub acc word
+with slot: iclass=0b1110  {
+    :D5 "+=sub(" T5 "," S5 ")" is imm_21_27=0b1111000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & D5 & D5i & OUTPUT_D5 {
+        D5 = D5i + (T5i - S5i);
+    }
+}
+
+# XTYPE/ALU:sub hword
+define pcodeop sub_sat;
+with slot: iclass=0b1101  {
+    :D5 "=sub(" T5".L, ", S5".L)"  is imm_21_27=0b0101001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b00 & imm_5=0 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i:2 - S5i:2;
+        D5 = sext(tmp);
+    }
+    :D5 "=sub(" T5".L, ", S5".H)" is imm_21_27=0b0101001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b01 & imm_5=0 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i:2 - S5i(2);
+        D5 = sext(tmp);
+    }
+    :D5 "=sub(" T5".L, ", S5".L):sat" is imm_21_27=0b0101001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b10 & imm_5=0 & D5 & OUTPUT_D5 {
+        local tmp:2 = sub_sat(T5i:2, S5i:2);
+        D5 = sext(tmp);
+    }
+    :D5 "=sub(" T5".L, ", S5".H):sat" is imm_21_27=0b0101001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_6_7=0b11 & imm_5=0 & D5 & OUTPUT_D5 {
+        local tmpa:2 = S5i(2);
+        local tmp:2 = sub_sat(T5i:2, tmpa);
+        D5 = sext(tmp);
+    }
+    :D5 "=sub(" T5".L, ", S5".L):<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i:2 - S5i:2;
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".L, ", S5".H):<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i:2 - S5i(2);
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".H, ", S5".L):<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b010 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i(2) - S5i:2;
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".H, ", S5".H):<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & D5 & OUTPUT_D5 {
+        local tmp:2 = T5i(2) - S5i(2);
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".L, ", S5".L):sat:<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b100 & D5 & OUTPUT_D5 {
+        local tmp:2 = sub_sat(T5i:2, S5i:2);
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".L, ", S5".H):sat:<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b101 & D5 & OUTPUT_D5 {
+        local tmpa:2 = S5i(2);
+        local tmp:2 = sub_sat(T5i:2, tmpa);
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".H, ", S5".L):sat:<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b110 & D5 & OUTPUT_D5 {
+        local tmpa:2 = T5i(2);
+        local tmp:2 = sub_sat(tmpa, S5i:2);
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+    :D5 "=sub(" T5".H, ", S5".H):sat:<<16" is imm_21_27=0b0101011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b111 & D5 & OUTPUT_D5 {
+        local tmpa:2 = S5i(2);
+        local tmpb:2 = T5i(2);
+        local tmp:2 = sub_sat(tmpb, tmpa);
+        local tmp2:4 = sext(tmp);
+        D5 = tmp2 << 16;
+    }
+}
+
+# XTYPE/ALU:sext w->dw
+with slot: iclass=0b1000  {
+    :D5_pair "=sxtw(" S5 ")" is imm_22_27=0b010001 & imm_21=0 & S5 & S5i & imm_8_13=0 & imm_6_7=0b00 & imm_5=0 & D5_pair {
+        D5_pair = sext(S5i:2);
+    }
+}
+
+# XTYPE/ALU:vector abs val hw
+define pcodeop vabsh;
+define pcodeop vabsh_sat;
+with slot: iclass=0b1000  {
+    :D5_pair "=vabsh(" S5_pair ")" is imm_21_27=0b0000010 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b100 & D5_pair {
+        D5_pair = vabsh(S5_pairi);
+    }
+    :D5_pair "=vabsh(" S5_pair "):sat" is imm_21_27=0b0000010 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b101 & D5_pair {
+        D5_pair = vabsh_sat(S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector abs val w
+define pcodeop vabsw;
+define pcodeop vabsw_sat;
+with slot: iclass=0b1000  {
+    :D5_pair "=vabsw(" S5_pair ")" is imm_21_27=0b0000010 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b110 & D5_pair {
+        D5_pair = vabsw(S5_pairi);
+    }
+    :D5_pair "=vabsw(" S5_pair "):sat" is imm_21_27=0b0000010 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b111 & D5_pair {
+        D5_pair = vabsw_sat(S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector abs diff by
+define pcodeop vabsdiffub;
+define pcodeop vabsdiffb;
+with slot: iclass=0b1110  {
+    :D5_pair "=vabsdiffub(" T5_pair "," S5_pair ")" is imm_21_27=0b1000101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+           D5_pair = vabsdiffub(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vabsdiffb(" T5_pair "," S5_pair "):sat" is imm_21_27=0b1000111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vabsdiffb(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector abs diff hw
+define pcodeop vabsdiffh;
+with slot: iclass=0b1110  {
+    :D5_pair "=vabsdiffh(" T5_pair "," S5_pair ")" is imm_21_27=0b1000011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vabsdiffh(T5_pairi, S5_pairi);
+    }
+}
+
+define pcodeop vabsdiffw;
+# XTYPE/ALU:vector abs diff w
+with slot: iclass=0b1110  {
+    :D5_pair "=vabsdiffw(" T5_pair "," S5_pair ")" is imm_21_27=0b1000001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vabsdiffw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector add cmp and sel max by - TODO: not documented??
+
+# XTYPE/ALU:vector add cmp and sel max hw
+define pcodeop vacsh;
+with slot: iclass=0b1110  {
+    :D5_pair "," U2_5_6 "=vacsh(" S5_pair "," T5_pair ")" is imm_21_27=0b1010101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_7=0 & U2_5_6 & D5_pair {
+        local tmp:8 = vacsh(S5_pairi, T5_pairi);
+        D5_pair = zext(tmp:4);
+        U2_5_6 = tmp(1);
+    }
+}
+
+# XTYPE/ALU:vector add hw
+with slot: iclass=0b1101  {
+    :D5_pair "=vaddh(" S5_pair "," T5_pair ")" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vaddh(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vaddh(" S5_pair "," T5_pair "):sat" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vaddh_sat(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vadduh(" S5_pair "," T5_pair "):sat" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        D5_pair = vadduh_sat(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector add hw w sat and pck uby
+define pcodeop vaddhub_sat;
+with slot: iclass=0b1100  {
+    :D5 "=vaddhub(" S5_pair "," T5_pair "):sat" is imm_22_27=0b000101 & imm_21=0 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = vaddhub_sat(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector red add u by
+define pcodeop vraddub;
+with slot: iclass=0b1110  {
+    :D5_pair "=vraddub(" S5_pair "," T5_pair ")" is imm_21_27=0b1000010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vraddub(S5_pairi, T5_pairi);
+    }
+    :D5_pair "+=vraddub(" S5_pair "," T5_pair ")" is imm_21_27=0b1010010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = D5_pair + vraddub(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector red add hw
+define pcodeop vradduh;
+define pcodeop vraddh;
+
+with slot: iclass=0b1110  {
+    :D5 "=vradduh(" S5_pair "," T5_pair ")" is imm_23_27=0b10010 & imm_21_22=0 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_7=0 & imm_5_6=0b01 & D5 & OUTPUT_D5 {
+        D5 = vradduh(S5_pairi, T5_pairi);
+    }
+    :D5 "=vraddh(" S5_pair "," T5_pair ")" is imm_23_27=0b10010 & imm_22=0 & imm_21=1 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b111 & D5 & OUTPUT_D5 {
+        D5 = vraddh(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector add by
+define pcodeop vaddub;
+define pcodeop vaddub_sat;
+with slot: iclass=0b1101  {
+    :D5_pair "=vaddub(" S5_pair "," T5_pair ")"  is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vaddub(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vaddub(" S5_pair "," T5_pair "):sat" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vaddub_sat(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector  add w
+define pcodeop vaddw;
+define pcodeop vaddw_sat;
+with slot: iclass=0b1101  {
+    :D5_pair "=vaddw(" S5_pair "," T5_pair ")" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = vaddw(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vaddw(" S5_pair "," T5_pair "):sat" is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = vaddw_sat(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector avg hw
+define pcodeop vavgh_crnd;
+
+define pcodeop vavguh;
+define pcodeop vavguh_rnd;
+
+define pcodeop vnavgh_rnd_sat;
+define pcodeop vnavgh_crnd_sat;
+
+with slot: iclass=0b1101  {
+    :D5_pair "=vavgh(" S5_pair "," T5_pair ")" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vavgh(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgh(" S5_pair "," T5_pair "):rnd" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vavgh_rnd(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgh(" S5_pair "," T5_pair "):crnd" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        D5_pair = vavgh_crnd(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavguh(" S5_pair "," T5_pair ")" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = vavguh(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavguh(" S5_pair "," T5_pair "):rnd" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_6_7=0b11 & imm_5=0 & D5_pair {
+        D5_pair = vavguh_rnd(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vnavgh(" T5_pair "," S5_pair ")" is imm_21_27=0b0011100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vnavgh(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vnavgh(" T5_pair "," S5_pair "):rnd:sat" is imm_21_27=0b0011100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vnavgh_rnd_sat(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vnavgh(" T5_pair "," S5_pair "):crnd:sat" is imm_21_27=0b0011100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vnavgh_crnd_sat(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector avg u by
+define pcodeop vavgub;
+define pcodeop vavgub_rnd;
+with slot: iclass=0b1101  {
+    :D5_pair "=vavgub(" S5_pair "," T5_pair ")" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vavgub(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgub(" S5_pair "," T5_pair "):rnd" is imm_21_27=0b0011010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vavgub_rnd(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector avg w
+define pcodeop vavgw;
+define pcodeop vavgw_rnd;
+define pcodeop vavgw_crnd;
+
+define pcodeop vavguw;
+define pcodeop vavguw_rnd;
+
+define pcodeop vnavgw;
+define pcodeop vnavgw_rnd;
+
+define pcodeop vavgw_rnd_sat;
+define pcodeop vavgw_crnd_sat;
+
+with slot: iclass=0b1101  {
+    :D5_pair "=vavgw(" S5_pair "," T5_pair ")" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vavgw(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgw(" S5_pair "," T5_pair "):rnd" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vavgw_rnd(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgw(" S5_pair "," T5_pair "):crnd" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vavgw_crnd(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavguw(" S5_pair "," T5_pair ")" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vavguw(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavguw(" S5_pair "," T5_pair "):rnd" is imm_21_27=0b0011011 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        D5_pair = vavguw_rnd(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vnavgw(" S5_pair "," T5_pair ")" is imm_21_27=0b0011100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vnavgw(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgw(" S5_pair "," T5_pair "):rnd:sat" is imm_21_27=0b0011100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_6_7=0b10 & imm_5=0 & D5_pair {
+        D5_pair = vavgw_rnd_sat(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=vavgw(" S5_pair "," T5_pair "):crnd:sat" is imm_21_27=0b0011100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_6_7=0b11 & imm_5=0 & D5_pair {
+        D5_pair = vavgw_crnd_sat(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector clip un, not in v79
+define pcodeop vclip;
+with slot: iclass=0b1000  {
+    :D5 "=vclip(" S5_pair "," imm_8_12u ")" is imm_21_27=0b1000110 & S5_pair & S5_pairi & imm_13=0 & imm_8_12u & imm_5_7=0b110 & D5 & OUTPUT_D5 {
+        D5 = vclip(S5_pairi, imm_8_12u:1);
+    }
+}
+
+# XTYPE/ALU:vector cond neg
+define pcodeop vcnegh;
+define pcodeop vrcnegh;
+with slot: iclass=0b1100  {
+    :D5_pair "=vcnegh(" S5_pair "," T5 ")" is imm_22_27=0b001111 & imm_21=0 & S5_pair & S5_pairi & imm_13=0 & T5 & T5i & imm_6_7=0b01 & imm_5=0 & D5_pair {
+        D5_pair = vcnegh(S5_pairi, T5i);
+    }
+    :D5_pair "=vrcnegh(" S5_pair "," T5 ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=1 & T5 & T5i & imm_5_7=0b111 & D5_pair & D5_pairi {
+        D5_pair = D5_pairi + vrcnegh(S5_pairi, T5i);
+    }
+}
+
+# XTYPE/ALU:vector max by
+define pcodeop vmaxub;
+define pcodeop vmaxb;
+with slot: iclass=0b1101  {
+    :D5_pair "=vmaxub(" T5_pair "," S5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vmaxub(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vmaxb(" T5_pair "," S5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = vmaxb(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector max hw
+define pcodeop vmaxhw;
+define pcodeop vmaxuhw;
+with slot: iclass=0b1101  {
+    :D5_pair "=vmaxhw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vmaxhw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vmaxuhw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vmaxuhw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector red max hw
+define pcodeop vrmaxhw;
+define pcodeop vrmaxuhw;
+with slot: iclass=0b1100  {
+    :T5_pair "=vrmaxhw(" S5_pair "," D5 ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5 & D5i {
+        T5_pair = vrmaxhw(S5_pairi, D5i);
+    }
+    :T5_pair "=vrmaxuhw(" S5_pair "," D5 ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=1 & T5_pair & T5_pairi & imm_5_7=0b001 & D5 & D5i {
+        T5_pair = vrmaxuhw(S5_pairi, D5i);
+    }
+}
+
+# XTYPE/ALU:vector red max w
+define pcodeop vrmaxw;
+define pcodeop vrmaxuw;
+with slot: iclass=0b1100  {
+    :T5_pair "=vrmaxw(" S5_pair "," D5 ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5 & D5i {
+        T5_pair = vrmaxw(S5_pairi, D5i);
+    }
+    :T5_pair "=vrmaxuw(" S5_pair "," D5 ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=1 & T5_pair & T5_pairi & imm_5_7=0b010 & D5 & D5i {
+        T5_pair = vrmaxuw(S5_pairi, D5i);
+    }
+}
+
+# XTYPE/ALU:vector max w
+define pcodeop vmaxw;
+define pcodeop vmaxuw;
+with slot: iclass=0b1101  {
+    :D5_pair "=vmaxuw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = vmaxuw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vmaxw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vmaxw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector min b
+define pcodeop vminb;
+define pcodeop vminub;
+with slot: iclass=0b1101  {
+    :D5_pair "=vminub(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vminub(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vminb(" T5_pair "," S5_pair ")" is imm_21_27=0b0011110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b111 & D5_pair {
+        D5_pair = vminb(T5_pairi, S5_pairi);
+    }
+}
+with slot: iclass=0b1110  {
+    :D5_pair "," U2_5_6 "=vminub(" T5_pair "," S5_pair ")" is imm_21_27=0b1010111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_7=0 & U2_5_6 & D5_pair {
+        local tmp:12 = vminub(T5_pairi, S5_pairi);
+    D5_pair = tmp:8;
+    U2_5_6 = tmp(4);
+    }
+}
+
+# XTYPE/ALU:vector min hw
+define pcodeop vminhw;
+define pcodeop vminuhw;
+with slot: iclass=0b1101  {
+    :D5_pair "=vminhw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vminhw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vminuhw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vminuhw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector reduce minimum halfwords
+define pcodeop vrminhw;
+define pcodeop vrminuhw;
+with slot: iclass=0b1100  {
+    :D5_pair "=vrminhw(" T5_pair "," S5_pair ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = vrminhw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vrminuhw(" T5_pair "," S5_pair ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=1 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = vrminuhw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector reduce minimum words
+define pcodeop vrminw;
+define pcodeop vrminuw;
+with slot: iclass=0b1100  {
+    :D5_pair "=vrminw(" T5_pair "," S5_pair ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = vrminw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vrminuw(" T5_pair "," S5_pair ")" is imm_21_27=0b1011001 & S5_pair & S5_pairi & imm_13=1 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = vrminuw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector minimum words
+define pcodeop vminw;
+define pcodeop vminuw;
+with slot: iclass=0b1101  {
+    :D5_pair "=vminw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vminw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vminuw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        D5_pair = vminuw(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector sum absolute difference unsigned bytes
+define pcodeop vrsadub;
+with slot: iclass=0b1110  {
+    :D5_pair "=vrsadub(" S5_pair "," T5_pair ")" is imm_21_27=0b1000010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vrsadub(S5_pairi, T5_pairi);
+    }
+    :D5_pair "+=vrsadub(" S5_pair "," T5_pair ")" is imm_21_27=0b1010010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = D5_pair + vrsadub(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector sub halfword
+#define pcodeop vsubh;
+#define pcodeop vsubh_sat;
+#define pcodeop vsubuh_sat;
+with slot: iclass=0b1101  {
+    :D5_pair "=vsubh(" T5_pair "," S5_pair ")" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & D5_pair {
+        D5_pair = vsubh(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vsubh(" T5_pair "," S5_pair "):sat" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = vsubh_sat(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vsubuh(" T5_pair "," S5_pair "):sat" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b100 & D5_pair {
+        D5_pair = vsubuh_sat(T5_pairi, S5_pairi);
+    }
+}
+
+# XTYPE/ALU:vector sub bytes
+define pcodeop vsubub;
+define pcodeop vsubub_sat;
+with slot: iclass=0b1101  {
+    :D5_pair "=vsubub(" T5_pair "," S5_pair ")" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & D5_pair {
+        D5_pair = vsubub(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vsubub(" T5_pair "," S5_pair "):sat" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & D5_pair {
+        D5_pair = vsubub_sat(T5_pairi, S5_pairi);
+    }
+}
+
+
+# XTYPE/ALU:vector sub words
+define pcodeop vsubw;
+define pcodeop vsubw_sat;
+with slot: iclass=0b1101  {
+    :D5_pair "=vsubw(" T5_pair "," S5_pair ")" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b101 & D5_pair {
+        D5_pair = vsubw(T5_pairi, S5_pairi);
+    }
+    :D5_pair "=vsubw(" T5_pair "," S5_pair "):sat" is imm_21_27=0b0011001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b110 & D5_pair {
+        D5_pair = vsubw_sat(T5_pairi, S5_pairi);
+    }
+}
