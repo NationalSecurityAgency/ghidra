@@ -13,6 +13,7 @@ processorProject.gradle - apply if the project contains processor language speci
 helpProject.gradle - apply if the project contains files for the Ghidra help system.
 javaTestProject.gradle - apply if the project contains unit tests.
 jacocoProject.gradle - apply to the project to include it in when running the Jacoco task.
+spotbugsProject.gradle - apply to the project to enable SpotBugs static code analysis.
 
 The following scripts can be included if the project is to be included in the build process. Only 
 one of these scripts should be applied to a project.
