@@ -18,6 +18,9 @@ package ghidra.base.help;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.help.HelpSet;
 import javax.help.HelpSetException;
@@ -107,28 +110,20 @@ public class GhidraHelpService extends HelpManager {
 
 	private Map<ResourceFile, Set<URL>> mapHelpToModule(Collection<ResourceFile> moduleRoots,
 			Set<URL> allHelpSets) {
-
 		Map<ResourceFile, Set<URL>> results = new HashMap<>();
 		for (ResourceFile module : moduleRoots) {
-			String moduleName = module.getName();
-
-			Set<URL> help = new HashSet<>();
-
-			Iterator<URL> it = allHelpSets.iterator();
-			while (it.hasNext()) {
-				URL url = it.next();
-				String asString = url.toExternalForm();
-				if (asString.contains(moduleName)) {
-					it.remove();
-					help.add(url);
-				}
-			}
-
+			Set<URL> help = allHelpSets.stream()
+					.map(Optional::ofNullable)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
+					.filter(url -> url.toExternalForm().contains(module.getName()))
+					.collect(Collectors.toSet());
+			// Clean up
+			allHelpSets.removeAll(help);
 			if (!help.isEmpty()) {
 				results.put(module, help);
 			}
 		}
-
 		return results;
 	}
 
