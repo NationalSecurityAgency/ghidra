@@ -1104,7 +1104,7 @@ addr64: [Base64 + Index64*ss + simm32_64] is mod=2 & r_m=4; Index64 & Base64 & s
 addr64: [Base64 + Index64*ss]			is mod=2 & r_m=4; Index64 & Base64 & ss; imm32=0   { local tmp=Base64+Index64*ss; export tmp; }
 @endif
 
-currentCS: CS is protectedMode=0 & CS { tmp:4 = (inst_next >> 4) & 0xf000; CS = tmp:2; export CS; }
+currentCS: CS is protectedMode=0 & CS { export CS; }
 currentCS: CS is protectedMode=1 & CS { tmp:4 = (inst_next >> 16) & 0xffff; CS = tmp:2; export CS; }
  
 segWide: is segover=0		        { export 0:$(SIZE); }
@@ -2980,10 +2980,10 @@ with : lockprefx=0 {
 @endif
 
 # direct far calls generate an opcode undefined exception in x86-64
-:CALLF ptr1616      is vexMode=0 & addrsize=0 & opsize=0 & byte=0x9a; ptr1616           { push22(CS); build ptr1616; push22(&:2 inst_next); call ptr1616; }
-:CALLF ptr1616      is vexMode=0 & addrsize=1 & opsize=0 & byte=0x9a; ptr1616           { push42(CS); build ptr1616; push42(&:2 inst_next); call ptr1616; }
-:CALLF ptr1632      is vexMode=0 & addrsize=0 & opsize=1 & byte=0x9a; ptr1632           { push22(CS); build ptr1632; push24(&:4 inst_next); call ptr1632; }
-:CALLF ptr1632      is vexMode=0 & addrsize=1 & opsize=1 & byte=0x9a; ptr1632           { pushseg44(CS); build ptr1632; push44(&:4 inst_next); call ptr1632; }
+:CALLF ptr1616      is vexMode=0 & addrsize=0 & opsize=0 & byte=0x9a; ptr1616           { tmp:2 = CS; push22(CS); build ptr1616; push22(&:2 inst_next); call ptr1616; CS = tmp; }
+:CALLF ptr1616      is vexMode=0 & addrsize=1 & opsize=0 & byte=0x9a; ptr1616           { tmp:2 = CS; push42(CS); build ptr1616; push42(&:2 inst_next); call ptr1616; CS = tmp; }
+:CALLF ptr1632      is vexMode=0 & addrsize=0 & opsize=1 & byte=0x9a; ptr1632           { tmp:2 = CS; push22(CS); build ptr1632; push24(&:4 inst_next); call ptr1632; CS = tmp; }
+:CALLF ptr1632      is vexMode=0 & addrsize=1 & opsize=1 & byte=0x9a; ptr1632           { tmp:2 = CS; pushseg44(CS); build ptr1632; push44(&:4 inst_next); call ptr1632; CS = tmp; }
 :CALLF addr16       is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; addr16 & reg_opcode=3 ... { local ptr:$(SIZE) = segment(DS,addr16); local addrptr:$(SIZE) = segment(*:2 (ptr+2),*:2 ptr);
                                                                                                   push22(CS); push22(&:2 inst_next); call [addrptr]; }
 :CALLF addr32       is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; addr32 & reg_opcode=3 ... { local dest:4 = addr32; push42(CS); push42(&:2 inst_next); call [dest]; }
