@@ -1,0 +1,1987 @@
+                             LAB_0007980c                                    XREF[2]:     000796a0(j), 000796ac(j)  
+        0007980c 24 00 bf 8f     lw         ra,local_4(sp)
+        00079810 20 00 b4 8f     lw         s4,local_8(sp)
+        00079814 1c 00 b3 8f     lw         s3,local_c(sp)
+        00079818 18 00 b2 8f     lw         s2,local_10(sp)
+        0007981c 14 00 b1 8f     lw         s1,local_14(sp)
+        00079820 10 00 b0 8f     lw         s0,local_18(sp)
+        00079824 28 00 bd 27     addiu      sp,sp,0x28
+                             LAB_00079828                                    XREF[1]:     00079668(j)  
+        00079828 08 00 e0 03     jr         ra
+        0007982c 00 00 00 00     _nop
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_core_probe()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     00079840(W), 
+                                                                                                   00079b9c(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     00079844(W), 
+                                                                                                   00079ba0(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     00079848(W), 
+                                                                                                   00079ba4(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     0007983c(W), 
+                                                                                                   00079ba8(R)  
+             undefined4        Stack[-0x14]:4 local_14                                XREF[2]:     0007984c(W), 
+                                                                                                   00079bac(R)  
+             undefined4        Stack[-0x18]:4 local_18                                XREF[2]:     00079850(W), 
+                                                                                                   00079bb0(R)  
+             undefined4        Stack[-0x1c]:4 local_1c                                XREF[2]:     00079834(W), 
+                                                                                                   00079bb4(R)  
+             undefined4        Stack[-0x20]:4 local_20                                XREF[2]:     00079854(W), 
+                                                                                                   00079bb8(R)  
+             undefined4        Stack[-0x24]:4 local_24                                XREF[2]:     00079858(W), 
+                                                                                                   00079bbc(R)  
+             undefined4        Stack[-0x28]:4 local_28                                XREF[2]:     0007985c(W), 
+                                                                                                   00079bc0(R)  
+             undefined4        Stack[-0x2c]:4 local_2c                                XREF[2]:     00079a50(W), 
+                                                                                                   00079a64(R)  
+             undefined4        Stack[-0x30]:4 local_30                                XREF[2]:     00079a58(W), 
+                                                                                                   00079a74(R)  
+                             tx_isp_core_probe                               XREF[1]:     000b2910(*)  
+        00079830 c0 ff bd 27     addiu      sp,sp,-0x40
+        00079834 24 00 b3 af     sw         s3,local_1c(sp)
+        00079838 02 00 13 3c     lui        s3,0x2
+        0007983c 30 00 b6 af     sw         s6,local_10(sp)
+        00079840 3c 00 bf af     sw         ra,local_4(sp)
+        00079844 38 00 be af     sw         s8,local_8(sp)
+        00079848 34 00 b7 af     sw         s7,local_c(sp)
+        0007984c 2c 00 b5 af     sw         s5,local_14(sp)
+        00079850 28 00 b4 af     sw         s4,local_18(sp)
+        00079854 20 00 b2 af     sw         s2,local_20(sp)
+        00079858 1c 00 b1 af     sw         s1,local_24(sp)
+        0007985c 18 00 b0 af     sw         s0,local_28(sp)
+        00079860 25 b0 80 00     or         s6,a0,zero
+        00079864 d0 00 05 24     li         a1,0xd0
+        00079868 50 9c 73 26     addiu      s3,s3,-0x63b0
+        0007986c 09 f8 60 02     jalr       s3=>private_kmalloc                              undefined private_kmalloc()
+        00079870 18 02 04 24     _li        a0,0x218
+        00079874 09 00 40 14     bne        v0,zero,LAB_0007989c
+        00079878 0e 00 11 3c     _lui       s1,0xe
+        0007987c 08 00 05 3c     lui        a1,0x8
+        00079880 01 00 02 3c     lui        v0,0x1
+        00079884 e4 29 a5 24     addiu      a1=>$LC87,a1,0x29e4                              = "Failed to allocate sensor dev
+        00079888 00 05 42 24     addiu      v0,v0,0x500
+        0007988c 09 f8 40 00     jalr       v0=>isp_printf                                   undefined isp_printf()
+        00079890 02 00 04 24     _li        a0,0x2
+        00079894 c1 00 00 10     b          LAB_00079b9c
+        00079898 f4 ff 02 24     _li        v0,-0xc
+                             LAB_0007989c                                    XREF[1]:     00079874(j)  
+        0007989c 18 02 06 24     li         a2,0x218
+        000798a0 25 28 00 00     or         a1,zero,zero
+        000798a4 25 20 40 00     or         a0,v0,zero
+        000798a8 2c b0 31 26     addiu      s1,s1,-0x4fd4
+        000798ac 09 f8 20 02     jalr       s1=><EXTERNAL>::memset                           void * memset(void * __s, int __
+        000798b0 25 80 40 00     _or        s0,v0,zero
+        000798b4 0b 00 06 3c     lui        a2,0xb
+        000798b8 02 00 02 3c     lui        v0,0x2
+        000798bc d0 29 c6 24     addiu      a2=>core_subdev_ops,a2,0x29d0
+        000798c0 25 28 00 02     or         a1,s0,zero
+        000798c4 25 20 c0 02     or         a0,s6,zero
+        000798c8 e8 fb 42 24     addiu      v0,v0,-0x418
+        000798cc 09 f8 40 00     jalr       v0=>tx_isp_subdev_init                           undefined tx_isp_subdev_init()
+        000798d0 58 00 d2 8e     _lw        s2,0x58(s6)
+        000798d4 0b 00 40 10     beq        v0,zero,LAB_00079904
+        000798d8 dc 00 14 26     _addiu     s4,s0,0xdc
+        000798dc 03 00 47 92     lbu        a3,0x3(s2)
+        000798e0 02 00 46 92     lbu        a2,0x2(s2)
+        000798e4 08 00 05 3c     lui        a1,0x8
+        000798e8 01 00 02 3c     lui        v0,0x1
+        000798ec 08 2a a5 24     addiu      a1=>$LC88,a1,0x2a08                              = "Failed to init isp module(%d.
+        000798f0 00 05 42 24     addiu      v0,v0,0x500
+        000798f4 09 f8 40 00     jalr       v0=>isp_printf                                   undefined isp_printf()
+        000798f8 02 00 04 24     _li        a0,0x2
+        000798fc a2 00 00 10     b          LAB_00079b88
+        00079900 f4 ff 11 24     _li        s1,-0xc
+                             LAB_00079904                                    XREF[1]:     000798d4(j)  
+        00079904 02 00 12 3c     lui        s2,0x2
+        00079908 a8 98 52 26     addiu      s2,s2,-0x6758
+        0007990c 09 f8 40 02     jalr       s2=>private_spin_lock_init                       undefined private_spin_lock_init()
+        00079910 25 20 80 02     _or        a0,s4,zero
+        00079914 01 00 06 3c     lui        a2,0x1
+        00079918 08 00 05 3c     lui        a1,0x8
+        0007991c 02 00 02 3c     lui        v0,0x2
+        00079920 25 20 80 02     or         a0,s4,zero
+        00079924 00 00 c6 24     addiu      a2=>slock_af_hist,a2,0x0
+        00079928 e4 98 42 24     addiu      v0,v0,-0x671c
+        0007992c 09 f8 40 00     jalr       v0=>private_raw_mutex_init                       undefined private_raw_mutex_init()
+        00079930 2c 2a a5 24     _addiu     a1=>$LC89,a1,0x2a2c                              = "&core_dev->mlock"
+        00079934 c8 00 04 96     lhu        a0,0xc8(s0)
+        00079938 c4 00 14 24     li         s4,0xc4
+        0007993c 58 00 c2 8e     lw         v0,0x58(s6)
+        00079940 54 01 04 ae     sw         a0,0x154(s0)
+        00079944 02 20 94 70     mul        a0,a0,s4
+        00079948 38 01 02 ae     sw         v0,0x138(s0)
+        0007994c 09 f8 60 02     jalr       s3=>private_kmalloc                              undefined private_kmalloc()
+        00079950 d0 00 05 24     _li        a1,0xd0
+        00079954 25 98 40 00     or         s3,v0,zero
+        00079958 0d 00 40 14     bne        v0,zero,LAB_00079990
+        0007995c 25 a8 40 02     _or        s5,s2,zero
+        00079960 08 00 05 3c     lui        a1,0x8
+        00079964 01 00 11 3c     lui        s1,0x1
+        00079968 e4 29 a5 24     addiu      a1=>$LC87,a1,0x29e4                              = "Failed to allocate sensor dev
+        0007996c 00 05 31 26     addiu      s1,s1,0x500
+        00079970 09 f8 20 02     jalr       s1=>isp_printf                                   undefined isp_printf()
+        00079974 02 00 04 24     _li        a0,0x2
+        00079978 08 00 05 3c     lui        a1,0x8
+        0007997c 40 2a a5 24     addiu      a1=>$LC90,a1,0x2a40                              = "Failed to init output channel
+        00079980 09 f8 20 02     jalr       s1=>isp_printf                                   undefined isp_printf()
+        00079984 02 00 04 24     _li        a0,0x2
+        00079988 7b 00 00 10     b          LAB_00079b78
+        0007998c 02 00 02 3c     _lui       v0,0x2
+                             LAB_00079990                                    XREF[1]:     00079958(j)  
+        00079990 c8 00 06 96     lhu        a2,0xc8(s0)
+        00079994 25 28 00 00     or         a1,zero,zero
+        00079998 02 30 d4 70     mul        a2,a2,s4
+        0007999c 25 20 40 00     or         a0,v0,zero
+        000799a0 09 f8 20 02     jalr       s1=><EXTERNAL>::memset                           void * memset(void * __s, int __
+        000799a4 08 00 17 3c     _lui       s7,0x8
+        000799a8 25 90 00 00     or         s2,zero,zero
+        000799ac 25 88 60 02     or         s1,s3,zero
+        000799b0 24 00 05 24     li         a1,0x24
+        000799b4 01 00 1e 24     li         s8,0x1
+        000799b8 80 00 03 24     li         v1,0x80
+        000799bc b8 81 f7 26     addiu      s7,s7,-0x7e48
+                             LAB_000799c0                                    XREF[1]:     00079a84(j)  
+        000799c0 54 01 02 8e     lw         v0,0x154(s0)
+        000799c4 2b 10 42 02     sltu       v0,s2,v0
+        000799c8 30 00 40 10     beq        v0,zero,LAB_00079a8c
+        000799cc 02 a0 45 72     _mul       s4,s2,a1
+        000799d0 70 00 32 ae     sw         s2,0x70(s1)
+        000799d4 cc 00 02 8e     lw         v0,0xcc(s0)
+        000799d8 21 10 54 00     addu       v0,v0,s4
+        000799dc 78 00 22 ae     sw         v0,0x78(s1)
+        000799e0 cc 00 02 8e     lw         v0,0xcc(s0)
+        000799e4 21 10 54 00     addu       v0,v0,s4
+        000799e8 05 00 42 90     lbu        v0,0x5(v0)
+        000799ec 03 00 40 14     bne        v0,zero,LAB_000799fc
+        000799f0 00 00 00 00     _nop
+        000799f4 22 00 00 10     b          LAB_00079a80
+        000799f8 74 00 20 ae     _sw        zero,0x74(s1)
+                             LAB_000799fc                                    XREF[1]:     000799ec(j)  
+        000799fc 0a 00 40 12     beq        s2,zero,LAB_00079a28
+        00079a00 40 0a 02 24     _li        v0,0xa40
+        00079a04 0f 00 5e 56     bnel       s2,s8,LAB_00079a44
+        00079a08 88 00 23 ae     _sw        v1,0x88(s1)
+        00079a0c 80 07 02 24     li         v0,0x780
+        00079a10 80 00 22 ae     sw         v0,0x80(s1)
+        00079a14 38 04 02 24     li         v0,0x438
+        00079a18 84 00 22 ae     sw         v0,0x84(s1)
+        00079a1c 90 00 32 a2     sb         s2,0x90(s1)
+        00079a20 07 00 00 10     b          LAB_00079a40
+        00079a24 91 00 32 a2     _sb        s2,0x91(s1)
+                             LAB_00079a28                                    XREF[1]:     000799fc(j)  
+        00079a28 80 00 22 ae     sw         v0,0x80(s1)
+        00079a2c 00 08 02 24     li         v0,0x800
+        00079a30 84 00 22 ae     sw         v0,0x84(s1)
+        00079a34 01 00 02 24     li         v0,0x1
+        00079a38 90 00 22 a2     sb         v0,0x90(s1)
+        00079a3c 91 00 20 a2     sb         zero,0x91(s1)
+                             LAB_00079a40                                    XREF[1]:     00079a20(j)  
+        00079a40 88 00 23 ae     sw         v1,0x88(s1)
+                             LAB_00079a44                                    XREF[1]:     00079a04(j)  
+        00079a44 8c 00 23 ae     sw         v1,0x8c(s1)
+        00079a48 74 00 3e ae     sw         s8,0x74(s1)
+        00079a4c 9c 00 24 26     addiu      a0,s1,0x9c
+        00079a50 14 00 a5 af     sw         a1,local_2c(sp)
+        00079a54 09 f8 a0 02     jalr       s5=>private_spin_lock_init                       undefined private_spin_lock_init()
+        00079a58 10 00 a3 af     _sw        v1,local_30(sp)
+        00079a5c 7c 00 30 ae     sw         s0,0x7c(s1)
+        00079a60 cc 00 02 8e     lw         v0,0xcc(s0)
+        00079a64 14 00 a5 8f     lw         a1,local_2c(sp)
+        00079a68 21 10 54 00     addu       v0,v0,s4
+        00079a6c 1c 00 57 ac     sw         s7=>ispcore_pad_event_handle,0x1c(v0)
+        00079a70 cc 00 02 8e     lw         v0,0xcc(s0)
+        00079a74 10 00 a3 8f     lw         v1,local_30(sp)
+        00079a78 21 a0 54 00     addu       s4,v0,s4
+        00079a7c 20 00 91 ae     sw         s1,0x20(s4)
+                             LAB_00079a80                                    XREF[1]:     000799f4(j)  
+        00079a80 01 00 52 26     addiu      s2,s2,0x1
+        00079a84 ce ff 00 10     b          LAB_000799c0
+        00079a88 c4 00 31 26     _addiu     s1,s1,0xc4
+                             LAB_00079a8c                                    XREF[1]:     000799c8(j)  
+        00079a8c 02 00 02 3c     lui        v0,0x2
+        00079a90 50 01 13 ae     sw         s3,0x150(s0)
+        00079a94 08 90 42 24     addiu      v0,v0,-0x6ff8
+        00079a98 09 f8 40 00     jalr       v0=>isp_core_tuning_init                         undefined isp_core_tuning_init()
+        00079a9c 25 20 00 02     _or        a0,s0,zero
+        00079aa0 16 00 40 14     bne        v0,zero,LAB_00079afc
+        00079aa4 bc 01 02 ae     _sw        v0,0x1bc(s0)
+        00079aa8 08 00 05 3c     lui        a1,0x8
+        00079aac 01 00 02 3c     lui        v0,0x1
+        00079ab0 64 2a a5 24     addiu      a1=>$LC91,a1,0x2a64                              = "Failed to init tuning module!
+        00079ab4 00 05 42 24     addiu      v0,v0,0x500
+        00079ab8 09 f8 40 00     jalr       v0=>isp_printf                                   undefined isp_printf()
+        00079abc 02 00 04 24     _li        a0,0x2
+        00079ac0 e8 00 02 8e     lw         v0,0xe8(s0)
+        00079ac4 02 00 42 28     slti       v0,v0,0x2
+        00079ac8 04 00 40 14     bne        v0,zero,LAB_00079adc
+        00079acc 08 00 02 3c     _lui       v0,0x8
+        00079ad0 68 96 42 24     addiu      v0,v0,-0x6998
+        00079ad4 09 f8 40 00     jalr       v0=>ispcore_slake_module                         undefined ispcore_slake_module()
+        00079ad8 25 20 00 02     _or        a0,s0,zero
+                             LAB_00079adc                                    XREF[1]:     00079ac8(j)  
+        00079adc 02 00 02 3c     lui        v0,0x2
+        00079ae0 64 9c 42 24     addiu      v0,v0,-0x639c
+        00079ae4 09 f8 40 00     jalr       v0=>private_kfree                                undefined private_kfree()
+        00079ae8 50 01 04 8e     _lw        a0,0x150(s0)
+        00079aec 01 00 02 24     li         v0,0x1
+        00079af0 58 01 02 ae     sw         v0,0x158(s0)
+        00079af4 1f 00 00 10     b          LAB_00079b74
+        00079af8 50 01 00 ae     _sw        zero,0x150(s0)
+                             LAB_00079afc                                    XREF[1]:     00079aa0(j)  
+        00079afc 01 00 02 24     li         v0,0x1
+        00079b00 e8 00 02 ae     sw         v0,0xe8(s0)
+        00079b04 02 00 02 3c     lui        v0,0x2
+        00079b08 25 28 00 02     or         a1,s0,zero
+        00079b0c 44 97 42 24     addiu      v0,v0,-0x68bc
+        00079b10 09 f8 40 00     jalr       v0=>private_platform_set_drvdata                 undefined private_platform_set_d
+        00079b14 25 20 c0 02     _or        a0,s6,zero
+        00079b18 bc 01 02 8e     lw         v0,0x1bc(s0)
+        00079b1c d4 00 10 ae     sw         s0,0xd4(s0)
+        00079b20 c8 40 42 8c     lw         v0,0x40c8(v0)
+        00079b24 30 00 02 ae     sw         v0,0x30(s0)
+        00079b28 0b 00 02 3c     lui        v0,0xb
+        00079b2c 64 29 42 24     addiu      v0,v0,0x2964
+        00079b30 34 00 02 ae     sw         v0=>isp_info_proc_fops,0x34(s0)
+        00079b34 0e 00 02 3c     lui        v0,0xe
+        00079b38 88 a9 50 ac     sw         s0,-0x5678(v0)=>ispcore_sd                       = ??
+        00079b3c 02 00 02 3c     lui        v0,0x2
+        00079b40 34 d4 42 24     addiu      v0,v0,-0x2bcc
+        00079b44 09 f8 40 00     jalr       v0=>sensor_early_init                            undefined sensor_early_init()
+        00079b48 25 20 00 02     _or        a0,s0,zero
+        00079b4c 01 00 02 3c     lui        v0,0x1
+        00079b50 90 05 42 24     addiu      v0,v0,0x590
+        00079b54 09 f8 40 00     jalr       v0=>get_isp_clk                                  undefined get_isp_clk()
+        00079b58 00 00 00 00     _nop
+        00079b5c 0b 00 04 3c     lui        a0,0xb
+        00079b60 18 2c 83 8c     lw         v1,offset isp_clk(a0)                            = 05F5E100h
+        00079b64 0a 10 62 00     movz       v0,v1,v0
+        00079b68 18 2c 82 ac     sw         v0,offset isp_clk(a0)                            = 05F5E100h
+        00079b6c 0b 00 00 10     b          LAB_00079b9c
+        00079b70 25 10 00 00     _or        v0,zero,zero
+                             LAB_00079b74                                    XREF[1]:     00079af4(j)  
+        00079b74 02 00 02 3c     lui        v0,0x2
+                             LAB_00079b78                                    XREF[1]:     00079988(j)  
+        00079b78 78 01 42 24     addiu      v0,v0,0x178
+        00079b7c 09 f8 40 00     jalr       v0=>tx_isp_subdev_deinit                         undefined tx_isp_subdev_deinit()
+        00079b80 25 20 00 02     _or        a0,s0,zero
+        00079b84 ea ff 11 24     li         s1,-0x16
+                             LAB_00079b88                                    XREF[1]:     000798fc(j)  
+        00079b88 02 00 02 3c     lui        v0,0x2
+        00079b8c 64 9c 42 24     addiu      v0,v0,-0x639c
+        00079b90 09 f8 40 00     jalr       v0=>private_kfree                                undefined private_kfree()
+        00079b94 25 20 00 02     _or        a0,s0,zero
+        00079b98 25 10 20 02     or         v0,s1,zero
+                             LAB_00079b9c                                    XREF[2]:     00079894(j), 00079b6c(j)  
+        00079b9c 3c 00 bf 8f     lw         ra,local_4(sp)
+        00079ba0 38 00 be 8f     lw         s8,local_8(sp)
+        00079ba4 34 00 b7 8f     lw         s7,local_c(sp)
+        00079ba8 30 00 b6 8f     lw         s6,local_10(sp)
+        00079bac 2c 00 b5 8f     lw         s5,local_14(sp)
+        00079bb0 28 00 b4 8f     lw         s4,local_18(sp)
+        00079bb4 24 00 b3 8f     lw         s3,local_1c(sp)
+        00079bb8 20 00 b2 8f     lw         s2,local_20(sp)
+        00079bbc 1c 00 b1 8f     lw         s1,local_24(sp)
+        00079bc0 18 00 b0 8f     lw         s0,local_28(sp)
+        00079bc4 08 00 e0 03     jr         ra
+        00079bc8 40 00 bd 27     _addiu     sp,sp,0x40
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined system_irq_func_set()
+             undefined         <UNASSIGNED>   <RETURN>
+                             system_irq_func_set                             XREF[11]:    Entry Point(*), 
+                                                                                          tisp_init:00027168(c), 
+                                                                                          tiziano_awb_init:000297c8(c), 
+                                                                                          tiziano_defog_init:000570ec(c), 
+                                                                                          tiziano_adr_init:0005e7b0(c), 
+                                                                                          tiziano_ae_init:00064974(c), 
+                                                                                          tiziano_ae_init:00064984(c), 
+                                                                                          tiziano_ae_init:00064994(c), 
+                                                                                          tiziano_ae_init:000649a4(c), 
+                                                                                          tiziano_af_init:00067cac(c), 
+                                                                                          tiziano_wdr_init:00071eec(c)  
+        00079bcc 0e 00 02 3c     lui        v0,0xe
+        00079bd0 08 a9 42 24     addiu      v0,v0,-0x56f8
+        00079bd4 80 20 04 00     sll        a0,a0,0x2
+        00079bd8 21 20 82 00     addu       a0,a0,v0
+        00079bdc 00 00 85 ac     sw         a1,0x0(a0)=>irq_func_cb                          = ??
+        00079be0 08 00 e0 03     jr         ra
+        00079be4 25 10 00 00     _or        v0,zero,zero
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined mbus_to_bayer_write()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[3]:     00079bf8(W), 
+                                                                                                   00079c34(R), 
+                                                                                                   00079c70(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[1]:     00079c54(W)  
+                             mbus_to_bayer_write                             XREF[2]:     Entry Point(*), 
+                                                                                          ispcore_interrupt_service_routin
+        00079be8 ff cf 82 24     addiu      v0,a0,-0x3001
+        00079bec e0 ff bd 27     addiu      sp,sp,-0x20
+        00079bf0 14 00 43 2c     sltiu      v1,v0,0x14
+        00079bf4 14 00 60 10     beq        v1,zero,switchD_00079c14::default
+        00079bf8 1c 00 bf af     _sw        ra,local_4(sp)
+        00079bfc 80 18 02 00     sll        v1,v0,0x2
+        00079c00 08 00 02 3c     lui        v0,0x8
+        00079c04 60 e2 42 24     addiu      v0,v0,-0x1da0
+        00079c08 21 10 43 00     addu       v0,v0,v1
+        00079c0c 00 00 43 8c     lw         v1,0x0(v0)=>switchD_00079c14::switchdataD_0007   = 00079c1c
+        00079c10 08 00 02 3c     lui        v0,0x8
+                             switchD_00079c14::switchD
+        00079c14 08 00 60 00     jr         v1
+        00079c18 34 8b 42 24     _addiu     v0,v0,-0x74cc
+                             switchD_00079c14::caseD_3003                    XREF[9]:     00079c14(j), 0007e260(*), 
+                             switchD_00079c14::caseD_3004                                 0007e268(*), 0007e26c(*), 
+                             switchD_00079c14::caseD_3005                                 0007e270(*), 0007e274(*), 
+                             switchD_00079c14::caseD_3006                                 0007e278(*), 0007e27c(*), 
+                             switchD_00079c14::caseD_3007                                 0007e288(*)  
+                             switchD_00079c14::caseD_3008
+                             switchD_00079c14::caseD_300b
+                             switchD_00079c14::caseD_3001
+        00079c1c 02 00 00 10     b          LAB_00079c28
+        00079c20 01 00 05 24     _li        a1,0x1
+                             switchD_00079c14::caseD_300e                    XREF[5]:     00079c14(j), 0007e28c(*), 
+                             switchD_00079c14::caseD_3010                                 0007e294(*), 0007e29c(*), 
+                             switchD_00079c14::caseD_3013                                 0007e2a8(*)  
+                             switchD_00079c14::caseD_300c
+        00079c24 03 00 05 24     li         a1,0x3
+                             LAB_00079c28                                    XREF[3]:     00079c1c(j), 00079c38(j), 
+                                                                                          00079c40(j)  
+        00079c28 09 f8 40 00     jalr       v0=>system_reg_write                             undefined system_reg_write()
+        00079c2c 08 00 04 24     _li        a0,0x8
+        00079c30 10 00 00 10     b          LAB_00079c74
+        00079c34 1c 00 bf 8f     _lw        ra,local_4(sp)
+                             switchD_00079c14::caseD_3009                    XREF[5]:     00079c14(j), 0007e264(*), 
+                             switchD_00079c14::caseD_300a                                 0007e280(*), 0007e284(*), 
+                             switchD_00079c14::caseD_3011                                 0007e2a0(*)  
+                             switchD_00079c14::caseD_3002
+        00079c38 fb ff 00 10     b          LAB_00079c28
+        00079c3c 02 00 05 24     _li        a1,0x2
+                             switchD_00079c14::caseD_300f                    XREF[5]:     00079c14(j), 0007e290(*), 
+                             switchD_00079c14::caseD_3012                                 0007e298(*), 0007e2a4(*), 
+                             switchD_00079c14::caseD_3014                                 0007e2ac(*)  
+                             switchD_00079c14::caseD_300d
+        00079c40 f9 ff 00 10     b          LAB_00079c28
+        00079c44 25 28 00 00     _or        a1,zero,zero
+                             switchD_00079c14::default                       XREF[1]:     00079bf4(j)  
+        00079c48 08 00 06 3c     lui        a2,0x8
+        00079c4c 08 00 05 3c     lui        a1,0x8
+        00079c50 01 00 02 3c     lui        v0,0x1
+        00079c54 10 00 a4 af     sw         a0,local_10(sp)
+        00079c58 53 01 07 24     li         a3,0x153
+        00079c5c 68 e3 c6 24     addiu      a2=>__func__.34538,a2,-0x1c98                    = "mbus_to_bayer_write"
+        00079c60 58 29 a5 24     addiu      a1=>$LC82,a1,0x2958                              = "%s[%d] the format(0x%08x) of 
+        00079c64 00 05 42 24     addiu      v0,v0,0x500
+        00079c68 09 f8 40 00     jalr       v0=>isp_printf                                   undefined isp_printf()
+        00079c6c 02 00 04 24     _li        a0,0x2
+        00079c70 1c 00 bf 8f     lw         ra,local_4(sp)
+                             LAB_00079c74                                    XREF[1]:     00079c30(j)  
+        00079c74 25 10 00 00     or         v0,zero,zero
+        00079c78 08 00 e0 03     jr         ra
+        00079c7c 20 00 bd 27     _addiu     sp,sp,0x20
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined ispcore_interrupt_service_routine()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     00079c88(W), 
+                                                                                                   0007a208(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     00079c8c(W), 
+                                                                                                   0007a20c(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     00079c90(W), 
+                                                                                                   0007a210(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     00079c94(W), 
+                                                                                                   0007a214(R)  
+             undefined4        Stack[-0x14]:4 local_14                                XREF[2]:     00079c98(W), 
+                                                                                                   0007a218(R)  
+             undefined4        Stack[-0x18]:4 local_18                                XREF[2]:     00079c84(W), 
+                                                                                                   0007a21c(R)  
+             undefined4        Stack[-0x1c]:4 local_1c                                XREF[2]:     00079c9c(W), 
+                                                                                                   0007a220(R)  
+             undefined4        Stack[-0x20]:4 local_20                                XREF[2]:     00079ca0(W), 
+                                                                                                   0007a224(R)  
+             undefined4        Stack[-0x28]:4 local_28                                XREF[3]:     00079f08(W), 
+                                                                                                   0007a0e4(W), 
+                                                                                                   0007a19c(W)  
+             undefined4        Stack[-0x2c]:4 local_2c                                XREF[3]:     00079efc(W), 
+                                                                                                   0007a0f4(W), 
+                                                                                                   0007a1a4(W)  
+             undefined4        Stack[-0x30]:4 local_30                                XREF[3]:     00079ee0(W), 
+                                                                                                   0007a0e8(W), 
+                                                                                                   0007a1a0(W)  
+             undefined4        Stack[-0x34]:4 local_34                                XREF[3]:     00079ed8(W), 
+                                                                                                   0007a0dc(W), 
+                                                                                                   0007a194(W)  
+             undefined4        Stack[-0x38]:4 local_38                                XREF[3]:     00079ecc(W), 
+                                                                                                   0007a0d4(W), 
+                                                                                                   0007a188(W)  
+             undefined4        Stack[-0x44]:4 local_44                                XREF[1]:     00079cd4(W)  
+             undefined4        Stack[-0x48]:4 local_48                                XREF[1]:     00079cdc(W)  
+                             ispcore_interrupt_service_routine               XREF[1]:     000b2a24(*)  
+        00079c80 a8 ff bd 27     addiu      sp,sp,-0x58
+        00079c84 40 00 b2 af     sw         s2,local_18(sp)
+        00079c88 54 00 bf af     sw         ra,local_4(sp)
+        00079c8c 50 00 b6 af     sw         s6,local_8(sp)
+        00079c90 4c 00 b5 af     sw         s5,local_c(sp)
+        00079c94 48 00 b4 af     sw         s4,local_10(sp)
+        00079c98 44 00 b3 af     sw         s3,local_14(sp)
+        00079c9c 3c 00 b1 af     sw         s1,local_1c(sp)
+        00079ca0 38 00 b0 af     sw         s0,local_20(sp)
+        00079ca4 b8 00 82 8c     lw         v0,0xb8(a0)
+        00079ca8 d4 00 90 8c     lw         s0,0xd4(a0)
+        00079cac b4 00 51 8c     lw         s1,0xb4(v0)
+        00079cb0 25 90 80 00     or         s2,a0,zero
+        00079cb4 f8 03 27 32     andi       a3,s1,0x3f8
+        00079cb8 b8 00 51 ac     sw         s1,0xb8(v0)
+        00079cbc 12 00 e0 50     beql       a3,zero,LAB_00079d08
+        00079cc0 5c 01 04 8e     _lw        a0,0x15c(s0)
+        00079cc4 b8 00 82 8c     lw         v0,0xb8(a0)
+        00079cc8 08 00 05 3c     lui        a1,0x8
+        00079ccc 4c 08 42 8c     lw         v0,0x84c(v0)
+        00079cd0 25 30 20 02     or         a2,s1,zero
+        00079cd4 14 00 a2 af     sw         v0,local_44(sp)
+        00079cd8 f8 03 02 24     li         v0,0x3f8
+        00079cdc 10 00 a2 af     sw         v0,local_48(sp)
+        00079ce0 01 00 02 3c     lui        v0,0x1
+        00079ce4 84 2a a5 24     addiu      a1=>$LC92,a1,0x2a84                              = "ispcore: irq-status 0x%08x, e
+        00079ce8 00 05 42 24     addiu      v0,v0,0x500
+        00079cec 09 f8 40 00     jalr       v0=>isp_printf                                   undefined isp_printf()
+        00079cf0 01 00 04 24     _li        a0,0x1
+        00079cf4 0e 00 03 3c     lui        v1,0xe
+        00079cf8 bc a9 62 8c     lw         v0,-0x5644(v1)=>isp_err                          = ??
+        00079cfc 01 00 42 24     addiu      v0,v0,0x1
+        00079d00 bc a9 62 ac     sw         v0,-0x5644(v1)=>isp_err                          = ??
+        00079d04 5c 01 04 8e     lw         a0,0x15c(s0)
+                             LAB_00079d08                                    XREF[1]:     00079cbc(j)  
+        00079d08 01 00 03 24     li         v1,0x1
+        00079d0c 3e 01 83 10     beq        a0,v1,LAB_0007a208
+        00079d10 01 00 02 24     _li        v0,0x1
+        00079d14 00 10 33 32     andi       s3,s1,0x1000
+        00079d18 07 00 60 12     beq        s3,zero,LAB_00079d38
+        00079d1c 00 02 22 32     _andi      v0,s1,0x200
+        00079d20 0b 00 04 3c     lui        a0,0xb
+        00079d24 01 00 02 3c     lui        v0,0x1
+        00079d28 ec 05 42 24     addiu      v0,v0,0x5ec
+        00079d2c 09 f8 40 00     jalr       v0=>private_schedule_work                        undefined private_schedule_work()
+        00079d30 2c 2a 84 24     _addiu     a0=>fs_work,a0,0x2a2c
+        00079d34 00 02 22 32     andi       v0,s1,0x200
+                             LAB_00079d38                                    XREF[1]:     00079d18(j)  
+        00079d38 0d 00 40 10     beq        v0,zero,LAB_00079d70
+        00079d3c 00 01 22 32     _andi      v0,s1,0x100
+        00079d40 7c 01 02 8e     lw         v0,0x17c(s0)
+        00079d44 06 00 40 10     beq        v0,zero,LAB_00079d60
+        00079d48 0e 00 03 3c     _lui       v1,0xe
+        00079d4c 08 00 02 3c     lui        v0,0x8
+        00079d50 6c 8b 42 24     addiu      v0,v0,-0x7494
+        00079d54 09 f8 40 00     jalr       v0=>exception_handle                             undefined exception_handle()
+        00079d58 00 00 00 00     _nop
+        00079d5c 0e 00 03 3c     lui        v1,0xe
+                             LAB_00079d60                                    XREF[1]:     00079d44(j)  
+        00079d60 b8 a9 62 8c     lw         v0,-0x5648(v1)=>isp_overflow                     = ??
+        00079d64 01 00 42 24     addiu      v0,v0,0x1
+        00079d68 b8 a9 62 ac     sw         v0,-0x5648(v1)=>isp_overflow                     = ??
+        00079d6c 00 01 22 32     andi       v0,s1,0x100
+                             LAB_00079d70                                    XREF[1]:     00079d38(j)  
+        00079d70 0c 00 40 10     beq        v0,zero,LAB_00079da4
+        00079d74 00 00 00 00     _nop
+        00079d78 7c 01 02 8e     lw         v0,0x17c(s0)
+        00079d7c 06 00 40 10     beq        v0,zero,LAB_00079d98
+        00079d80 0e 00 03 3c     _lui       v1,0xe
+        00079d84 08 00 02 3c     lui        v0,0x8
+        00079d88 6c 8b 42 24     addiu      v0,v0,-0x7494
+        00079d8c 09 f8 40 00     jalr       v0=>exception_handle                             undefined exception_handle()
+        00079d90 00 00 00 00     _nop
+        00079d94 0e 00 03 3c     lui        v1,0xe
+                             LAB_00079d98                                    XREF[1]:     00079d7c(j)  
+        00079d98 b4 a9 62 8c     lw         v0,-0x564c(v1)=>isp_breakfrm                     = ??
+        00079d9c 01 00 42 24     addiu      v0,v0,0x1
+        00079da0 b4 a9 62 ac     sw         v0,-0x564c(v1)=>isp_breakfrm                     = ??
+                             LAB_00079da4                                    XREF[1]:     00079d70(j)  
+        00079da4 23 00 60 12     beq        s3,zero,LAB_00079e34
+        00079da8 00 20 22 32     _andi      v0,s1,0x2000
+        00079dac 0e 00 13 3c     lui        s3,0xe
+        00079db0 94 a9 63 92     lbu        v1,-0x566c(s3)=>frame_vb_measure                 = ??
+        00079db4 01 00 02 24     li         v0,0x1
+        00079db8 0a 00 62 14     bne        v1,v0,LAB_00079de4
+        00079dbc 03 00 02 24     _li        v0,0x3
+        00079dc0 0e 00 04 3c     lui        a0,0xe
+        00079dc4 01 00 02 3c     lui        v0,0x1
+        00079dc8 08 06 42 24     addiu      v0,v0,0x608
+        00079dcc 09 f8 40 00     jalr       v0=>private_do_gettimeofday                      undefined private_do_gettimeofda
+        00079dd0 a8 a9 84 24     _addiu     a0=>tv_frame_start,a0,-0x5658                    = ??
+        00079dd4 02 00 02 24     li         v0,0x2
+        00079dd8 94 a9 62 a2     sb         v0,-0x566c(s3)=>frame_vb_measure                 = ??
+        00079ddc 94 a9 63 92     lbu        v1,-0x566c(s3)=>frame_vb_measure                 = ??
+        00079de0 03 00 02 24     li         v0,0x3
+                             LAB_00079de4                                    XREF[1]:     00079db8(j)  
+        00079de4 0a 00 62 14     bne        v1,v0,LAB_00079e10
+        00079de8 0e 00 02 3c     _lui       v0,0xe
+        00079dec 0e 00 04 3c     lui        a0,0xe
+        00079df0 01 00 02 3c     lui        v0,0x1
+        00079df4 08 06 42 24     addiu      v0,v0,0x608
+        00079df8 09 f8 40 00     jalr       v0=>private_do_gettimeofday                      undefined private_do_gettimeofda
+        00079dfc 98 a9 84 24     _addiu     a0=>tv_frame_start_next,a0,-0x5668               = ??
+        00079e00 04 00 03 24     li         v1,0x4
+        00079e04 0e 00 02 3c     lui        v0,0xe
+        00079e08 94 a9 43 a0     sb         v1,-0x566c(v0)=>frame_vb_measure                 = ??
+        00079e0c 0e 00 02 3c     lui        v0,0xe
+                             LAB_00079e10                                    XREF[1]:     00079de4(j)  
+        00079e10 90 a9 42 8c     lw         v0,-0x5670(v0)=>isp_ch0_pre_dequeue_time         = ??
+        00079e14 07 00 40 10     beq        v0,zero,LAB_00079e34
+        00079e18 00 20 22 32     _andi      v0,s1,0x2000
+        00079e1c 0b 00 04 3c     lui        a0,0xb
+        00079e20 01 00 02 3c     lui        v0,0x1
+        00079e24 ec 05 42 24     addiu      v0,v0,0x5ec
+        00079e28 09 f8 40 00     jalr       v0=>private_schedule_work                        undefined private_schedule_work()
+        00079e2c 4c 2a 84 24     _addiu     a0=>pre_frame_dequeue,a0,0x2a4c
+        00079e30 00 20 22 32     andi       v0,s1,0x2000
+                             LAB_00079e34                                    XREF[2]:     00079da4(j), 00079e14(j)  
+        00079e34 06 00 40 10     beq        v0,zero,LAB_00079e50
+        00079e38 01 00 22 32     _andi      v0,s1,0x1
+        00079e3c 0e 00 03 3c     lui        v1,0xe
+        00079e40 c0 a9 62 8c     lw         v0,-0x5640(v1)=>isp_ip_frm_done                  = ??
+        00079e44 01 00 42 24     addiu      v0,v0,0x1
+        00079e48 c0 a9 62 ac     sw         v0,-0x5640(v1)=>isp_ip_frm_done                  = ??
+        00079e4c 01 00 22 32     andi       v0,s1,0x1
+                             LAB_00079e50                                    XREF[1]:     00079e34(j)  
+        00079e50 90 00 40 10     beq        v0,zero,LAB_0007a094
+        00079e54 02 00 22 32     _andi      v0,s1,0x2
+        00079e58 0e 00 03 3c     lui        v1,0xe
+        00079e5c c4 a9 62 8c     lw         v0,-0x563c(v1)=>isp_ch0_frm_done                 = ??
+        00079e60 0e 00 14 3c     lui        s4,0xe
+        00079e64 01 00 42 24     addiu      v0,v0,0x1
+        00079e68 c4 a9 62 ac     sw         v0,-0x563c(v1)=>isp_ch0_frm_done                 = ??
+        00079e6c 94 a9 83 92     lbu        v1,-0x566c(s4)=>frame_vb_measure                 = ??
+        00079e70 02 00 02 24     li         v0,0x2
+        00079e74 08 00 62 14     bne        v1,v0,LAB_00079e98
+        00079e78 50 01 13 8e     _lw        s3,0x150(s0)
+        00079e7c 0e 00 04 3c     lui        a0,0xe
+        00079e80 01 00 02 3c     lui        v0,0x1
+        00079e84 08 06 42 24     addiu      v0,v0,0x608
+        00079e88 09 f8 40 00     jalr       v0=>private_do_gettimeofday                      undefined private_do_gettimeofda
+        00079e8c a0 a9 84 24     _addiu     a0=>tv_frame_end,a0,-0x5660                      = ??
+        00079e90 03 00 02 24     li         v0,0x3
+        00079e94 94 a9 82 a2     sb         v0,-0x566c(s4)=>frame_vb_measure                 = ??
+                             LAB_00079e98                                    XREF[1]:     00079e74(j)  
+        00079e98 00 03 14 3c     lui        s4,0x300
+        00079e9c 0e 00 15 3c     lui        s5,0xe
+        00079ea0 06 00 94 26     addiu      s4,s4,0x6
+        00079ea4 02 00 16 3c     lui        s6,0x2
+        00079ea8 b8 00 42 8e     lw         v0,0xb8(s2)
+                             LAB_00079eac                                    XREF[1]:     00079f18(j)  
+        00079eac 01 00 04 3c     lui        a0,0x1
+        00079eb0 21 10 44 00     addu       v0,v0,a0
+        00079eb4 7c 99 43 8c     lw         v1,-0x6684(v0)
+        00079eb8 01 00 63 30     andi       v1,v1,0x1
+        00079ebc 18 00 60 54     bnel       v1,zero,LAB_00079f20
+        00079ec0 bc 01 04 8e     _lw        a0,0x1bc(s0)
+        00079ec4 74 99 43 8c     lw         v1,-0x668c(v0)
+        00079ec8 18 00 a6 27     addiu      a2,sp,0x18
+        00079ecc 20 00 a3 af     sw         v1,local_38(sp)
+        00079ed0 8c 99 43 8c     lw         v1,-0x6674(v0)
+        00079ed4 25 28 80 02     or         a1,s4,zero
+        00079ed8 24 00 a3 af     sw         v1,local_34(sp)
+        00079edc 90 99 42 8c     lw         v0,-0x6670(v0)
+        00079ee0 28 00 a2 af     sw         v0,local_30(sp)
+        00079ee4 88 a9 a2 8e     lw         v0,-0x5678(s5)=>ispcore_sd                       = ??
+        00079ee8 28 01 03 8e     lw         v1,0x128(s0)
+        00079eec b8 00 42 8c     lw         v0,0xb8(v0)
+        00079ef0 00 1c 03 00     sll        v1,v1,0x10
+        00079ef4 21 10 44 00     addu       v0,v0,a0
+        00079ef8 88 98 42 8c     lw         v0,-0x6778(v0)
+        00079efc 2c 00 a0 af     sw         zero,local_2c(sp)
+        00079f00 02 14 02 00     srl        v0,v0,0x10
+        00079f04 25 10 62 00     or         v0,v1,v0
+        00079f08 30 00 a2 af     sw         v0,local_28(sp)
+        00079f0c dc fa c2 26     addiu      v0,s6,-0x524
+        00079f10 09 f8 40 00     jalr       v0=>tx_isp_send_event_to_remote                  undefined tx_isp_send_event_to_r
+        00079f14 78 00 64 8e     _lw        a0,0x78(s3)
+        00079f18 e4 ff 00 10     b          LAB_00079eac
+        00079f1c b8 00 42 8e     _lw        v0,0xb8(s2)
+                             LAB_00079f20                                    XREF[1]:     00079ebc(j)  
+        00079f20 05 00 80 10     beq        a0,zero,LAB_00079f38
+        00079f24 25 30 00 00     _or        a2,zero,zero
+        00079f28 00 04 05 3c     lui        a1,0x400
+        00079f2c cc 40 82 8c     lw         v0,0x40cc(a0)
+        00079f30 09 f8 40 00     jalr       v0
+        00079f34 02 00 a5 24     _addiu     a1,a1,0x2
+                             LAB_00079f38                                    XREF[1]:     00079f20(j)  
+        00079f38 0e 00 13 3c     lui        s3,0xe
+        00079f3c b0 a9 63 8e     lw         v1,-0x5650(s3)=>csc_switch                       = ??
+        00079f40 01 00 02 24     li         v0,0x1
+        00079f44 0e 00 62 54     bnel       v1,v0,LAB_00079f80
+        00079f48 78 01 03 8e     _lw        v1,0x178(s0)
+        00079f4c bc 01 02 8e     lw         v0,0x1bc(s0)
+        00079f50 a4 40 42 8c     lw         v0,0x40a4(v0)
+        00079f54 08 00 40 54     bnel       v0,zero,LAB_00079f78
+        00079f58 b0 a9 60 ae     _sw        zero,-0x5650(s3)=>csc_switch                     = ??
+        00079f5c 00 ff 05 3c     lui        a1,0xff00
+        00079f60 08 00 02 3c     lui        v0,0x8
+        00079f64 00 ff a5 34     ori        a1,a1,0xff00
+        00079f68 34 8b 42 24     addiu      v0,v0,-0x74cc
+        00079f6c 09 f8 40 00     jalr       v0=>system_reg_write                             undefined system_reg_write()
+        00079f70 30 60 04 24     _li        a0,0x6030
+        00079f74 b0 a9 60 ae     sw         zero,-0x5650(s3)=>csc_switch                     = ??
+                             LAB_00079f78                                    XREF[1]:     00079f54(j)  
+        00079f78 78 01 03 8e     lw         v1,0x178(s0)
+        00079f7c 01 00 02 24     li         v0,0x1
+                             LAB_00079f80                                    XREF[1]:     00079f44(j)  
+        00079f80 1f 00 62 14     bne        v1,v0,LAB_0007a000
+        00079f84 02 00 02 24     _li        v0,0x2
+        00079f88 0b 00 02 3c     lui        v0,0xb
+        00079f8c 50 30 44 90     lbu        a0,offset isp_day_night_switch_drop_frame_num(   = ??
+        00079f90 0e 00 02 3c     lui        v0,0xe
+        00079f94 e4 a8 44 a0     sb         a0,-0x571c(v0)=>isp_day_night_switch_drop_fram   = ??
+        00079f98 e4 a8 42 24     addiu      v0,v0,-0x571c
+        00079f9c 01 00 44 a0     sb         a0,0x1(v0)=>DAT_000da8e5                         = ??
+        00079fa0 02 00 44 a0     sb         a0,0x2(v0)=>DAT_000da8e6                         = ??
+        00079fa4 0e 00 02 3c     lui        v0,0xe
+        00079fa8 e1 a8 44 a0     sb         a0,-0x571f(v0)=>isp_day_night_switch_drop_fram   = ??
+        00079fac bc 01 02 8e     lw         v0,0x1bc(s0)
+        00079fb0 a4 40 42 8c     lw         v0,0x40a4(v0)
+        00079fb4 08 00 43 54     bnel       v0,v1,LAB_00079fd8
+        00079fb8 bc 01 04 8e     _lw        a0,0x1bc(s0)
+        00079fbc 00 ff 05 3c     lui        a1,0xff00
+        00079fc0 08 00 02 3c     lui        v0,0x8
+        00079fc4 80 80 a5 34     ori        a1,a1,0x8080
+        00079fc8 34 8b 42 24     addiu      v0,v0,-0x74cc
+        00079fcc 09 f8 40 00     jalr       v0=>system_reg_write                             undefined system_reg_write()
+        00079fd0 30 60 04 24     _li        a0,0x6030
+        00079fd4 bc 01 04 8e     lw         a0,0x1bc(s0)
+                             LAB_00079fd8                                    XREF[1]:     00079fb4(j)  
+        00079fd8 05 00 80 10     beq        a0,zero,LAB_00079ff0
+        00079fdc 25 30 00 00     _or        a2,zero,zero
+        00079fe0 00 04 05 3c     lui        a1,0x400
+        00079fe4 cc 40 82 8c     lw         v0,0x40cc(a0)
+        00079fe8 09 f8 40 00     jalr       v0
+        00079fec 03 00 a5 24     _addiu     a1,a1,0x3
+                             LAB_00079ff0                                    XREF[1]:     00079fd8(j)  
+        00079ff0 01 00 02 24     li         v0,0x1
+        00079ff4 78 01 00 ae     sw         zero,0x178(s0)
+        00079ff8 0f 00 00 10     b          LAB_0007a038
+        00079ffc b0 a9 62 ae     _sw        v0,-0x5650(s3)=>csc_switch                       = ??
+                             LAB_0007a000                                    XREF[1]:     00079f80(j)  
+        0007a000 04 00 62 14     bne        v1,v0,LAB_0007a014
+        0007a004 03 00 02 24     _li        v0,0x3
+        0007a008 00 ff 05 3c     lui        a1,0xff00
+        0007a00c 05 00 00 10     b          LAB_0007a024
+        0007a010 00 ff a5 34     _ori       a1,a1,0xff00
+                             LAB_0007a014                                    XREF[1]:     0007a000(j)  
+        0007a014 09 00 62 54     bnel       v1,v0,LAB_0007a03c
+        0007a018 34 01 02 8e     _lw        v0,0x134(s0)
+        0007a01c 00 ff 05 3c     lui        a1,0xff00
+        0007a020 80 80 a5 34     ori        a1,a1,0x8080
+                             LAB_0007a024                                    XREF[1]:     0007a00c(j)  
+        0007a024 08 00 02 3c     lui        v0,0x8
+        0007a028 34 8b 42 24     addiu      v0,v0,-0x74cc
+        0007a02c 09 f8 40 00     jalr       v0=>system_reg_write                             undefined system_reg_write()
+        0007a030 30 60 04 24     _li        a0,0x6030
+        0007a034 78 01 00 ae     sw         zero,0x178(s0)
+                             LAB_0007a038                                    XREF[1]:     00079ff8(j)  
+        0007a038 34 01 02 8e     lw         v0,0x134(s0)
+                             LAB_0007a03c                                    XREF[1]:     0007a014(j)  
+        0007a03c 01 00 03 24     li         v1,0x1
+        0007a040 0a 00 43 14     bne        v0,v1,LAB_0007a06c
+        0007a044 0b 00 13 3c     _lui       s3,0xb
+        0007a048 1c 01 03 8e     lw         v1,0x11c(s0)
+        0007a04c 08 00 62 14     bne        v1,v0,LAB_0007a070
+        0007a050 14 2c 63 8e     _lw        v1,offset first_into(s3)                         = 00000001h
+        0007a054 08 00 02 3c     lui        v0,0x8
+        0007a058 e8 9b 42 24     addiu      v0,v0,-0x6418
+        0007a05c 09 f8 40 00     jalr       v0=>mbus_to_bayer_write                          undefined mbus_to_bayer_write()
+        0007a060 f4 00 04 8e     _lw        a0,0xf4(s0)
+        0007a064 1c 01 00 ae     sw         zero,0x11c(s0)
+        0007a068 0b 00 13 3c     lui        s3,0xb
+                             LAB_0007a06c                                    XREF[1]:     0007a040(j)  
+        0007a06c 14 2c 63 8e     lw         v1,offset first_into(s3)                         = 00000001h
+                             LAB_0007a070                                    XREF[1]:     0007a04c(j)  
+        0007a070 01 00 02 24     li         v0,0x1
+        0007a074 07 00 62 14     bne        v1,v0,LAB_0007a094
+        0007a078 02 00 22 32     _andi      v0,s1,0x2
+        0007a07c 07 00 02 3c     lui        v0,0x7
+        0007a080 ac 32 42 24     addiu      v0,v0,0x32ac
+        0007a084 09 f8 40 00     jalr       v0=>tisp_top_sel                                 undefined tisp_top_sel()
+        0007a088 01 00 04 24     _li        a0,0x1
+        0007a08c 14 2c 60 ae     sw         zero,offset first_into(s3)                       = 00000001h
+        0007a090 02 00 22 32     andi       v0,s1,0x2
+                             LAB_0007a094                                    XREF[2]:     00079e50(j), 0007a074(j)  
+        0007a094 2d 00 40 10     beq        v0,zero,LAB_0007a14c
+        0007a098 04 00 22 32     _andi      v0,s1,0x4
+        0007a09c 0e 00 13 3c     lui        s3,0xe
+        0007a0a0 0b 00 14 3c     lui        s4,0xb
+        0007a0a4 50 01 15 8e     lw         s5,0x150(s0)
+        0007a0a8 0e 00 16 3c     lui        s6,0xe
+        0007a0ac ec a8 73 26     addiu      s3,s3,-0x5714
+        0007a0b0 3c 2a 94 26     addiu      s4,s4,0x2a3c
+        0007a0b4 b8 00 42 8e     lw         v0,0xb8(s2)
+                             LAB_0007a0b8                                    XREF[2]:     0007a120(j), 0007a144(j)  
+        0007a0b8 01 00 03 3c     lui        v1,0x1
+        0007a0bc 21 10 43 00     addu       v0,v0,v1
+        0007a0c0 7c 9a 43 8c     lw         v1,-0x6584(v0)
+        0007a0c4 01 00 63 30     andi       v1,v1,0x1
+        0007a0c8 20 00 60 54     bnel       v1,zero,LAB_0007a14c
+        0007a0cc 04 00 22 32     _andi      v0,s1,0x4
+        0007a0d0 74 9a 43 8c     lw         v1,-0x658c(v0)
+        0007a0d4 20 00 a3 af     sw         v1,local_38(sp)
+        0007a0d8 8c 9a 43 8c     lw         v1,-0x6574(v0)
+        0007a0dc 24 00 a3 af     sw         v1,local_34(sp)
+        0007a0e0 90 9a 42 8c     lw         v0,-0x6570(v0)
+        0007a0e4 30 00 a0 af     sw         zero,local_28(sp)
+        0007a0e8 28 00 a2 af     sw         v0,local_30(sp)
+        0007a0ec e8 a8 c2 8e     lw         v0,-0x5718(s6)=>isp_ch1_dequeue_delay_time       = ??
+        0007a0f0 0d 00 40 10     beq        v0,zero,LAB_0007a128
+        0007a0f4 2c 00 a0 af     _sw        zero,local_2c(sp)
+        0007a0f8 0e 00 02 3c     lui        v0,0xe
+        0007a0fc 25 20 60 02     or         a0=>ch1_buf,s3,zero                              = ??
+        0007a100 1c 00 06 24     li         a2,0x1c
+        0007a104 bc b0 42 24     addiu      v0,v0,-0x4f44
+        0007a108 09 f8 40 00     jalr       v0=><EXTERNAL>::memcpy                           void * memcpy(void * __dest, voi
+        0007a10c 18 00 a5 27     _addiu     a1,sp,0x18
+        0007a110 01 00 02 3c     lui        v0,0x1
+        0007a114 ec 05 42 24     addiu      v0,v0,0x5ec
+        0007a118 09 f8 40 00     jalr       v0=>private_schedule_work                        undefined private_schedule_work()
+        0007a11c 25 20 80 02     _or        a0=>ch1_frame_dequeue_delay,s4,zero
+        0007a120 e5 ff 00 10     b          LAB_0007a0b8
+        0007a124 b8 00 42 8e     _lw        v0,0xb8(s2)
+                             LAB_0007a128                                    XREF[1]:     0007a0f0(j)  
+        0007a128 00 03 05 3c     lui        a1,0x300
+        0007a12c 3c 01 a4 8e     lw         a0,0x13c(s5)
+        0007a130 02 00 02 3c     lui        v0,0x2
+        0007a134 18 00 a6 27     addiu      a2,sp,0x18
+        0007a138 dc fa 42 24     addiu      v0,v0,-0x524
+        0007a13c 09 f8 40 00     jalr       v0=>tx_isp_send_event_to_remote                  undefined tx_isp_send_event_to_r
+        0007a140 06 00 a5 24     _addiu     a1,a1,0x6
+        0007a144 dc ff 00 10     b          LAB_0007a0b8
+        0007a148 b8 00 42 8e     _lw        v0,0xb8(s2)
+                             LAB_0007a14c                                    XREF[2]:     0007a094(j), 0007a0c8(j)  
+        0007a14c 1b 00 40 50     beql       v0,zero,LAB_0007a1bc
+        0007a150 0e 00 12 3c     _lui       s2,0xe
+        0007a154 50 01 14 8e     lw         s4,0x150(s0)
+        0007a158 00 03 10 3c     lui        s0,0x300
+        0007a15c 01 00 13 3c     lui        s3,0x1
+        0007a160 06 00 10 26     addiu      s0,s0,0x6
+        0007a164 02 00 15 3c     lui        s5,0x2
+        0007a168 b8 00 42 8e     lw         v0,0xb8(s2)
+                             LAB_0007a16c                                    XREF[1]:     0007a1b4(j)  
+        0007a16c 21 10 53 00     addu       v0,v0,s3
+        0007a170 7c 9b 43 8c     lw         v1,-0x6484(v0)
+        0007a174 01 00 63 30     andi       v1,v1,0x1
+        0007a178 10 00 60 54     bnel       v1,zero,LAB_0007a1bc
+        0007a17c 0e 00 12 3c     _lui       s2,0xe
+        0007a180 74 9b 43 8c     lw         v1,-0x648c(v0)
+        0007a184 18 00 a6 27     addiu      a2,sp,0x18
+        0007a188 20 00 a3 af     sw         v1,local_38(sp)
+        0007a18c 8c 9b 43 8c     lw         v1,-0x6474(v0)
+        0007a190 25 28 00 02     or         a1,s0,zero
+        0007a194 24 00 a3 af     sw         v1,local_34(sp)
+        0007a198 90 9b 42 8c     lw         v0,-0x6470(v0)
+        0007a19c 30 00 a0 af     sw         zero,local_28(sp)
+        0007a1a0 28 00 a2 af     sw         v0,local_30(sp)
+        0007a1a4 2c 00 a0 af     sw         zero,local_2c(sp)
+        0007a1a8 dc fa a2 26     addiu      v0,s5,-0x524
+        0007a1ac 09 f8 40 00     jalr       v0=>tx_isp_send_event_to_remote                  undefined tx_isp_send_event_to_r
+        0007a1b0 00 02 84 8e     _lw        a0,0x200(s4)
+        0007a1b4 ed ff 00 10     b          LAB_0007a16c
+        0007a1b8 b8 00 42 8e     _lw        v0,0xb8(s2)
+                             LAB_0007a1bc                                    XREF[2]:     0007a14c(j), 0007a178(j)  
+        0007a1bc 08 a9 52 26     addiu      s2,s2,-0x56f8
+        0007a1c0 25 98 00 00     or         s3,zero,zero
+        0007a1c4 01 00 10 24     li         s0,0x1
+        0007a1c8 01 00 15 24     li         s5,0x1
+        0007a1cc 20 00 14 24     li         s4,0x20
+                             LAB_0007a1d0                                    XREF[1]:     0007a1fc(j)  
+        0007a1d0 04 10 75 02     sllv       v0,s5,s3
+        0007a1d4 24 10 51 00     and        v0,v0,s1
+        0007a1d8 08 00 40 10     beq        v0,zero,LAB_0007a1fc
+        0007a1dc 01 00 73 26     _addiu     s3,s3,0x1
+        0007a1e0 00 00 42 8e     lw         v0,0x0(s2)=>irq_func_cb                          = ??
+        0007a1e4 05 00 40 10     beq        v0,zero,LAB_0007a1fc
+        0007a1e8 00 00 00 00     _nop
+        0007a1ec 09 f8 40 00     jalr       v0
+        0007a1f0 00 00 00 00     _nop
+        0007a1f4 01 00 43 38     xori       v1,v0,0x1
+        0007a1f8 0b 80 43 00     movn       s0,v0,v1
+                             LAB_0007a1fc                                    XREF[2]:     0007a1d8(j), 0007a1e4(j)  
+        0007a1fc f4 ff 74 16     bne        s3,s4,LAB_0007a1d0
+        0007a200 04 00 52 26     _addiu     s2,s2,0x4
+        0007a204 25 10 00 02     or         v0,s0,zero
+                             LAB_0007a208                                    XREF[1]:     00079d0c(j)  
+        0007a208 54 00 bf 8f     lw         ra,local_4(sp)
+        0007a20c 50 00 b6 8f     lw         s6,local_8(sp)
+        0007a210 4c 00 b5 8f     lw         s5,local_c(sp)
+        0007a214 48 00 b4 8f     lw         s4,local_10(sp)
+        0007a218 44 00 b3 8f     lw         s3,local_14(sp)
+        0007a21c 40 00 b2 8f     lw         s2,local_18(sp)
+        0007a220 3c 00 b1 8f     lw         s1,local_1c(sp)
+        0007a224 38 00 b0 8f     lw         s0,local_20(sp)
+        0007a228 08 00 e0 03     jr         ra
+        0007a22c 58 00 bd 27     _addiu     sp,sp,0x58
+                             //
+                             // .init.text 
+                             // SHT_PROGBITS  [0x6a230 - 0x6a23f]
+                             // ram:0007a230-ram:0007a23f
+                             //
+                             **************************************************************
+                             *                       THUNK FUNCTION                       *
+                             **************************************************************
+                               thunk undefined init_module()
+                               Thunked-Function: tx_isp_init
+             undefined         <UNASSIGNED>   <RETURN>
+                             tx_isp_module_init                              XREF[2]:     Entry Point(*), 
+                             init_module                                                  _elfSectionHeaders::00000084(*)  
+        0007a230 02 00 19 3c     lui        t9,0x2
+        0007a234 90 de 39 27     addiu      t9,t9,-0x2170
+        0007a238 08 00 20 03     jr         t9=>tx_isp_init                                  undefined tx_isp_init()
+        0007a23c 00 00 00 00     _nop
+                             -- Flow Override: CALL_RETURN (COMPUTED_CALL_TERMINATOR)
+                             //
+                             // .exit.text 
+                             // SHT_PROGBITS  [0x6a240 - 0x6a66b]
+                             // ram:0007a240-ram:0007a66b
+                             //
+                             **************************************************************
+                             *                       THUNK FUNCTION                       *
+                             **************************************************************
+                               thunk undefined cleanup_module()
+                               Thunked-Function: tx_isp_exit
+             undefined         <UNASSIGNED>   <RETURN>
+                             tx_isp_module_exit                              XREF[2]:     Entry Point(*), 
+                             cleanup_module                                               _elfSectionHeaders::000000d4(*)  
+        0007a240 02 00 19 3c     lui        t9,0x2
+        0007a244 f0 db 39 27     addiu      t9,t9,-0x2410
+        0007a248 08 00 20 03     jr         t9=>tx_isp_exit                                  undefined tx_isp_exit()
+        0007a24c 00 00 00 00     _nop
+                             -- Flow Override: CALL_RETURN (COMPUTED_CALL_TERMINATOR)
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_vic_remove()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     0007a268(W), 
+                                                                                                   0007a2c4(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     0007a25c(W), 
+                                                                                                   0007a2c8(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     0007a260(W), 
+                                                                                                   0007a2cc(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     0007a264(W), 
+                                                                                                   0007a2d0(R)  
+                             tx_isp_vic_remove                               XREF[1]:     00083764(*)  
+        0007a250 e0 ff bd 27     addiu      sp,sp,-0x20
+        0007a254 02 00 02 3c     lui        v0,0x2
+        0007a258 58 97 42 24     addiu      v0,v0,-0x68a8
+        0007a25c 18 00 b2 af     sw         s2,local_8(sp)
+        0007a260 14 00 b1 af     sw         s1,local_c(sp)
+        0007a264 10 00 b0 af     sw         s0,local_10(sp)
+        0007a268 1c 00 bf af     sw         ra,local_4(sp)
+        0007a26c 09 f8 40 00     jalr       v0=>private_platform_get_drvdata                 undefined private_platform_get_d
+        0007a270 25 90 80 00     _or        s2,a0,zero
+        0007a274 25 80 40 00     or         s0,v0,zero
+        0007a278 05 00 40 10     beq        v0,zero,LAB_0007a290
+        0007a27c 25 88 00 00     _or        s1,zero,zero
+        0007a280 01 f0 42 2c     sltiu      v0,v0,-0xfff
+        0007a284 02 00 40 54     bnel       v0,zero,LAB_0007a290
+        0007a288 d4 00 11 8e     _lw        s1,0xd4(s0)
+        0007a28c 25 80 00 00     or         s0,zero,zero
+                             LAB_0007a290                                    XREF[2]:     0007a278(j), 0007a284(j)  
+        0007a290 02 00 02 3c     lui        v0,0x2
+        0007a294 25 28 00 00     or         a1,zero,zero
+        0007a298 44 97 42 24     addiu      v0,v0,-0x68bc
+        0007a29c 09 f8 40 00     jalr       v0=>private_platform_set_drvdata                 undefined private_platform_set_d
+        0007a2a0 25 20 40 02     _or        a0,s2,zero
+        0007a2a4 02 00 02 3c     lui        v0,0x2
+        0007a2a8 78 01 42 24     addiu      v0,v0,0x178
+        0007a2ac 09 f8 40 00     jalr       v0=>tx_isp_subdev_deinit                         undefined tx_isp_subdev_deinit()
+        0007a2b0 25 20 00 02     _or        a0,s0,zero
+        0007a2b4 02 00 02 3c     lui        v0,0x2
+        0007a2b8 64 9c 42 24     addiu      v0,v0,-0x639c
+        0007a2bc 09 f8 40 00     jalr       v0=>private_kfree                                undefined private_kfree()
+        0007a2c0 25 20 20 02     _or        a0,s1,zero
+        0007a2c4 1c 00 bf 8f     lw         ra,local_4(sp)
+        0007a2c8 18 00 b2 8f     lw         s2,local_8(sp)
+        0007a2cc 14 00 b1 8f     lw         s1,local_c(sp)
+        0007a2d0 10 00 b0 8f     lw         s0,local_10(sp)
+        0007a2d4 25 10 00 00     or         v0,zero,zero
+        0007a2d8 08 00 e0 03     jr         ra
+        0007a2dc 20 00 bd 27     _addiu     sp,sp,0x20
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_vin_remove()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     0007a2f8(W), 
+                                                                                                   0007a350(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     0007a2ec(W), 
+                                                                                                   0007a354(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     0007a2f0(W), 
+                                                                                                   0007a358(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     0007a2f4(W), 
+                                                                                                   0007a35c(R)  
+                             tx_isp_vin_remove                               XREF[1]:     00083884(*)  
+        0007a2e0 e0 ff bd 27     addiu      sp,sp,-0x20
+        0007a2e4 02 00 02 3c     lui        v0,0x2
+        0007a2e8 58 97 42 24     addiu      v0,v0,-0x68a8
+        0007a2ec 18 00 b2 af     sw         s2,local_8(sp)
+        0007a2f0 14 00 b1 af     sw         s1,local_c(sp)
+        0007a2f4 10 00 b0 af     sw         s0,local_10(sp)
+        0007a2f8 1c 00 bf af     sw         ra,local_4(sp)
+        0007a2fc 09 f8 40 00     jalr       v0=>private_platform_get_drvdata                 undefined private_platform_get_d
+        0007a300 25 90 80 00     _or        s2,a0,zero
+        0007a304 25 80 40 00     or         s0,v0,zero
+        0007a308 04 00 40 10     beq        v0,zero,LAB_0007a31c
+        0007a30c 25 88 00 00     _or        s1,zero,zero
+        0007a310 01 f0 51 2c     sltiu      s1,v0,-0xfff
+        0007a314 0a 80 11 00     movz       s0,zero,s1
+        0007a318 25 88 00 02     or         s1,s0,zero
+                             LAB_0007a31c                                    XREF[1]:     0007a308(j)  
+        0007a31c 02 00 02 3c     lui        v0,0x2
+        0007a320 25 28 00 00     or         a1,zero,zero
+        0007a324 44 97 42 24     addiu      v0,v0,-0x68bc
+        0007a328 09 f8 40 00     jalr       v0=>private_platform_set_drvdata                 undefined private_platform_set_d
+        0007a32c 25 20 40 02     _or        a0,s2,zero
+        0007a330 02 00 02 3c     lui        v0,0x2
+        0007a334 78 01 42 24     addiu      v0,v0,0x178
+        0007a338 09 f8 40 00     jalr       v0=>tx_isp_subdev_deinit                         undefined tx_isp_subdev_deinit()
+        0007a33c 25 20 20 02     _or        a0,s1,zero
+        0007a340 02 00 02 3c     lui        v0,0x2
+        0007a344 64 9c 42 24     addiu      v0,v0,-0x639c
+        0007a348 09 f8 40 00     jalr       v0=>private_kfree                                undefined private_kfree()
+        0007a34c 25 20 00 02     _or        a0,s0,zero
+        0007a350 1c 00 bf 8f     lw         ra,local_4(sp)
+        0007a354 18 00 b2 8f     lw         s2,local_8(sp)
+        0007a358 14 00 b1 8f     lw         s1,local_c(sp)
+        0007a35c 10 00 b0 8f     lw         s0,local_10(sp)
+        0007a360 25 10 00 00     or         v0,zero,zero
+        0007a364 08 00 e0 03     jr         ra
+        0007a368 20 00 bd 27     _addiu     sp,sp,0x20
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_csi_remove()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     0007a384(W), 
+                                                                                                   0007a440(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     0007a378(W), 
+                                                                                                   0007a444(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     0007a388(W), 
+                                                                                                   0007a448(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     0007a37c(W), 
+                                                                                                   0007a44c(R)  
+             undefined4        Stack[-0x14]:4 local_14                                XREF[2]:     0007a380(W), 
+                                                                                                   0007a450(R)  
+                             tx_isp_csi_remove                               XREF[1]:     000839a4(*)  
+        0007a36c d8 ff bd 27     addiu      sp,sp,-0x28
+        0007a370 02 00 02 3c     lui        v0,0x2
+        0007a374 58 97 42 24     addiu      v0,v0,-0x68a8
+        0007a378 20 00 b3 af     sw         s3,local_8(sp)
+        0007a37c 18 00 b1 af     sw         s1,local_10(sp)
+        0007a380 14 00 b0 af     sw         s0,local_14(sp)
+        0007a384 24 00 bf af     sw         ra,local_4(sp)
+        0007a388 1c 00 b2 af     sw         s2,local_c(sp)
+        0007a38c 09 f8 40 00     jalr       v0=>private_platform_get_drvdata                 undefined private_platform_get_d
+        0007a390 25 98 80 00     _or        s3,a0,zero
+        0007a394 25 88 40 00     or         s1,v0,zero
+        0007a398 06 00 40 10     beq        v0,zero,LAB_0007a3b4
+        0007a39c 25 80 00 00     _or        s0,zero,zero
+        0007a3a0 01 f0 50 2c     sltiu      s0,v0,-0xfff
+        0007a3a4 0a 88 10 00     movz       s1,zero,s0
+        0007a3a8 25 10 20 02     or         v0,s1,zero
+        0007a3ac 0a 10 10 00     movz       v0,zero,s0
+        0007a3b0 25 80 40 00     or         s0,v0,zero
+                             LAB_0007a3b4                                    XREF[1]:     0007a398(j)  
+        0007a3b4 b8 00 03 8e     lw         v1,0xb8(s0)
+        0007a3b8 fe ff 04 24     li         a0,-0x2
+        0007a3bc 10 00 62 8c     lw         v0,0x10(v1)
+        0007a3c0 38 01 12 8e     lw         s2,0x138(s0)
+        0007a3c4 24 10 44 00     and        v0,v0,a0
+        0007a3c8 10 00 62 ac     sw         v0,0x10(v1)
+        0007a3cc b8 00 03 8e     lw         v1,0xb8(s0)
+        0007a3d0 25 28 00 00     or         a1,zero,zero
+        0007a3d4 10 00 62 8c     lw         v0,0x10(v1)
+        0007a3d8 25 20 60 02     or         a0,s3,zero
+        0007a3dc 01 00 42 34     ori        v0,v0,0x1
+        0007a3e0 10 00 62 ac     sw         v0,0x10(v1)
+        0007a3e4 02 00 02 3c     lui        v0,0x2
+        0007a3e8 44 97 42 24     addiu      v0,v0,-0x68bc
+        0007a3ec 09 f8 40 00     jalr       v0=>private_platform_set_drvdata                 undefined private_platform_set_d
+        0007a3f0 00 00 00 00     _nop
+        0007a3f4 02 00 02 3c     lui        v0,0x2
+        0007a3f8 1c 98 42 24     addiu      v0,v0,-0x67e4
+        0007a3fc 09 f8 40 00     jalr       v0=>private_iounmap                              undefined private_iounmap()
+        0007a400 3c 01 04 8e     _lw        a0,0x13c(s0)
+        0007a404 04 00 45 8e     lw         a1,0x4(s2)
+        0007a408 00 00 44 8e     lw         a0,0x0(s2)
+        0007a40c 01 00 a5 24     addiu      a1,a1,0x1
+        0007a410 02 00 02 3c     lui        v0,0x2
+        0007a414 f4 97 42 24     addiu      v0,v0,-0x680c
+        0007a418 09 f8 40 00     jalr       v0=>private_release_mem_region                   undefined private_release_mem_re
+        0007a41c 23 28 a4 00     _subu      a1,a1,a0
+        0007a420 02 00 02 3c     lui        v0,0x2
+        0007a424 78 01 42 24     addiu      v0,v0,0x178
+        0007a428 09 f8 40 00     jalr       v0=>tx_isp_subdev_deinit                         undefined tx_isp_subdev_deinit()
+        0007a42c 25 20 20 02     _or        a0,s1,zero
+        0007a430 02 00 02 3c     lui        v0,0x2
+        0007a434 64 9c 42 24     addiu      v0,v0,-0x639c
+        0007a438 09 f8 40 00     jalr       v0=>private_kfree                                undefined private_kfree()
+        0007a43c 25 20 00 02     _or        a0,s0,zero
+        0007a440 24 00 bf 8f     lw         ra,local_4(sp)
+        0007a444 20 00 b3 8f     lw         s3,local_8(sp)
+        0007a448 1c 00 b2 8f     lw         s2,local_c(sp)
+        0007a44c 18 00 b1 8f     lw         s1,local_10(sp)
+        0007a450 14 00 b0 8f     lw         s0,local_14(sp)
+        0007a454 25 10 00 00     or         v0,zero,zero
+        0007a458 08 00 e0 03     jr         ra
+        0007a45c 28 00 bd 27     _addiu     sp,sp,0x28
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_fs_remove()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     0007a480(W), 
+                                                                                                   0007a4f4(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     0007a46c(W), 
+                                                                                                   0007a4f8(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     0007a470(W), 
+                                                                                                   0007a4fc(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     0007a474(W), 
+                                                                                                   0007a500(R)  
+             undefined4        Stack[-0x14]:4 local_14                                XREF[2]:     0007a478(W), 
+                                                                                                   0007a504(R)  
+             undefined4        Stack[-0x18]:4 local_18                                XREF[2]:     0007a47c(W), 
+                                                                                                   0007a508(R)  
+                             tx_isp_fs_remove                                XREF[1]:     00083b44(*)  
+        0007a460 d8 ff bd 27     addiu      sp,sp,-0x28
+        0007a464 02 00 02 3c     lui        v0,0x2
+        0007a468 58 97 42 24     addiu      v0,v0,-0x68a8
+        0007a46c 20 00 b4 af     sw         s4,local_8(sp)
+        0007a470 1c 00 b3 af     sw         s3,local_c(sp)
+        0007a474 18 00 b2 af     sw         s2,local_10(sp)
+        0007a478 14 00 b1 af     sw         s1,local_14(sp)
+        0007a47c 10 00 b0 af     sw         s0,local_18(sp)
+        0007a480 24 00 bf af     sw         ra,local_4(sp)
+        0007a484 09 f8 40 00     jalr       v0=>private_platform_get_drvdata                 undefined private_platform_get_d
+        0007a488 25 80 00 00     _or        s0,zero,zero
+        0007a48c d4 00 51 8c     lw         s1,0xd4(v0)
+        0007a490 25 90 40 00     or         s2,v0,zero
+        0007a494 ec 02 13 24     li         s3,0x2ec
+        0007a498 02 00 14 3c     lui        s4,0x2
+        0007a49c e0 00 23 8e     lw         v1,0xe0(s1)
+                             LAB_0007a4a0                                    XREF[1]:     0007a4c0(j)  
+        0007a4a0 2a 18 03 02     slt        v1,s0,v1
+        0007a4a4 08 00 60 10     beq        v1,zero,LAB_0007a4c8
+        0007a4a8 dc 00 24 8e     _lw        a0,0xdc(s1)
+        0007a4ac 02 10 13 72     mul        v0,s0,s3
+        0007a4b0 21 20 44 00     addu       a0,v0,a0
+        0007a4b4 1c ca 82 26     addiu      v0,s4,-0x35e4
+        0007a4b8 09 f8 40 00     jalr       v0=>tx_isp_frame_chan_deinit                     undefined tx_isp_frame_chan_dein
+        0007a4bc 01 00 10 26     _addiu     s0,s0,0x1
+        0007a4c0 f7 ff 00 10     b          LAB_0007a4a0
+        0007a4c4 e0 00 23 8e     _lw        v1,0xe0(s1)
+                             LAB_0007a4c8                                    XREF[1]:     0007a4a4(j)  
+        0007a4c8 02 00 10 3c     lui        s0,0x2
+        0007a4cc 03 00 80 10     beq        a0,zero,LAB_0007a4dc
+        0007a4d0 64 9c 10 26     _addiu     s0,s0,-0x639c
+        0007a4d4 09 f8 00 02     jalr       s0=>private_kfree                                undefined private_kfree()
+        0007a4d8 00 00 00 00     _nop
+                             LAB_0007a4dc                                    XREF[1]:     0007a4cc(j)  
+        0007a4dc 02 00 02 3c     lui        v0,0x2
+        0007a4e0 78 01 42 24     addiu      v0,v0,0x178
+        0007a4e4 09 f8 40 00     jalr       v0=>tx_isp_subdev_deinit                         undefined tx_isp_subdev_deinit()
+        0007a4e8 25 20 40 02     _or        a0,s2,zero
+        0007a4ec 09 f8 00 02     jalr       s0=>private_kfree                                undefined private_kfree()
+        0007a4f0 25 20 20 02     _or        a0,s1,zero
+        0007a4f4 24 00 bf 8f     lw         ra,local_4(sp)
+        0007a4f8 20 00 b4 8f     lw         s4,local_8(sp)
+        0007a4fc 1c 00 b3 8f     lw         s3,local_c(sp)
+        0007a500 18 00 b2 8f     lw         s2,local_10(sp)
+        0007a504 14 00 b1 8f     lw         s1,local_14(sp)
+        0007a508 10 00 b0 8f     lw         s0,local_18(sp)
+        0007a50c 25 10 00 00     or         v0,zero,zero
+        0007a510 08 00 e0 03     jr         ra
+        0007a514 28 00 bd 27     _addiu     sp,sp,0x28
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_remove()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     0007a524(W), 
+                                                                                                   0007a594(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     0007a528(W), 
+                                                                                                   0007a598(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     0007a52c(W), 
+                                                                                                   0007a59c(R)  
+                             tx_isp_remove                                   XREF[1]:     00083c94(*)  
+        0007a518 e0 ff bd 27     addiu      sp,sp,-0x20
+        0007a51c 02 00 02 3c     lui        v0,0x2
+        0007a520 58 97 42 24     addiu      v0,v0,-0x68a8
+        0007a524 1c 00 bf af     sw         ra,local_4(sp)
+        0007a528 18 00 b1 af     sw         s1,local_8(sp)
+        0007a52c 14 00 b0 af     sw         s0,local_c(sp)
+        0007a530 09 f8 40 00     jalr       v0=>private_platform_get_drvdata                 undefined private_platform_get_d
+        0007a534 25 88 80 00     _or        s1,a0,zero
+        0007a538 25 80 40 00     or         s0,v0,zero
+        0007a53c 0c 00 44 24     addiu      a0,v0,0xc
+        0007a540 02 00 02 3c     lui        v0,0x2
+        0007a544 14 9b 42 24     addiu      v0,v0,-0x64ec
+        0007a548 09 f8 40 00     jalr       v0=>private_misc_deregister                      undefined private_misc_deregiste
+        0007a54c 00 00 00 00     _nop
+        0007a550 02 00 02 3c     lui        v0,0x2
+        0007a554 a0 9b 42 24     addiu      v0,v0,-0x6460
+        0007a558 09 f8 40 00     jalr       v0=>private_proc_remove                          undefined private_proc_remove()
+        0007a55c 1c 01 04 8e     _lw        a0,0x11c(s0)
+        0007a560 02 00 02 3c     lui        v0,0x2
+        0007a564 80 db 42 24     addiu      v0,v0,-0x2480
+        0007a568 09 f8 40 00     jalr       v0=>tx_isp_unregister_platforms                  undefined tx_isp_unregister_plat
+        0007a56c 84 00 04 26     _addiu     a0,s0,0x84
+        0007a570 02 00 02 3c     lui        v0,0x2
+        0007a574 25 20 20 02     or         a0,s1,zero
+        0007a578 44 97 42 24     addiu      v0,v0,-0x68bc
+        0007a57c 09 f8 40 00     jalr       v0=>private_platform_set_drvdata                 undefined private_platform_set_d
+        0007a580 25 28 00 00     _or        a1,zero,zero
+        0007a584 02 00 02 3c     lui        v0,0x2
+        0007a588 64 9c 42 24     addiu      v0,v0,-0x639c
+        0007a58c 09 f8 40 00     jalr       v0=>private_kfree                                undefined private_kfree()
+        0007a590 25 20 00 02     _or        a0,s0,zero
+        0007a594 1c 00 bf 8f     lw         ra,local_4(sp)
+        0007a598 18 00 b1 8f     lw         s1,local_8(sp)
+        0007a59c 14 00 b0 8f     lw         s0,local_c(sp)
+        0007a5a0 25 10 00 00     or         v0,zero,zero
+        0007a5a4 08 00 e0 03     jr         ra
+        0007a5a8 20 00 bd 27     _addiu     sp,sp,0x20
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                               undefined tx_isp_core_remove()
+             undefined         <UNASSIGNED>   <RETURN>
+             undefined4        Stack[-0x4]:4  local_4                                 XREF[2]:     0007a5c0(W), 
+                                                                                                   0007a650(R)  
+             undefined4        Stack[-0x8]:4  local_8                                 XREF[2]:     0007a5b8(W), 
+                                                                                                   0007a654(R)  
+             undefined4        Stack[-0xc]:4  local_c                                 XREF[2]:     0007a5c8(W), 
+                                                                                                   0007a658(R)  
+             undefined4        Stack[-0x10]:4 local_10                                XREF[2]:     0007a5bc(W), 
+                                                                                                   0007a65c(R)  
+                             tx_isp_core_remove                              XREF[1]:     000b2914(*)  
+        0007a5ac e0 ff bd 27     addiu      sp,sp,-0x20
+        0007a5b0 02 00 02 3c     lui        v0,0x2
+        0007a5b4 58 97 42 24     addiu      v0,v0,-0x68a8
+        0007a5b8 18 00 b2 af     sw         s2,local_8(sp)
+        0007a5bc 10 00 b0 af     sw         s0,local_10(sp)
+        0007a5c0 1c 00 bf af     sw         ra,local_4(sp)
+        0007a5c4 09 f8 40 00     jalr       v0=>private_platform_get_drvdata                 undefined private_platform_get_d
+        0007a5c8 14 00 b1 af     _sw        s1,local_c(sp)
+        0007a5cc d4 00 50 8c     lw         s0,0xd4(v0)
+        0007a5d0 bc 01 04 8e     lw         a0,0x1bc(s0)
+        0007a5d4 06 00 80 10     beq        a0,zero,LAB_0007a5f0
+        0007a5d8 25 90 40 00     _or        s2,v0,zero
+        0007a5dc 02 00 02 3c     lui        v0,0x2
+        0007a5e0 e0 90 42 24     addiu      v0,v0,-0x6f20
+        0007a5e4 09 f8 40 00     jalr       v0=>isp_core_tuning_deinit                       undefined isp_core_tuning_deinit()
+        0007a5e8 00 00 00 00     _nop
+        0007a5ec bc 01 00 ae     sw         zero,0x1bc(s0)
+                             LAB_0007a5f0                                    XREF[1]:     0007a5d4(j)  
+        0007a5f0 e8 00 02 8e     lw         v0,0xe8(s0)
+        0007a5f4 02 00 42 28     slti       v0,v0,0x2
+        0007a5f8 04 00 40 14     bne        v0,zero,LAB_0007a60c
+        0007a5fc 08 00 02 3c     _lui       v0,0x8
+        0007a600 68 96 42 24     addiu      v0,v0,-0x6998
+        0007a604 09 f8 40 00     jalr       v0=>ispcore_slake_module                         undefined ispcore_slake_module()
+        0007a608 25 20 00 02     _or        a0,s0,zero
+                             LAB_0007a60c                                    XREF[1]:     0007a5f8(j)  
+        0007a60c 02 00 11 3c     lui        s1,0x2
+        0007a610 64 9c 31 26     addiu      s1,s1,-0x639c
+        0007a614 09 f8 20 02     jalr       s1=>private_kfree                                undefined private_kfree()
+        0007a618 50 01 04 8e     _lw        a0,0x150(s0)
+        0007a61c 01 00 02 24     li         v0,0x1
+        0007a620 58 01 02 ae     sw         v0,0x158(s0)
+        0007a624 02 00 02 3c     lui        v0,0x2
+        0007a628 25 20 40 02     or         a0,s2,zero
+        0007a62c 78 01 42 24     addiu      v0,v0,0x178
+        0007a630 09 f8 40 00     jalr       v0=>tx_isp_subdev_deinit                         undefined tx_isp_subdev_deinit()
+        0007a634 50 01 00 ae     _sw        zero,0x150(s0)
+        0007a638 02 00 02 3c     lui        v0,0x2
+        0007a63c c0 53 42 24     addiu      v0,v0,0x53c0
+        0007a640 09 f8 40 00     jalr       v0=>tisp_deinit                                  undefined tisp_deinit()
+        0007a644 00 00 00 00     _nop
+        0007a648 09 f8 20 02     jalr       s1=>private_kfree                                undefined private_kfree()
+        0007a64c 25 20 00 02     _or        a0,s0,zero
+        0007a650 1c 00 bf 8f     lw         ra,local_4(sp)
+        0007a654 18 00 b2 8f     lw         s2,local_8(sp)
+        0007a658 14 00 b1 8f     lw         s1,local_c(sp)
+        0007a65c 10 00 b0 8f     lw         s0,local_10(sp)
+        0007a660 25 10 00 00     or         v0,zero,zero
+        0007a664 08 00 e0 03     jr         ra
+        0007a668 20 00 bd 27     _addiu     sp,sp,0x20
+                             //
+                             // .MIPS.abiflags 
+                             // SHT_MIPS_ABIFLAGS  [0x6a670 - 0x6a687]
+                             // ram:0007a670-ram:0007a687
+                             //
+                             DAT_0007a670                                    XREF[1]:     _elfSectionHeaders::00000174(*)  
+        0007a670 00              ??         00h
+        0007a671 00              ??         00h
+        0007a672 20              ??         20h     
+        0007a673 01              ??         01h
+        0007a674 01              ??         01h
+        0007a675 00              ??         00h
+        0007a676 00              ??         00h
+        0007a677 03              ??         03h
+        0007a678 00              ??         00h
+        0007a679 00              ??         00h
+        0007a67a 00              ??         00h
+        0007a67b 00              ??         00h
+        0007a67c 00              ??         00h
+        0007a67d 00              ??         00h
+        0007a67e 00              ??         00h
+        0007a67f 00              ??         00h
+        0007a680 01              ??         01h
+        0007a681 00              ??         00h
+        0007a682 00              ??         00h
+        0007a683 00              ??         00h
+        0007a684 00              ??         00h
+        0007a685 00              ??         00h
+        0007a686 00              ??         00h
+        0007a687 00              ??         00h
+                             //
+                             // .reginfo 
+                             // SHT_MIPS_REGINFO  [0x6a688 - 0x6a69f]
+                             // ram:0007a688-ram:0007a69f
+                             //
+                             Elf32_RegInfo_MIPS_0007a688                     XREF[1]:     _elfSectionHeaders::0000019c(*)  
+        0007a688 fc 00 03        Elf32_Re
+                 b2 00 00 
+                 00 00 00 
+                             //
+                             // .rodata 
+                             // SHT_PROGBITS  [0x6a6a0 - 0x6e37f]
+                             // ram:0007a6a0-ram:0007e37f
+                             //
+                             __param_str_isp_memopt                          XREF[1]:     _elfSectionHeaders::000001c4(*)  
+        0007a6a0 69 73 70        ds         "isp_memopt"
+                 5f 6d 65 
+                 6d 6f 70 
+                             __param_str_isp_day_night_switch_drop_frame_num
+        0007a6ac 69 73 70        ds         "isp_day_night_switch_drop_frame_num"
+                 5f 64 61 
+                 79 5f 6e 
+                             __param_str_isp_ch1_dequeue_delay_time
+        0007a6d0 69 73 70        ds         "isp_ch1_dequeue_delay_time"
+                 5f 63 68 
+                 31 5f 64 
+                             __param_str_isp_ch0_pre_dequeue_valid_lines
+        0007a6ec 69 73 70        ds         "isp_ch0_pre_dequeue_valid_lines"
+                 5f 63 68 
+                 30 5f 70 
+                             __param_str_isp_ch0_pre_dequeue_interrupt_proc
+        0007a70c 69 73 70        ds         "isp_ch0_pre_dequeue_interrupt_process"
+                 5f 63 68 
+                 30 5f 70 
+                             __param_str_isp_ch0_pre_dequeue_time
+        0007a734 69 73 70        ds         "isp_ch0_pre_dequeue_time"
+                 5f 63 68 
+                 30 5f 70 
+                             __param_str_isp_clk
+        0007a750 69 73 70        undefined8 006B6C635F707369h
+                 5f 63 6c 
+                 6b 00
+                             __param_str_print_level
+        0007a758 70 72 69        ds         "print_level"
+                 6e 74 5f 
+                 6c 65 76 
+                             func_ptr_table_0007a764
+        0007a764 00              ??         00h
+        0007a765 00              ??         00h
+        0007a766 00              ??         00h
+        0007a767 00              ??         00h
+        0007a768 00              ??         00h
+        0007a769 00              ??         00h
+        0007a76a 00              ??         00h
+        0007a76b 00              ??         00h
+        0007a76c 00              ??         00h
+        0007a76d 00              ??         00h
+        0007a76e 00              ??         00h
+        0007a76f 00              ??         00h
+                             switchD_00011694::switchdataD_0007a770          XREF[1]:     vic_sensor_ops_ioctl:00011690(*)  
+        0007a770 a8 16 01 00     addr       switchD_00011694::caseD_200000c
+        0007a774 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a778 9c 16 01 00     addr       switchD_00011694::caseD_200000e
+        0007a77c a8 16 01 00     addr       switchD_00011694::caseD_200000c
+        0007a780 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a784 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a788 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a78c c0 16 01 00     addr       switchD_00011694::caseD_2000013
+        0007a790 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a794 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a798 7c 16 01 00     addr       switchD_00011694::caseD_200000d
+        0007a79c dc 16 01 00     addr       switchD_00011694::caseD_2000017
+        0007a7a0 a4 17 01 00     addr       switchD_00011694::caseD_2000018
+                             __func__.32770                                  XREF[7]:     tx_isp_vic_start:00010e1c(*), 
+                                                                                          tx_isp_vic_start:00010e58(*), 
+                                                                                          tx_isp_vic_start:00010e80(*), 
+                                                                                          tx_isp_vic_start:00010ec8(*), 
+                                                                                          tx_isp_vic_start:0001101c(*), 
+                                                                                          tx_isp_vic_start:00011058(*), 
+                                                                                          tx_isp_vic_start:0001106c(*)  
+        0007a7a4 74 78 5f        ds         "tx_isp_vic_start"
+                 69 73 70 
+                 5f 76 69 
+                             __func__.32988                                  XREF[2]:     ispvic_frame_channel_s_stream:00
+                                                                                          ispvic_frame_channel_s_stream:00
+        0007a7b8 69 73 70        ds         "ispvic_frame_channel_s_stream"
+                 76 69 63 
+                 5f 66 72 
+                             __func__.32883                                  XREF[1]:     vic_mdma_irq_function:00012b68(*
+        0007a7d8 76 69 63        ds         "vic_mdma_irq_function"
+                 5f 6d 64 
+                 6d 61 5f 
+                             __func__.32862                                  XREF[1]:     vic_framedone_irq_function:00012
+        0007a7f0 76 69 63        ds         "vic_framedone_irq_function"
+                 5f 66 72 
+                 61 6d 65 
+                             func_ptr_table_0007a80c
+        0007a80c 00              ??         00h
+        0007a80d 00              ??         00h
+        0007a80e 00              ??         00h
+        0007a80f 00              ??         00h
+                             switchD_00014728::switchdataD_0007a810          XREF[1]:     subdev_sensor_ops_ioctl:00014724
+        0007a810 74 47 01 00     addr       switchD_00014728::caseD_2000000
+        0007a814 84 47 01 00     addr       switchD_00014728::caseD_2000001
+        0007a818 30 47 01 00     addr       switchD_00014728::caseD_2000002
+        0007a81c 44 47 01 00     addr       switchD_00014728::caseD_2000003
+        0007a820 54 47 01 00     addr       switchD_00014728::caseD_2000004
+        0007a824 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a828 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a82c 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a830 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a834 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a838 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a83c 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a840 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a844 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a848 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a84c 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a850 08 48 01 00     addr       switchD_00014728::caseD_2000005
+        0007a854 94 47 01 00     addr       switchD_00014728::caseD_2000011
+        0007a858 d4 47 01 00     addr       switchD_00014728::caseD_2000012
+                             __func__.31460                                  XREF[1]:     subdev_sensor_ops_ioctl:00014abc
+        0007a85c 73 75 62        ds         "subdev_sensor_ops_release_sensor"
+                 64 65 76 
+                 5f 73 65 
+                             __func__.31438                                  XREF[1]:     subdev_sensor_ops_ioctl:00014958
+        0007a880 73 75 62        ds         "subdev_sensor_ops_register_sensor"
+                 64 65 76 
+                 5f 73 65 
+                             __func__.31472                                  XREF[1]:     subdev_sensor_ops_release_all_se
+        0007a8a4 73 75 62        ds         "subdev_sensor_ops_release_all_sensor"
+                 64 65 76 
+                 5f 73 65 
+                             __func__.31657                                  XREF[2]:     video_input_cmd_set:00013f68(*), 
+                                                                                          video_input_cmd_set:000140cc(*)  
+        0007a8cc 76 69 64        ds         "video_input_cmd_set"
+                 65 6f 5f 
+                 69 6e 70 
+                             __func__.31553                                  XREF[2]:     tx_isp_csi_probe:00014d30(*), 
+                                                                                          tx_isp_csi_probe:00014d88(*)  
+        0007a8e0 74 78 5f        ds         "tx_isp_csi_probe"
+                 69 73 70 
+                 5f 63 73 
+                             func_ptr_table_0007a904 (0007a8f4+16)           XREF[1]:     csi_set_on_lanes:00015874(*)  
+                             __func__.31455
+        0007a8f4 63 73 69        ds         "csi_set_on_lanes"
+                 5f 73 65 
+                 74 5f 6f 
+        0007a908 00              ??         00h
+        0007a909 00              ??         00h
+        0007a90a 00              ??         00h
+        0007a90b 00              ??         00h
+        0007a90c 00              ??         00h
+        0007a90d 00              ??         00h
+        0007a90e 00              ??         00h
+        0007a90f 00              ??         00h
+                             switchD_00016cac::switchdataD_0007a910          XREF[1]:     apical_isp_core_ops_s_ctrl:00016
+        0007a910 20 6d 01 00     addr       switchD_00016cac::caseD_0
+        0007a914 28 6d 01 00     addr       switchD_00016cac::caseD_1
+        0007a918 b4 6c 01 00     addr       switchD_00016cac::caseD_2
+        0007a91c bc 6c 01 00     addr       switchD_00016cac::caseD_3
+        0007a920 c4 6c 01 00     addr       switchD_00016cac::caseD_4
+        0007a924 cc 6c 01 00     addr       switchD_00016cac::caseD_5
+        0007a928 d4 6c 01 00     addr       switchD_00016cac::caseD_6
+        0007a92c dc 6c 01 00     addr       switchD_00016cac::caseD_7
+        0007a930 e4 6c 01 00     addr       switchD_00016cac::caseD_8
+        0007a934 ec 6c 01 00     addr       switchD_00016cac::caseD_9
+                             switchD_000187a8::switchdataD_0007a938          XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007a938 b0 87 01 00     addr       switchD_000187a8::caseD_0
+        0007a93c b8 87 01 00     addr       switchD_000187a8::caseD_1
+        0007a940 c0 87 01 00     addr       switchD_000187a8::caseD_2
+        0007a944 c8 87 01 00     addr       switchD_000187a8::caseD_3
+        0007a948 d0 87 01 00     addr       switchD_000187a8::caseD_4
+        0007a94c d8 87 01 00     addr       switchD_000187a8::caseD_5
+        0007a950 e0 87 01 00     addr       switchD_000187a8::caseD_6
+        0007a954 e8 87 01 00     addr       switchD_000187a8::caseD_7
+        0007a958 f0 87 01 00     addr       switchD_000187a8::caseD_8
+        0007a95c f8 87 01 00     addr       switchD_000187a8::caseD_9
+                             CSWTCH.84                                       XREF[1]:     apical_isp_core_ops_s_ctrl:00016
+        0007a960 00 32 3c        undefined3 32003Ch
+        0007a963 00              ??         00h
+                             __func__.34540                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007a964 74 69 7a        ds         "tiziano_isp_awb_ct_trend_g_attr"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34526
+        0007a984 74 69 7a        ds         "tiziano_isp_awb_cluster_g_attr"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34466                                  XREF[1]:     apical_isp_af_weight_g_attr.isra
+        0007a9a4 61 70 69        ds         "apical_isp_af_weight_g_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34665                                  XREF[1]:     apical_isp_ae_zone_weight_g_attr
+        0007a9c0 61 70 69        ds         "apical_isp_ae_zone_weight_g_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34904                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007a9e4 61 70 69        ds         "apical_isp_ae_it_max_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34838                                  XREF[1]:     apical_isp_ev_g_attr.isra.75:000
+        0007aa00 61 70 69        ds         "apical_isp_ev_g_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34592                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007aa18 74 69 7a        ds         "tiziano_isp_ae_target_list_g_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34796                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007aa3c 74 69 7a        ds         "tiziano_isp_backlight_comp_g_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34781                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007aa60 61 70 69        ds         "apical_isp_hi_light_depress_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34766                                  XREF[1]:     apical_isp_max_dgain_g_ctrl.isra
+        0007aa84 61 70 69        ds         "apical_isp_max_dgain_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34753                                  XREF[1]:     apical_isp_max_again_g_ctrl.isra
+        0007aaa0 61 70 69        ds         "apical_isp_max_again_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34727                                  XREF[2]:     apical_isp_core_ops_g_ctrl:00018
+                                                                                          apical_isp_core_ops_g_ctrl:00018
+        0007aabc 61 70 69        ds         "apical_isp_wb_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34431                                  XREF[1]:     apical_isp_ae_g_roi.isra.77:0001
+        0007aad4 61 70 69        ds         "apical_isp_ae_g_roi"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34387                                  XREF[1]:     apical_isp_gamma_g_attr.isra.76:
+        0007aae8 61 70 69        ds         "apical_isp_gamma_g_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34133
+        0007ab00 61 70 69        ds         "apical_isp_g_totalgain"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34804                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007ab18 61 70 69        ds         "apical_isp_af_metric_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34934                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007ab34 61 70 69        ds         "apical_isp_drc_strength_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34919                                  XREF[1]:     apical_isp_core_ops_g_ctrl:00018
+        0007ab54 61 70 69        ds         "apical_isp_dpc_strength_g_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.35026                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00017
+        0007ab74 74 69 7a        ds         "tiziano_isp_ae_manual_attr_s_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34997                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00017
+        0007ab98 74 69 7a        ds         "tiziano_isp_awb_ct_s_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.35009                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00017
+        0007abb4 74 69 7a        ds         "tiziano_isp_ccm_attr_s_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34533                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00017
+        0007abd0 74 69 7a        ds         "tiziano_isp_awb_ct_trend_s_attr"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34985                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00017
+        0007abf0 74 69 7a        ds         "tiziano_isp_wb_algo_s_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34449                                  XREF[2]:     apical_isp_af_weight_s_attr.isra
+                                                                                          apical_isp_af_weight_s_attr.isra
+        0007ac0c 61 70 69        ds         "apical_isp_af_weight_s_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34553                                  XREF[1]:     apical_isp_af_hist_s_attr.isra.5
+        0007ac28 61 70 69        ds         "apical_isp_af_hist_s_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34648                                  XREF[2]:     apical_isp_ae_zone_weight_s_attr
+                                                                                          apical_isp_ae_zone_weight_s_attr
+        0007ac44 61 70 69        ds         "apical_isp_ae_zone_weight_s_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34897
+        0007ac68 61 70 69        ds         "apical_isp_ae_it_max_s_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34585                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00016
+        0007ac84 74 69 7a        ds         "tiziano_isp_ae_target_list_s_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34789
+        0007aca8 74 69 7a        ds         "tiziano_isp_backlight_comp_s_ctrl"
+                 69 61 6e 
+                 6f 5f 69 
+                             __func__.34774
+        0007accc 61 70 69        ds         "apical_isp_hi_light_depress_s_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34692                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00016
+        0007acf0 61 70 69        ds         "apical_isp_wb_s_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34414                                  XREF[2]:     apical_isp_ae_s_roi.isra.36:0001
+                                                                                          apical_isp_ae_s_roi.isra.36:0001
+        0007ad08 61 70 69        ds         "apical_isp_ae_s_roi"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34622                                  XREF[3]:     apical_isp_expr_s_ctrl.isra.35:0
+                                                                                          apical_isp_expr_s_ctrl.isra.35:0
+                                                                                          apical_isp_expr_s_ctrl.isra.35:0
+        0007ad1c 61 70 69        ds         "apical_isp_expr_s_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34403                                  XREF[1]:     apical_isp_gamma_s_attr.isra.34:
+        0007ad34 61 70 69        ds         "apical_isp_gamma_s_attr"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34235                                  XREF[1]:     apical_isp_core_ops_s_ctrl:00016
+        0007ad4c 61 70 69        ds         "apical_isp_flicker_s_control"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34927
+        0007ad6c 61 70 69        ds         "apical_isp_drc_strength_s_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             __func__.34912
+        0007ad8c 61 70 69        ds         "apical_isp_dpc_strength_s_ctrl"
+                 63 61 6c 
+                 5f 69 73 
+                             func_ptr_table_0007adc4 (0007adac+24)           XREF[1]:     isp_core_tunning_release:0001593
+                             __func__.35366
+        0007adac 69 73 70        ds         "isp_core_tunning_release"
+                 5f 63 6f 
+                 72 65 5f 
+        0007adc8 00              ??         00h
+        0007adc9 00              ??         00h
+        0007adca 00              ??         00h
+        0007adcb 00              ??         00h
+        0007adcc 00              ??         00h
+        0007adcd 00              ??         00h
+        0007adce 00              ??         00h
+        0007adcf 00              ??         00h
+                             __pow2_lut                                      XREF[3]:     private_math_exp2:0001915c(*), 
+                                                                                          private_math_exp2:00019188(*), 
+                                                                                          private_math_exp2:00019190(*)  
+        0007add0 00 00 00        undefine
+                 40 4c c3 
+                 66 41 b4 
+                             func_ptr_table_0007ae54
+        0007ae54 00              ??         00h
+        0007ae55 00              ??         00h
+        0007ae56 00              ??         00h
+        0007ae57 00              ??         00h
+        0007ae58 00              ??         00h
+        0007ae59 00              ??         00h
+        0007ae5a 00              ??         00h
+        0007ae5b 00              ??         00h
+        0007ae5c 00              ??         00h
+        0007ae5d 00              ??         00h
+        0007ae5e 00              ??         00h
+        0007ae5f 00              ??         00h
+                             __func__.31401                                  XREF[2]:     tx_isp_request_irq:0001a6ec(*), 
+                                                                                          tx_isp_request_irq:0001a788(*)  
+        0007ae60 74 78 5f        ds         "tx_isp_request_irq"
+                 69 73 70 
+                 5f 72 65 
+                             func_ptr_table_0007ae74
+        0007ae74 00              ??         00h
+        0007ae75 00              ??         00h
+        0007ae76 00              ??         00h
+        0007ae77 00              ??         00h
+        0007ae78 00              ??         00h
+        0007ae79 00              ??         00h
+        0007ae7a 00              ??         00h
+        0007ae7b 00              ??         00h
+        0007ae7c 00              ??         00h
+        0007ae7d 00              ??         00h
+        0007ae7e 00              ??         00h
+        0007ae7f 00              ??         00h
+                             __func__.35257                                  XREF[2]:     frame_chan_event:0001b1a8(*), 
+                                                                                          frame_chan_event:0001b710(*)  
+        0007ae80 66 72 61        ds         "frame_channel_buffer_done"
+                 6d 65 5f 
+                 63 68 61 
+        0007ae9c 00              ??         00h
+        0007ae9d 00              ??         00h
+        0007ae9e 00              ??         00h
+        0007ae9f 00              ??         00h
+                             __func__.34038
+        0007aea0 74 78 5f        ds         "tx_isp_get_frame_drop"
+                 69 73 70 
+                 5f 67 65 
+                             __func__.34024
+        0007aeb8 74 78 5f        ds         "tx_isp_set_frame_drop"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.34016
+        0007aed0 74 78 5f        ds         "tx_isp_get_default_bin_path"
+                 69 73 70 
+                 5f 67 65 
+                             __func__.34002
+        0007aeec 74 78 5f        ds         "tx_isp_set_default_bin_path"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33982
+        0007af08 74 78 5f        ds         "tx_isp_set_awb_algo_close"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33966
+        0007af24 74 78 5f        ds         "tx_isp_set_awb_algo_handle"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33960
+        0007af40 74 78 5f        ds         "tx_isp_get_awb_algo_handle"
+                 69 73 70 
+                 5f 67 65 
+                             __func__.33938                                  XREF[1]:     tx_isp_unlocked_ioctl:0001f5c0(*
+        0007af5c 74 78 5f        ds         "tx_isp_set_ae_algo_close"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33932                                  XREF[2]:     tx_isp_unlocked_ioctl:0001f44c(*
+                                                                                          tx_isp_unlocked_ioctl:0001f594(*
+        0007af78 74 78 5f        ds         "tx_isp_set_ae_algo_open"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33919
+        0007af90 74 78 5f        ds         "tx_isp_set_ae_algo_handle"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33913                                  XREF[1]:     tx_isp_get_ae_algo_handle.isra.1
+        0007afac 74 78 5f        ds         "tx_isp_get_ae_algo_handle"
+                 69 73 70 
+                 5f 67 65 
+                             __func__.33894
+        0007afc8 74 78 5f        ds         "tx_isp_set_gpio_sta"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33882
+        0007afdc 74 78 5f        ds         "tx_isp_set_gpio_init"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33840                                  XREF[2]:     tx_isp_unlocked_ioctl:0001f128(*
+                                                                                          tx_isp_unlocked_ioctl:0001f164(*
+        0007aff4 74 78 5f        ds         "tx_isp_wdr_get_buf"
+                 69 73 70 
+                 5f 77 64 
+                             __func__.33828                                  XREF[4]:     tx_isp_unlocked_ioctl:0001ef70(*
+                                                                                          tx_isp_unlocked_ioctl:0001efb0(*
+                                                                                          tx_isp_unlocked_ioctl:0001f02c(*
+                                                                                          tx_isp_unlocked_ioctl:0001f058(*
+        0007b008 74 78 5f        ds         "tx_isp_wdr_set_buf"
+                 69 73 70 
+                 5f 77 64 
+                             __func__.33813                                  XREF[1]:     tx_isp_unlocked_ioctl:0001ef38(*
+        0007b01c 74 78 5f        ds         "tx_isp_get_buf"
+                 69 73 70 
+                 5f 67 65 
+                             __func__.33797                                  XREF[1]:     tx_isp_unlocked_ioctl:0001ee5c(*
+        0007b02c 74 78 5f        ds         "tx_isp_set_buf"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33772
+        0007b03c 74 78 5f        ds         "tx_isp_sensor_g_register"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33756
+        0007b058 74 78 5f        ds         "tx_isp_sensor_s_register"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33614
+        0007b074 74 78 5f        ds         "tx_isp_video_link_setup"
+                 69 73 70 
+                 5f 76 69 
+                             __func__.33704
+        0007b08c 74 78 5f        ds         "tx_isp_sensor_release_sensor"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33689
+        0007b0ac 74 78 5f        ds         "tx_isp_sensor_register_sensor"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33674                                  XREF[1]:     tx_isp_unlocked_ioctl:0001e5f0(*
+        0007b0cc 74 78 5f        ds         "tx_isp_sensor_set_input"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33665                                  XREF[1]:     tx_isp_unlocked_ioctl:0001e524(*
+        0007b0e4 74 78 5f        ds         "tx_isp_sensor_get_input"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.33644                                  XREF[1]:     tx_isp_unlocked_ioctl:0001e480(*
+        0007b0fc 74 78 5f        ds         "tx_isp_sensor_enum_input"
+                 69 73 70 
+                 5f 73 65 
+                             __func__.34201                                  XREF[1]:     isp_subdev_init_clks:0001da1c(*)  
+        0007b118 69 73 70        ds         "isp_subdev_init_clks"
+                 5f 73 75 
+                 62 64 65 
+                             __func__.34251                                  XREF[3]:     tx_isp_subdev_init:0001fc24(*), 
+                                                                                          tx_isp_subdev_init:000200e0(*), 
+                                                                                          tx_isp_subdev_init:00020130(*)  
+        0007b130 74 78 5f        ds         "tx_isp_subdev_init"
+                 69 73 70 
+                 5f 73 75 
+                             __func__.34189                                  XREF[1]:     tx_isp_module_init:0001fb2c(*)  
+        0007b144 74 78 5f        ds         "tx_isp_module_init"
+                 69 73 70 
+                 5f 6d 6f 
+                             isp_drivers                                     XREF[2]:     tx_isp_probe:00020598(*), 
+                                                                                          tx_isp_probe:00020610(R)  
+        0007b158 80 38 08 00     addr       tx_isp_vin_driver                                = 00013c20
+                             PTR_tx_isp_csi_driver_0007b15c                  XREF[1]:     tx_isp_probe:00020610(R)  
+        0007b15c a0 39 08 00     addr       tx_isp_csi_driver
+        0007b160 60 37 08 00     addr       tx_isp_vic_driver
+        0007b164 10 29 0b 00     addr       tx_isp_core_driver
+        0007b168 40 3b 08 00     addr       tx_isp_fs_driver
+                             configs[4]                                      XREF[2,2]:   tx_isp_video_link_destroy.isra.5
+                             configs                                                      tx_isp_unlocked_ioctl:0001e7b8(*
+                                                                                          tx_isp_video_link_destroy.isra.5
+                                                                                          tx_isp_unlocked_ioctl:0001e7b4(*
+        0007b16c 64 3d 08        undefine
+                 00 03 00 
+                 00 00 50 
+        0007b17c 00              ??         00h
+        0007b17d 00              ??         00h
+        0007b17e 00              ??         00h
+        0007b17f 00              ??         00h
+                             __func__.28718                                  XREF[2]:     fix_point_intp:00021624(*), 
+                                                                                          fix_point_intp:00021654(*)  
+        0007b180 66 69 78        ds         "fix_point_intp"
+                 5f 70 6f 
+                 69 6e 74 
+                             __pow2_lut                                      XREF[3]:     tisp_math_exp2:00020cec(*), 
+                                                                                          tisp_math_exp2:00020d18(*), 
+                                                                                          tisp_math_exp2:00020d20(*)  
+        0007b190 00 00 00        undefine
+                 40 4c c3 
+                 66 41 b4 
+                             func_ptr_table_0007b214
+        0007b214 00              ??         00h
+        0007b215 00              ??         00h
+        0007b216 00              ??         00h
+        0007b217 00              ??         00h
+        0007b218 00              ??         00h
+        0007b219 00              ??         00h
+        0007b21a 00              ??         00h
+        0007b21b 00              ??         00h
+        0007b21c 00              ??         00h
+        0007b21d 00              ??         00h
+        0007b21e 00              ??         00h
+        0007b21f 00              ??         00h
+                             __func__.36108                                  XREF[1]:     tisp_netlink_init:00021dd8(*)  
+        0007b220 74 69 73        ds         "tisp_netlink_init"
+                 70 5f 6e 
+                 65 74 6c 
+                             func_ptr_table_0007b244 (0007b234+16)           XREF[2]:     netlink_send_msg:00021c98(*), 
+                             __func__.36095                                               netlink_send_msg:00021cf0(*)  
+        0007b234 6e 65 74        ds         "netlink_send_msg"
+                 6c 69 6e 
+                 6b 5f 73 
+        0007b248 00              ??         00h
+        0007b249 00              ??         00h
+        0007b24a 00              ??         00h
+        0007b24b 00              ??         00h
+        0007b24c 00              ??         00h
+        0007b24d 00              ??         00h
+        0007b24e 00              ??         00h
+        0007b24f 00              ??         00h
+                             switchD_00024624::switchdataD_0007b250          XREF[1]:     tisp_code_tuning_ioctl:00024620(
+        0007b250 2c 46 02 00     addr       switchD_00024624::caseD_20007400
+        0007b254 e4 48 02 00     addr       switchD_00024624::caseD_20007401
+        0007b258 c4 4d 02 00     addr       switchD_00024624::caseD_20007402
+        0007b25c 30 4c 02 00     addr       switchD_00024624::caseD_20007403
+        0007b260 a8 4c 02 00     addr       switchD_00024624::caseD_20007404
+        0007b264 c4 4d 02 00     addr       switchD_00024624::caseD_20007402
+        0007b268 18 4d 02 00     addr       switchD_00024624::caseD_20007406
+        0007b26c 2c 4d 02 00     addr       switchD_00024624::caseD_20007407
+        0007b270 10 4b 02 00     addr       switchD_00024624::caseD_20007408
+        0007b274 bc 4b 02 00     addr       switchD_00024624::caseD_20007409
+                             switchD_000246c8::switchdataD_0007b278          XREF[1]:     tisp_code_tuning_ioctl:000246c4(
+        0007b278 d0 46 02 00     addr       switchD_000246c8::caseD_0
+        0007b27c e4 46 02 00     addr       switchD_000246c8::caseD_1
+        0007b280 f8 46 02 00     addr       switchD_000246c8::caseD_2
+        0007b284 0c 47 02 00     addr       switchD_000246c8::caseD_3
+        0007b288 20 47 02 00     addr       switchD_000246c8::caseD_4
+        0007b28c 34 47 02 00     addr       switchD_000246c8::caseD_5
+        0007b290 48 47 02 00     addr       switchD_000246c8::caseD_6
+        0007b294 5c 47 02 00     addr       switchD_000246c8::caseD_7
+        0007b298 70 47 02 00     addr       switchD_000246c8::caseD_8
+        0007b29c 84 47 02 00     addr       switchD_000246c8::caseD_9
+        0007b2a0 98 47 02 00     addr       switchD_000246c8::caseD_a
+        0007b2a4 ac 47 02 00     addr       switchD_000246c8::caseD_b
+        0007b2a8 c0 47 02 00     addr       switchD_000246c8::caseD_c
+        0007b2ac d4 47 02 00     addr       switchD_000246c8::caseD_d
+        0007b2b0 e8 47 02 00     addr       switchD_000246c8::caseD_e
+        0007b2b4 fc 47 02 00     addr       switchD_000246c8::caseD_f
+        0007b2b8 10 48 02 00     addr       switchD_000246c8::caseD_10
+        0007b2bc 24 48 02 00     addr       switchD_000246c8::caseD_11
+        0007b2c0 38 48 02 00     addr       switchD_000246c8::caseD_12
+        0007b2c4 4c 48 02 00     addr       switchD_000246c8::caseD_13
+        0007b2c8 60 48 02 00     addr       switchD_000246c8::caseD_14
+        0007b2cc 74 48 02 00     addr       switchD_000246c8::caseD_15
+        0007b2d0 bc 48 02 00     addr       switchD_000246c8::caseD_16
+        0007b2d4 88 48 02 00     addr       switchD_000246c8::caseD_17
+        0007b2d8 a8 48 02 00     addr       switchD_000246c8::caseD_18
+                             switchD_00024964::switchdataD_0007b2dc          XREF[1]:     tisp_code_tuning_ioctl:00024960(
+        0007b2dc 78 49 02 00     addr       switchD_00024964::caseD_1
+        0007b2e0 88 49 02 00     addr       switchD_00024964::caseD_2
+        0007b2e4 c4 49 02 00     addr       switchD_00024964::caseD_3
+        0007b2e8 d4 49 02 00     addr       switchD_00024964::caseD_4
+        0007b2ec a4 49 02 00     addr       switchD_00024964::caseD_5
+        0007b2f0 b4 49 02 00     addr       switchD_00024964::caseD_6
+        0007b2f4 e4 49 02 00     addr       switchD_00024964::caseD_7
+        0007b2f8 f4 49 02 00     addr       switchD_00024964::caseD_8
+        0007b2fc 04 4a 02 00     addr       switchD_00024964::caseD_9
+        0007b300 14 4a 02 00     addr       switchD_00024964::caseD_a
+        0007b304 24 4a 02 00     addr       switchD_00024964::caseD_b
+        0007b308 34 4a 02 00     addr       switchD_00024964::caseD_c
+        0007b30c 44 4a 02 00     addr       switchD_00024964::caseD_d
+        0007b310 54 4a 02 00     addr       switchD_00024964::caseD_e
+        0007b314 64 4a 02 00     addr       switchD_00024964::caseD_f
+        0007b318 74 4a 02 00     addr       switchD_00024964::caseD_10
+        0007b31c 84 4a 02 00     addr       switchD_00024964::caseD_11
+        0007b320 94 4a 02 00     addr       switchD_00024964::caseD_12
+        0007b324 a4 4a 02 00     addr       switchD_00024964::caseD_13
+        0007b328 b4 4a 02 00     addr       switchD_00024964::caseD_14
+        0007b32c c4 4a 02 00     addr       switchD_00024964::caseD_15
+        0007b330 e0 4a 02 00     addr       switchD_00024964::caseD_16
+        0007b334 6c 49 02 00     addr       switchD_00024964::caseD_17
+        0007b338 d4 4a 02 00     addr       switchD_00024964::caseD_18
+                             __func__.33092                                  XREF[1]:     tisp_code_tuning_ioctl:00024af4(
+        0007b33c 74 69 73        ds         "tisp_set_par_process"
+                 70 5f 73 
+                 65 74 5f 
+                             __func__.33228                                  XREF[1]:     tisp_code_tuning_ioctl:00024d58(
+        0007b354 74 69 73        ds         "tisp_code_tuning_ioctl"
+                 70 5f 63 
+                 6f 64 65 
+                             __func__.32662                                  XREF[1]:     tisp_dn_mode_set:0002306c(*)  
+        0007b36c 74 69 73        ds         "tisp_dn_mode_set"
+                 70 5f 64 
+                 6e 5f 6d 
+                             __func__.32615                                  XREF[1]:     tisp_param_operate_init:00024f64
+        0007b380 74 69 73        ds         "tisp_param_operate_init"
+                 70 5f 70 
+                 61 72 61 
+                             __func__.32585                                  XREF[5]:     tisp_param_operate_process:00022
+                                                                                          tisp_param_operate_process:00022
+                                                                                          tisp_param_operate_process:00022
+                                                                                          tisp_param_operate_process:00022
+                                                                                          tisp_param_operate_process:00022
+        0007b398 74 69 73        ds         "tisp_param_operate_process"
+                 70 5f 70 
+                 61 72 61 
+                             func_ptr_table_0007b3b4
+        0007b3b4 00              ??         00h
+        0007b3b5 00              ??         00h
+        0007b3b6 00              ??         00h
+        0007b3b7 00              ??         00h
+        0007b3b8 00              ??         00h
+        0007b3b9 00              ??         00h
+        0007b3ba 00              ??         00h
+        0007b3bb 00              ??         00h
+        0007b3bc 00              ??         00h
+        0007b3bd 00              ??         00h
+        0007b3be 00              ??         00h
+        0007b3bf 00              ??         00h
+                             switchD_00026738::switchdataD_0007b3c0          XREF[1]:     tisp_init:00026734(*)  
+        0007b3c0 40 67 02 00     addr       switchD_00026738::caseD_0
+        0007b3c4 48 67 02 00     addr       switchD_00026738::caseD_1
+        0007b3c8 5c 67 02 00     addr       switchD_00026738::caseD_2
+        0007b3cc 64 67 02 00     addr       switchD_00026738::caseD_3
+        0007b3d0 6c 67 02 00     addr       switchD_00026738::caseD_4
+        0007b3d4 74 67 02 00     addr       switchD_00026738::caseD_5
+        0007b3d8 7c 67 02 00     addr       switchD_00026738::caseD_6
+        0007b3dc 84 67 02 00     addr       switchD_00026738::caseD_7
+        0007b3e0 8c 67 02 00     addr       switchD_00026738::caseD_8
+        0007b3e4 94 67 02 00     addr       switchD_00026738::caseD_9
+        0007b3e8 9c 67 02 00     addr       switchD_00026738::caseD_a
+        0007b3ec a4 67 02 00     addr       switchD_00026738::caseD_b
+        0007b3f0 ac 67 02 00     addr       switchD_00026738::caseD_c
+        0007b3f4 b4 67 02 00     addr       switchD_00026738::caseD_d
+        0007b3f8 bc 67 02 00     addr       switchD_00026738::caseD_e
+        0007b3fc c4 67 02 00     addr       switchD_00026738::caseD_f
+        0007b400 cc 67 02 00     addr       switchD_00026738::caseD_10
+        0007b404 d4 67 02 00     addr       switchD_00026738::caseD_11
+        0007b408 dc 67 02 00     addr       switchD_00026738::caseD_12
+        0007b40c e4 67 02 00     addr       switchD_00026738::caseD_13
+        0007b410 f0 67 02 00     addr       switchD_00026738::caseD_14
+                             __func__.32832                                  XREF[3]:     tiziano_load_parameters:000260c4
+                                                                                          tiziano_load_parameters:000261e4
+                                                                                          tiziano_load_parameters:000263d0
+        0007b414 74 69 7a        ds         "tiziano_load_parameters"
+                 69 61 6e 
+                 6f 5f 6c 
+                             __func__.32805                                  XREF[2]:     tisp_channel_attr_set:00025bb8(*
+                                                                                          tisp_channel_attr_set:00025ce0(*
+        0007b42c 74 69 73        ds         "tisp_channel_attr_set"
+                 70 5f 63 
+                 68 61 6e 
+                             __func__.32786                                  XREF[1]:     tisp_channel_stop:00025984(*)  
+        0007b444 74 69 73        ds         "tisp_channel_stop"
+                 70 5f 63 
+                 68 61 6e 
+                             __func__.32765                                  XREF[2]:     tisp_deinit:000253f4(*), 
+                                                                                          tisp_deinit:00025434(*)  
+        0007b458 74 69 73        ds         "tisp_deinit"
+                 70 5f 64 
+                 65 69 6e 
+                             __func__.32757                                  XREF[5]:     tisp_init:00026808(*), 
+                                                                                          tisp_init:000268d4(*), 
+                                                                                          tisp_init:00026944(*), 
+                                                                                          tisp_init:00026d28(*), 
+                                                                                          tisp_init:00027198(*)  
+        0007b464 74 69 73        ds         "tisp_init"
+                 70 5f 69 
+                 6e 69 74 
+                             crc_table                                       XREF[4]:     tiziano_load_parameters:00026084
+                                                                                          tiziano_load_parameters:000260a4
+                                                                                          tiziano_load_parameters:00026390
+                                                                                          tiziano_load_parameters:000263b0
+        0007b470 00 00 00        undefine
+                 00 96 30 
+                 07 77 2c 
+                             __func__.28613                                  XREF[2]:     tisp_event_process:00027618(*), 
+                                                                                          tisp_event_process:00027678(*)  
+        0007b490 74 69 73        ds         "tisp_event_process"
+                 70 5f 65 
+                 76 65 6e 
+                             __func__.28578                                  XREF[1]:     tisp_event_push:000274b4(*)  
+        0007b4a4 74 69 73        ds         "tisp_event_push"
+                 70 5f 65 
+                 76 65 6e 
+                             func_ptr_table_0007b4b4
+        0007b4b4 00              ??         00h
