@@ -106,7 +106,7 @@ void FileManage::addCurrentDir(void)
 bool FileManage::isDirectory(const string &path)
 
 {
-  DWORD attribs = GetFileAttributes(path.c_str());
+  DWORD attribs = GetFileAttributesA(path.c_str());
   if (attribs == INVALID_FILE_ATTRIBUTES) return false;
   return ((attribs & FILE_ATTRIBUTE_DIRECTORY)!=0);
 }
