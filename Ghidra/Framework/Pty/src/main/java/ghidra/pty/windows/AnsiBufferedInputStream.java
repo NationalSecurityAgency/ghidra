@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,7 @@ public class AnsiBufferedInputStream extends InputStream {
 			return -1;
 		}
 		byte c = (byte) ci;
-		// printDebugChar(c);
+		//printDebugChar(c);
 		switch (mode) {
 			case CHARS:
 				processChars(c);
@@ -248,6 +248,10 @@ public class AnsiBufferedInputStream extends InputStream {
 				break;
 			case 'D':
 				execCursorBackward();
+				mode = Mode.CHARS;
+				break;
+			case 'G':
+				execCursorCharAbsolute();
 				mode = Mode.CHARS;
 				break;
 			case 'H':
@@ -413,6 +417,11 @@ public class AnsiBufferedInputStream extends InputStream {
 	protected void execCursorBackward() {
 		int delta = parseNumericBuffer();
 		lineBuf.position(lineBuf.position() - delta);
+	}
+
+	protected void execCursorCharAbsolute() {
+		int abs = parseNumericBuffer();
+		lineBuf.position(abs - 1);
 	}
 
 	protected void execCursorPosition() {

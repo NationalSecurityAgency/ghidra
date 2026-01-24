@@ -52,15 +52,17 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 			try {
 				conn.execute("util.terminate_session()");
 				conn.close();
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				//IGNORE
 			}
 			try {
 				mdo.close();
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				//IGNORE
 			}
-			
+
 		}
 	}
 
@@ -74,7 +76,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 				"util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
 			if (exec != null) {
 				start(conn, exec);
-				mdo = waitDomainObject("/New Traces/x64dbg/" + exec.substring(exec.lastIndexOf("\\")+1));
+				mdo = waitDomainObject(
+					"/New Traces/x64dbg/" + exec.substring(exec.lastIndexOf("\\") + 1));
 			}
 			else {
 				conn.execute("ghidra_trace_start()");
@@ -124,7 +127,7 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 			waitForPass(() -> assertThat(
 				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Threads[]").size(),
 				greaterThan(INIT_NOTEPAD_THREAD_COUNT)),
-				RUN_TIMEOUT_MS, RETRY_MS);			
+				RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
 
@@ -151,6 +154,12 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 			RemoteMethod go = conn.conn.getMethod("go");
 			go.invoke(Map.of("process", proc));  // Initial breakpoint
 			go.invoke(Map.of("process", proc));
+			RemoteMethod stop = conn.conn.getMethod("interrupt");
+			stop.invoke(Map.of("process", proc));
+			waitForPass(() -> {
+				assertNotNull(proc);
+				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
+			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			waitForPass(() -> assertThat(
 				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Modules[]").size(),
@@ -173,7 +182,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 
 			txPut(conn, "threads");
 			waitForPass(() -> {
-				List<Object> values = tb.objValues(lastSnap(conn), "Sessions[0].Processes[].Threads[]");
+				List<Object> values =
+					tb.objValues(lastSnap(conn), "Sessions[0].Processes[].Threads[]");
 				assertEquals(INIT_NOTEPAD_THREAD_COUNT, values.size());
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
@@ -181,7 +191,7 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 			List<Object> values = tb.objValues(lastSnap(conn), "Sessions[0].Processes[].Threads[]");
 			TraceObject thread = (TraceObject) values.get(0);
 			Object tid0 = tb.objValue(thread, lastSnap(conn), "TID");
-			conn.execute("util.select_thread("+tid0.toString()+")");
+			conn.execute("util.select_thread(" + tid0.toString() + ")");
 			waitForPass(() -> {
 				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
 				assertEquals(tid0.toString(), tnum);
@@ -189,7 +199,7 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 
 			thread = (TraceObject) values.get(1);
 			Object tid1 = tb.objValue(thread, lastSnap(conn), "TID");
-			conn.execute("util.select_thread("+tid1.toString()+")");
+			conn.execute("util.select_thread(" + tid1.toString() + ")");
 			waitForPass(() -> {
 				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
 				assertEquals(tid1.toString(), tnum);
@@ -197,7 +207,7 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 
 			thread = (TraceObject) values.get(2);
 			Object tid2 = tb.objValue(thread, lastSnap(conn), "TID");
-			conn.execute("util.select_thread("+tid2.toString()+")");
+			conn.execute("util.select_thread(" + tid2.toString() + ")");
 			waitForPass(() -> {
 				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
 				assertEquals(tid2.toString(), tnum);
@@ -309,7 +319,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 		try (PythonAndTrace conn = startAndSyncPython(NOTEPAD)) {
 			txPut(conn, "breakpoints");
 			assertEquals(0,
-				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]").size());
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]")
+						.size());
 
 			conn.execute("pc = util.get_pc()");
 			conn.execute("util.dbg.client.set_breakpoint(address_or_symbol=pc)");
@@ -317,7 +328,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 
 			waitForPass(() -> {
 				List<Object> brks =
-					tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]");
+					tb.objValues(lastSnap(conn),
+						"Sessions[].Processes[].Debug.Software Breakpoints[]");
 				assertEquals(1, brks.size());
 			});
 		}
@@ -328,7 +340,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 		try (PythonAndTrace conn = startAndSyncPython(NOTEPAD)) {
 			txPut(conn, "breakpoints");
 			assertEquals(0,
-				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]").size());
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]")
+						.size());
 
 			conn.execute("pc = util.get_pc()");
 			conn.execute("util.dbg.client.set_breakpoint(address_or_symbol=pc)");
@@ -336,13 +349,15 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 
 			TraceObject brk = waitForPass(() -> {
 				List<Object> brks =
-					tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]");
+					tb.objValues(lastSnap(conn),
+						"Sessions[].Processes[].Debug.Software Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
 
 			assertEquals(true, tb.objValue(brk, lastSnap(conn), "Enabled"));
-			conn.execute("util.dbg.client.toggle_breakpoint(address_name_symbol_or_none=pc, on=False)");
+			conn.execute(
+				"util.dbg.client.toggle_breakpoint(address_name_symbol_or_none=pc, on=False)");
 			conn.execute("util.dbg.client.stepi()");
 			conn.execute("util.dbg.client.wait_until_stopped()");
 			conn.execute("util.dbg.client.stepi()");
@@ -355,7 +370,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 		try (PythonAndTrace conn = startAndSyncPython(NOTEPAD)) {
 			txPut(conn, "breakpoints");
 			assertEquals(0,
-				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]").size());
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]")
+						.size());
 
 			conn.execute("pc = util.get_pc()");
 			conn.execute("util.dbg.client.set_breakpoint(address_or_symbol=pc)");
@@ -363,7 +379,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 
 			TraceObject brk = waitForPass(() -> {
 				List<Object> brks =
-					tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]");
+					tb.objValues(lastSnap(conn),
+						"Sessions[].Processes[].Debug.Software Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
@@ -372,7 +389,8 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 			conn.execute("util.dbg.client.stepi()");
 
 			waitForPass(() -> assertEquals(0,
-				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]").size()));
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Software Breakpoints[]")
+						.size()));
 		}
 	}
 
@@ -394,6 +412,6 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 	private void clearBreakpoints(PythonAndConnection conn) {
 		conn.execute("util.dbg.client.clear_breakpoint(None)");
 		conn.execute("util.dbg.client.clear_hardware_breakpoint(None)");
-		conn.execute("util.dbg.client.clear_memory_breakpoint(None)");	
+		conn.execute("util.dbg.client.clear_memory_breakpoint(None)");
 	}
 }

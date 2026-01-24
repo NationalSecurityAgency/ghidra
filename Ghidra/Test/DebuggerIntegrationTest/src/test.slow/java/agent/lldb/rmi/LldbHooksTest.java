@@ -16,8 +16,7 @@
 package agent.lldb.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
@@ -28,9 +27,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
+import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -59,8 +58,22 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 		@Override
 		public void close() throws Exception {
-			conn.close();
-			mdo.close();
+			Exception toThrow = null;
+			try {
+				conn.close();
+			}
+			catch (Exception e) {
+				toThrow = e;
+			}
+			try {
+				mdo.close();
+			}
+			catch (Exception e) {
+				toThrow = e;
+			}
+			if (toThrow != null) {
+				throw toThrow;
+			}
 		}
 	}
 
@@ -86,10 +99,10 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	// TODO: This passes if you single-step through it but fails on some transactional stuff if run
 	//@Test
 	public void testOnNewThread() throws Exception {
-		String cloneExit = DummyProc.which("expCloneExit");
+		String specimen = getSpecimenNewThreadAndExit();
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 
-			start(conn, "%s".formatted(cloneExit));
+			start(conn, "%s".formatted(specimen));
 			conn.execute("break set -n work");
 			waitForPass(() -> {
 				TraceObject proc = tb.objAny0("Processes[]");
@@ -115,11 +128,11 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	// TODO: This passes if you single-step through it but fails on some transactional stuff if run
 	//@Test
 	public void testOnThreadSelected() throws Exception {
-		String cloneExit = DummyProc.which("expCloneExit");
+		String specimen = getSpecimenNewThreadAndExit();
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			traceManager.openTrace(tb.trace);
 
-			start(conn, "%s".formatted(cloneExit));
+			start(conn, "%s".formatted(specimen));
 			conn.execute("break set -n work");
 
 			waitForPass(() -> {
@@ -211,7 +224,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			traceManager.openTrace(tb.trace);
 
 			start(conn, getSpecimenPrint());
-			conn.execute("breakpoint set -n puts");
+			conn.execute("breakpoint set -n wrapputs");
 			conn.execute("cont");
 
 			waitStopped(conn.conn);
@@ -284,7 +297,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testOnCont() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, getSpecimenRead());
+			start(conn, getSpecimenSpin());
 
 			conn.execute("cont");
 			waitRunning(conn.conn);
