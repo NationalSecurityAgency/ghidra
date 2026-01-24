@@ -46,6 +46,7 @@ public class ConstTpl {
 	public static final int J_FLOWREF_SIZE = 10;
 	public static final int J_FLOWDEST = 11;
 	public static final int J_FLOWDEST_SIZE = 12;
+	public static final int J_OFFSET = 13;
 
 	public static final int V_SPACE = 0;
 	public static final int V_OFFSET = 1;
@@ -139,6 +140,8 @@ public class ConstTpl {
 	public long fix(ParserWalker walker) {
 		switch (type) {
 			case J_START:
+				return walker.getAddr().getOffset();
+			case J_OFFSET:
 				return walker.getAddr().getOffset();
 			case J_NEXT:
 				return walker.getNaddr().getOffset();
@@ -302,6 +305,9 @@ public class ConstTpl {
 		else if (el == ELEM_CONST_START.id()) {
 			type = J_START;
 		}
+		else if (el == ELEM_CONST_OFFSET.id()) {
+			type = J_OFFSET;
+		}
 		else if (el == ELEM_CONST_NEXT.id()) {
 			type = J_NEXT;
 		}
@@ -376,6 +382,8 @@ public class ConstTpl {
 				return "[next2]";
 			case J_START:
 				return "[start]";
+			case J_OFFSET:
+				return "[offset]";
 			case J_RELATIVE:
 				return "[rel:" + Long.toHexString(value_real) + "]";
 		}
