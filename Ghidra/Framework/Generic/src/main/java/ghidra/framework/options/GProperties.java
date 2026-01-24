@@ -25,9 +25,9 @@ import java.util.*;
 
 import javax.swing.KeyStroke;
 
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.output.XMLOutputter;
 
 import com.google.gson.*;
 

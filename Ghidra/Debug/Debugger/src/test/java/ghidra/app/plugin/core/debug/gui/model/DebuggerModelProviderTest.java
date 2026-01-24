@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.stream.*;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.*;
 
 import db.Transaction;

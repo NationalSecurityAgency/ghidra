@@ -28,10 +28,10 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import db.buffers.DataBuffer;
 import docking.*;
@@ -255,8 +255,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		root.setAttribute(VERSION_ATTRIBUTE_NAME, version);
 		root.addContent(template.saveToXml());
 		try (OutputStream os = new FileOutputStream(TOOL_FILE)) {
-			org.jdom.Document doc = new org.jdom.Document(root);
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			org.jdom2.Document doc = new org.jdom2.Document(root);
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 		}
 		catch (IOException e) {

@@ -22,7 +22,7 @@ import java.util.*;
 
 import javax.swing.JComponent;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DockingUtils;

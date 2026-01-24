@@ -30,9 +30,9 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import docking.DockingUtils;
 import docking.Tool;
@@ -157,7 +157,7 @@ public class KeyBindingUtils {
 		// create the xml structure, the outputter and then write the data
 		Element rootElement = keyBindingOptions.getXmlRoot(true);
 		Document document = new Document(rootElement);
-		XMLOutputter xmlOutputter = new GenericXMLOutputter();
+		XMLOutputter xmlOutputter = GenericXMLOutputter.getInstance();
 
 		try {
 			xmlOutputter.output(document, outputStream);

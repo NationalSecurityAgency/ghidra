@@ -20,8 +20,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.function.Function;
 
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.output.XMLOutputter;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -84,7 +84,7 @@ class ToolServicesImpl implements ToolServices {
 			new FileOutputStream(location.getParent() + File.separator + filename)) {
 			BufferedOutputStream bf = new BufferedOutputStream(f);
 			Document doc = new Document(tool.saveToXml());
-			XMLOutputter xmlout = new GenericXMLOutputter();
+			XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 			xmlout.output(doc, bf);
 		}
 

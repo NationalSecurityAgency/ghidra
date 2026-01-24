@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import db.*;
 import ghidra.framework.data.OpenMode;

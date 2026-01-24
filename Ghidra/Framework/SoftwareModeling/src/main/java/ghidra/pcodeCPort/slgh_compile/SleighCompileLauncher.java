@@ -19,7 +19,7 @@ import java.io.*;
 import java.util.*;
 
 import org.antlr.runtime.RecognitionException;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;

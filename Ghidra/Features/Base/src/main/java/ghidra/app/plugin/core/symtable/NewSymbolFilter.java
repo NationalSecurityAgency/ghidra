@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.symtable;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;

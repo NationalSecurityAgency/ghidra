@@ -19,8 +19,8 @@ import java.awt.Component;
 import java.io.*;
 import java.util.*;
 
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.output.XMLOutputter;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
@@ -428,7 +428,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		try {
 			OutputStream os = new FileOutputStream(toolFile);
 			Document doc = new Document(t.getToolTemplate(true).saveToXml());
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 			os.close();
 		}

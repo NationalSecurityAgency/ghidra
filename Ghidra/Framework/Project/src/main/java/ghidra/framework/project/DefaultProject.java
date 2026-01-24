@@ -20,9 +20,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DefaultProjectData;
@@ -578,7 +578,7 @@ public class DefaultProject implements Project {
 			File saveFile = new File(projectData.getProjectDir(), PROJECT_STATE);
 			OutputStream os = new FileOutputStream(saveFile);
 			Document doc = new Document(root);
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 			os.close();
 

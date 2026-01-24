@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
