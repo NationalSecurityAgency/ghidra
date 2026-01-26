@@ -29,7 +29,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import db.Transaction;
 import docking.ActionContext;

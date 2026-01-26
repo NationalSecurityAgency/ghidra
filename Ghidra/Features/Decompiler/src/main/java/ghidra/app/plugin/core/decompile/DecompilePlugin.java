@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.decompile;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.decompiler.*;

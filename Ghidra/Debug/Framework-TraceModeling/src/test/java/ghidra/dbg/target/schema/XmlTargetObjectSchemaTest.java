@@ -20,7 +20,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.Ignore;
 import org.junit.Test;
 

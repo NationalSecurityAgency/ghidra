@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.Test;
 
 import db.Transaction;

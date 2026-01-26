@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.navigation;
 import java.io.IOException;
 import java.util.*;
 
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;

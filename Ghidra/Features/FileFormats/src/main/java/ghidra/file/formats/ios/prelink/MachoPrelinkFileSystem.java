@@ -20,7 +20,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import org.apache.commons.collections4.BidiMap;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;

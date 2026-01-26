@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.*;
 import org.junit.rules.TestName;
 

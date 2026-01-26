@@ -26,7 +26,7 @@ import java.util.*;
 
 import javax.swing.KeyStroke;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;

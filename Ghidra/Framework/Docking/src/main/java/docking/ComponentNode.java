@@ -21,7 +21,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;

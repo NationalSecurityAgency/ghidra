@@ -21,9 +21,9 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import ghidra.framework.model.ProjectManager;
 import ghidra.framework.model.ToolTemplate;
@@ -218,7 +218,7 @@ public class ToolUtils {
 
 			Element element = template.saveToXml();
 			Document doc = new Document(element);
-			XMLOutputter xmlout = new GenericXMLOutputter();
+			XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 			xmlout.output(doc, os);
 			os.close();
 

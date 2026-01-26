@@ -19,7 +19,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 /**
  * Base class for the various node objects used to build the component hierarchy.

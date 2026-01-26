@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 import javax.swing.*;
 
 import org.apache.commons.collections4.map.LazyMap;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
