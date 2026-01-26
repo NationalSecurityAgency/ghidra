@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,13 +30,16 @@ import docking.action.KeyBindingData;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
 import ghidra.app.context.ProgramActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.services.GoToService;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
@@ -106,7 +109,26 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		return new ProgramActionContext(this, program, bookmarkTable);
+
+		ProgramLocation location = getBookmarkLocation();
+		return new ProgramLocationActionContext(this, program, bookmarkTable, location);
+	}
+
+	private ProgramLocation getBookmarkLocation() {
+		int row = bookmarkTable.getSelectedRow();
+		if (row < 0) {
+			return null;
+		}
+
+		BookmarkRowObject rowObject = model.getRowObject(row);
+		if (rowObject == null) {
+			return null; // this can happen when closing
+		}
+
+		BookmarkManager manager = program.getBookmarkManager();
+		Bookmark bookmark = manager.getBookmark(rowObject.getKey());
+		Address address = bookmark.getAddress();
+		return new ProgramLocation(program, address);
 	}
 
 	void setGoToService(GoToService goToService) {
@@ -339,7 +361,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	ProgramSelection getBookmarkLocations() {
+	ProgramSelection getBookmarkSelection() {
 		return bookmarkTable.getProgramSelection();
 	}
 
