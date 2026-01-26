@@ -665,8 +665,8 @@ public class GnuDemanglerParser {
 
 		int pos = itemText.lastIndexOf(Namespace.DELIMITER);
 		if (pos == -1) {
-			throw new DemanglerParseException(
-				"Expected the demangled string to contain a namespace");
+			// We now allow this case instead of throwing an exception
+			return null;
 		}
 
 		String parentText = itemText.substring(0, pos);
@@ -1715,6 +1715,12 @@ public class GnuDemanglerParser {
 
 	}
 
+	/*
+	 	Note: this class is used to handle things like 'guard variable for' or other items that 
+	 	don't parse directly as functions or variables.  Historically these items have always been
+	 	in a parent non-global namespace.  Global variables do not have a parent namespace as part 
+	 	of their name.  We have changed this class to allow the case of no specified namespace.
+	 */
 	private class ItemInNamespaceHandler extends SpecialPrefixHandler {
 
 		ItemInNamespaceHandler(String demangled) {
@@ -1728,6 +1734,11 @@ public class GnuDemanglerParser {
 		@Override
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledObject demangledObject = parseItemInNamespace(type);
+			if (demangledObject == null) {
+				// The item we are demangling is global and not in a namespace.  Assume the item 
+				// passed in is the valid demangled object.
+				return (DemangledObject) namespace;
+			}
 			return demangledObject;
 		}
 	}
