@@ -673,6 +673,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testGuardVariable_GlobalVariable() throws Exception {
+
+		String mangled = "_ZGV17globalVariableFoo";
+
+		String demangled = process.demangle(mangled);
+
+		assertEquals("guard variable for globalVariableFoo", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledVariable.class);
+		assertName(object, "globalVariableFoo");
+
+		assertEquals("globalVariableFoo", object.getSignature(false));
+
+		DemangledVariable variable = (DemangledVariable) object;
+		assertEquals("globalVariableFoo", variable.getName());
+		assertNull(variable.getDataType()); // no type information provided
+	}
+
+	@Test
 	public void testConstFunction() throws Exception {
 		//
 		// The below demangles to LScrollerView::CalcPortExposedRect( const(Rect &, bool))
