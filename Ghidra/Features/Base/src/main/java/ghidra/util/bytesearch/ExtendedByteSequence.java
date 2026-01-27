@@ -75,6 +75,9 @@ public class ExtendedByteSequence implements ByteSequence {
 		return extendedLength;
 	}
 
+	/**
+	 * {@eturn the length of the pre sequence that is available}
+	 */
 	public int getPreLength() {
 		return preLength;
 	}
@@ -82,7 +85,7 @@ public class ExtendedByteSequence implements ByteSequence {
 	@Override
 	public byte getByte(int i) {
 		if (i < 0) {
-			return preSequence.getByte(i + preLength);
+			return preSequence.getByte(i + preSequence.getLength());
 		}
 		if (i >= mainLength) {
 			return postSequence.getByte(i - mainLength);
@@ -96,9 +99,9 @@ public class ExtendedByteSequence implements ByteSequence {
 			throw new IndexOutOfBoundsException();
 		}
 		if (index < 0 && index + size <= 0) {
-			return preSequence.getBytes(index + preLength, size);
+			return preSequence.getBytes(index + preSequence.getLength(), size);
 		}
-		if (index + size < mainLength) {
+		if (index >= 0 && index + size < mainLength) {
 			return mainSequence.getBytes(index, size);
 		}
 		if (index >= mainLength) {

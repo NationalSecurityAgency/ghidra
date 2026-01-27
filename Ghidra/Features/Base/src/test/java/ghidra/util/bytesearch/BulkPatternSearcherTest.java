@@ -23,6 +23,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.features.base.memsearch.bytesequence.ByteArrayByteSequence;
 import ghidra.util.task.TaskMonitor;
 
 public class BulkPatternSearcherTest {
@@ -35,6 +36,7 @@ public class BulkPatternSearcherTest {
 	private TestPattern bcc = new TestPattern("bcc");
 
 	private BulkPatternSearcher<TestPattern> searcher;
+	private List<Match<TestPattern>> results = new ArrayList<Match<TestPattern>>();
 
 	@Before
 	public void setUp() {
@@ -44,7 +46,6 @@ public class BulkPatternSearcherTest {
 
 	@Test
 	public void testMatchWithIntoList() {
-		List<Match<TestPattern>> results = new ArrayList<Match<TestPattern>>();
 		searcher.search(data.getBytes(), results);
 		Iterator<Match<TestPattern>> it = results.iterator();
 		assertTrue(it.hasNext());
@@ -64,7 +65,6 @@ public class BulkPatternSearcherTest {
 
 	@Test
 	public void testMatchWithIntoListWithBufferLimit() {
-		List<Match<TestPattern>> results = new ArrayList<Match<TestPattern>>();
 		searcher.search(data.getBytes(), 5, results);
 		Iterator<Match<TestPattern>> it = results.iterator();
 		assertTrue(it.hasNext());
@@ -113,7 +113,6 @@ public class BulkPatternSearcherTest {
 		String input = "This is a test of the input stream";
 		InputStream is = new ByteArrayInputStream(input.getBytes());
 
-		List<Match<TestPattern>> results = new ArrayList<>();
 		Matcher.search(is, results, TaskMonitor.DUMMY);
 
 		assertEquals(3, results.size());
@@ -132,7 +131,6 @@ public class BulkPatternSearcherTest {
 		String input = "This is a test of the input stream";
 		InputStream is = new ByteArrayInputStream(input.getBytes());
 
-		List<Match<TestPattern>> results = new ArrayList<>();
 		matcher.search(is, -1, results, TaskMonitor.DUMMY);
 
 		assertEquals(3, results.size());
@@ -152,7 +150,6 @@ public class BulkPatternSearcherTest {
 		String input = "This is a test of the input stream";
 		InputStream is = new ByteArrayInputStream(input.getBytes());
 
-		List<Match<TestPattern>> results = new ArrayList<>();
 		matcher.search(is, 24, results, TaskMonitor.DUMMY);
 
 		assertEquals(2, results.size());
@@ -219,13 +216,74 @@ public class BulkPatternSearcherTest {
 
 	@Test
 	public void testSearchBeginningOnly() {
-		List<Match<TestPattern>> results = new ArrayList<Match<TestPattern>>();
 		searcher.matches(data.getBytes(), data.length(), results);
 		Iterator<Match<TestPattern>> it = results.iterator();
 		assertTrue(it.hasNext());
 		assertMatch(it.next(), a, 0);
 		assertMatch(it.next(), ab, 0);
 		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void testByteSequenceStartsInMainEndsInPost() {
+		TestPattern p = new TestPattern("joebob");
+		search("xxxxjoexbob", "xxxjoe", "bob", p);
+		assertEquals(1, results.size());
+		assertMatch(results.get(0), p, 8);
+	}
+
+	@Test
+	public void testPreSequencePatterns_patternStartsInPre_effectivelyStartInPre() {
+		TestPattern p = new TestPattern("joe", "bob");
+
+		// pre-pattern and effective start are both in pre sequence, so no match
+		search("xxjoeb", "obxxx", "xxxx", p);
+		assertTrue(results.isEmpty());
+	}
+
+	@Test
+	public void testPreSequencePatterns_patternStartInPre_effectivelyStartsInMain() {
+		TestPattern p = new TestPattern("joe", "bob");
+
+		// pre-patterns starts in pre sequence, effective match start is in main, so this
+		// is a match
+		search("xxxxjoe", "bobxxx", "xxxx", p);
+		assertEquals(1, results.size());
+		assertMatch(results.get(0), p, -3);
+	}
+
+	@Test
+	public void testPreSequencePatterns_patternStartsInMainEndsInPost() {
+		TestPattern p = new TestPattern("joe", "bob");
+
+		// create input such that pre-sequence and main sequence start in main, but pattern
+		// ends in post sequence, so this is a match
+		search("xxx", "xxjoeb", "obxx", p);
+		assertEquals(1, results.size());
+		assertMatch(results.get(0), p, 2);
+	}
+
+	@Test
+	public void testPreSequencePattern_patternStartsInMain_effectStartInPost() {
+		TestPattern p = new TestPattern("joe", "bob");
+
+		// create input such that the pre-sequence starts in the main, but the actual pattern
+		// match start is in the post sequence, so this in not a match
+
+		search("xxx", "xxxjoe", "bob", p);
+		assertTrue(results.isEmpty());
+	}
+
+	private void search(String preData, String mainData, String postData, TestPattern p) {
+		ByteSequence pre = new ByteArrayByteSequence(preData);
+		ByteSequence main = new ByteArrayByteSequence(mainData);
+		ByteSequence post = new ByteArrayByteSequence(postData);
+		ExtendedByteSequence sequence = new ExtendedByteSequence(main, pre, post, 10);
+
+		BulkPatternSearcher<TestPattern> patternSearcher =
+			new BulkPatternSearcher<TestPattern>(List.of(p));
+		patternSearcher.search(sequence, results);
+
 	}
 
 	private void assertMatch(Match<TestPattern> match, TestPattern expectedPattern, int start) {
@@ -235,10 +293,16 @@ public class BulkPatternSearcherTest {
 	private class TestPattern extends DittedBitSequence {
 
 		private String inputString;
+		private int preSequenceLength;
 
 		public TestPattern(String inputString) {
-			super(getBytes(inputString), getMask(inputString));
-			this.inputString = inputString;
+			this("", inputString);
+		}
+
+		public TestPattern(String preSequence, String matchSequence) {
+			super(getBytes(preSequence + matchSequence), getMask(preSequence + matchSequence));
+			this.inputString = preSequence + matchSequence;
+			this.preSequenceLength = preSequence.length();
 		}
 
 		private static byte[] getMask(String inputString) {
@@ -267,6 +331,11 @@ public class BulkPatternSearcherTest {
 		@Override
 		public String toString() {
 			return inputString;
+		}
+
+		@Override
+		public int getPreSequenceLength() {
+			return preSequenceLength;
 		}
 
 	}

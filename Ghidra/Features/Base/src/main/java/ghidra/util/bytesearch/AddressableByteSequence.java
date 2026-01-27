@@ -71,6 +71,21 @@ public class AddressableByteSequence implements ByteSequence {
 	}
 
 	/**
+	 * Sets the range of bytes that this object will buffer. This immediately will read the bytes
+	 * from the byte source into it's internal byte array buffer.
+	 * @param start the address to start reading bytes
+	 * @param length the number of bytes to read
+	 */
+	public void setRange(Address start, int length) {
+		if (length > capacity) {
+			throw new IllegalArgumentException("Length exceeds capacity");
+		}
+		this.startAddress = start;
+		this.length = length;
+		byteSource.getBytes(start, bytes, length);
+	}
+
+	/**
 	 * Returns the address of the byte represented by the given index into this buffer.
 	 * @param index the index into the buffer to get its associated address
 	 * @return the Address for the given index
@@ -112,14 +127,4 @@ public class AddressableByteSequence implements ByteSequence {
 	public boolean hasAvailableBytes(int index, int length) {
 		return index >= 0 && index + length <= getLength();
 	}
-
-	private void setRange(Address start, int length) {
-		if (length > capacity) {
-			throw new IllegalArgumentException("Length exceeds capacity");
-		}
-		this.startAddress = start;
-		this.length = length;
-		byteSource.getBytes(start, bytes, length);
-	}
-
 }
