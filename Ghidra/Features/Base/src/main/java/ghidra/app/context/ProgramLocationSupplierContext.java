@@ -15,27 +15,18 @@
  */
 package ghidra.app.context;
 
-import java.util.Set;
-
 import docking.ActionContext;
-import ghidra.program.model.listing.Function;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * A "mix-in" interface that specific implementers of {@link ActionContext} may also implement if
- * they can supply functions in their action context. Actions that want to work on functions
- * can look for this interface, which can be used in a variety of contexts.
+ * they can supply a program location in their action context. Actions that want to work on 
+ * locations can look for this interface, which can be used in a variety of contexts.
  */
-public interface FunctionSupplierContext extends ActionContext {
+public interface ProgramLocationSupplierContext extends ActionContext {
 
 	/**
-	 * Returns true if this context can supply one or more functions. 
-	 * @return true if this context can supply one or more functions
+	 * {@return the program location}
 	 */
-	public boolean hasFunctions();
-
-	/**
-	 * Returns the set of functions that this context object can supply.
-	 * @return the set of functions that this context object can supply
-	 */
-	public Set<Function> getFunctions();
+	public ProgramLocation getLocation();
 }
