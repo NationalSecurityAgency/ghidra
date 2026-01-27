@@ -30,7 +30,7 @@ import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
 
 /**
- * Database implementation for a structure or union.
+ * {@link CompositeDB} provides an abstract database implementation for a structure or union.
  */
 abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
