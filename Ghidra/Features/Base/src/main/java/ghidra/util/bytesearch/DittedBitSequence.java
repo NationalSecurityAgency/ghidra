@@ -482,4 +482,9 @@ public class DittedBitSequence implements BytePattern {
 		}
 		return popcnt;
 	}
+
+	@Override
+	public int getPreSequenceLength() {
+		return 0;
+	}
 }

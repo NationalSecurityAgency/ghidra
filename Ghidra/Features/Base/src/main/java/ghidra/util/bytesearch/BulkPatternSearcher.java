@@ -48,6 +48,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 	private SearchState<T> startState;
 	private int bufferSize = DEFAULT_BUFFER_SIZE;
 	private int uniqueStateCount;
+	private int maxPatternLength;
 
 	/**
 	 * Constructor
@@ -56,7 +57,16 @@ public class BulkPatternSearcher<T extends BytePattern> {
 	 */
 	public BulkPatternSearcher(List<T> patterns) {
 		this.patterns = patterns;
+		maxPatternLength = computeMaxPatternLength();
 		startState = buildStateMachine();
+	}
+
+	private int computeMaxPatternLength() {
+		int max = 0;
+		for (T pattern : patterns) {
+			max = Math.max(max, pattern.getSize());
+		}
+		return max;
 	}
 
 	/**
@@ -104,7 +114,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 				if (nextState == null) {
 					break;
 				}
-				nextState.addMatchesForCompletedPatterns(results, patternStart);
+				nextState.addMatches(results, patternStart);
 				state = nextState;
 			}
 		}
@@ -126,7 +136,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 			if (nextState == null) {
 				break;
 			}
-			nextState.addMatchesForCompletedPatterns(results, 0);
+			nextState.addMatches(results, 0);
 			state = nextState;
 		}
 	}
@@ -136,20 +146,24 @@ public class BulkPatternSearcher<T extends BytePattern> {
 	 * to the given list of results.
 	 * @param bytes the extended byte sequence to search
 	 * @param results the list of match results to populate
-	 * @param chunkOffset a constant offset to add to the pattern starts found in this buffer.
 	 * Users of this method may have split a larger byte sequence into chunks and the final match
 	 * position needs to be the sum of the chunk offset plus the offset within this chunk.
 	 */
-	public void search(ExtendedByteSequence bytes, List<Match<T>> results, int chunkOffset) {
-		for (int patternStart = 0; patternStart < bytes.getLength(); ++patternStart) {
+	public void search(ExtendedByteSequence bytes, List<Match<T>> results) {
+		search(bytes, results, 0);
+	}
+
+	private void search(ExtendedByteSequence bytes, List<Match<T>> results, long streamOffset) {
+		for (int start = -bytes.getPreLength(); start < bytes.getLength(); start++) {
 			SearchState<T> state = startState;
-			for (int j = patternStart; j < bytes.getExtendedLength(); j++) {
+			for (int j = start; j < bytes.getExtendedLength(); j++) {
 				int index = bytes.getByte(j) & 0xff;
 				SearchState<T> nextState = state.nextStates[index];
 				if (nextState == null) {
 					break;
 				}
-				nextState.addMatchesForCompletedPatterns(results, patternStart + chunkOffset);
+				nextState.addMatchesFilteredByEffectiveStart(results, start, 0,
+					bytes.getLength() - 1, streamOffset);
 				state = nextState;
 			}
 		}
@@ -182,9 +196,8 @@ public class BulkPatternSearcher<T extends BytePattern> {
 	public void search(InputStream inputStream, long maxRead, List<Match<T>> results,
 			TaskMonitor monitor) throws IOException {
 		RestrictedStream restrictedStream = new RestrictedStream(inputStream, maxRead);
-		int maxPatternLength = getLongestPatternLength();
 		int bufSize = Math.max(maxPatternLength, bufferSize);
-		int offset = 0;
+		long streamOffset = 0;
 
 		// The basic strategy is to use two byte buffers and create a virtual buffer with those two
 		// buffers. The first pass will look for patterns that start in the 1st buffer but can 
@@ -210,9 +223,9 @@ public class BulkPatternSearcher<T extends BytePattern> {
 
 			ExtendedByteSequence combined =
 				new ExtendedByteSequence(main, pre, post, maxPatternLength);
-			search(combined, results, offset);
+			search(combined, results, streamOffset);
 			monitor.incrementProgress(main.getLength());
-			offset += main.getLength();
+			streamOffset += main.getLength();
 
 			// rotate buffers and load data into second buffer
 			InputStreamBufferByteSequence tmp = pre;
@@ -226,7 +239,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 		post.load(inputStream, maxPatternLength);
 		ExtendedByteSequence combined =
 			new ExtendedByteSequence(main, pre, post, maxPatternLength);
-		search(combined, results, offset);
+		search(combined, results, streamOffset);
 		monitor.incrementProgress(main.getLength());
 	}
 
@@ -237,6 +250,13 @@ public class BulkPatternSearcher<T extends BytePattern> {
 	 */
 	public void setBufferSize(int bufferSize) {
 		this.bufferSize = bufferSize;
+	}
+
+	/**
+	 * {@return the length of the longest pattern}
+	 */
+	public int getMaxPatternLength() {
+		return maxPatternLength;
 	}
 
 	private SearchState<T> buildStateMachine() {
@@ -255,14 +275,6 @@ public class BulkPatternSearcher<T extends BytePattern> {
 		uniqueStateCount = dedupCache.size() + 1; // add 1 for the root state which wasn't cached
 		dedupCache.clear();
 		return start;
-	}
-
-	private int getLongestPatternLength() {
-		int maxLength = 0;
-		for (T t : patterns) {
-			maxLength = Math.max(maxLength, t.getSize());
-		}
-		return maxLength;
 	}
 
 	/**
@@ -297,7 +309,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 					if (state == null) {
 						break;
 					}
-					state.addMatchesForCompletedPatterns(resultBuffer, patternStart);
+					state.addMatches(resultBuffer, patternStart);
 				}
 				patternStart++;
 			}
@@ -346,7 +358,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 				return; // we are a terminal state
 			}
 			for (int inputValue = 0; inputValue < 256; inputValue++) {
-				List<T> matchedPatterns = getMatchedPatterns(inputValue);
+				List<T> matchedPatterns = getMatchingPatternsForTransitionValue(inputValue);
 				if (!matchedPatterns.isEmpty()) {
 					nextStates[inputValue] = getSearchState(matchedPatterns, cache, unresolved);
 				}
@@ -393,7 +405,7 @@ public class BulkPatternSearcher<T extends BytePattern> {
 			return newState;
 		}
 
-		private List<T> getMatchedPatterns(int inputValue) {
+		private List<T> getMatchingPatternsForTransitionValue(int inputValue) {
 			List<T> matchedPatterns = new ArrayList<>();
 			for (T pattern : activePatterns) {
 				if (pattern.isMatch(level, inputValue)) {
@@ -403,13 +415,27 @@ public class BulkPatternSearcher<T extends BytePattern> {
 			return matchedPatterns;
 		}
 
-		private void addMatchesForCompletedPatterns(Collection<Match<T>> results, int i) {
+		private void addMatches(Collection<Match<T>> results, int start) {
 			if (completedPatterns == null) {
 				return;
 			}
 			for (T pattern : completedPatterns) {
-				results.add(new Match<T>(pattern, i, pattern.getSize()));
+				results.add(new Match<T>(pattern, start, pattern.getSize()));
 			}
+		}
+
+		private void addMatchesFilteredByEffectiveStart(Collection<Match<T>> results, int start,
+				int min, int max, long streamOffset) {
+			if (completedPatterns == null) {
+				return;
+			}
+			for (T pattern : completedPatterns) {
+				int actualStart = start + pattern.getPreSequenceLength();
+				if (actualStart >= min && actualStart <= max) {
+					results.add(new Match<T>(pattern, streamOffset + start, pattern.getSize()));
+				}
+			}
+
 		}
 
 		private List<T> buildFullyMatchedPatternsList() {

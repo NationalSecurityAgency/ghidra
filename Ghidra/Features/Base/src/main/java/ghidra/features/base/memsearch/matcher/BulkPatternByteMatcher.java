@@ -41,7 +41,7 @@ public class BulkPatternByteMatcher<T extends BytePattern> implements ByteMatche
 	@Override
 	public Iterable<Match<T>> match(ExtendedByteSequence bytes) {
 		List<Match<T>> matches = new ArrayList<>();
-		matcher.search(bytes, matches, 0);
+		matcher.search(bytes, matches);
 		return matches;
 	}
 

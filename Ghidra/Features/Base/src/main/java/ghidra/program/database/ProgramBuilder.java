@@ -316,6 +316,19 @@ public class ProgramBuilder {
 		});
 	}
 
+	public MemoryBlock createMappedMemory(String name, String address, int size,
+			String mappedAddress) {
+		return tx(() -> {
+			Address blockAddress = addr(address);
+			Address mapAddress = addr(mappedAddress);
+			Memory memory = program.getMemory();
+			MemoryBlock block =
+				memory.createByteMappedBlock(name, blockAddress, mapAddress, size, false);
+			return block;
+		});
+
+	}
+
 	public MemoryBlock createUninitializedMemory(String name, String address, int size) {
 
 		return tx(() -> {

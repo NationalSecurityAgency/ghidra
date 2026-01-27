@@ -25,6 +25,10 @@ public class ByteArrayByteSequence implements ByteSequence {
 		this.bytes = bytes;
 	}
 
+	public ByteArrayByteSequence(String data) {
+		this(data.getBytes());
+	}
+
 	@Override
 	public int getLength() {
 		return bytes.length;

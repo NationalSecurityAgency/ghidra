@@ -243,4 +243,9 @@ public class Pattern extends DittedBitSequence {
 		}
 		return true;
 	}
+
+	@Override
+	public int getPreSequenceLength() {
+		return markOffset;
+	}
 }

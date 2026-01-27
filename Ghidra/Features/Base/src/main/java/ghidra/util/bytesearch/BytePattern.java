@@ -16,7 +16,7 @@
 package ghidra.util.bytesearch;
 
 /**
- * Interface for Patterns that can be combined into a single state machine that can be 
+ * Interface for fixed length patterns that can be combined into a single state machine that can be 
  * simultaneously searched for in a byte sequence.
  */
 public interface BytePattern {
@@ -34,5 +34,17 @@ public interface BytePattern {
 	 * @return true if this pattern matches the given byte value at the given pattern offset.
 	 */
 	public boolean isMatch(int patternOffset, int byteValue);
+
+	/**
+	 * Returns the number of bytes in this pattern that represent a pre-sequence that must match
+	 * before the official start of the matching pattern. For example if looking for a pattern of
+	 * "abcd", but only if it follows "xyz", then the pattern would be "xyzabcd", with a pre
+	 * sequence length of 3. So when this pattern matches, we want the "match to be at the position
+	 * where the "a" is and not the "x". This is know as "look behind" when using regular
+	 * expressions.
+	 * @return the number of bytes in the pattern that represent a required pre sequence before the
+	 * actual pattern we want to find the position of
+	 */
+	public int getPreSequenceLength();
 
 }

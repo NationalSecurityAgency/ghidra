@@ -18,7 +18,7 @@ package ghidra.util.bytesearch;
 import java.util.Objects;
 
 /**
- * Represents a match of a BytePattern at a given offset in a byte sequence.
+ * Represents a match of a pattern at a given offset in a byte sequence.
  * 
  * @param <T> The specific implementation of the BytePattern that was used to create this match
  * 
