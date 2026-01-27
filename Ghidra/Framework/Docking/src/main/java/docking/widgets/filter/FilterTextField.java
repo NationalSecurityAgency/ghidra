@@ -28,6 +28,7 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import ghidra.util.layout.AbstractLayoutManager;
 import utility.function.Callback;
 
 /**
@@ -101,33 +102,12 @@ public class FilterTextField extends JPanel {
 		textField.getDocument().addDocumentListener(new FilterDocumentListener());
 		textField.addActionListener(e -> notifyEnterPressed());
 
-		layeredPane = new JLayeredPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				Insets insets = getInsets();
-				Dimension ps = textField.getPreferredSize();
-				ps.width += insets.left + insets.right;
-				ps.height += insets.top + insets.bottom;
-				return ps;
-			}
-		};
+		layeredPane = new JLayeredPane();
+		layeredPane.setLayout(new FilterFieldLayoutManager());
 		layeredPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		layeredPane.add(textField, BASE_COMPONENT_LAYER);
 		layeredPane.add(clearLabel, HOVER_COMPONENT_LAYER);
 		clearLabel.setVisible(false);
-
-		layeredPane.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentResized(java.awt.event.ComponentEvent e) {
-				Dimension preferredSize = layeredPane.getSize();
-				Insets insets = layeredPane.getInsets();
-				int x = insets.left;
-				int y = insets.top;
-				int width = preferredSize.width - insets.right - x;
-				int height = preferredSize.height - (insets.top + insets.bottom);
-				textField.setBounds(x, y, width, height);
-			}
-		});
 
 		add(layeredPane, BorderLayout.NORTH);
 
@@ -406,6 +386,33 @@ public class FilterTextField extends JPanel {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
+	/**
+	 * A simple layout manager to size and position the text field within this widget.   The manager
+	 * does not update the clear button, as that manages its own bounds.
+	 */
+	private class FilterFieldLayoutManager extends AbstractLayoutManager {
+
+		@Override
+		public void layoutContainer(Container parent) {
+			Dimension d = parent.getSize();
+			Insets insets = parent.getInsets();
+			int width = d.width - insets.left - insets.right;
+			int x = insets.left;
+			int y = insets.top;
+			int height = d.height - (insets.top + insets.bottom);
+			textField.setBounds(x, y, width, height);
+		}
+
+		@Override
+		public Dimension preferredLayoutSize(Container parent) {
+			Insets insets = parent.getInsets();
+			Dimension ps = textField.getPreferredSize();
+			ps.width += insets.left + insets.right;
+			ps.height += insets.top + insets.bottom;
+			return ps;
+		}
+	}
 
 	private class TraversalKeyListener extends KeyAdapter {
 		private final Component component;
