@@ -162,13 +162,27 @@ public class GnuDemanglerParser {
 	* 				--the text can have "::" namespace separators (non-capturing group) and
 	*             	  must be followed by more text
 	*           	--the text can have multiple words, such as (unsigned long)
+	*           	--the text may be followed by 0 or more asterisks 
+	*           
+	*           	\(
+	*           		(?:\\w+\s)*	  non-capturing letters with a space, optional
+	*           		\\w+[*]*		  1 or more letters 
+	*           			[*]*          optional asterisk
+	*           		(?:::\w+[*]*)*	  namespace delimiter with 1 or more word characters, optional
+	*           				[*]*	  optional asterisk
+	*               \)
+	*               
+	*               \s*					optional space
+	*               -{0,1}				0 or 1 minus sign
+	*               \\w+				1 or more letters
+	*           
 	*           -optional space
 	*           -optional '-' character (a negative sign character)
 	* 			-followed by more text (with optional spaces)
 	* </pre>
 	*/
 	private static final Pattern CAST_PATTERN =
-		Pattern.compile("\\((?:\\w+\\s)*\\w+(?:::\\w+)*\\)\\s*-{0,1}\\w+");
+		Pattern.compile("\\((?:\\w+\\s)*\\w+[*]*(?:::\\w+[*]*)*\\)\\s*-{0,1}\\w+");
 
 	/*
 	 * Sample:  Magick::operator<(Magick::Coordinate const&, Magick::Coordinate const&)
