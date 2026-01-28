@@ -104,14 +104,14 @@ fi
 if [ -f "${SUPPORT_DIR}/launch.properties" ]; then
 
 	# Production Environment
-	INSTALL_DIR="${SUPPORT_DIR}/.."
+	export INSTALL_DIR="${SUPPORT_DIR}/.."
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/lib/Utility.jar"
 	LS_CPATH="${SUPPORT_DIR}/LaunchSupport.jar"
 	DEBUG_LOG4J="${SUPPORT_DIR}/debug.log4j.xml"
 else
 
 	# Development Environment (Eclipse classes or "gradle jar")
-	INSTALL_DIR="${SUPPORT_DIR}/../../../.."
+	export INSTALL_DIR="${SUPPORT_DIR}/../../../.."
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/bin/main"
 	LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/bin/main"
 	if ! [ -d "${LS_CPATH}" ]; then
