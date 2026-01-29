@@ -182,6 +182,23 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testLegacy_DemangledFunctionCharacter() throws Exception {
+
+		// This is only supported in the older v24 demangler.  The 'F' character was not being 
+		// correctly demangled.  The native demangler was updated to fix this.
+		String mangled = "foo__03FooCFUcT1";
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		String demangled = process.demangle(mangled);
+		assertEquals("Foo::foo(unsigned char, unsigned char) const", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "foo", "Foo");
+		assertEquals("undefined Foo::foo(unsigned char,unsigned char)", object.getSignature());
+	}
+
+	@Test
 	public void testTemplates_TemplatedType() throws Exception {
 		String mangled =
 			"_ZNKSt8_Rb_treeI8LocationS0_St9_IdentityIS0_ESt4lessIS0_ESaIS0_EE4findERKS0_";
