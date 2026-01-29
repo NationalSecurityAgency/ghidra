@@ -16,7 +16,6 @@
 package ghidra.app.util.pcodeInject;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
@@ -29,11 +28,10 @@ public class InjectMultiANewArray extends InjectPayloadJava {
 
 	@Override
 	public PcodeOp[] getPcode(Program program, InjectContext con) {
-		AbstractConstantPoolInfoJava[] constantPool = getConstantPool(program);
 		int constantPoolIndex = (int) con.inputlist.get(0).getOffset();
 		int dimensions = (int) con.inputlist.get(1).getOffset();
 		PcodeOpEmitter pCode = new PcodeOpEmitter(language, con.baseAddr, uniqueBase);
-		ArrayMethods.getPcodeForMultiANewArray(pCode, constantPoolIndex, constantPool, dimensions);
+		ArrayMethods.getPcodeForMultiANewArray(pCode, constantPoolIndex, dimensions);
 		return pCode.getPcodeOps();
 	}
 }
