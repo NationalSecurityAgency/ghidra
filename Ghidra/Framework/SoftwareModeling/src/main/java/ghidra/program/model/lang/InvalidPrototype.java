@@ -37,6 +37,7 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 
 	/**
 	 * Construct a new invalid instruction prototype.
+	 * 
 	 * @param lang is the Language for which the invalid instruction is discovered
 	 */
 	public InvalidPrototype(Language lang) {
@@ -51,6 +52,11 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 
 	@Override
 	public boolean hasCrossBuildDependency() {
+		return false;
+	}
+
+	@Override
+	public boolean hasNext2Dependency() {
 		return false;
 	}
 

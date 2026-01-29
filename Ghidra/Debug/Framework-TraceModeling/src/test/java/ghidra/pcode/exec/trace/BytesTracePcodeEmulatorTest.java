@@ -314,6 +314,39 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	}
 
 	/**
+	 * This tests the inst_next2 symbol
+	 */
+	@Test
+	public void testSK() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					""",
+				List.of(
+					"imm r0, #123", // decimal
+					"sk",
+					"imm r0, #911" // decimal
+				));
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction(); // imm 123
+			emuThread.stepInstruction(); // sk
+
+			try (Transaction tx = tb.startTransaction()) {
+				writer.writeDown(1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400006),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(123),
+				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
+		}
+	}
+
+	/**
 	 * Test the instruction decoder considers the cached state
 	 * 
 	 * <p>

@@ -336,6 +336,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	void doReplaceWith(UnionInternal union, boolean notify)
 			throws DataTypeDependencyException, IOException {
 
+		int oldAlignment = getAlignment();
+		int oldLength = unionLength;
+
 		// pre-resolved component types to catch dependency issues early
 		DataTypeComponent[] otherComponents = union.getComponents();
 		DataType[] resolvedDts = new DataType[otherComponents.length];
@@ -359,13 +362,21 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			doAdd(resolvedDts[i], dtc.getLength(), dtc.getFieldName(), dtc.getComment(), false);
 		}
 
-		record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, union.getDescription());
-		compositeAdapter.updateRecord(record, false);
+		repack(false, false);
 
-		repack(false, false); // updates timestamp
+		record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, union.getDescription());
+		compositeAdapter.updateRecord(record, true); // updates timestamp
 
 		if (notify) {
-			notifySizeChanged(false); // assume size and/or alignment changed
+			if (unionLength != oldLength) {
+				notifySizeChanged(false);
+			}
+			else if (unionAlignment != oldAlignment) {
+				notifyAlignmentChanged(false);
+			}
+			else {
+				dataMgr.dataTypeChanged(this, false);
+			}
 		}
 
 		if (pointerPostResolveRequired) {

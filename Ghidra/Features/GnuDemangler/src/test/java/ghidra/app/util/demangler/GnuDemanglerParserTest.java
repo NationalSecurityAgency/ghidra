@@ -108,6 +108,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testParse_CastInTemplates_ToPointer() throws Exception {
+
+		String mangled =
+			"_ZN3ndk4impl15ScopedAResourceIP7AStatusXadL_Z14AStatus_deleteEELS3_0EEaSEOS4_";
+		String demangled = process.demangle(mangled);
+		assertEquals(
+			"ndk::impl::ScopedAResource<AStatus*, &AStatus_delete, (AStatus*)0>::operator=(ndk::impl::ScopedAResource<AStatus*, &AStatus_delete, (AStatus*)0>&&)",
+			demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "operator=", "ndk", "impl",
+			"ScopedAResource<AStatus*,&AStatus_delete,(AStatus*)0>");
+
+		assertEquals(
+			"undefined ndk::impl::ScopedAResource<AStatus*,&AStatus_delete,(AStatus*)0>::operator=(ndk::impl::ScopedAResource<AStatus *,&AStatus_delete,(AStatus*)0> &&)",
+			object.getSignature(false));
+	}
+
+	@Test
 	public void testParse_MultiDimensionalArray() throws Exception {
 
 		DemangledObject object = parser.parse("fake", "Layout::graphNew(short[][][][], char*)");
@@ -669,6 +689,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledVariable variable = (DemangledVariable) object;
 		assertEquals("__gthread_active_ptr", variable.getName());
 		assertEquals("__gthread_active_p()", variable.getNamespace().getNamespaceName());
+		assertNull(variable.getDataType()); // no type information provided
+	}
+
+	@Test
+	public void testGuardVariable_GlobalVariable() throws Exception {
+
+		String mangled = "_ZGV17globalVariableFoo";
+
+		String demangled = process.demangle(mangled);
+
+		assertEquals("guard variable for globalVariableFoo", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledVariable.class);
+		assertName(object, "globalVariableFoo");
+
+		assertEquals("globalVariableFoo", object.getSignature(false));
+
+		DemangledVariable variable = (DemangledVariable) object;
+		assertEquals("globalVariableFoo", variable.getName());
 		assertNull(variable.getDataType()); // no type information provided
 	}
 

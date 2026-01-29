@@ -1237,7 +1237,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 
 		repack(false);
-		notifySizeChanged();
+		notifySizeChanged(); // simplified assumption to force parents to update
 	}
 
 	private void doReplaceWithPacked(Structure struct) {

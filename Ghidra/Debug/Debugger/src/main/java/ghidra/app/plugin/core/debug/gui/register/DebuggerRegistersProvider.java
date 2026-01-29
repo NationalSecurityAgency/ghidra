@@ -141,11 +141,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected enum RegisterTableColumns
 		implements EnumeratedTableColumn<RegisterTableColumns, RegisterRow> {
-		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, //
-				r -> true, SortDirection.DESCENDING),
+		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, r -> true,
+				SortDirection.DESCENDING),
 		NUMBER("#", 1, Integer.class, RegisterRow::getNumber),
 		NAME("Name", 40, String.class, RegisterRow::getName),
-		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, //
+		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue,
 				RegisterRow::isValueEditable, SortDirection.ASCENDING) {
 			private static final RegisterValueCellRenderer RENDERER =
 				new RegisterValueCellRenderer();
@@ -162,10 +162,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				return DEFS;
 			}
 		},
-		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, //
+		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType,
 				r -> true, SortDirection.ASCENDING),
-		REPR("Repr", 100, String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, //
-				RegisterRow::isRepresentationEditable, SortDirection.ASCENDING);
+		REPR("Repr", 100, String.class, RegisterRow::getRepresentation,
+				RegisterRow::setRepresentation, RegisterRow::isRepresentationEditable,
+				SortDirection.ASCENDING);
 
 		private final String header;
 		private final int width;
@@ -414,6 +415,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		@Override
 		public final Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
+			setFont(getFixedWidthFont());
 			RegisterRow row = (RegisterRow) data.getRowObject();
 			if (!row.isKnown()) {
 				if (data.isSelected()) {
@@ -1099,9 +1101,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			result.add(pc);
 		}
 		for (Register reg : lang.getRegisters()) {
-			//if (reg.getGroup() != null) {
-			//	continue;
-			//}
 			if (reg.isProcessorContext()) {
 				continue;
 			}
