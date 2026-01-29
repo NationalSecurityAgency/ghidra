@@ -93,7 +93,7 @@ public class Objc1TypeMetadata extends AbstractObjcTypeMetadata {
 			}
 		}
 		catch (IOException e) {
-			log("Failed to parse modules from section '" + section + "'");
+			log("Failed to parse modules from section '" + section + "'", e);
 		}
 	}
 
@@ -112,7 +112,7 @@ public class Objc1TypeMetadata extends AbstractObjcTypeMetadata {
 			}
 		}
 		catch (IOException e) {
-			log("Failed to parse protocols from section '" + section + "'");
+			log("Failed to parse protocols from section '" + section + "'", e);
 		}
 	}
 
@@ -123,7 +123,7 @@ public class Objc1TypeMetadata extends AbstractObjcTypeMetadata {
 				module.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup: " + module.getName());
+				log("Failed to markup: " + module.getName(), e);
 			}
 		}
 		for (Objc1Protocol protocol : protocols) {
@@ -131,7 +131,7 @@ public class Objc1TypeMetadata extends AbstractObjcTypeMetadata {
 				protocol.applyTo(program.getGlobalNamespace(), monitor);
 			}
 			catch (Exception e) {
-				log("Failed to markup: " + protocol.getName());
+				log("Failed to markup: " + protocol.getName(), e);
 			}
 		}
 
