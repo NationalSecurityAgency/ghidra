@@ -229,7 +229,7 @@ public class BulkPatternSearcherTest {
 		TestPattern p = new TestPattern("joebob");
 		search("xxxxjoexbob", "xxxjoe", "bob", p);
 		assertEquals(1, results.size());
-		assertMatch(results.get(0), p, 8);
+		assertMatch(results.get(0), p, 3);
 	}
 
 	@Test
