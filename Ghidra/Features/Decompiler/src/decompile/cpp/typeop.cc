@@ -2254,7 +2254,13 @@ Datatype *TypeOpPtradd::getInputCast(const PcodeOp *op,int4 slot,const CastStrat
 				// not the (possibly different) type of the HIGH
     Datatype *reqtype = op->getIn(0)->getTypeReadFacing(op);
     Datatype *curtype = op->getIn(0)->getHighTypeReadFacing(op);
-    return castStrategy->castStandard(reqtype,curtype,false,false);
+    if (reqtype->getMetatype() != TYPE_PTR) return reqtype;
+    if (curtype->getMetatype() != TYPE_PTR) return reqtype;
+    Datatype *reqbase = ((TypePointer *)reqtype)->getPtrTo();	// Go down exactly one level
+    Datatype *curbase = ((TypePointer *)curtype)->getPtrTo();
+    if (reqbase->getAlignSize() == curbase->getAlignSize())
+      return (Datatype *)0;
+    return reqtype;
   }
   return TypeOp::getInputCast(op,slot,castStrategy);
 }
@@ -2318,7 +2324,24 @@ Datatype *TypeOpPtrsub::getInputCast(const PcodeOp *op,int4 slot,const CastStrat
 				// not the (possibly different) type of the HIGH
     Datatype *reqtype = op->getIn(0)->getTypeReadFacing(op);
     Datatype *curtype = op->getIn(0)->getHighTypeReadFacing(op);
-    return castStrategy->castStandard(reqtype,curtype,false,false);
+    if (curtype == reqtype)
+      return (Datatype *)0;
+    if (reqtype->getMetatype() != TYPE_PTR) return reqtype;
+    if (curtype->getMetatype() != TYPE_PTR) return reqtype;
+    Datatype *reqbase = ((TypePointer *)reqtype)->getPtrTo();	// Go down exactly one level
+    Datatype *curbase = ((TypePointer *)curtype)->getPtrTo();
+    if (curbase->getMetatype() == TYPE_ARRAY && reqbase->getMetatype() == TYPE_ARRAY) {
+      curbase = ((TypeArray *)curbase)->getBase();
+      reqbase = ((TypeArray *)reqbase)->getBase();
+    }
+    while(reqbase->getTypedef() != (Datatype *)0)
+      reqbase = reqbase->getTypedef();
+    while(curbase->getTypedef() != (Datatype *)0)
+      curbase = curbase->getTypedef();
+
+    if (curbase == reqbase)
+      return (Datatype *)0;
+    return reqtype;
   }
   return TypeOp::getInputCast(op,slot,castStrategy);
 }
