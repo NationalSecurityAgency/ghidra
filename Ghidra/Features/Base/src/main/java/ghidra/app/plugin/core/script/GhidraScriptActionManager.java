@@ -285,7 +285,17 @@ class GhidraScriptActionManager {
 	private void chooseScript(ActionContext actioncontext1) {
 
 		List<ScriptInfo> scriptInfos = provider.getScriptInfos();
-		ScriptSelectionDialog dialog = new ScriptSelectionDialog(plugin, scriptInfos);
+
+		// Get the last run script name to pre-populate the dialog
+		String initialScript = null;
+		ResourceFile lastRunScript = provider.getLastRunScript();
+		if (lastRunScript != null) {
+			initialScript = lastRunScript.getName();
+		}
+
+		ScriptSelectionDialog dialog =
+			new ScriptSelectionDialog(plugin, scriptInfos, provider.getRecentScripts(),
+				initialScript);
 		dialog.show();
 
 		ScriptInfo chosenInfo = dialog.getUserChoice();
