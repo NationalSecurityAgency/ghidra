@@ -111,7 +111,7 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		}
 
 		public void runFallthrough() {
-			assertEquals(0xdeadbeef, runClean());
+			assertEquals(0xdeadbeefL, runClean());
 		}
 
 		public void runFallthrough32() {
