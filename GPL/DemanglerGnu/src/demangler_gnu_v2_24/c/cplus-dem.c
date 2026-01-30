@@ -819,6 +819,33 @@ cplus_demangle_name_to_style (const char *name)
   return unknown_demangling;
 }
 
+
+/* Scans to see if mangled is a set of optional qualifiers and a function. */
+static int /* bool */
+isQualifiersAndFunc(const char *mangled)
+{
+
+	int i = 0;
+	while (1)
+	{
+
+		switch (mangled[i++])
+		{
+		case 'C':
+		case 'V':
+		case 'u':
+			/*qualifier*/
+			break;
+		case 'F':
+			/* function */
+			return 1;
+		default:
+			/* anything else is not a qualifier or function */
+			return 0;
+		}
+	}
+}
+
 /* char *cplus_demangle (const char *mangled, int options)
 
    If MANGLED is a mangled function name produced by GNU C++, then
@@ -1485,8 +1512,10 @@ demangle_signature (struct work_stuff *work,
 	    {
               /* EDG and others will have the "F", so we let the loop cycle
                  if we are looking at one. */
-              if (**mangled != 'F')
+              // if (**mangled != 'F')
+              if (!isQualifiersAndFunc(*mangled)) {
                  expect_func = 1;
+              }
 	    }
 	  oldmangled = NULL;
 	  break;
