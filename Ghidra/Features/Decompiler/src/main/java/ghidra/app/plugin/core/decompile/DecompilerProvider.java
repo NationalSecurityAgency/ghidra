@@ -751,16 +751,21 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		Function function = controller.getDecompileData().getFunction();
 		String programName = (program != null) ? program.getDomainFile().getName() : "";
 		String title = "Decompiler";
+		String functionName = "No Function";
+		String tabText = "Decompiler";
 		String subTitle = "";
 		if (function != null) {
-			title = "Decompile: " + function.getName();
+			functionName = function.getName();
+			title = "Decompile: " + functionName;
 			subTitle = " (" + programName + ")";
 		}
 		if (!isConnected()) {
 			title = "[" + title + "]";
+			tabText = "[" + functionName + "]";
 		}
 		setTitle(title);
 		setSubTitle(subTitle);
+		setTabText(tabText);
 	}
 
 	private void initializeDecompilerOptions() {
