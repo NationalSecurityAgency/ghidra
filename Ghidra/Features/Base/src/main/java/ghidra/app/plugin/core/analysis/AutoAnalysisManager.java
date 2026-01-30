@@ -1249,9 +1249,7 @@ public class AutoAnalysisManager {
 			long taskTime = getTaskTime(timedTasks, element);
 			double totalTime = taskTime / 1000.00;
 
-			String partTime = (((int) (totalTime * 1000.0)) % 1000) + "";
-			String secString =
-				((int) totalTime) + "." + "000".substring(partTime.length()) + partTime + " secs";
+			String secString = String.format("%.3f secs", totalTime);
 			int testLen = element.length() + secString.length();
 			if (testLen > spacer.length()) {
 				testLen = spacer.length() - 5;
