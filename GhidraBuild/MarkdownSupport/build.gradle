@@ -25,12 +25,12 @@ dependencies {
 }
 
 project.afterEvaluate {
-	rootProject.ext.mdDeps.clear()
+	rootProject.ext.markdownDeps.clear()
 	configurations.runtimeClasspath.resolve().each { File f ->
-		rootProject.ext.mdDeps.add(f.getAbsolutePath())
+		rootProject.ext.markdownDeps.add(f.getAbsolutePath())
 	}
 
 	sourceSets.main.output.files.each { File f ->
-		rootProject.ext.mdDeps.add(f.getAbsolutePath())
+		rootProject.ext.markdownDeps.add(f.getAbsolutePath())
 	}
 }

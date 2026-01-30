@@ -93,7 +93,7 @@ else {
  *  Force all project compile classpaths to be resolved at configuration time.
  *********************************************************************************/
 allprojects {
-	afterEvaluate {
+	gradle.taskGraph.whenReady {
 		configurations.matching { it.name.endsWith("compileClasspath") }.all { cfg ->
 			if (cfg.canBeResolved) {
 				try {
@@ -107,7 +107,7 @@ allprojects {
 /*********************************************************************************
  *  Store :MarkdownSupport ClassPath to fix issues with Gradle 9.
  *********************************************************************************/
-ext.mdDeps = []
+ext.markdownDeps = []
 
 /*********************************************************************************
  * Imports

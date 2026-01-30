@@ -45,10 +45,12 @@ task jythonUnpack(type: Copy) {
 		!file("build/data/${JYTHON_DIR}").exists()
 	}
 	
-	from zipTree(configurations.jython.singleFile)
-	include "Lib/**"
-	
-	destinationDir = file("build/data/${JYTHON_DIR}")
+	gradle.taskGraph.whenReady {
+		from zipTree(configurations.jython.singleFile)
+		include "Lib/**"
+		
+		destinationDir = file("build/data/${JYTHON_DIR}")
+	}
 }
 
 task jythonSrcCopy(type: Copy) {

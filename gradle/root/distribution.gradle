@@ -551,18 +551,16 @@ task assembleMarkdownToHtml (type: Copy) {
 	outputs.upToDateWhen {false}
 	destinationDir = file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
 	
-	doLast {
-		eachFile { f ->
-			def htmlName = f.sourceName[0..-3] + "html"
-			def htmlPath = f.relativePath.replaceLastName(htmlName).pathString
-			[
-				'java',
-				'-cp', project.files(rootProject.ext.mdDeps).asPath,
-				'ghidra.markdown.MarkdownToHtml',
-				f.file,
-				file("${destinationDir.path}/${htmlPath}")
-			].execute()
-		}
+	eachFile { f ->
+		def htmlName = f.sourceName[0..-3] + "html"
+		def htmlPath = f.relativePath.replaceLastName(htmlName).pathString 
+		
+		providers.javaexec {		
+			classpath =  rootProject.files(rootProject.ext.markdownDeps)
+			mainClass = 'ghidra.markdown.MarkdownToHtml'
+			args f.file
+			args file("${destinationDir.path}/${htmlPath}")
+		}.result.get()
 	}
 }
 
