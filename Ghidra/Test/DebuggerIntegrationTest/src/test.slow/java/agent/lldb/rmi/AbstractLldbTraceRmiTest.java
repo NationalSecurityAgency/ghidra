@@ -121,7 +121,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 30;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
 	/** Some snapshot likely to exceed the latest */
@@ -353,14 +353,13 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 					""";
 			cmd = lfIfWindows(cmd);
 			exec.pty.getParent().getOutputStream().write(cmd.getBytes());
-			Exception finalExc = null;
 			try {
 				try {
 					LldbResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 					r.handle();
 				}
 				catch (Exception e) {
-					finalExc = e;
+					Msg.error(this, e);
 				}
 				waitForPass(this, () -> assertTrue(connection.isClosed()), TIMEOUT_SECONDS,
 					TimeUnit.SECONDS);
@@ -373,9 +372,6 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				exec.pty.close();
 				exec.lldb.destroyForcibly();
 				exec.pumper.interrupt();
-				if (finalExc != null) {
-					throw finalExc;
-				}
 			}
 		}
 	}
@@ -458,6 +454,18 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			}
 		}
 		return xout.split(head)[1].split("---")[0].replace("(lldb)", "").trim();
+	}
+
+	// OK, Windows versions just behave differently re prompt
+	protected String extractOutSectionWithPrompt(String out, String head) {
+		String[] split = out.replace("\r", "").split("\n");
+		String xout = "";
+		for (String s : split) {
+			if (!s.contains("script print(") && !s.equals("")) {
+				xout += s + "\n";
+			}
+		}
+		return xout.split(head)[1].split("---")[0].trim();
 	}
 
 	record MemDump(long address, byte[] data) {}

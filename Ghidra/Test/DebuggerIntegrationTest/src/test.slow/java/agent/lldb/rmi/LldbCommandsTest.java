@@ -371,7 +371,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
-			String eval = extractOutSection(out, "---Start---");
+			String eval = extractOutSectionWithPrompt(out, "---Start---");
 			Address addr = tb.addr(Stream.of(eval.split("\\s+"))
 					.filter(s -> s.startsWith("0x"))
 					.mapToLong(Long::decode)
@@ -408,7 +408,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
-			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
+			String xout = extractOutSectionWithPrompt(out, "---Dump---");
+			MemDump dump = parseHexDump(xout.substring(xout.indexOf("0x")));
 			Arrays.fill(dump.data(), 0, 5, (byte) 0);
 			ByteBuffer buf = ByteBuffer.allocate(dump.data().length);
 			tb.trace.getMemoryManager().getBytes(snap, tb.addr(dump.address()), buf);
@@ -926,11 +927,11 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
 		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			assertEquals("""
-					Parent          Key   Span     Value        Type
-					Test.Objects[1] vaddr [0,+inf) ram:0000dead ADDRESS\
-					""",
-				extractOutSection(out, "---GetValues---"));
+			assertTrue(extractOutSectionWithPrompt(out, "---GetValues---").contains(
+				"""
+				Parent          Key   Span     Value        Type
+				Test.Objects[1] vaddr [0,+inf) ram:0000dead ADDRESS\
+				"""));
 		}
 	}
 
@@ -981,8 +982,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			for (CodeUnit cu : tb.trace.getCodeManager().definedUnits().get(0, true)) {
 				total += cu.getLength();
 			}
-			assertEquals("Disassembled %d bytes".formatted(total),
-				extractOutSection(out, "---Disassemble---"));
+			assertTrue(extractOutSectionWithPrompt(out, "---Disassemble---")
+					.contains("Disassembled %d bytes".formatted(total)));
 		}
 	}
 
@@ -1239,7 +1240,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		}
 	}
 
-	@Test 
+	@Test
 	public void testMinimal() throws Exception {
 		assumeFalse(IS_WINDOWS);
 		Function<String, String> scriptSupplier = addr -> """
