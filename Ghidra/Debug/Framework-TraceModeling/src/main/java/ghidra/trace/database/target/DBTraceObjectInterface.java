@@ -159,6 +159,51 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 					cast.getNewValue());
 				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
 			}
+			if (rec.getEventType() == TraceEvents.VALUE_LIFESPAN_CHANGED) {
+				if (object.isDeleted()) {
+					return null;
+				}
+				TraceEvent<T, ?> type = getChangedType();
+				if (type == null) {
+					return null;
+				}
+				TraceChangeRecord<TraceObjectValue, Lifespan> cast =
+					TraceEvents.VALUE_LIFESPAN_CHANGED.cast(rec);
+				TraceObjectValue affected = cast.getAffectedObject();
+				String key = affected.getEntryKey();
+				if (!appliesToKey(key)) {
+					return null;
+				}
+				assert affected.getParent() == object;
+				if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+					return null; // Object is not complete
+				}
+				emitExtraValueChanged(affected.getLifespan(), key, null, null);
+				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
+			}
+			if (rec.getEventType() == TraceEvents.VALUE_DELETED) {
+				if (object.isDeleted()) {
+					return null;
+				}
+				TraceEvent<T, ?> type = getChangedType();
+				if (type == null) {
+					return null;
+				}
+				TraceChangeRecord<TraceObjectValue, Void> cast =
+					TraceEvents.VALUE_DELETED.cast(rec);
+				TraceObjectValue affected = cast.getAffectedObject();
+				String key = affected.getEntryKey();
+				if (!appliesToKey(key)) {
+					return null;
+				}
+				assert affected.getParent() == object;
+				if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+					return null; // Object is not complete
+				}
+				emitExtraValueChanged(affected.getLifespan(), key, cast.getOldValue(),
+					cast.getNewValue());
+				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
+			}
 			if (rec.getEventType() == TraceEvents.OBJECT_DELETED) {
 				return translateDeleted(life);
 			}
