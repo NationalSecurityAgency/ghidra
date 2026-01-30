@@ -76,7 +76,7 @@ public class ExtendedByteSequence implements ByteSequence {
 	}
 
 	/**
-	 * {@eturn the length of the pre sequence that is available}
+	 * {@return the length of the pre sequence that is available}
 	 */
 	public int getPreLength() {
 		return preLength;
