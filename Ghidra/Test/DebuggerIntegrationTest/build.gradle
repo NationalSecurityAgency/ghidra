@@ -44,17 +44,17 @@ dependencies {
 	def ghidraPath = projectDir.getParentFile().getParentFile().path.replace(File.separator, "/") + "/";
 	
 	rootProject.subprojects { p ->
-		p.plugins.withType(JavaPlugin) {
-			def projectPath = p.projectDir.path.replace(File.separator, "/")
-			if (projectPath.startsWith(ghidraPath) && (
-				projectPath.contains("/Framework/") ||
-				projectPath.contains("/Features/") ||
-				projectPath.contains("/Debug/") ||
-				projectPath.contains("/Processors/"))) {
+		def projectPath = p.projectDir.path.replace(File.separator, "/")
+		if (projectPath.startsWith(ghidraPath) && (
+			projectPath.contains("/Framework/") ||
+			projectPath.contains("/Features/") ||
+			projectPath.contains("/Debug/") ||
+			projectPath.contains("/Processors/"))) {
 
-				api p
-			}
-		}	
+			evaluationDependsOn(p.path)
+
+			api p
+		}
 	}
 
 	// some tests use classes in Base, FunctionGraph and PDB
