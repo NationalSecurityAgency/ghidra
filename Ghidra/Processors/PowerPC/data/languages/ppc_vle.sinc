@@ -953,3 +953,76 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :se_isync						is $(ISVLE) & OP16_VLE=1 {
 	instructionSynchronize();
 }
+
+# =================================================================
+# Saturating Arithmetic Instructions
+
+# e_addwus - Add Word Unsigned Saturate
+:e_addwus D,A,B					is $(ISVLE) & OP=31 & D & A & B & XOP_1_10=0x36A & BIT_0=0
+{
+	tmpA:4 = A:4;
+	tmpB:4 = B:4;
+	tmpResult:4 = tmpA + tmpB;
+	if (!carry(tmpA, tmpB)) goto <no_overflow>;
+		D = 0xFFFFFFFF;
+		goto <done>;
+	<no_overflow>
+		D = zext(tmpResult);
+	<done>
+}
+
+# e_addhus - Add Halfword Unsigned Saturate
+:e_addhus D,A,B					is $(ISVLE) & OP=31 & D & A & B & XOP_1_10=0x3AA & BIT_0=0
+{
+	tmpA:2 = A:2;
+	tmpB:2 = B:2;
+	tmpResult:2 = tmpA + tmpB;
+	if (!carry(tmpA, tmpB)) goto <no_overflow>;
+		D = 0xFFFF;
+		goto <done>;
+	<no_overflow>
+		D = zext(tmpResult);
+	<done>
+}
+
+# e_addbus - Add Byte Unsigned Saturate
+:e_addbus D,A,B					is $(ISVLE) & OP=31 & D & A & B & XOP_1_10=0x3EA & BIT_0=0
+{
+	tmpA:1 = A:1;
+	tmpB:1 = B:1;
+	tmpResult:1 = tmpA + tmpB;
+	if (!carry(tmpA, tmpB)) goto <no_overflow>;
+		D = 0xFF;
+		goto <done>;
+	<no_overflow>
+		D = zext(tmpResult);
+	<done>
+}
+
+# e_subfhus - Subtract Halfword Unsigned Saturate
+:e_subfhus D,A,B				is $(ISVLE) & OP=31 & D & A & B & XOP_1_10=0x3A8 & BIT_0=0
+{
+	tmpA:2 = A:2;
+	tmpB:2 = B:2;
+	tmpResult:2 = tmpB - tmpA;
+	if (tmpA <= tmpB) goto <no_underflow>;
+		D = 0;
+		goto <done>;
+	<no_underflow>
+		D = zext(tmpResult);
+	<done>
+}
+
+# e_subfbus - Subtract Byte Unsigned Saturate
+:e_subfbus D,A,B				is $(ISVLE) & OP=31 & D & A & B & XOP_1_10=0x3E8 & BIT_0=0
+{
+	tmpA:1 = A:1;
+	tmpB:1 = B:1;
+	tmpResult:1 = tmpB - tmpA;
+	if (tmpA <= tmpB) goto <no_underflow>;
+		D = 0;
+		goto <done>;
+	<no_underflow>
+		D = zext(tmpResult);
+	<done>
+}
