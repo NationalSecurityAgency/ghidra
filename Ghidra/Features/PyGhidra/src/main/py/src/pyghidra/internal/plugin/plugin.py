@@ -30,6 +30,7 @@ from ghidra.pyghidra import PyGhidraScriptProvider, PyGhidraPlugin
 from ghidra.pyghidra.interpreter import PyGhidraConsole
 from ghidra.util.task import TaskMonitor
 from java.io import BufferedReader, InputStreamReader # type:ignore @UnresolvedImport
+from java.lang import Boolean # type:ignore @UnresolvedImport
 from java.lang import String # type:ignore @UnresolvedImport 
 from java.lang import Thread as JThread # type:ignore @UnresolvedImport
 from java.util import Collections # type:ignore @UnresolvedImport
@@ -171,6 +172,7 @@ class PyConsole(InteractiveConsole):
         self._script.set(state, ScriptControls(console, TaskMonitor.DUMMY))
         self._state = ConsoleState.RESET
         self._completer = PythonCodeCompleter(self)
+        self._orig_modules = sys.modules.copy()
 
     def raw_input(self, prompt=''):
         self._console.setPrompt(prompt)
@@ -238,6 +240,11 @@ class PyConsole(InteractiveConsole):
 
         # this resets the locals, and gets a new code compiler
         super().__init__(locals=PyGhidraScript(self._script))
+        
+        # restore sys.modules to its original state
+        if not Boolean.getBoolean("pyghidra.sys.modules.restore.disable"):
+            for k in list(set(sys.modules) - set(self._orig_modules)):
+                sys.modules.pop(k, None)
     
     @property
     def name(self) -> str:

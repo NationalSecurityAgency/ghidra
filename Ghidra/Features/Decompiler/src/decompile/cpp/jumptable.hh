@@ -98,6 +98,7 @@ public:
   Varnode *getOpParent(int4 i) const { return commonVn[ opMeld[i].rootVn ]; }	///< Get the split-point for the i-th PcodeOp
   PcodeOp *getOp(int4 i) const { return opMeld[i].op; }		///< Get the i-th PcodeOp
   PcodeOp *getEarliestOp(int4 pos) const;		///< Find \e earliest PcodeOp that has a specific common Varnode as input
+  bool isLoadInPath(int4 i) const;			///< Return \b true if a LOAD exists in the common path
   bool empty(void) const { return commonVn.empty(); }	///< Return \b true if \b this container holds no paths
 };
 

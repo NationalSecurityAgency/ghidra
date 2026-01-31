@@ -42,6 +42,7 @@ import ghidra.util.task.TaskMonitor;
  * as the execution address is set, either explicitly, or via branches and fallthrus.  There
  * are additional methods for inspecting the pcode ops in the current instruction as a sequence.
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public class Emulate {
 
 	private MemoryState memstate; // the memory state of the emulator.

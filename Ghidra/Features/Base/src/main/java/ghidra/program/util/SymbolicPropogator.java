@@ -1006,12 +1006,20 @@ public class SymbolicPropogator {
 										if (refs.length <= 0 ||
 											!refs[0].getToAddress().equals(target)) {
 	
+											Address oldTarget = target;
 											target = makeReference(vContext, instruction, Reference.MNEMONIC,
 												//  Use target in case location has shifted (external...)
 												target.getAddressSpace().getSpaceID(),
 												target.getAddressableWordOffset(), val1.getSize(),
 												null,
 												instruction.getFlowType(), ptype, !suspectOffset, false, monitor);
+											if (target == null) {
+												// Target was nulled out, restore old target.
+												// Need to handle function call side-effects even if didn't make a reference
+												// The target can be changed by makeReference(), but if it is nulled out, then
+												// it indicates the reference was already made.
+												target = oldTarget;
+											}
 										}
 									}
 								}

@@ -2,14 +2,25 @@
 #
 # Command-line script for interacting with a BSim database
 
-# Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
-# the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
-#MAXMEM=2G
+# Optionally override the default Java heap memory, which is typically 1/4 of system RAM.
+# Supported values are of the regular expression form "\d+[gGmMkK]", allowing the value to be 
+# specified in gigabytes, megabytes, or kilobytes (for example: 8G, 4096m, etc).
+MAXMEM_DEFAULT=
+
+# Allow the above MAXMEM_DEFAULT to be overridden by externally set environment variables
+# - GHIDRA_MAXMEM: Desired maximum heap memory for all Ghidra instances
+# - GHIDRA_BSIM_MAXMEM: Desired maximum heap memory only for Ghidra BSim instances
+GHIDRA_MAXMEM=${GHIDRA_MAXMEM:=${MAXMEM_DEFAULT}}
+GHIDRA_BSIM_MAXMEM=${GHIDRA_BSIM_MAXMEM:=${GHIDRA_MAXMEM}}
+
+# Force Java headless mode
+VMARG_LIST="-Djava.awt.headless=true"
+
+# Apply Java options from externally set environment variables
+VMARG_LIST="${VMARG_LIST} ${GHIDRA_JAVA_OPTIONS} ${GHIDRA_BSIM_JAVA_OPTIONS}"
 
 # launch mode  (fg, bg, debug, debug-suspend)
 LAUNCH_MODE=fg
-
-VMARG_LIST="-Djava.awt.headless=true "
 
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
@@ -18,4 +29,4 @@ VMARG_LIST="-Djava.awt.headless=true "
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSim" "${MAXMEM}" "${VMARG_LIST}" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"
+${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSim" "${GHIDRA_BSIM_MAXMEM}" "${VMARG_LIST}" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"

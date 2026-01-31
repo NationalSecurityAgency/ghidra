@@ -4919,7 +4919,6 @@ int4 RuleShiftAnd::applyOp(PcodeOp *op,Funcdata &data)
   if (!shiftin->isWritten()) return 0;
   PcodeOp *andop = shiftin->getDef();
   if (andop->code() != CPUI_INT_AND) return 0;
-  if (shiftin->loneDescend() != op) return 0;
   Varnode *maskvn = andop->getIn(1);
   if (!maskvn->isConstant()) return 0;
   uintb mask = maskvn->getOffset();
@@ -4951,8 +4950,7 @@ int4 RuleShiftAnd::applyOp(PcodeOp *op,Funcdata &data)
     mask &= fullmask;
   }
   if ((mask & nzm) != nzm) return 0;
-  data.opSetOpcode(andop,CPUI_COPY); // AND effectively does nothing, so we change it to a copy
-  data.opRemoveInput(andop,1);
+  data.opSetInput(op, invn, 0);	// Bypass the INT_AND
   return 1;
 }
 
@@ -6691,17 +6689,39 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   Datatype *ct = ptrVn->getTypeReadFacing(op);
   if (ct->getMetatype() != TYPE_PTR) return 0;
   Datatype *baseType = ((TypePointer *)ct)->getPtrTo();
-  int8 offset = 0;
+  int8 offset;
   if (ct->isFormalPointerRel() && ((TypePointerRel *)ct)->evaluateThruParent(0)) {
     TypePointerRel *ptRel = (TypePointerRel *)ct;
     baseType = ptRel->getParent();
     if (baseType->getMetatype() != TYPE_STRUCT)
       return 0;
-    int8 iOff = ptRel->getByteOffset();
-    if (iOff >= baseType->getSize())
+    offset = ptRel->getByteOffset();
+    if (offset >= baseType->getSize())
       return 0;
-    offset = iOff;
+    if (baseType->getSize() < movesize)
+      return 0;				// Moving something bigger than entire structure
+    int8 newoff;
+    Datatype *subType = baseType->getSubType(offset,&newoff); // Get field at pointer's offset
+    if (subType==(Datatype *)0) return 0;
+    if (subType->getSize() < movesize) return 0;	// Subtype is too small to handle LOAD/STORE
+    newoff = AddrSpace::byteToAddress(newoff, ptRel->getWordSize());
+    offset = -newoff & calc_mask(ptrVn->getSize());
+    // Create pointer up to parent
+    PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),offset));
+    if (ptrVn->getType()->needsResolution())
+      data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+    newop->setStopTypePropagation();
+    if (newoff != 0) {
+      // Add newoff in to get back to zero total offset
+      PcodeOp *addop = data.newOpBefore(op,CPUI_INT_ADD,newop->getOut(),data.newConstant(ptrVn->getSize(),newoff));
+      data.opSetInput(op,addop->getOut(),1);
+    }
+    else {
+      data.opSetInput(op,newop->getOut(),1);
+    }
+    return 1;
   }
+  offset = 0;
   if (baseType->getMetatype() == TYPE_STRUCT) {
     if (baseType->getSize() < movesize)
       return 0;				// Moving something bigger than entire structure

@@ -402,6 +402,7 @@ public class AppConfig {
 			userSettingsDirName += "_location_" + dirName;
 		}
 		
+
 		// Ensure there is a user home directory (there definitely should be)
 		String userHomeDirPath = System.getProperty("user.home");
 		if (userHomeDirPath == null || userHomeDirPath.isEmpty()) {
@@ -418,6 +419,20 @@ public class AppConfig {
 		if (applicationLayoutVersion.equals("1")) {
 			userSettingsDir = new File(userHomeDir, "." + appName + "/." + userSettingsDirName);
 			return new File(userSettingsDir, saveFileName);
+		}
+
+		// Handle application.settingsdir system property
+		for (String arg : launchProperties.getVmArgList()) {
+			if (arg.startsWith("-Dapplication.settingsdir")) {
+				String[] parts = arg.split("=", 2);
+				if (parts.length == 2) {
+					String path = parts[1].trim();
+					if (!path.isEmpty()) {
+						userSettingsDir = new File(path, appName + "/" + userSettingsDirName);
+						return new File(userSettingsDir, saveFileName);
+					}
+				}
+			}
 		}
 
 		// Look for XDG environment variable

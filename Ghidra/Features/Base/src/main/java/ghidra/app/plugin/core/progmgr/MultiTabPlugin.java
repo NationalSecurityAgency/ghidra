@@ -19,14 +19,15 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.DockingUtils;
+import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.tab.GTabPanel;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramActionContext;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
@@ -58,7 +59,9 @@ import help.Help;
 	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramVisibilityChangePluginEvent.class }
 )
 //@formatter:on
-public class MultiTabPlugin extends Plugin implements TransactionListener, OptionsChangeListener {
+public class MultiTabPlugin extends Plugin
+		implements TransactionListener, DomainObjectListener, OptionsChangeListener {
+
 	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
 	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
 	private static final String SHOW_TABS_ALWAYS = "Show Program Tabs Always";
@@ -85,6 +88,7 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 	private DockingAction goToPreviousProgramAction;
 
 	private Timer selectHighlightedProgramTimer;
+	private TabContextListener contextListener = new TabContextListener();
 
 	public MultiTabPlugin(PluginTool tool) {
 		super(tool);
@@ -265,6 +269,9 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 		progService = tool.getService(ProgramManager.class);
 		cvService = tool.getService(CodeViewerService.class);
 		cvService.setNorthComponent(tabPanel);
+
+		DockingWindowManager dwm = tool.getWindowManager();
+		dwm.addContextListener(contextListener);
 	}
 
 	private void initOptions() {
@@ -292,11 +299,7 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 		return EMPTY8_ICON;
 	}
 
-	boolean removeProgram(Program program) {
-		return progService.closeProgram(program, false);
-	}
-
-	void programSelected(Program program) {
+	private void programSelected(Program program) {
 		if (program != progService.getCurrentProgram()) {
 			progService.setCurrentProgram(program);
 			cvService.requestFocus();
@@ -307,6 +310,8 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 
 		if (progService.isVisible(prog)) {
 			tabPanel.addTab(prog);
+			prog.removeListener(this);
+			prog.addListener(this);
 			prog.removeTransactionListener(this);
 			prog.addTransactionListener(this);
 			updateActionEnablement();
@@ -314,6 +319,7 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 	}
 
 	private void remove(Program prog) {
+		prog.removeListener(this);
 		prog.removeTransactionListener(this);
 		tabPanel.removeTab(prog);
 		updateActionEnablement();
@@ -383,6 +389,14 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 	}
 
 	@Override
+	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+		if (ev.getSource() instanceof Program) {
+			Program program = (Program) ev.getSource();
+			tabPanel.refreshTab(program);
+		}
+	}
+
+	@Override
 	public void undoStackChanged(DomainObjectAdapterDB domainObj) {
 		// don't care
 	}
@@ -390,6 +404,52 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 	@Override
 	public void undoRedoOccurred(DomainObjectAdapterDB domainObj) {
 		tabPanel.refreshTab((Program) domainObj);
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	private class TabContextListener implements DockingContextListener {
+
+		@Override
+		public void contextChanged(ActionContext localContext) {
+
+			/*
+			 	 Goal: We would like to have the program tabs paint as gray when the default context
+			 	 	   is not being driven by the active program.   This should happen whenever the
+			 	 	   focus is in a component that has a program that can be used by tool actions.
+			 	 	   
+			 	 	   The tool uses the active program as a fallback/default for actions when the 
+			 	 	   local context will not work.  When a local context has a program different 
+			 	 	   than the active program, then we want to signal to users visually that the 
+			 	 	   focused component is the one providing the program for the current context.
+			 */
+
+			DockingWindowManager dwm = tool.getWindowManager();
+			Program myProgram = null;
+			ProgramActionContext defaultContext =
+				(ListingActionContext) dwm.getDefaultActionContext(ProgramActionContext.class);
+			if (defaultContext != null) {
+				myProgram = defaultContext.getProgram();
+			}
+
+			if (!(localContext instanceof ProgramActionContext pac)) {
+				tabPanel.setActive(true);
+				return;
+			}
+
+			Program localProgram = pac.getProgram();
+			if (myProgram != localProgram || !pac.isActiveProgram()) {
+				// A different program is in the local context; deactivate out tabs.
+				tabPanel.setActive(false);
+				return;
+			}
+
+			// Signal that the program from our default context is the active program.
+			tabPanel.setActive(true);
+		}
+
 	}
 
 }

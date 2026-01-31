@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -513,12 +513,18 @@ public class VerticalLayoutTextField implements TextField {
 			return getText().length();
 		}
 		int extraSpace = rowSeparator.length();
-		int len = 0;
+		int offset = 0;
 		for (int i = 0; i < row; i++) {
-			len += lines.get(i).length() + extraSpace;
+			String line = lines.get(i);
+			int len = line.length();
+			if (!line.endsWith(rowSeparator)) {
+				len += extraSpace; // getText() performs this same check; be consistent
+			}
+
+			offset += len;
 		}
-		len += Math.min(col, lines.get(row).length());
-		return len;
+		offset += Math.min(col, lines.get(row).length());
+		return offset;
 	}
 
 	@Override
@@ -527,11 +533,15 @@ public class VerticalLayoutTextField implements TextField {
 		int extraSpace = rowSeparator.length();
 		int n = subFields.size();
 		for (int i = 0; i < n; i++) {
-			int len = lines.get(i).length();
-			if (absoluteOffset < len + extraSpace) {
+			String line = lines.get(i);
+			int len = line.length();
+			if (!line.endsWith(rowSeparator)) {
+				len += extraSpace; // getText() performs this same check; be consistent
+			}
+			if (absoluteOffset < len) {
 				return new RowColLocation(i, absoluteOffset);
 			}
-			absoluteOffset -= len + extraSpace;
+			absoluteOffset -= len;
 		}
 
 		int lastRow = n - 1;
@@ -572,6 +582,7 @@ public class VerticalLayoutTextField implements TextField {
 	private class FieldRow {
 		private TextField field;
 		private int dataRow;
+		@SuppressWarnings("unused") // used by Json
 		private int screenRow;
 
 		FieldRow(TextField field, int dataRow, int screenRow) {

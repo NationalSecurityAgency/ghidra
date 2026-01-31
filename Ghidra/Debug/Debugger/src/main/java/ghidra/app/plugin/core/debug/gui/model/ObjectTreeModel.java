@@ -308,6 +308,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			}
 			String key = p.key(pos);
 			AbstractNode matched = children().stream()
+					.filter(c -> c instanceof AbstractNode)
 					.map(c -> (AbstractNode) c)
 					.filter(c -> key.equals(c.getValue().getEntryKey()))
 					.findFirst()

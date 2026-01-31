@@ -103,7 +103,8 @@ public class ImportBatchTask extends Task {
 		}
 		finally {
 			Msg.showInfo(this, null, "Batch Import Summary",
-				"Batch Import finished.\nImported " + totalObjsImported + " files.");
+				"Batch Import finished.\nImported " + totalObjsImported + " file" +
+					(totalObjsImported == 1 ? "." : "s."));
 		}
 	}
 

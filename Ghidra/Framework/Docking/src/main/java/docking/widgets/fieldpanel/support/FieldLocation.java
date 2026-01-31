@@ -17,7 +17,7 @@ package docking.widgets.fieldpanel.support;
 
 import java.math.BigInteger;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;

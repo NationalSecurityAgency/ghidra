@@ -19,7 +19,7 @@ package classrecovery;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.listing.Function;
@@ -226,42 +226,34 @@ public class DecompilerScriptUtils {
 		decompInterface.dispose();
 	}
 
+	/**
+	 * Best-effort extraction of an address candidate from decompiler p-code.
+	 * Returns {@code null} if the candidate is invalid or not mapped in program memory.
+	 * @param storedValue the Varnode containing possible address
+	 * @return the Address assigned to the Varnode, or null if invalid or not in program memory
+	 */
 	public Address getAssignedAddressFromPcode(Varnode storedValue) {
 
-		long addressOffset;
 		if (storedValue.isConstant()) {
-			addressOffset = storedValue.getOffset();
-			Address possibleAddress = toAddr(addressOffset);
-			if (possibleAddress == null || !program.getMemory().contains(possibleAddress)) {
-				return null;
-			}
-			return possibleAddress;
+			return toAddr(storedValue.getOffset());
 		}
 
-		PcodeOp valuePcodeOp = storedValue.getDef();
-
-		if (valuePcodeOp == null) {
+		PcodeOp op = storedValue.getDef();
+		if (op == null) {
 			return null;
 		}
 
-		if (valuePcodeOp.getOpcode() == PcodeOp.CAST || valuePcodeOp.getOpcode() == PcodeOp.COPY) {
-
-			Varnode constantVarnode = valuePcodeOp.getInput(0);
-			return getAssignedAddressFromPcode(constantVarnode);
-
+		int opcode = op.getOpcode();
+		if (opcode == PcodeOp.CAST || opcode == PcodeOp.COPY) {
+			return getAssignedAddressFromPcode(op.getInput(0));
 		}
-		else if (valuePcodeOp.getOpcode() != PcodeOp.PTRSUB) {
+
+		if (opcode != PcodeOp.PTRSUB) {
 			return null;
 		}
 
-		// don't need to check isConst bc always is
-		Varnode constantVarnode = valuePcodeOp.getInput(1);
-		addressOffset = constantVarnode.getOffset();
-		Address possibleAddress = toAddr(addressOffset);
-		if (possibleAddress == null || !program.getMemory().contains(possibleAddress)) {
-			return null;
-		}
-		return possibleAddress;
+		// PTRSUB input(1) is always a constant offset (but may not represent a valid program address)
+		return toAddr(op.getInput(1).getOffset());
 	}
 
 	/**
@@ -294,12 +286,26 @@ public class DecompilerScriptUtils {
 	}
 
 	/**
-	 * Returns a new address with the specified offset in the default address space.
-	 * @param offset the offset for the new address
-	 * @return a new address with the specified offset in the default address space
+	 * Attempts to convert the given offset to an {@link Address} in the default address space.
+	 * <p>
+	 * Decompiler pcode may surface non-pointer constants that heuristics attempt to interpret
+	 * as addresses; this method performs a best-effort conversion and safely ignores
+	 * invalid or unmapped candidates.
+	 * <p>
+	 *
+	 * @param offset the offset to convert
+	 * @return the address for the given offset, or {@code null} if the offset cannot be represented
+	 *         as a valid address in the program's memory
 	 */
 	public final Address toAddr(long offset) {
-		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		try {
+			Address addr = space.getAddress(offset);
+			return program.getMemory().contains(addr) ? addr : null;
+		}
+		catch (AddressOutOfBoundsException e) {
+			return null;
+		}
 	}
 
 }

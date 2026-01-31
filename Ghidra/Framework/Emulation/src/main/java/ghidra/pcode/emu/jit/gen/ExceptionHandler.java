@@ -15,14 +15,13 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static org.objectweb.asm.Opcodes.ATHROW;
-
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -42,9 +41,9 @@ import ghidra.program.model.pcode.PcodeOp;
  * 
  * @param op the op which may cause an exception
  * @param block the block containing the op
- * @param label the label at the start of the handler
+ * @param lbl the label at the start of the handler
  */
-public record ExceptionHandler(PcodeOp op, JitBlock block, Label label) {
+public record ExceptionHandler(PcodeOp op, JitBlock block, Lbl<Ent<Bot, TRef<Throwable>>> lbl) {
 	/**
 	 * Construct a handler, generating a new label
 	 * 
@@ -52,23 +51,24 @@ public record ExceptionHandler(PcodeOp op, JitBlock block, Label label) {
 	 * @param block the block containing the op
 	 */
 	public ExceptionHandler(PcodeOp op, JitBlock block) {
-		this(op, block, new Label());
+		this(op, block, Lbl.create());
 	}
 
 	/**
 	 * Emit the handler's code into the {@link JitCompiledPassage#run(int) run} method.
 	 * 
+	 * @param <THIS> the type of the compiled passage
+	 * @param em the dead emitter
+	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param gen the code generator
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
+	 * @return the dead emitter
 	 */
-	public void generateRunCode(JitCodeGenerator gen, MethodVisitor rv) {
-		rv.visitLabel(label);
-		// [exc]
-		gen.generatePassageExit(block, () -> {
-			rv.visitLdcInsn(gen.getAddressForOp(op).getOffset());
-		}, gen.getExitContext(op), rv);
-		// [exc]
-		rv.visitInsn(ATHROW);
-		// []
+	public <THIS extends JitCompiledPassage> Emitter<Dead> genRun(Emitter<Dead> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
+		return em
+				.emit(Lbl::placeDead, lbl)
+				.emit(gen::genExit, localThis, block, PcGen.loadOffset(gen.getAddressForOp(op)),
+					gen.getExitContext(op))
+				.emit(Op::athrow);
 	}
 }

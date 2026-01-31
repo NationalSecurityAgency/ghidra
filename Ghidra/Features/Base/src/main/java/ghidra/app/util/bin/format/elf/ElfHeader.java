@@ -1070,7 +1070,7 @@ public class ElfHeader implements StructConverter {
 		return offset >= 0 && (offset + length) <= provider.length();
 	}
 
-	protected void parseSectionHeaders() throws IOException {
+	public void parseSectionHeaders() throws IOException {
 		if (reader == null) {
 			throw new IOException("ELF binary reader is null!");
 		}

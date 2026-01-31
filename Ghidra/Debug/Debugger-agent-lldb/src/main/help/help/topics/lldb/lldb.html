@@ -38,7 +38,7 @@
     <UL style="list-style-type: none">
       <LI>
 <PRE>
-python3 -m pip install psutil protobuf==3.20.3
+python3 -m pip install protobuf>=3.20.3
 </PRE>
       </LI>
     </UL>
@@ -54,7 +54,7 @@ python3 -m pip install psutil protobuf==3.20.3
 <PRE>
 cd /path/to/ghidra_<EM>
 version</EM>/Ghidra/Debug
-python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-lldb/pypkg/dist psutil protobuf
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-lldb/pypkg/dist protobuf
 </PRE>
       </LI>
     </UL>
@@ -94,6 +94,9 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
       <LI><B><TT>lldb</TT> command</B>: This is the command or path to LLDB. We recommend version
       15 or later.</LI>
 
+	  <LI><B><TT>lldb</TT> cmd args</B>: Arguments passed directly to LLDB (versus the target).
+	  Note: these arguments may override user arguments passed to the cmd.</LI>
+	  
       <LI><B>Run command</B>: This is the LLDB command to actually launch the target. In most cases
       this should include "<TT>--stop-at-entry</TT>", since this will assure you an initial break
       and a chance to enable your breakpoints.</LI>

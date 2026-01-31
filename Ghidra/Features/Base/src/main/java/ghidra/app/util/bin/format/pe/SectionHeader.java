@@ -490,6 +490,15 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
+	 * Returns a ByteProvider to underlying bytes of this section.
+	 * @return a ByteProvider to underlying bytes of this section
+	 */
+	public ByteProvider getDataByteProvider()  {
+		return new ByteProviderWrapper(reader.getByteProvider(), getPointerToRawData(),
+			getSizeOfRawData());
+	}
+
+	/**
 	 * @see java.lang.Object#toString()
 	 */
 	@Override

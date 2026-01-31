@@ -139,17 +139,18 @@ public final class ObjcUtils {
 	 * @param program The {@link Program}
 	 * @param dt The {@link DataType} to apply
 	 * @param address The {@link Address} to apply the data type at
+	 * @return The {@link Data}
 	 * @throws CodeUnitInsertionException if data creation failed
 	 */
-	public static void createData(Program program, DataType dt, Address address)
+	public static Data createData(Program program, DataType dt, Address address)
 			throws CodeUnitInsertionException {
 		Data data = program.getListing().getDefinedDataAt(address);
 		if (data != null && data.getDataType().isEquivalent(dt)) {
-			return;
+			return data;
 		}
 
 		// Clear possible pointers created on import from following pointer chains
-		DataUtilities.createData(program, address, dt, -1,
+		return DataUtilities.createData(program, address, dt, -1,
 			ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 	}
 

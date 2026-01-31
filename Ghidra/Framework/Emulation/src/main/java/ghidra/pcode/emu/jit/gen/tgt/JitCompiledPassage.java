@@ -34,8 +34,7 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.program.util.DefaultLanguageService;
 
 /**
@@ -1370,7 +1369,7 @@ public interface JitCompiledPassage {
 	 * @param amt the amt as in {@code val << amt}, in little-endian order
 	 * @return the value
 	 */
-	static long intLeft(int val, int[] amt) {
+	static int intLeft(int val, int[] amt) {
 		if (Integer.compareUnsigned(amt[0], Integer.SIZE) >= 0) {
 			return 0;
 		}
@@ -1831,7 +1830,9 @@ public interface JitCompiledPassage {
 			for (int j = sizeL - 1; j >= 0; j--) {
 				r <<= Integer.SIZE;
 				r += inL[j] & MASK_I2UL;
-				out[j] = (int) (r / inR);
+				if (out != null) {
+					out[j] = (int) (r / inR);
+				}
 				r %= inR;
 				inL[j] = 0; // So that the mp-int inL is truly the remainder
 			}
@@ -1953,7 +1954,9 @@ public interface JitCompiledPassage {
 						carry >>>= Integer.SIZE;
 					}
 				}
-				out[j] = (int) qHat; // Completion of D5
+				if (out != null) {
+					out[j] = (int) qHat; // Completion of D5
+				}
 
 				/**
 				 * D7 [Loop on j]
@@ -1987,7 +1990,7 @@ public interface JitCompiledPassage {
 				neg(inR, inR.length);
 			}
 			divide(out, inL, inR);
-			if (signL != signR) {
+			if (signL != signR && out != null) {
 				neg(out, out.length);
 			}
 			if (signL) {
@@ -2074,6 +2077,20 @@ public interface JitCompiledPassage {
 	}
 
 	/**
+	 * Construct a p-code op
+	 * 
+	 * @param target address of instruction
+	 * @param sq sequence of pcode op with an instructions pcode ops
+	 * @param opcode pcode operation
+	 * @param inputs the inputs
+	 * @param output the output
+	 * @return the op
+	 */
+	static PcodeOp createOp(Address target, int sq, int opcode, Varnode[] inputs, Varnode output) {
+		return new PcodeOp(new SequenceNumber(target, sq), opcode, inputs, output);
+	}
+
+	/**
 	 * Get this instance's bound thread.
 	 * 
 	 * <p>
@@ -2125,7 +2142,7 @@ public interface JitCompiledPassage {
 	 * This is invoked by generated constructors to retain a userop reference for later invocation.
 	 * Note that it is the userop as defined by the user or emulator, not any wrapper used during
 	 * decode or translation. Depending on the invocation strategy, this reference may be saved and
-	 * later used with {@link #invokeUserop(PcodeUseropDefinition, Varnode, Varnode[])}, or its
+	 * later used with {@link #invokeUserop(PcodeUseropDefinition, PcodeOp)}, or its
 	 * method and instance may be extracted and saved for Direct invocation later.
 	 * 
 	 * @param name the name of the userop
@@ -2144,15 +2161,12 @@ public interface JitCompiledPassage {
 	 * via the Standard strategy.
 	 * 
 	 * @param userop the userop definition
-	 * @param output an optional output operand
-	 * @param inputs the input operands
+	 * @param op the {@link PcodeOp#CALLOTHER} op
 	 * @see JitDataFlowUseropLibrary
-	 * @see PcodeUseropDefinition#execute(PcodeExecutor, PcodeUseropLibrary, Varnode, List)
+	 * @see PcodeUseropDefinition#execute(PcodeExecutor, PcodeUseropLibrary, PcodeOp)
 	 */
-	default void invokeUserop(PcodeUseropDefinition<byte[]> userop, Varnode output,
-			Varnode[] inputs) {
-		userop.execute(thread().getExecutor(), thread().getUseropLibrary(), output,
-			Arrays.asList(inputs));
+	default void invokeUserop(PcodeUseropDefinition<byte[]> userop, PcodeOp op) {
+		userop.execute(thread().getExecutor(), thread().getUseropLibrary(), op);
 	}
 
 	/**

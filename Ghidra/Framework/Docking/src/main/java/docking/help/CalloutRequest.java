@@ -19,9 +19,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URL;
 
 import javax.help.WindowPresentation;
 import javax.swing.*;
@@ -88,24 +86,14 @@ class CalloutRequest {
 	}
 
 	private void savePageInfo() {
-		URI uri;
-		try {
-			uri = requestUrl.toURI();
-		}
-		catch (URISyntaxException e) {
-			// shouldn't happen
-			pageInfo = requestUrl.toString();
+		pageInfo = requestUrl.toString();
+
+		int lastSlash = pageInfo.lastIndexOf('/');
+		if (lastSlash < 0) {
 			return;
 		}
 
-		String uriPathString = uri.getPath();
-		Path path = Paths.get(uriPathString);
-		Path fileName = path.getFileName();
-		pageInfo = fileName.toString();
-		String ref = requestUrl.getRef();
-		if (ref != null) {
-			pageInfo = "#" + ref;
-		}
+		pageInfo = pageInfo.substring(lastSlash + 1, pageInfo.length());
 	}
 
 	public void runLater() {

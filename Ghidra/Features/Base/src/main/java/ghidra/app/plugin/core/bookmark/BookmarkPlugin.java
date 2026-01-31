@@ -182,7 +182,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		DockingAction selectionAction = new DockingAction("Select Bookmark Locations", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				select(provider.getBookmarkLocations());
+				select(provider.getBookmarkSelection());
 			}
 		};
 		icon = new GIcon("icon.plugin.bookmark.select");

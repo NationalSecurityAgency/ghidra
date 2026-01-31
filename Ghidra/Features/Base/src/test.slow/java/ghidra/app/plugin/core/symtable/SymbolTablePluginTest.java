@@ -30,7 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.*;
 
 import docking.*;

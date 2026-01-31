@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.codebrowser;
 
 import java.util.Iterator;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldSelection;

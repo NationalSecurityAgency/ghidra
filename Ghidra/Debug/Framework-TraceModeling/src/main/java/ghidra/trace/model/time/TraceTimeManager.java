@@ -17,6 +17,7 @@ package ghidra.trace.model.time;
 
 import java.util.Collection;
 
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 
@@ -77,6 +78,22 @@ public interface TraceTimeManager {
 	TraceSnapshot findScratchSnapshot(TraceSchedule schedule);
 
 	/**
+	 * Find the nearest related snapshot whose schedule is a prefix of the given schedule
+	 * 
+	 * <p>
+	 * This finds a snapshot that can be used as the initial state of an emulator to materialize the
+	 * state at the given schedule. The one it returns is the one that would require the fewest
+	 * instruction steps. Note that since an emulator cannot be initialized into the middle of an
+	 * instruction, snapshots whose schedules contain p-code op steps are ignored. Additionally,
+	 * this will ignore any snapshots whose version is less than the emulator cache version.
+	 * 
+	 * @param schedule the desired schedule
+	 * @return the found snapshot, or null
+	 * @see Trace#getEmulatorCacheVersion()
+	 */
+	TraceSnapshot findSnapshotWithNearestPrefix(TraceSchedule schedule);
+
+	/**
 	 * List all snapshots in the trace
 	 * 
 	 * @return the set of snapshots
@@ -129,5 +146,4 @@ public interface TraceTimeManager {
 	 * @return radix the radix
 	 */
 	TimeRadix getTimeRadix();
-
 }

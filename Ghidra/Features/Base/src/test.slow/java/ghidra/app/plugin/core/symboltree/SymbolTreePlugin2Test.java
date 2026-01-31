@@ -317,6 +317,55 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testClassNestedUnderNonClassNamespace_RenameClass() throws Exception {
+
+		/*
+		
+		 	The Classes folder flattens classes so every class appears at the top level.  Because
+		 	users can expand classes, top level classes may also appear nested under other classes.
+		 	
+		 	Classes
+		 		Class1
+		 		
+		 	Namespaces		 	
+		 		FooNs
+		 			Class1
+		 */
+
+		Namespace fooNs = createNamespace("FooNs");
+		GhidraClass class1 = createClass(fooNs, "Class1");
+
+		expandClasses();
+		expandNamesapces();
+
+		//@formatter:off
+		assertNamespaceNodes(
+			"FooNs::Class1"
+		);
+		//@formatter:on
+
+		//@formatter:off
+		assertClassNodes(
+			"Class1"
+		);
+		//@formatter:on
+
+		renameSymbol(class1.getSymbol(), "Class1.renamed");
+
+		//@formatter:off
+		assertNamespaceNodes(
+			"FooNs::Class1.renamed"
+		);
+		//@formatter:on
+
+		//@formatter:off
+		assertClassNodes(
+			"Class1.renamed"
+		);
+		//@formatter:on
+	}
+
+	@Test
 	public void testClassCategoryDuplicates_NestedClass_RenameLabel() throws Exception {
 
 		/*
@@ -733,7 +782,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		convertToClassAction = getAction(plugin, "Convert to Class");
 		assertNotNull(convertToClassAction);
 
-		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
 		assertNotNull(navigateIncomingAction);
 	}
 

@@ -20,9 +20,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 import org.xml.sax.*;
 
 import generic.jar.ResourceFile;
@@ -580,7 +580,7 @@ System.out.printf("In LibrarySymbolTable.read:(...) %s <ord %3d> : '%s'\n", file
 		try {
 			Document doc = new Document(root);
 
-			XMLOutputter xmlout = new GenericXMLOutputter();
+			XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 			xmlout.output(doc, fos);
 		}
 		finally {

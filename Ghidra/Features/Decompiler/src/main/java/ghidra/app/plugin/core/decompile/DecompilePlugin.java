@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.decompile;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.decompiler.*;
@@ -60,6 +60,8 @@ import ghidra.util.task.SwingUpdateManager;
 	})
 //@formatter:on
 public class DecompilePlugin extends Plugin {
+
+	public static final String OPTIONS_TITLE = "Decompiler";
 
 	private PrimaryDecompilerProvider connectedProvider;
 	private List<DecompilerProvider> disconnectedProviders;

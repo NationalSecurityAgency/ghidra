@@ -246,7 +246,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					ghidra_trace_info_lcsp()
 					util.terminate_session()
 					quit()
-					""".formatted(PREAMBLE));
+					"""
+					.formatted(PREAMBLE));
 
 		assertEquals("""
 				Selected Ghidra language: x86:LE:64:default
@@ -347,7 +348,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			traceManager.openTrace(tb.trace);
 			traceManager.activateTrace(tb.trace);
-			
+
 			String pc = extractOutSection(out, "---PC---");
 			long address = Long.parseLong(pc);
 			String dump = extractOutSection(out, "---Dump---");
@@ -985,22 +986,24 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 
 	@Test
 	public void testPutBreakpoints() throws Exception {
-		runThrowError(addr -> """
-				%s
-				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
-				pc = util.get_pc()
-				util.dbg.client.clear_breakpoint(None)
-				util.dbg.client.clear_hardware_breakpoint(None)
-				util.dbg.client.set_breakpoint(address_or_symbol=pc)
-				util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.x)
-				ghidra_trace_txstart('Tx')
-				ghidra_trace_put_breakpoints()
-				ghidra_trace_txcommit()
-				ghidra_trace_kill()
-				util.terminate_session()
-				quit()
-				""".formatted(PREAMBLE, addr));
+		runThrowError(
+			addr -> """
+					%s
+					ghidra_trace_connect('%s')
+					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+					pc = util.get_pc()
+					util.dbg.client.clear_breakpoint(None)
+					util.dbg.client.clear_hardware_breakpoint(None)
+					util.dbg.client.set_breakpoint(address_or_symbol=pc)
+					util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.x)
+					ghidra_trace_txstart('Tx')
+					ghidra_trace_put_breakpoints()
+					ghidra_trace_txcommit()
+					ghidra_trace_kill()
+					util.terminate_session()
+					quit()
+					"""
+					.formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procSBreakLocVals = tb.trace.getObjectManager()
@@ -1028,22 +1031,24 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 
 	@Test
 	public void testPutBreakpoints2() throws Exception {
-		runThrowError(addr -> """
-				%s
-				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
-				ghidra_trace_txstart('Tx')
-				pc = util.get_pc()
-				util.dbg.client.clear_hardware_breakpoint(None)
-				util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc, bp_type=HardwareBreakpointType.x)
-				util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.r)
-				util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+8, bp_type=HardwareBreakpointType.w)
-				ghidra_trace_put_breakpoints()
-				ghidra_trace_txcommit()
-				ghidra_trace_kill()
-				util.terminate_session()
-				quit()
-				""".formatted(PREAMBLE, addr));
+		runThrowError(
+			addr -> """
+					%s
+					ghidra_trace_connect('%s')
+					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+					ghidra_trace_txstart('Tx')
+					pc = util.get_pc()
+					util.dbg.client.clear_hardware_breakpoint(None)
+					util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc, bp_type=HardwareBreakpointType.x)
+					util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.r)
+					util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+8, bp_type=HardwareBreakpointType.w)
+					ghidra_trace_put_breakpoints()
+					ghidra_trace_txcommit()
+					ghidra_trace_kill()
+					util.terminate_session()
+					quit()
+					"""
+					.formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procBreakVals = tb.trace.getObjectManager()

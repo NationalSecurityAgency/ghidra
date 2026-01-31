@@ -119,12 +119,14 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 				conn.execute("pc = util.get_pc()");
 				clearBreakpoints(conn);
-				
+
 				conn.execute("util.dbg.client.set_breakpoint(address_or_symbol=pc)");
-				conn.execute("util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.x)");
+				conn.execute(
+					"util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.x)");
 				txPut(conn, "breakpoints");
 				TraceObject breakpoints =
-					Objects.requireNonNull(tb.objAny0("Sessions[].Processes[].Debug.Software Breakpoints"));
+					Objects.requireNonNull(
+						tb.objAny0("Sessions[].Processes[].Debug.Software Breakpoints"));
 				refreshBreakpoints.invoke(Map.of("node", breakpoints));
 
 				clearBreakpoints(conn);
@@ -166,12 +168,16 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 				conn.execute("pc = util.get_pc()");
 				clearBreakpoints(conn);
-				
-				conn.execute("util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc, bp_type=HardwareBreakpointType.x)");
-				conn.execute("util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.r)");
-				conn.execute("util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+8, bp_type=HardwareBreakpointType.w)");
+
+				conn.execute(
+					"util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc, bp_type=HardwareBreakpointType.x)");
+				conn.execute(
+					"util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+4, bp_type=HardwareBreakpointType.r)");
+				conn.execute(
+					"util.dbg.client.set_hardware_breakpoint(address_or_symbol=pc+8, bp_type=HardwareBreakpointType.w)");
 				TraceObject locations =
-					Objects.requireNonNull(tb.objAny0("Sessions[].Processes[].Debug.Hardware Breakpoints"));
+					Objects.requireNonNull(
+						tb.objAny0("Sessions[].Processes[].Debug.Hardware Breakpoints"));
 				refreshProcWatchpoints.invoke(Map.of("node", locations));
 
 				clearBreakpoints(conn);
@@ -449,7 +455,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 						attachPid.invoke(Map.ofEntries(
 							Map.entry("session", tb.obj("Sessions[0]")),
 							Map.entry("pid", dproc.pid)));
-					} catch (Exception e) {
+					}
+					catch (Exception e) {
 						// IGNORE
 					}
 
@@ -478,7 +485,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				String out = conn.executeCapture("print(list(util.process_list0()))");
 				conn.execute("util.terminate_session()");
 
-				assertThat(out, containsString("python.exe"));
+				assertEquals(out, "[]\n");
 			}
 		}
 	}
@@ -653,7 +660,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				stepInto.invoke(Map.of("thread", thread));
 				long pc = getAddressAtOffset(conn, 0);
 				conn.execute("util.terminate_session()");
-				
+
 				assertEquals(pcNext, pc);
 			}
 		}
@@ -674,11 +681,12 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				long address = getAddressAtOffset(conn, 0);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpNormal)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpNormal)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString(Long.toHexString(address)));
 			}
 		}
@@ -697,7 +705,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				clearBreakpoints(conn);
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpNormal)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpNormal)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
@@ -723,11 +732,12 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				long address = getAddressAtOffset(conn, 0);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
-				
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
+
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString(Long.toString(address)));
 			}
 		}
@@ -746,11 +756,12 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				clearBreakpoints(conn);
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("kernel32.dll"));
 			}
 		}
@@ -767,16 +778,17 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				clearBreakpoints(conn);
-				
+
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				long address = getAddressAtOffset(conn, 0);
 				breakAddr.invoke(Map.of("process", proc, "address", tb.addr(address), "size", 1L));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("%d".formatted(address)));
 				assertThat(out, containsString("hwSize=0"));
 				assertThat(out, containsString("typeEx=0"));
@@ -798,11 +810,12 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
 				long address = getAddressAtOffset(conn, 0);
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("kernel32.dll"));
 				assertThat(out, containsString("hwSize=0"));
 				assertThat(out, containsString("typeEx=0"));
@@ -826,11 +839,12 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				long address = getAddressAtOffset(conn, 0);
 				breakAddr.invoke(Map.of("process", proc, "address", tb.addr(address), "size", 1L));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("%d".formatted(address)));
 				assertThat(out, containsString("hwSize=0"));
 				assertThat(out, containsString("typeEx=1"));
@@ -853,11 +867,12 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
 				long address = getAddressAtOffset(conn, 0);
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpHardware)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("kernel32.dll"));
 				assertThat(out, containsString("hwSize=0"));
 				assertThat(out, containsString("typeEx=1"));
@@ -880,12 +895,13 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				long address = getAddressAtOffset(conn, 0);
 				breakAddr.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpMemory)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpMemory)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
 
-				assertThat(out, containsString("%d".formatted(address).substring(0,6)));  // page boundary
+				assertThat(out, containsString("%d".formatted(address).substring(0, 6)));  // page boundary
 				assertThat(out, containsString("hwSize=0"));
 				assertThat(out, containsString("typeEx=0"));
 			}
@@ -906,12 +922,13 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
 				long address = getAddressAtOffset(conn, 0);
 
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpMemory)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpMemory)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
-				assertThat(out, containsString("kernel32.dll"));  
+
+				assertThat(out, containsString("kernel32.dll"));
 				assertThat(out, containsString("hwSize=0"));
 				assertThat(out, containsString("typeEx=0"));
 			}
@@ -930,22 +947,23 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				clearBreakpoints(conn);
-				
+
 				long address = getAddressAtOffset(conn, 0);
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
 				txPut(conn, "breakpoints");
 				TraceObject bpt = Objects
-						.requireNonNull(tb.objAny0("Sessions[].Processes[].Debug.Software Breakpoints[]"));
+						.requireNonNull(
+							tb.objAny0("Sessions[].Processes[].Debug.Software Breakpoints[]"));
 
 				toggleBreakpoint.invoke(Map.of("breakpoint", bpt, "enabled", false));
 
 				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(0)))");
-				
+
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("enabled=False"));
 			}
 		}
@@ -963,20 +981,22 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				clearBreakpoints(conn);
-				
+
 				long address = getAddressAtOffset(conn, 0);
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[].Debug.Software Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(
+					tb.objAny0("Sessions[].Processes[].Debug.Software Breakpoints[]"));
 
 				deleteBreakpoint.invoke(Map.of("breakpoint", bpt));
-				String out = conn.executeCapture("print(list(util.dbg.client.get_breakpoints(BreakpointType.BpNormal)))");
+				String out = conn.executeCapture(
+					"print(list(util.dbg.client.get_breakpoints(BreakpointType.BpNormal)))");
 
 				clearBreakpoints(conn);
 				conn.execute("util.terminate_session()");
-				
+
 				assertThat(out, containsString("[]"));
 			}
 		}
@@ -994,7 +1014,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 		conn.execute("ghidra_trace_txstart('Tx-put %s')".formatted(obj));
 		try {
 			conn.execute("ghidra_trace_put_%s()".formatted(obj));
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			// IGNORE
 		}
 		conn.execute("ghidra_trace_txcommit()");
@@ -1013,7 +1034,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 	private String getInstAtOffset(PythonAndConnection conn, int offset) {
 		String inst = "print(util.get_inst(util.get_pc()+" + offset + "))";
 		String ret = conn.executeCapture(inst).strip();
-		ret = ret.substring(ret.indexOf("'")+1);  
+		ret = ret.substring(ret.indexOf("'") + 1);
 		return ret.substring(0, ret.indexOf("'"));
 	}
 
@@ -1021,7 +1042,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 		String instSize = "print(util.get_inst(util.get_pc()+" + offset + "))";
 		String ret = conn.executeCapture(instSize).strip();
 		ret = ret.substring(ret.indexOf("instr_size"));
-		return ret.substring(ret.indexOf("=")+1, ret.indexOf(" "));
+		return ret.substring(ret.indexOf("=") + 1, ret.indexOf(" "));
 	}
 
 	private long getAddressAtOffset(PythonAndConnection conn, int offset) {
@@ -1033,6 +1054,6 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 	private void clearBreakpoints(PythonAndConnection conn) {
 		conn.execute("util.dbg.client.clear_breakpoint(None)");
 		conn.execute("util.dbg.client.clear_hardware_breakpoint(None)");
-		conn.execute("util.dbg.client.clear_memory_breakpoint(None)");	
+		conn.execute("util.dbg.client.clear_memory_breakpoint(None)");
 	}
 }

@@ -38,7 +38,7 @@ import javax.security.auth.login.LoginException;
 import ghidra.framework.Application;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.*;
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -130,7 +130,7 @@ class ServerConnectTask extends Task {
 
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
-			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
+			if (DefaultKeyManagerFactory.getPreferredKeyStore() == null) {
 				throw new IOException("User PKI Certificate not installed", e);
 			}
 			// assume user cancelled connect attempt when prompted for cert password
@@ -291,13 +291,12 @@ class ServerConnectTask extends Task {
 							// if anonymous access allowed, let server validate certificate
 							// first and assume anonymous access if user unknown but cert is valid
 
-							if (!ApplicationKeyManagerFactory.initialize()) {
+							if (!DefaultKeyManagerFactory.initialize()) {
 								throw new IOException(
 									"Client PKI certificate has not been installed");
 							}
 
-							if (ApplicationKeyManagerFactory
-									.usingGeneratedSelfSignedCertificate()) {
+							if (DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate()) {
 								Msg.warn(this,
 									"Server connect - client is using self-signed PKI certificate");
 							}

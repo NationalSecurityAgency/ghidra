@@ -255,7 +255,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 
 		try {
 			thread.run();
-			fail("Should have failed on breakpoint");
+			fail("Should have interrupted on breakpoint");
 		}
 		catch (InterruptPcodeExecutionException e) {
 		}
@@ -287,7 +287,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 
 		try {
 			thread.run();
-			fail("Should have failed on injection error");
+			fail("Should have interrupted on injection error");
 		}
 		catch (InjectionErrorPcodeExecutionException e) {
 		}

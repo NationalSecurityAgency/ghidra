@@ -25,6 +25,7 @@ import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointSpec;
 
 public class BreakpointLocationRow {
 	private final DebuggerBreakpointsProvider provider;
@@ -111,6 +112,15 @@ public class BreakpointLocationRow {
 		try (Transaction tid = loc.getTrace().openTransaction("Set breakpoint comment")) {
 			loc.setComment(getSnap(), comment);
 		}
+	}
+
+	public String getExpression() {
+		TraceBreakpointSpec spec = loc.getSpecification();
+		if (spec == null) {
+			// Shouldn't happen, but may in the interim
+			return "";
+		}
+		return spec.getExpression(getSnap());
 	}
 
 	public boolean hasSleigh() {

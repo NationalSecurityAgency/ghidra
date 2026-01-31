@@ -20,8 +20,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -45,7 +44,11 @@ import ghidra.trace.database.guest.*;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.*;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
@@ -1432,12 +1435,19 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			frameCode = manager.getCodeRegisterSpace(stack.getFrame(0, 1, false), true);
 			assertNotEquals(regCode, frameCode);
 			dR5 = frameCode.definedData()
-					.create(Lifespan.nowOn(0), b.language.getRegister("r5"), LongDataType.dataType);
+					.create(Lifespan.nowOn(0), b.reg("r5"), LongDataType.dataType);
 		}
 
 		assertEquals(1, frameCode.getFrameLevel());
 		assertEquals(thread, frameCode.getThread());
 		assertEquals(List.of(dR5), list(frameCode.definedUnits().get(0, true)));
+
+		// Manager should be able to delegate to regs by space, too, now that we use overlays.
+		Address aR5 =
+			b.host.getConventionalRegisterRange(frameCode.space, b.reg("r5")).getMinAddress();
+		assertEquals(dR5, manager.definedData().getAt(0, aR5));
+		// TODO: Given the line above succeeding, this ought to pass, but it doesn't.
+		// assertEquals(List.of(dR5), list(manager.definedUnits().get(0, true)));
 	}
 
 	@Test
@@ -1837,6 +1847,65 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		}
 		assertNull(ctxManager.getValue(b.language, r4, 7, b.addr(0x4008)));
 		assertEquals(rvOne, ctxManager.getValue(b.language, r4, 6, b.addr(0x4008)));
+	}
+
+	@Test
+	public void testClearInRegisterSpace() throws CodeUnitInsertionException, CancelledException {
+		TraceCodeSpace regCode;
+		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject();
+			KeyPath pathThread = KeyPath.parse("Targets[0].Threads[1]");
+			TraceObject objThread = b.trace.getObjectManager().createObject(pathThread);
+			objThread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			TraceThread thread =
+				Objects.requireNonNull(objThread.queryInterface(TraceThread.class));
+			TraceObject objRegs = b.trace.getObjectManager()
+					.createObject(KeyPath.parse("Targets[0].Threads[1].Registers"));
+			objRegs.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+
+			Register r0 = b.reg("r0");
+			TraceMemorySpace regBytes =
+				b.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+			regBytes.setValue(0, new RegisterValue(r0, BigInteger.ONE));
+
+			regCode = regBytes.getCodeSpace(true);
+			regCode.definedData().create(Lifespan.nowOn(0), r0, LongDataType.dataType);
+			regCode.definedData().clear(Lifespan.nowOn(1), r0, TaskMonitor.DUMMY);
+		}
+
+		List<CodeUnit> result = new ArrayList<>();
+		regCode.definedUnits().get(1, true).forEach(result::add);
+		assertEquals(0, result.size());
+	}
+
+	@Test
+	public void testClearInRegisterSpaceUsingHostPlatform()
+			throws CodeUnitInsertionException, CancelledException {
+		TraceCodeSpace regCode;
+		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject();
+			KeyPath pathThread = KeyPath.parse("Targets[0].Threads[1]");
+			TraceObject objThread = b.trace.getObjectManager().createObject(pathThread);
+			objThread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			TraceThread thread =
+				Objects.requireNonNull(objThread.queryInterface(TraceThread.class));
+			TraceObject objRegs = b.trace.getObjectManager()
+					.createObject(KeyPath.parse("Targets[0].Threads[1].Registers"));
+			objRegs.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+
+			Register r0 = b.reg("r0");
+			TraceMemorySpace regBytes =
+				b.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+			regBytes.setValue(0, new RegisterValue(r0, BigInteger.ONE));
+
+			regCode = regBytes.getCodeSpace(true);
+			regCode.definedData().create(Lifespan.nowOn(0), r0, LongDataType.dataType);
+			regCode.definedData().clear(b.host, Lifespan.nowOn(1), r0, TaskMonitor.DUMMY);
+		}
+
+		List<CodeUnit> result = new ArrayList<>();
+		regCode.definedUnits().get(1, true).forEach(result::add);
+		assertEquals(0, result.size());
 	}
 
 	@Test

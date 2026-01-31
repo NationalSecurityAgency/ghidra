@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.format;
 
+import java.math.BigInteger;
+
 import ghidra.app.plugin.core.byteviewer.MemoryByteBlock;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Listing;
@@ -22,8 +24,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.HelpLocation;
-
-import java.math.BigInteger;
 
 /**
  * Converts byte values to Ascii representation.
@@ -178,64 +178,11 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	}
 
 	/**
-	 * Returns true if the formatter allows values to be changed.
-	 */
-	@Override
-	public boolean isEditable() {
-		return false;
-	}
-
-	/**
-	 * Overwrite a value in a ByteBlock.
-	 * @param block block to change
-	 * @param index byte index into the block
-	 * @param pos The position within the unit where c will be the
-	 * new character.
-	 * @param c new character to put at pos param
-	 * @return true if the replacement is legal, false if the
-	 * replacement value would not make sense for this format, e.g.
-	 * attempt to put a 'z' in a hex unit.
-	 * block
-	 */
-	@Override
-	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c) {
-		return false;
-	}
-
-	/**
 	 * Get the number of characters separating units.
 	 */
 	@Override
 	public int getUnitDelimiterSize() {
 		return 0;
-	}
-
-	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	@Override
-	public int getGroupSize() {
-		return 0;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException
-	 */
-	@Override
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
-
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	@Override
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
 	}
 
 	/**

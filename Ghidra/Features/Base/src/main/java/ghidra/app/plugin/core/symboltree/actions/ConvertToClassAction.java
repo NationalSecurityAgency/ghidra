@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,20 +71,22 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 
 		Symbol symbol = ((SymbolNode) node).getSymbol();
 		Namespace namespace = (Namespace) symbol.getObject();
-		if (namespace != null) {
-			String name = namespace.getName();
-			convertToClass(program, namespace);
-			program.flushEvents();
-
-			GTreeNode classesNode = root.getChild(SymbolCategory.CLASS_CATEGORY.getName());
-			if (classesNode != null) {
-				context.getSymbolTree().startEditing(classesNode, name);
-			}
-			else {
-				Msg.showInfo(this, null, "Classes Filtered Out of View",
-					"New class node is filtered out of view");
-			}
+		if (namespace == null) {
+			return;
 		}
+
+		String name = namespace.getName();
+		convertToClass(program, namespace);
+		program.flushEvents();
+
+		GTreeNode classesNode = root.getChild(SymbolCategory.CLASS_CATEGORY.getName());
+		if (classesNode == null) {
+			Msg.showInfo(this, null, "Classes Filtered Out of View",
+				"New class node is filtered out of view");
+			return;
+		}
+
+		tree.startEditing(classesNode, name);
 	}
 
 	private static void convertToClass(Program program, Namespace ns) {

@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
@@ -56,8 +56,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.ProgramUtilities;
-import ghidra.util.Msg;
-import ghidra.util.TaskUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
@@ -1103,8 +1102,10 @@ public class TestEnv {
 	}
 
 	private void resetTheme() {
-		ThemeManager themeManager = ThemeManager.getInstance();
-		themeManager.restoreThemeValues();
+		Swing.runNow(() -> {
+			ThemeManager themeManager = ThemeManager.getInstance();
+			themeManager.restoreThemeValues();
+		});
 	}
 
 	private void deleteTestProject(String projectName) {

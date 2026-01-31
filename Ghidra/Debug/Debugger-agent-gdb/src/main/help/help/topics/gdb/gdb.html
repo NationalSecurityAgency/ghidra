@@ -38,7 +38,7 @@
     <UL style="list-style-type: none">
       <LI>
 <PRE>
-python3 -m pip install psutil protobuf==3.20.3
+python3 -m pip install protobuf>=3.20.3
 </PRE>
       </LI>
     </UL>
@@ -51,7 +51,7 @@ python3 -m pip install psutil protobuf==3.20.3
 <PRE>
 cd /path/to/ghidra_<EM>
 version</EM>/Ghidra/Debug
-python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-gdb/pypkg/dist psutil protobuf
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-gdb/pypkg/dist protobuf
 </PRE>
       </LI>
     </UL>
@@ -102,6 +102,9 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
       <LI><B><TT>gdb</TT> command</B>: This is the command or path to GDB. We recommend version 13
       or later. We require version 8 or later.</LI>
 
+	  <LI><B><TT>gdb</TT> cmd args</B>: Arguments passed directly to GDB (versus the target).
+	  Note: these arguments may override user arguments passed to the cmd.</LI>
+
       <LI><B>Run command</B>: This is the GDB command to actually launch the target. In most cases
       this should be "<TT>starti,</TT>" since this will assure you an initial break and a chance to
       enable your breakpoints.</LI>
@@ -140,7 +143,7 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
     comprising our plugin for GDB and its dependencies. Copy all of the Python packages from
     <TT>Ghidra/Debug/Debugger-rmi-trace/pypkg/dist/</TT> and
     <TT>Ghidra/Debug/Debugger-agent-gdb/pypkg/dist/</TT> to the remote system. It is easiest to put
-    them all in one directory, e.g., <TT>~/ghidra-pypgk/</TT>. Then install them:</P>
+    them all in one directory, e.g., <TT>~/ghidra-pypkg/</TT>. Then install them:</P>
 
     <UL style="list-style-type: none">
       <LI>

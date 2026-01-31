@@ -396,7 +396,7 @@ public class DWARFProgram implements Closeable {
 
 	private void indexDIEsForCU(DWARFCompilationUnit cu, LongArrayList dieOffsetList,
 			IntArrayList parentIndexList, IntArrayList siblingIndexList, LongArrayList aggrTargets,
-			TaskMonitor monitor) throws CancelledException {
+			TaskMonitor monitor) throws CancelledException, DWARFException {
 		long endOffset = cu.getEndOffset();
 
 		int perCuDieCount = 0;
@@ -448,19 +448,26 @@ public class DWARFProgram implements Closeable {
 
 				DIEAggregate diea = DIEAggregate.createSingle(die);
 				for (DWARFAttribute attr : REF_ATTRS) {
-					long refdOffset = diea.getUnsignedLong(attr, -1);
-					if (refdOffset != -1) {
+					DWARFNumericAttribute attrval =
+						diea.getAttribute(attr, DWARFNumericAttribute.class);
+					if (attrval != null) {
+						long refdOffset = getLocalDIEOffset(attrval.getAttributeForm(),
+							attrval.getUnsignedValue(), cu);
 						aggrTargets.add(refdOffset);
 					}
 				}
 
 				diesByOffset.put(startOfDIE, die);
 			}
+			catch (DWARFException e) {
+				throw e;
+			}
 			catch (IOException e) {
 				Msg.error(this,
-					"Failed to read DIE at offset 0x%x in compunit %d (at 0x%x), skipping remainder of compilation unit."
-							.formatted(startOfDIE, cu.getUnitNumber(), cu.getStartOffset()),
-					e);
+					"Failed to read DIE at offset 0x%x in compunit %d (at 0x%x), skipping remainder of compilation unit: %s"
+							.formatted(startOfDIE, cu.getUnitNumber(), cu.getStartOffset(),
+								Objects.requireNonNullElse(e.getMessage(), "unspecified")));
+				Msg.debug(this, "Error location", e);
 				debugInfoBR.setPointerIndex(endOffset);
 			}
 		}
@@ -1092,12 +1099,45 @@ public class DWARFProgram implements Closeable {
 				return lineStrings.getStringAtOffset(offset);
 			case DW_FORM_strp:
 				return debugStrings.getStringAtOffset(offset);
+			case DW_FORM_gnu_strp_alt:
+			case DW_FORM_gnu_str_index:
+				throw new IOException("Unsupported DWARF string attribute form " + form);
 			case DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4:
 				long strOffset = stringsOffsetTable.getOffset((int) offset, cu);
 				return debugStrings.getStringAtOffset(strOffset);
+
 			default:
 				throw new IOException("Unsupported string form: " + form);
 		}
+	}
+
+	private long getLocalDIEOffset(DWARFForm form, long rawOffset, DWARFCompilationUnit cu)
+			throws DWARFException {
+		switch (form) {
+			case DW_FORM_ref1, DW_FORM_ref2, DW_FORM_ref4, DW_FORM_ref8, DW_FORM_ref_udata:
+				return rawOffset + cu.getStartOffset();
+			case DW_FORM_ref_addr:
+				return rawOffset;
+			case DW_FORM_gnu_ref_alt:
+				throw new DWARFException("Unsupported DIE reference form: " + form);
+			default:
+				Msg.warn(this, "Nontypical form %s used for reference".formatted(form));
+				return rawOffset;
+		}
+	}
+
+	/**
+	 * Return the DIE referenced by an attribute value (a DW_FORM and offset)
+	 * 
+	 * @param form {@link DWARFForm} 
+	 * @param rawOffset index / offset from the numeric attribute
+	 * @param cu compilation unit containing the value
+	 * @return {@link DebugInfoEntry}, or null if doesn't exist
+	 * @throws IOException if unsupported format for reference
+	 */
+	public DebugInfoEntry getDIE(DWARFForm form, long rawOffset, DWARFCompilationUnit cu)
+			throws IOException {
+		return getDIEByOffset(getLocalDIEOffset(form, rawOffset, cu));
 	}
 
 	/**
@@ -1206,6 +1246,7 @@ public class DWARFProgram implements Closeable {
 				long addr = addressListTable.getOffset((int) value, cu);
 				return addr;
 			}
+			case DW_FORM_gnu_addr_index:
 			default:
 				throw new IOException("Unsupported form %s".formatted(form));
 		}

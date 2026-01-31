@@ -51,6 +51,7 @@ import utility.function.Dummy;
  */
 public class GTabPanel<T> extends JPanel {
 
+	private boolean isActive;
 	private T selectedValue;
 	private T highlightedValue;
 	private boolean ignoreFocusLost;
@@ -117,6 +118,7 @@ public class GTabPanel<T> extends JPanel {
 			@Override
 			public void focusGained(FocusEvent e) {
 				updateTabColors();
+				repaint();
 			}
 
 			@Override
@@ -126,8 +128,9 @@ public class GTabPanel<T> extends JPanel {
 				}
 
 				highlightedValue = null;
-				updateAccessibleName();
 				updateTabColors();
+				updateAccessibleName();
+				repaint();
 			}
 		});
 	}
@@ -184,6 +187,19 @@ public class GTabPanel<T> extends JPanel {
 		}
 	}
 
+	public Color getSelectedTabColor() {
+
+		if (selectedValue == null) {
+			return GTab.BG_COLOR_UNSELECTED;
+		}
+
+		GTab<T> tab = getTab(selectedValue);
+		if (tab == null) {
+			return GTab.BG_COLOR_UNSELECTED;
+		}
+		return tab.getBackgroundColor(false);
+	}
+
 	/**
 	 * Returns the currently selected tab. If the panel is not empty, there will always be a
 	 * selected tab.
@@ -196,43 +212,93 @@ public class GTabPanel<T> extends JPanel {
 	/**
 	 * Returns the currently highlighted tab if a tab is highlighted. Note: the selected tab can
 	 * never be highlighted.
-	 * @return the currently highlighted tab or null if no tab is highligted
+	 * @return the currently highlighted tab or null if no tab is highlighted
 	 */
 	public T getHighlightedTabValue() {
 		return highlightedValue;
 	}
 
 	/**
-	 * Makes the tab for the given value be the selected tab.
+	 * Sets this panel to be active.  When active, this panel will paint differently than when 
+	 * inactive.
+	 * @param isActive true if active
+	 */
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+		doUpdateSelectedTab(selectedValue);
+		repaint();
+	}
+
+	/**
+	 * True if this panel is active.
+	 * @return true if active
+	 */
+	public boolean isActive() {
+		return isActive;
+	}
+
+	/**
+	 * Makes the tab for the given value be the selected and active tab.  If the value is null, then
+	 * the tabs will be rebuilt and no tab will be selected.
+	 * 
 	 * @param value the value whose tab is to be selected
 	 */
 	public void selectTab(T value) {
-		if (value == selectedValue) {
-			return;
-		}
 		if (value != null && !allValues.contains(value)) {
 			throw new IllegalArgumentException(
-				"Attempted to set selected value to non added value");
+				"Attempted to set selected value to non-added value");
 		}
+
+		if (isAlreadySelected(value)) {
+			return;
+		}
+
+		// This method is called for things like user clicks. Anytime we select the tab from the 
+		// API, also make this panel active.  This is easier on clients in that they do not have to
+		// both select and activate this panel.
+		isActive = true;
+		doUpdateSelectedTab(value);
+	}
+
+	private boolean isAlreadySelected(T value) {
+		if (value != selectedValue) {
+			return false; // different values; can't ignore
+		}
+
+		if (value == null) {
+			return true; // new value and current value are null; nothing to update
+		}
+
+		GTab<T> oldTab = getTab(selectedValue);
+		if (oldTab == null) {
+			return false;
+		}
+
+		return oldTab.isSelected();
+	}
+
+	private void doUpdateSelectedTab(T newValue) {
+
 		closeTabList();
 		highlightedValue = null;
-
 		T oldValue = selectedValue;
-		selectedValue = value;
+		selectedValue = newValue;
 
 		if (isVisibleTab(selectedValue)) {
 			GTab<T> oldTab = getTab(oldValue);
 			if (oldTab != null) {
 				oldTab.setSelected(false);
 			}
-			GTab<T> newTab = getTab(value);
+			GTab<T> newTab = getTab(newValue);
 			newTab.setSelected(true);
 		}
 		else {
 			rebuildTabs();
 		}
 
-		selectedTabConsumer.accept(value);
+		if (oldValue != newValue) {
+			selectedTabConsumer.accept(newValue);
+		}
 	}
 
 	/**
@@ -274,6 +340,7 @@ public class GTabPanel<T> extends JPanel {
 		highlightedValue = value == selectedValue ? null : value;
 		updateTabColors();
 		updateAccessibleName();
+		repaint();
 	}
 
 	/**
@@ -535,7 +602,7 @@ public class GTabPanel<T> extends JPanel {
 
 		if (shouldShowTabs()) {
 			setFocusable(true);
-			setBorder(new GTabPanelBorder());
+			setBorder(new GTabPanelBorder(this));
 			populateTabs();
 		}
 
@@ -567,24 +634,33 @@ public class GTabPanel<T> extends JPanel {
 		removeAll();
 
 		// reserve space for the selected tab
-		GTab<T> selectedTab = selectedValue != null ? new GTab<>(this, selectedValue, true) : null;
+		GTab<T> selectedTab = null;
+		if (selectedValue != null) {
+			selectedTab = new GTab<>(this, selectedValue, true);
+		}
+
 		availableWidth -= getParentedComponentWidth(selectedTab);
 
 		boolean selectedTabAdded = false;
 		for (T value : allValues) {
 			boolean isSelectedValue = value == selectedValue;
-			GTab<T> nextTab = isSelectedValue ? selectedTab : new GTab<>(this, value, false);
+			GTab<T> nextTab = selectedTab;
+			if (!isSelectedValue) {
+				nextTab = new GTab<>(this, value, false);
+			}
+
 			int tabWidth = isSelectedValue ? 0 : getParentedComponentWidth(nextTab);
 			if (tabWidth > availableWidth) {
 				break;
 			}
+
 			allTabs.add(nextTab);
 			add(nextTab);
 			selectedTabAdded |= isSelectedValue;
 			availableWidth -= tabWidth;
 		}
 
-		// if we ran out of space before adding the selected tab, add it now if it fits since
+		// If we ran out of space before adding the selected tab, add it now if it fits since
 		// we always want the selected tab visible and we reserved space for it (unless there 
 		// wasn't space for any tabs)
 		if (selectedTab != null && !selectedTabAdded && availableWidth >= 0) {

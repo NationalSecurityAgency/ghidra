@@ -14,7 +14,6 @@
 # limitations under the License.
 ##
 #@title lldb Android (Attach)
-#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>lldb</tt> and attach to an Android target.</h3>
 #@desc   <p>
@@ -31,6 +30,7 @@
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 #@env OPT_EXTRA_CMDS:str="" "Additional commands" "Follow-up lldb commands."
 
 . ..\support\lldbsetuputils.ps1

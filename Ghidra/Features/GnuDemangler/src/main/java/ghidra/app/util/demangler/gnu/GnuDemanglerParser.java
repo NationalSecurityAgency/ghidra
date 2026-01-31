@@ -162,13 +162,27 @@ public class GnuDemanglerParser {
 	* 				--the text can have "::" namespace separators (non-capturing group) and
 	*             	  must be followed by more text
 	*           	--the text can have multiple words, such as (unsigned long)
+	*           	--the text may be followed by 0 or more asterisks 
+	*           
+	*           	\(
+	*           		(?:\\w+\s)*	  non-capturing letters with a space, optional
+	*           		\\w+[*]*		  1 or more letters 
+	*           			[*]*          optional asterisk
+	*           		(?:::\w+[*]*)*	  namespace delimiter with 1 or more word characters, optional
+	*           				[*]*	  optional asterisk
+	*               \)
+	*               
+	*               \s*					optional space
+	*               -{0,1}				0 or 1 minus sign
+	*               \\w+				1 or more letters
+	*           
 	*           -optional space
 	*           -optional '-' character (a negative sign character)
 	* 			-followed by more text (with optional spaces)
 	* </pre>
 	*/
 	private static final Pattern CAST_PATTERN =
-		Pattern.compile("\\((?:\\w+\\s)*\\w+(?:::\\w+)*\\)\\s*-{0,1}\\w+");
+		Pattern.compile("\\((?:\\w+\\s)*\\w+[*]*(?:::\\w+[*]*)*\\)\\s*-{0,1}\\w+");
 
 	/*
 	 * Sample:  Magick::operator<(Magick::Coordinate const&, Magick::Coordinate const&)
@@ -665,8 +679,8 @@ public class GnuDemanglerParser {
 
 		int pos = itemText.lastIndexOf(Namespace.DELIMITER);
 		if (pos == -1) {
-			throw new DemanglerParseException(
-				"Expected the demangled string to contain a namespace");
+			// We now allow this case instead of throwing an exception
+			return null;
 		}
 
 		String parentText = itemText.substring(0, pos);
@@ -1715,6 +1729,12 @@ public class GnuDemanglerParser {
 
 	}
 
+	/*
+	 	Note: this class is used to handle things like 'guard variable for' or other items that 
+	 	don't parse directly as functions or variables.  Historically these items have always been
+	 	in a parent non-global namespace.  Global variables do not have a parent namespace as part 
+	 	of their name.  We have changed this class to allow the case of no specified namespace.
+	 */
 	private class ItemInNamespaceHandler extends SpecialPrefixHandler {
 
 		ItemInNamespaceHandler(String demangled) {
@@ -1728,6 +1748,11 @@ public class GnuDemanglerParser {
 		@Override
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledObject demangledObject = parseItemInNamespace(type);
+			if (demangledObject == null) {
+				// The item we are demangling is global and not in a namespace.  Assume the item 
+				// passed in is the valid demangled object.
+				return (DemangledObject) namespace;
+			}
 			return demangledObject;
 		}
 	}

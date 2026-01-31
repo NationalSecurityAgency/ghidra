@@ -157,12 +157,15 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
     list<PcodeOp *>::iterator titer = origvn->descend.begin();
     while(titer != origvn->descend.end()) {
       PcodeOp *op = *titer++;
-      i = op->getSlot(origvn);
-      // Do not replace MULTIEQUAL references in the same block
-      // as replaceop.  These are patched by block_remove
-      if ((op->code()==CPUI_MULTIEQUAL)&&(op->getParent()==outblock)&&(i==outblock_ind))
-	continue;
-      opSetInput(op,replacevn,i);
+      for(i=0;i<op->numInput();++i) {
+	if (op->getIn(i) != origvn)
+	  continue;
+	if (i == outblock_ind && op->getParent() == outblock && op->code() == CPUI_MULTIEQUAL) {
+	  continue;
+	}
+	opSetInput(op,replacevn,i);
+	break;
+      }
     }
   }
 }

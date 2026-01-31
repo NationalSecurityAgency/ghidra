@@ -50,7 +50,7 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 	public PKIAuthenticationModule(boolean anonymousAllowed)
 			throws IOException, CertificateException {
 		this.anonymousAllowed = anonymousAllowed;
-		authorities = ApplicationKeyManagerUtils.getTrustedIssuers();
+		authorities = DefaultTrustManagerFactory.getTrustedIssuers();
 		if (authorities == null || authorities.length == 0) {
 			throw new IOException("trusted PKI Certificate Authorities have not been configured");
 		}
@@ -72,8 +72,8 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 		try {
 			byte[] token = TokenGenerator.getNewToken(TOKEN_SIZE);
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			SignedToken signedToken = ApplicationKeyManagerUtils
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			SignedToken signedToken = DefaultKeyManagerFactory
 					.getSignedToken(usingSelfSignedCert ? null : authorities, token);
 			sigCb = new SignatureCallback(authorities, token, signedToken.signature);
 		}
@@ -127,8 +127,8 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 			}
 
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			if (!ApplicationKeyManagerUtils.isMySignature(usingSelfSignedCert ? null : authorities,
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			if (!DefaultKeyManagerFactory.isMySignature(usingSelfSignedCert ? null : authorities,
 				token, sigCb.getServerSignature())) {
 				throw new FailedLoginException("Invalid Signature callback");
 			}
@@ -138,8 +138,7 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 				throw new FailedLoginException("user certificate not provided");
 			}
 
-			ApplicationKeyManagerUtils.validateClient(certChain,
-				ApplicationKeyManagerUtils.RSA_TYPE);
+			DefaultTrustManagerFactory.validateClient(certChain, PKIUtils.RSA_TYPE);
 
 			byte[] sigBytes = sigCb.getSignature();
 			if (sigBytes != null) {

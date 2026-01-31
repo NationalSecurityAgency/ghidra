@@ -28,6 +28,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.NumericUtilities;
 
 /**
  * ByteBlockSet implementation for a Program object.
@@ -238,12 +239,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 			try {
 				long off = address.subtract(memBlocks[i].getStart());
-				BigInteger offset =
-					(off < 0)
-							? BigInteger.valueOf(off + 0x8000000000000000L)
-									.subtract(
-										BigInteger.valueOf(0x8000000000000000L))
-							: BigInteger.valueOf(off);
+				BigInteger offset = NumericUtilities.unsignedLongToBigInteger(off);
 				return new ByteBlockInfo(blocks[i], offset);
 			}
 			catch (Exception e) {

@@ -66,6 +66,22 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceStac
 		public String getColumnName() {
 			return "PC";
 		}
+
+		@Override
+		public ValueProperty<Address> getProperty(ValueRow row) {
+			return new ValueAddressProperty(row) {
+				@Override
+				public Address getValue() {
+					TraceObjectValue entry = row.getAttributeEntry(attributeName);
+					return entry.getValue() instanceof Address addr ? addr : null;
+				}
+
+				@Override
+				public boolean isModified() {
+					return row.isAttributeModified(attributeName);
+				}
+			};
+		}
 	}
 
 	static Address computeProgramCounter(ValueRow row, long snap) {

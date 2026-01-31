@@ -149,7 +149,7 @@ You can also experiment by placing code units in the Dynamic Listing before comm
 
 Just as the Dynamic Listing is the analog of the Static Listing, the Memory viewer is the analog of the Bytes viewer.
 To open it, use **Windows &rarr; Byte Viewer &rarr; Memory ...** in the menus.
-Its default configuration should be Auto PC, the same as the Dynamic Listing's default.
+Its configuration should be Auto PC, the same as the Dynamic Listing's.
 It has all the same additional Debugger features as the Dynamic Listing.
 Furthermore, bytes that have changed are displayed in red text.
 
@@ -221,6 +221,7 @@ The context menus for the Listing and Registers windows include a **Watch** acti
 The columns are:
 
 * The **Expression** column is the user-defined Sleigh expression.
+* The **Comment** column is a user-defined comment, usually to describe the watch.
 * The **Address** column is the address of the resulting value, if applicable.
   This may be in `register` space.
   Double-clicking this cell will go to the address in the Dynamic Listing.

@@ -21,7 +21,8 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
-import ghidra.util.bytesearch.SequenceSearchState;
+import ghidra.util.bytesearch.BulkPatternSearcher;
+import ghidra.util.bytesearch.Pattern;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -48,7 +49,7 @@ public class FunctionStartFuncAnalyzer extends FunctionStartAnalyzer {
 		if (set.isEmpty()) {
 			return true;
 		}
-		
+
 		return super.added(program, set, monitor, log);
 	}
 
@@ -57,13 +58,13 @@ public class FunctionStartFuncAnalyzer extends FunctionStartAnalyzer {
 		if (!super.canAnalyze(program)) {
 			return false;
 		}
-		SequenceSearchState localRoot = initialize(program);
-		if (localRoot == null) {
+		BulkPatternSearcher<Pattern> localSearcher = initialize(program);
+		if (localSearcher == null) {
 			return false;
 		}
 		if (hasFunctionStartConstraints) {
-			// cache the localRoot
-			rootState = localRoot;
+			// cache the local pattern searcher
+			patternSearcher = localSearcher;
 			return true;
 		}
 		return false;

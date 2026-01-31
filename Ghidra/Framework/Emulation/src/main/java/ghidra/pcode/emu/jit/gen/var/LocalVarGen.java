@@ -15,14 +15,19 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.VarHandler;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
+import ghidra.pcode.emu.jit.alloc.VarHandler;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.OpndEm;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.var.JitVarnodeVar;
 
 /**
@@ -36,17 +41,57 @@ import ghidra.pcode.emu.jit.var.JitVarnodeVar;
  * @param <V> the class of p-code variable node in the use-def graph
  */
 public interface LocalVarGen<V extends JitVarnodeVar> extends VarGen<V> {
-	@Override
-	default void generateValInitCode(JitCodeGenerator gen, V v, MethodVisitor iv) {
-		gen.getAllocationModel().getHandler(v).generateInitCode(gen, iv);
+
+	/**
+	 * Get the handler for a given p-code variable
+	 * <p>
+	 * This is made to be overridden for the implementation of subpiece handlers.
+	 * 
+	 * @param gen the code generator
+	 * @param v the value
+	 * @return the handler
+	 */
+	default VarHandler getHandler(JitCodeGenerator<?> gen, V v) {
+		return gen.getAllocationModel().getHandler(v);
 	}
 
 	@Override
-	default JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq, Ext ext,
-			MethodVisitor rv) {
-		VarHandler handler = gen.getAllocationModel().getHandler(v);
-		JitType type = typeReq.resolve(gen.getTypeModel().typeOf(v));
-		handler.generateLoadCode(gen, type, ext, rv);
-		return type;
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genValInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v) {
+		return em;
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N extends Next> Emitter<Ent<N, T>> genReadToStack(Emitter<N> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v, JT type, Ext ext) {
+		return getHandler(gen, v).genLoadToStack(em, gen, type, ext);
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> OpndEm<MpIntJitType, N> genReadToOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v,
+			MpIntJitType type, Ext ext, Scope scope) {
+		return getHandler(gen, v).genLoadToOpnd(em, gen, type, ext, scope);
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>>
+			genReadLegToStack(Emitter<N> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, V v, MpIntJitType type, int leg, Ext ext) {
+		return getHandler(gen, v).genLoadLegToStack(em, gen, type, leg, ext);
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<int[]>>>
+			genReadToArray(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+					V v, MpIntJitType type, Ext ext, Scope scope, int slack) {
+		return getHandler(gen, v).genLoadToArray(em, gen, type, ext, scope, slack);
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadToBool(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v) {
+		return getHandler(gen, v).genLoadToBool(em, gen);
 	}
 }

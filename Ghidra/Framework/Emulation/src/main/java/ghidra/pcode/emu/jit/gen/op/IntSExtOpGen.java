@@ -15,37 +15,20 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
-import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.op.JitIntSExtOp;
 
 /**
  * The generator for a {@link JitIntSExtOp int_sext}.
- * 
  * <p>
- * We implement this using a left then signed-right shift. This uses the unary operator generator
- * and emits {@link #ISHL} and {@link #ISHR} or {@link #LSHL} and {@link #LSHR}, depending on type.
- * Additional type conversions may be emitted first. As a special case, sign extension from
- * {@link IntJitType#I4 int4} to {@link LongJitType#I8 int8} is implemented with by emitting only
- * {@link #I2L}.
+ * This works exactly the same as {@link IntZExtOpGen} except that the conversions use sign
+ * extension.
  */
-public enum IntSExtOpGen implements IntUnOpGen<JitIntSExtOp> {
+public enum IntSExtOpGen implements IntExtUnOpGen<JitIntSExtOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
 	public boolean isSigned() {
 		return true;
-	}
-
-	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitIntSExtOp op, JitBlock block,
-			JitType uType, MethodVisitor rv) {
-		return uType;
 	}
 }

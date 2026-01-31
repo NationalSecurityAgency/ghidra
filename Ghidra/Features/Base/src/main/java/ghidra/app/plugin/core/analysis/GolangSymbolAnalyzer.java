@@ -43,6 +43,8 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
+import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.MultEntSubModel;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Language;
@@ -123,6 +125,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		this.program = program;
 		aam = AutoAnalysisManager.getAnalysisManager(program);
+
+		if (!analyzerOptions.fallbackGoVer.isEmpty()) {
+			GoBuildInfo.setFallbackVersion(program, analyzerOptions.fallbackGoVer);
+		}
 
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
@@ -345,22 +351,23 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		try {
 			ReturnParameterImpl retVal =
 				new ReturnParameterImpl(goTypes.getDTM().getPointer(null), program);
+			retVal.setName(retVal.getName(), SourceType.IMPORTED);
 
 			GoFuncData funcData = goBinary.getFunctionByName("gcWriteBarrier");
 			Function func = funcData != null ? funcData.getFunction() : null;
 			if (func != null) {
 				List<ParameterImpl> params = List.of(new ParameterImpl("numbytes",
-					goTypes.findDataType("uint"), program, SourceType.ANALYSIS));
+					goTypes.findDataType("uint"), program, SourceType.IMPORTED));
 
 				func.updateFunction(ccname, retVal, params,
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 			}
 			for (int i = 1; i <= 8; i++) {
 				funcData = goBinary.getFunctionByName("runtime.gcWriteBarrier" + i);
 				func = funcData != null ? funcData.getFunction() : null;
 				if (func != null) {
 					func.updateFunction(ccname, retVal, List.of(),
-						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 				}
 			}
 		}
@@ -380,15 +387,17 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		try {
 			DataType voidPtr = goTypes.getDTM().getPointer(null);
 			ReturnParameterImpl retVal = new ReturnParameterImpl(VoidDataType.dataType, program);
+			retVal.setName(retVal.getName(), SourceType.IMPORTED);
+
 			List<ParameterImpl> params =
-				List.of(new ParameterImpl("value", voidPtr, program, SourceType.ANALYSIS),
-					new ParameterImpl("dest", voidPtr, program, SourceType.ANALYSIS));
+				List.of(new ParameterImpl("value", voidPtr, program, SourceType.IMPORTED),
+					new ParameterImpl("dest", voidPtr, program, SourceType.IMPORTED));
 
 			GoFuncData funcData = goBinary.getFunctionByName("runtime.gcWriteBarrier");
 			Function func = funcData != null ? funcData.getFunction() : null;
 			if (func != null) {
 				func.updateFunction(ccname, retVal, params,
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 			}
 
 			if (goBinary.getBuildInfo().getGOARCH(program).equals("amd64")) {
@@ -402,11 +411,11 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					Register reg = lang.getRegister(gregName);
 					if (func != null && reg != null) {
 						params = List.of(
-							new ParameterImpl("value", voidPtr, reg, program, SourceType.ANALYSIS),
+							new ParameterImpl("value", voidPtr, reg, program, SourceType.IMPORTED),
 							new ParameterImpl("dest", voidPtr, destReg, program,
-								SourceType.ANALYSIS));
+								SourceType.IMPORTED));
 						func.updateFunction(ccname, retVal, params,
-							FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
+							FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
 					}
 				}
 			}
@@ -445,7 +454,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				ReturnParameterImpl voidRet = new ReturnParameterImpl(VoidDataType.dataType,
 					VariableStorage.VOID_STORAGE, program);
 				duffzeroFunc.updateFunction(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME, voidRet,
-					duffzeroParams, FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
+					duffzeroParams, FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
 
 				markupSession.appendComment(duffzeroFunc, null,
 					"Golang special function: duffzero");
@@ -468,7 +477,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 						new ParameterImpl("src", voidPtr, program));
 					duffcopyFunc.updateFunction(GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME,
 						new ReturnParameterImpl(VoidDataType.dataType, program), params,
-						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 
 					markupSession.appendComment(duffcopyFunc, null,
 						"Golang special function: duffcopy");
@@ -613,7 +622,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 			String ccName = duffFunc.getCallingConventionName();
 			Namespace funcNS = duffFunc.getParentNamespace();
-			AddressSet funcBody = new AddressSet(funcData.getBody());
+
+			// need to use our own logic instead of relying on possibly obfuscated go metadata
+			AddressSet funcBody = getDuffBody(duffFunc, monitor);
+
 			String duffComment = program.getListing()
 					.getCodeUnitAt(duffFunc.getEntryPoint())
 					.getComment(CommentType.PLATE);
@@ -627,13 +639,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				}
 				try {
 					func.setName(duffFunc.getName() + "_" + func.getEntryPoint(),
-						SourceType.ANALYSIS);
+						SourceType.IMPORTED);
 					func.setParentNamespace(funcNS);
 					FunctionUpdateType fut =
 						duffFunc.hasCustomVariableStorage() ? FunctionUpdateType.CUSTOM_STORAGE
 								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
 					func.updateFunction(ccName, duffFunc.getReturn(),
-						Arrays.asList(duffFunc.getParameters()), fut, true, SourceType.ANALYSIS);
+						Arrays.asList(duffFunc.getParameters()), fut, true, SourceType.IMPORTED);
 					if (duffComment != null && !duffComment.isBlank()) {
 						new SetCommentCmd(func.getEntryPoint(), CommentType.PLATE, duffComment)
 								.applyTo(program);
@@ -645,6 +657,19 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				}
 			}
 			return true;
+		}
+
+		private AddressSet getDuffBody(Function func, TaskMonitor monitor) {
+			MultEntSubModel bm = new MultEntSubModel(func.getProgram());
+			CodeBlock cb;
+			try {
+				cb = bm.getCodeBlockAt(func.getEntryPoint(), monitor);
+				return new AddressSet(cb);
+			}
+			catch (CancelledException e) {
+				// fail, fall thru, return 1 byte range
+			}
+			return new AddressSet(func.getBody());
 		}
 
 	}
@@ -947,10 +972,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				List<Variable> closureParams =
 					List.of(new ParameterImpl(GOLANG_CLOSURE_CONTEXT_NAME,
 						goBinary.getDTM().getPointer(closureStructDT), closureContextRegister,
-						program, SourceType.ANALYSIS));
+						program, SourceType.IMPORTED));
 
 				func.updateFunction(null, null, closureParams, FunctionUpdateType.CUSTOM_STORAGE,
-					true, SourceType.ANALYSIS);
+					true, SourceType.IMPORTED);
 
 				closureFuncsFixed++;
 			}
@@ -976,10 +1001,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					List<Variable> closureParams =
 						List.of(new ParameterImpl(GOLANG_CLOSURE_CONTEXT_NAME,
 							goBinary.getDTM().getPointer(closureStructDT), closureContextRegister,
-							program, SourceType.ANALYSIS));
+							program, SourceType.IMPORTED));
 
 					func.updateFunction(null, null, closureParams,
-						FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
+						FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
 
 					methodWrapperFuncsFixed++;
 
@@ -1007,9 +1032,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				Parameter[] methodParams = methodFunc.getParameters();
 				methodParams[0] = new ParameterImpl(GOLANG_CLOSURE_CONTEXT_NAME,
 					goBinary.getDTM().getPointer(closureStructDT), closureContextRegister, program,
-					SourceType.ANALYSIS);
+					SourceType.IMPORTED);
 				func.updateFunction(null, methodReturn, FunctionUpdateType.CUSTOM_STORAGE, true,
-					SourceType.ANALYSIS, methodParams);
+					SourceType.IMPORTED, methodParams);
 				methodWrapperFuncsFixed++;
 			}
 			catch (IOException | InvalidInputException | DuplicateNameException e) {
@@ -1283,19 +1308,24 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		public boolean fixupGcWriteBarrierFlag = true;
 
+		static final String FALLBACK_GOVER_OPTIONNAME = "Fallback Go Version";
+		static final String FALLBACK_GOVER_DESC = """
+				Go version to use if the Go metadata has been obfuscated.
+				""";
+
+		public String fallbackGoVer;
+
 		void registerOptions(Options options, Program program) {
-			options.registerOption(GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_OPTIONNAME,
-				outputSourceInfo, null, GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_DESC);
-			options.registerOption(GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_OPTIONNAME,
-				fixupDuffFunctions, null, GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_DESC);
-			options.registerOption(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME, propagateRtti, null,
-				GolangAnalyzerOptions.PROP_RTTI_DESC);
-			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME,
-				fixupGcWriteBarrierFunctions, null,
-				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FUNCS_DESC);
-			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME,
-				fixupGcWriteBarrierFlag, null,
-				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_DESC);
+			options.registerOption(OUTPUT_SOURCE_INFO_OPTIONNAME, outputSourceInfo, null,
+				OUTPUT_SOURCE_INFO_DESC);
+			options.registerOption(FIXUP_DUFF_FUNCS_OPTIONNAME, fixupDuffFunctions, null,
+				FIXUP_DUFF_FUNCS_DESC);
+			options.registerOption(PROP_RTTI_OPTIONNAME, propagateRtti, null, PROP_RTTI_DESC);
+			options.registerOption(FIXUP_GCWRITEBARRIER_OPTIONNAME, fixupGcWriteBarrierFunctions,
+				null, FIXUP_GCWRITEBARRIER_FUNCS_DESC);
+			options.registerOption(FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME, fixupGcWriteBarrierFlag,
+				null, FIXUP_GCWRITEBARRIER_FLAG_DESC);
+			options.registerOption(FALLBACK_GOVER_OPTIONNAME, "", null, FALLBACK_GOVER_DESC);
 		}
 
 		void optionsChanged(Options options, Program program) {
@@ -1312,6 +1342,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			fixupGcWriteBarrierFlag =
 				options.getBoolean(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME,
 					fixupGcWriteBarrierFlag);
+			fallbackGoVer = options.getString(FALLBACK_GOVER_OPTIONNAME, "");
 		}
 
 	}
@@ -1326,4 +1357,5 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Options options = program.getOptions(Program.PROGRAM_INFO);
 		return options.getBoolean(ANALYZED_FLAG_OPTION_NAME, false);
 	}
+
 }

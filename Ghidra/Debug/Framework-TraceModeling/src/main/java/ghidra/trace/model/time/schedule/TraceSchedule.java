@@ -487,6 +487,15 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
+	 * Check if this schedule has p-code steps
+	 * 
+	 * @return true if this indicates at least one instruction step
+	 */
+	public boolean hasPSteps() {
+		return !pSteps.isNop();
+	}
+
+	/**
 	 * Get the source snapshot
 	 * 
 	 * @return the snapshot key
@@ -578,6 +587,15 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public long tickCount() {
 		return steps.totalTickCount();
+	}
+
+	/**
+	 * Count the number of steps, excluding p-code steps
+	 * 
+	 * @return the number of steps
+	 */
+	public int stepCount() {
+		return steps.count();
 	}
 
 	/**
@@ -882,6 +900,51 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public TraceSchedule dropPSteps() {
 		return new TraceSchedule(this.snap, this.steps, new Sequence());
+	}
+
+	/**
+	 * Drop the last step
+	 * 
+	 * <p>
+	 * If there are p-code steps, this drops the last step there. Otherwise, this drops the last
+	 * step from the instruction steps. A step includes all ticks in the step, e.g.,
+	 * {@code 0:t0-20;t1-5} becomes {@code 0:t0-20}. To remove a specific number of ticks, see
+	 * {@link TraceSchedule#steppedBackward(Trace, long)}.
+	 * 
+	 * @return the schedule with the last step removed
+	 * @throws NoSuchElementException If there are neither instruction nor p-code steps.
+	 */
+	public TraceSchedule dropLastStep() {
+		if (!this.pSteps.isNop()) {
+			return new TraceSchedule(this.snap, this.steps, this.pSteps.dropLast());
+		}
+		return new TraceSchedule(this.snap, this.steps.dropLast(), new Sequence());
+	}
+
+	/**
+	 * Indicates a step and which kind (instruction or p-code)
+	 */
+	public record StepAndKind(StepKind kind, Step step) {}
+
+	/**
+	 * {@return the last step of the schedule}
+	 */
+	public StepAndKind lastStep() {
+		if (!this.pSteps.isNop()) {
+			return new StepAndKind(StepKind.PCODE, pSteps.last());
+		}
+		return new StepAndKind(StepKind.INSTRUCTION, steps.last());
+	}
+
+	/**
+	 * Drop all p-code steps, if any, and enough instruction steps, such that {@link #stepCount()}
+	 * returns the given count.
+	 * 
+	 * @param count the desired step count
+	 * @return the new schedule
+	 */
+	public TraceSchedule truncateToSteps(int count) {
+		return new TraceSchedule(this.snap, this.steps.truncate(count), new Sequence());
 	}
 
 	/**

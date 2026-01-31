@@ -1,6 +1,6 @@
 // 
 // This file contains a list of search and replace text pairs.
-// Each line is one specialaization name to full library definition.
+// Each line is one specialization name to full library definition.
 //
 // This list is based on content found in:
 //		https://en.cppreference.com/w/cpp/string
@@ -138,7 +138,7 @@ std::wstringstream::wstringstream		std::wstringstream::basic_stringstream
 std::wstringstream::~wstringstream		std::wstringstream::~basic_stringstream
 std::istringstream::istringstream		std::istringstream::basic_istringstream
 std::istringstream::~istringstream		std::istringstream::~basic_istringstream
-td::wistringstream::wistringstream		std::wistringstream::basic_istringstream
+std::wistringstream::wistringstream		std::wistringstream::basic_istringstream
 std::wistringstream::~wistringstream		std::wistringstream::~basic_istringstream
 std::ostringstream::ostringstream		std::ostringstream::basic_ostringstream
 std::ostringstream::~ostringstream		std::ostringstream::~basic_ostringstream

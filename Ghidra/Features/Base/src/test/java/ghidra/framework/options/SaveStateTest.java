@@ -17,7 +17,7 @@ package ghidra.framework.options;
 
 import static org.junit.Assert.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.Test;
 
 import generic.test.AbstractGTest;

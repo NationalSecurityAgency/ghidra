@@ -22,11 +22,12 @@ import java.util.List;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift AssociatedTypeDescriptor structure
+ * Represents a Swift {@code AssociatedTypeDescriptor} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
@@ -63,45 +64,35 @@ public final class AssociatedTypeDescriptor extends SwiftTypeMetadataStructure {
 	}
 
 	/**
-	 * Gets the conforming type name
-	 * 
-	 * @return The conforming type name
+	 * {@return the conforming type name}
 	 */
 	public String getConformingTypeName() {
 		return conformingTypeName;
 	}
 
 	/**
-	 * Gets the protocol type name
-	 * 
-	 * @return The protocol type name
+	 * {@return the protocol type name}
 	 */
 	public String getProtocolTypeName() {
 		return protocolTypeName;
 	}
 
 	/**
-	 * Gets the number of associated types
-	 * 
-	 * @return The number of associated types
+	 * {@return the number of associated types}
 	 */
 	public int getNumAssociatedTypes() {
 		return numAssociatedTypes;
 	}
 
 	/**
-	 * Gets the associated type record size
-	 * 
-	 * @return The associated type record size
+	 * {@return the associated type record size}
 	 */
 	public int getAssociatedTypeRecordSize() {
 		return associatedTypeRecordSize;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link AssociatedTypeRecord}s
-	 * 
-	 * @return The {@link List} of {@link AssociatedTypeRecord}s
+	 * {@return The {@link List} of {@link AssociatedTypeRecord}s}
 	 */
 	public List<AssociatedTypeRecord> getAssociatedTypeRecords() {
 		return associatedTypeRecords;
@@ -119,12 +110,11 @@ public final class AssociatedTypeDescriptor extends SwiftTypeMetadataStructure {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
 		struct.add(SwiftUtils.PTR_STRING, "ConformingTypeName", "");
 		struct.add(SwiftUtils.PTR_STRING, "ProtocolTypeName", "");
 		struct.add(DWORD, "NumAssociatedTypes", "");
 		struct.add(DWORD, "AssociatedTypeRecordSize", "");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

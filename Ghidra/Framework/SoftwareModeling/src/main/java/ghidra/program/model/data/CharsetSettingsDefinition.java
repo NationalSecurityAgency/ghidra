@@ -18,6 +18,8 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import ghidra.docking.settings.*;
+import ghidra.util.charset.CharsetInfo;
+import ghidra.util.charset.CharsetInfoManager;
 
 /**
  *  {@link SettingsDefinition} for setting the charset of a string instance.
@@ -56,7 +58,7 @@ public class CharsetSettingsDefinition implements EnumSettingsDefinition {
 	private final Map<String, Integer> stringToOrdinal = new HashMap<>();
 
 	private CharsetSettingsDefinition() {
-		ordinalToString = CharsetInfo.getInstance().getCharsetNames();
+		ordinalToString = CharsetInfoManager.getInstance().getCharsetNames().toArray(String[]::new);
 		for (int i = 0; i < ordinalToString.length; i++) {
 			stringToOrdinal.put(ordinalToString[i], i);
 		}

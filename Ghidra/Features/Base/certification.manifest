@@ -280,6 +280,8 @@ src/main/help/help/topics/CParserPlugin/images/UseOpenArchives.png||GHIDRA||||EN
 src/main/help/help/topics/CallTreePlugin/Call_Tree_Plugin.html||GHIDRA||||END|
 src/main/help/help/topics/CallTreePlugin/images/CallTreeWindow.png||GHIDRA||||END|
 src/main/help/help/topics/CallTreePlugin/images/depth-input.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Charsets/Charsets.htm||GHIDRA||||END|
+src/main/help/help/topics/Charsets/images/CharsetPickerDialog.png||GHIDRA||||END|
 src/main/help/help/topics/ClearPlugin/Clear.htm||GHIDRA||||END|
 src/main/help/help/topics/ClearPlugin/images/ClearFlow.png||GHIDRA||||END|
 src/main/help/help/topics/ClearPlugin/images/ClearWithOptions.png||GHIDRA||||END|

@@ -26,11 +26,6 @@ import time
 from typing import (Any, Callable, Dict, Generator, List, Literal,
                     Optional, Tuple, TypeVar, Union, cast)
 
-try:
-    import psutil
-except ImportError:
-    print("Unable to import 'psutil' - check that it has been installed")
-
 from ghidratrace import sch
 from ghidratrace.client import (Client, Address, AddressRange, Trace, Schedule,
                                 TraceObject, Transaction)
@@ -1478,15 +1473,21 @@ def ghidra_trace_put_processes(debugger: lldb.SBDebugger, command: str,
         put_processes()
 
 
-def put_available() -> None:
+def put_available() -> List[util.Available]:
     trace = STATE.require_trace()
+    availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
-    for proc in psutil.process_iter():
+    for proc in availables:
         ppath = AVAILABLE_PATTERN.format(pid=proc.pid)
         procobj = trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
         procobj.set_value('PID', proc.pid)
-        procobj.set_value('_display', f'{proc.pid} {proc.name()}')
+        if isinstance(proc, util.Available):
+        	procobj.set_value('Name', proc.name)
+        	procobj.set_value('_display', f'{proc.pid} {proc.command}')
+        else:
+        	procobj.set_value('Name', proc.name())
+        	procobj.set_value('_display', f'{proc.pid} {proc.name()}')
         procobj.insert()
     trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 

@@ -15,14 +15,24 @@
  */
 package ghidra.features.base.memsearch.gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
 
 import docking.ActionContext;
 import docking.DockingContextListener;
@@ -37,14 +47,21 @@ import docking.widgets.table.actions.DeleteTableRowAction;
 import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
+import ghidra.app.nav.NavigatableRegistry;
 import ghidra.app.nav.NavigatableRemovalListener;
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
+import ghidra.app.script.AskDialog;
 import ghidra.app.util.HelpTopics;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.SearchRegion;
 import ghidra.features.base.memsearch.combiner.Combiner;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.SearchData;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 import ghidra.features.base.memsearch.scan.Scanner;
-import ghidra.features.base.memsearch.searcher.*;
+import ghidra.features.base.memsearch.searcher.AlignmentFilter;
+import ghidra.features.base.memsearch.searcher.CodeUnitFilter;
+import ghidra.features.base.memsearch.searcher.MemoryMatch;
+import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectClosedListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -52,7 +69,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
+import ghidra.program.util.BytesFieldLocation;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
@@ -80,6 +99,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	private Navigatable navigatable;
 	private Program program;
 	private AddressableByteSource byteSource;
+	private SearchHistory searchHistory;
 
 	private JComponent mainComponent;
 	private JPanel controlPanel;
@@ -95,7 +115,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	private DockingAction nextAction;
 	private DockingAction refreshAction;
 
-	private ByteMatcher byteMatcher;
+	private UserInputByteMatcher byteMatcher;
 	private Address lastMatchingAddress;
 
 	private boolean isBusy;
@@ -107,7 +127,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 
 	// used to show a temporary message over the table
 	private GGlassPaneMessage glassPaneMessage;
-
+	
 	public MemorySearchProvider(MemorySearchPlugin plugin, Navigatable navigatable,
 			SearchSettings settings, MemorySearchOptions options, SearchHistory history) {
 		super(plugin.getTool(), "Memory Search", plugin.getName());
@@ -116,6 +136,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		this.options = options;
 		this.program = navigatable.getProgram();
 		this.byteSource = navigatable.getByteSource();
+		this.searchHistory = history;
 
 		// always initially use the byte ordering of the program, regardless of previous searches
 		if (settings == null) {
@@ -186,7 +207,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		return mainComponent;
 	}
 
-	void setByteMatcher(ByteMatcher byteMatcher) {
+	void setByteMatcher(UserInputByteMatcher byteMatcher) {
 		this.byteMatcher = byteMatcher;
 		tool.contextChanged(this);
 	}
@@ -214,7 +235,8 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 
 		Address start = getSearchStartAddress(forward);
 		AddressSet addresses = getSearchAddresses();
-		MemorySearcher searcher = new MemorySearcher(byteSource, byteMatcher, addresses, 1);
+		MemorySearcher<SearchData> searcher =
+			new MemorySearcher<>(byteSource, byteMatcher, addresses, 1);
 		searcher.setMatchFilter(createFilter());
 
 		setBusy(true);
@@ -236,7 +258,8 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		updateTitle();
 		int limit = options.getSearchLimit();
 		AddressSet addresses = getSearchAddresses();
-		MemorySearcher searcher = new MemorySearcher(byteSource, byteMatcher, addresses, limit);
+		MemorySearcher<SearchData> searcher =
+			new MemorySearcher<>(byteSource, byteMatcher, addresses, limit);
 		searcher.setMatchFilter(createFilter());
 
 		setBusy(true);
@@ -310,7 +333,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		tool.contextChanged(this);
 	}
 
-	private Predicate<MemoryMatch> createFilter() {
+	private Predicate<MemoryMatch<SearchData>> createFilter() {
 		AlignmentFilter alignmentFilter = new AlignmentFilter(model.getAlignment());
 		CodeUnitFilter codeUnitFilter =
 			new CodeUnitFilter(program, model.includeInstructions(),
@@ -373,7 +396,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		}
 	}
 
-	void searchOnceCompleted(MemoryMatch match, boolean cancelled) {
+	void searchOnceCompleted(MemoryMatch<SearchData> match, boolean cancelled) {
 		setBusy(false);
 		updateSubTitle();
 		if (match != null) {
@@ -385,7 +408,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		}
 	}
 
-	void refreshAndScanCompleted(MemoryMatch match) {
+	void refreshAndScanCompleted(MemoryMatch<SearchData> match) {
 		setBusy(false);
 		updateSubTitle();
 		if (match != null) {
@@ -643,7 +666,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	}
 
 	void tableSelectionChanged() {
-		MemoryMatch selectedMatch = resultsPanel.getSelectedMatch();
+		MemoryMatch<SearchData> selectedMatch = resultsPanel.getSelectedMatch();
 		matchHighlighter.setSelectedMatch(selectedMatch);
 		if (selectedMatch != null) {
 			lastMatchingAddress = selectedMatch.getAddress();
@@ -671,7 +694,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		return isBusy;
 	}
 
-	public List<MemoryMatch> getSearchResults() {
+	public List<MemoryMatch<SearchData>> getSearchResults() {
 		return resultsPanel.getTableModel().getModelData();
 	}
 
@@ -723,6 +746,46 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		}
 
 		glassPaneMessage.showCenteredMessage(message);
+	}
+
+	public void generateNewProvider(Scanner scanner) {
+		List<Navigatable> navigatables = NavigatableRegistry.getRegisteredNavigatables(tool);
+		Map<String, Navigatable> programMap = new HashMap<>();
+		for (Navigatable nav : navigatables) {
+			if (nav instanceof CodeViewerProvider listing) {
+				String key = listing.getTitle();
+				if (listing.getSubTitle() != null) {
+					key += ": " + listing.getSubTitle();
+				}
+				programMap.put(key, listing);
+			}
+		}
+		ArrayList<String> choices = new ArrayList<String>(programMap.keySet());
+		AskDialog<String> dialog = new AskDialog<String>(null, "Compare to...", "Program", AskDialog.STRING, choices, null);
+		if (dialog.isCanceled()) {
+			return;
+		}
+
+		Navigatable next = programMap.get(dialog.getChoiceValue());
+		MemorySearchProvider nextProvider = new MemorySearchProvider(plugin, next, model.getSettings(), options, new SearchHistory(searchHistory));
+		AddressableByteSource nextByteSource = nextProvider.byteSource;
+		nextProvider.setSearchInput(this.getSearchInput());
+		nextProvider.showScanPanel(true);
+		
+		List<MemoryMatch<SearchData>> searchResults = getSearchResults();
+		List<MemoryMatch<SearchData>> rebasedResults = new ArrayList<>();
+		for (MemoryMatch<SearchData> match : searchResults) {
+			ProgramLocation canonicalLocation = byteSource.getCanonicalLocation(match.getAddress());
+			Address rebase = nextByteSource.rebaseFromCanonical(canonicalLocation);
+			if (rebase != null) {
+				MemoryMatch<SearchData> nextMatch = new MemoryMatch<>(rebase, match.getBytes(), match.getPattern());
+				rebasedResults.add(nextMatch);
+			}
+		}
+		
+		MemorySearchResultsPanel nextResultsPanel = nextProvider.getResultsPanel();
+		nextProvider.setBusy(true);
+		nextResultsPanel.refreshAndMaybeScanForChanges(nextByteSource, scanner, rebasedResults);
 	}
 
 }

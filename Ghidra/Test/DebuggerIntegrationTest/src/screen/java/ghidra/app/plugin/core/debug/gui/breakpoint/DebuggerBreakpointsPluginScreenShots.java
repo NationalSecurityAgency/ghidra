@@ -44,7 +44,7 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -151,11 +151,20 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				long snap = tb1.trace.getTimeManager().createSnapshot("First").getKey();
 
 				DBTraceBreakpointManager bm = tb1.trace.getBreakpointManager();
-				bm.placeBreakpoint("Breakpoints[1]", snap, tb1.addr(0x00401234), List.of(),
-					Set.of(TraceBreakpointKind.SW_EXECUTE), true, "ram:00401234");
-				bm.placeBreakpoint("Breakpoints[2]", snap, tb1.range(0x00604321, 0x00604324),
-					List.of(),
-					Set.of(TraceBreakpointKind.WRITE), true, "ram:00604321");
+				TraceBreakpointLocation locCx =
+					bm.placeBreakpoint("Breakpoints[1]", snap, tb1.addr(0x00401234), List.of(),
+						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "");
+				locCx.getSpecification()
+						.getObject()
+						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+							"*0x00401234");
+				TraceBreakpointLocation locWr =
+					bm.placeBreakpoint("Breakpoints[2]", snap, tb1.range(0x00604321, 0x00604324),
+						List.of(), Set.of(TraceBreakpointKind.WRITE), true, "");
+				locWr.getSpecification()
+						.getObject()
+						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+							"version");
 			}
 
 			try (Transaction tx = tb2.startTransaction()) {
@@ -164,8 +173,13 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				long snap = tb2.trace.getTimeManager().createSnapshot("First").getKey();
 
 				DBTraceBreakpointManager bm = tb2.trace.getBreakpointManager();
-				bm.placeBreakpoint("Breakpoints[1]", snap, tb2.addr(0x7fac1234), List.of(),
-					Set.of(TraceBreakpointKind.SW_EXECUTE), false, "ram:7fac1234");
+				TraceBreakpointLocation locCx =
+					bm.placeBreakpoint("Breakpoints[1]", snap, tb2.addr(0x7fac1234), List.of(),
+						Set.of(TraceBreakpointKind.SW_EXECUTE), false, "");
+				locCx.getSpecification()
+				.getObject()
+				.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+					"*0x7fac1234");
 			}
 
 			programManager.openProgram(program);

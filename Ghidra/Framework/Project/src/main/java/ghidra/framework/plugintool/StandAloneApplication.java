@@ -22,10 +22,10 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.DockingApplicationConfiguration;
@@ -300,7 +300,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 			try {
 				os = new FileOutputStream(savedToolFile);
 				Document doc = new Document(rootElement);
-				XMLOutputter xmlout = new GenericXMLOutputter();
+				XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 				xmlout.output(doc, os);
 				os.close();
 			}

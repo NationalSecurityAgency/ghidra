@@ -96,4 +96,9 @@ public abstract class ObjcTypeMetadataStructure implements StructConverter {
 	 * @throws Exception if an error occurred
 	 */
 	public abstract void applyTo(Namespace namespace, TaskMonitor monitor) throws Exception;
+
+	@Override
+	public String toString() {
+		return "%s at 0x%x".formatted(getClass().getSimpleName(), base);
+	}
 }

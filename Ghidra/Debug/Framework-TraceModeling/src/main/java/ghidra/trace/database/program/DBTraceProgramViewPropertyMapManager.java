@@ -50,9 +50,8 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public void clear() {
-			AddressSetView view = getAddressSetView();
-			AddressRangeIterator addressRanges = view.getAddressRanges();
-			for (AddressRange range : addressRanges) {
+			AddressSet all = program.getAddressFactory().getAddressSet();
+			for (AddressRange range : all.getAddressRanges()) {
 				removeRange(range.getMinAddress(), range.getMaxAddress());
 			}
 		}

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 import ghidra.features.base.memsearch.combiner.Combiner;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.util.datastruct.Accumulator;
@@ -29,26 +30,27 @@ import ghidra.util.task.TaskMonitor;
  * Table loader that performs a search and then combines the new results with existing results.
  */
 public class CombinedMatchTableLoader implements MemoryMatchTableLoader {
-	private MemorySearcher memSearcher;
-	private List<MemoryMatch> previousResults;
+	private MemorySearcher<SearchData> memSearcher;
+	private List<MemoryMatch<SearchData>> previousResults;
 	private Combiner combiner;
 	private boolean completedSearch;
-	private MemoryMatch firstMatch;
+	private MemoryMatch<SearchData> firstMatch;
 
-	public CombinedMatchTableLoader(MemorySearcher memSearcher,
-			List<MemoryMatch> previousResults, Combiner combiner) {
+	public CombinedMatchTableLoader(MemorySearcher<SearchData> memSearcher,
+			List<MemoryMatch<SearchData>> previousResults, Combiner combiner) {
 		this.memSearcher = memSearcher;
 		this.previousResults = previousResults;
 		this.combiner = combiner;
 	}
 
 	@Override
-	public void loadResults(Accumulator<MemoryMatch> accumulator, TaskMonitor monitor) {
-		ListAccumulator<MemoryMatch> listAccumulator = new ListAccumulator<>();
+	public void loadResults(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor) {
+		ListAccumulator<MemoryMatch<SearchData>> listAccumulator = new ListAccumulator<>();
 		completedSearch = memSearcher.findAll(listAccumulator, monitor);
-		List<MemoryMatch> followOnResults = listAccumulator.asList();
+		List<MemoryMatch<SearchData>> followOnResults = listAccumulator.asList();
 		firstMatch = followOnResults.isEmpty() ? null : followOnResults.get(0);
-		Collection<MemoryMatch> results = combiner.combine(previousResults, followOnResults);
+		Collection<MemoryMatch<SearchData>> results =
+			combiner.combine(previousResults, followOnResults);
 		accumulator.addAll(results);
 	}
 

@@ -75,6 +75,8 @@ class PCodeTestBuild(BuildUtil):
             return PCodeBuildCCS(pcode_test)
         elif pcode_test.config.toolchain_type == 'sdcc':
             return PCodeBuildSDCC(pcode_test)
+        elif pcode_test.config.toolchain_type == 'llvm':
+            return PCodeBuildLLVM(pcode_test)
         else:
             raise Exception(pcode_test.config.format('Toolchain type %(toolchain_type)s not known'))
 
@@ -166,10 +168,10 @@ class PCodeTestBuild(BuildUtil):
             for f_test in glob.glob('*.test'):
                 f_h = re.sub(r'[.]test', '.h', f_test)
                 if self.isfile(f_h) and self.getmtime(f_test) <= self.getmtime(f_h): continue
-                out, err = self.run(['python', tpp_py, f_test])
+                out, err = self.run(['python3', tpp_py, f_test])
                 if err:
                     self.log_err(err)
-            out, err = self.run(['python', tpp_py, '--entry', 'pcode_main.c'])
+            out, err = self.run(['python3', tpp_py, '--entry', 'pcode_main.c'])
             if err:
                 self.log_err(err)
 
@@ -219,6 +221,54 @@ class PCodeTestBuild(BuildUtil):
                 
             self.chdir(self.config.cwd)
             self.log_close()
+
+class PCodeBuildLLVM(PCodeTestBuild):
+
+    def __init__(self, PCodeTest):
+        super(PCodeBuildLLVM, self).__init__(PCodeTest)
+
+    # Set options for compiler depending on needs.
+    def cflags(self, output_file):
+        f = []
+        f += ['-DHAS_FLOAT=1' if self.config.has_float else '-DHAS_FLOAT_OVERRIDE=1']
+        f += ['-DHAS_DOUBLE=1' if self.config.has_double else '-DHAS_DOUBLE_OVERRIDE=1']
+        f += ['-DHAS_LONGLONG=1' if self.config.has_longlong else '-DHAS_LONGLONG_OVERRIDE=1']
+        if self.config.has_shortfloat: f += ['-DHAS_SHORTFLOAT=1']
+        if self.config.has_vector: f += ['-DHAS_VECTOR=1']
+        if self.config.has_decimal128: f += ['-DHAS_DECIMAL128=1']
+        if self.config.has_decimal32: f += ['-DHAS_DECIMAL32=1']
+        if self.config.has_decimal64: f += ['-DHAS_DECIMAL64=1']
+
+        f += ['-DNAME=NAME:%s' % output_file]
+
+        f += [self.config.format(g) for g in self.config.ccflags.split()]
+        f += [self.config.format(g) for g in self.config.add_ccflags.split()]
+        f += [self.config.format(g) for g in self.config.cclibs.split()]
+        f += [self.config.format(g) for g in self.config.add_cclibs.split()]
+
+        return f
+
+    def compile(self, input_files, opt_cflag, output_base):
+
+        # Name the output file, and delete it if it exists
+
+        output_file = '%s.out' % (output_base)
+        self.remove(output_file)
+
+        # Construct the compile command line and execute it
+        cmp = self.which('compile_exe')
+        cmd = [cmp] + input_files + self.cflags(output_file)  + [opt_cflag]
+        cmd += ['-o', output_file]
+        out, err = self.run(cmd)
+        if out: self.log_info(out)
+
+        # print error messages, which may just be warnings
+        if err: self.log_warn(err)
+
+        # return now if the error preempted the binary
+        if not self.is_readable_file(output_file):
+            self.log_err('output not created %s' % output_file)
+            return
 
 class PCodeBuildSDCC(PCodeTestBuild):
 
