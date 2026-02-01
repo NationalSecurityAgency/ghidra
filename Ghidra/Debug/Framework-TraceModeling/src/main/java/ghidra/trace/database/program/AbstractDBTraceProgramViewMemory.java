@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.function.Consumer;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
@@ -28,14 +27,12 @@ import ghidra.program.model.mem.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.util.MemoryAdapter;
 import ghidra.util.LockHold;
 import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDBTraceProgramViewMemory
@@ -43,11 +40,25 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected final DBTraceProgramView program;
 	protected final DBTraceMemoryManager memoryManager;
 
-	protected volatile AddressSetView addressSet;
-	protected boolean forceFullView = false;
-	protected long snap;
+	private volatile AddressSetView addressSet;
+	private volatile boolean addressSetValid;
+	private boolean forceFullView = false;
+	private long snap;
 
-	protected LiveMemoryHandler memoryWriteRedirect;
+	private static final int CACHE_PAGE_COUNT = 3;
+	protected final ByteCache cache = new ByteCache(CACHE_PAGE_COUNT) {
+		@Override
+		protected int doLoad(Address address, ByteBuffer buf) throws MemoryAccessException {
+			DBTraceMemorySpace space =
+				program.trace.getMemoryManager().getMemorySpace(address.getAddressSpace(), false);
+			if (space == null) {
+				int len = buf.remaining();
+				buf.position(buf.limit());
+				return len;
+			}
+			return space.getViewBytes(program.snap, address, buf);
+		}
+	};
 
 	public AbstractDBTraceProgramViewMemory(DBTraceProgramView program) {
 		this.program = program;
@@ -55,37 +66,25 @@ public abstract class AbstractDBTraceProgramViewMemory
 		setSnap(program.snap);
 	}
 
-	protected abstract void recomputeAddressSet();
+	protected abstract AddressSetView computeAddressSet();
 
-	protected void forPhysicalSpaces(Consumer<AddressSpace> consumer) {
-		for (AddressSpace space : program.getAddressFactory().getAddressSpaces()) {
-			// NB. Overlay's isMemory depends on its base space
-			// TODO: Allow other?
-			// For some reason "other" is omitted from factory.getAddressSet
-			if (space.isMemorySpace() && space.getType() != AddressSpace.TYPE_OTHER) {
-				consumer.accept(space);
-			}
-		}
+	protected void invalidateAddressSet() {
+		addressSetValid = false;
+		program.fireObjectRestored();
 	}
 
-	protected void computeFullAdddressSet() {
-		AddressSet temp = new AddressSet();
-		try (LockHold hold = program.trace.lockRead()) {
-			forPhysicalSpaces(space -> temp.add(space.getMinAddress(), space.getMaxAddress()));
+	protected AddressSetView getOrComputeAddressSet() {
+		if (!addressSetValid) {
+			addressSet = computeAddressSet();
+			addressSetValid = true;
 		}
-		addressSet = temp;
+		return addressSet;
 	}
 
 	@Override
 	public void setForceFullView(boolean forceFullView) {
 		this.forceFullView = forceFullView;
-		if (forceFullView) {
-			computeFullAdddressSet();
-		}
-		else {
-			recomputeAddressSet();
-		}
-		program.fireObjectRestored();
+		invalidateAddressSet();
 	}
 
 	@Override
@@ -96,7 +95,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	void setSnap(long snap) {
 		this.snap = snap;
 		if (!forceFullView) {
-			recomputeAddressSet();
+			invalidateAddressSet();
 		}
 	}
 
@@ -117,44 +116,22 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public AddressSetView getLoadedAndInitializedAddressSet() {
-		return addressSet;
+		return getOrComputeAddressSet();
 	}
 
 	@Override
 	public AddressSetView getAllInitializedAddressSet() {
-		return addressSet;
+		return getOrComputeAddressSet();
 	}
 
 	@Override
 	public AddressSetView getInitializedAddressSet() {
-		return addressSet;
-	}
-
-	@Override
-	public AddressSetView getExecuteSet() {
-		AddressSet result = new AddressSet();
-		for (TraceMemoryRegion region : memoryManager.getAllRegions()) {
-			if (!region.isExecute() || !program.isRegionVisible(region, region.getLifespan())) {
-				continue;
-			}
-			result.add(region.getRange());
-		}
-		return result;
+		return getOrComputeAddressSet();
 	}
 
 	@Override
 	public boolean isBigEndian() {
 		return program.getLanguage().isBigEndian();
-	}
-
-	@Override
-	public void setLiveMemoryHandler(LiveMemoryHandler handler) {
-		this.memoryWriteRedirect = handler;
-	}
-
-	@Override
-	public LiveMemoryHandler getLiveMemoryHandler() {
-		return memoryWriteRedirect;
 	}
 
 	@Override
@@ -222,37 +199,37 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public long getSize() {
-		return addressSet.getNumAddresses();
+		return getOrComputeAddressSet().getNumAddresses();
 	}
 
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
 			throws LockException, MemoryBlockException, MemoryConflictException,
-			AddressOverflowException, NotFoundException {
+			AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void split(MemoryBlock block, Address addr)
-			throws MemoryBlockException, LockException, NotFoundException {
+			throws MemoryBlockException, LockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws LockException, MemoryBlockException, NotFoundException {
+			throws LockException, MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws LockException, MemoryBlockException, NotFoundException {
+			throws LockException, MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock itializedBlock)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -301,32 +278,29 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public byte getByte(Address addr) throws MemoryAccessException {
-		MemoryBlock block = getBlock(addr);
-		if (block == null) {
-			return 0; // Memory assumed initialized to 0
+		try (LockHold hold = program.trace.lockRead()) {
+			return cache.read(addr);
 		}
-		return block.getByte(addr);
 	}
 
 	@Override
-	public int getBytes(Address addr, byte[] dest, int destIndex, int size)
-			throws MemoryAccessException {
-		MemoryBlock block = getBlock(addr);
-		if (block == null) {
-			int avail = MathUtilities.unsignedMin(Math.max(0, size),
-				addr.getAddressSpace().getMaxAddress().subtract(addr));
-			Arrays.fill(dest, destIndex, avail, (byte) 0);
-			return avail;
+	public int getBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
+		try (LockHold hold = program.trace.lockRead()) {
+			if (cache.canCache(addr, len)) {
+				return cache.read(addr, ByteBuffer.wrap(b, off, len));
+			}
+			AddressSpace as = addr.getAddressSpace();
+			DBTraceMemorySpace space = program.trace.getMemoryManager().getMemorySpace(as, false);
+			if (space == null) {
+				throw new MemoryAccessException("Space does not exist");
+			}
+			len = MathUtilities.unsignedMin(len, as.getMaxAddress().subtract(addr) + 1);
+			return space.getViewBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
 		}
-		return block.getBytes(addr, dest, destIndex, size);
 	}
 
 	@Override
 	public void setByte(Address addr, byte value) throws MemoryAccessException {
-		if (memoryWriteRedirect != null) {
-			memoryWriteRedirect.putByte(addr, value);
-			return;
-		}
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(new byte[] { value })) != 1) {
 			throw new MemoryAccessException();
@@ -336,10 +310,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 	@Override
 	public void setBytes(Address addr, byte[] source, int sIndex, int size)
 			throws MemoryAccessException {
-		if (memoryWriteRedirect != null) {
-			memoryWriteRedirect.putBytes(addr, source, sIndex, size);
-			return;
-		}
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(source, sIndex, size)) != size) {
 			throw new MemoryAccessException();
@@ -370,166 +340,141 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public boolean contains(Address addr) {
-		return addressSet.contains(addr);
+		return getOrComputeAddressSet().contains(addr);
 	}
 
 	@Override
 	public boolean contains(Address start, Address end) {
-		return addressSet.contains(start, end);
+		return getOrComputeAddressSet().contains(start, end);
 	}
 
 	@Override
 	public boolean contains(AddressSetView set) {
-		return addressSet.contains(set);
+		return getOrComputeAddressSet().contains(set);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return addressSet.isEmpty();
+		return getOrComputeAddressSet().isEmpty();
 	}
 
 	@Override
 	public Address getMinAddress() {
-		return addressSet.getMinAddress();
+		return getOrComputeAddressSet().getMinAddress();
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		return addressSet.getMaxAddress();
+		return getOrComputeAddressSet().getMaxAddress();
 	}
 
 	@Override
 	public int getNumAddressRanges() {
-		return addressSet.getNumAddressRanges();
+		return getOrComputeAddressSet().getNumAddressRanges();
 	}
 
 	@Override
 	public AddressRangeIterator getAddressRanges() {
-		return addressSet.getAddressRanges();
+		return getOrComputeAddressSet().getAddressRanges();
 	}
 
 	@Override
 	public AddressRangeIterator getAddressRanges(boolean forward) {
-		return addressSet.getAddressRanges(forward);
+		return getOrComputeAddressSet().getAddressRanges(forward);
 	}
 
 	@Override
 	public AddressRangeIterator getAddressRanges(Address start, boolean forward) {
-		return addressSet.getAddressRanges(start, forward);
+		return getOrComputeAddressSet().getAddressRanges(start, forward);
 	}
 
 	@Override
 	public Iterator<AddressRange> iterator() {
-		return addressSet.iterator();
+		return getOrComputeAddressSet().iterator();
 	}
 
 	@Override
 	public Iterator<AddressRange> iterator(boolean forward) {
-		return addressSet.iterator(forward);
+		return getOrComputeAddressSet().iterator(forward);
 	}
 
 	@Override
 	public Iterator<AddressRange> iterator(Address start, boolean forward) {
-		return addressSet.iterator(start, forward);
+		return getOrComputeAddressSet().iterator(start, forward);
 	}
 
 	@Override
 	public long getNumAddresses() {
-		return addressSet.getNumAddresses();
+		return getOrComputeAddressSet().getNumAddresses();
 	}
 
 	@Override
 	public AddressIterator getAddresses(boolean forward) {
-		return addressSet.getAddresses(forward);
+		return getOrComputeAddressSet().getAddresses(forward);
 	}
 
 	@Override
 	public AddressIterator getAddresses(Address start, boolean forward) {
-		return addressSet.getAddresses(start, forward);
+		return getOrComputeAddressSet().getAddresses(start, forward);
 	}
 
 	@Override
 	public boolean intersects(AddressSetView addrSet) {
-		return addressSet.intersects(addrSet);
+		return getOrComputeAddressSet().intersects(addrSet);
 	}
 
 	@Override
 	public boolean intersects(Address start, Address end) {
-		return addressSet.intersects(start, end);
+		return getOrComputeAddressSet().intersects(start, end);
 	}
 
 	@Override
 	public AddressSet intersect(AddressSetView view) {
-		return addressSet.intersect(view);
+		return getOrComputeAddressSet().intersect(view);
 	}
 
 	@Override
 	public AddressSet intersectRange(Address start, Address end) {
-		return addressSet.intersectRange(start, end);
+		return getOrComputeAddressSet().intersectRange(start, end);
 	}
 
 	@Override
 	public AddressSet union(AddressSetView addrSet) {
-		return addressSet.union(addrSet);
+		return getOrComputeAddressSet().union(addrSet);
 	}
 
 	@Override
 	public AddressSet subtract(AddressSetView addrSet) {
-		return addressSet.subtract(addrSet);
+		return getOrComputeAddressSet().subtract(addrSet);
 	}
 
 	@Override
 	public AddressSet xor(AddressSetView addrSet) {
-		return addressSet.xor(addrSet);
+		return getOrComputeAddressSet().xor(addrSet);
 	}
 
 	@Override
 	public boolean hasSameAddresses(AddressSetView view) {
-		return addressSet.hasSameAddresses(view);
+		return getOrComputeAddressSet().hasSameAddresses(view);
 	}
 
 	@Override
 	public AddressRange getFirstRange() {
-		return addressSet.getFirstRange();
+		return getOrComputeAddressSet().getFirstRange();
 	}
 
 	@Override
 	public AddressRange getLastRange() {
-		return addressSet.getLastRange();
+		return getOrComputeAddressSet().getLastRange();
 	}
 
 	@Override
 	public AddressRange getRangeContaining(Address address) {
-		return addressSet.getRangeContaining(address);
+		return getOrComputeAddressSet().getRangeContaining(address);
 	}
 
 	@Override
 	public Address findFirstAddressInCommon(AddressSetView set) {
-		return addressSet.findFirstAddressInCommon(set);
-	}
-
-	protected synchronized void addRange(AddressRange range) {
-		if (!forceFullView) {
-			addressSet = addressSet.union(new AddressSet(range));
-		}
-	}
-
-	protected synchronized void removeRange(AddressRange range) {
-		if (!forceFullView) {
-			addressSet = addressSet.subtract(new AddressSet(range));
-		}
-	}
-
-	protected synchronized void changeRange(AddressRange remove, AddressRange add) {
-		if (!forceFullView) {
-			AddressSet temp = new AddressSet(addressSet);
-			if (remove != null) {
-				temp.delete(remove);
-			}
-			if (add != null) {
-				temp.add(add);
-			}
-			addressSet = temp;
-		}
+		return getOrComputeAddressSet().findFirstAddressInCommon(set);
 	}
 }

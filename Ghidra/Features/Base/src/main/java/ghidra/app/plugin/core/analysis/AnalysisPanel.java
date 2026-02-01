@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.beans.*;
 import java.io.File;
 import java.io.IOException;
@@ -141,8 +140,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	/**
-	 * Copies the the non-default options from the program analysis options into a new options object
-	 * @return the the non-default options from the program analysis options into a new options object
+	 * Copies the non-default options from the program analysis options into a new options object
+	 * @return the non-default options from the program analysis options into a new options object
 	 */
 	private Options getNonDefaultProgramOptions() {
 		FileOptions options = new FileOptions("Current Program Options");
@@ -359,8 +358,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 		File saveFile = getOptionsSaveFile(saveName);
 		if (saveFile.exists() && OptionDialog.CANCEL_OPTION == OptionDialog
-			.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
-				"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
+				.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
+					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
 			return;
 		}
 		FileOptions currentOptions = getCurrentOptionsAsFileOptions();
@@ -442,6 +441,22 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		configureEnabledColumnWidth(60);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.getSelectionModel().addListSelectionListener(this::selectedAnalyzerChanged);
+
+		// add ability to toggle analyzers enablement using the keyboard space bar
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+					int row = table.getSelectedRow();
+					int column = COLUMN_ANALYZER_IS_ENABLED;
+					if (row >= 0) {
+						boolean enabledState = (Boolean) model.getValueAt(row, column);
+						model.setValueAt(!enabledState, row, column);
+					}
+				}
+			}
+		});
+
 	}
 
 	private void selectedAnalyzerChanged(ListSelectionEvent event) {
@@ -697,7 +712,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 					GenericOptionsComponent.createOptionComponent(childState);
 
 				HelpLocation helpLoc = analysisOptions
-					.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
+						.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
 				if (helpLoc != null) {
 					help.registerHelp(comp, helpLoc);
 				}

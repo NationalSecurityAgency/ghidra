@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,15 @@ public class FileByteProvider implements MutableByteProvider {
 		this.fsrl = fsrl;
 		this.accessMode = accessMode;
 		this.raf = new RandomAccessFile(file, accessModeToString(accessMode));
-		this.currentLength = raf.length();
+		try {
+			this.currentLength = getFilesize();
+		}
+		catch (IOException e) {
+			// we have to close raf here since the caller won't have a FileByteProvider to close
+			this.raf.close();
+			this.raf = null;
+			throw e;
+		}
 	}
 
 	/**
@@ -98,7 +106,7 @@ public class FileByteProvider implements MutableByteProvider {
 	}
 
 	@Override
-	public long length() throws IOException {
+	public long length() {
 		return currentLength;
 	}
 
@@ -120,7 +128,8 @@ public class FileByteProvider implements MutableByteProvider {
 	public byte[] readBytes(long index, long length) throws IOException {
 		ensureBounds(index, length);
 		if (length > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Read length 0x%x exceeds Integer.MAX_VALUE (0x%x)"
+					.formatted(length, Integer.MAX_VALUE));
 		}
 		int len = (int) length;
 		byte[] result = new byte[len];
@@ -135,7 +144,6 @@ public class FileByteProvider implements MutableByteProvider {
 	 * Read bytes at the specified index into the given byte array.
 	 * <p>
 	 * See {@link InputStream#read(byte[], int, int)}.
-	 * <p>
 	 * 
 	 * @param index file offset to start reading
 	 * @param buffer byte array that will receive the bytes
@@ -266,6 +274,26 @@ public class FileByteProvider implements MutableByteProvider {
 		if (index + length > currentLength) {
 			throw new IOException("Unable to read past EOF: " + index + ", " + length);
 		}
+	}
+
+	private long getFilesize() throws IOException {
+		// Note: we need to do these checks because some file systems (eg. /proc, /sys) will
+		// report inaccurate values for sizes of programmatically generated files.
+		long len = raf.length();
+		if (len > 0) {
+			raf.seek(len - 1);
+			try {
+				if (raf.read() >= 0) {
+					return len;
+				}
+			}
+			catch (IOException e) {
+				// fall thru
+			}
+			throw new IOException(
+				"Unable to determine file size: %s, reported as %d".formatted(file, len));
+		}
+		return len;
 	}
 
 	private long getBufferPos(long index) {

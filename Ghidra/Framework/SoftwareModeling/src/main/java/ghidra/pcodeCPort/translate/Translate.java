@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,14 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jdom.Element;
-
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.address.*;
+import ghidra.pcodeCPort.address.Address;
+import ghidra.pcodeCPort.address.RangeList;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
-import ghidra.pcodeCPort.space.*;
+import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
-import ghidra.pcodeCPort.xml.DocumentStorage;
 import ghidra.program.model.lang.SpaceNames;
 
 public abstract class Translate implements BasicSpaceProvider {
@@ -49,170 +48,203 @@ public abstract class Translate implements BasicSpaceProvider {
 	protected int alignment; // Byte modulo on which instructions are aligned
 	protected int target_endian; // =0 target is little endian =1 target is big
 
-	/// The \e unique address space, for allocating temporary registers,
-	/// is used for both registers needed by the pcode translation
-	/// engine and, later, by the simplification engine.  This routine
-	/// sets the boundary of the portion of the space allocated
-	/// for the pcode engine, and sets the base offset where registers
-	/// created by the simplification process can start being allocated.
-	/// \param val is the boundary offset
+	/**
+	 * The unique address space, for allocating temporary registers,
+	 * is used for both registers needed by the pcode translation
+	 * engine and, later, by the simplification engine.  This routine
+	 * sets the boundary of the portion of the space allocated
+	 * for the pcode engine, and sets the base offset where registers
+	 * created by the simplification process can start being allocated.
+	 * @param val is the boundary offset
+	 */
 	protected void setUniqueBase(long val) {
 		if (val > unique_base) {
 			unique_base = val;
 		}
 	}
 
-	/// Processors can usually be described as using a big endian
-	/// encoding or a little endian encoding. This routine returns
-	/// \b true if the processor globally uses big endian encoding.
-	/// \return \b true if big endian
+	/**
+	 * Processors can usually be described as using a big endian
+	 * encoding or a little endian encoding. This routine returns
+	 * true if the processor globally uses big endian encoding.
+	 * @return true if big endian
+	 */
 	public boolean isBigEndian() {
 		return target_endian == 1;
 	}
 
-	/// \deprecated This routine is intended to return a \e global
-	/// address size for the processor. Use getDefaultSize instead.
-	/// \return the size of addresses in bytes
+	/**
+	 * This routine is intended to return a global address size for the processor.
+	 * @return the size of addresses in bytes
+	 * @deprecated use {@link #getDefaultSize()} instead
+	 */
+	@Deprecated
 	public int getAddrSize() {
 		return defaultspace.getAddrSize();
 	}
 
-	/// Return the size of addresses for the processor's official
-	/// default space. This space is usually the main RAM databus.
-	/// \return the size of an address in bytes
+	/**
+	 * Return the size of addresses for the processor's official
+	 * default space. This space is usually the main RAM databus.
+	 * @return the size of an address in bytes
+	 */
 	public int getDefaultSize() {
 		return defaultspace.getAddrSize();
 	}
 
-	/// If machine instructions need to have a specific alignment
-	/// for this processor, this routine returns it. I.e. a return
-	/// value of 4, means that the address of all instructions
-	/// must be a multiple of 4. If there is no
-	/// specific alignment requirement, this routine returns 1.
-	/// \return the instruction alignment
+	/**
+	 * If machine instructions need to have a specific alignment
+	 * for this processor, this routine returns it. I.e. a return
+	 * value of 4, means that the address of all instructions
+	 * must be a multiple of 4. If there is no
+	 * specific alignment requirement, this routine returns 1.
+	 * @return the instruction alignment
+	 */
 	int getAlignment() {
 		return alignment;
 	}
 
-	/// This routine gets the base offset, within the \e unique
-	/// temporary register space, where new registers can be
-	/// allocated for the simplification process.  Locations before
-	/// this offset are reserved registers needed by the pcode
-	/// translation engine.
-	/// \return the first allocatable offset
+	/**
+	 * This routine gets the base offset, within the unique
+	 * temporary register space, where new registers can be
+	 * allocated for the simplification process.  Locations before
+	 * this offset are reserved registers needed by the pcode
+	 * translation engine.
+	 * @return the first allocatable offset
+	 */
 	public long getUniqueBase() {
 		return unique_base;
 	}
 
-	/// There is a special address space reserved for encoding pointers
-	/// to pcode operations as addresses.  This allows a direct pointer
-	/// to be \e hidden within an operation, when manipulating pcode
-	/// internally. (See IopSpace)
-	/// \return a pointer to the address space
+	/**
+	 * There is a special address space reserved for encoding pointers
+	 * to pcode operations as addresses.  This allows a direct pointer
+	 * to be hidden within an operation, when manipulating pcode
+	 * internally. (See IopSpace)
+	 * @return a pointer to the address space
+	 */
 	public AddrSpace getIopSpace() {
 		return iopspace;
 	}
 
-	/// There is a special address space reserved for encoding pointers
-	/// to the FuncCallSpecs object as addresses. This allows direct
-	/// pointers to be \e hidden within an operation, when manipulating
-	/// pcode internally. (See FspecSpace)
-	/// \return a pointer to the address space
+	/**
+	 * There is a special address space reserved for encoding pointers
+	 * to the FuncCallSpecs object as addresses. This allows direct
+	 * pointers to be hidden within an operation, when manipulating
+	 * pcode internally. (See FspecSpace)
+	 * @return a pointer to the address space
+	 */
 	public AddrSpace getFspecSpace() {
 		return fspecspace;
 	}
 
-	/// Most processors have registers and instructions that are
-	/// reserved for implementing a stack. In the pcode translation,
-	/// these are translated into locations and operations on a
-	/// dedicated \b stack address space. (See SpacebaseSpace)
-	/// \return a pointer to the \b stack space
+	/**
+	 * Most processors have registers and instructions that are
+	 * reserved for implementing a stack. In the pcode translation,
+	 * these are translated into locations and operations on a
+	 * dedicated stack address space. (See SpacebaseSpace)
+	 * @return a pointer to the stack space
+	 */
 	public AddrSpace getStackSpace() {
 		return stackspace;
 	}
 
-	/// Both the pcode translation process and the simplification
-	/// process need access to a pool of temporary registers that
-	/// can be used for moving data around without affecting the
-	/// address spaces used to formally model the processor's RAM
-	/// and registers.  These temporary locations are all allocated
-	/// from a dedicated address space, referred to as the \b unique
-	/// space. (See UniqueSpace)
-	/// \return a pointer to the \b unique space
+	/**
+	 * Both the pcode translation process and the simplification
+	 * process need access to a pool of temporary registers that
+	 * can be used for moving data around without affecting the
+	 * address spaces used to formally model the processor's RAM
+	 * and registers.  These temporary locations are all allocated
+	 * from a dedicated address space, referred to as the unique
+	 * space. (See UniqueSpace)
+	 * @return a pointer to the unique space
+	 */
 	public AddrSpace getUniqueSpace() {
 		return uniqspace;
 	}
 
-	/// Most processors have a main address bus, on which the bulk
-	/// of the processor's RAM is mapped.  Everything referenced
-	/// with this address bus should be modeled in pcode with a
-	/// single address space, referred to as the \e default space.
-	/// \return a pointer to the \e default space
+	/**
+	 * Most processors have a main address bus, on which the bulk
+	 * of the processor's RAM is mapped.  Everything referenced
+	 * with this address bus should be modeled in pcode with a
+	 * single address space, referred to as the default space.
+	 * @return a pointer to the default space
+	 */
 	@Override
 	public AddrSpace getDefaultSpace() {
 		return defaultspace;
 	}
 
-	/// Pcode represents constant values within an operation as
-	/// offsets within a special \e constant address space. 
-	/// (See ConstantSpace)
-	/// \return a pointer to the \b constant space
+	/**
+	 * Pcode represents constant values within an operation as
+	 * offsets within a special constant address space. 
+	 * (See ConstantSpace)
+	 * @return a pointer to the constant space
+	 */
 	@Override
 	public AddrSpace getConstantSpace() {
 		return constantspace;
 	}
 
-	// This routine encodes a specific value as a \e constant
-	/// address. I.e. the address space of the resulting Address
-	/// will be the \b constant space, and the offset will be the
-	/// value.
-	/// \param val is the constant value to encode
-	/// \return the \e constant address
+	/**
+	 * This routine encodes a specific value as a constant
+	 * address. I.e. the address space of the resulting Address
+	 * will be the constant space, and the offset will be the
+	 * value.
+	 * @param val is the constant value to encode
+	 * @return the constant address
+	 */
 	public Address getConstant(long val) {
 		return new Address(constantspace, val);
 	}
 
-	// This routine is used to encode a pointer to an address space
-	// as a \e constant Address, for use in \b LOAD and \b STORE
-	// operations.  This is used internally and is slightly more
-	// efficient than storing the formal index of the space
-	// param spc is the space pointer to be encoded
-	// \return the encoded Address
+	/**
+	 * This routine is used to encode a pointer to an address space
+	 * as a constant Address, for use in LOAD and STORE
+	 * operations.  This is used internally and is slightly more
+	 * efficient than storing the formal index of the space
+	 * @param spc is the space pointer to be encoded
+	 * @return the encoded Address
+	 */
 	public Address createConstFromSpace(AddrSpace spc) {
 		long id = AddrSpaceToIdSymmetryMap.getID(spc);
 		return new Address(constantspace, id);
 	}
 
-	// This returns the total number of address spaces used by the
-	// processor, including all special spaces, like the \b constant
-	// space and the \b iop space. 
-	// \return the number of spaces
+	/**
+	 * This returns the total number of address spaces used by the
+	 * processor, including all special spaces, like the constant
+	 * space and the iop space. 
+	 * @return the number of spaces
+	 */
 	public int numSpaces() {
 		return baselist.size();
 	}
 
-	// This retrieves a specific address space via its formal index.
-	// All spaces have an index, and in conjunction with the numSpaces
-	// method, this method can be used to iterate over all spaces.
-	// \param i is the index of the address space
-	// \return a pointer to the desired space
+	/**
+	 * This retrieves a specific address space via its formal index.
+	 * All spaces have an index, and in conjunction with the numSpaces
+	 * method, this method can be used to iterate over all spaces.
+	 * @param i is the index of the address space
+	 * @return a pointer to the desired space
+	 */
 	public AddrSpace getSpace(int i) {
 		return baselist.get(i);
 	}
 
-	// The Translate object keep tracks of address ranges for which
-	// it is effectively impossible to have a pointer into. This is
-	// used for pointer aliasing calculations.  This routine returns
-	// \b true if it is \e possible to have pointers into the indicated
-	// range.
-	// \param loc is the starting address of the range
-	// \param size is the size of the range in bytes
-	// \return \b true if pointers are possible
+	/**
+	 * The Translate object keep tracks of address ranges for which
+	 * it is effectively impossible to have a pointer into. This is
+	 * used for pointer aliasing calculations.  This routine returns
+	 * true if it is possible to have pointers into the indicated
+	 * range.
+	 * @param loc is the starting address of the range
+	 * @param size is the size of the range in bytes
+	 * @return true if pointers are possible
+	 */
 	public boolean highPtrPossible(Address loc, int size) {
 		return !nohighptr.inRange(loc, size);
 	}
-
-	public abstract void initialize(DocumentStorage store);
 
 	protected void registerContext(String name, int sbit, int ebit) {
 		// Base implementation (for compiling) doesn't need to keep track of context symbol
@@ -236,44 +268,6 @@ public abstract class Translate implements BasicSpaceProvider {
 		alignment = 1;
 	}
 
-	AddrSpace restoreXmlSpace(Element el) { // Factory for spaces
-		AddrSpace res;
-		String tp = el.getName();
-		if ("space_base".equals(tp)) {
-			res = new SpacebaseSpace(this);
-		}
-		else if ("space_unique".equals(tp)) {
-			res = new UniqueSpace(this);
-		}
-		else if ("space_other".equals(tp)) {
-			res = new OtherSpace(this);
-		}
-		else {
-			res = new AddrSpace(this, spacetype.IPTR_PROCESSOR);
-		}
-
-		res.restoreXml(el);
-		return res;
-	}
-
-	protected void restoreXmlSpaces(Element el) {
-		// The first space should always be the constant space
-		insertSpace(new ConstantSpace(this));
-
-		// The second space should always be the other space
-		insertSpace(
-			new OtherSpace(this, SpaceNames.OTHER_SPACE_NAME, SpaceNames.OTHER_SPACE_INDEX));
-
-		String defname = el.getAttributeValue("defaultspace");
-		List<?> children = el.getChildren();
-		for (Object object : children) {
-			AddrSpace spc = restoreXmlSpace((Element) object);
-			insertSpace(spc);
-		}
-		AddrSpace spc = getSpaceByName(defname);
-		setDefaultSpace(spc.getIndex());
-	}
-
 	public AddrSpace getSpaceByName(String nm) { // Convert name to space
 		for (AddrSpace space : baselist) {
 			if (space.getName().equals(nm)) {
@@ -292,17 +286,19 @@ public abstract class Translate implements BasicSpaceProvider {
 		return null;
 	}
 
-	// Associate a particular register or memory location with an address space
-	// The canonical example is the \b stack \b pointer and the stack space.
-	// The \b basespace is the so-called stack space, which is really a
-	// virtual space typically contained by ram space.  The \b spacebase
-	// register effectively hides the true location of its basespace with
-	// its containing space and facilitates addressing in the virtual space
-	// by providing a base offset into the containing space.
-	// \param basespace is the virtual address space
-	// \param spc is the address space of the register
-	// \param offset is the offset of the register
-	// \param size is the size of the register
+	/**
+	 * Associate a particular register or memory location with an address space
+	 * The canonical example is the stack pointer and the stack space.
+	 * The basespace is the so-called stack space, which is really a
+	 * virtual space typically contained by ram space.  The spacebase
+	 * register effectively hides the true location of its basespace with
+	 * its containing space and facilitates addressing in the virtual space
+	 * by providing a base offset into the containing space.
+	 * @param basespace is the virtual address space
+	 * @param spc is the address space of the register
+	 * @param offset is the offset of the register
+	 * @param size is the size of the register
+	 */
 	public void addSpacebase(AddrSpace basespace, AddrSpace spc, long offset, int size) {
 		int index = basespace.getIndex();
 		while (index >= spacebaselist.size()) {
@@ -316,10 +312,12 @@ public abstract class Translate implements BasicSpaceProvider {
 		datalist.back().size = size;
 	}
 
-	// If \b basespace is a virtual space, it has one (or more) registers or memory locations
-	// associated with it that serve as base offsets, anchoring the virtual space in a physical space
-	// \param basespace is the virtual space to check
-	// \return the number of spacebase registers
+	/**
+	 * If basespace is a virtual space, it has one (or more) registers or memory locations
+	 * associated with it that serve as base offsets, anchoring the virtual space in a physical space
+	 * @param basespace is the virtual space to check
+	 * @return the number of spacebase registers
+	 */
 	public int numSpacebase(AddrSpace basespace) {
 		int index = basespace.getIndex();
 		if (index >= spacebaselist.size()) {
@@ -328,12 +326,14 @@ public abstract class Translate implements BasicSpaceProvider {
 		return spacebaselist.get(index).size();
 	}
 
-	// Retrieve a particular spacebase register associated with the virtual address space
-	// \b basespace.  This register serves as a base offset to anchor \b basespace within
-	// its containing space.
-	// \param basespace is the virtual space to find a spacebase register for
-	// \param i is the index of the particular spacebase register
-	// \return a reference to the spacebase register
+	/**
+	 * Retrieve a particular spacebase register associated with the virtual address space
+	 * basespace.  This register serves as a base offset to anchor basespace within
+	 * its containing space.
+	 * @param basespace is the virtual space to find a spacebase register for
+	 * @param i is the index of the particular spacebase register
+	 * @return a reference to the spacebase register
+	 */
 	public VarnodeData getSpacebase(AddrSpace basespace, int i) {
 		int index = basespace.getIndex();
 		if (index < spacebaselist.size()) {
@@ -467,56 +467,6 @@ public abstract class Translate implements BasicSpaceProvider {
 			shortcut = (char) i;
 		}
 		throw new LowlevelError("Unable to assign shortcut");
-	}
-
-	public void parseStackPointer(Element el) {
-		int ind = baselist.size();
-
-		AddrSpace basespace = getSpaceByName(el.getAttributeValue("space"));
-		if (basespace == null) {
-			throw new LowlevelError("Unknown space name: " + el.getAttributeValue("space"));
-		}
-		AddrSpace spc;
-
-		// Get data for the stackpointer
-		VarnodeData point = getRegister(el.getAttributeValue("register"));
-		spc = new SpacebaseSpace(SpaceNames.STACK_SPACE_NAME, ind, point.size, basespace,
-			point.space.getDelay() + 1);
-		insertSpace(spc);
-		addSpacebase(stackspace, point.space, point.offset, point.size);
-	}
-
-	public void parseSpacebase(Element el) { // Parse a "spacebase" command in configuration file
-		String namestring = el.getAttributeValue("name");
-		VarnodeData point = getRegister(el.getAttributeValue("register"));
-		AddrSpace spc = getSpaceByName(namestring);
-		if (spc == null) { // Space not previously defined
-			int ind = baselist.size();
-
-			AddrSpace basespace = getSpaceByName(el.getAttributeValue("space"));
-			if (basespace == null) {
-				throw new LowlevelError("Unknown space name: " + el.getAttributeValue("space"));
-			}
-			spc = new SpacebaseSpace(namestring, ind, point.size, basespace,
-				point.space.getDelay() + 1);
-			insertSpace(spc);
-		}
-		addSpacebase(spc, point.space, point.offset, point.size);
-	}
-
-	/**
-	 * This routine is used by the initialization process to add
-	 * address ranges to which there is never an (indirect) pointer
-	 * Should only be called during initialization
-	 * @param el is the parse XML describing the address range
-	 */
-	public void parseNoHighPtr(Element el) {
-		List<?> list = el.getChildren();
-		for (Object object : list) {
-			Range range = new Range();
-			range.restoreXml((Element) object, this);
-			nohighptr.insertRange(range.getSpace(), range.getFirst(), range.getLast());
-		}
 	}
 
 	// Get space the next space in the absolute order of addresses

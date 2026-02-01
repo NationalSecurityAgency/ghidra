@@ -15,7 +15,6 @@
  */
 package ghidra.util.bytesearch;
 
-import ghidra.program.model.data.DataType;
 
 /**
  * Templated simple DittedBitSequence Pattern for a byte/mask pattern and associated action.
@@ -52,7 +51,7 @@ public class GenericByteSequencePattern<T> extends Pattern {
 	 * @param action to apply if the match succeeds
 	 */
 	public GenericByteSequencePattern(byte[] bytesSequence, byte[] mask,
-			GenericMatchAction<DataType> action) {
+			GenericMatchAction<T> action) {
 		super(new DittedBitSequence(bytesSequence, mask), 0, new PostRule[0], new MatchAction[1]);
 
 		MatchAction[] matchActions = getMatchActions();

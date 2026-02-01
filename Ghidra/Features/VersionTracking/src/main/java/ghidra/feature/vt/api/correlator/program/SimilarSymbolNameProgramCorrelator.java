@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import generic.lsh.vector.VectorCompare;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -46,11 +45,10 @@ public class SimilarSymbolNameProgramCorrelator extends VTAbstractProgramCorrela
 	int featureID = 0;
 	int minNameLength;
 
-	public SimilarSymbolNameProgramCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	public SimilarSymbolNameProgramCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, ToolOptions options) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 	}
 
 	@Override
@@ -108,8 +106,7 @@ public class SimilarSymbolNameProgramCorrelator extends VTAbstractProgramCorrela
 			if (!addressSet.contains(symbol.getAddress())) {
 				continue;
 			}
-			if (symbol.getSource() == SourceType.DEFAULT ||
-				symbol.getSource() == SourceType.ANALYSIS) {
+			if (symbol.getSource().isLowerOrEqualPriorityThan(SourceType.ANALYSIS)) {
 				continue;
 			}
 

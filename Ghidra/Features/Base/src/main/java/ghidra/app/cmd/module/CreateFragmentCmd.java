@@ -16,7 +16,6 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -25,13 +24,13 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * 
  */
-public class CreateFragmentCmd implements Command {
+public class CreateFragmentCmd implements Command<Program> {
 
 	private String name;
 	private String statusMsg;
-	private String parentName; 
+	private String parentName;
 	private String treeName;
-	
+
 	/** 
 	 * Construct a new CreateFragmentCmd.
 	 * @param treeName name of the tree where the fragment will reside
@@ -50,34 +49,31 @@ public class CreateFragmentCmd implements Command {
 	 * @return false if the fragment was not created
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
 		Listing listing = program.getListing();
 		ProgramModule m = listing.getModule(treeName, parentName);
 		if (m == null) {
 			statusMsg = "Module named " + parentName + " does not exist";
 			return false;
-		}		
-		
+		}
+
 		try {
 			m.createFragment(name);
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			statusMsg = name + " already exists";
 		}
 		return false;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Create Fragment";
 	}

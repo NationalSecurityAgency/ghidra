@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@
 /// \brief Utilities for merging low-level Varnodes into high-level variables
 
 #include "op.hh"
+#include "expression.hh"
 
 namespace ghidra {
 
@@ -49,9 +50,9 @@ class Funcdata;
 /// of the Cover of an address tied Varnode and a PcodeOp in this set, affectsTest() can do
 /// secondary testing of whether the Varnode is actually modified by the PcodeOp.
 class StackAffectingOps : public PcodeOpSet {
-  Funcdata &data;
+  Funcdata &data;		///< The function containing these ops
 public:
-  StackAffectingOps(Funcdata &fd) : data(fd) {}
+  StackAffectingOps(Funcdata &fd) : data(fd) {}	///< Constructor
   virtual void populate(void);
   virtual bool affectsTest(PcodeOp *op,Varnode *vn) const;
 };
@@ -117,8 +118,8 @@ class Merge {
 public:
   Merge(Funcdata &fd) : data(fd), stackAffectingOps(fd), testCache(stackAffectingOps) {} ///< Construct given a specific function
   void clear(void);
+  static void markImplied(Varnode *vn);
   bool inflateTest(Varnode *a,HighVariable *high);
-  void inflate(Varnode *a,HighVariable *high);
   bool mergeTest(HighVariable *high,vector<HighVariable *> &tmplist);
 
   void mergeOpcode(OpCode opc);

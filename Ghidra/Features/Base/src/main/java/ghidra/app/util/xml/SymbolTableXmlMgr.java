@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -197,7 +197,7 @@ class SymbolTableXmlMgr {
 			String addrStr = element.getAttribute("ADDRESS");
 			String namespace = element.getAttribute("NAMESPACE");
 			if (namespace != null && namespace.endsWith("::")) {
-				namespace = namespace.substring(namespace.length() - 2);
+				namespace = namespace.substring(0, namespace.length() - 2);
 			}
 			String primary = element.getAttribute("PRIMARY");
 			String sourceTypeString = element.getAttribute("SOURCE_TYPE");
@@ -233,13 +233,8 @@ class SymbolTableXmlMgr {
 				scope = localNamespace;
 			}
 			else if (namespace != null && namespace.length() != 0) {
-				if (program.getGlobalNamespace().equals(localNamespace)) {
-					scope = NamespaceUtils.createNamespaceHierarchy(namespace,
-						program.getGlobalNamespace(), program, sourceType);
-				}
-				else {
-					name = namespace + name;
-				}
+				scope = NamespaceUtils.createNamespaceHierarchy(namespace,
+					program.getGlobalNamespace(), program, sourceType);
 			}
 
 			Symbol s = symbolTable.getPrimarySymbol(addr);

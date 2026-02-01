@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.program.model.data;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -36,7 +38,7 @@ public final class DataUtilities {
 	 * @return true if name is valid, else false
 	 */
 	public static boolean isValidDataTypeName(String name) {
-		if (name == null || name.length() == 0) {
+		if (StringUtils.isBlank(name)) {
 			return false;
 		}
 
@@ -121,8 +123,7 @@ public final class DataUtilities {
 			!Undefined.isUndefined(dt))) {
 			return true;
 		}
-		if (clearMode == ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA &&
-			!isDefaultData(dt)) {
+		if (clearMode == ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA && !isDefaultData(dt)) {
 			return true;
 		}
 		return false;
@@ -135,7 +136,7 @@ public final class DataUtilities {
 	 * @param addr data address (offcut data address only allowed if clearMode == ClearDataMode.CLEAR_ALL_CONFLICT_DATA)
 	 * @param newType new data-type being applied
 	 * @param length data length (used only for Dynamic newDataType which has canSpecifyLength()==true)
-	 * @param clearMode see CreateDataMode
+	 * @param clearMode the {@link ClearDataMode}
 	 * @return new data created
 	 * @throws CodeUnitInsertionException if data creation failed
 	 */
@@ -151,7 +152,7 @@ public final class DataUtilities {
 	 * @param newType new data-type being applied
 	 * @param length data length (used only for Dynamic newDataType which has canSpecifyLength()==true)
 	 * @param stackPointers see {@link #reconcileAppliedDataType(DataType, DataType, boolean)}
-	 * @param clearMode see CreateDataMode
+	 * @param clearMode the {@link ClearDataMode}
 	 * @return new data created
 	 * @throws CodeUnitInsertionException if data creation failed
 	 */
@@ -167,13 +168,27 @@ public final class DataUtilities {
 		Reference extRef = null;
 		if (!isParentData(data, addr)) {
 
-			existingLength = data.getLength();
-			if (data.isDefined() && newType.isEquivalent(existingType)) {
-				return data;
-			}
-
 			if (!stackPointers && isDataClearingDenied(existingType, clearMode)) {
 				throw new CodeUnitInsertionException("Could not create Data at address " + addr);
+			}
+
+			existingLength = data.getLength();
+
+			if (data.isDefined()) {
+				DataType existingDt = data.getDataType();
+				if (stackPointers && (newType instanceof Pointer) &&
+					(existingDt instanceof Pointer ptr)) {
+					if (isDefaultPointer(newType)) {
+						// When applying default-pointer to existing pointer replicate the outermost
+						// pointer type to wrap existing pointer (e.g., char* becomes char**)
+						newType = ptr.newPointer(ptr);
+					}
+					// Any use of stacking already reflected by newType
+					stackPointers = false;
+				}
+				if (newType.isEquivalent(existingType)) {
+					return data;
+				}
 			}
 
 			// TODO: This can probably be eliminated
@@ -284,8 +299,7 @@ public final class DataUtilities {
 		return newType.equals(existingType);
 	}
 
-	private static void restoreReference(DataType newType, ReferenceManager refMgr,
-			Reference ref) {
+	private static void restoreReference(DataType newType, ReferenceManager refMgr, Reference ref) {
 
 		if (ref == null) {
 			return;
@@ -309,11 +323,9 @@ public final class DataUtilities {
 	}
 
 	private static Reference getExternalPointerReference(Address addr, DataType newType,
-			boolean stackPointers,
-			ReferenceManager refMgr, DataType existingType) {
+			boolean stackPointers, ReferenceManager refMgr, DataType existingType) {
 		Reference extRef = null;
-		if ((stackPointers || newType instanceof Pointer) &&
-			existingType instanceof Pointer) {
+		if ((stackPointers || newType instanceof Pointer) && existingType instanceof Pointer) {
 			Reference[] refs = refMgr.getReferencesFrom(addr);
 			for (Reference ref : refs) {
 				if (ref.getOperandIndex() == 0 && ref.isExternalReference()) {
@@ -358,8 +370,8 @@ public final class DataUtilities {
 			checkForDefinedData(dti, listing, newEnd, definedData.getMaxAddress(), clearMode);
 		}
 		else if (clearMode != ClearDataMode.CLEAR_ALL_CONFLICT_DATA) {
-			throw new CodeUnitInsertionException("Not enough space to create DataType " +
-				dti.getDataType().getDisplayName());
+			throw new CodeUnitInsertionException(
+				"Not enough space to create DataType " + dti.getDataType().getDisplayName());
 		}
 		listing.clearCodeUnits(addr, newEnd, false);
 	}
@@ -370,14 +382,13 @@ public final class DataUtilities {
 		// ignore all defined data which may be cleared
 		while (end.compareTo(address) <= 0) {
 			Data definedData = listing.getDefinedDataAfter(end);
-			if (definedData == null ||
-				definedData.getMinAddress().compareTo(address) > 0) {
+			if (definedData == null || definedData.getMinAddress().compareTo(address) > 0) {
 				return;
 			}
 
 			if (isDataClearingDenied(definedData.getDataType(), clearMode)) {
-				throw new CodeUnitInsertionException("Not enough space to create DataType " +
-					dti.getDataType().getDisplayName());
+				throw new CodeUnitInsertionException(
+					"Not enough space to create DataType " + dti.getDataType().getDisplayName());
 			}
 			end = definedData.getMaxAddress();
 		}
@@ -413,7 +424,7 @@ public final class DataUtilities {
 	 * </li>
 	 * <li>If the originalDataType is any type of pointer the supplied newDatatype
 	 * will replace the pointer's base type (e.g., int * would become db * when
-	 * newDataType is {@link ByteDataType}).
+	 * newDataType is {@link ByteDataType}).</li>
 	 * </ul>
 	 * <P>If false, only required transformations will be applied, Example:
 	 * if newDataType is a FunctionDefinitionDataType it will be transformed
@@ -428,12 +439,14 @@ public final class DataUtilities {
 		}
 
 		DataType resultDt = newDataType;
-		if (stackPointers && isDefaultPointer(newDataType) &&
-			(originalDataType instanceof Pointer)) {
-			// wrap existing pointer with specified default pointer
-			resultDt = ((Pointer) newDataType).newPointer(originalDataType);
+		if (stackPointers && (newDataType instanceof Pointer) &&
+			(originalDataType instanceof Pointer ptr)) {
+			if (isDefaultPointer(newDataType)) {
+				// When applying default-pointer to existing pointer replicate the outermost
+				// pointer type to wrap existing pointer (e.g., char* becomes char**)
+				resultDt = ptr.newPointer(ptr);
+			}
 		}
-
 		else if (stackPointers && (originalDataType instanceof Pointer)) {
 			// replace existing pointer's base data type
 			resultDt = stackPointers((Pointer) originalDataType, newDataType);
@@ -446,12 +459,11 @@ public final class DataUtilities {
 	}
 
 	private static boolean isDefaultPointer(DataType dt) {
-		if (!(dt instanceof Pointer)) {
-			return false;
+		if (dt instanceof Pointer ptr) {
+			DataType ptrDt = ptr.getDataType();
+			return ptrDt == null || ptrDt == DataType.DEFAULT;
 		}
-		Pointer p = (Pointer) dt;
-		DataType ptrDt = p.getDataType();
-		return ptrDt == null || ptrDt == DataType.DEFAULT;
+		return false;
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.symboltree;
 
 import static generic.test.AbstractGTest.*;
 import static generic.test.AbstractGenericTest.*;
+import static generic.test.AbstractGuiTest.*;
 import static ghidra.test.AbstractGhidraHeadedIntegrationTest.*;
 import static org.junit.Assert.*;
 
@@ -40,6 +41,7 @@ import docking.test.AbstractDockingTest;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.program.model.address.Address;
@@ -67,7 +69,7 @@ class SymbolTreeTestUtils {
 	private DockingActionIf selectionAction;
 	private DockingActionIf createNamespaceAction;
 	private DockingActionIf createClassAction;
-	private ToggleDockingAction goToToggleAction;
+	private ToggleDockingAction navigateIncomingAction;
 
 	/** A comparator to sort Symbols the same way as the SymbolNode sorts */
 	// Note: a bit of guilty knowledge: the SymbolNodes will sort first on name, then on
@@ -102,7 +104,7 @@ class SymbolTreeTestUtils {
 
 	public static Program buildProgram() throws Exception {
 
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder("sample1", true);
 		Program program = builder.getProgram();
 
 		builder.createMemory("test", "0x1001000", 0x5500);
@@ -169,6 +171,49 @@ class SymbolTreeTestUtils {
 		return program;
 	}
 
+	public static Program buildProgram2() throws Exception {
+
+		// Note: the contents of this program are arbitrary and loosely based off of the program
+		// in buildProgram().
+
+		ToyProgramBuilder builder = new ToyProgramBuilder("sample2", true);
+		Program program = builder.getProgram();
+
+		builder.createMemory("test", "0x1001000", 0x5500);
+
+		// create an 'Exports' node
+		builder.createEntryPoint("0x1006420", "entry");
+		builder.createLabel("0x1006420", "entry");
+
+		// imports symbol tree node
+		builder.createExternalLibraries("ADVAPI32.dll", "comdlg32.dll", "GDI32.dll", "KERNEL32.dll",
+			"MSVCRT.dll", "SHELL32.dll", "USER32.dll", "WINSPOOL.DRV");
+		builder.createExternalReference("0x1001000", "ADVAPI32.dll", "IsTextUnicode", 0);
+		builder.createLabel("0x1001000", "ADVAPI32.dll_IsTextUnicode");
+		builder.createExternalReference("0x1001004", "ADVAPI32.dll", "RegCreateKeyW", 0);
+
+		ExternalManager externalManager = builder.getProgram().getExternalManager();
+		int tx = program.startTransaction("Test Transaction");
+		externalManager.setExternalPath("ADVAPI32.dll", "/path/to/ADVAPI32.DLL", true);
+		program.endTransaction(tx, true);
+
+		// functions
+		builder.createEmptyFunction("doStuff2", null, "0x10048a3", 19, new Undefined1DataType(),
+			new ParameterImpl("param_1", new IntegerDataType(), program),
+			new ParameterImpl("param_2", new IntegerDataType(), program));
+
+		//@formatter:off
+		ParameterImpl p = new ParameterImpl(null /*auto name*/, new IntegerDataType(), program);
+		builder.createEmptyFunction("ghidra2", null, "0x1002cf5", 121, new Undefined1DataType(),
+			p, p, p, p, p, p, p, p, p);
+		//@formatter:on
+
+		builder.createLabel("0x1002d2b", "AnotherLoca2l", "ghidra");
+		builder.createLabel("0x1002d1f", "MyLocal2", "ghidra");
+
+		return program;
+	}
+
 	SymbolTreeRootNode getRootNode() {
 		return (SymbolTreeRootNode) rootGTreeNode;
 	}
@@ -188,26 +233,26 @@ class SymbolTreeTestUtils {
 
 		selectNode(parenGTreeNode);
 		int childCount = parenGTreeNode.getChildCount();
-		int index = parenGTreeNode.getIndexInParent();
-		GTreeNode pNode = parenGTreeNode.getParent();
+		int parentIndex = parenGTreeNode.getIndexInParent();
+		GTreeNode grandParentNode = parenGTreeNode.getParent();
 
 		AbstractDockingTest.performAction(action, getSymbolTreeContext(), false);
 		waitForSwing();
 		waitForTree();
 		program.flushEvents();
 
-		if (pNode != null) {
-			// re-acquire parent
-			parenGTreeNode = pNode.getChild(index);
+		if (grandParentNode != null) {
+			parenGTreeNode = grandParentNode.getChild(parentIndex);
 		}
-		GTreeNode node = parenGTreeNode.getChild(childCount > 0 ? childCount - 1 : 0);
+
+		GTreeNode newNode = parenGTreeNode.getChild(childCount > 0 ? childCount - 1 : 0);
 
 		waitForTree();
 
 		runSwing(() -> tree.stopEditing());
 		waitForCondition(() -> !tree.isEditing());
 
-		rename(node, newName);
+		rename(newNode, newName);
 		return parenGTreeNode.getChild(newName);
 	}
 
@@ -227,6 +272,11 @@ class SymbolTreeTestUtils {
 		GTreeNode root = tree.getViewRoot();
 		List<GTreeNode> topLevelNodes = root.getChildren();
 		topLevelNodes.forEach(n -> tree.collapseAll(n));
+		waitForTree();
+	}
+
+	void expandTree() {
+		tree.expandAll();
 		waitForTree();
 	}
 
@@ -350,17 +400,17 @@ class SymbolTreeTestUtils {
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
 
-		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
+		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
 	}
 
 	void setGoToNavigationSelected(boolean selected) {
-		runSwing(() -> goToToggleAction.setSelected(true));
+		runSwing(() -> navigateIncomingAction.setSelected(true));
 	}
 
 	void closeProgram() throws Exception {
-		final ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
-		runSwing(() -> pm.closeProgram());
+		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
+		runSwing(() -> pm.closeProgram(program, true));
 	}
 
 	Program getProgram() {
@@ -370,6 +420,13 @@ class SymbolTreeTestUtils {
 	void openProgram() {
 		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
+	}
+
+	Program openProgram2() throws Exception {
+		Program p2 = buildProgram2();
+		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
+		pm.openProgram(p2.getDomainFile());
+		return p2;
 	}
 
 	void clearClipboard() {

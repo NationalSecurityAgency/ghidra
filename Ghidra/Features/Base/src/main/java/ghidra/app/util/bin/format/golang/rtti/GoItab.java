@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,18 +16,22 @@
 package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.Map.Entry;
 
-import ghidra.app.util.bin.format.golang.rtti.types.GoInterfaceType;
-import ghidra.app.util.bin.format.golang.rtti.types.GoType;
+import ghidra.app.util.bin.format.golang.rtti.types.*;
+import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod.GoIMethodInfo;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.util.Msg;
 
+/**
+ * Represents a mapping between a Go interface and a type that implements the methods of
+ * the interface.
+ */
 @PlateComment
-@StructureMapping(structureName = "runtime.itab")
+@StructureMapping(structureName = {"runtime.itab", "internal/abi.ITab"})
 public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
 	private GoRttiMapper programContext;
@@ -35,42 +39,102 @@ public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
 	private StructureContext<GoItab> context;
 
-	@FieldMapping
-	@MarkupReference("interfaceType")
+	@FieldMapping(fieldName = {"inter", "Inter"})
+	@MarkupReference("getInterfaceType")
 	long inter;	// runtime.interfacetype * 
 
-	@FieldMapping
-	@MarkupReference("type")
+	@FieldMapping(fieldName = {"_type", "Type"})
+	@MarkupReference("getType")
 	long _type;	// runtime._type *
 
 	@FieldMapping
 	long fun;	// inline varlen array, specd as uintptr[1], we are treating as simple long 
 
+	/**
+	 * {@return the interface implemented by the specified type}
+	 * @throws IOException if error reading ref'd interface structure
+	 */
 	@Markup
 	public GoInterfaceType getInterfaceType() throws IOException {
-		return programContext.readStructure(GoInterfaceType.class, inter);
+		GoType result = programContext.getGoTypes().getType(inter);
+		return result instanceof GoInterfaceType ifaceType ? ifaceType : null;
 	}
 
+	/**
+	 * {@return the type that implements the specified interface}
+	 * @throws IOException if error reading the ref'd type structure
+	 */
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.getGoType(_type);
+		return programContext.getGoTypes().getType(_type);
 	}
 
+	/**
+	 * {@return the number of methods implemented}
+	 * @throws IOException if error reading interface structure
+	 */
 	public long getFuncCount() throws IOException {
 		GoInterfaceType iface = getInterfaceType();
 		GoSlice methods = iface.getMethodsSlice();
 		return Math.max(1, methods.getLen());
 	}
 
+	/**
+	 * {@return an artificial slice that contains the address of the functions that implement
+	 * the interface methods}
+	 * @throws IOException if error reading method info
+	 */
 	public GoSlice getFunSlice() throws IOException {
 		long funcCount = getFuncCount();
 		long funOffset = context.getStructureEnd() - programContext.getPtrSize();
 		return new GoSlice(funOffset, funcCount, funcCount, programContext);
 	}
 
+	private Map<Address, GoIMethod> getInterfaceMethods() throws IOException {
+		long[] functionAddrs = getFunSlice().readUIntList(programContext.getPtrSize());
+		GoInterfaceType iface = getInterfaceType();
+		List<GoIMethod> ifaceMethods = iface.getMethods();
+		if (functionAddrs.length != ifaceMethods.size()) {
+			Msg.warn(this, "Bad interface spec: %s, iface length doesn't match function impl list"
+					.formatted(getStructureLabel()));
+			return Map.of();
+		}
+		Map<Address, GoIMethod> results = new HashMap<>();
+		for (int i = 0; i < functionAddrs.length; i++) {
+			if (functionAddrs[i] == 0) {
+				continue;
+			}
+			Address addr = programContext.getCodeAddress(functionAddrs[i]);
+			if (!programContext.getProgram()
+					.getMemory()
+					.getLoadedAndInitializedAddressSet()
+					.contains(addr)) {
+				continue;
+			}
+			GoIMethod imethod = ifaceMethods.get(i);
+
+			results.put(addr, imethod);
+		}
+		return results;
+	}
+
+	/**
+	 * {@return list of {@link GoIMethodInfo} instances, that represent the methods implemented by
+	 * the specified type / interface}
+	 * @throws IOException if error reading interface method list
+	 */
+	public List<GoIMethodInfo> getMethodInfoList() throws IOException {
+		List<GoIMethodInfo> results = new ArrayList<>();
+		for (Entry<Address, GoIMethod> entry : getInterfaceMethods().entrySet()) {
+			results.add(new GoIMethodInfo(this, entry.getValue(), entry.getKey()));
+		}
+		return results;
+	}
+
 	@Override
 	public String getStructureName() throws IOException {
-		return getInterfaceType().getStructureName();
+		return "%s__implements__%s".formatted(getType().getSymbolName().asString(),
+			getInterfaceType().getName());
 	}
 
 	@Override
@@ -79,11 +143,24 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s__itab".formatted(getStructureName());
+	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		return getType().getStructureNamespace();
+	}
+
+	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException {
+		// TODO: would be nice if we could override the base structure data type used to markup
+		// ourself, and use a specialized itab (as created by the GoInterfaceType).
+
 		GoSlice funSlice = getFunSlice();
 		List<Address> funcAddrs = Arrays.stream(funSlice.readUIntList(programContext.getPtrSize()))
 				.mapToObj(offset -> programContext.getCodeAddress(offset))
-				.collect(Collectors.toList());
+				.toList();
 		// this adds references from the elements of the artificial slice.  However, the reference
 		// from element[0] of the real "fun" array won't show anything in the UI even though
 		// there is a outbound reference there.
@@ -91,15 +168,17 @@ public class GoItab implements StructureMarkup<GoItab> {
 
 		GoSlice extraFunSlice =
 			funSlice.getSubSlice(1, funSlice.getLen() - 1, programContext.getPtrSize());
-		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions", (DataType) null,
-			true, session);
+		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions",
+			getStructureNamespace(), (DataType) null, true, session);
 	}
 
 	@Override
 	public String toString() {
 		try {
-			String s = "itab for " + getStructureName();
 			GoInterfaceType ifaceType = getInterfaceType();
+			String s =
+				"itab for %s implements %s".formatted(getType().getName(),
+					ifaceType.getName());
 			String methodListString = ifaceType.getMethodListString();
 			if (!methodListString.isEmpty()) {
 				s += "\n// Methods\n" + methodListString;
@@ -111,15 +190,21 @@ public class GoItab implements StructureMarkup<GoItab> {
 		}
 	}
 
+	public void discoverGoTypes(Set<Long> discoveredTypes) {
+		try {
+			GoInterfaceType ifaceType = getInterfaceType();
+			if (ifaceType != null) {
+				ifaceType.discoverGoTypes(discoveredTypes);
+			}
+			GoType type = getType();
+			if (type != null) {
+				type.discoverGoTypes(discoveredTypes);
+			}
+		}
+		catch (IOException e) {
+			// fail, don't discover the ref'd types
+		}
+	}
+
 }
-/*
-struct runtime.itab  
-Length: 20  Alignment: 4
-{ 
-  runtime.interfacetype *  inter    
-  runtime._type *                _type   
-  uint32                                hash    
-  uint8[4]                             _          
-  uintptr[1]                         fun       
-} pack()
-*/
+

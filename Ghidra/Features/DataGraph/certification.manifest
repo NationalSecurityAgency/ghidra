@@ -1,0 +1,9 @@
+##VERSION: 2.0
+##MODULE IP: Nuvola Icons - LGPL 2.1
+Module.manifest||GHIDRA||||END|
+data/datagraph.theme.properties||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/DataGraphPlugin/Data_Graph.html||GHIDRA||||END|
+src/main/help/help/topics/DataGraphPlugin/images/CodeVertex.png||GHIDRA||||END|
+src/main/help/help/topics/DataGraphPlugin/images/DataGraph.png||GHIDRA||||END|
+src/main/resources/images/view_detailed_16.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|

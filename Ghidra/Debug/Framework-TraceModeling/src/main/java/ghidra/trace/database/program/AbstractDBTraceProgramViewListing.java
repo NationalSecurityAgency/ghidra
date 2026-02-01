@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,10 @@ import java.util.*;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
+import generic.util.MergeSortingIterator;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.code.InstructionDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -34,16 +36,17 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.thread.DBTraceThread;
+import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.property.TracePropertyMapOperations;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
@@ -57,16 +60,16 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected class DBTraceProgramViewUndefinedData extends UndefinedDBTraceData {
 		public DBTraceProgramViewUndefinedData(DBTrace trace, long snap, Address address,
-				DBTraceThread thread, int frameLevel) {
+				TraceThread thread, int frameLevel) {
 			super(trace, snap, address, thread, frameLevel);
 		}
 
 		@Override
 		public int getBytes(ByteBuffer buffer, int addressOffset) {
-			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
+			DBTraceMemorySpace mem = trace.getMemoryManager().get(getAddressSpace(), false);
 			if (mem == null) {
-				// TODO: 0-fill instead? Will need to check memory space bounds.
-				return 0;
+				buffer.put((byte) 0);
+				return 1;
 			}
 			return mem.getViewBytes(program.snap, address.add(addressOffset), buffer);
 		}
@@ -74,7 +77,6 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected final DBTraceProgramView program;
 	protected final TraceCodeOperations codeOperations;
-	protected final InternalTracePlatform platform;
 
 	protected final DBTraceProgramViewRootModule rootModule;
 	protected final Map<TraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
@@ -87,8 +89,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			TraceCodeOperations codeOperations) {
 		this.program = program;
 		this.codeOperations = codeOperations;
-		// TODO: Guest platform views?
-		this.platform = program.trace.getPlatformManager().getHostPlatform();
+		// TODO: Map addresses when platform is guest?
 
 		this.rootModule = new DBTraceProgramViewRootModule(this);
 	}
@@ -145,8 +146,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	protected Comparator<CodeUnit> getUnitComparator(boolean forward) {
-		return forward
-				? (u1, u2) -> u1.getMinAddress().compareTo(u2.getMinAddress())
+		return forward ? (u1, u2) -> u1.getMinAddress().compareTo(u2.getMinAddress())
 				: (u1, u2) -> -u1.getMinAddress().compareTo(u2.getMinAddress());
 	}
 
@@ -159,9 +159,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected AddressSet getAddressSet(Address start, boolean forward) {
 		AddressFactory factory = program.getAddressFactory();
-		AddressSet all = program.allAddresses;
-		return forward
-				? factory.getAddressSet(start, all.getMaxAddress())
+		AddressSetView all = program.getAllAddresses();
+		return forward ? factory.getAddressSet(start, all.getMaxAddress())
 				: factory.getAddressSet(all.getMinAddress(), start);
 	}
 
@@ -184,8 +183,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	protected Iterator<? extends TraceInstruction> getInstructionIterator(boolean forward) {
-		return getTopCodeIterator(
-			s -> codeOperations.instructions().get(s, forward).iterator(), forward);
+		return getTopCodeIterator(s -> codeOperations.instructions().get(s, forward).iterator(),
+			forward);
 	}
 
 	protected Iterator<? extends TraceData> getDefinedDataIterator(Address start, boolean forward) {
@@ -195,13 +194,13 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected Iterator<? extends TraceData> getDefinedDataIterator(AddressSetView set,
 			boolean forward) {
-		return getTopCodeIterator(
-			s -> codeOperations.definedData().get(s, set, forward).iterator(), forward);
+		return getTopCodeIterator(s -> codeOperations.definedData().get(s, set, forward).iterator(),
+			forward);
 	}
 
 	protected Iterator<? extends TraceData> getDefinedDataIterator(boolean forward) {
-		return getTopCodeIterator(
-			s -> codeOperations.definedData().get(s, forward).iterator(), forward);
+		return getTopCodeIterator(s -> codeOperations.definedData().get(s, forward).iterator(),
+			forward);
 	}
 
 	protected Iterator<? extends TraceCodeUnit> getDefinedUnitIterator(Address start,
@@ -226,8 +225,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 				defStart = defUnit.getMinAddress();
 			}
 		}
-		Iterator<AddressRange> defIter = IteratorUtils.transformedIterator(
-			getDefinedUnitIterator(defStart, forward), u -> u.getRange());
+		Iterator<AddressRange> defIter = IteratorUtils
+				.transformedIterator(getDefinedUnitIterator(defStart, forward), u -> u.getRange());
 		AddressRangeIterator undefIter =
 			AddressRangeIterators.subtract(set.iterator(forward), defIter, start, forward);
 		AddressIteratorAdapter undefAddrIter = new AddressIteratorAdapter(undefIter, forward);
@@ -236,8 +235,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	protected AddressRangeIterator getUndefinedRangeIterator(AddressSetView set, boolean forward) {
-		Iterator<AddressRange> defIter = IteratorUtils.transformedIterator(
-			getDefinedUnitIterator(set, forward), u -> u.getRange());
+		Iterator<AddressRange> defIter = IteratorUtils
+				.transformedIterator(getDefinedUnitIterator(set, forward), u -> u.getRange());
 		return AddressRangeIterators.subtract(set.iterator(forward), defIter,
 			forward ? set.getMinAddress() : set.getMaxAddress(), forward);
 	}
@@ -267,40 +266,34 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	protected Iterator<TraceCodeUnit> getCodeUnitIterator(AddressSetView set, boolean forward) {
-		return new MergeSortingIterator<>(List.of(
-			getDefinedUnitIterator(set, forward),
-			getUndefinedDataIterator(set, forward)),
+		return new MergeSortingIterator<>(
+			List.of(getDefinedUnitIterator(set, forward), getUndefinedDataIterator(set, forward)),
 			getUnitComparator(forward));
 	}
 
 	protected Iterator<TraceCodeUnit> getCodeUnitIterator(Address start, boolean forward) {
-		return new MergeSortingIterator<>(List.of(
-			getDefinedUnitIterator(start, forward),
-			getUndefinedDataIterator(start, forward)),
-			getUnitComparator(forward));
+		return new MergeSortingIterator<>(List.of(getDefinedUnitIterator(start, forward),
+			getUndefinedDataIterator(start, forward)), getUnitComparator(forward));
 	}
 
 	protected Iterator<TraceCodeUnit> getCodeUnitIterator(boolean forward) {
-		AddressSetView set = program.allAddresses;
+		AddressSetView set = program.getAllAddresses();
 		return getCodeUnitIterator(forward ? set.getMinAddress() : set.getMaxAddress(), forward);
 	}
 
 	protected Iterator<TraceData> getDataIterator(AddressSetView set, boolean forward) {
-		return new MergeSortingIterator<>(List.of(
-			getDefinedDataIterator(set, forward),
-			getUndefinedDataIterator(set, forward)),
+		return new MergeSortingIterator<>(
+			List.of(getDefinedDataIterator(set, forward), getUndefinedDataIterator(set, forward)),
 			getUnitComparator(forward));
 	}
 
 	protected Iterator<TraceData> getDataIterator(Address start, boolean forward) {
-		return new MergeSortingIterator<>(List.of(
-			getDefinedDataIterator(start, forward),
-			getUndefinedDataIterator(start, forward)),
-			getUnitComparator(forward));
+		return new MergeSortingIterator<>(List.of(getDefinedDataIterator(start, forward),
+			getUndefinedDataIterator(start, forward)), getUnitComparator(forward));
 	}
 
 	protected Iterator<TraceData> getDataIterator(boolean forward) {
-		AddressSetView set = program.allAddresses;
+		AddressSetView set = program.getAllAddresses();
 		return getDataIterator(forward ? set.getMinAddress() : set.getMaxAddress(), forward);
 	}
 
@@ -355,11 +348,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
 		// TODO: The property map doesn't heed forking.
-		return new WrappingCodeUnitIterator(NestedIterator.start(
-			map.getAddressSetView(Lifespan.at(program.snap)).iterator(forward),
-			rng -> getTopCodeIterator(
-				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
-				forward)));
+		return new WrappingCodeUnitIterator(
+			FlattenedIterator
+					.start(map.getAddressSetView(Lifespan.at(program.snap)).iterator(forward),
+						rng -> getTopCodeIterator(
+							s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
+							forward)));
 	}
 
 	@Override
@@ -377,11 +371,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
 		// TODO: The property map doesn't heed forking.
-		return new WrappingCodeUnitIterator(NestedIterator.start(
-			map.getAddressSetView(Lifespan.at(program.snap)).iterator(addr, forward),
-			rng -> getTopCodeIterator(
-				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
-				forward)));
+		return new WrappingCodeUnitIterator(
+			FlattenedIterator
+					.start(map.getAddressSetView(Lifespan.at(program.snap)).iterator(addr, forward),
+						rng -> getTopCodeIterator(
+							s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
+							forward)));
 	}
 
 	@Override
@@ -400,35 +395,34 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
 		// TODO: The property map doesn't heed forking.
-		return new WrappingCodeUnitIterator(NestedIterator.start(
+		return new WrappingCodeUnitIterator(FlattenedIterator.start(
 			new IntersectionAddressSetView(map.getAddressSetView(Lifespan.at(program.snap)),
 				addrSet).iterator(forward),
 			rng -> getTopCodeIterator(
-				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
-				forward)));
+				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(), forward)));
 	}
 
-	protected AddressSetView getCommentAddresses(int commentType, AddressSetView addrSet) {
-		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
-			s -> program.trace.getCommentAdapter()
-					.getAddressSetView(Lifespan.at(s), e -> e.getType() == commentType)));
+	protected AddressSetView getCommentAddresses(CommentType commentType, AddressSetView addrSet) {
+		return new IntersectionAddressSetView(addrSet,
+			program.viewport.unionedAddresses(s -> program.trace.getCommentAdapter()
+					.getAddressSetView(Lifespan.at(s), e -> e.getType() == commentType.ordinal())));
 	}
 
 	protected AddressSetView getCommentAddresses(AddressSetView addrSet) {
 		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
-			s -> program.trace.getCommentAdapter()
-					.getAddressSetView(Lifespan.at(s))));
+			s -> program.trace.getCommentAdapter().getAddressSetView(Lifespan.at(s))));
 	}
 
 	@Override
-	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet) {
+	public CodeUnitIterator getCommentCodeUnitIterator(CommentType commentType,
+			AddressSetView addrSet) {
 		return new WrappingCodeUnitIterator(
 			getCodeUnitIterator(getCommentAddresses(commentType, addrSet), true));
 	}
 
 	@Override
-	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
-			boolean forward) {
+	public AddressIterator getCommentAddressIterator(CommentType commentType,
+			AddressSetView addrSet, boolean forward) {
 		return getCommentAddresses(commentType, addrSet).getAddresses(forward);
 	}
 
@@ -438,7 +432,15 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	public String getComment(int commentType, Address address) {
+	public long getCommentAddressCount() {
+		return program.viewport
+				.unionedAddresses(
+					s -> program.trace.getCommentAdapter().getAddressSetView(Lifespan.at(s)))
+				.getNumAddresses();
+	}
+
+	@Override
+	public String getComment(CommentType commentType, Address address) {
 		try (LockHold hold = program.trace.lockRead()) {
 			return program.viewport.getTop(
 				s -> program.trace.getCommentAdapter().getComment(s, address, commentType));
@@ -446,10 +448,19 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	public void setComment(Address address, int commentType, String comment) {
+	public CodeUnitComments getAllComments(Address address) {
+		CommentType[] types = CommentType.values();
+		String[] comments = new String[types.length];
+		for (CommentType type : types) {
+			comments[type.ordinal()] = getComment(type, address);
+		}
+		return new CodeUnitComments(comments);
+	}
+
+	@Override
+	public void setComment(Address address, CommentType commentType, String comment) {
 		program.trace.getCommentAdapter()
-				.setComment(Lifespan.nowOn(program.snap), address,
-					commentType, comment);
+				.setComment(Lifespan.nowOn(program.snap), address, commentType, comment);
 	}
 
 	@Override
@@ -678,24 +689,6 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	public DataIterator getCompositeData(boolean forward) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public DataIterator getCompositeData(Address start, boolean forward) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public DataIterator getCompositeData(AddressSetView addrSet, boolean forward) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Iterator<String> getUserDefinedProperties() {
 		// TODO Auto-generated method stub
 		return null;
@@ -708,25 +701,38 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	@SuppressWarnings("rawtypes")
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
-		// TODO: Why memBuf? Can it vary from program memory?
+			MemBuffer memBuf, ProcessorContextView context, int forcedLengthOverride)
+			throws CodeUnitInsertionException {
+		int checkLengthOverride =
+			InstructionDB.checkLengthOverride(forcedLengthOverride, prototype);
+		int length = checkLengthOverride != 0 ? checkLengthOverride : prototype.getLength();
+		AddressRange range;
+		try {
+			range = new AddressRangeImpl(addr, length);
+		}
+		catch (AddressOverflowException e) {
+			throw new CodeUnitInsertionException("Code unit would extend beyond address space");
+		}
+		var mostRecent = program.memory.memoryManager.getViewMostRecentStateEntry(program.snap,
+			range, s -> s == TraceMemoryState.KNOWN);
+		long snap = mostRecent == null ? program.snap : mostRecent.getKey().getY2();
 		return codeOperations.instructions()
-				.create(Lifespan.nowOn(program.snap), addr, platform, prototype, context);
+				.create(Lifespan.nowOn(snap), addr, program.platform, prototype, context,
+					forcedLengthOverride);
 	}
 
 	@Override
 	public AddressSetView addInstructions(InstructionSet instructionSet, boolean overwrite)
 			throws CodeUnitInsertionException {
 		return codeOperations.instructions()
-				.addInstructionSet(Lifespan.nowOn(program.snap), platform, instructionSet,
+				.addInstructionSet(Lifespan.nowOn(program.snap), program.platform, instructionSet,
 					overwrite);
 	}
 
@@ -734,12 +740,13 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public Data createData(Address addr, DataType dataType, int length)
 			throws CodeUnitInsertionException {
 		return codeOperations.definedData()
-				.create(Lifespan.nowOn(program.snap), addr, dataType, length);
+				.create(Lifespan.nowOn(program.snap), addr, program.platform, dataType, length);
 	}
 
 	@Override
 	public Data createData(Address addr, DataType dataType) throws CodeUnitInsertionException {
-		return codeOperations.definedData().create(Lifespan.nowOn(program.snap), addr, dataType);
+		return codeOperations.definedData()
+				.create(Lifespan.nowOn(program.snap), addr, program.platform, dataType);
 	}
 
 	@Override
@@ -756,7 +763,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public void clearComments(Address startAddr, Address endAddr) {
 		program.trace.getCommentAdapter()
 				.clearComments(Lifespan.nowOn(program.snap),
-					new AddressRangeImpl(startAddr, endAddr), CodeUnit.NO_COMMENT);
+					new AddressRangeImpl(startAddr, endAddr), null);
 	}
 
 	@Override
@@ -768,13 +775,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, Address addr) {
-		TraceMemoryRegion region = program.memory.getTopRegion(
-			s -> program.trace.getMemoryManager().getRegionContaining(s, addr));
-		if (region == null) {
+		RegionEntry entry = program.memory.getRegionsByAddress().get(addr);
+		if (entry == null || !entry.range.contains(addr)) {
 			return null;
 		}
-		return fragmentsByRegion.computeIfAbsent(region,
-			r -> new DBTraceProgramViewFragment(this, r));
+		return fragmentsByRegion.computeIfAbsent(entry.region,
+			r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 	}
 
 	@Override
@@ -787,13 +793,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		TraceMemoryRegion region = program.memory.getTopRegion(
-			s -> program.trace.getMemoryManager().getLiveRegionByPath(s, name));
-		if (region == null) {
+		RegionEntry entry = program.memory.getRegionsByName().get(name);
+		if (entry == null) {
 			return null;
 		}
-		return fragmentsByRegion.computeIfAbsent(region,
-			r -> new DBTraceProgramViewFragment(this, r));
+		return fragmentsByRegion.computeIfAbsent(entry.region,
+			r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 	}
 
 	@Override
@@ -928,7 +933,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	public CommentHistory[] getCommentHistory(Address addr, int commentType) {
+	public CommentHistory[] getCommentHistory(Address addr, CommentType commentType) {
 		return new CommentHistory[] {};
 	}
 }

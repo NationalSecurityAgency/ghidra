@@ -92,7 +92,7 @@ public class VerticalLayoutTextFieldTest extends AbstractGenericTest {
 		assertEquals(new RowColLocation(2, 0), field.dataToScreenLocation(2, 0));
 		assertEquals(new RowColLocation(2, 4), field.dataToScreenLocation(2, 4));
 		assertEquals(new RowColLocation(2, 12), field.dataToScreenLocation(2, 12));
-		assertEquals(new DefaultRowColLocation(2, 12), field.dataToScreenLocation(2, 15));
+		assertEquals(new RowColLocation(2, 12), field.dataToScreenLocation(2, 15));
 
 		assertEquals(new RowColLocation(3, 0), field.dataToScreenLocation(3, 0));
 		assertEquals(new RowColLocation(3, 4), field.dataToScreenLocation(3, 4));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,13 @@ import java.util.*;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
-import ghidra.app.util.bin.format.macho.commands.SegmentNames;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -38,7 +37,9 @@ import ghidra.util.task.TaskMonitor;
 public class MachoPrelinkUtils {
 
 	/**
-	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary
+	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary.
+	 * <p>
+	 * NOTE: This method will return false if the binary is a Mach-O file set.
 	 * 
 	 * @param provider The {@link ByteProvider} to check
 	 * @param monitor A monitor
@@ -46,12 +47,31 @@ public class MachoPrelinkUtils {
 	 */
 	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
 		try {
-			return new MachHeader(provider).parseSegments()
+			MachHeader header = new MachHeader(provider);
+			boolean hasPrelinkSegment = new MachHeader(provider).parseSegments()
 					.stream()
 					.anyMatch(segment -> segment.getSegmentName().startsWith("__PRELINK"));
+			boolean hasFileSet = header.parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
+			return hasPrelinkSegment && !hasFileSet;
 		}
 		catch (MachException | IOException e) {
 			// Assume it's not a Mach-O PRELINK...fall through
+		}
+		return false;
+	}
+
+	/**
+	 * Check to see if the given {@link ByteProvider} is a Mach-O file set
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 * @return True if the given {@link ByteProvider} is a Mach-O file set; otherwise, false
+	 */
+	public static boolean isMachoFileset(ByteProvider provider) {
+		try {
+			return new MachHeader(provider).parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
+		}
+		catch (MachException | IOException e) {
+			// Assume it's not a Mach-O file set...fall through
 		}
 		return false;
 	}
@@ -224,22 +244,25 @@ public class MachoPrelinkUtils {
 	 * @param offset The offset within the provider to check.
 	 * @return True A valid {@link LoadSpec} for the Mach-O at the given provider's offset, or null 
 	 *   if it is not a Mach-O or a valid {@link LoadSpec} could not be found.
-	 * @throws IOException if there was an IO-related problem.
 	 */
-	private static LoadSpec getMachoLoadSpec(ByteProvider provider, long offset)
-			throws IOException {
-		Collection<LoadSpec> loadSpecs = new MachoLoader().findSupportedLoadSpecs(
-			new ByteProviderWrapper(provider, offset, provider.length() - offset));
+	private static LoadSpec getMachoLoadSpec(ByteProvider provider, long offset) {
+		try {
+			Collection<LoadSpec> loadSpecs = new MachoLoader().findSupportedLoadSpecs(
+				new ByteProviderWrapper(provider, offset, provider.length() - offset));
 
-		// Getting a LoadSpec back means it's a Mach-O we can load.  We also need to make sure
-		// the LoadSpec has a language/compiler spec defined to know we support the processor the
-		// loader detected.
-		if (!loadSpecs.isEmpty()) {
-			LoadSpec loadSpec = loadSpecs.iterator().next();
-			if (loadSpec.getLanguageCompilerSpec() != null) {
-				return loadSpec;
+			// Getting a LoadSpec back means it's a Mach-O we can load.  We also need to make sure
+			// the LoadSpec has a language/compiler spec defined to know we support the processor the
+			// loader detected.
+			if (!loadSpecs.isEmpty()) {
+				LoadSpec loadSpec = loadSpecs.iterator().next();
+				if (loadSpec.getLanguageCompilerSpec() != null) {
+					return loadSpec;
+				}
 			}
+			return null;
 		}
-		return null;
+		catch (IOException e) {
+			return null;
+		}
 	}
 }

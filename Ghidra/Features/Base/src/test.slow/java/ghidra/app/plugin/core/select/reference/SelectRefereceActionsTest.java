@@ -21,8 +21,7 @@
  */
 package ghidra.app.plugin.core.select.reference;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -70,7 +69,6 @@ public class SelectRefereceActionsTest extends AbstractGhidraHeadedIntegrationTe
 		SelectRefsPlugin plugin = env.getPlugin(SelectRefsPlugin.class);
 		forwardAction = (SelectForwardRefsAction) getInstanceField("forwardAction", plugin);
 		backwardAction = (SelectBackRefsAction) getInstanceField("backwardAction", plugin);
-
 	}
 
 	@After
@@ -86,24 +84,21 @@ public class SelectRefereceActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testForwardLocation() {
+
 		String start = "0020";
-
-		// Selection of address 01001144 gets expanded within code viewer provider
-		// to full code unit
-		CodeUnit cu = program.getListing().getCodeUnitContaining(addr("0010"));
-
 		ProgramLocation location = new AddressFieldLocation(program, addr(start));
 		cb.goTo(location);
 
-		ProgramSelection selection = getCurrentSelection();
-		assertTrue(selection.isEmpty());
-		performAction(forwardAction, cb.getProvider().getActionContext(null), true);
-		selection = getCurrentSelection();
-		assertEquals(selection.getNumAddresses(), cu.getLength());
+		ProgramSelection currentSelection = getCurrentSelection();
+		assertTrue(currentSelection.isEmpty());
+		performAction(forwardAction, cb.getProvider(), true);
+		currentSelection = getCurrentSelection();
+		CodeUnit cu = program.getListing().getCodeUnitContaining(addr("0010"));
+		assertEquals(currentSelection.getNumAddresses(), cu.getLength());
 
 		for (Address addr = cu.getMinAddress(); addr.compareTo(cu.getMaxAddress()) <= 0; addr =
 			addr.add(1)) {
-			assertTrue(selection.contains(addr));
+			assertTrue(currentSelection.contains(addr));
 		}
 	}
 
@@ -111,98 +106,88 @@ public class SelectRefereceActionsTest extends AbstractGhidraHeadedIntegrationTe
 	public void testBackwardLocation() {
 		String start = "0020";
 
-		// Selection of address 010064c0 and 010064fb gets expanded within code viewer provider
-		// to full code unit
-		AddressSet set = new AddressSet();
-		CodeUnit cu = program.getListing().getCodeUnitContaining(addr("0030"));
-		set.addRange(cu.getMinAddress(), cu.getMaxAddress());
-		cu = program.getListing().getCodeUnitContaining(addr("0040"));
-		set.addRange(cu.getMinAddress(), cu.getMaxAddress());
-
 		ProgramLocation location = new AddressFieldLocation(program, addr(start));
 		cb.goTo(location);
 
-		ProgramSelection selection = getCurrentSelection();
-		assertTrue(selection.isEmpty());
-		performAction(backwardAction, cb.getProvider().getActionContext(null), true);
-		selection = getCurrentSelection();
-		assertEquals(new AddressSet(selection), set);
+		ProgramSelection currentSelection = getCurrentSelection();
+		assertTrue(currentSelection.isEmpty());
+		performAction(backwardAction, cb.getProvider(), true);
+
+		AddressSet referenceAddrs = getCodeUnitAddrs("0030", "0040");
+		currentSelection = getCurrentSelection();
+		assertEquals(new AddressSet(currentSelection), referenceAddrs);
 	}
 
 	@Test
 	public void testSelectionWithNoReferences() {
 
-		ProgramSelection selection = new ProgramSelection(addr("0050"), addr("0060"));
+		AddressSetView addrs = toAddressSet(program, "0050", "0060");
+
 		CodeViewerProvider provider = cb.getProvider();
-		provider.setSelection(selection);
 
-		performAction(forwardAction, provider.getActionContext(null), true);
+		makeSelection(env.getTool(), program, addrs);
+		performAction(forwardAction, provider, true);
 
-		selection = getCurrentSelection();
-		assertEquals(selection.isEmpty(), true);
+		ProgramSelection currentSelection = getCurrentSelection();
+		assertEquals(currentSelection.isEmpty(), true);
 
-		selection = new ProgramSelection(addr("010049d0"), addr("010049dd"));
-		provider.setSelection(selection);
-
-		performAction(backwardAction, provider.getActionContext(null), true);
-		selection = getCurrentSelection();
-		assertEquals(selection.isEmpty(), true);
+		currentSelection = new ProgramSelection(addr("010049d0"), addr("010049dd"));
+		addrs = toAddressSet(program, "010049d0", "010049dd");
+		makeSelection(env.getTool(), program, addrs);
+		performAction(backwardAction, provider, true);
+		currentSelection = getCurrentSelection();
+		assertEquals(currentSelection.isEmpty(), true);
 	}
 
 	@Test
 	public void testSelectionForwardReferencesOnly() {
-		String[] start = { "0030", "0050" };
-		ProgramSelection selection = new ProgramSelection(addr(start[0]), addr(start[1]));
 
-		// Selection of address 01005a3c and 01005bff gets expanded within code viewer provider
-		// to full code unit
-		AddressSet set = new AddressSet();
-		Listing listing = program.getListing();
-		CodeUnit cu = listing.getCodeUnitContaining(addr("0014"));
-		set.addRange(cu.getMinAddress(), cu.getMaxAddress());
-		cu = listing.getCodeUnitContaining(addr("0020"));
-		set.addRange(cu.getMinAddress(), cu.getMaxAddress());
+		AddressSetView addrs = toAddressSet(program, "0030", "0050");
+		AddressSet referenceAddrs = getCodeUnitAddrs("0014", "0020");
 
 		CodeViewerProvider provider = cb.getProvider();
-		provider.setSelection(selection);
 
-		performAction(backwardAction, provider.getActionContext(null), true);
-		selection = getCurrentSelection();
+		makeSelection(env.getTool(), program, addrs);
+		performAction(backwardAction, provider, true);
+		ProgramSelection selection = getCurrentSelection();
 		assertTrue(selection.isEmpty());
 
-		selection = new ProgramSelection(addr(start[0]), addr(start[1]));
-		provider.setSelection(selection);
-		performAction(forwardAction, provider.getActionContext(null), true);
+		makeSelection(env.getTool(), program, addrs);
+		performAction(forwardAction, provider, true);
 		selection = getCurrentSelection();
-		assertEquals(new AddressSet(selection), set);
+		assertEquals(new AddressSet(selection), referenceAddrs);
 	}
 
 	@Test
 	public void testSelectionBackwardReferencesOnly() {
-		String[] start = { "0000", "0014" };
-		ProgramSelection selection = new ProgramSelection(addr(start[0]), addr(start[1]));
 
-		// Selection of address 01006580, 01006511 and 010065cc gets expanded within code viewer provider
-		// to full code unit
-		AddressSet set = new AddressSet();
-		Listing listing = program.getListing();
-		CodeUnit cu = listing.getCodeUnitContaining(addr("0020"));
-		set.addRange(cu.getMinAddress(), cu.getMaxAddress());
-		cu = listing.getCodeUnitContaining(addr("0044"));
-		set.addRange(cu.getMinAddress(), cu.getMaxAddress());
+		AddressSetView addrs = toAddressSet(program, "0000", "0014");
+		AddressSet referenceAddrs = getCodeUnitAddrs("0020", "0044");
 
 		CodeViewerProvider provider = cb.getProvider();
-		provider.setSelection(selection);
 
-		performAction(forwardAction, provider.getActionContext(null), true);
-		selection = getCurrentSelection();
-		assertTrue(selection.isEmpty());
+		makeSelection(env.getTool(), program, addrs);
+		performAction(forwardAction, provider, true);
 
-		selection = new ProgramSelection(addr(start[0]), addr(start[1]));
-		provider.setSelection(selection);
-		performAction(backwardAction, provider.getActionContext(null), true);
-		selection = getCurrentSelection();
-		assertEquals(new AddressSet(selection), set);
+		ProgramSelection curentSelection = getCurrentSelection();
+		assertTrue(curentSelection.isEmpty());
+
+		makeSelection(env.getTool(), program, addrs);
+		performAction(backwardAction, provider, true);
+		curentSelection = getCurrentSelection();
+		assertEquals(new AddressSet(curentSelection), referenceAddrs);
+	}
+
+	private AddressSet getCodeUnitAddrs(String... addrs) {
+
+		// Selection of addresses gets expanded within code viewer provider to full code unit
+		AddressSet set = new AddressSet();
+		Listing listing = program.getListing();
+		for (String addr : addrs) {
+			CodeUnit cu = listing.getCodeUnitContaining(addr(addr));
+			set.addRange(cu.getMinAddress(), cu.getMaxAddress());
+		}
+		return set;
 	}
 
 	private Address addr(String address) {

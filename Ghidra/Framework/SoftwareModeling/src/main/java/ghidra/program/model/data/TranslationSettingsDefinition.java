@@ -37,7 +37,7 @@ public class TranslationSettingsDefinition extends JavaEnumSettingsDefinition<TR
 
 		private final String s;
 
-		private TRANSLATION_ENUM(String s) {
+		TRANSLATION_ENUM(String s) {
 			this.s = s;
 		}
 

@@ -15,8 +15,10 @@
  */
 package ghidra.pcode.exec;
 
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
+
 /**
- * Exception thrown by {@link PcodeEmulationLibrary#emu_injection_err(), a p-code userop invoked
+ * Exception thrown by {@link PcodeEmulationLibrary#emu_injection_err()}, a p-code userop invoked
  * when client-provided Sleigh code in an injection could not be compiled.
  */
 public class InjectionErrorPcodeExecutionException extends PcodeExecutionException {

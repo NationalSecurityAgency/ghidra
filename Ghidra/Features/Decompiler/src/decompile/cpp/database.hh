@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,7 +213,8 @@ public:
     no_category = -1,		///< Symbol is not in a special category
     function_parameter = 0,	///< The Symbol is a parameter to a function
     equate = 1,			///< The Symbol holds \e equate information about a constant
-    union_facet = 2		///< Symbol holding read or write facing union field information
+    union_facet = 2,		///< Symbol holding read or write facing union field information
+    fake_input = 3		///< Temporary placeholder for an input symbol prior to formalizing parameters
   };
 
   Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
@@ -709,7 +710,13 @@ public:
 
   virtual void encode(Encoder &encoder) const=0;	///< Encode \b this as a \<scope> element
   virtual void decode(Decoder &decoder)=0;		///< Decode \b this Scope from a \<scope> element
-  virtual void decodeWrappingAttributes(Decoder &decoder) {}	///< Restore attributes for \b this Scope from wrapping element
+
+  /// \brief Restore attributes for \b this from a parent element that is not a Scope
+  ///
+  /// Attributes are read from the (already opened) element, prior to reading the
+  /// \<scope> element specific to \b this Scope
+  /// \param decoder is the stream decoder
+  virtual void decodeWrappingAttributes(Decoder &decoder) {}
   virtual void printEntries(ostream &s) const=0;	///< Dump a description of all SymbolEntry objects to a stream
 
   /// \brief Get the number of Symbols in the given category
@@ -729,7 +736,7 @@ public:
   ///
   /// \param sym is the given Symbol
   /// \param cat is the \e category to set for the Symbol
-  /// \param ind is the index position to set (within the category)
+  /// \param ind is, for the function_parameter category, the index position to set, and is unused for other categories
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind)=0;
 
   virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,

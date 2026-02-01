@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -140,6 +140,11 @@ public class CoffMachineType {
 	public final static short IMAGE_FILE_MACHINE_M68KMAGIC = 0x0268;
 
 	/**
+	 * Motorola 68000 Apple A/UX
+	 */
+	public final static short IMAGE_FILE_MACHINE_M68KAUX = 0x0150; // big endian
+
+	/**
 	 * PIC-30 (dsPIC30F)
 	 */
 	public final static short IMAGE_FILE_MACHINE_PIC30 = 0x1236;
@@ -203,6 +208,11 @@ public class CoffMachineType {
 	 * Hitachi SH5
 	 */
 	public final static short IMAGE_FILE_MACHINE_SH5 = 0x01a8;
+	
+	/**
+	 * Texas Instruments TMS320C3x/4x
+	 */
+	public final static short IMAGE_FILE_MACHINE_TI_TMS320C3x4x = 0x0093;
 
 	/**
 	 * Texas Instruments TMS470

@@ -20,23 +20,22 @@ import java.io.IOException;
 import db.DBHandle;
 import generic.depends.DependentServiceResolver;
 import generic.depends.err.*;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class DBDomainObjectSupport extends DomainObjectAdapterDB {
-	private DBOpenMode openMode;
+	private OpenMode openMode;
 	private TaskMonitor monitor;
 
 	private VersionException versionExc;
 
 	protected static interface ManagerSupplier<T> {
-		T create(DBOpenMode openMode, TaskMonitor monitor)
+		T create(OpenMode openMode, TaskMonitor monitor)
 				throws IOException, VersionException, CancelledException;
 	}
 
-	protected DBDomainObjectSupport(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor,
+	protected DBDomainObjectSupport(DBHandle dbh, OpenMode openMode, TaskMonitor monitor,
 			String name, int timeInterval, int bufSize, Object consumer) {
 		super(dbh, name, timeInterval, consumer);
 		this.openMode = openMode;

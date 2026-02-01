@@ -22,7 +22,7 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 /**
  * A class which handles exceptions that occur off of the main test thread.  Exceptions can be
@@ -33,7 +33,7 @@ public class ConcurrentTestExceptionHandler implements UncaughtExceptionHandler 
 	// Exception messages that we choose to ignore
 	private static final String[] IGNORABLE_ERROR_MESSAGES =
 		new String[] { "DerivedColor$UIResource cannot be cast to", // test machine timing issue
-			"FontUIResource cannot be cast to javax.swing.Painter", // test machine timing issue 
+			"FontUIResource cannot be cast to javax.swing.Painter", // test machine timing issue
 		};
 
 	private static final List<TestExceptionTracker> throwables =
@@ -41,13 +41,23 @@ public class ConcurrentTestExceptionHandler implements UncaughtExceptionHandler 
 
 	private static volatile boolean enabled = true;
 
+	/**
+	 * Installs this exception handler as the default uncaught exception handler.  See
+	 * {@link Thread#setDefaultUncaughtExceptionHandler(UncaughtExceptionHandler)}
+	 */
 	public static void registerHandler() {
-		SystemUtilities.runSwingLater(() -> {
-			// do this on the Swing thread
+		// Note: not sure why this is done on the Swing thread later.  Seems like this could be done
+		// when this method is called, from any thread.
+		Swing.runLater(() -> {
 			Thread.setDefaultUncaughtExceptionHandler(new ConcurrentTestExceptionHandler());
 		});
 	}
 
+	/**
+	 * Tells this class to process the given throwable
+	 * @param thread the thread that encountered the throwable
+	 * @param t the throwable
+	 */
 	public synchronized static void handle(Thread thread, Throwable t) {
 
 		if (!enabled) {
@@ -72,10 +82,10 @@ public class ConcurrentTestExceptionHandler implements UncaughtExceptionHandler 
 
 	/**
 	 * Some exceptions that happen off the test thread are not serious enough to fail the test.
-	 * For example, some exceptions happen on the headless test server due more to 
-	 * environmental issues rather than real problems.  This method is intended to ignore 
+	 * For example, some exceptions happen on the headless test server due more to
+	 * environmental issues rather than real problems.  This method is intended to ignore
 	 * these less-than-serious issues.
-	 * 
+	 *
 	 * @param t the throwable to examine
 	 * @return true if it should be ignored
 	 */
@@ -89,26 +99,49 @@ public class ConcurrentTestExceptionHandler implements UncaughtExceptionHandler 
 		return StringUtils.containsAny(message, IGNORABLE_ERROR_MESSAGES);
 	}
 
+	/**
+	 * Clears all exceptions being tracked by this class
+	 */
 	public synchronized static void clear() {
 		throwables.clear();
 	}
 
+	/**
+	 * Enables this class after a call to {@link #disable()} has been made
+	 */
 	public synchronized static void enable() {
 		enabled = true;
 	}
 
+	/**
+	 * Disables this class's tracking of exceptions.  Clients use this method to have this class
+	 * ignore expected exceptions.   This is a bit course-grained, as it does not allow clients to
+	 * ignore specific expected exceptions.
+	 */
 	public synchronized static void disable() {
 		enabled = false;
 	}
 
+	/**
+	 * Returns true if this class is enabled.  When disabled this class does not track exceptions.
+	 * @return true if enabled
+	 */
 	public synchronized static boolean isEnabled() {
 		return enabled;
 	}
 
+	/**
+	 * Returns all exceptions tracked by this class
+	 * @return all exceptions tracked by this class
+	 */
 	public static synchronized List<TestExceptionTracker> getExceptions() {
 		return new ArrayList<>(throwables);
 	}
 
+	/**
+	 * Returns true if this class has been given any exceptions to handle since last being cleared
+	 * @return true if this class has been given any exceptions to handle since last being cleared
+	 */
 	public static synchronized boolean hasException() {
 		return !throwables.isEmpty();
 	}

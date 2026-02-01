@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
@@ -32,6 +32,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -50,7 +51,8 @@ public class RetypeReturnAction extends AbstractDecompilerAction {
 		super("Retype Return");
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRetypeReturn"));
 		setPopupMenuData(new MenuData(new String[] { "Retype Return" }, "Decompile"));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_L, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 	}
 
 	@Override
@@ -97,7 +99,7 @@ public class RetypeReturnAction extends AbstractDecompilerAction {
 			if (commitRequired) {
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(highFunction, true,
-						SourceType.USER_DEFINED);
+						ReturnCommitOption.NO_COMMIT, SourceType.USER_DEFINED);
 				}
 				catch (DuplicateNameException e) {
 					throw new AssertException("Unexpected exception", e);

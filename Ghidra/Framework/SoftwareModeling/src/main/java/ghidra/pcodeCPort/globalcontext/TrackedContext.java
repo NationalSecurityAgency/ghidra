@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +15,9 @@
  */
 package ghidra.pcodeCPort.globalcontext;
 
-import ghidra.pcodeCPort.address.*;
-import ghidra.pcodeCPort.pcoderaw.*;
-import ghidra.pcodeCPort.translate.*;
-import ghidra.pcodeCPort.utils.*;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
-
-
+import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 
 public class TrackedContext {
-    public VarnodeData loc = new VarnodeData();
-    public long val;
-
-    public void saveXml( PrintStream s ) {
-        s.append( "<set" );
-        loc.space.saveXmlAttributes( s, loc.offset, loc.size );
-        XmlUtils.a_v_u( s, "val", val );
-        s.append( "/>\n" );
-    }
-
-    public void restoreXml( Element el, Translate trans ) {
-        VarnodeData varnodeData = Address.restoreXml( el, trans );
-        Address addr = varnodeData.getAddress();
-        int size = varnodeData.size;
-
-        val = XmlUtils.decodeUnknownLong( el.getAttributeValue( "val" ) );
-
-        loc.space = addr.getSpace();
-        loc.offset = addr.getOffset();
-        loc.size = size;
-    }
+	public VarnodeData loc = new VarnodeData();
+	public long val;
 }

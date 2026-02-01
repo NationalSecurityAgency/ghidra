@@ -18,7 +18,7 @@ package mdemangler.datatype.modifier;
 import java.util.*;
 
 import mdemangler.*;
-import mdemangler.naming.MDQualification;
+import mdemangler.naming.MDQualifiedName;
 
 /**
  * This class represents a Const/Volatile modifier (and extra stuff) of a modifier
@@ -89,7 +89,10 @@ public class MDCVMod extends MDParsableItem {
 	// TODO: Name this better once understood. For now, special pointer.
 	String special;
 
-	private MDQualification qual;
+	// Changed from MDQualification to support an empty name ("@@"), for which parsing
+	// gets challenging for a number of symbols, even with our trying to change the looping
+	// and end-of-list strategy of MDQualification
+	private MDQualifiedName qual;
 	private MDCVMod thisPointerCVMod; // TODO: check if EFI or CV portion
 	// private String basedName;
 	private MDBasedAttribute basedType;
@@ -689,7 +692,7 @@ public class MDCVMod extends MDParsableItem {
 				throw new MDException("CV code not expected: " + code);
 		}
 		if (isMember) {
-			qual = new MDQualification(dmang);
+			qual = new MDQualifiedName(dmang);
 			qual.parse();
 			if (isFunction) {
 				// TODO: check if EFI or CV portion-->I think might be any all
@@ -1066,9 +1069,11 @@ public class MDCVMod extends MDParsableItem {
 				// if ((modType != cvModifierType.plain) && (modType !=
 				// cvModifierType.question)) {
 				if (modType != CvModifierType.plain) {
-					if (qual.hasContent()) {
-						dmang.insertString(builder, "::");
-						qual.insert(builder);
+					StringBuilder qualBuilder = new StringBuilder();
+					qual.insert(qualBuilder);
+					if (!qualBuilder.isEmpty()) {
+						qualBuilder.append("::");
+						dmang.insertString(builder, qualBuilder.toString());
 					}
 				}
 			}

@@ -1,0 +1,1409 @@
+define pcodeop movgr2scr;
+
+#lbt.txt movgr2scr mask=0x00000800	[@lbt]
+#0x00000800	0xfffffc1c	cr0:2, r5:5	['scr0_2_s0', 'reg5_5_s0']
+:movgr2scr lbtrD, RJ          is op10_31=0x2 & op2_4=0x0 & lbtrD & RJ {
+	movgr2scr(lbtrD:1, RJ);
+}
+
+define pcodeop movscr2gr;
+
+#lbt.txt movscr2gr mask=0x00000c00	[@lbt]
+#0x00000c00	0xffffff80	r0:5,cr5:2	['reg0_5_s0', 'scr5_2_s0']
+:movscr2gr RD, lbtrJ          is op7_31=0x18 & RD & lbtrJ {
+	RD = movscr2gr(RD, lbtrJ:1);
+}
+
+define pcodeop x86mttop;
+
+#lbt.txt x86mttop mask=0x00007000	[@lbt]
+#0x00007000	0xffffff1f	u5:3	['imm5_3_s0']
+:x86mttop imm5_3              is op8_31=0x70 & op0_4=0x0 & imm5_3 {
+	x86mttop(imm5_3:$(REGSIZE));
+}
+
+define pcodeop x86mftop;
+
+#lbt.txt x86mftop mask=0x00007400	[@lbt]
+#0x00007400	0xffffffe0	r0:5	['reg0_5_s0']
+:x86mftop RD                  is op5_31=0x3a0 & RD {
+	RD = x86mftop(RD);
+}
+
+define pcodeop setx86loope;
+
+#lbt.txt x86setloope mask=0x00007800	[@lbt, @orig_name=setx86loope]
+#0x00007800	0xfffffc00	r0:5, r5:5	['reg0_5_s0', 'reg5_5_s0']
+:setx86loope RD, RJ           is op10_31=0x1e & RD & RJ {
+	RD = setx86loope(RD, RJ);
+}
+
+define pcodeop setx86loopne;
+
+#lbt.txt x86setloopne mask=0x00007c00	[@lbt, @orig_name=setx86loopne]
+#0x00007c00	0xfffffc00	r0:5, r5:5	['reg0_5_s0', 'reg5_5_s0']
+:setx86loopne RD, RJ          is op10_31=0x1f & RD & RJ {
+	RD = setx86loopne(RD, RJ);
+}
+
+define pcodeop x86inc.b;
+
+#lbt.txt x86inc.b mask=0x00008000	[@lbt]
+#0x00008000	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86inc.b RJ                  is op10_31=0x20 & op0_4=0x0 & RJ {
+	RJ = x86inc.b(RJ);
+}
+
+define pcodeop x86inc.h;
+
+#lbt.txt x86inc.h mask=0x00008001	[@lbt]
+#0x00008001	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86inc.h RJ                  is op10_31=0x20 & op0_4=0x1 & RJ {
+	RJ = x86inc.h(RJ);
+}
+
+define pcodeop x86inc.w;
+
+#lbt.txt x86inc.w mask=0x00008002	[@lbt]
+#0x00008002	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86inc.w RJ                  is op10_31=0x20 & op0_4=0x2 & RJ {
+	RJ = x86inc.w(RJ);
+}
+
+define pcodeop x86inc.d;
+
+#lbt.txt x86inc.d mask=0x00008003	[@lbt]
+#0x00008003	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86inc.d RJ                  is op10_31=0x20 & op0_4=0x3 & RJ {
+	RJ = x86inc.d(RJ);
+}
+
+define pcodeop x86dec.b;
+
+#lbt.txt x86dec.b mask=0x00008004	[@lbt]
+#0x00008004	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86dec.b RJ                  is op10_31=0x20 & op0_4=0x4 & RJ {
+	RJ = x86dec.b(RJ);
+}
+
+define pcodeop x86dec.h;
+
+#lbt.txt x86dec.h mask=0x00008005	[@lbt]
+#0x00008005	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86dec.h RJ                  is op10_31=0x20 & op0_4=0x5 & RJ {
+	RJ = x86dec.h(RJ);
+}
+
+define pcodeop x86dec.w;
+
+#lbt.txt x86dec.w mask=0x00008006	[@lbt]
+#0x00008006	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86dec.w RJ                  is op10_31=0x20 & op0_4=0x6 & RJ {
+	RJ = x86dec.w(RJ);
+}
+
+define pcodeop x86dec.d;
+
+#lbt.txt x86dec.d mask=0x00008007	[@lbt]
+#0x00008007	0xfffffc1f	r5:5	['reg5_5_s0']
+:x86dec.d RJ                  is op10_31=0x20 & op0_4=0x7 & RJ {
+	RJ = x86dec.d(RJ);
+}
+
+define pcodeop x86settm;
+
+#lbt.txt x86settm mask=0x00008008	[@lbt]
+#0x00008008	0xffffffff
+:x86settm                     is instword=0x00008008 {
+	x86settm();
+}
+
+define pcodeop x86inctop;
+
+#lbt.txt x86inctop mask=0x00008009	[@lbt]
+#0x00008009	0xffffffff
+:x86inctop                    is instword=0x00008009 {
+	x86inctop();
+}
+
+define pcodeop x86clrtm;
+
+#lbt.txt x86clrtm mask=0x00008028	[@lbt]
+#0x00008028	0xffffffff
+:x86clrtm                     is instword=0x00008028 {
+	x86clrtm();
+}
+
+define pcodeop x86dectop;
+
+#lbt.txt x86dectop mask=0x00008029	[@lbt]
+#0x00008029	0xffffffff
+:x86dectop                    is instword=0x00008029 {
+	x86dectop();
+}
+
+define pcodeop rotr.b;
+
+#lbt.txt rotr.b mask=0x001a0000	[@lbt]
+#0x001a0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rotr.b RD, RJ, RK            is op15_31=0x34 & RD & RJ & RK {
+	RD = rotr.b(RD, RJ, RK);
+}
+
+define pcodeop rotr.h;
+
+#lbt.txt rotr.h mask=0x001a8000	[@lbt]
+#0x001a8000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rotr.h RD, RJ, RK            is op15_31=0x35 & RD & RJ & RK {
+	RD = rotr.h(RD, RJ, RK);
+}
+
+define pcodeop addu12i.w;
+
+#lbt.txt addu12i.w mask=0x00290000	[@lbt]
+#0x00290000	0xffff8000	r0:5, r5:5, s10:5	['reg0_5_s0', 'reg5_5_s0', 'simm10_5_s0']
+:addu12i.w RD, RJ, simm10_5   is op15_31=0x52 & RD & RJ & simm10_5 {
+	RD = addu12i.w(RD, RJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop addu12i.d;
+
+#lbt.txt addu12i.d mask=0x00298000	[@lbt]
+#0x00298000	0xffff8000	r0:5, r5:5, s10:5	['reg0_5_s0', 'reg5_5_s0', 'simm10_5_s0']
+:addu12i.d RD, RJ, simm10_5   is op15_31=0x53 & RD & RJ & simm10_5 {
+	RD = addu12i.d(RD, RJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop adc.b;
+
+#lbt.txt adc.b mask=0x00300000	[@lbt]
+#0x00300000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:adc.b RD, RJ, RK             is op15_31=0x60 & RD & RJ & RK {
+	RD = adc.b(RD, RJ, RK);
+}
+
+define pcodeop adc.h;
+
+#lbt.txt adc.h mask=0x00308000	[@lbt]
+#0x00308000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:adc.h RD, RJ, RK             is op15_31=0x61 & RD & RJ & RK {
+	RD = adc.h(RD, RJ, RK);
+}
+
+define pcodeop adc.w;
+
+#lbt.txt adc.w mask=0x00310000	[@lbt]
+#0x00310000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:adc.w RD, RJ, RK             is op15_31=0x62 & RD & RJ & RK {
+	RD = adc.w(RD, RJ, RK);
+}
+
+define pcodeop adc.d;
+
+#lbt.txt adc.d mask=0x00318000	[@lbt]
+#0x00318000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:adc.d RD, RJ, RK             is op15_31=0x63 & RD & RJ & RK {
+	RD = adc.d(RD, RJ, RK);
+}
+
+define pcodeop sbc.b;
+
+#lbt.txt sbc.b mask=0x00320000	[@lbt]
+#0x00320000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sbc.b RD, RJ, RK             is op15_31=0x64 & RD & RJ & RK {
+	RD = sbc.b(RD, RJ, RK);
+}
+
+define pcodeop sbc.h;
+
+#lbt.txt sbc.h mask=0x00328000	[@lbt]
+#0x00328000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sbc.h RD, RJ, RK             is op15_31=0x65 & RD & RJ & RK {
+	RD = sbc.h(RD, RJ, RK);
+}
+
+define pcodeop sbc.w;
+
+#lbt.txt sbc.w mask=0x00330000	[@lbt]
+#0x00330000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sbc.w RD, RJ, RK             is op15_31=0x66 & RD & RJ & RK {
+	RD = sbc.w(RD, RJ, RK);
+}
+
+define pcodeop sbc.d;
+
+#lbt.txt sbc.d mask=0x00338000	[@lbt]
+#0x00338000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sbc.d RD, RJ, RK             is op15_31=0x67 & RD & RJ & RK {
+	RD = sbc.d(RD, RJ, RK);
+}
+
+define pcodeop rcr.b;
+
+#lbt.txt rcr.b mask=0x00340000	[@lbt]
+#0x00340000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rcr.b RD, RJ, RK             is op15_31=0x68 & RD & RJ & RK {
+	RD = rcr.b(RD, RJ, RK);
+}
+
+define pcodeop rcr.h;
+
+#lbt.txt rcr.h mask=0x00348000	[@lbt]
+#0x00348000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rcr.h RD, RJ, RK             is op15_31=0x69 & RD & RJ & RK {
+	RD = rcr.h(RD, RJ, RK);
+}
+
+define pcodeop rcr.w;
+
+#lbt.txt rcr.w mask=0x00350000	[@lbt]
+#0x00350000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rcr.w RD, RJ, RK             is op15_31=0x6a & RD & RJ & RK {
+	RD = rcr.w(RD, RJ, RK);
+}
+
+define pcodeop rcr.d;
+
+#lbt.txt rcr.d mask=0x00358000	[@lbt]
+#0x00358000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rcr.d RD, RJ, RK             is op15_31=0x6b & RD & RJ & RK {
+	RD = rcr.d(RD, RJ, RK);
+}
+
+define pcodeop armmove;
+
+#lbt.txt armmove mask=0x00364000	[@lbt]
+#0x00364000	0xffffc000	r0:5, r5:5,u10:4	['reg0_5_s0', 'reg5_5_s0', 'imm10_4_s0']
+:armmove RD, RJ, imm10_4      is op14_31=0xd9 & RD & RJ & imm10_4 {
+	RD = armmove(RD, RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop setx86j;
+
+#lbt.txt x86setj mask=0x00368000	[@lbt, @orig_name=setx86j]
+#0x00368000	0xffffc3e0	r0:5,u10:4	['reg0_5_s0', 'imm10_4_s0']
+:setx86j RD, imm10_4          is op14_31=0xda & op5_9=0x0 & RD & imm10_4 {
+	RD = setx86j(RD, imm10_4:$(REGSIZE));
+}
+
+define pcodeop setarmj;
+
+#lbt.txt armsetj mask=0x0036c000	[@lbt, @orig_name=setarmj]
+#0x0036c000	0xffffc3e0	r0:5,u10:4	['reg0_5_s0', 'imm10_4_s0']
+:setarmj RD, imm10_4          is op14_31=0xdb & op5_9=0x0 & RD & imm10_4 {
+	RD = setarmj(RD, imm10_4:$(REGSIZE));
+}
+
+define pcodeop armadd.w;
+
+#lbt.txt armadd.w mask=0x00370010	[@lbt]
+#0x00370010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armadd.w RJ, RK, imm0_4      is op15_31=0x6e & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armadd.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armsub.w;
+
+#lbt.txt armsub.w mask=0x00378010	[@lbt]
+#0x00378010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armsub.w RJ, RK, imm0_4      is op15_31=0x6f & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armsub.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armadc.w;
+
+#lbt.txt armadc.w mask=0x00380010	[@lbt]
+#0x00380010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armadc.w RJ, RK, imm0_4      is op15_31=0x70 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armadc.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armsbc.w;
+
+#lbt.txt armsbc.w mask=0x00388010	[@lbt]
+#0x00388010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armsbc.w RJ, RK, imm0_4      is op15_31=0x71 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armsbc.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armand.w;
+
+#lbt.txt armand.w mask=0x00390010	[@lbt]
+#0x00390010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armand.w RJ, RK, imm0_4      is op15_31=0x72 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armand.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armor.w;
+
+#lbt.txt armor.w mask=0x00398010	[@lbt]
+#0x00398010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armor.w RJ, RK, imm0_4       is op15_31=0x73 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armor.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armxor.w;
+
+#lbt.txt armxor.w mask=0x003a0010	[@lbt]
+#0x003a0010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armxor.w RJ, RK, imm0_4      is op15_31=0x74 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armxor.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armsll.w;
+
+#lbt.txt armsll.w mask=0x003a8010	[@lbt]
+#0x003a8010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armsll.w RJ, RK, imm0_4      is op15_31=0x75 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armsll.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armsrl.w;
+
+#lbt.txt armsrl.w mask=0x003b0010	[@lbt]
+#0x003b0010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armsrl.w RJ, RK, imm0_4      is op15_31=0x76 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armsrl.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armsra.w;
+
+#lbt.txt armsra.w mask=0x003b8010	[@lbt]
+#0x003b8010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armsra.w RJ, RK, imm0_4      is op15_31=0x77 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armsra.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armrotr.w;
+
+#lbt.txt armrotr.w mask=0x003c0010	[@lbt]
+#0x003c0010	0xffff8010	r5:5, r10:5,u0:4	['reg5_5_s0', 'reg10_5_s0', 'imm0_4_s0']
+:armrotr.w RJ, RK, imm0_4     is op15_31=0x78 & op4_4=0x1 & RJ & RK & imm0_4 {
+	RJ = armrotr.w(RJ, RK, imm0_4:$(REGSIZE));
+}
+
+define pcodeop armslli.w;
+
+#lbt.txt armslli.w mask=0x003c8010	[@lbt, @orig_fmt=JUk5Ud4]
+#0x003c8010	0xffff8010	r5:5,u10:5,u0:4	['reg5_5_s0', 'imm10_5_s0', 'imm0_4_s0']
+:armslli.w RJ, imm0_4, imm10_5 is op15_31=0x79 & op4_4=0x1 & RJ & imm0_4 & imm10_5 {
+	RJ = armslli.w(RJ, imm0_4:$(REGSIZE), imm10_5:$(REGSIZE));
+}
+
+define pcodeop armsrli.w;
+
+#lbt.txt armsrli.w mask=0x003d0010	[@lbt, @orig_fmt=JUk5Ud4]
+#0x003d0010	0xffff8010	r5:5,u10:5,u0:4	['reg5_5_s0', 'imm10_5_s0', 'imm0_4_s0']
+:armsrli.w RJ, imm0_4, imm10_5 is op15_31=0x7a & op4_4=0x1 & RJ & imm0_4 & imm10_5 {
+	RJ = armsrli.w(RJ, imm0_4:$(REGSIZE), imm10_5:$(REGSIZE));
+}
+
+define pcodeop armsrai.w;
+
+#lbt.txt armsrai.w mask=0x003d8010	[@lbt, @orig_fmt=JUk5Ud4]
+#0x003d8010	0xffff8010	r5:5,u10:5,u0:4	['reg5_5_s0', 'imm10_5_s0', 'imm0_4_s0']
+:armsrai.w RJ, imm0_4, imm10_5 is op15_31=0x7b & op4_4=0x1 & RJ & imm0_4 & imm10_5 {
+	RJ = armsrai.w(RJ, imm0_4:$(REGSIZE), imm10_5:$(REGSIZE));
+}
+
+define pcodeop armrotri.w;
+
+#lbt.txt armrotri.w mask=0x003e0010	[@lbt, @orig_fmt=JUk5Ud4]
+#0x003e0010	0xffff8010	r5:5,u10:5,u0:4	['reg5_5_s0', 'imm10_5_s0', 'imm0_4_s0']
+:armrotri.w RJ, imm0_4, imm10_5  is op15_31=0x7c & op4_4=0x1 & RJ & imm0_4 & imm10_5 {
+	RJ = armrotri.w(RJ, imm0_4:$(REGSIZE), imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86mul.b;
+
+#lbt.txt x86mul.b mask=0x003e8000	[@lbt]
+#0x003e8000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.b RJ, RK              is op15_31=0x7d & op0_4=0x0 & RJ & RK {
+	RJ = x86mul.b(RJ, RK);
+}
+
+define pcodeop x86mul.h;
+
+#lbt.txt x86mul.h mask=0x003e8001	[@lbt]
+#0x003e8001	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.h RJ, RK              is op15_31=0x7d & op0_4=0x1 & RJ & RK {
+	RJ = x86mul.h(RJ, RK);
+}
+
+define pcodeop x86mul.w;
+
+#lbt.txt x86mul.w mask=0x003e8002	[@lbt]
+#0x003e8002	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.w RJ, RK              is op15_31=0x7d & op0_4=0x2 & RJ & RK {
+	RJ = x86mul.w(RJ, RK);
+}
+
+define pcodeop x86mul.d;
+
+#lbt.txt x86mul.d mask=0x003e8003	[@lbt]
+#0x003e8003	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.d RJ, RK              is op15_31=0x7d & op0_4=0x3 & RJ & RK {
+	RJ = x86mul.d(RJ, RK);
+}
+
+define pcodeop x86mul.bu;
+
+#lbt.txt x86mul.bu mask=0x003e8004	[@lbt]
+#0x003e8004	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.bu RJ, RK             is op15_31=0x7d & op0_4=0x4 & RJ & RK {
+	RJ = x86mul.bu(RJ, RK);
+}
+
+define pcodeop x86mul.hu;
+
+#lbt.txt x86mul.hu mask=0x003e8005	[@lbt]
+#0x003e8005	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.hu RJ, RK             is op15_31=0x7d & op0_4=0x5 & RJ & RK {
+	RJ = x86mul.hu(RJ, RK);
+}
+
+define pcodeop x86mul.wu;
+
+#lbt.txt x86mul.wu mask=0x003e8006	[@lbt]
+#0x003e8006	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.wu RJ, RK             is op15_31=0x7d & op0_4=0x6 & RJ & RK {
+	RJ = x86mul.wu(RJ, RK);
+}
+
+define pcodeop x86mul.du;
+
+#lbt.txt x86mul.du mask=0x003e8007	[@lbt]
+#0x003e8007	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86mul.du RJ, RK             is op15_31=0x7d & op0_4=0x7 & RJ & RK {
+	RJ = x86mul.du(RJ, RK);
+}
+
+define pcodeop x86add.wu;
+
+#lbt.txt x86add.wu mask=0x003f0000	[@lbt]
+#0x003f0000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86add.wu RJ, RK             is op15_31=0x7e & op0_4=0x0 & RJ & RK {
+	RJ = x86add.wu(RJ, RK);
+}
+
+define pcodeop x86add.du;
+
+#lbt.txt x86add.du mask=0x003f0001	[@lbt]
+#0x003f0001	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86add.du RJ, RK             is op15_31=0x7e & op0_4=0x1 & RJ & RK {
+	RJ = x86add.du(RJ, RK);
+}
+
+define pcodeop x86sub.wu;
+
+#lbt.txt x86sub.wu mask=0x003f0002	[@lbt]
+#0x003f0002	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sub.wu RJ, RK             is op15_31=0x7e & op0_4=0x2 & RJ & RK {
+	RJ = x86sub.wu(RJ, RK);
+}
+
+define pcodeop x86sub.du;
+
+#lbt.txt x86sub.du mask=0x003f0003	[@lbt]
+#0x003f0003	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sub.du RJ, RK             is op15_31=0x7e & op0_4=0x3 & RJ & RK {
+	RJ = x86sub.du(RJ, RK);
+}
+
+define pcodeop x86add.b;
+
+#lbt.txt x86add.b mask=0x003f0004	[@lbt]
+#0x003f0004	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86add.b RJ, RK              is op15_31=0x7e & op0_4=0x4 & RJ & RK {
+	RJ = x86add.b(RJ, RK);
+}
+
+define pcodeop x86add.h;
+
+#lbt.txt x86add.h mask=0x003f0005	[@lbt]
+#0x003f0005	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86add.h RJ, RK              is op15_31=0x7e & op0_4=0x5 & RJ & RK {
+	RJ = x86add.h(RJ, RK);
+}
+
+define pcodeop x86add.w;
+
+#lbt.txt x86add.w mask=0x003f0006	[@lbt]
+#0x003f0006	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86add.w RJ, RK              is op15_31=0x7e & op0_4=0x6 & RJ & RK {
+	RJ = x86add.w(RJ, RK);
+}
+
+define pcodeop x86add.d;
+
+#lbt.txt x86add.d mask=0x003f0007	[@lbt]
+#0x003f0007	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86add.d RJ, RK              is op15_31=0x7e & op0_4=0x7 & RJ & RK {
+	RJ = x86add.d(RJ, RK);
+}
+
+define pcodeop x86sub.b;
+
+#lbt.txt x86sub.b mask=0x003f0008	[@lbt]
+#0x003f0008	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sub.b RJ, RK              is op15_31=0x7e & op0_4=0x8 & RJ & RK {
+	RJ = x86sub.b(RJ, RK);
+}
+
+define pcodeop x86sub.h;
+
+#lbt.txt x86sub.h mask=0x003f0009	[@lbt]
+#0x003f0009	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sub.h RJ, RK              is op15_31=0x7e & op0_4=0x9 & RJ & RK {
+	RJ = x86sub.h(RJ, RK);
+}
+
+define pcodeop x86sub.w;
+
+#lbt.txt x86sub.w mask=0x003f000a	[@lbt]
+#0x003f000a	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sub.w RJ, RK              is op15_31=0x7e & op0_4=0xa & RJ & RK {
+	RJ = x86sub.w(RJ, RK);
+}
+
+define pcodeop x86sub.d;
+
+#lbt.txt x86sub.d mask=0x003f000b	[@lbt]
+#0x003f000b	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sub.d RJ, RK              is op15_31=0x7e & op0_4=0xb & RJ & RK {
+	RJ = x86sub.d(RJ, RK);
+}
+
+define pcodeop x86adc.b;
+
+#lbt.txt x86adc.b mask=0x003f000c	[@lbt]
+#0x003f000c	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86adc.b RJ, RK              is op15_31=0x7e & op0_4=0xc & RJ & RK {
+	RJ = x86adc.b(RJ, RK);
+}
+
+define pcodeop x86adc.h;
+
+#lbt.txt x86adc.h mask=0x003f000d	[@lbt]
+#0x003f000d	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86adc.h RJ, RK              is op15_31=0x7e & op0_4=0xd & RJ & RK {
+	RJ = x86adc.h(RJ, RK);
+}
+
+define pcodeop x86adc.w;
+
+#lbt.txt x86adc.w mask=0x003f000e	[@lbt]
+#0x003f000e	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86adc.w RJ, RK              is op15_31=0x7e & op0_4=0xe & RJ & RK {
+	RJ = x86adc.w(RJ, RK);
+}
+
+define pcodeop x86adc.d;
+
+#lbt.txt x86adc.d mask=0x003f000f	[@lbt]
+#0x003f000f	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86adc.d RJ, RK              is op15_31=0x7e & op0_4=0xf & RJ & RK {
+	RJ = x86adc.d(RJ, RK);
+}
+
+define pcodeop x86sbc.b;
+
+#lbt.txt x86sbc.b mask=0x003f0010	[@lbt]
+#0x003f0010	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sbc.b RJ, RK              is op15_31=0x7e & op0_4=0x10 & RJ & RK {
+	RJ = x86sbc.b(RJ, RK);
+}
+
+define pcodeop x86sbc.h;
+
+#lbt.txt x86sbc.h mask=0x003f0011	[@lbt]
+#0x003f0011	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sbc.h RJ, RK              is op15_31=0x7e & op0_4=0x11 & RJ & RK {
+	RJ = x86sbc.h(RJ, RK);
+}
+
+define pcodeop x86sbc.w;
+
+#lbt.txt x86sbc.w mask=0x003f0012	[@lbt]
+#0x003f0012	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sbc.w RJ, RK              is op15_31=0x7e & op0_4=0x12 & RJ & RK {
+	RJ = x86sbc.w(RJ, RK);
+}
+
+define pcodeop x86sbc.d;
+
+#lbt.txt x86sbc.d mask=0x003f0013	[@lbt]
+#0x003f0013	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sbc.d RJ, RK              is op15_31=0x7e & op0_4=0x13 & RJ & RK {
+	RJ = x86sbc.d(RJ, RK);
+}
+
+define pcodeop x86sll.b;
+
+#lbt.txt x86sll.b mask=0x003f0014	[@lbt]
+#0x003f0014	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sll.b RJ, RK              is op15_31=0x7e & op0_4=0x14 & RJ & RK {
+	RJ = x86sll.b(RJ, RK);
+}
+
+define pcodeop x86sll.h;
+
+#lbt.txt x86sll.h mask=0x003f0015	[@lbt]
+#0x003f0015	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sll.h RJ, RK              is op15_31=0x7e & op0_4=0x15 & RJ & RK {
+	RJ = x86sll.h(RJ, RK);
+}
+
+define pcodeop x86sll.w;
+
+#lbt.txt x86sll.w mask=0x003f0016	[@lbt]
+#0x003f0016	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sll.w RJ, RK              is op15_31=0x7e & op0_4=0x16 & RJ & RK {
+	RJ = x86sll.w(RJ, RK);
+}
+
+define pcodeop x86sll.d;
+
+#lbt.txt x86sll.d mask=0x003f0017	[@lbt]
+#0x003f0017	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sll.d RJ, RK              is op15_31=0x7e & op0_4=0x17 & RJ & RK {
+	RJ = x86sll.d(RJ, RK);
+}
+
+define pcodeop x86srl.b;
+
+#lbt.txt x86srl.b mask=0x003f0018	[@lbt]
+#0x003f0018	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86srl.b RJ, RK              is op15_31=0x7e & op0_4=0x18 & RJ & RK {
+	RJ = x86srl.b(RJ, RK);
+}
+
+define pcodeop x86srl.h;
+
+#lbt.txt x86srl.h mask=0x003f0019	[@lbt]
+#0x003f0019	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86srl.h RJ, RK              is op15_31=0x7e & op0_4=0x19 & RJ & RK {
+	RJ = x86srl.h(RJ, RK);
+}
+
+define pcodeop x86srl.w;
+
+#lbt.txt x86srl.w mask=0x003f001a	[@lbt]
+#0x003f001a	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86srl.w RJ, RK              is op15_31=0x7e & op0_4=0x1a & RJ & RK {
+	RJ = x86srl.w(RJ, RK);
+}
+
+define pcodeop x86srl.d;
+
+#lbt.txt x86srl.d mask=0x003f001b	[@lbt]
+#0x003f001b	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86srl.d RJ, RK              is op15_31=0x7e & op0_4=0x1b & RJ & RK {
+	RJ = x86srl.d(RJ, RK);
+}
+
+define pcodeop x86sra.b;
+
+#lbt.txt x86sra.b mask=0x003f001c	[@lbt]
+#0x003f001c	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sra.b RJ, RK              is op15_31=0x7e & op0_4=0x1c & RJ & RK {
+	RJ = x86sra.b(RJ, RK);
+}
+
+define pcodeop x86sra.h;
+
+#lbt.txt x86sra.h mask=0x003f001d	[@lbt]
+#0x003f001d	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sra.h RJ, RK              is op15_31=0x7e & op0_4=0x1d & RJ & RK {
+	RJ = x86sra.h(RJ, RK);
+}
+
+define pcodeop x86sra.w;
+
+#lbt.txt x86sra.w mask=0x003f001e	[@lbt]
+#0x003f001e	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sra.w RJ, RK              is op15_31=0x7e & op0_4=0x1e & RJ & RK {
+	RJ = x86sra.w(RJ, RK);
+}
+
+define pcodeop x86sra.d;
+
+#lbt.txt x86sra.d mask=0x003f001f	[@lbt]
+#0x003f001f	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86sra.d RJ, RK              is op15_31=0x7e & op0_4=0x1f & RJ & RK {
+	RJ = x86sra.d(RJ, RK);
+}
+
+define pcodeop x86rotr.b;
+
+#lbt.txt x86rotr.b mask=0x003f8000	[@lbt]
+#0x003f8000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotr.b RJ, RK             is op15_31=0x7f & op0_4=0x0 & RJ & RK {
+	RJ = x86rotr.b(RJ, RK);
+}
+
+define pcodeop x86rotr.h;
+
+#lbt.txt x86rotr.h mask=0x003f8001	[@lbt]
+#0x003f8001	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotr.h RJ, RK             is op15_31=0x7f & op0_4=0x1 & RJ & RK {
+	RJ = x86rotr.h(RJ, RK);
+}
+
+define pcodeop x86rotr.d;
+
+#lbt.txt x86rotr.d mask=0x003f8002	[@lbt]
+#0x003f8002	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotr.d RJ, RK             is op15_31=0x7f & op0_4=0x2 & RJ & RK {
+	RJ = x86rotr.d(RJ, RK);
+}
+
+define pcodeop x86rotr.w;
+
+#lbt.txt x86rotr.w mask=0x003f8003	[@lbt]
+#0x003f8003	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotr.w RJ, RK             is op15_31=0x7f & op0_4=0x3 & RJ & RK {
+	RJ = x86rotr.w(RJ, RK);
+}
+
+define pcodeop x86rotl.b;
+
+#lbt.txt x86rotl.b mask=0x003f8004	[@lbt]
+#0x003f8004	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotl.b RJ, RK             is op15_31=0x7f & op0_4=0x4 & RJ & RK {
+	RJ = x86rotl.b(RJ, RK);
+}
+
+define pcodeop x86rotl.h;
+
+#lbt.txt x86rotl.h mask=0x003f8005	[@lbt]
+#0x003f8005	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotl.h RJ, RK             is op15_31=0x7f & op0_4=0x5 & RJ & RK {
+	RJ = x86rotl.h(RJ, RK);
+}
+
+define pcodeop x86rotl.w;
+
+#lbt.txt x86rotl.w mask=0x003f8006	[@lbt]
+#0x003f8006	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotl.w RJ, RK             is op15_31=0x7f & op0_4=0x6 & RJ & RK {
+	RJ = x86rotl.w(RJ, RK);
+}
+
+define pcodeop x86rotl.d;
+
+#lbt.txt x86rotl.d mask=0x003f8007	[@lbt]
+#0x003f8007	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rotl.d RJ, RK             is op15_31=0x7f & op0_4=0x7 & RJ & RK {
+	RJ = x86rotl.d(RJ, RK);
+}
+
+define pcodeop x86rcr.b;
+
+#lbt.txt x86rcr.b mask=0x003f8008	[@lbt]
+#0x003f8008	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcr.b RJ, RK              is op15_31=0x7f & op0_4=0x8 & RJ & RK {
+	RJ = x86rcr.b(RJ, RK);
+}
+
+define pcodeop x86rcr.h;
+
+#lbt.txt x86rcr.h mask=0x003f8009	[@lbt]
+#0x003f8009	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcr.h RJ, RK              is op15_31=0x7f & op0_4=0x9 & RJ & RK {
+	RJ = x86rcr.h(RJ, RK);
+}
+
+define pcodeop x86rcr.w;
+
+#lbt.txt x86rcr.w mask=0x003f800a	[@lbt]
+#0x003f800a	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcr.w RJ, RK              is op15_31=0x7f & op0_4=0xa & RJ & RK {
+	RJ = x86rcr.w(RJ, RK);
+}
+
+define pcodeop x86rcr.d;
+
+#lbt.txt x86rcr.d mask=0x003f800b	[@lbt]
+#0x003f800b	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcr.d RJ, RK              is op15_31=0x7f & op0_4=0xb & RJ & RK {
+	RJ = x86rcr.d(RJ, RK);
+}
+
+define pcodeop x86rcl.b;
+
+#lbt.txt x86rcl.b mask=0x003f800c	[@lbt]
+#0x003f800c	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcl.b RJ, RK              is op15_31=0x7f & op0_4=0xc & RJ & RK {
+	RJ = x86rcl.b(RJ, RK);
+}
+
+define pcodeop x86rcl.h;
+
+#lbt.txt x86rcl.h mask=0x003f800d	[@lbt]
+#0x003f800d	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcl.h RJ, RK              is op15_31=0x7f & op0_4=0xd & RJ & RK {
+	RJ = x86rcl.h(RJ, RK);
+}
+
+define pcodeop x86rcl.w;
+
+#lbt.txt x86rcl.w mask=0x003f800e	[@lbt]
+#0x003f800e	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcl.w RJ, RK              is op15_31=0x7f & op0_4=0xe & RJ & RK {
+	RJ = x86rcl.w(RJ, RK);
+}
+
+define pcodeop x86rcl.d;
+
+#lbt.txt x86rcl.d mask=0x003f800f	[@lbt]
+#0x003f800f	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86rcl.d RJ, RK              is op15_31=0x7f & op0_4=0xf & RJ & RK {
+	RJ = x86rcl.d(RJ, RK);
+}
+
+define pcodeop x86and.b;
+
+#lbt.txt x86and.b mask=0x003f8010	[@lbt]
+#0x003f8010	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86and.b RJ, RK              is op15_31=0x7f & op0_4=0x10 & RJ & RK {
+	RJ = x86and.b(RJ, RK);
+}
+
+define pcodeop x86and.h;
+
+#lbt.txt x86and.h mask=0x003f8011	[@lbt]
+#0x003f8011	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86and.h RJ, RK              is op15_31=0x7f & op0_4=0x11 & RJ & RK {
+	RJ = x86and.h(RJ, RK);
+}
+
+define pcodeop x86and.w;
+
+#lbt.txt x86and.w mask=0x003f8012	[@lbt]
+#0x003f8012	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86and.w RJ, RK              is op15_31=0x7f & op0_4=0x12 & RJ & RK {
+	RJ = x86and.w(RJ, RK);
+}
+
+define pcodeop x86and.d;
+
+#lbt.txt x86and.d mask=0x003f8013	[@lbt]
+#0x003f8013	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86and.d RJ, RK              is op15_31=0x7f & op0_4=0x13 & RJ & RK {
+	RJ = x86and.d(RJ, RK);
+}
+
+define pcodeop x86or.b;
+
+#lbt.txt x86or.b mask=0x003f8014	[@lbt]
+#0x003f8014	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86or.b RJ, RK               is op15_31=0x7f & op0_4=0x14 & RJ & RK {
+	RJ = x86or.b(RJ, RK);
+}
+
+define pcodeop x86or.h;
+
+#lbt.txt x86or.h mask=0x003f8015	[@lbt]
+#0x003f8015	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86or.h RJ, RK               is op15_31=0x7f & op0_4=0x15 & RJ & RK {
+	RJ = x86or.h(RJ, RK);
+}
+
+define pcodeop x86or.w;
+
+#lbt.txt x86or.w mask=0x003f8016	[@lbt]
+#0x003f8016	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86or.w RJ, RK               is op15_31=0x7f & op0_4=0x16 & RJ & RK {
+	RJ = x86or.w(RJ, RK);
+}
+
+define pcodeop x86or.d;
+
+#lbt.txt x86or.d mask=0x003f8017	[@lbt]
+#0x003f8017	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86or.d RJ, RK               is op15_31=0x7f & op0_4=0x17 & RJ & RK {
+	RJ = x86or.d(RJ, RK);
+}
+
+define pcodeop x86xor.b;
+
+#lbt.txt x86xor.b mask=0x003f8018	[@lbt]
+#0x003f8018	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86xor.b RJ, RK              is op15_31=0x7f & op0_4=0x18 & RJ & RK {
+	RJ = x86xor.b(RJ, RK);
+}
+
+define pcodeop x86xor.h;
+
+#lbt.txt x86xor.h mask=0x003f8019	[@lbt]
+#0x003f8019	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86xor.h RJ, RK              is op15_31=0x7f & op0_4=0x19 & RJ & RK {
+	RJ = x86xor.h(RJ, RK);
+}
+
+define pcodeop x86xor.w;
+
+#lbt.txt x86xor.w mask=0x003f801a	[@lbt]
+#0x003f801a	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86xor.w RJ, RK              is op15_31=0x7f & op0_4=0x1a & RJ & RK {
+	RJ = x86xor.w(RJ, RK);
+}
+
+define pcodeop x86xor.d;
+
+#lbt.txt x86xor.d mask=0x003f801b	[@lbt]
+#0x003f801b	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:x86xor.d RJ, RK              is op15_31=0x7f & op0_4=0x1b & RJ & RK {
+	RJ = x86xor.d(RJ, RK);
+}
+
+define pcodeop armnot.w;
+
+#lbt.txt armnot.w mask=0x003fc01c	[@lbt]
+#0x003fc01c	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:armnot.w RJ, imm10_4         is op14_31=0xff & op0_4=0x1c & RJ & imm10_4 {
+	RJ = armnot.w(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop armmov.w;
+
+#lbt.txt armmov.w mask=0x003fc01d	[@lbt]
+#0x003fc01d	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:armmov.w RJ, imm10_4         is op14_31=0xff & op0_4=0x1d & RJ & imm10_4 {
+	RJ = armmov.w(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop armmov.d;
+
+#lbt.txt armmov.d mask=0x003fc01e	[@lbt]
+#0x003fc01e	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:armmov.d RJ, imm10_4         is op14_31=0xff & op0_4=0x1e & RJ & imm10_4 {
+	RJ = armmov.d(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop armrrx.w;
+
+#lbt.txt armrrx.w mask=0x003fc01f	[@lbt]
+#0x003fc01f	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:armrrx.w RJ, imm10_4         is op14_31=0xff & op0_4=0x1f & RJ & imm10_4 {
+	RJ = armrrx.w(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop rotri.b;
+
+#lbt.txt rotri.b mask=0x004c2000	[@lbt]
+#0x004c2000	0xffffe000	r0:5, r5:5,u10:3	['reg0_5_s0', 'reg5_5_s0', 'imm10_3_s0']
+:rotri.b RD, RJ, imm10_3      is op13_31=0x261 & RD & RJ & imm10_3 {
+	RD = rotri.b(RD, RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop rotri.h;
+
+#lbt.txt rotri.h mask=0x004c4000	[@lbt]
+#0x004c4000	0xffffc000	r0:5, r5:5,u10:4	['reg0_5_s0', 'reg5_5_s0', 'imm10_4_s0']
+:rotri.h RD, RJ, imm10_4      is op14_31=0x131 & RD & RJ & imm10_4 {
+	RD = rotri.h(RD, RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop rcri.b;
+
+#lbt.txt rcri.b mask=0x00502000	[@lbt]
+#0x00502000	0xffffe000	r0:5, r5:5,u10:3	['reg0_5_s0', 'reg5_5_s0', 'imm10_3_s0']
+:rcri.b RD, RJ, imm10_3       is op13_31=0x281 & RD & RJ & imm10_3 {
+	RD = rcri.b(RD, RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop rcri.h;
+
+#lbt.txt rcri.h mask=0x00504000	[@lbt]
+#0x00504000	0xffffc000	r0:5, r5:5,u10:4	['reg0_5_s0', 'reg5_5_s0', 'imm10_4_s0']
+:rcri.h RD, RJ, imm10_4       is op14_31=0x141 & RD & RJ & imm10_4 {
+	RD = rcri.h(RD, RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop rcri.w;
+
+#lbt.txt rcri.w mask=0x00508000	[@lbt]
+#0x00508000	0xffff8000	r0:5, r5:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm10_5_s0']
+:rcri.w RD, RJ, imm10_5       is op15_31=0xa1 & RD & RJ & imm10_5 {
+	RD = rcri.w(RD, RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop rcri.d;
+
+#lbt.txt rcri.d mask=0x00510000	[@lbt]
+#0x00510000	0xffff0000	r0:5, r5:5,u10:6	['reg0_5_s0', 'reg5_5_s0', 'imm10_6_s0']
+:rcri.d RD, RJ, imm10_6       is op16_31=0x51 & RD & RJ & imm10_6 {
+	RD = rcri.d(RD, RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86slli.b;
+
+#lbt.txt x86slli.b mask=0x00542000	[@lbt]
+#0x00542000	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86slli.b RJ, imm10_3        is op13_31=0x2a1 & op0_4=0x0 & RJ & imm10_3 {
+	RJ = x86slli.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86srli.b;
+
+#lbt.txt x86srli.b mask=0x00542004	[@lbt]
+#0x00542004	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86srli.b RJ, imm10_3        is op13_31=0x2a1 & op0_4=0x4 & RJ & imm10_3 {
+	RJ = x86srli.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86srai.b;
+
+#lbt.txt x86srai.b mask=0x00542008	[@lbt]
+#0x00542008	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86srai.b RJ, imm10_3        is op13_31=0x2a1 & op0_4=0x8 & RJ & imm10_3 {
+	RJ = x86srai.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86rotri.b;
+
+#lbt.txt x86rotri.b mask=0x0054200c	[@lbt]
+#0x0054200c	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86rotri.b RJ, imm10_3       is op13_31=0x2a1 & op0_4=0xc & RJ & imm10_3 {
+	RJ = x86rotri.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86rcri.b;
+
+#lbt.txt x86rcri.b mask=0x00542010	[@lbt]
+#0x00542010	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86rcri.b RJ, imm10_3        is op13_31=0x2a1 & op0_4=0x10 & RJ & imm10_3 {
+	RJ = x86rcri.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86rotli.b;
+
+#lbt.txt x86rotli.b mask=0x00542014	[@lbt]
+#0x00542014	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86rotli.b RJ, imm10_3       is op13_31=0x2a1 & op0_4=0x14 & RJ & imm10_3 {
+	RJ = x86rotli.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86rcli.b;
+
+#lbt.txt x86rcli.b mask=0x00542018	[@lbt]
+#0x00542018	0xffffe01f	r5:5,u10:3	['reg5_5_s0', 'imm10_3_s0']
+:x86rcli.b RJ, imm10_3        is op13_31=0x2a1 & op0_4=0x18 & RJ & imm10_3 {
+	RJ = x86rcli.b(RJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop x86slli.h;
+
+#lbt.txt x86slli.h mask=0x00544001	[@lbt]
+#0x00544001	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86slli.h RJ, imm10_4        is op14_31=0x151 & op0_4=0x1 & RJ & imm10_4 {
+	RJ = x86slli.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86srli.h;
+
+#lbt.txt x86srli.h mask=0x00544005	[@lbt]
+#0x00544005	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86srli.h RJ, imm10_4        is op14_31=0x151 & op0_4=0x5 & RJ & imm10_4 {
+	RJ = x86srli.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86srai.h;
+
+#lbt.txt x86srai.h mask=0x00544009	[@lbt]
+#0x00544009	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86srai.h RJ, imm10_4        is op14_31=0x151 & op0_4=0x9 & RJ & imm10_4 {
+	RJ = x86srai.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86rotri.h;
+
+#lbt.txt x86rotri.h mask=0x0054400d	[@lbt]
+#0x0054400d	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86rotri.h RJ, imm10_4       is op14_31=0x151 & op0_4=0xd & RJ & imm10_4 {
+	RJ = x86rotri.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86rcri.h;
+
+#lbt.txt x86rcri.h mask=0x00544011	[@lbt]
+#0x00544011	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86rcri.h RJ, imm10_4        is op14_31=0x151 & op0_4=0x11 & RJ & imm10_4 {
+	RJ = x86rcri.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86rotli.h;
+
+#lbt.txt x86rotli.h mask=0x00544015	[@lbt]
+#0x00544015	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86rotli.h RJ, imm10_4       is op14_31=0x151 & op0_4=0x15 & RJ & imm10_4 {
+	RJ = x86rotli.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86rcli.h;
+
+#lbt.txt x86rcli.h mask=0x00544019	[@lbt]
+#0x00544019	0xffffc01f	r5:5,u10:4	['reg5_5_s0', 'imm10_4_s0']
+:x86rcli.h RJ, imm10_4        is op14_31=0x151 & op0_4=0x19 & RJ & imm10_4 {
+	RJ = x86rcli.h(RJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop x86slli.w;
+
+#lbt.txt x86slli.w mask=0x00548002	[@lbt]
+#0x00548002	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86slli.w RJ, imm10_5        is op15_31=0xa9 & op0_4=0x2 & RJ & imm10_5 {
+	RJ = x86slli.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86srli.w;
+
+#lbt.txt x86srli.w mask=0x00548006	[@lbt]
+#0x00548006	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86srli.w RJ, imm10_5        is op15_31=0xa9 & op0_4=0x6 & RJ & imm10_5 {
+	RJ = x86srli.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86srai.w;
+
+#lbt.txt x86srai.w mask=0x0054800a	[@lbt]
+#0x0054800a	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86srai.w RJ, imm10_5        is op15_31=0xa9 & op0_4=0xa & RJ & imm10_5 {
+	RJ = x86srai.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86rotri.w;
+
+#lbt.txt x86rotri.w mask=0x0054800e	[@lbt]
+#0x0054800e	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86rotri.w RJ, imm10_5       is op15_31=0xa9 & op0_4=0xe & RJ & imm10_5 {
+	RJ = x86rotri.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86rcri.w;
+
+#lbt.txt x86rcri.w mask=0x00548012	[@lbt]
+#0x00548012	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86rcri.w RJ, imm10_5        is op15_31=0xa9 & op0_4=0x12 & RJ & imm10_5 {
+	RJ = x86rcri.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86rotli.w;
+
+#lbt.txt x86rotli.w mask=0x00548016	[@lbt]
+#0x00548016	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86rotli.w RJ, imm10_5       is op15_31=0xa9 & op0_4=0x16 & RJ & imm10_5 {
+	RJ = x86rotli.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86rcli.w;
+
+#lbt.txt x86rcli.w mask=0x0054801a	[@lbt]
+#0x0054801a	0xffff801f	r5:5,u10:5	['reg5_5_s0', 'imm10_5_s0']
+:x86rcli.w RJ, imm10_5        is op15_31=0xa9 & op0_4=0x1a & RJ & imm10_5 {
+	RJ = x86rcli.w(RJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop x86slli.d;
+
+#lbt.txt x86slli.d mask=0x00550003	[@lbt]
+#0x00550003	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86slli.d RJ, imm10_6        is op16_31=0x55 & op0_4=0x3 & RJ & imm10_6 {
+	RJ = x86slli.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86srli.d;
+
+#lbt.txt x86srli.d mask=0x00550007	[@lbt]
+#0x00550007	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86srli.d RJ, imm10_6        is op16_31=0x55 & op0_4=0x7 & RJ & imm10_6 {
+	RJ = x86srli.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86srai.d;
+
+#lbt.txt x86srai.d mask=0x0055000b	[@lbt]
+#0x0055000b	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86srai.d RJ, imm10_6        is op16_31=0x55 & op0_4=0xb & RJ & imm10_6 {
+	RJ = x86srai.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86rotri.d;
+
+#lbt.txt x86rotri.d mask=0x0055000f	[@lbt]
+#0x0055000f	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86rotri.d RJ, imm10_6       is op16_31=0x55 & op0_4=0xf & RJ & imm10_6 {
+	RJ = x86rotri.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86rcri.d;
+
+#lbt.txt x86rcri.d mask=0x00550013	[@lbt]
+#0x00550013	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86rcri.d RJ, imm10_6        is op16_31=0x55 & op0_4=0x13 & RJ & imm10_6 {
+	RJ = x86rcri.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86rotli.d;
+
+#lbt.txt x86rotli.d mask=0x00550017	[@lbt]
+#0x00550017	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86rotli.d RJ, imm10_6       is op16_31=0x55 & op0_4=0x17 & RJ & imm10_6 {
+	RJ = x86rotli.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86rcli.d;
+
+#lbt.txt x86rcli.d mask=0x0055001b	[@lbt]
+#0x0055001b	0xffff001f	r5:5,u10:6	['reg5_5_s0', 'imm10_6_s0']
+:x86rcli.d RJ, imm10_6        is op16_31=0x55 & op0_4=0x1b & RJ & imm10_6 {
+	RJ = x86rcli.d(RJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop x86settag;
+
+#lbt.txt x86settag mask=0x00580000	[@lbt]
+#0x00580000	0xfffc0000	r0:5,u5:5,u10:8	['reg0_5_s0', 'imm5_5_s0', 'imm10_8_s0']
+:x86settag RD, imm5_5, imm10_8 is op18_31=0x16 & RD & imm5_5 & imm10_8 {
+	RD = x86settag(RD, imm5_5:$(REGSIZE), imm10_8:$(REGSIZE));
+}
+
+define pcodeop x86mfflag;
+
+#lbt.txt x86mfflag mask=0x005c0000	[@lbt]
+#0x005c0000	0xfffc03e0	r0:5,u10:8	['reg0_5_s0', 'imm10_8_s0']
+:x86mfflag RD, imm10_8        is op18_31=0x17 & op5_9=0x0 & RD & imm10_8 {
+	RD = x86mfflag(RD, imm10_8:$(REGSIZE));
+}
+
+define pcodeop x86mtflag;
+
+#lbt.txt x86mtflag mask=0x005c0020	[@lbt]
+#0x005c0020	0xfffc03e0	r0:5,u10:8	['reg0_5_s0', 'imm10_8_s0']
+:x86mtflag RD, imm10_8        is op18_31=0x17 & op5_9=0x1 & RD & imm10_8 {
+	RD = x86mtflag(RD, imm10_8:$(REGSIZE));
+}
+
+define pcodeop armmfflag;
+
+#lbt.txt armmfflag mask=0x005c0040	[@lbt]
+#0x005c0040	0xfffc03e0	r0:5,u10:8	['reg0_5_s0', 'imm10_8_s0']
+:armmfflag RD, imm10_8        is op18_31=0x17 & op5_9=0x2 & RD & imm10_8 {
+	RD = armmfflag(RD, imm10_8:$(REGSIZE));
+}
+
+define pcodeop armmtflag;
+
+#lbt.txt armmtflag mask=0x005c0060	[@lbt]
+#0x005c0060	0xfffc03e0	r0:5,u10:8	['reg0_5_s0', 'imm10_8_s0']
+:armmtflag RD, imm10_8        is op18_31=0x17 & op5_9=0x3 & RD & imm10_8 {
+	RD = armmtflag(RD, imm10_8:$(REGSIZE));
+}
+
+define pcodeop fcvt.ld.d;
+
+#lbt.txt fcvt.ld.d mask=0x0114e000	[@lbt]
+#0x0114e000	0xfffffc00	f0:5,f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fcvt.ld.d drD,drJ            is op10_31=0x4538 & drD & drJ {
+	drD = fcvt.ld.d(drD, drJ);
+}
+
+define pcodeop fcvt.ud.d;
+
+#lbt.txt fcvt.ud.d mask=0x0114e400	[@lbt]
+#0x0114e400	0xfffffc00	f0:5,f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fcvt.ud.d drD,drJ            is op10_31=0x4539 & drD & drJ {
+	drD = fcvt.ud.d(drD, drJ);
+}
+
+define pcodeop fcvt.d.ld;
+
+#lbt.txt fcvt.d.ld mask=0x01150000	[@lbt]
+#0x01150000	0xffff8000	f0:5,f5:5,f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fcvt.d.ld drD,drJ,drK        is op16_31=0x115 & drD & drJ & drK {
+	drD = fcvt.d.ld(drD, drJ, drK);
+}
+
+define pcodeop ldl.w;
+
+#lbt.txt ldl.w mask=0x2e000000	[@lbt]
+#0x2e000000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ldl.w RD, RJ, simm10_12      is op22_31=0xb8 & RD & RJ & simm10_12 {
+	RD = ldl.w(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop ldr.w;
+
+#lbt.txt ldr.w mask=0x2e400000	[@lbt]
+#0x2e400000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ldr.w RD, RJ, simm10_12      is op22_31=0xb9 & RD & RJ & simm10_12 {
+	RD = ldr.w(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop ldl.d;
+
+#lbt.txt ldl.d mask=0x2e800000	[@lbt]
+#0x2e800000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ldl.d RD, RJ, simm10_12      is op22_31=0xba & RD & RJ & simm10_12 {
+	RD = ldl.d(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop ldr.d;
+
+#lbt.txt ldr.d mask=0x2ec00000	[@lbt]
+#0x2ec00000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ldr.d RD, RJ, simm10_12      is op22_31=0xbb & RD & RJ & simm10_12 {
+	RD = ldr.d(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop stl.w;
+
+#lbt.txt stl.w mask=0x2f000000	[@lbt]
+#0x2f000000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:stl.w RD, RJ, simm10_12      is op22_31=0xbc & RD & RJ & simm10_12 {
+	RD = stl.w(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop str.w;
+
+#lbt.txt str.w mask=0x2f400000	[@lbt]
+#0x2f400000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:str.w RD, RJ, simm10_12      is op22_31=0xbd & RD & RJ & simm10_12 {
+	RD = str.w(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop stl.d;
+
+#lbt.txt stl.d mask=0x2f800000	[@lbt]
+#0x2f800000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:stl.d RD, RJ, simm10_12      is op22_31=0xbe & RD & RJ & simm10_12 {
+	RD = stl.d(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop str.d;
+
+#lbt.txt str.d mask=0x2fc00000	[@lbt]
+#0x2fc00000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:str.d RD, RJ, simm10_12      is op22_31=0xbf & RD & RJ & simm10_12 {
+	RD = str.d(RD, RJ, simm10_12:$(REGSIZE));
+}
+
+define pcodeop jiscr0;
+
+#lbt.txt jiscr0 mask=0x48000200	[@lbt, @orig_fmt=Sd5k16ps2]
+#0x48000200	0xfc0003e0	s0:5|10:16<<2	['simm0_0_s2']
+:jiscr0 Rel26                 is op26_31=0x12 & op5_9=0x10 & Rel26 {
+	jiscr0(Rel26);
+}
+
+define pcodeop jiscr1;
+
+#lbt.txt jiscr1 mask=0x48000300	[@lbt, @orig_fmt=Sd5k16ps2]
+#0x48000300	0xfc0003e0	s0:5|10:16<<2	['simm0_0_s2']
+:jiscr1 Rel26                 is op26_31=0x12 & op5_9=0x18 & Rel26 {
+	jiscr1(Rel26);
+}
+
+

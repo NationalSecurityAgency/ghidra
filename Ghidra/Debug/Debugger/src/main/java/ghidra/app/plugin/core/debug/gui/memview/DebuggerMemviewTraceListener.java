@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,20 +17,25 @@ package ghidra.app.plugin.core.debug.gui.memview;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointManager;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
@@ -38,7 +43,6 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	protected MemviewProvider provider;
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	Trace currentTrace;
-	TraceRecorder currentRecorder;
 
 	private boolean trackTrace = false;
 	private boolean trackThreads = true;
@@ -57,31 +61,36 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 		updateLabelDebouncer.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdate()));
 
-		listenFor(TraceThreadChangeType.ADDED, this::threadChanged);
-		listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);
-		listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadChanged);
-		listenFor(TraceThreadChangeType.DELETED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_ADDED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_CHANGED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_DELETED, this::threadChanged);
 
-		listenFor(TraceMemoryRegionChangeType.ADDED, this::regionChanged);
-		listenFor(TraceMemoryRegionChangeType.CHANGED, this::regionChanged);
-		listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
-		listenFor(TraceMemoryRegionChangeType.DELETED, this::regionChanged);
+		listenFor(TraceEvents.REGION_ADDED, this::regionChanged);
+		listenFor(TraceEvents.REGION_CHANGED, this::regionChanged);
+		listenFor(TraceEvents.REGION_LIFESPAN_CHANGED, this::regionChanged);
+		listenFor(TraceEvents.REGION_DELETED, this::regionChanged);
 
-		listenFor(TraceModuleChangeType.ADDED, this::moduleChanged);
-		listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-		listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-		listenFor(TraceModuleChangeType.DELETED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_ADDED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_DELETED, this::moduleChanged);
 
-		listenFor(TraceSectionChangeType.ADDED, this::sectionChanged);
-		listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-		listenFor(TraceSectionChangeType.DELETED, this::sectionChanged);
+		listenFor(TraceEvents.SECTION_ADDED, this::sectionChanged);
+		listenFor(TraceEvents.SECTION_CHANGED, this::sectionChanged);
+		listenFor(TraceEvents.SECTION_DELETED, this::sectionChanged);
 
-		listenFor(TraceBreakpointChangeType.ADDED, this::breakpointChanged);
-		listenFor(TraceBreakpointChangeType.CHANGED, this::breakpointChanged);
-		listenFor(TraceBreakpointChangeType.LIFESPAN_CHANGED, this::breakpointChanged);
-		listenFor(TraceBreakpointChangeType.DELETED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_ADDED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointChanged);
 
-		listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+		listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
+
+		listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+		listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+
+		listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 	}
 
 	public MemviewProvider getProvider() {
@@ -99,10 +108,14 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		AddressFactory factory = thread.getTrace().getBaseAddressFactory();
 		AddressSpace defaultSpace = factory.getDefaultAddressSpace();
 		Long threadId = thread.getKey();
+
 		AddressRange rng = rng(defaultSpace, threadId, threadId);
-		MemoryBox box = new MemoryBox("Thread " + thread.getName(), MemviewBoxType.THREAD, rng,
-			thread.getLifespan());
-		updateList.add(box);
+		TraceObject obj = thread.getObject();
+		obj.getCanonicalParents(Lifespan.ALL).forEach(p -> {
+			MemoryBox box = new MemoryBox(currentTrace, "Thread " + thread.getName(p.getMinSnap()),
+				MemviewBoxType.THREAD, rng, p.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -110,9 +123,16 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		if (!trackRegions || !trackTrace) {
 			return;
 		}
-		MemoryBox box = new MemoryBox("Region " + region.getName(), MemviewBoxType.VIRTUAL_ALLOC,
-			region.getRange(), region.getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = region.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceMemoryRegion.KEY_RANGE, true).forEach(v -> {
+			if (region.getName(v.getMinSnap()).equals("full memory")) {
+				return;
+			}
+			MemoryBox box = new MemoryBox(currentTrace, "Region " + region.getName(v.getMinSnap()),
+				MemviewBoxType.REGION, v.castValue(), v.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -120,13 +140,13 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		if (!trackModules || !trackTrace) {
 			return;
 		}
-		AddressRange range = module.getRange();
-		if (range == null) {
-			return;
-		}
-		MemoryBox box = new MemoryBox("Module " + module.getName(), MemviewBoxType.MODULE, range,
-			module.getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = module.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceModule.KEY_RANGE, true).forEach(v -> {
+			MemoryBox box = new MemoryBox(currentTrace, "Module " + module.getName(v.getMinSnap()),
+				MemviewBoxType.MODULE, v.castValue(), v.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -134,19 +154,29 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		if (!trackSections || !trackTrace) {
 			return;
 		}
-		MemoryBox box = new MemoryBox("Section " + section.getName(), MemviewBoxType.IMAGE,
-			section.getRange(), section.getModule().getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = section.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceSection.KEY_RANGE, true).forEach(v -> {
+			MemoryBox box = new MemoryBox(currentTrace, "Module " + section.getName(v.getMinSnap()),
+				MemviewBoxType.IMAGE, v.castValue(), v.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
-	private void breakpointChanged(TraceBreakpoint bpt) {
+	private void breakpointChanged(TraceBreakpointLocation bpt) {
 		if (!trackBreakpoints || !trackTrace) {
 			return;
 		}
-		MemoryBox box = new MemoryBox("Breakpoint " + bpt.getName(), MemviewBoxType.BREAKPOINT,
-			bpt.getRange(), bpt.getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = bpt.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					MemoryBox box =
+						new MemoryBox(currentTrace, "Module " + bpt.getName(v.getMinSnap()),
+							MemviewBoxType.BREAKPOINT, v.castValue(), v.getLifespan());
+					updateList.add(box);
+				});
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -155,9 +185,29 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			return;
 		}
 		Lifespan lifespan = range.getLifespan();
-		MemoryBox box = new MemoryBox("BytesChanged " + range.description(),
+		MemoryBox box = new MemoryBox(currentTrace, "BytesChanged " + range.description(),
 			MemviewBoxType.WRITE_MEMORY, range.getRange(), lifespan);
 		updateList.add(box);
+		updateLabelDebouncer.contact(null);
+	}
+
+	private void valueCreated(TraceObjectValue value) {
+		if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+			provider.fireTableDataChanged();
+		}
+	}
+
+	private void valueDeleted(TraceObjectValue value) {
+		if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+			provider.fireTableDataChanged();
+		}
+	}
+
+	private void objectRestored(DomainObjectChangeRecord domainObjectChangeRecord) {
+		if (!trackTrace) {
+			return;
+		}
+		processTrace(currentTrace);
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -189,6 +239,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			removeListener();
 		}
 		current = coordinates;
+		currentTrace = current.getTrace();
 		if (doListeners) {
 			addListener();
 		}
@@ -229,7 +280,10 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 	private void processTrace(Trace trace) {
 		updateList.clear();
-		provider.reset();
+		//provider.reset();
+		if (!provider.isVisible()) {
+			return;
+		}
 		TraceThreadManager threadManager = trace.getThreadManager();
 		for (TraceThread thread : threadManager.getAllThreads()) {
 			threadChanged(thread);
@@ -237,7 +291,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		TraceModuleManager moduleManager = trace.getModuleManager();
 		for (TraceModule module : moduleManager.getAllModules()) {
 			moduleChanged(module);
-			Collection<? extends TraceSection> sections = module.getSections();
+			Collection<? extends TraceSection> sections = module.getAllSections();
 			for (TraceSection section : sections) {
 				sectionChanged(section);
 			}
@@ -247,7 +301,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			regionChanged(region);
 		}
 		TraceBreakpointManager breakpointManager = trace.getBreakpointManager();
-		for (TraceBreakpoint bpt : breakpointManager.getAllBreakpoints()) {
+		for (TraceBreakpointLocation bpt : breakpointManager.getAllBreakpointLocations()) {
 			breakpointChanged(bpt);
 		}
 		updateLabelDebouncer.contact(null);

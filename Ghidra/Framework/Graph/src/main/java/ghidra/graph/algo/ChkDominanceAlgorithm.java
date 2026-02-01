@@ -232,7 +232,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 			}
 
 			V dominator = getImmediateDominator(v);
-			if (!Objects.equals(dominator, v)) {
+			if (dominator != null && !Objects.equals(dominator, v)) {
 				dg.addEdge(new DefaultGEdge<>(dominator, v));
 			}
 		}

@@ -175,7 +175,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
-		expectedAddresses.add(address(10), address(15));
+		expectedAddresses.add(address(10), address(17));
 		expectedAddresses.add(address(20), address(25));
 
 		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
@@ -580,7 +580,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
-		expectedAddresses.add(address(16), address(17));
+		expectedAddresses.add(address(14), address(17));
 
 		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
 

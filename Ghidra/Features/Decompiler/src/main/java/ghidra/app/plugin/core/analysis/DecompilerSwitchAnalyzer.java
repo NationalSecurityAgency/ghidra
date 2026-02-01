@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.analysis;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import java.math.BigInteger;
 
 import generic.concurrent.*;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -32,8 +30,11 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.InjectPayload;
+import ghidra.program.model.lang.PcodeInjectLibrary;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
@@ -53,10 +54,11 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 	public static final int OPTION_DEFAULT_DECOMPILER_TIMEOUT_SECS = 60;
 	private int decompilerTimeoutSecondsOption = OPTION_DEFAULT_DECOMPILER_TIMEOUT_SECS;
 
-	private boolean hitNonReturningFunction = false;
+	// cache for pcode callother injection payloads
+	private HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<>();
 
-	private Register isaModeSwitchRegister = null;
-	private Register isaModeRegister = null;
+	private boolean hitNonReturningThunkFunction = false;
+
 
 //==================================================================================================
 // Interface Methods
@@ -95,21 +97,18 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		isaModeSwitchRegister = program.getRegister("ISAModeSwitch");
-		isaModeRegister = program.getRegister("ISA_MODE");
-
 		try {
 			ArrayList<Address> locations = findLocations(program, set, monitor);
 			if (locations.isEmpty()) {
 				return true;
 			}
 
-			List<Function> definedFunctions = new ArrayList<>();
-			List<Function> undefinedFunctions = new ArrayList<>();
+			Collection<Function> definedFunctions = new HashSet<>();
+			Collection<Function> undefinedFunctions = new HashSet<>();
 			findFunctions(program, locations, definedFunctions, undefinedFunctions, monitor);
 
-			if (hitNonReturningFunction) {
-				hitNonReturningFunction = false;
+			if (hitNonReturningThunkFunction) {
+				hitNonReturningThunkFunction = false;
 				// if hit a non-returning function, code needs to be fixed up
 				//  before wasting time on analyzing potentially bad code
 				// This will also clean out locations that were thunks for the next go round.
@@ -210,8 +209,9 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			}
 			// kids, don't do thunks
 			if (function.isThunk()) {
+				// unless they are non-returning
 				if (function.hasNoReturn()) {
-					hitNonReturningFunction = true;
+					hitNonReturningThunkFunction = true;
 				}
 				continue;
 			}
@@ -224,6 +224,16 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
+	/**
+	 * Find locations that could be an unrecovered switches
+	 * 
+	 * @param program program
+	 * @param set area of program to check
+	 * @param monitor monitor
+	 * @return list of addresses that could be a switch
+	 * 
+	 * @throws CancelledException if monitor cancels
+	 */
 	private ArrayList<Address> findLocations(Program program, AddressSetView set,
 			TaskMonitor monitor) throws CancelledException {
 
@@ -244,6 +254,12 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 					continue;
 				}
 			}
+			
+			// check for break type construct
+			if (hasUnrecoverableCallOther(program, instruction)) {
+				continue;
+			}
+
 
 			Address address = instruction.getMinAddress();
 			locations.add(address);
@@ -252,6 +268,110 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		}
 
 		return locations;
+	}
+
+	/**
+	 * Check an instruction for an unrecoverable computed destination due
+	 * to calling a callOther pcode op that has no associated injection.
+	 * If there is an associated injection, then it might yet be recoverable.
+	 * 
+	 * @param program program
+	 * @param instr branching instruction to check
+	 * @return true if there is a callOther that will block switch recovery
+	 */
+	private boolean hasUnrecoverableCallOther(Program program, Instruction instr) {
+		HashSet<Varnode> callOtherOutputs = new HashSet<Varnode>();
+
+		PcodeOp[] pcode = instr.getPcode(true);
+		for (PcodeOp op : pcode) {
+			if (op.getOpcode() == PcodeOp.CALLOTHER) {
+				// if callother has defined pcode inject replacement
+				// then could recover
+				if (hasPcodeInject(program, op)) {
+					continue;
+				}
+				// save callother output varnode
+				Varnode dest = op.getOutput();
+				if (dest != null) {
+					callOtherOutputs.add(dest);
+				}
+				continue;
+			}
+			if (!callOtherOutputs.isEmpty() && op.getOpcode()==PcodeOp.BRANCHIND) {
+				// check if branching to an output varnode of callother
+				if (callOtherOutputs.contains(op.getInput(0))) {
+					// target is computed from a callother output
+					return true;
+				}
+				continue;
+			}
+			
+			// if have a callother destinations, check for it as an input
+			if (!callOtherOutputs.isEmpty()) {
+				Varnode[] inputs = op.getInputs();
+				for (Varnode in : inputs) {
+					if (callOtherOutputs.contains(in)) {
+						Varnode dest = op.getOutput();
+						if (dest != null) {
+							callOtherOutputs.add(dest);
+						}
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Check if the callOther Pcode op has an associated injection
+	 * 
+	 * @param program program
+	 * @param op callother pcode op
+	 * @return true if there is a pcode injection, false otherwise 
+	 */
+	private boolean hasPcodeInject(Program program, PcodeOp op) {
+		long callOtherIndex = op.getInput(0).getOffset();
+		InjectPayload payload = findPcodeInjection(program, callOtherIndex);
+
+		return payload != null;
+	}
+	
+	/**
+	 * Find out if a callother pcode op has a pcodeInjection attached to it
+	 * 
+	 * @param program program
+	 * @param callOtherIndex callOther ID index
+	 * @return injection payload or null if no register injections
+	 */
+	private InjectPayload findPcodeInjection(Program program, long callOtherIndex) {
+		InjectPayload payload = injectPayloadCache.get(callOtherIndex);
+
+		// has a payload value for the pcode callother index
+		if (payload != null) {
+			return payload;
+		}
+
+		// value null, if contains the key, then already looked up
+		if (injectPayloadCache.containsKey(callOtherIndex)) {
+			return null;
+		}
+		PcodeInjectLibrary snippetLibrary = program.getCompilerSpec().getPcodeInjectLibrary();
+
+		String opName = program.getLanguage().getUserDefinedOpName((int) callOtherIndex);
+
+		// segment is special named injection
+		if ("segment".equals(opName)) {
+			payload =
+				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, "segment_pcode");
+		}
+		else {
+			payload = snippetLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, opName);
+		}
+
+		// save payload in cache for next lookup
+		injectPayloadCache.put(callOtherIndex, payload);
+		return payload;
 	}
 
 	private boolean isCallFixup(Program program, Instruction instr, FlowType flowType) {
@@ -309,12 +429,12 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						program.getFunctionManager().getFunctionContaining(location);
 					if (fixupFunc != null) {
 						CreateFunctionCmd.fixupFunctionBody(program, fixupFunc, monitor);
-						// send function back, so non-returning nature will be picked up by decompiler
+						// send function back, so non-returning nature will be picked up
 						if (fixupFunc.hasNoReturn()) {
 							return fixupFunc;
 						}
-						return null;
 					}
+					return null;
 				}
 			}
 
@@ -360,7 +480,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			// NOTE: Assumption, we have found all flows leading to the switch that might split the basic block
 
 			final AtomicInteger foundCount = new AtomicInteger(0);
-			SymbolicPropogator prop = new SymbolicPropogator(program);
+			SymbolicPropogator prop = new SymbolicPropogator(program,false);
 			prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
 				new ContextEvaluatorAdapter() {
 					@Override
@@ -370,30 +490,8 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						if (refType.isComputed() && refType.isFlow() &&
 							program.getMemory().contains(address)) {
 							foundCount.incrementAndGet();
-							// don't propagate low code mode, let something else do that
-							// propogateCodeMode(context, address);
-							// don't make references, let other analysis do this
-							//return true;
 						}
 						return false;
-					}
-
-					private void propogateCodeMode(VarnodeContext context, Address addr) {
-						// get CodeModeRegister and flow it to destination, if it is set here
-
-						if (isaModeSwitchRegister == null) {
-							return;
-						}
-						BigInteger value = context.getValue(isaModeSwitchRegister, false);
-						if (value != null && program.getListing().getInstructionAt(addr) == null) {
-							try {
-								program.getProgramContext()
-										.setValue(isaModeRegister, addr, addr, value);
-							}
-							catch (ContextChangeException e) {
-								// ignore
-							}
-						}
 					}
 				}, false, monitor);
 

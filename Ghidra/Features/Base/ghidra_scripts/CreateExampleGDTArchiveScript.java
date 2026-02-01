@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,9 @@ import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
-import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.util.Msg;
 
 public class CreateExampleGDTArchiveScript extends GhidraScript {
 
@@ -69,13 +67,9 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 		
 		File f = getArchiveFile(dataTypeFile);
 		
-        FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(f);
-        
-		CParseResults results = CParserUtils.parseHeaderFiles(openTypes, filenames, includePaths, args, dtMgr, languageID, compiler, monitor);
-		
-		Msg.info(this, results.getFormattedParseMessage(null));
+		FileDataTypeManager dtMgr = CParserUtils.parseHeaderFiles(openTypes, filenames,
+			includePaths, args, f.getAbsolutePath(), languageID, compiler, monitor);
 
-		dtMgr.save();
 		dtMgr.close();
 	}
 
@@ -116,11 +110,10 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 		};
 		
 		String includeFiles[] = {
-			headerFilePath+"/VC/VS22/10.0.190141.0",
-			headerFilePath+"/VC/VS22/10.0.19041.0/um",
+			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.29.30133/include",
 			headerFilePath+"/VC/VS22/10.0.19041.0/shared",
 			headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
-			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.30.30705/include",			
+			headerFilePath+"/VC/VS22/10.0.19041.0/um",
 		};
 		
 		String args[] = {
@@ -258,8 +251,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"af_irda.h",
 				"in6addr.h",
 				"mstcpip.h",
-				"ws2def.h",
-				"winsock.h",
 				"winsock2.h",
 				"nsemail.h",
 				"nspapi.h",

@@ -20,13 +20,11 @@ import java.util.List;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
 
 import docking.widgets.table.RowObjectTableModel;
 
-/**
- * Table model used by {@link ColumnTableFilterTest}
- */
-class TestTableModel implements RowObjectTableModel<Integer> {
+public class TestTableModel extends AbstractTableModel implements RowObjectTableModel<Integer> {
 
 	private List<ColumnTestData<?>> columns = new ArrayList<>();
 	private int rowCount = 0;

@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.app.services.BlockModelService;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressRangeIterator;
@@ -37,11 +36,8 @@ import ghidra.util.task.TaskMonitor;
  * Creates a folder for each code block in the iterator.
  * For each code block, gets an iterator over code blocks containing the code block.
  * For each of these code blocks, create a fragment and move the code units to the fragment.  
- * 
- *   
- *
  */
-public class ModuleAlgorithmCmd extends BackgroundCommand {
+public class ModuleAlgorithmCmd extends BackgroundCommand<Program> {
 
 	private static final String NEW_MODULE_SUFFIX = " [Subroutine Tree]";
 	private static final String PROGRAM_CHANGED_MESSAGE =
@@ -71,14 +67,9 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 		this.partitioningModelName = partitioningModelName;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
-		Program program = (Program) obj;
 		ProgramModule root = program.getListing().getRootModule(treeName);
 
 		try {
@@ -103,13 +94,6 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 		this.tool = tool;
 	}
 
-	/**
-	 * 
-	 * @param monitor
-	 * @throws NotFoundException
-	 * @throws NotEmptyException
-	 * @throws DuplicateNameException
-	 */
 	private boolean applyModel(Program program, ProgramModule root, TaskMonitor monitor)
 			throws NotFoundException, NotEmptyException, DuplicateNameException {
 
@@ -125,9 +109,8 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 				(SubroutineBlockModel) blockModelService.getActiveSubroutineModel(program);
 		}
 		else {
-			partitioningModel =
-				(SubroutineBlockModel) blockModelService.getNewModelByName(partitioningModelName,
-					program);
+			partitioningModel = (SubroutineBlockModel) blockModelService
+					.getNewModelByName(partitioningModelName, program);
 		}
 		SubroutineBlockModel baseModel = partitioningModel.getBaseSubroutineModel();
 
@@ -315,6 +298,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 				module.setName(baseName + numKidsPrefix + module.getNumChildren() + "]");
 			}
 			catch (DuplicateNameException e) {
+				// ignore
 			}
 		}
 	}

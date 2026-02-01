@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -49,21 +50,21 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static PointerDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+	static PointerDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new PointerDBAdapterV2(handle, tablePrefix, true);
 		}
 		try {
 			return new PointerDBAdapterV2(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			PointerDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
@@ -110,9 +111,6 @@ abstract class PointerDBAdapter implements RecordTranslator {
 		}
 	}
 
-	/**
-	 *
-	 */
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	/**
@@ -163,4 +161,10 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	 * @throws IOException if the database can't be accessed.
 	 */
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
+
+	/**
+	 * Get the number of pointer datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 }

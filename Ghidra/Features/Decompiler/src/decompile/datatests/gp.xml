@@ -1,0 +1,35 @@
+<decompilertest>
+<!-- Example of MIPS -fPIC code storing the gp register on the stack.
+     The decompiler needs to be able to propagate the constant through the stack location.
+     This allows the printf call and "Hello" string to be recovered. -->
+<binaryimage arch="MIPS:BE:32:default:default">
+<bytechunk space="ram" offset="0x410040" readonly="true">
+3c1c0041279c00200399e02127bdffd0
+8f990094afbf0024afb00028afbc0020
+008080250320f80927a400188fbc0020
+020028258f8400908f99009800000000
+0320f809248400008fbf00248fa2001c
+8fb0002003e0000827bd0028
+</bytechunk>
+<bytechunk space="ram" offset="0x4100a0" readonly="true">
+48656c6c6f00
+</bytechunk>
+<bytechunk space="ram" offset="0x4100b0" readonly="true">
+004100a00041003000410024
+</bytechunk>
+<symbol space="ram" offset="0x410024" name="printf"/>
+<symbol space="ram" offset="0x410030" name="populate"/>
+<symbol space="ram" offset="0x410040" name="test_gp"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>set track t9 0x0 0x410040 0x410041</com>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>lo fu test_gp</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Gp Test #1" min="1" max="1">populate\(axStack_18\);</stringmatch>
+<stringmatch name="Gp Test #2" min="1" max="1">printf\("Hello",param_1\);</stringmatch>
+</decompilertest>

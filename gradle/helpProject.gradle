@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -197,14 +197,14 @@ def getModuleResourcesDirs(Collection<File> fullClasspath) {
 				  .findAll(dir -> dir.exists())
 }
 
-// Locatates 'buildHelp' tasks in projects that this project depends on.  The output of the tasks
-// is the module's help jar, which is only used to build help and not in the final release.  The
-// jar file names follow this format: <Module>-help.jar.
+// Locates 'buildModuleHelp' tasks in projects that this project depends on.  The output of the
+// tasks is the module's help jar, which is only used to build help and not in the final release.  
+// The jar file names follow this format: <Module>-help.jar.
 def getDependentProjectHelpTasks(Collection<File> fullClasspath) {
 
 	def myModules = getMyModules(fullClasspath)
 	def myProjects = filterProjectsBy(myModules)
-	return myProjects.collect(p -> p.tasks.findByPath('buildHelp'))
+	return myProjects.collect(p -> p.tasks.findByPath('buildModuleHelp'))
 					 .findAll(t -> t != null)
 }
 
@@ -229,11 +229,13 @@ tasks.register('cleanHelp') {
 // Task for calling the java help indexer, which creates a searchable index of the help contents
 tasks.register('indexHelp', JavaExec) {
 
-	group "private"
-	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
+	group = "private"
+	description = "indexes the helps files for this module.  [gradle/helpProject.gradle]"
 
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
+
+	onlyIf ("There is no help root directory") { helpRootDir.exists() }
 
 	inputs.dir helpRootDir
 	outputs.dir outputFile
@@ -272,6 +274,9 @@ tasks.register('indexHelp', JavaExec) {
 		// tell the indexer where send its output	
 		args '-db', outputFile.absolutePath			
 		
+		// debug
+		// args '-verbose'		
+		
 		// for each help file that was found, add it as an argument to the indexer
 		helpFiles.each { File file ->
 			args "${file.absolutePath}"
@@ -279,17 +284,47 @@ tasks.register('indexHelp', JavaExec) {
 	}
 }
 
+// Task for building Markdown in src/global/docs to HTML
+//      - the files generated will be placed in a build directory usable during development mode
+tasks.register('buildGlobalMarkdown') {
+	group = "private"	
+	dependsOn ':MarkdownSupport:classes'
+	
+	FileTree markdownFiles = this.project.fileTree('src/global/docs') {
+		include '*.md'
+	}
+	
+	onlyIf ("There are no markdown files") { !markdownFiles.isEmpty() }
+	
+	inputs.files markdownFiles  
+	
+	def markdownProject = project(':MarkdownSupport')
+	
+	doFirst {
+		markdownFiles.each { f ->
+			def htmlName = f.name[0..-3] + "html"
+			providers.javaexec {
+				classpath = markdownProject.sourceSets.main.runtimeClasspath
+				mainClass = 'ghidra.markdown.MarkdownToHtml'
+				args f
+				args file("build/src/global/docs/${htmlName}")
+			}.result.get()
+		}
+	}
+}
+
+
 
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
 //      - validates help
-//      - the files generated will be placed in a diretory usable during development mode and will
+//      - the files generated will be placed in a directory usable during development mode and will
 //        eventually be placed in:
 //				- the <Module>.jar file in production mode, or
 //				- the <Module>-help.jar file in development mode
 tasks.register('buildHelpFiles', JavaExec) { 
 
-	group "private"	
+	group = "private"	
 
 	dependsOn 'indexHelp'
 
@@ -302,7 +337,9 @@ tasks.register('buildHelpFiles', JavaExec) {
 
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
-
+	
+	onlyIf ("There is no help root directory") { helpRootDir.exists() }
+	
 	// 
 	// Inputs (used for incremental building):
 	//  1) Java files in the Help module used to build help 
@@ -321,7 +358,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 		// configuration time.		
 		return getHelpInputs(sourceSets.main.runtimeClasspath.files)
 	})
-
+	
 	outputs.dir outputDir
 
 	mainClass = 'help.GHelpBuilder'
@@ -330,15 +367,18 @@ tasks.register('buildHelpFiles', JavaExec) {
 	
 	args '-o', "${outputDir.absolutePath}"	// set the output directory arg
 
+	// to allow remote debugging of the help build jvm
+	// jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=13001'
 	
-	// args '-debug' // print debug info
+	// print debug info
+	// args '-debug' 
 
 	doFirst {		
 	
 		//
 		// The classpath needs to include items used by internal Java code to validate help 
 		// resources:
-		// 1) The jar path of each dependent Module.  The jar file will be on the 'main' runtime 
+		// 1) The jar path of each depended upon Module.  The jar file will be on the 'main' runtime 
 		//    classpath, but may not yet exist.  Regardless, the Java code will use the path to 
 		//    locate the module for that path.
 		// 2) Each module's 'src/main/resources' dir (this is needed when the jar files from 1
@@ -357,7 +397,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 
 		// To build help, the validator needs any other help content that this module may reference.
 		// Add each of these dependencies as an argument to the validator.		
-		// The dependency file is the <Module>-help.jar file from the 'buildHelp' tasks upon which
+		// The dependency file is <Module>-help.jar from the 'buildModuleHelp' tasks upon which
 		// we depend.
 		def buildHelpTasks = getDependentProjectHelpTasks(sourceSets.main.runtimeClasspath.files)		
 		buildHelpTasks.each {
@@ -368,7 +408,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 				args "${helpJar.absolutePath}"
 			}
 		}		
-		
+
 		// The help dir to process.  This needs to be the last argument to the process, 
 		// thus, this is why it is inside of this block
 		args "${helpRootDir.absolutePath}"	
@@ -385,15 +425,16 @@ tasks.register('buildHelpFiles', JavaExec) {
  * this jar is <Module>-help.jar.  This is in contrast to each module's jar which itself contains
  * all help needed in production.  The module's jar filename is <Module>.jar.
  */
-tasks.register('buildHelp', Jar) {
+tasks.register('buildModuleHelp', Jar) {
 
-	group rootProject.GHIDRA_GROUP
-	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
+	group = rootProject.GHIDRA_GROUP
+	description = "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
 
 	dependsOn tasks.named('buildHelpFiles')
-    duplicatesStrategy 'exclude'
+	dependsOn tasks.named('buildGlobalMarkdown')
+    duplicatesStrategy = 'exclude'
     
-	from "build/help/main"		// include the generated help and index files from 
+	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
 
 	destinationDirectory = file("build/libs")
@@ -404,8 +445,8 @@ tasks.register('buildHelp', Jar) {
 // Task for finding unused images that are not referenced from Ghidra help files 
 tasks.register('findUnusedHelp', JavaExec) {
 
-	group "private"
-	description "      Finds unused help images for this module.  [gradle/helpProject.gradle]\n"	
+	group = "private"
+	description = "      Finds unused help images for this module.  [gradle/helpProject.gradle]\n"	
 
 	File helpRootDir = file('src/main/help/help')	
 	inputs.dir helpRootDir
@@ -428,17 +469,17 @@ tasks.register('findUnusedHelp', JavaExec) {
 
 // include the help into the module's jar
 jar {
-    duplicatesStrategy 'exclude'
+    duplicatesStrategy = 'exclude'
 	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
 }
 
 // build the help whenever this module's jar file is built
-processResources.dependsOn buildHelp
-jar.dependsOn buildHelp
+processResources.dependsOn buildModuleHelp
+jar.dependsOn buildModuleHelp
 
 
 // make sure generated help directories exist during prepdev so that the directories are created and 
 // eclipse doesn't complain about missing src directories.
-rootProject.prepDev.dependsOn buildHelp
+rootProject.prepDev.dependsOn buildModuleHelp
 

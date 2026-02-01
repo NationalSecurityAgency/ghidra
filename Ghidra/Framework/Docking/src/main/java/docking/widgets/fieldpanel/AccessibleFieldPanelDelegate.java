@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 import javax.accessibility.*;
-import javax.swing.JComponent;
 
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
@@ -32,9 +31,9 @@ import docking.widgets.fieldpanel.support.*;
 /**
  * Contains all the code for implementing the AccessibleFieldPanel which is an inner class in
  * the FieldPanel class. The AccessibleFieldPanel has to be declared as an inner class because
- * it needs to extends AccessibleJComponent which is a non-static inner class of JComponent. 
+ * it needs to extend AccessibleJComponent which is a non-static inner class of JComponent. 
  * However, we did not want to put all the logic in there as FieldPanel is already an
- * extremely large and complex class. Also, by delegating the the logic, testing is much
+ * extremely large and complex class. Also, by delegating the logic, testing is much
  * easier.
  * <P>
  * The model for accessibility for the FieldPanel is a bit complex because
@@ -58,7 +57,7 @@ public class AccessibleFieldPanelDelegate {
 	private List<AccessibleLayout> accessibleLayouts;
 	private int totalFieldCount;
 	private AccessibleField[] fieldsCache;
-	private JComponent panel;
+	private FieldPanel panel;
 
 	// caret position tracking
 	private FieldLocation cursorLoc;
@@ -71,7 +70,7 @@ public class AccessibleFieldPanelDelegate {
 	private FieldSelection currentSelection;
 
 	public AccessibleFieldPanelDelegate(List<AnchoredLayout> layouts, AccessibleContext context,
-			JComponent panel) {
+			FieldPanel panel) {
 		this.context = context;
 		this.panel = panel;
 		setLayouts(layouts);
@@ -84,6 +83,7 @@ public class AccessibleFieldPanelDelegate {
 	 */
 	public void setLayouts(List<AnchoredLayout> layouts) {
 		totalFieldCount = 0;
+		cursorField = null;
 		accessibleLayouts = new ArrayList<>(layouts.size());
 		for (AnchoredLayout layout : layouts) {
 			AccessibleLayout accessibleLayout = new AccessibleLayout(layout, totalFieldCount);
@@ -92,6 +92,9 @@ public class AccessibleFieldPanelDelegate {
 		}
 		fieldsCache = new AccessibleField[totalFieldCount];
 		context.firePropertyChange(ACCESSIBLE_INVALIDATE_CHILDREN, null, panel);
+		if (cursorLoc != null) {
+			setCaret(cursorLoc, EventTrigger.GUI_ACTION);
+		}
 	}
 
 	/**
@@ -108,6 +111,7 @@ public class AccessibleFieldPanelDelegate {
 			AccessibleTextSequence newSequence = getAccessibleTextSequence(cursorField);
 			String oldDescription = description;
 			description = generateDescription();
+
 			if (trigger == EventTrigger.GUI_ACTION) {
 				context.firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, oldSequence, newSequence);
 				context.firePropertyChange(ACCESSIBLE_DESCRIPTION_PROPERTY, oldDescription,
@@ -212,15 +216,33 @@ public class AccessibleFieldPanelDelegate {
 	 * @return the AccessibleField associated with the given field location
 	 */
 	public AccessibleField getAccessibleField(FieldLocation loc) {
-		int result = Collections.binarySearch(accessibleLayouts, loc.getIndex(),
+		AccessibleLayout accessibleLayout = getAccessibleLayout(loc.getIndex());
+		if (accessibleLayout != null) {
+			return getAccessibleField(accessibleLayout.getStartingFieldNum() + loc.getFieldNum());
+		}
+
+		LayoutModel layoutModel = panel.getLayoutModel();
+		Layout layout = layoutModel.getLayout(loc.getIndex());
+		if (layout == null) {
+			return null;
+		}
+		Field field = layout.getField(loc.getFieldNum());
+		return new AccessibleField(field, panel, loc.getFieldNum(), null);
+	}
+
+	private AccessibleLayout getAccessibleLayout(BigInteger index) {
+		if (accessibleLayouts == null) {
+			return null;
+		}
+		int result = Collections.binarySearch(accessibleLayouts, index,
 			Comparator.comparing(
 				o -> o instanceof AccessibleLayout lh ? lh.getIndex() : (BigInteger) o,
 				BigInteger::compareTo));
+
 		if (result < 0) {
 			return null;
 		}
-		AccessibleLayout layout = accessibleLayouts.get(result);
-		return getAccessibleField(layout.getStartingFieldNum() + loc.getFieldNum());
+		return accessibleLayouts.get(result);
 	}
 
 	private AccessibleField createAccessibleField(int fieldNum) {
@@ -321,7 +343,7 @@ public class AccessibleFieldPanelDelegate {
 	 */
 	public Accessible getAccessibleAt(Point p) {
 		int result = Collections.binarySearch(accessibleLayouts, p.y, Comparator
-			.comparingInt(o -> o instanceof AccessibleLayout lh ? lh.getYpos() : (Integer) o));
+				.comparingInt(o -> o instanceof AccessibleLayout lh ? lh.getYpos() : (Integer) o));
 
 		if (result < 0) {
 			result = -result - 2;

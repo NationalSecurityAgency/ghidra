@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import db.*;
 import db.util.ErrorHandler;
 import generic.util.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
 import ghidra.program.database.map.AddressMap;
@@ -33,7 +34,7 @@ import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.datastruct.ObjectArray;
 import ghidra.util.exception.*;
@@ -51,6 +52,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	private boolean upgrade = false;
 
 	private Map<String, BookmarkType> typesByName = new TreeMap<>();
+	private Set<String> definedTypes = new HashSet<>();
 	private ObjectArray typesArray = new ObjectArray();
 	private Lock lock;
 
@@ -65,11 +67,11 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	 * schema
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	public BookmarkDBManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public BookmarkDBManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
 		this.addrMap = addrMap;
 		this.lock = lock;
-		upgrade = (openMode == DBConstants.UPGRADE);
+		upgrade = (openMode == OpenMode.UPGRADE);
 		bookmarkTypeAdapter = BookmarkTypeDBAdapter.getAdapter(handle, openMode);
 		int[] types = bookmarkTypeAdapter.getTypeIds();
 		bookmarkAdapter = BookmarkDBAdapter.getAdapter(handle, openMode, types, addrMap, monitor);
@@ -112,7 +114,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
@@ -161,7 +163,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 			if (rec != null) {
 				bookmarkAdapter.updateRecord(rec);
 				Address addr = bm.getAddress();
-				program.setObjChanged(ChangeManager.DOCR_BOOKMARK_CHANGED, addr, bm, null, null);
+				program.setObjChanged(ProgramEvent.BOOKMARK_CHANGED, addr, bm, null, null);
 
 			}
 		}
@@ -211,7 +213,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 			bookmarkAdapter.addType(bmt.getTypeId());
 
 			// fire event
-			program.setObjChanged(ChangeManager.DOCR_BOOKMARK_TYPE_ADDED, bmt, null, null);
+			program.setObjChanged(ProgramEvent.BOOKMARK_TYPE_ADDED, bmt, null, null);
 
 		}
 		return bmt;
@@ -235,6 +237,11 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	}
 
 	@Override
+	public boolean isDefinedType(String type) {
+		return definedTypes.contains(type);
+	}
+
+	@Override
 	public BookmarkType defineType(String type, Icon icon, Color color, int priority) {
 		lock.acquire();
 		try {
@@ -250,6 +257,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				bmt.setIcon(icon);
 				bmt.setMarkerColor(color);
 				bmt.setMarkerPriority(priority);
+				definedTypes.add(type);
 			}
 			catch (IOException e) {
 				dbError(e);
@@ -301,7 +309,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				bm = new BookmarkDB(this, cache, rec);
 
 				// fire event
-				program.setObjChanged(ChangeManager.DOCR_BOOKMARK_ADDED, addr, bm, null, null);
+				program.setObjChanged(ProgramEvent.BOOKMARK_ADDED, addr, bm, null, null);
 			}
 			return bm;
 		}
@@ -375,7 +383,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		try {
 			bookmarkAdapter.deleteRecord(bm.getId());
 			// fire event
-			program.setObjChanged(ChangeManager.DOCR_BOOKMARK_REMOVED, addr, bm, null, null);
+			program.setObjChanged(ProgramEvent.BOOKMARK_REMOVED, addr, bm, null, null);
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -395,8 +403,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 					bookmarkAdapter.deleteType(typeId);
 					bookmarkTypeAdapter.deleteRecord(typeId);
 					bmt.setHasBookmarks(false);
-					program.setObjChanged(ChangeManager.DOCR_BOOKMARK_TYPE_REMOVED, bmt, null,
-						null);
+					program.setObjChanged(ProgramEvent.BOOKMARK_TYPE_REMOVED, bmt, null, null);
 				}
 			}
 			catch (IOException e) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		ListingTextField tf = getFieldText(function);
 		assertEquals(2, tf.getNumRows());
 
-		setBooleanOption(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, true);
+		setBooleanOption(EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY, true);
 
 		tf = getFieldText(function);
 		assertEquals(4, tf.getNumRows());
@@ -96,7 +96,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		// check existing auto comment
 		ListingTextField tf = getFieldText(addr("0x01002265"));
 		assertEquals(1, tf.getNumRows());
-		assertThat(tf.getText(), startsWith("= 01h"));
+		assertThat(tf.getText(), startsWith("= 00000001h"));
 
 		// set repeatable comment at destination
 		Address destination = addr("0x01002265");
@@ -122,7 +122,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());
 		int transactionID = program.startTransaction("test");
 		try {
-			cu.setComment(CodeUnit.EOL_COMMENT, comment);
+			cu.setComment(CommentType.EOL, comment);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -172,10 +172,10 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void setRepeatableComment(Address a, String comment) {
-		setComment(a, CodeUnit.REPEATABLE_COMMENT, comment);
+		setComment(a, CommentType.REPEATABLE, comment);
 	}
 
-	private void setComment(Address a, int commentType, String comment) {
+	private void setComment(Address a, CommentType commentType, String comment) {
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		tx(program, () -> {
 			cu.setComment(commentType, comment);

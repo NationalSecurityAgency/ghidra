@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.datamgr.actions;
 
 import java.awt.Component;
+import java.awt.event.KeyEvent;
 
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.*;
@@ -37,6 +37,7 @@ public class CreatePointerAction extends DockingAction {
 		super("Create Pointer", plugin.getName());
 		this.plugin = plugin;
 
+		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));
 		setPopupMenuData(new MenuData(new String[] { "New", "Pointer" }, null, "Create"));
 	}
 
@@ -56,7 +57,8 @@ public class CreatePointerAction extends DockingAction {
 			createNewDataType(gTree, pointerDataType, categoryPath, dataTypeManager);
 
 		DataTypesProvider provider = plugin.getProvider();
-		if (provider.isFilteringPointers()) {
+		DtFilterState filterState = provider.getFilterState();
+		if (!filterState.isShowPointers()) {
 			DataTypePath newPath = new DataTypePath(categoryPath, newDataType.getName());
 			DataTypeManager newManager = newDataType.getDataTypeManager();
 			Msg.showInfo(getClass(), gTree, "Pointers Filter Enabled",
@@ -77,7 +79,8 @@ public class CreatePointerAction extends DockingAction {
 
 	private DataType createNewDataType(Component parentComponent, DataType dataType,
 			CategoryPath categoryPath, DataTypeManager dataTypeManager) {
-		int transactionID = dataTypeManager.startTransaction("Create Typedef");
+		int transactionID =
+			dataTypeManager.startTransaction("Create Pointer " + dataType.getName());
 		try {
 			return dataTypeManager.addDataType(dataType, plugin.getConflictHandler());
 		}

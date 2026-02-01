@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.map;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -29,6 +29,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -61,7 +62,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		private DBTraceAddressSnapRangePropertyMapSpace<MyEntry, MyEntry> space2;
 		private DBTraceAddressSnapRangePropertyMapSpace<String, AltEntry> space3;
 
-		protected MyObject(DBHandle dbh, DBOpenMode openMode, Language toy, Object consumer)
+		protected MyObject(DBHandle dbh, OpenMode openMode, Language toy, Object consumer)
 				throws VersionException, IOException {
 			super(dbh, openMode, new ConsoleTaskMonitor(), "Testing", 500, 1000, consumer);
 			this.toy = toy;
@@ -70,25 +71,25 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		}
 
 		protected MyObject(Language toy, Object consumer) throws IOException, VersionException {
-			this(new DBHandle(), DBOpenMode.CREATE, toy, consumer);
+			this(new DBHandle(), OpenMode.CREATE, toy, consumer);
 		}
 
 		protected MyObject(File file, Language toy, Object consumer)
 				throws IOException, VersionException {
-			this(new DBHandle(file), DBOpenMode.UPDATE, toy, consumer);
+			this(new DBHandle(file), OpenMode.UPDATE, toy, consumer);
 		}
 
 		protected void loadSpaces() throws VersionException, IOException {
 			try (Transaction tx = this.openTransaction("Create Tables")) {
-				this.space1 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-					MyEntry::new);
-				this.space2 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-					MyEntry::new);
-				this.space3 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, AltEntry.class,
-					AltEntry::new);
+				this.space1 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				this.space2 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				this.space3 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), AltEntry.class, AltEntry::new);
 			}
 		}
 
@@ -211,8 +212,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Before
 	public void setUp() throws IOException, VersionException {
 		toy = DefaultLanguageService.getLanguageService()
-				.getLanguage(
-					new LanguageID("Toy:BE:64:default"));
+				.getLanguage(new LanguageID("Toy:BE:64:default"));
 		obj = new MyObject(toy, this);
 	}
 
@@ -224,11 +224,6 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Test
 	public void testGetAddressSpace() {
 		assertEquals(toy.getDefaultSpace(), obj.space1.getAddressSpace());
-	}
-
-	@Test
-	public void testGetThread() {
-		assertNull(obj.space1.getThread());
 	}
 
 	@Test

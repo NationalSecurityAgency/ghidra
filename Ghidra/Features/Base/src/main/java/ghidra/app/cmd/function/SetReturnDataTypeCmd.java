@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
@@ -28,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command for setting a function's return type.
  */
-public class SetReturnDataTypeCmd implements Command {
+public class SetReturnDataTypeCmd implements Command<Program> {
 	private Address entry;
 	private DataType dataType;
 	private String status;
@@ -46,22 +44,13 @@ public class SetReturnDataTypeCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Set Return Data Type";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		Function function = program.getListing().getFunctionAt(entry);
 		try {
 			function.setReturnType(dataType, source);
@@ -76,9 +65,6 @@ public class SetReturnDataTypeCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return status;

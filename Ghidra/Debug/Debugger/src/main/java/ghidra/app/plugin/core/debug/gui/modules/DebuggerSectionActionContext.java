@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,32 +15,35 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import java.util.Collection;
+import java.awt.Component;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import docking.ComponentProvider;
 import docking.DefaultActionContext;
-import docking.widgets.table.GTable;
+import ghidra.trace.model.modules.TraceSection;
 
 public class DebuggerSectionActionContext extends DefaultActionContext {
-	private final Set<SectionRow> selectedSections;
-	//private final Set<ModuleRecord> involvedModules;
+	private final Set<TraceSection> selectedSections;
+	private final boolean forcedSingle;
 
-	public DebuggerSectionActionContext(DebuggerModulesProvider provider,
-			Collection<SectionRow> selected, GTable table) {
-		super(provider, selected, table);
-		this.selectedSections = Set.copyOf(selected);
-		/*
-		 * this.involvedModules = Collections.unmodifiableSet(
-		 * selected.stream().map(SectionRecord::getModule).collect(Collectors.toSet()));
-		 */
+	public DebuggerSectionActionContext(ComponentProvider provider,
+			Set<TraceSection> selected, Component sourceComponent, boolean forcedSingle) {
+		super(provider, selected, sourceComponent);
+		this.selectedSections = selected;
+		this.forcedSingle = forcedSingle;
 	}
 
-	public Set<SectionRow> getSelectedSections() {
+	public Set<TraceSection> getSelectedSections(boolean allowExpansion, long snap) {
+		if (forcedSingle && allowExpansion) {
+			return selectedSections.stream()
+					.flatMap(s -> s.getModule().getSections(snap).stream())
+					.collect(Collectors.toUnmodifiableSet());
+		}
 		return selectedSections;
 	}
 
-	/*
-	 * // TODO: Do I need this? public Set<ModuleRecord> getInvolvedModules() { return
-	 * involvedModules; }
-	 */
+	public boolean isForcedSingle() {
+		return forcedSingle;
+	}
 }

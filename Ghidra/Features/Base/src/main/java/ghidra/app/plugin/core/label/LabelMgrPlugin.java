@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,8 @@ public class LabelMgrPlugin extends Plugin {
 		// Setup list of actions
 		setupActions();
 
-		addEditDialog = new AddEditDialog("", tool);
+		addEditDialog = new AddEditDialog("Add/Edit Label", tool);
+		addEditDialog.setReusable(true);
 	}
 
 	private void setupActions() {
@@ -114,7 +115,8 @@ public class LabelMgrPlugin extends Plugin {
 	protected void removeLabelCallback(ListingActionContext context) {
 		Symbol s = getSymbol(context);
 		if (s != null) {
-			Command cmd = new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
+			Command<Program> cmd =
+				new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
 
 			if (!tool.execute(cmd, context.getProgram())) {
 				tool.setStatusInfo(cmd.getStatusMsg());
@@ -277,7 +279,7 @@ public class LabelMgrPlugin extends Plugin {
 			addr = loc.getAddress();
 		}
 		else if (location instanceof OperandFieldLocation) {
-			Address a = ((OperandFieldLocation) location).getRefAddress();
+			Address a = location.getRefAddress();
 			addr = (a == null) ? addr : a;
 		}
 

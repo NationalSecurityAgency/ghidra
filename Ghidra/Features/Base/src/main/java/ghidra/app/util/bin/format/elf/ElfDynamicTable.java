@@ -35,33 +35,36 @@ import ghidra.util.exception.NotFoundException;
  */
 public class ElfDynamicTable implements ElfFileSection {
 
-	private List<ElfDynamic> dynamics = new ArrayList<ElfDynamic>();
+	private final List<ElfDynamic> dynamics = new ArrayList<ElfDynamic>();
 
-	private ElfHeader header;
-	private long fileOffset;
-	private long addrOffset;
+	private final ElfHeader header;
+	private final long fileOffset;
+	private final long addrOffset;
 
-	public ElfDynamicTable(BinaryReader reader, ElfHeader header,
-			long fileOffset, long addrOffset) throws IOException {
-
-		long oldptr = reader.getPointerIndex();
+	/**
+	 * Construct an ELF Dynamic data table
+	 * @param reader byte provider reader (reader is not retained and position is unaffected)
+	 * @param header elf header
+	 * @param fileOffset file offset which will be used to temporarily position reader
+	 * @param addrOffset memory address offset
+	 * @throws IOException if IO error occurs during parse
+	 */
+	public ElfDynamicTable(BinaryReader reader, ElfHeader header, long fileOffset, long addrOffset)
+			throws IOException {
 
 		this.header = header;
 		this.fileOffset = fileOffset;
 		this.addrOffset = addrOffset;
 
-		reader.setPointerIndex(fileOffset);
-
 		// Collect set of all _DYNAMIC array tags specified in .dynamic section
+		BinaryReader entryReader = reader.clone(fileOffset);
 		while (true) {
-			ElfDynamic dyn = new ElfDynamic(reader, header);
+			ElfDynamic dyn = new ElfDynamic(entryReader, header);
 			dynamics.add(dyn);
 			if (dyn.getTag() == ElfDynamicType.DT_NULL.value) {
 				break;
 			}
 		}
-
-		reader.setPointerIndex(oldptr);
 	}
 
 	/**
@@ -119,8 +122,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	 * @throws NotFoundException if requested value type not found
 	 */
 	public long getDynamicValue(long type) throws NotFoundException {
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
+		for (ElfDynamic dyn : dynamics) {
 			if (dyn.getTag() == type) {
 				return dyn.getValue();
 			}
@@ -143,8 +145,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	 * @return true if dynamic value exists
 	 */
 	public boolean containsDynamicValue(long type) {
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
+		for (ElfDynamic dyn : dynamics) {
 			if (dyn.getTag() == type) {
 				return true;
 			}

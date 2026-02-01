@@ -17,14 +17,13 @@ package ghidra.util.datastruct;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.stream.Stream;
 
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
-public abstract class WeakSet<T> implements Iterable<T> {
+public abstract class WeakSet<T> implements Set<T> {
 
 	private static final boolean WARN_ON_ANONYMOUS_VALUE =
 		SystemUtilities.isInDevelopmentMode() || SystemUtilities.isInTestingMode();
@@ -79,50 +78,46 @@ public abstract class WeakSet<T> implements Iterable<T> {
 //==================================================================================================
 
 	/**
-	 * Adds all items to this set
-	 * @param it the items
-	 */
-	public void addAll(Iterable<T> it) {
-		for (T t : it) {
-			add(t);
-		}
-	}
-
-	/**
 	 * Add the given object to the set
 	 * @param t the object to add
 	 */
-	public abstract void add(T t);
+	@Override
+	public abstract boolean add(T t);
 
 	/**
 	 * Remove the given object from the data structure
 	 * @param t the object to remove
 	 *
 	 */
-	public abstract void remove(T t);
+	@Override
+	public abstract boolean remove(Object t);
 
 	/**
 	 * Returns true if the given object is in this data structure
 	 * @param t the object
 	 * @return true if the given object is in this data structure
 	 */
-	public abstract boolean contains(T t);
+	@Override
+	public abstract boolean contains(Object t);
 
 	/**
 	 * Remove all elements from this data structure
 	 */
+	@Override
 	public abstract void clear();
 
 	/**
 	 * Return the number of objects contained within this data structure
 	 * @return the size
 	 */
+	@Override
 	public abstract int size();
 
 	/**
 	 * Return whether this data structure is empty
 	 * @return whether this data structure is empty
 	 */
+	@Override
 	public abstract boolean isEmpty();
 
 	/**
@@ -132,9 +127,36 @@ public abstract class WeakSet<T> implements Iterable<T> {
 	 */
 	public abstract Collection<T> values();
 
+	@Override
+	public Object[] toArray() {
+		return weakHashStorage.keySet().toArray();
+	}
+
+	// <T> is hiding the class declaration; it is needed to satisfy the interface
+	@SuppressWarnings("hiding")
+	@Override
+	public <T> T[] toArray(T[] a) {
+		return weakHashStorage.keySet().toArray(a);
+	}
+
+	@Override
+	public boolean containsAll(Collection<?> c) {
+		return weakHashStorage.keySet().containsAll(c);
+	}
+
+	@Override
+	public abstract boolean addAll(Collection<? extends T> c);
+
+	@Override
+	public abstract boolean retainAll(Collection<?> c);
+
+	@Override
+	public abstract boolean removeAll(Collection<?> c);
+
 	/**
 	 * Returns a stream of the values of this collection.
 	 * @return a stream of the values of this collection.
 	 */
+	@Override
 	public abstract Stream<T> stream();
 }

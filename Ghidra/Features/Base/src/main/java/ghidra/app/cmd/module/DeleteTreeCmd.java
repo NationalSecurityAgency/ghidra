@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -25,9 +23,9 @@ import ghidra.program.model.listing.Program;
  * 
  * 
  */
-public class DeleteTreeCmd implements Command {
+public class DeleteTreeCmd implements Command<Program> {
 	private String treeName;
-	
+
 	/**
 	 * Constructor for DeleteTreeCmd.
 	 * @param treeName name of tree to delete
@@ -36,25 +34,17 @@ public class DeleteTreeCmd implements Command {
 		this.treeName = treeName;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
 		return program.getListing().removeTree(treeName);
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Delete " + treeName;
 	}

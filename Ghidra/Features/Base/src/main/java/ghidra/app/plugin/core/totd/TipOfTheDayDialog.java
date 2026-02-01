@@ -56,7 +56,6 @@ class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 		Icon tipIcon = new GIcon("icon.plugin.totd.provider");
 
 		tipArea = new JTextArea(4, 30);
-		tipArea.setEditable(false);
 		tipArea.setFont(Gui.getFont(FONT_ID));
 		tipArea.setWrapStyleWord(true);
 		tipArea.setLineWrap(true);
@@ -139,6 +138,8 @@ class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 		}
 		String tip = tips.get(tipIndex);
 		tipArea.setText(tip);
+		tipArea.getAccessibleContext().setAccessibleName("Ghidra Tip of The Day");
+		tipArea.getAccessibleContext().setAccessibleDescription(tip);
 	}
 
 	int getTipIndex() {

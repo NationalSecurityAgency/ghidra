@@ -45,6 +45,12 @@ public class GhidraProjectCreatorPreferences {
 	static final String GHIDRA_LAST_PROJECT_ROOT_PATH = "ghidradev.ghidraLastProjectRootPath";
 
 	/**
+	 * Path to the last used Ghidra module source directory.
+	 */
+	static final String GHIDRA_LAST_MODULE_SOURCE_DIR_PATH =
+		"ghidradev.ghidraLastModuleSourceDirPath";
+
+	/**
 	 * The last used Gradle distribution.
 	 */
 	static final String GHIDRA_LAST_GRADLE_DISTRIBUTION = "ghidradev.ghidraLastGradleDistribution";
@@ -121,6 +127,28 @@ public class GhidraProjectCreatorPreferences {
 	public static void setGhidraLastProjectRootPath(String path) {
 		IPreferenceStore prefs = Activator.getDefault().getPreferenceStore();
 		prefs.setValue(GHIDRA_LAST_PROJECT_ROOT_PATH, path);
+	}
+
+	/**
+	 * Gets the last used Ghidra module source directory path that's defined in the preferences.
+	 * 
+	 * @return The last used Ghidra module source directory path that's defined in the preferences.
+	 *   Could be the empty string.
+	 */
+	public static String getGhidraLastModuleSourceDirPath() {
+		IPreferenceStore prefs = Activator.getDefault().getPreferenceStore();
+		return prefs.getString(GHIDRA_LAST_MODULE_SOURCE_DIR_PATH);
+	}
+
+	/**
+	 * Sets the last used Ghidra module source directory path that's defined in the preferences.
+	 * 
+	 * @param path The last used Ghidra module source directory path that's defined in the 
+	 *   preferences.
+	 */
+	public static void setGhidraLastModuleSourceDirPath(String path) {
+		IPreferenceStore prefs = Activator.getDefault().getPreferenceStore();
+		prefs.setValue(GHIDRA_LAST_MODULE_SOURCE_DIR_PATH, path);
 	}
 
 	/**

@@ -115,6 +115,7 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 		String name = getCurrentFieldName();
 		setTitle("Edit Field Name: " + dataTypeComponent.getParent().getName() + "." + name);
 		fieldName.setText(name);
+		fieldName.selectAll();
 		clearStatusText();
 		tool.showDialog(this);
 	}
@@ -129,11 +130,11 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 
 		nameBorder = BorderFactory.createTitledBorder("Enter Field Name");
 		mainPanel.setBorder(nameBorder);
-
+		fieldName.getAccessibleContext().setAccessibleName("Name");
 		mainPanel.add(fieldName, BorderLayout.CENTER);
 
 		mainPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Edit Field Name");
 		return mainPanel;
 	}
 

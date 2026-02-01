@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.BookmarkType;
 
-/**
- * 
- */
 public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	private BookmarkDBManager mgr;
@@ -79,7 +76,8 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	@Override
 	public String getCategory() {
-		return record.getString(BookmarkDBAdapter.CATEGORY_COL);
+		String category = record.getString(BookmarkDBAdapter.CATEGORY_COL);
+		return category != null ? category : ""; // NOTE: Old data may have stored null
 	}
 
 	public void setComment(String comment) {
@@ -95,7 +93,8 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	@Override
 	public String getComment() {
-		return record.getString(BookmarkDBAdapter.COMMENT_COL);
+		String comment = record.getString(BookmarkDBAdapter.COMMENT_COL);
+		return comment != null ? comment : ""; // NOTE: Old data may have stored null
 	}
 
 	@Override

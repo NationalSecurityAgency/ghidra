@@ -199,14 +199,14 @@ public class RegisterFieldFactory extends FieldFactory {
 		return setRegisters;
 	}
 
-	private FieldElement[] getFieldElements(String[] registerStrings) {
-		FieldElement[] fieldElements = new FieldElement[registerStrings.length];
+	private List<FieldElement> getFieldElements(String[] registerStrings) {
+		List<FieldElement> elements = new ArrayList<>(registerStrings.length);
 		for (int i = 0; i < registerStrings.length; i++) {
 			AttributedString str =
 				new AttributedString(registerStrings[i], ListingColors.REGISTER, getMetrics());
-			fieldElements[i] = new TextFieldElement(str, i, 0);
+			elements.add(new TextFieldElement(str, i, 0));
 		}
-		return fieldElements;
+		return elements;
 	}
 
 	private ListingTextField getTextField(String[] registerStrings, ProxyObj<?> proxy, int xStart) {
@@ -214,9 +214,9 @@ public class RegisterFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		FieldElement[] fieldElements = getFieldElements(registerStrings);
-		return ListingTextField.createMultilineTextField(this, proxy, fieldElements, xStart, width,
-			Integer.MAX_VALUE, hlProvider);
+		List<FieldElement> elements = getFieldElements(registerStrings);
+		return ListingTextField.createMultilineTextField(this, proxy, elements, xStart, width,
+			hlProvider);
 	}
 
 	private class RegComparator implements Comparator<Register> {

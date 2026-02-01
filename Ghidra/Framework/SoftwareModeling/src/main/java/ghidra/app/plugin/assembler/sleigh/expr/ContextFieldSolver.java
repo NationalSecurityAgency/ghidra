@@ -35,15 +35,18 @@ public class ContextFieldSolver extends AbstractExpressionSolver<ContextField> {
 	}
 
 	@Override
-	public AssemblyResolution solve(ContextField cf, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			ContextField cf, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) {
 		assert cf.minValue() == 0; // In case someone decides to do signedness there.
 		if (!goal.isInRange(cf.maxValue(), cf.hasSignbit())) {
-			return AssemblyResolution.error("Value " + goal + " is not valid for " + cf,
-				description);
+			return factory.newErrorBuilder()
+					.error("Value " + goal + " is not valid for " + cf)
+					.description(description)
+					.build();
 		}
 		AssemblyPatternBlock block = AssemblyPatternBlock.fromContextField(cf, goal);
-		return AssemblyResolution.contextOnly(block, description);
+		return factory.contextOnly(block, description);
 	}
 
 	@Override

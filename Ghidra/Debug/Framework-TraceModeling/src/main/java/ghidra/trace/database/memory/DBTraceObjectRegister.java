@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,20 +17,20 @@ package ghidra.trace.database.memory;
 
 import java.math.BigInteger;
 
-import ghidra.dbg.target.TargetRegister;
-import ghidra.dbg.util.PathUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.memory.TraceObjectRegister;
-import ghidra.trace.model.target.*;
-import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.memory.TraceRegister;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObjectInterface {
+public class DBTraceObjectRegister implements TraceRegister, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectRegister(DBTraceObject object) {
@@ -43,51 +43,48 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public TraceObjectThread getThread() {
-		return object.queryCanonicalAncestorsInterface(TraceObjectThread.class)
+	public TraceThread getThread() {
+		return object.queryCanonicalAncestorsInterface(TraceThread.class)
 				.findAny()
 				.orElseThrow();
 	}
 
 	@Override
 	public String getName() {
-		TraceObjectKeyPath path = object.getCanonicalPath();
-		if (PathUtils.isIndex(path.key())) {
-			return path.index();
-		}
-		return path.key();
+		KeyPath path = object.getCanonicalPath();
+		return KeyPath.parseIfIndex(path.key());
 	}
 
 	@Override
-	public int getBitLength() {
-		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+	public int getBitLength(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceRegister.KEY_BITLENGTH,
+			Integer.class, 0);
 	}
 
 	@Override
 	public void setValue(Lifespan lifespan, byte[] value) {
-		int length = getByteLength();
+		int length = getByteLength(lifespan.lmin());
 		if (length != 0 && value.length != length) {
 			throw new IllegalArgumentException("Length must match the register");
 		}
-		object.setValue(lifespan, TargetRegister.VALUE_ATTRIBUTE_NAME, value);
+		object.setValue(lifespan, TraceRegister.KEY_VALUE, value);
 	}
 
 	@Override
 	public byte[] getValue(long snap) {
-		TraceObjectValue ov = object.getValue(snap, TargetRegister.VALUE_ATTRIBUTE_NAME);
+		TraceObjectValue ov = object.getValue(snap, TraceRegister.KEY_VALUE);
 		if (ov == null) {
 			return null;
 		}
 		Object val = ov.getValue();
-		if (val instanceof byte[]) {
+		if (val instanceof byte[] arr) {
 			// TODO: Should I correct mismatched size?
-			return (byte[]) val;
+			return arr;
 		}
-		if (val instanceof String) {
+		if (val instanceof String str) {
 			// Always base 16. Model API says byte array for register value is big endian.
-			BigInteger bigVal = new BigInteger((String) val, 16);
-			return Utils.bigIntegerToBytes(bigVal, getByteLength(), true);
+			BigInteger bigVal = new BigInteger(str, 16);
+			return Utils.bigIntegerToBytes(bigVal, getByteLength(snap), true);
 		}
 		throw new ClassCastException("Cannot convert " + val + " to byte array for register value");
 	}

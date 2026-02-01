@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.symboltree.nodes;
 
 import static ghidra.program.model.symbol.SymbolType.*;
 
-import java.awt.datatransfer.DataFlavor;
 import java.util.*;
 
 import javax.swing.Icon;
@@ -26,25 +25,47 @@ import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
 
-public class SymbolTreeRootNode extends SymbolCategoryNode {
+public class SymbolTreeRootNode extends GTreeNode {
 	private static Icon GLOBAL_ICON = new GIcon("icon.plugin.symboltree.node.root");
 	private final String name;
 
-	public SymbolTreeRootNode() {
-		name = "No Symbol Tree";
+	protected SymbolCategory symbolCategory;
+	protected Program program;
+	private int groupThreshold;
+
+	public SymbolTreeRootNode(Program program, int groupThreshold) {
+		this.groupThreshold = groupThreshold;
+		this.symbolCategory = SymbolCategory.ROOT_CATEGORY;
+		this.program = program;
+
+		if (program == null) {
+			name = "No Symbol Tree";
+		}
+		else {
+			name = "Global";
+		}
 	}
 
-	public SymbolTreeRootNode(Program program) {
-		super(SymbolCategory.ROOT_CATEGORY, program);
-		name = "Global";
+	public int getNodeGroupThreshold() {
+		return groupThreshold;
+	}
+
+	public int getReorganizeLimit() {
+		// Arbitrary number to prevent bulk updates from triggering repeated node organization.
+		// The higher the value, the longer the delay between the tree collapsing nodes to signal
+		// that a re-organzation is needed.
+		return groupThreshold * 2;
+	}
+
+	public Program getProgram() {
+		return program;
 	}
 
 	@Override
-	public List<GTreeNode> generateChildren(TaskMonitor monitor) {
+	public List<GTreeNode> generateChildren() {
 		if (program == null) {
 			return Collections.emptyList();
 		}
@@ -61,7 +82,6 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 		return list;
 	}
 
-	@Override
 	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
 
 		//
@@ -93,7 +113,7 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 		}
 		//else { GLOBAL, GLOBAL_VAR } // not sure where these end up
 
-		return super.findSymbolTreeNode(key, loadChildren, monitor);
+		return null;
 	}
 
 	private GTreeNode findCodeSymbol(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
@@ -118,7 +138,6 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 	}
 
 	private GTreeNode findClassSymbol(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
-
 		SymbolCategoryNode category = getClassesNode();
 		return category.findSymbolTreeNode(key, loadChildren, monitor);
 	}
@@ -230,13 +249,12 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 		return null; // must be filtered out
 	}
 
-	@Override
-	public SymbolNode symbolAdded(Symbol symbol) {
+	public SymbolNode symbolAdded(Symbol symbol, TaskMonitor monitor) {
 		SymbolNode returnNode = null;
 		List<GTreeNode> allChildren = getChildren();
 		for (GTreeNode gNode : allChildren) {
 			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
-			SymbolNode newNode = symbolNode.symbolAdded(symbol);
+			SymbolNode newNode = symbolNode.symbolAdded(symbol, monitor);
 			if (newNode != null) {
 				returnNode = newNode;  // doesn't matter which one we return
 			}
@@ -244,7 +262,6 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 		return returnNode;
 	}
 
-	@Override
 	public void symbolRemoved(Symbol symbol, String oldName, TaskMonitor monitor) {
 
 		// we have to loop--the symbol may exist in more than one category
@@ -252,6 +269,16 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 		for (GTreeNode gNode : allChildren) {
 			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
 			symbolNode.symbolRemoved(symbol, oldName, monitor);
+		}
+	}
+
+	public void symbolRemoved(Symbol symbol, Namespace oldNamespace, TaskMonitor monitor) {
+
+		// we have to loop--the symbol may exist in more than one category
+		List<GTreeNode> allChildren = getChildren();
+		for (GTreeNode gNode : allChildren) {
+			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
+			symbolNode.symbolRemoved(symbol, oldNamespace, monitor);
 		}
 	}
 
@@ -280,32 +307,14 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 	}
 
 	@Override
-	public boolean canCut() {
-		return false;
-	}
-
-	@Override
-	public boolean canPaste(List<GTreeNode> pastedNodes) {
-		return false;
-	}
-
-	@Override
-	public DataFlavor getNodeDataFlavor() {
-		return null;
-	}
-
-	@Override
-	public boolean isCut() {
-		return false;
-	}
-
-	@Override
-	public boolean isModifiable() {
-		return false;
-	}
-
-	@Override
-	public void setNodeCut(boolean isCut) {
-		throw new UnsupportedOperationException("Cannot cut the symbol tree root node");
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof SymbolTreeRootNode)) {
+			return false;
+		}
+		SymbolTreeRootNode node = (SymbolTreeRootNode) o;
+		return getName().equals(node.getName());
 	}
 }

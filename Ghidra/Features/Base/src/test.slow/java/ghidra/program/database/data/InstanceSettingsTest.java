@@ -113,6 +113,50 @@ public class InstanceSettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testComponentInstanceSettings() throws Exception {
+
+		Structure s = new StructureDataType("struct", 0);
+		s.setPackingEnabled(true);
+		s.add(new ArrayDataType(ByteDataType.dataType, 4, -1));
+		s = (Structure) dataMgr.resolve(s, null);
+
+		Data data = DataUtilities.createData(program, addr(10), s, -1, false,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+
+		Data component = data.getComponent(new int[] { 0, 2 });
+		assertNotNull(component);
+
+		Settings defaultSettings = component.getDefaultSettings();
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
+
+		assertEquals(FormatSettingsDefinition.CHAR, component.getLong("format").longValue());
+		FormatSettingsDefinition.DEF.setChoice(component, FormatSettingsDefinition.DECIMAL);
+		assertEquals(FormatSettingsDefinition.DECIMAL, component.getLong("format").longValue());
+
+		assertEquals(EndianSettingsDefinition.LITTLE, component.getLong("endian").longValue());
+		EndianSettingsDefinition.DEF.setChoice(component, EndianSettingsDefinition.BIG);
+		assertEquals(EndianSettingsDefinition.BIG, component.getLong("endian").longValue());
+
+		assertEquals(PaddingSettingsDefinition.PADDED_VALUE,
+			component.getLong("padded").longValue());
+		PaddingSettingsDefinition.DEF.setChoice(component,
+			PaddingSettingsDefinition.UNPADDED_VALUE);
+		assertEquals(PaddingSettingsDefinition.UNPADDED_VALUE,
+			component.getLong("padded").longValue());
+
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.HEX);
+		EndianSettingsDefinition.DEF.clear(defaultSettings);
+		PaddingSettingsDefinition.DEF.clear(defaultSettings);
+
+		assertEquals(FormatSettingsDefinition.DECIMAL, component.getLong("format").longValue());
+		assertEquals(EndianSettingsDefinition.BIG, component.getLong("endian").longValue());
+		assertEquals(PaddingSettingsDefinition.UNPADDED_VALUE,
+			component.getLong("padded").longValue());
+	}
+
+	@Test
 	public void testGetInstanceNames() throws Exception {
 		Data data = listing.getDataAt(addr(10));
 		data.setString(STRING_SETTING_NAME, "red");
@@ -259,7 +303,6 @@ public class InstanceSettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private void addBlock() throws Exception {
 
 		Memory memory = program.getMemory();
-		memory.createInitializedBlock("test", addr(0), 100, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		memory.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 	}
 }

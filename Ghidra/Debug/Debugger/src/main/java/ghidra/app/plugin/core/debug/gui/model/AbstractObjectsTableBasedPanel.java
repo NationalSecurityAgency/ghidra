@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,41 +25,28 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.ComponentProvider;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.Plugin;
+import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectInterface;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.KeyPath;
 
 public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterface>
-		extends ObjectsTablePanel implements ListSelectionListener, CellActivationListener {
-
-	public static boolean isContextNonEmpty(DebuggerObjectActionContext ctx) {
-		return ctx != null && !ctx.getObjectValues().isEmpty();
-	}
-
-	public static <T extends TraceObjectInterface> Stream<T> getSelected(
-			DebuggerObjectActionContext ctx, Class<T> iface) {
-		return ctx == null ? null
-				: ctx.getObjectValues()
-						.stream()
-						.filter(v -> v.isObject())
-						.map(v -> v.getChild().queryInterface(iface))
-						.filter(r -> r != null);
-	}
+		extends ObjectsTablePanel
+		implements ListSelectionListener, CellActivationListener, ObjectDefaultActionsMixin {
 
 	private final ComponentProvider provider;
 	private final Class<U> objType;
 
+	@AutoServiceConsumed
+	protected DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	protected DebuggerListingService listingService;
 	@SuppressWarnings("unused")
@@ -80,6 +67,19 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 
 		addSelectionListener(this);
 		addCellActivationListener(this);
+	}
+
+	public boolean isContextNonEmpty(DebuggerObjectActionContext ctx) {
+		return getSelected(ctx).findAny().isPresent();
+	}
+
+	public Stream<U> getSelected(DebuggerObjectActionContext ctx) {
+		return ctx == null ? null
+				: ctx.getObjectValues()
+						.stream()
+						.filter(v -> v.isObject())
+						.map(v -> v.getChild().queryInterface(objType))
+						.filter(r -> r != null);
 	}
 
 	public DebuggerObjectActionContext getActionContext() {
@@ -115,29 +115,39 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 		List<ValueRow> sel = getSelectedItems();
 		if (!sel.isEmpty()) {
 			myActionContext = new DebuggerObjectActionContext(
-				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, this);
+				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, table,
+				current.getSnap());
 		}
 	}
 
 	@Override
 	public void cellActivated(JTable table) {
-		if (listingService == null) {
+		if (performElementCellDefaultAction(table)) {
 			return;
 		}
-		int row = table.getSelectedRow();
-		int col = table.getSelectedColumn();
-		Object value = table.getValueAt(row, col);
-		if (!(value instanceof ValueProperty<?> property)) {
+		performValueRowDefaultAction(getSelectedItem());
+	}
+
+	@Override
+	public DebuggerCoordinates getCurrent() {
+		return current;
+	}
+
+	@Override
+	public PluginTool getTool() {
+		return plugin.getTool();
+	}
+
+	@Override
+	public void activatePath(KeyPath path) {
+		if (current.getTrace() == null) {
 			return;
 		}
-		Object propVal = property.getValue();
-		if (propVal instanceof Address address) {
-			listingService.goTo(address, true);
+		try {
+			traceManager.activate(current.pathNonCanonical(path));
 		}
-		else if (propVal instanceof AddressRange range) {
-			listingService.setCurrentSelection(
-				new ProgramSelection(range.getMinAddress(), range.getMaxAddress()));
-			listingService.goTo(range.getMinAddress(), true);
+		catch (IllegalArgumentException e) {
+			plugin.getTool().setStatusInfo(e.getMessage(), true);
 		}
 	}
 }

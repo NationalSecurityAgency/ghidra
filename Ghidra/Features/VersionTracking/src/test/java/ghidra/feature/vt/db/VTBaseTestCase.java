@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.StubMemory;
 import ghidra.program.model.symbol.*;
 
-public class VTBaseTestCase extends AbstractGenericTest {
+public abstract class VTBaseTestCase extends AbstractGenericTest {
 
 	private DomainFile sourceDomainFile = new TestDummyDomainFile(null, "SourceDomainFile") {
 		@Override
@@ -50,14 +50,13 @@ public class VTBaseTestCase extends AbstractGenericTest {
 			}
 		};
 
-	private Program sourceProgram = new VTStubProgram(sourceDomainFile);
-	private Program destinationProgram = new VTStubProgram(destinationDomainFile);
+	protected final Program sourceProgram = new VTStubProgram(sourceDomainFile);
+	protected final Program destinationProgram = new VTStubProgram(destinationDomainFile);
+
 	private FunctionManager functionManager = new VTSTubFunctionManager();
 	private Listing listing = new VTStubListing();
 	private SymbolTable symbolTable = new VTStubSymbolTable();
 	private Memory memory = new VTStubMemory();
-
-	private AddressMap addressMap = new AddressMapTestDummy();
 
 	private static String[] randomTags = { "TAG1", "TAG2", "TAG3" };
 	private static GenericAddressSpace space =
@@ -81,8 +80,7 @@ public class VTBaseTestCase extends AbstractGenericTest {
 	}
 
 	public VTSessionDB createVTSession() throws IOException {
-		return VTSessionDB.createVTSession("Test DB", sourceProgram, destinationProgram,
-			VTTestUtils.class);
+		return new VTSessionDB("Test DB", sourceProgram, destinationProgram, VTTestUtils.class);
 	}
 
 	public static int getRandomInt() {
@@ -193,7 +191,12 @@ public class VTBaseTestCase extends AbstractGenericTest {
 
 	private class VTStubProgram extends StubProgram {
 
-		private DomainFile domainFile;
+		private final DomainFile domainFile;
+		private final AddressSpace defaultSpace =
+			new GenericAddressSpace("Test", 32, AddressSpace.TYPE_RAM, 3);
+		private final AddressFactory addrFactory =
+			new DefaultAddressFactory(new AddressSpace[] { defaultSpace }, defaultSpace);
+		private final AddressMap addressMap = new AddressMapTestDummy(this);
 
 		VTStubProgram(DomainFile domainFile) {
 			this.domainFile = domainFile;
@@ -241,7 +244,7 @@ public class VTBaseTestCase extends AbstractGenericTest {
 
 		@Override
 		public AddressFactory getAddressFactory() {
-			return null;
+			return addrFactory;
 		}
 
 		@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,26 @@ import ghidra.util.exception.InvalidInputException;
  */
 public interface Namespace {
 
+	/**
+	 * Type of {@link Namespace}.
+	 */
+	public enum Type {
+		NAMESPACE("Namespace"), LIBRARY("Library"), CLASS("Class"), FUNCTION("Function");
+
+		private final String friendlyName;
+
+		private Type(String friendlyName) {
+			this.friendlyName = friendlyName;
+		}
+
+		/**
+		 * {@return a friendly name for use in messages}
+		 */
+		public String friendlyName() {
+			return friendlyName;
+		}
+	}
+
 	static final long GLOBAL_NAMESPACE_ID = 0;
 	/**
 	 * The delimiter that is used to separate namespace nodes in a namespace
@@ -46,6 +66,13 @@ public interface Namespace {
 	 * @return the symbol for this namespace.
 	 */
 	public Symbol getSymbol();
+
+	/**
+	 * {@return the type of namespace, e.g., Library, Class, Namespace, Function}
+	 */
+	public default Type getType() {
+		return Type.NAMESPACE;
+	}
 
 	/**
 	 * Returns true if this namespace is external (i.e., associated with a Library)
@@ -110,7 +137,7 @@ public interface Namespace {
 	 * this namespace.
 	 * @throws DuplicateNameException if another symbol exists in the parent namespace with
 	 * the same name as this namespace
-	 * @throws CircularDependencyException if the parent namespace is a descendent of this
+	 * @throws CircularDependencyException if the parent namespace is a descendant of this
 	 * namespace.
 	 */
 	public void setParentNamespace(Namespace parentNamespace)

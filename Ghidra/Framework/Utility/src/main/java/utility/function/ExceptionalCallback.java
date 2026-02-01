@@ -22,7 +22,7 @@ package utility.function;
  * @param <E> the exception of your choice
  */
 @FunctionalInterface
-public interface ExceptionalCallback<E extends Exception> {
+public interface ExceptionalCallback<E extends Throwable> {
 
 	/**
 	 * The method that will be called

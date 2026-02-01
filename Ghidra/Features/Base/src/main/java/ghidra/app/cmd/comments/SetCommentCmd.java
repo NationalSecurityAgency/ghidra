@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,17 +17,16 @@ package ghidra.app.cmd.comments;
 
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
 /**
  *  Command to set a specific type of comment on a code unit.
  */
-public class SetCommentCmd implements Command {
+public class SetCommentCmd implements Command<Program> {
 
 	private Address address;
-	private int commentType;
+	private CommentType commentType;
 	private String comment;
 	private String cmdName;
 	private String message;
@@ -37,8 +36,20 @@ public class SetCommentCmd implements Command {
 	 * @param addr address of code unit where comment will be placed
 	 * @param commentType valid comment type (see CodeUnit)
 	 * @param comment comment for code unit
+	 * @deprecated Use {@link #SetCommentCmd(Address, CommentType, String)} instead
 	 */
+	@Deprecated(forRemoval = true, since = "11.4")
 	public SetCommentCmd(Address addr, int commentType, String comment) {
+		this(addr, CommentType.valueOf(commentType), comment);
+	}
+
+	/**
+	 * Construct command
+	 * @param addr address of code unit where comment will be placed
+	 * @param commentType valid comment type (see CodeUnit)
+	 * @param comment comment for code unit
+	 */
+	public SetCommentCmd(Address addr, CommentType commentType, String comment) {
 		this.address = addr;
 		this.commentType = commentType;
 		this.comment = comment;
@@ -67,16 +78,15 @@ public class SetCommentCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		CodeUnit cu = getCodeUnit(program);
 		if (cu == null) {
 			message = "No Instruction or Data found for address " + address.toString() +
 				"  Is this address valid?";
 			return false;
 		}
-		String updatedComment = CommentUtils.fixupAnnotations(comment, program);
-		updatedComment = CommentUtils.sanitize(updatedComment);
+
+		String updatedComment = CommentUtils.sanitize(comment);
 		if (commentChanged(cu.getComment(commentType), updatedComment)) {
 			cu.setComment(commentType, updatedComment);
 		}
@@ -117,9 +127,27 @@ public class SetCommentCmd implements Command {
 	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
 	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
 	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 * @deprecated Use {@link #createComment(Program, Address, String, CommentType)} instead
 	 */
+	@Deprecated(forRemoval = true, since = "11.4")
 	public static void createComment(Program program, Address addr, String comment,
 			int commentType) {
+		SetCommentCmd commentCmd =
+			new SetCommentCmd(addr, CommentType.valueOf(commentType), comment);
+		commentCmd.applyTo(program);
+	}
+
+	/**
+	 * Creates the specified comment of the specified type at address.  The current comment of
+	 * this commentType will be cleared.
+	 * 
+	 * @param program the program being analyzed
+	 * @param addr the address where data is created
+	 * @param comment the comment about the data
+	 * @param commentType the type of comment
+	 */
+	public static void createComment(Program program, Address addr, String comment,
+			CommentType commentType) {
 		SetCommentCmd commentCmd = new SetCommentCmd(addr, commentType, comment);
 		commentCmd.applyTo(program);
 	}

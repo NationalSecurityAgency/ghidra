@@ -15,17 +15,19 @@
  */
 package ghidra.program.util;
 
-import ghidra.app.util.viewer.listingpanel.ListingDiffChangeListener;
+import static ghidra.util.datastruct.Duo.Side.*;
+
+import java.util.ArrayList;
+
+import ghidra.features.base.codecompare.listing.ListingDiffChangeListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.util.ListingAddressCorrelation;
 import ghidra.util.Msg;
-
-import java.util.ArrayList;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * Determines where instructions couldn't be matched and where they differ between sets of 
@@ -100,15 +102,15 @@ public class ListingDiff {
 
 	private void getDiffs() throws MemoryAccessException {
 		init();
-		AddressSetView addrSet1 = correlation.getAddressesInFirst();
-		AddressSetView addrSet2 = correlation.getAddressesInSecond();
-		Listing listing1 = correlation.getFirstProgram().getListing();
-		Listing listing2 = correlation.getSecondProgram().getListing();
+		AddressSetView addrSet1 = correlation.getAddresses(LEFT);
+		AddressSetView addrSet2 = correlation.getAddresses(RIGHT);
+		Listing listing1 = correlation.getProgram(LEFT).getListing();
+		Listing listing2 = correlation.getProgram(RIGHT).getListing();
 		CodeUnitIterator cuIter1 = listing1.getCodeUnits(addrSet1, true);
 		CodeUnitIterator cuIter2 = listing2.getCodeUnits(addrSet2, true);
 		for (CodeUnit cu1 : cuIter1) {
 			Address min1 = cu1.getMinAddress();
-			Address addr2 = correlation.getAddressInSecond(min1);
+			Address addr2 = correlation.getAddress(RIGHT, min1);
 			if (addr2 == null) {
 				// Add codeunit1 to the unmatchedDiffs
 				unmatchedCode1.addRange(cu1.getMinAddress(), cu1.getMaxAddress());
@@ -122,7 +124,7 @@ public class ListingDiff {
 		}
 		for (CodeUnit cu2 : cuIter2) {
 			Address min2 = cu2.getMinAddress();
-			Address addr1 = correlation.getAddressInFirst(min2);
+			Address addr1 = correlation.getAddress(LEFT, min2);
 			if (addr1 == null) {
 				// Add codeunit2 to the unmatchedDiffs
 				unmatchedCode2.addRange(cu2.getMinAddress(), cu2.getMaxAddress());
@@ -138,18 +140,18 @@ public class ListingDiff {
 	}
 
 	private void recomputeCodeUnitDiffs() {
-		AddressSetView addressSet1 = correlation.getAddressesInFirst();
-		AddressSetView addressSet2 = correlation.getAddressesInSecond();
+		AddressSetView addressSet1 = correlation.getAddresses(LEFT);
+		AddressSetView addressSet2 = correlation.getAddresses(RIGHT);
 		AddressSetView matchedAddresses1 = addressSet1.subtract(unmatchedCode1);
 		AddressSetView matchedAddresses2 = addressSet2.subtract(unmatchedCode2);
-		Listing listing1 = correlation.getFirstProgram().getListing();
-		Listing listing2 = correlation.getSecondProgram().getListing();
+		Listing listing1 = correlation.getProgram(LEFT).getListing();
+		Listing listing2 = correlation.getProgram(RIGHT).getListing();
 		CodeUnitIterator cuIter1 = listing1.getCodeUnits(matchedAddresses1, true);
 		CodeUnitIterator cuIter2 = listing2.getCodeUnits(matchedAddresses2, true);
 		codeUnitDiffs1.clear();
 		for (CodeUnit cu1 : cuIter1) {
 			Address min1 = cu1.getMinAddress();
-			Address addr2 = correlation.getAddressInSecond(min1);
+			Address addr2 = correlation.getAddress(RIGHT, min1);
 			if (addr2 == null) {
 				continue;
 			}
@@ -160,7 +162,7 @@ public class ListingDiff {
 		codeUnitDiffs2.clear();
 		for (CodeUnit cu2 : cuIter2) {
 			Address min2 = cu2.getMinAddress();
-			Address addr1 = correlation.getAddressInFirst(min2);
+			Address addr1 = correlation.getAddress(LEFT, min2);
 			if (addr1 == null) {
 				continue;
 			}
@@ -386,85 +388,49 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the first listing where matching code couldn't be determined in the 
+	 * Gets the address set for unmatched code for the given side
 	 * second listing.
+	 * @param side the LEFT or RIGHT side
 	 * @return the addresses of the unmatched code in the first listing.
 	 */
-	public AddressSetView getListing1UnmatchedCode() {
-		return new AddressSet(unmatchedCode1);
-	}
-
-	/**
-	 * Gets the addresses in the second listing where matching code couldn't be determined in the 
-	 * first listing.
-	 * @return the addresses of the unmatched code in the second listing.
-	 */
-	public AddressSetView getListing2UnmatchedCode() {
-		return new AddressSet(unmatchedCode2);
+	public AddressSetView getUnmatchedCode(Side side) {
+		return side == LEFT ? unmatchedCode1 : unmatchedCode2;
 	}
 
 	/**
 	 * Gets the addresses in the first listing where differences were found based on the current 
 	 * difference settings.
+	 * @param side the side (LEFT or RIGHT) to get the listing diffs for
 	 * @return the addresses with differences in the first listing.
 	 */
-	public AddressSetView getListing1Diffs() {
-		AddressSet diffs = new AddressSet(getListing1ByteDiffs());
-		diffs.add(getListing1CodeUnitDiffs());
-		return DiffUtility.getCodeUnitSet(diffs, correlation.getFirstProgram());
-	}
+	public AddressSetView getDiffs(Side side) {
 
-	/**
-	 * Gets the addresses in the second listing where differences were found based on the current 
-	 * difference settings.
-	 * @return the addresses with differences in the second listing.
-	 */
-	public AddressSetView getListing2Diffs() {
-		AddressSet diffs = new AddressSet(getListing2ByteDiffs());
-		diffs.add(getListing2CodeUnitDiffs());
-		return DiffUtility.getCodeUnitSet(diffs, correlation.getSecondProgram());
+		AddressSet diffs = new AddressSet(getByteDiffs(side));
+		diffs.add(getCodeUnitDiffs(side));
+		return DiffUtility.getCodeUnitSet(diffs, correlation.getProgram(side));
 	}
 
 	/**
 	 * Gets the addresses in the first listing where code unit (mnemonic and/or operand) differences 
 	 * were found based on the current difference settings.
+	 * @param side the side (LEFT or RIGHT) to get the code unit diffs for
 	 * @return the addresses with code unit differences in the first listing.
 	 */
-	public AddressSetView getListing1CodeUnitDiffs() {
-		return new AddressSet(codeUnitDiffs1);
-	}
-
-	/**
-	 * Gets the addresses in the second listing where code unit (mnemonic and/or operand) differences 
-	 * were found based on the current difference settings.
-	 * @return the addresses with code unit differences in the second listing.
-	 */
-	public AddressSetView getListing2CodeUnitDiffs() {
-		return new AddressSet(codeUnitDiffs2);
+	public AddressSetView getCodeUnitDiffs(Side side) {
+		return new AddressSet(side == LEFT ? codeUnitDiffs1 : codeUnitDiffs2);
 	}
 
 	/**
 	 * Gets the addresses in the first listing where byte differences were found based on the 
 	 * current difference settings.
+	 * @param side the side (LEFT or RIGHT) to get the byte diffs for
 	 * @return the addresses with byte differences in the first listing.
 	 */
-	public AddressSetView getListing1ByteDiffs() {
+	public AddressSetView getByteDiffs(Side side) {
 		if (ignoreByteDiffs) {
 			return new AddressSet();
 		}
-		return new AddressSet(byteDiffs1);
-	}
-
-	/**
-	 * Gets the addresses in the second listing where byte differences were found based on the 
-	 * current difference settings.
-	 * @return the addresses with byte differences in the second listing.
-	 */
-	public AddressSetView getListing2ByteDiffs() {
-		if (ignoreByteDiffs) {
-			return new AddressSet();
-		}
-		return new AddressSet(byteDiffs2);
+		return new AddressSet(side == LEFT ? byteDiffs1 : byteDiffs2);
 	}
 
 	/**
@@ -480,9 +446,9 @@ public class ListingDiff {
 			return null;
 		}
 		if (isListing1) {
-			return correlation.getAddressInSecond(address);
+			return correlation.getAddress(RIGHT, address);
 		}
-		return correlation.getAddressInFirst(address);
+		return correlation.getAddress(LEFT, address);
 	}
 
 	/**
@@ -604,32 +570,26 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the matching code unit from the other listing for the specified code unit from one
+	 * Gets the matching code unit from the other side listing given a code unit from a given side
 	 * of the two listings whose differences this class determines.
 	 * @param codeUnit the code unit whose match this determines.
-	 * @param isListing1 true indicates the code unit is from the first listing. false indicates
-	 * it is from the second listing.
+	 * @param side the side the code unit came from
 	 * @return the matching code unit or null
 	 */
-	public CodeUnit getMatchingCodeUnit(CodeUnit codeUnit, boolean isListing1) {
+	public CodeUnit getMatchingCodeUnit(CodeUnit codeUnit, Side side) {
 		if (correlation == null) {
 			return null;
 		}
+		Side otherSide = side.otherSide();
+
 		Address minAddress = codeUnit.getMinAddress();
-		Program sourceProgram = correlation.getFirstProgram();
-		Program destinationProgram = correlation.getSecondProgram();
-		if (isListing1) {
-			Address destination = correlation.getAddressInSecond(minAddress);
-			if (destination != null) {
-				return destinationProgram.getListing().getCodeUnitAt(destination);
-			}
+		Program otherSideProgram = correlation.getProgram(otherSide);
+
+		Address otherAddress = correlation.getAddress(otherSide, minAddress);
+		if (otherAddress != null) {
+			return otherSideProgram.getListing().getCodeUnitAt(otherAddress);
 		}
-		else {
-			Address source = correlation.getAddressInFirst(minAddress);
-			if (source != null) {
-				return sourceProgram.getListing().getCodeUnitAt(source);
-			}
-		}
+
 		// code unit not from our programs.
 		return null;
 	}

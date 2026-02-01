@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.DockingApplicationConfiguration;
@@ -225,21 +225,37 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	}
 
 	private Element getSavedToolElement() {
-		File savedToolFile = new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
-		if (!savedToolFile.exists()) {
-			return null;
+		File userSettingsDir = Application.getUserSettingsDirectory();
+		File savedToolFile = new File(userSettingsDir, SAVED_TOOL_FILE);
+		if (savedToolFile.exists()) {
+			return loadToolXml(savedToolFile);
 		}
 
+		Msg.debug(this, "No saved tool found in " + userSettingsDir);
+		List<File> dirs = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
+		for (File dir : dirs) {
+			savedToolFile = new File(dir, SAVED_TOOL_FILE);
+			Msg.debug(this, "Checking for previous tool in " + dir);
+			if (savedToolFile.exists()) {
+				Msg.debug(this, "Using previous tool " + savedToolFile);
+				return loadToolXml(savedToolFile);
+			}
+		}
+
+		return null;
+	}
+
+	private Element loadToolXml(File file) {
 		FileInputStream fileInputStream = null;
 		try {
-			fileInputStream = new FileInputStream(savedToolFile.getAbsolutePath());
+			fileInputStream = new FileInputStream(file.getAbsolutePath());
 			SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);
 			Element root = sax.build(fileInputStream).getRootElement();
 			return root;
 		}
 		catch (Exception e) {
-			Msg.showError(getClass(), null, "Error Reading Tool",
-				"Could not read tool: " + savedToolFile, e);
+			Msg.showError(getClass(), null, "Error Reading Tool", "Could not read tool: " + file,
+				e);
 		}
 		finally {
 			if (fileInputStream != null) {
@@ -251,7 +267,6 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 				}
 			}
 		}
-
 		return null;
 	}
 
@@ -262,45 +277,46 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 
 	@Override
 	public ToolServices getToolServices() {
-		return new ToolServicesAdapter() {
-
-			@Override
-			public void closeTool(PluginTool t) {
-				System.exit(0);
-			}
-
-			@Override
-			public void saveTool(PluginTool saveTool) {
-				Element toolElement = saveTool.saveToXml(true);
-				Element dataStateElement = saveTool.saveDataStateToXml(false);
-				Element rootElement = new Element("Root");
-				rootElement.addContent(toolElement);
-				rootElement.addContent(dataStateElement);
-				File savedToolFile =
-					new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
-				OutputStream os = null;
-				try {
-					os = new FileOutputStream(savedToolFile);
-					Document doc = new Document(rootElement);
-					XMLOutputter xmlout = new GenericXMLOutputter();
-					xmlout.output(doc, os);
-					os.close();
-				}
-				catch (Exception e) {
-					Msg.error(this, "Error saving tool", e);
-					try {
-						if (os != null) {
-							os.close();
-						}
-						savedToolFile.delete();
-					}
-					catch (Exception exc) {
-						// cleanup, don't care
-					}
-				}
-
-			}
-		};
+		return new StandAloneToolServices();
 	}
 
+	protected static class StandAloneToolServices extends ToolServicesAdapter {
+
+		@Override
+		public void closeTool(PluginTool t) {
+			System.exit(0);
+		}
+
+		@Override
+		public void saveTool(PluginTool saveTool) {
+			Element toolElement = saveTool.saveToXml(true);
+			Element dataStateElement = saveTool.saveDataStateToXml(false);
+			Element rootElement = new Element("Root");
+			rootElement.addContent(toolElement);
+			rootElement.addContent(dataStateElement);
+			File savedToolFile =
+				new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
+			OutputStream os = null;
+			try {
+				os = new FileOutputStream(savedToolFile);
+				Document doc = new Document(rootElement);
+				XMLOutputter xmlout = GenericXMLOutputter.getInstance();
+				xmlout.output(doc, os);
+				os.close();
+			}
+			catch (Exception e) {
+				Msg.error(this, "Error saving tool", e);
+				try {
+					if (os != null) {
+						os.close();
+					}
+					savedToolFile.delete();
+				}
+				catch (Exception exc) {
+					// cleanup, don't care
+				}
+			}
+
+		}
+	}
 }

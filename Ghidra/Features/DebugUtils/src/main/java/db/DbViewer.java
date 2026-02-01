@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.TableModel;
 
 import db.buffers.LocalBufferFile;
 import docking.framework.DockingApplicationConfiguration;
@@ -30,10 +29,12 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.table.GTable;
+import docking.widgets.table.GTableFilterPanel;
 import generic.application.GenericApplicationLayout;
-import ghidra.app.plugin.debug.dbtable.DbLargeTableModel;
 import ghidra.app.plugin.debug.dbtable.DbSmallTableModel;
 import ghidra.framework.Application;
+import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
@@ -56,6 +57,7 @@ public class DbViewer extends JFrame {
 	private JComboBox<String> combo;
 	private Table[] tables;
 	private Hashtable<String, TableStatistics[]> tableStats = new Hashtable<>();
+	private GTableFilterPanel<DBRecord> tableFilterPanel;
 
 	DbViewer() {
 		super("Database Viewer");
@@ -155,7 +157,7 @@ public class DbViewer extends JFrame {
 				tables[i].getName() + " (" + Integer.toString(tables[i].getRecordCount()) + ")";
 		}
 		combo = new GComboBox<>(names);
-		combo.addActionListener(e -> updateTable());
+		combo.addItemListener(e -> updateTable());
 		subNorthPanel.add(combo);
 		northPanel.add(subNorthPanel);
 		mainPanel.add(northPanel, BorderLayout.NORTH);
@@ -177,17 +179,13 @@ public class DbViewer extends JFrame {
 
 	private JPanel createSouthPanel(Table table) {
 		JPanel panel = new JPanel(new BorderLayout());
-		TableModel model = null;
-		if (table.getRecordCount() <= 10000) {
-			model = new DbSmallTableModel(table);
-		}
-		else {
-			model = new DbLargeTableModel(table);
-		}
-		JTable jtable = new JTable(model);
+		DbSmallTableModel model = new DbSmallTableModel(new ServiceProviderStub(), table);
+		GTable gTable = new GTable(model);
 
-		JScrollPane scroll = new JScrollPane(jtable);
+		tableFilterPanel = new GTableFilterPanel<>(gTable, model);
+		JScrollPane scroll = new JScrollPane(gTable);
 		panel.add(scroll, BorderLayout.CENTER);
+		panel.add(tableFilterPanel, BorderLayout.SOUTH);
 
 		TableStatistics[] stats = getStats(table);
 		String recCnt = "Records: " + Integer.toString(table.getRecordCount());
@@ -216,10 +214,9 @@ public class DbViewer extends JFrame {
 
 	/**
 	 * Get the statistics for the specified table.
-	 * @param table
-	 * @return arrays containing statistics. Element 0 provides
-	 * statsitics for primary table, element 1 provides combined
-	 * statsitics for all index tables.  Remaining array elements
+	 * @param table the table
+	 * @return arrays containing statistics. Element 0 provides statistics for primary table, 
+	 * element 1 provides combined statistics for all index tables.  Remaining array elements
 	 * should be ignored since they have been combined into element 1.
 	 */
 	private TableStatistics[] getStats(Table table) {
@@ -238,39 +235,21 @@ public class DbViewer extends JFrame {
 				tableStats.put(table.getName(), stats);
 			}
 			catch (IOException e) {
+				Msg.error(this, "Exception loading stats", e);
 			}
 		}
 		return stats;
 	}
 
-	/**
-	 * Launch the DbViewer application.
-	 * @param args (not used)
-	 */
 	public static void main(String[] args) throws IOException {
-
 		ApplicationLayout layout = new GenericApplicationLayout("DB Viewer", "1.0");
-
 		DockingApplicationConfiguration configuration = new DockingApplicationConfiguration();
 		configuration.setShowSplashScreen(false);
-
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (ClassNotFoundException e) {
-		}
-		catch (InstantiationException e) {
-		}
-		catch (IllegalAccessException e) {
-		}
-		catch (UnsupportedLookAndFeelException e) {
-		}
 		Application.initializeApplication(layout, configuration);
 
 		DbViewer viewer = new DbViewer();
 		viewer.setSize(new Dimension(500, 400));
 		viewer.setVisible(true);
-
 	}
 
 }

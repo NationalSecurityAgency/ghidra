@@ -125,10 +125,10 @@ public class ListingTextField implements ListingField, TextField {
 	}
 
 	/**
-	 * Displays the given array of text, each on its own line.
+	 * Displays the given List of text elements, each on its own line.
 	 * @param factory the field factory that generated this field
 	 * @param proxy the object used to populate this field
-	 * @param textElements the array of elements for the field.
+	 * @param textElements the list of text elements 
 	 * Each of these holds text, attributes and location information.
 	 * @param startX the starting X position of the field
 	 * @param width the width of the field
@@ -137,16 +137,34 @@ public class ListingTextField implements ListingField, TextField {
 	 * @return the text field.
 	 */
 	public static ListingTextField createMultilineTextField(FieldFactory factory, ProxyObj<?> proxy,
-			FieldElement[] textElements, int startX, int width, int maxLines,
+			List<FieldElement> textElements, int startX, int width, int maxLines,
 			ListingHighlightProvider provider) {
 
 		ListingFieldHighlightFactoryAdapter hlFactory =
 			new ListingFieldHighlightFactoryAdapter(provider);
-		List<FieldElement> list = Arrays.asList(textElements);
 		TextField field =
-			new VerticalLayoutTextField(list, startX, width, maxLines, hlFactory);
+			new VerticalLayoutTextField(textElements, startX, width, maxLines, hlFactory);
 		ListingTextField listingField = new ListingTextField(factory, proxy, field, hlFactory);
 		return listingField;
+	}
+
+	/**
+	 * Displays the given List of text elements, each on its own line with no max line restriction
+	 * @param factory the field factory that generated this field
+	 * @param proxy the object used to populate this field
+	 * @param textElements the list of text elements 
+	 * Each of these holds text, attributes and location information.
+	 * @param startX the starting X position of the field
+	 * @param width the width of the field
+	 * @param provider the highlight provider
+	 * @return the text field.
+	 */
+	public static ListingTextField createMultilineTextField(FieldFactory factory, ProxyObj<?> proxy,
+			List<FieldElement> textElements, int startX, int width,
+			ListingHighlightProvider provider) {
+
+		return ListingTextField.createMultilineTextField(factory, proxy, textElements, startX,
+			width, Integer.MAX_VALUE, provider);
 	}
 
 	protected ListingTextField(FieldFactory factory, ProxyObj<?> proxy, TextField field,

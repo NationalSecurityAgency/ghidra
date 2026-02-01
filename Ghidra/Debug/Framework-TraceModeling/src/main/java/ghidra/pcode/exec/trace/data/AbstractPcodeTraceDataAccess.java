@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,20 +163,6 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 	}
 
 	@Override
-	public AddressSetView intersectUnknown(AddressSetView guestView) {
-		TraceMemoryOperations ops = getMemoryOps(false);
-		if (ops == null) {
-			return guestView;
-		}
-
-		AddressSetView hostView = toOverlay(platform.mapGuestToHost(guestView));
-		AddressSetView hostKnown = ops.getAddressesWithState(snap, hostView,
-			s -> s != null && s != TraceMemoryState.UNKNOWN);
-		AddressSetView hostResult = TraceRegisterUtils.getPhysicalSet(hostView.subtract(hostKnown));
-		return platform.mapHostToGuest(hostResult);
-	}
-
-	@Override
 	public int putBytes(Address start, ByteBuffer buf) {
 		// TODO: Truncate or verify range?
 		Address hostStart = platform.mapGuestToHost(start);
@@ -186,7 +172,7 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		TraceMemoryOperations ops = getMemoryOps(true);
 		if (ops == null) {
 			throw new AssertionError("Cannot get memory operations for writing. " +
-				"This usually indicates a schema issue.");
+				"This usually indicates a schema issue or a missing object.");
 		}
 		return ops.putBytes(snap, toOverlay(hostStart), buf);
 	}

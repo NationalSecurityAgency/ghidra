@@ -15,27 +15,24 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
-import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.program.model.address.*;
+import ghidra.debug.api.target.Target;
+import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 
-public record PlaceTargetBreakpointActionItem(TargetBreakpointSpecContainer container,
-		Address address, long length, Set<TargetBreakpointKind> kinds)
-		implements BreakpointActionItem {
+public record PlaceTargetBreakpointActionItem(Target target, AddressRange range,
+		Set<TraceBreakpointKind> kinds) implements BreakpointActionItem {
 
-	public PlaceTargetBreakpointActionItem(TargetBreakpointSpecContainer container, Address address,
-			long length, Set<TargetBreakpointKind> kinds) {
-		this.container = container;
-		this.address = address;
-		this.length = length;
-		this.kinds = Set.copyOf(kinds);
+	public PlaceTargetBreakpointActionItem(Target target, AddressRange range,
+			Collection<TraceBreakpointKind> kinds) {
+		this(target, range, Set.copyOf(kinds));
 	}
 
 	@Override
 	public CompletableFuture<Void> execute() {
-		return container.placeBreakpoint(range(address, length), kinds);
+		return target.placeBreakpointAsync(range, kinds, null, null);
 	}
 }

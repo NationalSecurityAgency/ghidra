@@ -15,25 +15,33 @@
  */
 package ghidra.app.plugin;
 
+import ghidra.framework.main.ApplicationLevelPlugin;
+import ghidra.framework.plugintool.util.PluginDescription;
+import ghidra.framework.plugintool.util.PluginStatus;
+
+/**
+ * A listing of commonly used {@link PluginDescription} category names.
+ * <p>
+ * Note - the Front End tool automatically include plugins that: 1) implement 
+ * {@link ApplicationLevelPlugin}, have the {@link PluginStatus#RELEASED}, and do not have the 
+ * {@link #EXAMPLES} category.  If you wish to create an {@link ApplicationLevelPlugin} that is not
+ * automatically included in the Front End, the easiest way to do that is to mark its status as
+ * {@link PluginStatus#STABLE}.
+ */
 public interface PluginCategoryNames {
-	String COMMON = GenericPluginCategoryNames.COMMON;
-	String SUPPORT = GenericPluginCategoryNames.SUPPORT;
-	String CODE_VIEWER = "Code Viewer";
-	String BYTE_VIEWER = "Byte Viewer";
-	String GRAPH = "Graph";
-	String ANALYSIS = "Analysis";
-	String NAVIGATION = "Navigation";
-	String SEARCH = "Search";
-	String TREE = "Program Tree";
-	String TESTING = GenericPluginCategoryNames.TESTING;
-	String DIFF = "Code Difference";
-	String MISC = GenericPluginCategoryNames.MISC;
-	String USER_ANNOTATION = "User Annotation";
-	String EXAMPLES = GenericPluginCategoryNames.EXAMPLES;
-	String SELECTION = "Selection";
-	String INTERPRETERS = "Interpreters";
-	String DEBUGGER = "Debugger";
-	String PATCHING = "Patching";
-	String DECOMPILER = "Decompiler";
-	String UNMANAGED = "Unmanaged";
+
+	public String ANALYSIS = "Analysis";
+
+	// common to tools that open programs
+	public String COMMON = "Common";
+	public String CODE_VIEWER = "Code Viewer";
+	public String DEBUGGER = "Debugger";
+	public String DIAGNOSTIC = "Diagnostic";
+	public String EXAMPLES = "Examples";
+	public String FRAMEWORK = "Framework";
+	public String GRAPH = "Graph";
+	public String NAVIGATION = "Navigation";
+	public String SEARCH = "Search";
+	public String SELECTION = "Selection";
+	public String PROGRAM_ORGANIZATION = "Program Organization";
 }

@@ -42,6 +42,15 @@ public interface EclipseIntegrationService {
 	public File getEclipseExecutableFile() throws FileNotFoundException;
 
 	/**
+	 * Gets the Eclipse dropins directory.  If it doesn't exist, it will be created.
+	 * 
+	 * @return The Eclipse dropins directory.
+	 * @throws FileNotFoundException if the dropins directory was not found and could not be 
+	 *   created.
+	 */
+	public File getEclipseDropinsDir() throws FileNotFoundException;
+
+	/**
 	 * Gets the Eclipse workspace directory.  If it is defined, the directory may or may not exist.
 	 * If it is undefined, Eclipse will be in control of selecting a workspace directory to use.
 	 * 

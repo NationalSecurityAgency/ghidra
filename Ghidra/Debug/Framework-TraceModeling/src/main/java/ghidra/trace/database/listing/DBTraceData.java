@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,8 +52,8 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	@DBAnnotatedColumn(DATATYPE_COLUMN_NAME)
 	static DBObjectColumn DATATYPE_COLUMN;
 
-	static String tableName(AddressSpace space, long threadKey, int frameLevel) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
+	static String tableName(AddressSpace space) {
+		return DBTraceUtils.tableName(TABLE_NAME, space);
 	}
 
 	@DBAnnotatedField(column = PLATFORM_COLUMN_NAME)
@@ -92,7 +92,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		if (platform == null) {
 			throw new IOException("Data table is corrupt. Missing platform: " + platformKey);
 		}
-		dataType = space.dataTypeManager.getDataType(dataTypeID);
+		dataType = platform.getDataTypeManager().getDataType(dataTypeID);
 		if (dataType == null) {
 			throw new IOException("Data table is corrupt. Missing datatype: " + dataTypeID);
 		}
@@ -119,7 +119,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	 * Set the fields of this record
 	 * 
 	 * @param platform the platform
-	 * @param dataType the data type
+	 * @param dataTypeID the data type id
 	 */
 	protected void set(InternalTracePlatform platform, long dataTypeID) {
 		this.platformKey = platform.getIntKey();
@@ -128,7 +128,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 
 		this.platform = platform;
 		// Use the stored dataType, not the given one, in case it's different
-		this.dataType = space.dataTypeManager.getDataType(dataTypeID);
+		this.dataType = platform.getDataTypeManager().getDataType(dataTypeID);
 		assert this.dataType != null;
 		this.defaultSettings = this.dataType.getDefaultSettings();
 		this.baseDataType = getBaseDataType(this.dataType);
@@ -269,7 +269,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	@Override
 	public DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent) {
 		return (DBTraceDataSettingsOperations) getTrace().getDataSettingsAdapter()
-				.get(space, createIfAbsent);
+				.get(space.space, createIfAbsent);
 	}
 
 	@Override

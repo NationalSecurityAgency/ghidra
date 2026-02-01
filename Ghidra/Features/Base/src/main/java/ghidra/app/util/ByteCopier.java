@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
 import docking.dnd.GenericDataFlavor;
 import docking.dnd.StringTransferable;
 import docking.widgets.OptionDialog;
+import docking.widgets.OptionDialogBuilder;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -38,11 +38,16 @@ import ghidra.util.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Base class that can copy bytes into a Transferable object, and paste
- * bytes into a program.
+ * Base class that can copy bytes into a Transferable object, and paste bytes into a program.
  *
  */
 public abstract class ByteCopier {
+
+	/**
+	 * Arbitrary number of selected bytes before we prompt the user for confirmation.  This can be 
+	 * changed as needed.s
+	 */
+	private static final long LARGE_SELECTION_COUNT = 1_000_000;
 
 	public static DataFlavor BYTE_STRING_FLAVOR = createByteStringLocalDataTypeFlavor();
 	public static DataFlavor BYTE_STRING_NO_SPACES_FLAVOR =
@@ -158,6 +163,8 @@ public abstract class ByteCopier {
 	protected ProgramSelection currentSelection;
 	protected ProgramLocation currentLocation;
 
+	private OptionDialog confirmLargeSelectionDialog;
+
 	protected ByteCopier() {
 		// limit construction
 	}
@@ -167,7 +174,35 @@ public abstract class ByteCopier {
 		if (addressSet == null || addressSet.isEmpty()) {
 			return new AddressSet(currentLocation.getAddress());
 		}
+
+		long size = addressSet.getNumAddresses();
+		if (skipLargeSelection(size)) {
+			return new AddressSet();
+		}
+
 		return currentSelection;
+	}
+
+	private boolean skipLargeSelection(long size) {
+
+		if (size < LARGE_SELECTION_COUNT) {
+			return false;
+		}
+
+		if (confirmLargeSelectionDialog == null) {
+			String message = """
+					You have copied %,d bytes.
+					Are you sure you wish to copy this many bytes?
+					""".formatted(size);
+			confirmLargeSelectionDialog = new OptionDialogBuilder("Copy Large Selection?", message)
+					.addOption("Continue")
+					.addCancel()
+					.addDontShowAgainOption()
+					.build();
+		}
+
+		int choice = confirmLargeSelectionDialog.show();
+		return choice == OptionDialog.CANCEL_OPTION;
 	}
 
 	protected Transferable copyBytes(AddressSetView addresses, boolean includeSpaces,
@@ -381,125 +416,12 @@ public abstract class ByteCopier {
 	}
 
 	protected boolean pasteByteString(final String string) {
-		Command cmd = new Command() {
-
-			private String status = "Pasting";
-
-			@Override
-			public boolean applyTo(DomainObject domainObject) {
-				if (!(domainObject instanceof Program)) {
-					return false;
-				}
-
-				String validString = string;
-				if (!isOnlyAsciiBytes(string)) {
-					tool.setStatusInfo("Pasted string contained non-text ascii bytes. " +
-						"Only the ascii will be used.", true);
-					validString = keepOnlyAsciiBytes(string);
-				}
-
-				byte[] bytes = getBytes(validString);
-				if (bytes == null) {
-					status = "Improper data format. Expected sequence of hex bytes";
-					tool.beep();
-					return false;
-				}
-
-				// Ensure that we are not writing over instructions
-				Program program = (Program) domainObject;
-				Address address = currentLocation.getAddress();
-				if (!hasEnoughSpace(program, address, bytes.length)) {
-					status =
-						"Not enough space to paste all bytes.  Encountered data or instructions.";
-					tool.beep();
-					return false;
-				}
-
-				// Ask the user before pasting a string into the program.  Since having a string in
-				// the clipboard is so common, this is to prevent an accidental paste.
-				if (!confirmPaste(validString)) {
-					return true; // the user cancelled; the command is successful
-				}
-
-				boolean pastedAllBytes = pasteBytes(program, bytes);
-				if (!pastedAllBytes) {
-					tool.setStatusInfo("Not all bytes were pasted due to memory access issues",
-						true);
-				}
-
-				return true;
-			}
-
-			private boolean pasteBytes(Program program, byte[] bytes) {
-
-				// note: loop one byte at a time here, since Memory will validate all addresses
-				//       before pasting any bytes
-				boolean foundError = false;
-				Address address = currentLocation.getAddress();
-				Memory memory = program.getMemory();
-				for (byte element : bytes) {
-					try {
-						memory.setByte(address, element);
-					}
-					catch (MemoryAccessException e) {
-						// Keep trying the remaining bytes.  Should we just stop in this case?
-						foundError = true;
-					}
-					address = address.next();
-				}
-				return !foundError;
-			}
-
-			private boolean confirmPaste(String validString) {
-
-				// create a truncated version of the string to show in the dialog
-				String partialText = validString.length() < 40 ? validString
-						: validString.substring(0, 40) + " ...";
-				int result = OptionDialog.showYesNoDialog(null, "Paste String Into Program?",
-					"Are you sure you want to paste the string \"" + partialText +
-						"\"\n into the program's memory?");
-
-				return result != OptionDialog.NO_OPTION;
-			}
-
-			private boolean hasEnoughSpace(Program program, Address address, int byteCount) {
-				Listing listing = program.getListing();
-				for (int i = 0; i < byteCount;) {
-					if (address == null) {
-						status = "Not enough addresses to paste bytes";
-						tool.beep();
-						return false;
-					}
-					CodeUnit codeUnit = listing.getCodeUnitContaining(address);
-					if (!(codeUnit instanceof Data) || ((Data) codeUnit).isDefined()) {
-						status = "Cannot paste on top of defined instructions/data";
-						tool.beep();
-						return false;
-					}
-					int length = codeUnit.getLength();
-					i += length;
-					address = codeUnit.getMaxAddress().next();
-				}
-				return true;
-			}
-
-			@Override
-			public String getStatusMsg() {
-				return status;
-			}
-
-			@Override
-			public String getName() {
-				return "Paste";
-			}
-
-		};
-
-		return tool.execute(cmd, currentProgram);
+		return tool.execute(new PasteByteStringCommand(string), currentProgram);
 	}
 
 	/**
 	 * Create a Transferable from the given text.
+	 * 
 	 * @param text text used to create a Transferable
 	 * @return a Transferable
 	 */
@@ -511,8 +433,120 @@ public abstract class ByteCopier {
 // Inner Classes
 //==================================================================================================
 
+	protected class PasteByteStringCommand implements Command<Program> {
+		protected final String string;
+		private String status = "Pasting";
+
+		protected PasteByteStringCommand(String string) {
+			this.string = string;
+		}
+
+		@Override
+		public boolean applyTo(Program program) {
+			String validString = string;
+			if (!isOnlyAsciiBytes(string)) {
+				tool.setStatusInfo("Pasted string contained non-text ascii bytes. " +
+					"Only the ascii will be used.", true);
+				validString = keepOnlyAsciiBytes(string);
+			}
+
+			byte[] bytes = getBytes(validString);
+			if (bytes == null) {
+				status = "Improper data format. Expected sequence of hex bytes";
+				tool.beep();
+				return false;
+			}
+
+			// Ensure that we are not writing over instructions
+			Address address = currentLocation.getAddress();
+			if (!hasEnoughSpace(program, address, bytes.length)) {
+				status =
+					"Not enough space to paste all bytes.  Encountered data or instructions.";
+				tool.beep();
+				return false;
+			}
+
+			// Ask the user before pasting a string into the program.  Since having a string in
+			// the clipboard is so common, this is to prevent an accidental paste.
+			if (!confirmPaste(validString)) {
+				return true; // the user cancelled; the command is successful
+			}
+
+			boolean pastedAllBytes = pasteBytes(program, bytes);
+			if (!pastedAllBytes) {
+				tool.setStatusInfo("Not all bytes were pasted due to memory access issues",
+					true);
+			}
+
+			return true;
+		}
+
+		protected boolean pasteBytes(Program program, byte[] bytes) {
+
+			// note: loop one byte at a time here, since Memory will validate all addresses
+			//       before pasting any bytes
+			boolean foundError = false;
+			Address address = currentLocation.getAddress();
+			Memory memory = program.getMemory();
+			for (byte element : bytes) {
+				try {
+					memory.setByte(address, element);
+				}
+				catch (MemoryAccessException e) {
+					// Keep trying the remaining bytes.  Should we just stop in this case?
+					foundError = true;
+				}
+				address = address.next();
+			}
+			return !foundError;
+		}
+
+		protected boolean confirmPaste(String validString) {
+
+			// create a truncated version of the string to show in the dialog
+			String partialText = validString.length() < 40 ? validString
+					: validString.substring(0, 40) + " ...";
+			int result = OptionDialog.showYesNoDialog(null, "Paste String Into Program?",
+				"Are you sure you want to paste the string \"" + partialText +
+					"\"\n into the program's memory?");
+
+			return result != OptionDialog.NO_OPTION;
+		}
+
+		protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+			Listing listing = program.getListing();
+			for (int i = 0; i < byteCount;) {
+				if (address == null) {
+					status = "Not enough addresses to paste bytes";
+					tool.beep();
+					return false;
+				}
+				CodeUnit codeUnit = listing.getCodeUnitContaining(address);
+				if (!(codeUnit instanceof Data data) || data.isDefined()) {
+					status = "Cannot paste on top of defined instructions/data";
+					tool.beep();
+					return false;
+				}
+				int length = codeUnit.getLength();
+				i += length;
+				address = codeUnit.getMaxAddress().next();
+			}
+			return true;
+		}
+
+		@Override
+		public String getStatusMsg() {
+			return status;
+		}
+
+		@Override
+		public String getName() {
+			return "Paste";
+		}
+	}
+
 	/**
-	 * An iterator of bytes from memory.  This class exists because the {@link MemoryByteIterator}
+	 * An iterator of bytes from memory. This class exists because the {@link MemoryByteIterator}
 	 * throws an exception from its next() method, which will not work for us.
 	 */
 	private static class ByteIterator implements Iterator<Byte> {

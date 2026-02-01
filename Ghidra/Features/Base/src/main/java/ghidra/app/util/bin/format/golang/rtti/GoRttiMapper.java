@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,166 +15,274 @@
  */
 package ghidra.app.util.bin.format.golang.rtti;
 
-import java.io.File;
+import static ghidra.app.util.bin.format.golang.GoConstants.*;
+import static ghidra.app.util.bin.format.golang.rtti.GoRttiMapper.FuncDefFlags.*;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
-import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties;
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.golang.*;
+import ghidra.app.util.bin.format.golang.rtti.GoApiSnapshot.*;
 import ghidra.app.util.bin.format.golang.rtti.types.*;
-import ghidra.app.util.bin.format.golang.structmapping.DataTypeMapper;
-import ghidra.app.util.bin.format.golang.structmapping.StructureMapping;
+import ghidra.app.util.bin.format.golang.rtti.types.GoMethod.GoMethodInfo;
+import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.PeLoader;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Endian;
-import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
- * {@link DataTypeMapper} for golang binaries. 
+ * {@link DataTypeMapper} for Go binaries. 
  * <p>
- * When bootstrapping golang binaries, the following steps are used:
+ * When bootstrapping Go binaries, the following steps are used:
  * <ul>
  * 	<li>Find the GoBuildInfo struct.  This struct is the easiest to locate, even when the binary
- * 	is stripped.  This gives us the go pointerSize (probably same as ghidra pointer size) and the
+ * 	is stripped.  This gives us the Go pointerSize (probably same as ghidra pointer size) and the
  * 	goVersion.  This struct does not rely on StructureMapping, allowing its use before a
- * 	DataTypeMapper is created.
- * 	<li>Create DataTypeMapper
- * 	<li>Find the runtime.firstmoduledata structure.
- * 		<ul>
- *			<li>If there are symbols, just use the symbol or named memory block.
- *			<li>If stripped:
+ * 	DataTypeMapper is created.</li>
+ * 	<li>Create DataTypeMapper</li>
+ * 	<li>Find the runtime.firstmoduledata structure.</li>
+ * 	<li>
+ *     <ul>
+ *			<li>If there are symbols, just use the symbol or named memory block.</li>
+ *			<li>If stripped:</li>
+ *			<li>
  *				<ul>
  * 					<li>Find the pclntab.  This has a magic signature, a pointerSize, and references
- * 					to a couple of tables that are also referenced in the moduledata structure.
+ * 					to a couple of tables that are also referenced in the moduledata structure.</li>
  * 					<li>Search memory for a pointer to the pclntab struct.  This should be the first
  * 					field of the moduledata structure.  The values that are duplicated between the
- * 					two structures can be compared to ensure validity.
+ * 					two structures can be compared to ensure validity.</li>
  * 					<li>Different binary formats (Elf vs PE) will determine which memory blocks to
- * 					search.
- * 				</ul>  
- * 		</ul>
+ * 					search.</li>
+ * 				</ul>
+ * 			</li>  
+ * 	   </ul>
+ *  </li>
  * </ul>
  */
-public class GoRttiMapper extends DataTypeMapper {
+public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContext {
+	public static final GoVerRange SUPPORTED_VERSIONS = GoVerRange.parse("1.15-1.25");
+
+	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
+	private static final List<String> SECTION_PREFIXES =
+		List.of("." /* ELF */, "__" /* macho sections */);
 
 	/**
-	 * Returns a new {@link GoRttiMapper} for the specified program, or null if the binary
-	 * is not a supported golang binary.
-	 * 
-	 * @param program {@link Program}
-	 * @param log {@link MessageLog}
-	 * @return new {@link GoRttiMapper}, or null if not a golang binary
-	 * @throws IOException if bootstrap gdt is corrupted or some other struct mapping logic error 
-	 */
-	public static GoRttiMapper getMapperFor(Program program, MessageLog log) throws IOException {
-		GoBuildInfo buildInfo = GoBuildInfo.fromProgram(program);
-		GoVer goVer;
-		if (buildInfo == null || (goVer = buildInfo.getVerEnum()) == GoVer.UNKNOWN) {
-			return null;
-		}
-		ResourceFile gdtFile =
-			findGolangBootstrapGDT(goVer, buildInfo.getPointerSize(), getGolangOSString(program));
-		if (gdtFile == null) {
-			Msg.error(GoRttiMapper.class, "Missing golang gdt archive for " + goVer);
-		}
-
-		try {
-			return new GoRttiMapper(program, buildInfo.getPointerSize(), buildInfo.getEndian(),
-				buildInfo.getVerEnum(), gdtFile);
-		}
-		catch (IllegalArgumentException e) {
-			// user deserves a warning because the binary wasn't supported
-			log.appendMsg(e.getMessage());
-			return null;
-		}
-	}
-
-	/**
-	 * Returns the name of the golang bootstrap gdt data type archive, using the specified
-	 * version, pointer size and OS name.
-	 * 
-	 * @param goVer {@link GoVer}
-	 * @param pointerSizeInBytes pointer size for this binary, or -1 to use wildcard "any" 
-	 * @param osName name of the operating system, or "any"
-	 * @return String, "golang_1.18_64bit_any.gdt"
-	 */
-	public static String getGDTFilename(GoVer goVer, int pointerSizeInBytes, String osName) {
-		String bitSize = pointerSizeInBytes > 0
-				? Integer.toString(pointerSizeInBytes * 8)
-				: "any";
-		String gdtFilename =
-			"golang_%d.%d_%sbit_%s.gdt".formatted(goVer.getMajor(), goVer.getMinor(),
-				bitSize, osName);
-		return gdtFilename;
-	}
-
-	/**
-	 * Returns a golang OS string based on the Ghidra program.
-	 * 
-	 * @param program {@link Program}
-	 * @return String golang OS string such as "linux", "win"
-	 */
-	public static String getGolangOSString(Program program) {
-		String loaderName = program.getExecutableFormat();
-		if (ElfLoader.ELF_NAME.equals(loaderName)) {
-			// TODO: this will require additional work to map all Golang OSs to Ghidra loader info
-			return "linux";
-		}
-		else if (PeLoader.PE_NAME.equals(loaderName)) {
-			return "win";
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
-	 * Searches for a golang bootstrap gdt file that matches the specified Go version/size/OS.
+	 * Returns a shared {@link GoRttiMapper} for the specified program, or null if the binary
+	 * is not a supported Go binary.
 	 * <p>
-	 * First looks for a gdt with an exact match, then for a gdt with version/size match and
-	 * "any" OS, and finally, a gdt that matches the version and "any" size and "any" OS.
+	 * The returned value will be cached and returned in any additional calls to this method, and
+	 * automatically {@link #close() closed} when the current analysis session is finished.
+	 * <p>
+	 * NOTE: Only valid during an analysis session.  If outside of an analysis session, use
+	 * {@link #getGoBinary(Program, TaskMonitor)} to create a new instance if you need to use this 
+	 * outside of an analyzer.
+	 *   
+	 * @param program Go {@link Program} 
+	 * @param monitor {@link TaskMonitor}
+	 * @return a shared {@link GoRttiMapper Go binary} instance, or null if unable to find valid
+	 * Go info in the Program
 	 * 
-	 * @param goVer version of Go
-	 * @param ptrSize size of pointers
-	 * @param osName name of OS
-	 * @return ResourceFile of matching bootstrap gdt, or null if nothing matches
 	 */
-	public static ResourceFile findGolangBootstrapGDT(GoVer goVer, int ptrSize, String osName) {
-		ResourceFile result = null;
-		if (osName != null) {
-			result = DataTypeArchiveUtility.findArchiveFile(getGDTFilename(goVer, ptrSize, osName));
-		}
-		if (result == null) {
-			result = DataTypeArchiveUtility.findArchiveFile(getGDTFilename(goVer, ptrSize, "any"));
-		}
-		if (result == null) {
-			result =
-				DataTypeArchiveUtility.findArchiveFile(getGDTFilename(goVer, -1 /*any*/, "any"));
-		}
-		return result;
+	public static GoRttiMapper getSharedGoBinary(Program program, TaskMonitor monitor) {
+		GoRttiMapper goBinary = TransientProgramProperties.getProperty(program, GoRttiMapper.class,
+			TransientProgramProperties.SCOPE.ANALYSIS_SESSION, GoRttiMapper.class, () -> {
+				// cached instance not found, create new instance
+				Msg.info(GoRttiMapper.class, "Reading Go binary info: " + program.getName());
+				try {
+					GoRttiMapper supplier_result = getGoBinary(program, monitor);
+					if (supplier_result != null) {
+						supplier_result.init(monitor);
+						return supplier_result;
+					}
+				}
+				catch (BootstrapInfoException mbie) {
+					Msg.warn(GoRttiMapper.class, mbie.getMessage());
+					logAnalyzerMsg(program, mbie.getMessage());
+				}
+				catch (IOException e) {
+					// this is a more serious error, and the stack trace should be written
+					// to the application log
+					Msg.error(GoRttiMapper.class, "Failed to read Go info", e);
+					logAnalyzerMsg(program, e.getMessage());
+				}
+
+				return null;
+			});
+
+		return goBinary;
 	}
 
-	private static final CategoryPath RECOVERED_TYPES_CP = new CategoryPath("/golang-recovered");
+	private static void logAnalyzerMsg(Program program, String msg) {
+		AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
+		if (aam.isAnalyzing()) {
+			// should cause a modal popup at end of analysis that will show the message
+			MessageLog log = aam.getMessageLog();
+			log.appendMsg(msg);
+		}
+	}
+
+	/**
+	 * Creates a {@link GoRttiMapper} representing the specified program.
+	 * 
+	 * @param program {@link Program}
+	 * @param monitor {@link TaskMonitor}
+	 * @return new {@link GoRttiMapper}, or null if basic Go information is not found in the
+	 * binary
+	 * @throws BootstrapInfoException if it is a Go binary and has an unsupported or
+	 * unparseable version number or if Go bootstrap info was missing
+	 * @throws IOException if there was an error in the Ghidra Go RTTI reading logic 
+	 */
+	public static GoRttiMapper getGoBinary(Program program, TaskMonitor monitor)
+			throws BootstrapInfoException, IOException {
+		GoBuildInfo buildInfo = GoBuildInfo.fromProgram(program);
+		if (buildInfo == null || buildInfo.getGoVer().isInvalid()) {
+			GoBuildInfo fallbackBI = GoBuildInfo.fromFallbackInfo(program);
+			if (fallbackBI != null) {
+				buildInfo = fallbackBI;
+			}
+		}
+		if (buildInfo == null) {
+			// probably not a Go binary
+			return null;
+		}
+
+		GoVer goVer = buildInfo.getGoVer();
+		if (goVer.isInvalid()) {
+			throw new BootstrapInfoException(
+				"Invalid Go version string [%s]".formatted(buildInfo.getVersion()));
+		}
+		if (!SUPPORTED_VERSIONS.contains(goVer) ) {
+			Msg.error(GoRttiMapper.class, "Untested Go version [%s]".formatted(goVer));
+		}
+
+		GoApiSnapshot apiSnapshot;
+		try {
+			apiSnapshot = GoApiSnapshot.get(goVer, buildInfo.getGOARCH(program),
+				buildInfo.getGOOS(program), monitor);
+			if (!apiSnapshot.getVer().isInvalid()) {
+				Msg.info(GoRttiMapper.class,
+					"Using Go API snapshot for version %s".formatted(apiSnapshot.getVer()));
+			}
+		}
+		catch (CancelledException e) {
+			throw new IOException("Error fetching Go API snapshot file: cancelled");
+		}
+
+		return new GoRttiMapper(program, buildInfo, buildInfo.getPointerSize(), goVer, apiSnapshot);
+	}
+
+	/**
+	 * Returns true if the specified Program is marked as "golang".
+	 * 
+	 * @param program {@link Program}
+	 * @return boolean true if program is marked as golang
+	 */
+	public static boolean isGolangProgram(Program program) {
+		return GoConstants.GOLANG_CSPEC_NAME.equals(
+			program.getCompilerSpec().getCompilerSpecDescription().getCompilerSpecName());
+	}
+
+	public static boolean hasGolangSections(List<String> sectionNames) {
+		for (String sectionName : sectionNames) {
+			if (sectionName.contains("gopclntab") ||
+				sectionName.contains(GoBuildInfo.MACHO_SECTION_NAME) ||
+				sectionName.contains(GoBuildInfo.SECTION_NAME)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns a matching symbol from the specified program, using Go specific logic.
+	 * 
+	 * @param program {@link Program}
+	 * @param symbolName name of Go symbol
+	 * @return {@link Symbol}, or null if not found
+	 */
+	public static Symbol getGoSymbol(Program program, String symbolName) {
+		for (String prefix : SYMBOL_SEARCH_PREFIXES) {
+			List<Symbol> symbols = program.getSymbolTable().getSymbols(prefix + symbolName, null);
+			if (symbols.size() == 1) {
+				return symbols.get(0);
+			}
+		}
+		return null;
+	}
+
+	public static MemoryBlock getGoSection(Program program, String sectionName) {
+		for (String prefix : SECTION_PREFIXES) {
+			MemoryBlock memBlock = program.getMemory().getBlock(prefix + sectionName);
+			if (memBlock != null) {
+				return memBlock;
+			}
+		}
+		return null;
+	}
+
+	public static MemoryBlock getFirstGoSection(Program program, String... blockNames) {
+		for (String blockToSearch : blockNames) {
+			MemoryBlock memBlock = getGoSection(program, blockToSearch);
+			if (memBlock != null) {
+				return memBlock;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Return the address of the Go zerobase symbol, or an artificial substitute.
+	 * <p>
+	 * The zerobase symbol is used as the location of parameters that are zero-length.
+	 * 
+	 * @param prog {@link Program}
+	 * @return {@link Address} of the runtime.zerobase, or artificial substitute
+	 */
+	public static Address getZerobaseAddress(Program prog) {
+		Symbol zerobaseSym = getGoSymbol(prog, "runtime.zerobase");
+		Address zerobaseAddr =
+			zerobaseSym != null ? zerobaseSym.getAddress() : getArtificalZerobaseAddress(prog);
+		if (zerobaseAddr == null) {
+			zerobaseAddr = prog.getImageBase().getAddressSpace().getMinAddress();	// ICKY HACK
+			Msg.warn(GoRttiMapper.class,
+				"Unable to find Go runtime.zerobase, using " + zerobaseAddr);
+		}
+		return zerobaseAddr;
+	}
+
+	public static List<GoVer> getAllSupportedVersions() {
+		try {
+			return SUPPORTED_VERSIONS.asList();
+		}
+		catch (IOException e) {
+			return List.of();
+		}
+	}
+
+	public final static String ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME =
+		"ARTIFICIAL.runtime.zerobase";
+
+	private static Address getArtificalZerobaseAddress(Program program) {
+		Symbol zerobaseSym = getGoSymbol(program, ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME);
+		return zerobaseSym != null ? zerobaseSym.getAddress() : null;
+	}
+
 	private static final CategoryPath GOLANG_CP = GoConstants.GOLANG_CATEGORYPATH;
 	private static final CategoryPath VARLEN_STRUCTS_CP = GoConstants.GOLANG_CATEGORYPATH;
 
@@ -192,109 +300,169 @@ public class GoRttiMapper extends DataTypeMapper {
 			GoFunctabEntry.class, GoFuncData.class, GoItab.class, GoString.class, GoPcHeader.class);
 
 	private final BinaryReader reader;
-	private final GoVer goVersion;
+	private final GoBuildInfo buildInfo;
+	private final GoVer goVer;
 	private final int ptrSize;
-	private final Endian endian;
-	private final DataType uintptrDT;
-	private final DataType int32DT;
-	private final DataType uint32DT;
-	private final Map<Long, GoType> goTypes = new HashMap<>();
-	private final Map<String, GoType> typeNameIndex = new HashMap<>();
-	private final Map<Long, DataType> cachedRecoveredDataTypes = new HashMap<>();
+	private final GoRegisterInfo regInfo;
+	private final String defaultCCName;
 	private final List<GoModuledata> modules = new ArrayList<>();
 	private Map<Address, GoFuncData> funcdataByAddr = new HashMap<>();
 	private Map<String, GoFuncData> funcdataByName = new HashMap<>();
-	private GoType mapGoType;
-	private GoType chanGoType;
-	private GoRegisterInfo regInfo;
-	private PrototypeModel abiInternalCallingConvention;
-	private PrototypeModel abi0CallingConvention;
-	private PrototypeModel duffzeroCallingConvention;
-	private PrototypeModel duffcopyCallingConvention;
+	private Map<Address, List<MethodInfo>> methodsByAddr = new HashMap<>();
+	private byte minLC;
+	private final GoApiSnapshot apiSnapshot;
+	private final GoTypeManager goTypes;
 
 	/**
 	 * Creates a GoRttiMapper using the specified bootstrap information.
 	 * 
-	 * @param program {@link Program} containing the go binary
+	 * @param program {@link Program} containing the Go binary
+	 * @param buildInfo {@link GoBuildInfo}
 	 * @param ptrSize size of pointers
-	 * @param endian {@link Endian}
-	 * @param goVersion version of go
-	 * @param archiveGDT path to the matching golang bootstrap gdt data type file, or null
-	 * if not present and types recovered via DWARF should be used instead
+	 * @param goVer version of Go
+	 * @param apiSnapshot json func signatures and data types 
 	 * @throws IOException if error linking a structure mapped structure to its matching
-	 * ghidra structure, which is a programming error or a corrupted bootstrap gdt
-	 * @throws IllegalArgumentException if there is no matching bootstrap gdt for this specific
-	 * type of golang binary
+	 * ghidra structure, which is a programming error or invalid bootstrap info
+	 * @throws BootstrapInfoException if there is no bootstrap info for this specific
+	 * type and version of Go binary
 	 */
-	public GoRttiMapper(Program program, int ptrSize, Endian endian, GoVer goVersion,
-			ResourceFile archiveGDT) throws IOException, IllegalArgumentException {
-		super(program, archiveGDT);
+	public GoRttiMapper(Program program, GoBuildInfo buildInfo, int ptrSize, GoVer goVer,
+			GoApiSnapshot apiSnapshot) throws IOException, BootstrapInfoException {
+		super(program, null);
 
-		this.goVersion = goVersion;
+		this.regInfo = GoRegisterInfoManager.getInstance()
+				.getRegisterInfoForLang(program.getLanguage(), goVer);
+		this.apiSnapshot = apiSnapshot;
+		this.buildInfo = buildInfo;
+		this.goVer = goVer;
 		this.ptrSize = ptrSize;
-		this.endian = endian;
+		this.defaultCCName = regInfo.hasAbiInternalParamRegisters() &&
+			hasCallingConvention(GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME)
+					? GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME
+					: null;
 
 		reader = super.createProgramReader();
 
-		addArchiveSearchCategoryPath(CategoryPath.ROOT, GOLANG_CP);
-		addProgramSearchCategoryPath(DWARFProgram.DWARF_ROOT_CATPATH, DWARFProgram.UNCAT_CATPATH);
+		this.goTypes = new GoTypeManager(this, apiSnapshot);
 
-		this.uintptrDT = getTypeOrDefault("uintptr", DataType.class,
-			AbstractIntegerDataType.getUnsignedDataType(ptrSize, getDTM()));
-		this.int32DT = getTypeOrDefault("int32", DataType.class,
-			AbstractIntegerDataType.getSignedDataType(4, null));
-		this.uint32DT = getTypeOrDefault("uint32", DataType.class,
-			AbstractIntegerDataType.getUnsignedDataType(4, null));
+		initStructMappings();
+	}
 
+	private void initStructMappings() throws IOException {
 		try {
-			registerStructures(GOLANG_STRUCTMAPPED_CLASSES);
+			registerStructures(GOLANG_STRUCTMAPPED_CLASSES, this);
 		}
 		catch (IOException e) {
-			if (archiveGDT == null) {
-				// a normal'ish situation where there isn't a .gdt for this arch/binary and there
-				// isn't any DWARF.
-				throw new IllegalArgumentException(
-					"Missing golang .gdt archive for %s, no fallback DWARF info, unable to extract golang RTTI info."
-							.formatted(goVersion));
+			if (apiSnapshot.isInvalid()) {
+				// a normal'ish situation where we don't have type info for this arch/binary
+				throw new BootstrapInfoException(
+					"Missing Go bootstrap type info, unable to extract Go RTTI info."
+							.formatted(goVer));
 			}
-			// a bad situation where the data type info is corrupted 
-			throw new IOException("Invalid or missing Golang bootstrap GDT file: %s"
-					.formatted(archiveGDT.getAbsolutePath()));
+
+			// we have type info, but something failed in the struct mappings 
+			throw new IOException(
+				"Invalid Go bootstrap struct mapping info: %s".formatted(goVer), e);
 		}
+	}
+
+	@Override
+	public void close() {
+		Set<String> missingGoTypes = goTypes.getMissingGoTypes();
+		if (!missingGoTypes.isEmpty()) {
+			Msg.info(this, "Go missing type names: " + missingGoTypes.size());
+			//missingGoTypes.forEach(s -> Msg.info(this, "  " + s));
+		}
+		super.close();
+	}
+
+	@Override
+	public <T extends DataType> T getType(String name, Class<T> clazz) {
+		try {
+			DataType result = goTypes.findDataType(name);
+			if (result == null && GoPcHeader.GO_STRUCTURE_NAME.equals(name) &&
+				Structure.class.isAssignableFrom(clazz)) {
+				// create an artificial runtime.pcHeader structure for <=1.15 to enable GoModuledata
+				// to have references to a GoPcHeader 
+				result = clazz.cast(GoPcHeader.createArtificialGoPcHeaderStructure(GOLANG_CP,
+					program.getDataTypeManager()));
+			}
+			return clazz.isInstance(result) ? clazz.cast(result) : null;
+		}
+		catch (IOException e) {
+			Msg.warn(this, "Unable to find Go type %s".formatted(name), e);
+			return null;
+		}
+	}
+
+	@Override
+	public boolean isFieldPresent(String presentWhen) {
+		presentWhen = presentWhen.strip();
+		if (presentWhen.isEmpty()) {
+			return true;
+		}
+
+		try {
+			GoVerSet versions = GoVerSet.parse(presentWhen);
+			if (!versions.isEmpty()) {
+				return versions.contains(goVer);
+			}
+			// fall thru, throw error
+		}
+		catch (IOException e) {
+			// fall thru
+		}
+		throw new IllegalArgumentException(
+			"Invalid 'presentWhen' value [%s]".formatted(presentWhen));
 	}
 
 	/**
-	 * Returns the golang version
-	 * @return {@link GoVer}
+	 * {@return {@link GoVer Go version}}
 	 */
-	public GoVer getGolangVersion() {
-		return goVersion;
+	public GoVer getGoVer() {
+		return goVer;
 	}
 
+	/**
+	 * Returns a shared {@link GoRegisterInfo} instance
+	 * @return {@link GoRegisterInfo}
+	 */
 	public GoRegisterInfo getRegInfo() {
 		return regInfo;
 	}
 
+	public GoBuildInfo getBuildInfo() {
+		return buildInfo;
+	}
+
+	/**
+	 * Finishes making this instance ready to be used.
+	 * 
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException if error reading data
+	 */
 	public void init(TaskMonitor monitor) throws IOException {
-		initHiddenCompilerTypes();
-
-		this.regInfo = GoRegisterInfoManager.getInstance()
-				.getRegisterInfoForLang(program.getLanguage(), goVersion);
-
-		this.abiInternalCallingConvention = program.getFunctionManager()
-				.getCallingConvention(GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME);
-		this.abi0CallingConvention = program.getFunctionManager()
-				.getCallingConvention(GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME);
-		this.duffzeroCallingConvention = program.getFunctionManager()
-				.getCallingConvention(GoConstants.GOLANG_DUFFZERO_CALLINGCONVENTION_NAME);
-		this.duffcopyCallingConvention = program.getFunctionManager()
-				.getCallingConvention(GoConstants.GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME);
-
 		GoModuledata firstModule = findFirstModuledata(monitor);
 		if (firstModule != null) {
-			addModule(firstModule);
+			GoPcHeader pcHeader = firstModule.getPcHeader();
+			if (pcHeader != null) {
+				this.minLC = pcHeader.getMinLC();
+				if (pcHeader.getPtrSize() != ptrSize) {
+					throw new IOException(
+						"Mismatched ptrSize: %d vs %d".formatted(pcHeader.getPtrSize(), ptrSize));
+				}
+				if (pcHeader.getGoVersion().isInvalid()) {
+					// we can get here if the firstmoduledata was located via symbolname instead of
+					// relying on bootstraping via the pcheader
+					Msg.warn(this,
+						"Unknown Go pcheader magic value: 0x%x".formatted(pcHeader.getMagic()));
+				}
+			}
+			modules.add(firstModule);
 		}
 		initFuncdata();
+		goTypes.init(monitor);
+		initMethodInfo();
 	}
 
 	private void initFuncdata() throws IOException {
@@ -306,32 +474,70 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 	}
 
+	private void initMethodInfo() throws IOException {
+		for (GoType goType : goTypes.allTypes()) {
+			goType.getMethodInfoList().forEach(this::addMethodInfo);
+		}
+
+		for (GoModuledata module : modules) {
+			for (GoItab itab : module.getItabs()) {
+				itab.getMethodInfoList().forEach(this::addMethodInfo);
+			}
+		}
+	}
+
+	private void addMethodInfo(MethodInfo bm) {
+		List<MethodInfo> methods =
+			methodsByAddr.computeIfAbsent(bm.getAddress(), unused -> new ArrayList<>());
+		methods.add(bm);
+	}
+
+	public GoTypeManager getGoTypes() {
+		return goTypes;
+	}
+
 	/**
-	 * Returns the first module data instance
-	 * 
-	 * @return {@link GoModuledata}
+	 * {@return the minLC (pcquantum) value found in the pcln header structure}
+	 * @throws IOException if value has not been initialized yet
+	 */
+	public byte getMinLC() throws IOException {
+		if (minLC == 0) {
+			throw new IOException("Unknown Go minLC value");
+		}
+		return minLC;
+	}
+
+	/**
+	 * {@return the first {@link GoModuledata} module data instance}
 	 */
 	public GoModuledata getFirstModule() {
-		return modules.get(0);
+		return !modules.isEmpty() ? modules.get(0) : null;
+	}
+
+	public List<GoModuledata> getModules() {
+		return modules;
 	}
 
 	/**
-	 * Adds a module data instance to the context
-	 * 
-	 * @param module {@link GoModuledata} to add
+	 * {@return new {@link GoParamStorageAllocator} param storage allocator instance}
 	 */
-	public void addModule(GoModuledata module) {
-		modules.add(module);
-	}
-
-	public GoParamStorageAllocator getStorageAllocator() {
-		GoParamStorageAllocator storageAllocator = new GoParamStorageAllocator(program, goVersion);
+	public GoParamStorageAllocator newStorageAllocator() {
+		GoParamStorageAllocator storageAllocator = new GoParamStorageAllocator(program, goVer);
 		return storageAllocator;
 	}
 
+	/**
+	 * Returns true if the specified function uses the abi0 calling convention.
+	 *  
+	 * @param func {@link Function} to test
+	 * @return boolean true if function uses abi0 calling convention
+	 */
 	public boolean isGolangAbi0Func(Function func) {
-		Address funcAddr = func.getEntryPoint();
-		for (Symbol symbol : func.getProgram().getSymbolTable().getSymbolsAsIterator(funcAddr)) {
+		return isAbi0Func(func.getEntryPoint(), program);
+	}
+
+	public static boolean isAbi0Func(Address funcEntry, Program program) {
+		for (Symbol symbol : program.getSymbolTable().getSymbolsAsIterator(funcEntry)) {
 			if (symbol.getSymbolType() == SymbolType.LABEL) {
 				String labelName = symbol.getName();
 				if (labelName.endsWith("abi0")) {
@@ -342,20 +548,25 @@ public class GoRttiMapper extends DataTypeMapper {
 		return false;
 	}
 
-	public PrototypeModel getAbi0CallingConvention() {
-		return abi0CallingConvention;
+	/**
+	 * Returns true if the specified calling convention is defined for the program.
+	 * @param ccName calling convention name
+	 * @return true if the specified calling convention is defined for the program
+	 */
+	public boolean hasCallingConvention(String ccName) {
+		return program.getFunctionManager().getCallingConvention(ccName) != null;
 	}
 
-	public PrototypeModel getAbiInternalCallingConvention() {
-		return abiInternalCallingConvention;
+	public String getDefaultCallingConventionName() {
+		return defaultCCName;
 	}
 
-	public PrototypeModel getDuffzeroCallingConvention() {
-		return duffzeroCallingConvention;
-	}
+	@Override
+	public MarkupSession createMarkupSession(TaskMonitor monitor) {
+		UnknownProgressWrappingTaskMonitor upwtm = new UnknownProgressWrappingTaskMonitor(monitor);
+		upwtm.initialize(1, "Marking up Go RTTI structures");
 
-	public PrototypeModel getDuffcopyCallingConvention() {
-		return duffcopyCallingConvention;
+		return super.createMarkupSession(upwtm);
 	}
 
 	/**
@@ -397,59 +608,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		return VARLEN_STRUCTS_CP;
 	}
 
-	/**
-	 * Returns the data type that represents a golang uintptr
-	 * 
-	 * @return golang uinptr data type
-	 */
-	public DataType getUintptrDT() {
-		return uintptrDT;
-	}
-
-	/**
-	 * Returns the data type that represents a golang int32
-	 * 
-	 * @return golang int32 data type
-	 */
-	public DataType getInt32DT() {
-		return int32DT;
-	}
-
-	/**
-	 * Returns the data type that represents a golang uint32
-	 * 
-	 * @return golang uint32 data type
-	 */
-	public DataType getUint32DT() {
-		return uint32DT;
-	}
-
-	/**
-	 * Returns the data type that represents a generic golang slice.
-	 * 
-	 * @return golang generic slice data type
-	 */
-	public Structure getGenericSliceDT() {
-		return getStructureDataType(GoSlice.class);
-	}
-
-	/**
-	 * Returns the ghidra data type that represents a golang built-in map type.
-	 * 
-	 * @return golang map data type
-	 */
-	public GoType getMapGoType() {
-		return mapGoType;
-	}
-
-	/**
-	 * Returns the ghidra data type that represents the built-in golang channel type.
-	 * 
-	 * @return golang channel type
-	 */
-	public GoType getChanGoType() {
-		return chanGoType;
-	}
 
 	@Override
 	protected BinaryReader createProgramReader() {
@@ -465,333 +623,403 @@ public class GoRttiMapper extends DataTypeMapper {
 		return ptrSize;
 	}
 
-	/**
-	 * Returns a specialized {@link GoType} for the type that is located at the specified location.
-	 * 
-	 * @param offset absolute position of a go type
-	 * @return specialized {@link GoType} (example, GoStructType, GoArrayType, etc)
-	 * @throws IOException if error reading
-	 */
-	public GoType getGoType(long offset) throws IOException {
-		if (offset == 0) {
-			return null;
-		}
-		GoType goType = goTypes.get(offset);
-		if (goType == null) {
-			Class<? extends GoType> typeClass = GoType.getSpecializedTypeClass(this, offset);
-			goType = readStructure(typeClass, offset);
-			goTypes.put(offset, goType);
-		}
-		return goType;
+	public enum FuncDefFlags {
+		RECV_MISSING,
+		RECV_ARTIFICIAL,
+		PARAMS_PARTIAL,
+		PARAM_SUBSTITUTION,
+		PARAMS_MISSING,
+		RETURN_INFO_PARTIAL,
+		RESULT_SUBSTITUTION,
+		RETURN_INFO_MISSING,
+		FROM_RTTI_METHOD,
+		FROM_SNAPSHOT,
+		FROM_ANALYSIS,
+		CLOSURE,
+		METHOD_WRAPPER
+	}
+
+	public record FuncDefResult(FunctionDefinition funcDef, GoType recvType, Set<FuncDefFlags> flags,
+			String funcDefStr, GoSymbolName symbolName) {
 	}
 
 	/**
-	 * Returns a specialized {@link GoType} for the type that is located at the specified location.
+	 * Returns function definition information for a func.
 	 * 
-	 * @param addr location of a go type
-	 * @return specialized {@link GoType} (example, GoStructType, GoArrayType, etc)
-	 * @throws IOException if error reading
+	 * @param funcData {@link GoFuncData} representing a Go func
+	 * @return {@link FuncDefResult} record, or null if no information could be found or
+	 * generated
+	 * @throws IOException if error reading type info
 	 */
-	public GoType getGoType(Address addr) throws IOException {
-		return getGoType(addr.getOffset());
-	}
+	public FuncDefResult getFuncDefFor(GoFuncData funcData) throws IOException {
+		GoSymbolName symbolName = funcData.getSymbolName();
 
-	public GoType getLastGoType() {
-		Optional<Entry<Long, GoType>> max = goTypes.entrySet()
-				.stream()
-				.max((o1, o2) -> o1.getKey().compareTo(o2.getKey()));
-		return max.isPresent() ? max.get().getValue() : null;
-	}
-
-	/**
-	 * Finds a go type by its go-type name, from the list of 
-	 * {@link #discoverGoTypes(TaskMonitor) discovered} go types. 
-	 * 
-	 * @param typeName name string
-	 * @return {@link GoType}, or null if not found
-	 */
-	public GoType findGoType(String typeName) {
-		return typeNameIndex.get(typeName);
-	}
-
-	/**
-	 * Returns the Ghidra {@link DataType} that is equivalent to the named golang type.
-	 * 
-	 * @param <T> expected DataType
-	 * @param goTypeName golang type name
-	 * @param clazz class of expected data type
-	 * @return {@link DataType} representing the named golang type, or null if not found
-	 */
-	public <T extends DataType> T getGhidraDataType(String goTypeName, Class<T> clazz) {
-		T dt = getType(goTypeName, clazz);
-		if (dt == null) {
-			GoType goType = findGoType(goTypeName);
-			if (goType != null) {
-				try {
-					DataType tmpDT = goType.recoverDataType();
-					if (clazz.isInstance(tmpDT)) {
-						dt = clazz.cast(tmpDT);
-					}
-				}
-				catch (IOException e) {
-					Msg.warn(this, "Failed to get Ghidra data type from go type: %s[%x]"
-							.formatted(goTypeName,
-								goType.getStructureContext().getStructureStart()));
+		GoMethodInfo methodInfo = getMethodInfoForFunction(funcData.getFuncAddress());
+		if (methodInfo != null) {
+			if (symbolName.isNonPtrReceiverCandidate()) {
+				GoType recvType = methodInfo.getType(); // never null
+				GoSymbolName nonptrRecvName = symbolName.asNonPtrReceiverSymbolName();
+				if (nonptrRecvName != null && recvType.getSymbolName()
+						.getBaseTypeName()
+						.equals(nonptrRecvName.getReceiverString())) {
+					symbolName = nonptrRecvName;
 				}
 			}
+			if (methodInfo.getMethodFuncType() != null) {
+				return createFuncDefFromMethod(symbolName, methodInfo);
+			}
 		}
-		return dt;
+
+		if (symbolName.getPrefix() != null) {
+			String prefix = Objects.requireNonNullElse(symbolName.getTypePrefixSubKeyword(), "");
+			switch (prefix) {
+				case "eq":
+					return createFuncDefForDotEquals(symbolName);
+				case "hash":
+					return createFuncDefForDotHash(symbolName);
+				default:
+					return null;
+			}
+		}
+
+		// TODO: a bit hacky, but the knowledge about how morestack takes a context
+		// is not exposed via any function signature info
+		if (symbolName.asString().equals("runtime.morestack")) {
+			return createFuncDefForClosure(symbolName);
+		}
+
+		if (symbolName.isNonPtrReceiverCandidate()) {
+			// attempt to reinterpret the symbolname as a non-pointer receiver symbol name
+			GoSymbolName nonptrRecvName = symbolName.asNonPtrReceiverSymbolName();
+			if (nonptrRecvName != null && goTypes.findRecieverType(nonptrRecvName) != null) {
+				symbolName = nonptrRecvName;
+			}
+		}
+
+		GoType recvType = methodInfo != null ? methodInfo.getType() : null;
+
+		GoSymbolNameType nameType = symbolName.getNameType();
+		if (nameType == GoSymbolNameType.METHOD_WRAPPER) {
+			return createFuncDefForMethodWrapper(symbolName);
+		}
+		else if (nameType != null && nameType.isClosure()) {
+			return createFuncDefForClosure(symbolName);
+		}
+		else {
+			GoFuncDef snapshotFuncdef =
+				apiSnapshot.getFuncdef(symbolName.getStrippedSymbolString());
+			if (snapshotFuncdef != null) {
+				return createFuncDefFromApiSnapshot(symbolName, recvType, snapshotFuncdef);
+			}
+		}
+
+		return createFuncDefWithMissingInfo(symbolName, recvType);
 	}
 
-	/**
-	 * Export the currently registered struct mapping types to a gdt file, producing a bootstrap
-	 * GDT archive.
-	 * <p>
-	 * The struct data types will either be from the current program's DWARF data, or
-	 * from an earlier golang.gdt (if this binary doesn't have DWARF)
-	 * 
-	 * @param gdtFile destination {@link File} to write the bootstrap types to
-	 * @param monitor {@link TaskMonitor}
-	 * @throws IOException if error
-	 */
-	public void exportTypesToGDT(File gdtFile, TaskMonitor monitor) throws IOException {
+	private FuncDefResult createFuncDefForDotEquals(GoSymbolName symbolName) throws IOException {
+		GoSymbolName typeName = GoSymbolName.parseTypeName(symbolName.getBaseName(), null);
 
-		List<DataType> registeredStructDTs = mappingInfo.values()
-				.stream()
-				.map(smi -> {
-					if (smi.getStructureDataType() == null) {
-						return null;
-					}
-					DataType existingDT = findType(smi.getStructureName(),
-						List.of(DWARFProgram.DWARF_ROOT_CATPATH, DWARFProgram.UNCAT_CATPATH),
-						programDTM);
-					if (existingDT == null) {
-						existingDT = smi.getStructureDataType();
-					}
-					if (existingDT == null) {
-						Msg.warn(this, "Missing type: " + smi.getDescription());
-					}
-					return existingDT;
-				})
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
+		// Note: anon structs in older Go vers tend to also have package paths that make them
+		// fail to match a simple namelookup, as well as the field names can fail to make because
+		// of inconsistent package name inclusion.
 
-		// Copy the data types into a tmp gdt, and then copy them again into the final gdt
-		// to avoid traces of the original program name as a deleted source archive link in the
-		// gdt data base.  This method only leaves the target gdt filename + ".step1" in the db.
-		File tmpGDTFile = new File(gdtFile.getParentFile(), gdtFile.getName() + ".step1.gdt");
-		FileDataTypeManager tmpFdtm = FileDataTypeManager.createFileArchive(tmpGDTFile);
-		int tx = -1;
+		if (typeName.asString().startsWith("[...]")) {
+			// strip array initializer string because it causes problems with parsing, and doesn't
+			// matter because arrays are converted to element anyways.
+			typeName = GoSymbolName.parseTypeName(typeName.asString().substring(5));
+		}
+
+		DataType typ = null;
 		try {
-			tx = tmpFdtm.startTransaction("Import");
-			tmpFdtm.addDataTypes(registeredStructDTs, DataTypeConflictHandler.DEFAULT_HANDLER,
-				monitor);
-			moveAllDataTypesTo(tmpFdtm, DWARFProgram.DWARF_ROOT_CATPATH, GOLANG_CP);
-			for (SourceArchive sa : tmpFdtm.getSourceArchives()) {
-				tmpFdtm.removeSourceArchive(sa);
+			typ = goTypes.findDataType(typeName);
+			if (typ != null && typ instanceof Array adt) {
+				// convert array to its element, which will be turned into ptr-to-element lower down
+				typ = adt.getDataType();
 			}
-			tmpFdtm.getRootCategory()
-					.removeCategory(DWARFProgram.DWARF_ROOT_CATPATH.getName(), monitor);
-			// TODO: could also clear out any description strings on types
 		}
-		catch (CancelledException | DuplicateNameException e) {
-			Msg.error(this, "Error when exporting types to file: %s".formatted(gdtFile), e);
+		catch (IOException e) {
+			// fall thru with null dt
 		}
-		finally {
-			if (tx != -1) {
-				tmpFdtm.endTransaction(tx, true);
+		DataType dt = programDTM.getPointer(typ);
+		DataType returnDT = BooleanDataType.dataType;
+
+		List<ParameterDefinition> params = List.of(new ParameterDefinitionImpl("o1", dt, null),
+			new ParameterDefinitionImpl("o2", dt, null));
+
+		Set<FuncDefFlags> flags = typ != null
+				? Set.of(FuncDefFlags.FROM_ANALYSIS)
+				: Set.of(FuncDefFlags.FROM_ANALYSIS, FuncDefFlags.PARAM_SUBSTITUTION);
+
+		FunctionDefinitionDataType funcDef =
+			goTypes.createFuncDef(params, returnDT, symbolName, false);
+		return new FuncDefResult(funcDef, null, flags, "func(*o1, *o2) bool", symbolName);
+	}
+
+	private FuncDefResult createFuncDefForDotHash(GoSymbolName symbolName) throws IOException {
+		GoSymbolName typeName = GoSymbolName.parseTypeName(symbolName.getBaseName(), null);
+		DataType typ = goTypes.findDataType(typeName);
+		DataType dt = programDTM.getPointer(typ);
+		DataType returnDT = goTypes.getDataType("uintptr");
+
+		List<ParameterDefinition> params = List.of(new ParameterDefinitionImpl(null, dt, null),
+			new ParameterDefinitionImpl("seed", goTypes.getDataType("uintptr"), null));
+
+		Set<FuncDefFlags> flags = typ != null
+				? Set.of(FuncDefFlags.FROM_ANALYSIS)
+				: Set.of(FuncDefFlags.FROM_ANALYSIS, FuncDefFlags.PARAM_SUBSTITUTION);
+
+		FunctionDefinitionDataType funcDef =
+			goTypes.createFuncDef(params, returnDT, symbolName, false);
+		return new FuncDefResult(funcDef, null, flags, "func(val*, seed) uintptr", symbolName);
+	}
+
+	private FuncDefResult createFuncDefForMethodWrapper(GoSymbolName symbolName)
+			throws IOException {
+
+		String s = symbolName.asString();
+		String baseMethodName = s.substring(0, s.length() - "-fm".length()); // TODO: hacky
+		GoFuncData methodFunc = getFunctionByName(baseMethodName);
+		if (methodFunc != null) {
+			GoSymbolName recvTypeName = symbolName.getReceiverTypeName();
+			DataType closureDT = goTypes.getMethodClosureType(recvTypeName.asString());
+			FuncDefResult funcDefResult = getFuncDefFor(methodFunc);
+			if (closureDT != null && funcDefResult != null) {
+				FunctionDefinition funcDef = funcDefResult.funcDef();
+				ParameterDefinition[] args = funcDef.getArguments();
+				ParameterDefinition recvArg = args[0];
+				recvArg.setName(GOLANG_CLOSURE_CONTEXT_NAME);
+				recvArg.setDataType(programDTM.getPointer(closureDT));
+
+				funcDef.setArguments(args); // this is a NO-OP, modifying recvArg directly updates the funcdef
+
+				EnumSet<FuncDefFlags> newFlags = EnumSet.copyOf(funcDefResult.flags());
+				newFlags.add(METHOD_WRAPPER);
+
+				return new FuncDefResult(funcDef, funcDefResult.recvType, newFlags,
+					funcDefResult.funcDefStr, funcDefResult.symbolName);
 			}
 		}
 
-		tmpFdtm.save();
+		Structure closureDT = goTypes.getDefaultMethodWrapperClosureType();
+		FunctionDefinition closureFuncdef = getFuncDefFromContextStruct(closureDT);
+		if (closureFuncdef != null) {
+			return new FuncDefResult(closureFuncdef, null,
+				EnumSet.of(METHOD_WRAPPER, PARAMS_MISSING, RETURN_INFO_MISSING),
+				"func-fm(.context, ???) ???", symbolName);
+		}
 
-		FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
-		tx = -1;
+		return null;
+	}
+
+	private FunctionDefinition getFuncDefFromContextStruct(Structure struct) {
+		DataType ptrF =
+			struct.getNumDefinedComponents() > 0 ? struct.getComponent(0).getDataType() : null;
+		return ptrF instanceof Pointer ptr &&
+			ptr.getDataType() instanceof FunctionDefinition funcdef ? funcdef : null;
+	}
+
+	private FuncDefResult createFuncDefForClosure(GoSymbolName symbolName) throws IOException {
+		List<ParameterDefinition> closureParams =
+			List.of(new ParameterDefinitionImpl(GOLANG_CLOSURE_CONTEXT_NAME,
+				programDTM.getPointer(goTypes.getDefaultClosureType()), null));
+		EnumSet<FuncDefFlags> flags = EnumSet.of(PARAMS_MISSING, RETURN_INFO_MISSING, CLOSURE);
+
+		FunctionDefinitionDataType funcDef =
+			goTypes.createFuncDef(closureParams, (DataType) null, symbolName, false);
+		return new FuncDefResult(funcDef, null, flags, "func(.context, ???) ???",
+			symbolName);
+
+	}
+
+	private FuncDefResult createFuncDefFromMethod(GoSymbolName symbolName,
+			GoMethodInfo methodInfo) throws IOException {
+		// This is the 'best' way to get the signature for a function, as all the types
+		// should be resolved and present in the binary already
+		EnumSet<FuncDefFlags> flags = EnumSet.of(FROM_RTTI_METHOD);
+
+		GoType recvType = methodInfo.getType(); // never null
+		GoFuncType methodFuncDefType = methodInfo.getMethodFuncType();
+
+		FunctionDefinition funcdef = methodFuncDefType.getFunctionSignature(goTypes);
+
+		FunctionDefinition funcDT = goTypes.createFuncDef(List.of(funcdef.getArguments()),
+			funcdef.getReturnType(), symbolName, false);
+
+		insertArg(funcDT, 0, GOLANG_RECEIVER_PARAM_NAME, goTypes.getDataType(recvType));
+		if (symbolName.hasGenerics()) {
+			insertArg(funcDT, 1, GOLANG_GENERICS_PARAM_NAME, goTypes.getGenericDictDT());
+		}
+		return new FuncDefResult(funcDT, recvType, flags, methodInfo.toString(),
+			symbolName);
+	}
+
+	private FuncDefResult createFuncDefWithMissingInfo(GoSymbolName symbolName, GoType recvType)
+			throws IOException {
+		String funcdefStr = "";
+		EnumSet<FuncDefFlags> flags = EnumSet.of(PARAMS_MISSING, RETURN_INFO_MISSING);
+		List<ParameterDefinition> params = new ArrayList<>();
+
+		if (symbolName.hasReceiver()) {
+			DataType recvDT = goTypes.getDataType(recvType);
+			if ( recvDT == null ) {
+				recvDT = goTypes.findRecieverType(symbolName);
+			}
+			if (recvType == null) {
+				recvType = goTypes.getSubstitutionType(symbolName.getReceiverString());
+				flags.add(RECV_ARTIFICIAL);
+			}
+			if (recvType == null) {
+				// if we can't get the receiver type, which is the first param in the arg list,
+				// we can't construct a useful funcdef
+				return null;
+			}
+
+			funcdefStr = recvType.getMethodPrototypeString(symbolName.getBaseName(), null);
+
+
+			params.add(new ParameterDefinitionImpl(GOLANG_RECEIVER_PARAM_NAME,
+				goTypes.getDataType(recvType), null));
+		}
+
+		if (symbolName.hasGenerics()) {
+			params.add(
+				new ParameterDefinitionImpl(GOLANG_GENERICS_PARAM_NAME, goTypes.getGenericDictDT(),
+					null));
+		}
+
+		if (!params.isEmpty()) {
+			FunctionDefinitionDataType funcDef =
+				goTypes.createFuncDef(params, (DataType) null, symbolName, false);
+
+			return new FuncDefResult(funcDef, recvType, flags, funcdefStr, symbolName);
+		}
+
+		return null;
+	}
+
+	private FuncDefResult createFuncDefFromApiSnapshot(GoSymbolName symbolName, GoType recvType,
+			GoFuncDef snapshotFuncdef) throws IOException {
+		EnumSet<FuncDefFlags> flags = EnumSet.of(FROM_SNAPSHOT);
+		List<ParameterDefinition> params = new ArrayList<>();
+		List<ParameterDefinition> returnParams = new ArrayList<>();
+		for (int i =0; i < snapshotFuncdef.Params.size(); i++) {
+			GoNameTypePair p = snapshotFuncdef.Params.get(i);
+			DataType pDT = goTypes.findDataType(p.DataType);
+			if (pDT == null) {
+				break;
+			}
+			if (!goTypes.hasGoType(p.DataType)) {
+				flags.add(
+					i == 0 && symbolName.hasReceiver() ? RECV_ARTIFICIAL : PARAM_SUBSTITUTION);
+			}
+			String paramName = (p.Name == null || p.Name.isEmpty()) && i == 0
+					? GOLANG_RECEIVER_PARAM_NAME
+					: p.Name;
+			params.add(new ParameterDefinitionImpl(paramName, pDT, null));
+		}
+		for (GoNameTypePair p : snapshotFuncdef.Results) {
+			DataType pDT = goTypes.findDataType(p.DataType);
+			if (pDT == null) {
+				break;
+			}
+			if (!goTypes.hasGoType(p.DataType)) {
+				flags.add(RESULT_SUBSTITUTION);
+			}
+			returnParams.add(new ParameterDefinitionImpl(p.Name, pDT, null));
+		}
+		
+		if ( params.size() < snapshotFuncdef.Params.size() ) {
+			flags.add(params.isEmpty() ? PARAMS_MISSING : FuncDefFlags.PARAMS_PARTIAL);
+		}
+		if ( returnParams.size() < snapshotFuncdef.Results.size() ) {
+			if (returnParams.isEmpty()) {
+				returnParams = null;
+			}
+			flags.add(returnParams == null ? RETURN_INFO_MISSING : RETURN_INFO_PARTIAL);
+		}
+		if ( symbolName.hasGenerics() ) {
+			// insert artificial generic dict param, iff recv param was successfully added
+			int generics_index = symbolName.hasReceiver() && params.size() > 0 ? 1 : 0;
+			if (params.size() >= generics_index) {
+				params.add(generics_index,
+					new ParameterDefinitionImpl(GOLANG_GENERICS_PARAM_NAME,
+						goTypes.getGenericDictDT(), null));
+			}
+		}
+		
+		FunctionDefinitionDataType funcDef = goTypes.createFuncDef(params, returnParams, symbolName,
+			snapshotFuncdef.getFuncFlags().contains(FuncFlags.NoReturn));
+		return new FuncDefResult(funcDef, recvType, flags,
+			snapshotFuncdef.getDefinitionString(symbolName), symbolName);
+
+	}
+	
+	private void insertArg(FunctionDefinition funcDef, int index, String argName, DataType argDT) {
+		List<ParameterDefinition> args = new ArrayList<>(Arrays.asList(funcDef.getArguments()));
+		args.add(index, new ParameterDefinitionImpl(argName, argDT, null));
+		funcDef.setArguments(args.toArray(ParameterDefinition[]::new));
+	}
+	
+
+
+	/**
+	 * Returns method info about the specified function.
+	 * 
+	 * @param funcAddr function address
+	 * @return {@link GoMethodInfo}, or null
+	 */
+	public GoMethodInfo getMethodInfoForFunction(Address funcAddr) {
+		List<MethodInfo> results = methodsByAddr.getOrDefault(funcAddr, List.of());
+		for (MethodInfo mi : results) {
+			if (mi instanceof GoMethodInfo gmi && gmi.isTfn(funcAddr)) {
+				return gmi;
+			}
+		}
+		return null;
+	}
+
+	public interface GoNameSupplier {
+		GoName get() throws IOException;
+	}
+
+	/**
+	 * An exception handling wrapper around a "getName()" call that could throw an IOException.
+	 * <p>
+	 * When there is an error fetching the GoName instance via the specified callback, a limited
+	 * usage GoName instance will be created and returned that will provide a replacement name
+	 * that is built using the calling structure's offset as the identifier.
+	 *  
+	 * @param <T> struct mapped instance type
+	 * @param supplier Supplier callback
+	 * @param structInstance reference to the caller's struct-mapped instance 
+	 * @param defaultValue string value to return (wrapped in a GoName) if the GoName is simply 
+	 * missing
+	 * @return GoName, either from the callback, or a limited-functionality instance created to
+	 * hold a fallback name string
+	 */
+	public <T> GoName getSafeName(GoNameSupplier supplier, T structInstance, String defaultValue) {
 		try {
-			tx = fdtm.startTransaction("Import");
-			tmpFdtm.getAllDataTypes()
-					.forEachRemaining(
-						dt -> fdtm.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER));
-			for (SourceArchive sa : fdtm.getSourceArchives()) {
-				fdtm.removeSourceArchive(sa);
+			GoName result = supplier.get();
+			if (result != null) {
+				return result;
 			}
+			// fall thru, return a fake GoName with defaultValue
 		}
-		finally {
-			if (tx != -1) {
-				fdtm.endTransaction(tx, true);
-			}
+		catch (IOException e) {
+			// fall thru, return fallback name, but ensure defaultValue isn't used
+			defaultValue = null;
 		}
 
-		fdtm.save();
-
-		tmpFdtm.close();
-		fdtm.close();
-
-		tmpGDTFile.delete();
-
+		StructureContext<T> structContext = getStructureContextOfInstance(structInstance);
+		String fallbackName = defaultValue;
+		fallbackName =
+			fallbackName == null && structContext != null
+					? "%s_%x".formatted(structContext.getMappingInfo().getStructureName(),
+						structContext.getStructureStart())
+					: "invalid_object";
+		return GoName.createFakeInstance(fallbackName);
 	}
 
-	private void moveAllDataTypesTo(DataTypeManager dtm, CategoryPath srcCP, CategoryPath destCP)
-			throws DuplicateNameException {
-		Category srcCat = dtm.getCategory(srcCP);
-		if (srcCat != null) {
-			for (DataType dt : srcCat.getDataTypes()) {
-				if (dt instanceof Array || dt instanceof Pointer) {
-					continue;
-				}
-				dt.setCategoryPath(destCP);
-			}
-			for (Category subcat : srcCat.getCategories()) {
-				moveAllDataTypesTo(dtm, subcat.getCategoryPath(), destCP); // flatten everything
-			}
-		}
-	}
-
-	/**
-	 * Returns category path that should be used to place recovered golang types.
-	 * 
-	 * @return {@link CategoryPath} to use when creating recovered golang types
-	 */
-	public CategoryPath getRecoveredTypesCp() {
-		return RECOVERED_TYPES_CP;
-	}
-
-	/**
-	 * Returns a {@link DataType Ghidra data type} that represents the {@link GoType golang type}, 
-	 * using a cache of already recovered types to eliminate extra work and self recursion.
-	 *  
-	 * @param typ the {@link GoType} to convert
-	 * @return Ghidra {@link DataType}
-	 * @throws IOException if error converting type
-	 */
-	public DataType getRecoveredType(GoType typ) throws IOException {
-		Address typeStructAddr = getAddressOfStructure(typ);
-		if (typeStructAddr == null) {
-			throw new IOException("Unable to get address of a struct mapped instance");
-		}
-		long offset = typeStructAddr.getOffset();
-		DataType dt = cachedRecoveredDataTypes.get(offset);
-		if (dt != null) {
-			return dt;
-		}
-		dt = typ.recoverDataType();
-		cachedRecoveredDataTypes.put(offset, dt);
-		return dt;
-	}
-
-	/**
-	 * Inserts a mapping between a {@link GoType golang type} and a 
-	 * {@link DataType ghidra data type}.
-	 * <p>
-	 * Useful to prepopulate the data type mapping before recursing into contained/referenced types
-	 * that might be self-referencing.
-	 * 
-	 * @param typ {@link GoType golang type}
-	 * @param dt {@link DataType Ghidra type}
-	 * @throws IOException if golang type struct is not a valid struct mapped instance
-	 */
-	public void cacheRecoveredDataType(GoType typ, DataType dt) throws IOException {
-		Address typeStructAddr = getAddressOfStructure(typ);
-		if (typeStructAddr == null) {
-			throw new IOException("Unable to get address of a struct mapped instance");
-		}
-		long offset = typeStructAddr.getOffset();
-		cachedRecoveredDataTypes.put(offset, dt);
-	}
-
-	/**
-	 * Returns a {@link DataType Ghidra data type} that represents the {@link GoType golang type}, 
-	 * using a cache of already recovered types to eliminate extra work and self recursion.
-	 *  
-	 * @param typ the {@link GoType} to convert
-	 * @return Ghidra {@link DataType}
-	 * @throws IOException if golang type struct is not a valid struct mapped instance
-	 */
-	public DataType getCachedRecoveredDataType(GoType typ) throws IOException {
-		Address typeStructAddr = getAddressOfStructure(typ);
-		if (typeStructAddr == null) {
-			throw new IOException("Unable to get address of a struct mapped instance");
-		}
-		long offset = typeStructAddr.getOffset();
-		return cachedRecoveredDataTypes.get(offset);
-	}
-
-	/**
-	 * Converts all discovered golang rtti type records to Ghidra data types, placing them
-	 * in the program's DTM in /golang-recovered
-	 * 
-	 * @param monitor {@link TaskMonitor}
-	 * @throws IOException error converting a golang type to a Ghidra type
-	 * @throws CancelledException if the user cancelled the import
-	 */
-	public void recoverDataTypes(TaskMonitor monitor) throws IOException, CancelledException {
-		monitor.setMessage("Converting Golang types to Ghidra data types");
-		monitor.initialize(goTypes.size());
-		List<Long> typeOffsets = goTypes.keySet().stream().sorted().collect(Collectors.toList());
-		for (Long typeOffset : typeOffsets) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-			GoType typ = getGoType(typeOffset);
-			DataType dt = typ.recoverDataType();
-			if (programDTM.getDataType(dt.getDataTypePath()) == null) {
-				programDTM.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-			}
-		}
-	}
-
-	/**
-	 * Iterates over all golang rtti types listed in the GoModuledata struct, and recurses into
-	 * each type to discover any types they reference.
-	 * <p>
-	 * The found types are accumulated in {@link #goTypes}.
-	 * 
-	 * @param monitor {@link TaskMonitor}
-	 * @throws IOException if error
-	 * @throws CancelledException if cancelled
-	 */
-	public void discoverGoTypes(TaskMonitor monitor) throws IOException, CancelledException {
-		UnknownProgressWrappingTaskMonitor upwtm =
-			new UnknownProgressWrappingTaskMonitor(monitor, 50);
-		upwtm.setMessage("Iterating Golang RTTI types");
-		upwtm.initialize(0);
-
-		goTypes.clear();
-		typeNameIndex.clear();
-		Set<Long> discoveredTypes = new HashSet<>();
-		for (GoModuledata module : modules) {
-			for (Iterator<GoType> it = module.iterateTypes(); it.hasNext();) {
-				upwtm.checkCancelled();
-				upwtm.setProgress(discoveredTypes.size());
-
-				GoType type = it.next();
-				type.discoverGoTypes(discoveredTypes);
-			}
-		}
-		for (GoType goType : goTypes.values()) {
-			String typeName = goType.getNameString();
-			typeNameIndex.put(typeName, goType);
-		}
-		Msg.info(this, "Found %d golang types".formatted(goTypes.size()));
-	}
-
-	/**
-	 * Returns the {@link GoType} corresponding to an offset that is relative to the controlling
-	 * GoModuledata's typesOffset.
-	 * 
-	 * @param ptrInModule the address of the structure that contains the offset that needs to be
-	 * calculated.  The containing-structure's address is important because it indicates which
-	 * GoModuledata is the 'parent' 
-	 * @param off offset
-	 * @return {@link GoType}, or null if offset is special value 0 or -1
-	 * @throws IOException if error
-	 */
-	public GoType resolveTypeOff(long ptrInModule, long off) throws IOException {
-		if (off == 0 || off == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG || off == -1) {
-			return null;
-		}
-		GoModuledata module = findContainingModule(ptrInModule);
-		return getGoType(module.getTypesOffset() + off);
-	}
 
 	/**
 	 * Returns the {@link Address} to an offset that is relative to the controlling
@@ -814,7 +1042,6 @@ public class GoRttiMapper extends DataTypeMapper {
 	/**
 	 * Returns the {@link GoName} corresponding to an offset that is relative to the controlling
 	 * GoModuledata's typesOffset.
-	 * <p>
 	 * 
 	 * @param ptrInModule the address of the structure that contains the offset that needs to be
 	 * calculated.  The containing-structure's address is important because it indicates which
@@ -847,70 +1074,127 @@ public class GoRttiMapper extends DataTypeMapper {
 		return offset != 0 ? readStructure(GoName.class, offset) : null;
 	}
 
-	public GoFuncData getFunctionData(Address funcAddr) throws IOException {
+	/**
+	 * Returns metadata about a function
+	 * 
+	 * @param funcAddr entry point of a function
+	 * @return {@link GoFuncData}, or null if function not found in lookup tables
+	 */
+	public GoFuncData getFunctionData(Address funcAddr) {
 		return funcdataByAddr.get(funcAddr);
 	}
 
+	/**
+	 * Returns a function based on its name
+	 * 
+	 * @param funcName name of function
+	 * @return {@link GoFuncData}, or null if not found
+	 */
 	public GoFuncData getFunctionByName(String funcName) {
 		return funcdataByName.get(funcName);
 	}
 
-	public List<GoFuncData> getAllFunctions() throws IOException {
-		return new ArrayList<>(funcdataByAddr.values());
+	public List<GoFuncData> getFunctionsByNamePattern(Pattern pattern) {
+		List<GoFuncData> results = new ArrayList<>();
+		for (Entry<String, GoFuncData> entry : funcdataByName.entrySet()) {
+			String name = entry.getKey();
+			GoFuncData func = entry.getValue();
+			if (pattern.matcher(name).matches()) {
+				results.add(func);
+			}
+		}
+		return results;
 	}
 
-	//--------------------------------------------------------------------------------------------
-
-	private void initHiddenCompilerTypes() {
-		// these structure types are what golang map and chan types actually point to.
-		mapGoType = findGoType("runtime.hmap");
-		chanGoType = findGoType("runtime.hchan");
+	/**
+	 * {@return list of all functions contained in the Go func metadata table}
+	 */
+	public List<GoFuncData> getAllFunctions() {
+		return new ArrayList<>(funcdataByAddr.values());
 	}
 
 	private GoModuledata findFirstModuledata(TaskMonitor monitor) throws IOException {
 		GoModuledata result = GoModuledata.getFirstModuledata(this);
-		if (result == null) {
-			monitor.setMessage("Searching for Golang pclntab");
-			monitor.initialize(0);
-			Address pclntabAddress = GoPcHeader.getPclntabAddress(program);
-			if (pclntabAddress == null) {
-				pclntabAddress =
-					GoPcHeader.findPclntabAddress(this, getPclntabSearchRange(), monitor);
-			}
-			if (pclntabAddress != null) {
-				monitor.setMessage("Searching for Golang firstmoduledata");
-				monitor.initialize(0);
-				GoPcHeader pclntab = readStructure(GoPcHeader.class, pclntabAddress);
-				result = GoModuledata.findFirstModule(this, pclntabAddress, pclntab,
-					getModuledataSearchRange(), monitor);
-			}
+		Address pcHeaderAddress =
+			result != null ? result.getPcHeaderAddress() : GoPcHeader.getPcHeaderAddress(program);
+		if (pcHeaderAddress == null) {
+			monitor.initialize(0, "Searching for Go pclntab");
+			pcHeaderAddress =
+				GoPcHeader.findPcHeaderAddress(this, getPclntabSearchRange(), monitor);
 		}
+		if (result == null && pcHeaderAddress != null) {
+			// find the moduledata struct by searching for a pointer to the pclntab/pcHeader,
+			// which should be the first field in the moduledata struct.
+			monitor.initialize(0, "Searching for Go firstmoduledata");
+			GoPcHeader pcHeader = readStructure(GoPcHeader.class, pcHeaderAddress);
+			result = GoModuledata.findFirstModule(this, pcHeaderAddress, pcHeader,
+				getModuledataSearchRange(), monitor);
+		}
+
 		if (result != null && !result.isValid()) {
-			throw new IOException("Invalid Golang moduledata at %s"
+			throw new IOException("Invalid Go moduledata at %s"
 					.formatted(result.getStructureContext().getStructureAddress()));
 		}
 		return result;
 	}
 
 	private AddressRange getPclntabSearchRange() {
-		Memory memory = program.getMemory();
-		for (String blockToSearch : List.of(".noptrdata", ".rdata")) {
-			MemoryBlock memBlock = memory.getBlock(blockToSearch);
-			if (memBlock != null) {
-				return new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd());
-			}
-		}
-		return null;
+		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "rdata");
+		return memBlock != null ? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
+				: null;
 	}
 
 	private AddressRange getModuledataSearchRange() {
-		Memory memory = program.getMemory();
-		for (String blockToSearch : List.of(".noptrdata", ".data")) {
-			MemoryBlock memBlock = memory.getBlock(blockToSearch);
-			if (memBlock != null) {
-				return new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd());
-			}
+		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "data");
+		return memBlock != null ? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
+				: null;
+	}
+
+	/**
+	 * {@return {@link AddressSetView} of range that is valid to find string structs in}
+	 */
+	public AddressSetView getStringStructRange() {
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getDataRange());
+			result.add(moduledata.getRoDataRange());
 		}
-		return null;
+		return result;
+	}
+
+	/**
+	 * {@return {@link AddressSetView} of range that is valid for string char[] data}
+	 */
+	public AddressSetView getStringDataRange() {
+		// TODO: initialized []byte("stringchars") slices can have data in noptrdata section
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getRoDataRange());
+		}
+		return result;
+	}
+
+	public AddressSetView getTextAddresses() {
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getTextRange());
+		}
+		return result;
+	}
+
+	public AddressSetView getUninitializedNoPtrDataRange() {
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getUninitializedNoPtrDataRange());
+		}
+		return result;
+	}
+
+	public Symbol getGoSymbol(String symbolName) {
+		return getGoSymbol(program, symbolName);
+	}
+
+	public MemoryBlock getGoSection(String sectionName) {
+		return getGoSection(program, sectionName);
 	}
 }

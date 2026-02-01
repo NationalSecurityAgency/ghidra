@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class CreateTypeDescriptorBackgroundCmd
 	private static final String RTTI_0_NAME = "RTTI Type Descriptor";
 
 	/**
-	 * Constructs a command for applying a TypeDescriptor data type at an address using the 
+	 * Constructs a command for applying a TypeDescriptor data type at an address using the
 	 * default validation and apply options.
 	 * @param address the address where the data should be created using the data type.
 	 */
@@ -46,13 +46,13 @@ public class CreateTypeDescriptorBackgroundCmd
 	}
 
 	/**
-	 * Constructs a command for applying a TypeDescriptor data type at an address using the 
+	 * Constructs a command for applying a TypeDescriptor data type at an address using the
 	 * indicated options.
 	 * @param address the address where the data should be created using the data type.
-	 * @param validationOptions the options for controlling how validation is performed when 
+	 * @param validationOptions the options for controlling how validation is performed when
 	 * determining whether or not to create the data structure at the indicated address.
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	public CreateTypeDescriptorBackgroundCmd(Address address,
@@ -65,7 +65,7 @@ public class CreateTypeDescriptorBackgroundCmd
 	 * by the model and using the indicated options.
 	 * @param model the model indicating the TypeDescriptor data to be created by this command.
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	public CreateTypeDescriptorBackgroundCmd(TypeDescriptorModel model,
@@ -114,7 +114,7 @@ public class CreateTypeDescriptorBackgroundCmd
 		Data nameData = DataUtilities.createData(program, arrayAddr, charArray,
 			charArray.getLength(), getClearDataMode());
 
-		nameData.setComment(CodeUnit.EOL_COMMENT, "TypeDescriptor.name");
+		nameData.setComment(CommentType.EOL, "TypeDescriptor.name");
 
 		return true;
 	}
@@ -152,13 +152,14 @@ public class CreateTypeDescriptorBackgroundCmd
 			return false;
 		}
 
+		// If PDB had been run, then the namespace here might already have been promoted to
+		//  a class type.  At this point in processing, we know that the model only has a type
+		//  with a "class" or "struct" tag (see TypeDescriptorModel).
 		// <br>Note: For now this assumes all classes and structs with RTTI data must
 		// actually be classes. In the future this might need additional checking before
 		// promoting some "struct" ref types to being a class, if we can better determine
-		// whether or not they are actually classes. 
-		String refType = model.getRefType(); // Can be null.
-		boolean makeClass = "class".equals(refType) || "struct".equals(refType);
-		if (makeClass) {
+		// whether or not they are actually classes.
+		if (!(classNamespace instanceof GhidraClass)) {
 			classNamespace = RttiUtil.promoteToClassNamespace(program, classNamespace);
 		}
 

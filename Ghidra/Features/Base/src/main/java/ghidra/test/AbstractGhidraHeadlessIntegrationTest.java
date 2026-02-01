@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import docking.test.AbstractDockingTest;
 import ghidra.GhidraTestApplicationLayout;
@@ -32,19 +32,21 @@ import ghidra.app.script.GhidraScriptConstants;
 import ghidra.app.services.GoToService;
 import ghidra.framework.*;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.mgr.ServiceManager;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
@@ -92,7 +94,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		System.setProperty(GhidraScriptConstants.USER_SCRIPTS_DIR_PROPERTY, getTestDirectoryPath());
 	}
 
-	@BeforeClass
+	@AfterClass
 	public static void cleanDbTestDir() {
 		// keep files around in batch mode to allow tests to run faster; assume batch mode performs
 		// its own cleanup; only run once per class to allow subsequent tests to be faster
@@ -178,7 +180,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @return result of command applyTo method
 	 * @throws RollbackException thrown if thrown by command applyTo method
 	 */
-	public static boolean applyCmd(Program program, Command cmd) throws RollbackException {
+	public static boolean applyCmd(Program program, Command<Program> cmd) throws RollbackException {
 		int txId = program.startTransaction(cmd.getName());
 		boolean commit = true;
 		try {
@@ -205,25 +207,51 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic.
 	 *
-	 * @param p the program
+	 * @param dobj the domain object (e.g., a program)
 	 * @param c the code to execute
 	 * @see #modifyProgram(Program, ExceptionalCallback)
 	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
-	public static <E extends Exception> void tx(Program p, ExceptionalCallback<E> c) {
-		int txId = p.startTransaction("Test - Function in Transaction");
+	public static <E extends Exception> void tx(DomainObject dobj, ExceptionalCallback<E> c) {
+		int txId = dobj.startTransaction("Test - Function in Transaction");
 		boolean commit = true;
 		try {
 			c.call();
-			p.flushEvents();
+			dobj.flushEvents();
 			waitForSwing();
 		}
 		catch (Exception e) {
 			commit = false;
-			failWithException("Exception modifying program '" + p.getName() + "'", e);
+			failWithException("Exception modifying program '" + dobj.getName() + "'", e);
 		}
 		finally {
-			p.endTransaction(txId, commit);
+			dobj.endTransaction(txId, commit);
+		}
+	}
+
+	/**
+	 * Provides a convenient method for modifying the given data type manager, handling the 
+	 * transaction logic.
+	 *
+	 * @param dtm the data type manager
+	 * @param c the code to execute
+	 * @see #modifyProgram(Program, ExceptionalCallback)
+	 * @see #modifyProgram(Program, ExceptionalFunction)
+	 */
+	public static <E extends Exception> void tx(DataTypeManager dtm, ExceptionalCallback<E> c) {
+		int txId = dtm.startTransaction("Test - Function in Transaction");
+		boolean commit = true;
+		try {
+			c.call();
+			dtm.flushEvents();
+			waitForSwing();
+		}
+		catch (Exception e) {
+			commit = false;
+			failWithException("Exception modifying program '" + dtm.getName() + "'", e);
+		}
+		finally {
+			dtm.endTransaction(txId, commit);
 		}
 	}
 
@@ -233,34 +261,34 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param <T> the return type
 	 * @param <E> the exception type
-	 * @param p the program
+	 * @param dobj the program or other domain object
 	 * @param s the code to execute
 	 * @return the supplier's return value
 	 * @see #modifyProgram(Program, ExceptionalCallback)
 	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
-	public static <T, E extends Exception> T tx(Program p, ExceptionalSupplier<T, E> s) {
-		int txId = p.startTransaction("Test - Function in Transaction");
+	public static <T, E extends Exception> T tx(DomainObject dobj, ExceptionalSupplier<T, E> s) {
+		int txId = dobj.startTransaction("Test - Function in Transaction");
 		boolean commit = true;
 		try {
 			T t = s.get();
-			p.flushEvents();
+			dobj.flushEvents();
 			waitForSwing();
 			return t;
 		}
 		catch (Exception e) {
 			commit = false;
-			failWithException("Exception modifying program '" + p.getName() + "'", e);
+			failWithException("Exception modifying program '" + dobj.getName() + "'", e);
 		}
 		finally {
-			p.endTransaction(txId, commit);
+			dobj.endTransaction(txId, commit);
 		}
 		return null;
 	}
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
-	 * logic. This method is calls {@link #tx(Program, ExceptionalCallback)}, but helps with
+	 * logic. This method is calls {@link #tx(DomainObject, ExceptionalCallback)}, but helps with
 	 * semantics.
 	 *
 	 * @param p the program
@@ -307,7 +335,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param wait if true, wait for undo to fully complete in Swing thread. If a modal dialog may
 	 *            result from this undo, wait should be set false.
 	 */
-	public static void undo(UndoableDomainObject dobj, boolean wait) {
+	public static void undo(DomainObject dobj, boolean wait) {
 		Runnable r = () -> {
 			try {
 				dobj.undo();
@@ -331,7 +359,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param wait if true, wait for redo to fully complete in Swing thread. If a modal dialog may
 	 *            result from this redo, wait should be set false.
 	 */
-	public static void redo(UndoableDomainObject dobj, boolean wait) {
+	public static void redo(DomainObject dobj, boolean wait) {
 		Runnable r = () -> {
 			try {
 				dobj.redo();
@@ -349,11 +377,39 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	/**
+	 * Undo the last transaction on the domain object and wait for all events to be flushed.  This
+	 * method takes the undo item name, which is used to find the undo item.  Once found, all items
+	 * before and including that undo item will be undone.
+	 *
+	 * @param dobj The domain object upon which to perform the undo.
+	 * @param name the name of the undo item on the stack.
+	 */
+	public static void undo(DomainObject dobj, String name) {
+
+		List<String> names = dobj.getAllUndoNames();
+		int i = 0;
+		for (; i < names.size(); i++) {
+			String undoName = names.get(i);
+			if (name.equals(undoName)) {
+				break;
+			}
+		}
+
+		if (i == names.size()) {
+			fail("Unable to find undo entry '%s'.  All undo names: %s".formatted(name, names));
+		}
+
+		while (i-- >= 0) {
+			undo(dobj, true);
+		}
+	}
+
+	/**
 	 * Undo the last transaction on the domain object and wait for all events to be flushed.
 	 *
 	 * @param dobj The domain object upon which to perform the undo.
 	 */
-	public static void undo(final UndoableDomainObject dobj) {
+	public static void undo(DomainObject dobj) {
 		undo(dobj, true);
 	}
 
@@ -362,7 +418,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param dobj The domain object upon which to perform the redo.
 	 */
-	public static void redo(final UndoableDomainObject dobj) {
+	public static void redo(DomainObject dobj) {
 		redo(dobj, true);
 	}
 
@@ -373,7 +429,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param dobj The domain object upon which to perform the undo.
 	 * @param count number of transactions to undo
 	 */
-	public static void undo(UndoableDomainObject dobj, int count) {
+	public static void undo(DomainObject dobj, int count) {
 		for (int i = 0; i < count; ++i) {
 			undo(dobj);
 		}
@@ -386,7 +442,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param dobj The domain object upon which to perform the redo.
 	 * @param count number of transactions to redo
 	 */
-	public static void redo(UndoableDomainObject dobj, int count) {
+	public static void redo(DomainObject dobj, int count) {
 		for (int i = 0; i < count; ++i) {
 			redo(dobj);
 		}
@@ -394,14 +450,19 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	public static <T extends Plugin> T getPlugin(PluginTool tool, Class<T> c) {
 		List<Plugin> list = tool.getManagedPlugins();
-		Iterator<Plugin> it = list.iterator();
-		while (it.hasNext()) {
-			Plugin p = it.next();
+		for (Plugin p : list) {
 			if (p.getClass() == c) {
 				return c.cast(p);
 			}
 		}
 		return null;
+	}
+
+	public AddressSet toAddressSet(Program p, String from, String to) {
+		AddressFactory af = p.getAddressFactory();
+		Address a1 = af.getAddress(from);
+		Address a2 = af.getAddress(to);
+		return af.getAddressSet(a1, a2);
 	}
 
 	public AddressSet toAddressSet(List<Address> addrs) {
@@ -468,6 +529,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		ProgramSelection selection = new ProgramSelection(addresses);
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, p));
 		waitForSwing();
+	}
+
+	public void clearSelection(PluginTool tool, Program p) {
+		AddressSet set = new AddressSet();
+		makeSelection(tool, p, set);
 	}
 
 	/**
@@ -582,29 +648,27 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
 
-		List<Class<?>> extentions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
-		Set<Class<?>> set = new HashSet<>(extentions);
-		Iterator<Class<?>> iterator = set.iterator();
-		while (iterator.hasNext()) {
-			Class<?> c = iterator.next();
-			if (service.isAssignableFrom(c)) {
-				iterator.remove();
-				T instance = tool.getService(service);
-				serviceManager.removeService(service, instance);
-			}
+		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
+			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
+				ClassSearcher.class);
+		HashMap<ClassFileInfo, Class<?>> loadedCache =
+			(HashMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
+		String suffix = ClassSearcher.getExtensionPointSuffix(service.getSimpleName());
+
+		if (suffix != null) {
+			Set<ClassFileInfo> serviceSet = extensionPointSuffixToInfoMap.get(suffix);
+			assertNotNull(serviceSet);
+			serviceSet.clear();
+			ClassFileInfo info = new ClassFileInfo("", replacement.getClass().getName(), suffix);
+			serviceSet.add(info);
+			loadedCache.put(info, replacement.getClass());
 		}
 
 		T instance = tool.getService(service);
 		if (instance != null) {
 			serviceManager.removeService(service, instance);
 		}
-
-		set.add(replacement.getClass());
 		serviceManager.addService(service, replacement);
-
-		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
-		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 
 //==================================================================================================

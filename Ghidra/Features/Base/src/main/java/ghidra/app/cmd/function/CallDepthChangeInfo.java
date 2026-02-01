@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,17 @@
  */
 package ghidra.app.cmd.function;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.CodeBlock;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.ProcessorContext;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.util.*;
 import ghidra.program.util.*;
 import ghidra.program.util.SymbolicPropogator.Value;
@@ -33,13 +34,6 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * CallDepthChangeInfo.java
- * 
- * Date: Feb 6, 2003
- * 
- */
-/**
- * 
  * Given a function in a program or the start of a function, record information
  * about the change to a stack pointer from a subroutine call. The routine
  * getCallChange() can be called with the address of a call instruction. If the
@@ -49,10 +43,7 @@ import ghidra.util.task.TaskMonitor;
  * The computation is based on a set of equations that are generated and solved.
  * Each equation represents the stack change for a given basic flow block or
  * call instruction within the function.
- * 
- * 
  */
-
 public class CallDepthChangeInfo {
 
 	Program program;
@@ -82,13 +73,27 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Construct a new CallDepthChangeInfo object.
+	 * Using this constructor will NOT track the stack depth at the start/end of each instruction.
+	 * 
 	 * @param func function to examine
 	 */
 	public CallDepthChangeInfo(Function func) {
+		this(func, false);
+	}
+	
+	/**
+	 * Construct a new CallDepthChangeInfo object.
+	 * Allows calls to getRegDepth() and getRegValueRepresentation()
+	 * 
+	 * @param func function to examine
+	 * @param storeDepthAtEachInstuction true to track stack at start/end of each instruction. allowing
+	 * a call to 
+	 */
+	public CallDepthChangeInfo(Function func, boolean storeDepthAtEachInstuction) {
 		this.program = func.getProgram();
 		frameReg = program.getCompilerSpec().getStackPointer();
 		try {
-			initialize(func, func.getBody(), frameReg, TaskMonitor.DUMMY);
+			initialize(func, func.getBody(), frameReg, storeDepthAtEachInstuction, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new RuntimeException("Unexpected Exception", e);
@@ -97,10 +102,8 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Construct a new CallDepthChangeInfo object.
-	 * @param func
-	 *            function to examine
-	 * @param monitor
-	 *            monitor used to cancel the operation
+	 * @param func function to examine
+	 * @param monitor used to cancel the operation
 	 * 
 	 * @throws CancelledException
 	 *             if the operation was canceled
@@ -111,6 +114,8 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Construct a new CallDepthChangeInfo object.
+	 * Using this constructor will track the stack depth at the start/end of each instruction.
+	 * 
 	 * @param function function to examine
 	 * @param restrictSet set of addresses to restrict flow flowing to.
 	 * @param frameReg register that is to have it's depth(value) change tracked
@@ -125,41 +130,18 @@ public class CallDepthChangeInfo {
 		if (frameReg == null) {
 			frameReg = program.getCompilerSpec().getStackPointer();
 		}
-		initialize(function, restrictSet, frameReg, monitor);
+		// track start/end values at each instruction
+		initialize(function, restrictSet, frameReg, true, monitor);
 	}
 
-	/**
-	 * Construct a new CallDepthChangeInfo object.
-	 * 
-	 * @param program  program containing the function to examime
-	 * @param addr     address within the function to examine
-	 * @param restrictSet set of addresses to restrict flow flowing to.
-	 * @param frameReg register that is to have it's depth(value) change tracked
-	 * @param monitor  monitor used to cancel the operation
-	 * @throws CancelledException
-	 *             if the operation was canceled
-	 */
-	public CallDepthChangeInfo(Program program, Address addr, AddressSetView restrictSet,
-			Register frameReg, TaskMonitor monitor) throws CancelledException {
-		Function func = program.getFunctionManager().getFunctionContaining(addr);
-		Register stackReg = program.getCompilerSpec().getStackPointer();
-		initialize(func, restrictSet, stackReg, monitor);
-	}
 
-	/**
-	 * initialize codeblocks and call locations.
-	 * 
-	 * @param addressSetView
-	 * @param monitor
-	 * @throws CancelledException
-	 */
 	private void initialize(Function func, AddressSetView restrictSet, Register reg,
-			TaskMonitor monitor) throws CancelledException {
+			boolean storeDepthAtEachInstuction, TaskMonitor monitor) throws CancelledException {
 		changeMap = new DefaultIntPropertyMap("change");
 		depthMap = new DefaultIntPropertyMap("depth");
 		trans = new VarnodeTranslator(program);
 
-		symEval = new SymbolicPropogator(program);
+		symEval = new SymbolicPropogator(program,storeDepthAtEachInstuction);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);
@@ -177,6 +159,7 @@ public class CallDepthChangeInfo {
 			i = changeMap.getInt(addr);
 		}
 		catch (NoValueException exc) {
+			// ignore
 		}
 
 		return i;
@@ -196,6 +179,7 @@ public class CallDepthChangeInfo {
 			depth = depthMap.getInt(addr);
 		}
 		catch (NoValueException exc) {
+			// ignore
 		}
 		return depth;
 	}
@@ -221,6 +205,8 @@ public class CallDepthChangeInfo {
 	 * unknown.
 	 * 
 	 * @param instr instruction to analyze
+	 * @param procContext 
+	 * @param currentStackDepth 
 	 * 
 	 * @return int change to stack depth if it can be determined,
 	 *         Function.UNKNOWN_STACK_DEPTH_CHANGE otherwise.
@@ -396,7 +382,6 @@ public class CallDepthChangeInfo {
 		return false;
 	}
 
-
 	/**
 	 * Gets the stack depth change value that has been set at the indicated address.
 	 * 
@@ -475,7 +460,6 @@ public class CallDepthChangeInfo {
 		return ipm.getPropertyIterator(addressSet);
 	}
 
-
 	/**
 	 * Follow the flows of the subroutine, accumulating information about the
 	 * stack pointer and any other register the stack pointer is assigned to.
@@ -508,17 +492,14 @@ public class CallDepthChangeInfo {
 			@Override
 			public boolean evaluateContextBefore(VarnodeContext context, Instruction instr) {
 				Varnode stackRegVarnode = context.getRegisterVarnode(frameReg);
-				Varnode stackValue = null;
-				try {
-					stackValue = context.getValue(stackRegVarnode, true, this);
-					
-					if (stackValue != null && context.isSymbol(stackValue) && context.isStackSymbolicSpace(stackValue)) {
-						int stackPointerDepth = (int) stackValue.getOffset();
-						setDepth(instr, stackPointerDepth);
-					}
-				}
-				catch (NotFoundException e) {
-					// ignore
+				Varnode stackValue = context.getValue(stackRegVarnode, true, this);
+
+				if (stackValue != null && context.isSymbol(stackValue) &&
+					context.isStackSymbolicSpace(stackValue)) {
+					long stackPointerDepth = stackValue.getOffset();
+					int size = stackValue.getSize();
+					stackPointerDepth = (stackPointerDepth << 8 * (8 - size)) >> 8 * (8 - size);
+					setDepth(instr, (int) stackPointerDepth);
 				}
 
 				return false;
@@ -580,7 +561,6 @@ public class CallDepthChangeInfo {
 		return;
 	}
 
-
 	public int getStackPurge() {
 		return stackPurge;
 	}
@@ -635,25 +615,14 @@ public class CallDepthChangeInfo {
 		return getRegDepth(addr, stackReg);
 	}
 
-	/**
+	/** Get the stack register depth at address.
+	 *  To have a valid value, the class must be constructed to storeDepthAtEachInstuction
+	 *  
 	 * @param addr the address to get the register depth at.
 	 * @param reg the register to get the depth of.
 	 * @return the depth of the register at the address.
 	 */
 	public int getRegDepth(Address addr, Register reg) {
-		// OK lets CHEAT...
-		// Since single instructions will give the wrong value,
-		// get the value as of the end of the last instruction that fell into this one!
-		Instruction instr = this.program.getListing().getInstructionAt(addr);
-		if (instr != null && instr.getLength() < 2) {
-			Address fallAddr = instr.getFallFrom();
-			if (fallAddr != null) {
-				addr = fallAddr;
-			}
-			// just in case this instruction falling from is bigger than 1 byte
-			instr = program.getListing().getInstructionAt(addr);
-			addr = instr.getMaxAddress();
-		}
 		Value rValue = symEval.getRegisterValue(addr, reg);
 		if (rValue == null) {
 			return Function.INVALID_STACK_DEPTH_CHANGE;
@@ -671,6 +640,11 @@ public class CallDepthChangeInfo {
 	}
 
 	/**
+	 * Get the stack register value as a printable string.  This can be an equation
+	 * of register+value.
+	 * 
+	 *  To have a valid value, the class must be constructed to storeDepthAtEachInstuction
+	 *  
 	 * @param addr the address of the register value to get the representation of.
 	 * @param reg the register to get the representation of.
 	 * @return the string representation of the register value.

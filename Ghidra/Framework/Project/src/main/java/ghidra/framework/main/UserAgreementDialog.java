@@ -15,7 +15,8 @@
  */
 package ghidra.framework.main;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.io.InputStream;
 
 import javax.swing.*;
@@ -57,26 +58,29 @@ public class UserAgreementDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel() {
-		Font font = Gui.getFont(FONT_ID);
 		JPanel panel = new JPanel(new BorderLayout());
 		JLabel label = new GDLabel("Ghidra User Agreement", SwingConstants.CENTER);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-		label.setFont(font.deriveFont(Font.ITALIC, 22f));
+		label.getAccessibleContext().setAccessibleName("Ghidra User Agreement");
+		Gui.registerFont(label, FONT_ID);
 		panel.add(label, BorderLayout.NORTH);
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 40, 40, 40));
 		JEditorPane editorPane = new JEditorPane();
 		editorPane.setEditorKit(new HTMLEditorKit());
 		editorPane.setMargin(new Insets(10, 10, 10, 10));
-
+		editorPane.getAccessibleContext().setAccessibleName("Agreement");
 		editorPane.setText(getUserAgreementText());
 		editorPane.setCaretPosition(0);
 		editorPane.setEditable(false);
 
 		JScrollPane scrollPane = new JScrollPane(editorPane);
+		scrollPane.getAccessibleContext().setAccessibleName("Editor");
 		panel.add(scrollPane, BorderLayout.CENTER);
 		JPanel checkBoxPanel = new JPanel(new VerticalLayout(10));
 		checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+		checkBoxPanel.getAccessibleContext().setAccessibleName("Checkbox");
 		panel.add(checkBoxPanel, BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("User Agreement");
 		return panel;
 	}
 

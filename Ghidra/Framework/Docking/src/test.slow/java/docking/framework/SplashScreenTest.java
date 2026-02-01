@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 		for (Window window : getAllWindows()) {
 			runSwing(window::dispose);
 		}
+		waitForSwing();
 	}
 
 	@Test
@@ -74,7 +75,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 		String newStatusText = "New Status Text";
 		SplashScreen.updateSplashScreenStatus(newStatusText);
 
-		String updatedText = statusLabel.getText().trim();
+		waitForSwing();
+		String updatedText = runSwing(() -> statusLabel.getText().trim());
 
 		assertEquals("The text of the label does not match the updated " + "text that was passed.",
 			newStatusText, updatedText);
@@ -95,11 +97,13 @@ public class SplashScreenTest extends AbstractDockingTest {
 		assertSpashScreenVisible(true);
 
 		// show a modal dialog with no parent (this will use the Splash Screen's parent)
-		showModalPasswordDialog(null);
+		DockingDialog dialog = showModalPasswordDialog(null);
 
 		// When the splash screen and the dialog share a parent, then the dialog should NOT
 		// cause the splash screen to go away
 		assertSpashScreenVisible(true);
+
+		close(dialog);
 	}
 
 	@Test
@@ -113,6 +117,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 		showModalPasswordDialog(frame);
 
 		ensureSplashScreenWillClose();
+
+		close(frame);
 	}
 
 //==================================================================================================
@@ -133,8 +139,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 	private DockingDialog showModalPasswordDialog(Frame parentFrame) throws Exception {
 
 		String dialogTitle = "InfoWindowTest.testSplashScreenPasswordModality() Dialog";
-		DialogComponentProvider passwordDialog = runSwing(() -> new PasswordDialog(dialogTitle,
-			"Server Type", "Server Name", "Prompt", null, null));
+		DialogComponentProvider passwordDialog =
+			runSwing(() -> new PasswordDialog(dialogTitle, "Server Type", "Server Name", "Prompt"));
 
 		if (parentFrame == null) {
 			// null means to share the parent
@@ -143,12 +149,11 @@ public class SplashScreenTest extends AbstractDockingTest {
 		}
 
 		Frame finalParent = parentFrame;
-		executeOnSwingWithoutBlocking(
-			() -> {
-				DockingDialog dialog =
-					DockingDialog.createDialog(finalParent, passwordDialog, finalParent);
-				dialog.setVisible(true);
-			});
+		executeOnSwingWithoutBlocking(() -> {
+			DockingDialog dialog =
+				DockingDialog.createDialog(finalParent, passwordDialog, finalParent);
+			dialog.setVisible(true);
+		});
 
 		JDialog dialog = waitForJDialog(dialogTitle);
 		assertNotNull(dialog);
@@ -159,7 +164,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 	private void showSplashScreen(final boolean makeVisible) {
 
 		if (makeVisible) {
-			SplashScreen splash = runSwing(() -> SplashScreen.showSplashScreen());
+			SplashScreen splash = SplashScreen.showNow();
 			assertNotNull("Failed showing splash screen", splash);
 			waitForSwing();
 			return;

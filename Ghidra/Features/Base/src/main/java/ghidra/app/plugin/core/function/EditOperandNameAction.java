@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.app.plugin.core.function;
 
+import java.awt.event.KeyEvent;
+
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.AddEditDialog;
@@ -24,11 +27,6 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-
-import java.awt.event.KeyEvent;
-
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
 
 /**
  * <CODE>EditNameAction</CODE> allows the user to rename a function.

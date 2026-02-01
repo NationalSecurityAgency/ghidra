@@ -43,6 +43,9 @@ public class IncludeDataTypesInFilterAction extends ToggleDockingAction {
 
 	@Override
 	public void setSelected(boolean newValue) {
+		if (isSelected() == newValue) {
+			return;
+		}
 		super.setSelected(newValue);
 		provider.setIncludeDataTypeMembersInFilterCallback(newValue);
 	}

@@ -1548,14 +1548,12 @@ int4 find_symbol(void) {
     sleighlval.operandsym = (OperandSymbol *)sym;
     return OPERANDSYM;
   case SleighSymbol::start_symbol:
-    sleighlval.startsym = (StartSymbol *)sym;
-    return STARTSYM;
   case SleighSymbol::end_symbol:
-    sleighlval.endsym = (EndSymbol *)sym;
-    return ENDSYM;
   case SleighSymbol::next2_symbol:
-    sleighlval.next2sym = (Next2Symbol *)sym;
-    return NEXT2SYM;
+  case SleighSymbol::flowdest_symbol:
+  case SleighSymbol::flowref_symbol:
+    sleighlval.specsym = (SpecificSymbol *)sym;
+    return JUMPSYM;
   case SleighSymbol::subtable_symbol:
     sleighlval.subtablesym = (SubtableSymbol *)sym;
     return SUBTABLESYM;

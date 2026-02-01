@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,6 +167,7 @@ private:
   void symbolDirty(void) const { highflags |= symboldirty; }	///< Mark the symbol as \e dirty
   void setUnmerged(void) const { highflags |= unmerged; }	///< Mark \b this as having merge problems
   bool isCoverDirty(void) const;	///< Is the cover returned by getCover() up-to-date
+  void stripType(void) const;		///< Take the stripped form of the current data-type.
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   ~HighVariable(void);			///< Destructor
@@ -177,7 +178,7 @@ public:
   int4 getSymbolOffset(void) const { return symboloffset; }	///< Get the Symbol offset associated with \b this
   int4 numInstances(void) const { return inst.size(); }		///< Get the number of member Varnodes \b this has
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
-  void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
+  void finalizeDatatype(TypeFactory *typeFactory);		///< Set a final data-type matching the associated Symbol
   void groupWith(int4 off,HighVariable *hi2);		///< Put \b this and another HighVariable in the same intersection group
   void establishGroupSymbolOffset(void);	///< Transfer \b symbol offset of \b this to the VariableGroup
 
@@ -207,6 +208,7 @@ public:
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
   bool isUnmerged(void) const { return ((highflags&unmerged)!=0); }	///< Return \b true if \b this has merge problems
+  bool isSameGroup(const HighVariable *op2) const;	///< Is \b this part of the same VariableGroup as \b op2
 
   /// \brief Determine if \b this HighVariable has an associated cover.
   ///
@@ -261,11 +263,11 @@ class HighIntersectTest {
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
   bool testUntiedCallIntersection(HighVariable *tied,HighVariable *untied);
 public:
-  HighIntersectTest(PcodeOpSet &cCover) : affectingOps(cCover) {}
+  HighIntersectTest(PcodeOpSet &cCover) : affectingOps(cCover) {}	///< Constructor
   void moveIntersectTests(HighVariable *high1,HighVariable *high2);
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   bool intersection(HighVariable *a,HighVariable *b);
-  void clear(void) { highedgemap.clear(); }
+  void clear(void) { highedgemap.clear(); }	///< Clear any cached tests
 };
 
 /// The internal cover is marked as dirty. If \b this is a piece of a VariableGroup, it and all the other
@@ -295,6 +297,17 @@ inline const Cover &HighVariable::getCover(void) const
   if (piece == (VariablePiece *)0)
     return internalCover;
   return piece->getCover();
+}
+
+/// Test if the two HighVariables should be pieces of the same symbol.
+/// \param op2 is the other HighVariable to compare with \b this
+/// \return \b true if they share the same underlying VariableGroup
+inline bool HighVariable::isSameGroup(const HighVariable *op2) const
+
+{
+  if (piece == (VariablePiece *)0 || op2->piece == (VariablePiece *)0)
+    return false;
+  return piece->getGroup() == op2->piece->getGroup();
 }
 
 } // End namespace ghidra

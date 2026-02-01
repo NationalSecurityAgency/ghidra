@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.calltree;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.Icon;
 
@@ -26,24 +24,28 @@ import ghidra.program.model.listing.Program;
 public class IncomingCallsRootNode extends IncomingCallNode {
 
 	IncomingCallsRootNode(Program program, Function function, Address sourceAddress,
-			boolean filterDuplicates, AtomicInteger filterDepth) {
-		super(program, function, sourceAddress, filterDuplicates, filterDepth);
+			CallTreeOptions callTreeOptions) {
+		super(program, function, sourceAddress, false, callTreeOptions);
 		name = function.getName();
 	}
 
 	@Override
 	CallNode recreate() {
-		return new IncomingCallsRootNode(program, function, getSourceAddress(), filterDuplicates,
-			filterDepth);
+		return new IncomingCallsRootNode(program, function, getSourceAddress(), callTreeOptions);
 	}
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return CallTreePlugin.FUNCTION_ICON;
+		return FUNCTION_ICON;
 	}
 
 	@Override
 	public String getName() {
 		return "Incoming References - " + name;
+	}
+
+	@Override
+	public String getToolTip() {
+		return null;
 	}
 }

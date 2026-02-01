@@ -18,6 +18,7 @@ package ghidra.program.database.module;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 
 abstract class ParentChildDBAdapter {
@@ -37,9 +38,9 @@ abstract class ParentChildDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if database IO error occurs
 	 */
-	static ParentChildDBAdapter getAdapter(DBHandle handle, int openMode, long treeID)
+	static ParentChildDBAdapter getAdapter(DBHandle handle, OpenMode openMode, long treeID)
 			throws VersionException, IOException {
-		return new ParentChildDBAdapterV0(handle, openMode == DBConstants.CREATE, treeID);
+		return new ParentChildDBAdapterV0(handle, openMode == OpenMode.CREATE, treeID);
 	}
 
 	static final String getTableName(long treeID) {

@@ -24,10 +24,7 @@ import java.util.Arrays;
  * It allows the bytes to be edited in the middle of collection
  *
  */
-/**
- *
- */
-public class PackedBytes {
+public class PackedBytes extends OutputStream {
 	private byte[] out;
 	private int bytecnt;
 
@@ -62,6 +59,7 @@ public class PackedBytes {
 	 * Dump a single byte to the packed byte stream
 	 * @param val is the byte to be written
 	 */
+	@Override
 	public void write(int val) {
 		int newcount = bytecnt + 1;
 		if (newcount > out.length) {
@@ -75,12 +73,13 @@ public class PackedBytes {
 	 * Dump an array of bytes to the packed byte stream
 	 * @param byteArray is the byte array
 	 */
-	public void write(byte[] byteArray) {
-		int newcount = bytecnt + byteArray.length;
+	@Override
+	public void write(byte[] byteArray, int off, int len) {
+		int newcount = bytecnt + len;
 		if (newcount > out.length) {
 			out = Arrays.copyOf(out, Math.max(out.length << 1, newcount));
 		}
-		System.arraycopy(byteArray, 0, out, bytecnt, byteArray.length);
+		System.arraycopy(byteArray, off, out, bytecnt, len);
 		bytecnt = newcount;
 	}
 

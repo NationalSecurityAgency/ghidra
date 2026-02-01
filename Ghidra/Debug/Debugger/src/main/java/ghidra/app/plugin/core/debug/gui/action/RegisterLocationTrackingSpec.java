@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
@@ -30,7 +29,6 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 
 public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, LocationTracker {
 	Register computeRegister(DebuggerCoordinates coordinates);
@@ -51,10 +49,14 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		return this;
 	}
 
-	default Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	@Override
+	default Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TracePlatform platform = coordinates.getPlatform();
 		TraceThread thread = coordinates.getThread();
+		if (thread == null) {
+			return null;
+		}
 		long viewSnap = coordinates.getViewSnap();
 		long snap = coordinates.getSnap();
 		int frame = coordinates.getFrame();
@@ -62,7 +64,7 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (reg == null) {
 			return null;
 		}
-		if (!thread.getLifespan().contains(snap)) {
+		if (!thread.isValid(snap)) {
 			return null;
 		}
 		TraceMemorySpace regs = reg.getAddressSpace().isRegisterSpace()
@@ -81,38 +83,35 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (value == null) {
 			return null;
 		}
-		// TODO: Action to select the address space
-		// Could use code unit, but that can't specify space, yet, either....
+		/**
+		 * NOTE: I don't think the user needs a way to select the address space. For PC and SP, the
+		 * tracker provides the best default, i.e., the default (code) space and the compiler's
+		 * physical stack space. For watches, I believe the sleigh syntax allows the user to pick,
+		 * but I can't recall testing that.
+		 */
 		return platform.mapGuestToHost(computeDefaultAddressSpace(coordinates)
 				.getAddress(value.getUnsignedValue().longValue(), true));
 	}
 
 	@Override
-	default CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
-	}
-
-	@Override
-	default GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+	default GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
 			ProgramLocation location) {
 		Register register = computeRegister(coordinates);
 		return GoToInput.offsetOnly(register.getName());
 	}
 
 	@Override
-	default boolean affectedByBytesChange(TraceAddressSpace space,
-			TraceAddressSnapRange range, DebuggerCoordinates coordinates) {
+	default boolean affectedByBytesChange(AddressSpace space, TraceAddressSnapRange range,
+			DebuggerCoordinates coordinates) {
 		if (!LocationTrackingSpec.changeIsCurrent(space, range, coordinates)) {
 			return false;
 		}
 		Register register = computeRegister(coordinates);
-		AddressSpace as = space.getAddressSpace();
-		if (register == null || register.getAddressSpace() != as) {
+		if (register == null) {
 			return false;
 		}
 		AddressRange regRng = coordinates.getPlatform()
-				.getConventionalRegisterRange(as.isRegisterSpace() ? as : null, register);
+				.getConventionalRegisterRange(space.isRegisterSpace() ? space : null, register);
 		return range.getRange().intersects(regRng);
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
@@ -28,8 +26,8 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command to add a memory variable to a function.
  */
-public class AddMemoryVarCmd implements Command {
-	private Program program;
+public class AddMemoryVarCmd implements Command<Program> {
+
 	private Address memAddr;
 	private Address firstUseAddr;
 	private String name;
@@ -68,13 +66,8 @@ public class AddMemoryVarCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		program = (Program) obj;
+	public boolean applyTo(Program program) {
 
 		Function f = program.getListing().getFunctionContaining(firstUseAddr);
 		if (f == null) {
@@ -100,17 +93,11 @@ public class AddMemoryVarCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Create Memory Variable";
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errMsg;

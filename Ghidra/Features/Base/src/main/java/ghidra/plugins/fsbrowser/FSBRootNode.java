@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package ghidra.plugins.fsbrowser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
 import ghidra.formats.gfilesystem.*;
@@ -36,35 +38,58 @@ import ghidra.util.task.TaskMonitor;
  */
 public class FSBRootNode extends FSBNode {
 
-	private FileSystemRef fsRef;
+	private RefdFile rootDir; // do not use RefdFile.close(), the FsRef will be extracted and closed manually
 	private FSBFileNode prevNode;
-	private List<FSBRootNode> subRootNodes = new ArrayList<>();
 	private FSBRootNode modelNode;
+	private boolean cryptoStatusUpdated;
+	private Icon icon;
 
-	FSBRootNode(FileSystemRef fsRef) {
-		this(fsRef, null);
+	FSBRootNode(RefdFile rootDir) {
+		this(rootDir, null);
 	}
 
-	FSBRootNode(FileSystemRef fsRef, FSBFileNode prevNode) {
-		this.fsRef = fsRef;
+	FSBRootNode(RefdFile rootDir, FSBFileNode prevNode) {
+		super(FSBComponentProvider.getDescriptiveFSName(rootDir));
+
+		this.rootDir = rootDir;
 		this.prevNode = prevNode;
 		this.modelNode = this;
+		this.icon = FSBComponentProvider.getFSIcon(rootDir.fsRef.getFilesystem(), prevNode == null,
+			FSBIcons.getInstance());
 	}
 
 	@Override
 	public GTreeNode clone() throws CloneNotSupportedException {
 		FSBRootNode clone = (FSBRootNode) super.clone();
-		clone.fsRef = null; // stomp on the clone's fsRef to force it to use modelNode's fsRef
+		clone.rootDir = null; // stomp on the clone's fsRef to force it to use modelNode's fsRef
 		return clone;
 	}
 
 	@Override
 	public void dispose() {
-		releaseFSRefsIfModelNode();
+		releaseFSRefIfModelNode();
 		super.dispose();
 	}
 
-	void swapBackPrevModelNodeAndDispose() {
+	@Override
+	public void init(TaskMonitor monitor) throws CancelledException {
+		setChildren(generateChildren(monitor));
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		return icon;
+	}
+
+	public void setCryptoStatusUpdated(boolean cryptoStatusUpdated) {
+		this.cryptoStatusUpdated = cryptoStatusUpdated;
+	}
+
+	boolean isCryptoStatusUpdated() {
+		return cryptoStatusUpdated;
+	}
+
+	public void swapBackPrevModelNodeAndDispose() {
 		if (this != modelNode) {
 			modelNode.swapBackPrevModelNodeAndDispose();
 			return;
@@ -76,42 +101,33 @@ public class FSBRootNode extends FSBNode {
 		dispose(); // releases the fsRef
 	}
 
+	@Override
+	public GFile getGFile() {
+		return rootDir.file;
+	}
+
 	public FileSystemRef getFSRef() {
-		return modelNode.fsRef;
+		return modelNode.rootDir != null ? modelNode.rootDir.fsRef : null;
 	}
 
-	private void releaseFSRefsIfModelNode() {
-		if (this != modelNode) {
+	private void releaseFSRefIfModelNode() {
+		if (this != modelNode || rootDir == null) {
 			return;
 		}
-		for (FSBRootNode subFSBRootNode : subRootNodes) {
-			subFSBRootNode.releaseFSRefsIfModelNode();
-		}
-		subRootNodes.clear();
-
-		FileSystemService.getInstance().releaseFileSystemImmediate(fsRef);
-		fsRef = null;
+		FileSystemService.getInstance().releaseFileSystemImmediate(rootDir.fsRef);
+		rootDir = null;
 	}
 
 	@Override
-	public void updateFileAttributes(TaskMonitor monitor) throws CancelledException {
+	public void refreshNode(TaskMonitor monitor) throws CancelledException {
 		if (this != modelNode) {
-			modelNode.updateFileAttributes(monitor);
+			modelNode.refreshNode(monitor);
 			return;
 		}
-		for (GTreeNode node : getChildren()) {
-			monitor.checkCancelled();
-			if (node instanceof FSBFileNode) {
-				((FSBFileNode) node).updateFileAttributes(monitor);
-			}
+		refreshChildren(monitor);
+		if (cryptoStatusUpdated) {
+			// do something to refresh children's status that may have been affected by crypto update 
 		}
-	}
-
-	@Override
-	public String getName() {
-		return modelNode.fsRef != null && !modelNode.fsRef.isClosed()
-				? modelNode.fsRef.getFilesystem().getName()
-				: " Missing ";
 	}
 
 	@Override
@@ -126,10 +142,9 @@ public class FSBRootNode extends FSBNode {
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		if (fsRef != null) {
+		if (rootDir != null) {
 			try {
-				return FSBNode.createNodesFromFileList(fsRef.getFilesystem().getListing(null),
-					monitor);
+				return FSBNode.createNodesFromFileList(rootDir.file.getListing(), monitor);
 			}
 			catch (IOException e) {
 				FSUtilities.displayException(this, null, "Error Opening File System",
@@ -141,6 +156,70 @@ public class FSBRootNode extends FSBNode {
 
 	@Override
 	public FSRL getFSRL() {
-		return modelNode.fsRef.getFilesystem().getFSRL();
+		return modelNode != null && modelNode.rootDir != null
+				? modelNode.rootDir.file.getFSRL()
+				: null;
 	}
+
+	public FSBNode getGFileFSBNode(GFile file, TaskMonitor monitor) {
+		List<GFile> pathParts = splitGFilePath(file);
+		List<GFile> rootPathParts = splitGFilePath(rootDir.file);
+		// TODO: ensure pathParts has a prefix that equals rootPathParts
+		FSBNode fileNode = this;
+		for (int i = rootPathParts.size() /* skip root */; fileNode != null &&
+			i < pathParts.size(); i++) {
+			try {
+				fileNode = fileNode.findMatchingNode(pathParts.get(i), monitor);
+			}
+			catch (CancelledException e) {
+				return null;
+			}
+		}
+		return fileNode;
+	}
+
+	public FSRL getContainer() {
+		// allows the import of the file container of a filesystem image
+		if ( rootDir != null && rootDir.file.getParentFile() == null ) {
+			return rootDir.fsRef.getFilesystem().getFSRL().getContainer();
+		}
+		return null;
+	}
+
+	private List<GFile> splitGFilePath(GFile f) {
+		List<GFile> result = new ArrayList<>();
+		while (f != null) {
+			result.add(0, f);
+			f = f.getParentFile();
+		}
+		return result;
+	}
+
+	public FSRL getProgramProviderFSRL(FSRL fsrl) {
+		if (rootDir != null) {
+			GFileSystem fs = rootDir.fsRef.getFilesystem();
+			if (fs instanceof GFileSystemProgramProvider programProviderFS) {
+				try {
+					GFile gfile = fs.lookup(fsrl.getPath());
+					if (gfile != null && programProviderFS.canProvideProgram(gfile)) {
+						return fsrl;
+					}
+				}
+				catch (IOException e) {
+					// ignore error and fall thru
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public FSRL getLoadableFSRL() {
+		FSRL ppFSRL = getProgramProviderFSRL(getFSRL());
+		if (ppFSRL != null) {
+			return ppFSRL;
+		}
+		return getContainer();
+	}
+
 }

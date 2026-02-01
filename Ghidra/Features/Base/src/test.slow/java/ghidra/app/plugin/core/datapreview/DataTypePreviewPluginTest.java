@@ -118,7 +118,7 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("6.119088925166103E-308", model.getValueAt(9, DTPPTableModel.PREVIEW_COL));
 		assertEquals("2600h", model.getValueAt(10, DTPPTableModel.PREVIEW_COL));
 		assertEquals("7000h", model.getValueAt(11, DTPPTableModel.PREVIEW_COL));
-		assertEquals("\"\\0\\0\\0\\0\\0\\0\\0\",0Eh,\"\\0f\"",
+		assertEquals("00h,00h,00h,00h,00h,00h,00h,0Eh,00h,\"f\"",
 			model.getValueAt(12, DTPPTableModel.PREVIEW_COL));
 
 		assertEquals(14, model.getRowCount());

@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Keyboard Navigation</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <BLOCKQUOTE>
+      <H1>Keyboard Navigation</H1>
+
+      <BLOCKQUOTE>
+        <H2>Component Traversal</H2>
+
+        <BLOCKQUOTE>
+          <P>Ghidra supports standard keyboard navigation for traversing component focus
+          cycles within each window. In general, TAB and &lt;CTRL&gt; TAB will transfer focus to
+          the next component. And &lt;SHIFT&gt; TAB and &lt;CTRL&gt;&lt;SHIFT&gt;TAB will transfer
+          focus to the previous component in the cycle. TAB and &lt;SHIFT&gt;TAB do not always work
+          as they are sometimes used by individual components such as text components, but the
+          &lt;CTRL&gt; versions should work universally.</P>
+
+          <P>Ghidra also provides some handy shortcut keys for navigation:</P>
+
+          <UL>
+            <LI>&lt;CTRL&gt;F3 - Transfer focus to the next window or dialog.</LI>
+
+            <LI>&lt;CTRL&gt;&lt;SHIFT&gt;F3 - Transfer focus to the previous window or dialog.</LI>
+
+            <LI>&lt;CTRL&gt;J - Transfer focus (Jump) to the next component provider (titled
+            component).</LI>
+
+            <LI>&lt;CTRL&gt;&lt;SHIFT&gt;J - Transfer focus (Jump) to the previous component
+            provider.</LI>
+          </UL>
+        </BLOCKQUOTE>
+
+        <H2>Actions</H2>
+
+        <BLOCKQUOTE>
+          <P>Global menus can be reached using the various accelerator keys such as &lt;ALT&gt;F to
+          access the File menu.</P>
+
+          <P>Context menus can be invoked using the &lt;SHIFT&gt;F10 key or the dedicated context
+          menu key available on some keyboards.</P>
+
+          <P>Toolbar actions currently can't be directly accessed via the keyboard unless a
+          keybinding is assigned to them.</P>
+        </BLOCKQUOTE>
+
+        <H2>Actions Dialog</H2><A NAME="ActionChooserDialog"/>
+
+        <BLOCKQUOTE>
+          <P>The Actions Dialog displays a list of all actions (or commands) relevant to the
+          currently focused component window or dialog and allows the user to select and invoke any
+          valid, enabled action using either the mouse or keyboard.</P>
+
+          <DIV class="image">
+            <IMG alt="" src="images/ActionsDialog.png">
+          </DIV>
+          <P>The dialog displays a list of available actions, grouped into categories indicating
+          from where the action is normally invoked. Actions that are not enabled (and therefore
+          can't be invoked) are displayed as faded.</P>
+          
+          <P>Initially, the dialog shows just the local toolbar and menu items for the currently 
+          focused component, along with all relevant popup and keyboard actions. Repeatedly
+          pressing the keybinding assigned to this action (default is &LT;CTRL&GT; 3) will show 
+          additional, less relevant actions.
+
+		  <P>Displayed actions in the list can be selected via the mouse or by using the up/down
+		  arrows to move the current selection. Pressing the OK button or pressing the
+          &lt;ENTER&gt; key will cause the dialog to close and the action to be invoked.</P>
+          
+          <P>Also, the list can be filtered by typing in the provided text box.</P>
+
+          <BLOCKQUOTE>
+            <P><IMG border="0" src="help/shared/note.png" alt="">This dialog can be invoked using
+            its assigned keybinding (default is &LT;CTRL&GT; 3).</P>
+
+            <P><IMG border="0" src="help/shared/note.png" alt="">Help (F1) and Assign Keybinding
+            (F4) actions work on the selected action.</P>
+            
+            <P><IMG border="0" src="help/shared/note.png" alt="">Bringing up this dialog and pressing
+            (&lt;CTRL&gt; 3) a few times to show all local and global actions is a great way to 
+            explore all the actions Ghidra actions. </P>
+
+            
+          </BLOCKQUOTE>
+       </BLOCKQUOTE>
+       </BLOCKQUOTE>
+		<BR><BR><BR>
+          <P style="color:#7f7f7f;">Keywords: find actions, system actions, tool actions, component actions, local
+          actions, global actions, keyboard actions, list actions, actions list, choose actions,
+          select actions, display actions, show actions.</P> 
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

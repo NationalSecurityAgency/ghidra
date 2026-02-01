@@ -40,6 +40,11 @@ public enum SleighUtils {
 
 	/**
 	 * A Sleigh parsing error
+	 * 
+	 * @param header the header / title for the message
+	 * @param message the detail message
+	 * @param start the character position where the syntax error starts
+	 * @param stop the character position where the syntax error ends
 	 */
 	public record SleighParseErrorEntry(String header, String message, int start, int stop) {
 		public String fullMessage() {

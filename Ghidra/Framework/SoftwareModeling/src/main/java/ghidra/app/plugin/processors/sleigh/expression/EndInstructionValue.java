@@ -19,15 +19,16 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * The integer offset of the address following the current instruction
  */
 public class EndInstructionValue extends PatternValue {
@@ -43,37 +44,26 @@ public class EndInstructionValue extends PatternValue {
 		return obj instanceof EndInstructionValue;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#minValue()
-	 */
 	@Override
 	public long minValue() {
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#maxValue()
-	 */
 	@Override
 	public long maxValue() {
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternExpression#getValue(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
 	public long getValue(ParserWalker walker) throws MemoryAccessException {
 		Address addr = walker.getNaddr();
 		return addr.getAddressableWordOffset();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		parser.discardSubTree("end_exp");
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_END_EXP);
+		decoder.closeElement(el);
 		// Nothing to do
 	}
 

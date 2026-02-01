@@ -16,7 +16,6 @@
 package ghidra.framework.plugintool.testplugins.secondconflict;
 
 import ghidra.app.DeveloperPluginPackage;
-import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
@@ -28,7 +27,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 //@formatter:off
 @PluginInfo(status = PluginStatus.HIDDEN,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.UNMANAGED,
+	category = "NONE",
 	shortDescription = "Test plugin name collision",
 	description = "Test plugin name collision.")
 //@formatter:on

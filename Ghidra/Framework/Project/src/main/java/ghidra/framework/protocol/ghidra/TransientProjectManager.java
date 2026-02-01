@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,11 @@ package ghidra.framework.protocol.ghidra;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import ghidra.framework.Application;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.ProjectLocator;
@@ -172,7 +172,7 @@ public class TransientProjectManager {
 	private TransientProjectData createTransientProject(RepositoryAdapter repository,
 			RepositoryInfo repositoryInfo) throws IOException {
 
-		File tmp = File.createTempFile("ghidraPrj", "");
+		File tmp = Application.createTempFile("ghidraPrj", "");
 		tmp.delete();
 
 		ProjectLocator tmpProjectLocation = new TransientProjectStorageLocator(
@@ -191,13 +191,8 @@ public class TransientProjectManager {
 		private final RepositoryInfo repositoryInfo;
 
 		TransientProjectStorageLocator(String path, String name, RepositoryInfo repositoryInfo) {
-			super(path, name);
+			super(path, name, repositoryInfo.repositoryURL);
 			this.repositoryInfo = repositoryInfo;
-		}
-
-		@Override
-		public URL getURL() {
-			return repositoryInfo.repositoryURL;
 		}
 
 		@Override

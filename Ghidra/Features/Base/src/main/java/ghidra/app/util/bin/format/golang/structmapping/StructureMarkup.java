@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.golang.structmapping;
 import java.io.IOException;
 import java.util.List;
 
+import ghidra.util.exception.CancelledException;
+
 /**
  * Optional interface that structure mapped classes can implement that allows them to control how
  * their class is marked up.
@@ -43,8 +45,13 @@ public interface StructureMarkup<T> {
 
 	/**
 	 * Returns a string that can be used to place a label on the instance.
+	 * <p>
+	 * This default implementation will query the {@link #getStructureName()} method, and if
+	 * it provides a value, will produce a string that looks like "name___mappingstructname", where
+	 * "mappingstructname" will be the {@code structureName} value in the {@code @StructureMapping}
+	 * annotation.
 	 *  
-	 * @return string to be used as a labe, or null if there is not a valid label for the instance
+	 * @return string to be used as a label, or null if there is not a valid label for the instance
 	 * @throws IOException if error getting label
 	 */
 	default String getStructureLabel() throws IOException {
@@ -56,12 +63,23 @@ public interface StructureMarkup<T> {
 	}
 
 	/**
+	 * Returns the namespace that any labels should be placed in.
+	 * 
+	 * @return name of namespace to place the label for this structure mapped type, or null
+	 * @throws IOException if error generating namespace name
+	 */
+	default String getStructureNamespace() throws IOException {
+		return null;
+	}
+
+	/**
 	 * Called to allow the implementor to perform custom markup of itself.
 	 * 
 	 * @param session state and methods to assist marking up the program
 	 * @throws IOException if error during markup
+	 * @throws CancelledException if cancelled
 	 */
-	default void additionalMarkup(MarkupSession session) throws IOException {
+	default void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
 		// empty
 	}
 

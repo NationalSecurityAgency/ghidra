@@ -53,7 +53,7 @@ public class DockingApplicationConfiguration extends ApplicationConfiguration {
 		LookAndFeelUtils.performPlatformSpecificFixups();
 
 		if (showSplashScreen) {
-			SplashScreen.showSplashScreen();
+			SplashScreen.showLater();
 		}
 
 		ApplicationKeyManagerFactory

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import db.buffers.LocalManagedBufferFile;
-import ghidra.framework.store.FileSystem;
+import ghidra.framework.store.*;
 import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.server.Repository;
 import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
@@ -62,12 +63,11 @@ public class RepositoryFolder {
 
 	/**
 	 * Constructor for non-root folders
-	 * @param fileSystem the private file system
-	 * @param versionedFileSystem file system for storing version controlled items
+	 * @param repository shared repository
+	 * @param fileSystem local file system for storing version controlled items
 	 * @param parent parent folder
 	 * @param name name of this folder
-	 * @param listener listener for DomainFolder changes.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private RepositoryFolder(Repository repository, LocalFileSystem fileSystem,
 			RepositoryFolder parent, String name) throws IOException {
@@ -80,10 +80,9 @@ public class RepositoryFolder {
 
 	/**
 	 * Constructor for the root folder
-	 * @param fileSystem the private file system
-	 * @param versionedFileSystem file system for storing version controlled items
-	 * @param listener listener for DomainFolder changes.
-	 * @throws IOException
+	 * @param repository shared repository
+	 * @param fileSystem local file system for storing version controlled items
+	 * @throws IOException if an IO error occurs
 	 */
 	public RepositoryFolder(Repository repository, LocalFileSystem fileSystem) throws IOException {
 		this.repository = repository;
@@ -95,25 +94,30 @@ public class RepositoryFolder {
 	private void init() throws IOException {
 		String path = getPathname();
 		String[] names = fileSystem.getFolderNames(path);
-		for (int i = 0; i < names.length; i++) {
+		for (String folderName : names) {
 			RepositoryFolder subfolder =
-				new RepositoryFolder(repository, fileSystem, this, names[i]);
-			folderMap.put(names[i], subfolder);
+				new RepositoryFolder(repository, fileSystem, this, folderName);
+			folderMap.put(folderName, subfolder);
 		}
 		names = fileSystem.getItemNames(path);
-		for (int i = 0; i < names.length; i++) {
-			try {
-				RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, names[i]);
-				fileMap.put(names[i], rf);
+		int badItemCount = 0;
+		for (String itemName : names) {
+			LocalFolderItem item = fileSystem.getItem(path, itemName);
+			if (item == null || (item instanceof UnknownFolderItem)) {
+				++badItemCount;
 			}
-			catch (FileNotFoundException e) {
-				// Skip
-			}
+			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
+			fileMap.put(itemName, rf);
+		}
+		if (badItemCount != 0) {
+			log.error("Repository '" + repository.getName() + "' contains " + badItemCount +
+				" bad items: " + getPathname());
 		}
 	}
 
 	/**
 	 * Returns folder name
+	 * @return folder name
 	 */
 	public String getName() {
 		return name;
@@ -121,6 +125,7 @@ public class RepositoryFolder {
 
 	/**
 	 * Returns parent folder or null if this is the root folder.
+	 * @return parent folder or null
 	 */
 	public RepositoryFolder getParent() {
 		return parent;
@@ -128,6 +133,7 @@ public class RepositoryFolder {
 
 	/**
 	 * Returns folder path within repository
+	 * @return folder path
 	 */
 	public String getPathname() {
 		synchronized (fileSystem) {
@@ -141,7 +147,8 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns list of sub-folders contained within this folder
+	 * Returns all sub-folders contained within this folder
+	 * @return all sub-folders
 	 */
 	public RepositoryFolder[] getFolders() {
 		synchronized (fileSystem) {
@@ -156,6 +163,7 @@ public class RepositoryFolder {
 	 * Returns sub-folders with the specified name or null 
 	 * if sub-folder not found within this folder.
 	 * @param folderName sub-folder name
+	 * @return specified sub-folder or null if not found
 	 */
 	public RepositoryFolder getFolder(String folderName) {
 		synchronized (fileSystem) {
@@ -180,7 +188,8 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns list of files/items contained within this folder
+	 * Returns all files/items contained within this folder
+	 * @return all files/items contained within this folder
 	 */
 	public RepositoryFile[] getFiles() {
 		synchronized (fileSystem) {
@@ -195,6 +204,7 @@ public class RepositoryFolder {
 	 * Returns files/items with the specified name or null 
 	 * if file/item not found within this folder.
 	 * @param fileName sub-folder name
+	 * @return named file or null if not found
 	 */
 	public RepositoryFile getFile(String fileName) {
 		synchronized (fileSystem) {
@@ -202,8 +212,16 @@ public class RepositoryFolder {
 			if (rf != null) {
 				return rf;
 			}
+			// NOTE: Uncertain what condition would lead to exiting file not already
+			// existing in fileMap
 			if (fileSystem.fileExists(getPathname(), fileName)) {
 				try {
+					LocalFolderItem item = fileSystem.getItem(getPathname(), fileName);
+					if (item == null) {
+						log.error("Repository '" + repository.getName() + "' contains bad item: " +
+							makePathname(getPathname(), fileName));
+						return null;
+					}
 					rf = new RepositoryFile(repository, fileSystem, this, fileName);
 					fileMap.put(fileName, rf);
 					return rf;
@@ -220,10 +238,11 @@ public class RepositoryFolder {
 	/**
 	 * Create a new sub-folder within this folder and the associated directory on the local file-system.
 	 * @param folderName new sub-folder name
-	 * @param user
+	 * @param user user who is initiating request
 	 * @return new folder
 	 * @throws InvalidNameException if folder name is invalid
-	 * @throws IOException
+	 * @throws DuplicateFileException if folder already exists with specified name
+	 * @throws IOException if an IO error occurs
 	 */
 	public RepositoryFolder createFolder(String folderName, String user)
 			throws InvalidNameException, IOException {
@@ -244,15 +263,49 @@ public class RepositoryFolder {
 	}
 
 	/**
+	 * Creates a new text data file within the specified parent folder.
+	 * @param itemName new data file name
+	 * @param fileID file ID to be associated with new file or null
+	 * @param contentType application defined content type
+	 * @param textData text data (required)
+	 * @param comment file comment (may be null)
+	 * @param user user who is initiating request
+	 * @throws DuplicateFileException Thrown if a folderItem with that name already exists.
+	 * @throws InvalidNameException if the name has illegal characters.
+	 * @throws IOException if an IO error occurs.
+	 */
+	public void createTextDataFile(String itemName, String fileID, String contentType,
+			String textData, String comment, String user) throws InvalidNameException, IOException {
+		synchronized (fileSystem) {
+			repository.validate();
+			repository.validateWritePrivilege(user);
+			if (getFile(itemName) != null) {
+				throw new DuplicateFileException(itemName + " already exists");
+			}
+
+			fileSystem.createTextDataItem(getPathname(), itemName, fileID, contentType, textData,
+				comment, user);
+
+			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
+			fileMap.put(itemName, rf);
+
+			RepositoryManager.log(repository.getName(), makePathname(getPathname(), itemName),
+				"file created", user);
+		}
+	}
+
+	/**
 	 * Create a new database file/item within this folder.
 	 * @param itemName name of new database
+	 * @param fileID file ID
 	 * @param bufferSize preferred database buffer size
 	 * @param contentType application content type
-	 * @param user
-	 * @param projectPath
+	 * @param user user who is initiating request
+	 * @param projectPath file path within repository
 	 * @return buffer file (contains checkoutId as checkinId)
-	 * @throws InvalidNameException
-	 * @throws IOException
+	 * @throws InvalidNameException if itemName is invalid
+	 * @throws DuplicateFileException if file already exists with specified name
+	 * @throws IOException if an IO error occurs
 	 */
 	public LocalManagedBufferFile createDatabase(String itemName, String fileID, int bufferSize,
 			String contentType, String user, String projectPath)
@@ -275,7 +328,9 @@ public class RepositoryFolder {
 
 	/**
 	 * Delete this empty folder.
-	 * @throws IOException
+	 * @throws FolderNotEmptyException Thrown if the folder is not empty.
+	 * @throws FileNotFoundException if there is no folder with the given path name.
+	 * @throws IOException if error occurred during delete.
 	 */
 	public void delete() throws IOException {
 		synchronized (fileSystem) {
@@ -290,7 +345,7 @@ public class RepositoryFolder {
 
 	/**
 	 * Returns true if any file/item contained within this folder
-	 * or its descendents is checked-out.
+	 * or its descendants is checked-out.
 	 */
 	private boolean containsCheckout() throws IOException {
 
@@ -325,6 +380,7 @@ public class RepositoryFolder {
 	 * Move child RepositoryItem into its new parent folder
 	 * after the underlying item has already been moved.
 	 * @param rf child RepositoryItem
+	 * @param oldName old file name
 	 * @param newFolder new parent folder for rf
 	 */
 	void fileMoved(RepositoryFile rf, String oldName, RepositoryFolder newFolder) {
@@ -336,11 +392,11 @@ public class RepositoryFolder {
 
 	/**
 	 * Move this folder to a new parent folder and optionally change its name.
-	 * @param newParentPath new parent folder
+	 * @param newParent new parent folder
 	 * @param newFolderName new name for this folder
-	 * @param user
+	 * @param user user who is initiating request
 	 * @throws InvalidNameException if newFolderName is invalid
-	 * @throws IOException
+	 * @throws IOException if operation fails
 	 */
 	public void moveTo(RepositoryFolder newParent, String newFolderName, String user)
 			throws InvalidNameException, IOException {
@@ -352,8 +408,8 @@ public class RepositoryFolder {
 				if (parent == null) {
 					throw new IOException("Root folder may not be moved");
 				}
-				if (newParent.isDescendentOf(this)) {
-					throw new IOException("New folder must not be decendent");
+				if (newParent.isDescendantOf(this)) {
+					throw new IOException("New folder must not be descendant");
 				}
 				if (containsCheckout()) {
 					throw new FileInUseException(
@@ -402,9 +458,9 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns true if this folder is a descendent of the specified folder
+	 * Returns true if this folder is a descendant of the specified folder
 	 */
-	private boolean isDescendentOf(RepositoryFolder folder) {
+	private boolean isDescendantOf(RepositoryFolder folder) {
 		RepositoryFolder rf = parent;
 		while (rf != null) {
 			if (rf == folder) {
@@ -421,4 +477,5 @@ public class RepositoryFolder {
 				: parentPath;
 		return path + FileSystem.SEPARATOR + childName;
 	}
+
 }

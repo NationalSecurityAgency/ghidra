@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,29 +28,18 @@ import ghidra.program.model.data.LEB128;
 
 /**
  * A Mach-O binding table
- * 
- * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/common/MachOLayout.cpp">common/MachOLayout.cpp</a> 
- * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/common/MachOAnalyzer.cpp">common/MachOAnalyzer.cpp</a> 
  */
-public class BindingTable {
+public class BindingTable extends OpcodeTable {
 
-	private List<Binding> bindings;
+	private List<Binding> bindings = new ArrayList<>();
 	private List<Binding> threadedBindings;
-	private List<Long> opcodeOffsets;
-	private List<Long> ulebOffsets;
-	private List<Long> slebOffsets;
-	private List<Long> stringOffsets;
+
 
 	/**
 	 * Creates an empty {@link BindingTable}
 	 */
 	public BindingTable() {
-		bindings = new ArrayList<>();
-		threadedBindings = null;
-		opcodeOffsets = new ArrayList<>();
-		ulebOffsets = new ArrayList<>();
-		slebOffsets = new ArrayList<>();
-		stringOffsets = new ArrayList<>();
+		super();
 	}
 
 	/**
@@ -62,7 +51,7 @@ public class BindingTable {
 	 * @param lazy True if this is a lazy binding table; otherwise, false
 	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public BindingTable(BinaryReader reader, MachHeader header, int tableSize, boolean lazy)
+	public BindingTable(BinaryReader reader, MachHeader header, long tableSize, boolean lazy)
 			throws IOException {
 		this();
 
@@ -204,34 +193,6 @@ public class BindingTable {
 	 */
 	public List<Binding> getThreadedBindings() {
 		return threadedBindings;
-	}
-
-	/**
-	 * {@return opcode offsets from the start of the bind data}
-	 */
-	public List<Long> getOpcodeOffsets() {
-		return opcodeOffsets;
-	}
-
-	/**
-	 * {@return ULEB128 offsets from the start of the bind data}
-	 */
-	public List<Long> getUlebOffsets() {
-		return ulebOffsets;
-	}
-
-	/**
-	 * {@return SLEB128 offsets from the start of the bind data}
-	 */
-	public List<Long> getSlebOffsets() {
-		return slebOffsets;
-	}
-
-	/**
-	 * {@return string offsets from the start of the bind data}
-	 */
-	public List<Long> getStringOffsets() {
-		return stringOffsets;
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,108 +23,25 @@ import java.awt.image.VolatileImage;
 
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.image.ImageUtils;
+import generic.util.image.ImageUtils.Padding;
+import ghidra.util.Msg;
 
 public class Callout {
 
-	private static final Color CALLOUT_SHAPE_COLOR = Palette.getColor("palegreen");
+	private static final Color CALLOUT_SHAPE_COLOR = Palette.getColor("yellowgreen"); //Palette.getColor("palegreen");
 	private static final int CALLOUT_BORDER_PADDING = 20;
 
-	public Image createCallout(CalloutComponentInfo calloutInfo) {
-
-		double distanceFactor = 1.15;
-
-		//
-		// Callout Size
-		//
-		Dimension cSize = calloutInfo.getSize();
-		int newHeight = cSize.height * 4;
-		int calloutHeight = newHeight;
-		int calloutWidth = calloutHeight; // square
-
-		//
-		// Callout Distance (from original component)
-		//
-		double xDistance = calloutWidth * distanceFactor * .80;
-		double yDistance = calloutHeight * distanceFactor * distanceFactor;
-
-		// only pad if the callout leaves the bounds of the parent image
-		int padding = 0;
-		Rectangle cBounds = calloutInfo.getBounds();
-		Point cLoc = cBounds.getLocation();
-		if (yDistance > cLoc.y) {
-			// need some padding!
-			padding = (int) Math.round(calloutHeight * distanceFactor);
-			cLoc.y += padding;
-			cBounds.setLocation(cLoc.x, cLoc.y); // move y down by the padding
+	public Image createCalloutOnImage(Image image, CalloutInfo calloutInfo) {
+		try {
+			return doCreateCalloutOnImage(image, calloutInfo);
 		}
-
-		boolean goLeft = false;
-
-// TODO for now, always go right
-//		Rectangle pBounds = parentComponent.getBounds();
-//		double center = pBounds.getCenterX();
-//		if (cLoc.x > center) {
-//			goLeft = true; // callout is on the right of center--go to the left
-//		}
-
-		//
-		// Callout Bounds
-		//
-		int calloutX = (int) (cLoc.x + (goLeft ? -(xDistance + calloutWidth) : xDistance));
-		int calloutY = (int) (cLoc.y + -yDistance);
-		int backgroundWidth = calloutWidth;
-		int backgroundHeight = backgroundWidth; // square
-		Rectangle calloutBounds =
-			new Rectangle(calloutX, calloutY, backgroundWidth, backgroundHeight);
-
-		//
-		// Full Callout Shape Bounds
-		//
-		Rectangle fullBounds = cBounds.union(calloutBounds);
-		BufferedImage calloutImage =
-			createCalloutImage(calloutInfo, cLoc, calloutBounds, fullBounds);
-
-//		DropShadow dropShadow = new DropShadow();
-//		Image shadow = dropShadow.createDrowShadow(calloutImage, 40);
-
-		//
-		// Create our final image and draw into it the callout image and its shadow
-		//
-
-		return calloutImage;
-
-//		int width = Math.max(shadow.getWidth(null), calloutImage.getWidth());
-//		int height = Math.max(shadow.getHeight(null), calloutImage.getHeight());
-//
-//		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-//
-//		Graphics g = image.getGraphics();
-//		Graphics2D g2d = (Graphics2D) g;
-//		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//
-//		Point imageLoc = calloutInfo.convertPointToParent(fullBounds.getLocation());
-//		g2d.drawImage(shadow, imageLoc.x, imageLoc.y, null);
-//		g2d.drawImage(calloutImage, imageLoc.x, imageLoc.y, null);
-
-		//
-		//
-		//
-		//
-		// Debug
-		//
-//		g2d.setColor(Palette.RED);
-//		g2d.draw(fullBounds);
-//
-//		g2d.setColor(Palette.CYAN);
-//		g2d.draw(calloutBounds);
-//
-//		g2d.setColor(Palette.BLUE);
-//		g2d.draw(cBounds);
-
-//		return image;
+		catch (Exception e) {
+			Msg.error(this, "Unexpected exception creating callout image", e);
+			throw e;
+		}
 	}
 
-	public Image createCalloutOnImage(Image image, CalloutComponentInfo calloutInfo) {
+	private Image doCreateCalloutOnImage(Image image, CalloutInfo calloutInfo) {
 
 		//
 		// This code creates a 'call out' image, which is a round, zoomed image of an area
@@ -133,134 +50,134 @@ public class Callout {
 		//
 
 		//
-		// Callout Size
+		// Callout Size (this is the small image that will be in the center of the overall callout
+		// shape)
 		//
-		Dimension cSize = calloutInfo.getSize();
-		int newHeight = cSize.height * 6;
+		Rectangle clientBounds = calloutInfo.getBounds();
+		Dimension clientShapeSize = clientBounds.getSize();
+		int newHeight = clientShapeSize.height * 6;
 		int calloutHeight = newHeight;
 		int calloutWidth = calloutHeight; // square
 
 		//
-		// Callout Distance (from original component).  This is the location (relative to
-		// the original component) of the callout image (not the full shape).  So, if the
-		// x distance was 10, then the callout image would start 10 pixels to the right of
-		// the component.
+		// Callout Offset (from original shape that is being magnified).  This is the location 
+		// (relative to the original component) of the callout image (not the full shape; the round
+		// magnified image).  So, if the x offset is 10, then the callout image would start 10 pixels
+		// to the right of the component.
 		//
-		double distanceX = calloutWidth * 1.5;
-		double distanceY = calloutHeight * 2;
+		double offsetX = calloutWidth * 1.5;
+		double offsetY = calloutHeight * 2;
 
 		// only pad if the callout leaves the bounds of the parent image
 		int topPadding = 0;
-		Rectangle componentBounds = calloutInfo.getBounds();
-		Point componentLocation = componentBounds.getLocation();
-		Point imageComponentLocation = calloutInfo.convertPointToParent(componentLocation);
-
-		int calloutImageY = imageComponentLocation.y - ((int) distanceY);
-		if (calloutImageY < 0) {
-
-			// the callout would be drawn off the top of the image; pad the image
-			topPadding = Math.abs(calloutImageY) + CALLOUT_BORDER_PADDING;
-
-			// Also, since we have made the image bigger, we have to the component bounds, as
-			// the callout image uses these bounds to know where to draw the callout.  If we
-			// don't move them, then the padding will cause the callout to be drawn higher
-			// by the amount of the padding.
-			componentLocation.y += topPadding;
-			componentBounds.setLocation(componentLocation.x, componentLocation.y);
-		}
+		Point clientLocation = clientBounds.getLocation();
 
 		//
 		// Callout Bounds
 		//
-		// angle the callout
+		// set the callout location offset from the client area and angle it as well
 		double theta = Math.toRadians(45);
-		int calloutX = (int) (componentLocation.x + (Math.cos(theta) * distanceX));
-		int calloutY = (int) (componentLocation.y - (Math.sin(theta) * distanceY));
-
-		int backgroundWidth = calloutWidth;
-		int backgroundHeight = backgroundWidth; // square
-		Rectangle calloutBounds =
-			new Rectangle(calloutX, calloutY, backgroundWidth, backgroundHeight);
+		int calloutX = (int) (clientLocation.x + (Math.cos(theta) * offsetX));
+		int calloutY = (int) (clientLocation.y - (Math.sin(theta) * offsetY));
+		Rectangle calloutShapeBounds =
+			new Rectangle(calloutX, calloutY, calloutWidth, calloutHeight);
 
 		//
 		// Full Callout Shape Bounds (this does not include the drop-shadow)
 		//
-		Rectangle calloutDrawingArea = componentBounds.union(calloutBounds);
+		Rectangle calloutBounds = clientBounds.union(calloutShapeBounds);
 		BufferedImage calloutImage =
-			createCalloutImage(calloutInfo, componentLocation, calloutBounds, calloutDrawingArea);
+			createCalloutImage(calloutInfo, calloutShapeBounds, calloutBounds);
 
+		calloutInfo.moveToDestination(calloutBounds);
+
+		Point calloutLocation = calloutBounds.getLocation();
+		int top = calloutLocation.y - CALLOUT_BORDER_PADDING;
+		if (top < 0) {
+			// the callout would be drawn off the top of the image; pad the image
+			topPadding = -top;
+		}
+
+		//
+		// The drop shadow size is used also to control the offset of the shadow.  The shadow is 
+		// twice as big as the callout we will paint.  The shadow will be painted first, with the
+		// callout image on top.
+		// 
 		DropShadow dropShadow = new DropShadow();
 		Image shadow = dropShadow.createDropShadow(calloutImage, 40);
 
 		//
 		// Create our final image and draw into it the callout image and its shadow
-		//
-		Point calloutImageLoc = calloutInfo.convertPointToParent(calloutDrawingArea.getLocation());
-		calloutDrawingArea.setLocation(calloutImageLoc);
+		//		
 
-		Rectangle dropShadowBounds = new Rectangle(calloutImageLoc.x, calloutImageLoc.y,
-			shadow.getWidth(null), shadow.getHeight(null));
-		Rectangle completeBounds = calloutDrawingArea.union(dropShadowBounds);
-		int fullBoundsXEndpoint = calloutImageLoc.x + completeBounds.width;
-		int overlap = fullBoundsXEndpoint - image.getWidth(null);
-		int rightPadding = 0;
-		if (overlap > 0) {
-			rightPadding = overlap + CALLOUT_BORDER_PADDING;
-		}
-
-		int fullBoundsYEndpoint = calloutImageLoc.y + completeBounds.height;
-		int bottomPadding = 0;
-		overlap = fullBoundsYEndpoint - image.getHeight(null);
-		if (overlap > 0) {
-			bottomPadding = overlap;
-		}
-
-		image =
-			ImageUtils.padImage(image, Palette.WHITE, topPadding, 0, rightPadding, bottomPadding);
-		Graphics g = image.getGraphics();
+		Padding padding = createImagePadding(image, shadow, calloutBounds, topPadding);
+		Color bg = Palette.WHITE;
+		Image paddedImage = ImageUtils.padImage(image, bg, padding);
+		Graphics g = paddedImage.getGraphics();
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		g2d.drawImage(shadow, calloutImageLoc.x, calloutImageLoc.y, null);
-		g2d.drawImage(calloutImage, calloutImageLoc.x, calloutImageLoc.y, null);
+		// Get the final location that may have been updated if we padded the image
+		int paddedX = calloutLocation.x += padding.left();
+		int paddedY = calloutLocation.y += padding.top();
+		Point finalLocation = new Point(paddedX, paddedY);
+		g2d.drawImage(shadow, finalLocation.x, finalLocation.y, null);
+		g2d.drawImage(calloutImage, finalLocation.x, finalLocation.y, null);
 
-		//
-		//
-		//
 		//
 		// Debug
 		//
 //		g2d.setColor(Palette.RED);
-//		g2d.draw(fullBounds);
+//		Rectangle calloutImageBounds = new Rectangle(finalLocation.x, finalLocation.y,
+//			calloutImage.getWidth(), calloutImage.getHeight());
+//		g2d.draw(calloutImageBounds);
 //
-//		g2d.setColor(Palette.CYAN);
-//		g2d.draw(calloutBounds);
+//		g2d.setColor(Palette.ORANGE);
+//		Rectangle destCalloutBounds = new Rectangle(calloutShapeBounds);
+//		calloutInfo.moveToImage(destCalloutBounds, padding);
+//		destCalloutBounds.setLocation(destCalloutBounds.getLocation());
+//		g2d.draw(destCalloutBounds);
 //
 //		g2d.setColor(Palette.BLUE);
-//		g2d.draw(componentBounds);
-//
-//		g2d.setColor(Palette.MAGENTA);
-//		g2d.draw(completeBounds);
-//
-//		g2d.setColor(Palette.GRAY);
-//		g2d.draw(dropShadowBounds);
-//
-//		Point cLocation = componentBounds.getLocation();
-//		Point convertedCLocation = calloutInfo.convertPointToParent(cLocation);
-//		g2d.setColor(Palette.PINK);
-//		componentBounds.setLocation(convertedCLocation);
-//		g2d.draw(componentBounds);
-//
-//		Point convertedFBLocation = calloutInfo.convertPointToParent(fullBounds.getLocation());
-//		fullBounds.setLocation(convertedFBLocation);
-//		g2d.setColor(Palette.ORANGE);
-//		g2d.draw(fullBounds);
+//		Rectangle movedClient = new Rectangle(calloutInfo.getBounds());
+//		calloutInfo.moveToImage(movedClient, padding);
+//		g2d.draw(movedClient);
 
-		return image;
+		return paddedImage;
 	}
 
-	private BufferedImage createCalloutImage(CalloutComponentInfo calloutInfo, Point cLoc,
-			Rectangle calloutBounds, Rectangle fullBounds) {
+	private Padding createImagePadding(Image fullImage, Image shadow, Rectangle calloutOnlyBounds,
+			int topPad) {
+		Point calloutLocation = calloutOnlyBounds.getLocation();
+		int sw = shadow.getWidth(null);
+		int sh = shadow.getHeight(null);
+		Rectangle shadowBounds = new Rectangle(calloutLocation.x, calloutLocation.y, sw, sh);
+		Rectangle combinedBounds = calloutOnlyBounds.union(shadowBounds);
+		int endX = calloutLocation.x + combinedBounds.width;
+		int overlap = endX - fullImage.getWidth(null);
+		int rightPad = 0;
+		if (overlap > 0) {
+			rightPad = overlap + CALLOUT_BORDER_PADDING;
+		}
+
+		int endY = calloutLocation.y + combinedBounds.height;
+		int bottomPad = 0;
+		overlap = endY - fullImage.getHeight(null);
+		if (overlap > 0) {
+			bottomPad = overlap;
+		}
+
+		int leftPad = 0;
+		return new Padding(topPad, leftPad, rightPad, bottomPad);
+	}
+
+	private BufferedImage createCalloutImage(CalloutInfo calloutInfo,
+			Rectangle calloutShapeBounds, Rectangle fullBounds) {
+
+		// 
+		// The client shape will be to the left of the callout.  The client shape and the callout
+		// bounds together are the full shape.
+		// 
 		BufferedImage calloutImage =
 			new BufferedImage(fullBounds.width, fullBounds.height, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D cg = (Graphics2D) calloutImage.getGraphics();
@@ -270,30 +187,33 @@ public class Callout {
 		// Make relative our two shapes--the component shape and the callout shape
 		//
 		Point calloutOrigin = fullBounds.getLocation(); // the shape is relative to the full bounds
-		int sx = calloutBounds.x - calloutOrigin.x;
-		int sy = calloutBounds.y - calloutOrigin.y;
-		Ellipse2D calloutShape =
-			new Ellipse2D.Double(sx, sy, calloutBounds.width, calloutBounds.height);
+		int sx = calloutShapeBounds.x - calloutOrigin.x;
+		int sy = calloutShapeBounds.y - calloutOrigin.y;
 
-		int cx = cLoc.x - calloutOrigin.x;
-		int cy = cLoc.y - calloutOrigin.y;
-		Dimension cSize = calloutInfo.getSize();
+		Ellipse2D calloutShape =
+			new Ellipse2D.Double(sx, sy, calloutShapeBounds.width, calloutShapeBounds.height);
+
+		Rectangle clientBounds = calloutInfo.getBounds();
+		Point clientLocation = clientBounds.getLocation();
+		int cx = clientLocation.x - calloutOrigin.x;
+		int cy = clientLocation.y - calloutOrigin.y;
+		Dimension clientSize = clientBounds.getSize();
 
 // TODO this shows how to correctly account for scaling in the Function Graph
 //		Dimension cSize2 = new Dimension(cSize);
 //		double scale = .5d;
 //		cSize2.width *= scale;
 //		cSize2.height *= scale;
-		Rectangle componentShape = new Rectangle(new Point(cx, cy), cSize);
 
-		paintCalloutArrow(cg, componentShape, calloutShape);
+		Rectangle componentShape = new Rectangle(new Point(cx, cy), clientSize);
+		paintCalloutArrow(cg, componentShape, calloutShape.getBounds());
 		paintCalloutCircularImage(cg, calloutInfo, calloutShape);
 
 		cg.dispose();
 		return calloutImage;
 	}
 
-	private void paintCalloutCircularImage(Graphics2D g, CalloutComponentInfo calloutInfo,
+	private void paintCalloutCircularImage(Graphics2D g, CalloutInfo calloutInfo,
 			RectangularShape shape) {
 
 		//
@@ -325,8 +245,8 @@ public class Callout {
 		g.drawImage(foregroundImage, ir.x, ir.y, null);
 	}
 
-	private void paintCalloutArrow(Graphics2D g2d, RectangularShape componentShape,
-			RectangularShape calloutShape) {
+	private void paintCalloutArrow(Graphics2D g2d, Rectangle componentShape,
+			Rectangle calloutShape) {
 
 		Rectangle cr = componentShape.getBounds();
 		Rectangle sr = calloutShape.getBounds();
@@ -362,12 +282,10 @@ public class Callout {
 	}
 
 	private Image createMagnifiedImage(GraphicsConfiguration gc, Dimension imageSize,
-			CalloutComponentInfo calloutInfo, RectangularShape imageShape) {
+			CalloutInfo calloutInfo, RectangularShape imageShape) {
 
-		Dimension componentSize = calloutInfo.getSize();
-		Point componentScreenLocation = calloutInfo.getLocationOnScreen();
-
-		Rectangle r = new Rectangle(componentScreenLocation, componentSize);
+		Rectangle r = new Rectangle(calloutInfo.getBounds());
+		calloutInfo.moveToScreen(r);
 
 		int offset = 100;
 		r.x -= offset;
@@ -381,7 +299,8 @@ public class Callout {
 			compImage = robot.createScreenCapture(r);
 		}
 		catch (AWTException e) {
-			throw new RuntimeException("boom", e);
+			// shouldn't happen
+			throw new RuntimeException("Unable to create a Robot for capturing the screen", e);
 		}
 
 		double magnification = calloutInfo.getMagnification();

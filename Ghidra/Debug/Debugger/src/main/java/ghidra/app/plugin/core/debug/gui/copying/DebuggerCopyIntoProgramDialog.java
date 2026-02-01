@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,12 @@ import db.Transaction;
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.Copier;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
@@ -281,7 +282,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		}
 	}
 
-	protected DebuggerModelService modelService;
+	protected DebuggerTargetService targetService;
 	protected ProgramManager programManager;
 	protected DebuggerStaticMappingService staticMappingService;
 
@@ -289,7 +290,6 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	protected AddressSetView set;
 
 	protected CompletableFuture<Void> lastTask;
-	protected CompletableFuture<?> captureTask;
 
 	protected final DefaultComboBoxModel<CopyDestination> comboDestinationModel =
 		new DefaultComboBoxModel<>();
@@ -322,7 +322,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		{
 			JPanel opts = new JPanel();
 			opts.setLayout(new BoxLayout(opts, BoxLayout.Y_AXIS));
-
+			opts.getAccessibleContext().setAccessibleName("Options");
 			{
 				Box progBox = Box.createHorizontalBox();
 				progBox.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
@@ -336,7 +336,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					syncCbRelocateEnabled(getDestination());
 					reset();
 				});
+				comboDestination.getAccessibleContext().setAccessibleName("Combo Destination");
 				progBox.add(comboDestination);
+				progBox.getAccessibleContext().setAccessibleName("Program Box");
 				opts.add(progBox);
 			}
 
@@ -344,15 +346,16 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 				// Avoid Swing's automatic indentation
 				JPanel inner = new JPanel(new BorderLayout());
 				inner.setBorder(BorderFactory.createEmptyBorder(0, GAP, GAP, GAP));
-				cbCapture =
-					new JCheckBox("<html>Read live target's memory");
+				cbCapture = new JCheckBox("<html>Read live target's memory");
 				cbCapture.addActionListener(e -> {
 					if (!isVisible()) {
 						return;
 					}
 					reset();
 				});
+				cbCapture.getAccessibleContext().setAccessibleName("Read Target Memory");
 				inner.add(cbCapture);
+				inner.getAccessibleContext().setAccessibleName("Read Target Memory");
 				opts.add(inner);
 			}
 
@@ -368,7 +371,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					}
 					reset();
 				});
+				cbRelocate.getAccessibleContext().setAccessibleName("Relocate via Mappings");
 				inner.add(cbRelocate);
+				inner.getAccessibleContext().setAccessibleName("Relocate via Mappings");
 				opts.add(inner);
 			}
 
@@ -383,7 +388,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					}
 					reset();
 				});
+				cbUseOverlays.getAccessibleContext().setAccessibleName("Use Overlays");
 				inner.add(cbUseOverlays);
+				inner.getAccessibleContext().setAccessibleName("Use Overlays");
 				opts.add(inner);
 			}
 
@@ -391,14 +398,17 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 				JPanel panelInclude = new JPanel(new GridLayout(0, 2, GAP, GAP));
 				panelInclude.setBorder(BorderFactory.createTitledBorder("Include:"));
 				JButton buttonSelectNone = new JButton("Select None");
+				buttonSelectNone.getAccessibleContext().setAccessibleName("Select None");
 				buttonSelectNone.addActionListener(e -> plan.selectNone());
 				panelInclude.add(buttonSelectNone);
 				JButton buttonSelectAll = new JButton("Select All");
+				buttonSelectAll.getAccessibleContext().setAccessibleName("Select All");
 				buttonSelectAll.addActionListener(e -> plan.selectAll());
 				panelInclude.add(buttonSelectAll);
 				for (Copier copier : plan.getAllCopiers()) {
 					panelInclude.add(plan.getCheckBox(copier));
 				}
+				panelInclude.getAccessibleContext().setAccessibleName("Include All or None");
 				opts.add(panelInclude);
 			}
 			panel.add(opts, BorderLayout.NORTH);
@@ -410,11 +420,14 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 			table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			tablePanel.add(new JScrollPane(table));
 			filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
+			filterPanel.getAccessibleContext().setAccessibleName("Filter");
 			tablePanel.add(filterPanel, BorderLayout.SOUTH);
+			tablePanel.getAccessibleContext().setAccessibleName("Filters");
 			panel.add(tablePanel, BorderLayout.CENTER);
 		}
 
 		panel.setMinimumSize(new Dimension(600, 600));
+		panel.getAccessibleContext().setAccessibleName("Copy Debugger Into Program");
 		addWorkPanel(panel);
 
 		addOKButton();
@@ -433,18 +446,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		resetButton = new JButton("Reset");
 		resetButton.setMnemonic('R');
 		resetButton.setName("Reset");
+		resetButton.getAccessibleContext().setAccessibleName("Reset");
 		resetButton.addActionListener(e -> resetCallback());
 		addButton(resetButton);
-	}
-
-	@Override
-	protected void cancelCallback() {
-		synchronized (this) {
-			if (captureTask != null) {
-				captureTask.cancel(false);
-			}
-		}
-		super.cancelCallback();
 	}
 
 	@Override
@@ -490,28 +494,28 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		tableModel.delete(entry);
 	}
 
-	protected TraceRecorder getRecorderIfReadsPresent() {
-		if (modelService == null) {
+	protected Target getTargetIfReadsPresent() {
+		if (targetService == null) {
 			return null;
 		}
-		TraceRecorder recorder = modelService.getRecorder(source.getTrace());
-		if (recorder == null) {
+		Target target = targetService.getTarget(source.getTrace());
+		if (target == null) {
 			return null;
 		}
-		if (!DebuggerCoordinates.NOWHERE.view(source).recorder(recorder).isAliveAndReadsPresent()) {
+		if (!DebuggerCoordinates.NOWHERE.view(source).target(target).isAliveAndReadsPresent()) {
 			return null;
 		}
-		return recorder;
+		return target;
 	}
 
 	protected void checkCbCaptureEnabled() {
-		boolean en = getRecorderIfReadsPresent() != null;
+		boolean en = getTargetIfReadsPresent() != null;
 		cbCapture.setEnabled(en);
 		cbCapture.setSelected(en);
 	}
 
-	public void setModelService(DebuggerModelService modelService) {
-		this.modelService = modelService;
+	public void setTargetService(DebuggerTargetService targetService) {
+		this.targetService = targetService;
 		checkCbCaptureEnabled();
 	}
 
@@ -561,7 +565,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	}
 
 	public void setCapture(boolean capture) {
-		if (capture && getRecorderIfReadsPresent() == null) {
+		if (capture && getTargetIfReadsPresent() == null) {
 			throw new IllegalStateException(
 				"Cannot enable capture unless live and reading the present");
 		}
@@ -569,7 +573,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	}
 
 	public boolean isCapture() {
-		return (cbCapture.isSelected() && getRecorderIfReadsPresent() != null);
+		return (cbCapture.isSelected() && getTargetIfReadsPresent() != null);
 	}
 
 	public void setRelocate(boolean relocate) {
@@ -630,23 +634,26 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 
 	protected String computeRegionString(AddressRange rng) {
 		TraceMemoryManager mm = source.getTrace().getMemoryManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceMemoryRegion> regions =
-			mm.getRegionsIntersecting(Lifespan.at(source.getSnap()), rng);
-		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName();
+			mm.getRegionsIntersecting(Lifespan.at(snap), rng);
+		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName(snap);
 	}
 
 	protected String computeModulesString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceModule> modules =
-			mm.getModulesIntersecting(Lifespan.at(source.getSnap()), rng);
-		return modules.stream().map(m -> m.getName()).collect(Collectors.joining(","));
+			mm.getModulesIntersecting(Lifespan.at(snap), rng);
+		return modules.stream().map(m -> m.getName(snap)).collect(Collectors.joining(","));
 	}
 
 	protected String computeSectionsString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceSection> sections =
-			mm.getSectionsIntersecting(Lifespan.at(source.getSnap()), rng);
-		return sections.stream().map(s -> s.getName()).collect(Collectors.joining(","));
+			mm.getSectionsIntersecting(Lifespan.at(snap), rng);
+		return sections.stream().map(s -> s.getName(snap)).collect(Collectors.joining(","));
 	}
 
 	protected void createEntry(Collection<RangeEntry> result, AddressRange srcRange,
@@ -702,10 +709,11 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	protected List<AddressRange> breakRangeByRegions(AddressRange srcRange) {
 		AddressSet remains = new AddressSet(srcRange);
 		List<AddressRange> result = new ArrayList<>();
+		long snap = source.getSnap();
 		for (TraceMemoryRegion region : source.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(Lifespan.at(source.getSnap()), srcRange)) {
-			AddressRange range = region.getRange().intersect(srcRange);
+				.getRegionsIntersecting(Lifespan.at(snap), srcRange)) {
+			AddressRange range = region.getRange(snap).intersect(srcRange);
 			result.add(range);
 			remains.delete(range);
 		}
@@ -719,9 +727,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		List<RangeEntry> result = new ArrayList<>();
 		Set<String> taken = new HashSet<>();
 		collectBlockNames(taken, dest);
-		Collection<MappedAddressRange> mappedSet = staticMappingService
-				.getOpenMappedViews(source.getTrace(), set, source.getSnap())
-				.get(dest);
+		Collection<MappedAddressRange> mappedSet =
+			staticMappingService.getOpenMappedViews(source.getTrace(), set, source.getSnap())
+					.get(dest);
 		if (mappedSet == null) {
 			return;
 		}
@@ -787,55 +795,40 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		return block;
 	}
 
-	protected void executeEntry(RangeEntry entry, Program dest, TraceRecorder recorder,
-			TaskMonitor monitor) throws Exception {
+	protected void executeEntry(RangeEntry entry, Program dest, Target target, TaskMonitor monitor)
+			throws Exception {
 		MemoryBlock block = executeEntryBlock(entry, dest, monitor);
 		Address dstMin = entry.getDstRange().getMinAddress();
 		if (block.isOverlay()) {
 			dstMin = block.getStart().getAddressSpace().getAddress(dstMin.getOffset());
 		}
-		if (recorder != null) {
-			executeCapture(entry.getSrcRange(), recorder, monitor);
+		if (target != null) {
+			executeCapture(entry.getSrcRange(), target, monitor);
 		}
 		plan.execute(source, entry.getSrcRange(), dest, dstMin, monitor);
 	}
 
-	protected TraceRecorder getRecorderIfEnabledAndReadsPresent() {
+	protected Target getTargetIfEnabledAndReadsPresent() {
 		if (!cbCapture.isSelected()) {
 			return null;
 		}
-		return getRecorderIfReadsPresent();
+		return getTargetIfReadsPresent();
 	}
 
-	protected void executeCapture(AddressRange range, TraceRecorder recorder, TaskMonitor monitor)
+	protected void executeCapture(AddressRange range, Target target, TaskMonitor monitor)
 			throws Exception {
-		synchronized (this) {
-			monitor.checkCancelled();
-			CompletableFuture<Void> recCapture =
-				recorder.readMemoryBlocks(new AddressSet(range), monitor);
-			this.captureTask = recCapture.thenCompose(__ -> {
-				return recorder.getTarget().getModel().flushEvents();
-			}).thenCompose(__ -> {
-				return recorder.flushTransactions();
-			});
-		}
-		try {
-			captureTask.get(); // Not a fan, but whatever.
-		}
-		finally {
-			captureTask = null;
-		}
+		target.readMemoryAsync(new AddressSet(range), monitor).get();
 	}
 
 	protected void executePlan(TaskMonitor monitor) throws Exception {
 		Program dest = getDestination().getOrCreateProgram(source, this);
 		boolean doRelease = !Arrays.asList(programManager.getAllOpenPrograms()).contains(dest);
-		TraceRecorder recorder = getRecorderIfEnabledAndReadsPresent();
+		Target target = getTargetIfEnabledAndReadsPresent();
 		try (Transaction tx = dest.openTransaction("Copy From Trace")) {
 			monitor.initialize(tableModel.getRowCount());
 			for (RangeEntry entry : tableModel.getModelData()) {
 				monitor.setMessage("Copying into " + entry.getDstRange());
-				executeEntry(entry, dest, recorder, monitor);
+				executeEntry(entry, dest, target, monitor);
 				monitor.incrementProgress(1);
 			}
 			programManager.openProgram(dest);

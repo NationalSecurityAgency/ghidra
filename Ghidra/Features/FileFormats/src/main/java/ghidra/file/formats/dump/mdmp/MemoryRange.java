@@ -28,7 +28,7 @@ public class MemoryRange implements StructConverter {
 
 	private long startOfMemoryRange;
 	private long dataSize;
-	private int RVA;
+	private long RVA;
 
 	private DumpFileReader reader;
 	private long index;
@@ -81,11 +81,11 @@ public class MemoryRange implements StructConverter {
 		this.dataSize = dataSize;
 	}
 
-	public int getRVA() {
+	public long getRVA() {
 		return RVA;
 	}
 
-	public void setRVA(int rva) {
+	public void setRVA(long rva) {
 		RVA = rva;
 	}
 }

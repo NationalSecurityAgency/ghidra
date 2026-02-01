@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 
@@ -44,6 +45,8 @@ class SymbolProvider extends ComponentProviderAdapter {
 	private SymbolRenderer renderer;
 	private SymbolTableModel symbolKeyModel;
 	private SymbolPanel symbolPanel;
+
+	private boolean followIncomingLocationChanges;
 
 	SymbolProvider(SymbolTablePlugin plugin) {
 		super(plugin.getTool(), "Symbol Table", plugin.getName(), ProgramActionContext.class);
@@ -57,10 +60,23 @@ class SymbolProvider extends ComponentProviderAdapter {
 		setWindowGroup("symbolTable");
 		renderer = new SymbolRenderer();
 
-		symbolKeyModel = new SymbolTableModel(this, plugin.getTool());
+		symbolKeyModel = new SymbolTableModel(plugin.getTool());
 		symbolPanel = new SymbolPanel(this, symbolKeyModel, renderer, plugin.getTool());
 
 		addToTool();
+	}
+
+	void setFollowIncomingLocationChanges(boolean b) {
+		followIncomingLocationChanges = b;
+	}
+
+	void locationChanged(ProgramLocation location) {
+		if (!isVisible()) {
+			return;
+		}
+		if (followIncomingLocationChanges) {
+			symbolPanel.locationChanged(location);
+		}
 	}
 
 	void updateTitle() {

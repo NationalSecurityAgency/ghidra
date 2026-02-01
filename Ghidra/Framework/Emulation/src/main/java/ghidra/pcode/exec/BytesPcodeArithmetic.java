@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.lang.Language;
 
@@ -38,6 +39,11 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	 * The instance which interprets arrays as little-endian values
 	 */
 	LITTLE_ENDIAN(Endian.LITTLE);
+
+	@Override
+	public Class<byte[]> getDomain() {
+		return byte[].class;
+	}
 
 	/**
 	 * Obtain the instance for the given endianness
@@ -102,14 +108,14 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	}
 
 	@Override
-	public byte[] modBeforeStore(int sizeout, int sizeinAddress, byte[] inAddress, int sizeinValue,
-			byte[] inValue) {
+	public byte[] modBeforeStore(int sizeinOffset, AddressSpace space, byte[] inOffset,
+			int sizeinValue, byte[] inValue) {
 		return inValue;
 	}
 
 	@Override
-	public byte[] modAfterLoad(int sizeout, int sizeinAddress, byte[] inAddress, int sizeinValue,
-			byte[] inValue) {
+	public byte[] modAfterLoad(int sizeinOffset, AddressSpace space, byte[] inOffset,
+			int sizeinValue, byte[] inValue) {
 		return inValue;
 	}
 

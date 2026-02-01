@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,14 @@ import java.awt.Component;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeRenderer;
 import generic.theme.GIcon;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolCategoryNode;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.SymbolInspector;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
+import resources.ResourceManager;
 
 public class SymbolGTree extends GTree {
 
@@ -42,6 +42,16 @@ public class SymbolGTree extends GTree {
 		setCellRenderer(new SymbolTreeCellRenderer());
 
 		setDragNDropHandler(new SymbolGTreeDragNDropHandler(plugin));
+
+		setAccessibleNamePrefix("Symbol");
+
+		setRootNodeAllowedToCollapse(false);
+	}
+
+	// open access
+	@Override
+	protected void setFilterRestoreState(GTreeState state) {
+		super.setFilterRestoreState(state);
 	}
 
 	@Override
@@ -93,10 +103,20 @@ public class SymbolGTree extends GTree {
 
 			return label;
 		}
-	}
 
-	public void setProgram(Program program) {
-		symbolInspector.setProgram(program);
+		@Override
+		protected Icon getNodeIcon(GTreeNode node, boolean expanded) {
+
+			Icon icon = super.getNodeIcon(node, expanded);
+
+			if (node instanceof SymbolCategoryNode symbolNode) {
+				if (!symbolNode.isEnabled()) {
+					return ResourceManager.getDisabledIcon(icon);
+				}
+			}
+
+			return icon;
+		}
 	}
 
 	@Override

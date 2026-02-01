@@ -202,6 +202,8 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		model = new ChecksumTableModel(tool, checksums);
 		table = new GhidraTable(model);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		table.setAccessibleNamePrefix("Checksum Generator");
 	}
 
 	private void updateFields() {

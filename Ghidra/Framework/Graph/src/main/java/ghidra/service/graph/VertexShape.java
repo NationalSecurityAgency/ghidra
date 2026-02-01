@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -148,14 +148,16 @@ public abstract class VertexShape {
 		return Objects.equals(name, other.name) && size == other.size;
 	}
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//Vertex Shape Classes
-//////////////////////////////////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------------------------------
+	// Vertex Shape Classes
+	//--------------------------------------------------------------------------------------------
+
 	static class RectangleVertexShape extends VertexShape {
 		private RectangleVertexShape(int size) {
 			super("Rectangle", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			return new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0);
 		}
@@ -167,6 +169,7 @@ public abstract class VertexShape {
 			super("Ellipse", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			return new Ellipse2D.Double(-1.0, -1.0, 2.0, 2.0);
 		}
@@ -183,6 +186,7 @@ public abstract class VertexShape {
 			super("Triangle Up", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 			path.moveTo(-1.0, 1.0);
@@ -208,6 +212,7 @@ public abstract class VertexShape {
 			super("Triangle Down", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 			path.moveTo(-1.0, -1.0);
@@ -234,6 +239,7 @@ public abstract class VertexShape {
 			super("Star", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			int numPoints = 7;
 			Path2D path = new Path2D.Double();
@@ -263,6 +269,7 @@ public abstract class VertexShape {
 			super("Diamond", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 			path.moveTo(0.0, -1.0);
@@ -290,6 +297,7 @@ public abstract class VertexShape {
 			this.startAngle = startAngle;
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 

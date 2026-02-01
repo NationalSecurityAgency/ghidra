@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 import ghidra.program.model.symbol.*;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceNamespaceSymbolView;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -48,7 +48,7 @@ public class DBTraceNamespaceSymbolView
 			DBTraceNamespaceSymbol namespace = store.create();
 			namespace.set(name, dbnsParent, source);
 			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceSymbolChangeType.ADDED, null, namespace));
+				new TraceChangeRecord<>(TraceEvents.SYMBOL_ADDED, null, namespace));
 			return namespace;
 		}
 	}

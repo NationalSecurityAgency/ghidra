@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,23 +31,28 @@
 /*********************************************************************************
  * Defines the main ip task for each subproject
  *********************************************************************************/
-task ip { 
+task ip {
+	def p = project
+	
 	doLast {
 		
 		// scans all the files in the module, reads ip from header, verifies ip, and creates mapping
-		def ipToFileMap = getIpForModule(project)
+		def ipToFileMap = getIpForModule(p)
 		
 		// reads the ip info from the Module.manifest file and verifies each ip
-		def moduleManifestIpMap = getModuleManifestIp(project)
+		def moduleManifestIpMap = getModuleManifestIp(p)
 		
 		// gets the external libs from gradle and verifies they are accounted for in the Module.manifest file
-		checkExternalLibsInMap(moduleManifestIpMap, project)
+		checkExternalLibsInMap(moduleManifestIpMap, p)
+		
+		// gets the declared external python wheels and verifies they are accounted for in the Module.manifest file
+		checkExternalPythonWheelsInMap(moduleManifestIpMap, p)
 		
 		// adds the ip info from the Module.manifest file to the map generated from scanning the module files.
 		addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
 		
 		// writes the LICENSE.txt file for the module
-		writeLicenseInfo(project, ipToFileMap)
+		writeLicenseInfo(p, ipToFileMap)
 	}
 }
 rootProject.assembleDistribution.dependsOn ip
@@ -105,6 +110,18 @@ def checkExternalLibsInMap(Map<String, String> map, Project project) {
 	}
 }
 
+/**********************************************************************************
+ * Gets the python dependences and makes sure each external wheel is accounted for in
+ * the map from the Module.manifest file
+ *********************************************************************************/
+def checkExternalPythonWheelsInMap(Map<String, String> map, Project project) {
+	PYTHON_DEPS.getOrDefault(project, List.of()).each { dep ->
+		String name = dep.getName()  // get just the filename without the path
+		String relativePath = "pypkg/dist/"+name;
+		assert map.containsKey(relativePath) : "No License specified for external python wheel: "+relativePath+ " in module "+project.projectDir
+	}
+}
+
 /*********************************************************************************
  * Examines all the files in the module, reads their ip from the header, verifies
  * that the ip is allowed, and adds an entry to a mapping of the ip to a list of 
@@ -122,9 +139,9 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/build/**";
 		exclude "certification.manifest"
 		exclude "certification.local.manifest"
-		exclude ".project"
-		exclude ".classpath"
-		exclude ".pydevproject"
+		exclude "**/.project"
+		exclude "**/.classpath"
+		exclude "**/.pydevproject"
 		exclude "Module.manifest"
 		exclude "build.gradle"
 		exclude "buildNatives.gradle"		
@@ -135,6 +152,8 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/data/build.xml" // language build file (generated for dev only)
 		exclude "**/.vs/**"
 		exclude "**/*.vcxproj.user"
+		exclude '**/__pycache__'
+		exclude '**/*.egg-info'
 	}
 	tree.each { file ->
 			String ip = getIp(p.projectDir, file)
@@ -175,6 +194,7 @@ def isCSourceFile(File file) {
 	return filename.endsWith(".java") ||
 		   filename.endsWith(".c") ||
 		   filename.endsWith(".gradle") ||
+		   filename.endsWith(".gradle.kts") ||
 		   filename.endsWith(".groovy") ||
 		   filename.endsWith(".cpp") ||
 		   filename.endsWith(".cc") ||
@@ -197,8 +217,19 @@ def isBashSourceFile(File file) {
 	// NOTE: bash/shell scripts without extension will not utilize a header
 	return filename.endsWith(".py") ||
 			filename.endsWith(".sh") ||
+			filename.endsWith(".ps1") ||
 			filename.endsWith(".bash") ||
 			filename.endsWith(".command");
+}
+
+/*********************************************************************************
+ * checks if a file supports a Windows Batch style header based on its extension.
+ *********************************************************************************/
+def isBatchSourceFile(File file) {
+
+	String filename = file.getName().toLowerCase();
+	
+	return filename.endsWith(".bat");
 }
 
 
@@ -212,6 +243,12 @@ def getIp(File projectDir, File file) {
 	}
 	else if (isBashSourceFile(file)) {
 		ip = getIpForSourceFile(file, "#  IP:");
+		if (ip == null) {
+			ip = getIpForSourceFile(file, "# IP:");
+		}
+	}
+	else if (isBatchSourceFile(file)) {
+		ip = getIpForSourceFile(file, ":: IP:");
 	}
 	if (ip == null) {
 		ip = getIpForNonSourceFile(projectDir, file);
@@ -230,7 +267,7 @@ def getIpForSourceFile(File file, String prefix) {
 	file.withReader { reader ->
 		while(++lineNum < 5 && (line = reader.readLine()) != null) {
 			if (line.startsWith(prefix)) {
-				ip = line.substring(7).trim();
+				ip = line.substring(prefix.length()).trim();
 				break;
 			}		
 		}

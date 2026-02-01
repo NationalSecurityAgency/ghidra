@@ -14,7 +14,6 @@
     <compiler name="default" spec="pic16.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="pic16cxx"/>
   </language>
-  <!-- TODO: Need PIC-16F manual and index -->
   <language processor="PIC-16"
             endian="little"
             size="16"
@@ -24,7 +23,7 @@
             processorspec="pic16f.pspec"
             manualindexfile="../manuals/PIC-16F.idx"
             id="PIC-16:LE:16:PIC-16F">
-    <description>PIC-16F(L)XXX</description>
+    <description>PIC-16(L)FXXX</description>
     <compiler name="default" spec="pic16f.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="pic16fxx"/>
   </language>

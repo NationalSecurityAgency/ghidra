@@ -17,11 +17,10 @@ package ghidra.pcodeCPort.space;
 
 import java.io.PrintStream;
 
-import org.jdom.Element;
-
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.program.model.lang.SpaceNames;
+import ghidra.program.model.pcode.Encoder;
 
 public class ConstantSpace extends AddrSpace {
 	public ConstantSpace(Translate t) {
@@ -39,13 +38,8 @@ public class ConstantSpace extends AddrSpace {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		throw new LowlevelError("Should never save the constant space as XML");
-	}
-
-	@Override
-	public void restoreXml(Element el) {
-		throw new LowlevelError("Should never restore the constant space from XML");
+	public void encode(Encoder encoder) {
+		throw new LowlevelError("Should never save the constant space");
 	}
 
 }

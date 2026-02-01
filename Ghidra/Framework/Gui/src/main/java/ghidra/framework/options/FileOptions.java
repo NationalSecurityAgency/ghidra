@@ -19,6 +19,8 @@ import java.beans.PropertyEditor;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.KeyStroke;
+
 import org.apache.commons.io.FilenameUtils;
 
 import ghidra.util.HelpLocation;
@@ -104,6 +106,15 @@ public class FileOptions extends AbstractOptions {
 	@Override
 	protected Option createUnregisteredOption(String optionName, OptionType type,
 			Object defaultValue) {
+
+		if (type == OptionType.KEYSTROKE_TYPE) {
+			// convert key strokes to action triggers
+			type = OptionType.ACTION_TRIGGER;
+			if (defaultValue instanceof KeyStroke keyStroke) {
+				defaultValue = new ActionTrigger(keyStroke);
+			}
+		}
+
 		return new FileOption(optionName, type, null, null, defaultValue, false, null);
 	}
 

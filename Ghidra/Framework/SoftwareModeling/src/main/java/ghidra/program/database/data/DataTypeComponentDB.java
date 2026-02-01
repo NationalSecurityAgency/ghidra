@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	private final ComponentDBAdapter adapter;
 	private final DBRecord record; // null record -> immutable component
 	private final CompositeDB parent;
-
-	private DataType cachedDataType; // required for bit-fields during packing process
+	private final DataType cachedDataType; // used by immutable defined component (no record)
 
 	private int ordinal;
 	private int offset;
@@ -56,9 +55,15 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	 */
 	DataTypeComponentDB(DataTypeManagerDB dataMgr, CompositeDB parent, int ordinal, int offset,
 			DataType datatype, int length) {
-		this(dataMgr, parent, ordinal, offset);
+		this.dataMgr = dataMgr;
+		this.parent = parent;
 		this.cachedDataType = datatype;
+
+		this.ordinal = ordinal;
+		this.offset = offset;
 		this.length = length;
+		this.record = null;
+		this.adapter = null;
 	}
 
 	/**
@@ -73,6 +78,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		this.dataMgr = dataMgr;
 		this.parent = parent;
 		this.ordinal = ordinal;
+		this.cachedDataType = null;
+
 		this.offset = offset;
 		this.length = 1;
 		this.record = null;
@@ -90,11 +97,13 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			DBRecord record) {
 		this.dataMgr = dataMgr;
 		this.adapter = adapter;
+		this.cachedDataType = null;
 		this.record = record;
+
 		this.parent = parent;
-		ordinal = record.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL);
-		offset = record.getIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL);
-		length = record.getIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL);
+		this.ordinal = record.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL);
+		this.offset = record.getIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL);
+		this.length = record.getIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL);
 		if (isZeroBitFieldComponent()) {
 			length = 0; // previously stored as 1, force to 0
 		}
@@ -138,7 +147,11 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		if (id == -1) {
 			return DataType.DEFAULT;
 		}
-		return dataMgr.getDataType(id);
+		DataType dt = dataMgr.getDataType(id);
+		if (dt == null) {
+			return BadDataType.dataType;
+		}
+		return dt;
 	}
 
 	@Override
@@ -191,6 +204,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	@Override
 	public Settings getDefaultSettings() {
+
 		if (!hasSettings()) {
 			return SettingsImpl.NO_SETTINGS;
 		}
@@ -214,7 +228,9 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public String getFieldName() {
 		if (record != null && !isZeroBitFieldComponent()) {
-			return record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
+			String fieldName = record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
+			// Blank check is required since we improperly allowed storage of blank names in the past
+			return StringUtils.isBlank(fieldName) ? null : fieldName;
 		}
 		return null;
 	}
@@ -222,35 +238,10 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
 		if (record != null) {
-			name = checkFieldName(name);
-			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+			String fieldName = InternalDataTypeComponent.cleanupFieldName(name);
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, fieldName);
 			updateRecord(true);
 		}
-	}
-
-	private void checkDuplicateName(String name) throws DuplicateNameException {
-		DataTypeComponentImpl.checkDefaultFieldName(name);
-		for (DataTypeComponent comp : parent.getDefinedComponents()) {
-			if (comp == this) {
-				continue;
-			}
-			if (name.equals(comp.getFieldName())) {
-				throw new DuplicateNameException("Duplicate field name: " + name);
-			}
-		}
-	}
-
-	private String checkFieldName(String name) throws DuplicateNameException {
-		if (name != null) {
-			name = name.trim();
-			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-				name = null;
-			}
-			else {
-				checkDuplicateName(name);
-			}
-		}
-		return name;
 	}
 
 	@Override
@@ -295,8 +286,15 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		return myDt.getClass() == otherDt.getClass();
 	}
 
-	@Override
-	public boolean isEquivalent(DataTypeComponent dtc) {
+	static boolean isEquivalent(DataTypeComponent existingDtc, DataTypeComponent dtc,
+			DataTypeConflictHandler handler) {
+		if (existingDtc instanceof DataTypeComponentDB existingDtcDB) {
+			return existingDtcDB.isEquivalent(dtc, handler);
+		}
+		return existingDtc.isEquivalent(dtc);
+	}
+
+	boolean isEquivalent(DataTypeComponent dtc, DataTypeConflictHandler handler) {
 		DataType myDt = getDataType();
 		DataType otherDt = dtc.getDataType();
 		// SCR #11220 - this may fix the null pointer exception  - not sure as it is hard
@@ -319,7 +317,16 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			return false;
 		}
 
-		return DataTypeUtilities.isSameOrEquivalentDataType(myDt, otherDt);
+		if (DataTypeUtilities.isSameDataType(myDt, otherDt)) {
+			return true;
+		}
+
+		return DataTypeDB.isEquivalent(myDt, otherDt, handler);
+	}
+
+	@Override
+	public boolean isEquivalent(DataTypeComponent dtc) {
+		return isEquivalent(dtc, null);
 	}
 
 	@Override
@@ -410,11 +417,9 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			if (StringUtils.isBlank(comment)) {
 				comment = null;
 			}
-			// TODO: Need to check field name and throw DuplicateNameException
-			// name = checkFieldName(name);
-			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
-			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL,
-				dataMgr.getResolvedID(dt));
+			String fieldName = InternalDataTypeComponent.cleanupFieldName(name);
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, fieldName);
+			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataMgr.getResolvedID(dt));
 			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 			updateRecord(false);
 		}
@@ -435,11 +440,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		return InternalDataTypeComponent.toString(this);
 	}
 
-	/**
-	 * Determine if component is an undefined filler component
-	 * @return true if undefined filler component, else false
-	 */
-	boolean isUndefined() {
+	@Override
+	public boolean isUndefined() {
 		return record == null && cachedDataType == null;
 	}
 
@@ -458,6 +460,11 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			// to TypeDefSettingsDefinition established by the base datatype
 			// and does not consider DataTypeComponent default settings changes or other setting types.
 			dataMgr.dataTypeChanged(getParent(), false);
+		}
+
+		@Override
+		public boolean isImmutableSettings() {
+			return false; // NOTE: We could check to see if any editable Settings are defined
 		}
 
 		@Override

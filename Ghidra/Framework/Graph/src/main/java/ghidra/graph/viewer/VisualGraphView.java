@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.graph.viewer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -27,7 +28,9 @@ import docking.widgets.label.GDLabel;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
+import generic.theme.Gui;
 import ghidra.graph.VisualGraph;
+import ghidra.graph.viewer.GraphComponent.SatellitePosition;
 import ghidra.graph.viewer.event.mouse.VertexTooltipProvider;
 import ghidra.graph.viewer.event.mouse.VisualGraphMousePlugin;
 import ghidra.graph.viewer.layout.LayoutProvider;
@@ -38,18 +41,18 @@ import ghidra.graph.viewer.vertex.VertexFocusListener;
  * A view object, where 'view' is used in the sense of the Model-View-Controller (MVC) pattern.
  * This class will contain all UI widgets need to display and interact with a graph.
  *
- * <p><b><u>Implementation Note:</u></b> 
+ * <p><b><u>Implementation Note:</u></b>
  * <ol>
- * 	<li>The graph of this component can be null, changing to non-null values over the 
- * lifetime of this view.  This allows this view to be installed in a UI component, with the 
- * contents changing as needed. 
+ * 	<li>The graph of this component can be null, changing to non-null values over the
+ * lifetime of this view.  This allows this view to be installed in a UI component, with the
+ * contents changing as needed.
  * 	</li>
  *  <li>
  * 	When the graph is {@link #setGraph(VisualGraph) set}, the view portion of the class is
  * 	recreated.
  *  </li>
  *  <li>
- *  At any given point in time there may not be a {@link #graphComponent}.  This means that 
+ *  At any given point in time there may not be a {@link #graphComponent}.  This means that
  *  this class must maintain settings state that it will apply when the component is created.
  *  This state is atypical and makes this class a bit harder to understand.
  *  </li>
@@ -60,13 +63,15 @@ import ghidra.graph.viewer.vertex.VertexFocusListener;
  * @param <G> the graph type
  */
 //@formatter:off
-public class VisualGraphView<V extends VisualVertex, 
-							 E extends VisualEdge<V>, 
+public class VisualGraphView<V extends VisualVertex,
+							 E extends VisualEdge<V>,
 							 G extends VisualGraph<V, E>> {
-//@formatter:on	
+//@formatter:on
 
 	private static final float ZOOM_OUT_AMOUNT = .9f;
 	private static final float ZOOM_IN_AMOUNT = 1.1f;
+
+	private static final String MESSAGE_FONT_ID = "font.visualgraph.view.label.message";
 
 	private JPanel viewPanel;
 	private JPanel viewContentPanel;
@@ -76,7 +81,7 @@ public class VisualGraphView<V extends VisualVertex,
 	 * As graph data is updated, we set and clear the contents of this panel as needed.  This
 	 * allows the client to initialize the satellite window once, with updates controlled by
 	 * this class.
-	 * 
+	 *
 	 * Note: this panel will be empty when docked and when the viewer is not yet built
 	 */
 	private JPanel undockedSatelliteContentPanel;
@@ -97,16 +102,16 @@ public class VisualGraphView<V extends VisualVertex,
 		return result.get();
 	};
 
-	private Optional<GraphSatelliteListener> clientSatelliteListener = Optional.empty();
+	private List<GraphSatelliteListener> satelliteListeners = new ArrayList<>();
 
-	// this internal listener is the way we manage keeping our state in sync with the 
+	// this internal listener is the way we manage keeping our state in sync with the
 	// graph component, as well as how we notify the client listener
 	private GraphSatelliteListener internalSatelliteListener = (docked, visible) -> {
 
 		// keep our internal state in-sync
 		showSatellite = visible;
 		satelliteDocked = docked;
-		clientSatelliteListener.ifPresent(l -> l.satelliteVisibilityChanged(docked, visible));
+		satelliteListeners.forEach(l -> l.satelliteVisibilityChanged(docked, visible));
 	};
 
 	private boolean satelliteDocked = true;
@@ -121,6 +126,7 @@ public class VisualGraphView<V extends VisualVertex,
 
 	protected LayoutProvider<V, E, G> layoutProvider;
 	private final ScalingControl scaler = new VisualGraphScalingControl();
+	private SatellitePosition satellitePosition = SatellitePosition.LOWER_RIGHT;
 
 	public VisualGraphView() {
 		build();
@@ -181,8 +187,10 @@ public class VisualGraphView<V extends VisualVertex,
 		installGraphViewer();
 	}
 
-	public void setSatelliteListener(GraphSatelliteListener l) {
-		clientSatelliteListener = Optional.ofNullable(l);
+	public void addSatelliteListener(GraphSatelliteListener l) {
+		if (l != null) {
+			satelliteListeners.add(l);
+		}
 	}
 
 	public void setVertexFocusListener(VertexFocusListener<V> l) {
@@ -190,10 +198,10 @@ public class VisualGraphView<V extends VisualVertex,
 	}
 
 	/**
-	 * Sets a listener that allows clients to be notified of vertex double-clicks.  Normal 
+	 * Sets a listener that allows clients to be notified of vertex double-clicks.  Normal
 	 * mouse processing is handled by the {@link VisualGraphMousePlugin} class.  This is a
 	 * convenience method so that clients do not have to deal with the mouse plugin.
-	 * 
+	 *
 	 * @param l the listener
 	 */
 	public void setVertexClickListener(VertexClickListener<V, E> l) {
@@ -260,6 +268,7 @@ public class VisualGraphView<V extends VisualVertex,
 			undockedSatelliteContentPanel.add(graphComponent.getSatelliteContentComponent());
 			undockedSatelliteContentPanel.validate();
 		}
+		graphComponent.setSatellitePosition(satellitePosition);
 	}
 
 	/*
@@ -290,9 +299,9 @@ public class VisualGraphView<V extends VisualVertex,
 	}
 
 	/**
-	 * Returns the primary viewer of the graph (as opposed to the satellite viewer).   The 
+	 * Returns the primary viewer of the graph (as opposed to the satellite viewer).   The
 	 * viewer returned is responsible for maintaining view information for a given graph.
-	 * 
+	 *
 	 * @return the primary viewer
 	 */
 	public GraphViewer<V, E> getPrimaryGraphViewer() {
@@ -308,7 +317,7 @@ public class VisualGraphView<V extends VisualVertex,
 
 	/**
 	 * Sets the perspective for this view
-	 * 
+	 *
 	 * @param newPerspective the new perspective
 	 */
 	public void setGraphPerspective(GraphPerspectiveInfo<V, E> newPerspective) {
@@ -350,8 +359,7 @@ public class VisualGraphView<V extends VisualVertex,
 		viewContentPanel.removeAll();
 		viewContentPanel.paintImmediately(viewContentPanel.getBounds());
 		JLabel messageLabel = new GDLabel(errorMessage);
-		Font font = messageLabel.getFont();
-		messageLabel.setFont(font.deriveFont(22f)); // make a bit bigger for readability
+		Gui.registerFont(messageLabel, MESSAGE_FONT_ID);
 		messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		messageLabel.setFocusable(true); // we have to have something focusable in our provider
 		viewContentPanel.add(messageLabel, BorderLayout.NORTH);
@@ -362,8 +370,8 @@ public class VisualGraphView<V extends VisualVertex,
 	/**
 	 * Sets a message to be painted on the viewer.  This is useful to show a text message to the
 	 * user.  Passing null will clear the message.
-	 * 
-	 * @param message the status message 
+	 *
+	 * @param message the status message
 	 */
 	public void setStatusMessage(String message) {
 		if (graphComponent != null) {
@@ -377,10 +385,10 @@ public class VisualGraphView<V extends VisualVertex,
 
 	/**
 	 * Returns whether the satellite intended to be visible.  If this component is built, then
-	 * a result of true means that the satellite is showing.  If the component is not yet 
-	 * built, then a result of true means that the satellite will be made visible when the 
+	 * a result of true means that the satellite is showing.  If the component is not yet
+	 * built, then a result of true means that the satellite will be made visible when the
 	 * component is built.
-	 * 
+	 *
 	 * @return true if visible
 	 */
 	public boolean isSatelliteVisible() {
@@ -419,12 +427,23 @@ public class VisualGraphView<V extends VisualVertex,
 		}
 	}
 
+	public void setSatellitePosition(SatellitePosition position) {
+		satellitePosition = position;
+		if (graphComponent != null) {
+			graphComponent.setSatellitePosition(position);
+		}
+	}
+
+	public SatellitePosition getSatellitePosition() {
+		return satellitePosition;
+	}
+
 	/**
 	 * Returns whether the satellite intended to be docked.  If this component is built, then
-	 * a result of true means that the satellite is docked.  If the component is not yet 
-	 * built, then a result of true means that the satellite will be made docked when the 
+	 * a result of true means that the satellite is docked.  If the component is not yet
+	 * built, then a result of true means that the satellite will be made docked when the
 	 * component is built.
-	 * 
+	 *
 	 * @return true if visible
 	 */
 	public boolean isSatelliteDocked() {
@@ -438,8 +457,12 @@ public class VisualGraphView<V extends VisualVertex,
 		}
 	}
 
-	public boolean arePopupsEnabled() {
+	public boolean arePopupsVisible() {
 		return showPopups;
+	}
+
+	public boolean arePopupsEnabled() {
+		return arePopupsVisible();
 	}
 
 	public JComponent getUndockedSatelliteComponent() {
@@ -517,8 +540,8 @@ public class VisualGraphView<V extends VisualVertex,
 	}
 
 	public Point translatePointFromVertexToViewSpace(V v, Point p) {
-		return GraphViewerUtils.translatePointFromVertexRelativeSpaceToViewSpace(
-			getPrimaryGraphViewer(), v, p);
+		return GraphViewerUtils
+				.translatePointFromVertexRelativeSpaceToViewSpace(getPrimaryGraphViewer(), v, p);
 	}
 
 	public Rectangle translateRectangleFromVertexToViewSpace(V v, Rectangle r) {
@@ -577,7 +600,7 @@ public class VisualGraphView<V extends VisualVertex,
 	}
 
 	/**
-	 * Effectively clears this display.  This method is not called dispose, as that implies 
+	 * Effectively clears this display.  This method is not called dispose, as that implies
 	 * the end of an object's lifecycle.  This object can be re-used after this method is
 	 * called.
 	 */

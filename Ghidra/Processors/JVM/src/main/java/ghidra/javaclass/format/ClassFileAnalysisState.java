@@ -18,8 +18,8 @@ package ghidra.javaclass.format;
 import java.io.IOException;
 import java.util.HashMap;
 
-import ghidra.app.plugin.core.analysis.AnalysisState;
-import ghidra.app.plugin.core.analysis.AnalysisStateInfo;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.address.*;
@@ -32,10 +32,10 @@ import ghidra.util.Msg;
  * Class for holding the {@link ClassFileJava} and {@link MethodInfoJava} in memory
  * for a particular .class file Program. These describe the objects in the constant pool and
  * signatures of individual methods.  They are parsed directly from the .class
- * file (and so can't really change) and are shared via this {@link AnalysisState} with
- * any plug-in that needs to do p-code analysis. 
+ * file (and so can't really change) and are shared with any plug-in that needs to do 
+ * p-code analysis. 
  */
-public class ClassFileAnalysisState implements AnalysisState {
+public class ClassFileAnalysisState {
 
 	private Program program;
 	private ClassFileJava classFile;					// Constant-pool and method descriptions
@@ -55,7 +55,7 @@ public class ClassFileAnalysisState implements AnalysisState {
 	}
 
 	/**
-	 * @return the class file information {@link ClassFileJava} held by this {@link AnalysisState}
+	 * @return the class file information {@link ClassFileJava}
 	 */
 	public ClassFileJava getClassFile() {
 		return classFile;
@@ -100,17 +100,15 @@ public class ClassFileAnalysisState implements AnalysisState {
 	}
 
 	/**
-	 * Return persistent <code>ClassFileAnalysisState</code> which corresponds to the specified program instance.
-	 * @param program
-	 * @return <code>ClassFileAnalysisState</code> for specified program instance
+	 * Return persistent <code>ClassFileAnalysisState</code> which corresponds to the specified
+	 * program instance.
+	 * 
+	 * @param program {@link Program}
+	 * @return shared/persistent {@link ClassFileAnalysisState} for specified program instance
+	 * @throws IOException if error reading java class file metadata
 	 */
 	public static synchronized ClassFileAnalysisState getState(Program program) throws IOException {
-		ClassFileAnalysisState analysisState =
-			AnalysisStateInfo.getAnalysisState(program, ClassFileAnalysisState.class);
-		if (analysisState == null) {
-			analysisState = new ClassFileAnalysisState(program);
-			AnalysisStateInfo.putAnalysisState(program, analysisState);
-		}
-		return analysisState;
+		return TransientProgramProperties.getProperty(program, ClassFileAnalysisState.class,
+			SCOPE.PROGRAM, ClassFileAnalysisState.class, () -> new ClassFileAnalysisState(program));
 	}
 }

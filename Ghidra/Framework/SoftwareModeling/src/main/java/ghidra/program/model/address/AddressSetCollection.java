@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,8 @@ package ghidra.program.model.address;
 public interface AddressSetCollection {
 
 	/**
-	 * Determine if any AddressSet in this collection intersects with the specified address set.
+	 * {@return true if any AddressSet in this collection intersects with the specified address set;
+	 * otherwise, false}
 	 *
 	 * @param addrSet address set to check intersection with.
 	 */
@@ -40,7 +41,7 @@ public interface AddressSetCollection {
 
 	/**
 	 * Test if the address is contained within any of the addressSets in this collection.
-	 * <P>
+	 * 
 	 * @param address address to test.
 	 * @return true if addr exists in the set, false otherwise.
 	 */
@@ -57,7 +58,8 @@ public interface AddressSetCollection {
 	public boolean hasFewerRangesThan(int rangeThreshold);
 
 	/**
-	 * Returns a single AddressSet containing the union of all the addressSetViews in the collection.  
+	 * {@return a single AddressSet containing the union of all the addressSetViews in the 
+	 * collection}  
 	 */
 	public AddressSet getCombinedAddressSet();
 

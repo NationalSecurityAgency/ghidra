@@ -35,7 +35,7 @@ public class StaticMemberMsType extends AbstractStaticMemberMsType {
 	 */
 	public StaticMemberMsType(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		attribute = new ClassFieldMsAttributes(reader);
+		attributes = new ClassFieldMsAttributes(reader);
 		fieldTypeRecordNumber = RecordNumber.parse(pdb, reader, RecordCategory.TYPE, 32);
 		name = reader.parseString(pdb, StringParseType.StringNt);
 		reader.align4();

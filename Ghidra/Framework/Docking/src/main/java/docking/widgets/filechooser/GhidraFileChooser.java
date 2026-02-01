@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package docking.widgets.filechooser;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
@@ -29,15 +31,23 @@ import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.text.DefaultFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
+import docking.action.DockingAction;
+import docking.action.DockingActionIf;
+import docking.action.builder.ActionBuilder;
+import docking.actions.*;
+import docking.menu.DockingToolBarUtils;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
+import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GColor;
 import generic.theme.GIcon;
 import ghidra.framework.preferences.Preferences;
@@ -71,6 +81,15 @@ import util.HistoryList;
  * </ol>
  */
 public class GhidraFileChooser extends ReusableDialogComponentProvider implements FileFilter {
+
+	/**
+	 * Somewhat arbitrary file count threshold to signal when slow operations should be avoided.
+	 */
+	private static final int BIG_DATA_THRESHOLD = 200;
+
+	private static final String ACTION_NAME_BACK = "Last Folder Visited";
+	private static final String ACTION_NAME_FORWARD = "Previous Folder Visited";
+	private static final String ACTION_NAME_UP = "Up One Level";
 
 	static final String UP_BUTTON_NAME = "UP_BUTTON";
 	private static final Color FOREROUND_COLOR = new GColor("color.fg.filechooser");
@@ -107,9 +126,11 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private static final Icon ICON_MY_COMPUTER = new GIcon("icon.filechooser.places.my.computer");
 	private static final Icon ICON_DESKTOP = new GIcon("icon.filechooser.places.desktop");
 	private static final Icon ICON_HOME = new GIcon("icon.filechooser.places.home");
+	private static final Icon ICON_DOWNLOADS = new GIcon("icon.filechooser.places.downloads");
 	private static final Icon ICON_RECENT = new GIcon("icon.filechooser.places.recent");
 
-	// base and overlay?
+	private final static Cursor WAIT_CURSOR = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
+	private final static Cursor DEFAULT_CURSOR = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 
 	/** Instruction to display only files. */
 	public static final int FILES_ONLY = 0;
@@ -155,20 +176,27 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 	private Component parent;
 	private JPanel waitPanel;
-	private EmptyBorderButton backButton;
-	private EmptyBorderButton forwardButton;
-	private EmptyBorderButton upLevelButton;
-	private EmptyBorderButton newFolderButton;
-	private EmptyBorderButton refreshButton;
+	private JButton backButton;
+	private JButton forwardButton;
+	private JButton upButton;
+	private JButton newFolderButton;
+	private JButton refreshButton;
 	private EmptyBorderToggleButton detailsButton;
 
+	private DockingAction upAction;
+	private DockingAction backAction;
+	private DockingAction forwardAction;
+	private KeyBindingChangeListener keyBindingChangeListener = new KeyBindingChangeListener();
+
+	private JPanel shortcutPanel;
 	private UnselectableButtonGroup shortCutButtonGroup;
 	private FileChooserToggleButton myComputerButton;
 	private FileChooserToggleButton desktopButton;
 	private FileChooserToggleButton homeButton;
+	private FileChooserToggleButton downloadsButton;
 	private FileChooserToggleButton recentButton;
 
-	private JTextField currentPathTextField;
+	private GFormattedTextField currentPathTextField;
 	private DropDownSelectionTextField<File> filenameTextField;
 	private DirectoryTableModel directoryTableModel;
 	private DirectoryTable directoryTable;
@@ -211,7 +239,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * @param parent the parent component
 	 */
 	public GhidraFileChooser(Component parent) {
-		this(new LocalFileChooserModel(), parent);
+		this(null, parent);
 	}
 
 	/**
@@ -231,8 +259,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	private void init(GhidraFileChooserModel newModel) {
+		if (newModel == null) {
+			newModel = new LocalFileChooserModel(() -> this);
+		}
 		this.fileChooserModel = newModel;
-		this.fileChooserModel.setModelUpdateCallback(modelUpdater::update);
 
 		history.setAllowDuplicates(true);
 
@@ -247,11 +277,57 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		setPreferredSize(800, 600);
 
 		updateDirOnly(newModel.getHomeDirectory(), true);
+
+		createActions();
 	}
 
 //==================================================================================================
 // Setup Methods
 //==================================================================================================
+
+	private void createActions() {
+
+		String owner = getClass().getSimpleName();
+		upAction = new ActionBuilder("Up One Level", owner)
+				.sharedKeyBinding()
+				.keyBinding("Alt Up")
+				.onAction(c -> goUp())
+				.build();
+
+		backAction = new ActionBuilder("Last Folder Visited", owner)
+				.sharedKeyBinding()
+				.keyBinding("Alt Left")
+				.onAction(c -> goBack())
+				.build();
+
+		forwardAction = new ActionBuilder("Previous Folder Visited", owner)
+				.sharedKeyBinding()
+				.keyBinding("Alt Right")
+				.onAction(c -> goForward())
+				.build();
+
+		upAction.addPropertyChangeListener(keyBindingChangeListener);
+		backAction.addPropertyChangeListener(keyBindingChangeListener);
+		forwardAction.addPropertyChangeListener(keyBindingChangeListener);
+
+		addAction(upAction);
+		addAction(backAction);
+		addAction(forwardAction);
+
+		updateNavigationButtonToolTips();
+	}
+
+	public static void registerSharedActions(Tool tool, ToolActions toolActions) {
+
+		toolActions.registerSharedActionPlaceholder(
+			new GfcActionPlaceholder(ACTION_NAME_BACK, "Alt Left"));
+
+		toolActions.registerSharedActionPlaceholder(
+			new GfcActionPlaceholder(ACTION_NAME_FORWARD, "Alt Right"));
+
+		toolActions.registerSharedActionPlaceholder(
+			new GfcActionPlaceholder(ACTION_NAME_UP, "Alt Up"));
+	}
 
 	private JComponent buildWorkPanel() {
 		buildWaitPanel();
@@ -263,9 +339,9 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		JScrollPane directoryListScroll = buildDirectoryList();
 
 		card = new CardLayout();
-
 		cardPanel = new JPanel(card);
 		cardPanel.setName("CARD_PANEL");
+		cardPanel.getAccessibleContext().setAccessibleName("Card");
 		cardPanel.add(directoryTableScroll, CARD_TABLE);
 		cardPanel.add(directoryListScroll, CARD_LIST);
 		cardPanel.add(waitPanel, CARD_WAIT);
@@ -278,57 +354,73 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		JPanel directoryPanel = new JPanel(new BorderLayout(PAD, PAD));
 		directoryPanel.add(cardPanel, BorderLayout.CENTER);
 		directoryPanel.add(filenamePanel, BorderLayout.SOUTH);
-
+		directoryPanel.getAccessibleContext().setAccessibleName("Directory");
 		JPanel main = new JPanel(new BorderLayout(PAD, PAD));
 		main.add(currentPathPanel, BorderLayout.NORTH);
 		main.add(shortCutPanel, BorderLayout.WEST);
 		main.add(directoryPanel, BorderLayout.CENTER);
-
+		main.getAccessibleContext().setAccessibleName("Ghidra File Chooser");
 		return main;
 	}
 
 	private JPanel buildShortCutPanel() {
-		myComputerButton = new FileChooserToggleButton("My Computer") {
+
+		myComputerButton = new FileChooserToggleButton("My Computer", this) {
 			@Override
 			File getFile() {
 				return MY_COMPUTER;
 			}
 		};
 		myComputerButton.setName("MY_COMPUTER_BUTTON");
+		myComputerButton.getAccessibleContext().setAccessibleName("My Computer");
 		myComputerButton.setIcon(ICON_MY_COMPUTER);
 		myComputerButton.addActionListener(e -> updateMyComputer());
 		myComputerButton.setForeground(FOREROUND_COLOR);
 
-		desktopButton = new FileChooserToggleButton("Desktop") {
+		desktopButton = new FileChooserToggleButton("Desktop", this) {
 			@Override
 			File getFile() {
 				return fileChooserModel.getDesktopDirectory();
 			}
 		};
 		desktopButton.setName("DESKTOP_BUTTON");
+		desktopButton.getAccessibleContext().setAccessibleName("Desktop");
 		desktopButton.setIcon(ICON_DESKTOP);
 		desktopButton.addActionListener(e -> updateDesktop());
 		desktopButton.setForeground(FOREROUND_COLOR);
 		desktopButton.setEnabled(fileChooserModel.getDesktopDirectory() != null);
 
-		homeButton = new FileChooserToggleButton("Home") {
+		homeButton = new FileChooserToggleButton("Home", this) {
 			@Override
 			File getFile() {
 				return fileChooserModel.getHomeDirectory();
 			}
 		};
 		homeButton.setName("HOME_BUTTON");
+		homeButton.getAccessibleContext().setAccessibleName("Home");
 		homeButton.setIcon(ICON_HOME);
 		homeButton.addActionListener(e -> updateHome());
 		homeButton.setForeground(FOREROUND_COLOR);
 
-		recentButton = new FileChooserToggleButton("Recent") {
+		downloadsButton = new FileChooserToggleButton("Downloads", this) {
+			@Override
+			File getFile() {
+				return fileChooserModel.getDownloadsDirectory();
+			}
+		};
+		downloadsButton.setName("DOWNLOADS_BUTTON");
+		downloadsButton.setIcon(ICON_DOWNLOADS);
+		downloadsButton.addActionListener(e -> updateDownloads());
+		downloadsButton.setForeground(FOREROUND_COLOR);
+
+		recentButton = new FileChooserToggleButton("Recent", this) {
 			@Override
 			File getFile() {
 				return RECENT;
 			}
 		};
 		recentButton.setName("RECENT_BUTTON");
+		recentButton.getAccessibleContext().setAccessibleName("Recent");
 		recentButton.setIcon(ICON_RECENT);
 		recentButton.addActionListener(e -> updateRecent());
 		recentButton.setForeground(FOREROUND_COLOR);
@@ -337,38 +429,46 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		shortCutButtonGroup.add(myComputerButton);
 		shortCutButtonGroup.add(desktopButton);
 		shortCutButtonGroup.add(homeButton);
+		shortCutButtonGroup.add(downloadsButton);
 		shortCutButtonGroup.add(recentButton);
 
-		JPanel shortCutPanel = new JPanel(new GridLayout(0, 1));
-		DockingUtils.setTransparent(shortCutPanel);
-		shortCutPanel.add(myComputerButton);
-		shortCutPanel.add(desktopButton);
-		shortCutPanel.add(homeButton);
-		shortCutPanel.add(recentButton);
+		shortcutPanel = new JPanel(new GridLayout(0, 1));
+		shortcutPanel.getAccessibleContext().setAccessibleName("Short Cut");
+		DockingUtils.setTransparent(shortcutPanel);
+		shortcutPanel.add(myComputerButton);
+		shortcutPanel.add(desktopButton);
+		shortcutPanel.add(homeButton);
+		shortcutPanel.add(downloadsButton);
+		shortcutPanel.add(recentButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createLoweredBevelBorder());
 		panel.setBackground(SHORTCUT_BACKGROUND_COLOR);
-		panel.add(shortCutPanel, BorderLayout.NORTH);
+		panel.add(shortcutPanel, BorderLayout.NORTH);
+		panel.getAccessibleContext().setAccessibleName("Short Cut");
+
 		return panel;
 	}
 
 	private JPanel buildFileNamePanel() {
-		JLabel filenameLabel = new GDLabel("File name:");
+		JLabel filenameLabel = new GDLabel("Filename:");
+
 		FileDropDownSelectionDataModel model = new FileDropDownSelectionDataModel(this);
 		filenameTextField = new DropDownSelectionTextField<>(model);
+		filenameLabel.setLabelFor(filenameTextField);
 		filenameTextField.setMatchingWindowHeight(200);
+		filenameTextField.getAccessibleContext().setAccessibleName("Filename");
 		filenameTextField.addCellEditorListener(new CellEditorListener() {
 
 			@Override
 			public void editingStopped(ChangeEvent e) {
-				// the user has cancelled editing in the text field (i.e., they pressed ESCAPE)
+				// the user has cancelled editing in the text field (i.e., they pressed ENTER)
 				enterCallback();
 			}
 
 			@Override
 			public void editingCanceled(ChangeEvent e) {
-				// the user has committed editing from the text field (i.e, they pressed ENTER)
+				// the user has committed editing from the text field (i.e, they pressed ESCAPE)
 				escapeCallback();
 			}
 		});
@@ -391,9 +491,12 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		filenameTextField.setName("filenameTextField");
 
 		JLabel filterLabel = new GLabel("Type:");
+		filterLabel.getAccessibleContext().setAccessibleName("Filter");
 		filterCombo = new GComboBox<>();
-		filterCombo.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
+		filterLabel.setLabelFor(filterCombo);
+		filterCombo.setRenderer(GListCellRenderer.createDefaultTextRenderer(
 			fileFilter -> fileFilter != null ? fileFilter.getDescription() : ""));
+		filterCombo.getAccessibleContext().setAccessibleName("File Type Filter");
 		filterModel = (DefaultComboBoxModel<GhidraFileFilter>) filterCombo.getModel();
 		addFileFilter(GhidraFileFilter.ALL);
 		filterCombo.addItemListener(e -> rescanCurrentDirectory());
@@ -404,16 +507,8 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		filenamePanel.add(filenameTextField);
 		filenamePanel.add(filterLabel);
 		filenamePanel.add(filterCombo);
+		filenamePanel.getAccessibleContext().setAccessibleName("Filename");
 		return filenamePanel;
-	}
-
-	private class SelectionListener<T> implements DropDownSelectionChoiceListener<File> {
-
-		@Override
-		public void selectionChanged(File file) {
-			// take the selection and close the dialog
-			worker.schedule(new SetSelectedFileAndAcceptSelection(file));
-		}
 	}
 
 	private JPanel buildHeaderPanel() {
@@ -422,7 +517,6 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		GridBagConstraints gbc = new GridBagConstraints();
 
 		gbc.gridx = 0;
-		//	gbc.insets = new Insets(PAD, PAD, PAD, PAD);
 		JButton[] navButtons = buildNavigationButtons();
 		for (JButton element : navButtons) {
 			headerPanel.add(element, gbc);
@@ -444,16 +538,110 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		gbc.gridx = afterPathLabel;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.weightx = 1.0;
-		currentPathTextField = new JTextField();
-		currentPathTextField.setName("Path");
-		currentPathTextField.setEditable(false);
+		currentPathTextField = buildPathTextField();
+		currentPathTextField.getAccessibleContext().setAccessibleName("Path");
 		headerPanel.add(currentPathTextField, gbc);
-
+		headerPanel.getAccessibleContext().setAccessibleName("Path Navigation");
 		return headerPanel;
+	}
+
+	private GFormattedTextField buildPathTextField() {
+		DefaultFormatter formatter = new DefaultFormatter();
+		formatter.setOverwriteMode(false);
+		DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
+		GFormattedTextField textField = new GFormattedTextField(factory, "") {
+			@Override
+			public void setText(String t) {
+				super.setText(t);
+				setDefaultValue(t);
+			}
+		};
+		textField.setName("Path");
+
+		textField.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				lastInputFocus = textField;
+			}
+		});
+
+		DockingUtils.installUndoRedo(textField);
+
+		// have the Escape key clear any edits to the field
+		KeyStroke escapeKs = KeyBindingUtils.parseKeyStroke("Escape");
+		Action escapeAction = new AbstractAction("Reset Path") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				if (textField.isChanged()) {
+					textField.reset();
+				}
+				else {
+					// When not edited, pass the event up to the chooser so the behavior works as
+					// it does elsewhere in the dialog.
+					escapeCallback();
+				}
+			}
+		};
+
+		// remove the table's escape key binding and then add our own
+		KeyBindingUtils.clearKeyBinding(textField, escapeKs);
+		KeyBindingUtils.registerAction(textField, escapeKs, escapeAction,
+			JComponent.WHEN_FOCUSED);
+
+		// update Enter to allow the user to pick the selected language
+		KeyStroke enterKs = KeyBindingUtils.parseKeyStroke("Enter");
+		Action enterAction = new AbstractAction("Choose File") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				if (!textField.isChanged()) {
+					// When not edited, pass the event up to the chooser so the behavior works as
+					// it does elsewhere in the dialog.
+					enterCallback();
+					return;
+				}
+
+				if (!textField.isValid()) {
+					return;
+				}
+
+				String text = textField.getText();
+				File f = new File(text);
+				if (f.isFile()) {
+					setSelectedFile(f);
+				}
+				else {
+					updateDirOnly(f, true);
+				}
+			}
+		};
+
+		// remove the table's enter key binding and then add our own
+		KeyBindingUtils.clearKeyBinding(textField, enterKs);
+		KeyBindingUtils.registerAction(textField, enterKs, enterAction,
+			JComponent.WHEN_FOCUSED);
+
+		// an input verifier that returns true if the path is an existing file or directory
+		InputVerifier inputVerifier = new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				String text = textField.getText();
+				File f = new File(text);
+				if (isSpecialDirectory(f)) {
+					return true;
+				}
+				return f.isFile() || f.isDirectory();
+			}
+		};
+		textField.setInputVerifier(inputVerifier);
+
+		return textField;
 	}
 
 	private void buildWaitPanel() {
 		waitPanel = new JPanel(new BorderLayout());
+		waitPanel.getAccessibleContext().setAccessibleName("Wait");
 		waitPanel.setBorder(BorderFactory.createLoweredBevelBorder());
 		waitPanel.setBackground(BACKGROUND_COLOR);
 		waitPanel.addMouseListener(new MouseAdapter() {
@@ -464,13 +652,13 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				waitPanel.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				waitPanel.setCursor(WAIT_CURSOR);
 				e.consume();
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				waitPanel.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				waitPanel.setCursor(DEFAULT_CURSOR);
 			}
 		});
 		waitPanel.addMouseMotionListener(new MouseMotionAdapter() {
@@ -482,6 +670,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	private JButton[] buildNavigationButtons() {
+
 		backButton = new EmptyBorderButton(ICON_BACK);
 		backButton.setName("BACK_BUTTON");
 		backButton.setEnabled(false);
@@ -494,28 +683,32 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		forwardButton.setToolTipText("Go to previous folder visited");
 		forwardButton.addActionListener(e -> goForward());
 
-		upLevelButton = new EmptyBorderButton(ICON_UP);
-		upLevelButton.setName(UP_BUTTON_NAME);
-		upLevelButton.setToolTipText("Up one level");
-		upLevelButton.addActionListener(e -> goUpOneDirectoryLevel());
+		upButton = new EmptyBorderButton(ICON_UP);
+		upButton.setName(UP_BUTTON_NAME);
+		upButton.setEnabled(false);
+		upButton.setToolTipText("Up one level");
+		upButton.addActionListener(e -> goUp());
 
-		return new JButton[] { backButton, forwardButton, upLevelButton };
+		return new JButton[] { backButton, forwardButton, upButton };
 	}
 
 	private JButton[] buildNonNavigationButtons() {
 
 		newFolderButton = new EmptyBorderButton(ICON_NEW_FOLDER);
 		newFolderButton.setName("NEW_BUTTON");
+		newFolderButton.getAccessibleContext().setAccessibleName("New Folder");
 		newFolderButton.setToolTipText("Create new folder");
 		newFolderButton.addActionListener(e -> createNewFolder());
 
 		refreshButton = new EmptyBorderButton(Icons.REFRESH_ICON);
 		refreshButton.setName("REFRESH_BUTTON");
+		refreshButton.getAccessibleContext().setAccessibleName("Refresh");
 		refreshButton.setToolTipText("Rescan current directory");
 		refreshButton.addActionListener(e -> rescanCurrentDirectory());
 
 		detailsButton = new EmptyBorderToggleButton(ICON_DETAILS);
 		detailsButton.setName("DETAILS_BUTTON");
+		detailsButton.getAccessibleContext().setAccessibleName("Details");
 		detailsButton.setToolTipText("Show details");
 		detailsButton.addActionListener(e -> {
 			cancelEdits();
@@ -524,6 +717,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		optionsButton = new EmptyBorderButton(ICON_OPTIONS);
 		optionsButton.setName("OPTIONS_BUTTON");
+		optionsButton.getAccessibleContext().setAccessibleName("Options");
 		optionsButton.setToolTipText("File Chooser Options");
 		optionsButton.addActionListener(e -> {
 			DockingWindowManager.showDialog(parent, optionsDialog);
@@ -557,8 +751,9 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 	private JScrollPane buildDirectoryList() {
 		directoryListModel = new DirectoryListModel();
-		directoryList = new DirectoryList(this, directoryListModel, rootPanel.getFont());
+		directoryList = new DirectoryList(this, directoryListModel);
 		directoryList.setName("LIST");
+		directoryList.getAccessibleContext().setAccessibleName("Directory");
 		directoryList.setBackground(BACKGROUND_COLOR);
 
 		directoryList.addFocusListener(new FocusAdapter() {
@@ -582,7 +777,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 				directoryList.setVisibleRowCount(nRows - 1);
 			}
 		});
-
+		directoryScroll.getAccessibleContext().setAccessibleName("Directory");
 		return directoryScroll;
 	}
 
@@ -625,13 +820,13 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * Sets the <code>GhidraFileChooser</code> to allow the user to just
 	 * select files, just select
 	 * directories, or select both files and directories.  The default is
-	 * <code>JFilesChooser.FILES_ONLY</code>.
+	 * {@link JFileChooser#FILES_ONLY}.
 	 *
 	 * @param mode the type of files to be displayed:
 	 * <ul>
-	 * <li>GhidraFileChooser.FILES_ONLY
-	 * <li>GhidraFileChooser.DIRECTORIES_ONLY
-	 * <li>GhidraFileChooser.FILES_AND_DIRECTORIES
+	 * <li>{@link GhidraFileChooser#FILES_ONLY}</li>
+	 * <li>{@link GhidraFileChooser#DIRECTORIES_ONLY}</li>
+	 * <li>{@link GhidraFileChooser#FILES_AND_DIRECTORIES}</li>
 	 * </ul>
 	 *
 	 * @exception IllegalArgumentException  if <code>mode</code> is an
@@ -681,6 +876,17 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	/**
+	 * Returns whether the current file data is a large number of files.   Exactly what constitutes 
+	 * large is up to the client.  This method allows the framework to avoid expensive operations
+	 * when the data set is large.
+	 * 
+	 * @return true if big data
+	 */
+	public boolean hasBigData() {
+		return directoryListModel.getSize() > BIG_DATA_THRESHOLD;
+	}
+
+	/**
 	 * Sets the text used in the <code>OK</code> button
 	 *
 	 * @param buttonText the text
@@ -717,6 +923,11 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		updateDirOnly(home, true);
 	}
 
+	private void updateDownloads() {
+		File downloads = downloadsButton.getFile();
+		updateDirOnly(downloads, true);
+	}
+
 	void removeRecentFiles(List<RecentGhidraFile> toRemove) {
 		recentList.removeAll(toRemove);
 		saveRecentList();
@@ -732,7 +943,8 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	private File currentDirectory() {
-		String path = currentPathTextField.getText();
+		// The default text should always be valid, regardless of user edits
+		String path = currentPathTextField.getDefaultText();
 		if (path.length() == 0) {
 			return null;
 		}
@@ -800,22 +1012,12 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 			throw new AssertException("Expected a directory and did not get one: " + directory);
 		}
 
-		File currentDirectory = currentDirectory();
-
 		// if we are forcing the update, then just do it! ...or, if the new dir is not already
 		// the current dir, then we need to update
+		File currentDirectory = currentDirectory();
 		if (force || !directory.equals(currentDirectory)) {
 			worker.schedule(new UpdateDirectoryContentsJob(directory, null, addToHistory));
-			return;
 		}
-
-		// we only get here if the new dir is the current dir and we are not forcing an update
-		// TODO this code causes unexpected behavior when in 'directories only' mode in that
-		// this will cause the current directory to change.  The behavior can be seen by
-		// putting this code back in and then running the tests.   No tests are failing with this
-		// code removed.  We are leaving this code here for a couple releases in case we find
-		// a code path that requires it.
-		// setSelectedFileAndUpdateDisplay((isFilesOnly() ? null : directory));
 	}
 
 	boolean pendingUpdate() {
@@ -851,13 +1053,15 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private void setDirectoryList(File directory, List<File> files) {
 		// if the visible listing is still the same directory as this incoming list of files
 		if (currentDirectory().equals(directory)) {
+
 			// recompute list cell dims before causing an update to the model
 			directoryTableModel.setFiles(files);
 			directoryTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 			directoryListModel.setFiles(files);
 			directoryList.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 		}
-		updateShortCutPanel();
+
+		updateShortcutPanel();
 	}
 
 	/**
@@ -1006,8 +1210,8 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * <ul>
 	 *  <li>If the parent directory of the file exists, then the parent directory will be made
 	 *      the current directory and the name of the file will be put into the filename
-	 *      textfield; otherwise,
-	 *  <li>If the parent file does <b>not</b> exist, then the selection is cleared.
+	 *      textfield; otherwise,</li>
+	 *  <li>If the parent file does <b>not</b> exist, then the selection is cleared.</li>
 	 * </ul>
 	 * <p>
 	 * If the given file is null, then the selected file state is cleared.
@@ -1216,6 +1420,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		});
 	}
 
+	void rootInfoUpdated() {
+		modelUpdater.update();
+	}
+
 	GhidraFileChooserModel getModel() {
 		return fileChooserModel;
 	}
@@ -1233,20 +1441,38 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	private void doSetSelectedFileAndUpdateDisplay(File file) {
-		if (lastInputFocus != null) {
-			lastInputFocus.requestFocusInWindow();
+
+		Component toFocus = getRestoreFocusComponent();
+		if (toFocus != null) {
+			toFocus.requestFocusInWindow();
 		}
 
 		if (file == null) {
 			return;
 		}
 
-		// SCR 4513 - exception if we don't cancel edits before changing the display
+		// exception if we don't cancel edits before changing the display
 		cancelEdits();
 		selectedFiles.setFile(file);
 		updateTextFieldForFile(file);
 
 		directoryModel.setSelectedFile(file); // the list or table display
+	}
+
+	private Component getRestoreFocusComponent() {
+		// ensure we transfer focus to the directory or table when the view switches
+		if (isTableShowing()) {
+			if (lastInputFocus == directoryList) {
+				lastInputFocus = directoryTable;
+			}
+		}
+		else {
+			if (lastInputFocus == directoryTable) {
+				lastInputFocus = directoryList;
+			}
+		}
+
+		return lastInputFocus;
 	}
 
 	private void updateTextFieldForFile(File file) {
@@ -1303,7 +1529,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		return false;
 	}
 
-	private void goUpOneDirectoryLevel() {
+	private void goUp() {
 		cancelEdits();
 
 		if (currentDirectory() == null) {
@@ -1372,13 +1598,22 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		updateDirAndSelectFile(currentDir, currentSelectedFile, true, false);
 	}
 
-	private void updateShortCutPanel() {
-		// make sure that if one of the shortcut buttons is selected, the directory matches that button
+	void updateShortcutPanel() {
+
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+		if (focusOwner != null && !SwingUtilities.isDescendingFrom(focusOwner, shortcutPanel)) {
+			// only synchronize the button state if the user is not interacting with the buttons
+			return;
+		}
+
+		// make sure the selected button matches the current directory
 		File currentDirectory = currentDirectory();
 		checkShortCutButton(myComputerButton, currentDirectory);
 		checkShortCutButton(homeButton, currentDirectory);
 		checkShortCutButton(recentButton, currentDirectory);
 		checkShortCutButton(desktopButton, currentDirectory);
+		checkShortCutButton(downloadsButton, currentDirectory);
 	}
 
 	private void checkShortCutButton(FileChooserToggleButton button, File currentDirectory) {
@@ -1406,13 +1641,24 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		history.clear();
 	}
 
+	private void updateNavigationButtonToolTips() {
+		String tip = DockingToolBarUtils.createToolTipText(backButton, backAction);
+		backButton.setToolTipText(tip);
+
+		tip = DockingToolBarUtils.createToolTipText(forwardButton, forwardAction);
+		forwardButton.setToolTipText(tip);
+
+		tip = DockingToolBarUtils.createToolTipText(upButton, upAction);
+		upButton.setToolTipText(tip);
+	}
+
 	private void updateNavigationButtons() {
 		backButton.setEnabled(history.hasPrevious());
 		forwardButton.setEnabled(history.hasNext());
 
 		File dir = currentDirectory();
 		boolean enable = dir != null && dir.getParentFile() != null;
-		upLevelButton.setEnabled(enable);
+		upButton.setEnabled(enable);
 	}
 
 	private void updateHistoryWithSelectedFiles(HistoryEntry historyEntry) {
@@ -1507,6 +1753,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		directoryTableModel = new DirectoryTableModel(this);
 		directoryTable = new DirectoryTable(this, directoryTableModel);
 		directoryTable.setName("TABLE");
+		directoryTable.getAccessibleContext().setAccessibleName("Directory");
 		directoryTable.setBackground(BACKGROUND_COLOR);
 
 		directoryTable.addFocusListener(new FocusAdapter() {
@@ -1518,6 +1765,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		JScrollPane scrollPane = new JScrollPane(directoryTable);
 		scrollPane.getViewport().setBackground(BACKGROUND_COLOR);
+		scrollPane.getAccessibleContext().setAccessibleName("Directory");
 		return scrollPane;
 	}
 
@@ -2083,7 +2331,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		public void runSwing() {
 			setDirectoryList(myComputerFile, roots);
 			setWaitPanelVisible(false);
-			Swing.runLater(() -> doSetSelectedFileAndUpdateDisplay(null));
+			setSelectedFileAndUpdateDisplay(null);
 		}
 	}
 
@@ -2102,6 +2350,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 			setCurrentDirectoryDisplay(recentFile, addToHistory);
 			List<File> list = CollectionUtils.asList(recentList, File.class);
 			setDirectoryList(recentFile, list);
+			setSelectedFileAndUpdateDisplay(null);
 		}
 	}
 
@@ -2276,6 +2525,54 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 				selectedFilesText = " *" + selectedFile;
 			}
 			return parentDir.getName() + selectedFilesText;
+		}
+	}
+
+	private class SelectionListener<T> implements DropDownSelectionChoiceListener<File> {
+
+		@Override
+		public void selectionChanged(File file) {
+			// take the selection and close the dialog
+			worker.schedule(new SetSelectedFileAndAcceptSelection(file));
+		}
+	}
+
+	private class KeyBindingChangeListener implements PropertyChangeListener {
+
+		@Override
+		public void propertyChange(PropertyChangeEvent e) {
+			String name = e.getPropertyName();
+			if (name.equals(DockingActionIf.KEYBINDING_DATA_PROPERTY)) {
+				updateNavigationButtonToolTips();
+			}
+		}
+
+	}
+
+	// A class that allows us to register actions and keybindings before this dialog is instantiated
+	private static class GfcActionPlaceholder implements SharedDockingActionPlaceholder {
+
+		private String name;
+		private String keyBinding;
+
+		GfcActionPlaceholder(String name, String keyBinding) {
+			this.name = name;
+			this.keyBinding = keyBinding;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public KeyStroke getKeyBinding() {
+			return KeyBindingUtils.parseKeyStroke(keyBinding);
+		}
+
+		@Override
+		public String getOwner() {
+			return GhidraFileChooser.class.getSimpleName();
 		}
 	}
 }

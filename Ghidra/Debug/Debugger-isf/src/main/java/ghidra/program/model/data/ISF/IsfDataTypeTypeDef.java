@@ -17,12 +17,13 @@ package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.DataType;
 
-public class IsfDataTypeTypeDef implements IsfObject {
+public class IsfDataTypeTypeDef extends AbstractIsfObject {
 
 	public String kind;
 	public IsfObject subtype;
 
 	public IsfDataTypeTypeDef(DataType dt, IsfObject typeObj) {
+		super(dt);
 		kind = IsfUtilities.getKind(dt);
 		subtype = typeObj;
 	}

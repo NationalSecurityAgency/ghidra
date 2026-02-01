@@ -20,6 +20,10 @@ import db.DBRecord;
 
 public class BinaryColumnAdapter extends AbstractColumnAdapter {
 
+	BinaryColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
 	@Override
 	Class<?> getValueClass() {
 		return String.class;
@@ -28,7 +32,7 @@ public class BinaryColumnAdapter extends AbstractColumnAdapter {
 	@Override
 	Object getKeyValue(DBRecord rec) {
 		byte[] bytes = ((BinaryField) rec.getKeyField()).getBinaryData();
-		StringBuffer buf = new StringBuffer("  byte[" + bytes.length + "] = ");
+		StringBuffer buf = new StringBuffer("byte[" + bytes.length + "] = ");
 		if (bytes.length > 0) {
 			int len = Math.min(bytes.length, 20);
 			buf.append(bytes[0]);
@@ -49,7 +53,7 @@ public class BinaryColumnAdapter extends AbstractColumnAdapter {
 		if (bytes == null) {
 			return "null";
 		}
-		StringBuffer buf = new StringBuffer("  byte[" + bytes.length + "] = ");
+		StringBuilder buf = new StringBuilder("byte[" + bytes.length + "] = ");
 		if (bytes.length > 0) {
 			int len = Math.min(bytes.length, 20);
 			String str = getByteString(bytes[0]);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class DemangledAddressTable extends DemangledObject {
 	 * @param mangled the source mangled string
 	 * @param originalDemangled the original demangled string
 	 * @param name the name of the address table
-	 * @param calculateLength true if the length of this address table should be calculdated at
+	 * @param calculateLength true if the length of this address table should be calculated at
 	 *        analysis time
 	 */
 	public DemangledAddressTable(String mangled, String originalDemangled, String name,
@@ -96,10 +96,9 @@ public class DemangledAddressTable extends DemangledObject {
 
 		Listing listing = program.getListing();
 		if (program.getMemory().isExternalBlockAddress(address)) {
-			Msg.warn(this,
-				"Unable to fully apply external demangled Address Table at " + address + ": " +
-					s.getName(true));
-			listing.setComment(address, CodeUnit.EOL_COMMENT,
+			Msg.warn(this, "Unable to fully apply external demangled Address Table at " + address +
+				": " + s.getName(true));
+			listing.setComment(address, CommentType.EOL,
 				"WARNING: Unable to apply demangled Address Table");
 			return true; // don't complain
 		}

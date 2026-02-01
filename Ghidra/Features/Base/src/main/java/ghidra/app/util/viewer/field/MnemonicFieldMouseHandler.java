@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.nav.Navigatable;
-import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
@@ -54,10 +53,11 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 		Program program = programManager.getCurrentProgram();
 		Listing listing = program.getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(location.getAddress());
-		return checkMemReferences(codeUnit, serviceProvider);
+		return checkMemReferences(codeUnit, sourceNavigatable, serviceProvider);
 	}
 
-	private boolean checkMemReferences(CodeUnit codeUnit, ServiceProvider serviceProvider) {
+	private boolean checkMemReferences(CodeUnit codeUnit, Navigatable navigatable,
+			ServiceProvider serviceProvider) {
 
 		if (codeUnit == null) {
 			return false;
@@ -65,7 +65,7 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 
 		Reference[] refs = codeUnit.getMnemonicReferences();
 		if (refs.length > 1) {
-			List<OutgoingReferenceEndpoint> outgoingReferences = new ArrayList<OutgoingReferenceEndpoint>();
+			List<OutgoingReferenceEndpoint> outgoingReferences = new ArrayList<>();
 			for (Reference reference : refs) {
 				outgoingReferences.add(new OutgoingReferenceEndpoint(reference,
 					ReferenceUtils.isOffcut(codeUnit.getProgram(), reference.getToAddress())));
@@ -77,8 +77,8 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 
 			TableService service = serviceProvider.getService(TableService.class);
 			if (service != null) {
-				Navigatable nav = NavigationUtils.getActiveNavigatable();
-				service.showTable("Mnemonic", "Mnemonic", model, "References", nav);
+				service.showTable("Mnemonic References", "Mnemonic", model, "References",
+					navigatable);
 				return true;
 			}
 		}
@@ -96,7 +96,7 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 
 			GoToService goToService = serviceProvider.getService(GoToService.class);
 			if (goToService != null) {
-				return goToService.goTo(loc);
+				return goToService.goTo(navigatable, loc, navigatable.getProgram());
 			}
 		}
 

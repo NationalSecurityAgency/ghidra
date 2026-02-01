@@ -34,6 +34,7 @@ import org.eclipse.ui.ide.IDE;
 
 import ghidradev.EclipseMessageUtils;
 
+@SuppressWarnings("restriction")
 public class OpenDeclarations {
 
 	private IProject project;

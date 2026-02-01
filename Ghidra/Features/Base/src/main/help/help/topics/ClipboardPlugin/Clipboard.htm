@@ -29,6 +29,8 @@
       <LI><A href="#ByteString">Byte String</A></LI>
 
       <LI><A href="#ByteString_NoSpaces">Byte String (no spaces)</A></LI>
+      
+      <LI><A href="#GhidraURL">GhidraURL</A></LI>
     </UL>
 
     <P>The default copy operation in the Code Browser (achieved by executing the <A href=
@@ -165,6 +167,15 @@
         <LI><B>Byte String (No Spaces)</B> <A name="ByteString_NoSpaces"></A> - This is the same as
         the Byte String format, except there are no delimiting spaces between bytes.</LI>
 
+		<LI><B>Data</B> - Copies a the values of all the selected data objects to the clipboard as
+		text. This option ignores any compound data objects such as structures, unions, or arrays.
+		You can copy data from structures, but you must first open them and select the elements you
+		want to copy as a string.</LI>
+
+		<LI><B>Dereferenced Data</B> - Copies the values of all data pointed to by the selected  
+		pointers. The contents will be copied to the clipboard as text. If the pointed to data is a
+		compound data object such as a structure or array, it is ignored.</LI>
+
 		<LI><B>Python Byte String</B> - Copies the bytes into the Python byte string format, for
 		example: <CODE>b'\x41\xec\x49\x89'</CODE>.</LI>
 		
@@ -179,6 +190,13 @@
         <LI><B>Address w/ Offset</B> - Copies the address at the cursor or each address in the 
         current selection.   The text is formatted to show the offset from the entry point of the
         function, for example: <CODE>main + 0x2</CODE></LI>
+        
+        <LI><B>Byte Source Offset</B> - Copies the byte source offset from the start of the file for 
+        each address in the current selection. If the address is not backed by a file, 
+        <CODE>&lt;NO_OFFSET&gt;</CODE> is copied.</LI>
+        
+	<LI><B>GhidraURL</B> <A name="GhidraURL"></A> - Creates a GhidraURL for the address under the 
+	cursor then copies that URL to the clipboard.</LI>
       </UL>
 
       <P>The Code Browser <B>Listing</B> window can paste the following formats:</P>

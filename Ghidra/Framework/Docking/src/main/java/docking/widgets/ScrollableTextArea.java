@@ -222,7 +222,7 @@ public class ScrollableTextArea extends JScrollPane {
 	 * used by all constructors to finish initialization of the object
 	 */
 	private void initialize() {
-		textArea.setLineWrap(false);
+		textArea.setLineWrap(true);
 		this.setAutoscrolls(true);
 		this.setViewportView(textArea);
 

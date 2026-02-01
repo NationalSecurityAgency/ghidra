@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.event;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginEvent;
 
 public class TraceActivatedPluginEvent extends PluginEvent {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	DomainFileProxy(String name, String parentPath, DomainObjectAdapter doa, int version,
-			String fileID, ProjectLocator projectLocation) {
+			String fileID, ProjectLocator projectLocation) throws IOException {
 
 		this(name, doa);
 		this.parentPath = parentPath;
@@ -247,24 +247,13 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public boolean isLinkFile() {
-		DomainObjectAdapter dobj = getDomainObject();
-		if (dobj != null) {
-			ContentHandler<?> ch;
-			try {
-				ch = DomainObjectAdapter.getContentHandler(dobj);
-				return LinkHandler.class.isAssignableFrom(ch.getClass());
-			}
-			catch (IOException e) {
-				// ignore
-			}
-		}
+	public boolean isLink() {
 		return false;
 	}
 
 	@Override
-	public DomainFolder followLink() {
-		throw new UnsupportedOperationException();
+	public LinkFileInfo getLinkInfo() {
+		return null;
 	}
 
 	@Override
@@ -311,11 +300,6 @@ public class DomainFileProxy implements DomainFile {
 
 	public boolean isInUse() {
 		return true;
-	}
-
-	public boolean isUsedExclusivelyBy(Object consumer) {
-		DomainObjectAdapter dobj = getDomainObject();
-		return dobj != null ? dobj.isUsedExclusivelyBy(consumer) : false;
 	}
 
 	@Override
@@ -403,7 +387,7 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		throw new UnsupportedOperationException("Repository operations not supported");
 	}
@@ -419,8 +403,8 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		return null; // not supported by proxy file
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

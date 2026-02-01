@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public interface AuthenticationModule {
 	 * <li>The authentication callback array may contain callback instances other than
 	 * the ones your module specified in its {@link #getAuthenticationCallbacks()}</li>
 	 * </ul>
-	 * <p>
+	 * 
 	 * @param userMgr Ghidra server user manager
 	 * @param subject unauthenticated user ID (must be used if name callback not provided/allowed)
 	 * @param callbacks authentication callbacks
@@ -57,7 +57,7 @@ public interface AuthenticationModule {
 
 	/**
 	 * Allows this AuthenticationModule to deny default anonymous login steps.
-	 * <p>
+	 * 
 	 * @return true if a separate AnonymousCallback is allowed and may be
 	 * added to the array returned by getAuthenticationCallbacks.
 	 * @see #getAuthenticationCallbacks()

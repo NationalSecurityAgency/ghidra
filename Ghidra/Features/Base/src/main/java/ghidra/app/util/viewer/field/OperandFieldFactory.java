@@ -89,7 +89,8 @@ public class OperandFieldFactory extends OperandFieldHelper {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel formatModel,
+			ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new OperandFieldFactory(formatModel, hsProvider, displayOptions, fieldOptions);
 	}

@@ -51,6 +51,7 @@ public class ExportPatternFileActionListener implements ActionListener {
 	 */
 	public ExportPatternFileActionListener(ClipboardPanel clipboardPanel, Component comp) {
 		this.clipboardPanel = clipboardPanel;
+		this.clipboardPanel.getAccessibleContext().setAccessibleName("Clipboard");
 		component = comp;
 	}
 
@@ -94,7 +95,10 @@ public class ExportPatternFileActionListener implements ActionListener {
 		gFileChooser.setFileFilter(xmlFilter);
 		String baseDir = Preferences.getProperty(XML_EXPORT_DIR_PROPERTY);
 		if (baseDir != null) {
-			gFileChooser.setCurrentDirectory(new File(baseDir));
+			File dir = new File(baseDir);
+			if (dir.isDirectory()) {
+				gFileChooser.setCurrentDirectory(dir);
+			}
 		}
 		gFileChooser.setTitle("Select Export File");
 		File outFile = gFileChooser.getSelectedFile();

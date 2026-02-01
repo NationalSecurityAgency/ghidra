@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,9 +70,8 @@ public class ExporterPlugin extends Plugin implements ApplicationLevelPlugin {
 			protected void actionPerformed(NavigatableActionContext context) {
 				Program program = context.getProgram();
 				DomainFile domainFile = program.getDomainFile();
-				ExporterDialog dialog =
-					new ExporterDialog(tool, domainFile, program, context.getSelection());
-				tool.showDialog(dialog);
+				ExporterDialog.showExporterDialog(tool, domainFile, program,
+					context.getSelection());
 			}
 		};
 		MenuData menuData =
@@ -104,8 +103,7 @@ public class ExporterPlugin extends Plugin implements ApplicationLevelPlugin {
 			@Override
 			protected void actionPerformed(ProjectDataContext context) {
 				DomainFile domainFile = context.getSelectedFiles().get(0);
-				ExporterDialog dialog = new ExporterDialog(tool, domainFile);
-				tool.showDialog(dialog);
+				ExporterDialog.show(tool, domainFile);
 			}
 
 			@Override
@@ -116,6 +114,10 @@ public class ExporterPlugin extends Plugin implements ApplicationLevelPlugin {
 				}
 				List<DomainFile> selectedFiles = context.getSelectedFiles();
 				if (selectedFiles.size() != 1) {
+					return false;
+				}
+				DomainFile domainFile = context.getSelectedFiles().get(0);
+				if (domainFile.isLink() && domainFile.getLinkInfo().isFolderLink()) {
 					return false;
 				}
 				return true;

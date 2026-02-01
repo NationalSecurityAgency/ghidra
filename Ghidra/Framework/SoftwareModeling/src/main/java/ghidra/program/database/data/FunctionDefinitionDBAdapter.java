@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.util.DBRecordAdapter;
 import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.lang.CompilerSpec;
@@ -65,29 +66,29 @@ abstract class FunctionDefinitionDBAdapter implements DBRecordAdapter {
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param callConvAdapter calling convention table adapter suitable to add new conventions
 	 * (e.g., this adapter being used during upgrade operation).  Only used when openMode is 
-	 * {@link DBConstants#UPGRADE} when adding new calling conventions must be permitted.
+	 * {@link OpenMode#UPGRADE} when adding new calling conventions must be permitted.
 	 * @param monitor the monitor to use for displaying status or for canceling.
 	 * @return the adapter for accessing the table of function definition data types.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static FunctionDefinitionDBAdapter getAdapter(DBHandle handle, int openMode,
+	static FunctionDefinitionDBAdapter getAdapter(DBHandle handle, OpenMode openMode,
 			String tablePrefix, CallingConventionDBAdapter callConvAdapter, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new FunctionDefinitionDBAdapterV2(handle, tablePrefix, true);
 		}
 		try {
 			return new FunctionDefinitionDBAdapterV2(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			FunctionDefinitionDBAdapter adapter;
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = findReadOnlyAdapter(handle, tablePrefix, callConvAdapter);
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
@@ -134,7 +135,7 @@ abstract class FunctionDefinitionDBAdapter implements DBRecordAdapter {
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor task monitor
 	 * @return the adapter for the new upgraded version of the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
 	 * @throws CancelledException if task is cancelled
@@ -203,6 +204,7 @@ abstract class FunctionDefinitionDBAdapter implements DBRecordAdapter {
 	 * @return the function definition data type record iterator.
 	 * @throws IOException if the database can't be accessed.
 	 */
+	@Override
 	public abstract RecordIterator getRecords() throws IOException;
 
 	/**

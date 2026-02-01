@@ -16,9 +16,9 @@
 package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.ISF.IsfDataTypeWriter.Exclude;
+import ghidra.program.model.data.ISF.AbstractIsfWriter.Exclude;
 
-public class IsfComponent implements IsfObject {
+public class IsfComponent extends AbstractIsfObject {
 
 	public Integer offset;
 	public IsfObject type;
@@ -30,16 +30,25 @@ public class IsfComponent implements IsfObject {
 	@Exclude
 	public String field_name;
 	@Exclude
+	public Boolean noFieldName;
+	@Exclude
 	public String comment;
 
+
 	public IsfComponent(DataTypeComponent component, IsfObject typeObj) {
+		super(component.getDataType());
 		offset = component.getOffset();
 		type = typeObj;
 
 		field_name = component.getFieldName();
+		if (field_name == null || field_name.equals("")) {
+			noFieldName = true;
+		}
 		ordinal = component.getOrdinal();
 		length = component.getLength();
 		comment = component.getComment();
+		
+		processSettings(component.getDataType(), component.getDefaultSettings());		
 	}
 
 }

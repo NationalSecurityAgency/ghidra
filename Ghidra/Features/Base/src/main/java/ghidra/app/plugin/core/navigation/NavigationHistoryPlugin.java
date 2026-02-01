@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.navigation;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DockingWindowManager;
@@ -49,7 +49,7 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Tool State History",
 	description = "This plugin maintains a history of tool states. "
 			+ "It is used in conjunction with other plugins "
@@ -348,7 +348,8 @@ public class NavigationHistoryPlugin extends Plugin
 		notifyHistoryChange();
 	}
 
-	private void clear(Program program) {
+	@Override
+	public void clear(Program program) {
 		for (HistoryList historyList : historyListMap.values()) {
 			clear(historyList, program);
 		}
@@ -657,7 +658,7 @@ public class NavigationHistoryPlugin extends Plugin
 				ProgramLocation location =
 					validateProgramLocation(activeNavigatable, memento.getProgramLocation());
 				if (location != null) {
-					// prefer the active natigatable's location
+					// prefer the active navigatable's location
 					return location;
 				}
 			}
@@ -683,11 +684,13 @@ public class NavigationHistoryPlugin extends Plugin
 			Program program = location.getProgram();
 			if (program.isClosed()) {
 
-				Msg.showError(this, null, "Closed Program",
-					"The Navigation History Plugin is using a closed program.\n" + "Program: " +
-						program.getName() + "Navigatable: " +
-						navigatable.getClass().getSimpleName() + "\n" + "Location: " +
-						location.getClass().getSimpleName() + " @ " + location.getAddress());
+				Msg.showError(this, null, "Closed Program", """
+						The Navigation History Plugin is using a closed program.
+						Program: %s
+						Navigatable: %s
+						Location: %s @ %s"""
+						.formatted(program.getName(), navigatable.getClass().getSimpleName(),
+							location.getClass().getSimpleName(), location.getAddress()));
 				return true;
 			}
 

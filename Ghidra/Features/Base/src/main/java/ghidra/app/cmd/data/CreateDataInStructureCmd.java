@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
@@ -25,7 +24,7 @@ import ghidra.program.model.listing.Program;
 /**
  * Command to Create data inside of a structure.
  */
-public class CreateDataInStructureCmd implements Command {
+public class CreateDataInStructureCmd implements Command<Program> {
 
 	// TODO: Not sure any of this will work for a packed structure which does not support
 	// offset-based component manipulation (see GP-3740)
@@ -69,12 +68,8 @@ public class CreateDataInStructureCmd implements Command {
 		this.stackPointers = stackPointers;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		Data data = program.getListing().getDefinedDataContaining(addr);
 		Data dataComp = data.getComponent(componentPath);
 		if (dataComp == null) {
@@ -142,17 +137,11 @@ public class CreateDataInStructureCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Create " + newDataType.getDisplayName() + " component";

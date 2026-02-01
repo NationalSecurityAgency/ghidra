@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramContext;
@@ -40,15 +41,15 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextManager;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceRegisterContextManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace>
-		implements TraceRegisterContextManager,
-		DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
+		extends AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace> implements
+		TraceRegisterContextManager, DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
 	public static final String NAME = "RegisterContext";
 
 	@DBAnnotatedObjectInfo(version = 0)
@@ -87,7 +88,7 @@ public class DBTraceRegisterContextManager
 
 	protected final Map<Language, ProgramContext> defaultContexts = new HashMap<>();
 
-	public DBTraceRegisterContextManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceRegisterContextManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTracePlatformManager languageManager)
 			throws VersionException, IOException {
@@ -100,14 +101,7 @@ public class DBTraceRegisterContextManager
 	@Override
 	protected DBTraceRegisterContextSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceRegisterContextSpace(this, dbh, space, ent, null);
-	}
-
-	@Override
-	protected DBTraceRegisterContextSpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		// TODO: Should I just forbid this? It doesn't seem sane. Then again, what do I know?
-		return new DBTraceRegisterContextSpace(this, dbh, space, ent, thread);
+		return new DBTraceRegisterContextSpace(this, dbh, space, ent);
 	}
 
 	@Override
@@ -204,7 +198,7 @@ public class DBTraceRegisterContextManager
 	@Override
 	public AddressSetView getRegisterValueAddressRanges(Language language, Register register,
 			long snap) {
-		return delegateAddressSet(getActiveMemorySpaces(),
+		return delegateAddressSet(getActiveSpaces(),
 			m -> m.getRegisterValueAddressRanges(language, register, snap));
 	}
 
@@ -217,8 +211,7 @@ public class DBTraceRegisterContextManager
 
 	@Override
 	public boolean hasRegisterValue(Language language, Register register, long snap) {
-		return delegateAny(getActiveMemorySpaces(),
-			m -> m.hasRegisterValue(language, register, snap));
+		return delegateAny(getActiveSpaces(), m -> m.hasRegisterValue(language, register, snap));
 	}
 
 	@Override

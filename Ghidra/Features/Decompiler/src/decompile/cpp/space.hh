@@ -117,11 +117,11 @@ protected:
   void calcScaleMask(void);	///< Calculate scale and mask
   void setFlags(uint4 fl);	///< Set a cached attribute
   void clearFlags(uint4 fl);	///< Clear a cached attribute
-  void saveBasicAttributes(ostream &s) const; ///< Write the XML attributes of this space
   void decodeBasicAttributes(Decoder &decoder);	///< Read attributes for \b this space from an open XML element
   void truncateSpace(uint4 newsize);
 public:
-  AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const string &nm,uint4 size,uint4 ws,int4 ind,uint4 fl,int4 dl);
+  AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const string &nm,bool bigEnd,
+	    uint4 size,uint4 ws,int4 ind,uint4 fl,int4 dl,int4 dead);
   AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp); ///< For use with decode
   virtual ~AddrSpace(void) {}	///< The address space destructor
   const string &getName(void) const; ///< Get the name
@@ -163,8 +163,7 @@ public:
   virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;   ///< Recover an offset and size
   virtual void printRaw(ostream &s,uintb offset) const;  ///< Write an address in this space to a stream
   virtual uintb read(const string &s,int4 &size) const;  ///< Read in an address (and possible size) from a string
-  virtual void saveXml(ostream &s) const; ///< Write the details of this space as XML
-  virtual void decode(Decoder &decoder); ///< Recover the details of this space from XML
+  virtual void decode(Decoder &decoder); ///< Recover the details of this space from a stream
 
   static uintb addressToByte(uintb val,uint4 ws); ///< Scale from addressable units to byte units
   static uintb byteToAddress(uintb val,uint4 ws); ///< Scale from byte units to addressable units
@@ -190,7 +189,6 @@ public:
   ConstantSpace(AddrSpaceManager *m,const Translate *t); ///< Only constructor
   virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
   virtual void printRaw(ostream &s,uintb offset) const;
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
   static const string NAME;		///< Reserved name for the address space
   static const int4 INDEX;		///< Reserved index for constant space
@@ -202,7 +200,6 @@ public:
   OtherSpace(AddrSpaceManager *m, const Translate *t, int4 ind);	///< Constructor
   OtherSpace(AddrSpaceManager *m, const Translate *t);	///< For use with decode
   virtual void printRaw(ostream &s, uintb offset) const;
-  virtual void saveXml(ostream &s) const;
   static const string NAME;		///< Reserved name for the address space
   static const int4 INDEX;		///< Reserved index for the other space
 };
@@ -220,7 +217,6 @@ class UniqueSpace : public AddrSpace {
 public:
   UniqueSpace(AddrSpaceManager *m,const Translate *t,int4 ind,uint4 fl);	///< Constructor
   UniqueSpace(AddrSpaceManager *m,const Translate *t);	///< For use with decode
-  virtual void saveXml(ostream &s) const;
   static const string NAME;		///< Reserved name for the unique space
   static const uint4 SIZE;		///< Fixed size (in bytes) for unique space offsets
 };
@@ -243,7 +239,6 @@ public:
   virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual uintb read(const string &s,int4 &size) const;
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
   static const string NAME;		///< Reserved name for the join space
 };
@@ -261,7 +256,6 @@ class OverlaySpace : public AddrSpace {
 public:
   OverlaySpace(AddrSpaceManager *m,const Translate *t);	///< Constructor
   virtual AddrSpace *getContain(void) const { return baseSpace; }
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
 };
 

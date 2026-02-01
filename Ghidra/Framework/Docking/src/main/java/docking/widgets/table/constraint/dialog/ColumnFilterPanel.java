@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,11 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.widgets.EmptyBorderButton;
-import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import ghidra.util.Swing;
 import ghidra.util.layout.VerticalLayout;
 import resources.Icons;
 import resources.ResourceManager;
@@ -71,24 +72,17 @@ class ColumnFilterPanel extends JPanel {
 		Vector<ColumnFilterData<?>> v = new Vector<>(filterEntry.getAllColumnData());
 
 		DefaultComboBoxModel<ColumnFilterData<?>> model = new DefaultComboBoxModel<>(v);
-		columnFilterComboBox = new GhidraComboBox<>(model);
-		columnFilterComboBox.setRenderer(new GListCellRenderer<>() {
-
+		columnFilterComboBox = new GComboBox<>(model);
+		columnFilterComboBox.getAccessibleContext().setAccessibleName("Table Column");
+		columnFilterComboBox.setRenderer(new GComboBoxCellRenderer<>() {
 			@Override
 			protected String getItemText(ColumnFilterData<?> value) {
 				return value == null ? "" : value.getName();
-			}
-
-			@Override
-			public boolean shouldAlternateRowBackgroundColor() {
-				// alternating colors look odd in this combo box
-				return false;
 			}
 		});
 
 		columnFilterComboBox.setSelectedItem(filterEntry.getColumnFilterData());
 
-		columnFilterComboBox.addItemListener(e -> columnChanged());
 		columnFilterComboBox.addActionListener(e -> columnChanged());
 		return columnFilterComboBox;
 	}
@@ -133,5 +127,47 @@ class ColumnFilterPanel extends JPanel {
 
 	DialogFilterRow getColumnFilterEntry() {
 		return filterEntry;
+	}
+
+	ColumnFilterGridLocation getActiveGridLocation(Component component, int dialogRow) {
+
+		if (columnFilterComboBox == component) {
+			return new ColumnFilterGridLocation(dialogRow, 0, 0);
+		}
+
+		for (int subRow = 0; subRow < filterPanels.size(); subRow++) {
+			ConstraintFilterPanel panel = filterPanels.get(subRow);
+			int col = panel.getActiveComponentColumn(component);
+			if (col != -1) {
+				return new ColumnFilterGridLocation(dialogRow, subRow, col);
+			}
+		}
+
+		return null;
+	}
+
+	void restoreActiveGridLocation(ColumnFilterGridLocation location) {
+
+		Component component = getComponent(location);
+		if (component != null) {
+			Swing.runLater(() -> {
+				component.requestFocusInWindow();
+			});
+		}
+	}
+
+	private Component getComponent(ColumnFilterGridLocation location) {
+		int subRow = location.subRow();
+		int col = location.col();
+		if (subRow == 0 && col == 0) {
+			return columnFilterComboBox;
+		}
+
+		if (filterPanels.size() <= subRow) {
+			return null; // the UI was rebuilt in such a way that the old grid location is not valid
+		}
+
+		ConstraintFilterPanel panel = filterPanels.get(subRow);
+		return panel.getActiveComponent(col);
 	}
 }

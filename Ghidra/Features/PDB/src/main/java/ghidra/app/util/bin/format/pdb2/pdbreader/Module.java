@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,7 +73,7 @@ public class Module {
 
 	private void precalculateStreamLocations() {
 		streamNumber = moduleInformation.getStreamNumberDebugInformation();
-		if (streamNumber == 0xffff) {
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			return;
 		}
 		stream = pdb.getMsf().getStream(streamNumber);
@@ -104,8 +104,7 @@ public class Module {
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon issue reading this Module's stream
 	 */
-	public C11Lines getLineInformation()
-			throws CancelledException, PdbException {
+	public C11Lines getLineInformation() throws CancelledException, PdbException {
 		if (sizeLines == 0) {
 			return null;
 		}
@@ -129,10 +128,9 @@ public class Module {
 	 * @throws PdbException upon invalid cvSignature
 	 */
 	public MsSymbolIterator getSymbolIterator() throws CancelledException, PdbException {
-		PdbByteReader symbolsReader = getSymbolsReader();
-		parseSignature(symbolsReader);
-		MsSymbolIterator iterator = new MsSymbolIterator(pdb, symbolsReader);
-		return iterator;
+		int startingOffset = pdb.getDebugInfo().getSymbolRecords().getCvSigLength(streamNumber);
+		int lengthSymbols = moduleInformation.getSizeLocalSymbolsDebugInformation();
+		return new MsSymbolIterator(pdb, streamNumber, startingOffset, lengthSymbols);
 	}
 
 	private void parseSignature(PdbByteReader symbolsReader) throws PdbException {
@@ -245,8 +243,7 @@ public class Module {
 	public GlobalReferenceIterator getGlobalReferenceIterator()
 			throws CancelledException, PdbException {
 		PdbByteReader globalRefsReader = getGlobalRefsReader();
-		GlobalReferenceIterator iterator =
-			new GlobalReferenceIterator(pdb, globalRefsReader);
+		GlobalReferenceIterator iterator = new GlobalReferenceIterator(pdb, globalRefsReader);
 		return iterator;
 	}
 
@@ -262,8 +259,7 @@ public class Module {
 	}
 
 	private PdbByteReader getC13LinesReader() throws CancelledException {
-		return getReader(offsetC13Lines, sizeC13Lines,
-			"C13Lines");
+		return getReader(offsetC13Lines, sizeC13Lines, "C13Lines");
 	}
 
 	private PdbByteReader getGlobalRefsReader() throws CancelledException {
@@ -272,7 +268,7 @@ public class Module {
 
 	private PdbByteReader getReader(int offset, int size, String sectionName)
 			throws CancelledException {
-		if (streamNumber == 0xffff) {
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			return PdbByteReader.DUMMY;
 		}
 
@@ -313,8 +309,7 @@ public class Module {
 	 * @throws CancelledException upon user cancellation
 	 * @throws IOException upon IOException writing to the {@link Writer}
 	 */
-	void dump(Writer writer)
-			throws CancelledException, PdbException, IOException {
+	void dump(Writer writer) throws CancelledException, PdbException, IOException {
 
 		writer.write("Module------------------------------------------------------\n");
 
@@ -331,27 +326,26 @@ public class Module {
 		writer.write("End Module--------------------------------------------------\n");
 	}
 
-	private void dumpSymbols(Writer writer)
-			throws IOException, CancelledException, PdbException {
-		writer.write("Symbols-----------------------------------------------------\n");
-		MsSymbolIterator symbolIterator = getSymbolIterator();
-		while (symbolIterator.hasNext()) {
+	private void dumpSymbols(Writer writer) throws IOException, CancelledException, PdbException {
+		writer.write("Symbols-----------------------------------------------------");
+		MsSymbolIterator symbolIter = getSymbolIterator();
+		while (symbolIter.hasNext()) {
 			pdb.checkCancelled();
-			AbstractMsSymbol symbol = symbolIterator.next();
+			AbstractMsSymbol symbol = symbolIter.next();
+			writer.append("\n------------------------------------------------------------\n");
+			writer.append(String.format("Offset: 0X%08X\n", symbolIter.getCurrentOffset()));
 			writer.append(symbol.toString());
-			writer.append("\n");
 		}
-		writer.write("End Symbols-------------------------------------------------\n");
+		writer.write("\nEnd Symbols-------------------------------------------------\n");
 	}
 
-	private void dumpC11Lines(Writer writer)
-			throws IOException, CancelledException, PdbException {
+	private void dumpC11Lines(Writer writer) throws IOException, CancelledException, PdbException {
 		// Need to confirm C11 parsing and then convert it to an Iterator model; would be very
 		// helpful to find some real data
 		writer.write("C11Lines----------------------------------------------------\n");
 		C11Lines c11lines = getLineInformation();
 		if (c11lines != null) {
-			writer.write(c11lines.dump());
+			c11lines.dump(writer, pdb.getMonitor());
 		}
 		writer.write("End C11Lines------------------------------------------------\n");
 	}
@@ -364,7 +358,7 @@ public class Module {
 		while (c13Iterator.hasNext()) {
 			pdb.checkCancelled();
 			C13Section c13Section = c13Iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, pdb.getMonitor());
 		}
 		writer.write("End C13Sections---------------------------------------------\n");
 
@@ -392,8 +386,7 @@ public class Module {
 			throws IOException, CancelledException, PdbException {
 		writer.write("GlobalReferenceSymbolOffsets--------------------------------\n");
 		List<Long> tmp = new ArrayList<>();
-		GlobalReferenceOffsetIterator globalRefsOffsetIterator =
-			getGlobalReferenceOffsetIterator();
+		GlobalReferenceOffsetIterator globalRefsOffsetIterator = getGlobalReferenceOffsetIterator();
 		while (globalRefsOffsetIterator.hasNext()) {
 			pdb.checkCancelled();
 			Long val = globalRefsOffsetIterator.next();
@@ -404,6 +397,7 @@ public class Module {
 		GlobalReferenceOffsetIterator globalReferenceOffsetIterator =
 			getGlobalReferenceOffsetIterator();
 		while (globalReferenceOffsetIterator.hasNext()) {
+			pdb.checkCancelled();
 			long val = globalReferenceOffsetIterator.next();
 			long val2 = tmp.get(cnt++);
 			if (val != val2) {
@@ -418,8 +412,7 @@ public class Module {
 	private void dumpGlobalReferences(Writer writer)
 			throws IOException, CancelledException, PdbException {
 		writer.write("GlobalReferenceSymbols--------------------------------------\n");
-		GlobalReferenceIterator globalReferenceIterator =
-			getGlobalReferenceIterator();
+		GlobalReferenceIterator globalReferenceIterator = getGlobalReferenceIterator();
 		while (globalReferenceIterator.hasNext()) {
 			pdb.checkCancelled();
 			MsSymbolIterator symIter = globalReferenceIterator.next();

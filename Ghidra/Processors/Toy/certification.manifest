@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/languages/old/ToyV00BE64.lang||GHIDRA||||END|
 data/languages/old/ToyV0BE64.trans||GHIDRA||||END|
 data/languages/old/ToyV0LE64.lang||GHIDRA||||END|
@@ -18,6 +19,7 @@ data/languages/toy64-long8.cspec||GHIDRA||||END|
 data/languages/toy64.cspec||GHIDRA||||END|
 data/languages/toy64_be.slaspec||GHIDRA||||END|
 data/languages/toy64_be_harvard.slaspec||GHIDRA||||END|
+data/languages/toy64_be_harvard_rev.slaspec||GHIDRA||||END|
 data/languages/toy64_le.slaspec||GHIDRA||||END|
 data/languages/toyInstructions.sinc||GHIDRA||||END|
 data/languages/toyPosStack.cspec||GHIDRA||||END|

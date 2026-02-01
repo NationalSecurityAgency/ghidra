@@ -173,7 +173,7 @@ public class MSDataTypeUtils {
 				// Can't get data type archive so just do nothing.
 			}
 		}
-		return (matchingDt != null) ? matchingDt : comparisonDt;
+		return (matchingDt != null) ? matchingDt.clone(programDTM) : comparisonDt;
 	}
 
 	private static DataType findMatchingDataType(DataType comparisonDt,

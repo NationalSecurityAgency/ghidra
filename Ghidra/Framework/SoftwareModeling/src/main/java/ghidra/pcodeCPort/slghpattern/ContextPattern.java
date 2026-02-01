@@ -15,10 +15,11 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import java.io.PrintStream;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 
 public class ContextPattern extends DisjointPattern {
 
@@ -31,7 +32,7 @@ public class ContextPattern extends DisjointPattern {
 
 	public ContextPattern() {
 		maskvalue = null;
-	} // For use with restoreXml
+	}
 
 	public ContextPattern(PatternBlock mv) {
 		maskvalue = mv;
@@ -104,18 +105,10 @@ public class ContextPattern extends DisjointPattern {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<context_pat>\n");
-		maskvalue.saveXml(s);
-		s.append("</context_pat>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el) {
-		List<?> list = el.getChildren();
-		Element child = (Element) list.get(0);
-		maskvalue = new PatternBlock(true);
-		maskvalue.restoreXml(child);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_CONTEXT_PAT);
+		maskvalue.encode(encoder);
+		encoder.closeElement(ELEM_CONTEXT_PAT);
 	}
 
 }

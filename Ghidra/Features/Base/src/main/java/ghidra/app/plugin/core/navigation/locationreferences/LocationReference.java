@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,13 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import static ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext.*;
+import static docking.widgets.search.SearchLocationContext.*;
 
 import java.util.Objects;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.symbol.DynamicReference;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 
@@ -33,8 +35,13 @@ public class LocationReference implements Comparable<LocationReference> {
 	private final boolean isOffcutReference;
 	private final Address locationOfUseAddress;
 	private final String refType;
-	private final LocationReferenceContext context;
+	private final SearchLocationContext context;
 	private final ProgramLocation location;
+
+	/**
+	 * Optional reference object.  Some clients do not have actual references.
+	 */
+	private Reference reference;
 
 	private int hashCode = -1;
 
@@ -46,7 +53,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	//       represents the 'from' address for a reference; for parameters and variables of a
 	//       function, this represents the address of that variable.
 	private LocationReference(Address address, ProgramLocation location, String refType,
-			LocationReferenceContext context, boolean isOffcut) {
+			SearchLocationContext context, boolean isOffcut) {
 		this.locationOfUseAddress = Objects.requireNonNull(address);
 		this.location = location;
 		this.refType = refType == null ? "" : refType;
@@ -57,6 +64,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	LocationReference(Reference reference, boolean isOffcutReference) {
 		this(reference.getFromAddress(), null, getRefType(reference), EMPTY_CONTEXT,
 			isOffcutReference);
+		this.reference = reference;
 	}
 
 	LocationReference(Address locationOfUseAddress, String refType, boolean isOffcutReference) {
@@ -68,15 +76,15 @@ public class LocationReference implements Comparable<LocationReference> {
 	}
 
 	LocationReference(Address locationOfUseAddress, String context) {
-		this(locationOfUseAddress, null, null, LocationReferenceContext.get(context), false);
+		this(locationOfUseAddress, null, null, SearchLocationContext.get(context), false);
 	}
 
-	LocationReference(Address locationOfUseAddress, LocationReferenceContext context) {
-		this(locationOfUseAddress, null, null, LocationReferenceContext.get(context), false);
+	LocationReference(Address locationOfUseAddress, SearchLocationContext context) {
+		this(locationOfUseAddress, null, null, SearchLocationContext.get(context), false);
 	}
 
 	LocationReference(Address locationOfUseAddress, String context, ProgramLocation location) {
-		this(locationOfUseAddress, location, null, LocationReferenceContext.get(context), false);
+		this(locationOfUseAddress, location, null, SearchLocationContext.get(context), false);
 	}
 
 	/**
@@ -98,7 +106,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	/**
 	 * Returns the address where the item described by this object is used.  For example, for
 	 * data types, the address is where a data type is applied; for references, this value is the
-	 * <tt>from</tt> address.
+	 * {@code from} address.
 	 *
 	 * @return  the address where the item described by this object is used.
 	 */
@@ -121,7 +129,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	 *
 	 * @return the context
 	 */
-	public LocationReferenceContext getContext() {
+	public SearchLocationContext getContext() {
 		return context;
 	}
 
@@ -131,6 +139,28 @@ public class LocationReference implements Comparable<LocationReference> {
 	 */
 	public ProgramLocation getProgramLocation() {
 		return location;
+	}
+
+	/**
+	 * Returns the reference that this class is using. This may be null if there is no database
+	 * reference associated with this object.
+	 * @return the reference; may be null
+	 */
+	public Reference getReference() {
+		return reference;
+	}
+
+	/**
+	 * Returns true if this class has a {@link Reference} and that reference is not dynamic (i.e.,
+	 * the reference exists in the database).
+	 * 
+	 * @return true if this class has a removable reference
+	 */
+	public boolean isDeletable() {
+		if (reference == null) {
+			return false;
+		}
+		return !(reference instanceof DynamicReference);
 	}
 
 	@Override

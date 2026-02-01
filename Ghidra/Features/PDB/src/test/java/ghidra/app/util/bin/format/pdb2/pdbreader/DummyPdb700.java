@@ -16,6 +16,8 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.StubMsf;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
@@ -28,6 +30,9 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 public class DummyPdb700 extends Pdb700 {
 
 	private boolean debugInfoAvailable = true;
+
+	private Map<RecordNumber, AbstractMsType> dummyTypes = new HashMap<>();
+	private Map<RecordNumber, AbstractMsType> dummyItems = new HashMap<>();
 
 	//==============================================================================================
 	// API
@@ -42,8 +47,8 @@ public class DummyPdb700 extends Pdb700 {
 	 * @throws IOException upon file IO seek/read issues
 	 * @throws PdbException upon unknown value for configuration or error in processing components
 	 */
-	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive,
-			int ipiIndexMin, int ipiIndexMaxExclusive) throws IOException, PdbException {
+	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive, int ipiIndexMin,
+			int ipiIndexMaxExclusive) throws IOException, PdbException {
 		super(new StubMsf(), new PdbReaderOptions());
 		typeProgramInterface =
 			new DummyTypeProgramInterface800(this, tpiIndexMin, tpiIndexMaxExclusive);
@@ -76,7 +81,13 @@ public class DummyPdb700 extends Pdb700 {
 	 * @return {@code true} if successful
 	 */
 	public boolean setTypeRecord(int recordNumber, AbstractMsType type) {
-		return typeProgramInterface.setRecord(recordNumber, type);
+		int typeIndexMin = typeProgramInterface.getTypeIndexMin();
+		if (recordNumber < typeIndexMin) {
+			return false;
+		}
+		RecordNumber record = RecordNumber.typeRecordNumber(recordNumber);
+		dummyTypes.put(record, type);
+		return true;
 	}
 
 	/**
@@ -86,7 +97,10 @@ public class DummyPdb700 extends Pdb700 {
 	 * @return record number assigned
 	 */
 	public int addTypeRecord(AbstractMsType type) {
-		return typeProgramInterface.addRecord(type);
+		int newRecordNum = dummyTypes.size() + typeProgramInterface.getTypeIndexMin();
+		RecordNumber record = RecordNumber.typeRecordNumber(newRecordNum);
+		dummyTypes.put(record, type);
+		return newRecordNum;
 	}
 
 	/**
@@ -97,7 +111,13 @@ public class DummyPdb700 extends Pdb700 {
 	 * @return {@code true} if successful
 	 */
 	public boolean setItemRecord(int recordNumber, AbstractMsType type) {
-		return itemProgramInterface.setRecord(recordNumber, type);
+		int typeIndexMin = itemProgramInterface.getTypeIndexMin();
+		if (recordNumber < typeIndexMin) {
+			return false;
+		}
+		RecordNumber record = RecordNumber.itemRecordNumber(recordNumber);
+		dummyItems.put(record, type);
+		return true;
 	}
 
 	/**
@@ -107,7 +127,48 @@ public class DummyPdb700 extends Pdb700 {
 	 * @return record number assigned
 	 */
 	public int addItemRecord(AbstractMsType type) {
-		return itemProgramInterface.addRecord(type);
+		int newRecordNum = dummyItems.size() + itemProgramInterface.getTypeIndexMin();
+		RecordNumber record = RecordNumber.itemRecordNumber(newRecordNum);
+		dummyItems.put(record, type);
+		return newRecordNum;
+	}
+
+	@Override
+	public AbstractMsType getTypeRecord(RecordNumber recordNumber) {
+		return getTypeRecord(recordNumber, AbstractMsType.class);
+	}
+
+	@Override
+	public <T extends AbstractMsType> T getTypeRecord(RecordNumber recordNumber,
+			Class<T> typeClass) {
+		recordNumber = fixupTypeIndex(recordNumber, typeClass);
+		AbstractMsType msType = null;
+		if (recordNumber.getCategory() == RecordCategory.TYPE) {
+			int typeIndexMin = typeProgramInterface.getTypeIndexMin();
+			if (recordNumber.getNumber() < typeIndexMin) {
+				msType = typeProgramInterface.getPrimitiveRecord(recordNumber.getNumber());
+			}
+			else {
+				msType = dummyTypes.get(recordNumber);
+			}
+		}
+		else {
+			int typeIndexMin = itemProgramInterface.getTypeIndexMin();
+			if (recordNumber.getNumber() < typeIndexMin) {
+				// Not sure there is such as thing as an item primitive
+				msType = itemProgramInterface.getPrimitiveRecord(recordNumber.getNumber());
+			}
+			else {
+				msType = dummyItems.get(recordNumber);
+			}
+		}
+		if (!typeClass.isInstance(msType)) {
+			if (!recordNumber.isNoType()) {
+				PdbLog.logGetTypeClassMismatch(msType, typeClass);
+			}
+			return null;
+		}
+		return typeClass.cast(msType);
 	}
 
 }

@@ -20,8 +20,10 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
+import generic.json.Json;
+
 /**
- * A class that holds information used to show a popup menu 
+ * A class that holds information used to show a popup menu
  */
 public class PopupMenuContext {
 
@@ -57,5 +59,10 @@ public class PopupMenuContext {
 			return event.getSource();
 		}
 		return component;
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 }

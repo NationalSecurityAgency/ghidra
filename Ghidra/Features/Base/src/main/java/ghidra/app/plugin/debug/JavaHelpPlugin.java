@@ -26,7 +26,7 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.actions.SharedStubKeyBindingAction;
-import docking.help.*;
+import docking.help.HelpManager;
 import docking.tool.ToolConstants;
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -45,9 +45,9 @@ import help.HelpService;
  */
 //@formatter:off
 @PluginInfo(
-	status = PluginStatus.RELEASED,
+	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Write JavaHelp Info",
 	description = "This plugin identifies " +
 			"those plugin actions that do not have help associated with them. The file, " +

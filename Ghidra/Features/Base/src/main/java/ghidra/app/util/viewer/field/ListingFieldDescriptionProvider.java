@@ -18,6 +18,7 @@ package ghidra.app.util.viewer.field;
 import docking.widgets.fieldpanel.FieldDescriptionProvider;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 
 public class ListingFieldDescriptionProvider implements FieldDescriptionProvider {
@@ -27,9 +28,13 @@ public class ListingFieldDescriptionProvider implements FieldDescriptionProvider
 		if (field instanceof ListingField listingField) {
 			FieldFactory fieldFactory = listingField.getFieldFactory();
 			ProgramLocation location = fieldFactory.getProgramLocation(0, 0, listingField);
-			return fieldFactory.getFieldName() + " Field at Address " + location.getAddress() +
-				" text = " + field.getText();
+			if (location != null) {
+				Address address = location.getAddress();
+				String addressString =
+					address.toString(address.getAddressSpace().showSpaceName(), 1);
+				return fieldFactory.getFieldName() + " Field at Address " + addressString;
+			}
 		}
-		return "Unknown Field";
+		return "No program open";
 	}
 }

@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
@@ -47,7 +46,6 @@ public class AddressFieldFactory extends FieldFactory {
 	private boolean padZeros;
 	private int minHexDigits;
 	private boolean rightJustify;
-	private PropertyEditor addressFieldOptionsEditor = new AddressFieldOptionsPropertyEditor();
 
 	/**
 	 * Default Constructor
@@ -74,7 +72,7 @@ public class AddressFieldFactory extends FieldFactory {
 
 		fieldOptions.registerOption(ADDRESS_DISPLAY_OPTIONS_NAME, OptionType.CUSTOM_TYPE,
 			new AddressFieldOptionsWrappedOption(), helpLoc, "Adjusts the Address Field display",
-			addressFieldOptionsEditor);
+			() -> new AddressFieldOptionsPropertyEditor());
 
 		CustomOption customOption =
 			fieldOptions.getCustomOption(ADDRESS_DISPLAY_OPTIONS_NAME, null);

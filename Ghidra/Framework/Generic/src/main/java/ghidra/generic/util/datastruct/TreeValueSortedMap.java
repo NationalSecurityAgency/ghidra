@@ -19,8 +19,6 @@ import java.util.*;
 
 import org.apache.commons.collections4.comparators.ComparableComparator;
 
-import ghidra.util.ReversedListIterator;
-
 /**
  * A tree-based implementation of a value-sorted map
  *
@@ -655,48 +653,17 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		private ValueSortedTreeMapEntrySet() {
 		}
 
+		@Override
+		public List<Entry<K, V>> toList() {
+			return new ArrayList<>(this);
+		}
+
 		/**
 		 * Inserts (by copy) the entry into the owning map
 		 */
 		@Override
 		public boolean add(Entry<K, V> e) {
 			return put(e.getKey(), e.getValue()) == null;
-		}
-
-		/**
-		 * Inserts (by copy) the entry into the owning map, ignoring index
-		 * 
-		 * @param index ignored since order is determined by the entry's value
-		 */
-		@Override
-		public void add(int index, Entry<K, V> element) {
-			add(element);
-		}
-
-		/**
-		 * Inserts (by copy) all entries in the collection, ignoring index
-		 * 
-		 * @param index ignored since order is determined by the entries' values
-		 */
-		@Override
-		public boolean addAll(int index, Collection<? extends Entry<K, V>> c) {
-			return addAll(c);
-		}
-
-		/**
-		 * Inserts (by copy) the entry at its sorted position, not necessarily first
-		 */
-		@Override
-		public void addFirst(Entry<K, V> e) {
-			put(e.getKey(), e.getValue());
-		}
-
-		/**
-		 * Inserts (by copy) the entry at its sorted position, not necessarily last
-		 */
-		@Override
-		public void addLast(Entry<K, V> e) {
-			put(e.getKey(), e.getValue());
 		}
 
 		@Override
@@ -721,36 +688,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Iterator<Entry<K, V>> descendingIterator() {
-			return new ReversedListIterator<>(new EntryListIterator(tail.next)); // i.e., null
-		}
-
-		@Override
-		public Entry<K, V> element() {
-			return getFirst();
-		}
-
-		@Override
 		public Entry<K, V> get(int index) {
 			return root.getByIndex(index);
-		}
-
-		@Override
-		public Entry<K, V> getFirst() {
-			Entry<K, V> ret = peekFirst();
-			if (ret == null) {
-				throw new NoSuchElementException();
-			}
-			return ret;
-		}
-
-		@Override
-		public Entry<K, V> getLast() {
-			Entry<K, V> ret = peekLast();
-			if (ret == null) {
-				throw new NoSuchElementException();
-			}
-			return ret;
 		}
 
 		@Override
@@ -774,21 +713,6 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Iterator<Entry<K, V>> iterator() {
-			return listIterator();
-		}
-
-		@Override
-		public int lastIndexOf(Object o) {
-			return indexOf(o);
-		}
-
-		@Override
-		public ListIterator<Entry<K, V>> listIterator() {
-			return new EntryListIterator(head);
-		}
-
-		@Override
 		public ListIterator<Entry<K, V>> listIterator(int index) {
 			if (root == null) {
 				return Collections.emptyListIterator();
@@ -797,48 +721,12 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public boolean offer(Entry<K, V> e) {
-			return put(e.getKey(), e.getValue()) == null;
-		}
-
-		/**
-		 * Inserts (by copy) the entry at its sorted position, not necessarily first
-		 */
-		@Override
-		public boolean offerFirst(Entry<K, V> e) {
-			return put(e.getKey(), e.getValue()) == null;
-		}
-
-		/**
-		 * Inserts (by copy) the entry at its sorted position, not necessarily last
-		 */
-		@Override
-		public boolean offerLast(Entry<K, V> e) {
-			return put(e.getKey(), e.getValue()) == null;
-		}
-
-		@Override
-		public Entry<K, V> peek() {
-			return peekFirst();
-		}
-
-		@Override
-		public Entry<K, V> peekFirst() {
-			return head;
-		}
-
-		@Override
-		public Entry<K, V> peekLast() {
-			return tail;
+		public Iterator<Entry<K, V>> iterator() {
+			return new EntryListIterator(head);
 		}
 
 		@Override
 		public Entry<K, V> poll() {
-			return pollFirst();
-		}
-
-		@Override
-		public Entry<K, V> pollFirst() {
 			if (head == null) {
 				return null;
 			}
@@ -846,40 +734,6 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 			head.remove();
 			nodeMap.remove(result.key);
 			return result;
-		}
-
-		@Override
-		public Entry<K, V> pollLast() {
-			if (tail == null) {
-				return tail;
-			}
-			Node result = tail;
-			tail.remove();
-			nodeMap.remove(result.key);
-			return result;
-		}
-
-		@Override
-		public Entry<K, V> pop() {
-			return removeFirst();
-		}
-
-		@Override
-		public void push(Entry<K, V> e) {
-			put(e.getKey(), e.getValue());
-		}
-
-		@Override
-		public Entry<K, V> remove() {
-			return removeFirst();
-		}
-
-		@Override
-		public Entry<K, V> remove(int index) {
-			Node n = root.getByIndex(index);
-			n.remove();
-			nodeMap.remove(n.key);
-			return n;
 		}
 
 		@Override
@@ -906,58 +760,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Entry<K, V> removeFirst() {
-			Entry<K, V> ret = pollFirst();
-			if (ret == null) {
-				throw new NoSuchElementException();
-			}
-			return ret;
-		}
-
-		@Override
-		public boolean removeFirstOccurrence(Object o) {
-			return remove(o);
-		}
-
-		@Override
-		public Entry<K, V> removeLast() {
-			Entry<K, V> ret = pollLast();
-			if (ret == null) {
-				throw new NoSuchElementException();
-			}
-			return ret;
-		}
-
-		@Override
-		public boolean removeLastOccurrence(Object o) {
-			return remove(o);
-		}
-
-		/**
-		 * Modify the entry (key and value) at index
-		 * 
-		 * Because the map is sorted by value, the index of the given entry may not remain the same
-		 * after it is modified. In fact, this is equivalent to removing the entry at the given
-		 * index, and then inserting the given entry at its sorted position.
-		 */
-		@Override
-		public Entry<K, V> set(int index, Entry<K, V> element) {
-			Entry<K, V> result = remove(index);
-			add(element);
-			return result;
-		}
-
-		@Override
 		public int size() {
 			return nodeMap.size();
-		}
-
-		/**
-		 * This operation is not supported
-		 */
-		@Override
-		public List<Entry<K, V>> subList(int fromIndex, int toIndex) {
-			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -976,33 +780,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public void add(int index, K element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean add(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends K> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(int index, Collection<? extends K> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addFirst(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addLast(K e) {
-			throw new UnsupportedOperationException();
+		public List<K> toList() {
+			return new ArrayList<>(this);
 		}
 
 		@Override
@@ -1016,28 +795,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Iterator<K> descendingIterator() {
-			return new ReversedListIterator<>(new KeyListIterator(tail.next)); // i.e., null
-		}
-
-		@Override
-		public K element() {
-			return getFirst();
-		}
-
-		@Override
 		public K get(int index) {
 			return entrySet.get(index).getKey();
-		}
-
-		@Override
-		public K getFirst() {
-			return entrySet.getFirst().getKey();
-		}
-
-		@Override
-		public K getLast() {
-			return entrySet.getLast().getKey();
 		}
 
 		@Override
@@ -1055,104 +814,25 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Iterator<K> iterator() {
-			return listIterator();
-		}
-
-		@Override
-		public int lastIndexOf(Object o) {
-			return indexOf(o);
-		}
-
-		@Override
-		public ListIterator<K> listIterator() {
-			return new KeyListIterator(head);
-		}
-
-		@Override
 		public ListIterator<K> listIterator(int index) {
+			if (root == null) {
+				return Collections.emptyListIterator();
+			}
 			return new KeyListIterator(root.getByIndex(index));
 		}
 
 		@Override
-		public boolean offer(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerFirst(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerLast(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K peek() {
-			return peekFirst();
-		}
-
-		@Override
-		public K peekFirst() {
-			Entry<K, V> n = entrySet.peekFirst();
-			if (n == null) {
-				return null;
-			}
-			return n.getKey();
-		}
-
-		@Override
-		public K peekLast() {
-			Entry<K, V> n = entrySet.peekLast();
-			if (n == null) {
-				return null;
-			}
-			return n.getKey();
+		public Iterator<K> iterator() {
+			return new KeyListIterator(head);
 		}
 
 		@Override
 		public K poll() {
-			return pollFirst();
-		}
-
-		@Override
-		public K pollFirst() {
-			Entry<K, V> n = entrySet.pollFirst();
+			Entry<K, V> n = entrySet.poll();
 			if (n == null) {
 				return null;
 			}
 			return n.getKey();
-		}
-
-		@Override
-		public K pollLast() {
-			Entry<K, V> n = entrySet.pollLast();
-			if (n == null) {
-				return null;
-			}
-			return n.getKey();
-		}
-
-		@Override
-		public K pop() {
-			return removeFirst();
-		}
-
-		@Override
-		public void push(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K remove() {
-			return removeFirst();
-		}
-
-		@Override
-		public K remove(int index) {
-			return entrySet.remove(index).getKey();
 		}
 
 		@Override
@@ -1161,41 +841,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public K removeFirst() {
-			return entrySet.removeFirst().getKey();
-		}
-
-		@Override
-		public boolean removeFirstOccurrence(Object o) {
-			return TreeValueSortedMap.this.remove(o) != null;
-		}
-
-		@Override
-		public K removeLast() {
-			return entrySet.removeLast().getKey();
-		}
-
-		@Override
-		public boolean removeLastOccurrence(Object o) {
-			return TreeValueSortedMap.this.remove(o) != null;
-		}
-
-		@Override
-		public K set(int index, K element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public int size() {
 			return nodeMap.size();
-		}
-
-		/**
-		 * This operation is not supported
-		 */
-		@Override
-		public List<K> subList(int fromIndex, int toIndex) {
-			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -1209,38 +856,13 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 	 * Generally, only the removal mutation methods are supported, all others are not supported.
 	 */
 	protected class ValueSortedTreeMapValues extends AbstractCollection<V>
-			implements SortedList<V>, Deque<V> {
+			implements SortedList<V> {
 		private ValueSortedTreeMapValues() {
 		}
 
 		@Override
-		public void add(int index, V element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean add(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends V> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(int index, Collection<? extends V> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addFirst(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addLast(V e) {
-			throw new UnsupportedOperationException();
+		public List<V> toList() {
+			return new ArrayList<>(this);
 		}
 
 		@Override
@@ -1261,28 +883,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Iterator<V> descendingIterator() {
-			return new ReversedListIterator<>(new ValueListIterator(tail.next)); // i.e., null
-		}
-
-		@Override
-		public V element() {
-			return getFirst();
-		}
-
-		@Override
 		public V get(int index) {
 			return entrySet.get(index).getValue();
-		}
-
-		@Override
-		public V getFirst() {
-			return entrySet.getFirst().getValue();
-		}
-
-		@Override
-		public V getLast() {
-			return entrySet.getLast().getValue();
 		}
 
 		@Override
@@ -1346,129 +948,26 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public Iterator<V> iterator() {
-			return listIterator();
-		}
-
-		@Override
-		public int lastIndexOf(Object o) {
-			try {
-				@SuppressWarnings("unchecked")
-				V val = (V) o;
-				Node n = root.searchValue(val, SearchMode.LAST);
-				if (n == null) {
-					return -1;
-				}
-				return n.computeIndex();
-			}
-			catch (ClassCastException e) {
-				return -1;
-			}
-		}
-
-		@Override
-		public ListIterator<V> listIterator() {
-			return new ValueListIterator(head);
-		}
-
-		@Override
 		public ListIterator<V> listIterator(int index) {
 			return new ValueListIterator(root.getByIndex(index));
 		}
 
 		@Override
-		public boolean offer(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerFirst(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerLast(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public V peek() {
-			return peekFirst();
-		}
-
-		@Override
-		public V peekFirst() {
-			Entry<K, V> n = entrySet.peekFirst();
-			if (n == null) {
-				return null;
-			}
-			return n.getValue();
-		}
-
-		@Override
-		public V peekLast() {
-			Entry<K, V> n = entrySet.peekLast();
-			if (n == null) {
-				return null;
-			}
-			return n.getValue();
+		public Iterator<V> iterator() {
+			return new ValueListIterator(head);
 		}
 
 		@Override
 		public V poll() {
-			return pollFirst();
-		}
-
-		@Override
-		public V pollFirst() {
-			Entry<K, V> n = entrySet.pollFirst();
+			Entry<K, V> n = entrySet.poll();
 			if (n == null) {
 				return null;
 			}
 			return n.getValue();
-		}
-
-		@Override
-		public V pollLast() {
-			Entry<K, V> n = entrySet.pollLast();
-			if (n == null) {
-				return null;
-			}
-			return n.getValue();
-		}
-
-		@Override
-		public V pop() {
-			return removeFirst();
-		}
-
-		@Override
-		public void push(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public V remove() {
-			return removeFirst();
-		}
-
-		@Override
-		public V remove(int index) {
-			return entrySet.remove(index).getValue();
 		}
 
 		@Override
 		public boolean remove(Object o) {
-			return removeFirstOccurrence(o);
-		}
-
-		@Override
-		public V removeFirst() {
-			return entrySet.removeFirst().getValue();
-		}
-
-		@Override
-		public boolean removeFirstOccurrence(Object o) {
 			try {
 				@SuppressWarnings("unchecked")
 				V val = (V) o;
@@ -1486,44 +985,8 @@ public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements Value
 		}
 
 		@Override
-		public V removeLast() {
-			return entrySet.removeLast().getValue();
-		}
-
-		@Override
-		public boolean removeLastOccurrence(Object o) {
-			try {
-				@SuppressWarnings("unchecked")
-				V val = (V) o;
-				Node n = root.searchValue(val, SearchMode.LAST);
-				if (n == null) {
-					return false;
-				}
-				n.remove();
-				nodeMap.remove(n.key);
-				return true;
-			}
-			catch (ClassCastException e) {
-				return false;
-			}
-		}
-
-		@Override
-		public V set(int index, V element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public int size() {
 			return nodeMap.size();
-		}
-
-		/**
-		 * This operation is not supported
-		 */
-		@Override
-		public List<V> subList(int fromIndex, int toIndex) {
-			throw new UnsupportedOperationException();
 		}
 	}
 

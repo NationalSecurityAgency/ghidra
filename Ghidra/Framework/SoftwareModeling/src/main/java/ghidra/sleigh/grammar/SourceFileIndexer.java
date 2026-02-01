@@ -15,15 +15,15 @@
  */
 package ghidra.sleigh.grammar;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * This class is used to index source files in a SLEIGH language module.
@@ -86,33 +86,36 @@ public class SourceFileIndexer {
 	}
 
 	/**
-	 * Save the index as XML 
-	 * @param s stream to write to
+	 * Encode the index to a stream
+	 * @param encoder stream to write to
+	 * @throws IOException for errors writing to the stream
 	 */
-	public void saveXml(PrintStream s) {
-		s.append("<sourcefiles>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SOURCEFILES);
 		for (int i = 0; i < leastUnusedIndex; ++i) {
-			s.append("<sourcefile name=\"");
-			XmlUtils.xml_escape(s, filenameToIndex.inverse().get(i));
-			s.append("\" index=\"" + i + "\"/>\n");
+			encoder.openElement(ELEM_SOURCEFILE);
+			encoder.writeString(ATTRIB_NAME, filenameToIndex.inverse().get(i));
+			encoder.writeSignedInteger(ATTRIB_INDEX, i);
+			encoder.closeElement(ELEM_SOURCEFILE);
 		}
-		s.append("</sourcefiles>\n");
+		encoder.closeElement(ELEM_SOURCEFILES);
 	}
 
 	/**
-	 * Restore an index saved as to XML
-	 * @param parser xml parser
+	 * Decode an index from a stream
+	 * @param decoder is the stream
+	 * @throws DecoderException for errors in the encoding
 	 */
-	public void restoreXml(XmlPullParser parser) {
-		XmlElement elem = parser.start("sourcefiles");
-		XmlElement subElem = null;
-		while ((subElem = parser.softStart("sourcefile")) != null) {
-			String filename = subElem.getAttribute("name");
-			Integer index = Integer.parseInt(subElem.getAttribute("index"));
+	public void decode(Decoder decoder) throws DecoderException {
+		int elem = decoder.openElement(ELEM_SOURCEFILES);
+		while (decoder.peekElement() == ELEM_SOURCEFILE.id()) {
+			decoder.openElement();
+			String filename = decoder.readString(ATTRIB_NAME);
+			int index = (int) decoder.readSignedInteger(ATTRIB_INDEX);
 			filenameToIndex.put(filename, index);
-			parser.end(subElem);
+			decoder.closeElement(ELEM_SOURCEFILE.id());
 		}
-		parser.end(elem);
+		decoder.closeElement(elem);
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.apache.commons.collections4.map.LazyMap;
 import docking.framework.ApplicationInformationDisplayFactory;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
+import ghidra.util.Swing;
 import ghidra.util.bean.GGlassPane;
 import help.HelpDescriptor;
 
@@ -45,13 +46,17 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	private DialogComponentProvider component;
 	private boolean hasBeenFocused;
 	private Runnable requestFocusRunnable = () -> {
+		if (hasBeenFocused) {
+			return;
+		}
+
+		hasBeenFocused = true;
 		if (focusComponent != null) {
 			focusComponent.requestFocus();
-			hasBeenFocused = true;
 		}
+		WindowUtilities.bringModalestDialogToFront(DockingDialog.this);
 	};
 	private DockingWindowManager owningWindowManager;
-	private WindowAdapter modalFixWindowAdapter;
 
 	/**
 	 * Creates a default parent frame that will appear in the OS's task bar.  Having this frame
@@ -62,10 +67,9 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	 * only happens during tests and one-off main methods that are not part of a
 	 * running tool.
 	 *
-	 * @param componentProvider the dialog content for this dialog
 	 * @return the hidden frame
 	 */
-	private static JFrame createHiddenParentFrame(DialogComponentProvider componentProvider) {
+	private static JFrame createHiddenParentFrame() {
 
 		//
 		// Note: we expect to only get here when there is no parent window found.  This usually
@@ -118,7 +122,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	private DockingDialog(DialogComponentProvider comp, Component centeredOnComponent) {
-		super(createHiddenParentFrame(comp), comp.getTitle(), comp.isModal());
+		super(createHiddenParentFrame(), comp.getTitle(), comp.isModal());
 		init(comp);
 		initializeLocationAndSize(centeredOnComponent);
 	}
@@ -189,6 +193,14 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 		return component.getClass().getName() + System.identityHashCode(scopeObject);
 	}
 
+	private void requestInitialFocus() {
+		Component newFocusComponent = component.getFocusComponent();
+		if (newFocusComponent != null) {
+			focusComponent = newFocusComponent;
+			Swing.runLater(requestFocusRunnable);
+		}
+	}
+
 	private void init(DialogComponentProvider provider) {
 		component = provider;
 		provider.setDialog(this);
@@ -198,20 +210,21 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 		pack();
 		setResizable(provider.isResizeable());
 		windowAdapter = new WindowAdapter() {
-			@Override
-			public void windowActivated(WindowEvent e) {
-				if (!hasBeenFocused) {
-					Component newFocusComponent = component.getFocusComponent();
-					if (newFocusComponent != null) {
-						focusComponent = newFocusComponent;
-						SwingUtilities.invokeLater(requestFocusRunnable);
-					}
-				}
-			}
 
 			@Override
 			public void windowOpened(WindowEvent e) {
-				component.dialogShown();
+
+				Tool tool = null;
+				if (owningWindowManager != null) {
+					tool = owningWindowManager.getTool();
+				}
+				component.dialogShown(tool);
+
+				// Note: this call was previously in windowActivated().  We found that method was 
+				// not called consistently on all platforms.  On Windows, when showing a modal 
+				// dialog over a modal dialog, the newest dialog would not get the windowActivated()
+				// callback.  windowOpened() seems to be called consistently.  
+				requestInitialFocus();
 			}
 
 			@Override
@@ -226,15 +239,8 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 				cleanup();
 			}
 		};
-		this.addWindowListener(windowAdapter);
-		modalFixWindowAdapter = new WindowAdapter() {
-			@Override
-			public void windowOpened(WindowEvent e) {
-				WindowUtilities.bringModalestDialogToFront(DockingDialog.this);
-			}
-		};
 
-		this.addWindowListener(modalFixWindowAdapter);
+		addWindowListener(windowAdapter);
 
 		if (provider.getDefaultButton() != null) {
 			getRootPane().setDefaultButton(provider.getDefaultButton());
@@ -300,6 +306,15 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	/**
+	 * Returns true if the given provider is the provider owned by this dialog.
+	 * @param dcp the provider to check
+	 * @return true if the given provider is the provider owned by this dialog
+	 */
+	public boolean containsProvider(DialogComponentProvider dcp) {
+		return component == dcp;
+	}
+
+	/**
 	 * Centers the dialog on the given component.
 	 * @param c the component to center over.
 	 */
@@ -320,10 +335,8 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 			return;
 		}
 
-		Rectangle r = getBounds();
 		Point p = WindowUtilities.centerOnComponent(c, this);
-		r.setLocation(p);
-		setBounds(r);
+		setLocation(p);
 	}
 
 	@Override

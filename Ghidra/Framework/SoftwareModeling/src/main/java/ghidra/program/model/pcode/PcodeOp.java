@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class PcodeOp {
 	public static final int INT_SLESS = 13;         	// Return TRUE if signed op1 < signed op2
 	public static final int INT_SLESSEQUAL = 14;	// Return TRUE if signed op1 <= signed op2
 	public static final int INT_LESS = 15;		// Return TRUE if unsigned op1 < unsigned op2
-	// Also indicates borrow on unsigned substraction
+	// Also indicates borrow on unsigned subtraction
 	public static final int INT_LESSEQUAL = 16;	// Return TRUE if unsigned op1 <= unsigned op2
 	public static final int INT_ZEXT = 17;		// Zero extend operand 
 	public static final int INT_SEXT = 18;		// Sign extend operand 
@@ -294,6 +294,15 @@ public class PcodeOp {
 	}
 
 	/**
+	 * Return true if the PcodeOp is commutative.
+	 * If true, the operation has exactly two inputs that can be switched without affecting the output.
+	 * @return true if the operation is commutative
+	 */
+	public final boolean isCommutative() {
+		return isCommutative(opcode);
+	}
+
+	/**
 	 * @return the sequence number this pcode is within some number of pcode
 	 */
 	public final SequenceNumber getSeqnum() {
@@ -422,7 +431,7 @@ public class PcodeOp {
 
 	/**
 	 * Encode just the opcode and input/output Varnode data for this PcodeOp to a stream
-	 * as an \<op> element
+	 * as an {@code <op>} element
 	 * @param encoder is the stream encoder
 	 * @param addrFactory is a factory for looking up encoded address spaces
 	 * @throws IOException for errors in the underlying stream
@@ -680,6 +689,8 @@ public class PcodeOp {
 				return "PTRADD";
 			case PTRSUB:
 				return "PTRSUB";
+			case SEGMENTOP:
+				return "SEGMENTOP";
 			case CPOOLREF:
 				return "CPOOLREF";
 			case NEW:
@@ -714,5 +725,34 @@ public class PcodeOp {
 			throw new UnknownInstructionException();
 		}
 		return i.intValue();
+	}
+
+	/**
+	 * Return true if the given opcode represents a commutative operation.
+	 * If true, the operation has exactly two inputs that can be switched without affecting the output.
+	 * @param opcode is the opcode
+	 * @return true if the operation is commutative
+	 */
+	public static boolean isCommutative(int opcode) {
+		switch (opcode) {
+			case PcodeOp.INT_EQUAL:
+			case PcodeOp.INT_NOTEQUAL:
+			case PcodeOp.INT_ADD:
+			case PcodeOp.INT_XOR:
+			case PcodeOp.INT_AND:
+			case PcodeOp.INT_OR:
+			case PcodeOp.INT_MULT:
+			case PcodeOp.BOOL_XOR:
+			case PcodeOp.BOOL_AND:
+			case PcodeOp.BOOL_OR:
+			case PcodeOp.FLOAT_EQUAL:
+			case PcodeOp.FLOAT_NOTEQUAL:
+			case PcodeOp.FLOAT_ADD:
+			case PcodeOp.FLOAT_MULT:
+			case PcodeOp.INT_CARRY:
+			case PcodeOp.INT_SCARRY:
+				return true;
+		}
+		return false;
 	}
 }

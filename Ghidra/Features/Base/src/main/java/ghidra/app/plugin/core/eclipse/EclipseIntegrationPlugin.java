@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import docking.options.OptionsService;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
@@ -110,7 +112,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 		if (mainFeaturesDir.isDirectory()) {
 			featuresDirs.add(mainFeaturesDir);
 		}
-		File dropinsDir = new File(eclipseInstallDir, "dropins");
+		File dropinsDir = getEclipseDropinsDir();
 		if (dropinsDir.isDirectory()) {
 			featuresDirs.add(dropinsDir);
 			for (File dir : dropinsDir.listFiles(File::isDirectory)) {
@@ -273,15 +275,17 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 		return eclipseInstallDir;
 	}
 
-	/**
-	 * Gets the Eclipse dropins directory.
-	 * 
-	 * @return The Eclipse dropins directory.
-	 * @throws FileNotFoundException if the dropins directory does not exist.
-	 */
+	@Override
 	public File getEclipseDropinsDir() throws FileNotFoundException {
 		File eclipseInstallDir = getEclipseInstallDir();
-		File dropinsDir = new File(eclipseInstallDir, "dropins");
+		File dropinsDir;
+		if (eclipseInstallDir.getAbsolutePath().startsWith("/snap/eclipse")) {
+			dropinsDir = new File(SystemUtils.getUserHome(), "snap/eclipse/dropins");
+		}
+		else {
+			dropinsDir = new File(eclipseInstallDir, "dropins");
+		}
+		FileUtilities.mkdirs(dropinsDir);
 		if (!dropinsDir.isDirectory()) {
 			throw new FileNotFoundException("Eclipse dropins directory does not exist.");
 		}

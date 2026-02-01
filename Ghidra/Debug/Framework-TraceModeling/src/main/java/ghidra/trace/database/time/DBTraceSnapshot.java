@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,15 @@ package ghidra.trace.database.time;
 import java.io.IOException;
 
 import db.DBRecord;
+import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
@@ -80,7 +85,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			eventThread = manager.threadManager.getThread(threadKey);
 			if (!"".equals(scheduleStr)) {
 				try {
-					schedule = TraceSchedule.parse(scheduleStr);
+					schedule = TraceSchedule.parse(scheduleStr, TimeRadix.DEC);
 				}
 				catch (IllegalArgumentException e) {
 					Msg.error(this, "Could not parse schedule: " + schedule, e);
@@ -143,7 +148,26 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	@Override
 	public TraceThread getEventThread() {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return eventThread;
+			if (eventThread != null) {
+				return eventThread;
+			}
+			// TODO: Can it be something other than root?
+			DBTraceObject root = manager.trace.getObjectManager().getRootObject();
+			if (root == null) {
+				return null;
+			}
+			if (!root.getSchema().getInterfaces().contains(TraceEventScope.class)) {
+				return null;
+			}
+			TraceObjectValue eventAttr =
+				root.getAttribute(getKey(), TraceEventScope.KEY_EVENT_THREAD);
+			if (eventAttr == null) {
+				return null;
+			}
+			if (!(eventAttr.getValue() instanceof TraceObject eventObj)) {
+				return null;
+			}
+			return eventObj.queryInterface(TraceThread.class);
 		}
 	}
 
@@ -181,7 +205,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	public void setSchedule(TraceSchedule schedule) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.schedule = schedule;
-			this.scheduleStr = schedule == null ? "" : schedule.toString();
+			this.scheduleStr = schedule == null ? "" : schedule.toString(TimeRadix.DEC);
 			update(SCHEDULE_COLUMN);
 			manager.notifySnapshotChanged(this);
 		}
@@ -201,6 +225,28 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			update(VERSION_COLUMN);
 			manager.notifySnapshotChanged(this);
 		}
+	}
+
+	@Override
+	public boolean isSnapOnly(boolean whenInconsistent) {
+		if (schedule == null && key < 0) {
+			return whenInconsistent;
+		}
+		return schedule == null || schedule.isSnapOnly();
+	}
+
+	@Override
+	public boolean isStale(boolean whenInconsistent) {
+		if (schedule == null) {
+			if (key < 0) {
+				return whenInconsistent;
+			}
+			return false; // A recorded snapshot
+		}
+		if (schedule.isSnapOnly()) {
+			return false;
+		}
+		return version < manager.trace.getEmulatorCacheVersion();
 	}
 
 	@Override

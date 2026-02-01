@@ -20,9 +20,11 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.omf.OmfFileHeader;
-import ghidra.app.util.bin.format.omf.OmfLibraryRecord;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.app.util.bin.format.omf.OmfException;
+import ghidra.app.util.bin.format.omf.omf.OmfLibraryRecord;
+import ghidra.app.util.bin.format.omf.omf.OmfRecordFactory;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
@@ -38,10 +40,10 @@ public class OmfArchiveFileSystem extends AbstractFileSystem<OmfLibraryRecord.Me
 		this.provider = provider;
 	}
 
-	public void mount(TaskMonitor monitor) throws IOException {
+	public void mount(TaskMonitor monitor) throws IOException, OmfException {
 		monitor.setMessage("Opening OMF archive...");
-		BinaryReader reader = OmfFileHeader.createReader(provider);
-		OmfLibraryRecord libraryRec = OmfLibraryRecord.parse(reader, monitor);
+		OmfLibraryRecord libraryRec =
+			OmfLibraryRecord.parse(new OmfRecordFactory(provider), monitor);
 		ArrayList<OmfLibraryRecord.MemberHeader> memberHeaders = libraryRec.getMemberHeaders();
 		for (OmfLibraryRecord.MemberHeader member : memberHeaders) {
 			String name = member.name;

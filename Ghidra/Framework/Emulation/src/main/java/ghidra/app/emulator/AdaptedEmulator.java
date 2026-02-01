@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,24 +15,25 @@
  */
 package ghidra.app.emulator;
 
-import generic.ULongSpan;
-import generic.ULongSpan.ULongSpanSet;
+import java.util.Arrays;
+
 import ghidra.app.emulator.memory.MemoryLoadImage;
 import ghidra.app.emulator.state.RegisterState;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.lifecycle.Transitional;
 import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.PcodeMachine.SwiMode;
 import ghidra.pcode.emulate.*;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.memstate.MemoryFaultHandler;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcode.pcoderaw.PcodeOpRaw;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.Msg;
@@ -47,11 +48,14 @@ import ghidra.util.task.TaskMonitor;
  * ported to use the new {@link PcodeEmulator} directly. New use cases based on p-code emulation
  * should use the {@link PcodeEmulator} directly. Older use cases still being actively maintained
  * should begin work porting to {@link PcodeEmulator}. Old use cases without active maintenance may
- * try this wrapper, but may have to remain using {@link DefaultEmulator}. At a minimum, to update
- * such old use cases, `new Emulator(...)` must be replaced by `new DefaultEmulator(...)`.
+ * try this wrapper, but they will no longer compile once this adaptor is removed. At a minimum, to
+ * update such old use cases, {@code new Emulator(...)} must be replaced by
+ * {@code new DefaultEmulator(...)}.
  */
 @Transitional
+@Deprecated(since = "12.1", forRemoval = true)
 public class AdaptedEmulator implements Emulator {
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedPcodeEmulator extends PcodeEmulator {
 		private final MemoryLoadImage loadImage;
 		private final MemoryFaultHandler faultHandler;
@@ -65,14 +69,12 @@ public class AdaptedEmulator implements Emulator {
 
 		@Override
 		protected PcodeExecutorState<byte[]> createSharedState() {
-			return new AdaptedBytesPcodeExecutorState(language,
-				new StateBacking(faultHandler, loadImage));
+			return new AdaptedBytesPcodeExecutorState(language, faultHandler, loadImage);
 		}
 
 		@Override
 		protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
-			return new AdaptedBytesPcodeExecutorState(language,
-				new StateBacking(faultHandler, null));
+			return new AdaptedBytesPcodeExecutorState(language, faultHandler, null);
 		}
 
 		@Override
@@ -91,6 +93,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	@Transitional
 	public class AdaptedPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> {
 		@PcodeUserop
@@ -106,6 +109,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedPcodeThread extends BytesPcodeThread {
 		Address lastExecuteAddress;
 
@@ -126,81 +130,155 @@ public class AdaptedEmulator implements Emulator {
 			}
 			return adaptedBreakTable.doPcodeOpBreak(new PcodeOpRaw(op));
 		}
-	}
-
-	record StateBacking(MemoryFaultHandler faultHandler, MemoryLoadImage loadImage) {
-	}
-
-	static class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
-		public AdaptedBytesPcodeExecutorState(Language language, StateBacking backing) {
-			super(new AdaptedBytesPcodeExecutorStatePiece(language, backing));
-		}
-	}
-
-	static class AdaptedBytesPcodeExecutorStatePiece
-			extends AbstractBytesPcodeExecutorStatePiece<AdaptedBytesPcodeExecutorStateSpace> {
-		private final StateBacking backing;
-
-		public AdaptedBytesPcodeExecutorStatePiece(Language language, StateBacking backing) {
-			super(language);
-			this.backing = backing;
-		}
 
 		@Override
-		protected AbstractSpaceMap<AdaptedBytesPcodeExecutorStateSpace> newSpaceMap() {
-			return new SimpleSpaceMap<>() {
+		protected SleighInstructionDecoder createInstructionDecoder(
+				PcodeExecutorState<byte[]> sharedState) {
+			return new SleighInstructionDecoder(language, sharedState) {
 				@Override
-				protected AdaptedBytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
-					return new AdaptedBytesPcodeExecutorStateSpace(language, space, backing);
+				public PseudoInstruction decodeInstruction(Address address, RegisterValue context) {
+					try {
+						isDecoding = true;
+						return super.decodeInstruction(address, context);
+					}
+					finally {
+						isDecoding = false;
+					}
 				}
 			};
 		}
 	}
 
-	static class AdaptedBytesPcodeExecutorStateSpace
-			extends BytesPcodeExecutorStateSpace<StateBacking> {
-		public AdaptedBytesPcodeExecutorStateSpace(Language language, AddressSpace space,
-				StateBacking backing) {
-			super(language, space, backing);
+	@Deprecated(since = "12.1", forRemoval = true)
+	class AdaptedStateCallbacks implements PcodeStateCallbacks {
+		private final MemoryLoadImage loadImage;
+
+		public AdaptedStateCallbacks(MemoryLoadImage loadImage) {
+			this.loadImage = loadImage;
 		}
 
 		@Override
-		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
-			if (uninitialized.isEmpty()) {
-				return uninitialized;
+		public <A, T> AddressSetView readUninitialized(PcodeExecutorStatePiece<A, T> piece,
+				AddressSetView set) {
+			PcodeExecutorStatePiece<A, byte[]> bytesPiece =
+				PcodeStateCallbacks.checkValueDomain(piece, byte[].class);
+			if (bytesPiece == null) {
+				return set;
 			}
-			if (backing.loadImage == null) {
+			if (set.isEmpty()) {
+				return set;
+			}
+			AddressSpace space = set.getMinAddress().getAddressSpace();
+			if (loadImage == null) {
 				if (space.isUniqueSpace()) {
 					throw new AccessPcodeExecutionException(
-						"Attempted to read from uninitialized unique: " + uninitialized);
+						"Attempted to read from uninitialized unique: " + set);
 				}
-				return uninitialized;
+				return set;
 			}
-			ULongSpan bound = uninitialized.bound();
-			byte[] data = new byte[(int) bound.length()];
-			backing.loadImage.loadFill(data, data.length, space.getAddress(bound.min()), 0,
-				false);
-			for (ULongSpan span : uninitialized.spans()) {
-				bytes.putData(span.min(), data, (int) (span.min() - bound.min()),
-					(int) span.length());
+			AddressRange bound = new AddressRangeImpl(set.getMinAddress(), set.getMaxAddress());
+			byte[] data = new byte[(int) bound.getLength()];
+			loadImage.loadFill(data, data.length, bound.getMinAddress(), 0, false);
+			for (AddressRange range : set) {
+				int offset = (int) range.getMinAddress().subtract(bound.getMinAddress());
+				byte[] portion = Arrays.copyOfRange(data, offset, offset + (int) range.getLength());
+				bytesPiece.setVarInternal(space, range.getMinAddress().getOffset(), portion.length,
+					portion);
 			}
-			return bytes.getUninitialized(bound.min(), bound.max());
+			return new AddressSet();
+		}
+	}
+
+	@Deprecated(since = "12.1", forRemoval = true)
+	class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
+		public AdaptedBytesPcodeExecutorState(Language language, MemoryFaultHandler faultHandler,
+				MemoryLoadImage loadImage) {
+			super(new AdaptedBytesPcodeExecutorStatePiece(language,
+				new AdaptedStateCallbacks(loadImage), faultHandler));
 		}
 
 		@Override
-		protected void warnUninit(ULongSpanSet uninit) {
-			ULongSpan bound = uninit.bound();
-			byte[] data = new byte[(int) bound.length()];
-			if (backing.faultHandler.uninitializedRead(space.getAddress(bound.min()), data.length,
-				data, 0)) {
-				for (ULongSpan span : uninit.spans()) {
-					bytes.putData(span.min(), data, (int) (span.min() - bound.min()),
-						(int) span.length());
+		public byte[] getVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+				Reason reason) {
+			byte[] data = super.getVar(space, offset, size, quantize, reason);
+			if (reason != Reason.INSPECT) {
+				adaptedFilteredMemState.applyRead(space, arithmetic.toLong(offset, Purpose.LOAD),
+					size, data);
+			}
+			return data;
+		}
+
+		@Override
+		public byte[] getVar(AddressSpace space, long offset, int size, boolean quantize,
+				Reason reason) {
+			byte[] data = super.getVar(space, offset, size, quantize, reason);
+			if (reason != Reason.INSPECT) {
+				adaptedFilteredMemState.applyRead(space, offset, size, data);
+			}
+			return data;
+		}
+
+		@Override
+		public void setVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+				byte[] val) {
+			adaptedFilteredMemState.applyWrite(space,
+				arithmetic.toLong(offset, Purpose.STORE), size, val);
+			super.setVar(space, offset, size, quantize, val);
+		}
+
+		@Override
+		public void setVar(AddressSpace space, long offset, int size, boolean quantize,
+				byte[] val) {
+			adaptedFilteredMemState.applyWrite(space, offset, size, val);
+			super.setVar(space, offset, size, quantize, val);
+		}
+	}
+
+	@Deprecated(since = "12.1", forRemoval = true)
+	static class AdaptedBytesPcodeExecutorStatePiece
+			extends AbstractBytesPcodeExecutorStatePiece<AdaptedBytesPcodeExecutorStateSpace> {
+		private final MemoryFaultHandler faultHandler;
+
+		public AdaptedBytesPcodeExecutorStatePiece(Language language, PcodeStateCallbacks cb,
+				MemoryFaultHandler faultHandler) {
+			super(language, cb);
+			this.faultHandler = faultHandler;
+		}
+
+		@Override
+		protected AdaptedBytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
+			return new AdaptedBytesPcodeExecutorStateSpace(language, space, this, faultHandler);
+		}
+	}
+
+	@Deprecated(since = "12.1", forRemoval = true)
+	static class AdaptedBytesPcodeExecutorStateSpace extends BytesPcodeExecutorStateSpace {
+		private final MemoryFaultHandler faultHandler;
+
+		public AdaptedBytesPcodeExecutorStateSpace(Language language, AddressSpace space,
+				AbstractBytesPcodeExecutorStatePiece<?> piece, MemoryFaultHandler faultHandler) {
+			super(language, space, piece);
+			this.faultHandler = faultHandler;
+		}
+
+		@Override
+		protected void warnUninit(AddressSetView uninitialized) {
+			AddressRange bound = new AddressRangeImpl(
+				uninitialized.getMinAddress(),
+				uninitialized.getMaxAddress());
+			byte[] data = new byte[(int) bound.getLength()];
+			if (faultHandler.uninitializedRead(bound.getMinAddress(), data.length, data, 0)) {
+				for (AddressRange range : uninitialized) {
+					int offset = (int) range.getMinAddress().subtract(bound.getMinAddress());
+					byte[] portion =
+						Arrays.copyOfRange(data, offset, offset + (int) range.getLength());
+					bytes.putData(range.getMinAddress().getOffset(), portion, 0, portion.length);
 				}
 			}
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedBreakTableCallback extends BreakTableCallBack {
 		public AdaptedBreakTableCallback() {
 			super((SleighLanguage) language);
@@ -222,18 +300,60 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	/**
+	 * An adapter to keep track of the filter chain
+	 * 
+	 * <p>
+	 * We don't actually invoke this adapter's set/getChunk methods. Instead, we just use it to
+	 * track what filters are installed. The {@link AdaptedBytesPcodeExecutorState} will invoke the
+	 * filter chain and then perform the read or write itself.
+	 */
+	@Deprecated(since = "12.1", forRemoval = true)
+	static class AdaptedFilteredMemoryState extends FilteredMemoryState {
+		private MemoryAccessFilter headFilter;
+
+		AdaptedFilteredMemoryState(Language lang) {
+			super(lang);
+		}
+
+		@Override
+		MemoryAccessFilter setFilter(MemoryAccessFilter filter) {
+			MemoryAccessFilter oldHead = this.headFilter;
+			this.headFilter = filter;
+			return oldHead;
+		}
+
+		void applyRead(AddressSpace space, long offset, int size, byte[] data) {
+			if (headFilter == null) {
+				return;
+			}
+			headFilter.filterRead(space, offset, size, data);
+		}
+
+		void applyWrite(AddressSpace space, long offset, int size, byte[] data) {
+			if (headFilter == null) {
+				return;
+			}
+			headFilter.filterWrite(space, offset, size, data);
+		}
+	}
+
 	private final Language language;
 	private final Register pcReg;
 	private final AdaptedPcodeEmulator emu;
 	private final AdaptedPcodeThread thread;
 	private final MemoryState adaptedMemState;
 	private final AdaptedBreakTableCallback adaptedBreakTable;
+	private final AdaptedFilteredMemoryState adaptedFilteredMemState;
 
+	// NB. Only a single thread is supported
+	private boolean isDecoding = false;
 	private boolean isExecuting = false;
 	private RuntimeException lastError;
 
 	public AdaptedEmulator(EmulatorConfiguration config) {
 		this.language = config.getLanguage();
+		this.adaptedFilteredMemState = new AdaptedFilteredMemoryState(language);
 		this.pcReg = language.getProgramCounter();
 		if (config.isWriteBackEnabled()) {
 			throw new IllegalArgumentException("write-back is not supported");
@@ -339,12 +459,11 @@ public class AdaptedEmulator implements Emulator {
 		if (lastError != null) {
 			return EmulateExecutionState.FAULT;
 		}
-		PcodeFrame frame = thread.getFrame();
-		if (frame != null) {
-			return EmulateExecutionState.EXECUTE;
+		if (isDecoding) {
+			return EmulateExecutionState.INSTRUCTION_DECODE;
 		}
 		if (isExecuting) {
-			return EmulateExecutionState.INSTRUCTION_DECODE;
+			return EmulateExecutionState.EXECUTE;
 		}
 		return EmulateExecutionState.STOPPED;
 	}
@@ -361,8 +480,7 @@ public class AdaptedEmulator implements Emulator {
 
 	@Override
 	public FilteredMemoryState getFilteredMemState() {
-		// Just a dummy to prevent NPEs
-		return new FilteredMemoryState(language);
+		return adaptedFilteredMemState;
 	}
 
 	@Override

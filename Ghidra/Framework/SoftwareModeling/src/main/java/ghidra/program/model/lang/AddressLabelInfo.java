@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,9 @@ package ghidra.program.model.lang;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.model.util.ProcessorSymbolType;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * <CODE>AddressLabelInfo</CODE> is a utility class for storing
@@ -29,34 +31,42 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	private Address addr;
 	private Address endAddr;
 	private String label;
+	private String description;
 	private boolean isPrimary;
 	private boolean isEntry;
 	private ProcessorSymbolType processorSymbolType;
 	private int sizeInBytes;
 	private Boolean isVolatile;
-	
+
 	/**
 	 * Constructor for class AddressLabelInfo
 	 * 
 	 * @param	addr			Address object that describes the memory address
 	 * @param	sizeInBytes		Integer describing the Size in bytes that the label applies to.
 	 * @param	label			String label or alias for the Address
+	 * @param   description     Label description
 	 * @param 	isPrimary		boolean describes if this object is the primary label for the Address 'addr'
 	 * @param	isEntry			boolean describes if this object is an entry label for the Address 'addr'
 	 * @param	type			ProcessorSymbolType the type of symbol
 	 * @param	isVolatile		Boolean describes if the memory at this address is volatile
+	 * @throws AddressOverflowException if sizeInBytes cause an overflow relative to address
+	 * @throws InvalidInputException if an invalid label name is specified
 	 */
-	public AddressLabelInfo(Address addr, Integer sizeInBytes, String label, boolean isPrimary, 
-			boolean isEntry, ProcessorSymbolType type, Boolean isVolatile) throws AddressOverflowException {
+	public AddressLabelInfo(Address addr, Integer sizeInBytes, String label, String description,
+			boolean isPrimary, boolean isEntry, ProcessorSymbolType type, Boolean isVolatile)
+			throws AddressOverflowException, InvalidInputException {
+		SymbolUtilities.validateName(label);
 		this.addr = addr;
-		if ( sizeInBytes == null || sizeInBytes <= 0 ) {
+		if (sizeInBytes == null || sizeInBytes <= 0) {
 			// Default size in addressable units
 			this.sizeInBytes = addr.getAddressSpace().getAddressableUnitSize();
-		} else {
+		}
+		else {
 			this.sizeInBytes = sizeInBytes;
 		}
-		this.endAddr = this.addr.addNoWrap(this.sizeInBytes-1);
+		this.endAddr = this.addr.addNoWrap(this.sizeInBytes - 1);
 		this.label = label;
+		this.description = description;
 		this.isPrimary = isPrimary;
 		this.isEntry = isEntry;
 		this.processorSymbolType = type;
@@ -64,43 +74,50 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	}
 
 	/**
-	 * Returns the object's address.
+	 * @return object's address.
 	 */
 	public final Address getAddress() {
 		return addr;
 	}
-	
+
 	/**
-	 * Returns the object's end address.
+	 * @return the object's end address.
 	 */
 	public final Address getEndAddress() {
 		return endAddr;
 	}
-	
+
 	/**
-	 * Returns the object's label or alias.
+	 * @return the object's label or alias.
 	 */
 	public final String getLabel() {
 		return label;
 	}
 
 	/**
-	 * Returns the object's size in bytes. Always non-zero positive value and defaults to 
+	 * @return the object's description if it has one, null otherwise
+	 */
+	public final String getDescription() {
+		return description;
+	}
+
+	/**
+	 * @return the object's size in bytes. Always non-zero positive value and defaults to 
 	 * addressable unit size of associated address space.
 	 */
 	public final int getByteSize() {
 		return sizeInBytes;
 	}
-	
+
 	/**
-	 * Returns whether the object is the primary label at the address.
+	 * @return whether the object is the primary label at the address.
 	 */
 	public final boolean isPrimary() {
 		return isPrimary;
 	}
-	
+
 	/**
-	 * Returns whether the object is volatile.
+	 * @return whether the object is volatile.
 	 * Boolean.False when the address is explicitly not volatile.
 	 * Boolean.True when the address is volatile.
 	 * NULL when the volatility is not defined at this address.
@@ -164,6 +181,9 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 		buf.append("isEntry = " + isEntry);
 		buf.append(", ");
 		buf.append("type = " + processorSymbolType);
+		if (description != null) {
+			buf.append("description = " + description);
+		}
 		return buf.toString();
 	}
 }

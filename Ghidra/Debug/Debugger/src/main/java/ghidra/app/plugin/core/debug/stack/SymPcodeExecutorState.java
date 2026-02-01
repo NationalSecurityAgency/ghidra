@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.debug.stack;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.core.debug.stack.Sym.*;
 import ghidra.app.plugin.core.debug.stack.SymStateSpace.SymEntry;
-import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
@@ -53,6 +53,8 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 
 	/**
 	 * Construct a new state for the given program
+	 * 
+	 * @param program the program under analysis
 	 */
 	public SymPcodeExecutorState(Program program) {
 		this.program = program;
@@ -79,16 +81,16 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	public String toString() {
 		return String.format("""
 				%s[
-				    cSpec=%s
-				    stack=%s
-				    registers=%s
-				    unique=%s
+				  cSpec=%s
+				  stack=%s
+				  registers=%s
+				  unique=%s
 				]
 				""", getClass().getSimpleName(),
 			cSpec.toString(),
-			stackSpace.toString("    ", language),
-			registerSpace.toString("    ", language),
-			uniqueSpace.toString("    ", language));
+			stackSpace.toString("  ", language),
+			registerSpace.toString("  ", language),
+			uniqueSpace.toString("  ", language));
 	}
 
 	@Override
@@ -99,6 +101,11 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	@Override
 	public PcodeArithmetic<Sym> getArithmetic() {
 		return arithmetic;
+	}
+
+	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
 	}
 
 	@Override
@@ -124,6 +131,11 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, Sym offset, int size, Sym val) {
+		setVar(space, offset, size, false, val);
+	}
+
+	@Override
 	public Sym getVar(AddressSpace space, Sym offset, int size, boolean quantize,
 			Reason reason) {
 		Address address = offset.addressIn(space, cSpec);
@@ -143,6 +155,11 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
+	public Sym getVarInternal(AddressSpace space, Sym offset, int size, Reason reason) {
+		return getVar(space, offset, size, false, reason);
+	}
+
+	@Override
 	public Map<Register, Sym> getRegisterValues() {
 		return Map.of();
 	}
@@ -159,13 +176,15 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
-	public SymPcodeExecutorState fork() {
+	public SymPcodeExecutorState fork(PcodeStateCallbacks cb) {
 		return new SymPcodeExecutorState(program, arithmetic, stackSpace.fork(),
 			registerSpace.fork(), uniqueSpace.fork());
 	}
 
 	/**
 	 * Create a new state whose registers are forked from those of this state
+	 * 
+	 * @return this fork
 	 */
 	public SymPcodeExecutorState forkRegs() {
 		return new SymPcodeExecutorState(program, arithmetic, new SymStateSpace(),
@@ -214,21 +233,41 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * <p>
 	 * There are two cases:
 	 * <ul>
-	 * <li>PC:Register => location is PC.reg.address
-	 * <li>PC:Deref => location is [Stack]:PC.offset
+	 * <li>{@code PC:Register => location is PC.reg.address}</li>
+	 * <li>{@code PC:Deref => location is [Stack]:PC.offset}</li>
 	 * </ul>
 	 * 
-	 * @return
+	 * @return the address (stack offset or register) of the return address
 	 */
 	public Address computeAddressOfReturn() {
-		Sym expr = getVar(language.getProgramCounter(), Reason.INSPECT);
-		if (expr instanceof StackDerefSym stackVar) {
-			return cSpec.getStackSpace().getAddress(stackVar.offset());
-		}
-		if (expr instanceof RegisterSym regVar) {
-			return regVar.register().getAddress();
-		}
-		return null;
+		return switch (getVar(language.getProgramCounter(), Reason.INSPECT)) {
+			case StackDerefSym stackVar -> cSpec.getStackSpace().getAddress(stackVar.offset());
+			case RegisterSym regVar -> regVar.register().getAddress();
+			default -> null;
+		};
+	}
+
+	/**
+	 * Examine this state's PC to determine how the return address is masked
+	 * 
+	 * <p>
+	 * This is only applicable in cases where {@link #computeAddressOfReturn()} returns a non-null
+	 * address. This is to handle architectures where the low bits indicate an ISA mode, and the
+	 * higher bits form the actual address. Often, the sleigh specifications for these processors
+	 * will mask off those low bits when setting the PC. If that has happened, and the symbolic
+	 * expression stored in the PC is otherwise understood to come from the stack or a register,
+	 * this will return that mask. Most often, this will return -1, indicating that all bits are
+	 * relevant to the actual address. If the symbolic expression does not indicate the stack or a
+	 * register, this still returns -1.
+	 * 
+	 * @return the mask, often -1
+	 */
+	public long computeMaskOfReturn() {
+		return switch (getVar(language.getProgramCounter(), Reason.INSPECT)) {
+			case StackDerefSym stackVar -> stackVar.mask();
+			case RegisterSym regVar -> regVar.mask();
+			default -> -1;
+		};
 	}
 
 	/**
@@ -261,7 +300,7 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * Any entry of the form (reg, v:Deref) is collected as (reg, [Stack]:v.offset). Note that the
 	 * size of the stack entry is implied by the size of the register.
 	 * 
-	 * @return
+	 * @return the map from register to stack address
 	 */
 	public Map<Register, Address> computeMapUsingRegisters() {
 		Map<Register, Address> result = new HashMap<>();

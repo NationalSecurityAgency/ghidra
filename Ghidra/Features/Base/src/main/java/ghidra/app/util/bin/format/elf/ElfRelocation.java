@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
-import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
+import ghidra.app.util.bin.format.elf.relocation.AbstractElfRelocationHandler;
 import ghidra.program.model.data.*;
 
 /**
@@ -62,7 +62,7 @@ import ghidra.program.model.data.*;
  * 
  * RELR entry (see SHT_RELR, DT_RELR):
  *    NOTE: Relocation type is data <i>relative</i> and must be specified by appropriate relocation handler
- *    (see {@link ElfRelocationHandler#getRelrRelocationType()}) since it is not contained within the 
+ *    (see {@link AbstractElfRelocationHandler#getRelrRelocationType()}) since it is not contained within the 
  *    relocation table which only specifies <i>r_offset</i> for each entry.
  * 
  * </pre>
@@ -96,12 +96,12 @@ public class ElfRelocation implements StructConverter {
 	 * @param reader binary reader positioned at start of relocation entry.
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @return ELF relocation object
 	 * @throws IOException if an IO or parse error occurs
 	 */
-	static ElfRelocation createElfRelocation(BinaryReader reader,
-			ElfHeader elfHeader, int relocationIndex, boolean withAddend) throws IOException {
+	static ElfRelocation createElfRelocation(BinaryReader reader, ElfHeader elfHeader,
+			int relocationIndex, boolean withAddend) throws IOException {
 		Class<? extends ElfRelocation> elfRelocationClazz = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = getInstance(elfRelocationClazz);
 		elfRelocation.initElfRelocation(reader, elfHeader, relocationIndex, withAddend);
@@ -113,16 +113,15 @@ public class ElfRelocation implements StructConverter {
 	 * relocation entry 
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @param r_offset The offset for the entry
 	 * @param r_info The info value for the entry
 	 * @param r_addend The signed-addend for the entry (32-bit addends should be signed-extended to 64-bits)
 	 * @return ELF relocation object
 	 * @throws IOException if an IO or parse error occurs
 	 */
-	static ElfRelocation createElfRelocation(ElfHeader elfHeader,
-			int relocationIndex, boolean withAddend, long r_offset, long r_info, long r_addend)
-			throws IOException {
+	static ElfRelocation createElfRelocation(ElfHeader elfHeader, int relocationIndex,
+			boolean withAddend, long r_offset, long r_info, long r_addend) throws IOException {
 		Class<? extends ElfRelocation> elfRelocationClazz = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = getInstance(elfRelocationClazz);
 		elfRelocation.initElfRelocation(elfHeader, relocationIndex, withAddend, r_offset, r_info,
@@ -173,7 +172,7 @@ public class ElfRelocation implements StructConverter {
 	 * a representative instance will be generated with all fields set to 0.
 	 * @param elfHeader ELF header
 	 * @param relocationTableIndex index of relocation within relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	protected void initElfRelocation(BinaryReader reader, ElfHeader elfHeader,
@@ -190,7 +189,7 @@ public class ElfRelocation implements StructConverter {
 	 * Initialize ELF relocation entry using data provided via the parameters.
 	 * @param elfHeader ELF header
 	 * @param relocationTableIndex index of relocation within relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @param offset The offset for the entry (r_offset)
 	 * @param info The info value for the entry (r_info)
 	 * @param addend The signed-addend (r_addend) for the entry (32-bit addends should 
@@ -218,8 +217,8 @@ public class ElfRelocation implements StructConverter {
 
 	private void readEntryData(BinaryReader reader) throws IOException {
 		if (is32bit) {
-			this.r_offset = Integer.toUnsignedLong(reader.readNextInt());
-			this.r_info = Integer.toUnsignedLong(reader.readNextInt());
+			this.r_offset = reader.readNextUnsignedInt();
+			this.r_info = reader.readNextUnsignedInt();
 			if (hasAddend) {
 				r_addend = reader.readNextInt();
 			}
@@ -273,29 +272,29 @@ public class ElfRelocation implements StructConverter {
 	}
 
 	/**
-	 * The type of relocation to apply.
-	 * NOTE 1: Relocation types are processor-specific (see {@link ElfRelocationHandler}).
-	 * NOTE 2: A type of 0 is returned by default for RELR relocations and must be updated 
+	 * The type ID value for this relocation
+	 * NOTE 1: Relocation types are processor-specific (see {@link AbstractElfRelocationHandler}).
+	 * NOTE 2: A type ID of 0 is returned by default for RELR relocations and must be updated 
 	 * during relocation processing (see {@link #setType(long)}).  The appropriate RELR 
 	 * relocation type can be obtained from the appropriate 
-	 * {@link ElfRelocationHandler#getRelrRelocationType()} or 
+	 * {@link AbstractElfRelocationHandler#getRelrRelocationType()} or 
 	 * {@link ElfRelocationContext#getRelrRelocationType()} if available.
-	 * @return type of relocation to apply
+	 * @return type ID for this relocation
 	 */
 	public int getType() {
 		return (int) (is32bit ? (r_info & BYTE_MASK) : (r_info & INT_MASK));
 	}
 
 	/**
-	 * Set the relocation type associated with this relocation.
+	 * Set the relocation type ID associated with this relocation.
 	 * Updating the relocation type is required for RELR relocations.
-	 * @param type relocation type to be applied
+	 * @param typeId relocation type ID value for this relocation
 	 */
-	public void setType(long type) {
+	public void setType(long typeId) {
 		long mask = is32bit ? BYTE_MASK : INT_MASK;
-		r_info = (r_info & ~mask) + (type & mask);
+		r_info = (r_info & ~mask) + (typeId & mask);
 	}
-	
+
 	/**
 	 * Returns the r_info relocation entry field value
 	 * @return r_info value

@@ -21,6 +21,10 @@ package ghidra.util.task;
  */
 public class UnknownProgressWrappingTaskMonitor extends WrappingTaskMonitor {
 
+	public UnknownProgressWrappingTaskMonitor(TaskMonitor delegate) {
+		this(delegate, 0);
+	}
+
 	public UnknownProgressWrappingTaskMonitor(TaskMonitor delegate, long startMaximum) {
 		super(delegate);
 		delegate.setMaximum(startMaximum);
@@ -44,7 +48,8 @@ public class UnknownProgressWrappingTaskMonitor extends WrappingTaskMonitor {
 
 		long _75_percent = currentMaximum - (currentMaximum / 4);
 		if (progress > _75_percent) {
-			delegate.setMaximum(Math.max(progress, currentMaximum + currentMaximum / 4));
+			delegate.setMaximum(
+				Math.max(Math.max(progress, 4), currentMaximum + currentMaximum / 4));
 		}
 	}
 

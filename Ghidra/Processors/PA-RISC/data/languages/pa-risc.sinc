@@ -356,7 +356,7 @@ attach names [ ldcwcc ] [
 
 # Table 5-7
 attach names [ SEDCondSym ] [
-	"" ",=" ",&lt;" ",OD" ",TR" ",&lt;&gt;" ",&gt;=" ",EV"
+	"" ",=" ",<" ",OD" ",TR" ",<>" ",>=" ",EV"
 ];
 
 attach names [ RegUnitCondSym ] [
@@ -368,28 +368,28 @@ attach names [ InvUnitCondSym ] [
 ];
 
 attach names [ RegLogicCondSym ] [
-	"" ",=" ",&lt;" ",&lt;=" _ _ _ ",OD"
+	"" ",=" ",<" ",<=" _ _ _ ",OD"
 ];
 
 attach names [ InvLogicCondSym ] [
-	"" ",&lt;&gt;" ",&gt;=" ",&gt;" _ _ _ ",EV"
+	"" ",<>" ",>=" ",>" _ _ _ ",EV"
 ];
 
 # Table 5-4
 attach names [ RegAddCondSym ] [
-	"" ",=" ",&lt;" ",&lt;=" ",NUV" ",ZNV" ",SV" ",OD"
+	"" ",=" ",<" ",<=" ",NUV" ",ZNV" ",SV" ",OD"
 ];
 
 attach names [ InvAddCondSym ] [
-	"" ",&lt;&gt;" ",&gt;=" ",&gt;" ",UV" ",VNZ" ",NSV" ",EV"
+	"" ",<>" ",>=" ",>" ",UV" ",VNZ" ",NSV" ",EV"
 ];
 
 attach names [ RegCSCondSym ] [
-	"" ",=" ",&lt;" ",&lt;=" ",&lt;&lt;" ",&lt;&lt;=" ",SV" ",OD"
+	"" ",=" ",<" ",<=" ",<<" ",<<=" ",SV" ",OD"
 ];
 
 attach names [ InvCSCondSym ] [
-	"" ",&lt;&gt;" ",&gt;=" ",&gt;" ",&gt;&gt;=" ",&gt;&gt;" ",NSV" ",EV"
+	"" ",<>" ",>=" ",>" ",>>=" ",>>" ",NSV" ",EV"
 ];
 
 # the different tests used by the FTEST instruction

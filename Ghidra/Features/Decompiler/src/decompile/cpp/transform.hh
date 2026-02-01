@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,6 +87,7 @@ private:
 public:
   TransformVar *getOut(void) const { return output; }	///< Get the output placeholder variable for \b this operator
   TransformVar *getIn(int4 i) const { return input[i]; }	///< Get the i-th input placeholder variable for \b this
+  void inheritIndirect(PcodeOp *indOp);		///< Set \e indirect \e creation flags for \b this based on given INDIRECT
 };
 
 /// \brief Describes a (register) storage location and the ways it might be split into lanes
@@ -114,7 +115,7 @@ private:
 public:
   LanedRegister(void) { wholeSize = 0; sizeBitMask = 0; }	///< Constructor for use with decode
   LanedRegister(int4 sz,uint4 mask) { wholeSize = sz; sizeBitMask = mask; }	///< Constructor
-  bool decode(Decoder &decoder);			///< Parse \<register> elements for lane sizes
+  void parseSizes(int4 registerSize,string laneSizes);			///< Parse a \e vector_lane_sizes attribute
   int4 getWholeSize(void) const { return wholeSize; }	///< Get the size in bytes of the whole laned register
   uint4 getSizeBitMask(void) const { return sizeBitMask; }	///< Get the bit mask of possible lane sizes
   void addLaneSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list

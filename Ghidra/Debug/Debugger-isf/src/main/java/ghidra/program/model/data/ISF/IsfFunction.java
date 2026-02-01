@@ -15,11 +15,14 @@
  */
 package ghidra.program.model.data.ISF;
 
-public class IsfFunction implements IsfObject {
+import ghidra.program.model.data.FunctionDefinition;
+
+public class IsfFunction extends AbstractIsfObject {
 
 	public String kind;
 
-	public IsfFunction() {
+	public IsfFunction(FunctionDefinition def) {
+		super(def);
 		kind = "function";
 	}
 

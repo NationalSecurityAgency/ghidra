@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,25 +17,19 @@ package ghidra.app.plugin.core.byteviewer;
 
 import static org.junit.Assert.*;
 
-import java.awt.*;
-import java.math.BigInteger;
+import java.awt.Point;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.List;
 
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.event.TableColumnModelEvent;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
 
-import org.junit.*;
+import org.junit.Test;
 
-import docking.*;
+import docking.DefaultActionContext;
+import docking.action.DockingAction;
 import docking.action.DockingActionIf;
-import docking.menu.ToolBarItemManager;
-import docking.menu.ToolBarManager;
 import docking.widgets.EventTrigger;
-import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.field.Field;
-import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -43,11 +37,7 @@ import ghidra.app.plugin.core.format.*;
 import ghidra.app.plugin.core.navigation.*;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.AddressInput;
-import ghidra.app.util.bean.FixedBitSizeValueField;
-import ghidra.app.util.viewer.field.OperandFieldFactory;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -55,41 +45,21 @@ import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
 
 /**
  * Basic tests for the byte view plugin
  */
-public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
+public class ByteViewerPlugin1Test extends AbstractByteViewerPluginTest {
 
-	private TestEnv env;
-	private PluginTool tool;
-	private Program program;
-	private ByteViewerPlugin plugin;
-	private ByteViewerPanel panel;
-	private CodeBrowserPlugin cbPlugin;
 
-	@Before
-	public void setUp() throws Exception {
-		env = new TestEnv();
-		tool = env.showTool();
-		tool.addPlugin(NavigationHistoryPlugin.class.getName());
-		tool.addPlugin(NextPrevAddressPlugin.class.getName());
-		tool.addPlugin(CodeBrowserPlugin.class.getName());
-		tool.addPlugin(GoToAddressLabelPlugin.class.getName());
-		tool.addPlugin(ByteViewerPlugin.class.getName());
-
-		plugin = env.getPlugin(ByteViewerPlugin.class);
-		tool.showComponentProvider(plugin.getProvider(), true);
-		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		program = buildNotepad();
-		ProgramManager pm = tool.getService(ProgramManager.class);
-		pm.openProgram(program.getDomainFile());
-		panel = plugin.getProvider().getByteViewerPanel();
+	@Override
+	protected List<Class<? extends Plugin>> getDefaultPlugins() {
+		return List.of(NavigationHistoryPlugin.class, NextPrevAddressPlugin.class,
+			CodeBrowserPlugin.class, GoToAddressLabelPlugin.class);
 	}
 
-	private Program buildNotepad() throws Exception {
+	@Override
+	protected Program buildProgram() throws Exception {
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY);
 		builder.createMemory("test2", "0x1001000", 1000);
 		builder.createMemory("mem1", "0xf0001300", 1000);
@@ -98,29 +68,18 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		builder.setBytes("0x1001000", "00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff");
 
 		// ascii - "message"
-		builder.setBytes("0x1001100", "6d 65 73 73 61 67 65 00");
+		builder.setBytes("0x1001100", "message\0".getBytes(StandardCharsets.US_ASCII));
 		builder.applyDataType("0x1001100", new StringDataType());
 
 		return builder.getProgram();
 	}
 
-	private Program build8051() throws Exception {
-		ProgramBuilder notepadBuilder = new ProgramBuilder("seg", ProgramBuilder._X86_16_REAL_MODE);
-		notepadBuilder.createMemory("mem1", "0000:0000", 0x8000);
-		return notepadBuilder.getProgram();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		env.dispose();
-	}
-
 	@Test
 	public void testOpenProgram() {
 		assertEquals("Hex", panel.getCurrentComponent().getDataModel().getName());
-		DockingActionIf action = getAction(plugin, "Byte Viewer Options");
+		DockingActionIf action = provider.getOptionsAction();
 		assertTrue(action.isEnabled());
-		assertEquals(1, panel.getNumberOfViews());
+		assertEquals(1, panel.getViewList().size());
 	}
 
 	@Test
@@ -148,7 +107,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		waitForSwing();
 
-		program = buildNotepad();
+		program = buildProgram();
 		runSwing(() -> {
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.openProgram(program.getDomainFile());
@@ -160,20 +119,16 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testAddRemoveViews() throws Exception {
-		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		setViewSelected(dialog, "Ascii", true);
-		setViewSelected(dialog, "Octal", true);
-		pressButtonByText(dialog.getComponent(), "OK");
+		loadViews("Chars", "Octal");
 
-		assertEquals(3, panel.getNumberOfViews());
+		assertEquals(3, panel.getViewList().size());
 
-		DataModelInfo info = panel.getDataModelInfo();
-		String[] names = info.getNames();
-		assertEquals(3, names.length);
-		Set<String> viewNames = new HashSet<>(Arrays.asList(names));
+		List<String> names = panel.getViewNamesInDisplayOrder();
+		assertEquals(3, names.size());
+		Set<String> viewNames = new HashSet<>(names);
 		assertTrue(viewNames.contains("Hex"));
 		assertTrue(viewNames.contains("Octal"));
-		assertTrue(viewNames.contains("Ascii"));
+		assertTrue(viewNames.contains("Chars"));
 
 		// verify cursor position is the same across all views
 		// verify the view is visible
@@ -181,7 +136,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(bc.isVisible());
 		ByteBlockInfo bbInfo = bc.getViewerCursorLocation();
 
-		bc = findComponent(panel, "Ascii");
+		bc = findComponent(panel, "Chars");
 		assertTrue(bc.isVisible());
 		assertEquals(bbInfo, bc.getViewerCursorLocation());
 
@@ -189,28 +144,23 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(bc.isVisible());
 		assertEquals(bbInfo, bc.getViewerCursorLocation());
 
-		dialog = launchByteViewerOptions();
-		setViewSelected(dialog, "Ascii", false);
-		setViewSelected(dialog, "Hex", false);
-		pressButtonByText(dialog.getComponent(), "OK");
+		enableViews(false, "Chars", "Hex");
 
-		assertEquals(1, panel.getNumberOfViews());
+		assertEquals(1, panel.getViewList().size());
 
-		info = panel.getDataModelInfo();
-		names = info.getNames();
-		assertEquals(1, names.length);
-		assertEquals("Octal", names[0]);
-
+		names = panel.getViewNamesInDisplayOrder();
+		assertEquals(1, names.size());
+		assertEquals("Octal", names.get(0));
 	}
 
 	@Test
 	public void testSetSelection() throws Exception {
-		loadViews("Ascii", "Octal");
+		loadViews("Chars", "Octal");
 
 		final FieldSelection fsel = new FieldSelection();
 		fsel.addRange(0, 0, 8, 7);
 
-		ByteViewerComponent ascii = getView("Ascii");
+		ByteViewerComponent ascii = getView("Chars");
 		setView(ascii);
 		runSwing(() -> {
 			ascii.selectionChanged(fsel, EventTrigger.GUI_ACTION);
@@ -226,7 +176,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// convert bsel to an address set
 		AddressSet set =
-			((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddressSet(bsel);
+			((ProgramByteBlockSet) provider.getByteBlockSet()).getAddressSet(bsel);
 
 		// subtract one address from code browser selection since it is on
 		// a code unit boundary
@@ -237,7 +187,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSetSelectionWithMouse() throws Exception {
 
-		loadViews("Ascii", "Octal");
+		loadViews("Chars", "Octal");
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 		GoToService goToService = tool.getService(GoToService.class);
@@ -245,7 +195,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Point startPoint = c.getCursorPoint();
 
-		goToByte("0x010010bc");
+		goTo(addr(0x010010bc));
 		Point endPoint = c.getCursorPoint();
 
 		dragMouse(c, 1, startPoint.x, startPoint.y, endPoint.x, endPoint.y, 0);
@@ -259,14 +209,13 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteBlockSelection bsel = panel.getViewerSelection();
 
 		// convert bsel to an address set
-		AddressSet set =
-			((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddressSet(bsel);
+		AddressSet set = ((ProgramByteBlockSet) provider.getByteBlockSet()).getAddressSet(bsel);
 		assertTrue(psel.hasSameAddresses(set));
 	}
 
 	@Test
 	public void testProcessSelectionEvent() throws Exception {
-		loadViews("Ascii", "Octal");
+		loadViews("Chars", "Octal");
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 
@@ -282,7 +231,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		c = findComponent(panel, "Octal");
 		assertTrue(byteBlockSelectionEquals(bsel, c.getViewerSelection()));
-		c = findComponent(panel, "Ascii");
+		c = findComponent(panel, "Chars");
 		assertTrue(byteBlockSelectionEquals(bsel, c.getViewerSelection()));
 
 		ProgramSelection psel = cbPlugin.getCurrentSelection();
@@ -290,7 +239,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		bsel = panel.getViewerSelection();
 
 		// convert bsel to an address set
-		set = ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddressSet(bsel);
+		set = ((ProgramByteBlockSet) provider.getByteBlockSet()).getAddressSet(bsel);
 		assertTrue(psel.hasSameAddresses(set));
 	}
 
@@ -305,19 +254,19 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		ByteViewerComponent c = panel.getCurrentComponent();
 		ByteBlockSelection sel = c.getViewerSelection();
-		loadViews("Ascii", "Octal");
+		loadViews("Chars", "Octal");
 		// verify that the selections are the same after adding views
 		ByteViewerComponent octalC = findComponent(panel, "Octal");
 		assertTrue(byteBlockSelectionEquals(sel, octalC.getViewerSelection()));
 
-		ByteViewerComponent asciiC = findComponent(panel, "Ascii");
+		ByteViewerComponent asciiC = findComponent(panel, "Chars");
 		assertTrue(byteBlockSelectionEquals(sel, asciiC.getViewerSelection()));
 
 	}
 
 	@Test
 	public void testMultiRangeSelection() throws Exception {
-		loadViews("Ascii", "Octal");
+		loadViews("Chars", "Octal");
 
 		final FieldSelection fsel = new FieldSelection();
 		fsel.addRange(0, 0, 4, 7);
@@ -333,21 +282,21 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteViewerComponent octalC = findComponent(panel, "Octal");
 		assertTrue(byteBlockSelectionEquals(sel, octalC.getViewerSelection()));
 
-		ByteViewerComponent asciiC = findComponent(panel, "Ascii");
+		ByteViewerComponent asciiC = findComponent(panel, "Chars");
 		assertTrue(byteBlockSelectionEquals(sel, asciiC.getViewerSelection()));
 
 	}
 
 	@Test
 	public void testLocationChanges() throws Exception {
-		loadViews("Ascii", "Octal");
+		loadViews("Chars", "Octal");
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 
-		goToByte("0x01001004");
+		goTo(addr(0x01001004));
 
 		ByteBlockInfo info = c.getViewerCursorLocation();
-		ByteViewerComponent ascii = getView("Ascii");
+		ByteViewerComponent ascii = getView("Chars");
 		assertEquals(info, ascii.getViewerCursorLocation());
 		ByteViewerComponent octal = getView("Octal");
 		assertEquals(info, octal.getViewerCursorLocation());
@@ -358,7 +307,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(addr, cbPlugin.getCurrentAddress());
 
-		goToByte("0x01001081");
+		goTo(addr(0x01001081));
 
 		info = c.getViewerCursorLocation();
 		assertEquals(info, ascii.getViewerCursorLocation());
@@ -371,7 +320,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		CodeUnit cu = program.getListing().getCodeUnitContaining(addr);
 		assertEquals(cu.getMinAddress(), cbPlugin.getCurrentAddress());
 
-		goToByte("0xf0001300");
+		goTo(addr(0xf0001300));
 
 		info = c.getViewerCursorLocation();
 		assertEquals(info, ascii.getViewerCursorLocation());
@@ -429,7 +378,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteViewerComponent octal = getView("Octal");
 		setView(hex);
 
-		goToByte("0x01001004");
+		goTo(addr(0x01001004));
 		assertPosition(hex, "44", 0);
 		assertPosition(octal, "104", 0);
 
@@ -452,7 +401,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteViewerComponent octal = getView("Octal");
 		setView(octal);
 
-		goToByte("0x01001004");
+		goTo(addr(0x01001004));
 		assertPosition(hex, "44", 0);
 		assertPosition(octal, "104", 0);
 
@@ -475,7 +424,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteViewerComponent octal = getView("Octal");
 		setView(octal);
 
-		goToByte("0x01001005");
+		goTo(addr(0x01001005));
 		assertPosition(hex, "55", 0);
 		assertPosition(octal, "125", 0);
 
@@ -528,70 +477,54 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testBytesPerLinesChange() throws Exception {
 
 		ByteViewerOptionsDialog d = launchByteViewerOptions();
-		FixedBitSizeValueField field =
-			(FixedBitSizeValueField) getInstanceField("bytesPerLineField", d);
-		runSwing(() -> field.setValue(BigInteger.valueOf(10)));
+		runSwing(() -> d.setBytesPerLine(10));
 		pressButtonByText(d.getComponent(), "OK");
 
 		waitForSwing();
 
 		// verify that the bytes per line is 10
-		assertEquals(10, plugin.getProvider().getBytesPerLine());
+		ByteViewerConfigOptions configOptions = provider.getConfigOptions();
+		assertEquals(10, configOptions.getBytesPerLine());
+
 		ByteViewerComponent c = panel.getCurrentComponent();
-		assertEquals(10, c.getNumberOfFields());
-		assertEquals(8, plugin.getProvider().getOffset());
+		assertEquals(10, runSwing(() -> c.getNumberOfFields()).intValue());
 	}
 
 	@Test
-	public void testSetAlignedAddress() throws Exception {
+	public void testOffsetChange() {
+		goTo(addr(0x0100100b));
 
-		goToByte("0x0100100b");
+		int offsetOfAddr = 16 /* bytes_per_line*/ - (0x0100100b - 0x1001000); // == 5
 
 		ByteViewerOptionsDialog d = launchByteViewerOptions();
-		AddressInput ai = (AddressInput) getInstanceField("addressInputField", d);
-
-		// verify that the text field has the min address since the
-		// current offset is 0
-		assertEquals(program.getMinAddress(), ai.getAddress());
-
-		runSwing(() -> ai.setValue("0100100b"));
+		runSwing(() -> d.setOffset(offsetOfAddr));
 		pressButtonByText(d.getComponent(), "OK");
-		// verify that offset label on the plugin shows '5'
-		assertEquals(5, plugin.getProvider().getOffset());
-		assertEquals("5", findLabelStr(plugin.getProvider().getComponent(), "Offset"));
-		assertEquals("0100100b", findLabelStr(plugin.getProvider().getComponent(), "Insertion"));
 
-		FieldLocation floc = getFieldLocation(addr(0x100101b));
-		assertEquals(2, floc.getIndex().intValue());
-		assertEquals(0, floc.getFieldNum());
+		// verify that offset label on the plugin shows the new offset
+		assertOffsetInfo(5, "0100100b");
 
-		floc = getFieldLocation(addr(0x100102b));
-		assertEquals(3, floc.getIndex().intValue());
-		assertEquals(0, floc.getFieldNum());
+		assertFieldLocationInfo(addr(0x0100100b), 1, 0 /* first field of the row */);
+		assertFieldLocationInfo(addr(0x0100102b), 3, 0 /* first field of the row */);
 	}
 
 	@Test
-	public void testSetBaseAddressSegmented() throws Exception {
+	public void testOffsetShiftViaToolbarButtonActions() {
+		DockingAction shiftLeftAction = provider.getShiftLeftAction();
+		DockingAction shiftRightAction = provider.getShiftRightAction();
 
-		ProgramManager pm = tool.getService(ProgramManager.class);
-		pm.closeProgram();
+		goTo(addr(0x0100100b));
+		assertFieldLocationInfo(addr(0x0100100b), 0, 0xb);
 
-		waitForSwing();
-
-		program = build8051();
-		pm.openProgram(program.getDomainFile());
-
-		ByteViewerOptionsDialog d = launchByteViewerOptions();
-		AddressInput ai = (AddressInput) getInstanceField("addressInputField", d);
-
-		// verify that the text field has the min address since the
-		// current offset is 0
-		assertEquals(program.getMinAddress(), ai.getAddress());
-
-		runSwing(() -> ai.setValue("0000:0c06"));
-		pressButtonByText(d.getComponent(), "OK");
-
-		assertEquals(10, plugin.getProvider().getOffset());
+		for (int i = 0; i < 0xb; i++) {
+			runSwing(() -> shiftLeftAction.actionPerformed(new DefaultActionContext()));
+			assertOffsetInfo(16 - i - 1, "0100100b");
+			assertFieldLocationInfo(addr(0x0100100b), 1, 0xb - i - 1);
+		}
+		for (int i = 0xb - 1; i > 0; i--) {
+			runSwing(() -> shiftRightAction.actionPerformed(new DefaultActionContext()));
+			assertOffsetInfo(16 - i, "0100100b");
+			assertFieldLocationInfo(addr(0x0100100b), 1, 0xb - i);
+		}
 	}
 
 	@Test
@@ -599,75 +532,94 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 		panel.setCurrentView(c); // force component to have focus
+		assertEquals(16, runSwing(() -> c.getNumberOfFields()).intValue());
 
-		goToByte("0x0100100b");
+		goTo(addr(0x0100100b));
 
 		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		FixedBitSizeValueField field =
-			(FixedBitSizeValueField) getInstanceField("groupSizeField", dialog);
 
-		// verify that the text field has the min address since the
-		// current offset is 0
-
-		runSwing(() -> field.setValue(BigInteger.valueOf(2)));
+		runSwing(() -> dialog.setHexGroupSize(2));
 		pressButtonByText(dialog.getComponent(), "OK");
 
-		assertEquals(2, c.getDataModel().getGroupSize());
+		DataFormatModel dataModel = c.getDataModel();
+		if (!(dataModel instanceof HexFormatModel hexModel)) {
+			fail();
+			return;
+		}
+		assertEquals(2, runSwing(() -> hexModel.getHexGroupSize()).intValue());
+		assertEquals(8, runSwing(() -> c.getNumberOfFields()).intValue());
 	}
 
 	@Test
 	public void testReorderViews() throws Exception {
-		loadViews("Ascii", "Octal");
-		final ByteViewerHeader columnHeader =
-			(ByteViewerHeader) findContainer(panel, ByteViewerHeader.class);
+		loadViews("Chars", "Octal");
+
+		List<String> names = panel.getViewNamesInDisplayOrder();
+		assertEquals("Hex", names.get(0));
+		assertEquals("Octal", names.get(1));
+		assertEquals("Chars", names.get(2));
+
+		final JTableHeader columnHeader = (JTableHeader) findContainer(panel, JTableHeader.class);
 		// move column 3 to 2
 		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 3, 2);
-			panel.columnMoved(ev);
+			TableColumnModel columnModel = columnHeader.getColumnModel();
+			columnModel.moveColumn(3, 2);
 		});
 
-		String[] names = panel.getDataModelInfo().getNames();
+		names = panel.getViewNamesInDisplayOrder();
+		assertEquals("Hex", names.get(0));
+		assertEquals("Chars", names.get(1));
+		assertEquals("Octal", names.get(2));
 
-		// move column 1 to 0
+		// move column 2 to 1
 		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 2, 1);
-			panel.columnMoved(ev);
+			TableColumnModel columnModel = columnHeader.getColumnModel();
+			columnModel.moveColumn(2, 1);
 		});
-		String[] newNames = panel.getDataModelInfo().getNames();
-		assertEquals(names[0], newNames[1]);
-		assertEquals(names[1], newNames[0]);
-		assertEquals(names[2], newNames[2]);
+		names = panel.getViewNamesInDisplayOrder();
+		assertEquals("Chars", names.get(0));
+		assertEquals("Hex", names.get(1));
+		assertEquals("Octal", names.get(2));
 
+	}
+
+	@Test
+	public void testResizeViews() {
+		loadViews("Chars", "Octal");
+		assertNotEquals(200, getViewWidth("Chars"));
+
+		setViewWidth("Chars", 200);
+
+		assertEquals(200, panel.getViewWidth("Chars"));
+	}
+
+	@Test
+	public void testResizeViewsSaveState() {
+		loadViews("Chars", "Octal");
+		assertNotEquals(200, getViewWidth("Chars"));
+
+		setViewWidth("Chars", 200);
+		env.saveRestoreToolState();
+
+		assertEquals(200, panel.getViewWidth("Chars"));
 	}
 
 	@Test
 	public void testReorderViewsSaveState() throws Exception {
 
-		loadViews("Ascii", "Octal");
-		final ByteViewerHeader columnHeader =
-			(ByteViewerHeader) findContainer(panel, ByteViewerHeader.class);
-		// move column 3 to 2
-		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 3, 2);
-			panel.columnMoved(ev);
-		});
+		loadViews("Chars", "Octal");
 
+		final JTableHeader columnHeader = (JTableHeader) findContainer(panel, JTableHeader.class);
 		// move column 1 to 0
 		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 1, 0);
-			panel.columnMoved(ev);
+			TableColumnModel columnModel = columnHeader.getColumnModel();
+			columnModel.moveColumn(3, 2);
 		});
-		String[] names = panel.getDataModelInfo().getNames();
+		List<String> names = panel.getViewNamesInDisplayOrder();
 
 		env.saveRestoreToolState();
-		String[] newNames = panel.getDataModelInfo().getNames();
-		for (int i = 0; i < names.length; i++) {
-			assertEquals(names[i], newNames[i]);
-		}
+		List<String> newNames = panel.getViewNamesInDisplayOrder();
+		assertEquals(names, newNames);
 	}
 
 	@Test
@@ -681,265 +633,6 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		performAction(cloneAction);
 		waitForSwing();
 		assertOnlyOneProviderToolbarAction();
-	}
-
-//==================================================================================================
-// Private Methods
-//==================================================================================================	
-
-	@SuppressWarnings("unchecked")
-	private void assertOnlyOneProviderToolbarAction() {
-
-		DockingWindowManager dwm = tool.getWindowManager();
-		ActionToGuiMapper guiActions =
-			(ActionToGuiMapper) getInstanceField("actionToGuiMapper", dwm);
-		GlobalMenuAndToolBarManager menuManager =
-			(GlobalMenuAndToolBarManager) getInstanceField("menuAndToolBarManager", guiActions);
-
-		Map<WindowNode, WindowActionManager> windowToActionManagerMap =
-			(Map<WindowNode, WindowActionManager>) getInstanceField("windowToActionManagerMap",
-				menuManager);
-
-		ProgramByteViewerComponentProvider provider = plugin.getProvider();
-		DockingActionIf showAction =
-			(DockingActionIf) getInstanceField("showProviderAction", provider);
-		String actionName = showAction.getName();
-		List<DockingActionIf> matches = new ArrayList<>();
-		for (WindowActionManager actionManager : windowToActionManagerMap.values()) {
-
-			ToolBarManager toolbarManager =
-				(ToolBarManager) getInstanceField("toolBarMgr", actionManager);
-			Map<String, List<ToolBarItemManager>> groupToItems =
-				(Map<String, List<ToolBarItemManager>>) getInstanceField("groupToItemsMap",
-					toolbarManager);
-
-			Collection<List<ToolBarItemManager>> values = groupToItems.values();
-			for (List<ToolBarItemManager> list : values) {
-				for (ToolBarItemManager manager : list) {
-					DockingActionIf action = manager.getAction();
-					if (actionName.equals(action.getName())) {
-						matches.add(action);
-					}
-				}
-			}
-		}
-
-		assertEquals("Should only have 1 action on toolbar to show the provider", 1,
-			matches.size());
-	}
-
-	private void goToOperand(String addr) {
-		goTo(addr(addr), OperandFieldFactory.FIELD_NAME);
-	}
-
-	private void goTo(Address a, String fieldName) {
-		int row = 0;
-		int col = 0;
-		assertTrue(cbPlugin.goToField(a, fieldName, row, col));
-	}
-
-	private void leftArrow() {
-		runSwing(() -> {
-			ByteViewerComponent view = panel.getCurrentComponent();
-			view.cursorLeft();
-		});
-	}
-
-	private void rightArrow() {
-
-		runSwing(() -> {
-			ByteViewerComponent view = panel.getCurrentComponent();
-			view.cursorRight();
-		});
-	}
-
-	private void rightArrowListing() {
-		FieldPanel fp = cbPlugin.getFieldPanel();
-		runSwing(() -> fp.cursorRight());
-	}
-
-	private void leftArrowListing() {
-		FieldPanel fp = cbPlugin.getFieldPanel();
-		runSwing(() -> fp.cursorLeft());
-	}
-
-	private void assertListingPosition(String expectedFieldText, int expectedColumn) {
-		FieldPanel fp = cbPlugin.getFieldPanel();
-
-		String fieldText = runSwing(() -> {
-			Field field = fp.getCurrentField();
-			String text = field.getText();
-			return text;
-		});
-		assertEquals(expectedFieldText, fieldText);
-
-		FieldLocation location = runSwing(() -> fp.getCursorLocation());
-		assertEquals(expectedColumn, location.getCol());
-	}
-
-	private void assertPosition(ByteViewerComponent view, String expectedFieldText,
-			int expectedColumn) {
-
-		String fieldText = runSwing(() -> {
-			Field field = view.getCurrentField();
-			String text = field.getText();
-			return text;
-		});
-		assertEquals(expectedFieldText, fieldText);
-
-		FieldLocation location = runSwing(() -> view.getCursorLocation());
-		assertEquals(expectedColumn, location.getCol());
-	}
-
-	private void goToByte(String addr) {
-		goToByte(addr(addr));
-	}
-
-	private void goToByte(Address addr) {
-
-		ByteViewerComponent view = runSwing(() -> panel.getCurrentComponent());
-		goToByte(view, addr);
-	}
-
-	private void goToByte(ByteViewerComponent view, Address addr) {
-		FieldLocation loc = getFieldLocation(addr);
-		runSwing(() -> {
-			view.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
-		});
-	}
-
-	private void setViewSelected(ByteViewerOptionsDialog dialog, String viewName,
-			boolean selected) {
-		Map<?, ?> checkboxMap = (Map<?, ?>) getInstanceField("checkboxMap", dialog);
-		JCheckBox checkbox = (JCheckBox) checkboxMap.get(viewName);
-		checkbox.setSelected(selected);
-	}
-
-	private ByteViewerOptionsDialog launchByteViewerOptions() {
-		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
-		assertTrue(action.isEnabled());
-
-		runSwing(() -> action.actionPerformed(new DefaultActionContext()), false);
-		waitForSwing();
-		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
-		return d;
-	}
-
-	private void setView(ByteViewerComponent view) {
-		runSwing(() -> panel.setCurrentView(view));
-	}
-
-	private ByteViewerComponent getView(String name) {
-		List<ByteViewerComponent> views = runSwing(() -> panel.getViewList());
-		for (ByteViewerComponent viewer : views) {
-			if (viewer.getName().equals(name)) {
-				return viewer;
-			}
-		}
-
-		fail("Cannot find view '" + name + "'");
-		return null;
-	}
-
-	private FieldLocation getFieldLocation(Address addr) {
-
-		return runSwing(() -> {
-			ByteViewerComponent c = panel.getCurrentComponent();
-			ProgramByteBlockSet blockset =
-				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr);
-			return c.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
-		});
-	}
-
-	private Address addr(long offset) {
-		return addr(Long.toHexString(offset));
-	}
-
-	private Address addr(String offset) {
-		return program.getAddressFactory().getAddress(offset);
-	}
-
-	private Address convertToAddr(ByteBlockInfo info) {
-		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddress(
-			info.getBlock(), info.getOffset());
-	}
-
-	private boolean byteBlockSelectionEquals(ByteBlockSelection b1, ByteBlockSelection b2) {
-
-		int nRanges = b1.getNumberOfRanges();
-		if (nRanges != b2.getNumberOfRanges()) {
-			return false;
-		}
-		for (int i = 0; i < nRanges; i++) {
-			ByteBlockRange range1 = b1.getRange(i);
-			ByteBlockRange range2 = b2.getRange(i);
-			if (!range1.equals(range2)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private ByteViewerComponent findComponent(Container container, String name) {
-		Component[] c = container.getComponents();
-		for (Component element : c) {
-			if (element instanceof ByteViewerComponent) {
-				if (((ByteViewerComponent) element).getDataModel().getName().equals(name)) {
-					return (ByteViewerComponent) element;
-				}
-			}
-			else if (element instanceof Container) {
-				ByteViewerComponent bvc = findComponent((Container) element, name);
-				if (bvc != null) {
-					return bvc;
-				}
-			}
-		}
-		return null;
-	}
-
-	private void loadViews(String... viewNames) {
-		assertNotEquals(0, viewNames.length);
-		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		for (String name : viewNames) {
-			setViewSelected(dialog, name, true);
-		}
-		pressButtonByText(dialog.getComponent(), "OK");
-	}
-
-	private Container findContainer(Container parent, Class<?> theClass) {
-		Component[] c = parent.getComponents();
-		for (Component element : c) {
-			if (element.getClass() == theClass) {
-				return (Container) element;
-			}
-			if (element instanceof Container) {
-				Container container = findContainer((Container) element, theClass);
-				if (container != null) {
-					return container;
-				}
-			}
-		}
-		return null;
-	}
-
-	private String findLabelStr(Container container, String name) {
-		Component[] c = container.getComponents();
-		for (Component element : c) {
-			if (element instanceof JLabel) {
-				if (name.equals(((JLabel) element).getName())) {
-					return ((JLabel) element).getText();
-				}
-			}
-			if (element instanceof Container) {
-				String str = findLabelStr((Container) element, name);
-				if (str != null) {
-					return str;
-				}
-			}
-		}
-		return null;
 	}
 
 }

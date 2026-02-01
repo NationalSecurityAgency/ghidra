@@ -45,8 +45,7 @@ void listSupportedArchMachTargets(void)
 int objdump_sprintf (SFILE *f, const char *format, ...)
 {
 
-	int i;
-	size_t n;
+	int n;
 	va_list args;
 
 	va_start (args, format);
@@ -57,6 +56,18 @@ int objdump_sprintf (SFILE *f, const char *format, ...)
 	return n;
 }
 
+/* Compatibility fix for binutils v 2.39 change to INIT_DISASSEMLE_INFO signature */
+int objdump_sprintf_styled(SFILE *f, enum disassembler_style style, const char *format, ...) {
+	int n;
+	va_list args;
+
+	va_start (args, format);
+	n = vsnprintf (f->buffer + f->pos, BUFF_SIZE, format, args);
+	strncat(disassembled_buffer, f->buffer, n);
+	va_end (args);
+
+	return n;
+}
 
 void configureDisassembleInfo(bfd* abfd,
 		disassemble_info* info,
@@ -67,7 +78,7 @@ void configureDisassembleInfo(bfd* abfd,
 
 	memset(sfile.buffer, 0x00, BUFF_SIZE);
 
-	INIT_DISASSEMBLE_INFO(*info, stdout, objdump_sprintf);
+	INIT_DISASSEMBLE_INFO(*info, stdout, objdump_sprintf, objdump_sprintf_styled);
 	info->arch = (enum bfd_architecture) arch;
 	info->mach = mach;
 	info->flavour = bfd_get_flavour(abfd);	

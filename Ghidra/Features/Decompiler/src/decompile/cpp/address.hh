@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 /// \file address.hh
 /// \brief Classes for specifying addresses and other low-level constants
 ///
-///  All addresses are absolute and there are are no registers in CPUI. However,
+///  All addresses are absolute and there are no registers in CPUI. However,
 ///  all addresses are prefixed with an "immutable" pointer, which can
 ///  specify a separate RAM space, a register space, an i/o space etc. Thus
 ///  a translation from a real machine language will typically simulate registers
@@ -98,10 +98,10 @@ public:
   void encode(Encoder &encoder) const; ///< Encode \b this to a stream
   void encode(Encoder &encoder,int4 size) const; ///< Encode \b this and a size to a stream
 
-  /// Restore an address from parsed XML
+  /// Decode an address from a stream
   static Address decode(Decoder &decoder);
 
-  /// Restore an address and size from parsed XML
+  /// Decode an address and size from a stream
   static Address decode(Decoder &decoder,int4 &size);
 };
 
@@ -221,7 +221,7 @@ class RangeProperties {
   bool seenLast;		///< End of the range is actively specified
 public:
   RangeProperties(void) { first = 0; last = 0; isRegister = false; seenLast = false; }
-  void decode(Decoder &decoder);	///< Restore \b this from an XML stream
+  void decode(Decoder &decoder);	///< Decode \b this from a stream
 };
 
 /// \brief A disjoint set of Ranges, possibly across multiple address spaces
@@ -558,7 +558,7 @@ inline intb zero_extend(intb val,int4 bit)
 
 {
   int4 sa = sizeof(intb)*8 - (bit+1);
-  return (intb)((uintb)(val << sa) >> sa);
+  return (intb)(((uintb)val << sa) >> sa);
 }
 
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set
@@ -576,11 +576,6 @@ extern int4 count_leading_zeros(uintb val);		///< Return the number of leading z
 
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
 extern int4 bit_transitions(uintb val,int4 sz);		///< Calculate the number of bit transitions in the sized value
-
-extern void mult64to128(uint8 *res,uint8 x,uint8 y);
-extern void unsignedSubtract128(uint8 *a,uint8 *b);
-extern int4 unsignedCompare128(uint8 *a,uint8 *b);
-extern int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r);
 
 } // End namespace ghidra
 #endif

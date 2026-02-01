@@ -17,6 +17,6 @@ package ghidra.program.model.data.ISF;
 
 public interface IsfObject {
 
-	// EMPTY by design
-
+	// EMPTY
+	
 }

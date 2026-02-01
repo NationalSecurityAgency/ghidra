@@ -13,14 +13,9 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Watches</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerWatchesPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerWatchesPlugin.png">
+    </DIV>
 
     <P>Watches refer to expressions which are evaluated each pause in order to monitor the value of
     variables in the target machine state. The watch variables are expressed in Sleigh and
@@ -32,15 +27,15 @@
 
     <P>The watch window uses colors to hint about changes in and freshness of displayed values. By
     default, changed values are displayed in red, and stale values are displayed in dark grey. A
-    "stale" value is one which depends on any register or memory whose contents are not known. The
-    value displayed is that computed from the last recorded contents, defaulting to 0 when never
-    recorded. Simply, a "changed" watch is one whose value has just changed. For example, if a
-    value changes as result of stepping, then that watch is changed. However, given the possibility
-    of rewinding, changing thread focus, etc., "changed" is actually subtly more flexible. The
-    watch remembers the evaluation from the user's last coordinates (time, thread, frame, etc.) as
-    well as the current coordinates. So, "changed" more precisely refers to a watch whose value
-    differs between those two coordinates. This permits the user to switch focus between different
-    coordinates and quickly identify what is different.</P>
+    <EM>stale</EM> value is one which depends on any register or memory whose contents are not
+    known. The value displayed is that computed from the last recorded contents, defaulting to 0
+    when never recorded. A <EM>changed</EM> watch is one whose value has just changed. For example,
+    if a value changes as result of stepping, then that watch is changed. However, given the
+    possibility of rewinding, changing thread focus, etc., "changed" is actually subtly more
+    flexible. The watch remembers the evaluation from the user's last coordinates (time, thread,
+    frame, etc.) as well as the current coordinates. So, "changed" more precisely refers to a watch
+    whose value differs between those two coordinates. This permits the user to switch focus
+    between different coordinates and quickly identify what is different.</P>
 
     <H2>Examples</H2>
 
@@ -95,8 +90,8 @@
       rendered in <FONT color="red">red</FONT>.</LI>
 
       <LI>Type - the user-modifiable type of the watch. Note the type is not marked up in the
-      trace. Clicking the Apply Data Type action will apply it to the current trace, if
-      possible.</LI>
+      trace. Clicking the <A href="#apply_data_type">Apply Data Type</A> action will apply it to
+      the current trace, if possible.</LI>
 
       <LI>Representation - the value of the watch as interpreted by the selected data type. If the
       value is an address, i.e., Type is a pointer, then double-clicking this cell will navigate
@@ -172,7 +167,6 @@
     <P>This toggle is a write protector for machine state. To modify a watch's value, this toggle
     must be enabled. Edits are directed according the to <A href=
     "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
-    Plugin</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr" column
-    cannot be edited, yet.</P>
+    Plugin</A>.</P>
   </BODY>
 </HTML>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.Date;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
+import ghidra.program.database.ProgramOverlayAddressSpace;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -27,10 +28,13 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.reloc.RelocationTable;
+import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
+import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -117,7 +121,6 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public SymbolTable getSymbolTable();
 
 	/**
-	
 	 * Returns the external manager.
 	 * @return the external manager
 	 */
@@ -146,6 +149,14 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @return the bookmark manager
 	 */
 	public BookmarkManager getBookmarkManager();
+
+	/**
+	 * Returns the program's {@link SourceFileManager}.
+	 * @return the source file manager
+	 */
+	default public SourceFileManager getSourceFileManager() {
+		return SourceFileManager.DUMMY;
+	}
 
 	/**
 	 * Gets the default pointer size in bytes as it may be stored within the program listing.
@@ -200,17 +211,19 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public void setPreferredRootNamespaceCategoryPath(String categoryPath);
 
 	/**
-	 * Gets the path to the program's executable file.
-	 * For example, <code>C:\Temp\test.exe</code>.
+	 * Gets the path to the program's executable file. For example, {@code /home/user/foo.exe}.
 	 * This will allow plugins to execute the program.
-	 *
+	 * <p>
+	 * NOTE: The format of the path is not guaranteed to follow any standard naming conventions.
+	 * If used for anything other than display purpose, callers of this method should take extra
+	 * steps to ensure the path is in a form suitable for their needs.
+	 * 
 	 * @return String  path to program's exe file
 	 */
 	public String getExecutablePath();
 
 	/**
-	 * Sets the path to the program's executable file.
-	 * For example, <code>C:\Temp\test.exe</code>.
+	 * Sets the path to the program's executable file. For example, {@code /home/user/foo.exe}.
 	 *
 	 * @param path  the path to the program's exe
 	 */
@@ -270,12 +283,14 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * Returns the language used by this program.
 	 * @return the language used by this program.
 	 */
+	@Override
 	public Language getLanguage();
 
 	/** 
 	 * Returns the CompilerSpec currently used by this program.
 	 * @return the compilerSpec currently used by this program.
 	 */
+	@Override
 	public CompilerSpec getCompilerSpec();
 
 	/**
@@ -301,7 +316,10 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public ProgramContext getProgramContext();
 
 	/**
-	 * get the program's minimum address.
+	 * Get the program's minimum address.
+	 * NOTE: An {@link AddressRange} should generally not be formed using this address
+	 * and {@link #getMaxAddress()} since it may span multiple {@link AddressSpace}s.
+	 * 
 	 * @return the program's minimum address or null if no memory blocks
 	 * have been defined in the program.
 	 */
@@ -309,6 +327,9 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 
 	/**
 	 * Get the programs maximum address.
+	 * NOTE: An {@link AddressRange} should generally not be formed using this address
+	 * and {@link #getMinAddress()} since it may span multiple {@link AddressSpace}s.
+	 * 
 	 * @return the program's maximum address or null if no memory blocks
 	 * have been defined in the program.
 	 */
@@ -324,32 +345,92 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 *  Returns the AddressFactory for this program.
 	 *  @return the program address factory
 	 */
+	@Override
 	public AddressFactory getAddressFactory();
 
 	/**
-	 * Return an array of Addresses that could represent the given
-	 * string.
-	 * @param addrStr the string to parse.
+	 * Return an array of memory Addresses that could correspond to the given
+	 * string.  Non-memory spaces are not considered.  Since this method allows
+	 * memory-block style addresses first it can be slower to parse than using 
+	 * {@link AddressFactory#getAddress(String)} or {@link AddressFactory#getAllAddresses(String)}
+	 * if block-name based address need not be handled.
+	 * <p> 
+	 * Supported addresses include (order also indicates precedence):
+	 * <ul>
+	 * <li>Memory block-name based address (e.g., 'MyBlk:abcd', 'MyBlk::abcd' ; only one address 
+	 * will be returned)</li>
+	 * <li>Default memory space (hex-offset only or with space-name, e.g., 'abcd', '0xabcd')</li>
+	 * <li>Memory space-name based address (with hex-offset, e.g., 'ram:abc')</li>
+	 * </ul>
+	 * <p>
+	 * NOTE: Names are case-sensitive.
+	 * 
+	 * @param addrStr the string to parse (memory block style addresses are also supported).
 	 * @return zero length array if addrStr is properly formatted but
 	 * no matching addresses were found or if the address is improperly formatted.
 	 */
 	public Address[] parseAddress(String addrStr);
 
 	/**
-	 * Return an array of Addresses that could represent the given
-	 * string.
-	 * @param addrStr the string to parse.
-	 * @param caseSensitive whether or not to process any addressSpace names as case sensitive.
+	 * Return an array of memory Addresses that could correspond to the given
+	 * string.  Non-memory spaces are not considered.  Since this method allows
+	 * memory-block style addresses first it can be slower to parse than using 
+	 * {@link AddressFactory#getAddress(String)} or {@link AddressFactory#getAllAddresses(String)}
+	 * if block-name based address need not be handled.
+	 * <p> 
+	 * Supported addresses include (order also indicates precedence):
+	 * <ul>
+	 * <li>Memory block-name based address (e.g., 'MyBlk:abcd', 'MyBlk::abcd' ; only one address 
+	 * will be returned)</li>
+	 * <li>Default memory space (hex-offset only or with space-name, e.g., 'abcd', '0xabcd')</li>
+	 * <li>Memory space-name based address (with hex-offset, e.g., 'ram:abc')</li>
+	 * </ul>
+	 * 
+	 * @param addrStr the string to parse (memory block style addresses are also supported).
+	 * @param caseSensitive whether or not to process space/block names as case sensitive.
 	 * @return zero length array if addrStr is properly formatted but
 	 * no matching addresses were found or if the address is improperly formatted.
 	 */
 	public Address[] parseAddress(String addrStr, boolean caseSensitive);
 
 	/**
-	 * Invalidates any caching in a program.
-	 * NOTE: Over-using this method can adversely affect system performance.
+	 * Create a new overlay space based upon the given base AddressSpace
+	 * @param overlaySpaceName the name of the new overlay space.
+	 * @param baseSpace the base AddressSpace to overlay (i.e., overlayed-space)	
+	 * @return the new overlay space
+	 * @throws DuplicateNameException if an address space already exists with specified overlaySpaceName.
+	 * @throws LockException if the program is shared and not checked out exclusively.
+	 * @throws IllegalStateException if image base override is active
+	 * @throws InvalidNameException if overlaySpaceName contains invalid characters
 	 */
-	public void invalidate();
+	public ProgramOverlayAddressSpace createOverlaySpace(String overlaySpaceName,
+			AddressSpace baseSpace) throws IllegalStateException, DuplicateNameException,
+			InvalidNameException, LockException;
+
+	/**
+	 * Rename an existing overlay address space.  
+	 * NOTE: This experimental method has known limitations with existing {@link Address} and 
+	 * {@link AddressSpace} objects following an undo/redo which may continue to refer to the old 
+	 * overlay name which may lead to unxpected errors.
+	 * @param overlaySpaceName overlay address space name
+	 * @param newName new name for overlay
+	 * @throws NotFoundException if the specified overlay space was not found
+	 * @throws InvalidNameException if new name is invalid
+	 * @throws DuplicateNameException if new name already used by another address space
+	 * @throws LockException if program does not has exclusive access
+	 */
+	public void renameOverlaySpace(String overlaySpaceName, String newName)
+			throws NotFoundException, InvalidNameException, DuplicateNameException, LockException;
+
+	/**
+	 * Remove the specified overlay address space from this program.
+	 * @param overlaySpaceName overlay address space name
+	 * @return true if successfully removed, else false if blocks still make use of overlay space.
+	 * @throws LockException if program does not has exclusive access
+	 * @throws NotFoundException if specified overlay space not found in program
+	 */
+	public boolean removeOverlaySpace(String overlaySpaceName)
+			throws LockException, NotFoundException;
 
 	/**
 	 * Returns the register with the given name;
@@ -489,4 +570,5 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @return unique program ID
 	 */
 	public long getUniqueProgramID();
+
 }

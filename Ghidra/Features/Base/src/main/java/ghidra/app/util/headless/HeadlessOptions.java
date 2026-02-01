@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import ghidra.app.util.opinion.Loader;
 import ghidra.app.util.opinion.LoaderService;
+import ghidra.formats.gfilesystem.GFileSystem;
 import ghidra.framework.client.HeadlessClientAuthenticator;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -60,8 +61,12 @@ public class HeadlessOptions {
 	// -overwrite
 	boolean overwrite;
 
+	// -mirror
+	boolean mirror;
+
 	// -recursive
 	boolean recursive;
+	Integer recursiveDepth; // 'null' means use default depth, which is different for files vs dirs
 
 	// -readOnly
 	boolean readOnly;
@@ -128,6 +133,7 @@ public class HeadlessOptions {
 		propertiesFilePaths = new ArrayList<>();
 		overwrite = false;
 		recursive = false;
+		recursiveDepth = null;
 		readOnly = false;
 		deleteProject = false;
 		analyze = true;
@@ -318,15 +324,38 @@ public class HeadlessOptions {
 	}
 
 	/**
-	 * This method can be used to enable recursive processing of files during
-	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of files to
-	 * occur, the user must have specified a directory (and not a specific file)
-	 * for the Headless Analyzer to import or process.
+	 * Enables/disables mirroring of the imported file(s) filesystem path in the project.
 	 * 
-	 * @param enabled  if true, enables recursive processing
+	 * @param enabled True if filesystem mirroring should happen; otherwise, false.
+	 */
+	public void enableMirroring(boolean enabled) {
+		this.mirror = enabled;
+	}
+
+	/**
+	 * This method can be used to enable recursive processing of files during
+	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of 
+	 * files to occur, the user must have specified a project folder to process or a directory or 
+	 * supported {@link GFileSystem} container file to import
+	 * 
+	 * @param enabled if true, enables recursive import/processing
 	 */
 	public void enableRecursiveProcessing(boolean enabled) {
+		enableRecursiveProcessing(enabled, null);
+	}
+
+	/**
+	 * This method can be used to enable recursive processing of files during
+	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of 
+	 * files to occur, the user must have specified a project folder to process or a directory or 
+	 * supported {@link GFileSystem} container file to import
+	 * 
+	 * @param enabled if true, enables recursive import/processing
+	 * @param depth maximum container recursion depth (could be null to use default)
+	 */
+	public void enableRecursiveProcessing(boolean enabled, Integer depth) {
 		this.recursive = enabled;
+		this.recursiveDepth = depth;
 	}
 
 	/**
@@ -473,30 +502,29 @@ public class HeadlessOptions {
 
 	/**
 	 * Sets the loader to use for imports, as well as any loader-specific arguments.  A null loader 
-	 * will attempt "best-guess" if possible.  Loader arguments are not supported if a "best-guess"
-	 * is made.
+	 * name will attempt a "best-guess" if possible.
 	 * 
-	 * @param loaderName The name (simple class name) of the loader to use.
-	 * @param loaderArgs A list of loader-specific arguments.  Could be null if there are none.
-	 * @throws InvalidInputException if an invalid loader name was specified, or if loader arguments
-	 *   were specified but a loader was not.
+	 * @param loaderName The name (simple class name) of the loader to use (could be null)
+	 * @throws InvalidInputException if an invalid loader name was specified
 	 */
-	public void setLoader(String loaderName, List<Pair<String, String>> loaderArgs)
-			throws InvalidInputException {
+	public void setLoader(String loaderName) throws InvalidInputException {
 		if (loaderName != null) {
 			this.loaderClass = LoaderService.getLoaderClassByName(loaderName);
 			if (this.loaderClass == null) {
 				throw new InvalidInputException("Invalid loader name specified: " + loaderName);
 			}
-			this.loaderArgs = loaderArgs;
 		}
 		else {
-			if (loaderArgs != null && loaderArgs.size() > 0) {
-				throw new InvalidInputException(
-					"Loader arguments defined without a loader being specified.");
-			}
 			this.loaderClass = null;
-			this.loaderArgs = null;
 		}
+	}
+
+	/**
+	 * Sets the loader arguments
+	 * 
+	 * @param loaderArgs A list of loader-specific arguments.  Could be null if there are none.
+	 */
+	public void setLoaderArgs(List<Pair<String, String>> loaderArgs) {
+		this.loaderArgs = loaderArgs;
 	}
 }

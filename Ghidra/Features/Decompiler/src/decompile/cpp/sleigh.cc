@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -188,6 +188,12 @@ AddrSpace *SleighBuilder::generatePointer(const VarnodeTpl *vntpl,VarnodeData &v
   return hand.space;
 }
 
+/// \brief Add in an additional offset to the address of a dynamic Varnode
+///
+/// The Varnode is ultimately read/written via LOAD/STORE operation AND has undergone a truncation
+/// operation, so an additional offset needs to get added to the pointer referencing the Varnode.
+/// \param op is the LOAD/STORE operation being generated
+/// \param vntpl is the dynamic Varnode
 void SleighBuilder::generatePointerAdd(PcodeData *op,const VarnodeTpl *vntpl)
 
 {
@@ -310,7 +316,7 @@ void SleighBuilder::buildEmpty(Constructor *ct,int4 secnum)
 void SleighBuilder::setUniqueOffset(const Address &addr)
 
 {
-  uniqueoffset = (addr.getOffset() & uniquemask)<<4;
+  uniqueoffset = (addr.getOffset() & uniquemask)<<8;
 }
 
 /// \brief Constructor
@@ -331,7 +337,7 @@ SleighBuilder::SleighBuilder(ParserWalker *w,DisassemblyCache *dcache,PcodeCache
   const_space = cspc;
   uniq_space = uspc;
   uniquemask = umask;
-  uniqueoffset = (walker->getAddr().getOffset() & uniquemask)<<4;
+  uniqueoffset = (walker->getAddr().getOffset() & uniquemask)<<8;
 }
 
 void SleighBuilder::appendBuild(OpTpl *bld,int4 secnum)
@@ -553,7 +559,13 @@ void Sleigh::initialize(DocumentStorage &store)
     const Element *el = store.getTag("sleigh");
     if (el == (const Element *)0)
       throw LowlevelError("Could not find sleigh tag");
-    restoreXml(el);
+    sla::FormatDecode decoder(this);
+    ifstream s(el->getContent(), std::ios_base::binary);
+    if (!s)
+      throw LowlevelError("Could not open .sla file: " + el->getContent());
+    decoder.ingestStream(s);
+    s.close();
+    decode(decoder);
   }
   else
     reregisterContext();

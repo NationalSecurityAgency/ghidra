@@ -24,7 +24,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.table.GTableFilterPanel;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 
 public abstract class DebuggerBreakpointStateTableCellEditor<T> extends AbstractCellEditor
 		implements TableCellEditor, ActionListener {

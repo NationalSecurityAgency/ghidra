@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,13 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -32,27 +32,28 @@ import ghidra.util.task.TaskMonitor;
  * A sequence of thread steps, each repeated some number of times
  */
 public class Sequence implements Comparable<Sequence> {
-	public static final String SEP = ";";
+	private static final String SEP = ";";
 
 	/**
 	 * Parse (and normalize) a sequence of steps
 	 * 
 	 * <p>
 	 * This takes a semicolon-separated list of steps in the form specified by
-	 * {@link Step#parse(String)}. Each step may or may not specify a thread, but it's uncommon for
-	 * any but the first step to omit the thread. The sequence is normalized as it is parsed, so any
-	 * step after the first that omits a thread will be combined with the previous step. When the
-	 * first step applies to the "last thread," it typically means the "event thread" of the source
-	 * trace snapshot.
+	 * {@link Step#parse(String, TimeRadix)}. Each step may or may not specify a thread, but it's
+	 * uncommon for any but the first step to omit the thread. The sequence is normalized as it is
+	 * parsed, so any step after the first that omits a thread will be combined with the previous
+	 * step. When the first step applies to the "last thread," it typically means the "event thread"
+	 * of the source trace snapshot.
 	 * 
 	 * @param seqSpec the string specification of the sequence
+	 * @param radix the radix
 	 * @return the parsed sequence
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	public static Sequence parse(String seqSpec) {
+	public static Sequence parse(String seqSpec, TimeRadix radix) {
 		Sequence result = new Sequence();
 		for (String stepSpec : seqSpec.split(SEP)) {
-			Step step = Step.parse(stepSpec);
+			Step step = Step.parse(stepSpec, radix);
 			result.advance(step);
 		}
 		return result;
@@ -108,7 +109,11 @@ public class Sequence implements Comparable<Sequence> {
 
 	@Override
 	public String toString() {
-		return StringUtils.join(steps, SEP);
+		return toString(TimeRadix.DEFAULT);
+	}
+
+	public String toString(TimeRadix radix) {
+		return steps.stream().map(s -> s.toString(radix)).collect(Collectors.joining(SEP));
 	}
 
 	/**
@@ -195,6 +200,35 @@ public class Sequence implements Comparable<Sequence> {
 		return Long.max(0, count);
 	}
 
+	/**
+	 * Drop the last step from this sequence
+	 * 
+	 * @return the sequence with the last step removed
+	 */
+	public Sequence dropLast() {
+		if (steps.isEmpty()) {
+			throw new NoSuchElementException();
+		}
+		return new Sequence(new ArrayList<>(steps.subList(0, steps.size() - 1)));
+	}
+
+	/**
+	 * {@return the last step}
+	 */
+	public Step last() {
+		return steps.getLast();
+	}
+
+	/**
+	 * Truncate this sequence to the first count steps
+	 * 
+	 * @param count the count
+	 * @return the new sequence
+	 */
+	public Sequence truncate(int count) {
+		return new Sequence(new ArrayList<>(steps.subList(0, count)));
+	}
+
 	@Override
 	public Sequence clone() {
 		return new Sequence(
@@ -240,7 +274,7 @@ public class Sequence implements Comparable<Sequence> {
 	}
 
 	/**
-	 * Richly compare to sequences
+	 * Richly compare two sequences
 	 * 
 	 * <p>
 	 * The result indicates not only which is "less" or "greater" than the other, but also indicates
@@ -275,24 +309,22 @@ public class Sequence implements Comparable<Sequence> {
 			Step s2 = that.steps.get(i);
 			result = s1.compareStep(s2);
 			switch (result) {
-				case UNREL_LT:
-				case UNREL_GT:
+				case UNREL_LT, UNREL_GT -> {
 					return result;
-				case REL_LT:
-					if (i + 1 == this.steps.size()) {
-						return CompareResult.REL_LT;
-					}
-					else {
-						return CompareResult.UNREL_LT;
-					}
-				case REL_GT:
-					if (i + 1 == that.steps.size()) {
-						return CompareResult.REL_GT;
-					}
-					else {
-						return CompareResult.UNREL_GT;
-					}
-				default: // EQUALS, next step
+				}
+				case REL_LT -> {
+					return i + 1 == this.steps.size()
+							? CompareResult.REL_LT
+							: CompareResult.UNREL_LT;
+				}
+				case REL_GT -> {
+					return i + 1 == that.steps.size()
+							? CompareResult.REL_GT
+							: CompareResult.UNREL_GT;
+				}
+				default -> {
+					// EQUALS, next step
+				}
 			}
 		}
 		if (that.steps.size() > min) {
@@ -351,6 +383,18 @@ public class Sequence implements Comparable<Sequence> {
 		long count = 0;
 		for (Step step : steps) {
 			count += step.getTickCount();
+		}
+		return count;
+	}
+
+	public int count() {
+		return steps.size();
+	}
+
+	public long totalSkipCount() {
+		long count = 0;
+		for (Step step : steps) {
+			count += step.getSkipCount();
 		}
 		return count;
 	}
@@ -439,5 +483,47 @@ public class Sequence implements Comparable<Sequence> {
 			thread = step.getThread(tm, eventThread);
 		}
 		return thread;
+	}
+
+	/**
+	 * Check if the first instruction step is actually to finish an incomplete instruction.
+	 * 
+	 * @param thread the thread whose instruction to potentially finish
+	 * @param machine a machine bound to the trace whose current state reflects the given position
+	 * @return if a finish was performed, this sequence with one initial step removed, i.e., a
+	 *         sequence representing the steps remaining
+	 */
+	Sequence checkFinish(TraceThread thread, PcodeMachine<?> machine) {
+		PcodeThread<?> emuThread = machine.getThread(thread.getPath(), true);
+		if (emuThread.getFrame() == null) {
+			return this;
+		}
+		Sequence result = new Sequence(new ArrayList<>(steps));
+		emuThread.finishInstruction();
+		if (result.steps.get(0).rewind(1) == 0) {
+			result.steps.remove(0);
+		}
+		return result;
+	}
+
+	public boolean differsOnlyByPatch(Sequence that) {
+		int size = this.steps.size();
+		if (size == that.steps.size()) {
+			if (size == 0) {
+				return true;
+			}
+			if (!this.steps.subList(0, size - 1).equals(that.steps.subList(0, size - 1))) {
+				return false;
+			}
+			Step thisLast = this.steps.getLast();
+			Step thatLast = that.steps.getLast();
+			return thisLast.equals(thatLast) ||
+				thisLast instanceof PatchStep && thatLast instanceof PatchStep;
+		}
+		if (size == that.steps.size() - 1) {
+			Step thatLast = that.steps.getLast();
+			return thatLast instanceof PatchStep;
+		}
+		return false;
 	}
 }

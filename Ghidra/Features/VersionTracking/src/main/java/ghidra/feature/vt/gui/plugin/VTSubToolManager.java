@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,11 @@ import java.awt.Component;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.KeyStroke;
-
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.output.XMLOutputter;
 
 import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
@@ -38,7 +37,7 @@ import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.duallisting.VTDualListingHighlightProvider;
@@ -51,7 +50,6 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.project.tool.GhidraTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
@@ -62,6 +60,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.xml.GenericXMLOutputter;
 
 public class VTSubToolManager implements VTControllerListener, OptionsChangeListener {
+	private final static String SAVED_MARKER_NAME = "HAS_BEEN_SAVED";
 	private final static String SOURCE_TOOL_NAME = "Version Tracking (SOURCE TOOL)";
 	private final static String DESTINATION_TOOL_NAME = "Version Tracking (DESTINATION TOOL)";
 
@@ -77,6 +76,46 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		this.plugin = plugin;
 		this.controller = plugin.getController();
 		controller.addListener(this);
+
+		refreshTools();
+
+	}
+
+	/**
+	 * Checks to see if the primary Version Tracking tool is new (meaning that it has not yet been
+	 * saved).  If the tool is new, we will delete any saved sub-tools.  This behavior allows users
+	 * to have the sub-tools also reset to the default state after the re-import their default 
+	 * Version Tracking tool. 
+	 */
+	private void refreshTools() {
+
+		// We add a PreferenceState to the tool that will get saved to the tool's xml.   This value
+		// is not part of the default Version Tracking tool.  Thus, if we preference exists, then
+		// we know the tool has previously been saved.
+		PluginTool tool = plugin.getTool();
+		DockingWindowManager dwm = tool.getWindowManager();
+		PreferenceState state = dwm.getPreferenceState(SAVED_MARKER_NAME);
+		if (state != null) {
+			Msg.trace(this, "Found a saved Version Tracking tool.");
+			return;
+		}
+
+		Msg.trace(this, "Found a new Version Tracking tool.  Deleting saved sub-tools.");
+		deleteSubTool(SOURCE_TOOL_NAME);
+		deleteSubTool(DESTINATION_TOOL_NAME);
+
+		PreferenceState newState = new PreferenceState();
+		dwm.putPreferenceState(SAVED_MARKER_NAME, newState);
+	}
+
+	private void deleteSubTool(String name) {
+
+		String toolFileName = name + ".tool";
+		File toolFile = new File(ToolUtils.getApplicationToolDirPath(), toolFileName);
+		if (toolFile.exists()) {
+			Msg.trace(this, "Deleting sub-tool: " + toolFile);
+			toolFile.delete();
+		}
 	}
 
 	Program openDestinationProgram(DomainFile domainFile, Component parent) {
@@ -84,7 +123,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			destinationTool = createTool(DESTINATION_TOOL_NAME, false);
 		}
 		ProgramManager service = destinationTool.getService(ProgramManager.class);
-		return service.openProgram(domainFile, parent);
+		return service.openProgram(domainFile);
 	}
 
 	Program openSourceProgram(DomainFile domainFile, Component parent) {
@@ -92,7 +131,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			sourceTool = createTool(SOURCE_TOOL_NAME, true);
 		}
 		ProgramManager service = sourceTool.getService(ProgramManager.class);
-		return service.openProgram(domainFile, parent);
+		return service.openProgram(domainFile);
 	}
 
 	void closeSourceProgram(Program source) {
@@ -144,8 +183,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			toolTemplate = ToolUtils.readToolTemplate(toolFileName);
 		}
 
-		PluginTool newTool =
-			(GhidraTool) toolTemplate.createTool(controller.getTool().getProject());
+		PluginTool newTool = toolTemplate.createTool(controller.getTool().getProject());
 		try {
 			VersionTrackingSubordinatePluginX pluginX =
 				new VersionTrackingSubordinatePluginX(newTool, isSourceTool);
@@ -190,30 +228,35 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		if (processingOptions) {
 			return;
 		}
+
+		if (!(newValue instanceof ActionTrigger)) {
+			return;
+		}
+
 		processingOptions = true;
 		try {
-			if (!(newValue instanceof KeyStroke)) {
-				return;
-			}
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			if (sourceTool != null) {
-				Options sourceOptions = sourceTool.getOptions(ToolConstants.KEY_BINDINGS);
-				if (sourceOptions != options) {
-					sourceOptions.setKeyStroke(optionName, keyStroke);
-					sourceTool.refreshKeybindings();
-					return;
-				}
-			}
-			if (destinationTool != null) {
-				Options destinationOptions = destinationTool.getOptions(ToolConstants.KEY_BINDINGS);
-				if (destinationOptions != options) {
-					destinationOptions.setKeyStroke(optionName, keyStroke);
-					destinationTool.refreshKeybindings();
-				}
-			}
+			updateActionTrigger(options, optionName, (ActionTrigger) newValue);
 		}
 		finally {
 			processingOptions = false;
+		}
+	}
+
+	private void updateActionTrigger(ToolOptions options, String optionName,
+			ActionTrigger trigger) {
+		if (sourceTool != null) {
+			Options sourceOptions = sourceTool.getOptions(DockingToolConstants.KEY_BINDINGS);
+			if (sourceOptions != options) {
+				sourceOptions.setActionTrigger(optionName, trigger);
+				return;
+			}
+		}
+		if (destinationTool != null) {
+			Options destinationOptions =
+				destinationTool.getOptions(DockingToolConstants.KEY_BINDINGS);
+			if (destinationOptions != options) {
+				destinationOptions.setActionTrigger(optionName, trigger);
+			}
 		}
 	}
 
@@ -352,7 +395,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	@Override
 	public void sessionUpdated(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_STATUS_CHANGED)) {
+		if (ev.contains(VTEvent.MARKUP_ITEM_STATUS_CHANGED)) {
 			CodeViewerService service = sourceTool.getService(CodeViewerService.class);
 			if (service == null) {
 				return;
@@ -363,7 +406,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			ListingPanel listingPanel = service.getListingPanel();
 			listingPanel.repaint();
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			// This kicks the sub-tool highlight providers so each gets fresh
 			// markup item information.
 			for (VersionTrackingSubordinatePluginX pluginX : pluginList) {
@@ -385,7 +428,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		try {
 			OutputStream os = new FileOutputStream(toolFile);
 			Document doc = new Document(t.getToolTemplate(true).saveToXml());
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 			os.close();
 		}
@@ -658,7 +701,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	 * 
 	 * @return The source tool from the VT session.
 	 */
-	PluginTool getSourceTool() {
+	public PluginTool getSourceTool() {
 		return sourceTool;
 	}
 
@@ -761,7 +804,8 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	}
 
 	private boolean isCursorOnScreen(CodeViewerService service) {
-		FieldPanel fieldPanel = service.getFieldPanel();
+		ListingPanel listingPanel = service.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
 		int cursorOffset = fieldPanel.getCursorOffset();
 		return cursorOffset >= 0; // negative offset means offscreen
 	}
@@ -778,7 +822,10 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		if (service == null) {
 			return null;
 		}
-		FieldSelection selection = service.getFieldPanel().getSelection();
+
+		ListingPanel listingPanel = service.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
+		FieldSelection selection = fieldPanel.getSelection();
 		AddressIndexMap addressIndexMap = service.getListingPanel().getAddressIndexMap();
 		AddressSet addressSet = addressIndexMap.getAddressSet(selection);
 		return addressSet;
@@ -787,13 +834,11 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	/**
 	 * Sets the address set to be the selection in the tool.
 	 * 
-	 * @param tool
-	 *            the tool
-	 * @param set
-	 *            the addressSet to use for the selection
+	 * @param tool the tool
+	 * @param addresses the addressSet to use for the selection
 	 */
-	private void setSelectionInTool(PluginTool tool, AddressSetView addressSet) {
-		ProgramSelection programSelection = new ProgramSelection(addressSet);
+	private void setSelectionInTool(PluginTool tool, AddressSetView addresses) {
+		ProgramSelection programSelection = new ProgramSelection(addresses);
 		CodeViewerService service = tool.getService(CodeViewerService.class);
 		if (service == null) {
 			return;

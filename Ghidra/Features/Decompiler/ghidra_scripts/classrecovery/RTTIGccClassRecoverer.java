@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,83 +17,30 @@
 package classrecovery;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeIterator;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.CharDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.data.LongDataType;
-import ghidra.program.model.data.LongLongDataType;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.PointerTypedef;
-import ghidra.program.model.data.StringDataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.TerminatedStringDataType;
-import ghidra.program.model.data.UnsignedIntegerDataType;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Bookmark;
-import ghidra.program.model.listing.BookmarkType;
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.program.model.symbol.ReferenceManager;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.Msg;
-import ghidra.util.bytesearch.GenericByteSequencePattern;
-import ghidra.util.bytesearch.GenericMatchAction;
-import ghidra.util.bytesearch.Match;
-import ghidra.util.bytesearch.MemoryBytePatternSearcher;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.bytesearch.*;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
@@ -154,21 +101,25 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	boolean isDwarfLoaded;
 	boolean replaceClassStructs;
 
-	FunctionManager functionManager = null;
-	Listing listing;
+	protected final FunctionManager functionManager;
+	protected final Listing listing;
+	protected final Memory memory;
 
-	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
-			FlatProgramAPI api,
-			boolean createBookmarks, boolean useShortTemplates, boolean nameVfunctions,
-			boolean isDwarfLoaded,
+	public RTTIGccClassRecoverer(Program program, ServiceProvider serviceProvider,
+			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
+			boolean nameVfunctions, boolean makeVfunctionsThisCalls, boolean isDwarfLoaded,
 			TaskMonitor monitor) throws Exception {
 
-		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			isDwarfLoaded, monitor);
+		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
+			makeVfunctionsThisCalls, isDwarfLoaded, monitor);
+
 		this.isDwarfLoaded = isDwarfLoaded;
 
 		functionManager = program.getFunctionManager();
 		listing = program.getListing();
+
+		memory = program.getMemory();
+
 	}
 
 	@Override
@@ -205,15 +156,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		List<ReferenceAddressPair> directReferenceList = new ArrayList<ReferenceAddressPair>();
 
 		ProgramMemoryUtil.loadDirectReferenceList(program, 1, initializedMem.getMinAddress(),
-			initializedMem,
-			directReferenceList, monitor);
+			initializedMem, directReferenceList, monitor);
 		createGlobalDirectRefMap(directReferenceList);
 
 		Msg.debug(this, "Creating Special Typeinfos");
 		List<GccTypeinfo> specialTypeinfos = createSpecialTypeinfos();
 		if (specialTypeinfos.isEmpty()) {
 			Msg.debug(this, "Could not create special typeinfos");
-			return null;
 		}
 
 		Msg.debug(this, "Creating Special Vtables");
@@ -226,7 +175,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		if (specialVtables.size() != specialTypeinfos.size()) {
 			Msg.debug(this, "Not equal number of special vtables and special typeinfos");
-			return null;
 		}
 
 		setComponentOffset();
@@ -253,7 +201,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		updateClassesWithParentsAndFlags(typeinfos);
 
 		Msg.debug(this, "Updating classes with vftables");
-		updateClassWithVfunctions(recoveredClasses, vtables);
+		updateClassWithVfunctions(vtables);
 
 		Msg.debug(this, "Creating Class Hierarchy lists and maps");
 		createClassHierarchyListAndMap();
@@ -265,6 +213,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Msg.debug(this, "Processing constructors and destructors");
 		processConstructorAndDestructors();
 
+		identifyPureVirtualFunction(recoveredClasses);
+
 		Msg.debug(this, "Creating vftable order maps");
 		createVftableOrderMap(recoveredClasses);
 
@@ -274,8 +224,57 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Msg.debug(this, "Creating and Applying Class structures");
 		createAndApplyClassStructures();
 
+		// fix purecall vfunction definitions
+		fixupPurecallFunctionDefs();
+
+		updateMultiVftableLabels();
+
 		return recoveredClasses;
 
+	}
+
+	//TODO: test with Windows and move to class helper
+	/**
+	 * Method to update the labels of vftables that belong to classes with multiple vftables in 
+	 * order to distinguish which base class the vftable is for.
+	 * @throws CancelledException if cancelled
+	 * @throws InvalidInputException if bad chars trying to label
+	 * @throws DuplicateNameException if duplicate name
+	 */
+	private void updateMultiVftableLabels()
+			throws CancelledException, DuplicateNameException, InvalidInputException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCancelled();
+
+			// if there are no vftables or only one vftable in this class then there is no need to 
+			// distinguish with a new label and can keep the generic one 
+			List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
+			if (vftableAddresses.size() < 2) {
+				continue;
+			}
+
+			for (Address vftableAddress : vftableAddresses) {
+				RecoveredClass vftableBaseClass =
+					recoveredClass.getVftableBaseClass(vftableAddress);
+				if (vftableBaseClass != null) {
+					Symbol primarySymbol = symbolTable.getPrimarySymbol(vftableAddress);
+
+					String baseClassName = vftableBaseClass.getName();
+					// get simplified name by removing template 
+					String shortenedTemplateName = vftableBaseClass.getShortenedTemplateName();
+					if (!shortenedTemplateName.isBlank()) {
+						baseClassName = shortenedTemplateName;
+					}
+
+					primarySymbol.setName("vftable_for_" + baseClassName,
+						primarySymbol.getSource());
+				}
+			}
+		}
 	}
 
 	private List<GccTypeinfo> createSpecialTypeinfos() throws CancelledException {
@@ -314,8 +313,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private GccTypeinfo findSpecialTypeinfoSymbol(String namespaceName,
-			String mangledNamespaceString)
-			throws CancelledException {
+			String mangledNamespaceString) throws CancelledException {
 
 		// try finding with normal symbol name and namespace
 		Symbol typeinfoSymbol =
@@ -334,9 +332,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				if (typeinfoSymbol == null) {
 					// then try finding with mangled namespace string in memory
-					typeinfoSymbol =
-						findTypeinfoSymbolUsingMangledNamespaceString(mangledNamespaceString,
-							namespaceName);
+					typeinfoSymbol = findTypeinfoSymbolUsingMangledNamespaceString(
+						mangledNamespaceString, namespaceName);
 				}
 			}
 		}
@@ -347,8 +344,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private Symbol findTypeinfoUsingNotInProgramMemoryVtableSymbol(String namespaceName,
-			String mangledNamespaceString)
-			throws CancelledException {
+			String mangledNamespaceString) throws CancelledException {
 
 		// try finding with normal symbol name and namespace
 		Symbol vtableSymbol =
@@ -369,7 +365,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// in a non-loaded section that isn't real memory then it shouldn't be the case where the 
 		// typeinfo is at the same location as the vtable since it should have enough memory and 
 		// real bytes that point to a real typeinfo in program memory
-		if (hasAssociatedFileByes(vtableAddress)) {
+		if (isLoadedAndInitializedMemory(vtableAddress)) {
 			return null;
 		}
 
@@ -383,8 +379,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Symbol typeinfoSymbol;
 		try {
 			typeinfoSymbol = symbolTable.createLabel(vtableAddress, "typeinfo",
-				vtableSymbol.getParentNamespace(),
-				SourceType.ANALYSIS);
+				vtableSymbol.getParentNamespace(), SourceType.ANALYSIS);
 			// api.setPlateComment(typeinfoAddress, "typeinfo for " + namespace);
 		}
 		catch (InvalidInputException e) {
@@ -396,7 +391,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private boolean hasAssociatedFileByes(Address address) {
+	private boolean isLoadedAndInitializedMemory(Address address) {
 
 		if (inExternalBlock(address)) {
 			return false;
@@ -406,9 +401,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 		Memory memory = program.getMemory();
 
-		long fileOffset = memory.getAddressSourceInfo(address).getFileOffset();
-		if (fileOffset == -1) {
-			return false;
+		AddressSetView initMem = memory.getLoadedAndInitializedAddressSet();
+		if (initMem.contains(address)) {
+			return true;
 		}
 
 		return true;
@@ -434,8 +429,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	// TODO: this assumes only one and returns the first found - have never seen
 	// more than one but should probably check
 	private Symbol findAndReturnDemangledSymbol(String mangledSymbolName,
-			String specialClassNamespaceName,
-			String classNamespaceName, String label) {
+			String specialClassNamespaceName, String classNamespaceName, String label) {
 
 		SymbolIterator symbolIterator = symbolTable.getSymbolIterator(mangledSymbolName, true);
 		if (symbolIterator.hasNext()) {
@@ -454,9 +448,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			}
 
 			try {
-				Symbol demangledSymbol =
-					symbolTable.createLabel(symbolAddress, label, classNamespace,
-						SourceType.ANALYSIS);
+				Symbol demangledSymbol = symbolTable.createLabel(symbolAddress, label,
+					classNamespace, SourceType.ANALYSIS);
 				demangledSymbol.setPrimary();
 				return demangledSymbol;
 			}
@@ -468,10 +461,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return null;
 	}
 
-	// TODO: can this be used for regular ones too?
 	private Symbol findTypeinfoSymbolUsingMangledNamespaceString(String mangledNamespace,
-			String namespaceName)
-			throws CancelledException {
+			String namespaceName) throws CancelledException {
 
 		Symbol specialTypeinfoSymbol = findTypeinfoUsingMangledString(mangledNamespace);
 		if (specialTypeinfoSymbol == null) {
@@ -489,9 +480,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		boolean isExternal =
 			typeinfoAddress.isExternalAddress() || inExternalBlock(typeinfoAddress);
 
-		GccTypeinfo gccTypeinfo =
-			new GccTypeinfo(typeinfoSymbol.getAddress(), typeinfoSymbol.getParentNamespace(),
-				isSpecial, !isExternal);
+		GccTypeinfo gccTypeinfo = new GccTypeinfo(typeinfoSymbol.getAddress(),
+			typeinfoSymbol.getParentNamespace(), isSpecial, !isExternal);
 		return gccTypeinfo;
 	}
 
@@ -528,10 +518,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		boolean isGcc;
 
-		boolean isCompilerSpecGcc = program.getCompilerSpec()
-				.getCompilerSpecID()
-				.getIdAsString()
-				.equalsIgnoreCase("gcc");
+		boolean isCompilerSpecGcc =
+			program.getCompilerSpec().getCompilerSpecID().getIdAsString().equalsIgnoreCase("gcc");
 		if (isCompilerSpecGcc) {
 			return true;
 		}
@@ -555,8 +543,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		byte[] maskBytes = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
 		Address found = program.getMemory()
-				.findBytes(commentBlock.getStart(), commentBlock.getEnd(), gccBytes,
-					maskBytes, true, monitor);
+				.findBytes(commentBlock.getStart(), commentBlock.getEnd(), gccBytes, maskBytes,
+					true, monitor);
 		if (found == null) {
 			isGcc = false;
 		}
@@ -638,7 +626,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return symbols;
 	}
 
-	// TODO: split out methods
 	private void updateClassesWithParentsAndFlags(List<GccTypeinfo> typeinfos)
 			throws CancelledException {
 
@@ -646,7 +633,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		for (GccTypeinfo typeinfo : typeinfos) {
 
 			monitor.checkCancelled();
-			Address typeinfoAddress = typeinfo.getAddress();
 
 			// skip the typeinfo symbols from the three special typeinfos
 			if (typeinfo.isSpecialTypeinfo()) {
@@ -658,25 +644,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			RecoveredClass recoveredClass = getClass(classNamespace);
 
 			if (recoveredClass == null) {
-				throw new IllegalArgumentException(
+				Msg.error(this,
 					"RecoveredClass should already exist for " + classNamespace.getName(true));
+				continue;
 			}
 
+			// per docs those on this list are public and have no-inherited classes
 			if (typeinfo.isClassTypeinfo()) {
-				recoveredClass.setHasSingleInheritance(true);
-				recoveredClass.setHasMultipleInheritance(false);
-				recoveredClass.setHasMultipleVirtualInheritance(false);
-				recoveredClass.setInheritsVirtualAncestor(false);
-
-				// no parents so just add empty order and parent maps to the class maps
-				Map<Integer, RecoveredClass> orderToParentMap =
-					new HashMap<Integer, RecoveredClass>();
-
-				classToParentOrderMap.put(recoveredClass, orderToParentMap);
-
-				Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
-
-				classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
+				addClassFlagsForNoInheritanceClass(recoveredClass);
 				continue;
 			}
 
@@ -684,46 +659,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// classes containing only a single, public, non-virtual base at offset zero
 			if (typeinfo.isSiClassTypeinfo()) {
 
-				List<BaseTypeinfo> baseTypeinfos = typeinfo.getBaseTypeinfos();
-				if (baseTypeinfos.size() != 1) {
-					throw new IllegalArgumentException(
-						"SiClassTypeinfo " + classNamespace.getName(true) +
-							" should have exactly one parent");
-				}
+				RecoveredClass parentClass =
+					addClassParentAndFlagsForSiClass(recoveredClass, typeinfo);
 
-				GccTypeinfo siParentTypeinfo = baseTypeinfos.get(0).getBaseTypeinfo();
-				RecoveredClass parentClass = getClass(siParentTypeinfo.getNamespace());
-
-				// parent isn't a known class - possibly is an external parent
+				// parent isn't a known class - cannot continue processing recoveredClass
 				if (parentClass == null) {
-					throw new IllegalArgumentException(
-						"RecoveredClass should already exist for " +
-							siParentTypeinfo.getNamespace().getName(true));
+					Msg.error(this, "Removing class: " + recoveredClass.getName() +
+						" from list to" + " process since parent information is not availalbe.");
+					recoveredClasses.remove(recoveredClass);
 				}
-
-				updateClassWithParent(parentClass, recoveredClass);
-				recoveredClass.setHasSingleInheritance(true);
-				recoveredClass.setHasMultipleInheritance(false);
-				recoveredClass.setHasMultipleVirtualInheritance(false);
-				parentClass.setIsPublicClass(true);
-				recoveredClass.addParentToBaseTypeMapping(parentClass, false);
-
-				// TODO: make method to check all ancestors not just parent
-				if (siParentTypeinfo.isVmiClassTypeinfo()) {
-					recoveredClass.setInheritsVirtualAncestor(true);
-				}
-
-				// add order to parent and parent offset
-				Map<Integer, RecoveredClass> orderToParentMap =
-					new HashMap<Integer, RecoveredClass>();
-				orderToParentMap.put(0, parentClass);
-				classToParentOrderMap.put(recoveredClass, orderToParentMap);
-
-				Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
-				parentToOffsetMap.put(parentClass, 0L);
-
-				classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
-
 				continue;
 			}
 
@@ -732,12 +676,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> parents =
 					addClassParentsAndFlagsForVmiClass(recoveredClass, typeinfo);
 
-				if (parents.isEmpty()) {
+				if (parents == null) {
 					Msg.debug(this,
-						"Could not get vmi parent from typeinfoAddress - removing class from list" +
-							typeinfoAddress.toString());
+						"Removing class: " + recoveredClass.getName() + " from list to" +
+							" process since full parent information is not availalbe.");
 					recoveredClasses.remove(recoveredClass);
-					continue;
 				}
 
 			}
@@ -795,9 +738,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Vtable vtable = processMainVtable(mainVtable, map.get(mainVtable));
 				if (vtable == null) {
-					Msg.debug(this,
-						"MISSING expected vtable for simple class " +
-							typeinfo.getNamespace().getName(true));
+					Msg.debug(this, "MISSING expected vtable for simple class " +
+						typeinfo.getNamespace().getName(true));
 					continue;
 				}
 
@@ -1045,8 +987,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private boolean isPossibleVttStart(Address address, List<Vtable> vtables,
-			List<Address> knownVtts)
-			throws CancelledException {
+			List<Address> knownVtts) throws CancelledException {
 
 		// make list of all vtable tops and vftable tops
 		List<Address> vtableAndVftableAddrs = getListOfVtableAndVftableTops(vtables);
@@ -1158,7 +1099,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * construction ones to the passed in list
 	 * 
 	 * @param typeinfo
+	 * @param map
 	 * @param constructionVtables
+	 * @param numBaseRefs
 	 * @return address of main vtable for this class
 	 * @throws CancelledException
 	 */
@@ -1462,8 +1405,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private Address getMainVtableUsingSymbols(List<Address> vtableAddresses,
-			List<Address> constructionVtables)
-			throws CancelledException {
+			List<Address> constructionVtables) throws CancelledException {
 
 		List<Address> mainVtableCandidates = new ArrayList<Address>();
 		for (Address vtableAddress : vtableAddresses) {
@@ -1496,7 +1438,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 
 			// get top of vtable
-			Address vtableAddress = getPrimaryVtableAddress(typeinfoRef);
+			Address vtableAddress = getPrimaryVtableAddress(typeinfoRef, typeinfo);
 
 			// no vtable associated with this typeinfo
 			if (vtableAddress == null) {
@@ -1656,8 +1598,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		symbolTable.createLabel(vtableAddress, internalString + constructionString + VTABLE_LABEL,
-			classNamespace,
-			SourceType.ANALYSIS);
+			classNamespace, SourceType.ANALYSIS);
 
 	}
 
@@ -1684,8 +1625,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		symbolTable.createLabel(vtable.getVfunctionTop(),
-			internalString + constructionString + VFTABLE_LABEL,
-			classNamespace, SourceType.ANALYSIS);
+			internalString + constructionString + VFTABLE_LABEL, classNamespace,
+			SourceType.ANALYSIS);
 
 	}
 
@@ -1706,7 +1647,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return subsetByType;
 	}
 
-	private Address getPrimaryVtableAddress(Address typeinfoRef) throws CancelledException {
+	private Address getPrimaryVtableAddress(Address typeinfoRef, GccTypeinfo typeinfo)
+			throws CancelledException {
 
 		if (typeinfoRef == null) {
 			return null;
@@ -1747,6 +1689,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return null;
 		}
 
+		Address vtableAddress = offsetToTop;
+
+		// NEW CHECK: check to see if referenced typeinfo is  non-inheritance type and if so
+		// return the current value of vtableAddress as there is only one long (zeres) for 
+		// vtables referencing non-inh class typeinfos
+		if (typeinfo.isClassTypeinfo()) {
+			return vtableAddress;
+		}
+
 		// start with last verified part of possible vtable and continue going backwards
 		// until top of vtable is found
 		// stop if top of mem block
@@ -1754,7 +1705,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// stop if referenced
 		// are they ever zero - not that i have seen so far in the last vftable
 		// if pointer to something or valid address or is in a structure
-		Address vtableAddress = offsetToTop;
+
 		MemoryBlock currentBlock = program.getMemory().getBlock(typeinfoRef);
 
 		while (vtableAddress != null) {
@@ -1855,8 +1806,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Namespace newNamespace;
 		try {
 			newNamespace = NamespaceUtils.createNamespaceHierarchy(name,
-				namespaceIn.getParentNamespace(), program,
-				SourceType.ANALYSIS);
+				namespaceIn.getParentNamespace(), program, SourceType.ANALYSIS);
 		}
 		catch (InvalidInputException e) {
 			return null;
@@ -1877,8 +1827,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	public Map<Address, Set<Address>> findTypeinfoReferencesNotInTypeinfoStructsOld(
-			List<Address> typeinfoAddresses)
-			throws CancelledException {
+			List<Address> typeinfoAddresses) throws CancelledException {
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Typeinfo References");
 
@@ -1918,7 +1867,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			searchSet.add(addressRange.getMinAddress(), addressRange.getMaxAddress());
 		}
-		Map<Address, Set<Address>> directRefMap = new HashMap<Address, Set<Address>>();
+		Map<Address, Set<Address>> refMap = new HashMap<Address, Set<Address>>();
 
 		AddressIterator addrIter =
 			initializedSet.getAddresses(initializedSet.getMinAddress(), true);
@@ -1928,11 +1877,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// check direct refs to see if they are in undefined area or not in function
 			byte[] bytes = ProgramMemoryUtil.getDirectAddressBytes(program, address);
 
-			addByteSearchPatternDirRefs(searcher, directRefMap, address, bytes, monitor);
+			addByteSearchPatternDirRefs(searcher, refMap, address, bytes, monitor);
 
 		}
 		searcher.search(program, searchSet, monitor);
-		return directRefMap;
+		return refMap;
 	}
 
 	/**
@@ -1981,8 +1930,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	public Map<Address, Set<Address>> findTypeinfoReferencesNotInTypeinfoStructs(
-			List<GccTypeinfo> typeinfos)
-			throws CancelledException {
+			List<GccTypeinfo> typeinfos) throws CancelledException {
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Typeinfo References");
 
@@ -2088,8 +2036,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * @param taskMonitor     a cancellable monitor
 	 */
 	private void addByteSearchPattern(MemoryBytePatternSearcher searcher,
-			Map<Address, Set<Address>> typeinfoRefMap,
-			Address typeinfoAddress, byte[] bytes, TaskMonitor taskMonitor) {
+			Map<Address, Set<Address>> typeinfoRefMap, Address typeinfoAddress, byte[] bytes,
+			TaskMonitor taskMonitor) {
 
 		// no pattern bytes.
 		if (bytes == null) {
@@ -2179,8 +2127,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * @throws CancelledException if cancelled
 	 */
 	private Vtable processVtable(Address vtableAddress, GccTypeinfoRef typeinfoRef,
-			Boolean isConstruction)
-			throws CancelledException {
+			Boolean isConstruction) throws CancelledException {
 
 		Vtable vtable = null;
 		boolean isSpecial = false;
@@ -2280,9 +2227,21 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		api.clearListing(vtableAddress);
 
-		SpecialVtable specialVtable =
-			new SpecialVtable(program, vtableAddress, typeinfoRef, isExternal,
-				vtableSymbol.getParentNamespace(), monitor);
+		SpecialVtable specialVtable = new SpecialVtable(program, vtableAddress, typeinfoRef,
+			isExternal, vtableSymbol.getParentNamespace(), monitor);
+
+		if (specialTypeinfo != null) {
+			specialTypeinfo.setVtableAddress(vtableAddress);
+		}
+
+		if (!specialVtable.isExternal()) {
+			specialVtable.applyVtableData();
+			vtableToSizeMap.put(specialVtable.getAddress(), specialVtable.getLength());
+			createVtableLabel(specialVtable);
+			createVtableComment(specialVtable);
+			createVfunctionSymbol(specialVtable);
+		}
+
 		return specialVtable;
 	}
 
@@ -2329,7 +2288,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 
 			if (specialTypeinfo.isInProgramMemory()) {
-				applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				Data struct =
+					applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				if (struct == null) {
+					Msg.error(this,
+						specialTypeinfo.getNamespace().getName() + ": cannot apply structure");
+					continue;
+				}
 				typeinfoToStructuretypeMap.put(specialTypeinfo.getAddress(),
 					SI_CLASS_TYPE_INFO_STRUCTURE);
 			}
@@ -2379,6 +2344,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 
+				// test to see if there is a string at the typeinfo name location in the would be
+				// typeinfo structure
+				if (!hasStringAtTypeinfoNameLocation(typeinfoAddress)) {
+					continue;
+				}
+
 				Data newStructure = null;
 				String specialTypeinfoNamespaceName = null;
 
@@ -2405,9 +2376,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 						.equals(VMI_CLASS_TYPEINFO_NAMESPACE)) {
 					specialTypeinfoNamespaceName = VMI_CLASS_TYPEINFO_NAMESPACE;
 					typeinfoToStructuretypeMap.put(typeinfoAddress, VMI_CLASS_TYPE_INFO_STRUCTURE);
-					Structure vmiClassTypeinfoStructure =
-						getOrCreateVmiTypeinfoStructure(typeinfoAddress,
-							baseClassTypeInfoStructure);
+					Structure vmiClassTypeinfoStructure = getOrCreateVmiTypeinfoStructure(
+						typeinfoAddress, baseClassTypeInfoStructure);
 					if (vmiClassTypeinfoStructure != null) {
 						newStructure =
 							applyTypeinfoStructure(vmiClassTypeinfoStructure, typeinfoAddress);
@@ -2416,6 +2386,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				if (newStructure == null) {
 					// is a typeinfo that inherits a non class typeinfo so skip it
+					// or there was an issue creating it so skip it
 					continue;
 				}
 
@@ -2426,9 +2397,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 					typeinfoSymbol = createDemangledTypeinfoSymbol(typeinfoAddress);
 					if (typeinfoSymbol == null) {
-						Msg.debug(this, "Could not create demangled typeinfo symbol at " +
-							typeinfoAddress.toString());
-						continue;
+						//If no mangled class name, check for non-mangled pascal type class name
+						typeinfoSymbol =
+							createTypeinfoSymbolFromNonMangledString(typeinfoAddress);
+						if (typeinfoSymbol == null) {
+							Msg.debug(this, "Could not create typeinfo symbol at " +
+								typeinfoAddress.toString());
+							continue;
+						}
 					}
 				}
 
@@ -2438,9 +2414,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					if (specialTypeinfoNamespaceName == null) {
 						continue;
 					}
-					GccTypeinfo specialTypeinfo =
-						getTypeinfo(specialTypeinfoNamespaceName, specialTypeinfos);
-					typeinfo.setInheritedSpecialTypeinfo(specialTypeinfo);
+
+					typeinfo.setInheritedSpecialTypeinfoNamespace(specialVtable.getNamespace());
+
 					typeinfos.add(typeinfo);
 					continue;
 				}
@@ -2454,7 +2430,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		for (GccTypeinfo typeinfo : typeinfos) {
 			monitor.checkCancelled();
 			Address typeinfoAddress = typeinfo.getAddress();
-			if (typeinfo.getInheritedSpecialTypeinfo() == null) {
+			if (typeinfo.getInheritedSpecialTypeinfoNamespace() == null) {
 
 				typeinfosToRemove.add(typeinfo);
 				continue;
@@ -2467,6 +2443,36 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		updateTypeinfosWithBases(typeinfos, typeinfoMap);
 
 		return typeinfos;
+	}
+
+	/**
+	 * Method to validate the second member of the typeinfo struct is a string
+	 * @param typeinfoAddress the address of the potential typeinfo struct
+	 * @return true if what is pointed to by the typeinfoName pointer is a valid string, false otherwise
+	 */
+	private boolean hasStringAtTypeinfoNameLocation(Address typeinfoAddress) {
+
+		// first get the referenced address and verify it is an address
+		Address typeinfoNameAddress =
+			extendedFlatAPI.getPointer(typeinfoAddress.add(defaultPointerSize));
+		if (typeinfoNameAddress == null) {
+			return false;
+		}
+
+		// get defined string if defined already
+		String definedString = getDefinedStringAt(typeinfoNameAddress);
+		if (definedString != null) {
+			return true;
+		}
+
+		// get string from memory if not defined to see if ascii there
+		String stringInMem = getStringFromMemory(typeinfoNameAddress);
+		if (stringInMem != null) {
+			return true;
+		}
+
+		return false;
+
 	}
 
 	private GccTypeinfo getTypeinfo(String namespaceName, List<GccTypeinfo> typeinfos)
@@ -2484,8 +2490,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private void updateTypeinfosWithBases(List<GccTypeinfo> typeinfos,
-			Map<Address, GccTypeinfo> typeinfoMap)
-			throws CancelledException {
+			Map<Address, GccTypeinfo> typeinfoMap) throws CancelledException {
 
 		List<GccTypeinfo> invalidTypeinfos = new ArrayList<GccTypeinfo>();
 		for (GccTypeinfo typeinfo : typeinfos) {
@@ -2501,9 +2506,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			// TODO: update the typeinfo with the correct namespace based on the structure
-
-			String namespaceName = typeinfo.getInheritedSpecialTypeinfo().getNamespace().getName();
+			String namespaceName = typeinfo.getInheritedSpecialTypeinfoNamespace().getName();
 
 			// if typeinfo inherits class_type_info then no Base to update
 			if (namespaceName.equals(CLASS_TYPEINFO_NAMESPACE)) {
@@ -2527,16 +2530,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private boolean updateSiTypeinfo(GccTypeinfo typeinfo, Map<Address, GccTypeinfo> typeinfoMap)
-			throws CancelledException {
+	private boolean updateSiTypeinfo(GccTypeinfo typeinfo, Map<Address, GccTypeinfo> typeinfoMap) {
 
 		Data siTypeinfoStructure = listing.getDataAt(typeinfo.getAddress());
 
 		// SI_CLASS_TYPE_INFO_STRUCTURE
 		if (!isTypeinfoStruct(siTypeinfoStructure)) {
-			throw new IllegalArgumentException(
-				siTypeinfoStructure.getAddressString(false, false) +
-					" is not a typeinfo structure");
+			throw new IllegalArgumentException(siTypeinfoStructure.getAddressString(false, false) +
+				" is not a typeinfo structure");
 		}
 
 		Data baseClassPointer = siTypeinfoStructure.getComponent(2);
@@ -2589,9 +2590,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				extendedFlatAPI.getReferencedAddress(baseClassStructureAddress, false);
 
 			if (baseTypeinfoAddress == null) {
-				Msg.debug(this,
-					typeinfo.getAddress() +
-						": invalid typeinfo - cannot get address at baseTypeinfo[" + i + "]");
+				Msg.debug(this, typeinfo.getAddress() +
+					": invalid typeinfo - cannot get address at baseTypeinfo[" + i + "]");
 				return false;
 			}
 
@@ -2659,8 +2659,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		DataType inheritanceFlagDataType = inheritanceFlagComponent.getDataType();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), flagAddress);
 		Scalar scalar = (Scalar) inheritanceFlagDataType.getValue(buf,
-			inheritanceFlagDataType.getDefaultSettings(),
-			inheritanceFlagDataType.getLength());
+			inheritanceFlagDataType.getDefaultSettings(), inheritanceFlagDataType.getLength());
 		long inheritanceFlagValue = scalar.getUnsignedValue();
 		return inheritanceFlagValue;
 	}
@@ -2678,8 +2677,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		DataType numBaseClassesDataType = numBaseClassesComponent.getDataType();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), numBaseClassesAddress);
 		Scalar scalar = (Scalar) numBaseClassesDataType.getValue(buf,
-			numBaseClassesDataType.getDefaultSettings(),
-			numBaseClassesDataType.getLength());
+			numBaseClassesDataType.getDefaultSettings(), numBaseClassesDataType.getLength());
 		int numBaseClasses = (int) scalar.getUnsignedValue();
 
 		return numBaseClasses;
@@ -2722,6 +2720,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			// ok if has symbol at the actual addr so don't check it
 			if (offset == 0) {
+				offset++;
 				continue;
 			}
 
@@ -2771,13 +2770,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)
-			throws CancelledException, AddressOutOfBoundsException, Exception {
+	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress) {
 
-		api.clearListing(typeinfoAddress, typeinfoAddress.add(typeInfoStructure.getLength() - 1));
-		Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+		try {
+			api.clearListing(typeinfoAddress,
+				typeinfoAddress.add(typeInfoStructure.getLength() - 1));
+			Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+			return newStructure;
+		}
+		catch (CodeUnitInsertionException | CancelledException e) {
+			Msg.warn(this, "Could not apply typeinfo struct at " + typeinfoAddress.toString());
+			return null;
+		}
 
-		return newStructure;
 	}
 
 	private Structure getOrCreateVmiTypeinfoStructure(Address typeinfoAddress,
@@ -2788,6 +2793,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		int numBases;
 		try {
 			numBases = api.getInt(typeinfoAddress.add(offsetOfNumBases));
+
+			if (numBases <= 0) {
+				Msg.debug(this, typeinfoAddress.toString() +
+					": VmiTypeinfoStructure has invalid number of bases: " + numBases);
+				return null;
+			}
 		}
 		// if there isn't enough memory to get the int then return null
 		catch (MemoryAccessException | AddressOutOfBoundsException e) {
@@ -2795,9 +2806,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		// get or create the vmiClassTypeInfoStruct
-		Structure vmiClassTypeinfoStructure =
-			(Structure) dataTypeManager.getDataType(classDataTypesCategoryPath,
-				VMI_CLASS_TYPE_INFO_STRUCTURE + numBases);
+		Structure vmiClassTypeinfoStructure = (Structure) dataTypeManager
+				.getDataType(classDataTypesCategoryPath, VMI_CLASS_TYPE_INFO_STRUCTURE + numBases);
 		if (vmiClassTypeinfoStructure == null) {
 			vmiClassTypeinfoStructure =
 				createVmiClassTypeInfoStructure(baseClassTypeInfoStructure, numBases);
@@ -2806,7 +2816,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private Symbol createDemangledTypeinfoSymbol(Address typeinfoAddress)
-			throws DuplicateNameException, InvalidInputException, CancelledException {
+			throws DuplicateNameException, InvalidInputException {
 
 		// TODO: 1. see if there is a mangled name that didn't get demangled at
 		// TODO: 2 - refactor the three places that call this to just call getSymbolAt
@@ -2871,22 +2881,24 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// get the newly created symbol to get the namespace
 		Symbol typeinfoNameSymbol = symbolTable.getPrimarySymbol(typeinfoNameAddress);
 
-		// TODO: need to account for rare case where there are more than one typeinfos
-		// with
+		Namespace typeinfoNamespace = typeinfoNameSymbol.getParentNamespace();
+
+		// need to account for rare case where there are more than one typeinfos with
 		// exact same class and name so make two classes in this case - name second one
 		// dupe#
-		// TODO: instead/also - eliminate the ones with no refs or just pick one?
 		List<Symbol> symbols = symbolTable.getSymbols(typeinfoNameSymbol.getName(),
-			typeinfoNameSymbol.getParentNamespace());
+			typeinfoNamespace);
 		if (symbols.size() > 1) {
 
+			Namespace parentNamespace = typeinfoNamespace.getParentNamespace();
 			Msg.debug(this, "Duplicate typeinfo namespace: " +
-				typeinfoNameSymbol.getParentNamespace().toString());
+				typeinfoNamespace.toString());
 			for (Symbol symbol : symbols) {
 				Msg.debug(this, symbol.getAddress());
 			}
-			Namespace newNamespace = symbolTable.getOrCreateNameSpace(globalNamespace,
-				typeinfoNameSymbol.getParentNamespace().getName(true) + "DUPE",
+
+			Namespace newNamespace = symbolTable.getOrCreateNameSpace(parentNamespace,
+				typeinfoNamespace.getName() + "DUPE",
 				SourceType.ANALYSIS);
 			try {
 				typeinfoNameSymbol.setNamespace(newNamespace);
@@ -2906,19 +2918,115 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Namespace classNamespace = typeinfoNameSymbol.getParentNamespace();
 
 		if (classNamespace.isGlobal()) {
-			Msg.debug(this,
-				typeinfoAddress.toString() +
-					"Could not create a class namespace for demangled namespace string ");
+			Msg.debug(this, typeinfoAddress.toString() +
+				"Could not create a class namespace for demangled namespace string ");
 			return null;
 		}
 
 		// create the new typeinfo symbol in the demangled namespace
 		Symbol newSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", classNamespace,
 			SourceType.ANALYSIS);
+		newSymbol.setPrimary();
 
 		api.setPlateComment(typeinfoAddress, "typeinfo for " + classNamespace.getName(true));
 
 		return newSymbol;
+	}
+
+	private Symbol createTypeinfoSymbolFromNonMangledString(Address typeinfoAddress)
+			throws DuplicateNameException, InvalidInputException, CancelledException {
+
+		Address typeinfoNameAddress = getTypeinfoNameAddress(typeinfoAddress);
+
+		if (typeinfoNameAddress == null) {
+			Msg.debug(this,
+				"Could not get typeinfo-name address from " + typeinfoAddress.toString());
+			return null;
+		}
+
+		String typeinfoNameString = getStringFromMemory(typeinfoNameAddress);
+
+		if (typeinfoNameString == null) {
+			Msg.debug(this, "Could not get typeinfo string from " + typeinfoNameAddress.toString());
+			return null;
+		}
+
+		// get length from start of string
+		String lenString = getAsciiLengthString(typeinfoNameString);
+		if (lenString.isEmpty()) {
+			Msg.debug(this,
+				"Could not get typeinfo-name string len from " + typeinfoNameAddress.toString());
+			return null;
+		}
+
+		// convert lenString to int len
+		try {
+			int len = Integer.parseInt(lenString);
+
+			// get className from string - if not exactly the correct len then return null
+			String className = typeinfoNameString.substring(lenString.length());
+			if (className.length() != len) {
+				Msg.debug(this, "Expected typeinfo-name to be len " + len + " but it was " +
+					className.length());
+				return null;
+			}
+
+			program.getListing()
+					.clearCodeUnits(typeinfoNameAddress,
+						typeinfoNameAddress.add(typeinfoNameString.length()), true);
+			boolean created = createString(typeinfoNameAddress, typeinfoNameString.length());
+			if (!created) {
+				Msg.debug(this, "Could not create string at " + typeinfoNameAddress);
+			}
+
+			// create typeinfo name symbol
+			Namespace classNamespace =
+				symbolTable.getOrCreateNameSpace(globalNamespace, className, SourceType.ANALYSIS);
+			Symbol typeinfoNameSymbol = symbolTable.createLabel(typeinfoNameAddress,
+				"typeinfo-name", classNamespace, SourceType.ANALYSIS);
+			typeinfoNameSymbol.setPrimary();
+
+			// create the new typeinfo symbol in the demangled namespace
+			Symbol typeinfoSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo",
+				classNamespace, SourceType.ANALYSIS);
+			typeinfoSymbol.setPrimary();
+
+			api.setPlateComment(typeinfoAddress, "typeinfo for " + classNamespace.getName(true));
+
+			return typeinfoSymbol;
+		}
+		catch (NumberFormatException ex) {
+			return null;
+		}
+	}
+
+	private String getAsciiLengthString(String string) throws CancelledException {
+
+		boolean isDigit = true;
+		int len = 0;
+		String lenString = new String();
+		while (isDigit) {
+			monitor.checkCancelled();
+			String charString = string.substring(len, len);
+			if (!StringUtils.isNumeric(charString)) {
+				return lenString;
+			}
+			lenString.concat(charString);
+			len++;
+		}
+		return lenString;
+	}
+
+	private boolean isAllAscii(Address address, int len) throws CancelledException {
+
+		for (int i = 0; i < len; i++) {
+			monitor.checkCancelled();
+
+			if (!isAscii(address.add(i))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private boolean isTypeinfoNameString(String string) {
@@ -2973,7 +3081,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	private String getDefinedStringAt(Address address) {
 
-		Listing listing = program.getListing();
 		Data stringData = listing.getDataAt(address);
 
 		if (stringData == null) {
@@ -3005,6 +3112,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		TerminatedStringDataType sdt = new TerminatedStringDataType();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
 		return (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+
+	}
+
+	private String getStringFromMemory(Address address, int len) {
+
+		TerminatedStringDataType sdt = new TerminatedStringDataType();
+		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
+		return (String) sdt.getValue(buf, sdt.getDefaultSettings(), len);
 
 	}
 
@@ -3204,15 +3319,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	public void assignConstructorsAndDestructorsUsingExistingNameNew(
-			List<RecoveredClass> recoveredClasses)
-			throws CancelledException, InvalidInputException, DuplicateNameException,
-			CircularDependencyException {
+			List<RecoveredClass> recoveredClasses) throws CancelledException, InvalidInputException,
+			DuplicateNameException, CircularDependencyException {
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCancelled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-
 			Namespace classNamespace = recoveredClass.getClassNamespace();
 			String name = classNamespace.getName();
 			SymbolIterator classSymbols = symbolTable.getSymbols(classNamespace);
@@ -3329,7 +3440,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Function calledFunction =
 					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
-				if (calledFunction.getName().equals(expectedCalledFunctionName)) {
+
+				if (calledFunction != null &&
+					calledFunction.getName().equals(expectedCalledFunctionName)) {
 					return instruction.getAddress();
 				}
 			}
@@ -3339,8 +3452,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private void removeFromIndeterminateLists(List<RecoveredClass> recoveredClasses,
-			Function function)
-			throws CancelledException {
+			Function function) throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCancelled();
@@ -3359,8 +3471,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		if (hasExternalRelocations()) {
 			PointerTypedef classTypeInfoPtr =
-				new PointerTypedef(null, null, -1, program.getDataTypeManager(),
-					componentOffset);
+				new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
 			classTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 
 		}
@@ -3379,18 +3490,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private StructureDataType createSiClassTypeInfoStructure(
-			StructureDataType classTypeInfoStructure)
-			throws CancelledException {
+			StructureDataType classTypeInfoStructure) throws CancelledException {
 
-		StructureDataType siClassTypeInfoStructure =
-			new StructureDataType(classDataTypesCategoryPath,
-				SI_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
+		StructureDataType siClassTypeInfoStructure = new StructureDataType(
+			classDataTypesCategoryPath, SI_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		CharDataType characterDT = new CharDataType();
 
 		PointerTypedef classTypeInfoPtr =
-			new PointerTypedef(null, null, -1, program.getDataTypeManager(),
-				componentOffset);
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
 		siClassTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 
 		DataType charPointer = dataTypeManager.getPointer(characterDT);
@@ -3406,12 +3514,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private StructureDataType createBaseClassTypeInfoStructure(
-			StructureDataType classTypeInfoStructure)
-			throws InvalidDataTypeException {
+			StructureDataType classTypeInfoStructure) throws InvalidDataTypeException {
 
-		StructureDataType baseclassTypeInfoStructure =
-			new StructureDataType(classDataTypesCategoryPath,
-				BASE_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
+		StructureDataType baseclassTypeInfoStructure = new StructureDataType(
+			classDataTypesCategoryPath, BASE_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		DataType classTypeInfoPointer = dataTypeManager.getPointer(classTypeInfoStructure);
 
@@ -3446,8 +3552,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private StructureDataType createVmiClassTypeInfoStructure(
-			StructureDataType baseClassTypeInfoStructure,
-			int numBaseClasses) throws CancelledException {
+			StructureDataType baseClassTypeInfoStructure, int numBaseClasses)
+			throws CancelledException {
 
 		StructureDataType vmiClassTypeInfoStructure =
 			new StructureDataType(classDataTypesCategoryPath,
@@ -3457,8 +3563,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		UnsignedIntegerDataType unsignedIntDT = new UnsignedIntegerDataType();
 
 		PointerTypedef classTypeInfoPtr =
-			new PointerTypedef(null, null, -1, program.getDataTypeManager(),
-				componentOffset);
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
 		vmiClassTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 
 		DataType charPointer = dataTypeManager.getPointer(characterDT);
@@ -3482,19 +3587,75 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return vmiClassTypeInfoStructure;
 	}
 
+	private void addClassFlagsForNoInheritanceClass(RecoveredClass recoveredClass) {
+		recoveredClass.setHasSingleInheritance(true);
+		recoveredClass.setHasMultipleInheritance(false);
+		recoveredClass.setHasMultipleVirtualInheritance(false);
+		recoveredClass.setInheritsVirtualAncestor(false);
+
+		// no parents so just add empty order and parent maps to the class maps
+		Map<Integer, RecoveredClass> orderToParentMap = new HashMap<Integer, RecoveredClass>();
+
+		classToParentOrderMap.put(recoveredClass, orderToParentMap);
+
+		Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
+
+		classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
+	}
+
+	private RecoveredClass addClassParentAndFlagsForSiClass(RecoveredClass recoveredClass,
+			GccTypeinfo typeinfo) {
+		List<BaseTypeinfo> baseTypeinfos = typeinfo.getBaseTypeinfos();
+		if (baseTypeinfos.size() != 1) {
+			throw new IllegalArgumentException(
+				"SiClassTypeinfo " + recoveredClass.getClassNamespace().getName(true) +
+					" should have exactly one parent");
+		}
+
+		GccTypeinfo siParentTypeinfo = baseTypeinfos.get(0).getBaseTypeinfo();
+
+		RecoveredClass parentClass = getClass(siParentTypeinfo.getNamespace());
+		if (parentClass == null) {
+			Msg.error(this, "Parent class's RecoveredClass object for : " +
+				siParentTypeinfo.getNamespace().getName(true) + " should already exist. ");
+			return null;
+		}
+
+		updateClassWithParent(parentClass, recoveredClass);
+		recoveredClass.setHasSingleInheritance(true);
+		recoveredClass.setHasMultipleInheritance(false);
+		recoveredClass.setHasMultipleVirtualInheritance(false);
+		parentClass.setIsPublicClass(true);
+		recoveredClass.addParentToBaseTypeMapping(parentClass, false);
+
+		// NEW check to get all ancestor info
+		if (typeinfo.getNumAllVirtualBases() > 0) {
+			recoveredClass.setInheritsVirtualAncestor(true);
+		}
+
+		// add order to parent and parent offset
+		Map<Integer, RecoveredClass> orderToParentMap = new HashMap<Integer, RecoveredClass>();
+		orderToParentMap.put(0, parentClass);
+		classToParentOrderMap.put(recoveredClass, orderToParentMap);
+
+		Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
+		parentToOffsetMap.put(parentClass, 0L);
+
+		classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
+		return parentClass;
+
+	}
+
 	/**
 	 * Method to add parents to the given class
 	 * 
 	 * @param recoveredClass  the given class
-	 * @param typeinfoAddress the address of the typeinfo
+	 * @param typeinfo the GccTypeinfo object for this class
 	 * @return list of parents for the given class
-	 * @throws CancelledException
-	 * @throws Exception          if cannot access the given typeinfo structure, one
-	 *                            of its components, or it is not a vmi structure
+	 * @throws CancelledException if cancelled
 	 */
 	private List<RecoveredClass> addClassParentsAndFlagsForVmiClass(RecoveredClass recoveredClass,
-			GccTypeinfo typeinfo)
-			throws CancelledException {
+			GccTypeinfo typeinfo) throws CancelledException {
 
 		long inheritanceFlagValue = typeinfo.getInheritanceFlagValue();
 
@@ -3523,6 +3684,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		boolean hasVirtualInheritance = false;
 		if (typeinfo.getNumAllVirtualBases() > 0) {
+			recoveredClass.setInheritsVirtualAncestor(true);
 			hasVirtualInheritance = true;
 		}
 
@@ -3547,9 +3709,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			RecoveredClass parentClass = getClass(vmiParentTypeinfo.getNamespace());
 
 			if (parentClass == null) {
-				throw new IllegalArgumentException(
-					"RecoveredClass should already exist for " +
-						vmiParentTypeinfo.getNamespace().getName(true));
+
+				Msg.error(this, "Parent class's RecoveredClass object for : " +
+					vmiParentTypeinfo.getNamespace().getName(true) + " should already exist. ");
+				return null;
+
 			}
 
 			updateClassWithParent(parentClass, recoveredClass);
@@ -3571,81 +3735,88 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private Address findSpecialVtable(GccTypeinfo specialTypeinfo,
-			List<GccTypeinfo> specialTypeinfos)
-			throws CancelledException {
-
-		String namespaceName = specialTypeinfo.getNamespace().getName();
-		String mangledNamespaceString = specialTypeinfo.getMangledNamespaceString();
-
-		// try finding with normal symbol name and namespace
-		Symbol vtableSymbol =
-			getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
-		if (vtableSymbol == null) {
-			// then try finding with mangled symbol
-			vtableSymbol =
-				findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespaceString,
-					SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
-
-			// then try finding top of special vtable by finding ref to special typeinfo
-			if (vtableSymbol == null) {
-				Address vtableAddress =
-					findSpecialVtableUsingSpecialTypeinfo(specialTypeinfo.getAddress(),
-						specialTypeinfos);
-
-				if (vtableAddress == null) {
-					return null;
-				}
-
-				try {
-					vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
-						specialTypeinfo.getNamespace(),
-						SourceType.ANALYSIS);
-					api.setPlateComment(vtableAddress,
-						"vtable for " + specialTypeinfo.getNamespace());
-
-				}
-				catch (InvalidInputException e) {
-					vtableSymbol = null;
-				}
-
-			}
-		}
-		if (vtableSymbol != null) {
-			return vtableSymbol.getAddress();
-		}
-		return null;
-	}
-
 	private List<SpecialVtable> findSpecialVtables(List<GccTypeinfo> specialTypeinfos)
 			throws Exception {
 
 		List<SpecialVtable> specialVtables = new ArrayList<SpecialVtable>();
 
-		for (GccTypeinfo specialTypeinfo : specialTypeinfos) {
-			monitor.checkCancelled();
+		Map<String, String> namespaceMap = new HashMap<String, String>();
+		namespaceMap.put(CLASS_TYPEINFO_NAMESPACE, MANGLED_CLASS_TYPEINFO_NAMESPACE);
+		namespaceMap.put(SI_CLASS_TYPEINFO_NAMESPACE, MANGLED_SI_CLASS_TYPEINFO_NAMESPACE);
+		namespaceMap.put(VMI_CLASS_TYPEINFO_NAMESPACE, MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE);
 
-			Address vtableAddress = findSpecialVtable(specialTypeinfo, specialTypeinfos);
+		for (String namespaceName : namespaceMap.keySet()) {
 
+			GccTypeinfo specTypeinfo = getSpecialTypeinfo(specialTypeinfos, namespaceName);
+
+			Address vtableAddress = findSpecialVtableAddress(namespaceName,
+				namespaceMap.get(namespaceName), specialTypeinfos);
 			if (vtableAddress == null) {
 				continue;
 			}
 
-			SpecialVtable specialVtable = createSpecialVtable(vtableAddress, specialTypeinfo);
-			if (specialVtable != null) {
-				specialVtables.add(specialVtable);
-				specialTypeinfo.setVtableAddress(vtableAddress);
-				if (!specialVtable.isExternal()) {
-					specialVtable.applyVtableData();
-					vtableToSizeMap.put(specialVtable.getAddress(), specialVtable.getLength());
-					createVtableLabel(specialVtable);
-					createVtableComment(specialVtable);
-					createVfunctionSymbol(specialVtable);
-				}
-			}
+			SpecialVtable specialVtable =
+				createSpecialVtable(vtableAddress, specTypeinfo);
+			specialVtables.add(specialVtable);
 
 		}
 		return specialVtables;
+	}
+
+	private Address findSpecialVtableAddress(String namespaceName, String mangledNamespace,
+			List<GccTypeinfo> specialTypeinfos) throws CancelledException {
+
+		//First try to find with special symbols
+		Symbol vtableSymbol = getSymbolInNamespaces(namespaceName, mangledNamespace, VTABLE_LABEL);
+
+		if (vtableSymbol != null) {
+			return vtableSymbol.getAddress();
+
+		}
+
+		// then try finding with mangled symbol
+		vtableSymbol = findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespace,
+			SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
+		if (vtableSymbol != null) {
+			return vtableSymbol.getAddress();
+		}
+
+		//Then with special typeinfo if there is one
+		GccTypeinfo specTypeinfo = getSpecialTypeinfo(specialTypeinfos, namespaceName);
+
+		if (specTypeinfo != null) {
+			Address vtableAddress = findSpecialVtableUsingSpecialTypeinfo(specTypeinfo.getAddress(),
+				specialTypeinfos);
+			if (vtableAddress == null) {
+				return null;
+			}
+			try {
+				vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
+					specTypeinfo.getNamespace(), SourceType.ANALYSIS);
+				api.setPlateComment(vtableAddress, "vtable for " + specTypeinfo.getNamespace());
+				return vtableSymbol.getAddress();
+
+			}
+			catch (InvalidInputException e) {
+				Msg.warn(this,
+					"Found vtable at " + vtableAddress + " but cannot create symbol" + e);
+				return null;
+			}
+		}
+
+		return null;
+	}
+
+	private GccTypeinfo getSpecialTypeinfo(List<GccTypeinfo> specialTypeinfos,
+			String namespaceName) {
+
+		for (GccTypeinfo specialTypeinfo : specialTypeinfos) {
+
+			if (specialTypeinfo.getNamespace().getName().equals(namespaceName)) {
+				return specialTypeinfo;
+			}
+		}
+		return null;
 	}
 
 	/*
@@ -3655,8 +3826,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * len between the two
 	 */
 	private Address findSpecialVtableUsingSpecialTypeinfo(Address typeinfoAddress,
-			List<GccTypeinfo> specialTypeinfos)
-			throws CancelledException {
+			List<GccTypeinfo> specialTypeinfos) throws CancelledException {
 
 		List<Address> referencesTo = getAllReferencesTo(typeinfoAddress);
 
@@ -3731,8 +3901,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		try {
 			symbolTable.createLabel(findSingleMangledString, mangledNamespaceString,
-				globalNamespace,
-				SourceType.ANALYSIS);
+				globalNamespace, SourceType.ANALYSIS);
 		}
 		catch (InvalidInputException e) {
 
@@ -3966,34 +4135,95 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 	}
 
-	private void updateClassWithVfunctions(List<RecoveredClass> recoveredClasses,
-			List<Vtable> vtables)
-			throws Exception {
+	private void updateClassWithVfunctions(List<Vtable> vtables) throws Exception {
 
-		for (RecoveredClass recoveredClass : recoveredClasses) {
+		for (Vtable vtable : vtables) {
 
 			monitor.checkCancelled();
-			Namespace classNamespace = recoveredClass.getClassNamespace();
 
-			Vtable classVtable = getVtable(vtables, classNamespace);
+			Namespace classNamespace = vtable.getNamespace();
 
-			if (classVtable == null) {
-				Msg.debug(this, "No vtable for class: " + classNamespace.getName());
-				return;
+			RecoveredClass recoveredClass = getClass(classNamespace);
+
+			if (recoveredClass == null) {
+				Msg.error(this, "No class for vtable : " + classNamespace.getName());
+				continue;
 			}
 
-			Address vftableAddress = classVtable.getVfunctionTop();
+			Address vftableAddress = vtable.getVfunctionTop();
 			if (vftableAddress == null) {
-				return;
+				continue;
 			}
 
-			Symbol vftableSymbol = symbolTable.getPrimarySymbol(vftableAddress);
+			// get the number of bases
+			// if only one then check no internal vtables
+			// if more than one then check matches num internal vtables
+			// match up the offset with the correct internal vftaable
+			List<Vtable> internalVtables = vtable.getInternalVtables();
+			List<Address> vftableAddresses = new ArrayList<Address>();
+			vftableAddresses.add(vftableAddress);
+			for (Vtable internalVtable : internalVtables) {
+				monitor.checkCancelled();
 
-			updateClassWithVftable(recoveredClass, vftableSymbol, true, false);
+				Address vfunctionTop = internalVtable.getVfunctionTop();
+				if (vfunctionTop == null) {
+					continue;
+				}
+				vftableAddresses.add(vfunctionTop);
+			}
+			Collections.sort(vftableAddresses);
 
-			// For now just assume simple case
-			// will have to refactor helper to handle gcc better
-			recoveredClass.addClassOffsetToVftableMapping(0, vftableAddress);
+			List<Long> baseOffsets = new ArrayList<Long>();
+			GccTypeinfo referencedTypeinfo = vtable.getReferencedTypeinfo();
+			List<BaseTypeinfo> baseTypeinfos = referencedTypeinfo.getBaseTypeinfos();
+			List<BaseTypeinfo> allBaseTypeinfos = referencedTypeinfo.getAllBaseTypeinfos();
+
+			// handle no parent case
+			if (baseTypeinfos.size() == 0) {
+				Symbol vftableSymbol = symbolTable.getPrimarySymbol(vftableAddress);
+				updateClassWithVftable(recoveredClass, vftableSymbol, true, false);
+				recoveredClass.addClassOffsetToVftableMapping(0, vftableAddress);
+				continue;
+			}
+
+			// handle parent case
+			for (BaseTypeinfo baseTypeinfo : baseTypeinfos) {
+				monitor.checkCancelled();
+				baseOffsets.add(baseTypeinfo.getOffset());
+			}
+
+			if (baseOffsets.size() != vftableAddresses.size()) {
+
+				Msg.debug(this,
+					classNamespace.getName(true) + " different size offset list and vftable list");
+
+				if (allBaseTypeinfos.size() == vftableAddresses.size()) {
+					Msg.debug(this, "Same number of total bases and vftables though");
+				}
+				continue;
+			}
+
+			for (int i = 0; i < baseOffsets.size(); i++) {
+
+				BaseTypeinfo baseTypeinfo = baseTypeinfos.get(i);
+				long offset = baseOffsets.get(i);
+
+				Address correspondingVftableAddress = vftableAddresses.get(i);
+				Symbol vftableSymbol = symbolTable.getPrimarySymbol(correspondingVftableAddress);
+
+				updateClassWithVftable(recoveredClass, vftableSymbol, true, false);
+				recoveredClass.addClassOffsetToVftableMapping((int) offset,
+					correspondingVftableAddress);
+
+				Namespace namespace = baseTypeinfo.getBaseTypeinfo().getNamespace();
+				RecoveredClass baseClass = getClass(namespace);
+				if (baseClass == null) {
+					continue;
+				}
+				recoveredClass.addVftableToBaseClassMapping(correspondingVftableAddress, baseClass);
+
+				//TODO: populate the new Vftable objects
+			}
 		}
 	}
 
@@ -4051,10 +4281,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			List<RecoveredClass> parentList = recoveredClass.getParentList();
-			Iterator<RecoveredClass> parentIterator = parentList.iterator();
-			while (parentIterator.hasNext()) {
+			for (RecoveredClass parentClass : parentList) {
 				monitor.checkCancelled();
-				RecoveredClass parentClass = parentIterator.next();
 				recoveredClass.addClassHierarchyMapping(parentClass,
 					parentClass.getClassHierarchy());
 			}
@@ -4087,10 +4315,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private boolean hasVirtualAncestor(RecoveredClass recoveredClass) throws CancelledException {
 
 		List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
-		Iterator<RecoveredClass> classIterator = classHierarchy.iterator();
-		while (classIterator.hasNext()) {
+		for (RecoveredClass ancestor : classHierarchy) {
 			monitor.checkCancelled();
-			RecoveredClass ancestor = classIterator.next();
 			if (ancestor.inheritsVirtualAncestor()) {
 				return true;
 			}
@@ -4150,11 +4376,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		classHierarchyList.add(recoveredClass);
 
 		List<RecoveredClass> parentList = recoveredClass.getParentList();
-		Iterator<RecoveredClass> parentIterator = parentList.iterator();
-		while (parentIterator.hasNext()) {
+		for (RecoveredClass parentClass : parentList) {
 			monitor.checkCancelled();
 
-			RecoveredClass parentClass = parentIterator.next();
 			if (nonInheritedClasses.contains(parentClass)) {
 				classHierarchyList.addAll(parentClass.getClassHierarchy());
 				continue;
@@ -4212,77 +4436,66 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private boolean isPossibleFunctionPointer(Address address) throws CancelledException {
 
-		// TODO: make one that works for all casea in helper
-
-		long longValue = extendedFlatAPI.getLongValueAt(address);
-
-		Register lowBitCodeMode = program.getRegister("LowBitCodeMode");
-		if (lowBitCodeMode != null) {
-			longValue = longValue & ~0x1;
-		}
-
-		Address possibleFunctionPointer = null;
-
-		try {
-			possibleFunctionPointer = address.getNewAddress(longValue);
-		}
-		catch (AddressOutOfBoundsException e) {
+		Address referencedAddress = extendedFlatAPI.getSingleReferencedAddress(address);
+		if (referencedAddress == null) {
 			return false;
 		}
 
-		if (possibleFunctionPointer == null) {
+		Address normalizedReferencedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, referencedAddress);
+
+		if (normalizedReferencedAddress == null) {
 			return false;
 		}
 
-		Function function = api.getFunctionAt(possibleFunctionPointer);
+		Function function = api.getFunctionAt(normalizedReferencedAddress);
 		if (function != null) {
 			return true;
 		}
 
 		AddressSetView executeSet = program.getMemory().getExecuteSet();
 
-		if (!executeSet.contains(possibleFunctionPointer)) {
+		if (!executeSet.contains(normalizedReferencedAddress)) {
 			return false;
 		}
 
-		Instruction instruction = api.getInstructionAt(possibleFunctionPointer);
+		Instruction instruction = api.getInstructionAt(normalizedReferencedAddress);
 		if (instruction != null) {
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 
 		}
 
-		boolean disassemble = api.disassemble(possibleFunctionPointer);
+		boolean disassemble = api.disassemble(normalizedReferencedAddress);
 		if (disassemble) {
 
 			// check for the case where there is conflicting data at the thumb offset function
 			// pointer and if so clear the data and redisassemble and remove the bad bookmark
-			long originalLongValue = extendedFlatAPI.getLongValueAt(address);
-			if (originalLongValue != longValue) {
-				Address offsetPointer = address.getNewAddress(originalLongValue);
-				Data dataAt = listing.getDataAt(offsetPointer);
+			//	long originalLongValue = extendedFlatAPI.getLongValueAt(address);
+			if (!referencedAddress.equals(normalizedReferencedAddress)) {
+
+				Data dataAt = listing.getDataAt(referencedAddress);
 				if (dataAt != null && dataAt.isDefined()) {
-					api.clearListing(offsetPointer);
+					api.clearListing(referencedAddress);
 					disassemble = api.disassemble(address);
 
-					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR,
-						"Bad Instruction",
-						"conflicting data");
+					Bookmark bookmark =
+						getBookmarkAt(normalizedReferencedAddress, BookmarkType.ERROR,
+							"Bad Instruction", "conflicting data");
 					if (bookmark != null) {
 						api.removeBookmark(bookmark);
 					}
 				}
 			}
 
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 		}
 		return false;
 	}
 
 	private Bookmark getBookmarkAt(Address address, String bookmarkType, String category,
-			String commentContains)
-			throws CancelledException {
+			String commentContains) throws CancelledException {
 
 		Bookmark[] bookmarks = program.getBookmarkManager().getBookmarks(address);
 
@@ -4407,10 +4620,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			for (RecoveredClass parent : parentList) {
 				monitor.checkCancelled();
 				if (parent.getName().endsWith("_class_type_info")) {
-					Msg.debug(this,
-						"Not creating class data type for " +
-							recoveredClass.getClassNamespace().getName(true) +
-							" because it has a parent that is one of the special typeinfo classes.");
+					Msg.debug(this, "Not creating class data type for " +
+						recoveredClass.getClassNamespace().getName(true) +
+						" because it has a parent that is one of the special typeinfo classes.");
 					return;
 				}
 			}
@@ -4426,9 +4638,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		if (!recoveredClass.hasVftable()) {
-			createSimpleClassStructure(recoveredClass, null);
-			// return in this case because if there is no vftable for a class the script
-			// cannot
+
+			Structure classStructure = createSimpleClassStructure(recoveredClass, null);
+			if (classStructure == null) {
+				Msg.error(this, "Could not create class structure for " +
+					recoveredClass.getClassNamespace().getName(true));
+			}
+
+			updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStructure);
+			// return in this case because if there is no vftable for a class the script cannot
 			// identify any member functions so there is no need to process the rest of this
 			// method
 			return;
@@ -4443,6 +4661,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// data
 		// structures, and class member data structure
 		Structure classStruct = createSimpleClassStructure(recoveredClass, vfPointerDataTypes);
+		if (classStruct == null) {
+			Msg.error(this, "Could not create class structure or continue processing for " +
+				recoveredClass.getClassNamespace().getName(true));
+			return;
+		}
 
 		// Now that we have a class data type
 		// name constructor and destructor functions and put into the class namespace
@@ -4469,6 +4692,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
 			classStruct);
 
+		updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
 	}
 
 	private Structure createSimpleClassStructure(RecoveredClass recoveredClass,
@@ -4479,8 +4703,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		CategoryPath classPath = recoveredClass.getClassPath();
 
 		// get either existing structure if prog has a structure created by pdb or
-		// computed
-		// structure from decompiled construtor(s) info
+		// computed structure from decompiled construtor(s) info
 		Structure classStructure;
 		if (recoveredClass.hasExistingClassStructure()) {
 			classStructure = recoveredClass.getExistingClassStructure();
@@ -4490,8 +4713,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		int structLen = 0;
+		// for gcc need to get actual length of components not the aligned length
 		if (classStructure != null) {
-			structLen = addAlignment(classStructure.getLength());
+
+			int numComponents = classStructure.getNumComponents();
+			classStructure.getNumDefinedComponents();
+
+			DataTypeComponent lastComponent = classStructure.getComponent(numComponents - 1);
+			structLen = lastComponent.getOffset() + lastComponent.getLength();
+
 		}
 
 		Structure classStructureDataType =
@@ -4501,36 +4731,33 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		if (nonInheritedClasses.contains(recoveredClass) && vfPointerDataTypes != null) {
 
 			// the size was checked before calling this method so we know there is one and
-			// only
-			// one for this simple case
+			// only one for this simple case
 			Address vftableAddress = recoveredClass.getVftableAddresses().get(0);
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
 			// simple case the offset for vftablePtr is 0
 			// if can fit or grow structure, add the vftablePtr to it
 			EditStructureUtils.addDataTypeToStructure(classStructureDataType, 0,
-				classVftablePointer,
-				CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+				classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 		}
 		// if single inheritance or multi non-virtual (wouldn't have called this method
-		// if
-		// it were virtually inherited) put parent struct and data into class struct
+		// if it were virtually inherited) put parent struct and data into class struct
 		else {
 
 			Map<Integer, RecoveredClass> orderToParentMap =
 				classToParentOrderMap.get(recoveredClass);
 			if (orderToParentMap == null || orderToParentMap.isEmpty()) {
-				throw new Exception(
-					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
-						" should have a parent in the classToParentOrderMap but doesn't");
+				Msg.error(this, "Vmi class " + recoveredClass.getClassNamespace().getName(true) +
+					" should have a parent in the classToParentOrderMap but doesn't");
+				return null;
 			}
 
 			Map<RecoveredClass, Long> parentToOffsetMap =
 				classToParentOffsetMap.get(recoveredClass);
 			if (parentToOffsetMap.isEmpty()) {
-				throw new Exception(
-					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
-						" should have a parent in the classToParentOffsetMap but doesn't");
+				Msg.error(this, "Vmi class " + recoveredClass.getClassNamespace().getName(true) +
+					" should have a parent in the classToParentOffsetMap but doesn't");
+				return null;
 			}
 
 			int numParents = orderToParentMap.keySet().size();
@@ -4539,60 +4766,56 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Long parentOffsetLong = parentToOffsetMap.get(parent);
 				if (parentOffsetLong == null) {
-					throw new Exception(
+					Msg.error(this,
 						"Can't get parent offset for " + parent.getClassNamespace().getName(true));
+					return null;
 				}
 				int parentOffset = parentOffsetLong.intValue();
 
 				Structure baseClassStructure = getClassStructureFromDataTypeManager(parent);
-				// if we can't get the parent throw exception because it shouldn't get here if
-				// the
-				// parent doesn't exist
-				if (baseClassStructure == null) {
-					throw new Exception(
-						parent.getClassNamespace().getName(true) +
-							" : structure should exist but doesn't.");
-				}
 
+				if (baseClassStructure == null) {
+					Msg.error(this, "Parent structure: " +
+						parent.getClassNamespace().getName(true) + " should exist but doesn't.");
+					return null;
+				}
 				// if it fits at offset or is at the end and class structure can be grown,
 				// copy the whole baseClass structure to the class Structure at the given offset
 				EditStructureUtils.addDataTypeToStructure(classStructureDataType, parentOffset,
-					baseClassStructure,
-					baseClassStructure.getName(), monitor);
+					baseClassStructure, baseClassStructure.getName(), monitor);
+
 			}
 
 		}
+
+		// for gcc need to split out parent parts before figuring out data length
+		// to avoid internal alignment issues causing the wrong size
+		classStructureDataType =
+			addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
 
 		// figure out class data, if any, create it and add to class structure
 		int dataOffset = getDataOffset(recoveredClass, classStructureDataType);
 		int dataLen = UNKNOWN;
 		if (dataOffset != NONE) {
 			dataLen = EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(
-				classStructureDataType, dataOffset,
-				monitor);
+				classStructureDataType, dataOffset, monitor);
 		}
 
 		if (dataLen != UNKNOWN && dataLen > 0) {
 
-			Structure recoveredClassDataStruct =
-				createClassMemberDataStructure(recoveredClass, classStructureDataType,
-					dataLen, dataOffset);
+			Structure recoveredClassDataStruct = createClassMemberDataStructure(recoveredClass,
+				classStructureDataType, dataLen, dataOffset);
 
 			if (recoveredClassDataStruct != null) {
 				// if it fits at offset or is at the end and class structure can be grown,
 				// copy the whole baseClass structure to the class Structure at the given offset
 				EditStructureUtils.addDataTypeToStructure(classStructureDataType, dataOffset,
-					recoveredClassDataStruct,
-					"data", monitor);
+					recoveredClassDataStruct, "data", monitor);
 			}
 
 		}
 
-		classStructureDataType =
-			addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
-
-		// unused at this point until something figures out how to create them and where
-		// to
+		// unused at this point until something figures out how to create them and where to
 		// put them
 		classStructureDataType =
 			addVbtableToClassStructure(recoveredClass, classStructureDataType, true);

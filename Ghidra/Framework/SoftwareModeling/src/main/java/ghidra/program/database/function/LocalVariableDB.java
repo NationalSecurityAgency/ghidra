@@ -36,7 +36,7 @@ public class LocalVariableDB extends VariableDB implements LocalVariable {
 			function.startUpdate();
 			function.checkDeleted();
 			symbol.setFirstUseOffset(firstUseOffset);
-			functionMgr.functionChanged(function, 0);
+			functionMgr.functionChanged(function, null);
 		}
 		finally {
 			function.endUpdate();

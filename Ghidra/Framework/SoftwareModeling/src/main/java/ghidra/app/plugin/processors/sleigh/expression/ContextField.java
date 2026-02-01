@@ -19,16 +19,15 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * Contiguous bits in the non-instruction part of the context interpreted
  * as an integer value
  */
@@ -81,17 +80,11 @@ public class ContextField extends PatternValue {
 		return signbit;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#minValue()
-	 */
 	@Override
 	public long minValue() {
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#maxValue()
-	 */
 	@Override
 	public long maxValue() {
 		long res = -1;
@@ -100,39 +93,35 @@ public class ContextField extends PatternValue {
 		return ~res;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#getValue(ghidra.app.plugin.processors.sleigh.InstructionContext)
-	 */
 	@Override
 	public long getValue(ParserWalker walker) throws MemoryAccessException {
 		long res = getContextBytes(walker);
 		res >>= shift;
-		if (signbit)
+		if (signbit) {
 			res = TokenField.signExtend(res, endbit - startbit);
-		else
+		}
+		else {
 			res = TokenField.zeroExtend(res, endbit - startbit);
+		}
 		return res;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("contextfield");
-		signbit = SpecXmlUtils.decodeBoolean(el.getAttribute("signbit"));
-		startbit = SpecXmlUtils.decodeInt(el.getAttribute("startbit"));
-		endbit = SpecXmlUtils.decodeInt(el.getAttribute("endbit"));
-		startbyte = SpecXmlUtils.decodeInt(el.getAttribute("startbyte"));
-		endbyte = SpecXmlUtils.decodeInt(el.getAttribute("endbyte"));
-		shift = SpecXmlUtils.decodeInt(el.getAttribute("shift"));
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_CONTEXTFIELD);
+		signbit = decoder.readBool(ATTRIB_SIGNBIT);
+		startbit = (int) decoder.readSignedInteger(ATTRIB_STARTBIT);
+		endbit = (int) decoder.readSignedInteger(ATTRIB_ENDBIT);
+		startbyte = (int) decoder.readSignedInteger(ATTRIB_STARTBYTE);
+		endbyte = (int) decoder.readSignedInteger(ATTRIB_ENDBYTE);
+		shift = (int) decoder.readSignedInteger(ATTRIB_SHIFT);
+		decoder.closeElement(el);
 	}
 
 	/**
-	 * Build a long from the context bytes in pos
-	 * @param pos
-	 * @return
+	 * Build a long from the context bytes at the current point in the instruction parse
+	 * @param walker is the parsing state
+	 * @return the recover value
 	 */
 	private long getContextBytes(ParserWalker walker) {
 		long res = 0;

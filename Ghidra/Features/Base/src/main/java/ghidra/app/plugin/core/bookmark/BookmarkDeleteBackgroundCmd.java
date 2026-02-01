@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +16,13 @@
 package ghidra.app.plugin.core.bookmark;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Command to delete a number of bookmarks.
  */
-public class BookmarkDeleteBackgroundCmd extends BackgroundCommand {
+public class BookmarkDeleteBackgroundCmd extends BackgroundCommand<Program> {
 
 	private Bookmark[] bookmarks;
 
@@ -41,8 +39,8 @@ public class BookmarkDeleteBackgroundCmd extends BackgroundCommand {
 	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
 	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		BookmarkManager mgr = ((Program) obj).getBookmarkManager();
+	public boolean applyTo(Program program, TaskMonitor monitor) {
+		BookmarkManager mgr = program.getBookmarkManager();
 		monitor.initialize(bookmarks.length);
 		for (int i = 0; i < bookmarks.length; i++) {
 			if (monitor.isCancelled()) {

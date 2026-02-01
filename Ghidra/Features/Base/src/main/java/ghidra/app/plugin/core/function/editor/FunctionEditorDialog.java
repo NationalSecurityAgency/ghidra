@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.*;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumnModel;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,7 +40,6 @@ import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
@@ -57,6 +57,11 @@ import ghidra.util.layout.VerticalLayout;
 import resources.Icons;
 
 public class FunctionEditorDialog extends DialogComponentProvider implements ModelChangeListener {
+
+	private static final String COMMIT_FULL_SIGNATURE_WARNING =
+		"All signature details will be commited (see Commit checkbox above)";
+	private static final String SIGNATURE_LOSS_WARNING =
+		"Return/Parameter changes will not be applied (see Commit checkbox above)";
 
 	private FunctionEditorModel model;
 	private DocumentListener nameFieldDocumentListener;
@@ -78,6 +83,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JCheckBox storageCheckBox;
 	private JScrollPane scroll;
 	private JPanel previewPanel;
+	private JCheckBox commitFullParamDetailsCheckBox; // optional: may be null
 
 	private FunctionSignatureTextField signatureTextField;
 	private UndoRedoKeeper signatureFieldUndoRedoKeeper;
@@ -85,11 +91,22 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private MyGlassPane glassPane;
 	private JPanel centerPanel;
 
+	/**
+	 * Construct Function Editor dialog for a specified Function and associated DataType service.
+	 * @param service DataType service
+	 * @param function Function to be modified
+	 */
 	public FunctionEditorDialog(DataTypeManagerService service, Function function) {
-		this(new FunctionEditorModel(service, function));
+		this(new FunctionEditorModel(service, function), true);
 	}
 
-	public FunctionEditorDialog(FunctionEditorModel model) {
+	/**
+	 * Construct Function Editor dialog using a specified model
+	 * @param model function detail model
+	 * @param hasOptionalSignatureCommit if true an optional control will be included which 
+	 * controls commit of parameter/return details, including Varargs and use of custom storage.
+	 */
+	public FunctionEditorDialog(FunctionEditorModel model, boolean hasOptionalSignatureCommit) {
 		super(createTitle(model.getFunction()));
 		this.service = model.getDataTypeManagerService();
 		setRememberLocation(true);
@@ -97,7 +114,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		setHelpLocation(new HelpLocation("FunctionPlugin", "Edit_Function"));
 		this.model = model;
 		model.setModelChangeListener(this);
-		addWorkPanel(buildMainPanel());
+		addWorkPanel(buildMainPanel(hasOptionalSignatureCommit));
 		addOKButton();
 		addCancelButton();
 		glassPane = new MyGlassPane();
@@ -158,35 +175,63 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				return;
 			}
 		}
-		if (model.apply()) {
+
+		boolean fullCommit = true;
+		if (commitFullParamDetailsCheckBox != null &&
+			!commitFullParamDetailsCheckBox.isSelected()) {
+			fullCommit = false;
+		}
+		if (model.apply(fullCommit)) {
 			close();
 		}
 	}
 
 	@Override
-	public void close() {
+	protected void cancelCallback() {
+		// called when cancelled button is pressed; ignore all changes
 		model.dispose();
 		super.close();
 	}
 
-	private JComponent buildMainPanel() {
+	@Override
+	protected void dismissCallback() {
+		// Called when the x button on the dialog is pressed.  Call the standard close() so we 
+		// prompt the user if they have changes.
+		close();
+	}
+
+	@Override
+	public void close() {
+		if (model.hasChanged()) {
+			if (!promptToAbortChanges()) {
+				return;
+			}
+		}
+
+		model.dispose();
+		super.close();
+	}
+
+	private JComponent buildMainPanel(boolean hasOptionalSignatureCommit) {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildPreview(), BorderLayout.NORTH);
-		panel.add(buildCenterPanel(), BorderLayout.CENTER);
+		panel.add(buildCenterPanel(hasOptionalSignatureCommit), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Function Editor");
 		return panel;
 	}
 
-	private JComponent buildCenterPanel() {
+	private JComponent buildCenterPanel(boolean hasOptionalSignatureCommit) {
 		centerPanel = new JPanel(new BorderLayout());
 		centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 		centerPanel.add(buildAttributePanel(), BorderLayout.NORTH);
 		centerPanel.add(buildTable(), BorderLayout.CENTER);
-		centerPanel.add(buildBottomPanel(), BorderLayout.SOUTH);
+		centerPanel.add(buildBottomPanel(hasOptionalSignatureCommit), BorderLayout.SOUTH);
+		centerPanel.getAccessibleContext().setAccessibleName("Function Attributes");
 		return centerPanel;
 	}
 
-	private Component buildBottomPanel() {
+	private Component buildBottomPanel(boolean hasOptionalSignatureCommit) {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		Border b = BorderFactory.createEmptyBorder(0, 0, 0, 0);
@@ -198,12 +243,37 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		Function thunkedFunction = model.getFunction().getThunkedFunction(false);
 		if (thunkedFunction != null) {
 			JPanel thunkedPanel = createThunkedFunctionTextPanel(thunkedFunction);
+			thunkedPanel.getAccessibleContext().setAccessibleName("Thunked Function");
 			thunkedPanel.setBorder(BorderFactory.createTitledBorder(b, "Thunked Function:"));
 			panel.add(thunkedPanel, BorderLayout.CENTER); // provide as much space as possible
 		}
 		else {
 			panel.add(new JPanel(), BorderLayout.CENTER);
 		}
+
+		if (hasOptionalSignatureCommit) {
+			commitFullParamDetailsCheckBox = new JCheckBox("Commit all return/parameter details");
+			commitFullParamDetailsCheckBox.addActionListener(e -> {
+				if (!model.isValid()) {
+					return;
+				}
+				if (!commitFullParamDetailsCheckBox.isSelected()) {
+					if (model.hasSignificantParameterChanges()) {
+						setStatusText(SIGNATURE_LOSS_WARNING, MessageType.WARNING);
+					}
+					else {
+						clearStatusText();
+					}
+				}
+				else {
+					setStatusText(COMMIT_FULL_SIGNATURE_WARNING, MessageType.WARNING);
+					setOkEnabled(true);
+				}
+			});
+			panel.add(commitFullParamDetailsCheckBox, BorderLayout.SOUTH);
+		}
+
+		panel.getAccessibleContext().setAccessibleName("Call Fixup and Thunked Function");
 		return panel;
 	}
 
@@ -224,13 +294,12 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent buildPreview() {
 		previewPanel = new JPanel(new BorderLayout());
 		JPanel verticalScrollPanel = new VerticalScrollablePanel();
+		verticalScrollPanel.getAccessibleContext().setAccessibleName("Vertical Scroll");
 		verticalScrollPanel.add(createSignatureTextPanel());
 		scroll = new JScrollPane(verticalScrollPanel);
+		scroll.getAccessibleContext().setAccessibleName("Scroll");
 		scroll.setBorder(null);
 		scroll.setOpaque(true);
-		scroll.setBackground(Colors.BACKGROUND);
-		scroll.getViewport().setBackground(Palette.NO_COLOR); // transparent
-		scroll.getViewport().setBackground(Colors.BACKGROUND);
 		previewPanel.add(scroll, BorderLayout.CENTER);
 		previewPanel.setBorder(BorderFactory.createLoweredBevelBorder());
 		scroll.getViewport().addMouseListener(new MouseAdapter() {
@@ -241,22 +310,21 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				signatureTextField.requestFocus();
 			}
 		});
+		previewPanel.getAccessibleContext().setAccessibleName("Preview");
 		return previewPanel;
 	}
 
 	private JComponent createSignatureTextPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		signatureTextField = new FunctionSignatureTextField();
-
+		signatureTextField.getAccessibleContext().setAccessibleName("Signature");
 		signatureFieldUndoRedoKeeper = DockingUtils.installUndoRedo(signatureTextField);
 
-		Font font = signatureTextField.getFont();
-		signatureTextField.setFont(font.deriveFont(18.0f));
 		panel.add(signatureTextField);
 
 		signatureTextField.setEscapeListener(e -> {
 
-			if (!model.hasChanges()) {
+			if (!model.hasSignatureTextChanges()) {
 				// no changes; user wish to close the dialog
 				cancelCallback();
 				return;
@@ -307,6 +375,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		signatureTextField
 				.setChangeListener(e -> model.setSignatureFieldText(signatureTextField.getText()));
+		panel.getAccessibleContext().setAccessibleName("Signature Text");
 		return panel;
 	}
 
@@ -352,9 +421,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		leftPanel.add(new GLabel("Calling Convention"));
 		leftPanel.add(createCallingConventionCombo());
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
-
+		leftPanel.getAccessibleContext().setAccessibleName("Function");
 		panel.add(leftPanel, BorderLayout.CENTER);
 		panel.add(buildTogglePanel(), BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Attributes");
 		return panel;
 	}
 
@@ -362,22 +432,26 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		JPanel panel = new JPanel(new PairLayout());
 		varArgsCheckBox = new GCheckBox("Varargs");
 		varArgsCheckBox.addItemListener(e -> model.setHasVarArgs(varArgsCheckBox.isSelected()));
+		varArgsCheckBox.getAccessibleContext().setAccessibleName("Variable Argument");
 		panel.add(varArgsCheckBox);
 
 		inLineCheckBox = new GCheckBox("In Line");
+		inLineCheckBox.getAccessibleContext().setAccessibleName("In Line");
 		panel.add(inLineCheckBox);
 		inLineCheckBox.addItemListener(e -> model.setIsInLine(inLineCheckBox.isSelected()));
 		inLineCheckBox.setEnabled(model.isInlineAllowed());
 
 		noReturnCheckBox = new GCheckBox("No Return");
+		noReturnCheckBox.getAccessibleContext().setAccessibleName("No Return");
 		noReturnCheckBox.addItemListener(e -> model.setNoReturn(noReturnCheckBox.isSelected()));
 		storageCheckBox = new GCheckBox("Use Custom Storage");
+		storageCheckBox.getAccessibleContext().setAccessibleName("Custom Storage");
 		storageCheckBox
 				.addItemListener(e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
 		panel.add(noReturnCheckBox);
 		panel.add(storageCheckBox);
 		panel.setBorder(BorderFactory.createTitledBorder("Function Attributes:"));
-
+		panel.getAccessibleContext().setAccessibleName("Toggle");
 		return panel;
 	}
 
@@ -396,6 +470,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		JPanel panel = new JPanel();
 
 		callFixupComboBox = new GComboBox<>();
+		callFixupComboBox.getAccessibleContext().setAccessibleName("Call Fixup");
 		String[] callFixupNames = model.getCallFixupNames();
 
 		callFixupComboBox.addItem(FunctionEditorModel.NONE_CHOICE);
@@ -406,7 +481,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				callFixupComboBox.addItem(element);
 			}
 			callFixupComboBox.addItemListener(
-				e -> model.setCallFixupName((String) callFixupComboBox.getSelectedItem()));
+				e -> model.setCallFixupChoice((String) callFixupComboBox.getSelectedItem()));
 		}
 		else {
 			callFixupComboBox.setToolTipText("No call-fixups defined by compiler specification");
@@ -414,21 +489,25 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 
 		panel.add(callFixupComboBox);
+		panel.getAccessibleContext().setAccessibleName("Call Fixup");
 		return panel;
 	}
 
 	private Component buildTable() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
-			"Function Variables"));
+			"Function Return/Parameters"));
 
 		paramTableModel = new ParameterTableModel(model);
 		parameterTable = new ParameterTable(paramTableModel);
-		selectionListener = e -> model.setSelectedParameterRow(parameterTable.getSelectedRows());
+		selectionListener = e -> model.setSelectedParameterRows(parameterTable.getSelectedRows());
+		parameterTable.getAccessibleContext().setAccessibleName("Parameter");
 
 		JScrollPane tableScroll = new JScrollPane(parameterTable);
+		tableScroll.getAccessibleContext().setAccessibleName("Scroll");
 		panel.add(tableScroll, BorderLayout.CENTER);
 		panel.add(buildButtonPanel(), BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Function Variables");
 		return panel;
 	}
 
@@ -478,11 +557,17 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			}
 		};
 		nameField.getDocument().addDocumentListener(nameFieldDocumentListener);
+		nameField.getAccessibleContext().setAccessibleName("Name");
 		return nameField;
 	}
 
 	@Override
 	public void dataChanged() {
+
+		// Save off the selected column so that we can restore it in the case that it makes sense
+		// to do so (see updateTableSelection()). 
+		TableCell oldSelectedCell = getSelectedTableCell();
+
 		if (model.isInParsingMode()) {
 			setGlassPane(glassPane);
 			glassPane.setVisible(true);
@@ -500,14 +585,21 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			updateCallFixupCombo();
 			updateOkButton();
 			updateParamTable();
-			updateTableSelection();
+			updateTableSelection(oldSelectedCell);
 			updateTableButtonEnablement();
 			updateStorageEditingEnabled();
+			updateOptionalParamCommit();
+		}
+	}
+
+	private void updateOptionalParamCommit() {
+		if (commitFullParamDetailsCheckBox != null) {
+			commitFullParamDetailsCheckBox.setSelected(model.hasSignificantParameterChanges());
 		}
 	}
 
 	private void updateStorageEditingEnabled() {
-		boolean canCustomizeStorage = model.canCustomizeStorage();
+		boolean canCustomizeStorage = model.canUseCustomStorage();
 		if (storageCheckBox.isSelected() != canCustomizeStorage) {
 			storageCheckBox.setSelected(canCustomizeStorage);
 		}
@@ -520,19 +612,63 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		downButton.setEnabled(model.canMoveParameterDown());
 	}
 
-	private void updateTableSelection() {
-		int[] selectedRows = model.getSelectedParameterRows();
+	private void updateTableSelection(TableCell lastSelectedCell) {
 
-		if (!Arrays.equals(selectedRows, parameterTable.getSelectedRows())) {
-			ListSelectionModel selectionModel = parameterTable.getSelectionModel();
-			selectionModel.removeListSelectionListener(selectionListener);
-			parameterTable.clearSelection();
-			for (int i : selectedRows) {
-				parameterTable.addRowSelectionInterval(i, i);
-			}
-			parameterTable.scrollToSelectedRow();
-			selectionModel.addListSelectionListener(selectionListener);
+		int[] modelRows = model.getSelectedParameterRows();
+		int[] tableRows = parameterTable.getSelectedRows();
+		if (Arrays.equals(modelRows, tableRows)) {
+			return;
 		}
+
+		ListSelectionModel rowSelectionModel = parameterTable.getSelectionModel();
+		rowSelectionModel.removeListSelectionListener(selectionListener);
+
+		try {
+			rowSelectionModel.clearSelection();
+			doUpdateTableSelection(lastSelectedCell);
+			parameterTable.scrollToSelectedRow();
+		}
+		finally {
+			rowSelectionModel.addListSelectionListener(selectionListener);
+		}
+	}
+
+	private void doUpdateTableSelection(TableCell lastSelectedCell) {
+
+		ListSelectionModel rowSelectionModel = parameterTable.getSelectionModel();
+		int[] modelRows = model.getSelectedParameterRows();
+
+		// single parameter row selected
+		if (modelRows.length == 1) {
+			int row = modelRows[0];
+			rowSelectionModel.setSelectionInterval(row, row);
+
+			//
+			// Special Code
+			// This method will attempt to selected the row in the UI that matches the model's 
+			// notion of the selected row.  Model changes trigger calls to this method.  Sometimes 
+			// this method is called when the user clicks a new row.  In that case, if the user has 
+			// selected a table cell, that is lost when we rebuild the table just before the call to
+			// this method.  We use the old row and column here to restore that selected table cell.  
+			//
+			if (row == lastSelectedCell.row) {
+				lastSelectedCell.selectedColumn();
+			}
+			return;
+		}
+
+		// multiple rows selected
+		for (int row : modelRows) {
+			if (row < parameterTable.getRowCount()) {
+				rowSelectionModel.addSelectionInterval(row, row);
+			}
+		}
+	}
+
+	private TableCell getSelectedTableCell() {
+		int row = parameterTable.getSelectionModel().getLeadSelectionIndex();
+		int col = parameterTable.getColumnModel().getSelectionModel().getLeadSelectionIndex();
+		return new TableCell(parameterTable, row, col);
 	}
 
 	private void updateParamTable() {
@@ -545,7 +681,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private void updateCallFixupCombo() {
-		String callFixupName = model.getCallFixupName();
+		String callFixupName = model.getCallFixupChoice();
 		if (!callFixupComboBox.getSelectedItem().equals(callFixupName)) {
 			callFixupComboBox.setSelectedItem(callFixupName);
 			if (!callFixupComboBox.getSelectedItem().equals(callFixupName)) {
@@ -580,7 +716,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private void updateOkButton() {
-		setOkEnabled(model.isValid());
+		setOkEnabled(model.isValid() && model.hasChanges());
 	}
 
 	private void updateStatusText() {
@@ -660,9 +796,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					color = getErrorForegroundColor(isSelected);
 				}
 				String toolTipText = ToolTipUtils.getToolTipText(dataType);
-				String headerText = "<HTML><b>" +
+				String headerText = "<html><b>" +
 					HTMLUtilities.friendlyEncodeHTML(dataType.getPathName()) + "</b><BR>";
-				toolTipText = toolTipText.replace("<HTML>", headerText);
+				toolTipText = toolTipText.replace("<html>", headerText);
 				setToolTipText(toolTipText);
 			}
 			else {
@@ -671,6 +807,42 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			}
 			setForeground(color);
 			return this;
+		}
+	}
+
+	private record TableCell(GTable table, int row, int col) {
+
+		TableCell getNextCell() {
+
+			int nextRow = row;
+			int nextCol = col + 1; // next column
+			int rowCount = table.getRowCount();
+			if (nextRow == rowCount) {
+				// wrap around to the first cell
+				return new TableCell(table, 0, 0);
+			}
+
+			int maxCol = table.getColumnCount();
+			if (nextCol < maxCol) {
+				// valid row and column
+				return new TableCell(table, nextRow, nextCol);
+			}
+
+			nextCol = 0; // move to the start of the next row
+			nextRow++;
+			if (nextRow < rowCount) {
+				// next row is valid
+				return new TableCell(table, nextRow, nextCol);
+			}
+
+			// reached the end; go to the start of the table
+			return new TableCell(table, 0, 0);
+		}
+
+		void selectedColumn() {
+			TableColumnModel columnModel = table.getColumnModel();
+			ListSelectionModel columnSelectionModel = columnModel.getSelectionModel();
+			columnSelectionModel.setSelectionInterval(col, col);
 		}
 	}
 
@@ -710,8 +882,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			getSelectionModel().addListSelectionListener(selectionListener);
 			// set the preferred viewport height smaller that the button panel, otherwise it is huge!
 			setPreferredScrollableViewportSize(new Dimension(600, 100));
-			setDefaultEditor(DataType.class,
-				new ParameterDataTypeCellEditor(FunctionEditorDialog.this, service));
+			setDefaultEditor(DataType.class, new ParameterDataTypeCellEditor(
+				FunctionEditorDialog.this, service, model.getProgram().getDataTypeManager()));
 			setDefaultRenderer(DataType.class, new ParameterDataTypeCellRenderer());
 			setDefaultEditor(VariableStorage.class, new StorageTableCellEditor(model));
 			setDefaultRenderer(VariableStorage.class, new VariableStorageCellRenderer());
@@ -729,37 +901,77 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 
 		@Override
-		public boolean editCellAt(int row, int column, EventObject e) {
+		public boolean editCellAt(int row, int col, EventObject e) {
 
-			if (row < 0 || row >= getRowCount() || column < 1 || column >= getColumnCount()) {
+			if (row < 0 || row >= getRowCount() || col < 1 || col >= getColumnCount()) {
+				editNextEditableCell(new TableCell(parameterTable, row, col));
 				return false;
 			}
 
-			boolean isEditable = super.editCellAt(row, column, e);
-			if (!isEditable) {
-				if ((e instanceof KeyEvent) ||
-					(e instanceof MouseEvent && ((MouseEvent) e).getClickCount() == 2)) {
-					FunctionVariableData rowData = paramTableModel.getRowObject(row);
-					if (rowData.getStorage().isAutoStorage()) {
-						setStatusText("Auto-parameters may not be modified");
-					}
-					else if (row == 0 && "Name".equals(getColumnName(column))) {
-						setStatusText("Return name may not be modified");
-					}
-					else if ("Storage".equals(getColumnName(column))) {
-						boolean blockVoidStorageEdit = (rowData.getIndex() == null) &&
-							VoidDataType.isVoidDataType(rowData.getFormalDataType());
-						if (!blockVoidStorageEdit) {
-							setStatusText(
-								"Enable 'Use Custom Storage' to allow editing of Parameter and Return Storage");
-						}
-						else {
-							setStatusText("Void return storage may not be modified");
-						}
-					}
-				}
+			boolean isEditable = super.editCellAt(row, col, e);
+			if (isEditable) {
+				return true;
 			}
-			return isEditable;
+
+			if (!(e instanceof KeyEvent)) {
+				// When the user double-clicks a table cell, print an error message to signal why 
+				// the cell is not editable.  For key events, we will try to edit the next cell, as 
+				// other tables do this in the system.
+				showEditErrorMessage(row, col);
+				return false;
+			}
+
+			// For key events, we will conveniently edit the next available cell
+			return editNextEditableCell(new TableCell(parameterTable, row, col));
+		}
+
+		/*
+		 * As a convenience to the user, if the cell they are on is not editable, find the next cell
+		 * that is and initiate an edit.  This was a user request.
+		 */
+		private boolean editNextEditableCell(TableCell currentCell) {
+
+			TableCell nextCell = currentCell.getNextCell();
+			do {
+				int row = nextCell.row;
+				int col = nextCell.col;
+				boolean isEditable = super.editCellAt(row, col);
+				if (isEditable) {
+					// set the cell selection so future navigation starts at the edit cell
+					getSelectionModel().setSelectionInterval(row, row);
+					nextCell.selectedColumn();
+					return true;
+				}
+				nextCell = nextCell.getNextCell();
+			}
+			while (!currentCell.equals(nextCell)); // stop if we cycle back to the original cell
+
+			return false;
+		}
+
+		private void showEditErrorMessage(int row, int column) {
+			FunctionVariableData rowData = paramTableModel.getRowObject(row);
+			if (rowData.getStorage().isAutoStorage()) {
+				setStatusText("Auto-parameters may not be modified");
+				return;
+			}
+
+			String columnName = getColumnName(column);
+			if (row == 0 && "Name".equals(columnName)) {
+				setStatusText("Return name may not be modified");
+				return;
+			}
+
+			if ("Storage".equals(columnName)) {
+				boolean blockVoidStorageEdit = (rowData.getIndex() == null) &&
+					VoidDataType.isVoidDataType(rowData.getFormalDataType());
+				if (blockVoidStorageEdit) {
+					setStatusText("Void return storage may not be modified");
+					return;
+				}
+
+				setStatusText("Enable 'Use Custom Storage' to edit Parameter and Return Storage");
+			}
 		}
 	}
 
@@ -783,6 +995,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				if (isInvalidStorage) {
 					setForeground(getErrorForegroundColor(isSelected));
 					setToolTipText("Invalid Parameter Storage");
+				}
+				else if (rowData.hasStorageConflict()) {
+					setForeground(getErrorForegroundColor(isSelected));
+					setToolTipText("Conflicting Parameter Storage");
 				}
 				else {
 					setForeground(isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
@@ -895,6 +1111,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	private class GlassPaneMouseListener implements MouseListener, MouseMotionListener {
 
+		private boolean armed = false;
+
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			processEvent(e);
@@ -903,10 +1121,16 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		@Override
 		public void mousePressed(MouseEvent e) {
 			processEvent(e);
+			armed = !isTextField(e);
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
+			if (!armed) {
+				return;
+			}
+			armed = false;
+
 			if (!processEvent(e)) {
 				try {
 					model.parseSignatureFieldText();
@@ -915,16 +1139,24 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					handleParseException(ex);
 				}
 			}
+
 		}
 
 		@Override
 		public void mouseEntered(MouseEvent e) {
-//			processEvent(e);
+			// stub
 		}
 
 		@Override
 		public void mouseExited(MouseEvent e) {
-//			processEvent(e);
+			// stub
+		}
+
+		private boolean isTextField(MouseEvent e) {
+			JDialog window = (JDialog) WindowUtilities.windowForComponent(e.getComponent());
+			Component comp =
+				SwingUtilities.getDeepestComponentAt(window.getContentPane(), e.getX(), e.getY());
+			return comp == signatureTextField;
 		}
 
 		private boolean processEvent(MouseEvent e) {

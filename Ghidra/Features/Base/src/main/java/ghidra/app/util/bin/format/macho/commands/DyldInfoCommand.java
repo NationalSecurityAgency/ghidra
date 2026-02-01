@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.dyld.BindOpcode;
-import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable;
+import ghidra.app.util.bin.format.macho.commands.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
@@ -36,17 +35,18 @@ import ghidra.util.task.TaskMonitor;
  * Represents a dyld_info_command structure
  */
 public class DyldInfoCommand extends LoadCommand {
-	private int rebaseOff;
-	private int rebaseSize;
-	private int bindOff;
-	private int bindSize;
-	private int weakBindOff;
-	private int weakBindSize;
-	private int lazyBindOff;
-	private int lazyBindSize;
-	private int exportOff;
-	private int exportSize;
+	private long rebaseOff;
+	private long rebaseSize;
+	private long bindOff;
+	private long bindSize;
+	private long weakBindOff;
+	private long weakBindSize;
+	private long lazyBindOff;
+	private long lazyBindSize;
+	private long exportOff;
+	private long exportSize;
 	
+	private RebaseTable rebaseTable;
 	private BindingTable bindingTable;
 	private BindingTable weakBindingTable;
 	private BindingTable lazyBindingTable;
@@ -66,18 +66,24 @@ public class DyldInfoCommand extends LoadCommand {
 			throws IOException {
 		super(loadCommandReader);
 
-		rebaseOff = loadCommandReader.readNextInt();
-		rebaseSize = loadCommandReader.readNextInt();
-		bindOff = loadCommandReader.readNextInt();
-		bindSize = loadCommandReader.readNextInt();
-		weakBindOff = loadCommandReader.readNextInt();
-		weakBindSize = loadCommandReader.readNextInt();
-		lazyBindOff = loadCommandReader.readNextInt();
-		lazyBindSize = loadCommandReader.readNextInt();
-		exportOff = loadCommandReader.readNextInt();
-		exportSize = loadCommandReader.readNextInt();
+		rebaseOff = loadCommandReader.readNextUnsignedInt();
+		rebaseSize = loadCommandReader.readNextUnsignedInt();
+		bindOff = loadCommandReader.readNextUnsignedInt();
+		bindSize = loadCommandReader.readNextUnsignedInt();
+		weakBindOff = loadCommandReader.readNextUnsignedInt();
+		weakBindSize = loadCommandReader.readNextUnsignedInt();
+		lazyBindOff = loadCommandReader.readNextUnsignedInt();
+		lazyBindSize = loadCommandReader.readNextUnsignedInt();
+		exportOff = loadCommandReader.readNextUnsignedInt();
+		exportSize = loadCommandReader.readNextUnsignedInt();
 		
-		// TODO: rebase
+		if (rebaseOff > 0 && rebaseSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + rebaseOff);
+			rebaseTable = new RebaseTable(dataReader, header, rebaseSize);
+		}
+		else {
+			rebaseTable = new RebaseTable();
+		}
 
 		if (bindOff > 0 && bindSize > 0) {
 			dataReader.setPointerIndex(header.getStartIndex() + bindOff);
@@ -115,73 +121,80 @@ public class DyldInfoCommand extends LoadCommand {
 	/**
 	 * {@return The rebase info offset}
 	 */
-	public int getRebaseOffset() {
+	public long getRebaseOffset() {
 		return rebaseOff;
 	}
 
 	/**
 	 * {@return The rebase info size}
 	 */
-	public int getRebaseSize() {
+	public long getRebaseSize() {
 		return rebaseSize;
 	}
 
 	/**
 	 * {@return The bind info offset}
 	 */
-	public int getBindOffset() {
+	public long getBindOffset() {
 		return bindOff;
 	}
 
 	/**
 	 * {@return The bind info size}
 	 */
-	public int getBindSize() {
+	public long getBindSize() {
 		return bindSize;
 	}
 
 	/**
 	 * {@return The weak bind info offset}
 	 */
-	public int getWeakBindOffset() {
+	public long getWeakBindOffset() {
 		return weakBindOff;
 	}
 
 	/**
 	 * {@return The weak bind info size}
 	 */
-	public int getWeakBindSize() {
+	public long getWeakBindSize() {
 		return weakBindSize;
 	}
 
 	/**
 	 * {@return The lazy bind info offset}
 	 */
-	public int getLazyBindOffset() {
+	public long getLazyBindOffset() {
 		return lazyBindOff;
 	}
 
 	/**
 	 * {@return The lazy bind info size}
 	 */
-	public int getLazyBindSize() {
+	public long getLazyBindSize() {
 		return lazyBindSize;
 	}
 
 	/**
 	 * {@return The export info offset}
 	 */
-	public int getExportOffset() {
+	public long getExportOffset() {
 		return exportOff;
 	}
 
 	/**
 	 * {@return The export info size}
 	 */
-	public int getExportSize() {
+	public long getExportSize() {
 		return exportSize;
 	}
 	
+	/**
+	 * {@return The rebase table}
+	 */
+	public RebaseTable getRebaseTable() {
+		return rebaseTable;
+	}
+
 	/**
 	 * {@return The binding table}
 	 */
@@ -246,22 +259,27 @@ public class DyldInfoCommand extends LoadCommand {
 
 	private void markupRebaseInfo(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
+		Address rebaseAddr = fileOffsetToAddress(program, header, rebaseOff, rebaseSize);
 		markupPlateComment(program, fileOffsetToAddress(program, header, rebaseOff, rebaseSize),
 			source, "rebase");
+		markupOpcodeTable(program, rebaseAddr, rebaseTable, RebaseOpcode.toDataType(), source,
+			"rebase", log);
 	}
 
 	private void markupBindings(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
 		Address bindAddr = fileOffsetToAddress(program, header, bindOff, bindSize);
 		markupPlateComment(program, bindAddr, source, "bind");
-		markupBindingTable(program, bindAddr, bindingTable, source, "bind", log);
+		markupOpcodeTable(program, bindAddr, bindingTable, BindOpcode.toDataType(), source, "bind",
+			log);
 	}
 
 	private void markupWeakBindings(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
 		Address addr = fileOffsetToAddress(program, header, weakBindOff, weakBindSize);
 		markupPlateComment(program, addr, source, "weak bind");
-		markupBindingTable(program, addr, weakBindingTable, source, "weak bind", log);
+		markupOpcodeTable(program, addr, weakBindingTable, BindOpcode.toDataType(), source,
+			"weak bind", log);
 
 	}
 
@@ -269,18 +287,18 @@ public class DyldInfoCommand extends LoadCommand {
 			TaskMonitor monitor, MessageLog log) {
 		Address addr = fileOffsetToAddress(program, header, lazyBindOff, lazyBindSize);
 		markupPlateComment(program, addr, source, "lazy bind");
-		markupBindingTable(program, addr, lazyBindingTable, source, "lazy bind", log);
+		markupOpcodeTable(program, addr, lazyBindingTable, BindOpcode.toDataType(), source,
+			"lazy bind", log);
 	}
 
-	private void markupBindingTable(Program program, Address addr, BindingTable table,
-			String source, String additionalDescription, MessageLog log) {
+	private void markupOpcodeTable(Program program, Address addr, OpcodeTable table,
+			DataType opcodeDataType, String source, String additionalDescription, MessageLog log) {
 		if (addr == null) {
 			return;
 		}
 		try {
-			DataType bindOpcodeDataType = BindOpcode.toDataType();
 			for (long offset : table.getOpcodeOffsets()) {
-				DataUtilities.createData(program, addr.add(offset), bindOpcodeDataType, -1,
+				DataUtilities.createData(program, addr.add(offset), opcodeDataType, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			}
 			for (long offset : table.getUlebOffsets()) {

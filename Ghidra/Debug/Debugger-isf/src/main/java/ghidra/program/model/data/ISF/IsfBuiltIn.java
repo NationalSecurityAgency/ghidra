@@ -17,16 +17,15 @@ package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.BuiltInDataType;
 
-public class IsfBuiltIn implements IsfObject {
+public class IsfBuiltIn extends AbstractIsfObject {
 
 	public Integer size;
-	public Boolean signed;
 	public String kind;
 	public String endian;
 
 	public IsfBuiltIn(BuiltInDataType builtin) {
+		super(builtin);
 		size = IsfUtilities.getLength(builtin);
-		signed = IsfUtilities.getSigned(builtin);
 		kind = IsfUtilities.getBuiltInKind(builtin);
 		endian = IsfUtilities.getEndianness(builtin);
 	}

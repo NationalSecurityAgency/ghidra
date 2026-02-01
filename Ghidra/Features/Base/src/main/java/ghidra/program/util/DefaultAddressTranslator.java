@@ -28,23 +28,28 @@ public class DefaultAddressTranslator implements AddressTranslator {
 		this.sourceProgram = sourceProgram;
 	}
 
+	@Override
 	public Program getDestinationProgram() {
 		return destinationProgram;
 	}
 
+	@Override
 	public Program getSourceProgram() {
 		return sourceProgram;
 	}
 
+	@Override
 	public Address getAddress(Address sourceAddress) {
 		return SimpleDiffUtility.getCompatibleAddress(sourceProgram, sourceAddress,
 			destinationProgram);
 	}
 
+	@Override
 	public boolean isOneForOneTranslator() {
 		return true;
 	}
 
+	@Override
 	public AddressSet getAddressSet(AddressSetView sourceAddressSet) {
 		if (sourceAddressSet == null) {
 			return null; // FIXME
@@ -55,7 +60,12 @@ public class DefaultAddressTranslator implements AddressTranslator {
 	@Override
 	public AddressRange getAddressRange(AddressRange sourceAddressRange)
 			throws AddressTranslationException {
-		return DiffUtility.getCompatibleAddressRange(sourceAddressRange, destinationProgram);
+		AddressSet destinationRange =
+			DiffUtility.getCompatibleAddressSet(sourceAddressRange, destinationProgram, true);
+		if (destinationRange != null && !destinationRange.isEmpty()) {
+			return destinationRange.getFirstRange();
+		}
+		return null;
 	}
 
 }

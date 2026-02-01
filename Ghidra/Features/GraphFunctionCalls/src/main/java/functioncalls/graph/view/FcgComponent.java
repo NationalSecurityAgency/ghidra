@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import functioncalls.graph.renderer.FcgEdgePaintTransformer;
 import functioncalls.graph.renderer.FcgVertexPaintTransformer;
 import functioncalls.plugin.FunctionCallGraphPlugin;
 import generic.theme.GColor;
+import ghidra.base.graph.CircleWithLabelVertexShapeProvider;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.edge.VisualEdgeRenderer;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
@@ -32,11 +33,9 @@ import ghidra.graph.viewer.vertex.VisualVertexRenderer;
  */
 public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCallGraph> {
 
-	// our parent stores a reference to this graph, but we do it here to maintain its type
-	private FunctionCallGraph fcGraph;
-
 	private FcgVertexPaintTransformer vertexPaintTransformer =
-		new FcgVertexPaintTransformer(FcgVertex.DEFAULT_VERTEX_SHAPE_COLOR);
+		new FcgVertexPaintTransformer(
+			CircleWithLabelVertexShapeProvider.DEFAULT_VERTEX_SHAPE_COLOR);
 
 	private FcgEdgePaintTransformer edgePaintTransformer =
 		new FcgEdgePaintTransformer(new GColor("color.bg.plugin.fcg.edge.primary.direct"),
@@ -55,7 +54,7 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 
 	@Override
 	protected FcgVertex getInitialVertex() {
-		return fcGraph.getSource();
+		return graph.getSource();
 	}
 
 	@Override
@@ -89,13 +88,6 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 		VisualEdgeRenderer<FcgVertex, FcgEdge> edgeRenderer =
 			(VisualEdgeRenderer<FcgVertex, FcgEdge>) renderer.getEdgeRenderer();
 		edgeRenderer.setDrawColorTransformer(satelliteEdgePaintTransformer);
-	}
-
-	@Override
-	public void dispose() {
-
-		fcGraph = null;
-		super.dispose();
 	}
 
 	@Override // open access for testing

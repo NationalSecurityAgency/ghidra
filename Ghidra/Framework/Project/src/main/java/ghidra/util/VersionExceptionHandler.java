@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.util;
 import java.awt.Component;
 
 import docking.widgets.OptionDialog;
+import ghidra.framework.data.LinkHandler;
 import ghidra.framework.model.DomainFile;
 import ghidra.util.exception.VersionException;
 
@@ -25,10 +26,28 @@ public class VersionExceptionHandler {
 
 	public static boolean isUpgradeOK(Component parent, DomainFile domainFile, String actionName,
 			VersionException ve) {
+
 		String contentType = domainFile.getContentType();
-		if (domainFile.isReadOnly() || ve.getVersionIndicator() != VersionException.OLDER_VERSION ||
-			!ve.isUpgradable()) {
-			showVersionError(parent, domainFile.getName(), contentType, actionName, ve);
+		if (ve.getVersionIndicator() != VersionException.OLDER_VERSION || !ve.isUpgradable()) {
+			showVersionError(parent, domainFile.getName(), contentType, actionName, false, ve);
+			return false;
+		}
+
+		boolean linkUsed = domainFile.isLink();
+		if (linkUsed) {
+			DomainFile file = LinkHandler.followInternalLinkage(domainFile, s -> {
+				/* ignore */ }, null);
+			if (file.isLink() && file.getLinkInfo().isExternalLink()) {
+				VersionExceptionHandler.showVersionError(null, domainFile.getName(),
+					domainFile.getContentType(), actionName, true, ve);
+				return false;
+			}
+			// redirect error handling to linked file
+			domainFile = file;
+		}
+
+		if (domainFile.isReadOnly() || !domainFile.isInWritableProject()) {
+			showVersionError(parent, domainFile.getName(), contentType, actionName, true, ve);
 			return false;
 		}
 		String filename = domainFile.getName();
@@ -90,8 +109,20 @@ public class VersionExceptionHandler {
 			OptionDialog.WARNING_MESSAGE);
 	}
 
+	/**
+	 * Show a version error in response to a content {@link VersionException}.
+	 * @param parent popup message parent
+	 * @param filename name of file
+	 * @param contentType file content type
+	 * @param actionName action name (e.g., "Open")
+	 * @param readOnly true if read-only, else false.  Specify false if not a factor to presenting 
+	 * the error.
+	 * @param ve version exception
+	 */
+
 	public static void showVersionError(final Component parent, final String filename,
-			final String contentType, final String actionName, VersionException ve) {
+			final String contentType, final String actionName, boolean readOnly,
+			VersionException ve) {
 
 		int versionIndicator = ve.getVersionIndicator();
 		final String versionType;
@@ -111,7 +142,8 @@ public class VersionExceptionHandler {
 		}
 
 		Msg.showError(VersionExceptionHandler.class, parent, actionName + " Failed!",
-			"Unable to " + actionName + " " + contentType + ": " + filename + "\n \n" +
-				"File was created with a" + versionType + " version of Ghidra" + upgradeMsg);
+			"Unable to " + actionName + " " + (readOnly ? " read-only " : "") + contentType + ": " +
+				filename + "\n \n" + "File was created with a" + versionType +
+				" version of Ghidra" + upgradeMsg);
 	}
 }

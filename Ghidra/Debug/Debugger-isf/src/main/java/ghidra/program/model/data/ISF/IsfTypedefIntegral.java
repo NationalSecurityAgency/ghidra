@@ -17,11 +17,12 @@ package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.TypeDef;
 
-public class IsfTypedefIntegral implements IsfObject {
+public class IsfTypedefIntegral extends AbstractIsfObject {
 
 	public Integer size;
 
 	public IsfTypedefIntegral(TypeDef td) {
+		super(td);
 		size = td.getLength();
 	}
 

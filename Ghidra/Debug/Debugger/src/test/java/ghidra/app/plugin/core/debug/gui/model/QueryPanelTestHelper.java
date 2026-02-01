@@ -16,14 +16,37 @@
 package ghidra.app.plugin.core.debug.gui.model;
 
 import docking.widgets.table.*;
-import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel;
+import ghidra.trace.model.Trace;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class QueryPanelTestHelper {
 
-	public static ObjectTableModel getTableModel(DebuggerThreadsPanel panel) {
+	public record ColumnAndIndex<T, V>(DynamicTableColumn<T, V, Trace> column, int modelIndex,
+			int viewIndex) {
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T, V> ColumnAndIndex<T, V> getColumnByNameAndType(
+			AbstractQueryTableModel<T> tableModel, GhidraTable table, String name, Class<V> type) {
+		int count = tableModel.getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<T, ?, ?> column = tableModel.getColumn(i);
+			if (!name.equals(column.getColumnName())) {
+				continue;
+			}
+			if (column.getColumnClass() != type) {
+				continue;
+			}
+			return new ColumnAndIndex<>((DynamicTableColumn<T, V, Trace>) column,
+				i, table.convertColumnIndexToView(i));
+		}
+		return null;
+	}
+
+	public static <T> AbstractQueryTableModel<T> getTableModel(
+			AbstractQueryTablePanel<T, ?> panel) {
 		return panel.tableModel;
 	}
 

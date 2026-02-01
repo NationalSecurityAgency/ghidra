@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +25,14 @@ import ghidra.util.exception.UsrException;
  */
 public class UnknownContextException extends UsrException {
 	/**
-	 * <p>Constructs an UnknownContextException with a default message.<p>
+	 * Constructs an UnknownContextException with a default message.
 	 */
 	public UnknownContextException() {
 		super("The current processor state is not known for constructing a legal instruction.");
 	}
 
 	/**
-	 * <p>Constructs an UnknownContextException with the specified
-	 * detail message.<p>
+	 * Constructs an UnknownContextException with the specified detail message.
 	 *
 	 * @param message The message.
 	 */

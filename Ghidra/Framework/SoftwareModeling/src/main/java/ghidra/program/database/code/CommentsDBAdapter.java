@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,12 @@ package ghidra.program.database.code;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -38,11 +39,16 @@ abstract class CommentsDBAdapter {
 
 	static final Schema COMMENTS_SCHEMA;
 
-	static final int PRE_COMMENT_COL = CodeUnit.PRE_COMMENT;
-	static final int POST_COMMENT_COL = CodeUnit.POST_COMMENT;
-	static final int EOL_COMMENT_COL = CodeUnit.EOL_COMMENT;
-	static final int PLATE_COMMENT_COL = CodeUnit.PLATE_COMMENT;
-	static final int REPEATABLE_COMMENT_COL = CodeUnit.REPEATABLE_COMMENT;
+	//
+	// IMPORTANT: It is very important that the defined table columns and their sequence
+	// do not change and must match the ordinal ordering of CommentType enum values.
+	//
+
+	static final int EOL_COMMENT_COL = CommentType.EOL.ordinal();
+	static final int PRE_COMMENT_COL = CommentType.PRE.ordinal();
+	static final int POST_COMMENT_COL = CommentType.POST.ordinal();
+	static final int PLATE_COMMENT_COL = CommentType.PLATE.ordinal();
+	static final int REPEATABLE_COMMENT_COL = CommentType.REPEATABLE.ordinal();
 
 	static final int COMMENT_COL_COUNT = 5;
 
@@ -50,9 +56,9 @@ abstract class CommentsDBAdapter {
 
 	static {
 		NAMES = new String[5];
+		NAMES[EOL_COMMENT_COL] = "EOL";
 		NAMES[PRE_COMMENT_COL] = "Pre";
 		NAMES[POST_COMMENT_COL] = "Post";
-		NAMES[EOL_COMMENT_COL] = "EOL";
 		NAMES[PLATE_COMMENT_COL] = "Plate";
 		NAMES[REPEATABLE_COMMENT_COL] = "Repeatable";
 
@@ -61,21 +67,10 @@ abstract class CommentsDBAdapter {
 				StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE }, NAMES);
 	}
 
-//	/** comment type for end of line */
-//	static final int EOL_COMMENT = 0;
-//	/** comment type that goes before a code unit */
-//	static final int PRE_COMMENT = 1;
-//	/** comment type that follows after a code unit */
-//	static final int POST_COMMENT = 2; 
-//	/** plate comment type */
-//	static final int PLATE_COMMENT = 3;
-//	/** repeatable comment type */
-//	static final int REPEATABLE_COMMENT = 4;
-
-	static CommentsDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static CommentsDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new CommentsDBAdapterV1(dbHandle, addrMap, true);
 		}
 
@@ -87,11 +82,11 @@ abstract class CommentsDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			CommentsDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;
@@ -104,6 +99,7 @@ abstract class CommentsDBAdapter {
 			return new CommentsDBAdapterV1(handle, addrMap.getOldAddressMap(), false);
 		}
 		catch (VersionException e) {
+			// ignore
 		}
 
 		return new CommentsDBAdapterV0(handle, addrMap);

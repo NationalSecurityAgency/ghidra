@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,6 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
-/**
- * 
- */
 public class CreateDataCmdTest extends AbstractGenericTest {
 
 	private static final long UNDEFINED_AREA = 0x0150;
@@ -483,16 +480,17 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		pdt = (Pointer) dt;
 		assertNull(pdt.getDataType());
 
+		// When default pointer is stacked, the resulting pointer size will match
+		// the outmost pointer size - in this case that is 1-byte
 		cmd = new CreateDataCmd(addr, false, true, new PointerDataType());
 		cmd.applyTo(program);
-
 		d = listing.getDataAt(addr);
 		assertNotNull(d);
 		assertTrue(d.isDefined());
-		assertEquals(addr.getPointerSize(), d.getLength());
+		assertEquals(1, d.getLength());
 		dt = d.getDataType();
 		assertTrue(dt instanceof Pointer);
-		assertEquals(addr.getPointerSize(), dt.getLength());
+		assertEquals(1, dt.getLength());
 
 		pdt = (Pointer) dt;
 		dt = pdt.getDataType();
@@ -557,16 +555,17 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		pdt = (Pointer) dt;
 		assertTrue(pdt.getDataType() instanceof ByteDataType);
 
+		// When default pointer is stacked, the resulting pointer size will match
+		// the outmost pointer size - in this case that is 1-byte
 		cmd = new CreateDataCmd(addr, false, true, new PointerDataType());
 		cmd.applyTo(program);
-
 		d = listing.getDataAt(addr);
 		assertNotNull(d);
 		assertTrue(d.isDefined());
-		assertEquals(addr.getPointerSize(), d.getLength());
+		assertEquals(1, d.getLength());
 		dt = d.getDataType();
 		assertTrue(dt instanceof Pointer);
-		assertEquals(addr.getPointerSize(), dt.getLength());
+		assertEquals(1, dt.getLength());
 
 		pdt = (Pointer) dt;
 		dt = pdt.getDataType();
@@ -630,8 +629,8 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		// Add external reference from pointer
 		program.getReferenceManager()
-				.addExternalReference(addr, "OtherFile", "ExtLabel", null,
-					SourceType.USER_DEFINED, 0, RefType.DATA);
+				.addExternalReference(addr, "OtherFile", "ExtLabel", null, SourceType.USER_DEFINED,
+					0, RefType.DATA);
 
 		// Undefined* becomes Byte*
 		cmd = new CreateDataCmd(addr, false, true, new ByteDataType());

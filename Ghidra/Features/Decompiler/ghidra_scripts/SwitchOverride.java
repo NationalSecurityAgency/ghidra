@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@
 //
 //  You can also pre-add the COMPUTED_JUMP references to the branch instruction before running the
 //  script, and simply put the cursor on the computed branching instruction.
-//@category Repair
+//@category
 
 import java.util.ArrayList;
 
@@ -37,10 +37,11 @@ import ghidra.program.model.symbol.*;
 
 public class SwitchOverride extends GhidraScript {
 
-	private Address collectSelectedJumpData(Listing listing,AddressSetView select,ArrayList<Address> destlist) {
+	private Address collectSelectedJumpData(Listing listing, AddressSetView select,
+			ArrayList<Address> destlist) {
 		Address branchind = null;
 		AddressIterator iter = select.getAddresses(true);
-		while(iter.hasNext()) {
+		while (iter.hasNext()) {
 			Address addr = iter.next();
 			Instruction inst = listing.getInstructionAt(addr);
 			if (isComputedBranchInstruction(inst)) {
@@ -52,18 +53,18 @@ public class SwitchOverride extends GhidraScript {
 		}
 		return branchind;
 	}
-	
+
 	private Address collectPointJumpData(Listing listing,
 			Address addr, ArrayList<Address> destlist) {
 		Address branchind = null;
-		
+
 		// current location must be a callfixup, or an indirect Jump
 		Instruction instr = currentProgram.getListing().getInstructionAt(addr);
-		
+
 		if (isComputedBranchInstruction(instr)) {
 			branchind = addr;
 		}
-		
+
 		// add any jump references already added
 		Reference[] referencesFrom = instr.getReferencesFrom();
 		for (Reference reference : referencesFrom) {
@@ -72,7 +73,7 @@ public class SwitchOverride extends GhidraScript {
 				destlist.add(reference.getToAddress());
 			}
 		}
-		
+
 		return branchind;
 	}
 
@@ -80,9 +81,9 @@ public class SwitchOverride extends GhidraScript {
 		if (instr == null) {
 			return false;
 		}
-		
+
 		FlowType flowType = instr.getFlowType();
-		
+
 		if (flowType.isJump() && flowType.isComputed()) {
 			return true;
 		}
@@ -91,7 +92,8 @@ public class SwitchOverride extends GhidraScript {
 			Reference[] referencesFrom = instr.getReferencesFrom();
 			for (Reference reference : referencesFrom) {
 				if (reference.getReferenceType().isCall()) {
-					Function func = currentProgram.getFunctionManager().getFunctionAt(reference.getToAddress());
+					Function func =
+						currentProgram.getFunctionManager().getFunctionAt(reference.getToAddress());
 					if (func != null && func.getCallFixup() != null) {
 						return true;
 					}
@@ -101,42 +103,46 @@ public class SwitchOverride extends GhidraScript {
 		return false;
 	}
 
-	
 	@Override
 	public void run() throws Exception {
 		ArrayList<Address> destlist = new ArrayList<Address>();
 		Address branchind = null;
-		
+
 		if (currentSelection != null && !currentSelection.isEmpty()) {
-			branchind = collectSelectedJumpData(currentProgram.getListing(),currentSelection,destlist);
-		} else {
-			branchind = collectPointJumpData(currentProgram.getListing(),currentLocation.getAddress(),destlist);
+			branchind =
+				collectSelectedJumpData(currentProgram.getListing(), currentSelection, destlist);
 		}
-		
-		if (branchind==null) {
-			println("Please highlight or place the cursor on the instruction performing the computed jump");
+		else {
+			branchind = collectPointJumpData(currentProgram.getListing(),
+				currentLocation.getAddress(), destlist);
+		}
+
+		if (branchind == null) {
+			println(
+				"Please highlight or place the cursor on the instruction performing the computed jump");
 			return;
 		}
-		if (destlist.size()==0) {
-			println("Please highlight destination instructions in addition to instruction performing switch");
+		if (destlist.size() == 0) {
+			println(
+				"Please highlight destination instructions in addition to instruction performing switch");
 			println(" Or put CONDITIONAL_JUMP destination references at the branching instruction");
 			return;
 		}
 		Function function = this.getFunctionContaining(branchind);
-		if (function==null) {
+		if (function == null) {
 			println("Computed jump instruction must be in a Function body.");
 			return;
 		}
-		
+
 		Instruction instr = currentProgram.getListing().getInstructionAt(branchind);
 		for (Address address : destlist) {
 			instr.addOperandReference(0, address, RefType.COMPUTED_JUMP, SourceType.USER_DEFINED);
 		}
 
 		// Allocate an override jumptable
-		JumpTable jumpTab = new JumpTable(branchind,destlist,true);
+		JumpTable jumpTab = new JumpTable(branchind, destlist, true);
 		jumpTab.writeOverride(function);
-		
+
 		// fixup the body now that there are jump references
 		CreateFunctionCmd.fixupFunctionBody(currentProgram, function, monitor);
 	}

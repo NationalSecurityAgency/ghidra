@@ -16,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -25,7 +24,7 @@ import ghidra.program.model.symbol.*;
 /**
  * Command class to add an offset memory reference to the program.
  */
-public class AddOffsetMemRefCmd implements Command {
+public class AddOffsetMemRefCmd implements Command<Program> {
 
 	private Address fromAddr;
 	private Address toAddr;
@@ -34,8 +33,8 @@ public class AddOffsetMemRefCmd implements Command {
 	private SourceType source;
 	private int opIndex;
 	private long offset;
-	
-    /**
+
+	/**
 	 * Command constructor for adding an offset memory reference. The first memory reference placed on
 	 * an operand will be made primary by default.  All non-memory references 
 	 * will be removed from the specified operand.  If toAddr corresponds to
@@ -53,41 +52,32 @@ public class AddOffsetMemRefCmd implements Command {
 	 * @param offset value added to a base address to get the toAddr
 	 */
 	public AddOffsetMemRefCmd(Address fromAddr, Address toAddr, boolean toAddrIsBase,
-			RefType refType,
-			SourceType source, int opIndex, long offset) {
-    	this.fromAddr = fromAddr;
-    	this.toAddr = toAddr;
+			RefType refType, SourceType source, int opIndex, long offset) {
+		this.fromAddr = fromAddr;
+		this.toAddr = toAddr;
 		this.toAddrIsBase = toAddrIsBase;
-    	this.refType = refType;
-    	this.source = source;
-    	this.opIndex = opIndex;
-    	this.offset = offset;
-    }
-    
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-    public boolean applyTo(DomainObject obj) {
-    	Program p = (Program)obj;
-    	ReferenceManager refMgr = p.getReferenceManager();
+		this.refType = refType;
+		this.source = source;
+		this.opIndex = opIndex;
+		this.offset = offset;
+	}
+
+	@Override
+	public boolean applyTo(Program program) {
+		ReferenceManager refMgr = program.getReferenceManager();
 		refMgr.addOffsetMemReference(fromAddr, toAddr, toAddrIsBase, offset, refType, source,
 			opIndex);
 		return true;
-    }
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return "";
-    }
+	@Override
+	public String getStatusMsg() {
+		return "";
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Add Offset Memory Reference";
-    }
+	@Override
+	public String getName() {
+		return "Add Offset Memory Reference";
+	}
 
 }

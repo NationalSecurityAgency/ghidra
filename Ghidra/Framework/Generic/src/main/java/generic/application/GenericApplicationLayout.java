@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 package generic.application;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -59,9 +59,9 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 *
 	 * @param name The name of the application.
 	 * @param version The version of the application.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 * @throws IOException if there was a problem getting a user directory.
 	 */
-	public GenericApplicationLayout(String name, String version) throws FileNotFoundException {
+	public GenericApplicationLayout(String name, String version) throws IOException {
 		this(new ApplicationProperties(name, version, NO_RELEASE_NAME));
 	}
 
@@ -70,10 +70,10 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * properties.  The default Ghidra application root directory(s) will be used.
 	 *
 	 * @param applicationProperties The properties object that will be read system properties.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 * @throws IOException if there was a problem getting a user directory.
 	 */
 	public GenericApplicationLayout(ApplicationProperties applicationProperties)
-			throws FileNotFoundException {
+			throws IOException {
 		this(getDefaultApplicationRootDirs(), applicationProperties);
 	}
 
@@ -85,10 +85,10 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * used to identify modules and resources.  The first entry will be treated as the
 	 * installation root.
 	 * @param applicationProperties The properties object that will be read system properties.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 * @throws IOException if there was a problem getting a user directory.
 	 */
-	public GenericApplicationLayout(Collection<ResourceFile> applicationRootDirs,
-			ApplicationProperties applicationProperties) throws FileNotFoundException {
+	public GenericApplicationLayout(SequencedCollection<ResourceFile> applicationRootDirs,
+			ApplicationProperties applicationProperties) throws IOException {
 
 		this.applicationProperties = Objects.requireNonNull(applicationProperties);
 		this.applicationRootDirs = applicationRootDirs;
@@ -96,7 +96,7 @@ public class GenericApplicationLayout extends ApplicationLayout {
 
 		// Application installation directory
 		applicationInstallationDir = applicationRootDirs.iterator().next().getParentFile();
-		if (SystemUtilities.isInDevelopmentMode()) {
+		if (SystemUtilities.isInDevelopmentMode() && applicationRootDirs.size() > 1) {
 			applicationInstallationDir = applicationInstallationDir.getParentFile();
 		}
 
@@ -117,9 +117,12 @@ public class GenericApplicationLayout extends ApplicationLayout {
 		modules = Collections.unmodifiableMap(allModules);
 
 		// User directories
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
+		userTempDir =
+			ApplicationUtilities.getDefaultUserTempDir(applicationProperties.getApplicationName());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(applicationProperties,
 			applicationInstallationDir);
+
+		extensionInstallationDirs = Collections.emptyList();
 	}
 
 	protected Collection<ResourceFile> getAdditionalApplicationRootDirs(
@@ -176,9 +179,9 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * first entry will be the primary root in both cases.
 	 * @return root directories
 	 */
-	public static Collection<ResourceFile> getDefaultApplicationRootDirs() {
+	public static SequencedCollection<ResourceFile> getDefaultApplicationRootDirs() {
 
-		Set<ResourceFile> results = new HashSet<>();
+		List<ResourceFile> results = new ArrayList<>();
 		String additionalRootsProperty = System.getProperty(ADDITIONAL_APPLICATION_ROOT_DIRS);
 		if (!StringUtils.isBlank(additionalRootsProperty)) {
 			String[] paths = additionalRootsProperty.split(File.pathSeparator);

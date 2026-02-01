@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
+
+import java.util.function.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,10 +33,11 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.navigation.GoToServiceImpl;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.OperandFieldLocation;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.*;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
 
 public class DecompilerNavigationTest extends AbstractDecompilerTest {
@@ -74,7 +77,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 	private Program buildProgram() throws Exception {
 		ClassicSampleX86ProgramBuilder builder =
-			new ClassicSampleX86ProgramBuilder("notepad", false, this);
+			new ClassicSampleX86ProgramBuilder("sample", false, this);
 
 		// need a default label at 01002cf0, so make up a reference
 		builder.createMemoryReference("01002ce5", "01002cf0", RefType.FALL_THROUGH,
@@ -197,9 +200,8 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 	public void testFunctionNavigation_WithAViewThatCachesTheLastValidFunction() throws Exception {
 
 		//
-		// This is testing the case where the user starts on a function foo().  Ancillary windows
-		// will display tool, such as a decompiled view.   Now, if the user clicks to a
-		// non-function location, such as data, the ancillary window may still show foo(), even
+		// This is testing the case where the user starts on a function foo().  When the user clicks
+		// away to a non-function location, such as data, the  window may still show foo(), even
 		// though the user is no longer in foo.  At this point, if the user wishes to go to the
 		// previous function, then from the ancillary window's perspective, it is the function
 		// that came before foo().
@@ -212,12 +214,13 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		goTo(f1);
 		goTo(f2);
 		goTo(nonFunctionAddress);
+		waitForDecompiler();
 
 		String title = provider.getTitle();
-		assertTrue("Decompiler did not retain last function visited", title.contains("sscanf"));
+		assertTrue("Decompiler did not retain last function visited. " +
+			"Expected sscanf, but was '%s'".formatted(title), title.contains("sscanf"));
 
-		provider.requestFocus();
-		waitForSwing();
+		focusDecompiler();
 
 		//
 		// The Decompiler is focused, showing 'entry'.  Going back while it is focused should go
@@ -227,12 +230,140 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		assertCurrentAddress(f1);
 	}
 
+	@Test
+	public void testDecompilerLocationEvent_VariableDeclaration() {
+
+		/*
+			undefined4 FUN_010059a3(undefined4 param_1,undefined4 param_2,int param_3)
+			
+			{
+			  int iVar1;
+			  int iVar2;
+			  int *piVar3;
+			  undefined4 uVar4;
+			  int iVar5;
+			  bool bVar6;
+			  int local_14;
+			  int local_10;
+			  undefined1 local_c [4];
+			  undefined4 local_8;
+		 */
+
+		decompile("010059a3"); // FUN_010059a3
+
+		// 16: undefined4 local_8;
+		int line = 16;
+		int character = 13;
+		assertToken("local_8", line, character);
+		setDecompilerLocation(line, character);
+
+		assertLocationType(loc -> loc instanceof VariableLocFieldLocation);
+	}
+
+	@Test
+	public void testDecompilerLocationEvent_FunctionSignature_Parameter() {
+
+		/*
+			undefined4 FUN_010059a3(undefined4 param_1,undefined4 param_2,int param_3)
+			
+			{
+			  int iVar1;
+			  int iVar2;
+			  int *piVar3;
+			  undefined4 uVar4;
+			  int iVar5;
+			  bool bVar6;
+			  int local_14;
+			  int local_10;
+			  undefined1 local_c [4];
+			  undefined4 local_8;
+		 */
+
+		decompile("010059a3"); // FUN_010059a3
+
+		// 4: undefined4 FUN_010059a3(undefined4 param_1
+		int line = 4;
+		int character = 36;
+		assertToken("param_1", line, character);
+		setDecompilerLocation(line, character);
+
+		assertLocationType(loc -> loc instanceof VariableLocFieldLocation);
+	}
+
+	@Test
+	public void testDecompilerLocationEvent_FunctionSignature_FunctionName() {
+
+		/*
+			undefined4 FUN_010059a3(undefined4 param_1,undefined4 param_2,int param_3)
+			
+			{
+			  int iVar1;
+			  int iVar2;
+			  int *piVar3;
+			  undefined4 uVar4;
+			  int iVar5;
+			  bool bVar6;
+			  int local_14;
+			  int local_10;
+			  undefined1 local_c [4];
+			  undefined4 local_8;
+		 */
+
+		decompile("010059a3"); // FUN_010059a3
+
+		// 4: undefined4 FUN_010059a3(undefined4 param_1
+		int line = 4;
+		int character = 12;
+		assertToken("FUN_010059a3", line, character);
+		setDecompilerLocation(line, character);
+
+		assertLocationType(loc -> loc instanceof FunctionNameFieldLocation);
+	}
+
+	private void assertLocationType(Predicate<ProgramLocation> predicate) {
+		waitForSwing();
+
+		BooleanSupplier success = () -> {
+			ProgramLocation loc = codeBrowser.getCurrentLocation();
+			return predicate.test(loc);
+		};
+
+		Supplier<String> failureMessage =
+			() -> "Listing is not at the expected field location.  Current location: " +
+				codeBrowser.getCurrentLocation();
+
+		waitForCondition(success, failureMessage);
+	}
+
+	@Override
+	public void assertCurrentAddress(Address expected) {
+		codeBrowser.updateNow();
+		waitForSwing();
+
+		BooleanSupplier success = () -> {
+			ProgramLocation loc = codeBrowser.getCurrentLocation();
+			Address actual = loc.getAddress();
+			return expected.equals(actual);
+		};
+
+		Supplier<String> failureMessage =
+			() -> "Listing is not at the expected address.  Current location: " +
+				codeBrowser.getCurrentLocation();
+
+		waitForCondition(success, failureMessage);
+	}
+
+	private void focusDecompiler() {
+		runSwing(() -> provider.requestFocus());
+		waitForSwing();
+	}
+
 	private void previousFunction() {
 		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
 		DockingAction previousFunctionAction =
 			(DockingAction) getInstanceField("previousFunctionAction", plugin);
 
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
 		assertTrue(previousFunctionAction.isEnabledForContext(context));
 		performAction(previousFunctionAction, context, true);
 		waitForSwing();
@@ -241,18 +372,6 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 	private void assertListingAddress(Address expected) {
 		waitForCondition(() -> expected.equals(codeBrowser.getCurrentLocation().getAddress()),
 			"The Listing is not at the expected address");
-	}
-
-	@Override
-	public void assertCurrentAddress(Address expected) {
-		codeBrowser.updateNow();
-		waitForSwing();
-
-		waitForCondition(() -> {
-			ProgramLocation loc = codeBrowser.getCurrentLocation();
-			Address actual = loc.getAddress();
-			return expected.equals(actual);
-		}, "Listing is not at the expected address");
 	}
 
 	private void assertExternalNavigationPerformed() {
@@ -269,9 +388,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 	private void createThunkToExternal(String addressString) throws Exception {
 
-		int txId = program.startTransaction("Set External Location");
-		try {
-
+		tx(program, () -> {
 			program.getExternalManager().setExternalPath("ADVAPI32.dll", "/FILE1", true);
 
 			Address address = addr(addressString);
@@ -289,12 +406,6 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 			Function function = program.getFunctionManager().getFunctionAt(addr(addressString));
 			function.setThunkedFunction(externalLocation.getFunction());
-		}
-		finally {
-			program.endTransaction(txId, true);
-		}
-
-		program.flushEvents();
-		waitForSwing();
+		});
 	}
 }

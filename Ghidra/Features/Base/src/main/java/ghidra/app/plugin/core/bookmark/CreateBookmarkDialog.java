@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		panel.add(buildIconLabel(), BorderLayout.WEST);
 		panel.add(buildCentralPanel(), BorderLayout.CENTER);
 		panel.add(buildCheckboxPanel(), BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Bookmark Creation");
 		return panel;
 	}
 
@@ -106,6 +106,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 		panel.add(selectionCB);
+		panel.getAccessibleContext().setAccessibleName("Selection Ranges");
 		return panel;
 	}
 
@@ -124,7 +125,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 
 		panel.add(new JLabel("Description: ", SwingConstants.RIGHT));
 		panel.add(descriptionTextField);
-
+		panel.getAccessibleContext().setAccessibleName("Bookmark Details");
 		return panel;
 	}
 
@@ -141,6 +142,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setPreferredSize(
 			new Dimension(icon.getIconWidth() + 20, icon.getIconHeight() + 20));
+		imageLabel.getAccessibleContext().setAccessibleName("Icons");
 		return imageLabel;
 	}
 
@@ -182,7 +184,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 	}
 
 	private String getEolComment(CodeUnit codeUnit) {
-		String comment = codeUnit.getComment(CodeUnit.EOL_COMMENT);
+		String comment = codeUnit.getComment(CommentType.EOL);
 		if (comment == null) {
 			return "";
 		}

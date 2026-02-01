@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.feature.vt.db;
+
+import java.util.*;
 
 //import generic.test.GenericTestCase;
 import generic.test.AbstractGenericTest;
@@ -25,27 +27,23 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markupitem.MarkupTypeTestStub;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.api.markuptype.VTMarkupTypeFactory;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.*;
-
 public class VTTestUtils {
 
 	private static String[] randomTags = { "TAG1", "TAG2", "TAG3" };
-	private static GenericAddressSpace space = new GenericAddressSpace("Test", 32,
-		AddressSpace.TYPE_RAM, 3);
 
 	private VTTestUtils() {
 		// utility class
 	}
 
-	public static VTProgramCorrelator createProgramCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, Program destinationProgram) {
-		return new DummyTestProgramCorrelator(serviceProvider, sourceProgram, destinationProgram);
+	public static VTProgramCorrelator createProgramCorrelator(Program sourceProgram,
+			Program destinationProgram) {
+		return new DummyTestProgramCorrelator(sourceProgram, destinationProgram);
 	}
 
 	/**
@@ -76,8 +74,8 @@ public class VTTestUtils {
 		return getRandomInt(0, Integer.MAX_VALUE);
 	}
 
-	public static Address addr() {
-		return addr(getRandomInt());
+	public static Address addr(Program p) {
+		return addr(getRandomInt(), p);
 	}
 
 	public static Address addr(String offset, Program p) {
@@ -85,32 +83,45 @@ public class VTTestUtils {
 		return addressFactory.getAddress(offset);
 	}
 
-	public static Address addr(long offset) {
-		return space.getAddress(offset);
+	public static Address addr(long offset, Program p) {
+		return p.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 
-	public static Address otherAddr(Address address) {
-		Address newAddress = addr();
-		while (newAddress.equals(address)) {
-			newAddress = addr();
+	public static Address otherAddr(Address addr, Program p) {
+		Address newAddress = addr(p);
+		long offset = addr.getOffset();
+		while (offset == newAddress.getOffset()) {
+			newAddress = addr(p);
 		}
 		return newAddress;
 	}
 
 	/**
 	 * Create a random match.
-	 * @param session the match set manager to use when creating a random tag or 
+	 * @param session the match set manager to use when creating a random tag or
 	 * null if you don't want to create a random tag.
 	 * @return the match
 	 */
 	public static VTMatchInfo createRandomMatch(VTSession session) {
-		return createRandomMatch(addr(), addr(), session);
+		return createRandomMatch(addr(session.getSourceProgram()),
+			addr(session.getDestinationProgram()), session);
+	}
+
+	/**
+	 * Create a random dummy match with a null VTSession.
+	 * @param session the match set manager to use when creating a random tag or
+	 * null if you don't want to create a random tag.
+	 * @return the match
+	 */
+	public static VTMatchInfo createRandomMatch(Program sourceProgram,
+			Program destincationProgram) {
+		return createRandomMatch(addr(sourceProgram), addr(destincationProgram), null);
 	}
 
 	/**
 	 * Create a random match
 	 * @param association the association to use for the source and destination address.
-	 * @param session the match set manager to use when creating a random tag or 
+	 * @param session the match set manager to use when creating a random tag or
 	 * null if you don't want to create a random tag.
 	 * @return the match
 	 */
@@ -149,7 +160,8 @@ public class VTTestUtils {
 
 		VTMarkupItem markupItem = new MarkupItemImpl(associationDB, markupType, sourceAddress);
 
-		Object markupItemManager = AbstractGenericTest.getInstanceField("markupManager", associationDB);
+		Object markupItemManager =
+			AbstractGenericTest.getInstanceField("markupManager", associationDB);
 		if (!(markupItemManager instanceof MarkupItemManagerImplDummy)) {
 
 			// Odd Code Alert: we don't want the MarkupItemManager actually looking for markup items
@@ -184,7 +196,8 @@ public class VTTestUtils {
 	}
 
 	public static VTMatch createMatchSetWithOneMatch(VTSessionDB db) throws Exception {
-		return createMatchSetWithOneMatch(db, addr(), addr());
+		return createMatchSetWithOneMatch(db, addr(db.getSourceProgram()),
+			addr(db.getDestinationProgram()));
 	}
 
 	public static VTMatch createMatchSetWithOneMatch(VTSessionDB db, Address sourceAddress,
@@ -193,9 +206,8 @@ public class VTTestUtils {
 		try {
 			testTransactionID = db.startTransaction("Test Match Set Setup");
 			VTMatchInfo info = createRandomMatch(sourceAddress, destinationAddress, db);
-			VTMatchSet matchSet =
-				db.createMatchSet(createProgramCorrelator(null, db.getSourceProgram(),
-					db.getDestinationProgram()));
+			VTMatchSet matchSet = db.createMatchSet(
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			return matchSet.addMatch(info);
 		}
 		finally {
@@ -210,9 +222,8 @@ public class VTTestUtils {
 			testTransactionID = db.startTransaction("Test Create Data Match Set");
 			VTMatchInfo info = createRandomMatch(sourceAddress, destinationAddress, db);
 			info.setAssociationType(VTAssociationType.DATA);
-			VTMatchSet matchSet =
-				db.createMatchSet(createProgramCorrelator(null, db.getSourceProgram(),
-					db.getDestinationProgram()));
+			VTMatchSet matchSet = db.createMatchSet(
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			return matchSet.addMatch(info);
 		}
 		finally {
@@ -243,8 +254,8 @@ public class VTTestUtils {
 			VTMarkupItemStatus.values()[getRandomInt(1, VTMarkupItemStatus.values().length - 1)];
 
 		while (status == statusSeed) {
-			status =
-				VTMarkupItemStatus.values()[getRandomInt(1, VTMarkupItemStatus.values().length - 1)];
+			status = VTMarkupItemStatus.values()[getRandomInt(1,
+				VTMarkupItemStatus.values().length - 1)];
 		}
 
 		return status;

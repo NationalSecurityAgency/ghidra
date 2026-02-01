@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.ConstantPool.Record;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBufferImpl;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -208,7 +209,7 @@ public class DecompileCallback {
 	 * @param addr is the given address
 	 * @param resultEncoder will contain the generated p-code ops
 	 */
-	public void getPcode(Address addr, PackedEncode resultEncoder) {
+	public void getPcode(Address addr, PatchEncoder resultEncoder) {
 		try {
 			Instruction instr = getInstruction(addr);
 			if (instr == null) {
@@ -547,7 +548,7 @@ public class DecompileCallback {
 
 	private void encodeHeaderComment(Encoder encoder, Function func) throws IOException {
 		Address addr = func.getEntryPoint();
-		String text = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
+		String text = listing.getComment(CommentType.PLATE, addr);
 		if (text != null) {
 			encoder.openElement(ELEM_COMMENT);
 			encoder.writeString(ATTRIB_TYPE, "header");
@@ -573,19 +574,19 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeCommentsType(Encoder encoder, AddressSetView addrset, Address addr,
-			int commenttype) throws IOException {
+			CommentType commenttype) throws IOException {
 		String typename;
 		switch (commenttype) {
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				typename = "user1";
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case PRE:
 				typename = "user2";
 				break;
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				typename = "user3";
 				break;
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				typename = "header";
 				break;
 			default:
@@ -597,7 +598,7 @@ public class DecompileCallback {
 			Address commaddr = iter.next();
 			String text = listing.getComment(commenttype, commaddr);
 			if (text != null) {
-				if (commenttype == CodeUnit.PLATE_COMMENT) {
+				if (commenttype == CommentType.PLATE) {
 					// Plate comments on the function entry
 					// address are considered part of the header
 					if (commaddr.equals(addr)) {
@@ -625,16 +626,16 @@ public class DecompileCallback {
 			encodeHeaderComment(encoder, func);
 		}
 		if ((flags & 1) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.EOL_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.EOL);
 		}
 		if ((flags & 2) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.PRE_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.PRE);
 		}
 		if ((flags & 4) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.POST_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.POST);
 		}
 		if ((flags & 8) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.PLATE_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.PLATE);
 		}
 		encoder.closeElement(ELEM_COMMENTDB);
 	}
@@ -840,9 +841,8 @@ public class DecompileCallback {
 		else {
 			highSymbol = new HighCodeSymbol(0,
 				SymbolUtilities.getDynamicName(program, data.getAddress()), data, dtmanage);
-			SymbolEntry entry = highSymbol.getFirstWholeMap();
-			if (data.getDataType() == DataType.DEFAULT && !entry.isReadOnly() &&
-				!entry.isVolatile()) {
+			if (data.getDataType() == DataType.DEFAULT &&
+				highSymbol.getMutability() == MutabilitySettingsDefinition.NORMAL) {
 				return false;
 			}
 		}
@@ -873,53 +873,6 @@ public class DecompileCallback {
 		HighSymbol labelSymbol = new HighLabelSymbol(sym.getName(), addr, dtmanage);
 		Namespace namespc = sym.getParentNamespace();
 		encodeResult(encoder, labelSymbol, namespc);
-	}
-
-	/**
-	 * Check address is read only. This only checks whether the block containing
-	 * the address is read-only. It does not, and should not, check if there is
-	 * a data object that has been set to constant
-	 * 
-	 * @param addr - address to check
-	 * 
-	 * @return true if the block is read_only, and there are no write
-	 *         references.
-	 */
-	private boolean isReadOnlyNoData(Address addr) {
-		boolean readonly = false;
-		MemoryBlock block = program.getMemory().getBlock(addr);
-		if (block != null) {
-			readonly = !block.isWrite();
-			// if the block says read-only, check the refs to the variable
-			// if the block says read-only, check the refs to the variable
-			if (readonly) {
-				ReferenceIterator refIter = program.getReferenceManager().getReferencesTo(addr);
-				int count = 0;
-//				boolean foundRead = false;
-				while (refIter.hasNext() && count < 100) {
-					Reference ref = refIter.next();
-					if (ref.getReferenceType().isWrite()) {
-						readonly = false;
-						break;
-					}
-					if (ref.getReferenceType().isRead()) {
-//						foundRead = true;
-					}
-					count++;
-				}
-				// TODO: Don't do override if no read reference found
-				//
-				// if we only have indirect refs to it, don't assume readonly!
-				//if (!foundRead && readonly && count > 1) {
-				//	readonly = false;
-				//}
-				// they must be reading it multiple times for some reason
-				// if (readonly && count > 1) {
-				// 	readonly = false;
-				// }
-			}
-		}
-		return readonly;
 	}
 
 	/**
@@ -967,16 +920,15 @@ public class DecompileCallback {
 			if (range.contains(addr)) {
 				Address first = range.getMinAddress();
 				Address last = range.getMaxAddress();
-				boolean readonly = true; // Treat function body as readonly
 				encodeHole(encoder, first.getAddressSpace(), first.getUnsignedOffset(),
-					last.getUnsignedOffset(), readonly, false);
+					last.getUnsignedOffset(), MutabilitySettingsDefinition.CONSTANT);
 				return;
 			}
 		}
 		// There is probably some sort of error, just return a block
 		// containing the single queried address
 		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
-			addr.getUnsignedOffset(), true, false);
+			addr.getUnsignedOffset(), MutabilitySettingsDefinition.CONSTANT);
 	}
 
 	private int getExtraPopOverride(Function func, Address addr) {
@@ -1013,10 +965,14 @@ public class DecompileCallback {
 	}
 
 	private void encodeHole(Encoder encoder, AddressSpace spc, long first, long last,
-			boolean readonly, boolean isVolatile) throws IOException {
+			int mutability) throws IOException {
 		encoder.openElement(ELEM_HOLE);
-		encoder.writeBool(ATTRIB_READONLY, readonly);
-		encoder.writeBool(ATTRIB_VOLATILE, isVolatile);
+		if (mutability == MutabilitySettingsDefinition.CONSTANT) {
+			encoder.writeBool(ATTRIB_READONLY, true);
+		}
+		else if (mutability == MutabilitySettingsDefinition.VOLATILE) {
+			encoder.writeBool(ATTRIB_VOLATILE, true);
+		}
 		encoder.writeSpace(ATTRIB_SPACE, spc);
 		encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
 		encoder.writeUnsignedInteger(ATTRIB_LAST, last);
@@ -1038,10 +994,9 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeHole(Encoder encoder, Address addr) throws IOException {
-		boolean readonly = isReadOnlyNoData(addr);
-		boolean isvolatile = isVolatileNoData(addr);
+		int mutability = MappedEntry.getMutabilityOfAddress(addr, program);
 		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
-			addr.getUnsignedOffset(), readonly, isvolatile);
+			addr.getUnsignedOffset(), mutability);
 	}
 
 	private void encodeExternalRef(Encoder encoder, Address addr, ExternalReference ref)
@@ -1133,20 +1088,6 @@ public class DecompileCallback {
 			return sym; // A label of global data of some sort
 		}
 		return null;
-	}
-
-	/**
-	 * Check whether the address is volatile. Do not check the data object.
-	 * 
-	 * @param addr is address to check for volatility
-	 * @return true if the address is volatile
-	 */
-	private boolean isVolatileNoData(Address addr) {
-		if (program.getLanguage().isVolatile(addr)) {
-			return true;
-		}
-		MemoryBlock block = program.getMemory().getBlock(addr);
-		return (block != null && block.isVolatile());
 	}
 
 	private Function getFunctionContaining(Address addr) {

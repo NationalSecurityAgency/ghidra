@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.framework.remote.RepositoryItem;
 import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -109,6 +110,29 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	}
 
 	@Override
+	public FolderItem[] getItems(String folderPath) throws IOException {
+		RepositoryItem[] items = repository.getItemList(folderPath);
+		if (!folderPath.endsWith(FileSystem.SEPARATOR)) {
+			folderPath += FileSystem.SEPARATOR;
+		}
+		FolderItem[] folderItems = new FolderItem[items.length];
+		for (int i = 0; i < items.length; i++) {
+			if (items[i].getItemType() == RepositoryItem.DATABASE) {
+				folderItems[i] = new RemoteDatabaseItem(repository, items[i]);
+			}
+			else if (items[i].getItemType() == RepositoryItem.TEXT_DATA_FILE) {
+				folderItems[i] = new RemoteTextDataItem(repository, items[i]);
+			}
+			else {
+				Msg.error(this, "Unsupported respository item encountered (" +
+					items[i].getItemType() + "): " + folderPath + items[i].getName());
+				folderItems[i] = new RemoteUnknownFolderItem(repository, items[i]);
+			}
+		}
+		return folderItems;
+	}
+
+	@Override
 	public synchronized FolderItem getItem(String folderPath, String name) throws IOException {
 		RepositoryItem item = repository.getItem(folderPath, name);
 		if (item == null) {
@@ -117,7 +141,10 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 		if (item.getItemType() == RepositoryItem.DATABASE) {
 			return new RemoteDatabaseItem(repository, item);
 		}
-		throw new IOException("Unsupported file type");
+		if (item.getItemType() == RepositoryItem.TEXT_DATA_FILE) {
+			return new RemoteTextDataItem(repository, item);
+		}
+		return new RemoteUnknownFolderItem(repository, item);
 	}
 
 	@Override
@@ -129,7 +156,10 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 		if (item.getItemType() == RepositoryItem.DATABASE) {
 			return new RemoteDatabaseItem(repository, item);
 		}
-		throw new IOException("Unsupported file type");
+		if (item.getItemType() == RepositoryItem.TEXT_DATA_FILE) {
+			return new RemoteTextDataItem(repository, item);
+		}
+		return new RemoteUnknownFolderItem(repository, item);
 	}
 
 	@Override
@@ -140,6 +170,17 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	@Override
 	public void createFolder(String parentPath, String folderName) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isSupportedItemType(FolderItem folderItem) {
+		if (folderItem instanceof DatabaseItem) {
+			return true; // assume this is always supported
+		}
+		if (folderItem instanceof TextDataItem) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -184,6 +225,14 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 			throws InvalidNameException, IOException, CancelledException {
 		repository.createDataFile(parentPath, name);
 		return (DataFileItem) getItem(parentPath, name);
+	}
+
+	@Override
+	public TextDataItem createTextDataItem(String parentPath, String name, String fileID,
+			String contentType, String textData, String comment, String ignoredUser)
+			throws InvalidNameException, IOException {
+		repository.createTextDataFile(parentPath, name, fileID, contentType, textData, comment);
+		return (TextDataItem) getItem(parentPath, name);
 	}
 
 	@Override

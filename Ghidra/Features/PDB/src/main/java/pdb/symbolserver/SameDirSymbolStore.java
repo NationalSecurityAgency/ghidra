@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,17 @@ package pdb.symbolserver;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.task.TaskMonitor;
+import pdb.symbolserver.SymbolServer.StatusRequiresContext;
 
 /**
  * A Pdb symbol server / symbol store, similar to the {@link LocalSymbolStore}, 
  * but limited to searching just the single directory that the original executable is located in.
- * <p>
- * 
  */
-public class SameDirSymbolStore implements SymbolStore {
+public class SameDirSymbolStore implements SymbolStore, StatusRequiresContext {
 
 	/**
 	 * Descriptive string
@@ -61,7 +63,26 @@ public class SameDirSymbolStore implements SymbolStore {
 		return symbolFileLocation;
 	}
 
+	/**
+	 * Creates a {@link SymbolServer} for the "Program's Import Location" item.  May return either
+	 * a {@link SameDirSymbolStore} instance, or a {@link ContainerFileSymbolServer}.
+	 *  
+	 * @param locationString will be "."
+	 * @param context {@link SymbolServerInstanceCreatorContext}
+	 * @return new {@link SymbolServer}
+	 */
+	public static SymbolServer createInstance(String locationString,
+			SymbolServerInstanceCreatorContext context) {
+		FSRL programFSRL = context.getProgramFSRL();
+		if (programFSRL != null && programFSRL.getNestingDepth() != 1) {
+			return new ContainerFileSymbolServer(programFSRL);
+		}
+		String programFilename = programFSRL != null ? programFSRL.getName() : null;
+		return new SameDirSymbolStore(context.getRootDir(), programFilename);
+	}
+
 	private final File rootDir;
+	private final String programFilename;
 
 	/**
 	 * Create a new instance, based on the directory where the program was originally imported from.
@@ -71,6 +92,12 @@ public class SameDirSymbolStore implements SymbolStore {
 	 */
 	public SameDirSymbolStore(File rootDir) {
 		this.rootDir = rootDir;
+		this.programFilename = null;
+	}
+
+	public SameDirSymbolStore(File rootDir, String programFilename) {
+		this.rootDir = rootDir;
+		this.programFilename = programFilename;
 	}
 
 	@Override
@@ -128,6 +155,21 @@ public class SameDirSymbolStore implements SymbolStore {
 
 		if (isValid()) {
 			LocalSymbolStore.searchLevel0(rootDir, this, fileInfo, findOptions, results, monitor);
+			if (results.isEmpty() && programFilename != null) {
+				// Search for renamed versions of the pdb file, using the current program's
+				// name.  Note: if this shouldn't be automatic, add FindOption enum to control this
+				List<String> altPdbfilenames = List.of(programFilename + ".pdb",
+					FilenameUtils.getBaseName(programFilename) + ".pdb");
+				for (String altPdbfilename : altPdbfilenames) {
+					SymbolFileInfo altFileInfo = SymbolFileInfo.fromPdbIdentifiers(altPdbfilename,
+						fileInfo.getIdentifiers());
+					LocalSymbolStore.searchLevel0(rootDir, this, altFileInfo, findOptions, results,
+						monitor);
+					if (!results.isEmpty()) {
+						break;
+					}
+				}
+			}
 		}
 
 		return results;
@@ -146,11 +188,6 @@ public class SameDirSymbolStore implements SymbolStore {
 	@Override
 	public String getFileLocation(String filename) {
 		return getFile(filename).getPath();
-	}
-
-	@Override
-	public boolean isLocal() {
-		return true;
 	}
 
 	@Override

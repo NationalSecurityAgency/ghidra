@@ -27,7 +27,6 @@ import ghidra.util.HelpLocation;
 
 public class StandAlonePluginTool extends PluginTool {
 
-	private PluginsConfiguration pluginClassManager;
 	private DockingAction configureToolAction;
 	private final GenericStandAloneApplication app;
 	private final String name;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.programtree;
 import java.awt.Component;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 import javax.swing.tree.TreePath;
 
@@ -85,6 +86,15 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 		ViewManagerComponentProvider provider = (ViewManagerComponentProvider) viewMgrService;
 		ActionContext context = runSwing(() -> provider.getActionContext(null));
 		return context;
+	}
+
+	protected void performTreeAction(DockingActionIf action) {
+		performAction(action, getActionContext(), true);
+	}
+
+	protected void waitForTreeEdit() {
+		BooleanSupplier bs = () -> runSwing(() -> tree.isEditing());
+		waitFor(bs);
 	}
 
 	protected void setTreeView(final String viewName) {

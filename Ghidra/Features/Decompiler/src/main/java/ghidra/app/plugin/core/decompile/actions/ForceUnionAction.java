@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,28 +128,28 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		int opcode = accessOp.getOpcode();
 		if (opcode == PcodeOp.PTRSUB) {
 			parentDt = typeIsUnionRelated(accessOp.getInput(0));
-			if (parentDt == null) {
-				accessOp = null;
-				return;
-			}
-			accessVn = accessOp.getInput(0);
-			accessSlot = 0;
-			if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op
-				do {
-					Varnode tmpVn = accessOp.getOutput();
-					PcodeOp tmpOp = tmpVn.getLoneDescend();
-					if (tmpOp == null) {
-						break;
+			if (parentDt != null) {
+				accessVn = accessOp.getInput(0);
+				accessSlot = 0;
+				if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op
+					do {
+						Varnode tmpVn = accessOp.getOutput();
+						PcodeOp tmpOp = tmpVn.getLoneDescend();
+						if (tmpOp == null) {
+							break;
+						}
+						accessOp = tmpOp;
+						accessVn = tmpVn;
+						accessSlot = accessOp.getSlot(accessVn);
 					}
-					accessOp = tmpOp;
-					accessVn = tmpVn;
-					accessSlot = accessOp.getSlot(accessVn);
+					while (accessOp.getOpcode() == PcodeOp.PTRSUB &&
+						accessOp.getInput(1).getOffset() == 0);
 				}
-				while (accessOp.getOpcode() == PcodeOp.PTRSUB &&
-					accessOp.getInput(1).getOffset() == 0);
+				return;
 			}
 		}
 		else {
+			parentDt = null;
 			for (accessSlot = 0; accessSlot < accessOp.getNumInputs(); ++accessSlot) {
 				accessVn = accessOp.getInput(accessSlot);
 				parentDt = typeIsUnionRelated(accessVn);
@@ -157,22 +157,26 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 					break;
 				}
 			}
-			if (accessSlot >= accessOp.getNumInputs()) {
-				accessSlot = -1;
-				accessVn = accessOp.getOutput();
-				parentDt = typeIsUnionRelated(accessVn);
-				if (parentDt == null) {
-					accessOp = null;
-					return;		// Give up, could not find type associated with field
+			if (parentDt != null) {
+				if (opcode == PcodeOp.SUBPIECE && accessSlot == 0 &&
+					!(parentDt instanceof Pointer)) {
+					// SUBPIECE acts directly as resolution operator
+					// Choose field based on output varnode, even though it isn't the union data-type
+					accessSlot = -1;
+					accessVn = accessOp.getOutput();
 				}
-			}
-			if (opcode == PcodeOp.SUBPIECE && accessSlot == 0 && !(parentDt instanceof Pointer)) {
-				// SUBPIECE acts directly as resolution operator
-				// Choose field based on output varnode, even though it isn't the union data-type
-				accessSlot = -1;
-				accessVn = accessOp.getOutput();
+				return;
 			}
 		}
+		accessSlot = -1;
+		accessVn = accessOp.getOutput();
+		if (accessVn != null) {
+			parentDt = typeIsUnionRelated(accessVn);
+			if (parentDt != null) {
+				return;
+			}
+		}
+		accessOp = null;		// Give up, could not find type associated with field
 	}
 
 	/**

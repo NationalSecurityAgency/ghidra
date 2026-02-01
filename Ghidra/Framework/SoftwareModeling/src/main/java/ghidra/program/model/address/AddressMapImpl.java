@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 package ghidra.program.model.address;
 
 import java.util.*;
-
-import ghidra.util.UniversalIdGenerator;
 
 /**
  * <code>AddressMapImpl</code> provides a stand-alone AddressMap.
@@ -60,6 +58,7 @@ public class AddressMapImpl {
 	/**
 	 * Creates a new AddressMapImpl with the specified mapID
 	 * @param mapID the 8-bit value is placed in the upper 8 bits of every address encoding.
+	 * @param addrFactory the address factory
 	 */
 	public AddressMapImpl(byte mapID, AddressFactory addrFactory) {
 		this.addrFactory = addrFactory;
@@ -77,7 +76,6 @@ public class AddressMapImpl {
 		for (int i = 0; i < sortedBaseStartAddrs.length; i++) {
 			long max = sortedBaseStartAddrs[i].getAddressSpace().getMaxAddress().getOffset();
 			max = max < 0 ? MAX_OFFSET : Math.min(max, MAX_OFFSET);
-			// Avoid use of add which fails for overlay addresses which have restricted min/max offsets
 			long off = sortedBaseStartAddrs[i].getOffset() | max;
 			sortedBaseEndAddrs[i] =
 				sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
@@ -332,15 +330,16 @@ public class AddressMapImpl {
 	private static class ObsoleteOverlaySpace extends OverlayAddressSpace {
 
 		private final OverlayAddressSpace originalSpace;
+		private String name;
 
 		ObsoleteOverlaySpace(OverlayAddressSpace ovSpace) {
-			super(makeName(), ovSpace.getOverlayedSpace(), ovSpace.getUnique(),
-				ovSpace.getMinOffset(), ovSpace.getMaxOffset());
+			super(ovSpace.getOverlayedSpace(), ovSpace.getUnique(), createName(ovSpace));
 			this.originalSpace = ovSpace;
+			this.name = createName(ovSpace);
 		}
 
-		private static String makeName() {
-			return "DELETED_" + Long.toHexString(UniversalIdGenerator.nextID().getValue());
+		private static String createName(OverlayAddressSpace ovSpace) {
+			return "DELETED_" + ovSpace.getName() + "_" + ovSpace.getSpaceID();
 		}
 
 		OverlayAddressSpace getOriginalSpace() {
@@ -348,20 +347,20 @@ public class AddressMapImpl {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if (obj == this) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (!(obj instanceof ObsoleteOverlaySpace)) {
-				return false;
-			}
-			ObsoleteOverlaySpace s = (ObsoleteOverlaySpace) obj;
-
-			return originalSpace.equals(s.originalSpace) && name.equals(s.name) &&
-				getMinOffset() == s.getMinOffset() && getMaxOffset() == s.getMaxOffset();
+		public String getName() {
+			return name;
 		}
+
+		@Override
+		public boolean contains(long offset) {
+			return false;
+		}
+
+		@Override
+		public AddressSetView getOverlayAddressSet() {
+			return new AddressSet();
+		}
+
 	}
+
 }

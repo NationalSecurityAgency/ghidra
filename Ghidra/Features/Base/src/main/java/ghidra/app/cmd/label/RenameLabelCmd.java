@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
@@ -34,7 +33,7 @@ import ghidra.util.exception.InvalidInputException;
  * Command for renaming labels. Handles converting back and forth between default and named labels 
  * as well.
  */
-public class RenameLabelCmd implements Command {
+public class RenameLabelCmd implements Command<Program> {
 
 	private Address addr;
 	private String oldName;
@@ -123,9 +122,8 @@ public class RenameLabelCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		Program program = (Program) obj;
 		if (currentNamespace == null) {
 			currentNamespace = program.getGlobalNamespace();
 		}

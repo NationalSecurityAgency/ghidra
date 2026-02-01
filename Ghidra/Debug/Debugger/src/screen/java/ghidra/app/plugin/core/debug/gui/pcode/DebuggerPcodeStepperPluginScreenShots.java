@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import org.junit.*;
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.pcode.exec.PcodeExecutor;
@@ -57,14 +58,17 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 	@Test
 	public void testCaptureDebuggerPcodeStepperPlugin() throws Throwable {
 		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
 			long snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			tb.trace.getMemoryManager()
-					.addRegion("[echo:.text]", Lifespan.nowOn(snap0),
+					.addRegion("Memory[echo:.text]", Lifespan.nowOn(snap0),
 						tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ,
 						TraceMemoryFlag.EXECUTE);
 
-			TraceThread thread = tb.getOrAddThread("[1]", snap0);
+			TraceThread thread = tb.getOrAddThread("Threads[1]", snap0);
+			tb.trace.getObjectManager()
+					.createObject(thread.getObject().getCanonicalPath().key("Registers"));
 
 			PcodeExecutor<byte[]> exe =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap0, thread, 0);
@@ -78,7 +82,7 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 
 			traceManager.openTrace(tb.trace);
 			traceManager.activateThread(thread);
-			traceManager.activateTime(TraceSchedule.parse("0:.t0-7"));
+			traceManager.activateTime(TraceSchedule.snap(0).steppedPcodeForward(thread, 7));
 			waitForSwing();
 
 			runSwing(() -> pcodeProvider.mainPanel.setDividerLocation(360));

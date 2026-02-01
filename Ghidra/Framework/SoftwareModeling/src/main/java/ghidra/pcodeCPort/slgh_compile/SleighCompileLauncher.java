@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.io.*;
 import java.util.*;
 
 import org.antlr.runtime.RecognitionException;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
@@ -55,12 +55,10 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 	 * 
 	 * @param args sleigh compiler command line arguments
 	 * @return exit code (TODO: exit codes are not well defined)
-	 * @throws JDOMException for XML errors
 	 * @throws IOException for file access errors
 	 * @throws RecognitionException for parse errors
 	 */
-	public static int runMain(String[] args)
-			throws JDOMException, IOException, RecognitionException {
+	public static int runMain(String[] args) throws IOException, RecognitionException {
 		int retval;
 		String filein = null;
 		String fileout = null;
@@ -80,6 +78,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			Msg.info(SleighCompile.class, "       <directory-path>   directory to have all slaspec files compiled");
 			Msg.info(SleighCompile.class, "  options:");
 			Msg.info(SleighCompile.class, "   -x                turns on parser debugging");
+			Msg.info(SleighCompile.class, "   -y                write .sla using XML debug format");
 			Msg.info(SleighCompile.class, "   -u                print warnings for unnecessary pcode instructions");
 			Msg.info(SleighCompile.class, "   -l                report pattern conflicts");
 			Msg.info(SleighCompile.class, "   -n                print warnings for all NOP constructors");
@@ -87,7 +86,6 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			Msg.info(SleighCompile.class, "   -e                enforce use of 'local' keyword for temporaries");
 			Msg.info(SleighCompile.class, "   -c                print warnings for all constructors with colliding operands");
 			Msg.info(SleighCompile.class, "   -f                print warnings for unused token fields");
-			Msg.info(SleighCompile.class, "   -o                print warnings for temporaries which are too large");
 			Msg.info(SleighCompile.class,  "  -s                treat register names as case sensitive");
 			Msg.info(SleighCompile.class, "   -DNAME=VALUE      defines a preprocessor macro NAME with value VALUE (option may be repeated)");
 			Msg.info(SleighCompile.class, "   -dMODULE          defines a preprocessor macro MODULE with a value of its module path (option may be repeated)");
@@ -103,8 +101,8 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		boolean deadTempWarning = false;
 		boolean enforceLocalKeyWord = false;
 		boolean unusedFieldWarning = false;
-		boolean largeTemporaryWarning = false;
 		boolean caseSensitiveRegisterNames = false;
+		boolean debugOutput = false;
 
 		int i;
 		for (i = 0; i < args.length; ++i) {
@@ -165,11 +163,11 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			else if (args[i].charAt(1) == 'a') {
 				allMode = true;
 			}
-			else if (args[i].charAt(1) == 'o') {
-				largeTemporaryWarning = true;
-			}
 			else if (args[i].charAt(1) == 's') {
 				caseSensitiveRegisterNames = true;
+			}
+			else if (args[i].charAt(1) == 'y') {
+				debugOutput = true;
 			}
 			else if (args[i].charAt(1) == 'x') {
 				SleighCompile.yydebug = true; // Debug option
@@ -205,7 +203,8 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 				SleighCompile compiler = new SleighCompile();
 				compiler.setAllOptions(preprocs, unnecessaryPcodeWarning, lenientConflict,
 					allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
-					enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames);
+					enforceLocalKeyWord, caseSensitiveRegisterNames,
+					debugOutput);
 
 				String outname = input.getName().replace(".slaspec", ".sla");
 				File output = new File(input.getParent(), outname);
@@ -234,7 +233,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		SleighCompile compiler = new SleighCompile();
 		compiler.setAllOptions(preprocs, unnecessaryPcodeWarning, lenientConflict,
 			allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
-			enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames);
+			enforceLocalKeyWord, caseSensitiveRegisterNames, debugOutput);
 		if (i == args.length) {
 			Msg.error(SleighCompile.class, "Missing input file name");
 			return 1;

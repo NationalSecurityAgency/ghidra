@@ -132,11 +132,6 @@ public class ProjectExperimentsTest extends AbstractGhidraHeadedIntegrationTest 
 		}
 
 		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			log("File object replaced: file=" + file + " oldObject=" + obj(oldObject));
-		}
-
-		@Override
 		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
 			log("File object opened for update: file=" + file + " object=" + obj(object));
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,68 +15,24 @@
  */
 package ghidra.feature.vt.api.stringable;
 
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALL_FIXUP;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_VAR_ARGS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.VAR_ARGS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CallingConventionChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.HighestSourcePriorityChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.Undefined;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.PrototypeModel;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.listing.FunctionSignature;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.ParameterImpl;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ReturnParameterImpl;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.FunctionUtility;
-import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -544,9 +500,8 @@ public class FunctionSignatureStringable extends Stringable {
 	public boolean applyFunctionSignature(Function toFunction, ToolOptions markupOptions,
 			boolean forceApply) throws VersionTrackingApplyException {
 
-		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice =
-			markupOptions.getEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-				DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
+		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice = markupOptions
+				.getEnum(VTOptionDefines.FUNCTION_SIGNATURE, DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 
 		int toParamCount = toFunction.getParameterCount();
 
@@ -586,10 +541,16 @@ public class FunctionSignatureStringable extends Stringable {
 			List<Parameter> newParams =
 				getParameters(toFunction, markupOptions, forceApply, useCustomStorage);
 
-			toFunction.updateFunction(conventionName, returnParam, newParams,
-				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-				true, signatureSource);
+			toFunction
+					.updateFunction(conventionName, returnParam, newParams,
+						useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
+								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
+						true, signatureSource);
+
+			// Test to see if destination function is now in the same namespace as the source
+			// if so copy the class structure from source to destination if the update didn't 
+			copyClassStructure(newParams, toFunction, markupOptions);
+
 			if (forceApply) {
 				// must force signatureSource if precedence has been lowered
 				// TODO: Should any manual change in function signature force source to be USER_DEFINED instead ??
@@ -622,6 +583,195 @@ public class FunctionSignatureStringable extends Stringable {
 		return true;
 	}
 
+	/**
+	 * Method to determine if a copy is needed of the source class struct to the destination program
+	 * and if so, does the copy
+	 * @param newParams the params to apply to the destination program as determined by the apply
+	 * options
+	 * @param toFunction the destination function
+	 */
+	private void copyClassStructure(List<Parameter> newParams, Function toFunction,
+			ToolOptions markupOptions) {
+
+		// this is only meant to handle the case where there are auto this params
+		// existing other mechanisms handle custom storage case already
+		if (toFunction.hasCustomVariableStorage()) {
+			return;
+		}
+
+		VTMatchApplyChoices.ParameterDataTypeChoices parameterDataTypesChoice =
+			markupOptions.getEnum(VTOptionDefines.PARAMETER_DATA_TYPES,
+				DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES);
+
+		if (parameterDataTypesChoice == ParameterDataTypeChoices.EXCLUDE) {
+			return;
+		}
+
+		boolean onlyReplaceUndefineds =
+			(parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+
+		boolean replaceAlways = (parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE);
+
+		// check to see if the resulting newParams after checking the markupOptions includes
+		// a this param and if so resolve the class data type in the destination program
+		// to make sure the class structure gets copied to the destination program
+
+		// if source function is not a thiscall then no class structure to copy
+		if (!callingConventionName.equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
+			return;
+		}
+		// if there are no new params to apply as determined by the options then nothing to copy
+		if (newParams.isEmpty()) {
+			return;
+		}
+
+		// if newParams does not have a this param to copy as determined by the apply options then
+		// no copy needed
+		if (!newParams.get(0).getName().equals("this")) {
+			return;
+		}
+
+		// get the this param for source and verify it is a pointer to a structure
+		ParameterInfo sourceParam1 = parameterInfos.get(0);
+		DataType sourceClassDataType = getPointedToDataType(sourceParam1.dataType);
+		if (sourceClassDataType == null) {
+			return;
+		}
+
+		if (!isStructure(sourceClassDataType)) {
+			return;
+		}
+
+		// get the pointed to data type for the new destination this param
+		// if it isn't a pointer to a data type then return
+		Parameter newDestinationParam1 = newParams.get(0);
+		DataType newDestinationClassDataType =
+			getPointedToDataType(newDestinationParam1.getDataType());
+		if (newDestinationClassDataType == null) {
+			return;
+		}
+
+		// if the new this param (ie what the calling method has determined what the new this
+		// param is supposed to be) is not a pointer to a structure then return because it
+		// doesn't think it should also be a class structure
+		if (!isStructure(newDestinationClassDataType)) {
+			return;
+		}
+
+		// if it gets this far then can probably assume both the new destination and source this 
+		// data types are pointers to class structures
+		// NOTE: at this time there is a use case where the calling method incorrectly assumes the
+		// newParam is the same class structure as the source one. However, that method did not
+		// check the FunctionName option to see if that option was to not replace the function
+		// name. So we need to have a check to see if the current function namespace is already 
+		// the same as the assumed new destination this structure name which would indicate that 
+		// the function already was in the same class and so we still need to do the resolve to make
+		// sure that the structure contents get resolved according to the parameter replace options
+		VTMatchApplyChoices.FunctionNameChoices functionNameChoice =
+			markupOptions.getEnum(VTOptionDefines.FUNCTION_NAME, DEFAULT_OPTION_FOR_FUNCTION_NAME);
+		String currentDestinationFunctionNamespaceName =
+			toFunction.getSymbol().getParentNamespace().getName();
+		String newDestinationClassName = newDestinationClassDataType.getName();
+		if (functionNameChoice == FunctionNameChoices.EXCLUDE &&
+			!currentDestinationFunctionNamespaceName.equals(newDestinationClassName)) {
+			return;
+		}
+
+		// now use the path to the source data type to try and get the same named structure 
+		// in the destination data type manager
+		ProgramBasedDataTypeManager destinationDataTypeManager =
+			toFunction.getProgram().getDataTypeManager();
+
+		String pathName = sourceClassDataType.getPathName();
+		DataType destinationDataTypeInDTM = destinationDataTypeManager.getDataType(pathName);
+
+		// only do the copy if the option is to replace always or if it is replace undefines and the
+		// destination structure is empty (ie undefined)
+		if (replaceAlways ||
+			destinationDataTypeInDTM == null ||
+			(destinationDataTypeInDTM.isNotYetDefined() && onlyReplaceUndefineds)) {
+
+			// since nothing above prevents the copy go ahead and copy the source class data type			
+
+			//needs to be the original dt to get the struct * not just the struct
+			destinationDataTypeManager.resolve(sourceParam1.dataType,
+				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+			// check to see if the resolve probably updated the function's auto this param datatype
+			// it might not have if there was a .conflict created during the resolve or if the
+			// source and destination data types were in different folders or if one program
+			// has the preferred root data type manager folder set and the other doesn't
+			// not sure there is a way to tell this info since I don't know which the decompiler will
+			// pick at this point because nothing has been applied yet
+			DataType destinationDataTypeConflict =
+				destinationDataTypeManager.getDataType(pathName + ".conflict");
+
+			if (destinationDataTypeConflict != null) {
+				Msg.debug(this, "The applied class structure " +
+					newDestinationClassDataType.getPathName() +
+					" was copied to the destination program but a .conflict was created due to there " +
+					"already being a non-empty structure with that same path and name.");
+			}
+
+			// get the original toFunction this param if there was one and get it's path
+			// if the new path is different then spit out warming too
+			if (toFunction.getParameterCount() == 0) {
+				return;
+			}
+
+			if (!toFunction.getParameter(0).getName().equals("this")) {
+				return;
+			}
+
+			DataType pointedToDataType =
+				getPointedToDataType(toFunction.getParameter(0).getDataType());
+			if (pointedToDataType == null) {
+				return;
+			}
+
+			if (!pointedToDataType.getName().equals(newDestinationClassName)) {
+				return;
+			}
+
+			if (pointedToDataType.getPathName().equals(pathName)) {
+				return; // already handled with conflict check above
+			}
+
+			Msg.debug(this,
+				"The applied class structure was copied to the same data type manager " +
+					"path as in the source program whichi is different than the path to the existing " +
+					"class structure. The decompiler will first check for one in the Preferred Class" +
+					"Root Folder (if one has been set) otherwise it will use the first one it finds.");
+		}
+
+	}
+
+	private boolean isStructure(DataType dataType) {
+
+		if (dataType instanceof Structure) {
+			return true;
+		}
+
+		if (dataType instanceof StructureDataType) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+	private DataType getPointedToDataType(DataType dataType) {
+
+		if (!(dataType instanceof PointerDataType)) {
+			return null;
+		}
+
+		PointerDataType pointerDataType = (PointerDataType) dataType;
+
+		return pointerDataType.getDataType();
+
+	}
+
 	private void applyInline(Function toFunction, boolean fromFunctionIsInline,
 			ToolOptions markupOptions) {
 		ReplaceChoices inlineChoice = markupOptions.getEnum(INLINE, DEFAULT_OPTION_FOR_INLINE);
@@ -648,10 +798,12 @@ public class FunctionSignatureStringable extends Stringable {
 			return returnParam; // Not replacing return type.
 		}
 		DataType toReturnType = toFunction.getReturnType();
+
 		DataType fromReturnType = returnInfo.dataType;
 		boolean isFromDefault = fromReturnType == DataType.DEFAULT;
 		boolean isToDefault = toReturnType == DataType.DEFAULT;
-		boolean isToUndefined = Undefined.isUndefined(toReturnType);
+		boolean isToUndefined = Undefined.isUndefined(getBaseDataType(toReturnType));
+
 		if (!forceApply && onlyReplaceUndefineds) {
 			if (!isToDefault && !isToUndefined) {
 				return returnParam; // can't do it because we should only replace undefined data types.
@@ -723,8 +875,8 @@ public class FunctionSignatureStringable extends Stringable {
 	}
 
 	private String getCallingConvention(Function toFunction, ToolOptions markupOptions) {
-		boolean isFromUnknownCallingConvention = ((callingConventionName == null) ||
-			callingConventionName.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING));
+		boolean isFromUnknownCallingConvention =
+			CompilerSpec.isUnknownCallingConvention(callingConventionName);
 		CallingConventionChoices callingConventionChoice =
 			markupOptions.getEnum(CALLING_CONVENTION, DEFAULT_OPTION_FOR_CALLING_CONVENTION);
 		String toCallingConventionName = toFunction.getCallingConventionName();
@@ -817,13 +969,28 @@ public class FunctionSignatureStringable extends Stringable {
 		return parameters;
 	}
 
+	/**
+	 * If the given data type is a pointer, get the "pointed to" data type
+	 * @param dataType the given data type
+	 * @return if not a pointer, just return the same dataType, if a pointer, return the 
+	 * "pointed to" data type
+	 */
+	private DataType getBaseDataType(DataType dataType) {
+
+		if (dataType instanceof Pointer) {
+			Pointer pointer = (Pointer) dataType;
+			dataType = pointer.getDataType();
+		}
+		return dataType;
+	}
+
 	private DataType getHighestPriorityDataType(DataType fromDataType, DataType toDataType,
 			boolean onlyReplaceUndefineds) {
 		// Priority from highest to lowest is Defined, Undefined with size, Default.
 		boolean fromIsDefault = fromDataType == DataType.DEFAULT;
 		boolean toIsDefault = toDataType == DataType.DEFAULT;
-		boolean fromIsUndefined = Undefined.isUndefined(fromDataType);
-		boolean toIsUndefined = Undefined.isUndefined(toDataType);
+		boolean fromIsUndefined = Undefined.isUndefined(getBaseDataType(fromDataType));
+		boolean toIsUndefined = Undefined.isUndefined(getBaseDataType(toDataType));
 		if (fromIsDefault) {
 			return toDataType;
 		}
@@ -854,8 +1021,8 @@ public class FunctionSignatureStringable extends Stringable {
 			throws VersionTrackingApplyException {
 
 		// See what options the user has specified when applying parameter names.
-		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions.getEnum(
-			VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
+		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions
+				.getEnum(VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
 		VTMatchApplyChoices.HighestSourcePriorityChoices highestPriorityChoice =
 			markupOptions.getEnum(VTOptionDefines.HIGHEST_NAME_PRIORITY,
 				DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY);
@@ -1023,38 +1190,31 @@ public class FunctionSignatureStringable extends Stringable {
 
 	private boolean isFirstHigherPriorityWhenUserPriority(SourceType first, SourceType second,
 			boolean replaceSamePriorityNames) {
-		if (first == second && first != SourceType.DEFAULT) {
+		if (first == SourceType.DEFAULT) {
+			return false;
+		}
+		if (first == second) {
 			return replaceSamePriorityNames;
 		}
-		if (first == SourceType.USER_DEFINED) {
-			return (second == SourceType.IMPORTED || second == SourceType.ANALYSIS ||
-				second == SourceType.DEFAULT);
-		}
-		if (first == SourceType.IMPORTED) {
-			return (second == SourceType.ANALYSIS || second == SourceType.DEFAULT);
-		}
-		if (first == SourceType.ANALYSIS) {
-			return (second == SourceType.DEFAULT);
-		}
-		return false;
+		return first.isHigherPriorityThan(second);
 	}
 
 	private boolean isFirstHigherPriorityWhenImportedPriority(SourceType first, SourceType second,
 			boolean replaceSamePriorityNames) {
-		if (first == second && first != SourceType.DEFAULT) {
+		if (first == SourceType.DEFAULT) {
+			return false;
+		}
+		if (first == second) {
 			return replaceSamePriorityNames;
 		}
+		// Force IMPORTED to have highest priority
 		if (first == SourceType.IMPORTED) {
-			return (second == SourceType.USER_DEFINED || second == SourceType.ANALYSIS ||
-				second == SourceType.DEFAULT);
+			return true;
 		}
-		if (first == SourceType.USER_DEFINED) {
-			return (second == SourceType.ANALYSIS || second == SourceType.DEFAULT);
+		else if (second == SourceType.IMPORTED) {
+			return false;
 		}
-		if (first == SourceType.ANALYSIS) {
-			return (second == SourceType.DEFAULT);
-		}
-		return false;
+		return first.isHigherPriorityThan(second);
 	}
 
 	private void replaceParameterComments(Function toFunction, CommentChoices commentChoice) {

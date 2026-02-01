@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -157,12 +158,12 @@ public class DBTraceDataSettingsAdapter
 	public class DBTraceDataSettingsSpace extends
 			DBTraceAddressSnapRangePropertyMapSpace<DBTraceSettingsEntry, DBTraceSettingsEntry>
 			implements DBTraceDataSettingsOperations {
-		public DBTraceDataSettingsSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
-				ReadWriteLock lock, AddressSpace space, TraceThread thread, int frameLevel,
+		public DBTraceDataSettingsSpace(String tableName, DBTrace trace,
+				DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
 				Class<DBTraceSettingsEntry> dataType,
 				DBTraceAddressSnapRangePropertyMapDataFactory<DBTraceSettingsEntry, DBTraceSettingsEntry> dataFactory)
 				throws VersionException, IOException {
-			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
+			super(tableName, trace, storeFactory, lock, space, dataType, dataFactory);
 		}
 
 		@Override
@@ -176,7 +177,7 @@ public class DBTraceDataSettingsAdapter
 		}
 	}
 
-	public DBTraceDataSettingsAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceDataSettingsAdapter(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -184,20 +185,10 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	protected DBTraceDataSettingsSpace createSpace(
-			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceDataSettingsSpace(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, null, 0, dataType, dataFactory);
-	}
-
-	@Override
-	protected DBTraceDataSettingsSpace createRegisterSpace(
-			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
+	protected DBTraceDataSettingsSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceDataSettingsSpace(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
+		return new DBTraceDataSettingsSpace(tableName(space), trace, trace.getStoreFactory(), lock,
+			space, dataType, dataFactory);
 	}
 
 	@Override
@@ -206,8 +197,7 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	public DBTraceDataSettingsSpace getRegisterSpace(TraceThread thread,
-			boolean createIfAbsent) {
+	public DBTraceDataSettingsSpace getRegisterSpace(TraceThread thread, boolean createIfAbsent) {
 		return (DBTraceDataSettingsSpace) super.getRegisterSpace(thread, createIfAbsent);
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,8 +40,7 @@ import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.filter.FilterTextField;
-import docking.widgets.table.GDynamicColumnTableModel;
-import docking.widgets.table.RowObjectTableModel;
+import docking.widgets.table.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -78,7 +77,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected ConsoleService console;
 
 	protected Program program;
-	protected DraggableScriptTable scriptTable;
+	protected GTable scriptTable;
 	protected JTextPane consoleTextPane;
 	protected GhidraScriptEditorComponentProvider editor;
 	protected JTextArea editorTextArea;
@@ -122,11 +121,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		ConsoleComponentProvider consoleProvider =
 			waitForComponentProvider(ConsoleComponentProvider.class);
 		consoleTextPane =
-			(JTextPane) findComponentByName(consoleProvider.getComponent(), "CONSOLE");
+			(JTextPane) findComponentByName(consoleProvider.getComponent(), "Console Text Pane");
 		assertNotNull(consoleTextPane);
 
-		scriptTable =
-			(DraggableScriptTable) findComponentByName(provider.getComponent(), "SCRIPT_TABLE");
+		scriptTable = (GTable) findComponentByName(provider.getComponent(), "Scripts Table");
 		assertNotNull(scriptTable);
 
 		clearConsole();
@@ -211,11 +209,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void selectCategory(String category) {
-
-		GTree categoryTree = (GTree) findComponentByName(provider.getComponent(), "CATEGORY_TREE");
+		GTree categoryTree = provider.getTree();
 		waitForTree(categoryTree);
-		JTree jTree = (JTree) invokeInstanceMethod("getJTree", categoryTree);
-		assertNotNull(jTree);
 		GTreeNode child = categoryTree.getModelRoot().getChild(category);
 		categoryTree.setSelectedNode(child);
 		waitForTree(categoryTree);
@@ -1204,6 +1199,34 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		assertTrue("Timed-out waiting for cancelled script to complete", success);
 	}
 
+	protected void runScript(ResourceFile scriptFile) throws Exception {
+
+		GhidraScriptProvider scriptProvider = GhidraScriptUtil.getProvider(scriptFile);
+		GhidraScript script =
+			scriptProvider.getScriptInstance(scriptFile, new PrintWriter(System.err));
+
+		Task task = new RunScriptTask(script, plugin.getCurrentState(), console);
+		task.addTaskListener(provider.getTaskListener());
+
+		CountDownLatch latch = new CountDownLatch(1);
+		task.addTaskListener(new TaskListener() {
+
+			@Override
+			public void taskCompleted(Task t) {
+				latch.countDown();
+			}
+
+			@Override
+			public void taskCancelled(Task t) {
+				latch.countDown();
+			}
+		});
+
+		TaskLauncher.launch(task);
+
+		latch.await(TASK_RUN_SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
+	}
+
 	protected void startRunScriptTask(GhidraScript script) throws Exception {
 		Task task = new RunScriptTask(script, plugin.getCurrentState(), console);
 		task.addTaskListener(provider.getTaskListener());
@@ -1615,16 +1638,14 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected class SpyConsole extends ConsoleComponentProvider {
-		protected StringBuffer apiBuffer;
 
 		protected StringWriter outBuffer = new StringWriter();
 		protected StringWriter errBuffer = new StringWriter();
-		protected PrintWriter out = new PrintWriter(outBuffer);
-		protected PrintWriter err = new PrintWriter(errBuffer);
+		protected PrintWriter out = new PrintWriter(outBuffer, true);
+		protected PrintWriter err = new PrintWriter(errBuffer, true);
 
 		SpyConsole() {
 			super(plugin.getTool(), "Spy Console");
-			this.apiBuffer = new StringBuffer();
 		}
 
 		@Override
@@ -1638,25 +1659,24 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		}
 
 		void clear() {
-			apiBuffer = new StringBuffer();
 			outBuffer = new StringWriter();
 			errBuffer = new StringWriter();
 		}
 
 		@Override
 		public void println(String msg) {
-			apiBuffer.append(msg).append('\n');
+			out.println(msg);
 			Msg.trace(this, "Spy Script Console - println(): " + msg);
 		}
 
 		@Override
 		public void addMessage(String originator, String msg) {
-			apiBuffer.append(msg).append('\n');
+			out.println(msg);
 			Msg.trace(this, "Spy Script Console - addMessage(): " + msg);
 		}
 
 		String getApiOutput() {
-			return apiBuffer.toString();
+			return outBuffer.toString();
 		}
 	}
 

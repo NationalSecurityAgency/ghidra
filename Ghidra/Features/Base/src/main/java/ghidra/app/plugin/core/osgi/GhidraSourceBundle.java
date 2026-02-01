@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,6 +45,8 @@ import aQute.bnd.osgi.Clazz.QUERY;
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationProperties;
 import ghidra.util.Msg;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
@@ -138,8 +140,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * Source bundles are compiled to a path relative to the user's home:  
-	 * &nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
+	 * Source bundles are compiled to a path relative to the user's settings directory:  
+	 * &nbsp;{@code <user settings>/osgi/compiled-bundles/<sourceDirHash> }
 	 *  
 	 * @return the destination for compiled source bundles
 	 *
@@ -154,7 +156,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * a hash of the source directory path.
 	 * 
 	 * <p>This hash is also used as the final path component of the compile destination:
-	 * <br/>&nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
+	 * <br/>&nbsp;{@code <user settings>/osgi/compiled-bundles/<sourceDirHash> }
 	 * 
 	 * @param sourceDir the source directory
 	 * @return a string hash of the source directory path
@@ -324,14 +326,16 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private static void findPackageDirs(List<String> packages, ResourceFile dir) {
 		boolean added = false;
 		ResourceFile[] files = dir.listFiles(f -> f.isDirectory() || f.getName().endsWith(".java"));
-		for (ResourceFile file : files) {
-			if (!file.getName().matches("internal|private")) {
-				if (file.isDirectory()) {
-					findPackageDirs(packages, file);
-				}
-				else if (!added) {
-					added = true;
-					packages.add(dir.getAbsolutePath());
+		if (files != null) {
+			for (ResourceFile file : files) {
+				if (!file.getName().matches("internal|private")) {
+					if (file.isDirectory()) {
+						findPackageDirs(packages, file);
+					}
+					else if (!added) {
+						added = true;
+						packages.add(dir.getAbsolutePath());
+					}
 				}
 			}
 		}
@@ -699,14 +703,17 @@ public class GhidraSourceBundle extends GhidraBundle {
 				ClassMapper mapper = new ClassMapper(binarySubdir);
 
 				// for each source file, lookup class files by class name 
-				for (ResourceFile sourceFile : sourceSubdir.listFiles()) {
-					if (sourceFile.isDirectory()) {
-						stack.push(sourceFile);
-					}
-					else {
-						List<Path> classFiles = mapper.findAndRemove(sourceFile);
-						if (classFiles != null) {
-							discrepancy.found(sourceFile, classFiles);
+				ResourceFile[] sourceSubdirs = sourceSubdir.listFiles();
+				if (sourceSubdirs != null) {
+					for (ResourceFile sourceFile : sourceSubdirs) {
+						if (sourceFile.isDirectory()) {
+							stack.push(sourceFile);
+						}
+						else {
+							List<Path> classFiles = mapper.findAndRemove(sourceFile);
+							if (classFiles != null) {
+								discrepancy.found(sourceFile, classFiles);
+							}
 						}
 					}
 				}
@@ -874,6 +881,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
+
+		String minJava =
+			Application.getApplicationProperty(ApplicationProperties.APPLICATION_JAVA_MIN_PROPERTY);
+		if (minJava != null) {
+			analyzer.setProperty("Require-Capability",
+				"osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=%s))\"".formatted(minJava));
+		}
 
 		try {
 			Manifest manifest;

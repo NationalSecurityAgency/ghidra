@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.event.ListSelectionEvent;
 
@@ -25,24 +26,25 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueAttribute;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
-import ghidra.dbg.target.TargetModule;
-import ghidra.dbg.target.TargetProcess;
-import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
-import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.thread.TraceProcess;
 
-public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceObjectModule> {
+public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceModule> {
 
 	private static class ModuleBaseColumn extends AbstractTraceValueObjectAddressColumn {
 		public ModuleBaseColumn() {
-			super(TargetModule.RANGE_ATTRIBUTE_NAME);
+			super(TraceModule.KEY_RANGE);
 		}
 
 		@Override
@@ -58,7 +60,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class ModuleMaxColumn extends AbstractTraceValueObjectAddressColumn {
 		public ModuleMaxColumn() {
-			super(TargetModule.RANGE_ATTRIBUTE_NAME);
+			super(TraceModule.KEY_RANGE);
 		}
 
 		@Override
@@ -74,7 +76,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class ModuleNameColumn extends TraceValueObjectAttributeColumn<String> {
 		public ModuleNameColumn() {
-			super(TargetModule.MODULE_NAME_ATTRIBUTE_NAME, String.class);
+			super(TraceModule.KEY_MODULE_NAME, String.class);
 		}
 
 		@Override
@@ -96,11 +98,14 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 				return "";
 			}
 			ValueAttribute<AddressRange> attr =
-				rowObject.getAttribute(TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class);
+				rowObject.getAttribute(TraceModule.KEY_RANGE, AddressRange.class);
 			if (attr == null) {
 				return "";
 			}
 			AddressRange range = attr.getValue();
+			if (range == null) {
+				return "";
+			}
 
 			// TODO: Cache this? Would flush on:
 			//    1. Mapping changes
@@ -126,7 +131,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class ModuleLengthColumn extends AbstractTraceValueObjectLengthColumn {
 		public ModuleLengthColumn() {
-			super(TargetModule.RANGE_ATTRIBUTE_NAME);
+			super(TraceModule.KEY_RANGE);
 		}
 
 		@Override
@@ -157,13 +162,16 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			DebuggerObjectActionContext ctx) {
 		Set<TraceModule> result = new HashSet<>();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
+			if (!value.isObject()) {
+				continue;
+			}
 			TraceObject child = value.getChild();
-			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
+			TraceModule module = child.queryInterface(TraceModule.class);
 			if (module != null) {
 				result.add(module);
 				continue;
 			}
-			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
+			TraceSection section = child.queryInterface(TraceSection.class);
 			if (section != null) {
 				result.add(section.getModule());
 				continue;
@@ -176,13 +184,16 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			DebuggerObjectActionContext ctx) {
 		Set<TraceSection> result = new HashSet<>();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
-			TraceObject child = value.getChild();
-			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
-			if (module != null) {
-				result.addAll(module.getSections());
+			if (!value.isObject()) {
 				continue;
 			}
-			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
+			TraceObject child = value.getChild();
+			TraceModule module = child.queryInterface(TraceModule.class);
+			if (module != null) {
+				result.addAll(module.getSections(ctx.getSnap()));
+				continue;
+			}
+			TraceSection section = child.queryInterface(TraceSection.class);
 			if (section != null) {
 				result.add(section);
 				continue;
@@ -195,52 +206,56 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		AddressSet result = new AddressSet();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
 			TraceObject child = value.getChild();
-			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
+			TraceModule module = child.queryInterface(TraceModule.class);
 			if (module != null) {
-				result.add(module.getRange());
+				result.add(module.getRange(ctx.getSnap()));
 				continue;
 			}
-			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
+			TraceSection section = child.queryInterface(TraceSection.class);
 			if (section != null) {
-				result.add(section.getRange());
+				result.add(section.getRange(ctx.getSnap()));
 				continue;
 			}
 		}
 		return result;
 	}
 
-	protected static ModelQuery successorModules(TargetObjectSchema rootSchema, List<String> path) {
-		TargetObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TargetModule.class, path, true));
+	protected static ModelQuery successorModules(TraceObjectSchema rootSchema, KeyPath path) {
+		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
+		return new ModelQuery(schema.searchFor(TraceModule.class, path, true));
 	}
 
 	private final DebuggerModulesProvider provider;
 
 	public DebuggerModulesPanel(DebuggerModulesProvider provider) {
-		super(provider.plugin, provider, TraceObjectModule.class);
+		super(provider.plugin, provider, TraceModule.class);
 		this.provider = provider;
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ModuleTableModel(plugin);
 	}
 
 	@Override
 	protected ModelQuery computeQuery(TraceObject object) {
-		TargetObjectSchema rootSchema = object.getRoot().getTargetSchema();
-		List<String> seedPath = object.getCanonicalPath().getKeyList();
-		List<String> processPath = rootSchema.searchForAncestor(TargetProcess.class, seedPath);
+		TraceObjectSchema rootSchema = object.getRoot().getSchema();
+		KeyPath seedPath = object.getCanonicalPath();
+		KeyPath processPath = rootSchema.searchForAncestor(TraceProcess.class, seedPath);
 		if (processPath != null) {
-			return successorModules(rootSchema, processPath);
+			ModelQuery result = successorModules(rootSchema, processPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		List<String> containerPath =
-			rootSchema.searchForSuitableContainer(TargetModule.class, seedPath);
-
+		KeyPath containerPath = rootSchema.searchForSuitableContainer(TraceModule.class, seedPath);
 		if (containerPath != null) {
-			return successorModules(rootSchema, containerPath);
+			ModelQuery result = successorModules(rootSchema, containerPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		return successorModules(rootSchema, List.of());
+		return successorModules(rootSchema, KeyPath.ROOT);
 	}
 
 	public void setSelectedModules(Set<TraceModule> sel) {

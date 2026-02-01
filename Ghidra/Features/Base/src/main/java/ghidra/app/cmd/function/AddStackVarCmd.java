@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
@@ -28,15 +26,14 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command to add a stack variable to a function.
  */
-public class AddStackVarCmd implements Command {
-	private Program program;
+public class AddStackVarCmd implements Command<Program> {
+
 	private Address addr;
 	private int stackOffset;
 	private String name;
 	private DataType dataType;
 	private SourceType source;
 	private String errMsg = "";
-
 
 	/**
 	 * Constructs a new command to add a stack variable to a function.
@@ -46,26 +43,23 @@ public class AddStackVarCmd implements Command {
 	 * @param dataType variable data-type or null for a default data type of minimal size
 	 * @param source the source of this stack variable
 	 */
-    public AddStackVarCmd(Address addr, int stackOffset, String name, DataType dataType, SourceType source) {
-        this.addr = addr;
-        this.stackOffset = stackOffset;
-        this.name = name;
-        this.dataType = dataType;
-        this.source = source;
-    }
+	public AddStackVarCmd(Address addr, int stackOffset, String name, DataType dataType,
+			SourceType source) {
+		this.addr = addr;
+		this.stackOffset = stackOffset;
+		this.name = name;
+		this.dataType = dataType;
+		this.source = source;
+	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-    public boolean applyTo(DomainObject obj) {
-        program = (Program)obj;
-        if (dataType != null) {
-        	dataType = dataType.clone(program.getDataTypeManager());
-        }
+	@Override
+	public boolean applyTo(Program program) {
+		if (dataType != null) {
+			dataType = dataType.clone(program.getDataTypeManager());
+		}
 		Function f = program.getListing().getFunctionContaining(addr);
 		if (f == null) {
-			errMsg="Address not contained within function: " +addr;
+			errMsg = "Address not contained within function: " + addr;
 			return false;
 		}
 		StackFrame sf = f.getStackFrame();
@@ -77,27 +71,25 @@ public class AddStackVarCmd implements Command {
 				errMsg = "Create stack variable failed";
 				return false;
 			}
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			errMsg = "Variable named " + name + " already exists";
 			return false;
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			errMsg = e.getMessage();
 			return false;
 		}
 		return true;
-    }
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Create Stack Variable";
-    }
+	@Override
+	public String getName() {
+		return "Create Stack Variable";
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return errMsg;
-    }
+	@Override
+	public String getStatusMsg() {
+		return errMsg;
+	}
 }

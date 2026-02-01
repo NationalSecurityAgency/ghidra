@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package docking.actions;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.swing.KeyStroke;
-
 import org.apache.commons.collections4.Bag;
 import org.apache.commons.collections4.bag.HashBag;
 import org.apache.commons.lang3.StringUtils;
@@ -28,8 +26,9 @@ import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.*;
 import docking.tool.ToolConstants;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
+import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A stub action that allows key bindings to be edited through the key bindings options.  This 
@@ -63,7 +62,7 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	 * Note: This collection is weak; the actions will stay as long as they are 
 	 * 		 registered in the tool.
 	 */
-	private WeakHashMap<DockingActionIf, KeyStroke> clientActions = new WeakHashMap<>();
+	private WeakHashMap<DockingActionIf, ActionTrigger> clientActions = new WeakHashMap<>();
 
 	private ToolOptions keyBindingOptions;
 	private Bag<String> actionOwners = new HashBag<>();
@@ -73,11 +72,13 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	 * 
 	 * @param name The name of the action--this will be displayed in the options as the name of
 	 *             key binding's action
-	 * @param defaultKs the default key stroke for this stub.  The key stroke will be validated
-	 *        each time an action is added to this stub to ensure that the defaults are in sync.
+	 * @param defaultActionTrigger the default action trigger for this stub.  The action trigger 
+	 *        will be validated each time an action is added to this stub to ensure that the 
+	 *        defaults are in sync.
 	 * @param options the tool's key binding options
 	 */
-	SharedStubKeyBindingAction(String name, KeyStroke defaultKs, ToolOptions options) {
+	SharedStubKeyBindingAction(String name, ActionTrigger defaultActionTrigger,
+			ToolOptions options) {
 		// Note: we need to have this stub registered to use key bindings so that the options will
 		//       restore the saved key binding to this class, which will then notify any of the
 		//       shared actions using this stub.
@@ -87,7 +88,7 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		// Dummy keybinding actions don't have help--the real action does
 		DockingWindowManager.getHelpService().excludeFromHelp(this);
 
-		setUnvalidatedKeyBindingData(new KeyBindingData(defaultKs));
+		setKeyBindingData(this, defaultActionTrigger);
 
 		// A listener to keep the shared, stub keybindings in sync with their clients 
 		options.addOptionsChangeListener(this);
@@ -119,14 +120,21 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	void addClientAction(DockingActionIf action) {
 
 		// 1) Validate new action keystroke against existing actions
-		KeyStroke defaultKs = validateActionsHaveTheSameDefaultKeyStroke(action);
+		ActionTrigger defaultTrigger = validateActionsHaveTheSameDefaultKeyStroke(action);
 
 		// 2) Add the action and the validated keystroke, as this is the default keystroke
-		clientActions.put(action, defaultKs);
+		clientActions.put(action, defaultTrigger);
 
 		// 3) Update the given action with the current option value.  This allows clients to 
 		//    add and remove actions after the tool has been initialized.
-		updateActionKeyStrokeFromOptions(action, defaultKs);
+		updateActionKeyStrokeFromOptions(action, defaultTrigger);
+
+		// 4) Store the default value for this stub so later requests to Restore Defaults will have
+		//    the correct value.
+		if (defaultTrigger != null) {
+			KeyBindingData defaultKbd = new KeyBindingData(defaultTrigger);
+			setDefaultKeyBindingData(defaultKbd);
+		}
 	}
 
 	@Override
@@ -159,61 +167,96 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		return super.getDescription();
 	}
 
-	private KeyStroke validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {
+	private ActionTrigger validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {
 
 		// this value may be null
 		KeyBindingData defaultBinding = newAction.getDefaultKeyBindingData();
-		KeyStroke newDefaultKs = getKeyStroke(defaultBinding);
+		ActionTrigger newDefaulTrigger = getActionTrigger(defaultBinding);
 
-		Set<Entry<DockingActionIf, KeyStroke>> entries = clientActions.entrySet();
-		for (Entry<DockingActionIf, KeyStroke> entry : entries) {
+		Set<Entry<DockingActionIf, ActionTrigger>> entries = clientActions.entrySet();
+		for (Entry<DockingActionIf, ActionTrigger> entry : entries) {
 			DockingActionIf existingAction = entry.getKey();
-			KeyStroke existingDefaultKs = entry.getValue();
-			if (Objects.equals(existingDefaultKs, newDefaultKs)) {
+			ActionTrigger existingDefaultTrigger = entry.getValue();
+			if (Objects.equals(existingDefaultTrigger, newDefaulTrigger)) {
 				continue;
 			}
 
-			KeyBindingUtils.logDifferentKeyBindingsWarnigMessage(newAction, existingAction,
-				existingDefaultKs);
+			logDifferentKeyBindingsWarnigMessage(newAction, existingAction, existingDefaultTrigger);
 
 			//
 			// Not sure which keystroke to prefer here--keep the first one that was set
 			//
 
-			// set the new action's keystroke to be the winner
-			newAction.setKeyBindingData(new KeyBindingData(existingDefaultKs));
+			// set the existing action's keystroke to be the winner
+			newAction.setKeyBindingData(existingAction.getKeyBindingData());
 
 			// one message is probably enough; 
-			return existingDefaultKs;
+			return existingDefaultTrigger;
 		}
 
-		return newDefaultKs;
+		return newDefaulTrigger;
 	}
 
-	private void updateActionKeyStrokeFromOptions(DockingActionIf action, KeyStroke defaultKs) {
+	private void updateActionKeyStrokeFromOptions(DockingActionIf action,
+			ActionTrigger defaultTrigger) {
 
-		KeyStroke stubKs = defaultKs;
-		KeyStroke optionsKs = getKeyStrokeFromOptions(defaultKs);
-		if (!Objects.equals(defaultKs, optionsKs)) {
-			// we use the 'unvalidated' call since this value is provided by the user--we assume
-			// that user input is correct; we only validate programmer input
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(optionsKs));
-			stubKs = optionsKs;
+		ActionTrigger stubTrigger = defaultTrigger;
+		ActionTrigger optionsTrigger = getActionTriggerFromOptions(defaultTrigger);
+		if (!Objects.equals(defaultTrigger, optionsTrigger)) {
+			setKeyBindingData(action, optionsTrigger);
+			stubTrigger = optionsTrigger;
 		}
 
-		setUnvalidatedKeyBindingData(new KeyBindingData(stubKs));
+		setKeyBindingData(this, stubTrigger);
 	}
 
-	private KeyStroke getKeyStrokeFromOptions(KeyStroke validatedKeyStroke) {
-		KeyStroke ks = keyBindingOptions.getKeyStroke(getFullName(), validatedKeyStroke);
-		return ks;
+	private void setKeyBindingData(DockingActionIf action, ActionTrigger actionTrigger) {
+
+		KeyBindingData newKbData = null;
+		if (actionTrigger != null) {
+			newKbData = new KeyBindingData(actionTrigger);
+		}
+
+		KeyBindingData currentKbData = action.getKeyBindingData();
+		if (Objects.equals(currentKbData, newKbData)) {
+			return;
+		}
+
+		// we use the 'unvalidated' call since this value is provided by the user--we assume
+		// that user input is correct; we only validate programmer input
+		action.setUnvalidatedKeyBindingData(newKbData);
 	}
 
-	private KeyStroke getKeyStroke(KeyBindingData data) {
+	private ActionTrigger getActionTriggerFromOptions(ActionTrigger validatedTrigger) {
+		return keyBindingOptions.getActionTrigger(getFullName(), validatedTrigger);
+	}
+
+	private ActionTrigger getActionTrigger(KeyBindingData data) {
 		if (data == null) {
 			return null;
 		}
-		return data.getKeyBinding();
+		return data.getActionTrigger();
+	}
+
+	/*
+	 * This can be called from ToolActions.optionsRebuilt().  In that case, the code only
+	 * loops over KeyBindingType.INDIVIDAL actions types (which this class is), but not 
+	 * KeyBindingType.SHARED actions, which the contained actions are.  In the case of options 
+	 * getting restored, 1) only this action gets updated, and 2),  there is no options changed 
+	 * event fired.  Thus, to handle options being restored, we have to override this method to make
+	 * sure we update out internal client actions.
+	 */
+	@Override
+	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
+
+		// update this shared key binding
+		super.setUnvalidatedKeyBindingData(newKeyBindingData);
+
+		// update the client keybindings
+		ActionTrigger newTrigger = getActionTrigger(newKeyBindingData);
+		for (DockingActionIf action : clientActions.keySet()) {
+			setKeyBindingData(action, newTrigger);
+		}
 	}
 
 	@Override
@@ -224,11 +267,13 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 			return; // not my binding
 		}
 
-		KeyStroke newKs = (KeyStroke) newValue;
+		// update this shared key binding
+		ActionTrigger newTrigger = (ActionTrigger) newValue;
+		setKeyBindingData(this, newTrigger);
+
+		// update the client keybindings
 		for (DockingActionIf action : clientActions.keySet()) {
-			// we use the 'unvalidated' call since this value is provided by the user--we assume
-			// that user input is correct; we only validate programmer input
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
+			setKeyBindingData(action, newTrigger);
 		}
 	}
 
@@ -243,6 +288,11 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	}
 
 	@Override
+	public boolean isValidContext(ActionContext context) {
+		return false;
+	}
+
+	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		return false;
 	}
@@ -252,5 +302,29 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		super.dispose();
 		clientActions.clear();
 		keyBindingOptions.removeOptionsChangeListener(this);
+	}
+
+	@Override
+	public String toString() {
+		return "Shared Stub Action: " + super.toString();
+	}
+
+	private static void logDifferentKeyBindingsWarnigMessage(DockingActionIf newAction,
+			DockingActionIf existingAction, ActionTrigger existingDefaultTrigger) {
+
+		//@formatter:off
+		String s = "Shared Key Binding Actions have different default values.  These " +
+				"must be the same." +
+				"\n\tAction name: '"+existingAction.getName()+ "'" +
+				"\n\tAction 1: " + existingAction.getInceptionInformation() +
+				"\n\t\tAction Trigger: " + existingDefaultTrigger +
+				"\n\tAction 2: " + newAction.getInceptionInformation() +
+				"\n\t\tAction Trigger: " + newAction.getKeyBinding() +
+				"\nUsing the " +
+				"first value set - " + existingDefaultTrigger;
+		//@formatter:on
+
+		Msg.warn(SharedStubKeyBindingAction.class, s,
+			ReflectionUtilities.createJavaFilteredThrowable());
 	}
 }

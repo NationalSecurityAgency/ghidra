@@ -1,0 +1,99 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>BSim Program Correlator</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="BSim_Correlator"></A>BSim Program Correlator</H1>
+
+    <BLOCKQUOTE>
+      <P>The BSim <A href="help/topics/VersionTrackingPlugin/VT_Correlators.html">Program
+      Correlator</A> uses the decompiler to generate confidence scores between potentially matching
+      functions in the source and destination programs. Function call-graphs are used to further
+      boost the scores and distinguish between conflicting matches.
+      .</P>
+
+      <P>The decompiler generates a formal feature vector for a function, where individual features
+      are extracted from the control-flow and data-flow characteristics of its normalized p-code
+      representation.  </P>
+
+      <P>Functions are compared by comparing their corresponding feature vectors, from which
+      similarity and confidence scores are extracted.</P>
+      
+      <P>A confidence score, for this correlator, is an open-ended floating-point value
+      (ranging from -infinity to +infinity) describing the amount of correspondence between the
+      control-flow and data-flow of two functions. A good working range for setting thresholds
+      (below) and for describing function pairs with some matching features is 0.0 to 100.0. 
+      A score of 0.0 corresponds to functions with roughly equal amounts of similar and dissimilar features.
+      A score of 10.0 is typical for small identical functions, and 100.0 is achieved by pairs
+      of larger sized identical functions.</P>
+
+      <P>The correlator initially collects high confidence (high scoring) matches as a "seed" set.
+      Then, using call-graph information, the seed matches are extended to additional matches
+      throughout the programs.</P>
+
+      <P>There are four options for the BSim Program Correlator:</P>
+
+      <P><B>Confidence Threshold for a Match</B></P>
+
+	  <BLOCKQUOTE>
+      <P>This option sets the threshold for accepting
+      a new match by following the call-graph from a previously accepted pair of matching functions.
+      Because potential pairs are drawn from the local call-graph neighborhood of an
+      accepted pair, this threshold is typically set lower than the seed threshold.</P>
+	  </BLOCKQUOTE>
+
+      <P><B>Confidence Threshold for a Seed</B></P>
+
+	  <BLOCKQUOTE>
+      <P>This establishes the threshold for choosing
+      potential matches as part of the initial "seed" set. Be careful setting this threshold
+      lower than the default, as any false match in the initial seed set is more likely to propagate.</P>
+	  </BLOCKQUOTE>
+
+	  <P><B>Memory Model</B></P>
+
+	  <BLOCKQUOTE>
+      <P>The memory model option selects how much memory to use for finding
+      matches. If you run out of memory correlating large programs, lower this choice to "Medium"
+       or "Small"...note however that correlation may be slightly less accurate.</P>
+	  </BLOCKQUOTE>
+
+	  <P><B>Use Accepted Matches as Seeds</B></P>
+	  
+	  <BLOCKQUOTE>
+      <P>This option indicates whether to include
+      previously accepted matches, typically from other correlators, into the initial "seed" set.
+      The BSim Program Correlator will still try to find additional seed matches to merge
+      with the already accepted matches. If you want to only use the incoming accepted
+      matches, set the Confidence Threshold for a Seed extremely high (like 99999999 or
+      so). Be careful to accept only high confidence matches prior to using this option, as
+      any errors in the initial seed set are more likely to propagate.</P>
+	  </BLOCKQUOTE>
+
+    </BLOCKQUOTE><!-- Main content blockquote -->
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Correlators.html">Version Tracking Program
+      Correlators</A></LI>
+
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Wizard.html">Version Tracking
+      Wizard</A></LI>
+
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</A></LI>
+
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version Tracking
+      Introduction</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.assembler.sleigh.sem;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
+import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseHiddenNode;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
 import ghidra.app.plugin.processors.sleigh.Constructor;
 import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
@@ -42,7 +41,7 @@ public class AssemblyHiddenConstructStateGenerator extends AssemblyConstructStat
 	 * @param subtableSym
 	 * @param fromLeft the accumulated patterns from the left sibling or the parent
 	 */
-	public AssemblyHiddenConstructStateGenerator(AssemblyTreeResolver resolver,
+	public AssemblyHiddenConstructStateGenerator(AbstractAssemblyTreeResolver<?> resolver,
 			SubtableSymbol subtableSym, AssemblyResolvedPatterns fromLeft) {
 		super(resolver, null, fromLeft);
 		this.subtableSym = subtableSym;
@@ -56,10 +55,17 @@ public class AssemblyHiddenConstructStateGenerator extends AssemblyConstructStat
 				.flatMap(sem -> applyConstructor(gc, sem));
 	}
 
+	protected AssemblyParseTreeNode getFiller() {
+		return new AssemblyParseHiddenNode(resolver.grammar);
+	}
+
 	@Override
 	protected List<AssemblyParseTreeNode> orderOpNodes(AssemblyConstructorSemantic sem) {
-		// Just provide null operands, since they're hidden, too.
+		// Just provide hidden operands
 		Constructor cons = sem.getConstructor();
-		return Arrays.asList(new AssemblyParseTreeNode[cons.getNumOperands()]);
+		AssemblyParseTreeNode hidden = getFiller();
+		return IntStream.range(0, cons.getNumOperands())
+				.mapToObj(i -> hidden)
+				.collect(Collectors.toList());
 	}
 }

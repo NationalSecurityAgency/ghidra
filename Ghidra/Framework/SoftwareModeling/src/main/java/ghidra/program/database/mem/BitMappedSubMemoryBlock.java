@@ -179,7 +179,7 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 
 	@Override
 	protected String getDescription() {
-		return "Bit Mapped: " + mappedAddress;
+		return "bitmap[0x%x, 0x%x, %s]".formatted(subBlockOffset, subBlockLength, mappedAddress);
 	}
 
 }

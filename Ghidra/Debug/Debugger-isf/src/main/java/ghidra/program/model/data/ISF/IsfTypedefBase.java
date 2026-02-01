@@ -18,18 +18,17 @@ package ghidra.program.model.data.ISF;
 import ghidra.program.model.data.BuiltInDataType;
 import ghidra.program.model.data.TypeDef;
 
-public class IsfTypedefBase implements IsfObject {
+public class IsfTypedefBase extends AbstractIsfObject {
 
 	public Integer size;
 	public String kind;
-	public Boolean signed;
 	public String endian;
 
 	public IsfTypedefBase(TypeDef typeDef) {
+		super(typeDef);
 		BuiltInDataType builtin = (BuiltInDataType) typeDef.getBaseDataType();
 		size = typeDef.getLength();
 		kind = IsfUtilities.getBuiltInKind(builtin);
-		signed = IsfUtilities.getSigned(typeDef);
 		endian = IsfUtilities.getEndianness(typeDef);
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class RepositoryFile {
 	private LocalFileSystem fileSystem;
 	private RepositoryFolder parent;
 	private String name;
-	private LocalDatabaseItem databaseItem;
+	private LocalFolderItem folderItem;
 	private RepositoryItem repositoryItem;
 	private boolean deleted = false;
 
@@ -49,27 +49,13 @@ public class RepositoryFile {
 	 * @param fileSystem local file-system which corresponds to repository.
 	 * @param parent parent repository folder
 	 * @param name item/file name
-	 * @throws IOException
 	 */
 	RepositoryFile(Repository repository, LocalFileSystem fileSystem, RepositoryFolder parent,
-			String name) throws IOException {
+			String name) {
 		this.repository = repository;
 		this.fileSystem = fileSystem;
 		this.parent = parent;
 		this.name = name;
-//		LocalFolderItem folderItem = fileSystem.getItem(parent.getPathname(), name);
-//		if (folderItem == null || !folderItem.isVersioned() ||
-//			!(folderItem instanceof LocalDatabaseItem)) {
-//			// must build pathname just in case folderItem does not exist
-//			String pathname = parent.getPathname();
-//			if (pathname.length() != 1) {
-//				pathname += "/";
-//			}
-//			pathname += name;
-//			RepositoryManager.log(repository.getName(), pathname, "file is corrupt", null);
-//			throw new FileNotFoundException(pathname + " is corrupt");
-//		}
-//		this.databaseItem = (LocalDatabaseItem) folderItem;
 	}
 
 	/**
@@ -83,27 +69,27 @@ public class RepositoryFile {
 			if (deleted) {
 				throw new FileNotFoundException(getPathname() + " not found");
 			}
-			if (databaseItem == null) {
+			if (folderItem == null) {
 				repositoryItem = null;
-				LocalFolderItem folderItem = fileSystem.getItem(parent.getPathname(), name);
-				if (folderItem == null || !folderItem.isVersioned() ||
-					!(folderItem instanceof LocalDatabaseItem)) {
+				folderItem = fileSystem.getItem(parent.getPathname(), name);
+				if (folderItem == null) {
 					// must build pathname just in case folderItem does not exist
 					String pathname = parent.getPathname();
 					if (pathname.length() != 1) {
 						pathname += "/";
 					}
 					pathname += name;
-					RepositoryManager.log(repository.getName(), pathname, "file is corrupt", null);
-					throw new FileNotFoundException(pathname + " is corrupt");
+					RepositoryManager.log(repository.getName(), pathname,
+						"file is corrupt or unsupported", null);
+					throw new FileNotFoundException(pathname + " is corrupt or unsupported");
 				}
-				this.databaseItem = (LocalDatabaseItem) folderItem;
 			}
 		}
 	}
 
 	/**
 	 * Returns item/file name
+	 * @return file name
 	 */
 	public String getName() {
 		return name;
@@ -111,6 +97,7 @@ public class RepositoryFile {
 
 	/**
 	 * Returns parent folder
+	 * @return parent folder
 	 */
 	public RepositoryFolder getParent() {
 		return parent;
@@ -118,6 +105,7 @@ public class RepositoryFile {
 
 	/**
 	 * Returns file/item path within repository.
+	 * @return path within repository
 	 */
 	public String getPathname() {
 		synchronized (fileSystem) {
@@ -131,22 +119,39 @@ public class RepositoryFile {
 
 	/**
 	 * Returns data pertaining to this file.
-	 * @throws IOException
+	 * @return Serializable {@link RepositoryItem} which corresponds to this file
 	 */
 	public RepositoryItem getItem() {
 		synchronized (fileSystem) {
 			try {
 				validate();
-				if (repositoryItem == null) {
-					repositoryItem =
-						new RepositoryItem(parent.getPathname(), name, databaseItem.getFileID(),
-							RepositoryItem.DATABASE, databaseItem.getContentType(),
-							databaseItem.getCurrentVersion(), databaseItem.lastModified());
+				if (repositoryItem == null && folderItem != null) {
+					String textData = null;
+					int itemType = -1;
+					if (folderItem instanceof DatabaseItem) {
+						itemType = RepositoryItem.DATABASE;
+					}
+					else if (folderItem instanceof TextDataItem textItem) {
+						itemType = RepositoryItem.TEXT_DATA_FILE;
+						textData = textItem.getTextData();
+					}
+					else {
+						repository.log(getPathname(),
+							"Unsupported item type: " + folderItem.getClass().getSimpleName(),
+							null);
+					}
+
+					repositoryItem = new RepositoryItem(parent.getPathname(), name,
+						folderItem.getFileID(), itemType, folderItem.getContentType(),
+						folderItem.getCurrentVersion(), folderItem.lastModified(), textData);
 				}
 			}
 			catch (IOException e) {
+				repository.log(getPathname(), "Item failure: " + e.getMessage(), null);
+			}
+			if (repository == null) {
 				repositoryItem = new RepositoryItem(parent.getPathname(), name, null,
-					RepositoryItem.DATABASE, "INVALID", 0, 0);
+					RepositoryItem.FILE, "INVALID", 0, 0, null);
 			}
 			return repositoryItem;
 		}
@@ -157,18 +162,24 @@ public class RepositoryFile {
 	 * This method is only valid for an underlying FolderItem of type database.
 	 * @param version requested version or -1 for current version
 	 * @param minChangeDataVer minimum version to include within change data or -1 if not applicable.
-	 * @param user 
+	 * @param user user who initiated the request
 	 * @return open BufferFile for read-only use.
-	 * @throws IOException
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
 	 */
 	public LocalManagedBufferFile openDatabase(int version, int minChangeDataVer, String user)
 			throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
+			if (!(folderItem instanceof LocalDatabaseItem databaseItem)) {
+				throw new IOException(
+					"Unsupported operation for " + folderItem.getClass().getSimpleName());
+			}
 			LocalManagedBufferFile bf = databaseItem.open(version, minChangeDataVer);
-			repository.log(getPathname(), "version " +
-				(version < 0 ? databaseItem.getCurrentVersion() : version) + " opened read-only",
+			repository.log(
+				getPathname(), "version " +
+					(version < 0 ? folderItem.getCurrentVersion() : version) + " opened read-only",
 				user);
 			return bf;
 		}
@@ -177,14 +188,20 @@ public class RepositoryFile {
 	/**
 	 * Open the current version for checkin use.
 	 * @param checkoutId checkout ID
-	 * @param user
+	 * @param user user who initiated the request
 	 * @return open BufferFile for update/checkin use
+	 * @throws UserAccessException if user is denied write access
+	 * @throws IOException if an IO error occurs
 	 */
 	public LocalManagedBufferFile openDatabase(long checkoutId, String user) throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateWritePrivilege(user);
-			ItemCheckoutStatus coStatus = databaseItem.getCheckout(checkoutId);
+			if (!(folderItem instanceof LocalDatabaseItem databaseItem)) {
+				throw new IOException(
+					"Unsupported operation for " + folderItem.getClass().getSimpleName());
+			}
+			ItemCheckoutStatus coStatus = folderItem.getCheckout(checkoutId);
 			if (coStatus == null) {
 				throw new IOException("Illegal checkin");
 			}
@@ -199,13 +216,17 @@ public class RepositoryFile {
 	}
 
 	/**
-	 * Returns list of all available versions.
+	 * Returns all available versions.
+	 * @param user user who initiated the request
+	 * @return all available versions
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
 	 */
 	public Version[] getVersions(String user) throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
-			return databaseItem.getVersions();
+			return folderItem.getVersions();
 		}
 	}
 
@@ -219,41 +240,42 @@ public class RepositoryFile {
 	public long length() throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			return databaseItem.length();
+			return folderItem.length();
 		}
 	}
 
 	/**
 	 * Delete oldest or current version of this file/item.
-	 * @param version oldest or current version, or -1 to remove
+	 * @param deleteVersion oldest or current version, or -1 to remove
 	 * all versions.
-	 * @param user
-	 * @throws IOException
+	 * @param user user who initiated the request
+	 * @throws UserAccessException if user is denied ability to delete version(s)
+	 * @throws IOException if an IO error occurs
 	 */
-	public void delete(int version, String user) throws IOException {
+	public void delete(int deleteVersion, String user) throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			User userObj = repository.validateWritePrivilege(user);
 
 			if (!userObj.isAdmin()) {
-				Version[] versions = databaseItem.getVersions();
-				if (version == -1) {
-					for (int i = 0; i < versions.length; i++) {
-						if (!user.equals(versions[i].getUser())) {
+				Version[] versions = folderItem.getVersions();
+				if (deleteVersion == -1) {
+					for (Version version : versions) {
+						if (!user.equals(version.getUser())) {
 							throw new UserAccessException(getName() + " version " +
-								versions[i].getVersion() + " owned by " + versions[i].getUser());
+								version.getVersion() + " owned by " + version.getUser());
 						}
 					}
 				}
-				else if (version == versions[0].getVersion()) {
+				else if (deleteVersion == versions[0].getVersion()) {
 					if (!user.equals(versions[0].getUser())) {
-						throw new UserAccessException(getName() + " version " + version +
+						throw new UserAccessException(getName() + " version " + deleteVersion +
 							" owned by " + versions[0].getUser());
 					}
 				}
-				else if (version == versions[versions.length - 1].getVersion()) {
+				else if (deleteVersion == versions[versions.length - 1].getVersion()) {
 					if (!user.equals(versions[versions.length - 1].getUser())) {
-						throw new UserAccessException(getName() + " version " + version +
+						throw new UserAccessException(getName() + " version " + deleteVersion +
 							" owned by " + versions[versions.length - 1].getUser());
 					}
 				}
@@ -261,21 +283,13 @@ public class RepositoryFile {
 					throw new IOException("Only the oldest or latest version may be deleted");
 				}
 			}
-			String oldPath = getPathname();
-			if (databaseItem == null) {
-				// forced removal by repo Admin
 
-			}
-			else {
-				databaseItem.delete(version, user);
+			if (folderItem != null) {
+				folderItem.delete(deleteVersion, user);
 			}
 			deleted = true;
 			repositoryItem = null;
 			parent.fileDeleted(this);
-			RepositoryFile newRf = parent.getFile(name);
-			if (newRf == null) {
-				RepositoryManager.log(repository.getName(), oldPath, "file deleted", user);
-			}
 			parent = null;
 		}
 	}
@@ -284,9 +298,10 @@ public class RepositoryFile {
 	 * Move this file/item to a new folder and optionally change its name.
 	 * @param newParent new parent folder
 	 * @param newItemName new file/item name
-	 * @param user
+	 * @param user user who initiated the request
 	 * @throws InvalidNameException if name is invalid
-	 * @throws IOException
+	 * @throws UserAccessException if user is denied write access
+	 * @throws IOException if an IO error occurs
 	 */
 	public void moveTo(RepositoryFolder newParent, String newItemName, String user)
 			throws InvalidNameException, IOException {
@@ -309,17 +324,19 @@ public class RepositoryFile {
 	/**
 	 * Request a checkout of the underlying item.
 	 * @param checkoutType checkout type requested
-	 * @param user
+	 * @param user user who initiated the request
+	 * @param projectPath user's project path which will own checkout
 	 * @return checkout data if successful.  Null is returned if exclusive checkout
 	 * failed due to existing checkout(s).
-	 * @throws IOException
+	 * @throws UserAccessException if user is denied write access
+	 * @throws IOException if an IO error occurs
 	 */
 	public ItemCheckoutStatus checkout(CheckoutType checkoutType, String user, String projectPath)
 			throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateWritePrivilege(user); // don't allow checkout if read-only 
-			ItemCheckoutStatus coStatus = databaseItem.checkout(checkoutType, user, projectPath);
+			ItemCheckoutStatus coStatus = folderItem.checkout(checkoutType, user, projectPath);
 			if (coStatus != null && checkoutType != CheckoutType.NORMAL && repositoryItem != null &&
 				repositoryItem.getFileID() == null) {
 				repositoryItem = null; // force refresh since fileID should get reset
@@ -332,35 +349,35 @@ public class RepositoryFile {
 	 * Update checkout version for an existing checkout.
 	 * @param checkoutId existing checkout ID
 	 * @param checkoutVersion newer version now associated with checkout
-	 * @param user
-	 * @throws IOException
+	 * @param user user who initiated the request
+	 * @throws IOException if an IO error occurs
 	 */
 	public void updateCheckoutVersion(long checkoutId, int checkoutVersion, String user)
 			throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			databaseItem.updateCheckoutVersion(checkoutId, checkoutVersion, user);
+			folderItem.updateCheckoutVersion(checkoutId, checkoutVersion, user);
 		}
 	}
 
 	/**
 	 * Terminate an existing checkout
 	 * @param checkoutId existing checkout ID
-	 * @param user
+	 * @param user user who initiated the request
 	 * @param notify if true notify listeners of item change.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public void terminateCheckout(long checkoutId, String user, boolean notify) throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			ItemCheckoutStatus coStatus = databaseItem.getCheckout(checkoutId);
+			ItemCheckoutStatus coStatus = folderItem.getCheckout(checkoutId);
 			if (coStatus != null) {
 				User userObj = repository.getUser(user);
 				if (!userObj.isAdmin() && !coStatus.getUser().equals(user)) {
 					throw new IOException(
 						"Undo-checkout not permitted, checkout was made by " + coStatus.getUser());
 				}
-				databaseItem.terminateCheckout(checkoutId, notify);
+				folderItem.terminateCheckout(checkoutId, notify);
 			}
 		}
 	}
@@ -368,49 +385,55 @@ public class RepositoryFile {
 	/**
 	 * Returns checkout data for a specified checkout ID.
 	 * @param checkoutId existing checkout ID
-	 * @param user
-	 * @throws IOException
+	 * @param user user who initiated the request
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
+	 * @return checkout data for a specified checkout ID.
 	 */
 	public ItemCheckoutStatus getCheckout(long checkoutId, String user) throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
-			return databaseItem.getCheckout(checkoutId);
+			return folderItem.getCheckout(checkoutId);
 		}
 	}
 
 	/**
-	 * Returns a list of all checkouts for this file/item.
-	 * @param user
-	 * @throws IOException
+	 * Returns all checkouts for this file/item.
+	 * @param user user who initiated the request
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
+	 * @return all checkouts for this file/item.
 	 */
 	public ItemCheckoutStatus[] getCheckouts(String user) throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
-			return databaseItem.getCheckouts();
+			return folderItem.getCheckouts();
 		}
 	}
 
 	/**
 	 * Returns true if one or more checkouts exist for this file/item.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
+	 * @return true if one or more checkouts exist for this file/item.
 	 */
 	public boolean hasCheckouts() throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			return databaseItem.hasCheckouts();
+			return folderItem.hasCheckouts();
 		}
 	}
 
 	/**
 	 * Returns true if checkin is currently in process.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
+	 * @return true if checkin is currently in process.
 	 */
 	public boolean isCheckinActive() throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			return databaseItem.isCheckinActive();
+			return folderItem.isCheckinActive();
 		}
 	}
 
@@ -419,20 +442,17 @@ public class RepositoryFile {
 	 */
 	public void itemChanged() {
 		synchronized (fileSystem) {
-			// Nulling the repositoryItem deletes the cache information & gets new version info.
 			repositoryItem = null;
 		}
 	}
 
 	/**
-	 * Reaquire associated folder item following a folder move or name change.
-	 * @param newName items new name (which may be unchanged if path change was
-	 * the result of a moved or renamed folder).
+	 * Clear cached data as a result of a path change
 	 */
 	void pathChanged() {
 		synchronized (fileSystem) {
 			repositoryItem = null;
-			databaseItem = null;
+			folderItem = null;
 		}
 	}
 

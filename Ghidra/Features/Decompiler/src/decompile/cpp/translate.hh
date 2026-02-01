@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -185,7 +185,6 @@ public:
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;
   virtual bool stackGrowsNegative(void) const { return isNegativeStack; }
   virtual AddrSpace *getContain(void) const { return contain; } ///< Return containing space
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -196,7 +195,7 @@ public:
 /// from \e most \e significant to \e least \e significant.
 class JoinRecord {
   friend class AddrSpaceManager;
-  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol
+  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol, most significant to least
   VarnodeData unified; ///< Special entry representing entire symbol in one chunk
 public:
   int4 numPieces(void) const { return pieces.size(); }	///< Get number of pieces in this record
@@ -205,6 +204,7 @@ public:
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
   Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
+  static void mergeSequence(vector<VarnodeData> &seq,const Translate *trans);	///< Merge any contiguous ranges in a sequence
 };
 
 /// \brief Comparator for JoinRecord objects
@@ -235,7 +235,7 @@ class AddrSpaceManager {
   vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
   AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
-  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from an XML tag
+  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from a stream
   void setDefaultCodeSpace(int4 index); ///< Set the default address space (for code)
   void setDefaultDataSpace(int4 index);	///< Set the default address space for data
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space
@@ -369,17 +369,25 @@ public:
   /// \return the VarnodeData for the register
   virtual const VarnodeData &getRegister(const string &nm) const=0;
 
-  /// \brief Get the name of a register given its location
+  /// \brief Get the name of the smallest containing register given a location and size
   ///
-  /// Generic references to locations in a \e register space can
-  /// be translated into the associated register \e name.  If the
-  /// location doesn't match a register \e exactly, an empty string
-  /// is returned.
+  /// Generic references to locations in a \e register space are translated into the
+  /// register \e name.  If a containing register isn't found, an empty string is returned.
   /// \param base is the address space containing the location
   /// \param off is the offset of the location
   /// \param size is the size of the location
   /// \return the name of the register, or an empty string
   virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const=0;
+
+  /// \brief Get the name of a register with an exact location and size
+  ///
+  /// If a register exists with the given location and size, return the name of the register.
+  /// Otherwise return the empty string.
+  /// \param base is the address space containing the location
+  /// \param off is the offset of the location
+  /// \param size is the size of the location
+  /// \return the name of the register, or an empty string
+  virtual string getExactRegisterName(AddrSpace *base,uintb off,int4 size) const=0;
 
   /// \brief Get a list of all register names and the corresponding location
   ///

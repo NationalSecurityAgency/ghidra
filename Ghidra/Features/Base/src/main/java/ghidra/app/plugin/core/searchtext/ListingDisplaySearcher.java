@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import docking.widgets.fieldpanel.Layout;
+import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.plugin.core.searchtext.iterators.*;
@@ -38,18 +39,22 @@ import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class attempts to search for text as it is rendered on the screen.  This in in
+ * This class attempts to search for text as it is rendered on the screen.  This is in
  * contrast to the Program Database Searcher which searches the database.  This is
  * needed because some information on the screen is rendered "on the fly" and not
  * stored in the database.  This searcher is much slower, but delivers
  * results that are in-line with what the user sees.
  * <p>
  * The search is performed in two steps.  First it uses Instruction and Data iterators to
- * find possible addresses where where information would be rendered.  Then for each of those
+ * find possible addresses where information would be rendered.  Then for each of those
  * addresses, it uses the code browsers rendering engine to produce a textual representation
  * for that address.  The textual representation also maintains information about the field
  * that generated it so that the search can be constrained to specific fields such as the
  * label or comment field.
+ * 
+ * <p> NOTE: This only searches defined instructions or data, which is possibly
+ * a mistake since this is more of a WYSIWYG search. However, searching undefined code units could
+ * make this slow search even more so.
  *
  */
 class ListingDisplaySearcher implements Searcher {
@@ -287,15 +292,15 @@ class ListingDisplaySearcher implements Searcher {
 			}
 
 			if (options.isForward()) {
-				while (!monitor.isCancelled() && results.size() == 0 &&
-					currentLayout != null && currentFieldIndex < currentLayout.getNumFields()) {
+				while (!monitor.isCancelled() && results.size() == 0 && currentLayout != null &&
+					currentFieldIndex < currentLayout.getNumFields()) {
 					findNextMatch();
 				}
 			}
 			else {
 				currentFieldIndex = currentLayout.getNumFields() - 1;
-				while (!monitor.isCancelled() && results.size() == 0 &&
-					currentLayout != null && currentFieldIndex >= 0) {
+				while (!monitor.isCancelled() && results.size() == 0 && currentLayout != null &&
+					currentFieldIndex >= 0) {
 					findNextMatch();
 				}
 			}
@@ -343,7 +348,10 @@ class ListingDisplaySearcher implements Searcher {
 	 * Returns the number of fields used in the match.
 	 */
 	private int findLocations(int fieldIndex) {
-		ListingField field = (ListingField) currentLayout.getField(fieldIndex);
+		Field f = currentLayout.getField(fieldIndex);
+		if (!(f instanceof ListingField field)) {
+			return 0;
+		}
 		FieldFactory ff = field.getFieldFactory();
 		String fieldName = ff.getFieldName();
 		if (!doSearchField(fieldName)) {
@@ -360,9 +368,13 @@ class ListingDisplaySearcher implements Searcher {
 				options.searchBothInstructionMnemonicAndOperands();
 		if (isMnemonic && isInstructionsOrData) {
 			if (currentFieldIndex <= currentLayout.getNumFields() - 2) {
-				ListingField opField = (ListingField) currentLayout.getField(fieldIndex + 1);
-				findMnemonicOperandLocations(field, opField);
-				fieldCount = 2; // if we match here, then signal that we matched across two fields
+				Field f2 = currentLayout.getField(fieldIndex + 1);
+				if ((f2 instanceof ListingField opField) && opField.getFieldFactory()
+						.getFieldName()
+						.equals(OperandFieldFactory.FIELD_NAME)) {
+					findMnemonicOperandLocations(field, opField);
+					fieldCount = 2; // if we match here, then signal that we matched across two fields
+				}
 			}
 			else {
 				findLocations(field);
@@ -389,8 +401,8 @@ class ListingDisplaySearcher implements Searcher {
 			if (startLocation.getAddress().equals(currentAddress)) {
 				// set the current Field index to correspond to the program location
 				for (int i = 0; i < currentLayout.getNumFields(); i++) {
-					ListingField field = (ListingField) currentLayout.getField(i);
-					if (getFieldForLocation(field, i)) {
+					Field f = currentLayout.getField(i);
+					if ((f instanceof ListingField field) && getFieldForLocation(field, i)) {
 						break;
 					}
 				}

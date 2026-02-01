@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,6 +88,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		for (MachoInfo info : machoInfoList) {
 			info.processMemoryBlocks();
 			info.markupHeaders();
+			info.markupLoadCommandData();
 			info.addToProgramTree();
 			monitor.incrementProgress(1);
 		}
@@ -217,7 +218,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * Processes memory blocks for this Mach-O.
 		 * 
 		 * @throws Exception If there was a problem processing memory blocks for this Mach-O.
-		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
+		 * @see MachoProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
 		public void processMemoryBlocks() throws Exception {
 			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, true, false);
@@ -227,14 +228,24 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * Marks up the Mach-O headers.
 		 * 
 		 * @throws Exception If there was a problem marking up the Mach-O's headers.
-		 * @see MachoPrelinkProgramBuilder#markupHeaders(MachHeader, Address)
+		 * @see MachoProgramBuilder#markupHeaders(MachHeader, Address)
 		 */
 		public void markupHeaders() throws Exception {
 			MachoPrelinkProgramBuilder.this.markupHeaders(header, headerAddr);
 
 			if (!name.isEmpty()) {
-				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, name);
+				listing.setComment(headerAddr, CommentType.PLATE, name);
 			}
+		}
+
+		/**
+		 * Marks up the Mach-O load command data.
+		 * 
+		 * @throws Exception If there was a problem marking up the Mach-O's load command data.
+		 * @see MachoProgramBuilder#markupLoadCommandData(MachHeader, String)
+		 */
+		public void markupLoadCommandData() throws Exception {
+			MachoPrelinkProgramBuilder.this.markupLoadCommandData(header, name);
 		}
 
 		/**

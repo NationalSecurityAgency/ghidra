@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.*;
+import ghidra.util.Msg;
 
 /**
  * A class that allows for the reuse of native demangler executable processes.  This class will
@@ -37,6 +38,16 @@ public class GnuDemanglerNativeProcess {
 	private static final String DEFAULT_NATIVE_OPTIONS = "";
 	private static final Map<String, GnuDemanglerNativeProcess> processesByName =
 		new HashMap<>();
+	
+	private static boolean errorDisplayed = false;
+	
+	private static synchronized boolean getAndSetErrorDisplayed() {
+		boolean b = errorDisplayed;
+		if (!b) {
+			errorDisplayed = true;
+		}
+		return b;
+	}
 
 	private String applicationName;
 	private String options;
@@ -153,16 +164,44 @@ public class GnuDemanglerNativeProcess {
 	private void createProcess() throws IOException {
 
 		String[] command = buildCommand();
-		process = Runtime.getRuntime().exec(command);
+		IOException exc = null;
+		isDisposed = true;
+		try {
+			process = Runtime.getRuntime().exec(command);
+			InputStream in = process.getInputStream();
+			OutputStream out = process.getOutputStream();
+			reader = new BufferedReader(new InputStreamReader(in));
+			writer = new PrintWriter(out);
+			
+			checkForError(command);
+			
+			isDisposed = false;
+		}
+		catch (IOException e) {
+			exc = e;
+		}
+		finally {
+			if (isDisposed) {
+				if (process != null) {
+					process.destroy();
+				}
+				if (!getAndSetErrorDisplayed()) {
+					String errorDetail = "";
+					if (exc != null) {
+						errorDetail = exc.getMessage();
+					}
+					errorDetail = "GNU Demangler executable may not be compatible with your system and may need to be rebuilt.\n" +
+							"(see GettingStarted.md, 'Building Native Components').\n\n" +
+							errorDetail;		
+					Msg.showError(this, null, "Failed to launch GNU Demangler process", errorDetail);
+				}
+				if (exc == null) {
+					throw new IOException("GNU Demangler process failed to launch (see log for details)");
+				}
+				throw exc;
+			}
+		}
 
-		InputStream in = process.getInputStream();
-		OutputStream out = process.getOutputStream();
-		reader = new BufferedReader(new InputStreamReader(in));
-		writer = new PrintWriter(out);
-
-		checkForError(command);
-
-		isDisposed = false;
 		String key = getKey(applicationName, options);
 		processesByName.put(key, this);
 	}
@@ -199,7 +238,7 @@ public class GnuDemanglerNativeProcess {
 			List<String> errorLines = IOUtils.readLines(err, Charset.defaultCharset());
 			error = StringUtils.join(errorLines, '\n');
 		}
-		catch (IOException e) {
+		catch (UncheckedIOException e) {
 			throw new IOException("Unable to read process error stream: ", e);
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.navigation;
 import java.io.IOException;
 import java.util.*;
 
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
@@ -36,6 +36,7 @@ import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Swing;
 import ghidra.util.xml.XmlUtilities;
 
 //@formatter:off
@@ -44,14 +45,17 @@ import ghidra.util.xml.XmlUtilities;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Determines the starting location when a program is opened.",
-	description = "This plugin watches for new programs being opened and determines the best starting location for the listing view.",
+	description = 
+		"This plugin watches for new programs being opened and determines the best " + 
+		"starting location for the listing view.  It is also responsible for storing " +
+		"and restoring the program's last listing location when reopened.",
 	servicesRequired = { GoToService.class },
 	eventsConsumed = { FirstTimeAnalyzedPluginEvent.class }
 )
 //@formatter:on
 public class ProgramStartingLocationPlugin extends ProgramPlugin {
 
-	public static enum NonActiveProgramState {
+	public enum NonActiveProgramState {
 		NEWLY_OPENED,
 		RESTORED,
 		FIRST_ANALYSIS_COMPLETED
@@ -75,7 +79,9 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		if (event instanceof FirstTimeAnalyzedPluginEvent ev) {
 			Program program = ev.getProgram();
 			if (program != null) {
-				firstAnalysisCompleted(program);
+				// call firstAnalysisCompleted() in its own swing thread so we don't block
+				// the event broadcast thread with a GUI modal popup
+				Swing.runLater(() -> firstAnalysisCompleted(program));
 			}
 		}
 	}
@@ -99,6 +105,7 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		}
 	}
 
+	@Override
 	protected void programClosed(Program program) {
 		ProgramLocation lastLocation = currentLocationsMap.remove(program);
 		if (lastLocation == null) {
@@ -146,7 +153,7 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 			return;
 		}
 
-		if (autoRepositionIfNotMoved && isProgramAtStartingLocation()) {
+		if (autoRepositionIfNotMoved && isProgramAtDefaultMinimumLocation()) {
 			gotoLocation(symbol.getProgramLocation());
 		}
 		else if (shouldAskToRepostion && askToPositionProgram(symbol)) {
@@ -192,14 +199,11 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		gotoService.goTo(location);
 	}
 
-	private boolean isProgramAtStartingLocation() {
-		ProgramLocation startLocation = startLocationsMap.get(currentProgram);
-		if (startLocation == null || currentLocation == null) {
+	private boolean isProgramAtDefaultMinimumLocation() {
+		if (currentLocation == null) {
 			return true;
 		}
-		// just compare address, analysis may have tweaked the current location even
-		// the user didn't move
-		return startLocation.getAddress().equals(currentLocation.getAddress());
+		return currentLocation.getAddress().equals(currentProgram.getMinAddress());
 	}
 
 	private ProgramLocation getStartingProgramLocation(Program program) {

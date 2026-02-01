@@ -15,16 +15,15 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import java.io.PrintStream;
-import java.util.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import generic.stl.*;
 import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 import ghidra.sleigh.grammar.LocationUtil;
 
@@ -49,7 +48,7 @@ public class ConstructTpl {
 	public int numLabels() {
 		return numlabels;
 	}
-	
+
 	public void setNumLabels(int val) {
 		numlabels = val;
 	}
@@ -57,7 +56,7 @@ public class ConstructTpl {
 	public void setOpvec(VectorSTL<OpTpl> opvec) {
 		vec = opvec;
 	}
-	
+
 	public VectorSTL<OpTpl> getOpvec() {
 		return vec;
 	}
@@ -127,9 +126,9 @@ public class ConstructTpl {
 		for (int i = 0; i < check.size(); ++i) {
 			if (check.get(i) == 0) { // Didn't see a BUILD statement
 				op = new OpTpl(min, OpCode.CPUI_MULTIEQUAL);
-				indvn =
-					new VarnodeTpl(min, new ConstTpl(const_space), new ConstTpl(
-						ConstTpl.const_type.real, i), new ConstTpl(ConstTpl.const_type.real, 4));
+				indvn = new VarnodeTpl(min, new ConstTpl(const_space),
+					new ConstTpl(ConstTpl.const_type.real, i),
+					new ConstTpl(ConstTpl.const_type.real, 4));
 				op.addInput(indvn);
 				vec.insert(vec.begin(), op);
 			}
@@ -205,67 +204,28 @@ public class ConstructTpl {
 		}
 	}
 
-	public void saveXml(PrintStream s, int sectionid) {
-		s.append("<construct_tpl");
+	public void encode(Encoder encoder, int sectionid) throws IOException {
+		encoder.openElement(ELEM_CONSTRUCT_TPL);
 		if (sectionid >= 0) {
-			s.append(" section=\"");
-			s.print(sectionid);
-			s.append("\"");
+			encoder.writeSignedInteger(ATTRIB_SECTION, sectionid);
 		}
 		if (delayslot != 0) {
-			s.append(" delay=\"");
-			s.print(delayslot);
-			s.append("\"");
+			encoder.writeSignedInteger(ATTRIB_DELAY, delayslot);		// FIXME: Seems to be unused
 		}
 		if (numlabels != 0) {
-			s.append(" labels=\"");
-			s.print(numlabels);
-			s.append("\"");
+			encoder.writeSignedInteger(ATTRIB_LABELS, numlabels);
 		}
-		s.append(">\n");
 		if (result != null) {
-			result.saveXml(s);
+			result.encode(encoder);
 		}
 		else {
-			s.append("<null/>");
+			encoder.openElement(ELEM_NULL);
+			encoder.closeElement(ELEM_NULL);
 		}
 		for (int i = 0; i < vec.size(); ++i) {
-			vec.get(i).saveXml(s);
+			vec.get(i).encode(encoder);
 		}
-		s.append("</construct_tpl>\n");
-	}
-
-	public int restoreXml(Element el, Translate trans) {
-		int sectionid = -1;
-		String str = el.getAttributeValue("delay");
-		if (str != null) {
-			delayslot = XmlUtils.decodeUnknownInt(str);
-		}
-		str = el.getAttributeValue("labels");
-		if (str != null) {
-			numlabels = XmlUtils.decodeUnknownInt(str);
-		}
-		str = el.getAttributeValue("section");
-		if (str != null) {
-			sectionid = XmlUtils.decodeUnknownInt(str);
-		}
-		List<?> list = el.getChildren();
-		Iterator<?> it = list.iterator();
-		Element child = (Element) it.next();
-		if (child.getName().equals("null")) {
-			result = null;
-		}
-		else {
-			result = new HandleTpl();
-			result.restoreXml(child, trans);
-		}
-		while (it.hasNext()) {
-			child = (Element) it.next();
-			OpTpl op = new OpTpl(null);
-			op.restoreXml(child, trans);
-			vec.push_back(op);
-		}
-		return sectionid;
+		encoder.closeElement(ELEM_CONSTRUCT_TPL);
 	}
 
 }

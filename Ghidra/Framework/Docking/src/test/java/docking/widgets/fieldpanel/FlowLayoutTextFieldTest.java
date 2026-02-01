@@ -114,13 +114,13 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 		assertEquals(new RowColLocation(1, 4), textField.dataToScreenLocation(2, 4));
 
 		// Supercalifra (12 chars); ... (3 chars); Supercalifra... (15 chars)
-		assertEquals(new DefaultRowColLocation(1, 12), textField.dataToScreenLocation(2, 15));
+		assertEquals(new RowColLocation(1, 12), textField.dataToScreenLocation(2, 15));
 
 		assertEquals(new RowColLocation(2, 0), textField.dataToScreenLocation(3, 0));
 		assertEquals(new RowColLocation(2, 4), textField.dataToScreenLocation(3, 4));
 
-		assertEquals(new DefaultRowColLocation(0, 12), textField.dataToScreenLocation(0, 12));
-		assertEquals(new DefaultRowColLocation(0, 12), textField.dataToScreenLocation(0, 75));
+		assertEquals(new DefaultRowColLocation(0, 0), textField.dataToScreenLocation(0, 12));
+		assertEquals(new DefaultRowColLocation(0, 0), textField.dataToScreenLocation(0, 75));
 	}
 
 	@Test

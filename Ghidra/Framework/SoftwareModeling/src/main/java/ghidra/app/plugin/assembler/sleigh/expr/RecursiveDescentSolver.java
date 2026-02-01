@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 
 import java.util.*;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
@@ -40,7 +38,6 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
  * {@link PatternExpression}.
  */
 public class RecursiveDescentSolver {
-	protected static final DbgTimer DBG = DbgTimer.INACTIVE;
 	private static final RecursiveDescentSolver INSTANCE = new RecursiveDescentSolver();
 
 	// A mapping from each subclass of PatternExpression to the appropriate solver
@@ -115,16 +112,12 @@ public class RecursiveDescentSolver {
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
 	 */
-	protected AssemblyResolution solve(PatternExpression exp, MaskedLong goal,
-			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException {
-		try {
-			return getRegistered(exp.getClass()).solve(exp, goal, vals, cur, hints, description);
-		}
-		catch (UnsupportedOperationException e) {
-			DBG.println("Error solving " + exp + " = " + goal);
-			throw e;
-		}
+	protected AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException {
+		return getRegistered(exp.getClass()).solve(factory, exp, goal, vals, cur, hints,
+			description);
 	}
 
 	/**
@@ -152,10 +145,10 @@ public class RecursiveDescentSolver {
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
 	 */
-	public AssemblyResolution solve(PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, String description)
-			throws NeedsBackfillException {
-		return solve(exp, goal, vals, cur, Set.of(), description);
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, String description) throws NeedsBackfillException {
+		return solve(factory, exp, goal, vals, cur, Set.of(), description);
 	}
 
 	/**
@@ -169,7 +162,6 @@ public class RecursiveDescentSolver {
 	protected <T extends PatternExpression> MaskedLong getValue(T exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
 		MaskedLong value = getRegistered(exp.getClass()).getValue(exp, vals, cur);
-		DBG.println("Expression: " + value + " =: " + exp);
 		return value;
 	}
 

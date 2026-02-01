@@ -18,17 +18,36 @@ package ghidra.app.util.bin.format.omf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * A known but currently unsupported OMF record
+ */
 public class OmfUnsupportedRecord extends OmfRecord {
+
+	private Class<?> recordTypesClass;
 
 	/**
 	 * Create a new {@link OmfUnsupportedRecord}
 	 *  
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @param recordTypesClass The class that contains accessible OMF type fields
 	 * @throws IOException If an IO-related error occurred
 	 */
-	public OmfUnsupportedRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
+	public OmfUnsupportedRecord(BinaryReader reader, Class<?> recordTypesClass) throws IOException {
+		super(reader);
+		this.recordTypesClass = recordTypesClass;
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		// No record-specific data to read
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this,
+			OmfUtils.getRecordName(recordType, recordTypesClass));
 	}
 }

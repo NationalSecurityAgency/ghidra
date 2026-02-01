@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,11 +69,14 @@ public class NList implements StructConverter {
 	 * @param stringTableOffset offset of the string table
 	 */
 	public void initString(BinaryReader reader, long stringTableOffset) {
-		try {
-			string = reader.readAsciiString(stringTableOffset + n_strx);
-		}
-		catch (Exception e) {
-			string = "";
+		string = "";
+		if (n_strx != 0) {
+			try {
+				string = reader.readAsciiString(stringTableOffset + n_strx);
+			}
+			catch (Exception e) {
+				// use empty string
+			}
 		}
 	}
 
@@ -214,7 +217,7 @@ public class NList implements StructConverter {
 	 */
 	public static int getSize(List<NList> nlists) {
 		if (!nlists.isEmpty()) {
-			int totalStringSize = 0;
+			int totalStringSize = 1; // First byte should always be 0
 			for (NList nlist : nlists) {
 				totalStringSize += nlist.getString().length() + 1; // Add 1 for null terminator
 			}

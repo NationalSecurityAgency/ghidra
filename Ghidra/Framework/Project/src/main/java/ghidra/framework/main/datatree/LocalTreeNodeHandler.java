@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,7 @@ import java.util.List;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeState;
 import ghidra.app.util.FileOpenDataFlavorHandler;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -63,7 +62,7 @@ public final class LocalTreeNodeHandler
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void handle(PluginTool tool, DataTree tree, GTreeNode destinationNode,
+	public boolean handle(PluginTool tool, DataTree tree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 
 		this.dataTree = tree;
@@ -71,10 +70,15 @@ public final class LocalTreeNodeHandler
 
 		List<GTreeNode> list = (List<GTreeNode>) transferData;
 		if (list.size() == 0) {
-			return;
+			return false;
 		}
 
-		CopyAllTask task = new CopyAllTask(list, destinationNode, dropAction);
+		DomainFolder destFolder = DataTree.getRealInternalFolderForNode(destinationNode);
+		if (destFolder == null || !destFolder.isInWritableProject()) {
+			return false;
+		}
+
+		CopyAllTask task = new CopyAllTask(list, destFolder, dropAction);
 		new TaskLauncher(task, dataTree, 1000);
 
 		if (treeState != null) { // is set to null if drag results in a task
@@ -83,40 +87,62 @@ public final class LocalTreeNodeHandler
 				dataTree.restoreTreeState(treeState);
 			});
 		}
-	}
-
-	private void add(GTreeNode destNode, GTreeNode draggedNode, int dropAction,
-			TaskMonitor monitor) {
-		DomainFolderNode folderNode = getDestinationFolderNode(destNode);
-
-		if (!isValidDrag(folderNode, draggedNode)) {
-			return;
-		}
-
-		DomainFolder destFolder = folderNode.getDomainFolder();
-		addDraggedTreeNode(destFolder, draggedNode, dropAction, monitor);
-	}
-
-	private boolean isValidDrag(DomainFolderNode folderNode, GTreeNode draggedNode) {
-		if (folderNode == draggedNode) {
-			return false;
-		}
-		if (draggedNode.getParent() == folderNode) {
-			return false; // dragging a node onto its parent has no effect
-		}
-
-		if (draggedNode instanceof DomainFolderNode) {
-			return !draggedNode.isAncestor(folderNode);
-		}
 
 		return true;
 	}
 
-	private DomainFolderNode getDestinationFolderNode(GTreeNode destNode) {
-		if (destNode instanceof DomainFolderNode) {
-			return (DomainFolderNode) destNode;
+	private void add(DomainFolder destFolder, GTreeNode draggedNode, int dropAction,
+			TaskMonitor monitor) {
+
+		if (destFolder instanceof LinkedDomainFolder linkedDomainFolder) {
+			try {
+				destFolder = linkedDomainFolder.getRealFolder();
+			}
+			catch (IOException e) {
+				Msg.error(this, "Unable to resolve linked-folder: " + destFolder.getName());
+				return;
+			}
 		}
-		return (DomainFolderNode) destNode.getParent();
+
+		if (!isValidDrag(destFolder, draggedNode)) {
+			return;
+		}
+
+		addDraggedTreeNode(destFolder, draggedNode, dropAction, monitor);
+	}
+
+	private boolean isValidDrag(DomainFolder destFolder, GTreeNode draggedNode) {
+		try {
+			// NOTE: destFolder should be real folder and not linked-folder
+			// NOTE: We may have issues since checks are not based on canonical paths
+			if (draggedNode instanceof DomainFolderNode folderNode) {
+				// This also checks cases where src/dest projects are using the same repository.
+				// Unfortunately, it will also prevent cases where shared-project folder 
+				// does not contain versioned content and could actually be allowed.
+				DomainFolder folder = folderNode.getDomainFolder();
+				if (folder instanceof LinkedDomainFolder linkedFolder) {
+					folder = linkedFolder.getRealFolder();
+				}
+				return !folder.isSameOrAncestor(destFolder);
+			}
+			if (draggedNode instanceof DomainFileNode fileNode) {
+				DomainFile file = fileNode.getDomainFile();
+				if (file instanceof LinkedDomainFile linkedFile) {
+					file = linkedFile.getRealFile();
+				}
+				DomainFolder folder = file.getParent();
+				if (file.isVersioned()) {
+					// This also checks cases where src/dest projects are using the same repository.
+					return !folder.isSame(destFolder);
+				}
+				DomainFile destFile = destFolder.getFile(file.getName());
+				return destFile == null || !destFile.equals(file);
+			}
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		return false;
 	}
 
 	private void addDraggedTreeNode(DomainFolder destFolder, GTreeNode data, int dropAction,
@@ -151,6 +177,9 @@ public final class LocalTreeNodeHandler
 		}
 
 		try {
+			if (file instanceof LinkedDomainFile linkedFile) {
+				file = linkedFile.getRealFile();
+			}
 			file.moveTo(destFolder);
 		}
 		catch (IOException e) {
@@ -172,12 +201,15 @@ public final class LocalTreeNodeHandler
 		}
 
 		try {
+			if (sourceFolder instanceof LinkedDomainFolder linkedFolder) {
+				sourceFolder = linkedFolder.getRealFolder();
+			}
 			sourceFolder.moveTo(destFolder);
 		}
 		catch (DuplicateFileException dfe) {
 			Msg.showError(this, dataTree, "Error Moving Folder",
-				"Destination folder already contains a folder named \"" + sourceFolder.getName() +
-					"\"");
+				"Destination folder already contains a folder or folder-link named \"" +
+					sourceFolder.getName() + "\"");
 		}
 		catch (FileInUseException fiue) {
 			String message = fiue.getMessage();
@@ -199,13 +231,13 @@ public final class LocalTreeNodeHandler
 
 	private class CopyAllTask extends Task {
 		private List<GTreeNode> toCopy;
-		private GTreeNode destination;
+		private DomainFolder destFolder;
 		private int dropAction;
 
-		CopyAllTask(List<GTreeNode> toCopy, GTreeNode destination, int dropAction) {
+		CopyAllTask(List<GTreeNode> toCopy, DomainFolder destFolder, int dropAction) {
 			super("Copy Files", true, true, true);
 			this.toCopy = toCopy;
-			this.destination = destination;
+			this.destFolder = destFolder;
 			this.dropAction = dropAction;
 		}
 
@@ -224,7 +256,7 @@ public final class LocalTreeNodeHandler
 				monitor.setMessage(
 					"Processing file " + (i + 1) + " of " + size + ": " + copyNode.getName());
 
-				add(destination, copyNode, dropAction, subMonitors[i]);
+				add(destFolder, copyNode, dropAction, subMonitors[i]);
 				monitor.setProgress(i);
 			}
 		}

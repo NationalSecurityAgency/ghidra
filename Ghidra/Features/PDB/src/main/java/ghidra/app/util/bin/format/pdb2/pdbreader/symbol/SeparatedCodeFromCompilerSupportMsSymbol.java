@@ -141,7 +141,7 @@ public class SeparatedCodeFromCompilerSupportMsSymbol extends AbstractMsSymbol
 	 * Returns the parent segment.
 	 * @return Parent segment.
 	 */
-	public long getSegmentParent() {
+	public int getSegmentParent() {
 		return sectionParent;
 	}
 

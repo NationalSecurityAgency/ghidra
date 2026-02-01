@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
 
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -423,7 +423,10 @@ class ToolActionManager implements ToolChestChangeListener {
 
 		String importDir = Preferences.getProperty(Preferences.LAST_TOOL_IMPORT_DIRECTORY);
 		if (importDir != null) {
-			fileChooser.setCurrentDirectory(new File(importDir));
+			File dir = new File(importDir);
+			if (dir.isDirectory()) {
+				fileChooser.setCurrentDirectory(dir);
+			}
 		}
 
 		fileChooser.rescanCurrentDirectory();

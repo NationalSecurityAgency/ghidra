@@ -204,7 +204,7 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 			if (byteOrder != 0x1020304) {
 				throw new InvalidControlBlockException(
 					"TestInfo @ " + infoStructAddr.toString(true) +
-						" has invalid byteOrder - language endianess may be incorrect (" +
+						" has invalid byteOrder - language endianness may be incorrect (" +
 						Integer.toHexString(byteOrder) + ")");
 			}
 

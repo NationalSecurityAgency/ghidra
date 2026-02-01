@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,9 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import docking.CloseIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
-import generic.theme.GColor;
+import generic.theme.CloseIcon;
 
 /**
  * A widget that can be used to render an icon, title and close button for JTabbedPane.  You would 
@@ -32,7 +31,7 @@ import generic.theme.GColor;
 public class DockingTabRenderer extends JPanel {
 
 	private static final int MAX_TITLE_LENGTH = 25;
-	private Icon CLOSE_ICON = new CloseIcon(true, new GColor("color.fg.button"));
+	private Icon CLOSE_ICON = new CloseIcon(true);
 
 	private JLabel titleLabel;
 	private JLabel iconLabel;
@@ -42,7 +41,7 @@ public class DockingTabRenderer extends JPanel {
 	private TabContainerForwardingMouseListener forwardingListener;
 	private MouseListener renameListener;
 
-	public DockingTabRenderer(final JTabbedPane tabbedPane, String fullTitle, String tabTitle,
+	public DockingTabRenderer(final JTabbedPane tabbedPane, String fullTitle, String tabText,
 			ActionListener closeListener) {
 
 		final ForwardingMouseListener eventForwardingListener =
@@ -52,8 +51,8 @@ public class DockingTabRenderer extends JPanel {
 		iconLabel = new GDLabel();
 		closeButton = new EmptyBorderButton();
 
-		setTitle(tabTitle, fullTitle);
-		closeButton.setToolTipText("Close " + tabTitle);
+		setTitle(tabText, fullTitle);
+		closeButton.setToolTipText("Close " + tabText);
 		closeButton.setFocusable(false);
 		closeButton.addActionListener(closeListener);
 		closeButton.setIcon(CLOSE_ICON);
@@ -135,13 +134,13 @@ public class DockingTabRenderer extends JPanel {
 		iconLabel.setIcon(icon);
 	}
 
-	public void setTitle(String tabTitle, String fullTitle) {
-		titleLabel.setText(getShortenedTitle(tabTitle));
-		String trimmedTabText = tabTitle.trim();
+	public void setTitle(String tabText, String fullTitle) {
+		titleLabel.setText(getShortenedTitle(tabText));
+		String trimmedTabText = tabText.trim();
 		String trimmedTitleText = fullTitle.trim();
 		if (trimmedTabText.equals(trimmedTitleText)) {
 			// don't include the same text on twice
-			titleLabel.setToolTipText(tabTitle);
+			titleLabel.setToolTipText(tabText);
 		}
 		else if (trimmedTitleText.contains(trimmedTabText)) {
 			// don't include both when the tab text is a subset of the title
@@ -149,7 +148,7 @@ public class DockingTabRenderer extends JPanel {
 		}
 		else {
 			// both are different, include both			
-			titleLabel.setToolTipText("<html><b>" + tabTitle + "</b> - [" + fullTitle + "]");
+			titleLabel.setToolTipText("<html><b>" + tabText + "</b> - [" + fullTitle + "]");
 		}
 	}
 
@@ -240,7 +239,7 @@ public class DockingTabRenderer extends JPanel {
 	/**
 	 * A class to handle mouse events specifically for BasicTabbedPaneUI$TabContainer, which does
 	 * not forward mouse events on to the tabbed pane.  When using custom tab renderers, which 
-	 * we are, tabbed panes that are larger than the the renderer will not get mouse events that
+	 * we are, tabbed panes that are larger than the renderer will not get mouse events that
 	 * are over the tab, but not the renderer.
 	 */
 	private class TabContainerForwardingMouseListener extends MouseAdapter {

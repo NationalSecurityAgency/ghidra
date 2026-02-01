@@ -28,7 +28,7 @@ import org.junit.*;
 
 import generic.concurrent.GThreadPool;
 import generic.test.AbstractGenericTest;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -480,7 +480,7 @@ public class GTaskTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+		public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 			try {
 				if (!latch.await(2, TimeUnit.SECONDS)) {
 					Assert.fail("Latch await expired!");
@@ -500,7 +500,7 @@ public class GTaskTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+		public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 			GTaskManager taskManager = GTaskManagerFactory.getTaskManager(obj);
 			taskManager.waitForHigherPriorityTasks();
 			super.run(obj, monitor);

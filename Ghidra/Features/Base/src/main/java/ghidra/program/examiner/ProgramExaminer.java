@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,12 +24,11 @@ import ghidra.GhidraException;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.plugin.core.analysis.EmbeddedMediaAnalyzer;
 import ghidra.app.util.bin.*;
-import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.LoadException;
 import ghidra.app.util.opinion.LoadResults;
-import ghidra.framework.Application;
-import ghidra.framework.HeadlessGhidraApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -38,6 +37,7 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
+import utility.application.ApplicationUtilities;
 
 /**
  * Wrapper for Ghidra code to find images (and maybe other artifacts later) in a program
@@ -81,19 +81,22 @@ public class ProgramExaminer {
 	private ProgramExaminer(ByteProvider provider) throws GhidraException {
 		initializeGhidra();
 		messageLog = new MessageLog();
-		LoadResults<Program> loadResults = null;
 		try {
-			try {
-				loadResults = AutoImporter.importByUsingBestGuess(provider, null, null, this,
-					messageLog, TaskMonitor.DUMMY);
-				program = loadResults.getPrimaryDomainObject();
+			try (LoadResults<Program> loadResults = ProgramLoader.builder()
+						.source(provider)
+						.log(messageLog)
+						.load()) {
+				program = loadResults.getPrimaryDomainObject(this);
 			}
 			catch (LoadException e) {
 				try {
-					program = AutoImporter
-							.importAsBinary(provider, null, null, defaultLanguage, null, this,
-								messageLog, TaskMonitor.DUMMY)
-							.getDomainObject();
+					try (LoadResults<Program> loadResults = ProgramLoader.builder()
+							.source(provider)
+							.language(defaultLanguage)
+							.log(messageLog)
+							.load()) {
+						program = loadResults.getPrimaryDomainObject(this);
+					}
 				}
 				catch (LoadException e1) {
 					throw new GhidraException(
@@ -106,9 +109,6 @@ public class ProgramExaminer {
 			throw new GhidraException(e);
 		}
 		finally {
-			if (loadResults != null) {
-				loadResults.releaseNonPrimary(this);
-			}
 			try {
 				provider.close();
 			}
@@ -122,8 +122,9 @@ public class ProgramExaminer {
 		if (!Application.isInitialized()) {
 			ApplicationLayout layout;
 			try {
-				layout =
-					new GhidraTestApplicationLayout(new File(System.getProperty("java.io.tmpdir")));
+				layout = new GhidraTestApplicationLayout(ApplicationUtilities.getDefaultUserTempDir(
+					new ApplicationProperties(ApplicationUtilities.findDefaultApplicationRootDirs())
+							.getApplicationName()));
 			}
 			catch (IOException e) {
 				throw new GhidraException(e);
@@ -184,8 +185,7 @@ public class ProgramExaminer {
 		int txID = program.startTransaction("find images");
 		try {
 			EmbeddedMediaAnalyzer imageAnalyzer = new EmbeddedMediaAnalyzer();
-			imageAnalyzer.added(program, program.getMemory(), TaskMonitor.DUMMY,
-				messageLog);
+			imageAnalyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, messageLog);
 		}
 		catch (CancelledException e) {
 			// using Dummy, can't happen

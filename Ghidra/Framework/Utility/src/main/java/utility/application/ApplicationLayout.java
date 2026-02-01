@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,11 @@
 package utility.application;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
-import utilities.util.FileUtilities;
 
 /**
  * The Application Layout base class defines the customizable elements of the application's
@@ -35,7 +33,7 @@ import utilities.util.FileUtilities;
 public abstract class ApplicationLayout {
 
 	protected ApplicationProperties applicationProperties;
-	protected Collection<ResourceFile> applicationRootDirs;
+	protected SequencedCollection<ResourceFile> applicationRootDirs;
 	protected ResourceFile applicationInstallationDir;
 	protected Map<String, GModule> modules;
 	protected File userTempDir;
@@ -57,9 +55,9 @@ public abstract class ApplicationLayout {
 	/**
 	 * Gets the application root directories from the application layout.
 	 *
-	 * @return A collection of application root directories (or null if not set).
+	 * @return A {@link SequencedCollection} of application root directories (or null if not set).
 	 */
-	public final Collection<ResourceFile> getApplicationRootDirs() {
+	public final SequencedCollection<ResourceFile> getApplicationRootDirs() {
 		return applicationRootDirs;
 	}
 
@@ -131,9 +129,8 @@ public abstract class ApplicationLayout {
 	 * Returns a prioritized {@link List ordered list} of the application Extensions installation 
 	 * directories.   Typically, the values may be any of the following locations:<br>
 	 * <ul>
-	 * <li><code>[user settings dir]/Extensions</code></li>
-	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
-	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
+	 * <li>{@code [user settings dir]/Extensions}</li>
+	 * <li>{@code [application root dirs]/Extensions}</li>
 	 * </ul>
 	 *
 	 * @return an {@link List ordered list} of the application Extensions installation directories.
@@ -150,35 +147,6 @@ public abstract class ApplicationLayout {
 	 */
 	public final ResourceFile getPatchDir() {
 		return patchDir;
-	}
-
-	/**
-	 * Creates the application's user directories (or ensures they already exist).
-	 *
-	 * @throws IOException if there was a problem creating the application's user directories.
-	 */
-	public final void createUserDirs() throws IOException {
-		if (userTempDir != null) {
-			if (!FileUtilities.mkdirs(userTempDir)) {
-				throw new IOException("Failed to create user temp directory: " + userTempDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userTempDir);
-		}
-
-		if (userCacheDir != null) {
-			if (!FileUtilities.mkdirs(userCacheDir)) {
-				throw new IOException("Failed to create user cache directory: " + userCacheDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userCacheDir);
-		}
-
-		if (userSettingsDir != null) {
-			if (!FileUtilities.mkdirs(userSettingsDir)) {
-				throw new IOException(
-					"Failed to create user settings directory: " + userSettingsDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userSettingsDir);
-		}
 	}
 
 	/**

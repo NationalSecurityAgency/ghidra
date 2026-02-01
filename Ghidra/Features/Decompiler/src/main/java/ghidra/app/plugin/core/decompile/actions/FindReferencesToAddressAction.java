@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesSe
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
 /**
@@ -40,32 +39,17 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 	}
 
 	@Override
-	protected ProgramLocation getLocation(NavigatableActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return null;
-		}
-		return context.getLocation();
+	protected boolean isMyNavigatable(NavigatableActionContext context) {
+		return context instanceof DecompilerActionContext;
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
+		if (!(context instanceof DecompilerActionContext dac)) {
 			return false;
 		}
-
-		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		return decompilerContext.checkActionEnablement(() -> {
-			updateMenuName(decompilerContext.getAddress());
-			return super.isEnabledForContext(context);
-		});
-	}
-
-	@Override
-	public void actionPerformed(ActionContext context) {
-		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		decompilerContext.performAction(() -> {
-			super.actionPerformed(context);
-		});
+		updateMenuName(dac.getAddress());
+		return super.isEnabledForContext(context);
 	}
 
 	private void updateMenuName(Address addr) {

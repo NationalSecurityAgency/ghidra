@@ -18,6 +18,7 @@ package ghidra.program.database.symbol;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -44,10 +45,11 @@ abstract class VariableStorageDBAdapter {
 	 * @throws CancelledException if the user cancels an upgrade.
 	 * @throws IOException if a database io error occurs.
 	 */
-	static VariableStorageDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
-			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+	static VariableStorageDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode,
+			AddressMap addrMap, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new VariableStorageDBAdapterV2(dbHandle, true);
 		}
 
@@ -56,11 +58,11 @@ abstract class VariableStorageDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
-			VariableStorageDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap, openMode);
-			if (openMode == DBConstants.UPGRADE) {
+			VariableStorageDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = VariableStorageDBAdapterV2.upgrade(dbHandle, adapter, monitor);
 			}
 			return adapter;
@@ -68,7 +70,7 @@ abstract class VariableStorageDBAdapter {
 	}
 
 	private static VariableStorageDBAdapter findReadOnlyAdapter(DBHandle dbHandle,
-			AddressMap addrMap, int openMode) {
+			AddressMap addrMap) {
 		Table table = dbHandle.getTable(VARIABLE_STORAGE_TABLE_NAME);
 		if (table == null) {
 			return new VariableStorageDBAdapterNoTable();
@@ -82,9 +84,9 @@ abstract class VariableStorageDBAdapter {
 
 	/**
 	 * Locate the record key which corresponds to the specified hash value.
-	 * @param hash
+	 * @param hash record hash value
 	 * @return record key or -1 if not found
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	abstract long findRecordKey(long hash) throws IOException;
 

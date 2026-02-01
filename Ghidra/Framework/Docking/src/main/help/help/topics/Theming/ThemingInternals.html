@@ -23,7 +23,7 @@
     the application is using resource values as specified by the active theme. The theme specifies
     the Java Look and Feel, whether or not the overall theme is "dark" (which determines which default
     values to use) and any resource values which have been overridden specifically by that theme.
-    There are two types of of themes; built-in themes and file-based themes. Built-in
+    There are two types of themes; built-in themes and file-based themes. Built-in
     themes are implemented directly as sub-classes of <CODE>GTheme</CODE> and simply specify a 
     Java Look and Feel
     and whether or not the theme is "dark". There is one "built-in" theme for each supported
@@ -38,8 +38,8 @@
     <CODE>ColorValue</CODE>, <CODE>FontValue</CODE>, and
     <CODE>IconValue</CODE>. Resource values are stored in these <CODE>ThemeValue</CODE> sub-classes 
     because the value can be
-    either a concrete value or be a reference to some other resource of the same type. So, for
-    example, "color.bg.foo" could map directly to an actual color or its value could be reference
+    either a concrete value or a reference to some other resource of the same type. So, for
+    example, "color.bg.foo" could map directly to an actual color or its value could be a reference
     to some other indirect color like "color.bg.bar". In any <CODE>ThemeValue</CODE> object, either 
     the referenced ID or the direct value must be null. To get the ultimate concrete value, there
     is a convenience method called <CODE>get()</CODE> on <CODE>ThemeValue</CODE>s that takes a 
@@ -155,7 +155,7 @@
     <H2>Creating/Editing/Saving Themes</H2>
 
     <P>New themes can be created and saved to files in the theme directory in the user's
-    application directory (<code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>). 
+    settings directory (<code>&lt;user settings&gt;/themes</code>). 
     When the application is started, this directory is scanned and any
     <CODE>*.theme</CODE> files are loaded and available to be selected as the active theme. 
     The <CODE>Gui</CODE> class has

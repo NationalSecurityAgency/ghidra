@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,49 +108,52 @@ public abstract class LocationDescriptor {
 
 		for (int i = 0; i < changeEvent.numRecords(); i++) {
 			DomainObjectChangeRecord domainObjectRecord = changeEvent.getChangeRecord(i);
-			int eventType = domainObjectRecord.getEventType();
-
-			switch (eventType) {
-				case ChangeManager.DOCR_MEMORY_BLOCK_MOVED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_REMOVED:
-					if (program.getMemory().contains(getHomeAddress())) {
+			EventType eventType = domainObjectRecord.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				checkForAddressChange(domainObjectRecord);
+				return true;
+			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case MEMORY_BLOCK_MOVED:
+					case MEMORY_BLOCK_REMOVED:
+						if (program.getMemory().contains(getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					case SYMBOL_ADDED:
+					case SYMBOL_RENAMED:
+					case SYMBOL_REMOVED:
 						checkForAddressChange(domainObjectRecord);
 						return true;
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-					checkForAddressChange(domainObjectRecord);
-					return true;
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-					ProgramChangeRecord changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					Reference ref = (Reference) changeRecord.getNewValue();
-					if (refersToAddress(ref, getHomeAddress())) {
-						checkForAddressChange(domainObjectRecord);
-						return true;
-					}
-					break;
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-					changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					ref = (Reference) changeRecord.getOldValue();
-					if (refersToAddress(ref, getHomeAddress())) {
-						checkForAddressChange(domainObjectRecord);
-						return true;
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_ASSOCIATION_ADDED:
-				case ChangeManager.DOCR_SYMBOL_ASSOCIATION_REMOVED:
-					changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					ref = (Reference) changeRecord.getObject();
-					if (refersToAddress(ref, getHomeAddress())) {
-						checkForAddressChange(domainObjectRecord);
-						return true;
-					}
-					break;
-				case DomainObject.DO_OBJECT_RESTORED:
-					checkForAddressChange(domainObjectRecord);
-					return true;
+					case REFERENCE_ADDED:
+						ProgramChangeRecord changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						Reference ref = (Reference) changeRecord.getNewValue();
+						if (refersToAddress(ref, getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					case REFERENCE_REMOVED:
+						changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						ref = (Reference) changeRecord.getOldValue();
+						if (refersToAddress(ref, getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					case SYMBOL_ASSOCIATION_ADDED:
+					case SYMBOL_ASSOCIATION_REMOVED:
+						changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						ref = (Reference) changeRecord.getObject();
+						if (refersToAddress(ref, getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					default:
+				}
 			}
 		}
 
@@ -173,8 +176,7 @@ public abstract class LocationDescriptor {
 			return removed;
 		}
 
-		int eventType = changeRecord.getEventType();
-		if (eventType == DomainObject.DO_OBJECT_RESTORED) {
+		if (changeRecord.getEventType() == DomainObjectEvent.RESTORED) {
 			// we cannot tell which addresses were effected, so the data *may* be stale
 			if (modelFreshnessListener != null) {
 				modelFreshnessListener.stateChanged(new ChangeEvent(this));
@@ -260,8 +262,8 @@ public abstract class LocationDescriptor {
 	}
 
 	/**
-	 * Returns a generic {@link ProgramLocation} based upon the <tt>program</tt> and
-	 * <tt>homeAddress</tt> of this <tt>LocationDescriptor</tt>.  Subclasses should override this
+	 * Returns a generic {@link ProgramLocation} based upon the {@code program} and
+	 * {@code homeAddress} of this {@code LocationDescriptor}.  Subclasses should override this
 	 * method to return more specific addresses.
 	 *
 	 * @return a generic ProgramLocation.
@@ -312,7 +314,7 @@ public abstract class LocationDescriptor {
 	 * @param obj The object associated with the text being rendered (e.g., CodeUnit).
 	 * @param fieldFactoryClass The class that created the field being rendered.
 	 * @param highlightColor The color to use for highlighting.
-	 * @return An array of highlights to render for the given <tt>text</tt>
+	 * @return An array of highlights to render for the given {@code text}
 	 */
 	abstract Highlight[] getHighlights(String text, Object obj,
 			Class<? extends FieldFactory> fieldFactoryClass, Color highlightColor);

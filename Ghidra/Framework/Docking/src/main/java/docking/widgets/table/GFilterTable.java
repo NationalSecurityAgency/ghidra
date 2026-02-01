@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,15 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 		filterPanel.dispose();
 	}
 
+	/**
+	 * Sets the accessible name prefix for both the table and the filter panel
+	 * @param prefix the name prefix
+	 */
+	public void setAccessibleNamePrefix(String prefix) {
+		table.setAccessibleNamePrefix(prefix);
+		filterPanel.setAccessibleNamePrefix(prefix);
+	}
+
 	private void buildTable() {
 		if (model instanceof ThreadedTableModel) {
 			buildThreadedTable();
@@ -76,7 +85,6 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 	}
 
 	private void buildThreadedTable() {
-		@SuppressWarnings("unchecked")
 		GThreadedTablePanel<ROW_OBJECT> tablePanel =
 			createThreadedTablePanel((ThreadedTableModel<ROW_OBJECT, ?>) model);
 		table = tablePanel.getTable();
@@ -140,6 +148,10 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 	public ROW_OBJECT getRowObject(int viewRow) {
 		ROW_OBJECT rowObject = filterPanel.getRowObject(viewRow);
 		return rowObject;
+	}
+
+	public int getRow(ROW_OBJECT rowObject) {
+		return filterPanel.getViewRow(rowObject);
 	}
 
 	public ROW_OBJECT getItemAt(Point point) {

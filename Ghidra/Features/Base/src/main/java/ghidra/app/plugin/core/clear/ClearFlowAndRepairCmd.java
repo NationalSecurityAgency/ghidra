@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,14 @@ import java.util.*;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.plugin.core.clear.ClearOptions.ClearType;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -35,7 +36,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class ClearFlowAndRepairCmd extends BackgroundCommand {
+public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 
 	private static final int FALLTHROUGH_SEARCH_LIMIT = 12;
 
@@ -72,12 +73,11 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		try {
 			monitor.setMessage("Examining code flow...");
 
-			Program program = (Program) obj;
 			Listing listing = program.getListing();
 
 			Stack<Address> todoStarts = new Stack<>();
@@ -204,23 +204,25 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			clearSet.delete(protectedSet);
 
 			ClearOptions opts = new ClearOptions(true);
-			opts.setClearSymbols(clearLabels);
+			opts.setShouldClear(ClearType.SYMBOLS, clearLabels);
 
 			ClearCmd clear = new ClearCmd(clearSet, opts);
-			clear.applyTo(obj, monitor);
+			clear.applyTo(program, monitor);
 
 			if (clearData && clearLabels) {
 				// Clear dereferenced symbols
 				SymbolTable symTable = program.getSymbolTable();
-				Iterator<Address> iter = ptrDestinations.iterator();
-				while (iter.hasNext()) {
+				for (Address addr : ptrDestinations) {
 					monitor.checkCancelled();
-					Address addr = iter.next();
 					Symbol[] syms = symTable.getSymbols(addr);
 					for (Symbol sym : syms) {
+						// TODO: GP-5872 This code is suspect - should it be restricted to LABELS only.
+						// Why would we remove a non-default function that had references?
 						if (sym.getSource() == SourceType.DEFAULT) {
 							break;
 						}
+						// TODO: GP-5872 If one of many labels at a location has a direct reference why
+						// would we bail when we may have already removed a few that did not.
 						if (sym.hasReferences()) {
 							continue;
 						}
@@ -312,8 +314,18 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 					}
 					// no instruction, check if data is there
 					Data data = listing.getDefinedDataAt(toAddr);
+					// data or instruction not found at destination
 					if (data == null) {
-						continue; // instruction not found at destination
+						continue; // don't add to clear set
+					}
+					// has an external reference from data, not produced from bad flow
+					if (data.getExternalReference(0) != null) {
+						continue; // don't add to clear set
+					}
+					// if defined data is anything other than Undefined1,2... or a pointer
+					if (data.isDefined() && !(data.getDataType() instanceof Undefined) &&
+						!(data.isPointer())) {
+						continue; // don't add to clear set
 					}
 				}
 				boolean clearIt = true;
@@ -341,9 +353,6 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	 * @param program
 	 * @param fromInstrAddr existing instruction address to be used for
 	 * context regeneration
-	 * @param flowFallthrough true if fall-through location is clear and
-	 * is the intended disassembly start location, else only the future
-	 * flow context state is needed.
 	 * @param context disassembly context.
 	 */
 	private void repairFlowContextFrom(Program program, Address fromInstrAddr,
@@ -604,10 +613,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 				}
 			}
 
-			Iterator<Address> entryIter = starts.iterator();
-			while (entryIter.hasNext()) {
+			for (Address entry : starts) {
 				monitor.checkCancelled();
-				Address entry = entryIter.next();
 				CreateFunctionCmd cmd = new CreateFunctionCmd(entry);
 				cmd.applyTo(program, monitor);
 			}
@@ -710,11 +717,14 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 						continue; // do not include data
 					}
 					Symbol s = symbolTable.getPrimarySymbol(blockAddr);
-					if (s != null && s.getSymbolType() == SymbolType.FUNCTION) {
-						SourceType source = s.getSource();
-						if (source == SourceType.USER_DEFINED || source == SourceType.IMPORTED) {
-							continue; // keep imported or user-defined function
-						}
+					if (s != null && s.getSymbolType() == SymbolType.FUNCTION &&
+						s.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
+						continue;
+						// TODO: GP-5872 Clearing thunks explicitly created by loader or pattern
+						// generally have default SourceType and may not have references
+						// to them.  We need to prevent these thunks from getting cleared.
+						// PowerPC64 ELF extension was forced to rename thunks it created to 
+						// avoid this where the thunk rename has its own set of issues.
 					}
 
 					if (clearOffcut && !destAddrs.contains(blockAddr)) {
@@ -742,10 +752,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 		FunctionManager functionManager = program.getFunctionManager();
-		Iterator<BlockVertex> vertexIter = vertexMap.values().iterator();
-		while (vertexIter.hasNext()) {
+		for (BlockVertex v : vertexMap.values()) {
 			monitor.checkCancelled();
-			BlockVertex v = vertexIter.next();
 			if (v == startVertex || v.srcVertices.isEmpty()) {
 				continue;
 			}

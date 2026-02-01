@@ -17,20 +17,44 @@ package ghidra.program.model.data.ISF;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.annotation.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFormatException;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.BitFieldDataType;
+import ghidra.program.model.data.BuiltInDataType;
+import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.DataOrganization;
+import ghidra.program.model.data.DataOrganizationImpl;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Dynamic;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.FactoryDataType;
+import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -40,29 +64,27 @@ import ghidra.util.task.TaskMonitor;
  *
  * The ISF JSON should be valid for Volatility is STRICT==true.
  */
-public class IsfDataTypeWriter {
+public class IsfDataTypeWriter extends AbstractIsfWriter {
 
-	private Map<DataType, IsfObject> resolved = new HashMap<>();
+	protected Map<DataType, IsfObject> resolved = new HashMap<>();
 	private Map<String, DataType> resolvedTypeMap = new HashMap<>();
-	private List<String> deferredKeys = new ArrayList<>();
+	public List<String> deferredKeys = new ArrayList<>();
 
 	private Writer baseWriter;
-	private JsonWriter writer;
-	private Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-	private DataTypeManager dtm;
+	protected DataTypeManager dtm;
 	private DataOrganization dataOrganization;
 
-	private JsonObject data = new JsonObject();
-	private JsonObject metadata = new JsonObject();
-	private JsonObject baseTypes = new JsonObject();
-	private JsonObject userTypes = new JsonObject();
-	private JsonObject enums = new JsonObject();
-	private JsonObject symbols = new JsonObject();
+	protected JsonObject data = new JsonObject();
+	protected JsonElement metadata;
+	protected JsonElement baseTypes;
+	protected JsonElement userTypes;
+	protected JsonElement enums;
+	protected JsonElement functions;
+	protected JsonElement symbols;
 
 	private List<Address> requestedAddresses = new ArrayList<>();
 	private List<String> requestedSymbols = new ArrayList<>();
-	private List<String> requestedTypes = new ArrayList<>();
 	private List<DataType> requestedDataTypes = new ArrayList<>();
 	private boolean skipSymbols = false;
 	private boolean skipTypes = false;
@@ -70,11 +92,15 @@ public class IsfDataTypeWriter {
 	/**
 	 * Constructs a new instance of this class using the given writer
 	 * 
-	 * @param dtm data-type manager corresponding to target program or null for default
+	 * @param dtm        data-type manager corresponding to target program or null
+	 *                   for default
 	 * @param baseWriter the writer to use when writing data types
 	 * @throws IOException if there is an exception writing the output
 	 */
-	public IsfDataTypeWriter(DataTypeManager dtm, Writer baseWriter) throws IOException {
+	public IsfDataTypeWriter(DataTypeManager dtm, List<DataType> target, Writer baseWriter)
+			throws IOException {
+		super(baseWriter);
+		this.baseWriter = baseWriter;
 		this.dtm = dtm;
 		if (dtm != null) {
 			dataOrganization = dtm.getDataOrganization();
@@ -82,64 +108,47 @@ public class IsfDataTypeWriter {
 		if (dataOrganization == null) {
 			dataOrganization = DataOrganizationImpl.getDefaultOrganization();
 		}
-		this.baseWriter = baseWriter;
-		this.writer = new JsonWriter(baseWriter);
-		writer.setIndent("  ");
-		this.gson = new GsonBuilder()
-				.addSerializationExclusionStrategy(strategy)
-				.setPrettyPrinting()
-				.create();
+
+		metadata = new JsonObject();
+		baseTypes = new JsonObject();
+		userTypes = new JsonObject();
+		enums = new JsonObject();
+		functions = new JsonObject();
+		symbols = new JsonObject();
+		requestedDataTypes = target == null ? new ArrayList<>() : target;
+		STRICT = true;
 	}
 
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.FIELD)
-	public @interface Exclude {
-		//EMPTY
-	}
-
-	// Am setting this as the default, but it's possible we may want more latitude in the future
-	private boolean STRICT = true;
-
-	// @Exclude used for properties that might be desirable for a non-STRICT implementation.
-	ExclusionStrategy strategy = new ExclusionStrategy() {
-		@Override
-		public boolean shouldSkipClass(Class<?> clazz) {
-			return false;
-		}
-
-		@Override
-		public boolean shouldSkipField(FieldAttributes field) {
-			return STRICT && field.getAnnotation(Exclude.class) != null;
-		}
-	};
-
-	/**
-	 * Exports all data types in the list as ISF JSON.
-	 * 
-	 * @param monitor the task monitor
-	 * @return the resultant JSON object
-	 * @throws IOException if there is an exception writing the output
-	 * @throws CancelledException if the action is cancelled by the user
-	 */
-	public JsonObject getRootObject(TaskMonitor monitor)
-			throws IOException, CancelledException {
-
-		genMetadata();
-		genTypes(monitor);
-		genSymbols();
-		genRoot();
-
+	@Override
+	public JsonObject getRootObject(TaskMonitor monitor) throws CancelledException, IOException {
+		genRoot(monitor);
 		return data;
 	}
 
-	private void genRoot() {
+	@Override
+	protected void genRoot(TaskMonitor monitor) throws CancelledException, IOException {
+		genMetadata();
+		genTypes(monitor);
+		genSymbols(monitor);
+
 		data.add("metadata", metadata);
 		data.add("base_types", baseTypes);
 		data.add("user_types", userTypes);
 		data.add("enums", enums);
-		// Would be nice to support this in the futere, but Volatility does not
-		//data.add("typedefs", typedefs);
+		// Would be nice to support this in the future, but Volatility does not
+		// data.add("functions", functions);
 		data.add("symbols", symbols);
+	}
+
+	public void add(JsonElement parent, String optKey, JsonElement child) {
+		if (parent instanceof JsonObject) {
+			JsonObject p = (JsonObject) parent;
+			p.add(optKey, child);
+		}
+		if (parent instanceof JsonArray) {
+			JsonArray p = (JsonArray) parent;
+			p.add(child);
+		}
 	}
 
 	private void genMetadata() {
@@ -161,13 +170,15 @@ public class IsfDataTypeWriter {
 					os = gson.toJsonTree(new IsfLinuxOS(gson, metaData));
 				}
 			}
-			metadata.addProperty("format", "6.2.0");
-			metadata.add("producer", producer);
-			metadata.add(oskey, os);
+			if (metadata instanceof JsonObject) {
+				((JsonObject) metadata).addProperty("format", "6.2.0");
+			}
+			add(metadata, "producer", producer);
+			add(metadata, oskey, os);
 		}
 	}
 
-	private void genSymbols() {
+	private void genSymbols(TaskMonitor monitor) {
 		if (!skipSymbols && dtm instanceof ProgramDataTypeManager) {
 			ProgramDataTypeManager pgmDtm = (ProgramDataTypeManager) dtm;
 			Program program = pgmDtm.getProgram();
@@ -215,33 +226,29 @@ public class IsfDataTypeWriter {
 				}
 			}
 			for (Entry<String, JsonObject> entry : map.entrySet()) {
-				symbols.add(entry.getKey(), entry.getValue());
+				add(symbols, entry.getKey(), entry.getValue());
 			}
 			for (Entry<String, JsonObject> entry : map.entrySet()) {
 				if (entry.getKey().startsWith("_")) {
 					String nu = entry.getKey().substring(1);
-					if (symbols.get(nu) == null) {
-						symbols.add(nu, entry.getValue());
-					}
+					add(symbols, nu, entry.getValue());
 				}
 			}
 		}
 	}
 
-	private void genTypes(TaskMonitor monitor)
-			throws CancelledException, IOException {
+	private void genTypes(TaskMonitor monitor) throws CancelledException, IOException {
 		if (skipTypes) {
 			return;
 		}
 		Map<String, DataType> map = new HashMap<>();
 		if (requestedDataTypes.isEmpty()) {
 			dtm.getAllDataTypes(requestedDataTypes);
-			baseTypes.add("pointer", getTree(new IsfTypedefPointer()));
-			baseTypes.add("undefined", getTree(new IsfTypedefPointer()));
+			addSingletons();
 		}
 		monitor.initialize(requestedDataTypes.size());
 		for (DataType dataType : requestedDataTypes) {
-			String key = dataType.getName();
+			String key = dataType.getPathName();
 			map.put(key, dataType);
 		}
 
@@ -260,11 +267,10 @@ public class IsfDataTypeWriter {
 	private void processMap(Map<String, DataType> map, List<String> keylist, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		JsonObject obj = new JsonObject();
-		int cnt = 0;
+		monitor.setMaximum(keylist.size());
 		for (String key : keylist) {
 			DataType dataType = map.get(key);
-			monitor.checkCancelled();
-			if (key.contains(".conflict")) {
+			if (DataTypeUtilities.isConflictDataType(dataType)) {
 				continue;
 			}
 			obj = getObjectForDataType(dataType, monitor);
@@ -272,37 +278,36 @@ public class IsfDataTypeWriter {
 				continue;
 			}
 			if (dataType instanceof FunctionDefinition) {
-				// Would be nice to support this in the futere, but Volatility does not
-				//typedefs.add(dataType.getName(), obj);
+				// Would be nice to support this in the future, but Volatility does not
+				add(functions, dataType.getPathName(), obj);
 			}
 			else if (IsfUtilities.isBaseDataType(dataType)) {
-				baseTypes.add(dataType.getName(), obj);
+				add(baseTypes, dataType.getPathName(), obj);
 			}
 			else if (dataType instanceof TypeDef) {
 				DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
 				if (IsfUtilities.isBaseDataType(baseDataType)) {
-					baseTypes.add(dataType.getName(), obj);
+					add(baseTypes, dataType.getPathName(), obj);
 				}
 				else if (baseDataType instanceof Enum) {
-					enums.add(dataType.getName(), obj);
+					add(enums, dataType.getPathName(), obj);
 				}
 				else {
-					userTypes.add(dataType.getName(), obj);
+					add(userTypes, dataType.getPathName(), obj);
 				}
 			}
 			else if (dataType instanceof Enum) {
-				enums.add(dataType.getName(), obj);
+				add(enums, dataType.getPathName(), obj);
 			}
 			else if (dataType instanceof Composite) {
-				userTypes.add(dataType.getName(), obj);
+				add(userTypes, dataType.getPathName(), obj);
 			}
-			monitor.setProgress(++cnt);
+			monitor.increment();
 		}
 	}
 
 	private void symbolToJson(Address imageBase, SymbolTable symbolTable,
-			Map<String, Symbol> linkages,
-			Map<String, JsonObject> map, Symbol symbol) {
+			Map<String, Symbol> linkages, Map<String, JsonObject> map, Symbol symbol) {
 		String key = symbol.getName();
 		Address address = symbol.getAddress();
 		JsonObject sym = map.containsKey(key) ? map.get(key) : new JsonObject();
@@ -315,7 +320,12 @@ public class IsfDataTypeWriter {
 			}
 		}
 		else {
-			sym.addProperty("address", address.subtract(imageBase));
+			if (address.getAddressSpace().equals(imageBase.getAddressSpace())) {
+				sym.addProperty("address", address.subtract(imageBase));
+			}
+			else {
+				sym.addProperty("address", address.getOffset());
+			}
 		}
 		map.put(symbol.getName(), sym);
 		if (!symbol.isPrimary()) {
@@ -328,11 +338,17 @@ public class IsfDataTypeWriter {
 		}
 	}
 
+	@Override
 	public void write(JsonObject obj) {
 		gson.toJson(obj, writer);
 	}
 
-	JsonObject getObjectForDataType(DataType dt, TaskMonitor monitor)
+	protected void addSingletons() {
+		add(baseTypes, "pointer", getTree(newTypedefPointer(null)));
+		add(baseTypes, "undefined", getTree(newTypedefPointer(null)));
+	}
+
+	protected JsonObject getObjectForDataType(DataType dt, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		IsfObject isf = getIsfObject(dt, monitor);
 		if (isf != null) {
@@ -344,26 +360,28 @@ public class IsfDataTypeWriter {
 	}
 
 	/**
-	 * Writes the data type as ISF JSON using the underlying writer. For now, ignoring top-level
-	 * bit-fields and function defs as unsupported by ISF. Typedefs really deserve their own
-	 * category, but again unsupported.
+	 * Writes the data type as ISF JSON using the underlying writer. For now,
+	 * ignoring top-level bit-fields and function defs as unsupported by ISF.
+	 * Typedefs really deserve their own category, but again unsupported.
 	 * 
-	 * @param dt the data type to write as ISF JSON
+	 * @param dt      the data type to write as ISF JSON
 	 * @param monitor the task monitor
 	 * @throws IOException if there is an exception writing the output
 	 */
-	private IsfObject getIsfObject(DataType dt, TaskMonitor monitor)
+	protected IsfObject getIsfObject(DataType dt, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (dt == null) {
-			Msg.error(this, "Shouldn't get here - null datatype passed");
-			return null;
+			throw new IOException("Null datatype passed to getIsfObject");
 		}
 		if (dt instanceof FactoryDataType) {
 			Msg.error(this, "Factory data types may not be written - type: " + dt);
 		}
-		if (dt instanceof Pointer || dt instanceof Array || dt instanceof BitFieldDataType) {
+		if (dt instanceof BitFieldDataType) {
+			Msg.error(this, "BitField data types may not be written - type: " + dt);
+		}
+		if (dt instanceof Pointer || dt instanceof Array) {
 			IsfObject type = getObjectDataType(IsfUtilities.getBaseDataType(dt));
-			IsfObject obj = new IsfTypedObject(dt, type);
+			IsfObject obj = newTypedObject(dt, type);
 			return obj;
 		}
 
@@ -393,7 +411,7 @@ public class IsfDataTypeWriter {
 		else if (dt instanceof BitFieldDataType) {
 			// skip - not hit
 		}
-		else if (dt instanceof FunctionDefinition) {  ///FAIL
+		else if (dt instanceof FunctionDefinition) { /// FAIL
 			// skip - not hit
 		}
 		else if (dt.equals(DataType.DEFAULT)) {
@@ -406,12 +424,12 @@ public class IsfDataTypeWriter {
 		return null;
 	}
 
-	private IsfObject resolve(DataType dt) {
+	public IsfObject resolve(DataType dt) {
 		if (resolved.containsKey(dt)) {
 			return resolved.get(dt);
 		}
 
-		DataType resolvedType = resolvedTypeMap.get(dt.getName());
+		DataType resolvedType = resolvedTypeMap.get(dt.getPathName());
 		if (resolvedType != null) {
 			if (resolvedType.isEquivalent(dt)) {
 				return resolved.get(dt); // skip equivalent type with same name as a resolved type
@@ -425,31 +443,32 @@ public class IsfDataTypeWriter {
 					}
 				}
 			}
-			Msg.warn(this, "WARNING! conflicting data type names: " + dt.getPathName() +
-				" - " + resolvedType.getPathName());
+			Msg.warn(this, "WARNING! conflicting data type names: " + dt.getPathName() + " - " +
+				resolvedType.getPathName());
 			return resolved.get(dt);
 		}
 
-		resolvedTypeMap.put(dt.getName(), dt);
+		resolvedTypeMap.put(dt.getPathName(), dt);
 		return null;
 	}
 
 	private void clearResolve(String typedefName, DataType baseType) {
 		if (baseType instanceof Composite || baseType instanceof Enum) {
 			// auto-typedef generated with composite and enum
-			if (typedefName.equals(baseType.getName())) {
+			if (typedefName.equals(baseType.getPathName())) {
 				resolvedTypeMap.remove(typedefName);
 				return;
 			}
 		}
-		// Inherited from DataTypeWriter (logic lost to time): 
-		//    A comment explaining the special 'P' case would be helpful!!  Smells like fish.
+		// Inherited from DataTypeWriter (logic lost to time):
+		// A comment explaining the special 'P' case would be helpful!! Smells like
+		// fish.
 		else if (baseType instanceof Pointer && typedefName.startsWith("P")) {
 			DataType dt = ((Pointer) baseType).getDataType();
 			if (dt instanceof TypeDef) {
 				dt = ((TypeDef) dt).getBaseDataType();
 			}
-			if (dt instanceof Composite && dt.getName().equals(typedefName.substring(1))) {
+			if (dt instanceof Composite && dt.getPathName().equals(typedefName.substring(1))) {
 				// auto-pointer-typedef generated with composite
 				resolvedTypeMap.remove(typedefName);
 				return;
@@ -469,12 +488,11 @@ public class IsfDataTypeWriter {
 					int elementLen = replacementBaseType.getLength();
 					if (elementLen > 0) {
 						int elementCnt = (component.getLength() + elementLen - 1) / elementLen;
-						return new IsfDynamicComponent(dynamic, type, elementCnt);
+						return newIsfDynamicComponent(dynamic, type, elementCnt);
 
 					}
 					Msg.error(this,
-						dynamic.getClass().getSimpleName() +
-							" returned bad replacementBaseType: " +
+						dynamic.getClass().getSimpleName() + " returned bad replacementBaseType: " +
 							replacementBaseType.getClass().getSimpleName());
 				}
 			}
@@ -492,7 +510,7 @@ public class IsfDataTypeWriter {
 		return getObjectDataType(dataType, -1);
 	}
 
-	private IsfObject getObjectDataType(DataType dataType, int componentOffset) {
+	public IsfObject getObjectDataType(DataType dataType, int componentOffset) {
 		if (dataType == null) {
 			return new IsfDataTypeNull();
 		}
@@ -509,9 +527,9 @@ public class IsfDataTypeWriter {
 			IsfObject baseObject = getObjectDataType(IsfUtilities.getBaseDataType(dataType));
 			return new IsfDataTypeTypeDef(dataType, baseObject);
 		}
-		if (dataType.getName().contains(".conflict")) {
-			if (!deferredKeys.contains(dataType.getName())) {
-				deferredKeys.add(dataType.getName());
+		if (DataTypeUtilities.isConflictDataType(dataType)) {
+			if (!deferredKeys.contains(dataType.getPathName())) {
+				deferredKeys.add(dataType.getPathName());
 			}
 		}
 		return new IsfDataTypeDefault(dataType);
@@ -522,25 +540,21 @@ public class IsfDataTypeWriter {
 	 * 
 	 * @throws CancelledException if the action is cancelled by the user
 	 */
-	private IsfObject getObjectTypeDef(TypeDef typeDef, TaskMonitor monitor)
+	protected IsfObject getObjectTypeDef(TypeDef typeDef, TaskMonitor monitor)
 			throws CancelledException {
-		//UNVERIFIED
 		DataType dataType = typeDef.getDataType();
-		String typedefName = typeDef.getDisplayName();
-		String dataTypeName = dataType.getDisplayName();
-		if (IsfUtilities.isIntegral(typedefName, dataTypeName)) {
-			return new IsfTypedefIntegral(typeDef);
-		}
+		String typedefName = typeDef.getPathName();
 
-		DataType baseType = typeDef.getBaseDataType();
+		DataType baseType = typeDef.getDataType();
 		try {
 			if (baseType instanceof BuiltInDataType builtin) {
-				return new IsfTypedefBase(typeDef);
+				return newTypedefBase(typeDef);
 			}
 			if (!(baseType instanceof Pointer)) {
-				return getIsfObject(dataType, monitor);
+				IsfObject isfObject = getIsfObject(dataType, monitor);
+				return newTypedefUser(typeDef, isfObject);
 			}
-			return new IsfTypedefPointer();
+			return newTypedefPointer(typeDef);
 		}
 		catch (Exception e) {
 			Msg.error(this, "TypeDef error: " + e);
@@ -550,11 +564,7 @@ public class IsfDataTypeWriter {
 		return null;
 	}
 
-	public JsonElement getTree(Object obj) {
-		return gson.toJsonTree(obj);
-	}
-
-	public void requestAddress(String key) {
+	public void requestAddress(String key) throws IOException {
 		if (dtm instanceof ProgramDataTypeManager pgmDtm) {
 			try {
 				Address address = pgmDtm.getProgram().getMinAddress().getAddress(key);
@@ -565,7 +575,7 @@ public class IsfDataTypeWriter {
 				requestedAddresses.add(address);
 			}
 			catch (AddressFormatException e) {
-				e.printStackTrace();
+				throw new IOException("Bad address format: " + key);
 			}
 		}
 	}
@@ -578,24 +588,6 @@ public class IsfDataTypeWriter {
 		requestedSymbols.add(symbol);
 	}
 
-	public void requestType(String path) {
-		requestedTypes.add(path);
-		DataType dataType = dtm.getDataType(path);
-		if (dataType == null) {
-			Msg.error(this, path + " not found");
-			return;
-		}
-		requestedDataTypes.add(dataType);
-	}
-
-	public void requestType(DataType dataType) {
-		if (dataType == null) {
-			Msg.error(this, dataType + " not found");
-			return;
-		}
-		requestedDataTypes.add(dataType);
-	}
-
 	public JsonWriter getWriter() {
 		return writer;
 	}
@@ -603,16 +595,6 @@ public class IsfDataTypeWriter {
 	@Override
 	public String toString() {
 		return baseWriter.toString();
-	}
-
-	public void close() {
-		try {
-			writer.flush();
-			writer.close();
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public void setSkipSymbols(boolean val) {
@@ -623,7 +605,28 @@ public class IsfDataTypeWriter {
 		skipTypes = val;
 	}
 
-	public void setStrict(boolean val) {
-		STRICT = val;
+	public IsfTypedefBase newTypedefBase(TypeDef typeDef) {
+		return new IsfTypedefBase(typeDef);
 	}
+
+//	public IsfTypedefIntegral newTypedefIntegral(TypeDef typeDef) {
+//		return new IsfTypedefIntegral(typeDef);
+//	}
+
+	public IsfTypedefPointer newTypedefPointer(TypeDef typeDef) {
+		return new IsfTypedefPointer(typeDef);
+	}
+
+	public IsfObject newTypedefUser(TypeDef typeDef, IsfObject object) {
+		return object;
+	}
+
+	public IsfTypedObject newTypedObject(DataType dt, IsfObject type) {
+		return new IsfTypedObject(dt, type);
+	}
+
+	public IsfObject newIsfDynamicComponent(Dynamic dynamic, IsfObject type, int elementCnt) {
+		return new IsfDynamicComponent(dynamic, type, elementCnt);
+	}
+
 }

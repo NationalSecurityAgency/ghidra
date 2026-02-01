@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.program.util.ProgramLocation;
 
 /**
   *  Generates a text label on each {@link CodeUnit} that marks the start of a memory block. The
-  *  label will will appear as part of the PLATE group in the field map.
+  *  label will appear as part of the PLATE group in the field map.
   */
 public class MemoryBlockStartFieldFactory extends FieldFactory {
 
@@ -56,14 +56,12 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private MemoryBlockStartFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
+	private MemoryBlockStartFieldFactory(FieldFormatModel model,
+			ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getField(ProxyObj, int)
-	 */
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 
@@ -85,7 +83,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		}
 
 		// Convert the text to field elements.
-		FieldElement[] elements = createFieldElements(attributedStrings);
+		List<FieldElement> elements = createFieldElements(attributedStrings);
 
 		// And put the elements in a text field.
 		ListingTextField ltf = ListingTextField.createMultilineTextField(this, proxy, elements,
@@ -205,13 +203,13 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		String type = "";
 		if (blockType != MemoryBlockType.DEFAULT) {
 			if (block.isMapped()) {
-				type = "(" + block.getSourceInfos().get(0).getDescription() + ")";
+				type = " (" + block.getSourceInfos().get(0).getDescription() + ")";
 			}
 			else {
-				type = "(" + blockType + ")";
+				type = " (" + blockType + ")";
 			}
 		}
-		String line1 = block.getName() + " " + type;
+		String line1 = block.getName() + type;
 		String line2 = block.getComment();
 		String line3 = block.getStart().toString(true) + "-" + block.getEnd().toString(true);
 		Color color = ListingColors.BLOCK_START;
@@ -227,7 +225,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		return lines;
 	}
 
-	private FieldElement[] createFieldElements(List<AttributedString> attributedStrings) {
+	private List<FieldElement> createFieldElements(List<AttributedString> attributedStrings) {
 		List<FieldElement> elements = new ArrayList<>();
 		int lineNum = 0;
 		for (AttributedString line : attributedStrings) {
@@ -235,11 +233,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 			elements.add(blockElement);
 			lineNum++;
 		}
-
-		// Convert to an array
-		FieldElement[] elementsArray = new FieldElement[elements.size()];
-		elements.toArray(elementsArray);
-
-		return elementsArray;
+		return elements;
 	}
 }

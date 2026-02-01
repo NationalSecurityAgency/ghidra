@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,28 +19,39 @@ import java.util.Iterator;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
-import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.SystemUtilities;
 
+//@formatter:off
+@PluginInfo(
+	status = PluginStatus.RELEASED, 
+	packageName = CorePluginPackage.NAME, 
+	category = "Byte Viewer", 
+	shortDescription = "Displays bytes in memory", 
+	description = "Provides a component for showing the bytes in memory. Additional plugins " +
+		"provide capabilites for this plugin to show the bytes in various formats (e.g., hex, " +
+		"octal, decimal). The hex format plugin is loaded by default when this plugin is loaded.", 
+	servicesRequired = { 
+		ProgramManager.class, GoToService.class, NavigationHistoryService.class, 
+		ClipboardService.class
+	}, 
+	eventsConsumed = { 
+		ProgramLocationPluginEvent.class, ProgramActivatedPluginEvent.class, 
+		ProgramSelectionPluginEvent.class, ProgramHighlightPluginEvent.class, 
+		ProgramClosedPluginEvent.class,	ByteBlockChangePluginEvent.class
+	}, 
+	eventsProduced = {
+		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
+		ByteBlockChangePluginEvent.class
+	}
+)
+//@formatter:on
 /**
- * Visible Plugin to show ByteBlock data in various formats.
+ * Plugin to show ByteBlock data in various formats.
  */
-@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = PluginCategoryNames.BYTE_VIEWER, shortDescription = "Displays bytes in memory", description = "Provides a component for showing the bytes in memory.  " +
-	"Additional plugins provide capabilites for this plugin" +
-	" to show the bytes in various formats (e.g., hex, octal, decimal)." +
-	"  The hex format plugin is loaded by default when this plugin is loaded.", servicesRequired = {
-		ProgramManager.class, GoToService.class, NavigationHistoryService.class,
-		ClipboardService.class, }, eventsConsumed = { ProgramLocationPluginEvent.class,
-			ProgramActivatedPluginEvent.class, ProgramSelectionPluginEvent.class,
-			ProgramHighlightPluginEvent.class, ProgramClosedPluginEvent.class,
-			ByteBlockChangePluginEvent.class, }, eventsProduced = {
-				ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
-				ByteBlockChangePluginEvent.class, })
 public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewerComponentProvider> {
 
 	public ByteViewerPlugin(PluginTool tool) {
@@ -57,10 +68,8 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 		if (event instanceof ProgramClosedPluginEvent) {
 			Program program = ((ProgramClosedPluginEvent) event).getProgram();
 			programClosed(program);
-			return;
 		}
-
-		if (event instanceof ProgramActivatedPluginEvent) {
+		else if (event instanceof ProgramActivatedPluginEvent) {
 			currentProgram = ((ProgramActivatedPluginEvent) event).getActiveProgram();
 			currentLocation = null;
 		}
@@ -79,44 +88,6 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 				iterator.remove();
 				removeProvider(provider);
 			}
-		}
-	}
-
-	@Override
-	public void updateLocation(ProgramByteViewerComponentProvider provider,
-			ProgramLocationPluginEvent event, boolean export) {
-
-		if (eventsDisabled()) {
-			return;
-		}
-
-		if (provider == connectedProvider) {
-			fireProgramLocationPluginEvent(provider, event);
-		}
-		else if (export) {
-			exportLocation(provider.getProgram(), event.getLocation());
-		}
-	}
-
-	@Override
-	public void fireProgramLocationPluginEvent(ProgramByteViewerComponentProvider provider,
-			ProgramLocationPluginEvent event) {
-
-		if (SystemUtilities.isEqual(event.getLocation(), currentLocation)) {
-			return;
-		}
-
-		currentLocation = event.getLocation();
-		if (provider == connectedProvider) {
-			firePluginEvent(event);
-		}
-	}
-
-	@Override
-	public void updateSelection(ByteViewerComponentProvider provider,
-			ProgramSelectionPluginEvent event, Program program) {
-		if (provider == connectedProvider) {
-			firePluginEvent(event);
 		}
 	}
 

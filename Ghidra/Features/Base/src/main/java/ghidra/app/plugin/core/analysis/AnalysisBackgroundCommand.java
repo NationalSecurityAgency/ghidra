@@ -21,7 +21,6 @@
 package ghidra.app.plugin.core.analysis;
 
 import ghidra.framework.cmd.MergeableBackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.SystemUtilities;
@@ -30,11 +29,9 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Background task to artificially kick off Auto analysis by
  * calling anything that analyzes bytes.
- * 
- * 
- *
  */
-public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
+public class AnalysisBackgroundCommand extends MergeableBackgroundCommand<Program> {
+
 	private AutoAnalysisManager mgr;
 	private boolean markAsAnalyzed;
 
@@ -51,17 +48,17 @@ public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		if (markAsAnalyzed) {
-			GhidraProgramUtilities.markProgramAnalyzed((Program) obj);
+			GhidraProgramUtilities.markProgramAnalyzed(program);
 		}
 		mgr.startAnalysis(monitor);
 		return true;
 	}
 
-	/** Merges the properties of the two commands */
 	@Override
-	public MergeableBackgroundCommand mergeCommands(MergeableBackgroundCommand command) {
+	public MergeableBackgroundCommand<Program> mergeCommands(
+			MergeableBackgroundCommand<Program> command) {
 		SystemUtilities.assertTrue(command instanceof AnalysisBackgroundCommand,
 			"This code assumes that the " +
 				"two commands are both AnalysisBackgroundCommands and this is not the case.");

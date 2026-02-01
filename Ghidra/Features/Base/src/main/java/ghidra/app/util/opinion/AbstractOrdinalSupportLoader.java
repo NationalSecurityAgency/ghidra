@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,20 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
+import generic.jar.ResourceFile;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -46,9 +45,9 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		list.add(new Option(ORDINAL_LOOKUP_OPTION_NAME, ORDINAL_LOOKUP_OPTION_DEFAULT,
 			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-ordinalLookup"));
 		return list;
@@ -71,50 +70,39 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean shouldSearchAllPaths(List<Option> options) {
-		return shouldPerformOrdinalLookup(options);
+	protected boolean shouldSearchAllPaths(Program program, ImporterSettings settings) {
+		return shouldPerformOrdinalLookup(settings);
 	}
 
 	@Override
-	protected boolean shouldLoadLibrary(String libName, FSRL libFsrl, ByteProvider provider,
-			LoadSpec loadSpec, MessageLog log) throws IOException {
-
-		if (!super.shouldLoadLibrary(libName, libFsrl, provider, loadSpec, log)) {
-			return false;
-		}
-
-		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
-		File localLibFile = getLocalFile(libFsrl);
-
-		if (localLibFile == null ||
-			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size) &&
-				LibraryLookupTable.libraryLookupTableFileExists(libName, size)) {
-			log.appendMsg("WARNING! Using existing exports file for " + libName +
-				" which may not be an exact match");
-		}
-
-		return true;
-	}
-
-	@Override
-	protected void processLibrary(Program lib, String libName, FSRL libFsrl, ByteProvider provider,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
+	protected void processLibrary(Program lib, String libName, FSRL libFsrl,
+			Queue<UnprocessedLibrary> unprocessed, int depth, ImporterSettings settings)
 			throws IOException, CancelledException {
-		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
-		File localLibFile = getLocalFile(libFsrl);
+		MessageLog log = settings.log();
+		int size = settings.loadSpec().getLanguageCompilerSpec().getLanguageDescription().getSize();
+		ResourceFile existingExportsFile = LibraryLookupTable.getExistingExportsFile(libName, size);
 
-		// Create exports file
-		if (localLibFile == null ||
-			!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
-			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size)) {
+		if (!shouldPerformOrdinalLookup(settings)) {
+			return;
+		}
+
+		// Create exports file if necessary
+		if (existingExportsFile == null) {
 			try {
-				// Need to write correct library exports file (LibrarySymbolTable)
-				// for use with related imports
-				LibraryLookupTable.createFile(lib, true, monitor);
+				ResourceFile newExportsFile =
+					LibraryLookupTable.createFile(lib, true, settings.monitor());
+				log.appendMsg("Created exports file: " + newExportsFile);
 			}
 			catch (IOException e) {
 				log.appendMsg("Unable to create exports file for " + libFsrl);
-				Msg.error(this, "Unable to create exports file for " + libFsrl, e);
+			}
+		}
+		else {
+			log.appendMsg("Using existing exports file: " + existingExportsFile);
+			File localLibFile = getLocalFile(libFsrl);
+			if (localLibFile != null &&
+				!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size)) {
+				log.appendMsg("WARNING: Existing exports file may not be an exact match.");
 			}
 		}
 	}
@@ -138,27 +126,31 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		monitor.initialize(loadedPrograms.size());
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms,
+			ImporterSettings settings) throws CancelledException, IOException {
 
-		if (shouldPerformOrdinalLookup(options)) {
-			for (Loaded<Program> loadedProgram : loadedPrograms) {
-				monitor.checkCancelled();
-				Program program = loadedProgram.getDomainObject();
+		if (shouldPerformOrdinalLookup(settings)) {
+			List<Loaded<Program>> saveablePrograms = loadedPrograms
+					.stream()
+					.filter(loaded -> loaded.check(Predicate.not(Program::isTemporary)))
+					.toList();
+			settings.monitor().initialize(saveablePrograms.size());
+			for (Loaded<Program> loadedProgram : saveablePrograms) {
+				settings.monitor().checkCancelled();
+				Program program = loadedProgram.getDomainObject(this);
 				int id = program.startTransaction("Ordinal fixups");
 				try {
-					applyLibrarySymbols(program, messageLog, monitor);
-					applyImports(program, messageLog, monitor);
+					applyLibrarySymbols(program, settings.log(), settings.monitor());
+					applyImports(program, settings.log(), settings.monitor());
 				}
 				finally {
 					program.endTransaction(id, true); // More efficient to commit when program will be discarded
+					program.release(this);
 				}
 			}
 		}
 
-		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+		super.postLoadProgramFixups(loadedPrograms, settings);
 	}
 
 	@Override
@@ -170,11 +162,11 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	/**
 	 * Checks to see if ordinal lookup should be performed
 	 * 
-	 * @param options a {@link List} of {@link Option}s
+	 * @param settings The {@link Loader.ImporterSettings}
 	 * @return True if ordinal lookup should be performed; otherwise, false
 	 */
-	private boolean shouldPerformOrdinalLookup(List<Option> options) {
-		return OptionUtils.getOption(ORDINAL_LOOKUP_OPTION_NAME, options,
+	private boolean shouldPerformOrdinalLookup(ImporterSettings settings) {
+		return OptionUtils.getOption(ORDINAL_LOOKUP_OPTION_NAME, settings.options(),
 			ORDINAL_LOOKUP_OPTION_DEFAULT);
 	}
 

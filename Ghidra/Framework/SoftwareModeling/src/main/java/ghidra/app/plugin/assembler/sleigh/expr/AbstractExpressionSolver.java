@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
@@ -31,8 +29,6 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 	private Class<T> tcls;
 	protected RecursiveDescentSolver solver;
-
-	protected final DbgTimer dbg = DbgTimer.INACTIVE;
 
 	/**
 	 * Construct a solver that can solve expression of the given type
@@ -54,9 +50,9 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 	 * @return the resolution
 	 * @throws NeedsBackfillException if the expression refers to an undefined symbol
 	 */
-	public abstract AssemblyResolution solve(T exp, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException;
+	public abstract AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			T exp, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) throws NeedsBackfillException;
 
 	/**
 	 * Attempt to get a constant value for the expression

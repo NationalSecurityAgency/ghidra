@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,6 @@ import ghidra.test.TestEnv;
 import ghidra.test.TestProgramManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import junit.framework.AssertionFailedError;
 import utilities.util.FileUtilities;
 
 /**
@@ -58,6 +57,7 @@ public class FakeSharedProject {
 	private GhidraProject gProject;
 	private TestProgramManager programManager = new TestProgramManager();
 	private FakeRepository repo;
+	private boolean isFileSharingEnabled; // set true if multiple projects share repo files
 
 	public FakeSharedProject(FakeRepository repo, User user) throws IOException {
 
@@ -83,6 +83,14 @@ public class FakeSharedProject {
 
 		DefaultProjectData pd = getProjectData();
 		invokeInstanceMethod("setVersionedFileSystem", pd, argTypes(FileSystem.class), args(fs));
+	}
+
+	/**
+	 * Mark project as sharing file with another project via a common repo.
+	 * This is needed to bypass check performed by assertFileInProject
+	 */
+	public void enableFileSharing() {
+		isFileSharingEnabled = true;
 	}
 
 	/**
@@ -162,6 +170,7 @@ public class FakeSharedProject {
 	public DomainFile getDomainFile(String filepath) {
 		Project project = getGhidraProject().getProject();
 		ProjectData projectData = project.getProjectData();
+		refresh(); // force refresh since we do not employ repo listener
 		DomainFile df;
 		if (filepath.startsWith("/")) {
 			df = projectData.getFile(filepath);
@@ -205,7 +214,7 @@ public class FakeSharedProject {
 	}
 
 	/**
-	 * Opens the the program by the given name.  The path can be a simple name or a relative or
+	 * Opens the program by the given name.  The path can be a simple name or a relative or
 	 * absolute path to the file within the project.
 	 * 
 	 * @param filePath the path to the file to open 
@@ -287,7 +296,7 @@ public class FakeSharedProject {
 			}
 		};
 
-		df.checkin(ch, false, TaskMonitor.DUMMY);
+		df.checkin(ch, TaskMonitor.DUMMY);
 		repo.refresh();
 	}
 
@@ -387,6 +396,10 @@ public class FakeSharedProject {
 			throw new IllegalArgumentException("DomainFile cannot be null");
 		}
 
+		if (isFileSharingEnabled) {
+			return;
+		}
+
 		ProjectLocator pl = df.getProjectLocator();
 		ProjectLocator mypl = getProjectData().getProjectLocator();
 		if (!pl.equals(mypl)) {
@@ -451,12 +464,6 @@ public class FakeSharedProject {
 
 	void refresh() {
 		DefaultProjectData projectData = getProjectData();
-		try {
-			projectData.refresh(true);
-		}
-		catch (IOException e) {
-			// shouldn't happen
-			throw new AssertionFailedError("Unable to refresh project " + this);
-		}
+		projectData.refresh(true);
 	}
 }

@@ -67,14 +67,13 @@ public abstract class SymbolEntry {
 	public abstract int getSize();
 
 	/**
-	 * @return true if the mapped storage is read-only
+	 * Return one of
+	 *    - MutabilitySettingsDefinition.NORMAL
+	 *    - MutabilitySettingsDefinition.VOLATILE
+	 *    - MutabilitySettingsDefinition.CONSTANT
+	 * @return the mutability setting
 	 */
-	public abstract boolean isReadOnly();
-
-	/**
-	 * @return true if the mapped storage is volatile
-	 */
-	public abstract boolean isVolatile();
+	public abstract int getMutability();
 
 	/**
 	 * The storage used to hold this Symbol may be used for other purposes at different points in

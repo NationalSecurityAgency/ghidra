@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -50,8 +50,8 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 	@DBAnnotatedColumn(COMMENT_COLUMN_NAME)
 	static DBObjectColumn COMMENT_COLUMN;
 
-	static String tableName(AddressSpace space, long threadKey, int frameLevel) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
+	static String tableName(AddressSpace space) {
+		return DBTraceUtils.tableName(TABLE_NAME, space);
 	}
 
 	@DBAnnotatedField(column = TYPE_COLUMN_NAME, indexed = true)
@@ -104,7 +104,7 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 
 	@Override
 	public long getId() {
-		return DBTraceBookmarkManager.packId(key, space);
+		return DBTraceBookmarkManager.packId(key, range.getAddressSpace());
 	}
 
 	@Override
@@ -140,14 +140,14 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 			update(CATEGORY_COLUMN, COMMENT_COLUMN);
 		}
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBookmarkChangeType.CHANGED, space, this));
+			new TraceChangeRecord<>(TraceEvents.BOOKMARK_CHANGED, space.space, this));
 	}
 
 	@Override
 	public void delete() {
 		space.bookmarkMapSpace.deleteData(this);
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBookmarkChangeType.DELETED, space, this));
+			new TraceChangeRecord<>(TraceEvents.BOOKMARK_DELETED, space.space, this));
 	}
 
 	@Override

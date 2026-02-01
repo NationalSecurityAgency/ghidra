@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +16,28 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
-public class RemoveStackDepthChangeCommand implements Command {
-	
-	private Program program;
+public class RemoveStackDepthChangeCommand implements Command<Program> {
+
 	private Address address;
-	
-	public RemoveStackDepthChangeCommand(Program program, Address address) {
-		this.program = program;
+
+	public RemoveStackDepthChangeCommand(Address address) {
 		this.address = address;
 	}
 
-	public boolean applyTo(DomainObject obj) {
+	@Override
+	public boolean applyTo(Program program) {
 		return CallDepthChangeInfo.removeStackDepthChange(program, address);
 	}
 
+	@Override
 	public String getName() {
 		return "Remove Stack Depth Change";
 	}
 
+	@Override
 	public String getStatusMsg() {
 		return null;
 	}

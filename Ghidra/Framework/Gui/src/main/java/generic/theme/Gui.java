@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package generic.theme;
 
 import java.awt.*;
 
-import javax.swing.Icon;
-import javax.swing.LookAndFeel;
+import javax.swing.*;
+
+import ghidra.util.Msg;
 
 /**
  * Provides a static set of methods for globally managing application themes and their values.
@@ -36,6 +37,8 @@ import javax.swing.LookAndFeel;
  *
  */
 public class Gui {
+	private static final String FONT_SUFFIX = ".font";
+
 	// Start with an StubThemeManager so that simple tests can operate without having
 	// to initialize the theme system. Applications and integration tests will
 	// called ThemeManager.initialize() which will replace this with a fully initialized version.
@@ -146,6 +149,9 @@ public class Gui {
 	/**
 	 * Binds the component to the font identified by the given font id. Whenever the font for
 	 * the font id changes, the component will updated with the new font.
+	 * <p>
+	 * Calling this method will trigger a call to {@link JComponent#setFont(Font)}.
+	 *
 	 * @param component the component to set/update the font
 	 * @param fontId the id of the font to register with the given component
 	 */
@@ -154,11 +160,64 @@ public class Gui {
 	}
 
 	/**
+	 * Registers the given component with the given font style.  This method allows clients to not
+	 * define a font id in the theme system, but instead to signal that they want the default font
+	 * for the given component, modified with the given style.  As the underlying font is changed,
+	 * the client will be updated with that new font with the given style applied.
+	 * <P>
+	 * Most clients should <b>not</b> be using this method.  Instead, use
+	 * {@link #registerFont(JComponent, int)}.
+	 * <P>
+	 * The downside of using this method is that the end user cannot modify the style of the font.
+	 * By using the standard theming mechanism for registering fonts, the end user has full control.
+	 *
+	 * @param component the component to set/update the font
+	 * @param fontStyle the font style, one of Font.BOLD, Font.ITALIC,
+	 */
+	public static void registerFont(JComponent component, int fontStyle) {
+
+		if (fontStyle == Font.PLAIN) {
+			Msg.warn(Gui.class,
+				"Gui.registerFont(Component, int) may only be used for a non-plain font style.  " +
+					"Use registerFont(Component, String) instead.");
+			return;
+		}
+
+		String id = component.getUIClassID(); // e.g., ButtonUI
+		String name = id.substring(0, id.length() - 2); // strip off "UI"
+		String fontId = FontValue.LAF_ID_PREFIX + name + FONT_SUFFIX; // e.g., laf.font.Button.font 
+
+		themeManager.registerFont(component, fontId, fontStyle);
+	}
+
+	/**
+	 * Removes the component and font id binding made in a previous call to 
+	 * {@link #registerFont(Component, String)}.
+	 * <p>
+	 * Clients need to call this method if they decide to change the font id being used for a given
+	 * component.  Must clients do not need to use this method.
+	 * 
+	 * @param component the component to remove
+	 * @param fontId the id of the font previously registered
+	 */
+	public static void unRegisterFont(JComponent component, String fontId) {
+		themeManager.unRegisterFont(component, fontId);
+	}
+
+	/**
 	 * Returns true if the active theme is using dark defaults
 	 * @return true if the active theme is using dark defaults
 	 */
 	public static boolean isDarkTheme() {
 		return themeManager.isDarkTheme();
+	}
+
+	/**
+	 * Returns true if the theme system is in the process of updating
+	 * @return true if the theme system is in the process of updating
+	 */
+	public static boolean isUpdatingTheme() {
+		return themeManager.isUpdatingTheme();
 	}
 
 	/**
@@ -174,5 +233,29 @@ public class Gui {
 
 	static void setThemeManager(ThemeManager manager) {
 		themeManager = manager;
+	}
+
+	/**
+	 * Sets application's blinking cursor state. This will affect all JTextFields, JTextAreas, 
+	 * JTextPanes via {@link UIDefaults}. Custom components can also respect this setting by
+	 * either adding a {@link ThemeListener} or overriding {@link JComponent#updateUI()}
+	 * <P> NOTE: This method is a bit odd here as it doesn't really apply to a theme. But it
+	 * requires manipulation of the look and feel which is managed by the theme. If other 
+	 * application level properties  come along and also require changing the UIDefaults, 
+	 * perhaps a more general solution might be to add a way for clients to register a callback
+	 * so that they get a chance to change the UIDefaults map as the look and feel is loaded.
+	 * @param b true for blinking text cursors, false for non-blinking text cursors
+	 */
+	public static void setBlinkingCursors(boolean b) {
+		themeManager.setBlinkingCursors(b);
+	}
+
+	/**
+	 * Returns true if the application should allow blinking cursors, false otherwise. Custom
+	 * components can use this method to determine if they should have a blinking cursor or not.
+	 * @return true if the application should allow blinking cursors, false otherwise.
+	 */
+	public static boolean isBlinkingCursors() {
+		return themeManager.isBlinkingCursors();
 	}
 }

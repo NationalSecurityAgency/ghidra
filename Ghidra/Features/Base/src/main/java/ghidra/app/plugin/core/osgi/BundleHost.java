@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,11 +49,11 @@ import utilities.util.FileUtilities;
  * Note: {@link GhidraBundle}, its implementations, and this class constitute a bridge between 
  * OSGi's {@link Bundle} and Ghidra.
  * <ul>
- * <li> unqualified, "bundle" will mean {@link GhidraBundle}
+ * <li> unqualified, "bundle" will mean {@link GhidraBundle}</li>
  * <li> use of OSGi types, including {@link Bundle} and {@link Framework}, should be package scoped 
- * (not public)  
+ * (not public) </li>
  * <li> bundle lifecycle is simplified to "active"(same as OSGi "active" state) and "inactive" 
- * (OSGi "uninstalled" state)
+ * (OSGi "uninstalled" state)</li>
  * </ul>
  */
 public class BundleHost {
@@ -72,7 +72,7 @@ public class BundleHost {
 	private List<BundleHostListener> listeners = new CopyOnWriteArrayList<>();
 
 	/**
-	 * If a {@link GhidraBundle} hasn't already been added for {@bundleFile}, add it now as a 
+	 * If a {@link GhidraBundle} hasn't already been added for {@code bundleFile}, add it now as a 
 	 * non-system bundle.
 	 * 
 	 * <p>Enable the bundle.
@@ -891,7 +891,7 @@ public class BundleHost {
 		}
 
 		if (!bundlesToActivate.isEmpty()) {
-			TaskLauncher.launchNonModal("Restoring bundle state",
+			TaskLauncher.launchModal("Restoring Bundle State",
 				(monitor) -> activateInStages(bundlesToActivate, monitor, new NullPrintWriter()));
 		}
 	}

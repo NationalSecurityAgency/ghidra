@@ -33,6 +33,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 		languagePanel = new NewLanguagePanel();
 
 		setTransient(true);
+		languagePanel.getAccessibleContext().setAccessibleName("Select Language");
 		addWorkPanel(languagePanel);
 		addOKButton();
 		addCancelButton();
@@ -63,7 +64,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 		wasCancelled = true;
 	}
 
-	boolean wasCancelled() {
+	public boolean wasCancelled() {
 		return wasCancelled;
 	}
 
@@ -71,7 +72,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 		return languagePanel.getSelectedLcsPair() != null;
 	}
 
-	void setSelectedLanguage(LanguageCompilerSpecPair language) {
+	public void setSelectedLanguage(LanguageCompilerSpecPair language) {
 		Swing.runNow(() -> languagePanel.setSelectedLcsPair(language));
 	}
 

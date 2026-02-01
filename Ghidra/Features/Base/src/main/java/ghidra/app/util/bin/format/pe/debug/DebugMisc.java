@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pe.OffsetValidator;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -68,7 +67,7 @@ public class DebugMisc implements StructConverter {
 
 		long oldIndex = reader.getPointerIndex();
 
-		long index = debugDir.getPointerToRawData() & Conv.INT_MASK;
+		long index = Integer.toUnsignedLong(debugDir.getPointerToRawData());
 		if (!validator.checkPointer(index)) {
 			Msg.error(this, "Invalid file index " + Long.toHexString(index));
 			return;
@@ -83,8 +82,18 @@ public class DebugMisc implements StructConverter {
 			actualData =
 				(unicode ? reader.readNextUnicodeString(length) : reader.readNextAsciiString());
 		}
+		else if (length == 0 && !unicode) {
+			actualData = reader.readNextAsciiString();
+			// NB: should be a multiple of 4 per winnt.h 
+			// 13 = len(start of struct) + null
+			length = (int) Math.ceil((actualData.length() + 13)/4.0)*4;
+			if (length > DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY) {
+				length = DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY;
+			}
+			Msg.warn(this, "Zero length structure - defaulting to " + Integer.toHexString(length));
+		}
 		else {
-			Msg.error(this, "Bad string length " + Integer.toHexString(length));
+			Msg.error(this, "Bad structure length " + Integer.toHexString(length));
 		}
 
 		reader.setPointerIndex(oldIndex);
@@ -152,6 +161,7 @@ public class DebugMisc implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 
 		StructureDataType struct = new StructureDataType(NAME, 0);

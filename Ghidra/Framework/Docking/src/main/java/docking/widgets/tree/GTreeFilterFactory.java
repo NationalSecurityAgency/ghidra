@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package docking.widgets.tree;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.Icon;
+import javax.swing.tree.TreePath;
 
 import docking.widgets.filter.*;
 import docking.widgets.tree.support.GTreeFilter;
@@ -26,14 +26,15 @@ import ghidra.util.FilterTransformer;
 
 public class GTreeFilterFactory {
 
+	private static final FilterOptions DEFAULT_OPTIONS = new FilterOptions();
 	private FilterOptions filterOptions;
 
 	public GTreeFilterFactory() {
-		this(new FilterOptions());
+		this(DEFAULT_OPTIONS);
 	}
 
 	public GTreeFilterFactory(FilterOptions filterOptions) {
-		this.filterOptions = filterOptions;
+		this.filterOptions = Objects.requireNonNull(filterOptions);
 	}
 
 	public FilterOptions getFilterOptions() {
@@ -49,10 +50,15 @@ public class GTreeFilterFactory {
 		return treeFilter;
 	}
 
-	private GTreeFilter getBaseFilter(String text, FilterTransformer<GTreeNode> transformer) {
+	private GTreeFilter getBaseFilter(String text, FilterTransformer<GTreeNode> clientTransformer) {
+
+		FilterTransformer<GTreeNode> transformer = clientTransformer;
+		if (filterOptions.shouldUsePath()) {
+			transformer = new PrependPathWrappingTransformer(clientTransformer);
+		}
 
 		if (filterOptions.isMultiterm() && text.trim().length() > 0) {
-			return getMultiWordTableFilter(text, transformer);
+			return getMultiWordFilter(text, transformer);
 
 		}
 		TextFilter textFilter = filterOptions.getTextFilterFactory().getTextFilter(text);
@@ -62,7 +68,7 @@ public class GTreeFilterFactory {
 		return null;
 	}
 
-	private GTreeFilter getMultiWordTableFilter(String text,
+	private GTreeFilter getMultiWordFilter(String text,
 			FilterTransformer<GTreeNode> transformer) {
 
 		List<TextFilter> filters = new ArrayList<>();
@@ -79,5 +85,55 @@ public class GTreeFilterFactory {
 
 	public Icon getFilterStateIcon() {
 		return filterOptions.getFilterStateIcon();
+	}
+
+	public boolean isDefault() {
+		return DEFAULT_OPTIONS.equals(filterOptions);
+	}
+
+	/**
+	 * A class that takes in a client node filter transformer and wraps it so that any text returned
+	 * by the client will have the node path prepended. 
+	 */
+	private class PrependPathWrappingTransformer implements FilterTransformer<GTreeNode> {
+
+		private ThreadLocal<List<String>> localizedResults = new ThreadLocal<>() {
+			@Override
+			protected List<String> initialValue() {
+				return new ArrayList<>();
+			}
+		};
+
+		private FilterTransformer<GTreeNode> delegate;
+
+		PrependPathWrappingTransformer(FilterTransformer<GTreeNode> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public List<String> transform(GTreeNode t) {
+
+			List<String> results = localizedResults.get();
+			results.clear();
+
+			TreePath treePath = t.getTreePath();
+			Object[] elements = treePath.getPath();
+			StringBuilder buffy = new StringBuilder();
+
+			// ignore the leaf node, as text for that is generated separately
+			int n = elements.length - 1;
+			for (int i = 0; i < n; i++) {
+				GTreeNode node = (GTreeNode) elements[i];
+				buffy.append(node.getDisplayText()).append('/');
+			}
+			String parentPath = buffy.toString();
+
+			List<String> delegateFilters = delegate.transform(t);
+			for (String filterPiece : delegateFilters) {
+				results.add(parentPath + filterPiece);
+			}
+
+			return results;
+		}
 	}
 }

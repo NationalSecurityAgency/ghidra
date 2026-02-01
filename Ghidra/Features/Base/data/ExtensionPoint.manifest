@@ -14,10 +14,12 @@ MachoRelocationHandler
 ElfRelocationHandler
 ElfExtension
 RelocationFixupHandler
-CodeComparisonPanel
+CodeComparisonView
 InstructionSkipper
 DataTypeReferenceFinder
 ChecksumAlgorithm
 OverviewColorService
 DWARFFunctionFixup
 ElfInfoProducer
+FSBFileHandler
+SearchAndReplaceHandler

@@ -50,7 +50,7 @@ public class LinuxJavaFinder extends JavaFinder {
 
 	@Override
 	protected File getJdkHomeFromJavaHome(File javaHomeDir) {
-		if (javaHomeDir.getName().equals("jre")) {
+		if (javaHomeDir.getName().equals("jre") && !javaHomeDir.getAbsolutePath().contains("org.eclipse.justj")) {
 			return javaHomeDir.getParentFile();
 		}
 		return javaHomeDir;

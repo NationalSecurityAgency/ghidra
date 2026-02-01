@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericTerminal;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyTerminal;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.processors.sleigh.ConstructState;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
@@ -47,7 +46,7 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 	 * @param value the value of the operand
 	 * @param opSym the operand symbol
 	 */
-	public AssemblyOperandState(AssemblyTreeResolver resolver,
+	public AssemblyOperandState(AbstractAssemblyTreeResolver<?> resolver,
 			List<AssemblyConstructorSemantic> path, int shift, AssemblyTerminal terminal,
 			long value, OperandSymbol opSym) {
 		super(resolver, path, shift, opSym.getMinimumLength());
@@ -58,18 +57,17 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 
 	@Override
 	public int computeHash() {
-		return Objects.hash(getClass(), shift, value, opSym);
+		int result = getClass().hashCode();
+		result *= 31;
+		result += Integer.hashCode(shift);
+		result *= 31;
+		result += Long.hashCode(value);
+		result *= 31;
+		result += opSym.hashCode();
+		return result;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof AssemblyOperandState)) {
-			return false;
-		}
-		AssemblyOperandState that = (AssemblyOperandState) obj;
+	protected boolean partsEqual(AssemblyOperandState that) {
 		if (this.resolver != that.resolver) {
 			return false;
 		}
@@ -83,6 +81,18 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		AssemblyOperandState that = (AssemblyOperandState) obj;
+		return partsEqual(that);
 	}
 
 	@Override
@@ -117,39 +127,48 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 		if (symExp == null) {
 			symExp = opSym.getDefiningSymbol().getPatternExpression();
 		}
-		DBG.println("Equation: " + symExp + " = " + Long.toHexString(value));
 		String desc = "Solution to " + opSym + " in " + Long.toHexString(value) + " = " + symExp;
 		AssemblyResolution sol =
-			AssemblyTreeResolver.solveOrBackfill(symExp, value, bitsize, resolver.vals, null, desc);
-		DBG.println("Solution: " + sol);
+			factory.solveOrBackfill(symExp, value, bitsize, resolver.vals, null, desc);
 		AssemblyResolution shifted = sol.shift(shift);
-		DBG.println("Shifted: " + shifted);
 		return shifted;
 	}
 
 	@Override
 	protected Stream<AssemblyResolvedPatterns> resolve(AssemblyResolvedPatterns fromRight,
 			Collection<AssemblyResolvedError> errors) {
-		try (DbgCtx dc = DBG.start("Resolving " + terminal)) {
-			AssemblyResolution sol = solveNumeric();
-			if (sol.isError()) {
-				errors.add((AssemblyResolvedError) sol);
-				return Stream.of();
-			}
-			if (sol.isBackfill()) {
-				AssemblyResolvedPatterns combined =
-					fromRight.combine((AssemblyResolvedBackfill) sol);
-				return Stream.of(combined.withRight(fromRight));
-			}
-			AssemblyResolution combined = fromRight.combine((AssemblyResolvedPatterns) sol);
-			if (combined == null) {
-				errors.add(
-					AssemblyResolution.error("Pattern/operand conflict", "Resolving " + terminal));
-				return Stream.of();
-			}
-			AssemblyResolvedPatterns pats = (AssemblyResolvedPatterns) combined;
-			// Do not take constructor from right
-			return Stream.of(pats.withRight(fromRight).withConstructor(null));
+		AssemblyResolution sol = solveNumeric();
+		if (sol.isError()) {
+			errors.add((AssemblyResolvedError) sol);
+			return Stream.of();
 		}
+		if (sol.isBackfill()) {
+			AssemblyResolvedPatterns combined =
+				fromRight.combine((AssemblyResolvedBackfill) sol);
+			return Stream.of(combined.withRight(fromRight));
+		}
+		AssemblyResolution combined = fromRight.combine((AssemblyResolvedPatterns) sol);
+		if (combined == null) {
+			errors.add(factory.newErrorBuilder()
+					.error("Pattern/operand conflict")
+					.description("Resolving " + terminal)
+					.build());
+			return Stream.of();
+		}
+		AssemblyResolvedPatterns pats = (AssemblyResolvedPatterns) combined;
+		// Do not take constructor from right
+		return Stream.of(pats.withRight(fromRight).withConstructor(null));
+	}
+
+	public AssemblyTerminal getTerminal() {
+		return terminal;
+	}
+
+	public long getValue() {
+		return value;
+	}
+
+	public OperandSymbol getOperandSymbol() {
+		return opSym;
 	}
 }

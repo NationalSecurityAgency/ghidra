@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import db.*;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.database.annot.*;
 import ghidra.util.database.annot.DBAnnotatedField.DefaultCodec;
@@ -40,7 +41,7 @@ import ghidra.util.exception.VersionException;
  * See {@link DBAnnotatedObject} for more documentation, including an example object definition. To
  * create a store, e.g., for {@code Person}:
  * 
- * <pre>
+ * <pre>{@code
  * interface MyDomainObject {
  * 	Person createPerson(String name, String address);
  * 
@@ -70,7 +71,7 @@ import ghidra.util.exception.VersionException;
  * 		}
  * 	}
  * 
- * 	&#64;Override
+ * 	@Override
  * 	public Person createPerson(String name, String address) {
  * 		// Locking details elided
  * 		DBPerson person = people.create();
@@ -78,19 +79,19 @@ import ghidra.util.exception.VersionException;
  * 		return person;
  * 	}
  * 
- * 	&#64;Override
+ * 	@Override
  * 	public Person getPerson(int id) {
  * 		// Locking details elided
  * 		return people.getAt(id);
  * 	}
  * 
- * 	&#64;Override
+ * 	@Override
  * 	public Collection<Person> getPeopleNamed(String name) {
  * 		// Locking details elided
  * 		return peopleByName.get(name);
  * 	}
  * }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * The factory manages tables on behalf of the domain object, so it is typically the first thing
@@ -109,6 +110,32 @@ import ghidra.util.exception.VersionException;
  *           store for that class.
  */
 public class DBCachedObjectStoreFactory {
+
+	public record RecAddress(int spaceId, long offset) {
+		public static RecAddress fromAddress(Address address) {
+			return new RecAddress(address.getAddressSpace().getSpaceID(), address.getOffset());
+		}
+
+		public long offset() {
+			return offset;
+		}
+
+		public Address toAddress(AddressFactory factory) {
+			return factory.getAddressSpace(spaceId).getAddress(offset);
+		}
+	}
+
+	public record RecRange(int spaceId, long min, long max) {
+		public static RecRange fromRange(AddressRange range) {
+			return new RecRange(range.getAddressSpace().getSpaceID(),
+				range.getMinAddress().getOffset(), range.getMaxAddress().getOffset());
+		}
+
+		public AddressRange toRange(AddressFactory factory) {
+			AddressSpace space = factory.getAddressSpace(spaceId);
+			return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
+		}
+	}
 
 	/**
 	 * A codec for encoding alternative data types
@@ -132,7 +159,7 @@ public class DBCachedObjectStoreFactory {
 	 * {@link DBAnnotatedObject} is sufficient. If context is required, then additional interfaces
 	 * can be required via type intersection:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 * public interface MyContext {
 	 * 	// ...
 	 * }
@@ -148,14 +175,14 @@ public class DBCachedObjectStoreFactory {
 	 * 		super(MyType.class, objectType, BinaryField.class, field, column);
 	 * 	}
 	 * 
-	 * 	&#64;Override
+	 * 	@Override
 	 * 	protected void doStore(OT obj, DBRecord record) {
 	 * 		MyContext ctx = obj.getContext();
 	 * 		// ...
 	 * 	}
 	 * 	// ...
 	 * }
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * <p>
 	 * Note that this implementation uses {@link AbstractDBFieldCodec}, which is highly recommended.
@@ -167,25 +194,25 @@ public class DBCachedObjectStoreFactory {
 	 * {@link BinaryField}. See {@link ByteDBFieldCodec} for the simplest example with actual
 	 * encoding and decoding implementations. To use the example codec in an object:
 	 * 
-	 * <pre>
-	 * &#64;DBAnnotatedObjectInfo(version = 1)
+	 * <pre>{@code
+	 * @DBAnnotatedObjectInfo(version = 1)
 	 * public static class SomeObject extends DBAnnotatedObject implements ContextProvider {
 	 * 	static final String MY_COLUMN_NAME = "My";
 	 * 
-	 * 	&#64;DBAnnotatedColumn(MY_COLUMN_NAME)
+	 * 	@DBAnnotatedColumn(MY_COLUMN_NAME)
 	 * 	static DBObjectColumn MY_COLUMN;
 	 * 
-	 * 	&#64;DBAnnotatedField(column = MY_COLUMN_NAME, codec = MyDBFieldCodec.class)
+	 * 	@DBAnnotatedField(column = MY_COLUMN_NAME, codec = MyDBFieldCodec.class)
 	 * 	private MyType my;
 	 * 
 	 * 	// ...
 	 * 
-	 * 	&#64;Override
+	 * 	@Override
 	 * 	public MyContext getContext() {
 	 * 		// ...
 	 * 	}
 	 * }
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * <p>
 	 * Notice that {@code SomeObject} must implement {@code ContextProvider}. This restriction is
@@ -379,7 +406,7 @@ public class DBCachedObjectStoreFactory {
 				throws IllegalArgumentException, IllegalAccessException;
 
 		/**
-		 * Same as {@link #load(DBAnnotatedObject, DBRecord), but permits exceptions
+		 * Same as {@link #load(DBAnnotatedObject, DBRecord)}, but permits exceptions
 		 */
 		protected abstract void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException;
@@ -712,7 +739,7 @@ public class DBCachedObjectStoreFactory {
 		void encode(ByteBuffer buffer, T value);
 
 		/**
-		 * The the class describing {@link T}
+		 * The class describing {@link T}
 		 * 
 		 * @return the class
 		 */
@@ -928,11 +955,41 @@ public class DBCachedObjectStoreFactory {
 		/** Codec for {@code String[]} */
 		PrimitiveCodec<String[]> STRING_ARR =
 			new ArrayObjectCodec<>(new LengthBoundCodec<>(STRING));
+		PrimitiveCodec<RecAddress> ADDRESS = new AbstractPrimitiveCodec<>(RecAddress.class) {
+			@Override
+			public RecAddress decode(ByteBuffer buffer) {
+				int spaceId = buffer.getInt();
+				long offset = buffer.getLong();
+				return new RecAddress(spaceId, offset);
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, RecAddress value) {
+				buffer.putInt(value.spaceId);
+				buffer.putLong(value.offset);
+			}
+		};
+		PrimitiveCodec<RecRange> RANGE = new AbstractPrimitiveCodec<>(RecRange.class) {
+			@Override
+			public RecRange decode(ByteBuffer buffer) {
+				int spaceId = buffer.getInt();
+				long min = buffer.getLong();
+				long max = buffer.getLong();
+				return new RecRange(spaceId, min, max);
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, RecRange value) {
+				buffer.putInt(value.spaceId);
+				buffer.putLong(value.min);
+				buffer.putLong(value.max);
+			}
+		};
 
 		// TODO: No floats?
 		Map<Byte, PrimitiveCodec<?>> CODECS_BY_SELECTOR = Stream
 				.of(BOOL, BYTE, CHAR, SHORT, INT, LONG, STRING, BOOL_ARR, BYTE_ARR, CHAR_ARR,
-					SHORT_ARR, INT_ARR, LONG_ARR, STRING_ARR)
+					SHORT_ARR, INT_ARR, LONG_ARR, STRING_ARR, ADDRESS, RANGE)
 				.collect(Collectors.toMap(c -> c.getSelector(), c -> c));
 		Map<Class<?>, PrimitiveCodec<?>> CODECS_BY_CLASS = CODECS_BY_SELECTOR.values()
 				.stream()

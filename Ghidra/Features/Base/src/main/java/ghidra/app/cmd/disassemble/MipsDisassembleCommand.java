@@ -17,7 +17,6 @@ package ghidra.app.cmd.disassemble;
 
 import java.math.BigInteger;
 
-import ghidra.framework.model.DomainObject;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -75,8 +74,7 @@ public class MipsDisassembleCommand extends DisassembleCommand {
 	}
 
 	@Override
-	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	synchronized public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		disassemblyPerformed = false;
 		unalignedStart = false;
@@ -90,7 +88,7 @@ public class MipsDisassembleCommand extends DisassembleCommand {
 				setStatusMsg("MIPS16 mode not supported");
 				return false;
 			}
-			return super.applyTo(obj, monitor);
+			return super.applyTo(program, monitor);
 		}
 
 		RegisterValue m16modeValue =

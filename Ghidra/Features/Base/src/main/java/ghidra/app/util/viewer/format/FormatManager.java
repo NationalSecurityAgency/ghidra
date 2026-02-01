@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.util.ListingHighlightProvider;
@@ -28,8 +28,11 @@ import ghidra.app.util.viewer.field.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.scalar.Scalar;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -71,7 +74,7 @@ public class FormatManager implements OptionsChangeListener {
 	TemplateSimplifier templateSimplifier;
 
 	// NOTE:  Unused custom format code was removed.  The custom format code last existed in
-	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.  
+	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.
 
 	/**
 	 * Constructs a new FormatManager.
@@ -100,7 +103,7 @@ public class FormatManager implements OptionsChangeListener {
 	private void getArrayDisplayOptions(Options options) {
 		options.registerOption(ARRAY_DISPLAY_OPTIONS, OptionType.CUSTOM_TYPE,
 			new ArrayElementWrappedOption(), null, ARRAY_DISPLAY_DESCRIPTION,
-			new ArrayElementPropertyEditor());
+			() -> new ArrayElementPropertyEditor());
 		CustomOption option = options.getCustomOption(ARRAY_DISPLAY_OPTIONS, null);
 		if (option instanceof ArrayElementWrappedOption) {
 			ArrayElementWrappedOption arrayOption = (ArrayElementWrappedOption) option;
@@ -159,7 +162,9 @@ public class FormatManager implements OptionsChangeListener {
 	 * @param listener the listener to be added
 	 */
 	public void addFormatModelListener(FormatModelListener listener) {
-		formatListeners.add(listener);
+		if (listener != null) {
+			formatListeners.add(listener);
+		}
 	}
 
 	/**
@@ -174,7 +179,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the total number of model in the format manager.
-	 * @return the total number of model in the format manager 
+	 * @return the total number of model in the format manager
 	 */
 	public int getNumModels() {
 		return NUM_MODELS;
@@ -200,7 +205,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model for the plate field.
-	 * @return the format model for the plate field 
+	 * @return the format model for the plate field
 	 */
 	public FieldFormatModel getPlateFormat() {
 		return models[FieldFormatModel.PLATE];
@@ -233,8 +238,8 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Returns the format model to use for the internals of open structures.
 	 * 
-	 * @param data
-	 *            the data code unit to get the format model for.
+	 * @param data the data code unit to get the format model for.
+	 * @return the format model to use for the internals of open structures.
 	 */
 	public FieldFormatModel getOpenDataFormat(Data data) {
 
@@ -248,6 +253,25 @@ public class FormatManager implements OptionsChangeListener {
 		return models[FieldFormatModel.OPEN_DATA];
 	}
 
+	/**
+	 * Toggle the enablement for the field with the given name.
+	 * @param name the of the field to toggle
+	 */
+	public void toggleField(String name) {
+		for (FieldFormatModel model : models) {
+			for (int i = 0; i < model.getNumRows(); i++) {
+				FieldFactory[] rowFactories = model.getFactorys(i);
+				for (FieldFactory fieldFactory : rowFactories) {
+					if (fieldFactory.getFieldName().equals(name)) {
+						fieldFactory.setEnabled(!fieldFactory.isEnabled());
+						return;
+					}
+				}
+			}
+		}
+		Msg.showError(this, null, "Toggle Field Failed!", "No field named \"" + name + "\"");
+	}
+
 	private boolean isPrimitiveArrayElement(Data data) {
 		Data parent = data.getParent();
 		if (parent == null) {
@@ -257,8 +281,7 @@ public class FormatManager implements OptionsChangeListener {
 			return false;
 		}
 		DataType type = data.getBaseDataType();
-		return type.getLength() > 0 && type instanceof AbstractIntegerDataType ||
-			type instanceof DefaultDataType;
+		return type.getLength() > 0 && type.getValueClass(null) == Scalar.class;
 	}
 
 	/**
@@ -279,7 +302,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the Options used for field specific properties.
-	 * @return the Options used for field specific properties 
+	 * @return the Options used for field specific properties
 	 */
 	public ToolOptions getFieldOptions() {
 		return fieldOptions;
@@ -310,6 +333,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the width of the widest model in this manager.
+	 * @return the width of the widest model in this manager.
 	 */
 	public int getMaxWidth() {
 		int maxWidth = 0;
@@ -325,6 +349,13 @@ public class FormatManager implements OptionsChangeListener {
 			maxRowCount = Math.max(maxRowCount, element.getNumRows());
 		}
 		return maxRowCount;
+	}
+
+	/**
+	 * {@return a list of field names that should have quick toggle actions.}
+	 */
+	public List<String> getQuickToggleFieldNames() {
+		return List.of("PCode");
 	}
 
 	private Element getDefaultModel(int modelID) {
@@ -353,15 +384,26 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
-
 		colElem.setAttribute("NAME", "Separator");
 		colElem.setAttribute("WIDTH", "80");
 		colElem.setAttribute("ENABLED", "true");
-
 		rowElem.addContent(colElem);
 		root.addContent(rowElem);
-		return root;
 
+		rowElem = new Element("ROW");
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "150");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("NAME", "Collapsed Code");
+		colElem.setAttribute("WIDTH", "200");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		root.addContent(rowElem);
+		return root;
 	}
 
 	private Element getDefaultPlateFormat() {
@@ -403,6 +445,12 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
+		colElem.setAttribute("NAME", "+");
+		colElem.setAttribute("WIDTH", "20");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
 		colElem.setAttribute("WIDTH", "200");
 		colElem.setAttribute("ENABLED", "true");
 		rowElem.addContent(colElem);
@@ -485,7 +533,13 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
-		colElem.setAttribute("WIDTH", "90");
+		colElem.setAttribute("NAME", "+");
+		colElem.setAttribute("WIDTH", "20");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "70");
 		colElem.setAttribute("ENABLED", "true");
 		rowElem.addContent(colElem);
 
@@ -589,6 +643,22 @@ public class FormatManager implements OptionsChangeListener {
 		rowElem.addContent(colElem);
 
 		root.addContent(rowElem);
+
+		rowElem = new Element("ROW");
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "200");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("NAME", "Source Map");
+		colElem.setAttribute("WIDTH", "440");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		root.addContent(rowElem);
+
 		rowElem = new Element("ROW");
 
 		colElem = new Element("FIELD");
@@ -793,6 +863,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Returns the maximum number of possible rows in a layout. This would only
 	 * occur if some address had every possible type of information to be displayed.
+	 * @return the maximum number of possible rows in a layout.
 	 */
 	public int getMaxNumRows() {
 		return maxNumRows;
@@ -847,7 +918,7 @@ public class FormatManager implements OptionsChangeListener {
 	}
 
 	/**
-	 * Gets all {@link ListingHighlightProvider}s installed on this FormatManager via the 
+	 * Gets all {@link ListingHighlightProvider}s installed on this FormatManager via the
 	 * {@link #addHighlightProvider(ListingHighlightProvider)}.
 	 * 
 	 * @return all {@link ListingHighlightProvider}s installed on this FormatManager.
@@ -857,8 +928,9 @@ public class FormatManager implements OptionsChangeListener {
 	}
 
 	/**
-	 * Returns the {@link ListingHighlightProvider} that should be used when creating {@link FieldFactory}
-	 * objects.
+	 * Returns the {@link ListingHighlightProvider} that should be used when creating 
+	 * {@link FieldFactory} objects.
+	 * @return the provider
 	 */
 	public ListingHighlightProvider getFormatHighlightProvider() {
 		return highlightProvider;
@@ -904,6 +976,9 @@ public class FormatManager implements OptionsChangeListener {
 		for (int i = 0; i < NUM_MODELS; i++) {
 			if (saveState.hasValue(models[i].getName())) {
 				models[i].restoreFromXml(saveState.getXmlElement(models[i].getName()));
+				// hack to make sure the new open/close variables field is present
+				// If missing, we are just going to reset it to the default format
+				checkForMissingNewCriticalFields(models[i]);
 			}
 			else {
 				models[i].restoreFromXml(getDefaultModel(i));
@@ -911,6 +986,36 @@ public class FormatManager implements OptionsChangeListener {
 		}
 		initialized = true;
 		modelChanged(null);
+	}
+
+	// This is a hack to make sure the new variables and functions open/close field is present.
+	// This was added in version 12.0/12.1 and can probably be removed in a few releases.
+	private void checkForMissingNewCriticalFields(FieldFormatModel model) {
+		if (model.getName().equals("Variable")) {
+			if (!hasField(model, "+")) {
+				model.restoreFromXml(getDefaultVariableFormat());
+			}
+		}
+		if (model.getName().equals("Function")) {
+			if (!hasField(model, "+")) {
+				model.restoreFromXml(getDefaultFunctionFormat());
+			}
+		}
+		if (model.getName().equals("Address Break")) {
+			if (!hasField(model, "Collapsed Code")) {
+				model.restoreFromXml(getDefaultDividerFormat());
+			}
+		}
+	}
+
+	private boolean hasField(FieldFormatModel model, String fieldName) {
+		FieldFactory[] unusedFactories = model.getUnusedFactories();
+		for (FieldFactory fieldFactory : unusedFactories) {
+			if (fieldFactory.getFieldName().equals(fieldName)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public ServiceProvider getServiceProvider() {
@@ -923,25 +1028,23 @@ public class FormatManager implements OptionsChangeListener {
 
 	private class MultipleHighlighterProvider implements ListingHighlightProvider {
 
-		private List<ListingHighlightProvider> highlightProviders =
-			new CopyOnWriteArrayList<>();
+		private List<ListingHighlightProvider> highlightProviders = new CopyOnWriteArrayList<>();
 
 		@Override
 		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
 			//
-			// Gather and use all other registered providers.  
-			// 
+			// Gather and use all other registered providers.
+			//
 			// Note: we loop backwards here as a hacky method to make sure that the middle-mouse
-			//       highlighter runs last and is thus painted above other highlights.  This 
-			//       works because the middle-mouse highlighter is installed before any other 
-			//       highlighters.			
+			//       highlighter runs last and is thus painted above other highlights.  This
+			//       works because the middle-mouse highlighter is installed before any other
+			//       highlighters.
 			List<Highlight> list = new ArrayList<>();
 			int size = highlightProviders.size();
 			for (int i = size - 1; i >= 0; i--) {
 				ListingHighlightProvider provider = highlightProviders.get(i);
-				Highlight[] highlights =
-					provider.createHighlights(text, field, cursorTextOffset);
+				Highlight[] highlights = provider.createHighlights(text, field, cursorTextOffset);
 				for (Highlight highlight : highlights) {
 					list.add(highlight);
 				}

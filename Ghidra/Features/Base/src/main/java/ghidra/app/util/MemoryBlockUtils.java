@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -209,7 +209,7 @@ public class MemoryBlockUtils {
 	 * @param w the write permission for the new block.
 	 * @param x the execute permission for the new block.
 	 * @param log a {@link MessageLog} for appending error messages
-	 * @return the new created block
+	 * @return the newly created block or null if the operation failed
 	 * @throws AddressOverflowException if the address 
 	 */
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
@@ -262,7 +262,7 @@ public class MemoryBlockUtils {
 	 * @param x the execute permission for the new block.
 	 * @param log a {@link MessageLog} for appending error messages
 	 * @param monitor the monitor for canceling this potentially long running operation.
-	 * @return the new created block
+	 * @return the newly created block or null if the operation failed
 	 * @throws AddressOverflowException if the address 
 	 */
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
@@ -353,6 +353,64 @@ public class MemoryBlockUtils {
 		try (InputStream fis = provider.getInputStream(offset)) {
 			return memory.createFileBytes(provider.getName(), offset, length, fis, monitor);
 		}
+	}
+
+	/**
+	 * Gets the next available {@link Address} in the {@link Program}
+	 * 
+	 * @param program The {@link Program}
+	 * @return The next available {@link Address} in the {@link Program}
+	 */
+	public static Address getNextAvailableAddress(Program program) {
+		Address maxAddress = null;
+		for (MemoryBlock block : program.getMemory().getBlocks()) {
+			if (block.isOverlay()) {
+				continue;
+			}
+			if (maxAddress == null || block.getEnd().compareTo(maxAddress) > 0) {
+				maxAddress = block.getEnd();
+			}
+		}
+		if (maxAddress == null) {
+			return program.getAddressFactory().getDefaultAddressSpace().getAddress(0x1000);
+		}
+		long maxAddr = maxAddress.getOffset();
+		long remainder = maxAddr % 0x1000;
+		return maxAddress.getNewAddress(maxAddr + 0x1000 - remainder);
+	}
+
+	/**
+	 * Adds the {@link MemoryBlock#EXTERNAL_BLOCK_NAME EXTERNAL block} to memory at the 
+	 * {@link #getNextAvailableAddress(Program) next available address}, or adds to an
+	 * existing one
+	 * 
+	 * @param program The {@link Program}
+	 * @param size The desired size of the new EXTERNAL block
+	 * @param log The {@link MessageLog}
+	 * @return The {@link Address} of the new (or new piece) of EXTERNAL block
+	 * @throws Exception if there was an issue creating or adding to the EXTERNAL block
+	 */
+	public static Address addExternalBlock(Program program, long size, MessageLog log)
+			throws Exception {
+		Memory mem = program.getMemory();
+		MemoryBlock externalBlock = mem.getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
+		Address ret;
+		if (externalBlock != null) {
+			ret = externalBlock.getEnd().add(1);
+			MemoryBlock newBlock =
+				mem.createBlock(externalBlock, MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size);
+			mem.join(externalBlock, newBlock);
+		}
+		else {
+			ret = getNextAvailableAddress(program);
+			externalBlock =
+				mem.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size, false);
+			externalBlock.setWrite(true);
+			externalBlock.setArtificial(true);
+			externalBlock.setComment(
+				"NOTE: This block is artificial and is used to make relocations work correctly");
+		}
+		return ret;
 	}
 
 	private static void setBlockAttributes(MemoryBlock block, String comment, String source,

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
@@ -140,7 +141,7 @@ public enum SleighProgramCompiler {
 	/**
 	 * Compile the given source into a p-code template
 	 * 
-	 * @see #compileProgram(SleighLanguage, String, List, PcodeUseropLibrary)
+	 * @see #compileProgram(SleighLanguage, String, String, PcodeUseropLibrary)
 	 * @param language the language
 	 * @param parser the parser
 	 * @param sourceName the name of the program, for error diagnostics
@@ -149,6 +150,9 @@ public enum SleighProgramCompiler {
 	 */
 	public static ConstructTpl compileTemplate(Language language, PcodeParser parser,
 			String sourceName, String source) {
+		if (source.isBlank()) {
+			return new ConstructTpl(new OpTpl[] {});
+		}
 		return parser.compilePcode(source, sourceName, 1);
 	}
 
@@ -164,7 +168,8 @@ public enum SleighProgramCompiler {
 	 */
 	public static List<PcodeOp> buildOps(Language language, ConstructTpl template)
 			throws UnknownInstructionException, MemoryAccessException, IOException {
-		Address zero = language.getDefaultSpace().getAddress(0);
+		//Address zero = language.getDefaultSpace().getAddress(0);
+		Address zero = Address.NO_ADDRESS;
 		SleighParserContext c = new SleighParserContext(zero, zero, zero, zero);
 		ParserWalker walk = new ParserWalker(c);
 		PcodeEmitObjects emit = new PcodeEmitObjects(walk);
@@ -249,7 +254,7 @@ public enum SleighProgramCompiler {
 	 * scripting, or perhaps in a Sleigh repl. The library given during compilation must match the
 	 * library given for execution, at least in its binding of userop IDs to symbols.
 	 * 
-	 * @param the parser to use
+	 * @param parser the parser to use
 	 * @param language the language of the target p-code machine
 	 * @param sourceName a diagnostic name for the Sleigh source
 	 * @param source the Sleigh source
@@ -284,7 +289,8 @@ public enum SleighProgramCompiler {
 	 * evaluator p-code program uses its own library as a means of capturing the result; however,
 	 * userop libraries are easily composed. It should be easy to add that feature if needed.
 	 * 
-	 * @param language the languge of the target p-code machine
+	 * @param parser a parser for the given language
+	 * @param language the language of the target p-code machine
 	 * @param expression the Sleigh expression to be evaluated
 	 * @return a p-code program whose {@link PcodeExpression#evaluate(PcodeExecutor)} method will
 	 *         evaluate the expression on the given executor and its state.

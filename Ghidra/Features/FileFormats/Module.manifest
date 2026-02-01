@@ -1,12 +1,14 @@
-MODULE FILE LICENSE: lib/dex-ir-2.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/dex-reader-2.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/dex-reader-api-2.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/dex-translator-2.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/asm-debug-all-5.0.3.jar INRIA License
+MODULE FILE LICENSE: lib/dex-ir-2.4.24.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dex-reader-2.4.24.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dex-reader-api-2.4.24.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dex-translator-2.4.24.jar Apache License 2.0
 MODULE FILE LICENSE: lib/baksmali-2.5.2.jar BSD-3-GRUVER
 MODULE FILE LICENSE: lib/dexlib2-2.5.2.jar BSD-3-GRUVER
 MODULE FILE LICENSE: lib/util-2.5.2.jar BSD-3-GRUVER
 MODULE FILE LICENSE: lib/sevenzipjbinding-16.02-2.01.jar LGPL 2.1
 MODULE FILE LICENSE: lib/sevenzipjbinding-all-platforms-16.02-2.01.jar LGPL 2.1
 MODULE FILE LICENSE: lib/AXMLPrinter2.jar Apache License 2.0
-
+MODULE FILE LICENSE: os/win_86_64/lzfse.exe BSD-3-APPLE
+MODULE FILE LICENSE: os/mac_86_64/lzfse BSD-3-APPLE
+MODULE FILE LICENSE: os/mac_arm_64/lzfse BSD-3-APPLE
+MODULE FILE LICENSE: os/linux_x86_64/lzfse BSD-3-APPLE

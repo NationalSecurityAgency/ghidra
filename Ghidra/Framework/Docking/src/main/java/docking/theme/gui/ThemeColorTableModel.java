@@ -224,14 +224,14 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 
 	private class ThemeColorRenderer extends AbstractGColumnRenderer<ResolvedColor> {
 
-		public ThemeColorRenderer() {
-			setFont(Gui.getFont("font.monospaced"));
+		@Override
+		protected Font getDefaultFont() {
+			return fixedWidthFont;
 		}
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-			setFont(Gui.getFont("font.monospaced"));
 			ResolvedColor resolved = (ResolvedColor) data.getValue();
 
 			String text = getValueText(resolved);

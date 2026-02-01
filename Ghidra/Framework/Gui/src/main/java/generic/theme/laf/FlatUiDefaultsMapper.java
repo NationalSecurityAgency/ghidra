@@ -24,42 +24,42 @@ public class FlatUiDefaultsMapper extends UiDefaultsMapper {
 	}
 
 	@Override
-	protected void registerIgnoredLafIds() {
-		super.registerIgnoredLafIds();
-		ignoredLafIds.add("Actions.Blue");
-		ignoredLafIds.add("Actions.Green");
-		ignoredLafIds.add("Actions.Grey");
-		ignoredLafIds.add("Actions.Greyinline");
-		ignoredLafIds.add("Actions.Red");
-		ignoredLafIds.add("Actions.Yellow");
+	protected void registerIgnoredJavaIds() {
+		super.registerIgnoredJavaIds();
+		ignoredJavaIds.add("Actions.Blue");
+		ignoredJavaIds.add("Actions.Green");
+		ignoredJavaIds.add("Actions.Grey");
+		ignoredJavaIds.add("Actions.Greyinline");
+		ignoredJavaIds.add("Actions.Red");
+		ignoredJavaIds.add("Actions.Yellow");
 
-		ignoredLafIds.add("Objects.BlackText");
-		ignoredLafIds.add("Objects.Blue");
-		ignoredLafIds.add("Objects.Green");
-		ignoredLafIds.add("Objects.GreenAndroid");
-		ignoredLafIds.add("Objects.Grey");
-		ignoredLafIds.add("Objects.Pink");
-		ignoredLafIds.add("Objects.Purple");
-		ignoredLafIds.add("Objects.Red");
-		ignoredLafIds.add("Objects.RedStatus");
-		ignoredLafIds.add("Objects.Yellow");
-		ignoredLafIds.add("Objects.YellowDark");
+		ignoredJavaIds.add("Objects.BlackText");
+		ignoredJavaIds.add("Objects.Blue");
+		ignoredJavaIds.add("Objects.Green");
+		ignoredJavaIds.add("Objects.GreenAndroid");
+		ignoredJavaIds.add("Objects.Grey");
+		ignoredJavaIds.add("Objects.Pink");
+		ignoredJavaIds.add("Objects.Purple");
+		ignoredJavaIds.add("Objects.Red");
+		ignoredJavaIds.add("Objects.RedStatus");
+		ignoredJavaIds.add("Objects.Yellow");
+		ignoredJavaIds.add("Objects.YellowDark");
 
-		ignoredLafIds.add("h0.font");
-		ignoredLafIds.add("h00.font");
-		ignoredLafIds.add("h1.font");
-		ignoredLafIds.add("h1.regular.font");
-		ignoredLafIds.add("h2.font");
-		ignoredLafIds.add("h2.regular.font");
-		ignoredLafIds.add("h3.font");
-		ignoredLafIds.add("h3.regular.font");
-		ignoredLafIds.add("h4.font");
-		ignoredLafIds.add("large.font");
-		ignoredLafIds.add("light.font");
-		ignoredLafIds.add("medium.font");
-		ignoredLafIds.add("mini.font");
-		ignoredLafIds.add("monospaced.font");
-		ignoredLafIds.add("small.font");
+		ignoredJavaIds.add("h0.font");
+		ignoredJavaIds.add("h00.font");
+		ignoredJavaIds.add("h1.font");
+		ignoredJavaIds.add("h1.regular.font");
+		ignoredJavaIds.add("h2.font");
+		ignoredJavaIds.add("h2.regular.font");
+		ignoredJavaIds.add("h3.font");
+		ignoredJavaIds.add("h3.regular.font");
+		ignoredJavaIds.add("h4.font");
+		ignoredJavaIds.add("large.font");
+		ignoredJavaIds.add("light.font");
+		ignoredJavaIds.add("medium.font");
+		ignoredJavaIds.add("mini.font");
+		ignoredJavaIds.add("monospaced.font");
+		ignoredJavaIds.add("small.font");
 
 	}
 }

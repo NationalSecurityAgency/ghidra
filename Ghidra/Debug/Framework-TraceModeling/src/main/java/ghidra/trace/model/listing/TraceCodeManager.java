@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 
 /**
  * The manager for trace code units, i.e., the equivalent of {@link Listing}
@@ -40,7 +39,7 @@ import ghidra.trace.util.TraceAddressSpace;
  * 
  * <p>
  * To create an instruction, see
- * {@link TraceInstructionsView#create(Lifespan, Address, TracePlatform, InstructionPrototype, ProcessorContextView)}.
+ * {@link TraceInstructionsView#create(Lifespan, Address, TracePlatform, InstructionPrototype, ProcessorContextView, int)}.
  * Since clients do not ordinarily have an {@link InstructionPrototype} in hand, the more common
  * method is to invoke the {@link Disassembler} on {@link Trace#getProgramView()}.
  * 
@@ -53,15 +52,6 @@ import ghidra.trace.util.TraceAddressSpace;
  * {@link TraceDefinedDataView#create(Lifespan, Register, DataType)}.
  */
 public interface TraceCodeManager extends TraceCodeOperations {
-
-	/**
-	 * Get the code space for the memory or registers of the given trace address space
-	 * 
-	 * @param space the trace address space (thread, stack frame, address space)
-	 * @param createIfAbsent true to create the space if it's not already present
-	 * @return the space, of {@code null} if absent and not created
-	 */
-	TraceCodeSpace getCodeSpace(TraceAddressSpace space, boolean createIfAbsent);
 
 	/**
 	 * Get the code space for the memory of the given address space

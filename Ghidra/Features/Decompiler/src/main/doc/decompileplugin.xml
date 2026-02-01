@@ -39,7 +39,7 @@
     plug-in enabled, but if it is disabled for some reason, it can be enabled from within
     a Code Browser by selecting the
     <informalexample>
-      <emphasis role="bold">File -> Configure...</emphasis>
+      <emphasis role="bold">File -> Configure</emphasis>
     </informalexample>
     menu option, then clicking on the <emphasis>Configure</emphasis> link under the
     <emphasis role="bold">Ghidra Core</emphasis> section and checking the box next to
@@ -1326,7 +1326,7 @@
     <informalexample>
       <itemizedlist spacing='compact'>
 	<listitem>Processor family</listitem>
-	<listitem>Endianess</listitem>
+	<listitem>Endianness</listitem>
 	<listitem>Size of the address bus</listitem>
 	<listitem>Processor variant</listitem>
 	<listitem>Compiler producing the Program</listitem>
@@ -3269,6 +3269,36 @@
 	</para>
       </listitem>
     </varlistentry>
+    <varlistentry id="DisplayBraceFormatting">
+      <term><emphasis role="bold">Brace Format for &lt;kind-of&gt; blocks</emphasis></term>
+      <listitem>
+	<para>
+          Choose how braces are placed after function declarations, or other kinds of code blocks in Decompiler output.
+          Formatting can be controlled for:
+          <informalexample>
+            <itemizedlist mark='bullet'>
+	      <listitem><emphasis role="bold">function blocks</emphasis> - the main function bodies</listitem>
+	      <listitem><emphasis role="bold">if/else blocks</emphasis> - blocks delineated by the <code>if</code> and <code>else</code> keywords</listitem>
+	      <listitem><emphasis role="bold">loop blocks</emphasis> - blocks delineated by the <code>for</code>, <code>do</code>, and <code>while</code> keywords</listitem>
+	      <listitem><emphasis role="bold">switch blocks</emphasis> - blocks delineated by the <code>switch</code> keyword</listitem>
+            </itemizedlist>
+          </informalexample>
+          The different formatting options primarily control how the opening brace is displayed relative to the line containing
+          the declaration or keyword starting the block.  The formatting options are:
+          <informalexample>
+            <itemizedlist mark='bullet'>
+	      <listitem><emphasis role="bold">Same line</emphasis> - opening brace placed on same line</listitem>
+	      <listitem><emphasis role="bold">Next line</emphasis> - opening brace placed on the next line</listitem>
+	      <listitem><emphasis role="bold">Skip one line</emphasis> - opening brace placed on line after a blank line</listitem>
+            </itemizedlist>
+          </informalexample>
+	</para>
+        <para>
+          The "Same line" option is consistent with K &amp; R code formatting style.  The "Next line" option is consistent with
+          the Allman formatting style.
+        </para>
+      </listitem>
+    </varlistentry>
     <varlistentry id="DisplayColorDefault">
       <term><emphasis role="bold">Color Default</emphasis></term>
       <listitem>
@@ -3318,6 +3348,14 @@
 	</para>
       </listitem>
     </varlistentry>
+    <varlistentry id="MiddleMouseColor">
+      <term><emphasis role="bold">Color for Highlighting Middle-mouse Matches</emphasis></term>
+      <listitem>
+	<para>
+	  Assign the background color used to highlight characters when highlighting using the middle-mouse button.
+	</para>
+      </listitem>
+    </varlistentry>    
     <varlistentry id="DisplayCommentIndent">
       <term><emphasis role="bold">Comment line indent level</emphasis></term>
       <listitem>
@@ -4114,6 +4152,40 @@
   </tip>
 </sect2>
 
+<sect2 id="ToolBarEliminateUnreachableCode">
+  <title>Eliminate Unreachable Code</title>
+  <para>
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="icon.decompiler.action.provider.unreachable" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="icon.decompiler.action.provider.unreachable" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&nbsp;- toggle button
+  </para>
+  <para>
+	Quickly turn off the <xref linkend="AnalysisUnreachable"/> decompiler setting.
+  </para>
+</sect2>
+
+<sect2 id="ToolBarRespectReadOnly">
+  <title>Respect Read-only Flags</title>
+  <para>
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="icon.decompiler.action.provider.readonly" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="icon.decompiler.action.provider.readonly" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&nbsp;- toggle button
+  </para>
+  <para>
+	Quickly turn off the <xref linkend="AnalysisReadOnly"/> decompiler setting.
+  </para>
+</sect2>
+
 <sect2 id="ToolBarCopy">
   <title>Copy</title>
   <para>
@@ -4306,7 +4378,8 @@
   <title>Middle-Click</title>
   <para>
     Highlights every occurrence of a variable, constant, or operator represented by the selected
-    token, within the Decompiler window.
+    token, within the Decompiler window.   There are actions available from the popup menu and from
+    the keyboard to navigate to each highlighted token.
   </para>
 </sect2>
 
@@ -4322,7 +4395,7 @@
     variable or operation affected.
   </para>
   <para>
-    Many of the actions have have a key binding, which, if it exists, will be listed in the pop-up menu.
+    Many of the actions have a key binding, which, if it exists, will be listed in the pop-up menu.
     If the key binding is used to activate the action, local context is determined by the current cursor
     position.  Key bindings can be reassigned from the
     <link xlink:href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings</link>
@@ -4706,6 +4779,17 @@
   </para>
 </sect2>
 
+<sect2 id="GoToMiddleMouseHighlight">
+  <title>Go To Next/Previous Highlight</title>
+  <para>
+    These actions are available from the popup menu and keyboard.   Only tokens highlighted from the
+    middle-mouse will be navigated.  <emphasis role="bold">Shift-Comma</emphasis> will go to the 
+    previous highlighted token.   <emphasis role="bold">Shift-Period</emphasis> will go to the
+    next highlighted token.   These key bindings can be changed via the
+    <link xlink:href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Tool Options Dialog</link>.
+  </para>
+</sect2>
+
 <sect2 id="ActionHighlight">
   <title>Highlight</title>
   <para>
@@ -4872,6 +4956,19 @@
     parameter information by setting the function's prototype directly (see the
     <xref linkend="ActionCommitParams"/> command).  In this situation, the "Override Signature"
     command is still possible, but it will bring up a confirmation dialog.
+  </para>
+</sect2>
+
+<sect2 id="ActionEditOverride">
+  <title>Edit Signature Override</title>
+  <para>
+    Edit the existing overriding function prototype to the called function under the cursor.
+  </para>
+  <para>
+	This action can only be triggered at call sites with an existing signature override. As with the Override 
+	Signature command, users must select either the token representing the called function's name or the 
+	tokens representing the function pointer at the call site. The action brings up a dialog where the user 
+  	can edit the current overriding function prototype. 
   </para>
 </sect2>
 
@@ -5085,7 +5182,7 @@
   <para>
     Decompilation is triggered again to incorporate the
     new name, causing local variable declarations to be reordered and line breaks to
-    change, but otherwise the the output is unaffected.
+    change, but otherwise the output is unaffected.
   </para>
   <para>
     Local variables and parameters presented by the Decompiler may be invented on-the-fly

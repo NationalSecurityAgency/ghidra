@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,7 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.exception.AssertException;
 import ghidra.util.table.GhidraTable;
+import ghidra.util.task.TaskMonitor;
 
 public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 
@@ -40,7 +41,13 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testMemoryMap() {
+	public void testMemoryMap() throws Exception {
+
+		program.withTransaction("Add Blocks", () -> {
+			program.getMemory()
+					.createInitializedBlock("OV1", addr(0x1000), 0x100, (byte) 0, TaskMonitor.DUMMY,
+						true);
+		});
 
 		performAction("Memory Map", "DockingWindows", true);
 
@@ -48,7 +55,7 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 		moveProviderToItsOwnWindow(provider);
 		JComponent component = getDockableComponent(provider);
 
-		captureIsolatedComponent(component, 800, 225);
+		captureIsolatedComponent(component, 1000, 250);
 	}
 
 	@Test
@@ -133,7 +140,7 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 		DialogComponentProvider dialog = getDialog();
 		GhidraComboBox<?> comboBox = (GhidraComboBox<?>) getInstanceField("comboBox", dialog);
 		selectItem(comboBox, "Byte Mapped");
-
+		runSwing(() -> dialog.setStatusText(""));
 		captureDialog();
 
 		drawRectangleAround(comboBox, Palette.GREEN, 10);

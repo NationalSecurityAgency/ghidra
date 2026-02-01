@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,9 @@ package ghidra.app.extension.datatype.finder;
 
 import java.util.List;
 
+import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextBuilder;
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.address.Address;
@@ -49,7 +49,7 @@ public abstract class DecompilerReference {
 	/**
 	 * Scan this reference for any data type matches.
 	 * <p>
-	 * The <tt>fieldName</tt> is optional.  If not included, then only data type matches will
+	 * The {@code fieldName} is optional.  If not included, then only data type matches will
 	 * be sought.  If it is included, then a match is only included when it is a reference
 	 * to the given data type where that type is being accessed by the given field name.
 	 *
@@ -87,14 +87,14 @@ public abstract class DecompilerReference {
 		return line;
 	}
 
-	protected LocationReferenceContext getContext() {
-		LocationReferenceContext context = getContext(variable);
+	protected SearchLocationContext getContext() {
+		SearchLocationContext context = getContext(variable);
 		return context;
 	}
 
-	protected LocationReferenceContext getContext(DecompilerVariable var) {
+	protected SearchLocationContext getContext(DecompilerVariable var) {
 
-		LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
+		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
 		builder.append(line.getLineNumber() + ": ");
 		List<ClangToken> tokens = line.getAllTokens();
 		for (ClangToken token : tokens) {
@@ -163,6 +163,18 @@ public abstract class DecompilerReference {
 				DataTypeComponent dtc = parent.getComponentContaining(field.getOffset());
 				if (dtc != null) {
 					return dtc.getDataType();
+				}
+			}
+		}
+		else if (fieldDt instanceof Union union) {
+
+			String fieldName = field.getText();
+			int n = union.getNumComponents();
+			for (int i = 0; i < n; i++) {
+				DataTypeComponent unionDtc = union.getComponent(i);
+				String dtcName = unionDtc.getFieldName();
+				if (fieldName.equals(dtcName)) {
+					return unionDtc.getDataType();
 				}
 			}
 		}

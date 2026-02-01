@@ -15,18 +15,14 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class VarnodeListSymbol extends ValueSymbol {
@@ -36,7 +32,7 @@ public class VarnodeListSymbol extends ValueSymbol {
 
 	public VarnodeListSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	@Override
 	public symbol_type getType() {
@@ -75,50 +71,29 @@ public class VarnodeListSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<varlist_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.append(">\n");
-		patval.saveXml(s);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VARLIST_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		patval.encode(encoder);
 		for (int i = 0; i < varnode_table.size(); ++i) {
 			if (varnode_table.get(i) == null) {
-				s.append("<null/>\n");
+				encoder.openElement(ELEM_NULL);
+				encoder.closeElement(ELEM_NULL);
 			}
 			else {
-				s.append("<var id=\"0x");
-				s.append(Long.toHexString(varnode_table.get(i).getId()));
-				s.append("\"/>\n");
+				encoder.openElement(ELEM_VAR);
+				encoder.writeUnsignedInteger(ATTRIB_ID, varnode_table.get(i).getId());
+				encoder.closeElement(ELEM_VAR);
 			}
 		}
-		s.append("</varlist_sym>\n");
+		encoder.closeElement(ELEM_VARLIST_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<varlist_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-
-		List<?> children = el.getChildren();
-		Iterator<?> iter = children.iterator();
-		Element child = (Element) iter.next();
-		patval = (PatternValue) PatternExpression.restoreExpression(child, trans);
-		patval.layClaim();
-		while (iter.hasNext()) {
-			Element subel = (Element) iter.next();
-			if (subel.getName().equals("var")) {
-				int id1 = XmlUtils.decodeUnknownInt(subel.getAttributeValue("id"));
-				varnode_table.push_back((VarnodeSymbol) trans.findSymbol(id1));
-			}
-			else {
-				varnode_table.push_back(null);
-			}
-		}
-		checkTableFill();
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VARLIST_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_VARLIST_SYM_HEAD);
 	}
 
 }

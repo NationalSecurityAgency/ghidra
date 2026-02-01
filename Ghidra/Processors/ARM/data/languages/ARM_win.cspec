@@ -37,7 +37,105 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
-        <!-- we cannot accurately model the allocation scheme when parameters are larger than 4 bytes -->
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s13"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="s15"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0" space="stack"/>
+        </pentry>
+		<!-- Variadic functions do not use floating-point registers -->
+        <rule>
+          <datatype name="float"/>
+          <varargs/>
+          <join align="true"/>
+        </rule>
+        <!-- Homogeneous float aggregates become regular structs in variadic calls -->
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <varargs/>
+          <join align="true"/>
+        </rule>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <join storage="float" align="true" stackspill="false"/>
+        </rule>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <goto_stack/>                	<!-- Don't consume general purpose registers -->
+		  <consume_extra storage="float"/> <!-- Once the stack has been used, don't go back to registers -->
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <join storage="float" align="true" backfill="true" stackspill="false"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <goto_stack/>					<!-- Don't consume general purpose registers -->
+          <consume_extra storage="float"/> <!-- Once the stack has been used, don't go back to registers -->
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join align="true"/>          <!-- Chunk from general purpose registers -->
+        </rule>
+      </input>
+      <output>
         <pentry minsize="1" maxsize="4" metatype="float">
           <register name="s0"/>
         </pentry>
@@ -68,26 +166,26 @@
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="r1"/>
         </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r2"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r3"/>
-        </pentry>
-        <pentry minsize="1" maxsize="500" align="4">
-          <addr offset="0" space="stack"/>
-        </pentry>
-      </input>
-      <output>
-        <pentry minsize="1" maxsize="16" metatype="float">
-          <register name="q0"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="r0"/>
-        </pentry>
-        <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r1" piece2="r0"/>
-        </pentry>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <join storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <join storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="struct" minsize="5"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="union" minsize="5"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
       </output>
       <unaffected>
         <register name="r4"/>
@@ -128,4 +226,12 @@
     </prototype>
   </default_proto>
   
+  <callotherfixup targetop="setISAMode">
+    <pcode incidentalcopy="true">
+      <!-- NOP -->
+      <body><![CDATA[
+        r0 = r0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
 </compiler_spec>

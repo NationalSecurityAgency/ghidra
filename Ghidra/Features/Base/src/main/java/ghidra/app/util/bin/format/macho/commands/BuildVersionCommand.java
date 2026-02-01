@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class BuildVersionCommand extends LoadCommand {
 	private int platform;
 	private int minos;
 	private int sdk;
-	private int ntools;
+	private long ntools;
 	private BuildToolVersion[] buildToolVersions;
 
 	BuildVersionCommand(BinaryReader reader) throws IOException {
@@ -40,8 +40,8 @@ public class BuildVersionCommand extends LoadCommand {
 		platform = reader.readNextInt();
 		minos = reader.readNextInt();
 		sdk = reader.readNextInt();
-		ntools = reader.readNextInt();
-		buildToolVersions = new BuildToolVersion[ntools];
+		ntools = checkCount(reader.readNextUnsignedInt());
+		buildToolVersions = new BuildToolVersion[(int) ntools];
 		for (int i = 0; i < ntools; i++) {
 			buildToolVersions[i] = new BuildToolVersion(reader.readNextInt(), reader.readNextInt());
 		}
@@ -58,7 +58,7 @@ public class BuildVersionCommand extends LoadCommand {
 		struct.add(DWORD, "sdk", null);
 		struct.add(DWORD, "ntools", null);
 		if (ntools > 0) {
-			struct.add(new ArrayDataType(buildToolVersionDataType, ntools,
+			struct.add(new ArrayDataType(buildToolVersionDataType, (int) ntools,
 				buildToolVersionDataType.getLength()), "build_tool_version[]", null);
 		}
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
@@ -82,7 +82,7 @@ public class BuildVersionCommand extends LoadCommand {
 		return sdk;
 	}
 
-	public int getNumTools() {
+	public long getNumTools() {
 		return ntools;
 	}
 

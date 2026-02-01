@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,15 @@
  */
 package ghidra.app.util.bin.format.golang.rtti;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Set;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.DataType;
 
 /**
- * Represents a golang "name" construct, which isn't represented in go as a normal structure
+ * Represents a Go "name" construct, which isn't represented in Go itself as a normal structure
  * since it is full of variable length and optional fields.
  * <pre>
  * struct {
@@ -49,7 +48,7 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 
 		private final int flagValue;
 
-		private Flag(int flagValue) {
+		Flag(int flagValue) {
 			this.flagValue = flagValue;
 		}
 
@@ -80,14 +79,14 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	int flags;
 
 	@FieldOutput(isVariableLength = true)
-	@EOLComment("fullNameString")
+	@EOLComment("getFullNameString")
 	GoVarlenString name;
 
 	@FieldOutput(isVariableLength = true)
 	GoVarlenString tag;
 
-	@FieldOutput(isVariableLength = true, getter = "pkgPathDataType")
-	@MarkupReference("pkgPath")
+	@FieldOutput(isVariableLength = true, getter = "getPkgPathDataType")
+	@MarkupReference("getPkgPath")
 	long pkgPath;	// uint32, nameoffset, only present if flags.HAS_PKGPATH
 
 	@Override
@@ -102,34 +101,69 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 				: 0;
 	}
 
+	/**
+	 * {@return the name value}
+	 */
 	public String getName() {
 		return name.getString();
 	}
 
+	/**
+	 * {@return the tag string}
+	 */
 	public String getTag() {
 		return tag != null ? tag.getString() : "";
 	}
 
+	/**
+	 * {@return the package path string, or null if not present}
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoName getPkgPath() throws IOException {
 		return programContext.resolveNameOff(context.getStructureStart(), pkgPath);
 	}
 
-	public DataType getPkgPathDataType() {
+	/**
+	 * Returns the data type needed to store the pkg path offset field, called by serialization
+	 * from the fieldoutput annotation.
+	 * 
+	 * @return Ghidra data type needed to store the pkg path offset field, or null if not present 
+	 * @throws IOException 
+	 */
+	public DataType getPkgPathDataType() throws IOException {
 		return Flag.HAS_PKGPATH.isSet(flags)
-				? programContext.getInt32DT()
+				? programContext.getGoTypes().findDataType("int32")
 				: null;
 	}
 
-	public String getFullNameString() throws IOException {
-		GoName pkgPathName = getPkgPath();
-		return (pkgPathName != null ? pkgPathName.getFullNameString() + "." : "") + getName();
+	/**
+	 * {@return a descriptive string containing the full name value}
+	 */
+	public String getFullNameString() {
+		String packagePathString = "";
+		try {
+			GoName pkgPathName = getPkgPath();
+			packagePathString = pkgPathName != null ? pkgPathName.getFullNameString() + "." : "";
+		}
+		catch (IOException e) {
+			// fall thru with empty package path
+		}
+		return packagePathString + getName();
 	}
 
+	/**
+	 * {@return the flags found in this structure, as an int}
+	 */
 	public int getFlags() {
 		return flags;
 	}
 
+	/**
+	 * Returns the flags found in this structure.
+	 * 
+	 * @return flags, as a set of {@link Flag} enum values
+	 */
 	public Set<Flag> getFlagsSet() {
 		return Flag.parseFlags(flags);
 	}
@@ -142,6 +176,30 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	@Override
 	public String getStructureName() throws IOException {
 		return getName();
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+			"GoName [context=%s, flags=%s, name=%s, tag=%s, pkgPath=%s, getFullNameString(): %s]",
+			context, flags, name, tag, pkgPath, getFullNameString());
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	/**
+	 * Create a GoName instance that supplies a specified name.
+	 * 
+	 * @param fakeName string name to return from the GoName's getName()
+	 * @return new GoName instance that can only be used to call getName() 
+	 */
+	public static GoName createFakeInstance(String fakeName) {
+		return new GoName() {
+			@Override
+			public String getName() {
+				return fakeName;
+			}
+		};
 	}
 
 }

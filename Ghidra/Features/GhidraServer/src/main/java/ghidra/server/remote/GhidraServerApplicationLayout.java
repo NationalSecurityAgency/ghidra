@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.server.remote;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -34,10 +33,10 @@ public class GhidraServerApplicationLayout extends ApplicationLayout {
 	/**
 	 * Constructs a new Ghidra server application layout object.
 	 *
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
-	 * @throws IOException if there was a problem getting the application properties.
+	 * @throws IOException if there was a problem getting a user directory or the application 
+	 *   properties.
 	 */
-	public GhidraServerApplicationLayout() throws FileNotFoundException, IOException {
+	public GhidraServerApplicationLayout() throws IOException {
 
 		// Application root directories
 		applicationRootDirs = ApplicationUtilities.findDefaultApplicationRootDirs();
@@ -47,7 +46,7 @@ public class GhidraServerApplicationLayout extends ApplicationLayout {
 
 		// Application installation directory
 		applicationInstallationDir = getApplicationRootDirs().iterator().next().getParentFile();
-		if (SystemUtilities.isInDevelopmentMode()) {
+		if (SystemUtilities.isInDevelopmentMode() && getApplicationRootDirs().size() > 1) {
 			applicationInstallationDir = applicationInstallationDir.getParentFile();
 		}
 
@@ -56,7 +55,8 @@ public class GhidraServerApplicationLayout extends ApplicationLayout {
 		extensionInstallationDirs = Collections.emptyList();
 
 		// User directories (don't let anything use the user home directory...there may not be one)
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
+		userTempDir =
+			ApplicationUtilities.getDefaultUserTempDir(applicationProperties.getApplicationName());
 
 		// Modules - required to find module data files
 		modules = ModuleUtilities.findModules(applicationRootDirs,

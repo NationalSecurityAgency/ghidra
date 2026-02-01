@@ -16,9 +16,10 @@
 import java.util.Map;
 import java.util.Objects;
 
-import ghidra.app.plugin.core.debug.service.rmi.trace.*;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.TraceRmiService;
+import ghidra.debug.api.tracermi.*;
 
 public class ListenTraceRmiScript extends GhidraScript {
 
@@ -37,12 +38,21 @@ public class ListenTraceRmiScript extends GhidraScript {
 
 		TraceRmiAcceptor acceptor = service.acceptOne(null);
 		println("Listening at " + acceptor.getAddress());
-		TraceRmiHandler handler = acceptor.accept();
-		println("Connection from " + handler.getRemoteAddress());
-		handler.start();
+		TraceRmiConnection connection = acceptor.accept();
+		println("Connection from " + connection.getRemoteAddress());
 
-		while (askYesNo("Execute?", "Execute 'echo test'?")) {
-			handler.getMethods().get("execute").invoke(Map.of("cmd", "echo test"));
+		RemoteMethod execute = connection.getMethods().get("execute");
+		if (execute == null) {
+			printerr("No execute method!");
+		}
+		while (true) {
+			String cmd = askString("Execute", "command?");
+			try {
+				execute.invoke(Map.of("cmd", cmd));
+			}
+			catch (TraceRmiError e) {
+				printerr(e.getMessage());
+			}
 		}
 	}
 }

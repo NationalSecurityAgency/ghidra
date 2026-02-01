@@ -188,14 +188,14 @@ public class ExportToIsfAction extends DockingAction {
 		fileChooser.dispose();
 	}
 
-	private class DataTypeWriterTask extends Task {
+	public class DataTypeWriterTask extends Task {
 
 		private final DataTypeManager programDataTypeMgr;
 		private final List<DataType> dataTypeList;
 		private final File file;
 		private final GTree gTree;
 
-		DataTypeWriterTask(GTree gTree, DataTypeManager programDataTypeMgr,
+		public DataTypeWriterTask(GTree gTree, DataTypeManager programDataTypeMgr,
 				List<DataType> dataTypeList, File file) {
 			super("Export Data Types", true, false, true);
 			this.gTree = gTree;
@@ -209,12 +209,9 @@ public class ExportToIsfAction extends DockingAction {
 			try {
 				monitor.setMessage("Export to " + file.getName() + "...");
 				IsfDataTypeWriter dataTypeWriter =
-					new IsfDataTypeWriter(programDataTypeMgr, new FileWriter(file));
+					new IsfDataTypeWriter(programDataTypeMgr, dataTypeList, new FileWriter(file));
 
 				try {
-					for (DataType dataType : dataTypeList) {
-						dataTypeWriter.requestType(dataType);
-					}
 					JsonObject object = dataTypeWriter.getRootObject(monitor);
 					dataTypeWriter.write(object);
 				}

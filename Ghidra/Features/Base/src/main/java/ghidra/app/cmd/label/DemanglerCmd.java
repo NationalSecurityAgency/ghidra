@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.util.List;
 
 import ghidra.app.util.demangler.*;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
@@ -27,7 +26,7 @@ import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
 
-public class DemanglerCmd extends BackgroundCommand {
+public class DemanglerCmd extends BackgroundCommand<Program> {
 
 	private Address addr;
 	private String mangled;
@@ -49,10 +48,9 @@ public class DemanglerCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program prog, TaskMonitor monitor) {
 
 		// search until we find a demangler that can handle the given mangled input
-		Program prog = (Program) obj;
 		for (Demangler demangler : getDemanglers()) {
 			if (!demangler.canDemangle(prog)) {
 				continue;
@@ -72,8 +70,10 @@ public class DemanglerCmd extends BackgroundCommand {
 
 	private boolean doDemangle(Demangler demangler, Program program, TaskMonitor monitor) {
 
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, addr);
 		try {
-			demangledObject = demangler.demangle(mangled, options);
+			demangledObject = demangler.demangle(mangledContext);
 		}
 		catch (DemangledException e) {
 			if (e.isInvalidMangledName()) {
@@ -87,13 +87,13 @@ public class DemanglerCmd extends BackgroundCommand {
 			return false; // error
 
 			// This produces too many messages for non-demangled symbols.  If we could
-			// figure out a way to tell which symbol are those which are mangled and 
-			// failing, then we should print those.  The problem is not knowing how to 
+			// figure out a way to tell which symbol are those which are mangled and
+			// failing, then we should print those.  The problem is not knowing how to
 			// tell a mangled from a non-mangled symbol.
 			// Msg.debug(this, "Unable to demangle name: " + mangled);
 		}
 		catch (Exception e) {
-			// Demangler IndexOutOfBoundsException that we're not sure how to fix 
+			// Demangler IndexOutOfBoundsException that we're not sure how to fix
 			setStatusMsg("Unable to demangle symbol: " + mangled + " at " + addr + ". Message: " +
 				e.getMessage());
 			return false;
@@ -114,9 +114,8 @@ public class DemanglerCmd extends BackgroundCommand {
 			return false;
 		}
 
-		setStatusMsg(
-			"Failed to apply mangled symbol at " + addr + "; name:  " + mangled + " (" +
-				demangler.getClass().getName() + "/" + demangledObject.getClass().getName() + ")");
+		setStatusMsg("Failed to apply mangled symbol at " + addr + "; name:  " + mangled + " (" +
+			demangler.getClass().getName() + "/" + demangledObject.getClass().getName() + ")");
 		return false; // error
 	}
 

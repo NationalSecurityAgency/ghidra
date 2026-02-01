@@ -34,10 +34,11 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.util.ProgramMergeFilter;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 /**
- * The DiffSettingsDialog is used to change the types of differences currently 
- * highlighted. It also allows the user to change the types of differences being 
+ * The DiffSettingsDialog is used to change the types of differences currently
+ * highlighted. It also allows the user to change the types of differences being
  * applied and whether labels and/or comments are being merged or replaced.
  */
 public class DiffApplySettingsProvider extends ComponentProviderAdapter {
@@ -63,6 +64,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 	private Choice propertiesCB;
 	private Choice functionsCB;
 	private Choice functionTagsCB;
+	private Choice sourceMapCB;
 
 	private int applyProgramContext;
 	private int applyBytes;
@@ -78,6 +80,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 	private int applyProperties;
 	private int applyFunctions;
 	private int applyFunctionTags;
+	private int applySourceMap;
 	private int replacePrimary;
 
 	private ProgramMergeFilter applyFilter;
@@ -107,8 +110,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 	public void addActions() {
 		plugin.getTool()
-				.addLocalAction(this,
-					new SaveApplySettingsAction(this, plugin.applySettingsMgr));
+				.addLocalAction(this, new SaveApplySettingsAction(this, plugin.applySettingsMgr));
 		plugin.getTool().addLocalAction(this, new DiffIgnoreAllAction(this));
 		plugin.getTool().addLocalAction(this, new DiffReplaceAllAction(this));
 		plugin.getTool().addLocalAction(this, new DiffMergeAllAction(this));
@@ -152,7 +154,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		});
 		choices.add(refsCB);
 
-		plateCommentsCB = new Choice("Plate Comments", true);
+		plateCommentsCB = new Choice("Comments, Plate", true);
 		plateCommentsCB.addActionListener(e -> {
 			applyPlateComments = plateCommentsCB.getSelectedIndex();
 			applyFilter.setFilter(ProgramMergeFilter.PLATE_COMMENTS, applyPlateComments);
@@ -160,7 +162,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		});
 		choices.add(plateCommentsCB);
 
-		preCommentsCB = new Choice("Pre Comments", true);
+		preCommentsCB = new Choice("Comments, Pre", true);
 		preCommentsCB.addActionListener(e -> {
 			applyPreComments = preCommentsCB.getSelectedIndex();
 			applyFilter.setFilter(ProgramMergeFilter.PRE_COMMENTS, applyPreComments);
@@ -168,7 +170,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		});
 		choices.add(preCommentsCB);
 
-		eolCommentsCB = new Choice("Eol Comments", true);
+		eolCommentsCB = new Choice("Comments, EOL", true);
 		eolCommentsCB.addActionListener(e -> {
 			applyEolComments = eolCommentsCB.getSelectedIndex();
 			applyFilter.setFilter(ProgramMergeFilter.EOL_COMMENTS, applyEolComments);
@@ -176,7 +178,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		});
 		choices.add(eolCommentsCB);
 
-		repeatableCommentsCB = new Choice("Repeatable Comments", true);
+		repeatableCommentsCB = new Choice("Comments, Repeatable", true);
 		repeatableCommentsCB.addActionListener(e -> {
 			applyRepeatableComments = repeatableCommentsCB.getSelectedIndex();
 			applyFilter.setFilter(ProgramMergeFilter.REPEATABLE_COMMENTS, applyRepeatableComments);
@@ -184,7 +186,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		});
 		choices.add(repeatableCommentsCB);
 
-		postCommentsCB = new Choice("Post Comments", true);
+		postCommentsCB = new Choice("Comments, Post", true);
 		postCommentsCB.addActionListener(e -> {
 			applyPostComments = postCommentsCB.getSelectedIndex();
 			applyFilter.setFilter(ProgramMergeFilter.POST_COMMENTS, applyPostComments);
@@ -240,6 +242,25 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		});
 		choices.add(functionTagsCB);
 
+		sourceMapCB = new Choice("Source Map", false);
+		if (!plugin.getFirstProgram().hasExclusiveAccess()) {
+			sourceMapCB.setSelectedIndex(ProgramMergeFilter.IGNORE);
+		}
+		sourceMapCB.addActionListener(e -> {
+			applySourceMap = sourceMapCB.getSelectedIndex();
+			if (!plugin.getFirstProgram().hasExclusiveAccess()) {
+				if (applySourceMap != ProgramMergeFilter.IGNORE) {
+					Msg.showWarn(this, null, "Exclusive Access Required",
+						"Exclusive access required to change source map information");
+					sourceMapCB.setSelectedIndex(ProgramMergeFilter.IGNORE);
+					applySourceMap = ProgramMergeFilter.IGNORE;
+				}
+			}
+			applyFilter.setFilter(ProgramMergeFilter.SOURCE_MAP, applySourceMap);
+			applyFilterChanged();
+		});
+		choices.add(sourceMapCB);
+
 		int maxLabelWidth = 0;
 		int maxComboWidth = 0;
 		for (Choice choice : choices) {
@@ -262,7 +283,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		createChoices();
 		VariableHeightPanel panel = new VariableHeightPanel(false, 10, 3);
 
-		panel.setToolTipText("<HTML>" +
+		panel.setToolTipText("<html>" +
 			"For each difference type, select whether to ignore, replace, or merge." +
 			"<BR>&nbsp&nbsp<B>Ignore</B> - don't apply this type of difference." +
 			"<BR>&nbsp&nbsp<B>Replace</B> - replace the difference type with the one from program 2." +
@@ -294,6 +315,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 			propertiesCB.setSelectedIndex(applyProperties);
 			functionsCB.setSelectedIndex(applyFunctions);
 			functionTagsCB.setSelectedIndex(applyFunctionTags);
+			sourceMapCB.setSelectedIndex(applySourceMap);
 		}
 		finally {
 			adjustingApplyFilter = false;
@@ -340,6 +362,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		applyFunctions = applyFilter.getFilter(ProgramMergeFilter.FUNCTIONS);
 		applyFunctionTags = applyFilter.getFilter(ProgramMergeFilter.FUNCTION_TAGS);
 		replacePrimary = applyFilter.getFilter(ProgramMergeFilter.PRIMARY_SYMBOL);
+		applySourceMap = applyFilter.getFilter(ProgramMergeFilter.SOURCE_MAP);
 
 		adjustApplyFilter();
 	}
@@ -402,11 +425,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 				new GComboBox<>(allowMerge ? DiffApplySettingsOptionManager.MERGE_CHOICE.values()
 						: DiffApplySettingsOptionManager.REPLACE_CHOICE.values());
 			applyCB.setName(type + " Diff Apply CB");
-			String typeName = type;
-			if (typeName.endsWith(" Comments")) {
-				typeName = "Comments, " + typeName.substring(0, typeName.length() - 9);
-			}
-			label = new GDLabel(" " + typeName + " ");
+			label = new GDLabel(" " + type + " ");
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			add(applyCB, BorderLayout.EAST);
 			add(label, BorderLayout.CENTER);
@@ -438,7 +457,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 		@Override
 		public int compareTo(Choice o) {
-			return label.toString().compareTo(o.label.toString());
+			return type.compareTo(o.type);
 		}
 
 	}

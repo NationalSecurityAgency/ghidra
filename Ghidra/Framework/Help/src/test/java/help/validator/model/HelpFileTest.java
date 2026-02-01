@@ -150,7 +150,7 @@ public class HelpFileTest extends AbstractHelpTest {
 		assertTrue(hrefs.isEmpty());
 	}
 
-	// @Test 
+	// @Test
 	// for debugging a real help file
 	public void test() throws Exception {
 
@@ -183,18 +183,18 @@ public class HelpFileTest extends AbstractHelpTest {
 		String badAttr = "bob=1";
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "<H1><A name=\"ManagePluginsDialog\"></A>Configure Tool</H1>\n" +
 		   "Some text with reference to shared image <a "+badAttr+">Click me</a>\n" +
 		   "\n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);
@@ -208,18 +208,18 @@ public class HelpFileTest extends AbstractHelpTest {
 		String badAttr = "bob=1";
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "<H1><A name=\"ManagePluginsDialog\"></A>Configure Tool</H1>\n" +
 		   "Some text with reference to shared image <IMG "+badAttr+"s>\n" +
 		   "\n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);
@@ -233,18 +233,18 @@ public class HelpFileTest extends AbstractHelpTest {
 		String badURI = ":baduri"; // no scheme name on this URI
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "<H1><A name=\"ManagePluginsDialog\"></A>Configure Tool</H1>\n" +
 		   "Some text with reference to shared image <a href=\""+badURI+"\">Click me</a>\n" +
 		   "\n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);
@@ -258,18 +258,18 @@ public class HelpFileTest extends AbstractHelpTest {
 		String badName = "bad_name";
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"../../shared/"+badName+".css\">\n" +
 		   "</HEAD>\n" +
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "<H1><A name=\"ManagePluginsDialog\"></A>Configure Tool</H1>\n" +
 		   "Some text with reference to shared image <IMG src=\"help/shared/DefaultStyle.css\">\n" +
 		   "\n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);
@@ -284,20 +284,20 @@ public class HelpFileTest extends AbstractHelpTest {
 		String badURI = ":baduri"; // no scheme name on this URI
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "<H1><A name=\"ManagePluginsDialog\"></A>Configure Tool</H1>\n" +
 		   "    <!--" +
 		   "    Some text with reference to shared image <a href=\""+badURI+"\">Click me</a>\n" +
-		   "    -->" + 
+		   "    -->" +
 		   "\n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);

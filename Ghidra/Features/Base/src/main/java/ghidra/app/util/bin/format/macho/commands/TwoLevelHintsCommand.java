@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,18 +35,18 @@ import ghidra.util.task.TaskMonitor;
  * Represents a twolevel_hints_command structure 
  */
 public class TwoLevelHintsCommand extends LoadCommand {
-	private int offset;
-	private int nhints;
-	private List<TwoLevelHint> hints = new ArrayList<TwoLevelHint>();
+	private long offset;
+	private long nhints;
+	private List<TwoLevelHint> hints = new ArrayList<>();
 
 	TwoLevelHintsCommand(BinaryReader reader) throws IOException {
 		super(reader);
-		offset = reader.readNextInt();
-		nhints = reader.readNextInt();
+		offset = reader.readNextUnsignedInt();
+		nhints = checkCount(reader.readNextUnsignedInt());
 
 		long index = reader.getPointerIndex();
 		reader.setPointerIndex(offset);
-		for (int i = 0; i < nhints; ++i) {
+		for (long i = 0; i < nhints; ++i) {
 			hints.add(new TwoLevelHint(reader));
 		}
 		reader.setPointerIndex(index);
@@ -60,7 +60,7 @@ public class TwoLevelHintsCommand extends LoadCommand {
 	 * Returns the offset to the hint table.
 	 * @return the offset to the hint table
 	 */
-	public int getOffset() {
+	public long getOffset() {
 		return offset;
 	}
 
@@ -68,7 +68,7 @@ public class TwoLevelHintsCommand extends LoadCommand {
 	 * Returns the number of hints in the hint table.
 	 * @return the number of hints in the hint table
 	 */
-	public int getNumberOfHints() {
+	public long getNumberOfHints() {
 		return nhints;
 	}
 

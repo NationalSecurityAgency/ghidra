@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,9 @@ import generic.theme.GIcon;
 import ghidra.framework.main.projectdata.actions.VersionControlAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.database.ProgramDB;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.task.TaskMonitor;
@@ -219,9 +220,8 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForSwing();
 		waitForTasks();
 
-		Program program = (Program) ((DomainFileNode) node).getDomainFile()
-				.getDomainObject(this,
-					true, false, TaskMonitor.DUMMY);
+		ProgramDB program = (ProgramDB) ((DomainFileNode) node).getDomainFile()
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		int transactionID = program.startTransaction("test");
 		try {
 			SymbolTable symTable = program.getSymbolTable();
@@ -251,6 +251,58 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
 		assertTrue(!df.isCheckedOut());
+
+	}
+
+	@Test
+	public void testCheckInWhileOpen() throws Exception {
+		GTreeNode node = getNode(PROGRAM_A);
+		addToVersionControl(node, false);
+
+		selectNode(node);
+		DockingActionIf action = getAction("CheckOut");
+		runSwing(() -> action.actionPerformed(getDomainFileActionContext(node)), false);
+		waitForSwing();
+		waitForTasks();
+
+		ProgramDB program = (ProgramDB) ((DomainFileNode) node).getDomainFile()
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
+		int transactionID = program.startTransaction("test");
+		try {
+			// Ensure that buffer memory cache has been completely consumed
+			// Max BufferMgr cache size is 256*16KByte=4MByte
+			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+			program.getMemory()
+					.createInitializedBlock("BigBlock", space.getAddress(0x80000000L),
+						4 * 1024 * 1024, (byte) 0xff, TaskMonitor.DUMMY, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+			program.save(null, TaskMonitor.DUMMY);
+		}
+
+		try {
+			DockingActionIf checkInAction = getAction("CheckIn");
+			runSwing(() -> checkInAction.actionPerformed(getDomainFileActionContext(node)), false);
+			waitForSwing();
+			VersionControlDialog dialog = waitForDialogComponent(VersionControlDialog.class);
+			assertNotNull(dialog);
+			JTextArea textArea = findComponent(dialog, JTextArea.class);
+			assertNotNull(textArea);
+			JCheckBox cb = findComponent(dialog, JCheckBox.class);
+			assertNotNull(cb);
+			runSwing(() -> {
+				textArea.setText("This is a test");
+				cb.setSelected(false);
+			});
+			pressButtonByText(dialog, "OK");
+			waitForTasks();
+			DomainFile df = ((DomainFileNode) node).getDomainFile();
+			assertTrue(df.isCheckedOut());
+		}
+		finally {
+			program.release(this);
+		}
 
 	}
 
@@ -392,7 +444,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		Program p = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		editProgram(p, program -> {
 			CodeUnit cu = program.getListing().getCodeUnitAt(program.getMinAddress());
-			cu.setComment(CodeUnit.PLATE_COMMENT, "my Plate Comment");
+			cu.setComment(CommentType.PLATE, "my Plate Comment");
 		});
 		p.release(this);
 
@@ -432,6 +484,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 	 * @param icon the icon to get a URL for
 	 * @return the URL for the given icon
 	 */
+	@Override
 	public URL getURL(Icon icon) {
 		if (icon instanceof UrlImageIcon urlIcon) {
 			return urlIcon.getUrl();

@@ -21,7 +21,6 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.app.cmd.function.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -140,13 +139,15 @@ class SetStackDepthChangeAction extends ListingContextAction {
 			return;
 		}
 		// Set the function purge.
-		Command purgeCmd = new SetFunctionPurgeCommand(function, newFunctionPurgeSize);
+		SetFunctionPurgeCommand purgeCmd =
+			new SetFunctionPurgeCommand(function, newFunctionPurgeSize);
 
 		Integer dephtChange = CallDepthChangeInfo.getStackDepthChange(program, fromAddress);
 		if (dephtChange != null) {
 			// If we have a stack depth change here, remove it since we are setting the purge.
-			CompoundCmd compoundCmd = new CompoundCmd("Set Function Purge via StackDepthChange");
-			compoundCmd.add(new RemoveStackDepthChangeCommand(program, fromAddress));
+			CompoundCmd<Program> compoundCmd =
+				new CompoundCmd<>("Set Function Purge via StackDepthChange");
+			compoundCmd.add(new RemoveStackDepthChangeCommand(fromAddress));
 			compoundCmd.add(purgeCmd);
 			funcPlugin.execute(program, compoundCmd);
 		}
@@ -177,8 +178,7 @@ class SetStackDepthChangeAction extends ListingContextAction {
 	}
 
 	private void setStackDepthChange(Program program, Address address, int newStackDepthChange) {
-		funcPlugin.execute(program,
-			new SetStackDepthChangeCommand(program, address, newStackDepthChange));
+		funcPlugin.execute(program, new SetStackDepthChangeCommand(address, newStackDepthChange));
 	}
 
 	@Override

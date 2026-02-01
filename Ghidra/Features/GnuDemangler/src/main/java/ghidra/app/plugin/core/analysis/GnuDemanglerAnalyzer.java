@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.beans.*;
 import java.util.Arrays;
 
 import docking.options.editor.BooleanEditor;
@@ -44,6 +43,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"Only demangle symbols that follow known compiler mangling patterns. " +
 			"Leaving this option off may cause non-mangled symbols to get demangled.";
 
+	private static final String OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS =
+		"Use Standard Text Replacements";
+	private static final String OPTION_DESCRIPTION_STANDARD_REPLACEMENTS =
+		"Use text simplifications in demangled output, for example to use standard c++ typedefs.";
+
 	private static final String OPTION_NAME_APPLY_SIGNATURE = "Apply Function Signatures";
 	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
 		"Apply any recovered function signature, in addition to the function name";
@@ -65,13 +69,13 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private boolean applyFunctionSignature = true;
 	private boolean applyCallingConvention = true;
 	private boolean demangleOnlyKnownPatterns = false;
+	private boolean useStandardReplacements = true;
 	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
 
-	private GnuDemangler demangler = new GnuDemangler();
-
 	public GnuDemanglerAnalyzer() {
 		super(NAME, DESCRIPTION);
+		demangler = new GnuDemangler();
 		setDefaultEnablement(true);
 	}
 
@@ -93,24 +97,19 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
-		BooleanEditor deprecatedEditor = null;
-		FormatEditor formatEditor = null;
-		if (!SystemUtilities.isInHeadlessMode()) {
-			// Only add the custom options editor when not headless.   The custom editor allows
-			// the list of choices presented to the user to change depending on the state of the
-			// useDeprecatedDemangler flag.
-			deprecatedEditor = new BooleanEditor();
-			deprecatedEditor.setValue(Boolean.valueOf(useDeprecatedDemangler));
-			formatEditor = new FormatEditor(demanglerFormat, deprecatedEditor);
-			deprecatedEditor.addPropertyChangeListener(formatEditor);
-		}
+		options.registerOption(OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS,
+			useStandardReplacements, help, OPTION_DESCRIPTION_STANDARD_REPLACEMENTS);
+
+		GnuOptionsEditor optionsEditor = new GnuOptionsEditor();
 
 		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
 			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER,
-			deprecatedEditor);
+			() -> optionsEditor.getDeprecatedNameEditor());
 
 		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE,
-			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
+			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT,
+			() -> optionsEditor.getFormatEditor());
+
 	}
 
 	@Override
@@ -121,6 +120,9 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
+		useStandardReplacements =
+			options.getBoolean(OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS,
+				useStandardReplacements);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
 		useDeprecatedDemangler =
 			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
@@ -134,13 +136,53 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		options.setApplySignature(applyFunctionSignature);
 		options.setApplyCallingConvention(applyCallingConvention);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
+		options.setUseStandardReplacements(useStandardReplacements);
 		return options;
 	}
 
 	@Override
-	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOtions,
-			MessageLog log) throws DemangledException {
-		return demangler.demangle(mangled, demanglerOtions);
+	protected DemangledObject doDemangle(MangledContext mangledContext, MessageLog log)
+			throws DemangledException {
+		return demangler.demangle(mangledContext);
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
+	// We only use the editor when not headless, since GUI code in headless will throw an exception.
+	// Further, the options below have a relationship, so we need to build them together.
+	// The format editor's list of choices presented to the user will change depending on the state
+	// of the deprecated boolean editor.
+	private class GnuOptionsEditor {
+
+		private BooleanEditor deprecatedEditor;
+		private FormatEditor formatEditor;
+
+		private void lazyInit() {
+			if (SystemUtilities.isInHeadlessMode()) {
+				return; // the editor should not be requested in headless mode
+			}
+
+			if (deprecatedEditor != null) {
+				return; // already loaded
+			}
+
+			deprecatedEditor = new BooleanEditor();
+			deprecatedEditor.setValue(Boolean.valueOf(useDeprecatedDemangler));
+			formatEditor = new FormatEditor(demanglerFormat, deprecatedEditor);
+			deprecatedEditor.addPropertyChangeListener(formatEditor);
+		}
+
+		PropertyEditor getDeprecatedNameEditor() {
+			lazyInit();
+			return deprecatedEditor;
+		}
+
+		PropertyEditor getFormatEditor() {
+			lazyInit();
+			return formatEditor;
+		}
 	}
 
 	private static class FormatEditor extends EnumEditor implements PropertyChangeListener {
@@ -221,6 +263,5 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		void setFormat(GnuDemanglerFormat format) {
 			setSelectedItem(format.name());
 		}
-
 	}
 }

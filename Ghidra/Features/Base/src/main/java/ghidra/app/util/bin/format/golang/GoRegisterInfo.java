@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,19 +15,27 @@
  */
 package ghidra.app.util.bin.format.golang;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * Immutable information about registers, alignment sizes, etc needed to allocate storage
  * for parameters during a function call.
- * <p>
  */
 public class GoRegisterInfo {
 
+	public enum RegType { INT, FLOAT }
+
+	private final GoVerSet validVersions;
 	private final List<Register> intRegisters;
 	private final List<Register> floatRegisters;
 	private final int stackInitialOffset;
@@ -36,9 +44,18 @@ public class GoRegisterInfo {
 	private final Register zeroRegister;	// always contains a zero value
 	private final boolean zeroRegisterIsBuiltin;	// zero register is provided by cpu, or is manually set
 
+	private final Register duffzeroDestParam;
+	private final Register duffzeroZeroParam;	// if duffzero has 2nd param
+	private final RegType duffzeroZeroParamType;
+
+	private final Register closureContextRegister;
+
 	GoRegisterInfo(List<Register> intRegisters, List<Register> floatRegisters,
 			int stackInitialOffset, int maxAlign, Register currentGoroutineRegister,
-			Register zeroRegister, boolean zeroRegisterIsBuiltin) {
+			Register zeroRegister, boolean zeroRegisterIsBuiltin, Register duffzeroDestParam,
+			Register duffzeroZeroParam, RegType duffzeroZeroParamType,
+			Register closureContextRegister, GoVerSet validVersions) {
+		this.validVersions = validVersions;
 		this.intRegisters = intRegisters;
 		this.floatRegisters = floatRegisters;
 		this.stackInitialOffset = stackInitialOffset;
@@ -46,6 +63,16 @@ public class GoRegisterInfo {
 		this.currentGoroutineRegister = currentGoroutineRegister;
 		this.zeroRegister = zeroRegister;
 		this.zeroRegisterIsBuiltin = zeroRegisterIsBuiltin;
+
+		this.duffzeroDestParam = duffzeroDestParam;
+		this.duffzeroZeroParam = duffzeroZeroParam;
+		this.duffzeroZeroParamType = duffzeroZeroParamType;
+
+		this.closureContextRegister = closureContextRegister;
+	}
+	
+	public GoVerSet getValidVersions() {
+		return validVersions;
 	}
 
 	public int getIntRegisterSize() {
@@ -80,6 +107,52 @@ public class GoRegisterInfo {
 		return stackInitialOffset;
 	}
 
+	public boolean hasAbiInternalParamRegisters() {
+		return !intRegisters.isEmpty() || !floatRegisters.isEmpty();
+	}
+
+	public List<Variable> getDuffzeroParams(Program program) {
+		if (duffzeroDestParam == null) {
+			return List.of();
+		}
+		try {
+			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+			DataType voidPtr = dtm.getPointer(VoidDataType.dataType);
+
+			List<Variable> params = new ArrayList<>();
+
+			params.add(new ParameterImpl("dest", Parameter.UNASSIGNED_ORDINAL, voidPtr,
+				getStorageForReg(program, duffzeroDestParam, voidPtr.getLength()), true, program,
+				SourceType.IMPORTED));
+			if (duffzeroZeroParam != null && duffzeroZeroParamType != null) {
+				int regSize = duffzeroZeroParam.getMinimumByteSize();
+				DataType dt = switch (duffzeroZeroParamType) {
+					case FLOAT -> AbstractFloatDataType.getFloatDataType(regSize, dtm);
+					case INT -> AbstractIntegerDataType.getUnsignedDataType(regSize, dtm);
+				};
+				params.add(new ParameterImpl("zeroValue", Parameter.UNASSIGNED_ORDINAL, dt,
+					getStorageForReg(program, duffzeroZeroParam, regSize), true, program,
+					SourceType.IMPORTED));
+			}
+
+			return params;
+		}
+		catch (InvalidInputException e) {
+			return List.of();
+		}
+	}
+
+	public Register getClosureContextRegister() {
+		return closureContextRegister;
+	}
+
+	private VariableStorage getStorageForReg(Program program, Register reg, int len)
+			throws InvalidInputException {
+		return new VariableStorage(program,
+			DWARFUtil.convertRegisterListToVarnodeStorage(List.of(reg), len)
+					.toArray(Varnode[]::new));
+	}
+
 	public int getAlignmentForType(DataType dt) {
 		while (dt instanceof TypeDef || dt instanceof Array) {
 			if (dt instanceof TypeDef td) {
@@ -92,7 +165,7 @@ public class GoRegisterInfo {
 		if (isIntType(dt) && isIntrinsicSize(dt.getLength())) {
 			return Math.min(maxAlign, dt.getLength());
 		}
-		if (dt instanceof Complex8DataType /* golang complex64 */ ) {
+		if (dt instanceof Complex8DataType /* Go complex64 */ ) {
 			return 4;
 		}
 		if (dt instanceof AbstractFloatDataType) {

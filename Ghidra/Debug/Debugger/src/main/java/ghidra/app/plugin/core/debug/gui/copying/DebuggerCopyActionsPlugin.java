@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 
 	public DebuggerCopyActionsPlugin(PluginTool tool) {
 		super(tool);
@@ -116,10 +116,8 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 				? view.getTrace().getFixedProgramView(view.getSnap())
 				: view;
 
-		ExporterDialog dialog =
-			new ExporterDialog(tool, fixed.getDomainFile(), fixed,
-				getSelectionFromContext(context));
-		tool.showDialog(dialog);
+		ExporterDialog.showExporterDialog(tool, fixed.getDomainFile(), fixed,
+			getSelectionFromContext(context));
 	}
 
 	protected void activatedCopyIntoCurrentProgram(DebuggerProgramLocationActionContext context) {
@@ -129,7 +127,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		copyDialog.setSource(context.getProgram(), context.getSelection());
 		copyDialog.setProgramManager(programManager);
 		copyDialog.setStaticMappingService(mappingService);
-		copyDialog.setModelService(modelService);
+		copyDialog.setTargetService(targetService);
 		copyDialog.setDestination(programManager.getCurrentProgram());
 		copyDialog.reset();
 		copyDialog.setStatusText("");
@@ -143,7 +141,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		copyDialog.setSource(context.getProgram(), context.getSelection());
 		copyDialog.setProgramManager(programManager);
 		copyDialog.setStaticMappingService(mappingService);
-		copyDialog.setModelService(modelService);
+		copyDialog.setTargetService(targetService);
 		copyDialog.setDestination(copyDialog.NEW_PROGRAM);
 		copyDialog.reset();
 		copyDialog.setStatusText("");

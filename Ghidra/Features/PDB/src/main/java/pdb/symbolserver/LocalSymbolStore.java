@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,6 @@ import utilities.util.FileUtilities;
  * Stores Pdb symbol files in a local directory.
  * <p>
  * This is both a {@link SymbolServer} and a {@link SymbolStore}
- * <p>
  */
 public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStore {
 	private static final String ADMIN_DIRNAME = "000admin"; // per MS custom
@@ -52,7 +51,6 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 	/**
 	 * Creates a (hopefully) MS-compatible symbol server directory location.
-	 * <p>
 	 * 
 	 * @param rootDir    Directory location of the new symbol store
 	 * @param indexLevel the 'level' of the storage directory. Typical directories
@@ -369,11 +367,6 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 			throws IOException {
 		File file = new File(rootDir, filename);
 		return new SymbolServerInputStream(new FileInputStream(file), file.length());
-	}
-
-	@Override
-	public boolean isLocal() {
-		return true;
 	}
 
 	@Override

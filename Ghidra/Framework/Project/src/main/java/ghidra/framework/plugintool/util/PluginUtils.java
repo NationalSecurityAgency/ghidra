@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.framework.plugintool.util;
 
 import java.lang.reflect.*;
+import java.util.List;
 
 import ghidra.framework.plugintool.*;
 import ghidra.util.Msg;
@@ -76,6 +77,14 @@ public class PluginUtils {
 	 */
 	public static Class<? extends Plugin> forName(String pluginClassName) throws PluginException {
 		try {
+
+			List<Class<? extends Plugin>> classes = ClassSearcher.getClasses(Plugin.class);
+			for (Class<? extends Plugin> plug : classes) {
+				if (plug.getName().equals(pluginClassName)) {
+					return plug;
+				}
+			}
+
 			Class<?> tmpClass = Class.forName(pluginClassName);
 			if (!Plugin.class.isAssignableFrom(tmpClass)) {
 				throw new PluginException(
@@ -84,7 +93,7 @@ public class PluginUtils {
 			return tmpClass.asSubclass(Plugin.class);
 		}
 		catch (ClassNotFoundException e) {
-			throw new PluginException("Plugin class not found");
+			throw new PluginException("Plugin class not found: " + pluginClassName);
 		}
 	}
 
@@ -106,7 +115,7 @@ public class PluginUtils {
 	/**
 	 * Returns the Plugin Class that is specified as being the defaultProvider for a
 	 * Service, or null if no default provider is specified.
-	 * <p>
+	 * 
 	 * @param serviceClass Service interface class
 	 * @return Plugin class that provides the specified service
 	 */

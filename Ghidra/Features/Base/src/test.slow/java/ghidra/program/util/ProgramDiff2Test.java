@@ -21,8 +21,7 @@
 
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -35,7 +34,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * <CODE>ProgramDiffTest</CODE> tests the <CODE>ProgramDiff</CODE> class
@@ -209,9 +207,9 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 				Namespace namespace = program.getGlobalNamespace();
 				try {
 					program.getFunctionManager()
-						.getFunctionAt(addr(program, "0x100248f"))
-						.getSymbol()
-						.setName("Bud", SourceType.IMPORTED);
+							.getFunctionAt(addr(program, "0x100248f"))
+							.getSymbol()
+							.setName("Bud", SourceType.IMPORTED);
 					createDataReference(program, addr(program, "0x01001e81"),
 						addr(program, "0x01001ea0"));
 					Symbol[] symbols = st.getSymbols(addr(program, "0x01001ea0"));
@@ -235,9 +233,9 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 				Namespace namespace = program.getGlobalNamespace();
 				try {
 					program.getFunctionManager()
-						.getFunctionAt(addr(program, "0x100248f"))
-						.getSymbol()
-						.setName("Bud", SourceType.ANALYSIS);
+							.getFunctionAt(addr(program, "0x100248f"))
+							.getSymbol()
+							.setName("Bud", SourceType.ANALYSIS);
 					createDataReference(program, addr(program, "0x01001e81"),
 						addr(program, "0x01001ea0"));// Leave this as default.
 					Symbol[] symbols = st.getSymbols(addr(program, "0x01001ea0"));
@@ -710,7 +708,9 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 				// P1 program
 				try {
 					Memory memory = program.getMemory();
-					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+					memory.createInitializedBlock("Foo1", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+					memory.createInitializedBlock("Foo2", addr(program, "0x01000000"), 0x200L,
 						(byte) 0x0, null, true);
 				}
 				catch (Exception e) {
@@ -723,7 +723,9 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 				// P2 program
 				try {
 					Memory memory = program.getMemory();
-					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+					memory.createInitializedBlock("Foo2", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+					memory.createInitializedBlock("Foo1", addr(program, "0x01000000"), 0x200L,
 						(byte) 0x0, null, true);
 				}
 				catch (Exception e) {
@@ -742,14 +744,16 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 	}
 
 	@Test
-	public void testDiffOverlaysDiffNames() throws Exception {
+	public void testDiffOverlaysDiffRegion() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
 				try {
 					Memory memory = program.getMemory();
-					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+					memory.createInitializedBlock("Foo1", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+					memory.createInitializedBlock("Foo2", addr(program, "0x01000000"), 0x200L,
 						(byte) 0x0, null, true);
 				}
 				catch (Exception e) {
@@ -762,7 +766,9 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 				// P2 program
 				try {
 					Memory memory = program.getMemory();
-					memory.createInitializedBlock("Bar", addr(program, "0x01000000"), 0x200L,
+					memory.createInitializedBlock("Foo2", addr(program, "0x02000000"), 0x200L,
+						(byte) 0x0, null, true);
+					memory.createInitializedBlock("Foo1", addr(program, "0x02000000"), 0x200L,
 						(byte) 0x0, null, true);
 				}
 				catch (Exception e) {
@@ -776,7 +782,57 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 
 		programDiff = new ProgramDiff(p1, p2);
 		AddressSet as = new AddressSet();
-		as.addRange(addr(p1, "Foo:0x01000000"), addr(p1, "Foo:0x010001ff"));
+		// All overlay blocks in common Foo overlay space is considered
+		as.addRange(addr(p1, "Foo1:0x01000000"), addr(p1, "Foo1:0x010001ff"));
+		as.addRange(addr(p1, "Foo1::02000000"), addr(p1, "Foo1::020001ff"));
+		as.addRange(addr(p1, "Foo2:0x01000000"), addr(p1, "Foo2:0x010001ff"));
+		as.addRange(addr(p1, "Foo2::02000000"), addr(p1, "Foo2::020001ff"));
+		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
+		assertEquals(as, programDiff.getDifferences(programDiff.getFilter(), null));
+	}
+
+	@Test
+	public void testDiffOverlaysDiffNames() throws Exception {
+		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				// P1 program
+				try {
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo1", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+					memory.createInitializedBlock("Foo2", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				// P2 program
+				try {
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Bar1", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+					memory.createInitializedBlock("Bar2", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+		});
+
+		p1 = mtf.getResultProgram();
+		p2 = mtf.getPrivateProgram();
+
+		programDiff = new ProgramDiff(p1, p2);
+		AddressSet as = new AddressSet();
+		// Only block regions in p1 are considered
+		as.addRange(addr(p1, "Foo1:0x01000000"), addr(p1, "Foo1:0x010001ff"));
+		as.addRange(addr(p1, "Foo2:0x01000000"), addr(p1, "Foo2:0x010001ff"));
 		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
 		assertEquals(as, programDiff.getDifferences(programDiff.getFilter(), null));
 	}
@@ -794,8 +850,8 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 
 					SymbolTable st = program.getSymbolTable();
 					Namespace globalNamespace = program.getGlobalNamespace();
-					st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030",
-						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030", globalNamespace,
+						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -812,8 +868,8 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 
 					SymbolTable st = program.getSymbolTable();
 					Namespace globalNamespace = program.getGlobalNamespace();
-					st.createLabel(addr(program, "Foo:0x01000050"), "Other0050",
-						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000050"), "Other0050", globalNamespace,
+						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -839,18 +895,19 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
 				try {
+					// Overlay Foo 0x01000000 - 0x0100017f
 					Memory memory = program.getMemory();
 					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x180L,
 						(byte) 0x0, null, true);
 
 					SymbolTable st = program.getSymbolTable();
 					Namespace globalNamespace = program.getGlobalNamespace();
-					st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030",
-						globalNamespace, SourceType.USER_DEFINED);
-					st.createLabel(addr(program, "Foo:0x01000079"), "Sample0079",
-						globalNamespace, SourceType.USER_DEFINED);
-					st.createLabel(addr(program, "Foo:0x0100017f"), "Sample017f",
-						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030", globalNamespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000179"), "Sample0179", globalNamespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x0100017f"), "Sample017f", globalNamespace,
+						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -861,18 +918,19 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
 				try {
+					// Overlapping overlay with the same name 0x01000080 - 0x0100017f
 					Memory memory = program.getMemory();
 					memory.createInitializedBlock("Foo", addr(program, "0x01000080"), 0x180L,
 						(byte) 0x0, null, true);
 
 					SymbolTable st = program.getSymbolTable();
 					Namespace globalNamespace = program.getGlobalNamespace();
-					st.createLabel(addr(program, "Foo:0x01000080"), "Other0080",
-						globalNamespace, SourceType.USER_DEFINED);
-					st.createLabel(addr(program, "Foo:0x01000180"), "Other0180",
-						globalNamespace, SourceType.USER_DEFINED);
-					st.createLabel(addr(program, "Foo:0x01000200"), "Other0200",
-						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000080"), "Other0080", globalNamespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000162"), "Other0162", globalNamespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000200"), "Other0200", globalNamespace,
+						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -883,13 +941,17 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 		p1 = mtf.getResultProgram();
 		p2 = mtf.getPrivateProgram();
 
-		// No addresses should be considered to be in common for the overlays.
+		// All overlay blocks in common Foo overlay space is considered
 		programDiff = new ProgramDiff(p1, p2);
-		AddressSet as = new AddressSet();
-		as.addRange(addr(p1, "Foo:0x01000000"), addr(p1, "Foo:0x0100017f"));
 		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
 		AddressSetView diffs = programDiff.getDifferences(programDiff.getFilter(), null);
-		assertEquals(as, diffs);
+
+		AddressSet expectedDiffAs = new AddressSet();
+		expectedDiffAs.addRange(addr(p1, "Foo:0x01000000"), addr(p1, "Foo:0x01000080")); // not found in p2
+		expectedDiffAs.add(addr(p1, "Foo:0x01000162")); // Other0162 not found in p1
+		expectedDiffAs.add(addr(p1, "Foo:0x01000179")); // Sample0179 not found in p2
+		expectedDiffAs.addRange(addr(p1, "Foo:0x0100017f"), addr(p1, "Foo:0x010001ff")); // not found in p1
+		assertEquals(expectedDiffAs, diffs);
 	}
 
 	@Test
@@ -1081,61 +1143,6 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 		AddressSet as = new AddressSet();
 		as.addRange(addr(p1, "0x1002249"), addr(p1, "0x1002249"));
 		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
-		assertEquals(as, programDiff.getDifferences(programDiff.getFilter(), null));
-	}
-
-	@Test
-	public void testDiffOverlayOrder() throws Exception {
-		mtf.initialize("overlayCalc", new ProgramModifierListener() {
-			@Override
-			public void modifyLatest(ProgramDB program) {
-				// P1 program
-				SymbolTable st = program.getSymbolTable();
-				try {
-					program.getMemory().createInitializedBlock("SomeOverlay",
-						addr(program, "0x01001630"), 0x200, (byte) 0, TaskMonitor.DUMMY, true);
-					program.getMemory().createInitializedBlock("OtherOverlay",
-						addr(program, "0x01001630"), 0x300, (byte) 0, TaskMonitor.DUMMY, true);
-					st.createLabel(addr(program, "SomeOverlay::01001630"), "OVL1630",
-						SourceType.USER_DEFINED);
-					st.createLabel(addr(program, "OtherOverlay::01001866"), "OVL1866",
-						SourceType.USER_DEFINED);
-				}
-				catch (Exception e) {
-					Assert.fail(e.getMessage());
-				}
-			}
-
-			@Override
-			public void modifyPrivate(ProgramDB program) {
-				// P2 program
-				SymbolTable st = program.getSymbolTable();
-				try {
-					program.getMemory().createInitializedBlock("OtherOverlay",
-						addr(program, "0x01001630"), 0x200, (byte) 0, TaskMonitor.DUMMY, true);
-					program.getMemory().createInitializedBlock("SomeOverlay",
-						addr(program, "0x01001630"), 0x300, (byte) 0, TaskMonitor.DUMMY, true);
-					st.createLabel(addr(program, "SomeOverlay::01001889"), "OVL1889",
-						SourceType.USER_DEFINED);
-					st.createLabel(addr(program, "OtherOverlay::01001646"), "OVL1646",
-						SourceType.USER_DEFINED);
-				}
-				catch (Exception e) {
-					Assert.fail(e.getMessage());
-				}
-			}
-		});
-
-		p1 = mtf.getResultProgram();
-		p2 = mtf.getPrivateProgram();
-
-		programDiff = new ProgramDiff(p1, p2);
-		AddressSet as = new AddressSet();
-		as.addRange(addr(p1, "SomeOverlay::01001630"), addr(p1, "SomeOverlay::01001630"));
-		// Diff won't detect SomeOverlay::01001889 because it isn't in p1.
-		as.addRange(addr(p1, "OtherOverlay::01001646"), addr(p1, "OtherOverlay::01001646"));
-		as.addRange(addr(p1, "OtherOverlay::01001866"), addr(p1, "OtherOverlay::01001866"));
-		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 		assertEquals(as, programDiff.getDifferences(programDiff.getFilter(), null));
 	}
 

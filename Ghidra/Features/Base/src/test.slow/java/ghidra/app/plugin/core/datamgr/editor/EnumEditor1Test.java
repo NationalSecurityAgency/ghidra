@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -607,7 +607,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		DataTypeManager dtm = program.getDataTypeManager();
 		int transactionID = program.startTransaction("Test");
-		dtm.remove(enummDt, TaskMonitor.DUMMY);
+		dtm.remove(enummDt);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForSwing();
@@ -1326,15 +1326,15 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAddAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Add Enum Value");
+		return getAction(plugin, "Add Enum Value");
 	}
 
 	private DockingActionIf getApplyAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Apply Enum Changes");
+		return getAction(plugin, "Apply Enum Changes");
 	}
 
 	private DockingActionIf getDeleteAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Delete Enum Value");
+		return getAction(plugin, "Delete Enum Value");
 	}
 
 	private int getRowFor(String theName) {

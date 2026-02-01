@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,94 +15,147 @@
  */
 package ghidra.app.util.bin.format.golang;
 
+import java.util.Objects;
+
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 
 /**
- * Golang version numbers
+ * Represents a Go version number (major.minor.patch), with some special sentinel values
+ * for wildcarding.
+ * 
+ * @param major currently just 1
+ * @param minor second part of version number, ranges from 0..unknown upper limit
+ * @param patch third part of version number, ranges from 0..unknown upper limit per minor version
  */
-public enum GoVer {
-	UNKNOWN(0, 0),
-	V1_2(1, 2),
-	V1_16(1, 16),
-	V1_17(1, 17),
-	V1_18(1, 18),
-	V1_19(1, 19),
-	V1_20(1, 20);
+public record GoVer(int major, int minor, int patch) implements Comparable<GoVer> {
 
-	private final int major;
-	private final int minor;
+	public static final String GOLANG_VERSION_PROPERTY_NAME = "Golang go version";
 
-	private GoVer(int major, int minor) {
-		this.major = major;
-		this.minor = minor;
+	public static final GoVer INVALID = new GoVer(0, 0, 0);
+	public static final GoVer ANY = new GoVer(-1, -1, -1);
+
+	/**
+	 * Parses a version string ("1.2.0") and returns a GoVer instance, or INVALID if bad data.
+	 * <p>
+	 * Missing patch numbers will be defaulted to 0.
+	 *  
+	 * @param s string to parse, "1.2.3", or "1.2"
+	 * @return GoVer instance, or INVALID
+	 */
+	public static GoVer parse(String s) {
+		return parse(s, 0);
+	}
+	
+	/**
+	 * Parses a version string ("1.2.0") and returns a GoVer instance, or INVALID if bad data.
+	 * <p>
+	 * Missing patch numbers will be replaced with the wildcard value.
+	 *  
+	 * @param s string to parse, "1.2.3", or "1.2"
+	 * @return GoVer instance, or INVALID
+	 */
+	public static GoVer parseWildcardPatch(String s) {
+		return parse(s, -1);
+	}
+	
+	private static GoVer parse(String s, int missingPatchValue) {
+		// handle extra info at end of ver string: "1.22.8 X:rangefunc"
+		String[] parts =
+			Objects.requireNonNullElse(s, "").replaceAll("[^.0-9].*$", "").split("\\.");
+		if (parts.length < 2) {
+			return INVALID;
+		}
+		try {
+			int major = Integer.parseInt(parts[0]);
+			int minor = Integer.parseInt(parts[1]);
+			int patch = parts.length > 2
+					? Integer.parseInt(parts[2])
+					: missingPatchValue;
+			return new GoVer(major, minor, patch);
+		}
+		catch (NumberFormatException e) {
+			// fall thru, return invalid
+		}
+		return INVALID;
 	}
 
 	/**
-	 * Major value
+	 * Parses a version string found in a Ghidra program info properties list
 	 * 
-	 * @return major
+	 * @param program {@link Program}
+	 * @return {@link GoVer} instance, or INVALID, never null
+	 */
+	public static GoVer fromProgramProperties(Program program) {
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		String verStr = props.getString(GOLANG_VERSION_PROPERTY_NAME, null);
+		return parse(verStr, 0);
+	}
+
+	/**
+	 * Writes a version string to a Ghidra program info properties list.
+	 * 
+	 * @param props props from a program
+	 * @param s version string
+	 */
+	public static void setProgramPropertiesWithOriginalVersionString(Options props, String s) {
+		props.setString(GOLANG_VERSION_PROPERTY_NAME, s);
+	}
+
+	public boolean isInvalid() {
+		return major == 0 && minor == 0;
+	}
+
+	public boolean isWildcard() {
+		return major == -1 && minor == -1;
+	}
+
+	/**
+	 * {@return major value}
 	 */
 	public int getMajor() {
 		return major;
 	}
 
 	/**
-	 * Minor value
-	 * 
-	 * @return minor
+	 * {@return minor value}
 	 */
 	public int getMinor() {
 		return minor;
 	}
 
 	/**
-	 * Compares this version to the specified other version and returns true if this version
-	 * is greater than or equal to the other version.
-	 * 
-	 * @param otherVersion version info to compare
-	 * @return true if this version is gte other version
+	 * {@return patch value}
 	 */
-	public boolean isAtLeast(GoVer otherVersion) {
-		return this.ordinal() >= otherVersion.ordinal();
+	public int getPatch() {
+		return patch;
 	}
 
-	/**
-	 * Parses a version string ("1.2") and returns the matching GoVer enum instance, or
-	 * UNKNOWN if no matching version or bad data.
-	 *  
-	 * @param s string to parse
-	 * @return GoVer enum instance, or UNKNOWN
-	 */
-	public static GoVer parse(String s) {
-		String[] parts = s.split("\\.");
-		if (parts.length < 2) {
-			return UNKNOWN;
-		}
-		try {
-			int major = Integer.parseInt(parts[0]);
-			int minor = Integer.parseInt(parts[1]);
-			for (GoVer ver : values()) {
-				if (ver.major == major && ver.minor == minor) {
-					return ver;
-				}
-			}
-		}
-		catch (NumberFormatException e) {
-			return UNKNOWN;
-		}
-		return UNKNOWN;
+	public GoVer prevPatch() {
+		return new GoVer(major, minor, patch > 0 ? patch - 1 : 0);
 	}
 
-	public static final String GOLANG_VERSION_PROPERTY_NAME = "Golang go version";
-	public static GoVer fromProgramProperties(Program program) {
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		String verStr = props.getString(GOLANG_VERSION_PROPERTY_NAME, null);
-		return verStr != null ? parse(verStr) : UNKNOWN;
+	public GoVer withPatch(int newPatchNum) {
+		return new GoVer(major, minor, newPatchNum);
 	}
 
-	public static void setProgramPropertiesWithOriginalVersionString(Options props, String s) {
-		props.setString(GOLANG_VERSION_PROPERTY_NAME, s);
+	@Override
+	public int compareTo(GoVer o) {
+		int result = Integer.compare(major, o.major);
+		if (result == 0) {
+			result = Integer.compare(minor, o.minor);
+		}
+		if (result == 0) {
+			result = patch == -1 || o.patch == -1 ? 0 : Integer.compare(patch, o.patch);
+		}
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		return patch != -1 
+				? "%d.%d.%d".formatted(major, minor, patch)
+				: "%d.%d".formatted(major, minor);
 	}
 
 }

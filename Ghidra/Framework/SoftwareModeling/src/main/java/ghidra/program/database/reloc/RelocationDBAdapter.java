@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -62,24 +63,22 @@ abstract class RelocationDBAdapter {
 
 	final static String TABLE_NAME = "Relocations";
 
-	final static Schema SCHEMA = new Schema(
-		RelocationDBAdapterV6.VERSION, "Index",
+	final static Schema SCHEMA = new Schema(RelocationDBAdapterV6.VERSION, "Index",
 		new Field[] { LongField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE,
 			BinaryField.INSTANCE, BinaryField.INSTANCE, StringField.INSTANCE },
 		new String[] { "Address", "Status", "Type", "Values", "Bytes", "Symbol Name" });
 
-	static RelocationDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static RelocationDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, IOException {
 		try {
-			return new RelocationDBAdapterV6(dbHandle, addrMap, openMode == DBConstants.CREATE);
+			return new RelocationDBAdapterV6(dbHandle, addrMap, openMode == OpenMode.CREATE);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
-			RelocationDBAdapter adapter =
-				findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			RelocationDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;
@@ -131,8 +130,7 @@ abstract class RelocationDBAdapter {
 		try {
 			tmpHandle.startTransaction();
 
-			RelocationDBAdapter tmpAdapter =
-				new RelocationDBAdapterV6(tmpHandle, addrMap, true);
+			RelocationDBAdapter tmpAdapter = new RelocationDBAdapterV6(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.iterator();
 			while (iter.hasNext()) {
 				DBRecord rec = iter.next();
@@ -147,8 +145,7 @@ abstract class RelocationDBAdapter {
 
 			dbHandle.deleteTable(TABLE_NAME);
 
-			RelocationDBAdapterV6 newAdapter =
-				new RelocationDBAdapterV6(dbHandle, addrMap, true);
+			RelocationDBAdapterV6 newAdapter = new RelocationDBAdapterV6(dbHandle, addrMap, true);
 
 			iter = tmpAdapter.iterator();
 			while (iter.hasNext()) {
@@ -270,23 +267,23 @@ abstract class RelocationDBAdapter {
 	 */
 	static void preV6DataMigrationUpgrade(RelocationDBAdapter adapter, Program program,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		
+
 		if (!(adapter instanceof RelocationDBAdapterV6 latestAdapter)) {
 			throw new AssertException("latest relocation adapter version expected");
 		}
-		
+
 		AddressMap addressMap = program.getAddressMap();
 		Memory memory = program.getMemory();
 		AddressSetView loadedAndInitializedAddressSet = memory.getLoadedAndInitializedAddressSet();
-		
+
 		ArrayList<DBRecord> list = new ArrayList<>();
 		RecordIterator recIter = latestAdapter.iterator();
 		while (recIter.hasNext()) {
 			list.add(recIter.next());
 		}
-		
+
 		// Sort on address and key order
-		Collections.sort(list, (r1,r2) -> {
+		Collections.sort(list, (r1, r2) -> {
 			Address a1 = addressMap.decodeAddress(r1.getLongValue(ADDR_COL));
 			Address a2 = addressMap.decodeAddress(r2.getLongValue(ADDR_COL));
 			int c = a1.compareTo(a2);
@@ -295,7 +292,7 @@ abstract class RelocationDBAdapter {
 			}
 			return c;
 		});
-		
+
 		// Update status/length of each relocation record
 		for (int i = 0; i < list.size(); i++) {
 			monitor.checkCancelled();
@@ -320,8 +317,7 @@ abstract class RelocationDBAdapter {
 					status = Status.UNKNOWN;
 				}
 				else {
-					status = rec.getIntValue(TYPE_COL) == 0 ? Status.APPLIED_OTHER
-							: Status.APPLIED;
+					status = rec.getIntValue(TYPE_COL) == 0 ? Status.APPLIED_OTHER : Status.APPLIED;
 				}
 			}
 			rec.setByteValue(FLAGS_COL, getFlags(status, byteLength));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import java.util.*;
 import javax.swing.text.*;
 
 import generic.theme.GColor;
+import ghidra.docking.settings.EnumSettingsDefinition;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.properties.UnsupportedMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -109,7 +111,7 @@ public class ProgramDiffDetails {
 		// FUTURE : Add checks to make sure programs are comparable.
 		//          Throw exception if not comparable.
 		initDetails();
-		initAttributes();
+		textAttrSet = new SimpleAttributeSet();
 	}
 
 	private static String getIndentString(int indentCount) {
@@ -119,11 +121,6 @@ public class ProgramDiffDetails {
 			buf.append(' ');
 		}
 		return buf.toString();
-	}
-
-	private void initAttributes() {
-		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontSize, 12);
 	}
 
 	/**
@@ -902,12 +899,12 @@ public class ProgramDiffDetails {
 			fieldName = dtc.getDefaultFieldName();
 		}
 		// TODO: how should we display bitfields?
-		buf.append(indent + "Offset=" + DiffUtility.toSignedHexString(offset) + " " + "Ordinal=" +
-			ordinal + " " + fieldName + " " + actualDt.getMnemonic(actualDt.getDefaultSettings()) +
-			"  " + getCategoryName(actualDt) + " " + "DataTypeSize=" +
-			(actualDt.isZeroLength() ? 0 : actualDt.getLength()) + " " + "ComponentSize=" +
-			dtc.getLength() + " " + ((comment != null) ? comment : "") +
-			" " + newLine);
+		buf.append(indent + "Offset=" + NumericUtilities.toSignedHexString(offset) + " " +
+			"Ordinal=" + ordinal + " " + fieldName + " " +
+			actualDt.getMnemonic(actualDt.getDefaultSettings()) + "  " + getCategoryName(actualDt) +
+			" " + "DataTypeSize=" + (actualDt.isZeroLength() ? 0 : actualDt.getLength()) + " " +
+			"ComponentSize=" + dtc.getLength() + " " + ((comment != null) ? comment : "") + " " +
+			newLine);
 		return actualDt;
 	}
 
@@ -958,8 +955,7 @@ public class ProgramDiffDetails {
 							fieldName = "field" + offset;
 						}
 						buf.append(newIndent + min.add(offset) + " " + dtc.getFieldName() + " " +
-							dtc.getDataType().getName() + " " + "length=" +
-							dtc.getLength() + " " +
+							dtc.getDataType().getName() + " " + "length=" + dtc.getLength() + " " +
 							((comment != null) ? comment : "") + " " + newLine);
 					}
 				}
@@ -979,14 +975,15 @@ public class ProgramDiffDetails {
 		Address max = cu.getMaxAddress();
 		String addrRangeStr = min + ((min.equals(max)) ? "" : " - " + max);
 		String cuRep;
-		if (cu instanceof Data) {
-			cuRep = ((Data) cu).getDataType().getPathName();
+		if (cu instanceof Data data) {
+			cuRep = data.getDataType().getPathName();
 		}
 		else if (cu instanceof Instruction) {
 			Instruction inst = (Instruction) cu;
 			boolean removedFallThrough =
 				inst.isFallThroughOverridden() && (inst.getFallThrough() == null);
 			boolean hasFlowOverride = inst.getFlowOverride() != FlowOverride.NONE;
+			boolean hasLengthOverride = inst.isLengthOverridden();
 			cuRep = cu.toString();
 			if (removedFallThrough) {
 				cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
@@ -1011,6 +1008,11 @@ public class ProgramDiffDetails {
 				cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
 					"Flow Override: " + inst.getFlowOverride();
 			}
+			if (hasLengthOverride) {
+				cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
+					"Length Override: " + inst.getLength() + " (actual length is " +
+					inst.getParsedLength() + ")";
+			}
 			cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
 				"Instruction Prototype hash = " +
 				Integer.toHexString(inst.getPrototype().hashCode());
@@ -1019,6 +1021,35 @@ public class ProgramDiffDetails {
 			cuRep = cu.toString();
 		}
 		buf.append(indent + addrRangeStr + "    " + cuRep + newLine);
+
+		if (cu instanceof Data data) {
+			// NOTE: Diff operates on the outmost code-unit only and not data components
+			String[] settingNames = data.getNames();
+			if (settingNames.length != 0) {
+				Map<String, SettingsDefinition> defMap = new HashMap<>();
+				for (SettingsDefinition settingsDef : data.getDataType().getSettingsDefinitions()) {
+					defMap.put(settingsDef.getStorageKey(), settingsDef);
+				}
+				buf.append(indent + indent + "Data Settings: ");
+				int count = 0;
+				Arrays.sort(settingNames);
+				for (String settingName : settingNames) {
+					Object value = data.getValue(settingName);
+					SettingsDefinition def = defMap.get(settingName);
+					if (def != null) {
+						settingName = def.getName();
+					}
+					if (value instanceof Long && def instanceof EnumSettingsDefinition eDef) {
+						value = eDef.getValueString(data);
+					}
+					if (count++ != 0) {
+						buf.append(", ");
+					}
+					buf.append(settingName + "=" + value);
+				}
+				buf.append(newLine);
+			}
+		}
 		return min;
 	}
 
@@ -1368,19 +1399,19 @@ public class ProgramDiffDetails {
 	}
 
 	private void addEOLCommentDetails() {
-		hasEolCommentDiffs = addSpecificCommentDetails(CodeUnit.EOL_COMMENT, "EOL-Comment");
+		hasEolCommentDiffs = addSpecificCommentDetails(CommentType.EOL, "EOL-Comment");
 	}
 
 	private void addPreCommentDetails() {
-		hasPreCommentDiffs = addSpecificCommentDetails(CodeUnit.PRE_COMMENT, "Pre-Comment");
+		hasPreCommentDiffs = addSpecificCommentDetails(CommentType.PRE, "Pre-Comment");
 	}
 
 	private void addPostCommentDetails() {
-		hasPostCommentDiffs = addSpecificCommentDetails(CodeUnit.POST_COMMENT, "Post-Comment");
+		hasPostCommentDiffs = addSpecificCommentDetails(CommentType.POST, "Post-Comment");
 	}
 
 	private void addPlateCommentDetails() {
-		hasPlateCommentDiffs = addSpecificCommentDetails(CodeUnit.PLATE_COMMENT, "Plate-Comment");
+		hasPlateCommentDiffs = addSpecificCommentDetails(CommentType.PLATE, "Plate-Comment");
 	}
 
 	/**
@@ -1425,7 +1456,7 @@ public class ProgramDiffDetails {
 
 	private void addRepeatableCommentDetails() {
 		hasRepeatableCommentDiffs =
-			addSpecificCommentDetails(CodeUnit.REPEATABLE_COMMENT, "Repeatable-Comment");
+			addSpecificCommentDetails(CommentType.REPEATABLE, "Repeatable-Comment");
 	}
 
 	/**
@@ -1460,11 +1491,11 @@ public class ProgramDiffDetails {
 		return retString;
 	}
 
-	private boolean addSpecificCommentDetails(int commentType, String commentName) {
+	private boolean addSpecificCommentDetails(CommentType commentType, String commentName) {
 		boolean hasCommentDiff = false;
 		try {
-			for (Address p1Address = minP1Address; p1Address.compareTo(
-				maxP1Address) <= 0; p1Address = p1Address.add(1L)) {
+			for (Address p1Address = minP1Address; p1Address
+					.compareTo(maxP1Address) <= 0; p1Address = p1Address.add(1L)) {
 				Address p2Address = SimpleDiffUtility.getCompatibleAddress(p1, p1Address, p2);
 				String noComment = "No " + commentName + ".";
 				String cmt1 = l1.getComment(commentType, p1Address);
@@ -1832,7 +1863,7 @@ public class ProgramDiffDetails {
 
 	private void addReturnOffset(StyledDocument doc, StackFrame frame) {
 		addFrameInfo(doc, "Return Address Offset: ",
-			DiffUtility.toSignedHexString(frame.getReturnAddressOffset()));
+			NumericUtilities.toSignedHexString(frame.getReturnAddressOffset()));
 	}
 
 	private void addReturnOffset(StyledDocument doc1, StyledDocument doc2, StackFrame frame1,
@@ -1840,14 +1871,16 @@ public class ProgramDiffDetails {
 		int offset1 = frame1.getReturnAddressOffset();
 		int offset2 = frame2.getReturnAddressOffset();
 		if (offset1 != offset2) {
-			addFrameInfo(doc1, "Return Address Offset: ", DiffUtility.toSignedHexString(offset1));
-			addFrameInfo(doc2, "Return Address Offset: ", DiffUtility.toSignedHexString(offset2));
+			addFrameInfo(doc1, "Return Address Offset: ",
+				NumericUtilities.toSignedHexString(offset1));
+			addFrameInfo(doc2, "Return Address Offset: ",
+				NumericUtilities.toSignedHexString(offset2));
 		}
 	}
 
 	private void addParameterOffset(StyledDocument doc, StackFrame frame) {
 		addFrameInfo(doc, "Parameter Offset: ",
-			DiffUtility.toSignedHexString(frame.getParameterOffset()));
+			NumericUtilities.toSignedHexString(frame.getParameterOffset()));
 	}
 
 	private void addParameterOffset(StyledDocument doc1, StyledDocument doc2, StackFrame frame1,
@@ -1855,8 +1888,8 @@ public class ProgramDiffDetails {
 		int offset1 = frame1.getParameterOffset();
 		int offset2 = frame2.getParameterOffset();
 		if (offset1 != offset2) {
-			addFrameInfo(doc1, "Parameter Offset: ", DiffUtility.toSignedHexString(offset1));
-			addFrameInfo(doc2, "Parameter Offset: ", DiffUtility.toSignedHexString(offset2));
+			addFrameInfo(doc1, "Parameter Offset: ", NumericUtilities.toSignedHexString(offset1));
+			addFrameInfo(doc2, "Parameter Offset: ", NumericUtilities.toSignedHexString(offset2));
 		}
 	}
 
@@ -1895,7 +1928,7 @@ public class ProgramDiffDetails {
 			vl.dtLen = Math.max(vl.dtLen, var.getDataType().getPathName().length());
 			vl.offsetLen = Math.max(vl.offsetLen, var.getVariableStorage().toString().length());
 			vl.firstUseLen = Math.max(vl.firstUseLen,
-				DiffUtility.toSignedHexString(var.getFirstUseOffset()).length());
+				NumericUtilities.toSignedHexString(var.getFirstUseOffset()).length());
 			vl.nameLen = Math.max(vl.nameLen, var.getName().length());
 			vl.sizeLen = Math.max(vl.sizeLen, Integer.toString(var.getLength()).length());
 			vl.sourceLen = Math.max(vl.sourceLen, var.getSource().toString().length());
@@ -2095,7 +2128,7 @@ public class ProgramDiffDetails {
 		else {
 			String dt = var.getDataType().getPathName();
 			String offset = var.getVariableStorage().toString();
-			String firstUse = DiffUtility.toSignedHexString(var.getFirstUseOffset());
+			String firstUse = NumericUtilities.toSignedHexString(var.getFirstUseOffset());
 			String name = var.getName();
 			String size = "" + var.getLength();
 			String source = var.getSource().toString();
@@ -2169,8 +2202,7 @@ public class ProgramDiffDetails {
 					// Handle case where the class for a Saveable property is missing (unsupported).
 					if (cu.getProgram()
 							.getListing()
-							.getPropertyMap(
-								propertyName) instanceof UnsupportedMapDB) {
+							.getPropertyMap(propertyName) instanceof UnsupportedMapDB) {
 						buf.append(
 							indent2 + propertyName + " is an unsupported property." + newLine);
 						continue;
@@ -2241,8 +2273,8 @@ public class ProgramDiffDetails {
 		BookmarkManager bmm1 = p1.getBookmarkManager();
 		BookmarkManager bmm2 = p2.getBookmarkManager();
 		try {
-			for (Address p1Address = minP1Address; p1Address.compareTo(
-				maxP1Address) <= 0; p1Address = p1Address.add(1)) {
+			for (Address p1Address = minP1Address; p1Address
+					.compareTo(maxP1Address) <= 0; p1Address = p1Address.add(1)) {
 				Address p2Address = SimpleDiffUtility.getCompatibleAddress(p1, p1Address, p2);
 				Bookmark[] marks1 = bmm1.getBookmarks(p1Address);
 				Arrays.sort(marks1, BOOKMARK_COMPARATOR);
@@ -2341,7 +2373,7 @@ public class ProgramDiffDetails {
 
 	private boolean isSameInstruction(Instruction i1, Instruction i2) {
 		boolean samePrototypes = i1.getPrototype().equals(i2.getPrototype());
-		boolean sameInstructionLength = i1.getLength() == i2.getLength();
+		boolean sameInstructionLength = i1.getLength() == i2.getLength(); // factors length override
 		boolean sameFallthrough = ProgramDiff.isSameFallthrough(p1, i1, p2, i2);
 		boolean sameFlowOverride = i1.getFlowOverride() == i2.getFlowOverride();
 		return samePrototypes && sameInstructionLength && sameFallthrough && sameFlowOverride;
@@ -2364,6 +2396,30 @@ public class ProgramDiffDetails {
 		// Detect that data type name or path differs?
 		if (!dt1.getPathName().equals(dt2.getPathName())) {
 			return false;
+		}
+
+		// assume only top-level data code units are compared
+		// we should not be a DataComponent (i.e., no parent)
+		if (d1.getParent() != null || d2.getParent() != null) {
+			throw new UnsupportedOperationException("Expecting top-level Data only");
+		}
+
+		// Only top-level Data instance Settings are supported 
+
+		String[] settingNames1 = d1.getNames();
+		Arrays.sort(settingNames1);
+		String[] settingNames2 = d2.getNames();
+		Arrays.sort(settingNames2);
+		if (!Arrays.equals(settingNames1, settingNames2)) {
+			return false;
+		}
+
+		for (int i = 0; i < settingNames1.length; i++) {
+			Object v1 = d1.getValue(settingNames1[i]);
+			Object v2 = d2.getValue(settingNames2[i]);
+			if (!Objects.equals(v1, v2)) {
+				return false;
+			}
 		}
 
 		return true;

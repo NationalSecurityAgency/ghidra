@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,21 +15,20 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 
 public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
 	INSTANCE;
@@ -66,16 +65,27 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 		return this;
 	}
 
-	public Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	@Override
+	public Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TraceThread thread = coordinates.getThread();
+		if (thread == null) {
+			return null;
+		}
 		long snap = coordinates.getSnap();
-		TraceStack stack = trace.getStackManager().getLatestStack(thread, snap);
+		TraceStack stack;
+		try {
+			stack = trace.getStackManager().getLatestStack(thread, snap);
+		}
+		catch (IllegalStateException e) {
+			// Schema does not specify a stack
+			return null;
+		}
 		if (stack == null) {
 			return null;
 		}
 		int level = coordinates.getFrame();
-		TraceStackFrame frame = stack.getFrame(level, false);
+		TraceStackFrame frame = stack.getFrame(snap, level, false);
 		if (frame == null) {
 			return null;
 		}
@@ -83,17 +93,11 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 	}
 
 	@Override
-	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
-	}
-
-	@Override
-	public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+	public GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
 			ProgramLocation location) {
-		Address address = doComputeTraceAddress(tool, coordinates);
+		Address address = computeTraceAddress(provider, coordinates);
 		if (address == null) {
-			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, coordinates,
+			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(provider, coordinates,
 				location);
 		}
 		return GoToInput.fromAddress(address);
@@ -120,8 +124,13 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 	}
 
 	@Override
-	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
+	public boolean affectedByBytesChange(AddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
 		return false;
+	}
+
+	@Override
+	public boolean shouldDisassemble() {
+		return true;
 	}
 }

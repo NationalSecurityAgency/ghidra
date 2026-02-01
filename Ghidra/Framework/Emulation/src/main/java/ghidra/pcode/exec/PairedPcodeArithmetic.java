@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package ghidra.pcode.exec;
 
+import java.math.BigInteger;
 import java.util.Objects;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -80,6 +82,12 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public Class<Pair<L, R>> getDomain() {
+		return (Class) Pair.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return endian;
 	}
@@ -115,28 +123,60 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
-	public Pair<L, R> modBeforeStore(int sizeout, int sizeinAddress, Pair<L, R> inAddress,
+	public Pair<L, R> modBeforeStore(PcodeOp op, AddressSpace space, Pair<L, R> inOffset,
+			Pair<L, R> inValue) {
+		return Pair.of(
+			leftArith.modBeforeStore(op, space, inOffset.getLeft(), inValue.getLeft()),
+			rightArith.modBeforeStore(op, space, inOffset.getRight(), inValue.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> modBeforeStore(int sizeinOffset, AddressSpace space, Pair<L, R> inOffset,
 			int sizeinValue, Pair<L, R> inValue) {
 		return Pair.of(
-			leftArith.modBeforeStore(sizeout, sizeinAddress, inAddress.getLeft(), sizeinValue,
+			leftArith.modBeforeStore(sizeinOffset, space, inOffset.getLeft(), sizeinValue,
 				inValue.getLeft()),
-			rightArith.modBeforeStore(sizeout, sizeinAddress, inAddress.getRight(), sizeinValue,
+			rightArith.modBeforeStore(sizeinOffset, space, inOffset.getRight(), sizeinValue,
 				inValue.getRight()));
 	}
 
 	@Override
-	public Pair<L, R> modAfterLoad(int sizeout, int sizeinAddress, Pair<L, R> inAddress,
+	public Pair<L, R> modAfterLoad(PcodeOp op, AddressSpace space, Pair<L, R> inOffset,
+			Pair<L, R> inValue) {
+		return Pair.of(
+			leftArith.modAfterLoad(op, space, inOffset.getLeft(), inValue.getLeft()),
+			rightArith.modAfterLoad(op, space, inOffset.getRight(), inValue.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> modAfterLoad(int sizeinOffset, AddressSpace space, Pair<L, R> inOffset,
 			int sizeinValue, Pair<L, R> inValue) {
 		return Pair.of(
-			leftArith.modAfterLoad(sizeout, sizeinAddress, inAddress.getLeft(), sizeinValue,
+			leftArith.modAfterLoad(sizeinOffset, space, inOffset.getLeft(), sizeinValue,
 				inValue.getLeft()),
-			rightArith.modAfterLoad(sizeout, sizeinAddress, inAddress.getRight(), sizeinValue,
+			rightArith.modAfterLoad(sizeinOffset, space, inOffset.getRight(), sizeinValue,
 				inValue.getRight()));
 	}
 
 	@Override
 	public Pair<L, R> fromConst(byte[] value) {
 		return Pair.of(leftArith.fromConst(value), rightArith.fromConst(value));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(long value, int size) {
+		return Pair.of(leftArith.fromConst(value, size), rightArith.fromConst(value, size));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(BigInteger value, int size, boolean isContextreg) {
+		return Pair.of(leftArith.fromConst(value, size, isContextreg),
+			rightArith.fromConst(value, size, isContextreg));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(BigInteger value, int size) {
+		return Pair.of(leftArith.fromConst(value, size), rightArith.fromConst(value, size));
 	}
 
 	@Override

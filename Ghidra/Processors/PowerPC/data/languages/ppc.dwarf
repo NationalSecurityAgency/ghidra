@@ -15,5 +15,5 @@
 		<register_mapping dwarf="119" ghidra="DAR"/>
 		<!-- <register_mapping dwarf="1124" ghidra="v0" auto_count="32"/> **not implemented** --> <!-- v0...v31 -->
 	</register_mappings>
-	<call_frame_cfa value="31"/>
+	<call_frame_cfa value="0"/>
 </dwarf>

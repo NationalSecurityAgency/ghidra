@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,9 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.tuple.Pair;
 
 import db.DBRecord;
+import generic.jar.ResourceFile;
 import ghidra.app.util.PseudoInstruction;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -32,14 +34,14 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.DBTraceUtils.CompilerSpecIDDBFieldCodec;
 import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
+import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TracePlatformChangeType;
+import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
-import ghidra.trace.util.OverlappingObjectIterator;
+import ghidra.trace.util.*;
 import ghidra.trace.util.OverlappingObjectIterator.Ranger;
-import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -158,6 +160,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 		new TreeMap<>();
 	protected final AddressSet guestAddressSet = new AddressSet();
 
+	protected DBTraceDataTypeManager dataTypeManager;
+
 	public DBTraceGuestPlatform(DBTracePlatformManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
 		super(store, record);
@@ -189,6 +193,12 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 		}
 	}
 
+	protected void loadDataTypeManager(OpenMode openMode, TaskMonitor monitor)
+			throws CancelledException, VersionException, IOException {
+		this.dataTypeManager = new DBTraceDataTypeManager(manager.dbh, openMode, manager.lock,
+			monitor, manager.trace, this);
+	}
+
 	@Override
 	public Trace getTrace() {
 		return manager.trace;
@@ -217,8 +227,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.delete(hostRange);
 			guestAddressSet.delete(guestRange);
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_DELETED,
-			null, this, range, null));
+		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_DELETED,
+			range.getHostRange().getAddressSpace(), this, range, null));
 	}
 
 	@Override
@@ -235,6 +245,11 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 	@Override
 	public CompilerSpec getCompilerSpec() {
 		return compilerSpec;
+	}
+
+	@Override
+	public TraceBasedDataTypeManager getDataTypeManager() {
+		return dataTypeManager;
 	}
 
 	@Override
@@ -265,8 +280,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.add(mappedRange.getHostRange());
 			guestAddressSet.add(mappedRange.getGuestRange());
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_ADDED,
-			null, this, null, mappedRange));
+		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_ADDED,
+			hostStart.getAddressSpace(), this, null, mappedRange));
 		return mappedRange;
 	}
 
@@ -286,6 +301,12 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 		return next.getMaxAddress().add(1);
 	}
 
+	private static ResourceFile getSlaFile(Language language) {
+		SleighLanguageDescription desc =
+			(SleighLanguageDescription) language.getLanguageDescription();
+		return desc.getSlaFile();
+	}
+
 	@Override
 	public TraceGuestPlatformMappedRange addMappedRegisterRange()
 			throws AddressOverflowException {
@@ -294,8 +315,24 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			if (guestRange == null) {
 				return null; // No registers, so we're mapped!
 			}
-			Address hostMin = manager.computeNextRegisterMin();
 			long size = guestRange.getLength();
+
+			/**
+			 * If the two languages are really the same (have the same .sla file), then map
+			 * registers identically. Such languages differ only in their default contextreg values.
+			 */
+			ResourceFile hostSla = getSlaFile(manager.hostPlatform.getLanguage());
+			ResourceFile guestSla = getSlaFile(getLanguage());
+			Address hostMin;
+			if (Objects.equals(hostSla, guestSla)) {
+				hostMin = manager.hostPlatform.getAddressFactory()
+						.getRegisterSpace()
+						.getAddress(guestRange.getMinAddress().getOffset());
+			}
+			else {
+				hostMin = manager.computeNextRegisterMin();
+			}
+
 			return addMappedRange(hostMin, guestRange.getMinAddress(), size);
 		}
 	}
@@ -312,6 +349,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public Address mapHostToGuest(Address hostAddress) {
+		if (hostAddress == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostAddress);
@@ -324,6 +364,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public AddressRange mapHostToGuest(AddressRange hostRange) {
+		if (hostRange == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostRange.getMinAddress());
@@ -352,6 +395,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public Address mapGuestToHost(Address guestAddress) {
+		if (guestAddress == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestAddress);
@@ -364,6 +410,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public AddressRange mapGuestToHost(AddressRange guestRange) {
+		if (guestRange == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestRange.getMinAddress());

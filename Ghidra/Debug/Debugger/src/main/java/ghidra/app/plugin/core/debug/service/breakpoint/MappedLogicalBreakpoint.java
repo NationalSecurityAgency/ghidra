@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,8 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.SleighUtils;
@@ -29,8 +28,8 @@ import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 
@@ -81,14 +80,6 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		return true;
 	}
 
-	protected TraceRecorder requireRecorder(DebuggerModelService modelService, Trace trace) {
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder == null) {
-			throw new AssertionError("This trace is not live");
-		}
-		return recorder;
-	}
-
 	@Override
 	public void enableForProgram() {
 		progBreak.enable();
@@ -125,7 +116,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planEnable(actions, length, kinds);
 		return actions.execute();
@@ -139,7 +130,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planDisable(actions, length, kinds);
 		return actions.execute();
@@ -153,7 +144,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planDelete(actions, length, kinds);
 		return actions.execute();
@@ -304,9 +295,9 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public void setRecorder(Trace trace, TraceRecorder recorder) {
+	public void setTarget(Trace trace, Target target) {
 		synchronized (traceBreaks) {
-			traceBreaks.get(trace).setRecorder(recorder);
+			traceBreaks.get(trace).setTarget(target);
 		}
 	}
 
@@ -318,8 +309,8 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public Set<TraceBreakpoint> getTraceBreakpoints() {
-		Set<TraceBreakpoint> result = new HashSet<>();
+	public Set<TraceBreakpointLocation> getTraceBreakpoints() {
+		Set<TraceBreakpointLocation> result = new HashSet<>();
 		synchronized (traceBreaks) {
 			for (TraceBreakpointSet breaks : traceBreaks.values()) {
 				result.addAll(breaks.getBreakpoints());
@@ -329,7 +320,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public Set<TraceBreakpoint> getTraceBreakpoints(Trace trace) {
+	public Set<TraceBreakpointLocation> getTraceBreakpoints(Trace trace) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(trace);
@@ -409,7 +400,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		return progMode.combineTrace(traceMode, Perspective.TRACE);
 	}
 
-	protected TraceMode computeTraceModeForLocation(TraceBreakpoint loc) {
+	protected TraceMode computeTraceModeForLocation(TraceBreakpointLocation loc) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(loc.getTrace());
@@ -421,7 +412,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public State computeStateForLocation(TraceBreakpoint loc) {
+	public State computeStateForLocation(TraceBreakpointLocation loc) {
 		ProgramMode progMode = progBreak.computeMode();
 		TraceMode traceMode = computeTraceModeForLocation(loc);
 		return progMode.combineTrace(traceMode, Perspective.TRACE);
@@ -487,7 +478,8 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean canMerge(TraceBreakpoint breakpoint) throws TrackedTooSoonException {
+	public boolean canMerge(TraceBreakpointLocation breakpoint, long snap)
+			throws TrackedTooSoonException {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(breakpoint.getTrace());
@@ -503,10 +495,10 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			 */
 			throw new TrackedTooSoonException();
 		}
-		if (length != breakpoint.getLength()) {
+		if (length != breakpoint.getLength(snap)) {
 			return false;
 		}
-		if (!Objects.equals(kinds, breakpoint.getKinds())) {
+		if (!Objects.equals(kinds, breakpoint.getKinds(snap))) {
 			return false;
 		}
 		return breaks.canMerge(breakpoint);
@@ -539,7 +531,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean trackBreakpoint(TraceBreakpoint breakpoint) {
+	public boolean trackBreakpoint(TraceBreakpointLocation breakpoint) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(breakpoint.getTrace());
@@ -565,7 +557,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean untrackBreakpoint(TraceBreakpoint breakpoint) {
+	public boolean untrackBreakpoint(TraceBreakpointLocation breakpoint) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(breakpoint.getTrace());

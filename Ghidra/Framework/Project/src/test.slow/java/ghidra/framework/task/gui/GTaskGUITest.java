@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import org.junit.*;
 
 import docking.test.AbstractDockingTest;
 import generic.concurrent.GThreadPool;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.task.*;
 import ghidra.framework.task.gui.taskview.*;
 import ghidra.util.exception.CancelledException;
@@ -412,8 +412,9 @@ public class GTaskGUITest extends AbstractDockingTest {
 
 	private void assertWaitingCount(int count) {
 		waitForSwing();
-		waitForCondition(() -> count == getWaitingCount(), "Timed-out waiting for the 'wait count' to be " + count + ", but was " +
-			getWaitingCount());
+		waitForCondition(() -> count == getWaitingCount(),
+			"Timed-out waiting for the 'wait count' to be " + count + ", but was " +
+				getWaitingCount());
 	}
 
 	private int getWaitingCount() {
@@ -586,10 +587,10 @@ public class GTaskGUITest extends AbstractDockingTest {
 			//
 			// Unusual Code: We can't call taskMgr.waitForHigherPriorityTasks() without first
 			// releasing the 'work finished' latch, as that will cause a deadlock.  So, we have
-			// to release that lock, be still be able to block the advance() method so that the
+			// to release that lock, to still be able to block the advance() method so that the
 			// test does not keep going until we let our 'higher priority task' get
 			// scheduled.   So, signal that our work is done, but then wait for the sub-work
-			// to be be scheduled.
+			// to be scheduled.
 			//
 			debug(getName() + ": release workFinished latch early");
 			workFinishedLatch.countDown();
@@ -647,11 +648,12 @@ public class GTaskGUITest extends AbstractDockingTest {
 		}
 
 		void waitForWorkFinished(int n) {
-			waitForCondition(() -> workCount.get() == n, "Work iteration " + n + " never completed");
+			waitForCondition(() -> workCount.get() == n,
+				"Work iteration " + n + " never completed");
 		}
 
 		@Override
-		public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+		public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 			debug(getName() + ": Run called");
 			monitor.initialize(loopCount);
 			taskStartLatch.countDown();

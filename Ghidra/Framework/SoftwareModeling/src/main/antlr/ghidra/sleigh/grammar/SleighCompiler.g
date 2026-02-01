@@ -37,6 +37,10 @@ scope Block {
 }
 
 @members {
+	private static final BigInteger MAX_ULONG = new BigInteger("ffffffffffffffff", 16);
+	private static final BigInteger MIN_SLONG = new BigInteger("-8000000000000000", 16);
+	private static final BigInteger MAX_UINT = new BigInteger("ffffffff", 16);
+
 	private ParsingEnvironment env = null;
 	private SleighCompile sc = null;
 	private PcodeCompile pcode = null;
@@ -63,6 +67,37 @@ scope Block {
 		if (rbi.bitLength() > 64) {
 			reportError(rbi.location, "Integer representation exceeds Java long (" + rbi + ")");
 		}
+	}
+
+	private long toSLong(RadixBigInteger bi) {
+		try {
+			return bi.longValueExact();
+		}
+		catch (ArithmeticException e) {
+			reportError(bi.location, "Integer cannot be represented as signed long: " + bi);
+			return bi.longValue();
+		}
+	}
+
+	private long toULong(RadixBigInteger bi) {
+		if (bi.compareTo(MAX_ULONG) > 0 || bi.signum() < 0) {
+			reportError(bi.location, "Integer cannot be represented as unsigned long: " + bi);
+		}
+		return bi.longValue();
+	}
+
+	private long toLong(RadixBigInteger bi) {
+		if (bi.compareTo(MAX_ULONG) > 0 || bi.compareTo(MIN_SLONG) < 0) {
+			reportError(bi.location, "Integer cannot be represented as long: " + bi);
+		}
+		return bi.longValue();
+	}
+
+	private int toUInt(RadixBigInteger bi) {
+		if (bi.compareTo(MAX_UINT) > 0 || bi.signum() < 0) {
+			reportError(bi.location, "Integer cannot be represented as unsigned int: " + bi);
+		}
+		return bi.intValue();
 	}
 
 	private void redefinedError(SleighSymbol sym, Tree t, String what) {
@@ -167,7 +202,7 @@ definition
 	;
 
 aligndef
-	:	^(OP_ALIGNMENT i=integer) { sc.setAlignment($i.value.intValue()); }
+	:	^(OP_ALIGNMENT i=integer) { sc.setAlignment(toUInt($i.value)); }
 	;
 
 tokendef
@@ -183,7 +218,7 @@ tokendef
 				if (sym != null) {
 					redefinedError(sym, n, "token");
 				} else {
-					$tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue(), 0);
+					$tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), toLong($i.value), 0);
 				}
 			}
 		} fielddefs)
@@ -193,7 +228,7 @@ tokendef
 			    if (sym != null) {
 			        redefinedError(sym, n, "token");
 			    } else {
-			        $tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue(), $s.value ==0 ? -1 : 1);
+			        $tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), toLong($i.value), $s.value ==0 ? -1 : 1);
 			    }
 			}
 	    } fielddefs)
@@ -212,7 +247,7 @@ fielddef
 	}
 	:	^(t=OP_FIELDDEF n=unbound_identifier["field"] s=integer e=integer {
 			if (n != null) {
-                $fielddef::fieldQuality = new FieldQuality($n.value.getText(), find($t), $s.value.longValue(), $e.value.longValue());
+                $fielddef::fieldQuality = new FieldQuality($n.value.getText(), find($t), toULong($s.value), toULong($e.value));
 			}
 		} fieldmods) {
 			if ($fielddef.size() > 0 && $fielddef::fieldQuality != null) {
@@ -344,6 +379,8 @@ specific_symbol[String purpose] returns [SpecificSymbol symbol]
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
+					&& sym.getType() != symbol_type.flowdest_symbol
+					&& sym.getType() != symbol_type.flowref_symbol
 					&& sym.getType() != symbol_type.operand_symbol
 					&& sym.getType() != symbol_type.epsilon_symbol
 					&& sym.getType() != symbol_type.varnode_symbol) {
@@ -440,13 +477,13 @@ typemod
 
 sizemod
 	:	^(OP_SIZE i=integer) {
-			$spacedef::quality.size = $i.value.intValue();
+			$spacedef::quality.size = toUInt($i.value);
 		}
 	;
 
 wordsizemod
 	:	^(OP_WORDSIZE i=integer) {
-			$spacedef::quality.wordsize = $i.value.intValue();
+			$spacedef::quality.wordsize = toUInt($i.value);
 		}
 	;
 
@@ -460,7 +497,7 @@ varnodedef
 				throw new SleighError("Unsupported size: " + String.format("0x\%x", size),
 					l.second.get(0));
 			}
-			sc.defineVarnodes(s, $offset.value.longValue(), $size.value.intValue(), l.first, l.second);
+			sc.defineVarnodes(s, toULong($offset.value), toUInt($size.value), l.first, l.second);
 		}
 	;
 
@@ -495,7 +532,7 @@ bitrangedef
 
 sbitrange
 	:	^(OP_BITRANGE ^(OP_IDENTIFIER s=.) b=varnode_symbol["bitrange definition", true] i=integer j=integer) {
-			sc.defineBitrange(find(s), $s.getText(), b, $i.value.intValue(), $j.value.intValue());
+			sc.defineBitrange(find(s), $s.getText(), b, toUInt($i.value), toUInt($j.value));
 		}
 	;
 
@@ -514,10 +551,10 @@ intblist returns [VectorSTL<Long> value]
 	@init {
 		$value = new VectorSTL<Long>();
 	}
-	:	^(OP_INTBLIST (n=intbpart { $value.push_back(n.longValue()); } )*)
+	:	^(OP_INTBLIST (n=intbpart { $value.push_back(toLong(n)); } )*)
 	;
 
-intbpart returns [BigInteger value]
+intbpart returns [RadixBigInteger value]
 	:	t=OP_WILDCARD { $value = new RadixBigInteger(find(t), "BADBEEF", 16); }
 	|	^(OP_NEGATE i=integer) { $value = i.negate(); }
 	|	i=integer { $value = i; }
@@ -803,7 +840,7 @@ pexpression returns [PatternExpression value]
 
 //	|	^(OP_APPLY n=identifier o=pexpression2_operands) { $value = $n.value + "(" + $o.value + ")"; } // for globalset!!!
 	|	y=pattern_symbol["pattern expression"] { $value = $y.expr; }
-	|	i=integer { $value = new ConstantValue(i.location, i.longValue()); }
+	|	i=integer { $value = new ConstantValue(i.location, toLong(i)); }
 	|	^(OP_PARENTHESIZED l=pexpression) { $value = l; }
 	;
 
@@ -823,7 +860,7 @@ pexpression2 returns [PatternExpression value]
 
 //	|	^(OP_APPLY n=identifier o=pexpression2_operands) { $value = $n.value + "(" + $o.value + ")"; } // for globalset!!!
 	|	y=pattern_symbol2["pattern expression"] { $value = $y.expr; }
-	|	i=integer { $value = new ConstantValue(i.location, i.longValue()); }
+	|	i=integer { $value = new ConstantValue(i.location, toLong(i)); }
 	|	^(OP_PARENTHESIZED l=pexpression2) { $value = l; }
 	;
 
@@ -841,6 +878,8 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.flowdest_symbol
+					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
 				SpecificSymbol ss = (SpecificSymbol) sym;
@@ -874,6 +913,8 @@ pattern_symbol2[String purpose] returns [PatternExpression expr]
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.flowdest_symbol
+					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.operand_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
@@ -945,6 +986,8 @@ cstatement[VectorSTL<ContextChange> r]
 							|| sym.getType() == symbol_type.start_symbol
 							|| sym.getType() == symbol_type.end_symbol
 							|| sym.getType() == symbol_type.next2_symbol
+							|| sym.getType() == symbol_type.flowdest_symbol
+							|| sym.getType() == symbol_type.flowref_symbol
 							|| sym.getType() == symbol_type.operand_symbol
 							|| sym.getType() == symbol_type.epsilon_symbol
 							|| sym.getType() == symbol_type.varnode_symbol) {
@@ -1015,7 +1058,7 @@ code_block[Location startingPoint] returns [ConstructTpl rtl]
 	}
 	scope Block;
 	@init {
-		$Block::ct = new ConstructTpl(startingPoint);
+		$Block::ct = pcode.enterSection(startingPoint);
 		$code_block::stmtLocation = new Location("<internal error populating statement location>", 0);
 	}
 	@after {
@@ -1081,13 +1124,13 @@ statement
 					pcode.recordNop(s.first);
 			}
 			$semantic::containsMultipleSections = true;
-			$Block::ct = new ConstructTpl(s.first);
+			$Block::ct = pcode.enterSection(s.first);
 		}
 	;
 
 declaration
 	:	^(OP_LOCAL n=unbound_identifier["sized local declaration"] i=integer) {
-			pcode.newLocalDefinition(find(n), n.getText(), $i.value.intValue());
+			pcode.newLocalDefinition(find(n), n.getText(), toUInt($i.value));
 		}
 	|	^(OP_LOCAL n=unbound_identifier["local declaration"]) {
 			pcode.newLocalDefinition(find(n), n.getText());
@@ -1154,13 +1197,13 @@ assignment returns [VectorSTL<OpTpl> value]
 		$code_block::stmtLocation = find(t);
 	}
 	:	^(t=OP_ASSIGN ^(OP_BITRANGE ss=specific_symbol["bit range assignment"] a=integer b=integer) e=expr) {
-			$value = pcode.assignBitRange(find(t), ss.getVarnode(), $a.value.intValue(), $b.value.intValue(), e);	
+			$value = pcode.assignBitRange(find(t), ss.getVarnode(), toUInt($a.value), toUInt($b.value), e);	
 		}
 	|	^(t=OP_ASSIGN ^(OP_DECLARATIVE_SIZE n=unbound_identifier["variable declaration/assignment"] i=integer) e=expr) {
-			$value = pcode.newOutput(find(n), true, e, n.getText(), $i.value.intValue());
+			$value = pcode.newOutput(find(n), true, e, n.getText(), toUInt($i.value));
 		}
 	|	^(OP_LOCAL t=OP_ASSIGN ^(OP_DECLARATIVE_SIZE n=unbound_identifier["variable declaration/assignment"] i=integer) e=expr) {
-			$value = pcode.newOutput(find(n), true, e, n.getText(), $i.value.intValue());
+			$value = pcode.newOutput(find(n), true, e, n.getText(), toUInt($i.value));
 		}
 	|	^(OP_LOCAL t=OP_ASSIGN n=unbound_identifier["variable declaration/assignment"] e=expr) {
 			$value = pcode.newOutput(find(n), true, e, n.getText());
@@ -1168,10 +1211,18 @@ assignment returns [VectorSTL<OpTpl> value]
 	|	^(t=OP_ASSIGN ^(OP_IDENTIFIER id=.) e=expr) {
 			SleighSymbol sym = pcode.findSymbol($id.getText());
 			if (sym == null) {
-				$value = pcode.newOutput(find(id), false, e, $id.getText());	
+				$value = pcode.newOutput(find(id), false, e, $id.getText());
+            } else if (sym instanceof BitrangeSymbol) {
+                BitrangeSymbol bitSym = (BitrangeSymbol)sym;
+                VarnodeSymbol parent = bitSym.getParentSymbol();
+                $value = pcode.assignBitRange(find(t), parent.getVarnode(),
+                                              bitSym.getBitOffset(),
+                                              bitSym.numBits(),e);
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
+					&& sym.getType() != symbol_type.flowdest_symbol
+					&& sym.getType() != symbol_type.flowref_symbol
 					&& sym.getType() != symbol_type.operand_symbol
 					&& sym.getType() != symbol_type.epsilon_symbol
 					&& sym.getType() != symbol_type.varnode_symbol) {
@@ -1191,7 +1242,7 @@ assignment returns [VectorSTL<OpTpl> value]
 	;
 
 bitrange returns [ExprTree value]
-	:	^(t=OP_BITRANGE ss=specific_symbol["bit range"] a=integer b=integer) { $value = pcode.createBitRange(find(t), ss, $a.value.intValue(), $b.value.intValue()); }
+	:	^(t=OP_BITRANGE ss=specific_symbol["bit range"] a=integer b=integer) { $value = pcode.createBitRange(find(t), ss, toUInt($a.value), toUInt($b.value)); }
 	;
 
 sizedstar returns [Pair<StarQuality, ExprTree> value]
@@ -1203,7 +1254,7 @@ sizedstar returns [Pair<StarQuality, ExprTree> value]
 	}
 	:	^(t=OP_DEREFERENCE s=space_symbol["sized star operator"] i=integer e=expr) {
 			q = new StarQuality(find(t));
-			q.setSize($i.value.intValue());
+			q.setSize(toUInt($i.value));
 			q.setId(new ConstTpl(s.getSpace()));
 		}
 	|	^(t=OP_DEREFERENCE s=space_symbol["sized star operator"] e=expr) {
@@ -1213,7 +1264,7 @@ sizedstar returns [Pair<StarQuality, ExprTree> value]
 		}
 	|	^(t=OP_DEREFERENCE i=integer e=expr) {
 			q = new StarQuality(find(t));
-			q.setSize($i.value.intValue());
+			q.setSize(toUInt($i.value));
 			q.setId(new ConstTpl(pcode.getDefaultSpace()));
 		}
 	|	^(t=OP_DEREFERENCE e=expr) {
@@ -1232,7 +1283,7 @@ sizedstarv returns [Pair<StarQuality, VarnodeTpl> value]
 	}
 	:	^(t=OP_DEREFERENCE s=space_symbol["sized star operator"] i=integer ss=specific_symbol["varnode reference"]) {
 			q = new StarQuality(find(t));
-			q.setSize($i.value.intValue());
+			q.setSize(toUInt($i.value));
 			q.setId(new ConstTpl(s.getSpace()));
 		}
 	|	^(t=OP_DEREFERENCE s=space_symbol["sized star operator"] ss=specific_symbol["varnode reference"]) {
@@ -1242,7 +1293,7 @@ sizedstarv returns [Pair<StarQuality, VarnodeTpl> value]
 		}
 	|	^(t=OP_DEREFERENCE i=integer ss=specific_symbol["varnode reference"]) {
 			q = new StarQuality(find(t));
-			q.setSize($i.value.intValue());
+			q.setSize(toUInt($i.value));
 			q.setId(new ConstTpl(pcode.getDefaultSpace()));
 		}
 	|	^(t=OP_DEREFERENCE ss=specific_symbol["varnode reference"]) {
@@ -1307,7 +1358,9 @@ jump_symbol[String purpose] returns [VarnodeTpl value]
 				unknownSymbolError($s.getText(), find($s), "start, end, or operand", purpose);
 			} else if (sym.getType() == symbol_type.start_symbol ||
 					sym.getType() == symbol_type.end_symbol ||
-					sym.getType() == symbol_type.next2_symbol) {
+					sym.getType() == symbol_type.next2_symbol ||
+					sym.getType() == symbol_type.flowdest_symbol ||
+					sym.getType() == symbol_type.flowref_symbol) {
 				SpecificSymbol ss = (SpecificSymbol) sym;
 				$value = new VarnodeTpl(find($s), new ConstTpl(ConstTpl.const_type.j_curspace),
 					ss.getVarnode().getOffset(),
@@ -1340,13 +1393,13 @@ jumpdest[String purpose] returns [ExprTree value]
 		}
 	|	^(t=OP_JUMPDEST_ABSOLUTE i=integer) {
 			value = new ExprTree(find(t), new VarnodeTpl(find(t), new ConstTpl(ConstTpl.const_type.j_curspace),
-				new ConstTpl(ConstTpl.const_type.real, $i.value.intValue()),
+				new ConstTpl(ConstTpl.const_type.real, toULong($i.value)),
 				new ConstTpl(ConstTpl.const_type.j_curspace_size)));
 		}
 	|	^(t=OP_JUMPDEST_RELATIVE i=integer s=space_symbol[purpose]) {
 			AddrSpace spc = s.getSpace();
 			value = new ExprTree(find(t), new VarnodeTpl(find(t), new ConstTpl(spc),
-				new ConstTpl(ConstTpl.const_type.real, $i.value.intValue()),
+				new ConstTpl(ConstTpl.const_type.real, toSLong($i.value)),
 				new ConstTpl(ConstTpl.const_type.real, spc.getAddrSize())));
 		}
 	|	^(t=OP_JUMPDEST_LABEL l=label) {
@@ -1450,16 +1503,40 @@ expr returns [ExprTree value]
 	|	s=sizedstar { $value = pcode.createLoad(s.first.location, s.first, s.second); }
 
 	|	a=expr_apply { $value = (ExprTree) $a.value; }
-	|	v=varnode { $value = new ExprTree(v.location, v); }
+	|	v=varnode_or_bitsym["expression"] { $value = $v.value; }
 	|	b=bitrange { $value = $b.value; }
 	|	i=integer { $value = new ExprTree(i.location, new VarnodeTpl(i.location, new ConstTpl(pcode.getConstantSpace()),
-				new ConstTpl(ConstTpl.const_type.real, $i.value.longValue()),
+				new ConstTpl(ConstTpl.const_type.real, toLong($i.value)),
 				new ConstTpl(ConstTpl.const_type.real, 0)));
 		}
 	|	^(OP_PARENTHESIZED l=expr) { $value = l; }
 
 	|	^(t=OP_BITRANGE2 ss=specific_symbol["expression"] i=integer) {
-			$value = pcode.createBitRange(find(t), ss, 0, ($i.value.intValue() * 8));
+			$value = pcode.createBitRange(find(t), ss, 0, toUInt($i.value) * 8);
+		}
+	;
+
+varnode_or_bitsym[String purpose] returns [ExprTree value]
+	:	^(t=OP_IDENTIFIER s=.) {
+            SleighSymbol sym = pcode.findSymbol($s.getText());
+            if (sym == null) {
+                unknownSymbolError($s.getText(), find($s), "varnode or bitrange symbol", purpose);
+            } else if (sym instanceof BitrangeSymbol) {
+                BitrangeSymbol bitSym = (BitrangeSymbol)sym;
+                $value = pcode.createBitRange(find(t), bitSym.getParentSymbol(),
+                                              bitSym.getBitOffset(),
+                                              bitSym.numBits());
+            } else if (sym instanceof SpecificSymbol) {
+                VarnodeTpl vTemp = ((SpecificSymbol)sym).getVarnode();
+                $value = new ExprTree(vTemp.location, vTemp);
+            } else {
+                undeclaredSymbolError(sym, find($s), purpose);
+            }
+        }
+	|	v=varnode_adorned { $value = new ExprTree($v.value.location,$v.value); }
+	|	t=OP_WILDCARD {
+			wildcardError($t, purpose);
+			$value = null;
 		}
 	;
 
@@ -1488,6 +1565,8 @@ expr_apply returns [Object value]
 				} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.flowdest_symbol
+					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.operand_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
@@ -1517,19 +1596,23 @@ expr_operands returns [VectorSTL<ExprTree> value]
 	:	(e=expr { value.push_back(e); })*
 	;
 
-varnode returns [VarnodeTpl value]
-	:	ss=specific_symbol["varnode reference"] { $value = ss.getVarnode(); }
-	|	^(t=OP_TRUNCATION_SIZE n=integer m=integer) {
-			if ($m.value.longValue() > 8) {
+varnode_adorned returns [VarnodeTpl value]
+	:	^(t=OP_TRUNCATION_SIZE n=integer m=integer) {
+			if (toULong($m.value) > 8) {
 				reportError(find(t), "Constant varnode size must not exceed 8 (" +
-				$n.value.longValue() + ":" + $m.value.longValue() + ")");
+				$n.value + ":" + $m.value + ")");
 			}
 			$value = new VarnodeTpl(find(t), new ConstTpl(pcode.getConstantSpace()),
-				new ConstTpl(ConstTpl.const_type.real, $n.value.longValue()),
-				new ConstTpl(ConstTpl.const_type.real, $m.value.longValue()));
+				new ConstTpl(ConstTpl.const_type.real, toLong($n.value)),
+				new ConstTpl(ConstTpl.const_type.real, toULong($m.value)));
 		}
-	|	^(OP_ADDRESS_OF ^(OP_SIZING_SIZE i=integer) v=varnode) { $value = pcode.addressOf(v, $i.value.intValue()); }
+	|	^(OP_ADDRESS_OF ^(OP_SIZING_SIZE i=integer) v=varnode) { $value = pcode.addressOf(v, toUInt($i.value)); }
 	|	^(OP_ADDRESS_OF v=varnode) { $value = pcode.addressOf(v, 0); }
+	;
+
+varnode returns [VarnodeTpl value]
+	:	ss=specific_symbol["varnode reference"] { $value = ss.getVarnode(); }
+	|	v=varnode_adorned { $value = $v.value; }
 	;
 
 qstring returns [String value]

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,6 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 	final static HashSet<String> handledProcessors = new HashSet<String>();
 	protected String processorName = "Basic";
-	protected AddressSetView EMPTY_ADDRESS_SET = new AddressSet();
 
 	public ConstantPropagationAnalyzer() {
 		this("Basic");
@@ -126,7 +125,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Called to to register a more specific analyzer.
+	 * Called to register a more specific analyzer.
 	 *
 	 * @param processorName
 	 */
@@ -150,7 +149,13 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		// unless there is a good data type at the location
 		boolean isHarvard = program.getLanguage().getDefaultSpace() != program.getLanguage().getDefaultDataSpace();
 		checkPointerParamRefsOption = program.getDefaultPointerSize() <= 2 || isHarvard;
+
+		checkStoredRefsOption = program.getDefaultPointerSize() > 2 && !isHarvard;
 		
+		long size = program.getAddressFactory().getDefaultAddressSpace().getSize();
+		minSpeculativeRefAddress = size * 16;
+		maxSpeculativeRefAddress = size * 8;
+
 		checkParamRefsOption = !(program.getAddressFactory()
 				.getDefaultAddressSpace() instanceof SegmentedAddressSpace);
 
@@ -183,7 +188,8 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			int locationCount = locations.size();
 			monitor.initialize(locationCount);
 			if (locationCount != 0) {
-				AddressSetView resultSet = runAddressAnalysis(program, locations, monitor);
+				monitor.setMessage(getName());
+				AddressSetView resultSet = runParallelAddressAnalysis(program, locations, null, maxThreadCount, monitor);
 				// get rid of any reached addresses
 				unanalyzedSet.delete(resultSet);
 			}
@@ -429,6 +435,11 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 				// now get rid of all the instructions that were analyzed
 				todoSet.delete(resultSet);
 			}
+			
+			// make sure todoSet removes start address if no results
+			if (resultSet == null || resultSet.isEmpty()) {
+				todoSet.delete(start,start);
+			}
 		}
 	}
 
@@ -443,6 +454,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	 * @return - set of addresses actually flowed to
 	 * @throws CancelledException
 	 */
+	@Override
 	public AddressSetView analyzeLocation(final Program program, Address start, AddressSetView set,
 			final TaskMonitor monitor) throws CancelledException {
 
@@ -465,7 +477,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			flowStart = func.getEntryPoint();
 		}
 
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropogator symEval = new SymbolicPropogator(program, false);
 		symEval.setParamRefCheck(checkParamRefsOption);
 
 		symEval.setParamPointerRefCheck(checkPointerParamRefsOption);
@@ -479,7 +491,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Actually use the setup evauluator to flow the constants
+	 * Actually use the setup evaluator to flow the constants
 	 * 
 	 * @param flowStart - address to start flowing at
 	 * @param flowSet - address set to restrict constant flowing to
@@ -494,7 +506,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor)
 				.setTrustWritableMemory(trustWriteMemOption)
-			    .setMinpeculativeOffset(minSpeculativeRefAddress)
+			    .setMinSpeculativeOffset(minSpeculativeRefAddress)
 			    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
 			    .setMinStoreLoadOffset(minStoreLoadRefAddress)
 			    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
@@ -570,12 +582,9 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		options.registerOption(MIN_KNOWN_REFADDRESS_OPTION_NAME, minStoreLoadRefAddress, null,
 			MIN_KNOWN_REFADDRESS_OPTION_DESCRIPTION);
 
-		long size = program.getAddressFactory().getDefaultAddressSpace().getSize();
-		minSpeculativeRefAddress = size * 16;
 		options.registerOption(MIN_SPECULATIVE_REFADDRESS_OPTION_NAME, minSpeculativeRefAddress, null,
 			MIN_SPECULATIVE_REFADDRESS_OPTION_DESCRIPTION);
 
-		maxSpeculativeRefAddress = size * 8;
 		options.registerOption(MAX_SPECULATIVE_REFADDRESS_OPTION_NAME, maxSpeculativeRefAddress, null,
 			MAX_SPECULATIVE_REFADDRESS_OPTION_DESCRIPTION);
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,20 +16,24 @@
 package ghidra.trace.database.time;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
+import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.*;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -44,7 +48,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	protected final DBCachedObjectStore<DBTraceSnapshot> snapshotStore;
 	protected final DBCachedObjectIndex<String, DBTraceSnapshot> snapshotsBySchedule;
 
-	public DBTraceTimeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceTimeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
 			throws VersionException, IOException {
 		this.trace = trace;
@@ -70,17 +74,17 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 	protected void notifySnapshotAdded(DBTraceSnapshot snapshot) {
 		trace.updateViewportsSnapshotAdded(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.ADDED, null, snapshot));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_ADDED, null, snapshot));
 	}
 
 	protected void notifySnapshotChanged(DBTraceSnapshot snapshot) {
 		trace.updateViewportsSnapshotChanged(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, snapshot));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_CHANGED, null, snapshot));
 	}
 
 	protected void notifySnapshotDeleted(DBTraceSnapshot snapshot) {
 		trace.updateViewportsSnapshotDeleted(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.DELETED, null, snapshot));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_DELETED, null, snapshot));
 	}
 
 	@Override
@@ -133,6 +137,115 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	@Override
+	public TraceSnapshot findScratchSnapshot(TraceSchedule schedule) {
+		Collection<? extends TraceSnapshot> exist = getSnapshotsWithSchedule(schedule);
+		if (!exist.isEmpty()) {
+			return exist.iterator().next();
+		}
+		/**
+		 * TODO: This could be more sophisticated.... Does it need to be, though? Ideally, we'd only
+		 * keep state around that has annotations, e.g., bookmarks and code units. That needs a new
+		 * query (latestStartSince) on those managers, though. It must find the latest start tick
+		 * since a given snap. We consider only start snaps because placed code units go "from now
+		 * on out".
+		 */
+		TraceSnapshot last = getMostRecentSnapshot(-1);
+		long snap = last == null ? Long.MIN_VALUE : last.getKey() + 1;
+		TraceSnapshot snapshot = getSnapshot(snap, true);
+		snapshot.setSchedule(schedule);
+		return snapshot;
+	}
+
+	protected DBTraceSnapshot doGetValidSnapshotBySchedule(String key, long version) {
+		for (DBTraceSnapshot snapshot : snapshotsBySchedule.get(key)) {
+			if (snapshot.getVersion() >= version) {
+				return snapshot;
+			}
+		}
+		return null;
+	}
+
+	protected DBTraceSnapshot doFindNearest(TraceSchedule schedule, long version) {
+		// Base case
+		if (schedule.isSnapOnly()) {
+			return snapshotStore.getObjectAt(schedule.getSnap()); // may be null
+		}
+
+		// Inductive case
+		DBTraceSnapshot best = null;
+		TraceSchedule dropped = schedule.dropLastStep();
+		String strDropped = dropped.toString();
+		for (Iterator<String> it =
+			snapshotsBySchedule.tail(strDropped, true).keys().iterator(); it.hasNext();) {
+			String key = it.next();
+			if (!key.startsWith(strDropped)) {
+				break;
+			}
+			TraceSchedule candidateSchedule = TraceSchedule.parse(key);
+			// We're in a chunk of too-advanced (and probably unrelated) schedules
+			if (candidateSchedule.stepCount() > schedule.stepCount()) {
+				TraceSchedule candidateTrunc =
+					candidateSchedule.truncateToSteps(schedule.stepCount());
+				Step candidateStep = candidateTrunc.lastStep().step();
+				TraceSchedule candidateDropped = candidateTrunc.dropLastStep();
+				// Hack the lexicographic indexing
+				String extra = switch (candidateStep) {
+					case PatchStep s -> "t%d-%c".formatted(s.getThreadKey(), '{' + 1);
+					default -> "%s%c".formatted(candidateStep, ';' + 1);
+				};
+				String newTailKey = (candidateDropped.isSnapOnly() ? "%s:%s" : "%s;%s")
+						.formatted(candidateDropped, extra);
+				it = snapshotsBySchedule.tail(newTailKey, true).keys().iterator();
+				continue;
+			}
+
+			// We have a potential nearest. Must be related and less than, but better than best
+			CompareResult cmp = candidateSchedule.compareSchedule(schedule);
+			if (!cmp.related || cmp.compareTo > 0) {
+				continue;
+			}
+			if (best != null && best.getSchedule().compareTo(candidateSchedule) >= 0) {
+				continue;
+			}
+			// Checking validity requires loading the record. Do this filter last.
+			DBTraceSnapshot valid = doGetValidSnapshotBySchedule(key, version);
+			if (valid != null) {
+				best = valid;
+			}
+		}
+
+		if (best != null) {
+			return best;
+		}
+
+		return doFindNearest(dropped, version);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote Because the index is lexicographic, we have to hack a bit. Consider that 20 would
+	 *           come before 3 in the index. That said, all the steps leading up to the last would
+	 *           have to be equal for it to be a prefix, so I don't think any weird lexicographic
+	 *           stuff comes into play except in the final step.
+	 * @implNote Even if the index were numeric, we have to worry about non-related schedules
+	 *           appearing between related ones, e.g., {@code 0:t0-2, 0:t0-3;t1-1}, when searching
+	 *           for {@code 0:t0-4}.
+	 */
+	@Override
+	public TraceSnapshot findSnapshotWithNearestPrefix(TraceSchedule schedule) {
+		long version = trace.getEmulatorCacheVersion();
+		TraceSchedule noPSteps = schedule.dropPSteps();
+		Optional<? extends TraceSnapshot> exists = getSnapshotsWithSchedule(noPSteps).stream()
+				.filter(s -> s.getVersion() >= version)
+				.findFirst();
+		if (exists.isPresent()) {
+			return exists.get();
+		}
+		return doFindNearest(noPSteps, version);
+	}
+
+	@Override
 	public Collection<? extends DBTraceSnapshot> getAllSnapshots() {
 		return Collections.unmodifiableCollection(snapshotStore.asMap().values());
 	}
@@ -159,5 +272,35 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 			snapshotStore.delete(snapshot);
 			notifySnapshotDeleted(snapshot);
 		}
+	}
+
+	@Override
+	public void setTimeRadix(TimeRadix radix) {
+		DBTraceObject root = trace.getObjectManager().getRootObject();
+		if (root == null) {
+			throw new IllegalStateException(
+				"There must be a root object in the ObjectManager before setting the TimeRadix");
+		}
+		root.setAttribute(Lifespan.ALL, KEY_TIME_RADIX, switch (radix) {
+			case DEC -> "dec";
+			case HEX_UPPER -> "HEX";
+			case HEX_LOWER -> "hex";
+		});
+	}
+
+	@Override
+	public TimeRadix getTimeRadix() {
+		DBTraceObject root = trace.getObjectManager().getRootObject();
+		if (root == null) {
+			return TimeRadix.DEFAULT;
+		}
+		TraceObjectValue attribute = root.getAttribute(0, KEY_TIME_RADIX);
+		if (attribute == null) {
+			return TimeRadix.DEFAULT;
+		}
+		return switch (attribute.getValue()) {
+			case String s -> TimeRadix.fromStr(s);
+			default -> TimeRadix.DEFAULT;
+		};
 	}
 }

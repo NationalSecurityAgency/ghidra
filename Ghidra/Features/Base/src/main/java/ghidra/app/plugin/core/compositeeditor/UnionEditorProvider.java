@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,17 @@ import ghidra.program.model.data.Union;
 /**
  * Editor for a Union Data Type.
  */
-public class UnionEditorProvider extends CompositeEditorProvider {
+public class UnionEditorProvider extends CompositeEditorProvider<Union, UnionEditorModel> {
 
 	protected static final Icon UNION_EDITOR_ICON =
 		new GIcon("icon.plugin.composite.editor.provider.union");
 
 	public UnionEditorProvider(Plugin plugin, Union unionDataType, boolean showInHex) {
 		super(plugin);
+		if (unionDataType.isDeleted()) {
+			throw new IllegalArgumentException(
+				"Union has been deleted: " + unionDataType.getPathName());
+		}
 		setIcon(UNION_EDITOR_ICON);
 		editorModel = new UnionEditorModel(this, showInHex);
 		editorModel.load(unionDataType);
@@ -39,7 +43,6 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 		updateTitle();
 		plugin.getTool().addComponentProvider(this, true);
 		addActionsToTool();
-		editorPanel.getTable().requestFocus();
 		editorModel.selectionChanged();
 	}
 
@@ -53,6 +56,8 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 		//@formatter:off
 		return new CompositeEditorTableAction[] {
 			new ApplyAction(this),
+			new UndoChangeAction(this),
+			new RedoChangeAction(this),
 			new MoveUpAction(this),
 			new MoveDownAction(this),
 			new DuplicateAction(this),

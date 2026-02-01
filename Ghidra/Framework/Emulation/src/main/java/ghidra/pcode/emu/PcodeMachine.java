@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,6 @@ public interface PcodeMachine<T> {
 		private AccessKind(boolean trapsRead, boolean trapsWrite) {
 			this.trapsRead = trapsRead;
 			this.trapsWrite = trapsWrite;
-			;
 		}
 
 		/**
@@ -116,7 +115,6 @@ public interface PcodeMachine<T> {
 	 * continuing from a breakpoint.
 	 * 
 	 * @param mode the new mode
-	 * @see #withSoftwareInterruptMode(SwiMode)
 	 */
 	void setSoftwareInterruptMode(SwiMode mode);
 
@@ -199,14 +197,20 @@ public interface PcodeMachine<T> {
 	/**
 	 * Set the suspension state of the machine
 	 * 
+	 * <p>
+	 * This does not simply suspend all threads, but sets a machine-wide flag. A thread is suspended
+	 * if either the thread's flag is set, or the machine's flag is set.
+	 * 
 	 * @see PcodeThread#setSuspended(boolean)
+	 * @param suspended true to suspend the machine, false to let it run
 	 */
 	void setSuspended(boolean suspended);
 
 	/**
 	 * Check the suspension state of the machine
 	 * 
-	 * @see PcodeThread#getSuspended()
+	 * @see PcodeThread#isSuspended()
+	 * @return true if suspended
 	 */
 	boolean isSuspended();
 
@@ -218,7 +222,7 @@ public interface PcodeMachine<T> {
 	 * userops, e.g., {@code emu_swi}.
 	 * 
 	 * @param sourceName a user-defined source name for the resulting "program"
-	 * @param lines the Sleigh source
+	 * @param source the Sleigh source
 	 * @return the compiled program
 	 */
 	PcodeProgram compileSleigh(String sourceName, String source);
@@ -229,7 +233,7 @@ public interface PcodeMachine<T> {
 	 * <p>
 	 * This will attempt to compile the given source against this machine's userop library and then
 	 * inject it at the given address. The resulting p-code <em>replaces</em> that which would be
-	 * executed by decoding the instruction at the given address. The means the machine will not
+	 * executed by decoding the instruction at the given address. That means the machine will not
 	 * decode, nor advance its counter, unless the Sleigh causes it. In most cases, the Sleigh will
 	 * call {@link PcodeEmulationLibrary#emu_exec_decoded()} to cause the machine to decode and
 	 * execute the overridden instruction.
@@ -248,6 +252,14 @@ public interface PcodeMachine<T> {
 	 * @param source the Sleigh source to compile and inject
 	 */
 	void inject(Address address, String source);
+
+	/**
+	 * Check for a p-code injection (override) at the given address
+	 * 
+	 * @param address the address, usually the program counter
+	 * @return the injected program, most likely {@code null}
+	 */
+	PcodeProgram getInject(Address address);
 
 	/**
 	 * Remove the inject, if present, at the given address
@@ -296,8 +308,8 @@ public interface PcodeMachine<T> {
 	 * trapped. To interrupt on direct and/or abstract accesses, consider wrapping the relevant
 	 * state and/or overriding {@link PcodeExecutorStatePiece#getVar(Varnode, Reason)} and related.
 	 * For accesses to abstract offsets, consider overriding
-	 * {@link AbstractPcodeMachine#checkLoad(AddressSpace, Object)} and/or
-	 * {@link AbstractPcodeMachine#checkStore(AddressSpace, Object)} instead.
+	 * {@link AbstractPcodeMachine#checkLoad(AddressSpace, Object, int)} and/or
+	 * {@link AbstractPcodeMachine#checkStore(AddressSpace, Object, int)} instead.
 	 * 
 	 * <p>
 	 * A breakpoint's range cannot cross more than one page boundary. Pages are 4096 bytes each.

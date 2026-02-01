@@ -15,6 +15,8 @@
  */
 package ghidra.util.database.spatial;
 
+import java.util.List;
+
 import db.DBRecord;
 import ghidra.util.database.DBCachedObjectStore;
 
@@ -38,6 +40,8 @@ public abstract class DBTreeNodeRecord<NS extends BoundingShape<NS>> extends DBT
 				return LEAF_PARENT;
 			}
 		};
+
+		public static final List<NodeType> VALUES = List.of(values());
 
 		private final boolean directory;
 		private final boolean leafParent;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,12 @@ import generic.concurrent.*;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AcyclicCallGraphBuilder;
 import ghidra.util.Msg;
@@ -41,7 +39,7 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
-public class DecompilerParameterIdCmd extends BackgroundCommand {
+public class DecompilerParameterIdCmd extends BackgroundCommand<Program> {
 
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
@@ -52,8 +50,8 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 	private int decompilerTimeoutSecs;
 
 	public DecompilerParameterIdCmd(String name, AddressSetView entries,
-			SourceType sourceTypeClearLevel,
-			boolean commitDataTypes, boolean commitVoidReturn, int decompilerTimeoutSecs) {
+			SourceType sourceTypeClearLevel, boolean commitDataTypes, boolean commitVoidReturn,
+			int decompilerTimeoutSecs) {
 		super(name, true, true, false);
 		entryPoints.add(entries);
 		this.sourceTypeClearLevel = sourceTypeClearLevel;
@@ -63,11 +61,10 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, final TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, final TaskMonitor monitor) {
+		program = p;
 
-		CachingPool<DecompInterface> decompilerPool =
-			new CachingPool<>(new DecompilerFactory());
+		CachingPool<DecompInterface> decompilerPool = new CachingPool<>(new DecompilerFactory());
 		QRunnable<Address> runnable = new ParallelDecompileRunnable(decompilerPool);
 
 		ConcurrentGraphQ<Address> queue = null;
@@ -153,18 +150,17 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 				// since decompile could fail and leave the source types changed.
 				Parameter retParam = func.getReturn();
 				if (retParam != null) {
-					if (!retParam.getSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+					if (retParam.getSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 						func.setReturn(retParam.getDataType(), retParam.getVariableStorage(),
 							SourceType.DEFAULT);
 					}
 				}
-				if (!func.getSignatureSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+				if (func.getSignatureSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 					func.setSignatureSource(SourceType.DEFAULT);
 				}
 			}
 			catch (InvalidInputException e) {
-				Msg.warn(this,
-					"Error changing signature SourceType on " + func.getName(), e);
+				Msg.warn(this, "Error changing signature SourceType on " + func.getName(), e);
 			}
 		}
 	}
@@ -218,17 +214,10 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 					if (hfunc == null) {
 						return;
 					}
-					HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, SourceType.ANALYSIS);
-					boolean commitReturn = true;
-					if (!commitVoidReturn) {
-						DataType returnType = hfunc.getFunctionPrototype().getReturnType();
-						if (returnType instanceof VoidDataType) {
-							commitReturn = false;
-						}
-					}
-					if (commitReturn) {
-						HighFunctionDBUtil.commitReturnToDatabase(hfunc, SourceType.ANALYSIS);
-					}
+					ReturnCommitOption returnCommit = commitVoidReturn ? ReturnCommitOption.COMMIT
+							: ReturnCommitOption.COMMIT_NO_VOID;
+					HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, returnCommit,
+						SourceType.ANALYSIS);
 					goodInfo = true;
 				}
 				else {
@@ -298,10 +287,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 				Address entryPoint = func.getEntryPoint();
 				BookmarkManager bookmarkManager =
 					hfunc.getFunction().getProgram().getBookmarkManager();
-				bookmarkManager.setBookmark(
-					entryPoint,
-					BookmarkType.WARNING,
-					"DecompilerParamID",
+				bookmarkManager.setBookmark(entryPoint, BookmarkType.WARNING, "DecompilerParamID",
 					"Problem recovering parameters in function " + func.getName() + " at " +
 						func.getEntryPoint() + " unknown input variable " + sym.getName());
 			}
@@ -326,8 +312,8 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 				func.setCallingConvention(CompilerSpec.CALLING_CONVENTION_cdecl);
 			}
 			catch (InvalidInputException e) {
-				setStatusMsg("Invalid Calling Convention " + CompilerSpec.CALLING_CONVENTION_cdecl +
-					" : " + e);
+				setStatusMsg(
+					"Unknown calling convention: " + CompilerSpec.CALLING_CONVENTION_cdecl);
 			}
 		}
 	}

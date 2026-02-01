@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.concurrent.locks.*;
 
 import db.DBHandle;
 import ghidra.framework.data.DBDomainObjectSupport;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
@@ -161,9 +162,9 @@ public abstract class DBCachedDomainObjectAdapter extends DBDomainObjectSupport 
 	protected ReadWriteLock rwLock;
 
 	/**
-	 * @see {@link DBDomainObjectSupport}
+	 * @see DBDomainObjectSupport
 	 */
-	protected DBCachedDomainObjectAdapter(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor,
+	protected DBCachedDomainObjectAdapter(DBHandle dbh, OpenMode openMode, TaskMonitor monitor,
 			String name, int timeInterval, int bufSize, Object consumer) {
 		super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
 		this.rwLock = new GhidraLockWrappingRWLock(lock);

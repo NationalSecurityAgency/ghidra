@@ -18,6 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -50,21 +51,21 @@ abstract class FunctionTagAdapter {
 	 * @throws CancelledException
 	 * @throws IOException
 	 */
-	static FunctionTagAdapter getAdapter(DBHandle handle, int openMode,
-			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
+	static FunctionTagAdapter getAdapter(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new FunctionTagAdapterV0(handle, true);
 		}
 		try {
 			return new FunctionTagAdapterV0(handle, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			FunctionTagAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, monitor);
 			}
 			return adapter;
@@ -75,10 +76,8 @@ abstract class FunctionTagAdapter {
 		return null;
 	}
 
-	private static FunctionTagAdapter upgrade(DBHandle handle,
-			FunctionTagAdapter oldAdapter,
-			TaskMonitor monitor)
-			throws VersionException {
+	private static FunctionTagAdapter upgrade(DBHandle handle, FunctionTagAdapter oldAdapter,
+			TaskMonitor monitor) throws VersionException {
 		return new FunctionTagAdapterV0(handle, true);
 	}
 
@@ -124,7 +123,7 @@ abstract class FunctionTagAdapter {
 	 * @throws IOException
 	 */
 	abstract void updateRecord(DBRecord record) throws IOException;
-	
+
 	/**
 	 * Removes the tag with the given name from the database.
 	 * 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,6 @@ import java.io.IOException;
 import db.*;
 import ghidra.util.exception.VersionException;
 
-/**
- *
- */
 class ArrayDBAdapterV0 extends ArrayDBAdapter {
 
 	private static final int VERSION = 0;
@@ -44,7 +41,7 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 	/**
 	 * Gets a version 0 read-only adapter for the {@link ArrayDB} database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public ArrayDBAdapterV0(DBHandle handle) throws VersionException {
@@ -91,7 +88,8 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 		DBRecord rec = ArrayDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(ArrayDBAdapter.ARRAY_DT_ID_COL, oldRec.getLongValue(V0_ARRAY_DT_ID_COL));
 		rec.setIntValue(ArrayDBAdapter.ARRAY_DIM_COL, oldRec.getIntValue(V0_ARRAY_DIM_COL));
-		rec.setIntValue(ArrayDBAdapter.ARRAY_ELEMENT_LENGTH_COL, oldRec.getIntValue(V0_ARRAY_ELEMENT_LENGTH_COL));
+		rec.setIntValue(ArrayDBAdapter.ARRAY_ELEMENT_LENGTH_COL,
+			oldRec.getIntValue(V0_ARRAY_ELEMENT_LENGTH_COL));
 		rec.setLongValue(ArrayDBAdapter.ARRAY_CAT_COL, 0);
 		return rec;
 	}
@@ -139,6 +137,11 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 	@Override
 	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return Field.EMPTY_ARRAY;
+	}
+
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
 	}
 
 }

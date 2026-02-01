@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import ghidra.app.services.TraceRecorder;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.debug.api.emulation.*;
+import ghidra.debug.api.target.Target;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.exec.trace.data.AbstractPcodeTraceAccess;
 import ghidra.trace.model.guest.TracePlatform;
 
@@ -30,21 +31,37 @@ public abstract class AbstractPcodeDebuggerAccess<S extends PcodeDebuggerMemoryA
 		extends AbstractPcodeTraceAccess<S, L>
 		implements PcodeDebuggerAccess {
 
-	protected final PluginTool tool;
-	protected final TraceRecorder recorder;
+	protected final ServiceProvider provider;
+	protected final Target target;
 
 	/**
 	 * Construct a shim
 	 * 
-	 * @param tool the tool controlling the session
-	 * @param recorder the target's recorder
+	 * @param provider the service provider (usually the tool)
+	 * @param target the target
 	 * @param platform the associated platform, having the same trace as the recorder
 	 * @param snap the associated snap
 	 */
-	public AbstractPcodeDebuggerAccess(PluginTool tool, TraceRecorder recorder,
+	public AbstractPcodeDebuggerAccess(ServiceProvider provider, Target target,
 			TracePlatform platform, long snap) {
 		super(platform, snap);
-		this.tool = tool;
-		this.recorder = recorder;
+		this.provider = provider;
+		this.target = target;
+	}
+
+	/**
+	 * Construct a shim
+	 * 
+	 * @param provider the service provider (usually the tool)
+	 * @param target the target
+	 * @param platform the associated platform, having the same trace as the recorder
+	 * @param snap the associated snap
+	 * @param threadsSnap the snap to use when finding associated threads between trace and emulator
+	 */
+	public AbstractPcodeDebuggerAccess(ServiceProvider provider, Target target,
+			TracePlatform platform, long snap, long threadsSnap) {
+		super(platform, snap, threadsSnap);
+		this.provider = provider;
+		this.target = target;
 	}
 }

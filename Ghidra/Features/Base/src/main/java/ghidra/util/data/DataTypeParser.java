@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,7 +127,7 @@ public class DataTypeParser {
 	/**
 	 * Parse a data-type string specification
 	 * @param dataTypeString a known data-type name followed by zero or more pointer/array decorations.
-	 * @return parsed data-type or null if not found
+	 * @return parsed data-type
 	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified maxSize
 	 * @throws CancelledException parse cancelled through user interaction
 	 */
@@ -141,7 +141,7 @@ public class DataTypeParser {
 	 * the dataTypeManagerService will not be queried.
 	 * @param dataTypeString a known data-type name followed by zero or more pointer/array decorations.
 	 * @param category known path of data-type or null if unknown
-	 * @return parsed data-type or null if not found
+	 * @return parsed data-type
 	 * @throws InvalidDataTypeException if data type string is invalid or length exceeds specified 
 	 *         maxSize
 	 * @throws CancelledException parse cancelled through user interaction (only if parser 
@@ -166,7 +166,7 @@ public class DataTypeParser {
 	 * @param dataTypeString a base data-type followed by a sequence of zero or more pointer/array 
 	 *        decorations to be applied.
 	 * The string may start with the baseDataType's name.
-	 * @return parsed data-type or null if not found
+	 * @return parsed data-type
 	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified 
 	 *         maxSize
 	 * @throws CancelledException parse cancelled through user interaction (only if parser 
@@ -379,7 +379,6 @@ public class DataTypeParser {
 
 		// give up and ask the user
 		return proptUserForType(baseName);
-
 	}
 
 	private DataType proptUserForType(String baseName) throws CancelledException {
@@ -388,7 +387,7 @@ public class DataTypeParser {
 			return null;
 		}
 
-		DataType dt = dataTypeManagerService.getDataType(baseName);
+		DataType dt = dataTypeManagerService.promptForDataType(baseName);
 		if (dt == null) {
 			throw new CancelledException();
 		}
@@ -483,7 +482,8 @@ public class DataTypeParser {
 				continue;
 			}
 
-			char n = nextIndex + 1 < dataTypeString.length() ? dataTypeString.charAt(nextIndex + 1) : '\0';
+			char n = nextIndex + 1 < dataTypeString.length() ? dataTypeString.charAt(nextIndex + 1)
+					: '\0';
 			if (c == ':' && n == ':') {
 				nextIndex += 2;
 				continue;

@@ -17,16 +17,13 @@ package ghidra.app.plugin.core.datamgr.actions;
 
 import java.awt.datatransfer.*;
 import java.awt.dnd.DnDConstants;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.KeyStroke;
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
-import docking.KeyBindingPrecedence;
+import docking.*;
 import docking.action.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -49,7 +46,8 @@ public class PasteAction extends DockingAction {
 		this.tool = plugin.getTool();
 		setPopupMenuData(new MenuData(new String[] { "Paste" }, "Edit"));
 		setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK),
+			new KeyBindingData(
+				KeyStroke.getKeyStroke(KeyEvent.VK_V, DockingUtils.CONTROL_KEY_MODIFIER_MASK),
 				KeyBindingPrecedence.ActionMapLevel));
 	}
 
@@ -124,7 +122,7 @@ public class PasteAction extends DockingAction {
 		for (GTreeNode cutNode : nodeList) {
 			DataTypeTreeNode dataTypeTreeNode = (DataTypeTreeNode) cutNode;
 			ArchiveNode archiveNode = dataTypeTreeNode.getArchiveNode();
-			if (archiveNode != destinationArchiveNode) {
+			if (!Objects.equals(archiveNode, destinationArchiveNode)) {
 				return true; // is invalid
 			}
 		}

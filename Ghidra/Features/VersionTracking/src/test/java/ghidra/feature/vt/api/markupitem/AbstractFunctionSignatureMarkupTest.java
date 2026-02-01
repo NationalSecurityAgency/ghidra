@@ -131,13 +131,21 @@ public abstract class AbstractFunctionSignatureMarkupTest
 
 	@After
 	public void tearDown() throws Exception {
-		sourceProgram = null;
-		destinationProgram = null;
-		session = null;
+		if (sourceProgram != null) {
+			vtTestEnv.release(sourceProgram);
+			sourceProgram = null;
+		}
+		if (destinationProgram != null) {
+			vtTestEnv.release(destinationProgram);
+			destinationProgram = null;
+		}
+		if (session != null) {
+			session.release(vtTestEnv);
+			session = null;
+		}
 		controller = null;
 		correlator = null;
 		vtTestEnv.dispose();
-
 	}
 
 	public static void setApplyMarkupOptionsToDefaults(ToolOptions applyOptions) {

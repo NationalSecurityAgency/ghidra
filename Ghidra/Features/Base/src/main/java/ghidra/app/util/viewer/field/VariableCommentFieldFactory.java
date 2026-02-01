@@ -16,6 +16,8 @@
 package ghidra.app.util.viewer.field;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -69,15 +71,15 @@ public class VariableCommentFieldFactory extends AbstractVariableFieldFactory {
 		String comment = sv.getComment();
 		String[] comments = StringUtilities.toLines(comment);
 		if ((comments != null) && (comments.length > 0)) {
-			FieldElement[] fields = new FieldElement[comments.length];
+			List<FieldElement> elements = new ArrayList<>(comments.length);
 			for (int i = 0; i < comments.length; i++) {
 				AttributedString as =
 					new AttributedString(comments[i], getColor(sv), getMetrics(sv));
-				fields[i] = new TextFieldElement(as, i, 0);
+				elements.add(new TextFieldElement(as, i, 0));
 			}
 
-			return ListingTextField.createMultilineTextField(this, proxy, fields, startX + varWidth,
-				width, Integer.MAX_VALUE, hlProvider);
+			return ListingTextField.createMultilineTextField(this, proxy, elements,
+				startX + varWidth, width, hlProvider);
 		}
 		return null;
 	}

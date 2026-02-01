@@ -16,8 +16,7 @@
 package ghidra.framework.main;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -159,6 +158,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 		listPanel = new ListPanel<>();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
+		listPanel.setKeyListener(new ListKeyListener());
 
 		parentPanel.add(myButtonPanel, BorderLayout.EAST);
 		parentPanel.add(listPanel, BorderLayout.CENTER);
@@ -255,11 +255,15 @@ public class SaveDataDialog extends DialogComponentProvider {
 				boldFont = font.deriveFont(font.getStyle() | Font.BOLD);
 			}
 
+			Color fg = isSelected ? list.getSelectionForeground() : list.getForeground();
+			Color bg = isSelected ? list.getSelectionBackground() : list.getBackground();
 			// set color to red if file cannot be saved 'as is'
 			if (!saveable[index]) {
-				checkboxes[index].setForeground(Colors.ERROR);
+				fg = Colors.ERROR;
 				checkboxes[index].setFont(boldFont);
 			}
+			checkboxes[index].setForeground(fg);
+			checkboxes[index].setBackground(bg);
 			return checkboxes[index];
 		}
 	}
@@ -287,6 +291,23 @@ public class SaveDataDialog extends DialogComponentProvider {
 			boolean selected = checkboxes[index].isSelected();
 			checkboxes[index].setSelected(!selected);
 			listPanel.repaint();
+		}
+	}
+
+	private class ListKeyListener extends KeyAdapter {
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+				e.consume();
+				JList<?> list = (JList<?>) e.getSource();
+				int index = list.getSelectedIndex();
+				if (index < 0) {
+					return;
+				}
+				boolean selected = checkboxes[index].isSelected();
+				checkboxes[index].setSelected(!selected);
+				listPanel.repaint();
+			}
 		}
 	}
 

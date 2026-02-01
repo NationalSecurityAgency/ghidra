@@ -1,0 +1,20 @@
+# Rust function names which do not return
+# (names should not start with '_' since these are stripped during checking)
+ZN5alloc5alloc18handle_alloc_error17h*
+ZN5alloc5alloc18handle_alloc_error8rt_error17h*
+ZN5alloc7raw_vec17capacity_overflow17h*
+ZN3std5alloc8rust_oom17h*
+ZN3std10sys_common9backtrace26__rust_end_short_backtrace17h*
+ZN4core9panicking5panic17h*
+ZN4core9panicking18panic_bounds_check17h*
+ZN4core9panicking9panic_fmt17h*
+ZN5alloc5alloc18handle_alloc_error17h*
+ZN3std7process5abort17h*
+ZN3std3sys4unix14abort_internal17h*
+rust_start_panic
+rust_panic_cleanup
+rust_foreign_exception
+rust_drop_panic
+rust_begin_unwind
+rg_oom
+abort

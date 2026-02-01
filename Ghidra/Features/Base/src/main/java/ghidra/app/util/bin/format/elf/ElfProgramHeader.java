@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import ghidra.app.util.bin.*;
@@ -66,35 +67,31 @@ import ghidra.util.StringUtilities;
 public class ElfProgramHeader
 		implements StructConverter, Comparable<ElfProgramHeader>, MemoryLoadable {
 
-	protected ElfHeader header;
+	protected final ElfHeader header;
 
-	private int p_type;
-	private int p_flags;
-	private long p_offset;
-	private long p_vaddr;
-	private long p_paddr;
-	private long p_filesz;
-	private long p_memsz;
-	private long p_align;
+	private final int p_type;
+	private final int p_flags;
+	private long p_offset; // may get altered after instantiation
+	private final long p_vaddr;
+	private final long p_paddr;
+	private final long p_filesz;
+	private final long p_memsz;
+	private final long p_align;
 
-	private BinaryReader reader;
+	private final BinaryReader reader;
 
-	public ElfProgramHeader(BinaryReader reader, ElfHeader header)
-			throws IOException {
+	/**
+	 * Construct {@link ElfProgramHeader}
+	 * @param reader dedicated reader instance positioned to the start of the program header data.
+	 * (the reader supplied will be retained and altered).
+	 * @param header ELF header
+	 * @throws IOException if an IO error occurs during parse
+	 */
+	public ElfProgramHeader(BinaryReader reader, ElfHeader header) throws IOException {
 		this.header = header;
 		this.reader = reader;
 
-		if (header.is32Bit()) {
-			p_type = reader.readNextInt();
-			p_offset = Integer.toUnsignedLong(reader.readNextInt());
-			p_vaddr = Integer.toUnsignedLong(reader.readNextInt());
-			p_paddr = Integer.toUnsignedLong(reader.readNextInt());
-			p_filesz = Integer.toUnsignedLong(reader.readNextInt());
-			p_memsz = Integer.toUnsignedLong(reader.readNextInt());
-			p_flags = reader.readNextInt();
-			p_align = Integer.toUnsignedLong(reader.readNextInt());
-		}
-		else if (header.is64Bit()) {
+		if (header.is64Bit()) {
 			p_type = reader.readNextInt();
 			p_flags = reader.readNextInt();
 			p_offset = reader.readNextLong();
@@ -103,6 +100,16 @@ public class ElfProgramHeader
 			p_filesz = reader.readNextLong();
 			p_memsz = reader.readNextLong();
 			p_align = reader.readNextLong();
+		}
+		else {
+			p_type = reader.readNextInt();
+			p_offset = reader.readNextUnsignedInt();
+			p_vaddr = reader.readNextUnsignedInt();
+			p_paddr = reader.readNextUnsignedInt();
+			p_filesz = reader.readNextUnsignedInt();
+			p_memsz = reader.readNextUnsignedInt();
+			p_flags = reader.readNextInt();
+			p_align = reader.readNextUnsignedInt();
 		}
 
 		if (p_memsz > p_filesz) {
@@ -113,22 +120,6 @@ public class ElfProgramHeader
 			//and ".bss".
 			//TODO Err.warn(this, "Program Header: extra bytes");
 		}
-	}
-
-	/**
-	 * Constructs a new program header with the specified type.
-	 * @param header ELF header
-	 * @param type the new type of the program header
-	 */
-	public ElfProgramHeader(ElfHeader header, int type) {
-		this.header = header;
-
-		p_type = type;
-		p_flags = ElfProgramHeaderConstants.PF_R | ElfProgramHeaderConstants.PF_W |
-			ElfProgramHeaderConstants.PF_X;
-		p_align = 0x1000;
-		p_paddr = 0xffffffff;
-		p_vaddr = 0xffffffff;
 	}
 
 	/**
@@ -350,7 +341,7 @@ public class ElfProgramHeader
 	void setOffset(long offset) {
 		this.p_offset = offset;
 	}
-	
+
 	/**
 	 * On systems for which physical addressing is relevant, this member is reserved for the
 	 * segment's physical address. Because System V ignores physical addressing for application
@@ -431,9 +422,6 @@ public class ElfProgramHeader
 		return typeEnum;
 	}
 
-	/**
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(ElfProgramHeader that) {
 		//sort the headers putting 0xffffffff (new guys)
@@ -457,7 +445,7 @@ public class ElfProgramHeader
 
 	@Override
 	public int hashCode() {
-		return (int) ((31 * p_offset) + (p_offset >>> 32));
+		return Objects.hash(p_offset);
 	}
 
 	@Override
@@ -466,8 +454,8 @@ public class ElfProgramHeader
 			return false;
 		}
 		ElfProgramHeader other = (ElfProgramHeader) obj;
-		return reader == other.reader && p_type == other.p_type && p_flags == other.p_flags &&
-			p_offset == other.p_offset && p_vaddr == other.p_vaddr && p_paddr == other.p_paddr &&
-			p_filesz == other.p_filesz && p_memsz == other.p_memsz && p_align == other.p_align;
+		return p_type == other.p_type && p_flags == other.p_flags && p_offset == other.p_offset &&
+			p_vaddr == other.p_vaddr && p_paddr == other.p_paddr && p_filesz == other.p_filesz &&
+			p_memsz == other.p_memsz && p_align == other.p_align;
 	}
 }

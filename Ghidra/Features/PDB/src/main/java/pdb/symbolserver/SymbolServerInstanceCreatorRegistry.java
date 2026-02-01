@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,9 @@
  */
 package pdb.symbolserver;
 
+import java.io.File;
 import java.util.*;
 import java.util.function.Predicate;
-
-import java.io.File;
-import java.net.URI;
-
-import org.apache.commons.io.FilenameUtils;
 
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -163,17 +159,16 @@ public class SymbolServerInstanceCreatorRegistry {
 	 * @return new {@link SymbolServerInstanceCreatorContext}
 	 */
 	public SymbolServerInstanceCreatorContext getContext(Program program) {
-		File exeLocation = new File(FilenameUtils.getFullPath(program.getExecutablePath()));
-		return new SymbolServerInstanceCreatorContext(exeLocation, this);
+		return new SymbolServerInstanceCreatorContext(program, this);
 	}
 
 	private void registerDefaultSymbolServerInstanceCreators() {
 		registerSymbolServerInstanceCreator(0, DisabledSymbolServer::isDisabledSymbolServerLocation,
 			DisabledSymbolServer::createInstance);
 		registerSymbolServerInstanceCreator(100, HttpSymbolServer::isHttpSymbolServerLocation,
-			(loc, context) -> new HttpSymbolServer(URI.create(loc)));
+			HttpSymbolServer::createInstance);
 		registerSymbolServerInstanceCreator(200, SameDirSymbolStore::isSameDirLocation,
-			(loc, context) -> new SameDirSymbolStore(context.getRootDir()));
+			SameDirSymbolStore::createInstance);
 		registerSymbolServerInstanceCreator(300, LocalSymbolStore::isLocalSymbolStoreLocation,
 			(loc, context) -> new LocalSymbolStore(new File(loc)));
 	}

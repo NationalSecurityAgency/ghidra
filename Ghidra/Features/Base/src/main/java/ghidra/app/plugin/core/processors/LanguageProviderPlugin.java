@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ import ghidra.util.task.*;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Set Language",
 	description = "This plugin provides the set language feature."
 )
@@ -88,6 +88,10 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 					return false;
 				}
 
+				if (file.isLink() && file.getLinkInfo().isExternalLink()) {
+					return false;
+				}
+
 				return file.isInWritableProject() &&
 					Program.class.isAssignableFrom(file.getDomainObjectClass());
 			}
@@ -105,20 +109,20 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 			}
 
 		};
-		setLanguageAction.setPopupMenuData(
-			new MenuData(new String[] { "Set Language..." }, "Language"));
+		setLanguageAction
+				.setPopupMenuData(new MenuData(new String[] { "Set Language..." }, "Language"));
 
 		setLanguageAction.setEnabled(true);
-		setLanguageAction.setHelpLocation(
-			new HelpLocation("LanguageProviderPlugin", "set language"));
+		setLanguageAction
+				.setHelpLocation(new HelpLocation("LanguageProviderPlugin", "set language"));
 		tool.addAction(setLanguageAction);
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// methods overriding Plugin                                        //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	@Override
 	public void dispose() {

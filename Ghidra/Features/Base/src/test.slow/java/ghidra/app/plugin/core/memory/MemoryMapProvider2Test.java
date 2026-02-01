@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -207,7 +208,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.WRITE));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.OVERLAY));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.OVERLAY));
 		assertEquals("Default", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.INIT));
 		assertEquals("", model.getValueAt(0, MemoryMapModel.SOURCE));
@@ -250,7 +251,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> {
-			addrField.setValue("0x200");
+			addrField.setText("0x200");
 			nameField.setText(".test");
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
@@ -281,7 +282,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.WRITE));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.OVERLAY));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.OVERLAY));
 		assertEquals("Default", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.INIT));
 		assertEquals("", model.getValueAt(0, MemoryMapModel.SOURCE));
@@ -318,7 +319,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> {
-			addrField.setValue("0x01001200");
+			addrField.setText("0x01001200");
 			nameField.setText(".test");
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
@@ -353,7 +354,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> {
-			addrField.setValue("xxxxx");
+			addrField.setText("xxxxx");
 			nameField.setText(".test");
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
@@ -363,7 +364,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a valid Start Address", msg);
+		assertEquals("Invalid Address: Could not evaluate token \"xxxxx\"", msg);
 		assertFalse(okButton.isEnabled());
 		close(d);
 	}
@@ -544,7 +545,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.WRITE));
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.OVERLAY));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.OVERLAY));
 		assertEquals("Default", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.INIT));
 		assertEquals("", model.getValueAt(0, MemoryMapModel.SOURCE));
@@ -628,15 +629,15 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
 		int row = blocks.length - 1;
 		assertEquals(".test", model.getValueAt(row, MemoryMapModel.NAME));
-		assertEquals("00000000", model.getValueAt(row, MemoryMapModel.START));
+		assertEquals(".test::00000000", model.getValueAt(row, MemoryMapModel.START));
 		assertEquals(".test::00000000", block.getStart().toString());
-		assertEquals("000000ff", model.getValueAt(row, MemoryMapModel.END));
+		assertEquals(".test::000000ff", model.getValueAt(row, MemoryMapModel.END));
 		assertEquals(".test::000000ff", block.getEnd().toString());
 		assertEquals("0x100", model.getValueAt(row, MemoryMapModel.LENGTH));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.WRITE));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.OVERLAY));
+		assertEquals("ram", model.getValueAt(row, MemoryMapModel.OVERLAY));
 		assertEquals(MemoryBlockType.DEFAULT.toString(),
 			model.getValueAt(row, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.INIT));
@@ -707,15 +708,15 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
 		int row = blocks.length - 1;
 		assertEquals(".test", model.getValueAt(row, MemoryMapModel.NAME));
-		assertEquals("00000000", model.getValueAt(row, MemoryMapModel.START));
+		assertEquals(".test::00000000", model.getValueAt(row, MemoryMapModel.START));
 		assertEquals(".test::00000000", block.getStart().toString());
-		assertEquals("000000ff", model.getValueAt(row, MemoryMapModel.END));
+		assertEquals(".test::000000ff", model.getValueAt(row, MemoryMapModel.END));
 		assertEquals(".test::000000ff", block.getEnd().toString());
 		assertEquals("0x100", model.getValueAt(row, MemoryMapModel.LENGTH));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.WRITE));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.OVERLAY));
+		assertEquals("ram", model.getValueAt(row, MemoryMapModel.OVERLAY));
 		assertEquals(MemoryBlockType.DEFAULT.toString(),
 			model.getValueAt(row, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.FALSE, model.getValueAt(row, MemoryMapModel.INIT));
@@ -767,7 +768,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			assertFalse(okButton.isEnabled());
 			String msg = findLabelStr(d.getComponent(), "statusLabel");
 			assertEquals("Please enter a source address for the bit block", msg);
-			runSwing(() -> addrField.setValue("01001000"));
+			runSwing(() -> addrField.setText("01001000"));
 		}
 		else {
 			assertTrue(okButton.isEnabled());
@@ -792,7 +793,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.WRITE));
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.OVERLAY));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.OVERLAY));
 		assertEquals("Bit Mapped", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertNull(model.getValueAt(0, MemoryMapModel.INIT));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.SOURCE));
@@ -843,7 +844,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			assertFalse(okButton.isEnabled());
 			String msg = findLabelStr(d.getComponent(), "statusLabel");
 			assertEquals("Please enter a source address for the bit block", msg);
-			runSwing(() -> addrField.setValue("01001000"));
+			runSwing(() -> addrField.setText("01001000"));
 		}
 		else {
 			assertTrue(okButton.isEnabled());
@@ -868,7 +869,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.READ));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.WRITE));
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.EXECUTE));
-		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.OVERLAY));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.OVERLAY));
 		assertEquals("Byte Mapped", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.INIT));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.SOURCE));
@@ -945,8 +946,8 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testMoveBlockNotAllowed() throws Exception {
 		// create an overlay block
 		tx(program, () -> {
-			memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-				TaskMonitor.DUMMY, true);
+			memory.createInitializedBlock("other.overlay", AddressSpace.OTHER_SPACE.getAddress(0),
+				0x100, (byte) 0xa, TaskMonitor.DUMMY, true);
 		});
 
 		int row = table.getModel().getRowCount() - 1;
@@ -956,18 +957,45 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
-		assertEquals("Move Overlay Block Not Allowed", d.getTitle());
+		assertEquals("Moving OTHER Overlay Block Not Allowed", d.getTitle());
 	}
 
 	@Test
 	public void testMoveBlock() throws Exception {
+		doTextMoveBlock(false);
+	}
+
+	@Test
+	public void testMoveOverlayBlock() throws Exception {
+		doTextMoveBlock(true);
+	}
+
+	private void doTextMoveBlock(boolean overlay) throws Exception {
 		// add a block at 0, length 0x100
 		tx(program, () -> {
 			memory.createInitializedBlock(".test", getAddr(0), 0x100, (byte) 0, TaskMonitor.DUMMY,
-				false);
+				overlay);
 		});
 
-		table.setRowSelectionInterval(0, 0);
+		MemoryBlock block = program.getMemory().getBlock(".test");
+		assertNotNull(block);
+		assertEquals(overlay, block.isOverlay());
+		Address startAddr = block.getStart();
+		Address endAddr = block.getEnd();
+
+		// Select correct row
+		AtomicInteger row = new AtomicInteger();
+		runSwing(() -> {
+			for (int i = 0; i < table.getRowCount(); i++) {
+				if (".test".equals(table.getModel().getValueAt(i, 0))) {
+					table.setRowSelectionInterval(i, i);
+					row.set(i);
+					break;
+				}
+			}
+		});
+
+		waitForSwing();
 
 		DockingActionIf action = getAction(plugin, "Move Block");
 		assertTrue(action.isEnabled());
@@ -986,11 +1014,11 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 
 		JLabel origStartLabel = (JLabel) findComponentByName(d.getComponent(), "origStart");
 		assertNotNull(origStartLabel);
-		assertEquals(getAddr(0).toString(), origStartLabel.getText());
+		assertEquals(startAddr.toString(), origStartLabel.getText());
 
 		JLabel origEndLabel = (JLabel) findComponentByName(d.getComponent(), "origEnd");
 		assertNotNull(origEndLabel);
-		assertEquals(getAddr(0xffL).toString(), origEndLabel.getText());
+		assertEquals(endAddr.toString(), origEndLabel.getText());
 
 		JLabel lengthLabel = (JLabel) findComponentByName(d.getComponent(), "length");
 		assertNotNull(lengthLabel);
@@ -999,19 +1027,21 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		AddressInput startField = (AddressInput) findComponentByName(d.getComponent(), "newStart");
 
 		assertNotNull(startField);
-		assertEquals(getAddr(0), startField.getAddress());
+		assertEquals(startAddr, startField.getAddress());
 
 		AddressInput endField = (AddressInput) findComponentByName(d.getComponent(), "newEnd");
 		assertNotNull(endField);
-		assertEquals(getAddr(0xffL), endField.getAddress());
+		assertEquals(endAddr, endField.getAddress());
 
 		JButton okButton = findButton(d.getComponent(), "OK");
 		assertNotNull(okButton);
 		assertFalse(okButton.isEnabled());
 
 		// move the block to 0x300
-		runSwing(() -> startField.setValue(getAddr(0x0300).toString()));
-		assertEquals(getAddr(0x3ff), endField.getAddress());
+		Address newStart = startAddr.getAddressSpace().getAddressInThisSpaceOnly(0x300);
+		Address newEnd = startAddr.getAddressSpace().getAddressInThisSpaceOnly(0x3ff);
+		runSwing(() -> startField.simulateAddressChanged(newStart));
+		assertEquals(newEnd, endField.getAddress());
 		assertTrue(okButton.isEnabled());
 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
@@ -1024,9 +1054,9 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(".test", model.getValueAt(0, MemoryMapModel.NAME));
-		assertEquals(getAddr(0x300).toString(), model.getValueAt(0, MemoryMapModel.START));
-		assertEquals(getAddr(0x3ff).toString(), model.getValueAt(0, MemoryMapModel.END));
+		assertEquals(".test", model.getValueAt(row.get(), MemoryMapModel.NAME));
+		assertEquals(newStart.toString(), model.getValueAt(row.get(), MemoryMapModel.START));
+		assertEquals(newEnd.toString(), model.getValueAt(row.get(), MemoryMapModel.END));
 	}
 
 	@Test
@@ -1080,7 +1110,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		// enter an invalid address
-		runSwing(() -> startField.setValue(getAddr(0x0300).toString() + "gggg"));
+		runSwing(() -> startField.setText(getAddr(0x0300).toString() + "gggg"));
 		assertFalse(okButton.isEnabled());
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
 		assertEquals("Invalid Address", msg);
@@ -1138,7 +1168,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		// enter an invalid address
-		runSwing(() -> endField.setValue(getAddr(0x0300).toString() + "gggg"));
+		runSwing(() -> endField.setText(getAddr(0x0300).toString() + "gggg"));
 		assertFalse(okButton.isEnabled());
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
 		assertEquals("Invalid Address", msg);
@@ -1197,8 +1227,8 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 
 		// enter an invalid address
 		runSwing(() -> {
-			startField.setValue(getAddr(0x1000).toString());
-			endField.setValue(getAddr(0x10).toString());
+			startField.setText(getAddr(0x1000).toString());
+			endField.setText(getAddr(0x10).toString());
 		});
 		assertFalse(okButton.isEnabled());
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
@@ -1257,7 +1287,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		// enter an invalid address
-		runSwing(() -> startField.setValue("00000000"));
+		runSwing(() -> startField.setText("00000000"));
 		assertFalse(okButton.isEnabled());
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
 		assertEquals("Block is already at 00000000", msg);

@@ -28,6 +28,7 @@ import ghidra.util.Msg;
  * @param <T> the base type this ThemeValue works on (i.e., Colors, Fonts, Icons)
  */
 public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
+
 	protected final String id;
 	protected final T value;
 	protected final String referenceId;
@@ -36,13 +37,19 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 		if (id.equals(referenceId)) {
 			throw new IllegalArgumentException("Can't create a themeValue that referencs itself");
 		}
+
+		if (id.startsWith("[")) {
+			throw new IllegalArgumentException(
+				"Theme values must be constructed with normalized, non-external ids");
+		}
+
 		this.id = id;
 		this.referenceId = referenceId;
 		this.value = value;
 	}
 
 	/**
-	 * True if this value is one that is one that is defined outside of the application, such as a 
+	 * True if this value is one that is one that is defined outside of the application, such as a
 	 * Java Look and Feel key.
 	 * @return true if external
 	 */
@@ -84,7 +91,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	 * reference chains, an error stack trace will be generated and the default T value will
 	 * be returned. In rare situations where it is acceptable for the value to not be resolvable,
 	 * use the {@link #hasResolvableValue(GThemeValueMap)} method first.
-	 * @param values the {@link GThemeValueMap} used to resolve references if this 
+	 * @param values the {@link GThemeValueMap} used to resolve references if this
 	 * instance doesn't have an actual value.
 	 * @return the T value for this instance, following references as needed.
 	 */
@@ -116,7 +123,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	 * Returns true if the ThemeValue can resolve to the concrete T value (color, font, or icon)
 	 * from the given set of theme values.
 	 * @param values the set of values to use to try and follow reference chains to ultimately
-	 * resolve the ThemeValue to a an actual T value 
+	 * resolve the ThemeValue to a an actual T value
 	 * @return true if the ThemeValue can resolve to the concrete T value (color, font, or icon)
 	 * from the given set of theme values.
 	 */
@@ -197,7 +204,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	/**
 	 * Returns the T to be used if the indirect reference couldn't be resolved.
 	 * @param primaryId the id we are trying to get a value for
-	 * @param unresolvedId the reference id that couldn't be resolved 
+	 * @param unresolvedId the reference id that couldn't be resolved
 	 * @return the default value to be used if the indirect reference couldn't be resolved.
 	 */
 	protected abstract T getUnresolvedReferenceValue(String primaryId, String unresolvedId);

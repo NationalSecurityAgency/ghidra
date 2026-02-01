@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.event;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.trace.model.Trace;
 

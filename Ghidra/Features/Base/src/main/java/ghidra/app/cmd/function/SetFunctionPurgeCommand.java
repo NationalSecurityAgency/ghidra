@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,8 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 
 /**
  * A simple command to set the stack purge size of a function.
@@ -26,41 +25,35 @@ import ghidra.program.model.listing.Function;
  * 
  * @since  Tracker Id 548
  */
-public class SetFunctionPurgeCommand implements Command {
-    private Function function;
-    private int functionPurge;
-    
-    /**
-     * Creates a new command that will set the given purge size on the given
-     * function.
-     * 
-     * @param function The function on which to set the purge size.
-     * @param newPurge The new stack purge size.
-     */
-    public SetFunctionPurgeCommand( Function function, int newPurge ) {
-        this.function = function;
-        this.functionPurge = newPurge;
-    }
+public class SetFunctionPurgeCommand implements Command<Program> {
+	private Function function;
+	private int functionPurge;
 
-    /**
-     * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-     */
-    public boolean applyTo(DomainObject obj) {        
-        function.setStackPurgeSize( functionPurge );
-        return true;
-    }
+	/**
+	 * Creates a new command that will set the given purge size on the given
+	 * function.
+	 * 
+	 * @param function The function on which to set the purge size.
+	 * @param newPurge The new stack purge size.
+	 */
+	public SetFunctionPurgeCommand(Function function, int newPurge) {
+		this.function = function;
+		this.functionPurge = newPurge;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return "";
-    }
+	@Override
+	public boolean applyTo(Program program) {
+		function.setStackPurgeSize(functionPurge);
+		return true;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Set Function Purge";
-    }
+	@Override
+	public String getStatusMsg() {
+		return "";
+	}
+
+	@Override
+	public String getName() {
+		return "Set Function Purge";
+	}
 }

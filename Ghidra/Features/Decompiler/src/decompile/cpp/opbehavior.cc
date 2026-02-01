@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,7 +129,20 @@ uintb OpBehavior::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) c
   string name(get_opname(opcode));
   throw LowlevelError("Binary emulation unimplemented for "+name);
 }
-  
+
+/// \param sizeout is the size of the output in bytes
+/// \param sizein is the size of the inputs in bytes
+/// \param in1 is the first input value
+/// \param in2 is the second input value
+/// \param in3 is the third input value
+/// \return the output value
+uintb OpBehavior::evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const
+
+{
+  string name(get_opname(opcode));
+  throw LowlevelError("Ternary emulation unimplemented for "+name);
+}
+
 /// If the output value is known, recover the input value.
 /// \param sizeout is the size of the output in bytes
 /// \param out is the output value
@@ -746,7 +759,23 @@ uintb OpBehaviorPiece::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb i
 uintb OpBehaviorSubpiece::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
+  if (in2 >= sizeof(uintb))
+    return 0;
   uintb res = (in1>>(in2*8)) & calc_mask(sizeout);
+  return res;
+}
+
+uintb OpBehaviorPtradd::evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const
+
+{
+  uintb res = (in1 + in2 * in3) & calc_mask(sizeout);
+  return res;
+}
+
+uintb OpBehaviorPtrsub::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
+
+{
+  uintb res = (in1 + in2) & calc_mask(sizeout);
   return res;
 }
 

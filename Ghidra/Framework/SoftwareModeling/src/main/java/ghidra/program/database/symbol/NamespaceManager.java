@@ -20,6 +20,7 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -57,7 +58,7 @@ public class NamespaceManager implements ManagerDB {
 	 * @throws VersionException if the table version is different from this adapter.
 	 */
 	public NamespaceManager(DBHandle handle, ErrorHandler errHandler, AddressMap addrMap,
-			int openMode, Lock lock, TaskMonitor monitor) throws VersionException {
+			OpenMode openMode, Lock lock, TaskMonitor monitor) throws VersionException {
 
 		this.errHandler = errHandler;
 		this.addrMap = addrMap;
@@ -97,12 +98,12 @@ public class NamespaceManager implements ManagerDB {
 
 	@Override
 	public void setProgram(ProgramDB program) {
-		this.symbolMgr = (SymbolManager) program.getSymbolTable();
+		this.symbolMgr = program.getSymbolTable();
 		globalNamespace = program.getGlobalNamespace();
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
@@ -114,6 +115,7 @@ public class NamespaceManager implements ManagerDB {
 
 	/**
 	 * Get the global namespace.
+	 * @return global namespace
 	 */
 	public Namespace getGlobalNamespace() {
 		return globalNamespace;
@@ -123,8 +125,10 @@ public class NamespaceManager implements ManagerDB {
 	 * Sets the body of a namespace.
 	 * @param namespace the namespace whose body is to be modified.
 	 * @param set the address set for the new body.
+	 * @throws OverlappingNamespaceException if specified set overlaps another namespace
 	 */
-	public void setBody(Namespace namespace, AddressSetView set) throws OverlappingNamespaceException {
+	public void setBody(Namespace namespace, AddressSetView set)
+			throws OverlappingNamespaceException {
 		if (set.getNumAddresses() > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException(
 				"Namespace body size must be less than 0x7fffffff byte addresses");
@@ -135,7 +139,8 @@ public class NamespaceManager implements ManagerDB {
 			AddressRange range = overlapsNamespace(set);
 			if (range != null) {
 				doSetBody(namespace, oldBody);
-				throw new OverlappingNamespaceException(range.getMinAddress(), range.getMaxAddress());
+				throw new OverlappingNamespaceException(range.getMinAddress(),
+					range.getMaxAddress());
 			}
 			doSetBody(namespace, set);
 		}
@@ -157,6 +162,7 @@ public class NamespaceManager implements ManagerDB {
 	/**
 	 * Removes any associated body with the given namespace.
 	 * @param namespace the namespace whose body is to be cleared.
+	 * @return old body
 	 */
 	public AddressSetView removeBody(Namespace namespace) {
 		lock.acquire();
@@ -180,6 +186,8 @@ public class NamespaceManager implements ManagerDB {
 	 * in a defined namespace (e.g., Function), the global namespace is
 	 * returned.
 	 * @param addr the address for which to find a namespace.
+	 * @return namespace which contains address or the 
+	 * {@link #getGlobalNamespace() global namespace} if a specific namespace not found.
 	 */
 	public Namespace getNamespaceContaining(Address addr) {
 		Field field = namespaceMap.getValue(addr);
@@ -198,13 +206,14 @@ public class NamespaceManager implements ManagerDB {
 	/**
 	 * Checks if an existing namespace's address set intersects with
 	 * the given set. If so, return the first overlapping range.
-	 * @returns null if no overlaps, or an address range of the first overlap
+	 * @param set address set to check for intersection
+	 * @return null if no overlaps, or an address range of the first overlap
 	 */
 	public AddressRange overlapsNamespace(AddressSetView set) {
 		AddressRangeIterator addressRanges = set.getAddressRanges();
 		for (AddressRange addressRange : addressRanges) {
-			AddressRangeIterator namesSpaceRanges = namespaceMap.getAddressRanges(
-				addressRange.getMinAddress(), addressRange.getMaxAddress());
+			AddressRangeIterator namesSpaceRanges = namespaceMap
+					.getAddressRanges(addressRange.getMinAddress(), addressRange.getMaxAddress());
 			AddressRange existingRange = namesSpaceRanges.next();
 			if (existingRange != null) {
 				return existingRange;
@@ -260,6 +269,7 @@ public class NamespaceManager implements ManagerDB {
 	/**
 	 * Gets the body for the given namespace.
 	 * @param namespace the namespace for which to get its body.
+	 * @return body for the given namespace
 	 */
 	public AddressSetView getAddressSet(Namespace namespace) {
 		lock.acquire();
@@ -267,6 +277,9 @@ public class NamespaceManager implements ManagerDB {
 			if (namespace == lastBodyNamespace) {
 				return lastBody;
 			}
+
+			symbolMgr.checkValidNamespaceArgument(namespace);
+
 			AddressSetView mySet = getAddressSet(namespace.getID());
 			AddressSet set = new AddressSet(mySet);
 			SymbolIterator it = symbolMgr.getSymbols(namespace);
@@ -335,9 +348,8 @@ public class NamespaceManager implements ManagerDB {
 			monitor.checkCancelled();
 			namespaceMap.clearRange(fromAddr, rangeEnd);
 
-			for (int i = 0; i < list.size(); i++) {
+			for (NamespaceHolder h : list) {
 				monitor.checkCancelled();
-				NamespaceHolder h = list.get(i);
 				namespaceMap.paintRange(h.range.getMinAddress(), h.range.getMaxAddress(),
 					new LongField(h.namespaceID));
 			}

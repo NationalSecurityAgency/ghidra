@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.expr.match.ExpressionMatcher;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.processors.sleigh.expression.*;
 import ghidra.util.Msg;
 
@@ -53,7 +52,8 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		return goal.invOr(rval);
 	}
 
-	protected AssemblyResolution tryCatenationExpression(OrExpression exp, MaskedLong goal,
+	protected AssemblyResolution tryCatenationExpression(
+			AbstractAssemblyResolutionFactory<?, ?> factory, OrExpression exp, MaskedLong goal,
 			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
 			String description) throws SolverException {
 		/*
@@ -68,37 +68,33 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		fields.put(64L, new ConstantValue(0));
 		long lo = 0;
 		PatternExpression fieldExp = null;
-		AssemblyResolvedPatterns result = AssemblyResolution.nop(description);
-		try (DbgCtx dc = dbg.start("Trying solution of field catenation")) {
-			dbg.println("Original: " + goal + ":= " + exp);
-			for (Map.Entry<Long, PatternExpression> ent : fields.entrySet()) {
-				long hi = ent.getKey();
-				if (hi == 0) {
-					fieldExp = ent.getValue();
-					continue;
-				}
-
-				dbg.println("Part(" + hi + ":" + lo + "]:= " + fieldExp);
-				MaskedLong part = goal.shiftLeft(64 - hi).shiftRightPositional(64 - hi + lo);
-				dbg.println("Solving: " + part + ":= " + fieldExp);
-				AssemblyResolution sol = solver.solve(fieldExp, part, vals, cur, hints,
-					description + " with shift " + lo);
-				if (sol.isError()) {
-					return sol;
-				}
-				result = result.combine((AssemblyResolvedPatterns) sol);
-				if (result == null) {
-					throw new SolverException("Solutions to individual fields produced conflict");
-				}
-
-				lo = hi;
+		AssemblyResolvedPatterns result = factory.nop(description);
+		for (Map.Entry<Long, PatternExpression> ent : fields.entrySet()) {
+			long hi = ent.getKey();
+			if (hi == 0) {
 				fieldExp = ent.getValue();
+				continue;
 			}
+
+			MaskedLong part = goal.shiftLeft(64 - hi).shiftRightPositional(64 - hi + lo);
+			AssemblyResolution sol = solver.solve(factory, fieldExp, part, vals, cur, hints,
+				description + " with shift " + lo);
+			if (sol.isError()) {
+				return sol;
+			}
+			result = result.combine((AssemblyResolvedPatterns) sol);
+			if (result == null) {
+				throw new SolverException("Solutions to individual fields produced conflict");
+			}
+
+			lo = hi;
+			fieldExp = ent.getValue();
 		}
 		return result;
 	}
 
-	protected AssemblyResolution tryCircularShiftExpression(OrExpression exp, MaskedLong goal,
+	protected AssemblyResolution tryCircularShiftExpression(
+			AbstractAssemblyResolutionFactory<?, ?> factory, OrExpression exp, MaskedLong goal,
 			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
 			String description) throws SolverException {
 		// If OR is being used to accomplish a circular shift, then we can apply a clever solver.
@@ -164,13 +160,12 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		}
 
 		// At this point, I know it's a circular shift
-		dbg.println("Identified circular shift: value:= " + expValu1 + ", shift:= " + expShift +
-			", size:= " + size + ", dir:= " + (dir == 1 ? "right" : "left"));
-		return solveLeftCircularShift(expValu1, expShift, size, dir, goal, vals, cur, hints,
-			description);
+		return solveLeftCircularShift(factory, expValu1, expShift, size, dir, goal, vals, cur,
+			hints, description);
 	}
 
-	protected AssemblyResolution solveLeftCircularShift(PatternExpression expValue,
+	protected AssemblyResolution solveLeftCircularShift(
+			AbstractAssemblyResolutionFactory<?, ?> factory, PatternExpression expValue,
 			PatternExpression expShift, int size, int dir, MaskedLong goal, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
@@ -178,15 +173,9 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		MaskedLong valShift = solver.getValue(expShift, vals, cur);
 
 		if (valValue != null && !valValue.isFullyDefined()) {
-			if (!valValue.isFullyUndefined()) {
-				dbg.println("Partially-defined f for left circular shift solver: " + valValue);
-			}
 			valValue = null;
 		}
 		if (valShift != null && valShift.isFullyDefined()) {
-			if (!valShift.isFullyUndefined()) {
-				dbg.println("Partially-defined g for left circular shift solver: " + valShift);
-			}
 			valShift = null;
 		}
 
@@ -194,12 +183,12 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			throw new AssertionError("Should not have constants when solving special forms");
 		}
 		else if (valValue != null) {
-			return solver.solve(expShift, computeCircShiftG(valValue, size, dir, goal), vals, cur,
-				hints, description);
+			return solver.solve(factory, expShift, computeCircShiftG(valValue, size, dir, goal),
+				vals, cur, hints, description);
 		}
 		else if (valShift != null) {
-			return solver.solve(expValue, computeCircShiftF(valShift, size, dir, goal), vals, cur,
-				hints, description);
+			return solver.solve(factory, expValue, computeCircShiftF(valShift, size, dir, goal),
+				vals, cur, hints, description);
 		}
 
 		// Oiy. Try guessing the shift amount, starting at 0
@@ -213,14 +202,14 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			try {
 				MaskedLong reqShift = MaskedLong.fromLong(shift);
 				MaskedLong reqValue = computeCircShiftF(reqShift, size, dir, goal);
-				AssemblyResolution resValue = solver.solve(expValue, reqValue, vals, cur,
+				AssemblyResolution resValue = solver.solve(factory, expValue, reqValue, vals, cur,
 					hintsWithCircularShift, description);
 				if (resValue.isError()) {
 					AssemblyResolvedError err = (AssemblyResolvedError) resValue;
 					throw new SolverException("Solving f failed: " + err.getError());
 				}
 				AssemblyResolution resShift =
-					solver.solve(expShift, reqShift, vals, cur, hints, description);
+					solver.solve(factory, expShift, reqShift, vals, cur, hints, description);
 				if (resShift.isError()) {
 					AssemblyResolvedError err = (AssemblyResolvedError) resShift;
 					throw new SolverException("Solving g failed: " + err.getError());
@@ -267,23 +256,22 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 	}
 
 	@Override
-	protected AssemblyResolution solveTwoSided(OrExpression exp, MaskedLong goal,
-			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException, SolverException {
+	protected AssemblyResolution solveTwoSided(AbstractAssemblyResolutionFactory<?, ?> factory,
+			OrExpression exp, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
 		try {
-			return tryCatenationExpression(exp, goal, vals, cur, hints, description);
+			return tryCatenationExpression(factory, exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
-			dbg.println("while solving: " + goal + "=:" + exp);
-			dbg.println(e.getMessage());
+			// Will be reported later
 		}
 
 		try {
-			return tryCircularShiftExpression(exp, goal, vals, cur, hints, description);
+			return tryCircularShiftExpression(factory, exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
-			dbg.println("while solving: " + goal + "=:" + exp);
-			dbg.println(e.getMessage());
+			// Will be reported later
 		}
 
 		Map<ExpressionMatcher<?>, PatternExpression> match = MATCHERS.neqConst.match(exp);
@@ -291,21 +279,22 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			long value = MATCHERS.val.get(match).getValue();
 			PatternValue field = MATCHERS.fld.get(match);
 			// Solve for equals, then either return that, or forbid it, depending on goal
-			AssemblyResolution solution =
-				solver.solve(field, MaskedLong.fromLong(value), vals, cur, hints, description);
+			AssemblyResolution solution = solver.solve(factory, field, MaskedLong.fromLong(value),
+				vals, cur, hints, description);
 			if (goal.equals(MaskedLong.fromMaskAndValue(0, 1))) {
 				return solution;
 			}
 			if (goal.equals(MaskedLong.fromMaskAndValue(1, 1))) {
 				if (solution.isError()) {
-					return AssemblyResolution.nop(description);
+					return factory.nop(description);
 				}
 				if (solution.isBackfill()) {
 					throw new AssertionError();
 				}
 				AssemblyResolvedPatterns forbidden = (AssemblyResolvedPatterns) solution;
 				forbidden = forbidden.withDescription("Solved 'not equals'");
-				return AssemblyResolution.nop(description).withForbids(Set.of(forbidden));
+				AssemblyResolvedPatterns rp = factory.nop(description);
+				return rp.withForbids(Set.of(forbidden));
 			}
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.graph.ProgramGraphDisplayOptions;
 import ghidra.graph.ProgramGraphType;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.GenericAddress;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
@@ -40,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
  * Task to create a PCode control flow graph based on decompiler output
  */
 public class PCodeCfgGraphTask extends Task {
-	enum PcodeGraphSubType {
+	public enum PcodeGraphSubType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
 
 		private String name;
@@ -95,8 +96,7 @@ public class PCodeCfgGraphTask extends Task {
 				createControlFlowGraph(graph, monitor);
 			}
 
-			GraphDisplay display =
-				graphService.getDefaultGraphDisplay(!newGraph, monitor);
+			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, monitor);
 
 			PCodeCfgDisplayListener displayListener =
 				new PCodeCfgDisplayListener(tool, display, hfunction, pcodeGraphType);
@@ -270,10 +270,9 @@ public class PCodeCfgGraphTask extends Task {
 
 	protected void createControlFlowGraph(AttributedGraph graph, TaskMonitor monitor)
 			throws CancelledException {
-		Iterator<PcodeBlockBasic> pblockIter = hfunction.getBasicBlocks().iterator();
-		while (pblockIter.hasNext()) {
+		for (PcodeBlockBasic element : hfunction.getBasicBlocks()) {
 			monitor.checkCancelled();
-			graphPcodeBlock(graph, pblockIter.next(), monitor);
+			graphPcodeBlock(graph, element, monitor);
 		}
 	}
 
@@ -425,7 +424,9 @@ public class PCodeCfgGraphTask extends Task {
 					return var.getName();
 				}
 			}
-			return "Stack[" + NumericUtilities.toSignedHexString(addr.getOffset()) + "]";
+			return GenericAddress.STACK_ADDRESS_PREFIX +
+				NumericUtilities.toSignedHexString(addr.getOffset()) +
+				GenericAddress.STACK_ADDRESS_SUFFIX;
 		}
 		else if (addr.isMemoryAddress()) {
 			return addr.toString(true);

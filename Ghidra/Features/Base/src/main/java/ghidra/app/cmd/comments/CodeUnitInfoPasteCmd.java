@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.util.List;
 
 import ghidra.app.util.CodeUnitInfo;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
@@ -33,7 +32,7 @@ import ghidra.util.exception.InvalidInputException;
  * Undoable edit for pasting code unit information at a location.
  * This class actually does the work of the "paste."
  */
-public class CodeUnitInfoPasteCmd implements Command {
+public class CodeUnitInfoPasteCmd implements Command<Program> {
 
 // TODO: should refactor to handle all variables in a consistent fashion
 
@@ -48,6 +47,8 @@ public class CodeUnitInfoPasteCmd implements Command {
 	 * Creates a new command for pasting comments/labels.
 	 * @param startAddr starting address for info
 	 * @param infoList list of CodeUnitInfo objects that will be applied
+	 * @param pasteLabels true if labels should be applied, else false
+	 * @param pasteComments true if comments should be applied, else false
 	 */
 	public CodeUnitInfoPasteCmd(Address startAddr, List<CodeUnitInfo> infoList, boolean pasteLabels,
 			boolean pasteComments) {
@@ -65,19 +66,14 @@ public class CodeUnitInfoPasteCmd implements Command {
 		return "Paste Labels/Comments";
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		Program program = (Program) obj;
 		SymbolTable symTable = program.getSymbolTable();
 		Listing listing = program.getListing();
 		boolean offCutExists = false;
 
-		for (int i = 0; i < infoList.size(); i++) {
-			CodeUnitInfo info = infoList.get(i);
+		for (CodeUnitInfo info : infoList) {
 			Address a = startAddr.add(info.getIndex());
 			CodeUnit cu = listing.getCodeUnitAt(a);
 			if (cu == null) {
@@ -133,8 +129,8 @@ public class CodeUnitInfoPasteCmd implements Command {
 				function.setName(fnName, info.getPrimarySymbolSource());
 			}
 			catch (DuplicateNameException e) {
-				messages.append("Could not set function name--duplicate name: " + fnName).append(
-					'\n');
+				messages.append("Could not set function name--duplicate name: " + fnName)
+						.append('\n');
 			}
 			catch (InvalidInputException e) {
 				// shouldn't happen
@@ -175,8 +171,8 @@ public class CodeUnitInfoPasteCmd implements Command {
 					}
 					catch (DuplicateNameException e) {
 						messages.append(
-							"Could not set stack variable name--duplicate name: " + fnName).append(
-								'\n');
+							"Could not set stack variable name--duplicate name: " + fnName)
+								.append('\n');
 					}
 					catch (InvalidInputException e) {
 						// shouldn't happen
@@ -204,8 +200,8 @@ public class CodeUnitInfoPasteCmd implements Command {
 						var.setName(varNames[i], varSources[i]);
 					}
 					catch (DuplicateNameException e) {
-						messages.append(
-							"Could not set variable name--duplicate name: " + fnName).append('\n');
+						messages.append("Could not set variable name--duplicate name: " + fnName)
+								.append('\n');
 					}
 					catch (InvalidInputException e) {
 						// shouldn't happen
@@ -219,8 +215,7 @@ public class CodeUnitInfoPasteCmd implements Command {
 	}
 
 	private Variable findStackVar(Variable[] stackVars, int stackOffset, int firstUseOffset) {
-		for (int k = 0; k < stackVars.length; k++) {
-			Variable var = stackVars[k];
+		for (Variable var : stackVars) {
 			if (stackOffset == var.getStackOffset() && firstUseOffset == var.getFirstUseOffset()) {
 				return var;
 			}
@@ -229,8 +224,7 @@ public class CodeUnitInfoPasteCmd implements Command {
 	}
 
 	private Variable findVar(Variable[] vars, Address storageAddr, int firstUseOffset) {
-		for (int k = 0; k < vars.length; k++) {
-			Variable var = vars[k];
+		for (Variable var : vars) {
 			Varnode varnode = var.getVariableStorage().getFirstVarnode();
 			if (varnode != null && firstUseOffset == var.getFirstUseOffset() &&
 				storageAddr.equals(varnode.getAddress())) {
@@ -277,8 +271,8 @@ public class CodeUnitInfoPasteCmd implements Command {
 				}
 			}
 			catch (DuplicateNameException e) {
-				messages.append("Could not set label name--duplicate name: " + primaryName).append(
-					'\n');
+				messages.append("Could not set label name--duplicate name: " + primaryName)
+						.append('\n');
 			}
 			catch (InvalidInputException e) {
 				// should not happen
@@ -331,24 +325,24 @@ public class CodeUnitInfoPasteCmd implements Command {
 		String[] repeatableComment = info.getRepeatableComment();
 
 		if (plateComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
-			cu.setCommentAsArray(CodeUnit.PLATE_COMMENT, appendComment(oldComment, plateComment));
+			String[] oldComment = cu.getCommentAsArray(CommentType.PLATE);
+			cu.setCommentAsArray(CommentType.PLATE, appendComment(oldComment, plateComment));
 		}
 		if (preComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
-			cu.setCommentAsArray(CodeUnit.PRE_COMMENT, appendComment(oldComment, preComment));
+			String[] oldComment = cu.getCommentAsArray(CommentType.PRE);
+			cu.setCommentAsArray(CommentType.PRE, appendComment(oldComment, preComment));
 		}
 		if (postComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
-			cu.setCommentAsArray(CodeUnit.POST_COMMENT, appendComment(oldComment, postComment));
+			String[] oldComment = cu.getCommentAsArray(CommentType.POST);
+			cu.setCommentAsArray(CommentType.POST, appendComment(oldComment, postComment));
 		}
 		if (eolComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.EOL_COMMENT);
-			cu.setCommentAsArray(CodeUnit.EOL_COMMENT, appendComment(oldComment, eolComment));
+			String[] oldComment = cu.getCommentAsArray(CommentType.EOL);
+			cu.setCommentAsArray(CommentType.EOL, appendComment(oldComment, eolComment));
 		}
 		if (repeatableComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
-			cu.setCommentAsArray(CodeUnit.REPEATABLE_COMMENT,
+			String[] oldComment = cu.getCommentAsArray(CommentType.REPEATABLE);
+			cu.setCommentAsArray(CommentType.REPEATABLE,
 				appendComment(oldComment, repeatableComment));
 		}
 	}
@@ -359,12 +353,12 @@ public class CodeUnitInfoPasteCmd implements Command {
 	private String[] appendComment(String[] comment1, String[] comment2) {
 		// first check for duplicate comments
 		ArrayList<String> list = new ArrayList<String>();
-		for (int i = 0; i < comment2.length; i++) {
-			list.add(comment2[i]);
+		for (String element : comment2) {
+			list.add(element);
 		}
-		for (int i = 0; i < comment1.length; i++) {
+		for (String element : comment1) {
 			for (int j = 0; j < list.size(); j++) {
-				if (comment1[i].equals(list.get(j))) {
+				if (element.equals(list.get(j))) {
 					list.remove(j);
 					--j;
 				}

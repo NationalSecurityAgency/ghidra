@@ -15,7 +15,6 @@
  */
 package ghidra.app.services;
 
-import java.awt.Component;
 import java.net.URL;
 
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
@@ -29,7 +28,9 @@ import ghidra.program.model.listing.Program;
  * Service for managing programs. Multiple programs may be open in a tool, but only one is active at
  * any given time.
  */
-@ServiceInfo(defaultProvider = ProgramManagerPlugin.class, description = "Get the currently open program")
+@ServiceInfo(
+		defaultProvider = ProgramManagerPlugin.class,
+		description = "Get the currently open program")
 public interface ProgramManager {
 
 	/**
@@ -78,8 +79,7 @@ public interface ProgramManager {
 	 * @param ghidraURL valid server-based program URL
 	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE). The visibility
 	 *            states will be ignored if the program is already open.
-	 * @return null if the user canceled the "open" for the new program or an error occurred and was
-	 *         displayed.
+	 * @return the opened program or null if the user canceled the "open" or an error occurred
 	 * @see GhidraURL
 	 */
 	public Program openProgram(URL ghidraURL, int state);
@@ -88,24 +88,43 @@ public interface ProgramManager {
 	 * Open the program for the given domainFile. Once open it will become the active program.
 	 *
 	 * @param domainFile domain file that has the program
-	 * @return null if the user canceled the "open" for the new program
+	 * @return the opened program or null if the user canceled the "open" or an error occurred
 	 */
 	public Program openProgram(DomainFile domainFile);
 
 	/**
-	 * Open the program for the given domainFile. Once open it will become the active program.
-	 *
-	 * <P>
-	 * Note: this method functions exactly as {@link #openProgram(DomainFile)}
-	 *
-	 * @param domainFile domain file that has the program
-	 * @param dialogParent unused
-	 * @return the program
-	 * @deprecated deprecated for 10.1; removal for 10.3 or later; use
-	 *             {@link #openProgram(DomainFile)}
+	 * Opens a program or retrieves it from a cache. If the program is in the cache, the consumer
+	 * will be added the program before returning it. Otherwise, the program will be opened with
+	 * the consumer. In addition, opening or accessing a cached program, will guarantee that it will
+	 * remain open for period of time, even if the caller of this method releases it from the 
+	 * consumer that was passed in. If the program isn't accessed again, it will be eventually be
+	 * released from the cache. If the program is still in use when the timer expires, the
+	 * program will remain in the cache with a new full expiration time. Calling this method
+	 * does not open the program in the tool.
+	 * 
+	 * @param domainFile the DomainFile from which to open a program.
+	 * @param consumer the consumer that is using the program. The caller is responsible for
+	 * releasing (See {@link Program#release(Object)}) the consumer when done with the program.
+	 * @return the program for the given domainFile or null if unable to open the program
 	 */
-	@Deprecated
-	public Program openProgram(DomainFile domainFile, Component dialogParent);
+	public Program openCachedProgram(DomainFile domainFile, Object consumer);
+
+	/**
+	 * Opens a program or retrieves it from a cache. If the program is in the cache, the consumer
+	 * will be added the program before returning it. Otherwise, the program will be opened with
+	 * the consumer. In addition, opening or accessing a cached program, will guarantee that it will
+	 * remain open for period of time, even if the caller of this method releases it from the 
+	 * consumer that was passed in. If the program isn't accessed again, it will be eventually be
+	 * released from the cache. If the program is still in use when the timer expires, the
+	 * program will remain in the cache with a new full expiration time.  Calling this method
+	 * does not open the program in the tool.
+	 * 
+	 * @param ghidraURL the ghidra URL from which to open a program.
+	 * @param consumer the consumer that is using the program. The caller is responsible for
+	 * releasing (See {@link Program#release(Object)}) the consumer when done with the program.
+	 * @return the program for the given URL or null if unable to open the program
+	 */
+	public Program openCachedProgram(URL ghidraURL, Object consumer);
 
 	/**
 	 * Opens the specified version of the program represented by the given DomainFile. This method
@@ -113,7 +132,7 @@ public interface ProgramManager {
 	 *
 	 * @param df the DomainFile to open
 	 * @param version the version of the Program to open
-	 * @return the opened program or null if the given version does not exist.
+	 * @return the opened program or null if the user canceled the "open" or an error occurred
 	 */
 	public Program openProgram(DomainFile df, int version);
 
@@ -125,8 +144,7 @@ public interface ProgramManager {
 	 *            file update mode.
 	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE). The visibility
 	 *            states will be ignored if the program is already open.
-	 * @return null if the user canceled the "open" for the new program or an error occurred and was
-	 *         displayed.
+	 * @return the opened program or null if the user canceled the "open" or an error occurred
 	 */
 	public Program openProgram(DomainFile domainFile, int version, int state);
 
@@ -137,18 +155,6 @@ public interface ProgramManager {
 	 * @param program the program to register as open with the tool.
 	 */
 	public void openProgram(Program program);
-
-	/**
-	 * Opens the program to the tool. In this case the program is already open, but this tool may
-	 * not have it registered as open. The program is made the active program.
-	 *
-	 * @param program the program to register as open with the tool.
-	 * @param current if true, the program is made the current active program. If false, then the
-	 *            program is made active only if it the first open program in the tool.
-	 * @deprecated use openProgram(Program program, int state) instead.
-	 */
-	@Deprecated
-	public void openProgram(Program program, boolean current);
 
 	/**
 	 * Open the specified program in the tool.
@@ -275,22 +281,4 @@ public interface ProgramManager {
 	 */
 	public Program[] getAllOpenPrograms();
 
-	/**
-	 * Allows program manager state to be locked/unlocked. While locked, the program manager will
-	 * not support opening additional programs.
-	 *
-	 * @param state locked if true, unlocked if false
-	 * @deprecated deprecated for 10.1; removal for 10.3 or later
-	 */
-	@Deprecated
-	public void lockDown(boolean state);
-
-	/**
-	 * Returns true if program manager is in the locked state
-	 *
-	 * @return true if program manager is in the locked state
-	 * @deprecated deprecated for 10.1; removal for 10.3 or later
-	 */
-	@Deprecated
-	public boolean isLocked();
 }

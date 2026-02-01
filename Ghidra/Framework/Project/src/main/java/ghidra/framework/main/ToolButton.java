@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,9 @@ import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 
@@ -33,6 +35,8 @@ import docking.dnd.*;
 import docking.tool.ToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.EmptyBorderButton;
+import ghidra.framework.data.LinkHandler;
+import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -152,11 +156,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 //==================================================================================================
 
 	@Override
-	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		// nothing to do
-	}
-
-	@Override
 	public boolean isDropOk(DropTargetDragEvent e) {
 		DataFlavor[] flavors = e.getCurrentDataFlavors();
 		Transferable transferable = e.getTransferable();
@@ -220,11 +219,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	@Override
-	public void undoDragUnderFeedback() {
-		// nothing to do
-	}
-
-	@Override
 	public void add(Object obj, DropTargetDropEvent event, DataFlavor f) {
 
 		if (f.equals(DataTreeDragNDropHandler.localDomainFileFlavor)) {
@@ -255,8 +249,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 				}
 			}
 		}
+		// else assume ToolButtonTransferable
 		else {
-			plugin.setToolButtonTransferable(null);
 			ToolButton toolButton = (ToolButton) obj;
 			resetButtonAfterDrag(toolButton);
 			addFromToolButton(toolButton);
@@ -264,7 +258,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	private void addFromToolButton(ToolButton toolButton) {
-		plugin.setToolButtonTransferable(null);
 		PluginTool tool = null;
 		if (associatedRunningTool != null && toolButton.associatedRunningTool != null) {
 			final PluginTool t2 = toolButton.associatedRunningTool;
@@ -353,51 +346,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		clearBorder();
 	}
 
-	/**
-	 * Method called when the drag operation exits the drop target
-	 * without dropping.
-	 */
 	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		plugin.setToolButtonTransferable(null);
+	public void dragFinished(boolean wasCancelled) {
 		resetButtonAfterDrag(this);
-
-		// Unusual Code Alert!
-		// When dragging, we do not get mouseReleased() events, which we use to launch tools.
-		// In this case, the drag was cancelled; if we are over ourselves, then simulate
-		// the Java-eaten mouseReleased() call
-		Container parent = getParent();
-		if (parent == null) {
-			return;
-		}
-
-		Point point = event.getLocation();
-		if (point == null) {
-			return;
-		}
-		SwingUtilities.convertPointFromScreen(point, parent);
-		Component componentUnderMouse =
-			SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
-
-		if (componentUnderMouse == this) {
-			handleMouseReleased();
-		}
-
 	}
 
-	/**
-	 * Return true if the object at the location in the DragGesture
-	 * event is draggable.
-	 *
-	 * @param e event passed to a DragGestureListener via its
-	 * dragGestureRecognized() method when a particular DragGestureRecognizer
-	 * detects a platform dependent Drag and Drop action initiating
-	 * gesture has occurred on the Component it is tracking.
-	 * @see docking.dnd.DragGestureAdapter
-	 */
 	@Override
 	public boolean isStartDragOk(DragGestureEvent e) {
-		plugin.setToolButtonTransferable(new ToolButtonTransferable(this));
 		return true;
 	}
 
@@ -408,12 +363,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 	@Override
 	public Transferable getTransferable(Point p) {
-		return plugin.getToolButtonTransferable();
-	}
-
-	@Override
-	public void move() {
-		resetButtonAfterDrag(this);
+		return new ToolButtonTransferable(this);
 	}
 
 	@Override
@@ -523,7 +473,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 		// Create our animation code: a zooming effect and an effect to move where the image is
 		// painted.  These effects are independent code-wise, but work together in that the
-		// mover will set the location and size, and the zoomer will will paint the image with
+		// mover will set the location and size, and the zoomer will paint the image with
 		// a transparency and a zoom level, which is affected by the movers bounds changing.
 		Image image = ZoomedImagePainter.createIconImage(icon);
 		final ZoomedImagePainter painter = new ZoomedImagePainter(startBounds, image);
@@ -561,7 +511,33 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			plugin.getActiveWorkspace().runTool(template);
 		}
 		else {
-			PluginTool tool = toolServices.launchTool(template.getName(), domainFiles);
+			List<DomainFile> files = new ArrayList<>();
+			domainFiles.forEach(file -> {
+				if (file.isLink()) {
+					if (file.getLinkInfo().isFolderLink()) {
+						return; // ignore folder links
+					}
+					AtomicReference<String> errorMsg = new AtomicReference<>();
+					LinkStatus status =
+						LinkHandler.getLinkFileStatus(file, error -> errorMsg.set(error));
+					if (status == LinkStatus.BROKEN) {
+						String msg = errorMsg.get();
+						String pathname = file.getPathname();
+						if (!msg.contains(pathname)) {
+							msg += ": " + pathname;
+						}
+						Msg.showError(this, getParent(), "Failed to Open File",
+							msg + ": " + file.getPathname());
+						return;
+					}
+				}
+				files.add(file);
+			});
+			if (files.isEmpty()) {
+				return;
+			}
+
+			PluginTool tool = toolServices.launchTool(template.getName(), files);
 			if (tool == null) {
 				Msg.showError(this, getParent(), "Failed to Launch Tool",
 					"Failed to launch " + template.getName() + " tool.\nSee log for details.");
@@ -608,10 +584,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	private void setHelpLocation(String anchorTag) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(this, new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, anchorTag));
-	}
-
-	private void handleMouseReleased() {
-		activateTool();
 	}
 
 //==================================================================================================

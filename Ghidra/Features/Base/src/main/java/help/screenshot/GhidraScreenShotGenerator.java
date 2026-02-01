@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,34 +104,33 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		}
 
 		// next, try the .gif extension
-		potentialFile = new File(helpTopic, "images/" + name + ".gif");
+		File imageDir = new File(helpTopic, "images");
+		imageDir.mkdirs();
+		potentialFile = new File(imageDir, name + ".gif");
 		if (potentialFile.exists()) {
 			handleGIFImage(potentialFile);
 		}
 
 		// next, how about jpg?
-		potentialFile = new File(helpTopic, "images/" + name + ".jpg");
+		potentialFile = new File(imageDir, name + ".jpg");
 		if (potentialFile.exists()) {
 			handleJPGImage(potentialFile);
 		}
 
 		// next, look for any matching image, ignoring case
 		final String nameLowerCase = name.toLowerCase();
-		File imagesDir = new File(helpTopic, "images");
-		File[] matchingFiles = imagesDir.listFiles((FileFilter) f -> {
+		File[] matchingFiles = imageDir.listFiles((FileFilter) f -> {
 			String filename = f.getName();
 			String filenameLowerCase = filename.toLowerCase();
 			return nameLowerCase.equals(filenameLowerCase);
 		});
 
-		if (matchingFiles.length == 1) {
-			return matchingFiles[0];
+		if (matchingFiles == null || matchingFiles.length == 0) {
+			return new File("ImageNotFound/" + name + ".png");
 		}
 
-		if (matchingFiles.length == 0) {
-//			fail("Unable to find image by name (case-insensitive): " + name + " for test case: " +
-//				getName());
-			return new File("ImageNotFound/" + name + ".png");
+		if (matchingFiles.length == 1) {
+			return matchingFiles[0];
 		}
 
 		Assert.fail("Found multiple files, ignoring case, that match name: " + name +
@@ -213,7 +212,9 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		assertNotNull("No new image found", image);
 
 		Image oldImage = getOldImage(helpTopic, oldImageName);
-		File imageFile = new File(helpTopic, "/images/" + oldImageName + DEFAULT_FILENAME_SUFFIX);
+		File imageDir = new File(helpTopic, "images");
+		imageDir.mkdirs();
+		File imageFile = new File(imageDir, oldImageName + DEFAULT_FILENAME_SUFFIX);
 		ImageDialogProvider dialog = new ImageDialogProvider(imageFile, oldImage, image);
 		dialog.setTitle("help/topics/" + helpTopic.getName() + "/images/" + oldImageName);
 		showDialog(dialog);
@@ -224,7 +225,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		showDialog(dialog);
 	}
 
-	private void showDialog(final DialogComponentProvider dialogComponent) {
+	private void showDialog(DialogComponentProvider dialogComponent) {
 		runSwing(() -> {
 			DockingDialog dialog = DockingDialog.createDialog(null, dialogComponent, null);
 			dialog.setLocation(WindowUtilities.centerOnScreen(dialog.getSize()));

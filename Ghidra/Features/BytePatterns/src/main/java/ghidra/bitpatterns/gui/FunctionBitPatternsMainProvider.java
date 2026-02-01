@@ -233,7 +233,10 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 				fileChooser.setTitle("Select Directory Containing XML Files");
 				String baseDir = Preferences.getProperty(PATTERN_INFO_DIR);
 				if (baseDir != null) {
-					fileChooser.setCurrentDirectory(new File(baseDir));
+					File dir = new File(baseDir);
+					if (dir.isDirectory()) {
+						fileChooser.setCurrentDirectory(dir);
+					}
 				}
 				File xmlDir = fileChooser.getSelectedFile();
 				fileChooser.dispose();

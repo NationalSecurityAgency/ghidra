@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.file.jad;
 
 import java.io.*;
 import java.util.Iterator;
-import java.util.List;
 import java.util.zip.ZipException;
 
 import org.apache.commons.io.FileUtils;
@@ -94,9 +93,9 @@ public class JarDecompiler {
 
 		FileSystemService fsService = FileSystemService.getInstance();
 		try (GFileSystem fs = fsService.openFileSystemContainer(jarFile, monitor)) {
-			List<GFile> files = FSUtilities.listFileSystem(fs, null, null, monitor);
-			monitor.initialize(files.size());
-			for (GFile file : files) {
+			monitor.setIndeterminate(true);
+			monitor.initialize(0);
+			for (GFile file : fs) {
 				if (monitor.isCancelled()) {
 					break;
 				}

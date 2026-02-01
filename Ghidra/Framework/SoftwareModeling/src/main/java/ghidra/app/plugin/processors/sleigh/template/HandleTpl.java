@@ -19,12 +19,13 @@
  */
 package ghidra.app.plugin.processors.sleigh.template;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.InstructionContext;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
  * Placeholder that resolves for a specific {@link InstructionContext} into a {@link FixedHandle}
@@ -104,23 +105,23 @@ public class HandleTpl {
 		}
 	}
 
-	public void restoreXml(XmlPullParser parser, AddressFactory factory) {
-		XmlElement el = parser.start("handle_tpl");
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_HANDLE_TPL);
 		space = new ConstTpl();
-		space.restoreXml(parser, factory);
+		space.decode(decoder);
 		size = new ConstTpl();
-		size.restoreXml(parser, factory);
+		size.decode(decoder);
 		ptrspace = new ConstTpl();
-		ptrspace.restoreXml(parser, factory);
+		ptrspace.decode(decoder);
 		ptroffset = new ConstTpl();
-		ptroffset.restoreXml(parser, factory);
+		ptroffset.decode(decoder);
 		ptrsize = new ConstTpl();
-		ptrsize.restoreXml(parser, factory);
+		ptrsize.decode(decoder);
 		temp_space = new ConstTpl();
-		temp_space.restoreXml(parser, factory);
+		temp_space.decode(decoder);
 		temp_offset = new ConstTpl();
-		temp_offset.restoreXml(parser, factory);
-		parser.end(el);
+		temp_offset.decode(decoder);
+		decoder.closeElement(el);
 	}
 
 	public int getOffsetOperandIndex() {

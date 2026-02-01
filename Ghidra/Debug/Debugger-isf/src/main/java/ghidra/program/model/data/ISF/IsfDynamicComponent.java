@@ -17,13 +17,14 @@ package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.Dynamic;
 
-public class IsfDynamicComponent implements IsfObject {
+public class IsfDynamicComponent extends AbstractIsfObject {
 
 	public String kind;
 	public Integer count;
 	public IsfObject subtype;
 
 	public IsfDynamicComponent(Dynamic dynamicType, IsfObject type, int elementCnt) {
+		super(dynamicType);
 		kind = "array";
 		subtype = type;
 		count = elementCnt;

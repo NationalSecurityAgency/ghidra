@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,6 +104,62 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 	}
 
 	@Test
+	public void testUnionWithStructureOfBitFieldsWithPadding() throws Exception {
+
+		/**
+		
+		  	<datatype name="TestUnion" kind="Union" length="0x8" >
+			  <member name="field1:0x1:0xb" datatype="int" offset="0x4" kind="Member" length="0x1" />
+			  <member name="field2:0x4:0xc" datatype="int" offset="0x4" kind="Member" length="0x4" />
+			</datatype>
+		
+			union TestUnion {
+			    struct {
+			        int :32;
+			        int :11;
+			        int field1:1;
+			        int field2:4;
+			    };
+			    short fieldSHORT;
+			};
+		
+		 */
+		UnionDataType union = new UnionDataType(CategoryPath.ROOT, "testUnion", dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("field1:0x1:0xb", "int", 4),
+				new MyPdbMember("field2:0x4:0xc", "int", 4),
+				new MyPdbMember("fieldSHORT", "short", 0)
+					);
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(union, false, false, 8, members,
+			this, TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/testUnion\n" +
+			"pack()\n" +
+			"Union testUnion {\n" +
+			"   0   testUnion_s_0   8   _s_0   \"\"\n" +
+			"   0   short   2   fieldSHORT   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 4\n" +
+			"/testUnion/testUnion_s_0\n" +
+			"pack()\n" +
+			"Structure testUnion_s_0 {\n" +
+			"   0   int   4   _padding_   \"\"\n" +
+			"   4   int:11(0)   2   _padding_   \"\"\n" +
+			"   5   int:1(3)   1   field1   \"\"\n" +
+			"   5   int:4(4)   1   field2   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 4", union, true);
+		//@formatter:on
+	}
+
+	@Test
 	public void testSimpleStructureWithBitFields() throws Exception {
 
 		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
@@ -118,22 +174,88 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("f", "ushort", 8));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 12, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 12, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/struct\n" + 
-			"pack()\n" + 
-			"Structure struct {\n" + 
-			"   0   uchar   1   a   \"\"\n" + 
-			"   1   uchar:4(0)   1   b   \"\"\n" + 
-			"   1   uchar:4(4)   1   c   \"\"\n" + 
-			"   2   uchar:4(0)   1   d   \"\"\n" + 
-			"   4   uint:4(0)   1   e   \"\"\n" + 
-			"   8   ushort   2   f   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"/struct\n" +
+			"pack()\n" +
+			"Structure struct {\n" +
+			"   0   uchar   1   a   \"\"\n" +
+			"   1   uchar:4(0)   1   b   \"\"\n" +
+			"   1   uchar:4(4)   1   c   \"\"\n" +
+			"   2   uchar:4(0)   1   d   \"\"\n" +
+			"   4   uint:4(0)   1   e   \"\"\n" +
+			"   8   ushort   2   f   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testSimplePack1StructureWithBitFields() throws Exception {
+
+		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("a", "uchar", 0),
+				new MyPdbMember("b:0x4:0x0", "uchar", 1),
+				new MyPdbMember("c:0x4:0x4", "uchar", 1),
+				new MyPdbMember("d:0x4:0x0", "uchar", 2),
+				new MyPdbMember("e:0x4:0x0", "uint", 3),
+				new MyPdbMember("f", "ushort", 7));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 9, members,
+			this, TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/struct\n" +
+			"pack(1)\n" +
+			"Structure struct {\n" +
+			"   0   uchar   1   a   \"\"\n" +
+			"   1   uchar:4(0)   1   b   \"\"\n" +
+			"   1   uchar:4(4)   1   c   \"\"\n" +
+			"   2   uchar:4(0)   1   d   \"\"\n" +
+			"   3   uint:4(0)   1   e   \"\"\n" +
+			"   7   ushort   2   f   \"\"\n" +
+			"}\n" +
+			"Length: 9 Alignment: 1", struct, true);
+		//@formatter:on
+	}
+
+	@Test
+	public void testSimpleNoPackStructureWithBitFields() throws Exception {
+
+		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("a", "uchar", 0),
+				new MyPdbMember("b:0x4:0x0", "uchar", 1),
+				new MyPdbMember("e:0x4:0x0", "uint", 3),
+				new MyPdbMember("f", "ushort", 7));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 9, members,
+			this, TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/struct\n" +
+			"pack(disabled)\n" +
+			"Structure struct {\n" +
+			"   0   uchar   1   a   \"\"\n" +
+			"   1   uchar:4(0)   1   b   \"\"\n" +
+			"   3   uint:4(0)   1   e   \"\"\n" +
+			"   7   ushort   2   f   \"\"\n" +
+			"}\n" +
+			"Length: 9 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -153,25 +275,61 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("f", "ushort", 8));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 12, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 12, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/struct\n" + 
-			"pack()\n" + 
-			"Structure struct {\n" + 
-			"   0   uchar   1   a   \"\"\n" + 
-			"   1   uchar:2(0)   1   padding   \"\"\n" + 
-			"   1   uchar:2(2)   1   b   \"\"\n" + 
-			"   1   uchar:1(4)   1   c1   \"\"\n" + 
-			"   1   uchar:1(5)   1   padding   \"\"\n" + 
-			"   1   uchar:1(6)   1   c2   \"\"\n" + 
-			"   2   uchar:7(0)   1   d   \"\"\n" + 
-			"   4   uint:4(0)   1   e   \"\"\n" + 
-			"   8   ushort   2   f   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct, true);
+			"/struct\n" +
+			"pack()\n" +
+			"Structure struct {\n" +
+			"   0   uchar   1   a   \"\"\n" +
+			"   1   uchar:2(0)   1   _padding_   \"\"\n" +
+			"   1   uchar:2(2)   1   b   \"\"\n" +
+			"   1   uchar:1(4)   1   c1   \"\"\n" +
+			"   1   uchar:1(5)   1   _padding_   \"\"\n" +
+			"   1   uchar:1(6)   1   c2   \"\"\n" +
+			"   2   uchar:7(0)   1   d   \"\"\n" +
+			"   4   uint:4(0)   1   e   \"\"\n" +
+			"   8   ushort   2   f   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4", struct, true);
+		//@formatter:on
+	}
+
+	@Test
+	public void testSimpleStructureWithFillerBitFieldsPackingDisabled() throws Exception {
+
+		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(new MyPdbMember("a", "uchar", 0),
+				new MyPdbMember("b:0x2:0x2", "uchar", 1),
+				new MyPdbMember("c1:0x1:0x4", "uchar", 1),
+				new MyPdbMember("c2:0x1:0x6", "uchar", 1),
+				new MyPdbMember("d:0x7:0x0", "uchar", 2),
+				new MyPdbMember("e:0x4:0x0", "uint", 4),
+				new MyPdbMember("f", "ushort", 8));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, true, false, 12, members,
+			this, TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/struct\n" +
+			"aligned(4) pack(disabled)\n" +
+			"Structure struct {\n" +
+			"   0   uchar   1   a   \"\"\n" +
+			"   1   uchar:2(2)   1   b   \"\"\n" +
+			"   1   uchar:1(4)   1   c1   \"\"\n" +
+			"   1   uchar:1(6)   1   c2   \"\"\n" +
+			"   2   uchar:7(0)   1   d   \"\"\n" +
+			"   4   uint:4(0)   1   e   \"\"\n" +
+			"   8   ushort   2   f   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4", struct, true);
 		//@formatter:on
 	}
 
@@ -179,7 +337,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 	public void testUnionedStructuresWithFillerBitFields() throws Exception {
 
 		/*** Structure Source ***
-		 
+		
 		 struct BitFieldUnionAlternatingPadded_s {
 		   union {
 		      struct {
@@ -200,7 +358,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 		      };
 		   };
 		};
-		 
+		
 		 */
 
 		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
@@ -216,45 +374,45 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("a5:0x1:0x5", "char", 0));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 1, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 1, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/struct\n" + 
-			"pack()\n" + 
-			"Structure struct {\n" + 
-			"   0   struct_u_0   1      \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/struct/struct_u_0\n" + 
-			"pack()\n" + 
-			"Union struct_u_0 {\n" + 
-			"   0   struct_u_0_s_0   1   _s_0   \"\"\n" + 
-			"   0   struct_u_0_s_1   1   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/struct/struct_u_0/struct_u_0_s_0\n" + 
-			"pack()\n" + 
-			"Structure struct_u_0_s_0 {\n" + 
-			"   0   char:1(0)   1   a0   \"\"\n" + 
-			"   0   char:1(1)   1   padding   \"\"\n" + 
-			"   0   char:1(2)   1   a2   \"\"\n" + 
-			"   0   char:1(3)   1   padding   \"\"\n" + 
-			"   0   char:1(4)   1   a4   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/struct/struct_u_0/struct_u_0_s_1\n" + 
-			"pack()\n" + 
-			"Structure struct_u_0_s_1 {\n" + 
-			"   0   char:1(0)   1   padding   \"\"\n" + 
-			"   0   char:1(1)   1   a1   \"\"\n" + 
-			"   0   char:1(2)   1   padding   \"\"\n" + 
-			"   0   char:1(3)   1   a3   \"\"\n" + 
-			"   0   char:1(4)   1   padding   \"\"\n" + 
-			"   0   char:1(5)   1   a5   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct, true);
+			"/struct\n" +
+			"pack()\n" +
+			"Structure struct {\n" +
+			"   0   struct_u_0   1      \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/struct/struct_u_0\n" +
+			"pack()\n" +
+			"Union struct_u_0 {\n" +
+			"   0   struct_u_0_s_0   1   _s_0   \"\"\n" +
+			"   0   struct_u_0_s_1   1   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/struct/struct_u_0/struct_u_0_s_0\n" +
+			"pack()\n" +
+			"Structure struct_u_0_s_0 {\n" +
+			"   0   char:1(0)   1   a0   \"\"\n" +
+			"   0   char:1(1)   1   _padding_   \"\"\n" +
+			"   0   char:1(2)   1   a2   \"\"\n" +
+			"   0   char:1(3)   1   _padding_   \"\"\n" +
+			"   0   char:1(4)   1   a4   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/struct/struct_u_0/struct_u_0_s_1\n" +
+			"pack()\n" +
+			"Structure struct_u_0_s_1 {\n" +
+			"   0   char:1(0)   1   _padding_   \"\"\n" +
+			"   0   char:1(1)   1   a1   \"\"\n" +
+			"   0   char:1(2)   1   _padding_   \"\"\n" +
+			"   0   char:1(3)   1   a3   \"\"\n" +
+			"   0   char:1(4)   1   _padding_   \"\"\n" +
+			"   0   char:1(5)   1   a5   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -272,41 +430,41 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("b:0x4:0x0", "uchar", 0),
 				new MyPdbMember("c:0x4:0x4", "uchar", 0),
 				new MyPdbMember("d:0x4:0x0", "uchar", 0),
-				new MyPdbMember("e:0x4:0x4", "uchar", 0), 
+				new MyPdbMember("e:0x4:0x4", "uchar", 0),
 				new MyPdbMember("f", "ushort", 0));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(union, false, 2, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(union, false, false, 2, members,
+			this, TaskMonitor.DUMMY));
 
 		// NOTE: handling of bit-fields within union is rather ambiguous within
 		// PDB data
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/union\n" + 
-			"pack()\n" + 
-			"Union union {\n" + 
-			"   0   uchar   1   a   \"\"\n" + 
-			"   0   union_s_1   1   _s_1   \"\"\n" + 
-			"   0   union_s_2   1   _s_2   \"\"\n" + 
-			"   0   ushort   2   f   \"\"\n" + 
-			"}\n" + 
-			"Size = 2   Actual Alignment = 2\n" + 
-			"/union/union_s_1\n" + 
-			"pack()\n" + 
-			"Structure union_s_1 {\n" + 
-			"   0   uchar:4(0)   1   b   \"\"\n" + 
-			"   0   uchar:4(4)   1   c   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/union/union_s_2\n" + 
-			"pack()\n" + 
-			"Structure union_s_2 {\n" + 
-			"   0   uchar:4(0)   1   d   \"\"\n" + 
-			"   0   uchar:4(4)   1   e   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1", union, true);
+			"/union\n" +
+			"pack()\n" +
+			"Union union {\n" +
+			"   0   uchar   1   a   \"\"\n" +
+			"   0   union_s_1   1   _s_1   \"\"\n" +
+			"   0   union_s_2   1   _s_2   \"\"\n" +
+			"   0   ushort   2   f   \"\"\n" +
+			"}\n" +
+			"Length: 2 Alignment: 2\n" +
+			"/union/union_s_1\n" +
+			"pack()\n" +
+			"Structure union_s_1 {\n" +
+			"   0   uchar:4(0)   1   b   \"\"\n" +
+			"   0   uchar:4(4)   1   c   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/union/union_s_2\n" +
+			"pack()\n" +
+			"Structure union_s_2 {\n" +
+			"   0   uchar:4(0)   1   d   \"\"\n" +
+			"   0   uchar:4(4)   1   e   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1", union, true);
 			//@formatter:on
 	}
 
@@ -322,18 +480,18 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("e", "char[0]", 1));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 1, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 1, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/struct\n" + 
-			"pack()\n" + 
-			"Structure struct {\n" + 
-			"   0   char   1   a   \"\"\n" + 
-			"   1   char[0]   0   e   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct, true);
+			"/struct\n" +
+			"pack()\n" +
+			"Structure struct {\n" +
+			"   0   char   1   a   \"\"\n" +
+			"   1   char[0]   0   e   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -353,34 +511,35 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("f", "char[0]", 8));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 16, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 16, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/union\n" + 
-			"pack()\n" + 
-			"Union union {\n" + 
-			"   0   union_s_0   12   _s_0   \"\"\n" + 
-			"   0   union_s_1   8   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
-			"/union/union_s_0\n" + 
-			"pack()\n" + 
-			"Structure union_s_0 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   4   int   4   b   \"\"\n" + 
-			"   8   int   4   c   \"\"\n" + 
-			"   12   char[0]   0   d   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
-			"/union/union_s_1\n" + 
-			"pack()\n" + 
-			"Structure union_s_1 {\n" + 
-			"   0   longlong   8   e   \"\"\n" + 
-			"   8   char[0]   0   f   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 8\n", struct, true);
+			"/union\n" +
+			"pack()\n" +
+			"Union union {\n" +
+			"   0   union_s_0   12   _s_0   \"\"\n" +
+			"   0   union_s_1   8   _s_1   \"\"\n" +
+			"   0   char[16]   16   _padding_   \"\"\n" +
+			"}\n" +
+			"Length: 16 Alignment: 8\n" +
+			"/union/union_s_0\n" +
+			"pack()\n" +
+			"Structure union_s_0 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   4   int   4   b   \"\"\n" +
+			"   8   int   4   c   \"\"\n" +
+			"   12   char[0]   0   d   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4\n" +
+			"/union/union_s_1\n" +
+			"pack()\n" +
+			"Structure union_s_1 {\n" +
+			"   0   longlong   8   e   \"\"\n" +
+			"   8   char[0]   0   f   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 8\n", struct, true);
 		//@formatter:on
 	}
 
@@ -399,33 +558,33 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("f", "char[0]", 0));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 12, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 12, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/union\n" + 
-			"pack()\n" + 
-			"Union union {\n" + 
-			"   0   union_s_0   12   _s_0   \"\"\n" + 
-			"   0   union_s_1   0   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
-			"/union/union_s_0\n" + 
-			"pack()\n" + 
-			"Structure union_s_0 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   4   int   4   b   \"\"\n" + 
-			"   8   int   4   c   \"\"\n" + 
-			"   12   char[0]   0   d   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
-			"/union/union_s_1\n" + 
-			"pack()\n" + 
-			"Structure union_s_1 {\n" + 
-			"   0   char[0]   0   f   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n", struct, true);
+			"/union\n" +
+			"pack()\n" +
+			"Union union {\n" +
+			"   0   union_s_0   12   _s_0   \"\"\n" +
+			"   0   union_s_1   0   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4\n" +
+			"/union/union_s_0\n" +
+			"pack()\n" +
+			"Structure union_s_0 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   4   int   4   b   \"\"\n" +
+			"   8   int   4   c   \"\"\n" +
+			"   12   char[0]   0   d   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4\n" +
+			"/union/union_s_1\n" +
+			"pack()\n" +
+			"Structure union_s_1 {\n" +
+			"   0   char[0]   0   f   \"\"\n" +
+			"}\n" +
+			"Length: 0 Alignment: 1\n", struct, true);
 		//@formatter:on
 	}
 
@@ -443,32 +602,32 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("c", "char", 1));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 1, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 2, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/union\n" + 
-			"pack(disabled)\n" + 
-			"Union union {\n" + 
-			"   0   union_s_0   1   _s_0   \"\"\n" + 
-			"   0   union_s_1   2   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 2   Actual Alignment = 1\n" + 
-			"/union/union_s_0\n" + 
-			"pack()\n" + 
-			"Structure union_s_0 {\n" + 
-			"   0   char   1   a   \"\"\n" + 
-			"   1   char[0]   0   flex   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/union/union_s_1\n" + 
-			"pack()\n" + 
-			"Structure union_s_1 {\n" + 
-			"   0   char   1   b   \"\"\n" + 
-			"   1   char   1   c   \"\"\n" + 
-			"}\n" + 
-			"Size = 2   Actual Alignment = 1", struct, true);
+			"/union\n" +
+			"pack()\n" +
+			"Union union {\n" +
+			"   0   union_s_0   1   _s_0   \"\"\n" +
+			"   0   union_s_1   2   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 2 Alignment: 1\n" +
+			"/union/union_s_0\n" +
+			"pack()\n" +
+			"Structure union_s_0 {\n" +
+			"   0   char   1   a   \"\"\n" +
+			"   1   char[0]   0   flex   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/union/union_s_1\n" +
+			"pack()\n" +
+			"Structure union_s_1 {\n" +
+			"   0   char   1   b   \"\"\n" +
+			"   1   char   1   c   \"\"\n" +
+			"}\n" +
+			"Length: 2 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -500,58 +659,58 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("b", "longlong", 8));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 16, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 16, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/struct\n" + 
-			"pack()\n" + 
-			"Structure struct {\n" + 
-			"   0   struct_u_0   1      \"\"\n" + 
-			"   8   struct_u_8   8      \"\"\n" + 
-			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
-			"/struct/struct_u_0\n" + 
-			"pack()\n" + 
-			"Union struct_u_0 {\n" + 
-			"   0   struct_u_0_s_0   1   _s_0   \"\"\n" + 
-			"   0   struct_u_0_s_1   1   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/struct/struct_u_0/struct_u_0_s_0\n" + 
-			"pack()\n" + 
-			"Structure struct_u_0_s_0 {\n" + 
-			"   0   char:1(0)   1   s0   \"\"\n" + 
-			"   0   char:1(1)   1   s1   \"\"\n" + 
-			"   0   char:1(2)   1   s2   \"\"\n" + 
-			"   0   char:1(3)   1   s3   \"\"\n" + 
-			"   0   char:1(4)   1   s4   \"\"\n" + 
-			"   0   char:1(5)   1   s5   \"\"\n" + 
-			"   0   char:1(6)   1   s6   \"\"\n" + 
-			"   0   char:1(7)   1   s7   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/struct/struct_u_0/struct_u_0_s_1\n" + 
-			"pack()\n" + 
-			"Structure struct_u_0_s_1 {\n" + 
-			"   0   uchar:1(0)   1   u0   \"\"\n" + 
-			"   0   uchar:1(1)   1   u1   \"\"\n" + 
-			"   0   uchar:1(2)   1   u2   \"\"\n" + 
-			"   0   uchar:1(3)   1   u3   \"\"\n" + 
-			"   0   uchar:1(4)   1   u4   \"\"\n" + 
-			"   0   uchar:1(5)   1   u5   \"\"\n" + 
-			"   0   uchar:1(6)   1   u6   \"\"\n" + 
-			"   0   uchar:1(7)   1   u7   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/struct/struct_u_8\n" + 
-			"pack()\n" + 
-			"Union struct_u_8 {\n" + 
-			"   0   ulong   4   a   \"\"\n" + 
-			"   0   longlong   8   b   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 8\n", struct, true);
+			"/struct\n" +
+			"pack()\n" +
+			"Structure struct {\n" +
+			"   0   struct_u_0   1      \"\"\n" +
+			"   8   struct_u_8   8      \"\"\n" +
+			"}\n" +
+			"Length: 16 Alignment: 8\n" +
+			"/struct/struct_u_0\n" +
+			"pack()\n" +
+			"Union struct_u_0 {\n" +
+			"   0   struct_u_0_s_0   1   _s_0   \"\"\n" +
+			"   0   struct_u_0_s_1   1   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/struct/struct_u_0/struct_u_0_s_0\n" +
+			"pack()\n" +
+			"Structure struct_u_0_s_0 {\n" +
+			"   0   char:1(0)   1   s0   \"\"\n" +
+			"   0   char:1(1)   1   s1   \"\"\n" +
+			"   0   char:1(2)   1   s2   \"\"\n" +
+			"   0   char:1(3)   1   s3   \"\"\n" +
+			"   0   char:1(4)   1   s4   \"\"\n" +
+			"   0   char:1(5)   1   s5   \"\"\n" +
+			"   0   char:1(6)   1   s6   \"\"\n" +
+			"   0   char:1(7)   1   s7   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/struct/struct_u_0/struct_u_0_s_1\n" +
+			"pack()\n" +
+			"Structure struct_u_0_s_1 {\n" +
+			"   0   uchar:1(0)   1   u0   \"\"\n" +
+			"   0   uchar:1(1)   1   u1   \"\"\n" +
+			"   0   uchar:1(2)   1   u2   \"\"\n" +
+			"   0   uchar:1(3)   1   u3   \"\"\n" +
+			"   0   uchar:1(4)   1   u4   \"\"\n" +
+			"   0   uchar:1(5)   1   u5   \"\"\n" +
+			"   0   uchar:1(6)   1   u6   \"\"\n" +
+			"   0   uchar:1(7)   1   u7   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/struct/struct_u_8\n" +
+			"pack()\n" +
+			"Union struct_u_8 {\n" +
+			"   0   ulong   4   a   \"\"\n" +
+			"   0   longlong   8   b   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 8\n", struct, true);
 		//@formatter:on
 	}
 
@@ -581,43 +740,44 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 				new MyPdbMember("u5:0x1:0x5", "uchar", 1),
 				new MyPdbMember("u6:0x1:0x6", "uchar", 1),
 				new MyPdbMember("u7:0x1:0x7", "uchar", 1));
-				
+
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 12, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 12, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/union\n" + 
-			"pack(disabled)\n" + 
-			"Union union {\n" + 
-			"   0   ulong   4   a   \"\"\n" + 
-			"   0   longlong   8   b   \"\"\n" + 
-			"   0   union_s_2   2   _s_2   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 1\n" + 
-			"/union/union_s_2\n" + 
-			"pack()\n" + 
-			"Structure union_s_2 {\n" + 
-			"   0   char:1(0)   1   s0   \"\"\n" + 
-			"   0   char:1(1)   1   s1   \"\"\n" + 
-			"   0   char:1(2)   1   s2   \"\"\n" + 
-			"   0   char:1(3)   1   s3   \"\"\n" + 
-			"   0   char:1(4)   1   s4   \"\"\n" + 
-			"   0   char:1(5)   1   s5   \"\"\n" + 
-			"   0   char:1(6)   1   s6   \"\"\n" + 
-			"   0   char:1(7)   1   s7   \"\"\n" + 
-			"   1   uchar:1(0)   1   u0   \"\"\n" + 
-			"   1   uchar:1(1)   1   u1   \"\"\n" + 
-			"   1   uchar:1(2)   1   u2   \"\"\n" + 
-			"   1   uchar:1(3)   1   u3   \"\"\n" + 
-			"   1   uchar:1(4)   1   u4   \"\"\n" + 
-			"   1   uchar:1(5)   1   u5   \"\"\n" + 
-			"   1   uchar:1(6)   1   u6   \"\"\n" + 
-			"   1   uchar:1(7)   1   u7   \"\"\n" + 
-			"}\n" + 
-			"Size = 2   Actual Alignment = 1", struct, true);
+			"/union\n" +
+			"pack(disabled)\n" +
+			"Union union {\n" +
+			"   0   ulong   4   a   \"\"\n" +
+			"   0   longlong   8   b   \"\"\n" +
+			"   0   union_s_2   2   _s_2   \"\"\n" +
+			"   0   char[12]   12   _padding_   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 1\n" +
+			"/union/union_s_2\n" +
+			"pack()\n" +
+			"Structure union_s_2 {\n" +
+			"   0   char:1(0)   1   s0   \"\"\n" +
+			"   0   char:1(1)   1   s1   \"\"\n" +
+			"   0   char:1(2)   1   s2   \"\"\n" +
+			"   0   char:1(3)   1   s3   \"\"\n" +
+			"   0   char:1(4)   1   s4   \"\"\n" +
+			"   0   char:1(5)   1   s5   \"\"\n" +
+			"   0   char:1(6)   1   s6   \"\"\n" +
+			"   0   char:1(7)   1   s7   \"\"\n" +
+			"   1   uchar:1(0)   1   u0   \"\"\n" +
+			"   1   uchar:1(1)   1   u1   \"\"\n" +
+			"   1   uchar:1(2)   1   u2   \"\"\n" +
+			"   1   uchar:1(3)   1   u3   \"\"\n" +
+			"   1   uchar:1(4)   1   u4   \"\"\n" +
+			"   1   uchar:1(5)   1   u5   \"\"\n" +
+			"   1   uchar:1(6)   1   u6   \"\"\n" +
+			"   1   uchar:1(7)   1   u7   \"\"\n" +
+			"}\n" +
+			"Length: 2 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -694,157 +854,157 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 					new MyPdbMember("buf", "char[0]", 0x2c));
 		//@formatter:on
 
-		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 0x38, members, this,
-			TaskMonitor.DUMMY));
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, false, 0x38, members,
+			this, TaskMonitor.DUMMY));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this,
-			"/MoreComplicated_s\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s {\n" + 
-			"   0   MoreComplicated_s_u_0   1      \"\"\n" + 
-			"   8   MoreComplicated_s_u_8   8      \"\"\n" + 
-			"   16   MoreComplicated_s_u_16   16      \"\"\n" + 
-			"   32   char[10]   10   beef   \"\"\n" + 
-			"   44   MoreComplicated_s_u_44   12      \"\"\n" + 
-			"}\n" + 
-			"Size = 56   Actual Alignment = 8\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_0\n" + 
-			"pack()\n" + 
-			"Union MoreComplicated_s_u_0 {\n" + 
-			"   0   MoreComplicated_s_u_0_s_0   1   _s_0   \"\"\n" + 
-			"   0   MoreComplicated_s_u_0_s_1   1   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_0/MoreComplicated_s_u_0_s_0\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_0_s_0 {\n" + 
-			"   0   char:1(0)   1   s0   \"\"\n" + 
-			"   0   char:1(1)   1   s1   \"\"\n" + 
-			"   0   char:1(2)   1   s2   \"\"\n" + 
-			"   0   char:1(3)   1   s3   \"\"\n" + 
-			"   0   char:1(4)   1   s4   \"\"\n" + 
-			"   0   char:1(5)   1   s5   \"\"\n" + 
-			"   0   char:1(6)   1   s6   \"\"\n" + 
-			"   0   char:1(7)   1   s7   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_0/MoreComplicated_s_u_0_s_1\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_0_s_1 {\n" + 
-			"   0   uchar:1(0)   1   u0   \"\"\n" + 
-			"   0   uchar:1(1)   1   u1   \"\"\n" + 
-			"   0   uchar:1(2)   1   u2   \"\"\n" + 
-			"   0   uchar:1(3)   1   u3   \"\"\n" + 
-			"   0   uchar:1(4)   1   u4   \"\"\n" + 
-			"   0   uchar:1(5)   1   u5   \"\"\n" + 
-			"   0   uchar:1(6)   1   u6   \"\"\n" + 
-			"   0   uchar:1(7)   1   u7   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_16\n" + 
-			"pack()\n" + 
-			"Union MoreComplicated_s_u_16 {\n" + 
-			"   0   MoreComplicated_s_u_16_s_0   16   _s_0   \"\"\n" + 
-			"   0   MoreComplicated_s_u_16_s_1   16   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_16/MoreComplicated_s_u_16_s_0\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_16_s_0 {\n" + 
-			"   0   double   8   da   \"\"\n" + 
-			"   8   char[8]   8   ca   \"\"\n" + 
-			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_16/MoreComplicated_s_u_16_s_1\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_16_s_1 {\n" + 
-			"   0   char[8]   8   cb   \"\"\n" + 
-			"   8   double   8   db   \"\"\n" + 
-			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_44\n" + 
-			"pack()\n" + 
-			"Union MoreComplicated_s_u_44 {\n" + 
-			"   0   MoreComplicated_s_u_44_s_0   12   _s_0   \"\"\n" + 
-			"   0   MoreComplicated_s_u_44_s_1   0   _s_1   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_44/MoreComplicated_s_u_44_s_0\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_44_s_0 {\n" + 
-			"   0   int   4   fromAddress   \"\"\n" + 
-			"   4   int   4   toAddress   \"\"\n" + 
-			"   8   int   4   seqNum   \"\"\n" + 
-			"   12   char[0]   0   data   \"\"\n" + 
-			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_44/MoreComplicated_s_u_44_s_1\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_44_s_1 {\n" + 
-			"   0   char[0]   0   buf   \"\"\n" + 
-			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_8\n" + 
-			"pack()\n" + 
-			"Union MoreComplicated_s_u_8 {\n" + 
-			"   0   ulong   4   val   \"\"\n" + 
-			"   0   double   8   d   \"\"\n" + 
-			"   0   MoreComplicated_s_u_8_s_2   8   _s_2   \"\"\n" + 
-			"   0   MoreComplicated_s_u_8_s_3   8   _s_3   \"\"\n" + 
-			"   0   MoreComplicated_s_u_8_s_4   8   _s_4   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 8\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_2\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_8_s_2 {\n" + 
-			"   0   ulong:4(0)   1   n0   \"\"\n" + 
-			"   0   ulong:4(4)   1   n1   \"\"\n" + 
-			"   1   ulong:4(0)   1   n2   \"\"\n" + 
-			"   1   ulong:4(4)   1   n3   \"\"\n" + 
-			"   2   ulong:4(0)   1   n4   \"\"\n" + 
-			"   2   ulong:4(4)   1   n5   \"\"\n" + 
-			"   3   ulong:4(0)   1   n6   \"\"\n" + 
-			"   3   ulong:4(4)   1   n7   \"\"\n" + 
-			"   4   ulong:4(0)   1   n8   \"\"\n" + 
-			"   4   ulong:4(4)   1   n9   \"\"\n" + 
-			"   5   ulong:4(0)   1   n10   \"\"\n" + 
-			"   5   ulong:4(4)   1   n11   \"\"\n" + 
-			"   6   ulong:4(0)   1   n12   \"\"\n" + 
-			"   6   ulong:4(4)   1   n13   \"\"\n" + 
-			"   7   ulong:4(0)   1   n14   \"\"\n" + 
-			"   7   ulong:4(4)   1   n15   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 4\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_3\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_8_s_3 {\n" + 
-			"   0   ulong:1(0)   1   x1   \"\"\n" + 
-			"   0   ulong:2(1)   1   x2   \"\"\n" + 
-			"   0   ulong:3(3)   1   x3   \"\"\n" + 
-			"   0   ulong:4(6)   2   x4   \"\"\n" + 
-			"   1   ulong:5(2)   1   x5   \"\"\n" + 
-			"   1   ulong:6(7)   2   x6   \"\"\n" + 
-			"   2   ulong:7(5)   2   x7   \"\"\n" + 
-			"   4   ulong:8(0)   1   x8   \"\"\n" + 
-			"   5   ulong:9(0)   2   x9   \"\"\n" + 
-			"   6   ulong:10(1)   2   x10   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 4\n" + 
-			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_4\n" + 
-			"pack()\n" + 
-			"Structure MoreComplicated_s_u_8_s_4 {\n" + 
-			"   0   uchar:1(0)   1   y1   \"\"\n" + 
-			"   0   uchar:2(1)   1   y2   \"\"\n" + 
-			"   0   uchar:3(3)   1   y3   \"\"\n" + 
-			"   1   uchar:4(0)   1   y4   \"\"\n" + 
-			"   2   uchar:5(0)   1   y5   \"\"\n" + 
-			"   3   uchar:6(0)   1   y6   \"\"\n" + 
-			"   4   uchar:7(0)   1   y7   \"\"\n" + 
-			"   5   uchar:8(0)   1   y8   \"\"\n" + 
-			"   6   ushort:9(0)   2   y9   \"\"\n" + 
-			"}\n" + 
-			"Size = 8   Actual Alignment = 2", struct, true);
+			"/MoreComplicated_s\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s {\n" +
+			"   0   MoreComplicated_s_u_0   1      \"\"\n" +
+			"   8   MoreComplicated_s_u_8   8      \"\"\n" +
+			"   16   MoreComplicated_s_u_16   16      \"\"\n" +
+			"   32   char[10]   10   beef   \"\"\n" +
+			"   44   MoreComplicated_s_u_44   12      \"\"\n" +
+			"}\n" +
+			"Length: 56 Alignment: 8\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_0\n" +
+			"pack()\n" +
+			"Union MoreComplicated_s_u_0 {\n" +
+			"   0   MoreComplicated_s_u_0_s_0   1   _s_0   \"\"\n" +
+			"   0   MoreComplicated_s_u_0_s_1   1   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_0/MoreComplicated_s_u_0_s_0\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_0_s_0 {\n" +
+			"   0   char:1(0)   1   s0   \"\"\n" +
+			"   0   char:1(1)   1   s1   \"\"\n" +
+			"   0   char:1(2)   1   s2   \"\"\n" +
+			"   0   char:1(3)   1   s3   \"\"\n" +
+			"   0   char:1(4)   1   s4   \"\"\n" +
+			"   0   char:1(5)   1   s5   \"\"\n" +
+			"   0   char:1(6)   1   s6   \"\"\n" +
+			"   0   char:1(7)   1   s7   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_0/MoreComplicated_s_u_0_s_1\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_0_s_1 {\n" +
+			"   0   uchar:1(0)   1   u0   \"\"\n" +
+			"   0   uchar:1(1)   1   u1   \"\"\n" +
+			"   0   uchar:1(2)   1   u2   \"\"\n" +
+			"   0   uchar:1(3)   1   u3   \"\"\n" +
+			"   0   uchar:1(4)   1   u4   \"\"\n" +
+			"   0   uchar:1(5)   1   u5   \"\"\n" +
+			"   0   uchar:1(6)   1   u6   \"\"\n" +
+			"   0   uchar:1(7)   1   u7   \"\"\n" +
+			"}\n" +
+			"Length: 1 Alignment: 1\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_16\n" +
+			"pack()\n" +
+			"Union MoreComplicated_s_u_16 {\n" +
+			"   0   MoreComplicated_s_u_16_s_0   16   _s_0   \"\"\n" +
+			"   0   MoreComplicated_s_u_16_s_1   16   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 16 Alignment: 8\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_16/MoreComplicated_s_u_16_s_0\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_16_s_0 {\n" +
+			"   0   double   8   da   \"\"\n" +
+			"   8   char[8]   8   ca   \"\"\n" +
+			"}\n" +
+			"Length: 16 Alignment: 8\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_16/MoreComplicated_s_u_16_s_1\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_16_s_1 {\n" +
+			"   0   char[8]   8   cb   \"\"\n" +
+			"   8   double   8   db   \"\"\n" +
+			"}\n" +
+			"Length: 16 Alignment: 8\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_44\n" +
+			"pack()\n" +
+			"Union MoreComplicated_s_u_44 {\n" +
+			"   0   MoreComplicated_s_u_44_s_0   12   _s_0   \"\"\n" +
+			"   0   MoreComplicated_s_u_44_s_1   0   _s_1   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_44/MoreComplicated_s_u_44_s_0\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_44_s_0 {\n" +
+			"   0   int   4   fromAddress   \"\"\n" +
+			"   4   int   4   toAddress   \"\"\n" +
+			"   8   int   4   seqNum   \"\"\n" +
+			"   12   char[0]   0   data   \"\"\n" +
+			"}\n" +
+			"Length: 12 Alignment: 4\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_44/MoreComplicated_s_u_44_s_1\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_44_s_1 {\n" +
+			"   0   char[0]   0   buf   \"\"\n" +
+			"}\n" +
+			"Length: 0 Alignment: 1\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_8\n" +
+			"pack()\n" +
+			"Union MoreComplicated_s_u_8 {\n" +
+			"   0   ulong   4   val   \"\"\n" +
+			"   0   double   8   d   \"\"\n" +
+			"   0   MoreComplicated_s_u_8_s_2   8   _s_2   \"\"\n" +
+			"   0   MoreComplicated_s_u_8_s_3   8   _s_3   \"\"\n" +
+			"   0   MoreComplicated_s_u_8_s_4   8   _s_4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 8\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_2\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_8_s_2 {\n" +
+			"   0   ulong:4(0)   1   n0   \"\"\n" +
+			"   0   ulong:4(4)   1   n1   \"\"\n" +
+			"   1   ulong:4(0)   1   n2   \"\"\n" +
+			"   1   ulong:4(4)   1   n3   \"\"\n" +
+			"   2   ulong:4(0)   1   n4   \"\"\n" +
+			"   2   ulong:4(4)   1   n5   \"\"\n" +
+			"   3   ulong:4(0)   1   n6   \"\"\n" +
+			"   3   ulong:4(4)   1   n7   \"\"\n" +
+			"   4   ulong:4(0)   1   n8   \"\"\n" +
+			"   4   ulong:4(4)   1   n9   \"\"\n" +
+			"   5   ulong:4(0)   1   n10   \"\"\n" +
+			"   5   ulong:4(4)   1   n11   \"\"\n" +
+			"   6   ulong:4(0)   1   n12   \"\"\n" +
+			"   6   ulong:4(4)   1   n13   \"\"\n" +
+			"   7   ulong:4(0)   1   n14   \"\"\n" +
+			"   7   ulong:4(4)   1   n15   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 4\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_3\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_8_s_3 {\n" +
+			"   0   ulong:1(0)   1   x1   \"\"\n" +
+			"   0   ulong:2(1)   1   x2   \"\"\n" +
+			"   0   ulong:3(3)   1   x3   \"\"\n" +
+			"   0   ulong:4(6)   2   x4   \"\"\n" +
+			"   1   ulong:5(2)   1   x5   \"\"\n" +
+			"   1   ulong:6(7)   2   x6   \"\"\n" +
+			"   2   ulong:7(5)   2   x7   \"\"\n" +
+			"   4   ulong:8(0)   1   x8   \"\"\n" +
+			"   5   ulong:9(0)   2   x9   \"\"\n" +
+			"   6   ulong:10(1)   2   x10   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 4\n" +
+			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_4\n" +
+			"pack()\n" +
+			"Structure MoreComplicated_s_u_8_s_4 {\n" +
+			"   0   uchar:1(0)   1   y1   \"\"\n" +
+			"   0   uchar:2(1)   1   y2   \"\"\n" +
+			"   0   uchar:3(3)   1   y3   \"\"\n" +
+			"   1   uchar:4(0)   1   y4   \"\"\n" +
+			"   2   uchar:5(0)   1   y5   \"\"\n" +
+			"   3   uchar:6(0)   1   y6   \"\"\n" +
+			"   4   uchar:7(0)   1   y7   \"\"\n" +
+			"   5   uchar:8(0)   1   y8   \"\"\n" +
+			"   6   ushort:9(0)   2   y9   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 2", struct, true);
 		//@formatter:on
 	}
 

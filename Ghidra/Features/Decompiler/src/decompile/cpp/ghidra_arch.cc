@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -318,8 +318,13 @@ Scope *ArchitectureGhidra::buildDatabase(DocumentStorage &store)
 void ArchitectureGhidra::buildTypegrp(DocumentStorage &store)
 
 {
-  const Element *el = store.getTag("coretypes");
   types = new TypeFactoryGhidra(this);
+}
+
+void ArchitectureGhidra::buildCoreTypes(DocumentStorage &store)
+
+{
+  const Element *el = store.getTag("coretypes");
   if (el != (const Element *)0) {
     XmlDecode decoder(this,el);
     types->decodeCoreTypes(decoder);
@@ -339,6 +344,7 @@ void ArchitectureGhidra::buildTypegrp(DocumentStorage &store)
     types->setCoreType("sqword",8,TYPE_INT,false);
     types->setCoreType("float",4,TYPE_FLOAT,false);
     types->setCoreType("float8",8,TYPE_FLOAT,false);
+    types->setCoreType("float10",10,TYPE_FLOAT,false);
     types->setCoreType("float16",16,TYPE_FLOAT,false);
     types->setCoreType("undefined",1,TYPE_UNKNOWN,false);
     types->setCoreType("undefined2",2,TYPE_UNKNOWN,false);
@@ -378,28 +384,30 @@ void ArchitectureGhidra::buildSymbols(DocumentStorage &store)
 
 {
   const Element *symtag = store.getTag(ELEM_DEFAULT_SYMBOLS.getName());
-  if (symtag == (const Element *)0) return;
-  XmlDecode decoder(this,symtag);
+  if (symtag == (const Element*) 0)
+    return;
+  XmlDecode decoder(this, symtag);
   uint4 el = decoder.openElement(ELEM_DEFAULT_SYMBOLS);
-  while(decoder.peekElement() != 0) {
+  Address lastAddr(Address::m_minimal);
+  int4 lastSize = -1;
+  while (decoder.peekElement() != 0) {
     uint4 subel = decoder.openElement(ELEM_SYMBOL);
     string addrString;
     string name;
     int4 size = 0;
     int4 volatileState = -1;
-    for(;;) {
+    for (;;) {
       uint4 attribId = decoder.getNextAttributeId();
-      if (attribId == 0) break;
+      if (attribId == 0)
+        break;
       if (attribId == ATTRIB_NAME)
-	name = decoder.readString();
+        name = decoder.readString();
       else if (attribId == ATTRIB_ADDRESS) {
-	addrString = decoder.readString();
-      }
-      else if (attribId == ATTRIB_VOLATILE) {
-	volatileState = decoder.readBool() ? 1 : 0;
-      }
-      else if (attribId == ATTRIB_SIZE)
-	size = decoder.readSignedInteger();
+        addrString = decoder.readString();
+      } else if (attribId == ATTRIB_VOLATILE) {
+        volatileState = decoder.readBool() ? 1 : 0;
+      } else if (attribId == ATTRIB_SIZE)
+        size = decoder.readSignedInteger();
     }
     decoder.closeElement(subel);
     if (name.size() == 0)
@@ -411,14 +419,21 @@ void ArchitectureGhidra::buildSymbols(DocumentStorage &store)
     // feed the global symbol to the decompiler on a per function basic.
     if (volatileState < 0)
       continue;
-    Address addr = parseAddressSimple(addrString);
+    Address addr;
+    if (addrString == "next" && lastSize != -1) {
+      addr = lastAddr + lastSize;
+    } else {
+      addr = parseAddressSimple(addrString);
+    }
     if (size == 0)
       size = addr.getSpace()->getWordSize();
-    Range range(addr.getSpace(),addr.getOffset(),addr.getOffset() + (size-1));
+    Range range(addr.getSpace(), addr.getOffset(), addr.getOffset() + (size - 1));
     if (volatileState == 0)
       symboltab->clearPropertyRange(Varnode::volatil, range);
     else
       symboltab->setPropertyRange(Varnode::volatil, range);
+    lastAddr = addr;
+    lastSize = size;
   }
   decoder.closeElement(el);
 }

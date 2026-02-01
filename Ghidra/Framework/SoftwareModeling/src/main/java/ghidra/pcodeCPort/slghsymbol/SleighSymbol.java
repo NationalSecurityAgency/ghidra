@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,15 +15,14 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
-import java.io.PrintStream;
-
-import org.jdom.Element;
-
-public class SleighSymbol implements Comparable<SleighSymbol> {
+public class SleighSymbol {
 	@Override
 	public String toString() {
 		return name;
@@ -49,7 +47,7 @@ public class SleighSymbol implements Comparable<SleighSymbol> {
 
 	public SleighSymbol(Location location) {
 		this.location = location;
-	} // For use with restoreXml
+	}
 
 	public SleighSymbol(Location location, String nm) {
 		this.location = location;
@@ -72,35 +70,19 @@ public class SleighSymbol implements Comparable<SleighSymbol> {
 		return symbol_type.dummy_symbol;
 	}
 
-	public void saveXml(PrintStream s) {
+	public void encode(Encoder encoder) throws IOException {
+		throw new IOException("Symbol " + name + " cannot be encoded directly");
 	}
 
-	public void restoreXml(Element el, SleighBase trans) {
-	}
-
-	protected final void saveSleighSymbolXmlHeader(PrintStream s) {
-		s.append(" name=\"").append(name).append("\"");
-		s.append(" id=\"0x").print(Long.toHexString(id));
-		s.append("\"");
-		s.append(" scope=\"0x");
-		s.print(Long.toHexString(scopeid));
-		s.append("\"");
+	protected final void encodeSleighSymbolHeader(Encoder encoder) throws IOException {
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.writeUnsignedInteger(ATTRIB_SCOPE, scopeid);
 	}
 
 	// Save the basic attributes of a symbol
-	protected void saveXmlHeader(PrintStream s) {
-		saveSleighSymbolXmlHeader(s);
-	}
-
-	void restoreXmlHeader(Element el) {
-		name = el.getAttributeValue("name");
-		id = XmlUtils.decodeUnknownInt(el.getAttributeValue("id"));
-		scopeid = XmlUtils.decodeUnknownInt(el.getAttributeValue("scope"));
-	}
-
-	@Override
-	public int compareTo(SleighSymbol o) {
-		return id - o.id;
+	protected void encodeHeader(Encoder encoder) throws IOException {
+		encodeSleighSymbolHeader(encoder);
 	}
 
 	public final Location location;

@@ -15,8 +15,6 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import org.jdom.Element;
-
 public abstract class DisjointPattern extends Pattern {
 
 	protected abstract PatternBlock getBlock(boolean context);
@@ -87,29 +85,35 @@ public abstract class DisjointPattern extends Pattern {
 		PatternBlock b = op2.getBlock(false);
 		if (b != null) { // a must match existing block
 			if (a == null) {
-				if (!b.alwaysTrue())
+				if (!b.alwaysTrue()) {
 					return false;
+				}
 			}
-			else if (!a.identical(b))
+			else if (!a.identical(b)) {
 				return false;
+			}
 		}
 		else {
-			if ((a != null) && (!a.alwaysTrue()))
+			if ((a != null) && (!a.alwaysTrue())) {
 				return false;
+			}
 		}
 		a = getBlock(true);
 		b = op2.getBlock(true);
 		if (b != null) { // a must match existing block
 			if (a == null) {
-				if (!b.alwaysTrue())
+				if (!b.alwaysTrue()) {
 					return false;
+				}
 			}
-			else if (!a.identical(b))
+			else if (!a.identical(b)) {
 				return false;
+			}
 		}
 		else {
-			if ((a != null) && (!a.alwaysTrue()))
+			if ((a != null) && (!a.alwaysTrue())) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -119,45 +123,35 @@ public abstract class DisjointPattern extends Pattern {
 		PatternBlock inter;
 		boolean res = true;
 
-		if (bl1 == null)
+		if (bl1 == null) {
 			inter = bl2;
-		else if (bl2 == null)
+		}
+		else if (bl2 == null) {
 			inter = bl1;
+		}
 		else {
 			inter = bl1.intersect(bl2);
 		}
 		if (inter == null) {
-			if (thisblock != null)
+			if (thisblock != null) {
 				res = false;
+			}
 		}
-		else if (thisblock == null)
+		else if (thisblock == null) {
 			res = false;
-		else
+		}
+		else {
 			res = thisblock.identical(inter);
+		}
 		return res;
 	}
 
 	public boolean resolvesIntersect(DisjointPattern op1, DisjointPattern op2) {
 		// Is this pattern equal to the intersection of -op1- and -op2-
-		if (!resolveIntersectBlock(op1.getBlock(false), op2.getBlock(false), getBlock(false)))
+		if (!resolveIntersectBlock(op1.getBlock(false), op2.getBlock(false), getBlock(false))) {
 			return false;
+		}
 		return resolveIntersectBlock(op1.getBlock(true), op2.getBlock(true), getBlock(true));
-	}
-
-	// DisjointPattern factory
-	public static DisjointPattern restoreDisjoint(Element el) {
-		DisjointPattern res;
-		if (el.getName().equals("instruct_pat")) {
-			res = new InstructionPattern();
-		}
-		else if (el.getName().equals("context_pat")) {
-			res = new ContextPattern();
-		}
-		else {
-			res = new CombinePattern();
-		}
-		res.restoreXml(el);
-		return res;
 	}
 
 	@Override

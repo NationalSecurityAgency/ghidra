@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,8 @@ package ghidra.app.util.viewer.field;
 import java.awt.Color;
 import java.math.BigInteger;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
@@ -35,8 +37,6 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
@@ -168,34 +168,25 @@ public class BytesFieldFactory extends FieldFactory {
 
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
-		Object obj = proxy.getObject();
-		if (!enabled || !(obj instanceof CodeUnit)) {
+		if (!enabled || !(proxy.getObject() instanceof CodeUnit cu)) {
 			return null;
 		}
 
-		CodeUnit cu = (CodeUnit) obj;
-		int length = Math.min(cu.getLength(), 100);
-		byte[] bytes = new byte[length];
-		Memory memory = cu.getProgram().getMemory();
-		try {
-			length = memory.getBytes(cu.getAddress(), bytes);
-		}
-		catch (MemoryAccessException e) {
-			return null;
-		}
+		// Instructions: use prototype length so we display all bytes for length-override case
+		// Consider all parsed bytes even if the overlap the next instruction due to the
+		// use of an instruction length-override.
+		final int arrLength =
+			cu instanceof Instruction ins ? ins.getParsedLength() : Math.min(cu.getLength(), 100);
+
+		byte[] bytes = new byte[arrLength];
+		final int length = cu.getBytes(bytes, 0);
 
 		if (length == 0) {
 			return null;
 		}
 
-		if ((cu instanceof Instruction) && reverseInstByteOrdering && !memory.isBigEndian()) {
-			int i = 0;
-			int j = length - 1;
-			while (j > i) {
-				byte b = bytes[i];
-				bytes[i++] = bytes[j];
-				bytes[j--] = b;
-			}
+		if ((cu instanceof Instruction) && reverseInstByteOrdering && !cu.isBigEndian()) {
+			ArrayUtils.reverse(bytes);
 		}
 
 		int groupLength = length / byteGroupSize;
@@ -359,7 +350,7 @@ public class BytesFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Computes how many bytes the the given column position represents. Normally this is just the
+	 * Computes how many bytes the given column position represents. Normally this is just the
 	 * column position / 2 (since each byte consists of two chars).  There is a special case when
 	 * the col position is just past the last char of the token.  In this case, we want to return
 	 * the number of bytes in a token - 1;

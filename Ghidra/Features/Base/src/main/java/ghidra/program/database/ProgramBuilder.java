@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
@@ -93,7 +95,7 @@ public class ProgramBuilder {
 	 * Construct program builder using the big-endian Toy language and default compiler spec.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * @throws Exception if there is an exception creating the program 
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder() throws Exception {
 		this("Test Program", _TOY);
@@ -146,8 +148,7 @@ public class ProgramBuilder {
 	 * @param language Language object
 	 * @throws Exception if there is an exception creating the program
 	 */
-	public ProgramBuilder(String name, Language language)
-			throws Exception {
+	public ProgramBuilder(String name, Language language) throws Exception {
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB(name, language, compilerSpec, this);
 		setAnalyzed();
@@ -279,7 +280,7 @@ public class ProgramBuilder {
 		AbstractGenericTest.setInstanceField("recordChanges", program, Boolean.valueOf(enabled));
 	}
 
-	/** 
+	/**
 	 * This prevents the 'ask to analyze' dialog from showing when called with {@code true}
 	 */
 	public void setAnalyzed() {
@@ -292,6 +293,14 @@ public class ProgramBuilder {
 
 	public MemoryBlock createMemory(String name, String address, int size, String comment) {
 		return createMemory(name, address, size, comment, (byte) 0);
+	}
+
+	public MemoryBlock createMemory(String name, String address, FileBytes fileBytes, int size) {
+		return tx(() -> {
+			Address startAddress = addr(address);
+			Memory memory = program.getMemory();
+			return memory.createInitializedBlock(name, startAddress, fileBytes, 0, size, false);
+		});
 	}
 
 	public MemoryBlock createMemory(String name, String address, int size, String comment,
@@ -307,6 +316,19 @@ public class ProgramBuilder {
 		});
 	}
 
+	public MemoryBlock createMappedMemory(String name, String address, int size,
+			String mappedAddress) {
+		return tx(() -> {
+			Address blockAddress = addr(address);
+			Address mapAddress = addr(mappedAddress);
+			Memory memory = program.getMemory();
+			MemoryBlock block =
+				memory.createByteMappedBlock(name, blockAddress, mapAddress, size, false);
+			return block;
+		});
+
+	}
+
 	public MemoryBlock createUninitializedMemory(String name, String address, int size) {
 
 		return tx(() -> {
@@ -320,8 +342,8 @@ public class ProgramBuilder {
 
 		return tx(() -> {
 			return program.getMemory()
-				.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
-					true);
+					.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
+						true);
 		});
 	}
 
@@ -329,7 +351,7 @@ public class ProgramBuilder {
 	 * Sets the bytes starting at {@code address} to the values encoded in {@code byteString}.
 	 * <p>
 	 * See {@link #setBytes(String, byte[], boolean)}.
-	 * <p>
+	 * 
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
@@ -345,7 +367,7 @@ public class ProgramBuilder {
 	 * and then optionally disassembling.
 	 * <p>
 	 * See {@link #setBytes(String, byte[], boolean)}.
-	 * <p>
+	 * 
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
@@ -364,7 +386,7 @@ public class ProgramBuilder {
 	/**
 	 * Sets the bytes starting at {@code stringAddress} to the byte values in {@code bytes}
 	 * and then optionally disassembling.
-	 * <p>
+	 * 
 	 * @param stringAddress String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param bytes array of bytes to copy into the memory buffer at the addresss.
 	 * @param disassemble boolean flag.  See {@link #disassemble(String, int)}
@@ -386,6 +408,50 @@ public class ProgramBuilder {
 		if (disassemble) {
 			disassemble(stringAddress, bytes.length);
 		}
+	}
+
+	public void setString(String address, String string) throws Exception {
+		byte[] bytes = string.getBytes();
+		setBytes(address, bytes);
+	}
+
+	public void setShort(String address, short value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void setInt(String address, int value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void setLong(String address, long value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void putAddress(String address, String pointerAddress) throws Exception {
+		Address pointer = addr(pointerAddress);
+		long offset = pointer.getOffset();
+		int pointerSize = pointer.getAddressSpace().getPointerSize();
+		switch (pointerSize) {
+			case 2:
+				setShort(address, (short) offset);
+				break;
+			case 4:
+				setInt(address, (int) offset);
+				break;
+			default:
+				setLong(address, offset);
+		}
+	}
+
+	private DataConverter getDataConverter() {
+		boolean bigEndian = program.getMemory().isBigEndian();
+		return bigEndian ? BigEndianDataConverter.INSTANCE : LittleEndianDataConverter.INSTANCE;
 	}
 
 	public void setRead(MemoryBlock block, boolean r) {
@@ -411,7 +477,7 @@ public class ProgramBuilder {
 			DisassembleCommand cmd = new DisassembleCommand(addresses, addresses, followFlows);
 
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -419,7 +485,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			DisassembleCommand cmd = new DisassembleCommand(set, set, true);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -427,7 +493,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			DisassembleCommand cmd = new DisassembleCommand(set, set, followFlows);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -437,7 +503,7 @@ public class ProgramBuilder {
 			DisassembleCommand cmd = new ArmDisassembleCommand(address,
 				new AddressSet(address, address.add(length - 1)), true);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -630,7 +696,7 @@ public class ProgramBuilder {
 		});
 	}
 
-	public Namespace createClassNamespace(String name, String parentNamespace, SourceType type)
+	public GhidraClass createClassNamespace(String name, String parentNamespace, SourceType type)
 			throws Exception {
 		return tx(() -> {
 			Namespace ns = getNamespace(parentNamespace);
@@ -653,6 +719,7 @@ public class ProgramBuilder {
 
 	/**
 	 * Creates a data instance at the specified address, repeated {@code N} times.
+	 * Any conflicting Data will be overwritten.
 	 *
 	 * @param addressString address.
 	 * @param dt {@link DataType} to place at address, {@link Dynamic} length datatype not supported.
@@ -662,7 +729,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			Address address = addr(addressString);
 			for (int i = 0; i < n; i++) {
-				CreateDataCmd cmd = new CreateDataCmd(address, dt);
+				CreateDataCmd cmd = new CreateDataCmd(address, true, dt);
 				if (!cmd.applyTo(program)) {
 					throw new AssertException(
 						"Could not apply data at address " + address + ". " + cmd.getStatusMsg());
@@ -923,7 +990,12 @@ public class ProgramBuilder {
 		});
 	}
 
+	@Deprecated(forRemoval = true, since = "11.4")
 	public void createComment(String address, String comment, int commentType) {
+		createComment(address, comment, CommentType.valueOf(commentType));
+	}
+
+	public void createComment(String address, String comment, CommentType commentType) {
 		tx(() -> {
 			Listing listing = program.getListing();
 			listing.setComment(addr(address), commentType, comment);
@@ -1087,7 +1159,22 @@ public class ProgramBuilder {
 		program.setChanged(changed);
 	}
 
-	private <E extends Exception> void tx(ExceptionalCallback<E> c) {
+	public FileBytes createFileBytes(int size) throws Exception {
+		byte[] bytes = new byte[size];
+		for (int i = 0; i < size; i++) {
+			bytes[i] = (byte) i;
+		}
+
+		return tx(() -> {
+			FileBytes fileBytes = program.getMemory()
+					.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
+						TaskMonitor.DUMMY);
+
+			return fileBytes;
+		});
+	}
+
+	public <E extends Exception> void tx(ExceptionalCallback<E> c) {
 		startTransaction();
 		boolean commit = true;
 		try {
@@ -1102,7 +1189,7 @@ public class ProgramBuilder {
 		}
 	}
 
-	private <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
+	public <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
 		startTransaction();
 		boolean commit = true;
 		try {
@@ -1117,7 +1204,7 @@ public class ProgramBuilder {
 		}
 	}
 
-	private interface ExceptionalSupplier<R, E extends Exception> {
+	public interface ExceptionalSupplier<R, E extends Exception> {
 		public R get() throws E;
 	}
 }

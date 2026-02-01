@@ -21,7 +21,7 @@ import ghidra.program.model.lang.Endian;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
- *  SettingsDefinition for endianess
+ *  SettingsDefinition for endianness
  */
 public class EndianSettingsDefinition implements EnumSettingsDefinition {
 
@@ -41,11 +41,11 @@ public class EndianSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	/**
-	 * Returns the endianess settings.  First looks in settings, then defaultSettings
+	 * Returns the endianness settings.  First looks in settings, then defaultSettings
 	 * and finally returns a default value if the first two have no value for this definition.
 	 * @param settings the instance settings to search for the value
 	 * @param buf the data context
-	 * @return a boolean value for the endianess setting
+	 * @return a boolean value for the endianness setting
 	 */
 	public boolean isBigEndian(Settings settings, MemBuffer buf) {
 		int val = getChoice(settings);
@@ -55,7 +55,7 @@ public class EndianSettingsDefinition implements EnumSettingsDefinition {
 		return val == BIG;
 	}
 
-	public Endian getEndianess(Settings settings, Endian defaultValue) {
+	public Endian getEndianness(Settings settings, Endian defaultValue) {
 		int val = getChoice(settings);
 		switch (val) {
 			default:
@@ -115,7 +115,7 @@ public class EndianSettingsDefinition implements EnumSettingsDefinition {
 
 	@Override
 	public String getDescription() {
-		return "Selects the endianess of the data";
+		return "Selects the endianness of the data";
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import docking.widgets.autocomplete.*;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.cmd.disassemble.ReDisassembleCommand;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
@@ -46,6 +47,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.CachingSwingWorker;
 import ghidra.util.task.TaskMonitor;
+import help.Help;
 
 /**
  * A context menu action to assemble an instruction at the current address
@@ -144,14 +146,19 @@ public class PatchInstructionAction extends AbstractPatchAction {
 
 		setPopupMenuData(new MenuData(new String[] { name }, MENU_GROUP));
 		setKeyBindingData(new KeyBindingData(KEYBIND_PATCH_INSTRUCTION));
-		setHelpLocation(new HelpLocation(owner.getName(), "patch_instruction"));
+		HelpLocation location = new HelpLocation(owner.getName(), "patch_instruction");
+		setHelpLocation(location);
 
 		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 
 		input.getAutocompleter().addAutocompletionListener(listenerForAccept);
-
+		
+		Help.getHelpService().registerHelp(input.getMnemonicField(), location);
+		Help.getHelpService().registerHelp(input.getOperandsField(), location);
+		Help.getHelpService().registerHelp(input.getExhaustButton(), location);
+		
 		init();
 	}
 
@@ -217,8 +224,8 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	protected void prepare() {
 		CodeUnit cu = getCodeUnit();
 		language = getLanguage(cu);
-		warnLanguage();
 		cache.get(language).get(null);
+		warnLanguage();
 		assembler = getAssembler(cu);
 	}
 
@@ -301,7 +308,11 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	}
 
 	protected void applyPatch(byte[] data) throws MemoryAccessException {
+		// NB. This will immediately re-disassembly the one command.
+		// We'll background the context repair, which may include more disassembly
 		assembler.patchProgram(data, getAddress());
+		ReDisassembleCommand cmd = new ReDisassembleCommand(getAddress());
+		tool.executeBackgroundCommand(cmd, getProgram());
 	}
 
 	/**

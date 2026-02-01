@@ -79,7 +79,6 @@ class RelocationProvider extends ComponentProviderAdapter {
 		table.setPreferredScrollableViewportSize(new Dimension(300, 200));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-
 		table.getSelectionModel().addListSelectionListener(e -> contextChanged());
 
 		ToolTipManager.sharedInstance().registerComponent(table);
@@ -88,6 +87,10 @@ class RelocationProvider extends ComponentProviderAdapter {
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 		panel.add(tableFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Relocations";
+		table.setAccessibleNamePrefix(namePrefix);
+		tableFilterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}

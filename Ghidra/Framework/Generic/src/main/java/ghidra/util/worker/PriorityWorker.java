@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,16 @@
  */
 package ghidra.util.worker;
 
-import ghidra.util.task.TaskMonitor;
-
 import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import ghidra.util.task.TaskMonitor;
+
 /**
  * Executes a single job at a time in priority order.
- * 
+ * <p>
+ * The highest priority jobs are those with the lowest value return by the job's getPriority()
+ * method. (i.e. the job with priority 0 will be processed before the job with priority 1)
  * @see Worker
  */
 public class PriorityWorker extends AbstractWorker<PriorityJob> {

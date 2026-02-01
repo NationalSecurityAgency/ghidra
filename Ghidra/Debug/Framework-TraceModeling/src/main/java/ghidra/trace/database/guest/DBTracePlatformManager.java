@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -28,11 +29,13 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TracePlatformChangeType;
+import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -59,7 +62,8 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 
 	protected final DBCachedObjectStore<DBTraceGuestPlatformMappedRange> rangeMappingStore;
 
-	protected final InternalTracePlatform hostPlatform = new InternalTracePlatform() {
+	@Internal
+	public class DBTraceHostPlatform implements InternalTracePlatform {
 		@Override
 		public Trace getTrace() {
 			return trace;
@@ -88,6 +92,16 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		@Override
 		public CompilerSpec getCompilerSpec() {
 			return trace.getBaseCompilerSpec();
+		}
+
+		@Override
+		public AddressFactory getAddressFactory() {
+			return trace.getBaseAddressFactory();
+		}
+
+		@Override
+		public TraceBasedDataTypeManager getDataTypeManager() {
+			return trace.getBaseDataTypeManager();
 		}
 
 		@Override
@@ -139,11 +153,13 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		public InstructionSet mapGuestInstructionAddressesToHost(InstructionSet set) {
 			return set;
 		}
-	};
+	}
 
-	public DBTracePlatformManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	protected final InternalTracePlatform hostPlatform = new DBTraceHostPlatform();
+
+	public DBTracePlatformManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, CompilerSpec baseCompilerSpec, DBTrace trace)
-			throws VersionException, IOException {
+			throws VersionException, IOException, CancelledException {
 		this.dbh = dbh;
 		this.lock = lock;
 		this.baseLanguage = baseCompilerSpec.getLanguage();
@@ -162,7 +178,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			(s, r) -> new DBTraceGuestPlatformMappedRange(this, s, r), true);
 
 		loadLanguages();
-		loadPlatforms();
+		loadPlatforms(openMode, monitor);
 		loadPlatformMappings();
 	}
 
@@ -172,9 +188,10 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		}
 	}
 
-	protected void loadPlatforms()
-			throws LanguageNotFoundException, CompilerSpecNotFoundException, VersionException {
+	protected void loadPlatforms(OpenMode openMode, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 		for (DBTraceGuestPlatform platformEntry : platformStore.asMap().values()) {
+			platformEntry.loadDataTypeManager(openMode, monitor);
 			platformsByCompiler.put(platformEntry.getCompilerSpec(), platformEntry);
 		}
 	}
@@ -256,10 +273,11 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		platformsByCompiler.clear();
 		try {
 			loadLanguages();
-			loadPlatforms();
+			// TODO: Or IMMUTABLE, if that was the original, and supported
+			loadPlatforms(OpenMode.UPDATE, TaskMonitor.DUMMY);
 			loadPlatformMappings();
 		}
-		catch (LanguageNotFoundException | CompilerSpecNotFoundException | VersionException e) {
+		catch (IOException | VersionException | CancelledException e) {
 			throw new AssertionError(e);
 		}
 	}
@@ -282,7 +300,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			platformsByCompiler.remove(platform.getCompilerSpec());
 			platformStore.delete(platform);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.DELETED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_DELETED, null, platform));
 	}
 
 	@Override
@@ -293,6 +311,12 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 	protected DBTraceGuestPlatform doAddGuestPlatform(CompilerSpec compilerSpec) {
 		DBTraceGuestPlatform platformEntry = platformStore.create();
 		platformEntry.set(compilerSpec);
+		try {
+			platformEntry.loadDataTypeManager(OpenMode.CREATE, TaskMonitor.DUMMY);
+		}
+		catch (CancelledException | VersionException | IOException e) {
+			throw new AssertionError(e);
+		}
 		platformsByCompiler.put(compilerSpec, platformEntry);
 		return platformEntry;
 	}
@@ -307,7 +331,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			platform = doAddGuestPlatform(compilerSpec);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.ADDED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
 		return platform;
 	}
 
@@ -323,19 +347,18 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 
 	@Override
 	public InternalTracePlatform getOrAddPlatform(CompilerSpec compilerSpec) {
-		if (compilerSpec.getCompilerSpecID()
-				.equals(trace.getBaseCompilerSpec().getCompilerSpecID())) {
-			return hostPlatform;
-		}
 		DBTraceGuestPlatform platform;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			if (trace.getBaseCompilerSpec() == compilerSpec) {
+				return hostPlatform;
+			}
 			DBTraceGuestPlatform exists = platformsByCompiler.get(compilerSpec);
 			if (exists != null) {
 				return exists;
 			}
 			platform = doAddGuestPlatform(compilerSpec);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.ADDED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
 		return platform;
 	}
 

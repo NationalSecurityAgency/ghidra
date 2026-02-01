@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,12 @@ import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.framework.store.local.ItemSerializer;
 import ghidra.program.database.DataTypeArchiveContentHandler;
@@ -47,19 +46,17 @@ public class GdtLoader implements Loader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		return Collections.emptyList();
 	}
 
 	@Override
-	public LoadResults<? extends DomainObject> load(ByteProvider provider, String filename,
-			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
-			CancelledException, VersionException {
+	public LoadResults<? extends DomainObject> load(ImporterSettings settings)
+			throws IOException, CancelledException, VersionException {
 
-		DataTypeArchive dtArchive =
-			loadPackedProgramDatabase(provider, filename, consumer, monitor);
-		return new LoadResults<>(dtArchive, filename, projectFolderPath);
+		DataTypeArchive dtArchive = loadPackedProgramDatabase(settings.provider(),
+			settings.importName(), settings.consumer(), settings.monitor());
+		return new LoadResults<>(new Loaded<>(dtArchive, settings));
 	}
 
 	private DataTypeArchive loadPackedProgramDatabase(ByteProvider provider, String programName,
@@ -77,15 +74,15 @@ public class GdtLoader implements Loader {
 			boolean success = false;
 			DBHandle dbh = null;
 			try {
-				if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-					packedDatabase.getContentType())) {
+				if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+						.equals(packedDatabase.getContentType())) {
 					throw new IOException("File imported is not a Program: " + programName);
 				}
 
 				monitor.setMessage("Restoring " + provider.getName());
 
 				dbh = packedDatabase.open(monitor);
-				dtArchive = new DataTypeArchiveDB(dbh, DBConstants.UPGRADE, monitor, consumer);
+				dtArchive = new DataTypeArchiveDB(dbh, OpenMode.UPGRADE, monitor, consumer);
 				success = true;
 			}
 			finally {
@@ -108,14 +105,14 @@ public class GdtLoader implements Loader {
 	}
 
 	@Override
-	public void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor)
+	public void loadInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 		throw new LoadException("Cannot add GDT to program");
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null && options.size() > 0) {
 			return "GDTLoader takes no options";
 		}
@@ -138,7 +135,7 @@ public class GdtLoader implements Loader {
 
 	private static File createTmpFile(ByteProvider provider, TaskMonitor monitor)
 			throws IOException {
-		File tmpFile = File.createTempFile("ghidra_gdt_loader", null);
+		File tmpFile = Application.createTempFile("ghidra_gdt_loader", null);
 		try (InputStream is = provider.getInputStream(0);
 				FileOutputStream fos = new FileOutputStream(tmpFile)) {
 			FileUtilities.copyStreamToStream(is, fos, monitor);

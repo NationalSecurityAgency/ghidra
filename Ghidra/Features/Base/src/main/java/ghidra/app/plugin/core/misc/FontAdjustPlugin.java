@@ -29,10 +29,10 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo( //@formatter:off
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.FRAMEWORK,
 	shortDescription = "Provides generic actions for increasing/decreasing fonts.",
 	description = "This plugin provides actions for increasing fonts used by component providers. "+
-	"ComponentProviders can either override the \"changeFontSize()\" method or register a" +
+	"ComponentProviders can either override the \"adjustFontSize()\" method or register a" +
 	"theme font id that can be automatically adjusted."
 ) //@formatter:on
 

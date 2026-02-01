@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.analysis;
 import ghidra.app.services.Analyzer;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
@@ -28,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  * Background task to artificially kick off Auto analysis by
  * calling anything that analyzes bytes.
  */
-public class OneShotAnalysisCommand extends BackgroundCommand {
+public class OneShotAnalysisCommand extends BackgroundCommand<Program> {
 	private Analyzer analyzer;
 	private AddressSetView set;
 	private MessageLog log;
@@ -41,8 +40,7 @@ public class OneShotAnalysisCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		try {
 			monitor.setMessage(analyzer.getName());
 			return analyzer.added(program, set, monitor, log);

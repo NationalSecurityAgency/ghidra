@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -451,6 +451,18 @@ void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
   }
 }
 
+/// \param ct is the Datatype to change to
+/// \return \b true if the Datatype changed
+bool Varnode::updateType(Datatype *ct)
+
+{
+  if (type == ct || isTypeLock()) return false;
+  type = ct;
+  if (high != (HighVariable *)0)
+    high->typeDirty();
+  return true;
+}
+
 /// Change the Datatype and lock state associated with this Varnode if various conditions are met
 ///    - Don't change a previously locked Datatype (unless \b override flag is \b true)
 ///    - Don't consider an \b undefined type to be locked
@@ -780,37 +792,104 @@ void Varnode::printRawHeritage(ostream &s,int4 depth) const
     s << endl;
 }
 
-/// If \b this is a constant, or is extended (INT_ZEXT,INT_SEXT) from a constant,
-/// the \e value of the constant is passed back and a non-negative integer is returned, either:
-///   - 0 for a normal constant Varnode
-///   - 1 for a zero extension (INT_ZEXT) of a normal constant
-///   - 2 for a sign extension (INT_SEXT) of a normal constant
-/// \param val is a reference to the constant value that is passed back
-/// \return the extension code (or -1 if \b this cannot be interpreted as a constant)
-int4 Varnode::isConstantExtended(uintb &val) const
+/// If \b this is a constant, or is extended (INT_ZEXT,INT_SEXT,PIECE) from a constant,
+/// the \e value of the constant (currently up to 128 bits) is passed back and \b true is returned.
+/// \param val will hold the 128-bit constant value
+/// \return \b true if a constant was recovered
+bool Varnode::isConstantExtended(uint8 *val) const
 
 {
   if (isConstant()) {
-    val = getOffset();
-    return 0;
+    val[0] = getOffset();
+    val[1] = 0;
+    return true;
   }
-  if (!isWritten()) return -1;
+  if (!isWritten() || size <= 8) return false;
+  if (size > 16) return false;		// Currently only up to 128-bit values
   OpCode opc = def->code();
   if (opc == CPUI_INT_ZEXT) {
     Varnode *vn0 = def->getIn(0);
     if (vn0->isConstant()) {
-      val = vn0->getOffset();
-      return 1;
+      val[0] = vn0->getOffset();
+      val[1] = 0;
+      return true;
     }
   }
   else if (opc == CPUI_INT_SEXT) {
     Varnode *vn0 = def->getIn(0);
     if (vn0->isConstant()) {
-      val = vn0->getOffset();
-      return 2;
+      val[0] = vn0->getOffset();
+      if (vn0->getSize() < 8)
+	val[0] = sign_extend(val[0], vn0->getSize(), size);
+      val[1] = (signbit_negative(val[0], 8)) ? 0xffffffffffffffffL : 0;
+      return true;
     }
   }
-  return -1;
+  else if (opc == CPUI_PIECE) {
+    Varnode *vnlo = def->getIn(1);
+    if (vnlo->isConstant()) {
+      val[0] = vnlo->getOffset();
+      Varnode *vnhi = def->getIn(0);
+      if (vnhi->isConstant()) {
+	val[1] = vnhi->getOffset();
+	if (vnlo->getSize() == 8)
+	  return true;
+	val[0] |= val[1] << 8*vnlo->getSize();
+	val[1] >>= 8*(8-vnlo->getSize());
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Recursively check if the Varnode is either:
+///   - Copied or extended from a constant
+///   - The result of arithmetic or logical operations on constants
+///   - Loaded from a pointer that is a constant
+///
+/// \param maxBinary is the maximum depth of binary operations to inspect (before giving up)
+/// \param maxLoad is the maximum number of CPUI_LOAD operations to allow in a sequence
+/// \return \b true if the Varnode (might) collapse to a constant
+bool Varnode::isEventualConstant(int4 maxBinary,int4 maxLoad) const
+
+{
+  const Varnode *curVn = this;
+  while(!curVn->isConstant()) {
+    if (!curVn->isWritten()) return false;
+    const PcodeOp *op = curVn->getDef();
+    switch(op->code()) {
+      case CPUI_LOAD:
+	if (maxLoad == 0) return false;
+	maxLoad -= 1;
+	curVn = op->getIn(1);
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_SUB:
+      case CPUI_INT_XOR:
+      case CPUI_INT_OR:
+      case CPUI_INT_AND:
+	if (maxBinary == 0) return false;
+	if (!op->getIn(0)->isEventualConstant(maxBinary-1,maxLoad))
+	  return false;
+	return op->getIn(1)->isEventualConstant(maxBinary-1,maxLoad);
+      case CPUI_INT_ZEXT:
+      case CPUI_INT_SEXT:
+      case CPUI_COPY:
+	curVn = op->getIn(0);
+	break;
+      case CPUI_INT_LEFT:
+      case CPUI_INT_RIGHT:
+      case CPUI_INT_SRIGHT:
+      case CPUI_INT_MULT:
+	if (!op->getIn(1)->isConstant()) return false;
+	curVn = op->getIn(0);
+	break;
+      default:
+	return false;
+    }
+  }
+  return true;
 }
 
 /// Make an initial determination of the Datatype of this Varnode. If a Datatype is already
@@ -873,6 +952,22 @@ bool Varnode::isBooleanValue(bool useAnnotation) const
   return false;
 }
 
+/// If we can prove that the upper bits of \b this are zero, return \b true.
+/// \param baseSize is the maximum number of least significant bytes that are allowed to be non-zero
+/// \return \b true if all the most significant bytes are zero
+bool Varnode::isZeroExtended(int4 baseSize) const
+
+{
+  if (baseSize >= size) return false;
+  if (size > sizeof(uintb)) {
+    if (!isWritten()) return false;
+    if (def->code() != CPUI_INT_ZEXT) return false;
+    if (def->getIn(0)->getSize() > baseSize) return false;
+    return true;
+  }
+  uintb mask = nzm >> 8*baseSize;
+  return (mask == 0);
+}
 
 /// Make a local determination if \b this and \b op2 hold the same value. We check if
 /// there is a common ancester for which both \b this and \b op2 are created from a direct
@@ -1435,6 +1530,29 @@ Varnode *VarnodeBank::findCoveringInput(int4 s,const Address &loc) const
   return (Varnode *)0;
 }
 
+/// \param s is the number of bytes in the given range
+/// \param loc is the starting address of the given range
+/// \return \b true if there is an input Varnode that overlaps the range
+bool VarnodeBank::hasInputIntersection(int4 s,const Address &loc) const
+
+{
+  VarnodeDefSet::const_iterator iter;
+  Varnode *vn;
+  iter = beginDef(Varnode::input,loc);
+  if (iter != def_tree.end()) {
+    vn = *iter;
+    if (vn->isInput() && vn->intersects(loc, s))
+      return true;
+  }
+  if (iter != def_tree.begin()) {
+    --iter;
+    vn = *iter;
+    if (vn->isInput() && vn->intersects(loc,s))
+      return true;
+  }
+  return false;
+}
+
 /// \brief Beginning of Varnodes in given address space sorted by location
 ///
 /// \param spaceid is the given address space
@@ -1887,30 +2005,6 @@ void VarnodeBank::verifyIntegrity(void) const
   }
 }
 #endif
-
-/// \brief Return \b true if the alternate path looks more valid than the main path.
-///
-/// Two different paths from a common Varnode each terminate at a CALL, CALLIND, or RETURN.
-/// Evaluate which path most likely represents actual parameter/return value passing,
-/// based on traversal information about each path.
-/// \param vn is the Varnode terminating the \e alternate path
-/// \param flags indicates traversals for both paths
-/// \return \b true if the alternate path is preferred
-bool TraverseNode::isAlternatePathValid(const Varnode *vn,uint4 flags)
-
-{
-  if ((flags & (indirect | indirectalt)) == indirect)
-    // If main path traversed an INDIRECT but the alternate did not
-    return true;	// Main path traversed INDIRECT, alternate did not
-  if ((flags & (indirect | indirectalt)) == indirectalt)
-    return false;	// Alternate path traversed INDIRECT, main did not
-  if ((flags & actionalt) != 0)
-    return true;	// Alternate path traversed a dedicated COPY
-  if (vn->loneDescend() == (PcodeOp*)0) return false;
-  const PcodeOp *op = vn->getDef();
-  if (op == (PcodeOp*)0) return true;
-  return !op->isMarker();	// MULTIEQUAL or INDIRECT indicates multiple values
-}
 
 /// Return true if \b vn1 contains the high part and \b vn2 the low part
 /// of what was(is) a single value.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import static java.util.function.Predicate.*;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.framework.main.ProgramaticUseOnly;
 import ghidra.framework.plugintool.util.*;
@@ -166,7 +166,7 @@ public abstract class PluginsConfiguration {
 	 * packages and then adding <b>all</b> plugins in that package.  This has the effect of pulling
 	 * in more plugin classes than were originally specified in the tool xml.
 	 *
-	 * @param classNames the list of classNames from from the old XML file
+	 * @param classNames the list of classNames from the old XML file
 	 * @return the adjusted set of plugin class names
 	 */
 	public Set<String> getPluginNamesByCurrentPackage(List<String> classNames) {
@@ -268,8 +268,12 @@ public abstract class PluginsConfiguration {
 	}
 
 	public List<PluginDescription> getPluginDescriptions(PluginPackage pluginPackage) {
-		List<PluginDescription> list = descriptionsByPackage.get(pluginPackage);
 		List<PluginDescription> stableList = new ArrayList<>();
+		List<PluginDescription> list = descriptionsByPackage.get(pluginPackage);
+		if (list == null) {
+			// This should not happen.  This implies an environment where no plugins are found,
+			return stableList;
+		}
 		for (PluginDescription pluginDescription : list) {
 			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE ||
 				pluginDescription.getStatus() == PluginStatus.HIDDEN) {

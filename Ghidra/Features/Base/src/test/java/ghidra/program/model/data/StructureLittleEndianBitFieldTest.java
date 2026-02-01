@@ -81,7 +81,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   6   int:8(3)   2   d   \"\"\n" + 
 			"   8   int:6(0)   1   e   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -98,7 +98,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   6   int:8(3)   2   d   \"\"\n" + 
 			"   8   int:6(0)   1   e   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -115,7 +115,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   int:85(0)   4   d   \"\"\n" + 
 			"   12   int:6(0)   1   e   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 4\n", struct);
+			"Length: 16 Alignment: 4\n", struct);
 		//@formatter:on
 		DataTypeComponent c = struct.getComponent(3);
 		assertTrue(c.isBitFieldComponent());
@@ -137,7 +137,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   2   short:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -154,7 +154,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   2   short:4(6)   2   d   \"\"\n" + 
 			"   8   long[0]   0   flex   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8", struct);
+			"Length: 8 Alignment: 8", struct);
 		//@formatter:on
 	}
 
@@ -170,7 +170,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   2   int:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -186,7 +186,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   3   char   1   d   \"\"\n" +
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -204,7 +204,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:8(6)   2   c   \"\"\n" + 
 			"   6   short:4(0)   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", struct);
+			"Length: 8 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -221,7 +221,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:0(0)   0      \"\"\n" + 
 			"   4   short:4(0)   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", struct);
+			"Length: 8 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -238,7 +238,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   2   int:4(6)   2   d   \"\"\n" + 
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8", struct);
+			"Length: 8 Alignment: 8", struct);
 		//@formatter:on
 	}
 
@@ -255,7 +255,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"   8   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -272,7 +272,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:8(6)   2   c   \"\"\n" + 
 			"   6   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8", struct);
+			"Length: 8 Alignment: 8", struct);
 		//@formatter:on
 	}
 
@@ -292,7 +292,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   int:8(0)   1   f   \"\"\n" + 
 			"   9   char   1   g   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 8", struct);
+			"Length: 16 Alignment: 8", struct);
 		//@formatter:on
 	}
 
@@ -308,7 +308,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   2   short:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", struct);
+			"Length: 4 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -324,7 +324,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   2   int:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", struct);
+			"Length: 4 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -340,7 +340,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   3   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", struct);
+			"Length: 4 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -357,7 +357,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:8(6)   2   c   \"\"\n" + 
 			"   5   short:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 7   Actual Alignment = 1", struct);
+			"Length: 7 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -374,7 +374,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:0(0)   0      \"\"\n" + 
 			"   4   short:4(0)   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 5   Actual Alignment = 1", struct);
+			"Length: 5 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -391,7 +391,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   2   int:4(6)   2   d   \"\"\n" + 
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 1", struct);
+			"Length: 8 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -405,7 +405,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   0   char   1   a   \"\"\n" + 
 			"   1   Z3p1   8   z3p1   \"\"\n" + 
 			"}\n" + 
-			"Size = 9   Actual Alignment = 1", struct);
+			"Length: 9 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -422,7 +422,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"   8   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 9   Actual Alignment = 1", struct);
+			"Length: 9 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -438,7 +438,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   2   short:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 2", struct);
+			"Length: 4 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -454,7 +454,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   2   int:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 2", struct);
+			"Length: 4 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -470,7 +470,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:8(6)   2   c   \"\"\n" + 
 			"   3   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 2", struct);
+			"Length: 4 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -487,7 +487,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   longlong   8   d   \"\"\n" + 
 			"   12   int:4(0)   1   e   \"\"\n" + 
 			"}\n" + 
-			"Size = 14   Actual Alignment = 2", struct);
+			"Length: 14 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -504,7 +504,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:8(6)   2   c   \"\"\n" + 
 			"   5   short:4(6)   2   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 2", struct);
+			"Length: 8 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -539,7 +539,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   14   short:4(6)   2   _d6   \"\"\n" + 
 			"   15   short:4(2)   1   _d7   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 2", struct);
+			"Length: 16 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -556,7 +556,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   4   int:0(0)   0      \"\"\n" + 
 			"   4   short:4(0)   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 6   Actual Alignment = 2", struct);
+			"Length: 6 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -573,7 +573,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   2   int:4(6)   2   d   \"\"\n" + 
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 2", struct);
+			"Length: 8 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -590,7 +590,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"   8   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 10   Actual Alignment = 2", struct);
+			"Length: 10 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -607,7 +607,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"   8   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 10   Actual Alignment = 2", struct);
+			"Length: 10 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -620,7 +620,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"Structure x1p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct);
+			"Length: 1 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -634,7 +634,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   0   char   1   a   \"\"\n" + 
 			"   1   int:27(0)   4   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 6   Actual Alignment = 2", struct);
+			"Length: 6 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -649,7 +649,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   2   short:0(0)   0      \"\"\n" + 
 			"   2   int:27(0)   4   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 6   Actual Alignment = 2", struct);
+			"Length: 6 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -664,7 +664,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:27(0)   4   b   \"\"\n" + 
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 2", struct);
+			"Length: 8 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -681,7 +681,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"   8   char   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -694,7 +694,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"Structure x1p4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct);
+			"Length: 1 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -708,7 +708,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   0   char   1   a   \"\"\n" + 
 			"   1   int:27(0)   4   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", struct);
+			"Length: 8 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -723,7 +723,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   2   short:0(0)   0      \"\"\n" + 
 			"   2   int:27(0)   4   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", struct);
+			"Length: 8 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -738,7 +738,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   int:27(0)   4   b   \"\"\n" + 
 			"   8   longlong:0(0)   0      \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", struct);
+			"Length: 8 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -754,7 +754,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   1   enumTypedef:3(3)   1   c   \"\"\n" + 
 			"   2   charTypedef:7(0)   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -770,7 +770,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   3   enumTypedef:3(1)   1   c   \"\"\n" + 
 			"   3   charTypedef:3(4)   1   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -787,7 +787,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   16   Z2   8   z2   \"\"\n" + 
 			"   24   Z3   8   z3   \"\"\n" + 
 			"}\n" + 
-			"Size = 32   Actual Alignment = 8", struct);
+			"Length: 32 Alignment: 8", struct);
 		//@formatter:on
 	}
 
@@ -804,7 +804,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   16   Z2   8   z2   \"\"\n" + 
 			"   24   Z3   8   z3   \"\"\n" + 
 			"}\n" + 
-			"Size = 32   Actual Alignment = 1", struct);
+			"Length: 32 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -821,7 +821,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   15   Z2p1   5   z2p1   \"\"\n" + 
 			"   20   Z3p1   8   z3p1   \"\"\n" + 
 			"}\n" + 
-			"Size = 28   Actual Alignment = 1", struct);
+			"Length: 28 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -838,7 +838,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   16   Z2   8   z2   \"\"\n" + 
 			"   24   Z3   8   z3   \"\"\n" + 
 			"}\n" + 
-			"Size = 32   Actual Alignment = 2", struct);
+			"Length: 32 Alignment: 2", struct);
 		//@formatter:on
 	}
 
@@ -855,7 +855,7 @@ public class StructureLittleEndianBitFieldTest extends AbstractCompositeBitField
 			"   16   Z2p2   6   z2p2   \"\"\n" + 
 			"   22   Z3p2   8   z3p2   \"\"\n" + 
 			"}\n" + 
-			"Size = 30   Actual Alignment = 2", struct);
+			"Length: 30 Alignment: 2", struct);
 		//@formatter:on
 	}
 

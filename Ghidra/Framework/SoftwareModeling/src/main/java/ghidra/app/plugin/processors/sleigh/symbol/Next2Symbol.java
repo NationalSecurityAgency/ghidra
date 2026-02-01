@@ -15,32 +15,32 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.expression.Next2InstructionValue;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * Symbol with semantic value equal to offset of address immediately
  * after the next instruction (inst_next2)
  */
 public class Next2Symbol extends SpecificSymbol {
 
 	private PatternExpression patexp;
-	
+
 	@Override
-    public PatternExpression getPatternExpression() {
+	public PatternExpression getPatternExpression() {
 		return patexp;
 	}
 
 	@Override
-    public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
+	public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
 		hand.space = walker.getCurSpace();
 		hand.offset_space = null;
 		hand.offset_offset = walker.getN2addr().getOffset();
@@ -48,21 +48,21 @@ public class Next2Symbol extends SpecificSymbol {
 	}
 
 	@Override
-    public String print(ParserWalker walker) throws MemoryAccessException {
+	public String print(ParserWalker walker) throws MemoryAccessException {
 		long val = walker.getN2addr().getOffset();
-		return "0x"+Long.toHexString(val);
+		return "0x" + Long.toHexString(val);
 	}
 
 	@Override
-    public void printList(ParserWalker walker, ArrayList<Object> list) {
+	public void printList(ParserWalker walker, ArrayList<Object> list) {
 		list.add(walker.getParentHandle());
 	}
 
 	@Override
-    public void restoreXml(XmlPullParser parser, SleighLanguage sleigh) {
-		XmlElement element = parser.start("next2_sym");
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int element = decoder.openElement(ELEM_NEXT2_SYM);
 		patexp = new Next2InstructionValue();
-		parser.end(element);
+		decoder.closeElement(ELEM_NEXT2_SYM.id());
 	}
 
 }

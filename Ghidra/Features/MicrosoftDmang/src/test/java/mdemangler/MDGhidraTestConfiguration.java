@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package mdemangler;
-
-import ghidra.app.util.demangler.DemangledObject;
 
 /**
  * This class is a derivation of MDBaseTestConfiguration (see javadoc there).  This
@@ -26,9 +24,9 @@ import ghidra.app.util.demangler.DemangledObject;
  */
 public class MDGhidraTestConfiguration extends MDBaseTestConfiguration {
 
-	protected DemangledObject demangledObject;
-	protected String demangledGhidraObject;
-	protected DemangledObject demangledObjectCheck;
+//	protected DemangledObject demangledObject;
+//	protected String demangledGhidraObject;
+//	protected DemangledObject demangledObjectCheck;
 
 	public MDGhidraTestConfiguration(boolean quiet) {
 		super(quiet);
@@ -48,10 +46,12 @@ public class MDGhidraTestConfiguration extends MDBaseTestConfiguration {
 	@Override
 	protected MDParsableItem doDemangleSymbol(MDMang mdmIn, String mangledIn) throws Exception {
 		MDParsableItem returnItem;
+		mdmIn.setMangledSymbol(mangledIn);
+		mdmIn.setErrorOnRemainingChars(true);
 		try {
-			//Set true in operational mode.
-			returnItem = ((MDMangGhidra) mdmIn).demangle(mangledIn, false); // "false" is different
-			demangledObject = ((MDMangGhidra) mdmIn).getObject();
+			// For first boolean: set true in operational mode.
+			returnItem = mdmIn.demangle();
+//			demangledObject = ((MDMangGhidra) mdmIn).getObject();
 		}
 		catch (MDException e) {
 			returnItem = null;
@@ -62,14 +62,14 @@ public class MDGhidraTestConfiguration extends MDBaseTestConfiguration {
 	@Override
 	protected void doBasicTestsAndOutput() throws Exception {
 		super.doBasicTestsAndOutput();
-		if (demangledObject != null) {
-			demangledGhidraObject = demangledObject.toString();
-			outputInfo.append("demangl: " + demangledGhidraObject + "\n");
-		}
-		else {
-			demangledGhidraObject = "";
-			outputInfo.append("demangled: NO RESULT\n");
-		}
+//		if (demangledObject != null) {
+//			demangledGhidraObject = demangledObject.toString();
+//			outputInfo.append("demangl: " + demangledGhidraObject + "\n");
+//		}
+//		else {
+//			demangledGhidraObject = "";
+//			outputInfo.append("demangled: NO RESULT\n");
+//		}
 //		For checking the original results, for comparison purposes, this code should probably
 //		be calling the MicrosoftWineDemangler.
 //		try {
@@ -86,38 +86,38 @@ public class MDGhidraTestConfiguration extends MDBaseTestConfiguration {
 //		}
 	}
 
-	@Override
-	protected void doExtraProcCheck() throws Exception {
-		if ((demangledObjectCheck != null) && (demangledObject != null)) {
-			if (demangledObjectCheck.getClass() != demangledObject.getClass()) {
-				outputInfo.append("ObjComp: notequal NEW: " + demangledObject.getClass().getName() +
-					", OLD: " + demangledObjectCheck.getClass().getName() + "\n");
-			}
-			else {
-				outputInfo.append("ObjComp: equal NEW: " + demangledObject.getClass().getName() +
-					", OLD: " + demangledObjectCheck.getClass().getName() + "\n");
-			}
-		}
-		else {
-			if ((demangledObjectCheck == null) && (demangledObject == null)) {
-				outputInfo.append("ObjComp: Not possible -- both null\n");
-			}
-			else if (demangledObjectCheck == null) {
-				outputInfo.append("ObjComp: Not possible -- OLD null; NEW: " +
-					demangledObject.getClass().getName() + "\n");
-			}
-			else {
-				outputInfo.append("ObjComp: Not possible -- NEW null; OLD: " +
-					demangledObjectCheck.getClass().getName() + "\n");
-			}
-		}
-		if (ghidraTestStringCompare(outputInfo, demangled, demangledGhidraObject)) {
-			outputInfo.append("RESULTS MATCH------******\n");
-		}
-		else {
-			outputInfo.append("RESULTS MISMATCH------*********************************\n");
-		}
-	}
+//	@Override
+//	protected void doExtraProcCheck() throws Exception {
+//		if ((demangledObjectCheck != null) && (demangledObject != null)) {
+//			if (demangledObjectCheck.getClass() != demangledObject.getClass()) {
+//				outputInfo.append("ObjComp: notequal NEW: " + demangledObject.getClass().getName() +
+//					", OLD: " + demangledObjectCheck.getClass().getName() + "\n");
+//			}
+//			else {
+//				outputInfo.append("ObjComp: equal NEW: " + demangledObject.getClass().getName() +
+//					", OLD: " + demangledObjectCheck.getClass().getName() + "\n");
+//			}
+//		}
+//		else {
+//			if ((demangledObjectCheck == null) && (demangledObject == null)) {
+//				outputInfo.append("ObjComp: Not possible -- both null\n");
+//			}
+//			else if (demangledObjectCheck == null) {
+//				outputInfo.append("ObjComp: Not possible -- OLD null; NEW: " +
+//					demangledObject.getClass().getName() + "\n");
+//			}
+//			else {
+//				outputInfo.append("ObjComp: Not possible -- NEW null; OLD: " +
+//					demangledObjectCheck.getClass().getName() + "\n");
+//			}
+//		}
+//		if (ghidraTestStringCompare(outputInfo, demangled, demangledGhidraObject)) {
+//			outputInfo.append("RESULTS MATCH------******\n");
+//		}
+//		else {
+//			outputInfo.append("RESULTS MISMATCH------*********************************\n");
+//		}
+//	}
 
 	private boolean ghidraTestStringCompare(StringBuilder outputInfoArg, String truthString,
 			String ghidraString) {

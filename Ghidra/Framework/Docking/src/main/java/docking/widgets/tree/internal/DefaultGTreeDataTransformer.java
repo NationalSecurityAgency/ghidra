@@ -24,7 +24,7 @@ import ghidra.util.FilterTransformer;
 public class DefaultGTreeDataTransformer implements FilterTransformer<GTreeNode> {
 	private ThreadLocal<List<String>> localizedResults = new ThreadLocal<List<String>>() {
 		@Override
-		protected java.util.List<String> initialValue() {
+		protected List<String> initialValue() {
 			return new ArrayList<String>();
 		}
 	};
@@ -33,7 +33,11 @@ public class DefaultGTreeDataTransformer implements FilterTransformer<GTreeNode>
 	public List<String> transform(GTreeNode node) {
 		List<String> results = localizedResults.get();
 		results.clear();
-		results.add(node.getDisplayText());
+		results.add(toString(node));
 		return results;
+	}
+
+	protected String toString(GTreeNode node) {
+		return node.getDisplayText();
 	}
 }

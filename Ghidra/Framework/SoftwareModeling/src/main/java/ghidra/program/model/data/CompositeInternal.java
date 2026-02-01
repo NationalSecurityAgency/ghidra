@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,7 +139,6 @@ public interface CompositeInternal extends Composite {
 	 * <code>OrdinalComparator</code> provides ability to compare an Integer ordinal with a
 	 * DataTypeComponent object. The ordinal will be consider equal (0) if the component corresponds
 	 * to the specified ordinal.
-	 * <p>
 	 */
 	public static class OrdinalComparator implements Comparator<Object> {
 
@@ -168,8 +167,8 @@ public interface CompositeInternal extends Composite {
 		stringBuffer.append(getTypeName(composite) + " " + composite.getDisplayName() + " {\n");
 		dumpComponents(composite, stringBuffer, "   ");
 		stringBuffer.append("}\n");
-		stringBuffer.append("Size = " + composite.getLength() + "   Actual Alignment = " +
-			composite.getAlignment() + "\n");
+		int length = composite.isZeroLength() ? 0 : composite.getLength();
+		stringBuffer.append("Length: " + length + " Alignment: " + composite.getAlignment() + "\n");
 		return stringBuffer.toString();
 	}
 
@@ -181,11 +180,10 @@ public interface CompositeInternal extends Composite {
 	 */
 	private static void dumpComponents(Composite composite, StringBuilder buffer, String pad) {
 		// limit output of filler components for non-packed structures
+
 		DataTypeComponent[] components = composite.getDefinedComponents();
 		for (DataTypeComponent dtc : components) {
 			DataType dataType = dtc.getDataType();
-//			buffer.append(pad + dtc.getOrdinal());
-//			buffer.append(") ");
 			buffer.append(pad + dtc.getOffset());
 			buffer.append(pad + dataType.getName());
 			if (dataType instanceof BitFieldDataType) {

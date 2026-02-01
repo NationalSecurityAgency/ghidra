@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.awt.Window;
 
 import org.junit.*;
 
+import docking.DialogComponentProvider;
 import ghidra.program.model.data.*;
 import ghidra.util.Swing;
 import ghidra.util.exception.DuplicateNameException;
@@ -35,7 +36,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		// Create overlapping trasnaction to handle all changes
+		// Create overlapping transaction to handle all changes
 		persistentTxId = program.startTransaction("Modify Program");
 	}
 
@@ -83,22 +84,23 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		init(complexStructure, tempCat);
 		int num = model.getNumComponents();
 		int len = model.getLength();
-		DataType dataType10 = model.viewComposite.getComponent(10).getDataType();
+		DataType dataType10 = getDataType(10);
 		assertEquals("complexStructure *", dataType10.getDisplayName());
-		assertEquals(4, dataType10.getLength());
+		assertEquals(4, getLength(10));
 
-		programDTM.remove(complexStructure, TaskMonitor.DUMMY);
+		programDTM.remove(complexStructure);
 		programDTM.getCategory(pgmRootCat.getCategoryPath())
-					.removeCategory("Temp", TaskMonitor.DUMMY);
+				.removeCategory("Temp", TaskMonitor.DUMMY);
 
+		DialogComponentProvider dlg = waitForDialogComponent("Close Structure Editor?");
+		pressButton(dlg.getComponent(), "No");
 		waitForSwing();
 
-		// complexStructure* gets removed and becomes 4 undefined bytes in this editor.
-		assertEquals(num + 3, model.getNumComponents());
+		// complexStructure* gets removed and becomes BadDataType in this editor.
+		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		dataType10 = model.viewComposite.getComponent(10).getDataType();
-		assertEquals("undefined", dataType10.getDisplayName());
-		assertEquals(1, dataType10.getLength());
+		assertEquals("The original Structure has been deleted", model.getStatus());
+		assertEquals(4, getLength(10));
 	}
 
 	@Test
@@ -417,6 +419,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		pressButtonByText(dialog, "Yes");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Structure) origCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(origCopy.isEquivalent(model.viewComposite));
@@ -442,6 +445,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		pressButtonByText(dialog, "No");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Structure) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
@@ -486,31 +490,39 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 	@Test
 	public void testComponentDataTypeRemoved() {
+
+		// Get the data types we want to hold onto for comparison later
+		DataType dt3 = getDataType(complexStructure, 3);
+		DataType dt5 = getDataType(complexStructure, 5);
+		DataType dt8 = getDataType(complexStructure, 8);
+		DataType dt10 = getDataType(complexStructure, 10);
+
 		init(complexStructure, pgmTestCat);
-		DataType undef = DataType.DEFAULT;
+
+		assertEquals(1, getLength(9)); // length start-off wierd - not sure why
 
 		assertEquals(23, model.getNumComponents());
-		// Clone the data types we want to hold onto for comparison later, since reload can close the viewDTM.
-		DataType dt3 = getDataType(3).clone(programDTM);
-		DataType dt5 = getDataType(5).clone(programDTM);
-		DataType dt8 = getDataType(8).clone(programDTM);
-		DataType dt10 = getDataType(10).clone(programDTM);
+		assertEquals(0x145, model.getLength());
 
 		runSwing(
-			() -> complexStructure.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
+			() -> complexStructure.getDataTypeManager().remove(simpleUnion));
 		waitForSwing();
-		assertEquals(30, model.getNumComponents());
+		assertEquals(23, model.getNumComponents());
 		assertTrue(dt3.isEquivalent(getDataType(3)));
-		assertTrue(undef.isEquivalent(getDataType(4)));
-		assertTrue(undef.isEquivalent(getDataType(11)));
-		assertTrue(dt5.isEquivalent(getDataType(12)));
-		assertTrue(dt8.isEquivalent(getDataType(15)));
-		assertTrue(undef.isEquivalent(getDataType(16)));
-		assertTrue(dt10.isEquivalent(getDataType(17)));
 		assertEquals(4, getOffset(3));
-		assertEquals(16, getOffset(12));
-		assertEquals(24, getOffset(15));
-		assertEquals(33, getOffset(17));
+		assertEquals(0x8, getLength(4));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(4)));
+		assertEquals("Type 'simpleUnion' was deleted", getComment(4));
+		assertTrue(dt5.isEquivalent(getDataType(5)));
+		assertTrue(dt8.isEquivalent(getDataType(8)));
+		assertEquals(0x20, getOffset(9));
+		assertEquals(1, getLength(9)); // length start-off wierd
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(9)));
+		assertEquals("Type 'simpleUnion *' was deleted", getComment(9));
+		assertEquals(0x21, getOffset(10));
+		assertEquals(0x4, getLength(10));
+		assertTrue(dt10.isEquivalent(getDataType(10)));
+		assertEquals(0x145, model.getLength());
 	}
 
 	@Test
@@ -519,13 +531,17 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		runSwingWithException(() -> model.add(simpleStructure));
 		waitForSwing();
+
+		assertEquals(1, model.getNumComponents());
 		assertTrue(simpleStructure.isEquivalent(getDataType(0)));
 
-		runSwing(() -> simpleStructure.getDataTypeManager()
-				.remove(
-					simpleStructure, TaskMonitor.DUMMY));
+		runSwing(
+			() -> simpleStructure.getDataTypeManager().remove(simpleStructure));
 		waitForSwing();
-		assertEquals(29, model.getNumComponents());// becomes undefined bytes
+
+		assertEquals(1, model.getNumComponents());// component becomes BadDataType
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(0)));
+		assertEquals("Type 'simpleStructure' was deleted", getComment(0));
 	}
 
 	@Test
@@ -581,18 +597,21 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 	@Test
 	public void testComponentDataTypeReplaced() throws Exception {
+
+		// Get the data types we want to hold onto for comparison later
+		DataType dt15 = getDataType(complexStructure, 15);
+		DataType dt16 = getDataType(complexStructure, 16);
+		DataType dt18 = getDataType(complexStructure, 18);
+		DataType dt19 = getDataType(complexStructure, 19);
+		DataType dt20 = getDataType(complexStructure, 20);
+		String dt21Name = getDataType(complexStructure, 21).getName();
+		DataType dt22 = getDataType(complexStructure, 22);
+
 		init(complexStructure, pgmTestCat);
 
 		int numComps = model.getNumComponents();
 		int len = model.getLength();
-		// Clone the data types we want to hold onto for comparison later, since reload can close the viewDTM.
-		DataType dt15 = getDataType(15).clone(programDTM);
-		DataType dt16 = getDataType(16).clone(programDTM);
-		DataType dt18 = getDataType(18).clone(programDTM);
-		DataType dt19 = getDataType(19).clone(programDTM);
-		DataType dt20 = getDataType(20).clone(programDTM);
-		String dt21Name = getDataType(21).getName();
-		DataType dt22 = getDataType(22).clone(programDTM);
+
 		assertEquals(87, complexStructure.getComponent(16).getDataType().getLength());
 		assertEquals(29, complexStructure.getComponent(19).getDataType().getLength());
 		assertEquals(24, complexStructure.getComponent(20).getDataType().getLength());
@@ -671,17 +690,14 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		programDTM.replaceDataType(complexStructure, newComplexStructure, true);
 		waitForSwing();
-		DataType origCopy = newComplexStructure.clone(null);
 
 		// Verify the Reload Structure Editor? dialog is displayed.
-		dialog = waitForWindow("Reload Structure Editor?");
+		dialog = waitForWindow("Close Structure Editor?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "Yes");
-		dialog.dispose();
-		dialog = null;
+		waitForSwing();
 
-		assertEquals(((Structure) origCopy).getNumComponents(), model.getNumComponents());
-		assertTrue(origCopy.isEquivalent(model.viewComposite));
+		assertFalse(provider.isVisible());
 	}
 
 	@Test
@@ -704,10 +720,12 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		waitForSwing();
 
 		// Verify the Reload Structure Editor? dialog is displayed.
-		Window dialog = waitForWindow("Reload Structure Editor?");
+		Window dialog = waitForWindow("Close Structure Editor?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "No");
-		dialog.dispose();
+		waitForSwing();
+
+		assertTrue(provider.isVisible());
 
 		assertEquals(((Structure) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
@@ -724,8 +742,14 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		programDTM.replaceDataType(complexStructure, newComplexStructure, true);
+
+		// Verify Structure Editor closes (we don't want two editors for the same type)
+		Window dialog = waitForWindow("Closing Structure Editor");
+		assertNotNull(dialog);
+		pressButtonByText(dialog, "OK");
 		waitForSwing();
-		assertTrue(newComplexStructure.isEquivalent(model.viewComposite));
+
+		assertFalse(provider.isVisible());
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 	 * @param operands the operands
 	 * @return the farthest end byte
 	 */
-	protected static int computeEnd(List<AbstractAssemblyState> operands) {
+	protected static int computeEnd(List<? extends AbstractAssemblyState> operands) {
 		return operands.stream()
 				.map(s -> s.shift + s.length)
 				.reduce(0, Integer::max);
@@ -61,7 +61,7 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 	 * @param sem the selected SLEIGH constructor
 	 * @param children the child state for each operand in the constructor
 	 */
-	public AssemblyConstructState(AssemblyTreeResolver resolver,
+	public AssemblyConstructState(AbstractAssemblyTreeResolver<?> resolver,
 			List<AssemblyConstructorSemantic> path, int shift,
 			AssemblyConstructorSemantic sem, List<AbstractAssemblyState> children) {
 		super(resolver, path, shift,
@@ -142,16 +142,16 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 		return sem.getPatterns()
 				.stream()
 				.map(pat -> {
-					DBG.println(path + ": Constructor pattern: " + pat.lineToString());
-					DBG.println(path + ": Current     pattern: " + fromMutations.lineToString());
 					AssemblyResolvedPatterns combined = fromMutations.combine(pat.shift(shift));
 					//DBG.println("Combined    pattern: " + combined);
 					return combined;
 				})
 				.filter(ar -> {
 					if (ar == null) {
-						errors.add(AssemblyResolution.error("Pattern conflict",
-							"Resolving " + sem.getLocation() + " in " + path));
+						errors.add(factory.newErrorBuilder()
+								.error("Pattern conflict")
+								.description("Resolving " + sem.getLocation() + " in " + path)
+								.build());
 						return false;
 					}
 					return true;

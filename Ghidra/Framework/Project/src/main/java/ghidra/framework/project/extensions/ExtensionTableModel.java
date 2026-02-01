@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,8 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.ExtensionDetails;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
@@ -34,7 +36,6 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Model for the {@link ExtensionTablePanel}. This defines 5 columns for displaying information in
  * {@link ExtensionDetails} objects:
- * <p>
  * <pre>
  * 		- Installed (checkbox)
  * 		- Name
@@ -155,7 +156,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		// into this state is by clicking an extension that was discovered in the 'extension 
 		// archives folder'		
 		if (extension.isFromArchive()) {
-			if (ExtensionUtils.installExtensionFromArchive(extension)) {
+			if (ExtensionInstaller.installExtensionFromArchive(extension)) {
 				refreshTable();
 			}
 			return;
@@ -192,6 +193,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			return;
 		}
 
+		ExtensionUtils.reload();
 		Set<ExtensionDetails> archived = ExtensionUtils.getArchiveExtensions();
 		Set<ExtensionDetails> installed = ExtensionUtils.getInstalledExtensions();
 
@@ -228,6 +230,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 		for (ExtensionDetails e : extensions) {
 			Boolean wasInstalled = originalInstallStates.get(e.getName());
+			if (wasInstalled == null) {
+				return false;
+			}
 			if (e.isInstalled() != wasInstalled) {
 				return true;
 			}

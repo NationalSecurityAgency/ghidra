@@ -16,15 +16,14 @@
 package ghidra.util.task;
 
 /**
- * Similar to a {@link Runnable} except the {@link #monitoredRun(TaskMonitor) run}
- * method is given a monitor to report progress and check for cancellation.
+ * Similar to a {@link Runnable} except the {@link #monitoredRun(TaskMonitor) run} method is given a
+ * monitor to report progress and check for cancellation.
  */
 public interface MonitoredRunnable {
-	
-    /**
-	 * Similar to a runnable except the run method is given a monitor 
-	 * to report progress and check for cancellation.
-	 * @param monitor the TaskMonitor to use.
+
+	/**
+	 * Runs this runnable, given a monitor to report progress and check for cancellation.
+	 * @param monitor the monitor.
 	 */
 	void monitoredRun(TaskMonitor monitor);
 }

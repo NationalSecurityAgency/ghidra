@@ -38,4 +38,14 @@ public class x86AssemblyTest extends AbstractAssemblyTest {
 			assertOneCompatRestExact("ADD ECX,dword ptr [-0x8 + EDX]", "03:4a:f8");
 		}
 	}
+
+	@Test
+	public void testAssemble_CALL_0x00401234() {
+		assertOneCompatRestExact("CALL 0x00401234", "e8:2f:12:40:c0");
+	}
+
+	@Test
+	public void testAssemble_CALL_0x00401234_at0() {
+		assertOneCompatRestExact("CALL 0x00401234", "e8:2f:12:40:00", 0);
+	}
 }

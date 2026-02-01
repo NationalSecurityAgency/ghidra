@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,6 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.xml.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -134,7 +133,7 @@ public class XmlLoader extends AbstractProgramLoader {
 		}
 
 		if (loadSpecs.isEmpty()) {
-			// just put 'em all in (give endianess preference)
+			// just put 'em all in (give endianness preference)
 			Endian endian = Endian.toEndian(info.endian);
 			List<LanguageDescription> languageDescriptions =
 				getLanguageService().getLanguageDescriptions(false);
@@ -177,18 +176,14 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 		List<Loaded<Program>> results = new ArrayList<>();
 
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
-		CompilerSpec importerCompilerSpec =
-			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
 
-		ParseResult result = parse(provider);
+		ParseResult result = parse(settings.provider());
 
 		if (result.lastInfo == null) {
 			return results;
@@ -197,32 +192,31 @@ public class XmlLoader extends AbstractProgramLoader {
 		if (result.lastInfo.imageBase != null) {
 			imageBase = importerLanguage.getAddressFactory().getAddress(result.lastInfo.imageBase);
 		}
-		Program prog = createProgram(provider, programName, imageBase, getName(), importerLanguage,
-			importerCompilerSpec, consumer);
-		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, programFolderPath));
+		Program prog = createProgram(imageBase, settings);
+		List<Loaded<Program>> loadedList = List.of(new Loaded<>(prog, settings));
 		boolean success = false;
 		try {
-			success = doImport(result.lastXmlMgr, options, log, prog, monitor, false);
+			success = doImport(result.lastXmlMgr, settings.options(), settings.log(), prog,
+				settings.monitor(), false);
 			if (success) {
-				createDefaultMemoryBlocks(prog, importerLanguage, log);
+				createDefaultMemoryBlocks(prog, settings);
 				return loadedList;
 			}
 			throw new LoadException("Failed to load");
 		}
 		finally {
 			if (!success) {
-				release(loadedList, consumer);
+				loadedList.forEach(Loaded::close);
 			}
 		}
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+	protected void loadProgramInto(Program prog, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
-		File file = provider.getFile();
-		doImport(new ProgramXmlMgr(file), options, log, prog, monitor, true);
+		File file = settings.provider().getFile();
+		doImport(new ProgramXmlMgr(file), settings.options(), settings.log(), prog,
+			settings.monitor(), true);
 	}
 
 	private boolean doImportWork(final ProgramXmlMgr mgr, final List<Option> options,
@@ -325,7 +319,7 @@ public class XmlLoader extends AbstractProgramLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		return new XmlProgramOptions().getOptions(loadIntoProgram);
 	}
 
@@ -335,7 +329,8 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		// XXX will this work? is there other state that xmlOptions needs to
 		// know?
 		try {

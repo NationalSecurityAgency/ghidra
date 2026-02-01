@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,11 @@ public interface FolderItem {
 	public static final int DATAFILE_FILE_TYPE = 1;
 
 	/**
+	 * Item type is associated with metadata only (e.g., URL)
+	 */
+	public static final int LINK_FILE_TYPE = 2;
+
+	/**
 	 * Default checkout ID used when a checkout is not applicable.
 	 */
 	public static final long DEFAULT_CHECKOUT_ID = -1;
@@ -60,9 +65,8 @@ public interface FolderItem {
 
 	/**
 	 * Return the file ID if one has been established or null
-	 * @throws IOException thrown if IO or access error occurs
 	 */
-	String getFileID() throws IOException;
+	String getFileID();
 
 	/**
 	 * Assign a new file-ID to this local non-versioned file.
@@ -288,8 +292,8 @@ public interface FolderItem {
 	 * @throws IOException
 	 * @throws CancelledException if monitor cancels operation
 	 */
-	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	public void output(File outputFile, int version, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Returns this instance after refresh or null if item no longer exists

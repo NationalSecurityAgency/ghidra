@@ -18,6 +18,7 @@ package ghidra.program.database.external;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -92,11 +93,11 @@ class OldExtRefAdapter {
 		refTable = newRefTable;
 	}
 
-	static OldExtRefAdapter getAdapter(DBHandle dbHandle, int openMode, TaskMonitor monitor)
+	static OldExtRefAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 
 		OldExtRefAdapter adapter = new OldExtRefAdapter(dbHandle);
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			adapter.moveTable(dbHandle, monitor);
 		}
 		return adapter;

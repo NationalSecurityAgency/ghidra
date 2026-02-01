@@ -18,7 +18,7 @@ package ghidra.feature.vt.api;
 import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
 
-import java.util.*;
+import java.util.Arrays;
 
 import org.junit.*;
 
@@ -27,9 +27,8 @@ import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.task.AcceptMatchTask;
+import ghidra.feature.vt.gui.task.VtTask;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
@@ -39,10 +38,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.test.*;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
 
 public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -53,12 +49,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB sourceProgram;
 	private ProgramDB destinationProgram;
 	private VTPlugin plugin;
-	private DomainObjectListenerRecorder eventRecorder = new DomainObjectListenerRecorder();
 	private Options options;
-
-	public VTMatchAcceptTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -70,7 +61,6 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ClassicSampleX86ProgramBuilder destinationBuilder = new ClassicSampleX86ProgramBuilder();
 		destinationProgram = destinationBuilder.getProgram();
-		destinationProgram.addListener(eventRecorder);
 
 		tool = env.getTool();
 
@@ -78,36 +68,27 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 		plugin = getPlugin(tool, VTPlugin.class);
 		controller = new VTControllerImpl(plugin);
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
 		options = controller.getOptions();
-		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
-		options.setBoolean(VTOptionDefines.APPLY_FUNCTION_NAME_ON_ACCEPT, false);
-		options.setBoolean(VTOptionDefines.APPLY_DATA_NAME_ON_ACCEPT, false);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		waitForBusyTool(tool);
-		destinationProgram.flushEvents();
-		waitForSwing();
-
 		env.dispose();
-
 	}
 
 	@Test
 	public void testAcceptWithApplyDataLabels() throws Exception {
 
 		//
-		// BTW this test exposes a bug because the hook that runs when you apply data on accept was.
-		// in a side effect, causing the destination address to be set. When the hook was changed to
-		// not set the destination address, the accept task was not setting the destination address 
-		// as it should.
+		// This test exposes a bug because the hook that runs when you apply data on accept was
+		// exhibiting a side effect, causing the destination address to be set. When the hook was 
+		// changed to not set the destination address, the accept task was not setting the 
+		// destination address as it should.
 		//
 
 		options.setBoolean(VTOptionDefines.APPLY_DATA_NAME_ON_ACCEPT, true);
@@ -148,11 +129,9 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void runTask(Task task) throws CancelledException {
-
-		task.run(TaskMonitor.DUMMY);
-		destinationProgram.flushEvents();
-		waitForSwing();
+	private void runTask(VtTask task) {
+		controller.runVTTask(task);
+		waitForProgram(destinationProgram);
 	}
 
 	private Data setData(DataType dataType, int dtLength, Address address, Program program)
@@ -170,15 +149,5 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 			program.endTransaction(transaction, commit);
 		}
 		return data;
-	}
-
-	private class DomainObjectListenerRecorder implements DomainObjectListener {
-
-		List<DomainObjectChangedEvent> events = new ArrayList<DomainObjectChangedEvent>();
-
-		@Override
-		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			events.add(ev);
-		}
 	}
 }

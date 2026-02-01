@@ -17,9 +17,9 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'GPL DemanglerGnu'
 
 
-def v33_1 = "demangler_gnu_v2_33_1"
+def v41 = "demangler_gnu_v2_41"
 def v24 = "demangler_gnu_v2_24"
-def srcVersion33_1 = "src/demangler_gnu_v2_33_1"
+def srcVersion41 = "src/demangler_gnu_v2_41"
 def srcVersion24 = "src/demangler_gnu_v2_24"
 
 /**
@@ -35,25 +35,24 @@ def srcVersion24 = "src/demangler_gnu_v2_24"
  */
 task zipBuildableSource(type:Zip) {
 
-	group 'private'
-	description "Collects the source files needed to build this module."
+	group = 'private'
+	description = "Collects the source files needed to build this module."
 	archiveBaseName = project.name + "-src-for-build"
 	archiveExtension = 'zip'
-				
+		
 	//
-	// Version 2.33.1
+	// Version 2.41
 	// 
-	from (project.projectDir.toString() + "/" + srcVersion33_1 + "c") {
-		into "/" + srcVersion33_1
+	from (project.projectDir.toString() + "/" + srcVersion41 + "c") {
+		into "/" + srcVersion41
 	}
-	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/headers") {
-		into "/" + srcVersion33_1
+	from (project.projectDir.toString() + "/" + srcVersion41 + "/headers") {
+		into "/" + srcVersion41
 	}
-	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/build") {
-		into "/" + srcVersion33_1
+	from (project.projectDir.toString() + "/" + srcVersion41 + "/build") {
+		into "/" + srcVersion41
 	}
-	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/README.txt")
-	
+	from (project.projectDir.toString() + "/" + srcVersion41 + "/README.txt")
 	
 	//
 	// Version 2.24
@@ -72,23 +71,26 @@ task zipBuildableSource(type:Zip) {
 
 model {
 				
-	//
-	// Version 2.33.1
-	//
 	components {
-		demangler_gnu_v2_33_1(NativeExecutableSpec) {
+		//
+		// Version 2.41
+		//
+		demangler_gnu_v2_41(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				c {
 					source {
-						srcDir srcVersion33_1 + "/c"
+						srcDir srcVersion41 + "/c"
 					}
 					exportedHeaders {
-						srcDir srcVersion33_1 + "/headers"
+						srcDir srcVersion41 + "/headers"
 					}
 				}
 			}			
@@ -99,10 +101,13 @@ model {
 		//
 		demangler_gnu_v2_24(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				c {
 					source {
@@ -127,8 +132,8 @@ model {
 		
 			def version = b.getApplication().getName()
 		
-			if (version.equals(v33_1)) {
-				if (toolChain in Gcc) {							
+			if (version.equals(v41)) {
+				if (toolChain in Gcc) {			
 					//cCompiler.args "-DCP_DEMANGLE_DEBUG"
 					cCompiler.args "-DHAVE_STDLIB_H"
 					cCompiler.args "-DHAVE_STRING_H"

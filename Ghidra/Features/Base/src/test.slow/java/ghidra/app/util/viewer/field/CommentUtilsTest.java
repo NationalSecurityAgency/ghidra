@@ -37,7 +37,7 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testGetCommentAnnotations_PlainAnnotation() {
 
-		String comment = "This is an {@symbol symbolName}";
+		String comment = "This is a {@symbol symbolName}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
@@ -47,7 +47,7 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testGetCommentAnnotations_QuotedAnnotation() {
 
-		String comment = "This is an {@symbol \"symbolName\"}";
+		String comment = "This is a {@symbol \"symbolName\"}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
@@ -57,7 +57,7 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testGetCommentAnnotations_QuotedAnnotation_WithEscapedQuotes() {
 
-		String comment = "This is an {@symbol \"symbol\\\"Name\\\"\"}";
+		String comment = "This is a {@symbol \"symbol\\\"Name\\\"\"}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
@@ -67,7 +67,7 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testGetCommentAnnotations_QuotedAnnotationWithBraces() {
 
-		String comment = "This is an {@symbol \"symbol{Name}\"}";
+		String comment = "This is a {@symbol \"symbol{Name}\"}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
@@ -79,7 +79,7 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		// the second brace is ignored (if the first brace is part of the symbol name, then it
 		// needs to be escaped or quoted
-		String comment = "This is an {@symbol symbol{Name}}";
+		String comment = "This is a {@symbol symbol{Name}}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
@@ -90,7 +90,7 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testGetCommentAnnotations_UnquotedAnnotation_WithUnbalancedBraces() {
 
 		// the second brace is ignored
-		String comment = "This is an {@symbol symbolName}}";
+		String comment = "This is a {@symbol symbolName}}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
@@ -101,16 +101,17 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testGetCommentAnnotations_UnquotedAnnotation_WithEscapedBraces() {
 
 		// escaped braces get ignored
-		String comment = "This is an {@symbol symbol\\{Name\\}}";
+		String comment = "This is a {@symbol symbol\\{Name\\}}";
 		List<WordLocation> annotations = CommentUtils.getCommentAnnotations(comment);
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
 		assertEquals("{@symbol symbol\\{Name\\}}", word.getWord());
+
 	}
-	
+
 	@Test
 	public void testSanitize() {
-		
+
 		String comment = null;
 		String sanitized = CommentUtils.sanitize(comment);
 		assertNull(sanitized);

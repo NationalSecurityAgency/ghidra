@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.target.Target;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Bookmark;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	/**
@@ -31,7 +32,7 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 */
 	void setTraceAddress(Trace trace, Address address);
 
-	void setRecorder(Trace trace, TraceRecorder recorder);
+	void setTarget(Trace trace, Target target);
 
 	/**
 	 * Remove the given trace from this set
@@ -55,16 +56,17 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * breakpoint history provider handles displaying records from the past, including dead traces.
 	 * 
 	 * @param breakpoint the trace breakpoint to check
+	 * @param snap the snap
 	 * @return true if it can be aggregated.
 	 * @throws TrackedTooSoonException if the containing trace is still being added to the manager
 	 */
-	boolean canMerge(TraceBreakpoint breakpoint) throws TrackedTooSoonException;
+	boolean canMerge(TraceBreakpointLocation breakpoint, long snap) throws TrackedTooSoonException;
 
 	boolean trackBreakpoint(Bookmark bookmark);
 
-	boolean trackBreakpoint(TraceBreakpoint breakpoint);
+	boolean trackBreakpoint(TraceBreakpointLocation breakpoint);
 
-	boolean untrackBreakpoint(TraceBreakpoint breakpoint);
+	boolean untrackBreakpoint(TraceBreakpointLocation breakpoint);
 
 	boolean untrackBreakpoint(Program program, Bookmark bookmark);
 
@@ -73,7 +75,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
-	 * @return a future which completes when the actions are populated
 	 */
 	void planEnable(BreakpointActionSet actions, Trace trace);
 
@@ -82,7 +83,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
-	 * @return a future which completes when the actions are populated
 	 */
 	void planDisable(BreakpointActionSet actions, Trace trace);
 
@@ -91,7 +91,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
-	 * @return a future which completes when the actions are populated
 	 */
 	void planDelete(BreakpointActionSet actions, Trace trace);
 }

@@ -1,0 +1,388 @@
+
+
+
+#la-fp-d.txt fadd.d mask=0x01010000	
+#0x01010000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fadd.d  drD, drJ, drK          is op15_31=0x202 & drD & drJ & drK {
+	drD = drJ f+ drK;
+}
+
+
+#la-fp-d.txt fsub.d mask=0x01030000	
+#0x01030000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fsub.d  drD, drJ, drK          is op15_31=0x206 & drD & drJ & drK {
+	drD = drJ f- drK;
+}
+
+
+#la-fp-d.txt fmul.d mask=0x01050000	
+#0x01050000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fmul.d  drD, drJ, drK          is op15_31=0x20a & drD & drJ & drK {
+	drD = drJ f* drK;
+}
+
+
+#la-fp-d.txt fdiv.d mask=0x01070000	
+#0x01070000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fdiv.d  drD, drJ, drK          is op15_31=0x20e & drD & drJ & drK {
+	drD = drJ f/ drK;
+}
+
+
+#la-fp-d.txt fmax.d mask=0x01090000	
+#0x01090000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fmax.d  drD, drJ, drK          is op15_31=0x212 & drD & drJ & drK {
+	local jval = drJ;
+	local kval = drK;
+	local test = jval f>= kval;
+	drD = (zext(test) * jval) + (zext(!test) * kval);
+}
+
+
+#la-fp-d.txt fmin.d mask=0x010b0000	
+#0x010b0000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fmin.d  drD, drJ, drK          is op15_31=0x216 & drD & drJ & drK {
+	local jval = drJ;
+	local kval = drK;
+	local test = jval f<= kval;
+	drD = (zext(test) * jval) + (zext(!test) * kval);
+}
+
+
+#la-fp-d.txt fmaxa.d mask=0x010d0000	
+#0x010d0000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fmaxa.d  drD, drJ, drK         is op15_31=0x21a & drD & drJ & drK {
+	local jval = drJ;
+	local kval = drK;
+	local test = (abs(jval) f>= abs(kval));
+	drD = (zext(test) * jval) + (zext(!test) * kval);
+}
+
+
+#la-fp-d.txt fmina.d mask=0x010f0000	
+#0x010f0000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fmina.d  drD, drJ, drK         is op15_31=0x21e & drD & drJ & drK {
+	local jval = drJ;
+	local kval = drK;
+	local test = (abs(jval) f<= abs(kval));
+	drD = (zext(test) * jval) + (zext(!test) * kval);
+}
+
+
+#la-fp-d.txt fscaleb.d mask=0x01110000	
+#0x01110000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fscaleb.d  drD, drJ, drK       is op15_31=0x222 & drD & drJ & drK {
+	drD = f_scaleb(drJ, drK);
+}
+
+
+#la-fp-d.txt fcopysign.d mask=0x01130000	
+#0x01130000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fcopysign.d  drD, drJ, drK     is op15_31=0x226 & drD & drJ & drK {
+	local kval = drK & 0x8000000000000000;
+	local jval = drJ & 0x7fffffffffffffff;
+	drD = kval | jval ;
+}
+
+
+#la-fp-d.txt fabs.d mask=0x01140800	
+#0x01140800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fabs.d  drD, drJ               is op10_31=0x4502 & drD & drJ {
+	drD = abs(drJ);
+}
+
+
+#la-fp-d.txt fneg.d mask=0x01141800	
+#0x01141800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fneg.d  drD, drJ               is op10_31=0x4506 & drD & drJ {
+	drD = f- drJ;
+}
+
+
+#la-fp-d.txt flogb.d mask=0x01142800	
+#0x01142800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:flogb.d  drD, drJ              is op10_31=0x450a & drD & drJ {
+	drD = f_logb(drJ);
+}
+
+
+#la-fp-d.txt fclass.d mask=0x01143800	
+#0x01143800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fclass.d  drD, drJ             is op10_31=0x450e & drD & drJ {
+	drD = f_class(drD, drJ);
+}
+
+
+#la-fp-d.txt fsqrt.d mask=0x01144800	
+#0x01144800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fsqrt.d  drD, drJ              is op10_31=0x4512 & drD & drJ {
+	drD = sqrt(drJ);
+}
+
+
+#la-fp-d.txt frecip.d mask=0x01145800	
+#0x01145800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:frecip.d  drD, drJ             is op10_31=0x4516 & drD & drJ {
+	local one:4 = 1;
+	drD = int2float(one) f/ drJ;
+}
+
+#la-fp-d.txt frsqrt.d mask=0x01146800	
+#0x01146800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:frsqrt.d  drD, drJ             is op10_31=0x451a & drD & drJ {
+	local one:4 = 1;
+	drD = int2float(one) f/ sqrt(drJ);
+}
+
+#la-fp-d.txt fmov.d mask=0x01149800	
+#0x01149800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fmov.d  drD, drJ               is op10_31=0x4526 & drD & drJ {
+	drD = drJ;
+}
+
+@ifdef LA64
+#la-fp-d.txt movgr2fr.d mask=0x0114a800	
+#0x0114a800	0xfffffc00	f0:5, r5:5	['freg0_5_s0', 'reg5_5_s0']
+:movgr2fr.d  drD, RJsrc         is op10_31=0x452a & drD & RJsrc {
+	drD = RJsrc;
+}
+
+
+#la-fp-d.txt movfr2gr.d mask=0x0114b800	
+#0x0114b800	0xfffffc00	r0:5, f5:5	['reg0_5_s0', 'freg5_5_s0']
+:movfr2gr.d  RD, drJ            is op10_31=0x452e & RD & drJ {
+	RD = drJ;
+}
+
+@endif
+
+#la-fp-d.txt fcvt.s.d mask=0x01191800	
+#0x01191800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fcvt.s.d  drD, drJ             is op10_31=0x4646 & drD & drJ & frD {
+	frD = float2float(drJ);
+}
+
+#la-fp-d.txt fcvt.d.s mask=0x01192400	
+#0x01192400	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:fcvt.d.s  drD, drJ             is op10_31=0x4649 & drD & drJ & frJ {
+	drD = float2float(frJ);
+}
+
+
+#la-fp-d.txt ftintrm.w.d mask=0x011a0800	
+#0x011a0800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrm.w.d  drD, drJ          is op10_31=0x4682 & drD & drJ {
+	local val:4 = trunc(drJ);
+	drD = zext(val);
+}
+
+#la-fp-d.txt ftintrm.l.d mask=0x011a2800	
+#0x011a2800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrm.l.d  drD, drJ          is op10_31=0x468a & drD & drJ {
+	drD = trunc(drJ);
+}
+
+
+#la-fp-d.txt ftintrp.w.d mask=0x011a4800	
+#0x011a4800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrp.w.d  drD, drJ          is op10_31=0x4692 & drD & drJ {
+	local val:4 = trunc(drJ);
+	drD = zext(val);
+}
+
+#la-fp-d.txt ftintrp.l.d mask=0x011a6800	
+#0x011a6800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrp.l.d  drD, drJ          is op10_31=0x469a & drD & drJ {
+	drD = trunc(drJ);
+}
+
+
+#la-fp-d.txt ftintrz.w.d mask=0x011a8800	
+#0x011a8800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrz.w.d  drD, drJ          is op10_31=0x46a2 & drD & drJ {
+	local val:4 = trunc(drJ);
+	drD = zext(val);
+}
+
+#la-fp-d.txt ftintrz.l.d mask=0x011aa800	
+#0x011aa800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrz.l.d  drD, drJ          is op10_31=0x46aa & drD & drJ {
+	drD = trunc(drJ);
+}
+
+
+#la-fp-d.txt ftintrne.w.d mask=0x011ac800	
+#0x011ac800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrne.w.d  drD, drJ         is op10_31=0x46b2 & drD & drJ {
+	local val:4 = round_even(drJ);
+	drD = zext(val);
+}
+
+#la-fp-d.txt ftintrne.l.d mask=0x011ae800	
+#0x011ae800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftintrne.l.d  drD, drJ         is op10_31=0x46ba & drD & drJ {
+	drD = round_even(drJ);
+}
+
+
+#la-fp-d.txt ftint.w.d mask=0x011b0800	
+#0x011b0800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftint.w.d  drD, drJ            is op10_31=0x46c2 & drD & drJ {
+	local val:4 = trunc(drJ);
+	drD = zext(val);
+}
+
+#la-fp-d.txt ftint.l.d mask=0x011b2800	
+#0x011b2800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ftint.l.d  drD, drJ            is op10_31=0x46ca & drD & drJ {
+	drD = trunc(drJ);
+}
+
+
+#la-fp-d.txt ffint.d.w mask=0x011d2000	
+#0x011d2000	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ffint.d.w  drD, drJ            is op10_31=0x4748 & drD & drJ & frJ {
+	drD = int2float(frJ);
+}
+
+#la-fp-d.txt ffint.d.l mask=0x011d2800	
+#0x011d2800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:ffint.d.l  drD, drJ            is op10_31=0x474a & drD & drJ {
+	drD = int2float(drJ);
+}
+
+
+#la-fp-d.txt frint.d mask=0x011e4800	
+#0x011e4800	0xfffffc00	f0:5, f5:5	['freg0_5_s0', 'freg5_5_s0']
+:frint.d  drD, drJ              is op10_31=0x4792 & drD & drJ {
+	local val:8 = trunc(drJ);
+	drD = int2float(val);
+}
+
+
+#la-fp-d.txt fmadd.d mask=0x08200000	
+#0x08200000	0xfff00000	f0:5, f5:5, f10:5, f15:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0', 'freg15_5_s0']
+:fmadd.d  drD, drJ, drK, drA    is op20_31=0x82 & drD & drJ & drK & drA {
+	drD = (drJ f* drK) f+ drA;
+}
+
+#la-fp-d.txt fmsub.d mask=0x08600000	
+#0x08600000	0xfff00000	f0:5, f5:5, f10:5, f15:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0', 'freg15_5_s0']
+:fmsub.d  drD, drJ, drK, drA    is op20_31=0x86 & drD & drJ & drK & drA {
+	drD = (drJ f* drK) f- drA;
+}
+
+#la-fp-d.txt fnmadd.d mask=0x08a00000	
+#0x08a00000	0xfff00000	f0:5, f5:5, f10:5, f15:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0', 'freg15_5_s0']
+:fnmadd.d  drD, drJ, drK, drA   is op20_31=0x8a & drD & drJ & drK & drA {
+	drD = f- ((drJ f* drK) f+ drA);
+}
+
+#la-fp-d.txt fnmsub.d mask=0x08e00000	
+#0x08e00000	0xfff00000	f0:5, f5:5, f10:5, f15:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0', 'freg15_5_s0']
+:fnmsub.d  drD, drJ, drK, drA   is op20_31=0x8e & drD & drJ & drK & drA {
+	drD = f- ((drJ f* drK) f- drA);
+}
+
+dSNaN: "c"  is ccf_s = 0 { }
+dSNaN: "s"  is ccf_s = 1 { }
+
+dcond: dSNaN^"af"   is ccf=0x0 & dSNaN { DCMPR = 0; }
+dcond: dSNaN^"lt"   is ccf=0x1 & dSNaN { DCMPR = DCMP1 f< DCMP2; }
+dcond: dSNaN^"eq"   is ccf=0x2 & dSNaN { DCMPR = DCMP1 f== DCMP2; }
+dcond: dSNaN^"le"   is ccf=0x3 & dSNaN { DCMPR = DCMP1 f<= DCMP2; }
+dcond: dSNaN^"un"   is ccf=0x4 & dSNaN { DCMPR = nan(DCMP1) || nan(DCMP2); }
+dcond: dSNaN^"ult"  is ccf=0x5 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f< DCMP2); }
+dcond: dSNaN^"ueq"  is ccf=0x6 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f== DCMP2); }
+dcond: dSNaN^"ule"  is ccf=0x7 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f<= DCMP2); }
+dcond: dSNaN^"ne"   is ccf=0x8 & dSNaN { DCMPR = DCMP1 f!= DCMP2; }
+dcond: dSNaN^"or"   is ccf=0xa & dSNaN { DCMPR = !(nan(DCMP1) || nan(DCMP2)); }
+dcond: dSNaN^"une"  is ccf=0xc & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f!= DCMP2); }
+
+#la-fp-d.txt fcmp.caf.d mask=0x0c200000	
+#0x0c200000	0xffff8018	c0:3, f5:5, f10:5	['fcc0_3_s0', 'freg5_5_s0', 'freg10_5_s0']
+:fcmp.^dcond^".d"  fccD, drJ, drK  is op20_31=0xc2 & dcond & op3_4 = 0 & fccD & drJ & drK {
+	DCMP1 = drJ;
+	DCMP2 = drK;
+	build dcond;
+	fccD = DCMPR;
+}
+
+
+#la-fp-d.txt fld.d mask=0x2b800000	
+#0x2b800000	0xffc00000	f0:5, r5:5, so10:12	['freg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:fld.d  drD, ldst_addr          is op22_31=0xae & drD & ldst_addr {
+	drD = sext(*[ram]:8 ldst_addr);
+}
+
+
+#la-fp-d.txt fst.d mask=0x2bc00000	
+#0x2bc00000	0xffc00000	f0:5, r5:5, so10:12	['freg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:fst.d  drD, ldst_addr          is op22_31=0xaf & drD & ldst_addr {
+	*[ram]:8 ldst_addr = drD;
+}
+
+
+#la-fp-d.txt fldx.d mask=0x38340000	
+#0x38340000	0xffff8000	f0:5, r5:5, r10:5	['freg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:fldx.d  drD, ldstx_addr        is op15_31=0x7068 & drD & ldstx_addr {
+	drD = *[ram]:8 ldstx_addr;
+}
+
+
+#la-fp-d.txt fstx.d mask=0x383c0000	
+#0x383c0000	0xffff8000	f0:5, r5:5, r10:5	['freg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:fstx.d  drD, ldstx_addr        is op15_31=0x7078 & drD & ldstx_addr {
+	*[ram]:8 ldstx_addr = drD;
+}
+
+#la-bound-fp-d.txt fldgt.d mask=0x38748000	
+#0x38748000	0xffff8000	f0:5,r5:5,r10:5	['freg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:fldgt.d  drD, RJsrc, RKsrc     is op15_31=0x70e9 & drD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	drD = sext(*[ram]:8 vaddr);
+}
+
+
+#la-bound-fp-d.txt fldle.d mask=0x38758000	
+#0x38758000	0xffff8000	f0:5,r5:5,r10:5	['freg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:fldle.d  drD, RJsrc, RKsrc     is op15_31=0x70eb & drD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	drD = sext(*[ram]:8 vaddr);
+}
+
+define pcodeop fstgt.d;
+
+#la-bound-fp-d.txt fstgt.d mask=0x38768000	
+#0x38768000	0xffff8000	f0:5,r5:5,r10:5	['freg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:fstgt.d  drD, RJsrc, RKsrc     is op15_31=0x70ed & drD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <store>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:8 vaddr = drD;
+}
+
+define pcodeop fstle.d;
+
+#la-bound-fp-d.txt fstle.d mask=0x38778000	
+#0x38778000	0xffff8000	f0:5,r5:5,r10:5	['freg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:fstle.d  drD, RJsrc, RKsrc     is op15_31=0x70ef & drD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <store>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:8 vaddr = drD;
+}
+
+

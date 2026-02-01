@@ -995,7 +995,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 @Test
     public void testAddReference() throws Exception {
 		Reference ref1 =
-			refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED,
+			refMgr.addMemoryReference(addr(512), addr(256), RefType.DATA, SourceType.USER_DEFINED,
 				2);
 		assertTrue(ref1.isPrimary());
 
@@ -1005,7 +1005,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(ref);
 		assertEquals(addr(512), ref.getFromAddress());
 		assertEquals(addr(256), ref.getToAddress());
-		assertEquals(RefType.FLOW, ref.getReferenceType());
+		assertEquals(RefType.DATA, ref.getReferenceType());
 		assertTrue(ref.isMemoryReference());
 		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
 		assertTrue(!ref.isPrimary());
@@ -1037,6 +1037,50 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(ref.isMemoryReference());
 		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
 		assertTrue(ref.isPrimary());
+		
+		// setting to DATA, should still be READ_WRITE
+		ref2 = refMgr.addMemoryReference(addr(512), addr(256), RefType.DATA, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(256), 2);
+		assertEquals(ref2, ref);
+		assertEquals(RefType.READ_WRITE, ref.getReferenceType());
+		
+		// test add of flow over data, FLOW should prevail
+		ref2 = refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(256), 2);
+		assertEquals(RefType.FLOW, ref.getReferenceType());
+		
+		// test add of flow over data, flow should prevail
+		ref2 = refMgr.addMemoryReference(addr(512), addr(256), RefType.UNCONDITIONAL_CALL, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(256), 2);
+		assertEquals(RefType.UNCONDITIONAL_CALL, ref.getReferenceType());
+		
+		// test add of READ over FLOW, flow should prevail
+		ref2 = refMgr.addMemoryReference(addr(512), addr(256), RefType.READ_WRITE, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(256), 2);
+		assertEquals(RefType.UNCONDITIONAL_CALL, ref.getReferenceType());
+		
+		// test add of GOTO over CALL, changes to GOTO
+		ref2 = refMgr.addMemoryReference(addr(512), addr(256), RefType.UNCONDITIONAL_JUMP, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(256), 2);
+		assertEquals(RefType.UNCONDITIONAL_JUMP, ref.getReferenceType());
+		
+		// test generic flow will overwrite other flow
+		ref2 = refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(256), 2);
+		assertEquals(RefType.FLOW, ref.getReferenceType());
+		
+		// test adding of another reference to a different address does get added
+		ref2 = refMgr.addMemoryReference(addr(512), addr(257), RefType.DATA, SourceType.USER_DEFINED,2);
+		ref = refMgr.getReference(addr(512), addr(257), 2);
+		assertTrue(ref.isMemoryReference());
+		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
+		assertFalse("new ref no primary", ref.isPrimary());
+		assertEquals(RefType.DATA, ref.getReferenceType());
+		ref3 = refMgr.getReference(addr(512), addr(256), 2);
+		assertTrue("original ref still primary",ref3.isPrimary());
+		assertEquals(RefType.FLOW, ref3.getReferenceType());
+		assertEquals(addr(512), ref.getFromAddress());
+		assertEquals(addr(257), ref.getToAddress());		
 	}
 
 @Test

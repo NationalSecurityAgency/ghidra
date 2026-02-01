@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,8 +60,6 @@ ext.ghidraPath = files()
  * string will be returned.
  */
 def getGitRev(repoPath) { 
-        
-   println("getting git commit for $repoPath")
    
    // If the path doesn't exist, the exec command will fail before it can
    // even run the 'git' command, so short-circuit the whole thing here.
@@ -81,22 +79,19 @@ def getGitRev(repoPath) {
    // 'ignoreExitValue' attribute only applies to the return value of the 
    // command being executed (eg: git); it doesn't apply to the return value of
    // the exec command itself.
-   def stdout = new ByteArrayOutputStream()
    try {
-	   exec {
+	   def stdout = providers.exec {
 	      ignoreExitValue = true
 	      workingDir repoPath
 	      commandLine 'git', 'rev-parse', 'HEAD'
-	      standardOutput = stdout
-	   }
+	   }.standardOutput.asText.get().trim()
+	   
+	   return stdout
    }
    catch (Exception e) {
       println("ERROR: gradle exec failed to run 'git rev-parse': is git installed on this system?")
+      return ""
    }
-      
-   // Return the commit hash
-   println(stdout)
-   return stdout.toString().trim()
 }
 
 /*********************************************************************************
@@ -110,9 +105,9 @@ def getGitRev(repoPath) {
  *********************************************************************************/
 task createJavadocs(type: Javadoc, description: 'Generate javadocs for all projects', group: 'Documentation') {
 	
-	destinationDir file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
+	destinationDir = file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
 	
-	failOnError false
+	failOnError = false
 
 	// the "source" property must be set in individual project's build.gradle files.
 	// projects that want to be included in the Jsondocs should add the following to 
@@ -123,15 +118,27 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 		
 	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
 	// find referenced classes.
-	classpath =  rootProject.ext.ghidraPath
+	classpath = rootProject.ext.ghidraPath
 
-	// generate documentation using html5
+	// Generate documentation using html5
 	options.addBooleanOption("html5", true)
 
-	options.addBooleanOption('Xdoclint:none', true)
+	// Control what warnings appear
+	options.addBooleanOption('Xdoclint:html', true)
+	options.addBooleanOption('Xdoclint:syntax', true)
+	options.addBooleanOption('Xdoclint:reference', true)
+	//options.addBooleanOption('Xdoclint:accessibility', true)
+	//options.addBooleanOption('Xdoclint:missing', true)
 	
 	// Some internal packages are not public and need to be exported.
 	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
+	
+	// Have to manually add these in for some reason
+	options.tags = [
+		'apiNote:a:API Notes:',
+		'implSpec:a:Implementation Requirements:',
+		'implNote:a:Implementation Notes:'
+    ]
 }
 
 
@@ -152,24 +159,23 @@ configurations {
 }
 
 dependencies {
-	jsondoc project('JsonDoclet')
+	jsondoc project('Doclets')
 }
 
  
 task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all projects', group: 'Documentation') {
 	
-	group 'private'
+	group = 'private'
 	
 	String ROOT_PROJECT_DIR = rootProject.projectDir.toString()
 	
-	destinationDir file(ROOT_PROJECT_DIR + "/build/tmp/jsondoc")
+	destinationDir = file(ROOT_PROJECT_DIR + "/build/tmp/jsondoc")
 	
-	failOnError false
-		
-	
+	failOnError = false
+
 	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
 	// find referenced classes.
-	classpath =  rootProject.ext.ghidraPath
+	classpath = rootProject.ext.ghidraPath
 
 	// the "source" property must be set in individual project's build.gradle files.
 	// projects that want to be included in the Jsondocs should add the following to 
@@ -178,7 +184,6 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	//	apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 	//
 	
-
 	// Generate at package level because user may try to get help directly on an object they have 
 	// rather than its public interface.
 	options.addBooleanOption("package", true)
@@ -190,11 +195,124 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Some internal packages are not public and need to be exported.
 	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
 
-	options.doclet = "JsonDoclet"
+	options.doclet = "ghidra.doclets.json.JsonDoclet"
 	doFirst {
 		options.docletpath = new ArrayList(configurations.jsondoc.files)
 	}
 }
+
+task createPythonTypeStubs(type: Javadoc, description: 'Generate pyi stubs for all projects', group: 'Documentation') {
+
+	group = 'private'
+
+	String ROOT_PROJECT_DIR = rootProject.projectDir.toString()
+
+	destinationDir = file(ROOT_PROJECT_DIR + "/build/typestubs/src")
+
+	failOnError = false
+
+	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
+	// find referenced classes.
+	classpath = rootProject.ext.ghidraPath
+
+	// Generate at package level because user may try to get help directly on an object they have
+	// rather than its public interface.
+	options.addBooleanOption("package", true)
+
+	// Set the ghidra flag to enable the creation of the ghidra_builtins pseudo package
+	options.addBooleanOption("ghidra", true)
+	
+	// Newer versions of gradle set this to true by default.
+	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
+	options.setNoTimestamp(false)
+
+	// Some internal packages are not public and need to be exported.
+	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
+
+	options.doclet = "ghidra.doclets.typestubs.PythonTypeStubDoclet"
+	doFirst {
+		options.docletpath = new ArrayList(configurations.jsondoc.files)
+	}
+}
+
+
+task createGhidraStubsWheel {
+	group = 'private'
+	description = "Creates the ghidra-stubs wheel for the Ghidra api.  [gradle/root/distribution.gradle]"
+
+	dependsOn("createPythonTypeStubs")
+
+	def typestubsDir = file("${ROOT_PROJECT_DIR}/build/typestubs").getAbsolutePath()
+	def distDir = file("${typestubsDir}/dist").getAbsolutePath()
+
+	it.outputs.file("${distDir}/ghidra_stubs-${project.version}-py3-none-any.whl")
+	
+	def p = project
+	def debuggerRmiTraceProject = project(":Debugger-rmi-trace")
+
+	doFirst {
+		copy {
+			from(file("${ROOT_PROJECT_DIR}/LICENSE"))
+			into typestubsDir
+		}
+		
+		copy {
+			from("${ROOT_PROJECT_DIR}/GhidraBuild/BuildFiles/Doclets/support/GhidraStubs_README.md")
+			into typestubsDir
+			rename "GhidraStubs_README.md", "README.md"
+		}
+
+		def manifest = file("${typestubsDir}/MANIFEST.in")
+		manifest.write("graft src\n")
+
+		def pyproject = file("${typestubsDir}/pyproject.toml" )
+		pyproject.write("""\
+			[build-system]
+			requires = ["setuptools", "wheel"]
+			build-backend = "setuptools.build_meta"
+
+			[project]
+			name = "ghidra-stubs"
+			version = "${p.version}"
+			dynamic = ["readme"]
+			description = "Ghidra Type Stubs"
+			license = {text = "Apache-2.0"}
+			maintainers = [
+				{name = "Ghidra Development Team"},
+			]
+			keywords = [
+				"ghidra",
+			]
+			classifiers = [
+				"License :: OSI Approved :: Apache Software License",
+				"Typing :: Stubs Only",
+			]
+			
+			[tool.setuptools.dynamic]
+			readme = {file = ["README.md"], content-type = "text/markdown"}
+			""".stripIndent()
+		)
+	}
+
+	doLast {
+		File setuptools = debuggerRmiTraceProject.findPyDep(".")
+		
+		if (PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+		
+		def exec = providers.exec {
+			workingDir { typestubsDir }
+			ignoreExitValue = true
+			commandLine PYTHON3
+			args "-m", "pip", "wheel", "-w", distDir, "--no-index", "-f", setuptools, "."
+		}
+		if (exec.result.get().exitValue != 0) {
+			throw new GradleException(exec.standardError.asText.get().strip())
+		}
+	}
+}
+
 
 /*********************************************************************************
  * JAVADOCS - ZIP
@@ -205,7 +323,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
  *
  *********************************************************************************/
 task zipJavadocs(type: Zip) {
-	group 'private'
+	group = 'private'
 	archiveFileName = 'GhidraAPI_javadoc.zip'	
 	destinationDirectory = file(rootProject.projectDir.toString() + "/build/tmp")
 
@@ -217,7 +335,7 @@ task zipJavadocs(type: Zip) {
 		into "api"
 	}
 	
-	description "Zips javadocs for Ghidra api.  [gradle/root/distribution.gradle]"
+	description = "Zips javadocs for Ghidra api.  [gradle/root/distribution.gradle]"
 }
 
 
@@ -234,12 +352,12 @@ task assembleDistribution (type: Copy) {
 	// every other time it is run even though in both cases the output directory has been removed
 	outputs.upToDateWhen {false}
 
-	group 'private'
-	description "Copies core files/folders to the distribution location."
-	destinationDir file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
+	group = 'private'
+	description = "Copies core files/folders to the distribution location."
+	destinationDir = file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
 
 	// Make sure that we don't try to copy the same file with the same path.
-	duplicatesStrategy 'exclude'
+	duplicatesStrategy = 'exclude'
 			
 	exclude "**/certification.manifest"
 	exclude "**/certification.local.manifest"
@@ -338,6 +456,19 @@ task assembleDistribution (type: Copy) {
 	from (zipJavadocs) {
 		into 'docs'
 	}
+
+	////////////////////////////
+	// Ghidra Python type stubs
+	////////////////////////////
+	from ("${ROOT_PROJECT_DIR}/build/typestubs/src") {
+		into 'docs/ghidra_stubs/typestubs'
+	}
+	from ("${ROOT_PROJECT_DIR}/build/typestubs/pypredef") {
+		into 'docs/ghidra_stubs/pypredef'
+	}
+	from (createGhidraStubsWheel) {
+		into 'docs/ghidra_stubs'
+	}
 	
 	////////////////
 	// Patch Readme
@@ -347,11 +478,11 @@ task assembleDistribution (type: Copy) {
 	}
 	
 	/////////////////////////////////
-	// Distro native build support
+	// Eclipse formatters
 	/////////////////////////////////
-	from (ROOT_PROJECT_DIR + "/GPL") {
-		include "settings.gradle"
-		into "Ghidra"
+	from (ROOT_PROJECT_DIR + "/eclipse") {
+		exclude "certification.manifest"
+		into "support/eclipse"
 	}
 
 	//////////////////////////////////////
@@ -385,14 +516,13 @@ project.PLATFORMS.each { platform ->
 		delete rootProject.file("build/tmp/expandedArchives")
 		
 		
-		group 'private'
-		description "Copies the platform-dependent files/folders to the distribution location."
-		destinationDir file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
+		group = 'private'
+		description = "Copies the platform-dependent files/folders to the distribution location."
+		destinationDir = file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
 				
 		// Make sure that we don't try to copy the same file with the same path into the
 		// zip (this can happen!)
-		duplicatesStrategy 'exclude'
-			
+		duplicatesStrategy = 'exclude'
 	}
 }
 
@@ -402,12 +532,39 @@ project.PLATFORMS.each { platform ->
  *
  **********************************************************************************/
 task assembleSource (type: Copy) {
-	group 'private'
-	description "Copies source zips for all core projects to the distribution folder"
-	destinationDir DISTRIBUTION_DIR
+	group = 'private'
+	description = "Copies source zips for all core projects to the distribution folder"
+	destinationDir = DISTRIBUTION_DIR
 	
 }
 
+/************************************************************************************
+ *
+ * Copies a markdown file and a generaterated html file into the distribution folder.
+ *
+ ************************************************************************************/
+task assembleMarkdownToHtml (type: Copy) {
+	group = 'private'
+	description = "Copies a markdown file and a generaterated html file into the distribution folder"
+	
+	dependsOn ':MarkdownSupport:classes'
+	outputs.upToDateWhen {false}
+	destinationDir = file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
+	
+	def markdownSuppportProject = project(':MarkdownSupport')
+	
+	eachFile { f ->
+		def htmlName = f.sourceName[0..-3] + "html"
+		def htmlPath = f.relativePath.replaceLastName(htmlName).pathString 
+		
+		providers.javaexec {		
+			classpath = markdownSuppportProject.sourceSets.main.runtimeClasspath
+			mainClass = 'ghidra.markdown.MarkdownToHtml'
+			args f.file
+			args file("${destinationDir.path}/${htmlPath}")
+		}.result.get()
+	}
+}
 
 /*********************************************************************************
  * 
@@ -416,20 +573,16 @@ task assembleSource (type: Copy) {
  **********************************************************************************/
 task createExternalExtensions(type: Copy) {
 	
-	group 'private'
-	description "Creates directory of extensions that are external to the installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
+	group = 'private'
+	description = "Creates directory of extensions that are external to the installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
 	
 	dependsOn assembleSource
 	
-	destinationDir new File(DISTRIBUTION_DIR.getPath(), "external_extensions")
+	destinationDir = new File(DISTRIBUTION_DIR.getPath(), "external_extensions")
 	
 	// Make sure that we don't try to copy the same file with the same path.
-	duplicatesStrategy 'exclude'
+	duplicatesStrategy = 'exclude'
 	
-	doLast {
-		delete file(DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX)
-	}
-			
 }
 
 import groovy.io.FileType
@@ -478,44 +631,30 @@ def updateSlaFilesTimestamp(String distributionDirectoryPath, int timeOffsetMinu
 		}
 	}
 
-	println "updateSlaFilesTimestamp: Updated timestamps to $numFilesAdded .sla files."
+	//println "updateSlaFilesTimestamp: Updated timestamps to $numFilesAdded .sla files."
 }
 
 /*********************************************************************************
- * 
- * Creates the local installation zip.
+ *
+ * Assemble all targets.
  *
  **********************************************************************************/
-task createInstallationZip(type: Zip) { t ->
-	
-	group 'private'
-	description "Creates local installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
-	
+task assembleAll() {
+
+	group = 'private'
+	description = "Assembles all targets to one installation directory (does not clean up artifacts) [gradle/root/distribution.gradle]"
+
 	dependsOn assembleDistribution
 	dependsOn assembleSource
+	dependsOn assembleMarkdownToHtml
 	dependsOn "assembleDistribution_$currentPlatform"
-	
+
 	if (project.hasProperty("allPlatforms")) {
 		project.PLATFORMS.each { platform ->
 			dependsOn ":assembleDistribution_${platform.name}"
 		}
 	}
 
-	if (project.hasProperty("allPlatforms")) {
-		archiveFileName = "${ZIP_NAME_PREFIX}.zip"
-	}
-	else {
-		archiveFileName = "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
-	}
-	destinationDirectory = DISTRIBUTION_DIR
-	
-	// Make sure that we don't try to copy the same file with the same path.
-	duplicatesStrategy 'exclude'
-
-	from (DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX) {
-		into ZIP_DIR_PREFIX
-	}
-		
 	doFirst {
 		// We always want the extensions directory to exist in the zip, even if there's nothing
 		// installed there.
@@ -530,6 +669,34 @@ task createInstallationZip(type: Zip) { t ->
 		// two minutes.
 		updateSlaFilesTimestamp(DISTRIBUTION_DIR.getPath(), 2)
 	}
+}
+
+/*********************************************************************************
+ *
+ * Creates the local installation zip.
+ *
+ **********************************************************************************/
+task createInstallationZip(type: Zip) { t ->
+
+	group = 'private'
+	description = "Creates local installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
+
+	dependsOn assembleAll
+
+	if (project.hasProperty("allPlatforms")) {
+		archiveFileName = "${ZIP_NAME_PREFIX}.zip"
+	}
+	else {
+		archiveFileName = "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
+	}
+	destinationDirectory = DISTRIBUTION_DIR
+
+	// Make sure that we don't try to copy the same file with the same path.
+	duplicatesStrategy = 'exclude'
+
+	from (DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX) {
+		into ZIP_DIR_PREFIX
+	}
 	
 	doLast {
 		delete file(DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX)
@@ -543,7 +710,7 @@ task createInstallationZip(type: Zip) { t ->
  *
  **********************************************************************************/
 task buildGhidra() {
-	description "Builds Ghidra for the current platform. The resulting zip will be in build/dist"
+	description = "Builds Ghidra for the current platform. The resulting zip will be in build/dist"
 
 	if (project.hasProperty("externalExtensions")) {
 		dependsOn createExternalExtensions

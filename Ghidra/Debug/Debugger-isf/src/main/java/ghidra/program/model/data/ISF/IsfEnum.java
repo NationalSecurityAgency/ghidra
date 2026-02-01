@@ -19,13 +19,14 @@ import com.google.gson.JsonObject;
 
 import ghidra.program.model.data.Enum;
 
-public class IsfEnum implements IsfObject {
+public class IsfEnum extends AbstractIsfObject {
 
 	public Integer size;
 	public String base;
 	public JsonObject constants = new JsonObject();
 
 	public IsfEnum(Enum enumm) {
+		super(enumm);
 		size = enumm.getLength();
 		base = "int";
 		String[] names = enumm.getNames();

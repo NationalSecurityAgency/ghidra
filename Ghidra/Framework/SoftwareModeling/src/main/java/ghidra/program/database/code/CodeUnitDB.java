@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import db.DBRecord;
 import ghidra.program.database.*;
+import ghidra.program.database.references.ReferenceDBManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.lang.*;
@@ -48,7 +49,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	protected long addr;
 	protected Address endAddr;
 	protected int length;
-	protected ReferenceManager refMgr;
+	protected ReferenceDBManager refMgr;
 	protected ProgramDB program;
 
 	private DBRecord commentRec;
@@ -64,7 +65,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	 * @param cacheKey the cache key (dataComponent does not use the address)
 	 * @param address min address of this code unit
 	 * @param addr index for min address
-	 * @param the length of the codeunit.
+	 * @param length the length of the codeunit.
 	 */
 	public CodeUnitDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> cache, long cacheKey,
 			Address address, long addr, int length) {
@@ -95,21 +96,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	/**
-	 * Check this code units validity when the lock/checkIsValid is not used and refresh if necessary.
-	 */
-	protected void refreshIfNeeded() {
-		if (isInvalid()) {
-			lock.acquire();
-			try {
-				refresh();
-			}
-			finally {
-				lock.release();
-			}
-		}
-	}
-
-	/**
 	 * Perform any refresh necessary and determine if this code unit has been deleted.
 	 * If a record has been provided, it may be used to facilitate a refresh without
 	 * performing a record query from the database
@@ -121,7 +107,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public void addMnemonicReference(Address refAddr, RefType refType, SourceType sourceType) {
-		refreshIfNeeded();
+		validate(lock);
 		refMgr.addMemoryReference(address, refAddr, refType, sourceType, MNEMONIC);
 	}
 
@@ -133,13 +119,12 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public void addOperandReference(int opIndex, Address refAddr, RefType type,
 			SourceType sourceType) {
-		refreshIfNeeded();
+		validate(lock);
 		refMgr.addMemoryReference(address, refAddr, type, sourceType, opIndex);
 	}
 
 	@Override
 	public int compareTo(Address a) {
-		refreshIfNeeded();
 		if (contains(a)) {
 			return 0;
 		}
@@ -148,13 +133,13 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public boolean contains(Address testAddr) {
-		refreshIfNeeded();
+		validate(lock);
 		return address.compareTo(testAddr) <= 0 && testAddr.compareTo(getMaxAddress()) <= 0;
 	}
 
 	@Override
 	public String getAddressString(boolean showBlockName, boolean pad) {
-		refreshIfNeeded();
+		validate(lock);
 		Address cuAddress = address;
 		String addressString = cuAddress.toString(false, pad);
 		if (showBlockName) {
@@ -205,7 +190,10 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public String getComment(int commentType) {
+	public String getComment(CommentType commentType) {
+		if (commentType == null) {
+			return null;
+		}
 		lock.acquire();
 		try {
 			checkIsValid();
@@ -215,7 +203,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 			if (commentRec == null) {
 				return null;
 			}
-			return commentRec.getString(commentType);
+			return commentRec.getString(commentType.ordinal());
 		}
 		finally {
 			lock.release();
@@ -223,14 +211,14 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public String[] getCommentAsArray(int commentType) {
+	public String[] getCommentAsArray(CommentType commentType) {
 		String comment = getComment(commentType);
 		return StringUtilities.toLines(comment);
 	}
 
 	@Override
 	public ExternalReference getExternalReference(int opIndex) {
-		refreshIfNeeded();
+		validate(lock);
 		Reference[] refs = refMgr.getReferencesFrom(address, opIndex);
 		for (Reference element : refs) {
 			if (element.isExternalReference()) {
@@ -248,7 +236,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 			throw NoValueException.noValueException;
 		}
 		try {
-			refreshIfNeeded();
+			validate(lock);
 			return pm.getInt(address);
 		}
 		catch (ConcurrentModificationException e) {
@@ -258,15 +246,11 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public String getLabel() {
-		refreshIfNeeded();
+		validate(lock);
 		SymbolTable st = codeMgr.getSymbolTable();
 		Symbol symbol = st.getPrimarySymbol(address);
 		if (symbol != null) {
-			try {
-				return symbol.getName();
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			return symbol.getName();
 		}
 		return null;
 	}
@@ -278,7 +262,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public Address getMaxAddress() {
-		refreshIfNeeded();
+		validate(lock);
 		if (endAddr == null) {
 			endAddr = getLength() == 0 ? address : address.add(getLength() - 1);
 		}
@@ -287,20 +271,19 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public Address getMinAddress() {
-		refreshIfNeeded();
+		validate(lock);
 		return address;
 	}
 
 	@Override
 	public Address getAddress() {
-		// TODO: Not sure why this method exists?
-		refreshIfNeeded();
+		validate(lock);
 		return address;
 	}
 
 	@Override
 	public Reference[] getMnemonicReferences() {
-		refreshIfNeeded();
+		validate(lock);
 		return refMgr.getReferencesFrom(address, MNEMONIC);
 	}
 
@@ -309,31 +292,27 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		ObjectPropertyMap<?> pm = upm.getObjectPropertyMap(name);
 		if (pm != null) {
-			try {
-				refreshIfNeeded();
-				return pm.get(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.get(address);
 		}
 		return null;
 	}
 
 	@Override
 	public Reference[] getOperandReferences(int opIndex) {
-		refreshIfNeeded();
+		validate(lock);
 		return refMgr.getReferencesFrom(address, opIndex);
 	}
 
 	@Override
 	public Reference getPrimaryReference(int index) {
-		refreshIfNeeded();
+		validate(lock);
 		return refMgr.getPrimaryReferenceFrom(address, index);
 	}
 
 	@Override
 	public Symbol getPrimarySymbol() {
-		refreshIfNeeded();
+		validate(lock);
 		SymbolTable st = codeMgr.getSymbolTable();
 		return st.getPrimarySymbol(address);
 	}
@@ -345,13 +324,13 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public Reference[] getReferencesFrom() {
-		refreshIfNeeded();
+		validate(lock);
 		return refMgr.getReferencesFrom(address);
 	}
 
 	@Override
 	public ReferenceIterator getReferenceIteratorTo() {
-		refreshIfNeeded();
+		validate(lock);
 		return program.getReferenceManager().getReferencesTo(address);
 	}
 
@@ -360,19 +339,15 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		StringPropertyMap pm = upm.getStringPropertyMap(name);
 		if (pm != null) {
-			try {
-				refreshIfNeeded();
-				return pm.getString(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.getString(address);
 		}
 		return null;
 	}
 
 	@Override
 	public Symbol[] getSymbols() {
-		refreshIfNeeded();
+		validate(lock);
 		SymbolTable st = codeMgr.getSymbolTable();
 		return st.getSymbols(address);
 	}
@@ -382,12 +357,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		VoidPropertyMap pm = upm.getVoidPropertyMap(name);
 		if (pm != null) {
-			try {
-				refreshIfNeeded();
-				return pm.hasProperty(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.hasProperty(address);
 		}
 		return false;
 	}
@@ -397,21 +368,10 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		PropertyMap<?> pm = upm.getPropertyMap(name);
 		if (pm != null) {
-			try {
-				refreshIfNeeded();
-				return pm.hasProperty(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.hasProperty(address);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
-		Address min = codeUnit.getMinAddress();
-
-		return this.getMaxAddress().isSuccessor(min);
 	}
 
 	@Override
@@ -430,7 +390,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public void removeMnemonicReference(Address refAddr) {
-		refreshIfNeeded();
+		validate(lock);
 		Reference ref = refMgr.getReference(address, refAddr, MNEMONIC);
 		if (ref != null) {
 			program.getReferenceManager().delete(ref);
@@ -439,7 +399,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public void removeOperandReference(int opIndex, Address refAddr) {
-		refreshIfNeeded();
+		validate(lock);
 		Reference ref = refMgr.getReference(address, refAddr, opIndex);
 		if (ref != null) {
 			program.getReferenceManager().delete(ref);
@@ -452,16 +412,17 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMap<?> pm = upm.getPropertyMap(name);
 		if (pm != null) {
 			try {
-				refreshIfNeeded();
+				validate(lock);
 				pm.remove(address);
 			}
 			catch (ConcurrentModificationException e) {
+				// ignore
 			}
 		}
 	}
 
 	@Override
-	public void setComment(int commentType, String comment) {
+	public void setComment(CommentType commentType, String comment) {
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -474,8 +435,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 					return;
 				}
 				try {
-					commentRec =
-						codeMgr.getCommentAdapter().createRecord(addr, commentType, comment);
+					commentRec = codeMgr.getCommentAdapter()
+							.createRecord(addr, commentType.ordinal(), comment);
 				}
 				catch (IOException e) {
 					codeMgr.dbError(e);
@@ -484,8 +445,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 				return;
 			}
 
-			String oldValue = commentRec.getString(commentType);
-			commentRec.setString(commentType, comment);
+			String oldValue = commentRec.getString(commentType.ordinal());
+			commentRec.setString(commentType.ordinal(), comment);
 			codeMgr.sendNotification(address, commentType, oldValue, comment);
 
 			for (int i = 0; i < CommentsDBAdapter.COMMENT_COL_COUNT; i++) {
@@ -508,7 +469,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public void setCommentAsArray(int commentType, String[] comment) {
+	public void setCommentAsArray(CommentType commentType, String[] comment) {
 		setComment(commentType, StringUtils.join(comment, '\n'));
 	}
 
@@ -613,7 +574,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public void setStackReference(int opIndex, int offset, SourceType sourceType, RefType refType) {
-		refreshIfNeeded();
+		validate(lock);
 		validateOpIndex(opIndex);
 		refMgr.addStackReference(address, opIndex, offset, refType, sourceType);
 	}
@@ -621,72 +582,61 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public void setRegisterReference(int opIndex, Register reg, SourceType sourceType,
 			RefType refType) {
-		refreshIfNeeded();
+		validate(lock);
 		validateOpIndex(opIndex);
 		refMgr.addRegisterReference(address, opIndex, reg, refType, sourceType);
 	}
 
 	@Override
 	public int getBytes(byte[] b, int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
-			populateByteArray();
-			if (offset < 0 || (offset + b.length) > bytes.length) {
-				return program.getMemory().getBytes(address.add(offset), b);
-			}
-			System.arraycopy(bytes, offset, b, 0, b.length);
+		validate(lock);
+		byte localBytes[] = populateByteArray();
+		if (offset >= 0 && (offset + b.length) <= localBytes.length) {
+			System.arraycopy(localBytes, offset, b, 0, b.length);
 			return b.length;
 		}
-		catch (AddressOutOfBoundsException | MemoryAccessException e) {
-			return 0;
+
+		try {
+			return program.getMemory().getBytes(address.add(offset), b);
 		}
-		finally {
-			lock.release();
+		catch (MemoryAccessException | AddressOutOfBoundsException e) {
+			return 0;
 		}
 	}
 
 	@Override
 	public byte[] getBytes() throws MemoryAccessException {
-		lock.acquire();
-		try {
-			checkIsValid();
-			populateByteArray();
-			int len = getLength();
-			byte[] b = new byte[len];
-			if (bytes.length < len) {
-				if (program.getMemory().getBytes(address, b) != len) {
-					throw new MemoryAccessException("Couldn't get all bytes for CodeUnit");
-				}
-			}
-			else {
-				System.arraycopy(bytes, 0, b, 0, b.length);
-			}
+		validate(lock);
+		byte localBytes[] = populateByteArray();
+		int locallen = getLength();
+		if (localBytes.length >= locallen) {
+			byte[] b = new byte[locallen];
+			System.arraycopy(localBytes, 0, b, 0, b.length);
 			return b;
 		}
-		finally {
-			lock.release();
+
+		int len = getLength();
+		byte[] b = new byte[len];
+
+		if (program.getMemory().getBytes(address, b) != len) {
+			throw new MemoryAccessException("Couldn't get all bytes for CodeUnit");
 		}
+		return b;
 	}
 
 	@Override
 	public byte getByte(int offset) throws MemoryAccessException {
-		lock.acquire();
-		try {
-			checkIsValid();
-			populateByteArray();
-			if (offset < 0 || offset >= bytes.length) {
-				try {
-					return program.getMemory().getByte(address.add(offset));
-				}
-				catch (AddressOutOfBoundsException e) {
-					throw new MemoryAccessException(e.getMessage());
-				}
-			}
-			return bytes[offset];
+		validate(lock);
+		byte localBytes[] = populateByteArray();
+		if (offset >= 0 && offset < localBytes.length) {
+			return localBytes[offset];
 		}
-		finally {
-			lock.release();
+
+		try {
+			return program.getMemory().getByte(address.add(offset));
+		}
+		catch (AddressOutOfBoundsException e) {
+			throw new MemoryAccessException(e.getMessage());
 		}
 	}
 
@@ -697,31 +647,31 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public BigInteger getValue(Register register, boolean signed) {
-		refreshIfNeeded();
+		validate(lock);
 		return programContext.getValue(register, address, signed);
 	}
 
 	@Override
 	public RegisterValue getRegisterValue(Register register) {
-		refreshIfNeeded();
+		validate(lock);
 		return programContext.getRegisterValue(register, address);
 	}
 
 	@Override
 	public void setValue(Register register, BigInteger value) throws ContextChangeException {
-		refreshIfNeeded();
+		validate(lock);
 		programContext.setValue(register, address, address, value);
 	}
 
 	@Override
 	public void clearRegister(Register register) throws ContextChangeException {
-		refreshIfNeeded();
+		validate(lock);
 		programContext.setValue(register, address, address, null);
 	}
 
 	@Override
 	public void setRegisterValue(RegisterValue value) throws ContextChangeException {
-		refreshIfNeeded();
+		validate(lock);
 		programContext.setRegisterValue(address, address, value);
 	}
 
@@ -742,7 +692,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public boolean hasValue(Register register) {
-		refreshIfNeeded();
+		validate(lock);
 		return programContext.getValue(register, address, false) != null;
 	}
 
@@ -791,24 +741,27 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		}
 	}
 
-	private void populateByteArray() {
-		if (bytes != null) {
-			return;
+	private byte[] populateByteArray() {
+		byte[] localBytes = bytes;
+		if (localBytes != null) {
+			return localBytes;
 		}
 		int cacheLength = getPreferredCacheLength();
-		bytes = new byte[cacheLength];
+		localBytes = new byte[cacheLength];
 		if (cacheLength != 0) {
 			int nbytes = 0;
 			try {
-				nbytes = program.getMemory().getBytes(address, bytes);
+				nbytes = program.getMemory().getBytes(address, localBytes);
 			}
 			catch (MemoryAccessException e) {
 				// ignore
 			}
-			if (nbytes != bytes.length) {
-				bytes = new byte[0];
+			if (nbytes != localBytes.length) {
+				localBytes = new byte[0];
 			}
 		}
+		bytes = localBytes;
+		return localBytes;
 	}
 
 	protected int getPreferredCacheLength() {
@@ -832,7 +785,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public void getBytesInCodeUnit(byte[] buffer, int bufferOffset) throws MemoryAccessException {
-		refreshIfNeeded();
+		validate(lock);
 		byte[] codeUnitBytes = getBytes();
 		System.arraycopy(codeUnitBytes, 0, buffer, bufferOffset,
 			Math.min(buffer.length, getLength()));

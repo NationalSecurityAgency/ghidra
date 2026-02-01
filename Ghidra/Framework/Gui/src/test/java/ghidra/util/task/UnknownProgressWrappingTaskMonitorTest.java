@@ -48,4 +48,53 @@ public class UnknownProgressWrappingTaskMonitorTest extends AbstractGenericTest 
 
 	}
 
+	@Test
+	public void testUPWTM_startAtZero() throws CancelledException {
+		UnknownProgressWrappingTaskMonitor upwtm =
+			new UnknownProgressWrappingTaskMonitor(new TaskMonitorAdapter(true) {
+				long max;
+				long progress;
+
+				@Override
+				public long getMaximum() {
+					return max;
+				}
+
+				@Override
+				public void setMaximum(long max) {
+					this.max = max;
+				}
+
+				@Override
+				public void initialize(long max) {
+					this.max = max;
+					progress = 0;
+				}
+
+				@Override
+				public void setProgress(long value) {
+					progress = value;
+				}
+
+				@Override
+				public void incrementProgress(long incrementAmount) {
+					progress += incrementAmount;
+				}
+
+				@Override
+				public long getProgress() {
+					return progress;
+				}
+			});
+		upwtm.initialize(0, "message");
+		assertEquals(0, upwtm.getProgress());
+		assertEquals(0, upwtm.getMaximum());
+
+		while (upwtm.getProgress() < 16) {
+			upwtm.increment();
+			assertTrue(upwtm.getMaximum() > upwtm.getProgress());
+		}
+
+	}
+
 }

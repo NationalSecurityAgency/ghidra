@@ -16,8 +16,10 @@
 package docking;
 
 import java.util.Iterator;
+import java.util.Set;
 
 import docking.action.DockingActionIf;
+import util.CollectionUtils;
 
 /**
  * A class that exists primarily to provide access to action-related package-level methods of the
@@ -84,5 +86,14 @@ public class ActionToGuiHelper {
 	 */
 	public void keyBindingsChanged() {
 		windowManager.scheduleUpdate();
+	}
+
+	public Set<DockingActionIf> getLocalActions(ComponentProvider provider) {
+		Iterator<DockingActionIf> actionIterator = windowManager.getComponentActions(provider);
+		return CollectionUtils.asSet(actionIterator);
+	}
+
+	public Set<DockingActionIf> getGlobalActions() {
+		return windowManager.getGlobalActions();
 	}
 }

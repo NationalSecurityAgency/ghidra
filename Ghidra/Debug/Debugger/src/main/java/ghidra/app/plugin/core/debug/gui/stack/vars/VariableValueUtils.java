@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@ import java.util.*;
 
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
@@ -40,14 +40,13 @@ import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
@@ -139,8 +138,7 @@ public enum VariableValueUtils {
 		}
 
 		@Override
-		protected Boolean evaluateLoad(Program program, PcodeOp op,
-				Map<Varnode, Boolean> already) {
+		protected Boolean evaluateLoad(Program program, PcodeOp op, Map<Varnode, Boolean> already) {
 			return evaluateVarnode(program, op.getInput(1), already);
 		}
 
@@ -181,8 +179,13 @@ public enum VariableValueUtils {
 		}
 
 		@Override
+		public boolean isImmutableSettings() {
+			return true;
+		}
+
+		@Override
 		public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-			return delegate.isChangeAllowed(settingsDefinition);
+			return false;
 		}
 
 		@Override
@@ -269,9 +272,10 @@ public enum VariableValueUtils {
 		RegisterValue spRV = regs.getValue(platform, viewSnap, sp);
 		Address spVal = cSpec.getStackBaseSpace().getAddress(spRV.getUnsignedValue().longValue());
 		Address max;
-		TraceMemoryRegion stackRegion = mem.getRegionContaining(coordinates.getSnap(), spVal);
+		long snap = coordinates.getSnap();
+		TraceMemoryRegion stackRegion = mem.getRegionContaining(snap, spVal);
 		if (stackRegion != null) {
-			max = stackRegion.getMaxAddress();
+			max = stackRegion.getMaxAddress(snap);
 		}
 		else {
 			long toMax = spVal.getAddressSpace().getMaxAddress().subtract(spVal);
@@ -363,15 +367,30 @@ public enum VariableValueUtils {
 	}
 
 	/**
+	 * Check if evaluation of the given varnode will require a frame
+	 * 
+	 * @param program the program containing the variable storage
+	 * @param varnode the varnode to evaluate
+	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
+	 *            {@link #collectSymbolStorage(ClangLine)}
+	 * @return true if a frame is required, false otherwise
+	 */
+	public static boolean requiresFrame(Program program, Varnode varnode,
+			AddressSetView symbolStorage) {
+		return new RequiresFrameEvaluator(symbolStorage).evaluateVarnode(program, varnode);
+	}
+
+	/**
 	 * Check if evaluation of the given p-code op will require a frame
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param op the op whose output to evaluation
 	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
 	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(PcodeOp op, AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateOp(null, op);
+	public static boolean requiresFrame(Program program, PcodeOp op, AddressSetView symbolStorage) {
+		return new RequiresFrameEvaluator(symbolStorage).evaluateOp(program, op);
 	}
 
 	/**
@@ -393,7 +412,7 @@ public enum VariableValueUtils {
 		if (stack == null) {
 			return null;
 		}
-		TraceStackFrame frame = stack.getFrame(0, false);
+		TraceStackFrame frame = stack.getFrame(snap, 0, false);
 		if (frame == null) {
 			return null;
 		}
@@ -457,9 +476,8 @@ public enum VariableValueUtils {
 	 */
 	public static boolean hasFreshUnwind(PluginTool tool, DebuggerCoordinates coordinates) {
 		ListingUnwoundFrame innermost = locateInnermost(tool, coordinates);
-		if (innermost == null || !Objects.equals(innermost.getProgramCounter(),
-			getProgramCounter(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getViewSnap()))) {
+		if (innermost == null || !Objects.equals(innermost.getProgramCounter(), getProgramCounter(
+			coordinates.getPlatform(), coordinates.getThread(), coordinates.getViewSnap()))) {
 			return false;
 		}
 		return true;
@@ -482,7 +500,7 @@ public enum VariableValueUtils {
 	}
 
 	/**
-	 * Find the fuction's variable whose storage contains the given stack offset
+	 * Find the function's variable whose storage contains the given stack offset
 	 * 
 	 * @param function the function
 	 * @param stackAddress the stack offset
@@ -523,7 +541,7 @@ public enum VariableValueUtils {
 	 * It's not the greatest, but any variable to be evaluated should only be expressed in terms of
 	 * symbols on the same line (at least by the decompiler's definition, wrapping shouldn't count
 	 * against us). This can be used to determine where evaluation should cease descending into
-	 * defining p-code ops. See {@link #requiresFrame(PcodeOp, AddressSetView)}, and
+	 * defining p-code ops. See {@link #requiresFrame(Program, PcodeOp, AddressSetView)}, and
 	 * {@link UnwoundFrame#evaluate(Program, PcodeOp, AddressSetView)}.
 	 * 
 	 * @param line the line
@@ -556,7 +574,7 @@ public enum VariableValueUtils {
 	}
 
 	/**
-	 * Find the descendent that dereferences this given varnode
+	 * Find the descendant that dereferences this given varnode
 	 * 
 	 * <p>
 	 * This searches only one hop for a {@link PcodeOp#LOAD} or {@link PcodeOp#STORE}. If it find a
@@ -650,13 +668,12 @@ public enum VariableValueUtils {
 		 */
 		private class ListenerForChanges extends TraceDomainObjectListener {
 			public ListenerForChanges() {
-				listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
-			private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-				TraceThread thread = space.getThread();
+			private void bytesChanged(AddressSpace space, TraceAddressSnapRange range) {
 				// TODO: Consider the lifespan, too? Would have to use viewport....
-				if (thread == null || thread == coordinates.getThread()) {
+				if (space.isMemorySpace() || coordinates.isRegisterSpace(space)) {
 					invalidateCache();
 				}
 			}
@@ -826,8 +843,8 @@ public enum VariableValueUtils {
 		 * data unit using {@link #getRegisterUnit(Register)}. Fall back to this method only if that
 		 * one fails.
 		 * 
-		 * @param register
-		 * @return
+		 * @param register the register
+		 * @return the "raw" value of the register
 		 */
 		public WatchValue getRawRegisterValue(Register register) {
 			WatchValuePcodeExecutorState state =
@@ -850,13 +867,12 @@ public enum VariableValueUtils {
 				address.isRegisterAddress()) {
 				settings = new DefaultSpaceSettings(settings, language.getDefaultSpace());
 			}
-			ByteMemBufferImpl buf =
-				new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
-					@Override
-					public Memory getMemory() {
-						return coordinates.getView().getMemory();
-					}
-				};
+			ByteMemBufferImpl buf = new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
+				@Override
+				public Memory getMemory() {
+					return coordinates.getView().getMemory();
+				}
+			};
 			return type.getRepresentation(buf, settings, bytes.length);
 		}
 
@@ -879,7 +895,11 @@ public enum VariableValueUtils {
 			}
 			Settings settings = type.getDefaultSettings();
 			if (address.isStackAddress()) {
-				address = frame.getBasePointer().add(address.getOffset());
+				Address base = frame.getBasePointer();
+				if (base == null) {
+					return null;
+				}
+				address = base.add(address.getOffset());
 				if (frame instanceof ListingUnwoundFrame listingFrame) {
 					settings = listingFrame.getComponentContaining(address);
 				}

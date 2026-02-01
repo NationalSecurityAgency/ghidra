@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
@@ -206,8 +207,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 
 			// must be an unknown signature
 			String callingConventionName = function.getCallingConventionName();
-
-			if (!callingConventionName.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+			if (!CompilerSpec.isUnknownCallingConvention(callingConventionName)) {
 				continue;
 			}
 
@@ -216,7 +216,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 				continue;
 			}
 
-			if (hasImportedSignatureWithinNamespace(function) ||
+			if (hasNonDefaultSignatureWithinNamespace(function) ||
 				hasDefinedParameterTypes(function)) {
 				functionEntries.add(function.getEntryPoint());
 			}
@@ -225,8 +225,8 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 		return functionEntries;
 	}
 
-	private boolean hasImportedSignatureWithinNamespace(Function function) {
-		return function.getSignatureSource() == SourceType.IMPORTED &&
+	private boolean hasNonDefaultSignatureWithinNamespace(Function function) {
+		return function.getSignatureSource() != SourceType.DEFAULT &&
 			function.getParentNamespace().getID() != Namespace.GLOBAL_NAMESPACE_ID;
 	}
 

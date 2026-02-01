@@ -37,8 +37,9 @@ public interface ElfInfoItem {
 	 */
 	void markupProgram(Program program, Address address);
 
-	public record ItemWithAddress<T> (T item, Address address) {};
-	public interface ReaderFunc<T extends ElfInfoItem> {
+	public record ItemWithAddress<T>(T item, Address address) {}
+
+	public interface ReaderFunc<T> {
 		T read(BinaryReader br, Program program) throws IOException;
 	}
 
@@ -50,7 +51,7 @@ public interface ElfInfoItem {
 	 * @param sectionName name of memory section that contains the item
 	 * @param readFunc {@link ReaderFunc} that will deserialize an instance of the item
 	 */
-	public static void markupElfInfoItemSection(Program program, String sectionName,
+	static void markupElfInfoItemSection(Program program, String sectionName,
 			ReaderFunc<ElfInfoItem> readFunc) {
 		ItemWithAddress<ElfInfoItem> wrappedItem =
 			readItemFromSection(program, sectionName, readFunc);
@@ -69,9 +70,13 @@ public interface ElfInfoItem {
 	 * @return a wrapped instance of the item, or null if the memory section does not exist
 	 * or there was an error while reading the item from the section
 	 */
-	public static <T extends ElfInfoItem> ItemWithAddress<T> readItemFromSection(Program program,
+	static <T extends ElfInfoItem> ItemWithAddress<T> readItemFromSection(Program program,
 			String sectionName, ReaderFunc<T> readFunc) {
-		MemoryBlock memBlock = program.getMemory().getBlock(sectionName);
+		return readItemFromSection(program, program.getMemory().getBlock(sectionName), readFunc);
+	}
+
+	static <T extends ElfInfoItem> ItemWithAddress<T> readItemFromSection(Program program,
+			MemoryBlock memBlock, ReaderFunc<T> readFunc) {
 		if (memBlock != null) {
 			try (ByteProvider bp =
 				MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), memBlock)) {
@@ -82,10 +87,9 @@ public interface ElfInfoItem {
 			}
 			catch (IOException e) {
 				Msg.warn(ElfInfoItem.class,
-					"Unable to read Elf item in section: %s".formatted(sectionName), e);
+					"Unable to read Elf item in section: %s".formatted(memBlock.getName()), e);
 			}
 		}
 		return null;
 	}
-
 }

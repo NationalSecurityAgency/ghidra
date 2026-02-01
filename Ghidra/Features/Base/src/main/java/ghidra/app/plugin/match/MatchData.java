@@ -15,15 +15,16 @@
  */
 package ghidra.app.plugin.match;
 
+import java.util.*;
+
 import generic.stl.Pair;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.search.trie.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
 
 public class MatchData {
 	private MatchData() {
@@ -80,7 +81,10 @@ public class MatchData {
 						bytes = aData.getBytes();
 					}
 					catch (MemoryAccessException e) {
-						throw new RuntimeException(e);
+						// if all the bytes for this data cannot be accessed then skip it
+						Msg.warn(MatchData.class, "Cannot process data at " + aData.getAddress() +
+							" because it runs into uninitialized memory.");
+						continue;
 					}
 					byte first = bytes[0];
 					for (int ii = 1; ii < bytes.length; ++ii) {
@@ -97,7 +101,10 @@ public class MatchData {
 							bytes = aData.getBytes();
 						}
 						catch (MemoryAccessException e) {
-							throw new RuntimeException(e);
+							// if all the bytes for this data cannot be accessed then skip it
+							Msg.warn(MatchData.class, "Cannot process data at " +
+								aData.getAddress() + " because it runs into uninitialized memory.");
+							continue;
 						}
 					}
 					ByteTrieNodeIfc<Pair<Set<Address>, Set<Address>>> node = trie.find(bytes);

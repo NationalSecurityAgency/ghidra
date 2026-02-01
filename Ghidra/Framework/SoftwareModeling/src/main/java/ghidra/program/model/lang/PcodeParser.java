@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,10 +36,10 @@ import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slgh_compile.*;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.slghsymbol.EndSymbol;
+import ghidra.pcodeCPort.slghsymbol.Next2Symbol;
 import ghidra.pcodeCPort.slghsymbol.OperandSymbol;
 import ghidra.pcodeCPort.slghsymbol.StartSymbol;
 import ghidra.pcodeCPort.space.*;
-import ghidra.pcodeCPort.xml.DocumentStorage;
 import ghidra.program.model.address.*;
 import ghidra.sleigh.grammar.*;
 import ghidra.sleigh.grammar.SleighParser_SemanticParser.semantic_return;
@@ -323,11 +323,6 @@ public class PcodeParser extends PcodeCompile {
 		}
 
 		@Override
-		public void initialize(DocumentStorage store) {
-			// Unused
-		}
-
-		@Override
 		public int printAssembly(PrintStream s, int size, Address baseaddr) {
 			return 0;
 		}
@@ -482,6 +477,12 @@ public class PcodeParser extends PcodeCompile {
 	public VectorSTL<ghidra.pcodeCPort.semantics.OpTpl> createCrossBuild(Location where,
 			ghidra.pcodeCPort.semantics.VarnodeTpl v, SectionSymbol second) {
 		throw new SleighError("Pcode snippet parsing does not support use of sections", where);
+	}
+
+	@Override
+	public ghidra.pcodeCPort.semantics.ConstructTpl enterSection(Location where) {
+		resetLabelCount();
+		return new ghidra.pcodeCPort.semantics.ConstructTpl(where);
 	}
 
 	@Override

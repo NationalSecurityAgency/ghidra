@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,6 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseActionGotoTable.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
 import ghidra.app.plugin.assembler.sleigh.tree.*;
 import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 
 /**
  * A class that implements the LALR(1) parsing algorithm
@@ -74,8 +72,6 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	protected final int id; // convenient ID for debug printing
 
 	static int nextMachineId = 0;
-
-	static final DbgTimer DBG = DbgTimer.INACTIVE;
 
 	/**
 	 * Construct a new parse state
@@ -206,7 +202,6 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 		c.accepted = accepted;
 		c.error = error;
 
-		DBG.println("Copied " + id + " to " + c.id);
 		return c;
 	}
 
@@ -224,40 +219,36 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 */
 	protected void doAction(Action a, AssemblyParseToken tok, Set<AssemblyParseMachine> results,
 			Deque<AssemblyParseMachine> visited) {
-		try (DbgCtx dc = DBG.start("Action: " + a)) {
-			if (a instanceof ShiftAction) {
-				AssemblyParseMachine m = copy();
-				m.stack.push(((ShiftAction) a).newStateNum);
-				m.treeStack.push(tok);
-				m.lastTok = tok;
-				m.pos += tok.getString().length();
-				m.exhaust(results, visited);
+		if (a instanceof ShiftAction) {
+			AssemblyParseMachine m = copy();
+			m.stack.push(((ShiftAction) a).newStateNum);
+			m.treeStack.push(tok);
+			m.lastTok = tok;
+			m.pos += tok.getString().length();
+			m.exhaust(results, visited);
+		}
+		else if (a instanceof ReduceAction) {
+			AssemblyProduction prod = ((ReduceAction) a).prod;
+			AssemblyParseBranch branch = new AssemblyParseBranch(parser.grammar, prod);
+			AssemblyParseMachine m = copy();
+			m.output.add(prod.getIndex());
+			for (@SuppressWarnings("unused")
+			AssemblySymbol sym : prod.getRHS()) {
+				m.stack.pop();
+				branch.addChild(m.treeStack.pop());
 			}
-			else if (a instanceof ReduceAction) {
-				AssemblyProduction prod = ((ReduceAction) a).prod;
-				AssemblyParseBranch branch = new AssemblyParseBranch(parser.grammar, prod);
-				AssemblyParseMachine m = copy();
-				m.output.add(prod.getIndex());
-				DBG.println("Prod: " + prod);
-				for (@SuppressWarnings("unused")
-				AssemblySymbol sym : prod.getRHS()) {
-					m.stack.pop();
-					branch.addChild(m.treeStack.pop());
-				}
-				for (Action aa : m.parser.actions.get(m.stack.peek(), prod.getLHS())) {
-					GotoAction ga = (GotoAction) aa;
-					DBG.println("Goto: " + ga);
-					AssemblyParseMachine n = m.copy();
-					n.stack.push(ga.newStateNum);
-					n.treeStack.push(branch);
-					n.exhaust(results, visited);
-				}
+			for (Action aa : m.parser.actions.get(m.stack.peek(), prod.getLHS())) {
+				GotoAction ga = (GotoAction) aa;
+				AssemblyParseMachine n = m.copy();
+				n.stack.push(ga.newStateNum);
+				n.treeStack.push(branch);
+				n.exhaust(results, visited);
 			}
-			else if (a instanceof AcceptAction) {
-				AssemblyParseMachine m = copy();
-				m.accepted = true;
-				results.add(m);
-			}
+		}
+		else if (a instanceof AcceptAction) {
+			AssemblyParseMachine m = copy();
+			m.accepted = true;
+			results.add(m);
 		}
 	}
 
@@ -271,13 +262,10 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 */
 	protected void consume(AssemblyTerminal t, AssemblyParseToken tok,
 			Set<AssemblyParseMachine> results, Deque<AssemblyParseMachine> visited) {
-		try (DbgCtx dc = DBG.start("Matched " + t + " " + tok)) {
-			Collection<Action> as = parser.actions.get(stack.peek(), t);
-			assert !as.isEmpty();
-			DBG.println("Actions: " + as);
-			for (Action a : as) {
-				doAction(a, tok, results, visited);
-			}
+		Collection<Action> as = parser.actions.get(stack.peek(), t);
+		assert !as.isEmpty();
+		for (Action a : as) {
+			doAction(a, tok, results, visited);
 		}
 	}
 
@@ -320,54 +308,47 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 * @param visited a collection of machine states already visited
 	 */
 	protected void exhaust(Set<AssemblyParseMachine> results, Deque<AssemblyParseMachine> visited) {
-		try (DbgCtx dc = DBG.start("Exhausting machine " + id)) {
-			DBG.println("Machine: " + this);
-			AssemblyParseMachine loop = findLoop(this, visited);
-			if (loop != null) {
-				DBG.println("Pruned. Loop of " + loop.id);
-				return;
+		AssemblyParseMachine loop = findLoop(this, visited);
+		if (loop != null) {
+			return;
+		}
+		try (DequePush<?> push = DequePush.push(visited, this)) {
+			if (error != ERROR_NONE) {
+				throw new AssertionError("INTERNAL: Tried to step a machine with errors");
 			}
-			try (DequePush<?> push = DequePush.push(visited, this)) {
-				if (error != ERROR_NONE) {
-					throw new AssertionError("INTERNAL: Tried to step a machine with errors");
+			if (accepted) {
+				// Gratuitous inputs should be detected by getTree
+				throw new AssertionError("INTERNAL: Tried to step an accepted machine");
+			}
+			Collection<AssemblyTerminal> terms = parser.actions.getExpected(stack.peek());
+			if (terms.isEmpty()) {
+				throw new RuntimeException("Encountered a state with no actions");
+			}
+			Set<AssemblyTerminal> unmatched = new TreeSet<>(terms);
+			for (AssemblyTerminal t : terms) {
+				for (AssemblyParseToken tok : t.match(buffer, pos, parser.grammar, symbols)) {
+					unmatched.remove(t);
+					assert buffer.regionMatches(pos, tok.getString(), 0,
+						tok.getString().length());
+					consume(t, tok, results, visited);
 				}
-				if (accepted) {
-					// Gratuitous inputs should be detected by getTree
-					throw new AssertionError("INTERNAL: Tried to step an accepted machine");
+			}
+			if (!unmatched.isEmpty()) {
+				AssemblyParseMachine m = copy();
+				final Collection<AssemblyTerminal> newExpected;
+				if (m.lastTok == null ||
+					!(m.lastTok instanceof TruncatedWhiteSpaceParseToken)) {
+					newExpected = unmatched;
 				}
-				Collection<AssemblyTerminal> terms = parser.actions.getExpected(stack.peek());
-				if (terms.isEmpty()) {
-					throw new RuntimeException("Encountered a state with no actions");
+				else {
+					newExpected = new TreeSet<>();
+					newExpected.add(AssemblySentential.WHITE_SPACE);
 				}
-				Set<AssemblyTerminal> unmatched = new TreeSet<>(terms);
-				for (AssemblyTerminal t : terms) {
-					for (AssemblyParseToken tok : t.match(buffer, pos, parser.grammar, symbols)) {
-						unmatched.remove(t);
-						assert buffer.regionMatches(pos, tok.getString(), 0,
-							tok.getString().length());
-						consume(t, tok, results, visited);
-					}
-				}
-				if (!unmatched.isEmpty()) {
-					AssemblyParseMachine m = copy();
-					final Collection<AssemblyTerminal> newExpected;
-					if (m.lastTok == null ||
-						!(m.lastTok instanceof TruncatedWhiteSpaceParseToken)) {
-						newExpected = unmatched;
-					}
-					else {
-						newExpected = new TreeSet<>();
-						newExpected.add(AssemblySentential.WHITE_SPACE);
-					}
-					DBG.println("Syntax Error: ");
-					DBG.println("  Expected: " + newExpected);
-					DBG.println("  Got: " + buffer.substring(pos));
-					m.error = ERROR_SYNTAX;
-					m.got = buffer.substring(pos);
-					m.expected = newExpected;
-					results.add(m);
-					return;
-				}
+				m.error = ERROR_SYNTAX;
+				m.got = buffer.substring(pos);
+				m.expected = newExpected;
+				results.add(m);
+				return;
 			}
 		}
 	}

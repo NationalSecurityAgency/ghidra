@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.NameTransformer;
 import ghidra.util.UniversalID;
+import ghidra.xml.XmlParseException;
 
 /**
  *
@@ -50,6 +51,20 @@ public class PcodeDataTypeManager {
 
 	private static final long DEFAULT_DECOMPILER_ID = 0xC000000000000000L;	// ID for "undefined" (decompiler side)
 	private static final long CODE_DECOMPILER_ID = 0xE000000000000001L;		// ID for internal "code" data-type
+
+	public static final int TYPE_VOID = 14;		// Standard "void" type, absence of type
+	public static final int TYPE_UNKNOWN = 12;		// An unknown low-level type. Treated as an unsigned integer.
+	public static final int TYPE_INT = 11;		// Signed integer. Signed is considered less specific than unsigned in C
+	public static final int TYPE_UINT = 10;		// Unsigned integer
+	public static final int TYPE_BOOL = 9;		// Boolean
+	public static final int TYPE_CODE = 8;		// Data is actual executable code
+	public static final int TYPE_FLOAT = 7;		// Floating-point
+
+	public static final int TYPE_PTR = 6;		// Pointer data-type
+	public static final int TYPE_PTRREL = 5;	// Pointer relative to another data-type (specialization of TYPE_PTR)
+	public static final int TYPE_ARRAY = 4;		// Array data-type, made up of a sequence of "element" datatype
+	public static final int TYPE_STRUCT = 3;	// Structure data-type, made up of component datatypes
+	public static final int TYPE_UNION = 2;		// An overlapping union of multiple datatypes
 
 	/**
 	 * A mapping between a DataType and its (name,id) on the decompiler side
@@ -263,6 +278,13 @@ public class PcodeDataTypeManager {
 			decoder.closeElement(el);
 			return new PartialUnion(progDataTypes, dt, offset, size);
 		}
+		else if (meta.equals("partenum")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+//			int offset = (int) decoder.readSignedInteger(ATTRIB_OFFSET);
+//			DataType dt = decodeDataType(decoder);
+			decoder.closeElementSkipping(el);
+			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
+		}
 		else {	// We typically reach here if the decompiler invents a new type
 				// probably an unknown with a non-standard size
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
@@ -463,6 +485,7 @@ public class PcodeDataTypeManager {
 		}
 		encoder.writeString(ATTRIB_METATYPE, "struct");
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
 		DataTypeComponent[] comps = type.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.isBitFieldComponent() || comp.getLength() == 0) {
@@ -494,6 +517,7 @@ public class PcodeDataTypeManager {
 		encodeNameIdAttributes(encoder, unionType);
 		encoder.writeString(ATTRIB_METATYPE, "union");
 		encoder.writeSignedInteger(ATTRIB_SIZE, unionType.getLength());
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, unionType.getAlignment());
 		DataTypeComponent[] comps = unionType.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.getLength() == 0) {
@@ -524,21 +548,14 @@ public class PcodeDataTypeManager {
 	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		long[] keys = type.getValues();
-		String metatype = "uint";
-		for (long key : keys) {
-			if (key < 0) {
-				metatype = "int";
-				break;
-			}
-		}
+		String metatype = type.isSigned() ? "enum_int" : "enum_uint";
+		String[] names = type.getNames();
 		encoder.writeString(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
-		encoder.writeBool(ATTRIB_ENUM, true);
-		for (long key : keys) {
+		for (String name : names) {
 			encoder.openElement(ELEM_VAL);
-			encoder.writeString(ATTRIB_NAME, type.getName(key));
-			encoder.writeSignedInteger(ATTRIB_VALUE, key);
+			encoder.writeString(ATTRIB_NAME, name);
+			encoder.writeSignedInteger(ATTRIB_VALUE, type.getValue(name));
 			encoder.closeElement(ELEM_VAL);
 		}
 		encoder.closeElement(ELEM_TYPE);
@@ -664,7 +681,7 @@ public class PcodeDataTypeManager {
 		encoder.writeSignedInteger(ATTRIB_SIZE, 1);		// Force size of 1
 		CompilerSpec cspec = program.getCompilerSpec();
 		FunctionPrototype fproto = new FunctionPrototype(type, cspec, voidInputIsVarargs);
-		fproto.encodePrototype(encoder, this);
+		fproto.encodePrototype(encoder, this, -1);
 		encoder.closeElement(ELEM_TYPE);
 	}
 
@@ -788,12 +805,12 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode a Structure to the stream that has its size reported as zero.
+	 * Encode a Structure/Union to the stream without listing its fields
 	 * @param encoder is the stream encoder
 	 * @param type data type to encode
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encodeCompositeZeroSizePlaceholder(Encoder encoder, DataType type)
+	public void encodeCompositePlaceholder(Encoder encoder, DataType type)
 			throws IOException {
 		String metaString;
 		if (type instanceof Structure) {
@@ -809,14 +826,16 @@ public class PcodeDataTypeManager {
 		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
 		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
 		encoder.writeString(ATTRIB_METATYPE, metaString);
-		encoder.writeSignedInteger(ATTRIB_SIZE, 0);
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
+		encoder.writeBool(ATTRIB_INCOMPLETE, true);
 		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
 	 * Encode a TypeDef data-type to the stream.  Generally this sends
-	 * a \<def> element with a \<typeref> reference to the underlying data-type being typedefed,
-	 * but we check for Settings on the TypeDef object that can indicate
+	 * a {@code <def>} element with a {@code <typeref>} reference to the underlying data-type being
+	 * typedefed, but we check for Settings on the TypeDef object that can indicate
 	 * specialty data-types with their own encodings.
 	 * @param encoder is the stream encoder
 	 * @param type is the TypeDef to build the XML for
@@ -1134,10 +1153,7 @@ public class PcodeDataTypeManager {
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);
 		coreBuiltin = new HashMap<Long, TypeMap>();
-		TypeMap type = new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false,
-			DEFAULT_DECOMPILER_ID);
-		coreBuiltin.put(type.id, type);
-		type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
+		TypeMap type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
 			builtInDataTypes);
 		coreBuiltin.put(type.id, type);
 
@@ -1215,7 +1231,7 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode the coretypes to the stream
+	 * Encode the core data-types to the stream
 	 * @param encoder is the stream encoder
 	 * @throws IOException for errors in the underlying stream
 	 */
@@ -1233,10 +1249,165 @@ public class PcodeDataTypeManager {
 			if (typeMap.isUtf) {
 				encoder.writeBool(ATTRIB_UTF, true);
 			}
-			// Encode special id ( <0 for builtins )
-			encoder.writeSignedInteger(ATTRIB_ID, typeMap.id);
+			encoder.writeUnsignedInteger(ATTRIB_ID, typeMap.id);
 			encoder.closeElement(ELEM_TYPE);
 		}
 		encoder.closeElement(ELEM_CORETYPES);
+	}
+
+	/**
+	 * Get the decompiler meta-type associated with a data-type.
+	 * @param tp is the data-type
+	 * @return the meta-type
+	 */
+	public static int getMetatype(DataType tp) {
+		if (tp instanceof TypeDef) {
+			tp = ((TypeDef) tp).getBaseDataType();
+		}
+		if (tp instanceof Undefined) {
+			return TYPE_UNKNOWN;
+		}
+		if (tp instanceof AbstractFloatDataType) {
+			return TYPE_FLOAT;
+		}
+		if (tp instanceof Pointer) {
+			return TYPE_PTR;
+		}
+		if (tp instanceof BooleanDataType) {
+			return TYPE_BOOL;
+		}
+		if (tp instanceof AbstractSignedIntegerDataType) {
+			return TYPE_INT;
+		}
+		if (tp instanceof AbstractUnsignedIntegerDataType) {
+			return TYPE_UINT;
+		}
+		if (tp instanceof Structure) {
+			return TYPE_STRUCT;
+		}
+		if (tp instanceof Union) {
+			return TYPE_UNION;
+		}
+		if (tp instanceof Array) {
+			return TYPE_ARRAY;
+		}
+		if (tp instanceof CharDataType) {
+			return ((CharDataType) tp).isSigned() ? TYPE_INT : TYPE_UINT;
+		}
+		if (tp instanceof WideCharDataType || tp instanceof WideChar16DataType ||
+			tp instanceof WideChar32DataType) {
+			return TYPE_INT;
+		}
+		if (tp instanceof Enum) {
+			return ((Enum) tp).isSigned() ? TYPE_INT : TYPE_UINT;
+		}
+		if (tp instanceof FunctionDefinition) {
+			return TYPE_CODE;
+		}
+		return TYPE_UNKNOWN;
+	}
+
+	/**
+	 * Convert an XML marshaling string to a metatype code
+	 * @param metaString is the string
+	 * @return the metatype code
+	 * @throws XmlParseException if the string does not represent a valid metatype
+	 */
+	public static int getMetatype(String metaString) throws XmlParseException {
+		switch (metaString.charAt(0)) {
+			case 'p':
+				if (metaString.equals("ptr")) {
+					return TYPE_PTR;
+				}
+				else if (metaString.equals("ptrrel")) {
+					return TYPE_PTRREL;
+				}
+				break;
+			case 'a':
+				if (metaString.equals("array")) {
+					return TYPE_ARRAY;
+				}
+				break;
+			case 's':
+				if (metaString.equals("struct")) {
+					return TYPE_STRUCT;
+				}
+				break;
+			case 'u':
+				if (metaString.equals("unknown")) {
+					return TYPE_UNKNOWN;
+				}
+				else if (metaString.equals("uint")) {
+					return TYPE_UINT;
+				}
+				else if (metaString.equals("union")) {
+					return TYPE_UNION;
+				}
+				break;
+			case 'i':
+				if (metaString.equals("int")) {
+					return TYPE_INT;
+				}
+				break;
+			case 'f':
+				if (metaString.equals("float")) {
+					return TYPE_FLOAT;
+				}
+				break;
+			case 'b':
+				if (metaString.equals("bool")) {
+					return TYPE_BOOL;
+				}
+				break;
+			case 'c':
+				if (metaString.equals("code")) {
+					return TYPE_CODE;
+				}
+				break;
+			case 'v':
+				if (metaString.equals("void")) {
+					return TYPE_VOID;
+				}
+				break;
+			default:
+				break;
+		}
+		throw new XmlParseException("Unknown metatype: " + metaString);
+	}
+
+	/**
+	 * Convert a decompiler metatype code to a string for XML marshaling
+	 * @param meta is the metatype
+	 * @return the marshaling string
+	 * @throws IOException is the metatype is invalid
+	 */
+	public static String getMetatypeString(int meta) throws IOException {
+		switch (meta) {
+			case TYPE_VOID:
+				return "void";
+			case TYPE_UNKNOWN:
+				return "unknown";
+			case TYPE_INT:
+				return "int";
+			case TYPE_UINT:
+				return "uint";
+			case TYPE_BOOL:
+				return "bool";
+			case TYPE_CODE:
+				return "code";
+			case TYPE_FLOAT:
+				return "float";
+			case TYPE_PTR:
+				return "ptr";
+			case TYPE_PTRREL:
+				return "ptrrel";
+			case TYPE_ARRAY:
+				return "array";
+			case TYPE_STRUCT:
+				return "struct";
+			case TYPE_UNION:
+				return "union";
+		}
+		throw new IOException("Unknown metatype");
 	}
 }

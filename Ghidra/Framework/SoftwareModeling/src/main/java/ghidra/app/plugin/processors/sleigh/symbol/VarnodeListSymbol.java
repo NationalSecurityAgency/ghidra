@@ -19,28 +19,19 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import ghidra.app.plugin.processors.sleigh.Constructor;
-import ghidra.app.plugin.processors.sleigh.FixedHandle;
-import ghidra.app.plugin.processors.sleigh.ParserWalker;
-import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.plugin.processors.sleigh.VarnodeData;
+import java.util.*;
+
+import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternValue;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A ValueSymbol where the semantic context is obtained by looking
  * up the value in a table of VarnodeSymbols
  */
@@ -58,14 +49,12 @@ public class VarnodeListSymbol extends ValueSymbol {
 		long max = getPatternValue().maxValue();
 		tableisfilled = (min >= 0) && (max < varnode_table.length);
 		for (int i = 0; i < varnode_table.length; ++i) {
-			if (varnode_table[i] == null)
+			if (varnode_table[i] == null) {
 				tableisfilled = false;
+			}
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#resolve(ghidra.app.plugin.processors.sleigh.ParserWalker, ghidra.app.plugin.processors.sleigh.SleighDebugLogger)
-	 */
 	@Override
 	public Constructor resolve(ParserWalker walker, SleighDebugLogger debug)
 			throws MemoryAccessException, UnknownInstructionException {
@@ -102,20 +91,21 @@ public class VarnodeListSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage sleigh) {
-		XmlElement el = parser.start("varlist_sym");
-		patval = (PatternValue) PatternExpression.restoreExpression(parser, sleigh);
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int el = decoder.openElement(ELEM_VARLIST_SYM);
+		patval = (PatternValue) PatternExpression.decodeExpression(decoder, sleigh);
 		ArrayList<VarnodeSymbol> varnodes = new ArrayList<>();
 		SymbolTable symtab = sleigh.getSymbolTable();
-		while (!parser.peek().isEnd()) {
-			XmlElement subel = parser.start();
-			if (subel.getName().equals("var")) {
-				int id = SpecXmlUtils.decodeInt(subel.getAttribute("id"));
+		while (decoder.peekElement() != 0) {
+			int subel = decoder.openElement();
+			if (subel == ELEM_VAR.id()) {
+				int id = (int) decoder.readUnsignedInteger(ATTRIB_ID);
 				varnodes.add((VarnodeSymbol) symtab.findSymbol(id));
 			}
-			else
+			else {
 				varnodes.add(null);
-			parser.end(subel);
+			}
+			decoder.closeElement(subel);
 		}
 		varnode_table = new VarnodeSymbol[varnodes.size()];
 
@@ -123,6 +113,6 @@ public class VarnodeListSymbol extends ValueSymbol {
 			varnode_table[i] = varnodes.get(i);
 		}
 		checkTableFill();
-		parser.end(el);
+		decoder.closeElement(ELEM_VARLIST_SYM.id());
 	}
 }

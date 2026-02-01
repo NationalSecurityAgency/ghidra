@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,27 +127,22 @@ public class InstructionStub implements Instruction {
 	}
 
 	@Override
-	public String getComment(int commentType) {
+	public String getComment(CommentType commentType) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public String[] getCommentAsArray(int commentType) {
+	public String[] getCommentAsArray(CommentType commentType) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void setComment(int commentType, String comment) {
+	public void setComment(CommentType commentType, String comment) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void setCommentAsArray(int commentType, String[] comment) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
+	public void setCommentAsArray(CommentType commentType, String[] comment) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -157,7 +152,17 @@ public class InstructionStub implements Instruction {
 	}
 
 	@Override
+	public int getParsedLength() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public byte[] getBytes() throws MemoryAccessException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public byte[] getParsedBytes() throws MemoryAccessException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -202,7 +207,8 @@ public class InstructionStub implements Instruction {
 	}
 
 	@Override
-	public void addOperandReference(int index, Address refAddr, RefType type, SourceType sourceType) {
+	public void addOperandReference(int index, Address refAddr, RefType type,
+			SourceType sourceType) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -455,6 +461,16 @@ public class InstructionStub implements Instruction {
 
 	@Override
 	public FlowOverride getFlowOverride() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setLengthOverride(int length) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isLengthOverridden() {
 		throw new UnsupportedOperationException();
 	}
 

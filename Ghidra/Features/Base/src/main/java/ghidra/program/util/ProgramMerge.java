@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,11 @@ package ghidra.program.util;
 
 import java.util.*;
 
+import ghidra.framework.store.LockException;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.properties.UnsupportedMapDB;
+import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.disassemble.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -27,13 +29,14 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.sourcemap.SourceFileManager;
+import ghidra.program.model.sourcemap.SourceMapEntry;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.LongLongHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramMerge</CODE> is a class for merging the differences between two
@@ -629,7 +632,9 @@ public class ProgramMerge {
 			return true;
 		}
 		try {
-			if (!Arrays.equals(instruction.getBytes(), resultInstruction.getBytes())) {
+			byte[] bytes = instruction.getParsedBytes();
+			byte[] resultBytes = resultInstruction.getParsedBytes();
+			if (!Arrays.equals(bytes, resultBytes)) {
 				return true; // bytes differ
 			}
 		}
@@ -683,8 +688,8 @@ public class ProgramMerge {
 			bytesLength = (int) originMax.subtract(originMin);
 		}
 		else {
-			originMax = originInstruction.getMaxAddress();
-			bytesLength = originInstruction.getLength();
+			bytesLength = originInstruction.getParsedLength();
+			originMax = originMin.add(bytesLength - 1);
 		}
 
 		Address resultMax = originToResultTranslator.getAddress(originMax);
@@ -700,7 +705,7 @@ public class ProgramMerge {
 
 		// If there are byte differences for this instruction then the
 		// bytes need to get copied even though the user did not indicate to.
-		if (bytesAreDifferent(originByteDiffs, originMin, resultMin, bytesLength)) { // FIXME
+		if (bytesMayDiffer(originByteDiffs, originMin, resultMin, bytesLength)) {
 			// Copy all the bytes for the instruction if any bytes differ.
 			ProgramMemoryUtil.copyBytesInRanges(resultProgram, originProgram, resultMin, resultMax);
 		}
@@ -710,7 +715,8 @@ public class ProgramMerge {
 			newInst = disassembleDelaySlottedInstruction(resultProgram, resultMin);
 		}
 		else {
-			newInst = disassembleNonDelaySlotInstruction(resultProgram, resultMin);
+			newInst = disassembleNonDelaySlotInstruction(resultProgram, resultMin,
+				originInstruction.isLengthOverridden() ? originInstruction.getLength() : 0);
 		}
 		if (newInst == null) {
 			return;
@@ -741,24 +747,29 @@ public class ProgramMerge {
 	}
 
 	private Instruction disassembleDelaySlottedInstruction(Program program, Address addr) {
+		// WARNING: does not support instruction length override use
 		// Use heavyweight disassembler for delay slotted instruction
 		AddressSet restrictedSet = new AddressSet(addr);
-		Disassembler disassembler =
-			Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
+		Disassembler disassembler = Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
 		disassembler.disassemble(addr, restrictedSet, false);
 		return program.getListing().getInstructionAt(addr);
 	}
 
-	private Instruction disassembleNonDelaySlotInstruction(Program program, Address addr) {
+	private Instruction disassembleNonDelaySlotInstruction(Program program, Address addr,
+			int lengthOverride) {
 		// Use lightweight disassembler for simple case
 		DisassemblerContextImpl context = new DisassemblerContextImpl(program.getProgramContext());
 		context.flowStart(addr);
 		try {
 			InstructionPrototype proto = program.getLanguage()
 					.parse(new DumbMemBufferImpl(program.getMemory(), addr), context, false);
+			if (lengthOverride > proto.getLength()) {
+				lengthOverride = 0;
+			}
 			return resultListing.createInstruction(addr, proto,
 				new DumbMemBufferImpl(program.getMemory(), addr),
-				new ProgramProcessorContext(program.getProgramContext(), addr));
+				new ProgramProcessorContext(program.getProgramContext(), addr),
+				Math.min(lengthOverride, proto.getLength()));
 		}
 		catch (Exception e) {
 			program.getBookmarkManager()
@@ -768,17 +779,13 @@ public class ProgramMerge {
 		return null;
 	}
 
-	private boolean bytesAreDifferent(AddressSetView originByteDiffs, Address originMin,
+	private boolean bytesMayDiffer(AddressSetView originByteDiffs, Address originMin,
 			Address resultMin, int byteCnt) throws MemoryAccessException {
 		if (originByteDiffs != null) {
 			AddressSet resultByteDiffs = originToResultTranslator.getAddressSet(originByteDiffs);
 			return resultByteDiffs.intersects(new AddressSet(resultMin, resultMin.add(byteCnt)));
 		}
-		byte[] originBytes = new byte[byteCnt];
-		originProgram.getMemory().getBytes(originMin, originBytes);
-		byte[] resultBytes = new byte[byteCnt];
-		resultProgram.getMemory().getBytes(resultMin, resultBytes);
-		return !Arrays.equals(originBytes, resultBytes);
+		return true;
 	}
 
 	/**
@@ -809,7 +816,7 @@ public class ProgramMerge {
 		// If there are byte differences for this instruction then the
 		// bytes need to get copied even though the user did not indicate to.
 		if (copyBytes &&
-			bytesAreDifferent(originByteDiffs, originMin, resultMin, originData.getLength())) {
+			bytesMayDiffer(originByteDiffs, originMin, resultMin, originData.getLength())) {
 			// Copy all the bytes for the instruction if any bytes differ.
 			ProgramMemoryUtil.copyBytesInRanges(resultProgram, originProgram, resultMin, resultMax);
 		}
@@ -981,9 +988,6 @@ public class ProgramMerge {
 		dupEquates.put(dupEquate.getName(), new DupEquate(dupEquate, desiredName));
 	}
 
-	/**
-	 *
-	 */
 	void reApplyDuplicateEquates() {
 		for (String conflictName : dupEquates.keySet()) {
 			DupEquate dupEquate = dupEquates.get(conflictName);
@@ -1014,9 +1018,6 @@ public class ProgramMerge {
 		}
 	}
 
-	/**
-	 *
-	 */
 	String getDuplicateEquatesInfo() {
 		StringBuffer buf = new StringBuffer();
 		for (String conflictName : dupEquates.keySet()) {
@@ -1030,9 +1031,6 @@ public class ProgramMerge {
 		return buf.toString();
 	}
 
-	/**
-	 *
-	 */
 	void clearDuplicateEquates() {
 		dupEquates.clear();
 	}
@@ -1295,14 +1293,15 @@ public class ProgramMerge {
 	 */
 	public Reference replaceReference(Reference resultRef, Reference originRef) {
 		ReferenceManager rm = resultProgram.getReferenceManager();
+		if (resultRef != null) {
+			rm.delete(resultRef); // remove old reference
+		}
 		if (originRef != null) {
 			if (originRef.isExternalReference()) {
 				updateExternalLocation(resultProgram, (ExternalReference) originRef);
 			}
 			return addReference(originRef, -1, true);
 		}
-
-		rm.delete(resultRef);
 		return null;
 	}
 
@@ -1318,7 +1317,7 @@ public class ProgramMerge {
 			Program fromPgm = fromExtLoc.getSymbol().getProgram();
 			Namespace toNamespace = DiffUtility.createNamespace(fromPgm, fromNamespace, toPgm);
 			ExternalLocation toExternalLocation =
-				SimpleDiffUtility.getMatchingExternalLocation(fromPgm, fromExtLoc, toPgm);
+				SimpleDiffUtility.getMatchingExternalLocation(fromPgm, fromExtLoc, toPgm, false);
 			if (toExternalLocation == null) {
 				toExtMgr.addExtLocation(toNamespace, fromExtLabel, fromExtAddr, fromSourceType);
 			}
@@ -1547,30 +1546,30 @@ public class ProgramMerge {
 		}
 
 		String typeStr = "Unknown";
-		int cuCommentType;
+		CommentType cuCommentType;
 		switch (type) {
 			case ProgramMergeFilter.PLATE_COMMENTS:
 				typeStr = "Plate";
-				cuCommentType = CodeUnit.PLATE_COMMENT;
+				cuCommentType = CommentType.PLATE;
 				break;
 			case ProgramMergeFilter.PRE_COMMENTS:
 				typeStr = "Pre";
-				cuCommentType = CodeUnit.PRE_COMMENT;
+				cuCommentType = CommentType.PRE;
 				break;
 			case ProgramMergeFilter.EOL_COMMENTS:
 				typeStr = "EOL";
-				cuCommentType = CodeUnit.EOL_COMMENT;
+				cuCommentType = CommentType.EOL;
 				break;
 			case ProgramMergeFilter.REPEATABLE_COMMENTS:
 				typeStr = "Repeatable";
-				cuCommentType = CodeUnit.REPEATABLE_COMMENT;
+				cuCommentType = CommentType.REPEATABLE;
 				break;
 			case ProgramMergeFilter.POST_COMMENTS:
 				typeStr = "Post";
-				cuCommentType = CodeUnit.POST_COMMENT;
+				cuCommentType = CommentType.POST;
 				break;
 			default:
-				throw new AssertException("Unrecognized comment type: " + type);
+				throw new AssertException("Unsupported comment type: " + type);
 		}
 
 		monitor.setMessage("Applying " + typeStr + " comments...");
@@ -1605,11 +1604,11 @@ public class ProgramMerge {
 	 * <CODE>mergeComments</CODE> merges the comment of the indicated
 	 * type in program1 with the comment in program2 at the specified address.
 	 * @param commentType comment type to merge (from CodeUnit class).
-	 * <br>EOL_COMMENT, PRE_COMMENT, POST_COMMENT, REPEATABLE_COMMENT, OR PLATE_COMMENT.
+	 * <br>EOL, PRE, POST, REPEATABLE, OR PLATE.
 	 * @param originAddress the address
 	 * This address should be derived from the origin program.
 	 */
-	public void mergeComments(int commentType, Address originAddress) {
+	public void mergeComments(CommentType commentType, Address originAddress) {
 		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 		String resultComment = resultListing.getComment(commentType, resultAddress);
 		String origComment = originListing.getComment(commentType, originAddress);
@@ -1621,11 +1620,11 @@ public class ProgramMerge {
 	 * <CODE>replaceComment</CODE> replaces the comment of the indicated
 	 * type in program1 with the comment in program2 at the specified address.
 	 * @param commentType comment type to replace (from CodeUnit class).
-	 * <br>EOL_COMMENT, PRE_COMMENT, POST_COMMENT, REPEATABLE_COMMENT, OR PLATE_COMMENT.
+	 * <br>EOL, PRE, POST, REPEATABLE, OR PLATE.
 	 * @param originAddress the address
 	 * This address should be derived from the origin program.
 	 */
-	public void replaceComment(int commentType, Address originAddress) {
+	public void replaceComment(CommentType commentType, Address originAddress) {
 		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 		String origComment = originListing.getComment(commentType, originAddress);
 		resultListing.setComment(resultAddress, commentType, origComment);
@@ -1717,9 +1716,7 @@ public class ProgramMerge {
 		// Now discard any tags we've been told to remove.
 		if (discardTags != null) {
 			Set<String> tagNames = getTagNames(discardTags);
-			Iterator<FunctionTag> iter = resultTags.iterator();
-			while (iter.hasNext()) {
-				FunctionTag tag = iter.next();
+			for (FunctionTag tag : resultTags) {
 				if (tagNames.contains(tag.getName())) {
 					resultFunction.removeTag(tag.getName());
 
@@ -1916,9 +1913,6 @@ public class ProgramMerge {
 		mergeLabels(originAddressSet, ProgramMergeFilter.REPLACE, true, replaceFunction, monitor);
 	}
 
-	/**
-	 *
-	 */
 	void reApplyDuplicateSymbols() {
 		SymbolTable originSymTab = originProgram.getSymbolTable();
 		SymbolTable resultSymTab = resultProgram.getSymbolTable();
@@ -1949,9 +1943,6 @@ public class ProgramMerge {
 		}
 	}
 
-	/**
-	 *
-	 */
 	String getDuplicateSymbolsInfo() {
 		StringBuffer buf = new StringBuffer();
 		SymbolTable origSymTab = originProgram.getSymbolTable();
@@ -1983,9 +1974,6 @@ public class ProgramMerge {
 		return buf.toString();
 	}
 
-	/**
-	 *
-	 */
 	void clearDuplicateSymbols() {
 		conflictSymbolIDMap.removeAll();
 //		dupSyms.clear();
@@ -2171,6 +2159,10 @@ public class ProgramMerge {
 				monitor.setMessage("Replacing Function " + (count + 1) + " of " + totalAddresses +
 					"." + " Address = " + address.toString(true));
 			}
+
+			// Only use origin memory address
+			address = DiffUtility.getCompatibleMemoryAddress(address, originProgram);
+
 			if (isThunkFunction(address)) {
 				// Skip the thunk, but save it for processing during a second pass.
 				thunkSet.addRange(address, address);
@@ -2183,13 +2175,14 @@ public class ProgramMerge {
 		replaceThunks(thunkSet, monitor);
 	}
 
-	private void replaceThunks(AddressSet thunkSet, TaskMonitor monitor) throws CancelledException {
+	private void replaceThunks(AddressSet originThunkSet, TaskMonitor monitor)
+			throws CancelledException {
 		long granularity;
 		// Now that all the non-thunk functions have been processed, process the saved thunks.
-		long totalThunks = thunkSet.getNumAddresses();
+		long totalThunks = originThunkSet.getNumAddresses();
 		granularity = (totalThunks / PROGRESS_COUNTER_GRANULARITY) + 1;
 		monitor.initialize(totalThunks);
-		AddressIterator thunkIter = thunkSet.getAddresses(true);
+		AddressIterator thunkIter = originThunkSet.getAddresses(true);
 		for (int count = 0; thunkIter.hasNext(); count++) {
 			monitor.checkCancelled();
 			Address address = thunkIter.next();
@@ -3934,8 +3927,7 @@ public class ProgramMerge {
 			if (originObject != null) {
 				try {
 					if (resultOpm == null) {
-						resultOpm =
-							createPropertyMap(userPropertyName, resultProgram, originOpm);
+						resultOpm = createPropertyMap(userPropertyName, resultProgram, originOpm);
 					}
 					resultOpm.add(resultAddress, originObject);
 				}
@@ -3948,6 +3940,50 @@ public class ProgramMerge {
 					Msg.error(this, msg);
 					errorMsg.append(msg + "\n");
 				}
+			}
+		}
+	}
+
+	/**
+	 * Merge the source map information from the origin program to the result program.
+	 * 
+	 * @param originAddrs address from origin program to merge
+	 * @param settings merge settings
+	 * @param monitor monitor
+	 * @throws LockException if invoked without exclusive access
+	 */
+	public void applySourceMapDifferences(AddressSet originAddrs, int settings, TaskMonitor monitor)
+			throws LockException {
+		SourceFileManager originManager = originProgram.getSourceFileManager();
+		SourceFileManager resultManager = resultProgram.getSourceFileManager();
+		AddressIterator originAddrIter = originAddrs.getAddresses(true);
+		while (originAddrIter.hasNext()) {
+			Address originAddr = originAddrIter.next();
+			try {
+				Address resultAddr = originToResultTranslator.getAddress(originAddr);
+				for (SourceMapEntry resultEntry : resultManager.getSourceMapEntries(resultAddr)) {
+					if (resultAddr.equals(resultEntry.getBaseAddress())) {
+						resultManager.removeSourceMapEntry(resultEntry);
+					}
+				}
+				for (SourceMapEntry originEntry : originManager.getSourceMapEntries(originAddr)) {
+					if (!originEntry.getBaseAddress().equals(originAddr)) {
+						continue;
+					}
+					SourceFile originFile = originEntry.getSourceFile();
+					resultManager.addSourceFile(originFile);
+					resultManager.addSourceMapEntry(originFile, originEntry.getLineNumber(),
+						resultAddr, originEntry.getLength());
+				}
+			}
+			catch (AddressTranslationException e) {
+				// as long as originAddrs comes from ProgramDiff.getSourceMapDifferences
+				// this shouldn't happen
+				throw new AssertException("couldn't translate " + originAddr + " in " +
+					originProgram.getName() + " to " + resultProgram.getName());
+			}
+			catch (AddressOverflowException e) {
+				throw new AssertException("Address overflow when merging source map entries");
 			}
 		}
 	}

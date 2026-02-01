@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,9 @@ package generic.theme;
 import static generic.theme.SystemThemeIds.*;
 
 import java.awt.Color;
+
+import javax.swing.JPanel;
+import javax.swing.JViewport;
 
 /**
  * This class contains many suitable default values for commonly used concepts.  See each static
@@ -88,6 +91,19 @@ public class GThemeDefaults {
 			//@formatter:on
 		}
 
+		public static class Viewport {
+			//@formatter:off
+			/**
+			 * By default the system {@link JViewport}s use BACKGROUND for their background, which
+			 * is the primary background color (typically white on light themes).  Some clients
+			 * would like the background color to match the uneditable background color used by
+			 * {@link JPanel}.   This color allows the empty space in the viewport to  match the
+			 * parent panel color.
+			 */
+			public static final GColor UNEDITABLE_BACKGROUND = new GColor("laf.color.Panel.background");
+			//@formatter:on
+		}
+
 		/**
 		 * Color values to use with tooltips
 		 */
@@ -139,11 +155,13 @@ public class GThemeDefaults {
 			public static final GColor PURPLE = getColor("purple");
 			public static final GColor RED = getColor("red");
 			public static final GColor SILVER = getColor("silver");
+			public static final GColor TEAL = getColor("teal");
 			public static final GColor WHITE = getColor("white");
 			public static final GColor YELLOW = getColor("yellow");
 
 			/**
-			 * Returns a new {@link GColor} for the given palette name.
+			 * Returns a new {@link GColor} for the given palette name.  The name should not include
+			 * the prefix {@code color.palette}.
 			 * <p>
 			 * For a list of supported palette IDs, see {@code gui.palette.theme.properties}.
 			 * <p>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,8 +78,9 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	}
 
 	/**
-	 * Returns the the ListingLayoutModel for the i'th program.
+	 * Returns the ListingLayoutModel for the i'th program.
 	 * @param index the index of program for which to return a listing model
+	 * @return the ListingLayoutModel for the i'th program.
 	 */
 	public ListingModel getAlignedModel(int index) {
 		return alignedModels[index];
@@ -124,7 +125,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 				hasLayout |= layouts[i] != null;
 			}
 			if (hasLayout) {
-				ml = new MultiLayout(layouts, formatMgr, emptyFactory);
+				ml = new MultiLayout(layouts, emptyFactory);
 			}
 			else {
 				ml = new MultiLayout();
@@ -138,7 +139,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	}
 
 	class AlignedModel implements ListingModel {
-		private int modelID;
+		private final int modelID;
 
 		AlignedModel(int modelID) {
 			this.modelID = modelID;
@@ -174,14 +175,18 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		 *         <code>address</code> is null
 		 */
 		private Address getNextAddress(Address address, boolean after) {
+
+			// Assume only a single external location is ever displayed within a panel
+			if (address.isExternalAddress()) {
+				return null;
+			}
+
 			Address nextAddress = null; // Next address for this model
 			Program program = getProgram();
 			Program primaryProgram = models[0].getProgram();
 			Address primaryModelAddress = (program == primaryProgram) ? address
 					: SimpleDiffUtility.getCompatibleAddress(program, address, primaryProgram);
 
-			// If address is an external from the other model, then we may not be able to get 
-			// an equivalent address in the primary model (i.e. primaryModelAddress may be null)
 			if (primaryModelAddress == null) {
 				return null;
 			}
@@ -216,11 +221,24 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 			return nextAddress;
 		}
 
+		private Address lastAddress;
+		private Address lastCachedPrimaryModelAddress;
+
 		@Override
 		public Layout getLayout(Address thisModelAddress, boolean isGapAddress) {
-			Address primaryModelAddress = (modelID == 0) ? thisModelAddress
-					: SimpleDiffUtility.getCompatibleAddress(getProgram(), thisModelAddress,
-						models[0].getProgram());
+
+			Address primaryModelAddress;
+			if (thisModelAddress.equals(lastAddress)) {
+				primaryModelAddress = lastCachedPrimaryModelAddress;
+			}
+			else {
+				primaryModelAddress = (modelID == 0) ? thisModelAddress
+						: SimpleDiffUtility.getCompatibleAddress(getProgram(), thisModelAddress,
+							models[0].getProgram());
+				lastAddress = thisModelAddress;
+				lastCachedPrimaryModelAddress = primaryModelAddress;
+			}
+
 			MultiLayout ml = getMultiLayout(primaryModelAddress, isGapAddress);
 			if (ml != null) {
 				return ml.getLayout(modelID);
@@ -251,6 +269,21 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		@Override
 		public void toggleOpen(Data data) {
 			models[modelID].toggleOpen(data);
+		}
+
+		@Override
+		public void setFunctionVariablesOpen(Address functionAddress, boolean open) {
+			models[modelID].setFunctionVariablesOpen(functionAddress, open);
+		}
+
+		@Override
+		public void setAllFunctionVariablesOpen(boolean open) {
+			models[modelID].setAllFunctionVariablesOpen(open);
+		}
+
+		@Override
+		public boolean areFunctionVariablesOpen(Address FunctionAddress) {
+			return models[modelID].areFunctionVariablesOpen(FunctionAddress);
 		}
 
 		@Override
@@ -319,27 +352,23 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 			return models[modelID].copy();
 		}
 
+		@Override
+		public boolean isFunctionOpen(Address functionAddress) {
+			return models[modelID].isFunctionOpen(functionAddress);
+		}
+
+		@Override
+		public void setFunctionOpen(Address functionAddress, boolean b) {
+			models[modelID].setFunctionOpen(functionAddress, b);
+		}
+
+		@Override
+		public void setAllFunctionsOpen(boolean selected) {
+			models[modelID].setAllFunctionsOpen(selected);
+		}
+
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.format.FormatModelListener#formatModelAdded(ghidra.app.util.viewer.format.FieldFormatModel)
-	 */
-	@Override
-	public void formatModelAdded(FieldFormatModel model) {
-		dataChanged(true);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.format.FormatModelListener#formatModelRemoved(ghidra.app.util.viewer.format.FieldFormatModel)
-	 */
-	@Override
-	public void formatModelRemoved(FieldFormatModel model) {
-		dataChanged(true);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.format.FormatModelListener#formatModelChanged(ghidra.app.util.viewer.format.FieldFormatModel)
-	 */
 	@Override
 	public void formatModelChanged(FieldFormatModel model) {
 		modelSizeChanged();
@@ -371,7 +400,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	 * primary program and listingModel
 	 */
 	public void setAddressSet(AddressSetView view) {
-		primaryAddrSet = view;
+		primaryAddrSet = ImmutableAddressSet.asImmutable(view);
 		modelSizeChanged();
 	}
 }

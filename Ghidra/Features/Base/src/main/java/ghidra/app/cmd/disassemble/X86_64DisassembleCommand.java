@@ -19,10 +19,10 @@ import java.math.BigInteger;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.framework.model.DomainObject;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.util.exception.CancelledException;
@@ -91,8 +91,7 @@ public class X86_64DisassembleCommand extends DisassembleCommand {
 		throw new UnsupportedOperationException();
 	}
 
-	public static AddressSet alignSet(int alignment, AddressSetView set)
-			throws CancelledException {
+	public static AddressSet alignSet(int alignment, AddressSetView set) {
 		AddressSet result = new AddressSet();
 		for (AddressRange range : set) {
 			Address min = range.getMinAddress();
@@ -115,8 +114,7 @@ public class X86_64DisassembleCommand extends DisassembleCommand {
 	}
 
 	@Override
-	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	synchronized public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		disassemblyPerformed = false;
 		unalignedStart = false;
@@ -130,8 +128,8 @@ public class X86_64DisassembleCommand extends DisassembleCommand {
 			languageError = "Requires x86:LE:64:default";
 			return false;
 		}
-		RegisterValue ctx = new RegisterValue(context.getBaseContextRegister())
-				.assign(longModeReg, size32Mode ? BigInteger.ZERO : BigInteger.ONE);
+		RegisterValue ctx = new RegisterValue(context.getBaseContextRegister()).assign(longModeReg,
+			size32Mode ? BigInteger.ZERO : BigInteger.ONE);
 
 		super.setInitialContext(ctx);
 

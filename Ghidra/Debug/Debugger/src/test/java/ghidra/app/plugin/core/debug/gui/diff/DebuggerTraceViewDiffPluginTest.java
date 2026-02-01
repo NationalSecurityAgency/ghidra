@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
@@ -34,7 +34,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
 
-public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerTraceViewDiffPlugin traceDiffPlugin;
 	protected DebuggerListingPlugin listingPlugin;
@@ -129,8 +129,9 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 	public void testColorsDiffBytes() throws Throwable {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
+			mm.createRegion("Memory[.text]", 0, tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			ByteBuffer buf = ByteBuffer.allocate(0x1000); // Yes, smaller than .text
@@ -164,8 +165,9 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 	public void testActionPrevDiff() throws Throwable {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
+			mm.createRegion("Memory[.text]", 0, tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			ByteBuffer buf = ByteBuffer.allocate(0x1000); // Yes, smaller than .text
@@ -201,8 +203,9 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 	public void testActionNextDiff() throws Throwable {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
+			mm.createRegion("Memory[.text]", 0, tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			ByteBuffer buf = ByteBuffer.allocate(0x1000); // Yes, smaller than .text

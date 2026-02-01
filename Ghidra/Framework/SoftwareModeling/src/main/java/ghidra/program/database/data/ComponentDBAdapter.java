@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -47,9 +49,9 @@ abstract class ComponentDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	static ComponentDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
+	static ComponentDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix)
 			throws VersionException, IOException {
-		return new ComponentDBAdapterV0(handle, tablePrefix, openMode == DBConstants.CREATE);
+		return new ComponentDBAdapterV0(handle, tablePrefix, openMode == OpenMode.CREATE);
 	}
 
 	/**
@@ -59,7 +61,8 @@ abstract class ComponentDBAdapter {
 	 * @param length the total length of this component.
 	 * @param ordinal the component's ordinal.
 	 * @param offset the component's offset.
-	 * @param name the component's name.
+	 * @param name the component's name.  This name will be subject to revision based upon 
+	 * {@link #cleanUpFieldName(String)} method use.
 	 * @param comment a comment about this component
 	 * @return the component data type record.
 	 * @throws IOException if there is a problem accessing the database.
@@ -85,6 +88,10 @@ abstract class ComponentDBAdapter {
 
 	/**
 	 * Updates the component data type table with the provided record.
+	 * <p>
+	 * IMPORTANT: Any modification of field name should be subject to {@link #cleanUpFieldName(String)}
+	 * use first.
+	 * 
 	 * @param record the new record
 	 * @throws IOException if there is a problem accessing the database.
 	 */

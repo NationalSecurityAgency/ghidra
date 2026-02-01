@@ -261,9 +261,9 @@ public class ExportToHeaderAction extends DockingAction {
 
 		String lastDirSelected = Preferences.getProperty(LAST_DATA_TYPE_EXPORT_DIRECTORY);
 		if (lastDirSelected != null) {
-			File file = new File(lastDirSelected);
-			if (file.exists()) {
-				fileChooser.setCurrentDirectory(file);
+			File dir = new File(lastDirSelected);
+			if (dir.isDirectory()) {
+				fileChooser.setCurrentDirectory(dir);
 			}
 		}
 

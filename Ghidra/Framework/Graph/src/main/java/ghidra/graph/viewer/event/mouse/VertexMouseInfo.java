@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.graph.viewer.event.mouse;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 
@@ -46,9 +47,11 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	private final V vertex;
 	private MouseEvent translatedMouseEvent;
 	private Component mousedDestinationComponent;
+	private Point2D vertexBasedClickPoint;
 
 	public VertexMouseInfo(MouseEvent originalMouseEvent, V vertex, Point2D vertexBasedClickPoint,
 			GraphViewer<V, E> viewer) {
+		this.vertexBasedClickPoint = vertexBasedClickPoint;
 		this.originalMouseEvent = Objects.requireNonNull(originalMouseEvent);
 		this.vertex = Objects.requireNonNull(vertex);
 		this.viewer = Objects.requireNonNull(viewer);
@@ -57,6 +60,10 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 		Component deepestComponent = SwingUtilities.getDeepestComponentAt(component,
 			(int) vertexBasedClickPoint.getX(), (int) vertexBasedClickPoint.getY());
 		setClickedComponent(deepestComponent, vertexBasedClickPoint);
+	}
+
+	public Point2D getVertexRelativeClickPoint() {
+		return vertexBasedClickPoint;
 	}
 
 	public boolean isScaledPastInteractionThreshold() {
@@ -75,6 +82,11 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 		if (!isVertexSelected()) {
 			return HAND_CURSOR;
 		}
+
+		if (mousedDestinationComponent != null) {
+			return mousedDestinationComponent.getCursor();
+		}
+
 		return DEFAULT_CURSOR;
 	}
 
@@ -221,12 +233,22 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 			System.currentTimeMillis(), 0, 0, 0, 0, false);
 	}
 
-	private MouseEvent createMouseEventFromSource(Component source, MouseEvent progenitor,
+	private MouseEvent createMouseEventFromSource(Component source, MouseEvent ev,
 			Point2D clickPoint) {
-		return new MouseEvent(source, progenitor.getID(), progenitor.getWhen(),
-			progenitor.getModifiers() | progenitor.getModifiersEx(), (int) clickPoint.getX(),
-			(int) clickPoint.getY(), progenitor.getClickCount(), progenitor.isPopupTrigger(),
-			progenitor.getButton());
+		if (ev instanceof MouseWheelEvent wheelEvent) {
+			int scrollType = wheelEvent.getScrollType();
+			int scrollAmount = wheelEvent.getScrollAmount();
+			int wheelRotation = wheelEvent.getWheelRotation();
+			return new MouseWheelEvent(source, ev.getID(), ev.getWhen(),
+				ev.getModifiers() | ev.getModifiersEx(), (int) clickPoint.getX(),
+				(int) clickPoint.getY(), ev.getClickCount(), ev.isPopupTrigger(),
+				scrollType, scrollAmount, wheelRotation);
+		}
+
+		return new MouseEvent(source, ev.getID(), ev.getWhen(),
+			ev.getModifiers() | ev.getModifiersEx(), (int) clickPoint.getX(),
+			(int) clickPoint.getY(), ev.getClickCount(), ev.isPopupTrigger(),
+			ev.getButton());
 	}
 
 	public boolean isPopupClick() {

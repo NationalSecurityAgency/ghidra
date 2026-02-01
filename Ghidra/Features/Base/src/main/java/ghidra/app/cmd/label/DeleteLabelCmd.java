@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.label;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -25,7 +23,7 @@ import ghidra.program.model.symbol.*;
 /**
  * Command to delete a label
  */
-public class DeleteLabelCmd implements Command {
+public class DeleteLabelCmd implements Command<Program> {
 
 	private Address addr;
 	private String name;
@@ -54,13 +52,9 @@ public class DeleteLabelCmd implements Command {
 		this(addr, name, null);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		SymbolTable st = ((Program) obj).getSymbolTable();
+	public boolean applyTo(Program program) {
+		SymbolTable st = program.getSymbolTable();
 		Symbol s = st.getSymbol(name, addr, scope);
 		if (s == null) {
 			errorMsg = "Symbol " + name + " not found!";
@@ -74,7 +68,7 @@ public class DeleteLabelCmd implements Command {
 		if (s.isExternalEntryPoint() && s.isPrimary()) {
 			if (st.getSymbols(s.getAddress()).length == 1) {
 				externalEntryCmd = new ExternalEntryCmd(addr, false);
-				externalEntryCmd.applyTo(obj);
+				externalEntryCmd.applyTo(program);
 			}
 		}
 		boolean success = st.removeSymbolSpecial(s);
@@ -84,17 +78,11 @@ public class DeleteLabelCmd implements Command {
 		return success;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Delete Label";
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errorMsg;

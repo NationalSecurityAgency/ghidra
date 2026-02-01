@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,56 +15,56 @@
  */
 package docking.options.editor;
 
-import ghidra.framework.options.EditorState;
-
 import java.awt.Dimension;
 import java.util.List;
 
 import javax.swing.JPanel;
 
+import ghidra.framework.options.EditorState;
+
 public abstract class GenericOptionsComponent extends JPanel {
-	protected final EditorState editorState;
 
 	/**
 	 * Do not use this constructor directly.  Instead, use the factory method:
 	 * {@link #createOptionComponent(EditorState)}
 	 */
-    protected GenericOptionsComponent(EditorState editorState) {
-		this.editorState = editorState;
+	protected GenericOptionsComponent() {
+		// stub
 	}
 
-    /**
-     * A factory method to create new OptionComponents.
-     * @param state The state that will be used to create the correct OptionComponent
-     * @return the new OptionComponent.
-     */
-    public static GenericOptionsComponent createOptionComponent( EditorState state ) {
-        if ( state.supportsCustomOptionsEditor() ) {
-            return new CustomOptionComponent( state );
-        }
-        return new DefaultOptionComponent( state );
-    }
+	/**
+	 * A factory method to create new OptionComponents.
+	 * @param state The state that will be used to create the correct OptionComponent
+	 * @return the new OptionComponent.
+	 */
+	public static GenericOptionsComponent createOptionComponent(EditorState state) {
+		if (state.supportsCustomOptionsEditor()) {
+			return new CustomOptionComponent(state);
+		}
+		return new DefaultOptionComponent(state);
+	}
 
-    /**
-     * Creates and sets a preferred alignment based upon the given list of option components.
-     * @param components the list of options components from which to determine the alignment.
-     */
+	/**
+	 * Creates and sets a preferred alignment based upon the given list of option components.
+	 * @param components the list of options components from which to determine the alignment.
+	 */
 	public static void alignLabels(List<GenericOptionsComponent> components) {
 		int maxWidth = 0;
 		int maxHeight = 0;
 		for (GenericOptionsComponent optionComponent : components) {
-		    Dimension dimension = optionComponent.getPreferredAlignmentSize();
-		    maxWidth = Math.max( dimension.width, maxWidth );
-		    maxHeight = Math.max( dimension.height, maxHeight );
-        }
+			Dimension dimension = optionComponent.getPreferredAlignmentSize();
+			maxWidth = Math.max(dimension.width, maxWidth);
+			maxHeight = Math.max(dimension.height, maxHeight);
+		}
 
 		for (GenericOptionsComponent component : components) {
-		    component.setAlignmentPreferredSize( new Dimension(maxWidth, maxHeight));
-        }
+			component.setPreferredAlignmentSize(new Dimension(maxWidth, maxHeight));
+		}
 	}
 
 	@Override
-    public void setEnabled(boolean enabled) {
+	public void setEnabled(boolean enabled) {
+		// stub
 	}
 
 	/**
@@ -73,7 +72,8 @@ public abstract class GenericOptionsComponent extends JPanel {
 	 * components.
 	 * @param dimension The alignment dimension.
 	 */
-	protected void setAlignmentPreferredSize( Dimension dimension ) {
+	protected void setPreferredAlignmentSize(Dimension dimension) {
+		// stub
 	}
 
 	/**
@@ -81,6 +81,6 @@ public abstract class GenericOptionsComponent extends JPanel {
 	 * @return the alignment dimension.
 	 */
 	protected Dimension getPreferredAlignmentSize() {
-	    return getPreferredSize();
+		return getPreferredSize();
 	}
 }

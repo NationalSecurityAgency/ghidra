@@ -20,12 +20,10 @@
 package ghidra.app.plugin.processors.sleigh.expression;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * Base class for binary operators that combine PatternExpressions
  */
 public abstract class BinaryExpression extends PatternExpression {
@@ -69,10 +67,10 @@ public abstract class BinaryExpression extends PatternExpression {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start();
-		left = PatternExpression.restoreExpression(parser, lang);
-		right = PatternExpression.restoreExpression(parser, lang);
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement();
+		left = PatternExpression.decodeExpression(decoder, lang);
+		right = PatternExpression.decodeExpression(decoder, lang);
+		decoder.closeElement(el);
 	}
 }

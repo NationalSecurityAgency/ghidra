@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
@@ -31,6 +31,7 @@ import docking.test.AbstractDockingTest;
 import docking.tool.ToolConstants;
 import generic.jar.ResourceFile;
 import generic.test.*;
+import generic.theme.ThemeManager;
 import ghidra.app.events.CloseProgramPluginEvent;
 import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -75,7 +76,7 @@ public class TestEnv {
 	private static Set<TestEnv> instances = new HashSet<>();
 
 	private FrontEndTool frontEndTool;
-	private PluginTool tool;
+	protected PluginTool tool;
 
 	private static TestProgramManager programManager = new TestProgramManager();
 
@@ -252,10 +253,9 @@ public class TestEnv {
 	private void dipsoseTestTools() {
 		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
+			tool = null;
 
-			Iterator<PluginTool> it = extraTools.iterator();
-			while (it.hasNext()) {
-				PluginTool pt = it.next();
+			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
 			}
 			extraTools.clear();
@@ -364,7 +364,7 @@ public class TestEnv {
 	 * @param ghidraClass The class of the dialog the user desires
 	 * @param maxTimeMS The max amount of time in milliseconds to wait for the requested dialog
 	 *        to appear.
-	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
+	 * @return The first occurrence of a dialog that extends the given <code>ghidraClass</code>
 	 * @deprecated use instead {@link AbstractDockingTest#waitForDialogComponent(Class)}
 	 */
 	@Deprecated
@@ -439,6 +439,7 @@ public class TestEnv {
 	}
 
 	private PluginTool lazyTool() {
+
 		if (tool != null) {
 			return tool;
 		}
@@ -559,18 +560,18 @@ public class TestEnv {
 		}
 
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
-		PrintWriter writer = new PrintWriter(System.out);
+		PrintWriter errWriter = new PrintWriter(System.err);
 		ResourceFile resourceFile = new ResourceFile(scriptFile);
 		GhidraScript script = null;
 		try {
-			script = scriptProvider.getScriptInstance(resourceFile, writer);
+			script = scriptProvider.getScriptInstance(resourceFile, errWriter);
 		}
 		catch (GhidraScriptLoadException e) {
 			Msg.error(TestEnv.class, "Problem creating script", e);
 
 		}
 		if (script == null) {
-			writer.flush();
+			errWriter.flush();
 			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 
@@ -592,9 +593,9 @@ public class TestEnv {
 	 * A convenience method to close and then reopen the default project created by this TestEnv
 	 * instance.  This will not delete the project between opening and closing and will restore
 	 * the project to its previous state.
-	 * @throws IOException if any exception occurs while saving and reopening
+	 * @throws Exception if any exception occurs while saving and reopening
 	 */
-	public void closeAndReopenProject() throws IOException {
+	public void closeAndReopenProject() throws Exception {
 		gp.setDeleteOnClose(false);
 		Project project = gp.getProject();
 		ProjectLocator projectLocator = project.getProjectLocator();
@@ -801,15 +802,15 @@ public class TestEnv {
 	}
 
 	/**
-	 * Open a read-only test program from the test data directory.
-	 * This program must be released prior to disposing this test environment.
+	 * Open a read-only test program from the test data directory. The returned program must be 
+	 * {@link #release(Program) released} prior to disposing this test environment.
+	 * <br>
 	 * NOTE: Some tests rely on this method returning null when file does
 	 * not yet exist within the resource area (e.g., test binaries for P-Code Tests)
 	 *
 	 * @param programName name of program database within the test data directory.
 	 * @return program or null if program file not found
 	 */
-
 	public ProgramDB getProgram(String programName) {
 		ProgramDB p = programManager.getProgram(programName);
 		return p;
@@ -836,7 +837,7 @@ public class TestEnv {
 		AbstractGuiTest.runSwing(() -> {
 			tool = launchDefaultTool();
 			ProgramManager pm = tool.getService(ProgramManager.class);
-			pm.openProgram(program.getDomainFile());
+			pm.openProgram(program);
 		});
 
 		if (tool == null) {
@@ -882,7 +883,7 @@ public class TestEnv {
 		AbstractGuiTest.runSwing(() -> {
 			PluginTool newTool = doLaunchTool(toolName);
 			ref.set(newTool);
-			if (newTool != null) {
+			if (newTool != null && domainFile != null) {
 				newTool.acceptDomainFiles(new DomainFile[] { domainFile });
 			}
 		});
@@ -964,7 +965,7 @@ public class TestEnv {
 
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
-			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+			CancelledException, VersionException {
 		File file = AbstractGenericTest.getTestDataFile(programName);
 		if (file == null || !file.exists()) {
 			throw new FileNotFoundException("Can not find test program: " + programName);
@@ -973,8 +974,7 @@ public class TestEnv {
 	}
 
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
+			throws CancelledException, VersionException, IOException {
 		Language language =
 			DefaultLanguageService.getLanguageService().getDefaultLanguage(processor);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
@@ -1007,9 +1007,8 @@ public class TestEnv {
 	private void cleanupAutoAnalysisManagers(PluginTool t) {
 
 		@SuppressWarnings("unchecked")
-		Map<Program, AutoAnalysisManager> map =
-			(Map<Program, AutoAnalysisManager>) TestUtils.getInstanceField("managerMap",
-				AutoAnalysisManager.class);
+		Map<Program, AutoAnalysisManager> map = (Map<Program, AutoAnalysisManager>) TestUtils
+				.getInstanceField("managerMap", AutoAnalysisManager.class);
 		Collection<AutoAnalysisManager> managers = map.values();
 		for (AutoAnalysisManager manager : managers) {
 			@SuppressWarnings("unchecked")
@@ -1018,9 +1017,7 @@ public class TestEnv {
 
 			Collection<WeakSet<PluginTool>> values = toolMap.values();
 			for (WeakSet<PluginTool> toolSet : values) {
-				Iterator<PluginTool> iterator = toolSet.iterator();
-				while (iterator.hasNext()) {
-					PluginTool aaTool = iterator.next();
+				for (PluginTool aaTool : toolSet) {
 					manager.removeTool(aaTool);
 				}
 			}
@@ -1100,11 +1097,20 @@ public class TestEnv {
 		disposeAllSwingUpdateManagers();
 
 		deleteTestProject(projectName);
+
+		resetTheme();
+	}
+
+	private void resetTheme() {
+		Swing.runNow(() -> {
+			ThemeManager themeManager = ThemeManager.getInstance();
+			themeManager.restoreThemeValues();
+		});
 	}
 
 	private void deleteTestProject(String projectName) {
-		boolean deletedProject = AbstractGhidraHeadlessIntegrationTest.deleteProject(
-			AbstractGTest.getTestDirectoryPath(), projectName);
+		boolean deletedProject = AbstractGhidraHeadlessIntegrationTest
+				.deleteProject(AbstractGTest.getTestDirectoryPath(), projectName);
 
 		if (!deletedProject) {
 			Msg.error(TestEnv.class, "dispose() - Open programs after disposing project: ");
@@ -1131,9 +1137,8 @@ public class TestEnv {
 		// Note: background tool tasks are disposed by the tool
 
 		@SuppressWarnings("unchecked")
-		Map<Task, TaskMonitor> tasks =
-			(Map<Task, TaskMonitor>) TestUtils.getInstanceField("runningTasks",
-				TaskUtilities.class);
+		Map<Task, TaskMonitor> tasks = (Map<Task, TaskMonitor>) TestUtils
+				.getInstanceField("runningTasks", TaskUtilities.class);
 		for (TaskMonitor tm : tasks.values()) {
 			tm.cancel();
 		}
@@ -1193,9 +1198,8 @@ public class TestEnv {
 		// the managers will dispose the managers.
 		//
 		@SuppressWarnings("unchecked")
-		WeakSet<SwingUpdateManager> s =
-			(WeakSet<SwingUpdateManager>) TestUtils.getInstanceField("instances",
-				SwingUpdateManager.class);
+		WeakSet<SwingUpdateManager> s = (WeakSet<SwingUpdateManager>) TestUtils
+				.getInstanceField("instances", SwingUpdateManager.class);
 
 		/* Debug for undisposed SwingUpdateManagers
 			Msg.out("complete update manager list: ");

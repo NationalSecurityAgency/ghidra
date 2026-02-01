@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,10 @@
 package ghidra.framework.main.datatable;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -25,10 +27,12 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.dnd.GTableDragProvider;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
 import ghidra.framework.main.FrontEndPlugin;
+import ghidra.framework.main.datatree.DataTreeDragNDropHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
@@ -41,7 +45,7 @@ public class ProjectDataTablePanel extends JPanel {
 
 	private static final String MAX_FILE_COUNT_PROPERTY = "ProjectDataTable.maxFileCount";
 	private static final int MAX_FILE_COUNT_DEFAULT = 2000;
-	private static int maxFileCount = loadMaxFileCount();
+	public static final int MAX_FILE_COUNT = loadMaxFileCount();
 
 	private FrontEndPlugin plugin;
 	private PluginTool tool;
@@ -54,9 +58,9 @@ public class ProjectDataTablePanel extends JPanel {
 	public Set<DomainFile> filesPendingSelection;
 
 	private GHtmlLabel capacityExceededText =
-		new GHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+		new GHtmlLabel("<html><CENTER><I>Table view disabled for very large projects, or<BR>" +
 			"if an older project/repository filesystem is in use.<BR>" +
-			"View will remain disabled until project is closed.</I></CENTER></HTML>");
+			"View will remain disabled until project is closed.</I></CENTER></html>");
 
 	private GGlassPanePainter painter = new TableGlassPanePainter();
 
@@ -95,12 +99,22 @@ public class ProjectDataTablePanel extends JPanel {
 				checkOpen(e);
 			}
 		});
-		gTable.getSelectionModel().addListSelectionListener(
-			e -> plugin.getTool().contextChanged(null));
+		gTable.getSelectionModel()
+				.addListSelectionListener(e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
+		gTable.getColumn("Name").setCellRenderer(new NameCellRenderer());
 
-		new ProjectDataTableDnDHandler(gTable, model);
+		// self-registering drag provider
+		new ProjectDataTableDragProvider();
+	}
+
+	/**
+	 * Determine if table capacity has been exceeded and files are not shown
+	 * @return true if files are not shown in project data table, else false
+	 */
+	public boolean isCapacityExceeded() {
+		return capacityExceeded;
 	}
 
 	public void dispose() {
@@ -110,6 +124,10 @@ public class ProjectDataTablePanel extends JPanel {
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, helpLocation);
+	}
+
+	public void setFilter(String filterText) {
+		table.setFiterText(filterText);
 	}
 
 	public void setSelectedDomainFiles(Set<DomainFile> files) {
@@ -177,7 +195,7 @@ public class ProjectDataTablePanel extends JPanel {
 
 		int fileCount = projectData.getFileCount();
 
-		if (fileCount < 0 || fileCount > maxFileCount) {
+		if (fileCount < 0 || fileCount > MAX_FILE_COUNT) {
 			capacityExceeded = true;
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
@@ -195,7 +213,7 @@ public class ProjectDataTablePanel extends JPanel {
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent e) {
 		int[] selectedRows = gTable.getSelectedRows();
 		if (selectedRows.length == 0) {
-			return null;
+			return new ProjectDataContext(provider, projectData, gTable, null, null, gTable, true);
 		}
 
 		List<DomainFile> list = new ArrayList<>();
@@ -275,7 +293,59 @@ public class ProjectDataTablePanel extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
+
+	private class ProjectDataTableDragProvider extends GTableDragProvider<DomainFileInfo> {
+
+		private static final DataFlavor DOMAIN_FILE_LIST_FLAVOR =
+			DataTreeDragNDropHandler.localDomainFileFlavor;
+		private static final DataFlavor[] ROW_DATA_FLAVORS = { DOMAIN_FILE_LIST_FLAVOR };
+
+		ProjectDataTableDragProvider() {
+			super(gTable, model);
+		}
+
+		@Override
+		protected Transferable createDragTransferable(List<DomainFileInfo> items) {
+			return new DomainFileTransferable(items);
+		}
+
+		private class DomainFileTransferable implements Transferable {
+			private List<DomainFileInfo> list;
+
+			DomainFileTransferable(List<DomainFileInfo> list) {
+				this.list = list;
+			}
+
+			@Override
+			public Object getTransferData(DataFlavor flavor)
+					throws UnsupportedFlavorException, IOException {
+				if (DOMAIN_FILE_LIST_FLAVOR.equals(flavor)) {
+					return getDomainFileList();
+				}
+				throw new UnsupportedFlavorException(flavor);
+			}
+
+			private Object getDomainFileList() {
+				List<DomainFile> domainFileList = new ArrayList<>();
+				for (DomainFileInfo domainFileInfo : list) {
+					domainFileList.add(domainFileInfo.getDomainFile());
+				}
+				return domainFileList;
+			}
+
+			@Override
+			public DataFlavor[] getTransferDataFlavors() {
+				return ROW_DATA_FLAVORS;
+			}
+
+			@Override
+			public boolean isDataFlavorSupported(DataFlavor flavor) {
+				return DOMAIN_FILE_LIST_FLAVOR.equals(flavor);
+			}
+		}
+
+	}
 
 	private class ProjectDataTableDomainFolderChangeListener implements DomainFolderChangeListener {
 
@@ -303,7 +373,8 @@ public class ProjectDataTablePanel extends JPanel {
 			}
 			checkCapacity();
 			if (!capacityExceeded) {
-				model.addObject(new DomainFileInfo(file));
+				model.addObject(new DomainFileInfo(file, model));
+				model.refresh();
 			}
 		}
 
@@ -312,7 +383,7 @@ public class ProjectDataTablePanel extends JPanel {
 			if (ignoreChanges()) {
 				return;
 			}
-			model.refresh();
+			reload();
 		}
 
 		@Override
@@ -329,6 +400,7 @@ public class ProjectDataTablePanel extends JPanel {
 					break;
 				}
 			}
+			model.refresh();
 		}
 
 		@Override
@@ -364,11 +436,6 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public void domainFolderSetActive(DomainFolder folder) {
-			// don't care
-		}
-
-		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 			if (ignoreChanges()) {
 				return;
@@ -378,24 +445,6 @@ public class ProjectDataTablePanel extends JPanel {
 			plugin.getTool().contextChanged(null);
 		}
 
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			if (ignoreChanges()) {
-				return;
-			}
-			clearInfo(file);
-			table.repaint();
-		}
-
-		@Override
-		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-			// don't care
-		}
-
-		@Override
-		public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-			// don't care
-		}
 	}
 
 	/**
@@ -492,15 +541,41 @@ public class ProjectDataTablePanel extends JPanel {
 
 			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
 
-			Object value = data.getValue();
-
-			renderer.setText("");
-			if (value != null) {
-				DomainFileType type = (DomainFileType) value;
-				setToolTipText(type.getContentType());
-				setText("");
-				setIcon(type.getIcon());
+			DomainFileInfo info = (DomainFileInfo) data.getRowObject();
+			if (info != null) {
+				DomainFileType type = (DomainFileType) data.getValue();
+				renderer.setText(type.toString());
+				renderer.setIcon(type.getIcon());
+				String toolTipText = HTMLUtilities.toLiteralHTMLForTooltip(info.getToolTip());
+				renderer.setToolTipText(toolTipText);
 			}
+			else {
+				renderer.setText("");
+				renderer.setToolTipText(null);
+			}
+
+			return renderer;
+		}
+	}
+
+	private class NameCellRenderer extends GTableCellRenderer {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+
+			DomainFileInfo info = (DomainFileInfo) data.getRowObject();
+			if (info != null) {
+				renderer.setText((String) data.getValue());
+				String toolTipText = HTMLUtilities.toLiteralHTMLForTooltip(info.getToolTip());
+				renderer.setToolTipText(toolTipText);
+			}
+			else {
+				renderer.setText("");
+				renderer.setToolTipText(null);
+			}
+
 			return renderer;
 		}
 	}

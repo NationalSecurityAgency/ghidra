@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,14 +47,12 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 	 * Create a new {@link DyldCacheSlideInfo1}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 1
-	 * @param mappingAddress The base address of where the slide fixups will take place
-	 * @param mappingSize The size of the slide fixups block
-	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
+	 * @param mappingInfo The {@link DyldCacheMappingInfo} of where the slide fixups will take place
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info 1
 	 */
-	public DyldCacheSlideInfo1(BinaryReader reader, long mappingAddress, long mappingSize,
-			long mappingFileOffset) throws IOException {
-		super(reader, mappingAddress, mappingSize, mappingFileOffset);
+	public DyldCacheSlideInfo1(BinaryReader reader, DyldCacheMappingInfo mappingInfo)
+			throws IOException {
+		super(reader, mappingInfo);
 		long startIndex = reader.getPointerIndex() - 4;  // version # already read
 
 		tocOffset = reader.readNextInt();
@@ -123,10 +121,10 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 	}
 
 	@Override
-	public List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
-			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
+	public List<DyldFixup> getSlideFixups(BinaryReader reader, int pointerSize, MessageLog log,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>(1024);
+		List<DyldFixup> fixups = new ArrayList<>(1024);
 
 		// V1 pointers currently don't need to be fixed, unless the cache is slid from its preferred
 		// location.
@@ -155,7 +153,7 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 							long pageOffset = pageEntriesIndex * 8 * 4 + bitMapIndex * 4;
 							long value = reader.readLong(segmentOffset + pageOffset) /* + slide */;
 							fixups.add(
-								new DyldCacheSlideFixup(segmentOffset + pageOffset, value, 8));
+								new DyldFixup(segmentOffset + pageOffset, value, 8, null, null));
 						}
 					}
 				}

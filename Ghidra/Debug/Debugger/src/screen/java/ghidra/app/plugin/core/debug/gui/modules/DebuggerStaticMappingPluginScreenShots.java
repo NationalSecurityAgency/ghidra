@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,15 +16,20 @@
 package ghidra.app.plugin.core.debug.gui.modules;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
-import ghidra.app.services.*;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.services.ProgramManager;
+import ghidra.debug.api.modules.MapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -76,22 +81,29 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 	@Test
 	public void testCaptureDebuggerStaticMappingPlugin() throws Throwable {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		final long snap;
 		try (Transaction tx = tb.startTransaction()) {
-			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
+			snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
+					.addLoadedModule("Modules[/bin/echo]", "/bin/echo",
 						tb.range(0x00400000, 0x0060ffff), snap);
-			bin.addSection("bash[.text]", ".text", tb.range(0x00400000, 0x0040ffff));
-			bin.addSection("bash[.data]", ".data", tb.range(0x00600000, 0x0060ffff));
+			bin.addSection(snap, "Modules[/bin/echo].Sections[.text]", ".text",
+				tb.range(0x00400000, 0x0040ffff));
+			bin.addSection(snap, "Modules[/bin/echo].Sections[.data]", ".data",
+				tb.range(0x00600000, 0x0060ffff));
+
 			TraceModule lib = tb.trace.getModuleManager()
-					.addLoadedModule("/lib/libc.so.6", "/lib/libc.so.6",
+					.addLoadedModule("Modules[/lib/libc.so.6]", "/lib/libc.so.6",
 						tb.range(0x7fac0000, 0x7faeffff), snap);
-			lib.addSection("libc[.text]", ".text", tb.range(0x7fac0000, 0x7facffff));
-			lib.addSection("libc[.data]", ".data", tb.range(0x7fae0000, 0x7faeffff));
+			lib.addSection(snap, "Modules[/lib/libc.so.6].Sections[.text]", ".text",
+				tb.range(0x7fac0000, 0x7facffff));
+			lib.addSection(snap, "Modules[/lib/libc.so.6].Sections[.data]", ".data",
+				tb.range(0x7fae0000, 0x7faeffff));
 		}
 
-		progEcho = createDefaultProgram("bash", ProgramBuilder._X64, this);
+		progEcho = createDefaultProgram("echo", ProgramBuilder._X64, this);
 		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
 
 		try (Transaction tx = progEcho.openTransaction("Add memory")) {
@@ -127,10 +139,12 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 		try (Transaction tx = tb.startTransaction()) {
 			Map<TraceModule, ModuleMapProposal> proposal =
 				mappingService.proposeModuleMaps(tb.trace.getModuleManager().getAllModules(),
-					List.of(programManager.getAllOpenPrograms()));
+					snap, List.of(programManager.getAllOpenPrograms()));
 			Collection<ModuleMapEntry> entries = MapProposal.flatten(proposal.values());
 			mappingService.addModuleMappings(entries, TaskMonitor.DUMMY, false);
 		}
+		mappingService.changesSettled().get(1, TimeUnit.SECONDS);
+		waitForTasks();
 
 		captureIsolatedProvider(DebuggerStaticMappingProvider.class, 700, 400);
 	}

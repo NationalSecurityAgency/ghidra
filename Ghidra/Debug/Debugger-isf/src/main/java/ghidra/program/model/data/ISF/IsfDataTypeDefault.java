@@ -17,14 +17,15 @@ package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.DataType;
 
-public class IsfDataTypeDefault implements IsfObject {
+public class IsfDataTypeDefault extends AbstractIsfObject {
 
 	public String kind;
-	public String name;
+	int size;
 
 	public IsfDataTypeDefault(DataType dt) {
+		super(dt);
 		kind = IsfUtilities.getKind(dt);
-		name = dt.getName();
+		size = dt.getLength();
 	}
 
 }

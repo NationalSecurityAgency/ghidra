@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	
+<!-- Log4j appender that writes messages to the console. -->
+<Console 	
+	name="console" 
+	target="SYSTEM_OUT">
+	<PatternLayout>
+		<LevelPatternSelector defaultPattern="%-5p %m (%c{1}) %ex %n">
+			<!-- avoid INFO text modification - assume package limited for INFO allowance -->
+			<PatternMatch key="INFO" pattern="%m %n" />
+    	</LevelPatternSelector>
+    </PatternLayout>
+</Console>
+

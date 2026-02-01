@@ -18,6 +18,7 @@ package ghidra.program.database.symbol;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -44,10 +45,10 @@ abstract class EquateRefDBAdapter {
 	static final int OP_INDEX_COL = 2;
 	static final int HASH_COL = 3;
 
-	static EquateRefDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static EquateRefDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new EquateRefDBAdapterV1(dbHandle, addrMap, true);
 		}
 
@@ -59,11 +60,11 @@ abstract class EquateRefDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			EquateRefDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,11 +99,11 @@ FloatFormat::floatclass FloatFormat::extractExpSig(double x,bool *sgn,uintb *sig
     x = -x;
   double norm = frexp(x,&e);  // norm is between 1/2 and 1
   norm = ldexp(norm,8*sizeof(uintb)-1); // norm between 2^62 and 2^63
-					   
+
   *signif = (uintb)norm;    // Convert to normalized integer
   *signif <<= 1;
 
-  e -= 1;    // Consider normalization between 1 and 2  
+  e -= 1;    // Consider normalization between 1 and 2
   *exp = e;
   return normalized;
 }
@@ -217,8 +217,9 @@ uintb FloatFormat::getNaNEncoding(bool sgn) const
 void FloatFormat::calcPrecision(void)
 
 {
-  float val = frac_size * 0.30103;
-  decimal_precision = (int4)floor(val + 0.5);
+  decimalMinPrecision = (int4)floor(frac_size * 0.30103);
+  // Precision needed to guarantee IEEE 754 binary -> decimal -> binary round trip conversion
+  decimalMaxPrecision = (int4)ceil((frac_size + 1) * 0.30103) + 1;
 }
 
 /// \param encoding is the encoding value
@@ -415,6 +416,47 @@ uintb FloatFormat::convertEncoding(uintb encoding,
   res = setFractionalCode(res, signif);
   res = setExponentCode(res, (uintb)exp);
   return setSign(res, sgn);
+}
+
+/// The string should be printed with the minimum number of digits to uniquely specify the underlying
+/// binary value.  This currently only works for the 32-bit and 64-bit IEEE 754 formats.
+/// If the \b forcesci parameter is \b true, the string will always be printed using scientific notation.
+/// \param host is the given value already converted to the host's \b double format.
+/// \param forcesci is \b true if the value should be printed in scientific notation.
+/// \return the decimal representation as a string
+string FloatFormat::printDecimal(double host,bool forcesci) const
+
+{
+  string res;
+  for(int4 prec=decimalMinPrecision;;++prec) {
+    ostringstream s;
+    if (forcesci) {
+      s.setf( ios::scientific ); // Set to scientific notation
+      s.precision(prec-1);	// scientific doesn't include first digit in precision count
+    }
+    else {
+      s.unsetf( ios::floatfield );	// Use "default" notation to allow fewer digits to be printed if possible
+      s.precision(prec);
+    }
+    s << host;
+    if (prec == decimalMaxPrecision) {
+      return s.str();
+    }
+    res = s.str();
+    double roundtrip = 0.0;
+    istringstream t(res);
+    if (size <= 4) {
+      float tmp = 0.0;
+      t >> tmp;
+      roundtrip = tmp;
+    }
+    else {
+      t >> roundtrip;
+    }
+    if (roundtrip == host)
+      break;
+  }
+  return res;
 }
 
 // Currently we emulate floating point operations on the target
@@ -626,68 +668,6 @@ uintb FloatFormat::opRound(uintb a) const
   double val = getHostFloat(a,&type);
   // return getEncoding(floor(val+.5)); // round half up
   return getEncoding(round(val)); // round half away from zero
-}
-
-/// Write the format out to a \<floatformat> XML tag.
-/// \param s is the output stream
-void FloatFormat::saveXml(ostream &s) const
-
-{
-  s << "<floatformat";
-  a_v_i(s,"size",size);
-  a_v_i(s,"signpos",signbit_pos);
-  a_v_i(s,"fracpos",frac_pos);
-  a_v_i(s,"fracsize",frac_size);
-  a_v_i(s,"exppos",exp_pos);
-  a_v_i(s,"expsize",exp_size);
-  a_v_i(s,"bias",bias);
-  a_v_b(s,"jbitimplied",jbitimplied);
-  s << "/>\n";
-}
-
-/// Restore \b object from a \<floatformat> XML tag
-/// \param el is the element
-void FloatFormat::restoreXml(const Element *el)
-
-{
-  {
-    istringstream s(el->getAttributeValue("size"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> size;
-  }
-  {
-    istringstream s(el->getAttributeValue("signpos"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> signbit_pos;
-  }
-  {
-    istringstream s(el->getAttributeValue("fracpos"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> frac_pos;
-  }
-  {
-    istringstream s(el->getAttributeValue("fracsize"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> frac_size;
-  }
-  {
-    istringstream s(el->getAttributeValue("exppos"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> exp_pos;
-  }
-  {
-    istringstream s(el->getAttributeValue("expsize"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> exp_size;
-  }
-  {
-    istringstream s(el->getAttributeValue("bias"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> bias;
-  }
-  jbitimplied = xml_readbool(el->getAttributeValue("jbitimplied"));
-  maxexponent = (1<<exp_size)-1;
-  calcPrecision();
 }
 
 } // End namespace ghidra

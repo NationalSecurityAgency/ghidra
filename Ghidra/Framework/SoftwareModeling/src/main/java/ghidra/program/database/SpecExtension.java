@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,34 +35,37 @@ import ghidra.xml.*;
 /**
  * Utility class for installing/removing "specification extensions" to a Program.
  * A specification extension is a program specific version of either a:
- *   - Prototype Model
- *   - Call Fixup or 
- *   - Callother Fixup
+ * <ul>
+ *   <li>Prototype Model</li>
+ *   <li>Call Fixup or</li>
+ *   <li>Callother Fixup</li>
+ * </ul>
  * Normally these objects are provided by the language specific configuration files (.cspec or .pspec),
  * but this class allows additional objects to be added that are specific to the program.
- * 
+ * <p>
  * Internally, each spec extension is stored as an XML document as a formal Program Option. Each type of
  * extension is described by a specific XML tag and is parsed as it would be in a .cspec or .pspec file.
  * The XML tags are:
- *   - \<callfixup>        - describing a Call Fixup
- *   - \<callotherfixup>   - describing a Callother Fixup
- *   - \<prototype>        - describing a typical Prototype Model
- *   - \<resolveprototype> - describing a Prototype Model merged from other models
- *   
+ * <ul>
+ *   <li>{@code <callfixup>} - describing a Call Fixup</li>
+ *   <li>{@code <callotherfixup>} - describing a Callother Fixup</li>
+ *   <li>{@code <prototype>} - describing a typical Prototype Model</li>
+ *   <li>{@code <resolveprototype>} - describing a Prototype Model merged from other models</li>
+ * </ul>
  * Each type of object has a unique name or target, which must be specified as part of the XML tag,
- * which is referred to in this class as the extension's "formal name".  In the \<callotherfixup> tag,
- * the formal name is given by the "targetop" attribute; for all the other tags, the formal name is
- * given by the "name" attribute".
- * 
+ * which is referred to in this class as the extension's "formal name".  In the 
+ * {@code <callotherfixup>} tag, the formal name is given by the "targetop" attribute; for all the 
+ * other tags, the formal name is given by the "name" attribute".
+ * <p>
  * The parent option for all extensions is given by the static field SPEC_EXTENSION. Under the parent
  * option, each extension is stored as a string with an option name, constructed by
  * concatenating the extension's formal name with a prefix corresponding to the extension's XML tag name.
- *
+ * <p>
  * testExtensionDocument() is used independently to extensively test whether a document
  * describes a valid extension.
- * 
- * Extensions are installed on a program via addReplaceCompilerSpecExtension().
- * Extensions are removed from a program via removeCompilerSpecExtension().
+ * <p>
+ * Extensions are installed on a program via {@code addReplaceCompilerSpecExtension()}.
+ * Extensions are removed from a program via {@code removeCompilerSpecExtension()}.
  */
 public class SpecExtension {
 
@@ -332,7 +335,7 @@ public class SpecExtension {
 		if (!SystemUtilities.isInHeadlessMode()) {
 			Options options = program.getOptions(SPEC_EXTENSION);
 			options.setOptionsHelpLocation(new HelpLocation("DecompilePlugin", "ExtensionOptions"));
-			options.registerOptionsEditor(new SpecExtensionEditor((ProgramDB) program));
+			options.registerOptionsEditor(() -> new SpecExtensionEditor((ProgramDB) program));
 		}
 	}
 
@@ -394,10 +397,12 @@ public class SpecExtension {
 	/**
 	 * Parse an XML string and build the corresponding compiler spec extension object.
 	 * Currently this can either be a
-	 *    - PrototypeModel or
-	 *    - InjectPayload
+	 * <ul>
+	 *   <li>PrototypeModel</li>
+	 *   <li>InjectPayload</li>
+	 * </ul>
 	 * 
-	 * For InjectPayloadCallfixup or InjectPayloadCallother, the p-code \<body> tag
+	 * For InjectPayloadCallfixup or InjectPayloadCallother, the p-code {@code <body>} tag
 	 * is also parsed, and the caller can control whether any parse errors
 	 * cause an exception or whether a dummy payload is provided instead.
 	 * @param optionName is the option name the extension is attached to

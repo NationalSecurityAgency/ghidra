@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ import ghidra.util.task.TaskLauncher;
  * the graphs that it generates. This plugin generates several different types of program graphs.
  * Both the "block flow" and "code flow" actions will generate a graph of basic block flows. The only
  * difference is that the "code flow" action generates a graph that
- * displays the assembly for for each basic block, whereas the "block flow" action generates a graph
+ * displays the assembly for each basic block, whereas the "block flow" action generates a graph
  * that displays the symbol or address at the start of the basic block.  This plugin also
  * generates call graphs, using either the default subroutine model or one that the user chooses.
  */
@@ -185,54 +185,57 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private void createActions() {
 
-		new ActionBuilder("Graph Block Flow", getName()).menuPath(MENU_GRAPH, "&Block Flow")
-				.menuGroup(MENU_GRAPH, "A")
+		new ActionBuilder("Graph Block Flow", getName())
+				.menuPath(MENU_GRAPH, "&Block Flow")
+				.menuGroup("Code Graph", "A")
 				.onAction(c -> graphBlockFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Graph Code Flow", getName()).menuPath(MENU_GRAPH, "C&ode Flow")
-				.menuGroup(MENU_GRAPH, "B")
+		new ActionBuilder("Graph Code Flow", getName())
+				.menuPath(MENU_GRAPH, "C&ode Flow")
+				.menuGroup("Code Graph", "B")
 				.onAction(c -> graphCodeFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph Calls Using Default Model", getName())
 				.menuPath(MENU_GRAPH, "&Calls")
-				.menuGroup(MENU_GRAPH, "C")
+				.menuGroup("Code Graph", "C")
 				.onAction(c -> createDefaultCallGraph())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		tool.setMenuGroup(new String[] { MENU_GRAPH, "Data" }, "Graph", "Data");
+		tool.setMenuGroup(new String[] { MENU_GRAPH, "Data References" }, "Graph", "Data");
 		HelpLocation helpLoc = new HelpLocation(getName(), "Data_Reference_Graph");
 
 		new ActionBuilder("Graph To/From Data References", getName())
-				.menuPath(MENU_GRAPH, "Data", "To/From &References")
-				.menuGroup(MENU_GRAPH, "Data")
+				.menuPath(MENU_GRAPH, "Data References", "To/From &References")
+				.menuGroup("Graph", "Data")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph To Data References", getName())
-				.menuPath(MENU_GRAPH, "Data", "&To References")
-				.menuGroup(MENU_GRAPH, "Data")
+				.menuPath(MENU_GRAPH, "Data References", "&To References")
+				.menuGroup("Graph", "Data")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphToDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph From Data References", getName())
-				.menuPath(MENU_GRAPH, "Data", "&From References")
-				.menuGroup(MENU_GRAPH, "Data")
+				.menuPath(MENU_GRAPH, "Data References", "&From References")
+				.menuGroup("Graph", "Data")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphFromDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		reuseGraphAction =
-			new ToggleActionBuilder("Reuse Graph", getName()).menuPath(MENU_GRAPH, "Reuse Graph")
+			new ToggleActionBuilder("Reuse Graph", getName())
+					.menuPath(MENU_GRAPH, "Reuse Graph")
 					.menuGroup("Graph Options")
 					.selected(reuseGraph)
 					.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
@@ -240,7 +243,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 					.buildAndInstall(tool);
 
 		appendGraphAction =
-			new ToggleActionBuilder("Append Graph", getName()).menuPath(MENU_GRAPH, "Append Graph")
+			new ToggleActionBuilder("Append Graph", getName())
+					.menuPath(MENU_GRAPH, "Append Graph")
 					.menuGroup("Graph Options")
 					.selected(false)
 					.onAction(c -> updateAppendAndReuseGraph())
@@ -297,13 +301,12 @@ public class ProgramGraphPlugin extends ProgramPlugin
 			subUsingGraphActions.add(action);
 		}
 
-		tool.setMenuGroup(new String[] { MENU_GRAPH, "Calls Using Model" }, "Graph", "C");
+		tool.setMenuGroup(new String[] { MENU_GRAPH, "Calls Using Model" }, "Code Graph", "D");
 	}
 
 	private DockingAction buildGraphActionWithModel(String blockModelName, HelpLocation helpLoc) {
 		return new ActionBuilder("Graph Calls using " + blockModelName, getName())
 				.menuPath(MENU_GRAPH, "Calls Using Model", blockModelName)
-				.menuGroup(MENU_GRAPH, "C")
 				.helpLocation(helpLoc)
 				.onAction(c -> createCallGraphUsing(blockModelName))
 				.enabledWhen(this::canGraph)

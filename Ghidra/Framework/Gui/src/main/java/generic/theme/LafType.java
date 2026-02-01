@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,6 +48,19 @@ public enum LafType {
 	private LafType(String name, boolean usesDarkDefaults) {
 		this.name = name;
 		this.usesDarkDefaults = usesDarkDefaults;
+	}
+
+	/**
+	 * Gets the preferred display string for this type.
+	 * @return the preferred display string.
+	 */
+	public String getDisplayString() {
+		if (this == MOTIF) {
+			// The name is "CDE/Motif"; Update to be consistent with other dialogs, like the theme
+			// switcher dialog
+			return "Motif";
+		}
+		return name;
 	}
 
 	/**
@@ -140,20 +153,15 @@ public enum LafType {
 	 */
 	public static LafType getDefaultLookAndFeel() {
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
-		switch (OS) {
-			case MAC_OS_X:
-				return MAC;
-			case WINDOWS:
-				return WINDOWS;
-			case LINUX:
-			case UNSUPPORTED:
-			default:
-				return NIMBUS;
-		}
+		return switch (OS) {
+			case MAC_OS_X -> MAC;
+			case WINDOWS -> WINDOWS;
+			default -> FLAT_LIGHT;
+		};
 	}
 
 	@Override
 	public String toString() {
-		return getName();
+		return getDisplayString();
 	}
 }

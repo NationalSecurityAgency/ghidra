@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.progmgr;
+
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -39,23 +41,12 @@ class ProgramSaveManager {
 	private ProgramManager programMgr;
 	private PluginTool tool;
 	private boolean treeDialogCancelled;
-	private DomainFileFilter domainFileFilter;
+	private DomainFileFilter programFileFilter;
 
 	ProgramSaveManager(PluginTool tool, ProgramManager programMgr) {
 		this.tool = tool;
 		this.programMgr = programMgr;
-		domainFileFilter = new DomainFileFilter() {
-
-			@Override
-			public boolean accept(DomainFile df) {
-				return Program.class.isAssignableFrom(df.getDomainObjectClass());
-			}
-
-			@Override
-			public boolean followLinkedFolders() {
-				return false; // can't save to linked-folder (read-only)
-			}
-		};
+		programFileFilter = new DefaultDomainFileFilter(Program.class, true);
 	}
 
 	/**
@@ -66,8 +57,7 @@ class ProgramSaveManager {
 	 * the user
 	 */
 	boolean canClose(Program program) {
-		if (program == null ||
-			(program.getDomainFile().getConsumers().size() > 1 && !tool.hasToolListeners())) {
+		if (!isOnlyToolConsumer(program)) {
 			return true;
 		}
 		if (acquireSaveLock(program, "Close")) {
@@ -105,9 +95,7 @@ class ProgramSaveManager {
 			return saveChangedPrograms(saveList);
 		}
 		finally {
-			Iterator<Program> it = lockList.iterator();
-			while (it.hasNext()) {
-				Program p = it.next();
+			for (Program p : lockList) {
 				p.unlock();
 			}
 		}
@@ -378,10 +366,9 @@ class ProgramSaveManager {
 				"The Program is currently being modified by the following actions/tasks:\n ");
 			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append("WARNING! The above task(s) should be cancelled before attempting a " +
@@ -412,10 +399,9 @@ class ProgramSaveManager {
 				"The Program is currently being modified by the following actions/tasks:\n ");
 			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append(
@@ -446,8 +432,7 @@ class ProgramSaveManager {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		DataTreeDialog dialog =
-			new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
+		DataTreeDialog dialog = new DataTreeDialog(null, "Save As", SAVE, programFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();

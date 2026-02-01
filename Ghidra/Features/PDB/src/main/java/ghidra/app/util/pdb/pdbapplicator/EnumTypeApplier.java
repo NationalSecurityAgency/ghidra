@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,11 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractEnumMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.MsProperty;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -31,33 +29,17 @@ import ghidra.util.exception.CancelledException;
  */
 public class EnumTypeApplier extends AbstractComplexTypeApplier {
 
-	//private AbstractMsTypeApplier underlyingApplier = null;
-
-//	private int length = 0;
-//	private boolean isSigned = false;
-//
-
+	// Intended for: AbstractEnumMsType
 	/**
-	 * Constructor for enum type applier, for transforming a enum into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractEnumMsType} to process.
+	 * Constructor for enum type applier, for transforming a enum into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
-	public EnumTypeApplier(DefaultPdbApplicator applicator, AbstractEnumMsType msType) {
-		super(applicator, msType);
+	public EnumTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
-	@Override
-	BigInteger getSize() {
-		MsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
-		if (underlyingApplier == null) {
-			return BigInteger.ZERO;
-		}
-		return underlyingApplier.getSize();
-	}
-
-	private long getMask() {
-		switch (getLength()) {
+	private long getMask(AbstractEnumMsType type) {
+		switch (getLength(type)) {
 			case 1:
 				return 0xffL;
 			case 2:
@@ -69,25 +51,21 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		}
 	}
 
-	private int getLength() {
-		// Minimum length allowed by Ghidra is 1 for enum, so all returns are min 1.
-		MsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
-		if (underlyingApplier == null) {
+	private int getLength(AbstractEnumMsType type) {
+		DataType underlyingDataType = getUnderlyingDataType(type);
+		if (underlyingDataType == null) {
 			return 1;
 		}
-		DataType underlyingType = underlyingApplier.getDataType();
-		if (underlyingType == null) {
-			return 1;
-		}
-		return Integer.max(underlyingType.getLength(), 1);
+		return Integer.max(underlyingDataType.getLength(), 1);
 	}
 
-	boolean isSigned() {
-		MsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
-		if (underlyingApplier == null) {
-			return false;
-		}
-		DataType underlyingType = underlyingApplier.getDataType();
+	private DataType getUnderlyingDataType(AbstractEnumMsType type) {
+		RecordNumber underlyingRecordNumber = type.getUnderlyingRecordNumber();
+		return applicator.getDataType(underlyingRecordNumber);
+	}
+
+	boolean isSigned(AbstractEnumMsType type) {
+		DataType underlyingType = getUnderlyingDataType(type);
 		if (underlyingType == null) {
 			return false;
 		}
@@ -97,205 +75,83 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		return false;
 	}
 
-	@Override
-	EnumTypeApplier getDependencyApplier() {
-		if (definitionApplier != null && definitionApplier instanceof EnumTypeApplier) {
-			return (EnumTypeApplier) definitionApplier;
-		}
-		return this;
-	}
-
-	String getName() {
-		return getMsType().getName();
-	}
-
-	@Override
-	DataType getDataType() {
-		getOrCreateEnum();
-		return dataType;
-	}
-
-	private MsTypeApplier getUnderlyingTypeApplier() {
-		MsTypeApplier under = null;
-		MsTypeApplier applier = (definitionApplier != null) ? definitionApplier : this;
-		RecordNumber underlyingRecordNumber =
-			((AbstractEnumMsType) applier.getMsType()).getUnderlyingRecordNumber();
-		under = applicator.getTypeApplier(underlyingRecordNumber);
-		if (under == null) {
-			applicator.appendLogMsg("Missing applier for underlying type index " +
-				underlyingRecordNumber + " in Enum " + msType.getName());
-		}
-		return under;
-	}
-
 	private EnumDataType createEmptyEnum(AbstractEnumMsType type) {
 
-		SymbolPath fixedPath = getFixedSymbolPath();
+		AbstractEnumMsType defType = getDefinitionType(type);
+
+		SymbolPath fixedPath = getFixedSymbolPath(defType);
 		CategoryPath categoryPath = applicator.getCategory(fixedPath.getParent());
 
-//		MsProperty property = type.getMsProperty();
-//		if (property.isForwardReference()) {
-//			// investigate this
-//		}
-////		RecordNumber underlyingRecordNumber = type.getUnderlyingRecordNumber();
-////		underlyingApplier = applicator.getApplier(underlyingRecordNumber);
-//		determineUnderlyingTypeApplier();
-//
-//		if (underlyingApplier == null) {
-//			return null;
-//		}
-//		DataType underlyingType = underlyingApplier.getDataType();
-//		if (underlyingType != null) {
-//			length = underlyingType.getLength();
-//			if (underlyingType instanceof AbstractIntegerDataType) {
-//				isSigned = ((AbstractIntegerDataType) underlyingType).isSigned();
-//			}
-//			else if (!(underlyingType instanceof VoidDataType)) {
-//			pdbLogAndInfoMessage(this, "Cannot processes enum with underlying type: " +
-//					underlyingType.getClass().getSimpleName());
-//				throw new PdbException(msg);
-//			}
-//		}
-//		else {
-//			AbstractMsType underlying = underlyingApplier.getMsType();
-//			if (underlying instanceof PrimitiveMsType) {
-//				length = ((PrimitiveMsType) underlying).getTypeSize();
-//				//TODO: can we set isSigned in here?  ((PrimitiveMsType) underlying)
-//				// TODO: there might be more
-//				// TODO: investigate getSize() on AbstractMsType?
-//				//       then: length = underlying.getSize();
-//			}
-//		}
-//		// Ghidra does not like size of zero.
-//		length = Integer.max(length, 1);
-
-		EnumDataType enumDataType = new EnumDataType(categoryPath, fixedPath.getName(), getLength(),
-			applicator.getDataTypeManager());
+		EnumDataType enumDataType = new EnumDataType(categoryPath, fixedPath.getName(),
+			getLength(defType), applicator.getDataTypeManager());
 
 		return enumDataType;
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
-		getOrCreateEnum();
+	boolean apply(AbstractMsType type)
+			throws PdbException, CancelledException {
+		//Ghidra cannot handle fwdrefs and separate definitions for enumerates as it can for
+		//  composites.  Thus, we will just try to provide the defined version now.
+		AbstractEnumMsType definedEnum =
+			(AbstractEnumMsType) applicator.getMappedTypeRecord(type.getRecordNumber());
 
-		AbstractEnumMsType type = (AbstractEnumMsType) msType;
-		MsProperty property = type.getMsProperty();
-		if (property.isForwardReference()) {
-			return;
-		}
+		// Note that we do not need to check on underlying data types, as there are none.
 
-		applyEnumMsType((AbstractEnumMsType) msType);
+		EnumDataType enumDataType = createEmptyEnum(definedEnum);
+		applyEnumMsType(enumDataType, definedEnum);
 
+		DataType dataType = enumDataType;
+		applicator.putDataType(definedEnum, dataType);
+		return true;
 	}
 
-	@Override
-	void resolve() {
-		if (!isForwardReference()) {
-			super.resolve();
-		}
-	}
+	private EnumDataType applyEnumMsType(EnumDataType enumDataType, AbstractEnumMsType type)
+			throws PdbException {
 
-	// Mapping of fwdRef/def must be done prior to this call.
-	private void getOrCreateEnum() {
-		AbstractEnumMsType neededType = (AbstractEnumMsType) msType;
-		if (dataType != null) {
-			return;
+		if (enumDataType.getCount() != 0) {
+			//already applied
+			return enumDataType;
 		}
-		if (isForwardReference()) {
-			if (definitionApplier != null) {
-				dataType = definitionApplier.getDataTypeInternal();
-				if (dataType != null) {
-					return;
-				}
-				neededType = (AbstractEnumMsType) definitionApplier.getMsType();
-			}
-		}
-		else {
-			if (forwardReferenceApplier != null) {
-				dataType = forwardReferenceApplier.getDataTypeInternal();
-				if (dataType != null) {
-					return;
-				}
-			}
-		}
-		dataType = createEmptyEnum(neededType);
-	}
-
-	private EnumDataType applyEnumMsType(AbstractEnumMsType type) throws PdbException {
 
 		String fullPathName = type.getName();
-
-//		// TODO: evaluate whether we do full SymbolPath... see others
-//		SymbolPath fixedPath = getFixedSymbolPath();
-//
-//		RecordNumber underlyingRecordNumber = type.getUnderlyingRecordNumber();
-//		MsProperty property = type.getMsProperty();
-//		if (property.isForwardReference()) {
-//			// investigate this
-//		}
-//		underlyingApplier = applicator.getApplier(underlyingRecordNumber);
-//
-//		if (underlyingApplier == null) {
-//			applicator.appendLogMsg("Missing applier for underlying type index " +
-//				underlyingRecordNumber + " in Enum " + fullPathName);
-//			return null;
-//		}
-//		DataType underlyingType = underlyingApplier.getDataType();
-//		int length = 0;
-//		if (underlyingType != null) {
-//			length = underlyingType.getLength();
-//		}
-//		else {
-//			AbstractMsType underlying = underlyingApplier.getMsType();
-//			if (underlying instanceof PrimitiveMsType) {
-//				length = ((PrimitiveMsType) underlying).getTypeSize();
-//				// TODO: there might be more
-//				// TODO: investigate getSize() on AbstractMsType?
-//				//       then: length = underlying.getSize();
-//			}
-//		}
-//		// Ghidra does not like size of zero.
-//		length = Integer.max(length, 1);
-//
-//		CategoryPath categoryPath = applicator.getCategory(fixedPath.getParent());
-//		EnumDataType enumDataType = new EnumDataType(categoryPath, fixedPath.getName(), length,
-//			applicator.getDataTypeManager());
-//
 
 		RecordNumber fieldListRecordNumber = type.getFieldDescriptorListRecordNumber();
 		FieldListTypeApplier fieldListApplier =
 			FieldListTypeApplier.getFieldListApplierSpecial(applicator, fieldListRecordNumber);
 
+		FieldListTypeApplier.FieldLists lists =
+			fieldListApplier.getFieldLists(fieldListRecordNumber);
+
+		if (!lists.methods().isEmpty()) {
+			// See applyCpp where we store sp in CppCompositeType so we don't have to determine
+			//  this again (including possible demangling)... can we store this symbol path
+			//  somewhere as well so we do not need to re-create it?
+			SymbolPath sp = getFixedSymbolPath(type);
+			applicator.predefineClass(sp);
+		}
+
 		// Note: not doing anything with getNamespaceList() or getMethodsList() at this time.
-		List<MsTypeApplier> memberList = fieldListApplier.getMemberList();
+		List<AbstractEnumerateMsType> enumerates = lists.enumerates();
 
 		int numElements = type.getNumElements();
-		if (memberList.size() != numElements) {
+		if (enumerates.size() != numElements) {
 			pdbLogAndInfoMessage(this, "Enum expecting " + numElements + " elements, but only " +
-				memberList.size() + " available for " + fullPathName);
+				enumerates.size() + " available for " + fullPathName);
 		}
-		EnumDataType enumDataType = (EnumDataType) dataType;
-		int length = getLength();
-		boolean isSigned = isSigned();
-		for (MsTypeApplier memberApplier : memberList) {
-			if (memberApplier instanceof EnumerateTypeApplier) {
-				EnumerateTypeApplier enumerateApplier = (EnumerateTypeApplier) memberApplier;
-				SymbolPath memberSymbolPath = new SymbolPath(enumerateApplier.getName());
-				enumDataType.add(memberSymbolPath.getName(),
-					narrowingConversion(length, isSigned, enumerateApplier.getNumeric()));
-			}
-			else { // (member instanceof AbstractMemberMsType)
-					// I do not believe (until proven otherwise) that an Enum will have members of
-					//  type AbstractMemberMsType.
-				pdbLogAndInfoMessage(this, getClass().getSimpleName() + ": unexpected " +
-					memberApplier.getClass().getSimpleName());
-			}
+
+		int length = getLength(type);
+		boolean isSigned = isSigned(type);
+		for (AbstractEnumerateMsType enumerateType : enumerates) {
+			SymbolPath memberSymbolPath = new SymbolPath(enumerateType.getName());
+			enumDataType.add(memberSymbolPath.getName(), narrowingConversion(type, length, isSigned,
+				enumerateType.getNumeric()));
 		}
 		return enumDataType;
 	}
 
-	private long narrowingConversion(int outputSize, boolean outputSigned, Numeric numeric) {
+	private long narrowingConversion(AbstractEnumMsType type, int outputSize, boolean outputSigned,
+			Numeric numeric) {
 		if (!numeric.isIntegral()) {
 			Msg.info(this, "Non-integral numeric found: " + numeric);
 			return 0;
@@ -304,9 +160,11 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 			pdbLogAndInfoMessage(this, "Using zero in place of non-integral enumerate: " + numeric);
 			return 0L; //
 		}
-		return numeric.getIntegral().longValue() & getMask();
-//		return NarrowingConverter.narrowBigToLong(outputSize, outputSigned, numeric.getSize(),
-//			numeric.isSigned(), numeric.getIntegral());
+		return numeric.getIntegral().longValue() & getMask(type);
+	}
+
+	private AbstractEnumMsType getDefinitionType(AbstractComplexMsType type) {
+		return getDefinitionType(type, AbstractEnumMsType.class);
 	}
 
 }

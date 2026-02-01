@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,9 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -74,21 +77,23 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 	}
 
 	private void populateTrace() throws Exception {
+		SchemaContext ctx = XmlSchemaContext.deserialize(DebuggerRegionsProviderTest.CTX_XML);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("/bin/bash (400000:40ffff)", Lifespan.nowOn(snap),
+			mm.addRegion("Memory[/bin/bash (400000:40ffff)]", Lifespan.nowOn(snap),
 				tb.range(0x00400000, 0x0040ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mm.addRegion("/bin/bash (600000:60ffff)", Lifespan.nowOn(snap),
+			mm.addRegion("Memory[/bin/bash (600000:60ffff)]", Lifespan.nowOn(snap),
 				tb.range(0x00600000, 0x0060ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
-			mm.addRegion("/lib/libc (7fac0000:7facffff)", Lifespan.nowOn(snap),
+			mm.addRegion("Memory[/lib/libc (7fac0000:7facffff)]", Lifespan.nowOn(snap),
 				tb.range(0x7fac0000, 0x7facffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mm.addRegion("/lib/libc (7fcc0000:7fccffff)", Lifespan.nowOn(snap),
+			mm.addRegion("Memory[/lib/libc (7fcc0000:7fccffff)]", Lifespan.nowOn(snap),
 				tb.range(0x7fcc0000, 0x7fccffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
 		}
@@ -146,10 +151,12 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testCaptureDebuggerRegionMapProposalDialog() throws Throwable {
 		populateTraceAndPrograms();
+		waitForTasks();
 
-		regionsProvider
-				.setSelectedRegions(Set.copyOf(tb.trace.getMemoryManager().getAllRegions()));
-		performAction(regionsProvider.actionMapRegions, false);
+		runSwing(() -> regionsProvider
+				.setSelectedRegions(Set.copyOf(tb.trace.getMemoryManager().getAllRegions())));
+
+		performAction(regionsProvider.actionMapRegions, regionsProvider, false);
 
 		captureDialog(DebuggerRegionMapProposalDialog.class);
 	}

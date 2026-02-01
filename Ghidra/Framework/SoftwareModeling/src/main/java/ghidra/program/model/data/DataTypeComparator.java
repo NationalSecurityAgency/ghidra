@@ -17,50 +17,49 @@ package ghidra.program.model.data;
 
 import java.util.Comparator;
 
-public class DataTypeComparator implements Comparator<Object> {
+/**
+ * {@link DataTypeComparator} provides the preferred named-based comparison of {@link DataType}
+ * which utilizes the {@link DataTypeNameComparator} for a primary {@link DataType#getName() name} 
+ * comparison followed by sub-ordering on {@link DataTypeManager} name and {@link CategoryPath}.
+ */
+public class DataTypeComparator implements Comparator<DataType> {
+
+	public static DataTypeComparator INSTANCE = new DataTypeComparator();
 
 	@Override
-	public int compare(Object o1, Object o2) {
+	public int compare(DataType dt1, DataType dt2) {
+		String name1 = dt1.getName();
+		String name2 = dt2.getName();
 
-		if (o1 instanceof DataType && o2 instanceof DataType) {
-			DataType dt1 = (DataType) o1;
-			DataType dt2 = (DataType) o2;
+		int nameCompare = DataTypeNameComparator.INSTANCE.compare(name1, name2);
+		if (nameCompare == 0) {
 
-			String name1 = dt1.getName();
-			String name2 = dt2.getName();
+			DataTypeManager dtm1 = dt1.getDataTypeManager();
+			String dtmName1 = dtm1 != null ? dtm1.getName() : null;
 
-			// if the names are the same, then sort by the path            
-			int nameResult = name1.compareToIgnoreCase(name2);
-			if (nameResult != 0) {
-				return nameResult;
+			DataTypeManager dtm2 = dt2.getDataTypeManager();
+			String dtmName2 = dtm2 != null ? dtm2.getName() : null;
+
+			if (dtm1 == null) {
+				if (dtm2 != null) {
+					return -1;
+				}
+			}
+			if (dtm2 == null) {
+				return 1;
 			}
 
-			String dtmName1 = dt1.getDataTypeManager().getName();
-			String dtmName2 = dt2.getDataTypeManager().getName();
+			// Compare DataTypeManager names if datatypes have the same name
+			int compare = dtmName1.compareTo(dtmName2);
+			if (compare == 0) {
 
-			// if they have the same name, and are in the same DTM, then compare paths
-			int dtmResult = dtmName1.compareToIgnoreCase(dtmName2);
-			if (dtmResult != 0) {
-				return dtmResult;
+				// Compare category paths if they have the same name and DTM
+				String catPath1 = dt1.getCategoryPath().getPath();
+				String catPath2 = dt2.getCategoryPath().getPath();
+				compare = catPath1.compareTo(catPath2);
 			}
-
-			return dt1.getPathName().compareToIgnoreCase(dt2.getPathName());
+			return compare;
 		}
-		// these cases are for lookups by string keys        
-		else if (o1 instanceof String && o2 instanceof DataType) {
-
-			DataType dt2 = (DataType) o2;
-			String name2 = dt2.getName();
-
-			return ((String) o1).compareToIgnoreCase(name2);
-		}
-		else if (o1 instanceof DataType && o2 instanceof String) {
-			DataType dt1 = (DataType) o1;
-			String name1 = dt1.getName();
-
-			return name1.compareToIgnoreCase(((String) o2));
-		}
-
-		return 0;
+		return nameCompare;
 	}
 }

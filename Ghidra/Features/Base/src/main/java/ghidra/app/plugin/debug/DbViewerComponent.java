@@ -17,20 +17,20 @@ package ghidra.app.plugin.debug;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.TableModel;
 
 import db.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
-import ghidra.app.plugin.debug.dbtable.*;
+import docking.widgets.table.GTableFilterPanel;
+import docking.widgets.table.threaded.GThreadedTablePanel;
+import ghidra.app.plugin.debug.dbtable.DbSmallTableModel;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.task.SwingUpdateManager;
@@ -39,25 +39,27 @@ class DbViewerComponent extends JPanel {
 
 	private static Table[] NO_TABLES = new Table[0];
 
-	private static Comparator<Table> TABLE_NAME_COMPARATOR = new Comparator<>() {
-		@Override
-		public int compare(Table o1, Table o2) {
-			return (o1).getName().compareTo((o2).getName());
-		}
-	};
+	private static Comparator<Table> TABLE_NAME_COMPARATOR =
+		(o1, o2) -> (o1).getName().compareTo((o2).getName());
 
 	private DBHandle dbh;
 	private DBListener dbListener;
-	private JPanel southPanel;
+	private JPanel centerPanel;
+	private JComponent southComponent;
 	private JLabel dbLabel;
 	private JComboBox<TableItem> combo;
 	private Table[] tables = NO_TABLES;
-	private Hashtable<String, TableStatistics[]> tableStats = new Hashtable<>();
+	private Map<String, TableStatistics[]> tableStats = new HashMap<>();
 
 	private SwingUpdateManager updateMgr;
 
-	DbViewerComponent() {
+	private PluginTool tool;
+
+	private GTableFilterPanel<DBRecord> tableFilterPanel;
+
+	DbViewerComponent(PluginTool tool) {
 		super(new BorderLayout());
+		this.tool = tool;
 
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel subNorthPanel = new JPanel(new PairLayout(4, 10));
@@ -66,38 +68,34 @@ class DbViewerComponent extends JPanel {
 		subNorthPanel.add(dbLabel);
 		subNorthPanel.add(new GLabel("Tables:"));
 		combo = new GComboBox<>();
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				refreshTable();
-			}
-		});
+		combo.addActionListener(e -> refreshTable());
 		subNorthPanel.add(combo);
 		northPanel.add(subNorthPanel);
 		add(northPanel, BorderLayout.NORTH);
 
-		updateMgr = new SwingUpdateManager(100, 2000, new Runnable() {
-			@Override
-			public void run() {
-				refresh();
-			}
-		});
+		updateMgr = new SwingUpdateManager(100, 2000, () -> refresh());
 	}
 
 	synchronized void closeDatabase() {
 		if (dbh != null) {
 			combo.removeAllItems();
 			dbLabel.setText("");
-			if (southPanel != null) {
-				remove(southPanel);
-				southPanel = null;
-			}
+			removeWidgets();
 			tables = NO_TABLES;
 			tableStats.clear();
 			dbh = null;
 			dbListener = null;
 
 			revalidate();
+		}
+	}
+
+	private void removeWidgets() {
+		if (centerPanel != null) {
+			remove(centerPanel);
+			remove(southComponent);
+			centerPanel = null;
+			southComponent = null;
 		}
 	}
 
@@ -110,7 +108,7 @@ class DbViewerComponent extends JPanel {
 		dbLabel.setText(name);
 		updateTableChoices(null);
 
-		dbListener = getNewDBListener();
+		dbListener = new InternalDBListener();
 		handle.addListener(dbListener);
 	}
 
@@ -126,10 +124,7 @@ class DbViewerComponent extends JPanel {
 
 	synchronized void refreshTable() {
 		if (dbh == null) {
-			if (southPanel != null) {
-				remove(southPanel);
-				southPanel = null;
-			}
+			removeWidgets();
 			return;
 		}
 		synchronized (dbh) {
@@ -139,6 +134,7 @@ class DbViewerComponent extends JPanel {
 
 	synchronized void dispose() {
 		updateMgr.dispose();
+		tableFilterPanel.dispose();
 		closeDatabase();
 	}
 
@@ -197,35 +193,20 @@ class DbViewerComponent extends JPanel {
 
 	private void updateTable() {
 
-		if (southPanel != null) {
-			remove(southPanel);
-			southPanel = null;
-		}
+		removeWidgets();
 
 		TableItem t = (TableItem) combo.getSelectedItem();
 		if (t != null) {
-			southPanel = createSouthPanel(t.table);
-			add(southPanel, BorderLayout.CENTER);
+			centerPanel = createCenterPanel(t.table);
+			add(centerPanel, BorderLayout.CENTER);
+			southComponent = createSouthComponent(t.table);
+			add(southComponent, BorderLayout.SOUTH);
+
 		}
 		revalidate();
 	}
 
-	private JPanel createSouthPanel(Table table) {
-		JPanel panel = new JPanel(new BorderLayout());
-		TableModel model = null;
-		GTable gTable = new GTable();
-		if (table.getRecordCount() <= 10000) {
-			model = new DbSmallTableModel(table);
-		}
-		else {
-			model = new DbLargeTableModel(table);
-		}
-		gTable.setModel(model);
-		gTable.setDefaultRenderer(Long.class, new LongRenderer());
-
-		JScrollPane scroll = new JScrollPane(gTable);
-		panel.add(scroll, BorderLayout.CENTER);
-
+	private JComponent createSouthComponent(Table table) {
 		TableStatistics[] stats = getStats(table);
 		String recCnt = "Records: " + Integer.toString(table.getRecordCount());
 		String intNodeCnt = "";
@@ -244,15 +225,22 @@ class DbViewerComponent extends JPanel {
 				size += " / " + Integer.toString(stats[1].size / 1024);
 			}
 		}
-		panel.add(new GLabel(
-			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size),
-			BorderLayout.SOUTH);
-
-		return panel;
+		return new GLabel(
+			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size);
 	}
 
-	private DBListener getNewDBListener() {
-		return new InternalDBListener();
+	private JPanel createCenterPanel(Table table) {
+		JPanel panel = new JPanel(new BorderLayout());
+		DbSmallTableModel model = new DbSmallTableModel(tool, table);
+
+		GThreadedTablePanel<DBRecord> threadedPanel = new GThreadedTablePanel<>(model);
+		GTable gTable = threadedPanel.getTable();
+
+		tableFilterPanel = new GTableFilterPanel<>(gTable, model);
+
+		panel.add(threadedPanel, BorderLayout.CENTER);
+		panel.add(tableFilterPanel, BorderLayout.SOUTH);
+		return panel;
 	}
 
 //==================================================================================================

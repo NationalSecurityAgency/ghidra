@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,14 +180,82 @@ SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
   return (SubtableSymbol *)0;
 }
 
+void ConsistencyChecker::OptimizeRecord::copyFromExcludingSize(ConsistencyChecker::OptimizeRecord &that)
+
+{
+  this->writeop = that.writeop;
+  this->readop = that.readop;
+  this->inslot = that.inslot;
+  this->writecount = that.writecount;
+  this->readcount = that.readcount;
+  this->writesection = that.writesection;
+  this->readsection = that.readsection;
+  this->opttype = that.opttype;
+}
+
+void ConsistencyChecker::OptimizeRecord::update(int4 opIdx, int4 slotIdx, int4 secNum)
+
+{
+  if (slotIdx >= 0) {
+    updateRead(opIdx, slotIdx, secNum);
+  }
+  else {
+    updateWrite(opIdx, secNum);
+  }
+}
+
+void ConsistencyChecker::OptimizeRecord::updateRead(int4 i, int4 inslot, int4 secNum)
+
+{
+  this->readop = i;
+  this->readcount++;
+  this->inslot = inslot;
+  this->readsection = secNum;
+}
+
+void ConsistencyChecker::OptimizeRecord::updateWrite(int4 i, int4 secNum)
+
+{
+  this->writeop = i;
+  this->writecount++;
+  this->writesection = secNum;
+}
+
+void ConsistencyChecker::OptimizeRecord::updateExport()
+
+{
+  this->writeop = 0;
+  this->readop = 0;
+  this->writecount = 2;
+  this->readcount = 2;
+  this->readsection = -2;
+  this->writesection = -2;
+}
+
+void ConsistencyChecker::OptimizeRecord::updateCombine(ConsistencyChecker::OptimizeRecord &that)
+
+{
+  if (that.writecount != 0) {
+    this->writeop = that.writeop;
+    this->writesection = that.writesection;
+  }
+  if (that.readcount != 0) {
+    this->readop = that.readop;
+    this->inslot = that.inslot;
+    this->readsection = that.readsection;
+  }
+  this->writecount += that.writecount;
+  this->readcount += that.readcount;
+  // opttype is not relevant here
+}
+
 /// \brief Construct the consistency checker and optimizer
 ///
 /// \param sleigh is the parsed SLEIGH spec
 /// \param rt is the root subtable of the SLEIGH spec
 /// \param un is \b true to request "Unnecessary extension" warnings
 /// \param warndead is \b true to request warnings for written but not read temporaries
-/// \param warnlargetemp is \b true to request warnings for temporaries that are too large
-ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead, bool warnlargetemp)
+ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead)
 
 {
   compiler = sleigh;
@@ -195,10 +263,8 @@ ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,
   unnecessarypcode = 0;
   readnowrite = 0;
   writenoread = 0;
-  largetemp = 0;        ///<Number of constructors using at least one temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
   printextwarning = un;
   printdeadwarning = warndead;
-  printlargetempwarning = warnlargetemp; ///< If true, prints a warning about each constructor using a temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
 }
 
 /// \brief Recover a specific value for the size associated with a Varnode template
@@ -973,7 +1039,7 @@ bool ConsistencyChecker::checkVarnodeTruncation(Constructor *ct,int4 slot,
 ///
 /// Run through all Varnodes looking for offset templates marked as ConstTpl::v_offset_plus,
 /// which indicates they were constructed using truncation notation. These truncation expressions
-/// are checked for validity and adjusted depending on the endianess of the address space.
+/// are checked for validity and adjusted depending on the endianness of the address space.
 /// \param ct is the Constructor
 /// \param cttpl is the given p-code section
 /// \param isbigendian is set to \b true if the SLEIGH specification is big endian
@@ -1129,6 +1195,90 @@ void ConsistencyChecker::setPostOrder(SubtableSymbol *root)
   }
 }
 
+map<uintb,ConsistencyChecker::OptimizeRecord>::iterator ConsistencyChecker::UniqueState::lesserIter(uintb offset)
+
+{
+  if (recs.begin() == recs.end()) {
+    return recs.end();
+  }
+  map<uintb,OptimizeRecord>::iterator iter;
+  iter = recs.lower_bound(offset);
+  if (iter == recs.begin()) {
+    return recs.end();
+  }
+  return std::prev(iter);
+}
+
+ConsistencyChecker::OptimizeRecord ConsistencyChecker::UniqueState::coalesce(vector<ConsistencyChecker::OptimizeRecord*> &records)
+
+{
+  uintb minOff = -1;
+  uintb maxOff = -1;
+  vector<OptimizeRecord*>::iterator iter;
+
+  for (iter = records.begin(); iter != records.end(); ++iter) {
+    if (minOff == -1 || (*iter)->offset < minOff) {
+      minOff = (*iter)->offset;
+    }
+    if (maxOff == -1 || (*iter)->offset + (*iter)->size > maxOff) {
+      maxOff = (*iter)->offset + (*iter)->size;
+    }
+  }
+
+  OptimizeRecord result(minOff, maxOff - minOff);
+
+  for (iter = records.begin(); iter != records.end(); ++iter) {
+    result.updateCombine(**iter);
+  }
+
+  return result;
+}
+
+void ConsistencyChecker::UniqueState::set(uintb offset, int4 size, OptimizeRecord &rec)
+
+{
+  vector<OptimizeRecord*> records;
+  getDefinitions(records, offset, size);
+  records.push_back(&rec);
+  OptimizeRecord coalesced = coalesce(records);
+  recs.erase(recs.lower_bound(coalesced.offset), recs.lower_bound(coalesced.offset+coalesced.size));
+  recs.insert(pair<uint4,OptimizeRecord>(coalesced.offset, coalesced));
+}
+
+void ConsistencyChecker::UniqueState::getDefinitions(vector<ConsistencyChecker::OptimizeRecord*> &result, uintb offset, int4 size)
+
+{
+  if (size == 0) {
+    size = 1;
+  }
+  map<uintb,OptimizeRecord>::iterator iter;
+  iter = lesserIter(offset);
+  uintb cursor = offset;
+  if (iter != recs.end() && endOf(iter) > offset) {
+    OptimizeRecord &preRec = iter->second;
+    cursor = endOf(iter);
+    result.push_back(&preRec);
+  }
+  uintb end = offset + size;
+  iter = recs.lower_bound(offset);
+  while (iter != recs.end() && iter->first < end) {
+    if (iter->first > cursor) {
+      // The iterator becomes invalid with this insertion, so take the new one.
+      iter = recs.insert(pair<uint4,OptimizeRecord>(cursor,OptimizeRecord(cursor, iter->first - cursor))).first;
+      result.push_back(&iter->second);
+      iter++; // Put the (now valid) iterator back to where it was.
+    }
+    // No need to truncate, as we're just counting a read
+    result.push_back(&iter->second);
+    cursor = endOf(iter);
+    iter++;
+  }
+  if (end > cursor) {
+    iter = recs.insert(pair<uint4,OptimizeRecord>(cursor,OptimizeRecord(cursor, end - cursor))).first;
+    result.push_back(&iter->second);
+  }
+}
+
 /// \brief Test whether two given Varnodes intersect
 ///
 /// This test must be conservative.  If it can't explicitly prove that the
@@ -1222,30 +1372,31 @@ bool ConsistencyChecker::readWriteInterference(const VarnodeTpl *vn,const OpTpl 
 /// If the Varnode is in the \e unique space, an OptimizationRecord for it is looked
 /// up based on its offset.  Information about how a p-code operator uses the Varnode
 /// is accumulated in the record.
-/// \param recs is collection of OptimizationRecords associated with temporary Varnodes
+/// \param state is collection of OptimizationRecords associated with temporary Varnodes
 /// \param vn is the given Varnode to check (which may or may not be temporary)
 /// \param i is the index of the operator using the Varnode (within its p-code section)
 /// \param inslot is the \e slot index of the Varnode within its operator
 /// \param secnum is the section number containing the operator
-void ConsistencyChecker::examineVn(map<uintb,OptimizeRecord> &recs,
+void ConsistencyChecker::examineVn(UniqueState &state,
 				   const VarnodeTpl *vn,uint4 i,int4 inslot,int4 secnum)
 {
   if (vn == (const VarnodeTpl *)0) return;
   if (!vn->getSpace().isUniqueSpace()) return;
   if (vn->getOffset().getType() != ConstTpl::real) return;
 
-  map<uintb,OptimizeRecord>::iterator iter;
-  iter = recs.insert( pair<uint4,OptimizeRecord>(vn->getOffset().getReal(),OptimizeRecord())).first;
-  if (inslot>=0) {
-    (*iter).second.readop = i;
-    (*iter).second.readcount += 1;
-    (*iter).second.inslot = inslot;
-    (*iter).second.readsection = secnum;
+  uintb offset = vn->getOffset().getReal();
+  int4 size = vn->getSize().getReal();
+  if (inslot >= 0) {
+    vector<OptimizeRecord*> defs;
+    state.getDefinitions(defs,offset,size);
+    for (vector<OptimizeRecord*>::iterator iter=defs.begin();iter!=defs.end();++iter) {
+      (*iter)->updateRead(i,inslot,secnum);
+    }
   }
   else {
-    (*iter).second.writeop = i;
-    (*iter).second.writecount += 1;
-    (*iter).second.writesection = secnum;
+    OptimizeRecord rec(offset,size);
+    rec.updateWrite(i,secnum);
+    state.set(offset,size,rec);
   }
 }
 
@@ -1254,9 +1405,9 @@ void ConsistencyChecker::examineVn(map<uintb,OptimizeRecord> &recs,
 /// For each temporary Varnode, count how many times it is read from or written to
 /// in the given section of p-code operators.
 /// \param ct is the given Constructor
-/// \param recs is the (initially empty) collection of count records
+/// \param state is the (initially empty) collection of count records
 /// \param secnum is the given p-code section number
-void ConsistencyChecker::optimizeGather1(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const
+void ConsistencyChecker::optimizeGather1(Constructor *ct,UniqueState &state,int4 secnum) const
 
 {
   ConstructTpl *tpl;
@@ -1271,10 +1422,10 @@ void ConsistencyChecker::optimizeGather1(Constructor *ct,map<uintb,OptimizeRecor
     const OpTpl *op = ops[i];
     for(uint4 j=0;j<op->numInput();++j) {
       const VarnodeTpl *vnin = op->getIn(j);
-      examineVn(recs,vnin,i,j,secnum);
+      examineVn(state,vnin,i,j,secnum);
     }
     const VarnodeTpl *vn = op->getOut();
-    examineVn(recs,vn,i,-1,secnum);
+    examineVn(state,vn,i,-1,secnum);
   }
 }
 
@@ -1284,9 +1435,9 @@ void ConsistencyChecker::optimizeGather1(Constructor *ct,map<uintb,OptimizeRecor
 /// for the section, and if it involves a temporary, mark it as both read and written, guaranteeing
 /// that the Varnode is not optimized away.
 /// \param ct is the given Constructor
-/// \param recs is the collection of count records
+/// \param state is the collection of count records
 /// \param secnum is the given p-code section number
-void ConsistencyChecker::optimizeGather2(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const
+void ConsistencyChecker::optimizeGather2(Constructor *ct,UniqueState &state,int4 secnum) const
 
 {
   ConstructTpl *tpl;
@@ -1300,29 +1451,29 @@ void ConsistencyChecker::optimizeGather2(Constructor *ct,map<uintb,OptimizeRecor
   if (hand == (HandleTpl *)0) return;
   if (hand->getPtrSpace().isUniqueSpace()) {
     if (hand->getPtrOffset().getType() == ConstTpl::real) {
-      pair<map<uintb,OptimizeRecord>::iterator,bool> res;
       uintb offset = hand->getPtrOffset().getReal();
-      res = recs.insert( pair<uintb,OptimizeRecord>(offset,OptimizeRecord()));
-      (*res.first).second.writeop = 0;
-      (*res.first).second.readop = 0;
-      (*res.first).second.writecount = 2;
-      (*res.first).second.readcount = 2;
-      (*res.first).second.readsection = -2;
-      (*res.first).second.writesection = -2;
+      int4 size = hand->getPtrSize().getReal();
+      vector<OptimizeRecord*> defs;
+      state.getDefinitions(defs,offset,size);
+      for (vector<OptimizeRecord*>::iterator iter=defs.begin();iter!=defs.end();++iter) {
+	(*iter)->updateExport();
+	// NOTE: Could this just be updateRead?
+	// Technically, an exported handle could be written by the parent....
+      }
     }
   }
   if (hand->getSpace().isUniqueSpace()) {
     if ((hand->getPtrSpace().getType() == ConstTpl::real)&&
 	(hand->getPtrOffset().getType() == ConstTpl::real)) {
-      pair<map<uintb,OptimizeRecord>::iterator,bool> res;
       uintb offset = hand->getPtrOffset().getReal();
-      res = recs.insert( pair<uintb,OptimizeRecord>(offset,OptimizeRecord()));
-      (*res.first).second.writeop = 0;
-      (*res.first).second.readop = 0;
-      (*res.first).second.writecount = 2;
-      (*res.first).second.readcount = 2;
-      (*res.first).second.readsection = -2;
-      (*res.first).second.writesection = -2;
+      int4 size = hand->getPtrSize().getReal();
+      vector<OptimizeRecord*> defs;
+      state.getDefinitions(defs,offset,size);
+      for (vector<OptimizeRecord*>::iterator iter=defs.begin();iter!=defs.end();++iter) {
+	(*iter)->updateExport();
+	// NOTE: Could this just be updateRead?
+	// Technically, an exported handle could be written by the parent....
+      }
     }
   }
 }
@@ -1336,14 +1487,14 @@ void ConsistencyChecker::optimizeGather2(Constructor *ct,map<uintb,OptimizeRecor
 /// if propagation is forward, the Varnode must not cross another write.
 /// If all the requirements pass, return the record indicating that the COPY can be removed.
 /// \param ct is the Constructor owning the p-code
-/// \param recs is the collection of OptimizeRecords to search
+/// \param state is the collection of OptimizeRecords to search
 /// \return a passing OptimizeRecord or null
 const ConsistencyChecker::OptimizeRecord *ConsistencyChecker::findValidRule(Constructor *ct,
-									    const map<uintb,OptimizeRecord> &recs) const
+									    const UniqueState &state) const
 {
   map<uintb,OptimizeRecord>::const_iterator iter;
-  iter = recs.begin();
-  while(iter != recs.end()) {
+  iter = state.begin();
+  while(iter!=state.end()) {
     const OptimizeRecord &currec( (*iter).second );
     ++iter;
     if ((currec.writecount==1)&&(currec.readcount==1)&&(currec.readsection==currec.writesection)) {
@@ -1354,13 +1505,27 @@ const ConsistencyChecker::OptimizeRecord *ConsistencyChecker::findValidRule(Cons
       else
 	tpl = ct->getNamedTempl(currec.readsection);
       const vector<OpTpl *> &ops( tpl->getOpvec() );
-      const OpTpl *op = ops[ currec.readop ];
+      const OpTpl *writeop = ops[ currec.writeop ];
+      const OpTpl *readop = ops[ currec.readop ];
       if (currec.writeop >= currec.readop) // Read must come after write
 	throw SleighError("Read of temporary before write");
-      if (op->getOpcode() == CPUI_COPY) {
+
+      VarnodeTpl *writevn = writeop->getOut();
+      VarnodeTpl *readvn = readop->getIn(currec.inslot);
+      // Because the record can change size and position, we have to check if the varnode
+      // "connecting" the write and read ops is actually the same varnode. If not, then we can't
+      // optimize it out.
+      // There may be an opportunity here to re-write the size/offset when either the write or read
+      // op is a COPY, but I'll leave that for later discussion.
+      // Actually, maybe not. If the truncate would be of a handle, we can't.
+      if (*writevn != *readvn) {
+	continue;
+      }
+
+      if (readop->getOpcode() == CPUI_COPY) {
 	bool saverecord = true;
 	currec.opttype = 0;	// Read op is a COPY
-	const VarnodeTpl *vn = op->getOut();
+	const VarnodeTpl *vn = readop->getOut();
 	for(int4 i=currec.writeop+1;i<currec.readop;++i) { // Check for interference between write and read
 	  if (readWriteInterference(vn,ops[i],true)) {
 	    saverecord = false;
@@ -1370,11 +1535,10 @@ const ConsistencyChecker::OptimizeRecord *ConsistencyChecker::findValidRule(Cons
 	if (saverecord)
 	  return &currec;
       }
-      op = ops[ currec.writeop ];
-      if (op->getOpcode() == CPUI_COPY) {
+      if (writeop->getOpcode() == CPUI_COPY) {
 	bool saverecord = true;
 	currec.opttype = 1;	// Write op is a COPY
-	const VarnodeTpl *vn = op->getIn(0);
+	const VarnodeTpl *vn = writeop->getIn(0);
 	for(int4 i=currec.writeop+1;i<currec.readop;++i) { // Check for interference between write and read
 	  if (readWriteInterference(vn,ops[i],false)) {
 	    saverecord = false;
@@ -1431,13 +1595,13 @@ void ConsistencyChecker::applyOptimization(Constructor *ct,const OptimizeRecord 
 /// An error message is issued if a temporary is read but not written.
 /// A warning may be issued if a temporary is written but not read.
 /// \param ct is the Constructor
-/// \param recs is the collection of records associated with each temporary Varnode
-void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,OptimizeRecord> &recs)
+/// \param state is the collection of records associated with each temporary Varnode
+void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const UniqueState &state)
 
 {
   map<uintb,OptimizeRecord>::const_iterator iter;
-  iter = recs.begin();
-  while(iter != recs.end()) {
+  iter = state.begin();
+  while(iter != state.end()) {
     const OptimizeRecord &currec( (*iter).second );
     if (currec.readcount == 0) {
       if (printdeadwarning)
@@ -1465,12 +1629,9 @@ void ConsistencyChecker::checkLargeTemporaries(Constructor *ct,ConstructTpl *ctp
   vector<OpTpl*> ops = ctpl->getOpvec();
   for(vector<OpTpl*>::iterator iter = ops.begin();iter != ops.end();++iter) {
     if (hasLargeTemporary(*iter)) {
-      if (printlargetempwarning) {
-	compiler->reportWarning(
-	    compiler->getLocation(ct),
-	    "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
-      }
-      largetemp++;
+      compiler->reportError(
+	  compiler->getLocation(ct),
+	  "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
       return;
     }
   }
@@ -1485,19 +1646,19 @@ void ConsistencyChecker::optimize(Constructor *ct)
 
 {
   const OptimizeRecord *currec;
-  map<uintb,OptimizeRecord> recs;
+  UniqueState state;
   int4 numsections = ct->getNumSections();
   do {
-    recs.clear();
+    state.clear();
     for(int4 i=-1;i<numsections;++i) {
-      optimizeGather1(ct,recs,i);
-      optimizeGather2(ct,recs,i);
+      optimizeGather1(ct,state,i);
+      optimizeGather2(ct,state,i);
     }
-    currec = findValidRule(ct,recs);
+    currec = findValidRule(ct,state);
     if (currec != (const OptimizeRecord *)0)
       applyOptimization(ct,*currec);
   } while(currec != (const OptimizeRecord *)0);
-  checkUnusedTemps(ct,recs);
+  checkUnusedTemps(ct,state);
 }
 
 /// Warnings or errors for individual violations may be printed, depending on settings.
@@ -1587,6 +1748,13 @@ void ConsistencyChecker::optimizeAll(void)
       optimize(ct);
     }
   }
+}
+
+ostream& operator<<(ostream &os, const ConsistencyChecker::OptimizeRecord &rec) {
+  os << "{writeop=" << rec.writeop << " readop=" << rec.readop << " inslot=" << rec.inslot <<
+        " writecount=" << rec.writecount << " readcount=" << rec.readcount <<
+	" opttype=" << rec.opttype << "}";
+  return os;
 }
 
 /// Sort based on the containing Varnode, then on the bit boundary
@@ -1785,10 +1953,10 @@ SleighCompile::SleighCompile(void)
   warnunnecessarypcode = false;
   warndeadtemps = false;
   lenientconflicterrors = true;
-  largetemporarywarning = false;
   warnalllocalcollisions = false;
   warnallnops = false;
   failinsensitivedups = true;
+  debugoutput = false;
   root = (SubtableSymbol *)0;
   curmacro = (MacroSymbol *)0;
   curct = (Constructor *)0;
@@ -1966,7 +2134,7 @@ void SleighCompile::buildPatterns(void)
 void SleighCompile::checkConsistency(void)
 
 {
-  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps,largetemporarywarning);
+  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps);
 
   if (!checker.testSizeRestrictions()) {
     errors += 1;
@@ -1996,14 +2164,6 @@ void SleighCompile::checkConsistency(void)
     reportWarning("Use -t switch to list each individually");
   }
   checker.testLargeTemporary();
-  if ((!largetemporarywarning) && (checker.getNumLargeTemporaries() > 0)) {
-	ostringstream msg;
-	msg << dec << checker.getNumLargeTemporaries();
-	msg << " constructors contain temporaries larger than ";
-	msg << SleighBase::MAX_UNIQUE_SIZE << " bytes";
-	reportWarning(msg.str());
-	reportWarning("Use -o switch to list each individually.");
-  }
 }
 
 /// \brief Search for offset matches between a previous set and the given current set
@@ -2301,7 +2461,7 @@ uint4 SleighCompile::getUniqueAddr(void)
 /// A number of checks are also performed, which may generate errors or warnings, including
 /// size restriction checks, pattern conflict checks, NOP constructor checks, and
 /// local collision checks.  Once this method is run, \b this SleighCompile is ready for the
-/// saveXml method.
+/// encode method.
 void SleighCompile::process(void)
 
 {
@@ -2546,7 +2706,8 @@ void SleighCompile::newSpace(SpaceQuality *qual)
   }
 
   int4 delay = (qual->type == SpaceQuality::registertype) ? 0 : 1;
-  AddrSpace *spc = new AddrSpace(this,this,IPTR_PROCESSOR,qual->name,qual->size,qual->wordsize,numSpaces(),AddrSpace::hasphysical,delay);
+  AddrSpace *spc = new AddrSpace(this,this,IPTR_PROCESSOR,qual->name,isBigEndian(),
+				 qual->size,qual->wordsize,numSpaces(),AddrSpace::hasphysical,delay,delay);
   insertSpace(spc);
   if (qual->isdefault) {
     if (getDefaultCodeSpace() != (AddrSpace *)0)
@@ -2587,7 +2748,7 @@ void SleighCompile::setEndian(int4 end)
 
 {
   setBigEndian( (end == 1) );
-  predefinedSymbols();		// Set up symbols now that we know endianess
+  predefinedSymbols();		// Set up symbols now that we know endianness
 }
 
 /// \brief Definition a set of Varnodes
@@ -3169,6 +3330,18 @@ vector<OpTpl *> *SleighCompile::createCrossBuild(VarnodeTpl *addr,SectionSymbol 
   return res;
 }
 
+/// \brief Prepare for a new section of p-code templates
+///
+/// Create the ConstructTpl to hold the templates and reset counters.
+/// \return the new ConstructTpl
+ConstructTpl *SleighCompile::enterSection(void)
+
+{
+  ConstructTpl *tpl = new ConstructTpl();
+  pcode.resetLabelCount();	// Macros have their own labels
+  return tpl;
+}
+
 /// \brief Create a new Constructor under the given subtable
 ///
 /// Create the object and initialize parsing for the new definition
@@ -3372,73 +3545,77 @@ bool SleighCompile::forceExportSize(ConstructTpl *ct)
   return true;
 }
 
-/// \brief If the given Varnode is in the \e unique space, shift its offset up by \b sa bits
+/// \brief Insert a region of zero bits into an address offset
+///
+/// \param addr is the address offset
+/// \return the modified offset
+uintb SleighCompile::insertCrossBuildRegion(uintb addr)
+
+{
+  uintb upperbits = (addr >> UNIQUE_CROSSBUILD_POSITION) << (UNIQUE_CROSSBUILD_POSITION + UNIQUE_CROSSBUILD_NUMBITS);
+  uintb lowerbits = (addr << (8*sizeof(uintb) - UNIQUE_CROSSBUILD_POSITION)) >> (8*sizeof(uintb) - UNIQUE_CROSSBUILD_POSITION);
+  return upperbits | lowerbits;
+}
+
+/// \brief If the given Varnode is in the \e unique space, insert a region of zero bits
 ///
 /// \param vn is the given Varnode
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueVn(VarnodeTpl *vn,int4 sa)
+void SleighCompile::shiftUniqueVn(VarnodeTpl *vn)
 
 {
   if (vn->getSpace().isUniqueSpace() && (vn->getOffset().getType() == ConstTpl::real)) {
-    uintb val = vn->getOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(vn->getOffset().getReal());
     vn->setOffset(val);
   }
 }
 
-/// \brief Shift the offset up by \b sa bits for any Varnode used by the given op in the \e unique space
+/// \brief Insert a region of zero bits for any Varnode used by the given op in the \e unique space
 ///
 /// \param op is the given op
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueOp(OpTpl *op,int4 sa)
+void SleighCompile::shiftUniqueOp(OpTpl *op)
 
 {
   VarnodeTpl *outvn = op->getOut();
   if (outvn != (VarnodeTpl *)0)
-    shiftUniqueVn(outvn,sa);
+    shiftUniqueVn(outvn);
   for(int4 i=0;i<op->numInput();++i)
-    shiftUniqueVn(op->getIn(i),sa);
+    shiftUniqueVn(op->getIn(i));
 }
 
-/// \brief Shift the offset up for both \e dynamic or \e static Varnode aspects in the \e unique space
+/// \brief Insert a region of zero bits for both \e dynamic or \e static Varnode aspects in the \e unique space
 ///
 /// \param hand is a handle template whose aspects should be modified
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueHandle(HandleTpl *hand,int4 sa)
+void SleighCompile::shiftUniqueHandle(HandleTpl *hand)
 
 {
   if (hand->getSpace().isUniqueSpace() && (hand->getPtrSpace().getType() == ConstTpl::real)
       && (hand->getPtrOffset().getType() == ConstTpl::real)) {
-    uintb val = hand->getPtrOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(hand->getPtrOffset().getReal());
     hand->setPtrOffset(val);
   }
   else if (hand->getPtrSpace().isUniqueSpace() && (hand->getPtrOffset().getType() == ConstTpl::real)) {
-    uintb val = hand->getPtrOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(hand->getPtrOffset().getReal());
     hand->setPtrOffset(val);
   }
   
   if (hand->getTempSpace().isUniqueSpace() && (hand->getTempOffset().getType() == ConstTpl::real)) {
-    uintb val = hand->getTempOffset().getReal();
-    val <<= sa;
+    uintb val = insertCrossBuildRegion(hand->getTempOffset().getReal());
     hand->setTempOffset(val);
   }
 }
 
-/// \brief Shift the offset up for any Varnode in the \e unique space for all p-code in the given section
+/// \brief Insert a region of zero bits for any Varnode in the \e unique space for all p-code in the given section
 ///
 /// \param tpl is the given p-code section
-/// \param sa is the number of bits to shift by
-void SleighCompile::shiftUniqueConstruct(ConstructTpl *tpl,int4 sa)
+void SleighCompile::shiftUniqueConstruct(ConstructTpl *tpl)
 
 {
   HandleTpl *result = tpl->getResult();
   if (result != (HandleTpl *)0)
-    shiftUniqueHandle(result,sa);
+    shiftUniqueHandle(result);
   const vector<OpTpl *> &vec( tpl->getOpvec() );
   for(int4 i=0;i<vec.size();++i)
-    shiftUniqueOp(vec[i],sa);
+    shiftUniqueOp(vec[i]);
 }
 
 /// With \b crossbuilds, temporaries may need to survive across instructions in a packet, so here we
@@ -3450,7 +3627,6 @@ void SleighCompile::checkUniqueAllocation(void)
   if (unique_allocatemask == 0) return;	// We don't have any crossbuild directives
 
   unique_allocatemask = 0xff;	// Provide 8 bits of free space
-  int4 sa = 8;
   int4 secsize = sections.size(); // This is the upper bound for section numbers
   SubtableSymbol *sym = root; // Start with the instruction table
   int4 i = -1;
@@ -3460,11 +3636,11 @@ void SleighCompile::checkUniqueAllocation(void)
       Constructor *ct = sym->getConstructor(j);
       ConstructTpl *tpl = ct->getTempl();
       if (tpl != (ConstructTpl *)0)
-	shiftUniqueConstruct(tpl,sa);
+	shiftUniqueConstruct(tpl);
       for(int4 k=0;k<secsize;++k) {
 	ConstructTpl *namedtpl = ct->getNamedTempl(k);
 	if (namedtpl != (ConstructTpl *)0)
-	  shiftUniqueConstruct(namedtpl,sa);
+	  shiftUniqueConstruct(namedtpl);
       }
     }
     i+=1;
@@ -3472,7 +3648,8 @@ void SleighCompile::checkUniqueAllocation(void)
     sym = tables[i];
   }
   uint4 ubase = getUniqueBase(); // We have to adjust the unique base
-  ubase <<= sa;
+  ubase += 1 << UNIQUE_CROSSBUILD_POSITION;
+  ubase <<= UNIQUE_CROSSBUILD_NUMBITS;
   setUniqueBase(ubase);
 }
 
@@ -3594,13 +3771,23 @@ int4 SleighCompile::run_compilation(const string &filein,const string &fileout)
     if (parseres==0)
       process();	// Do all the post-processing
     if ((parseres==0)&&(numErrors()==0)) { // If no errors
-      ofstream s(fileout);
+      ofstream s(fileout,ios::binary);
       if (!s) {
 	ostringstream errs;
 	errs << "Unable to open output file: " << fileout;
 	throw SleighError(errs.str());
       }
-      saveXml(s);	// Dump output xml
+      if (debugoutput) {
+	// If the debug output format was requested, use the XML encoder
+	XmlEncode encoder(s);
+	encode(encoder);
+      }
+      else {
+	// Use the standard .sla format encoder
+	sla::FormatEncode encoder(s,-1);
+	encode(encoder);
+	encoder.flush();
+      }
       s.close();
     }
     else {
@@ -3692,12 +3879,12 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 /// \param allNopWarning is \b true for individual warnings about NOP constructors
 /// \param deadTempWarning is \b true for individual warnings about dead temporary varnodes
 /// \param enforceLocalKeyWord is \b true to force all local variable definitions to use the \b local keyword
-/// \param largeTemporaryWarning is \b true for individual warnings about temporary varnodes that are too large
 /// \param caseSensitiveRegisterNames is \b true if register names are allowed to be case sensitive
+/// \param debugOutput is \b true if the output file is written using the debug (XML) form of the .sla format
 void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 				  bool lenientConflict, bool allCollisionWarning,
 				  bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
-				  bool largeTemporaryWarning, bool caseSensitiveRegisterNames)
+				  bool caseSensitiveRegisterNames,bool debugOutput)
 {
   map<string,string>::const_iterator iter = defines.begin();
   for (iter = defines.begin(); iter != defines.end(); iter++) {
@@ -3709,8 +3896,8 @@ void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnece
   setAllNopWarning( allNopWarning );
   setDeadTempWarning(deadTempWarning);
   setEnforceLocalKeyWord(enforceLocalKeyWord);
-  setLargeTemporaryWarning(largeTemporaryWarning);
   setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
+  setDebugOutput(debugOutput);
 }
 
 static void segvHandler(int sig) {
@@ -3736,13 +3923,13 @@ int main(int argc,char **argv)
     cerr << "USAGE: sleigh [-x] [-dNAME=VALUE] inputfile [outputfile]" << endl;
     cerr << "   -a              scan for all slaspec files recursively where inputfile is a directory" << endl;
     cerr << "   -x              turns on parser debugging" << endl;
+    cerr << "   -y              write .sla using XML debug format" << endl;
     cerr << "   -u              print warnings for unnecessary pcode instructions" << endl;
     cerr << "   -l              report pattern conflicts" << endl;
     cerr << "   -n              print warnings for all NOP constructors" << endl;
     cerr << "   -t              print warnings for dead temporaries" << endl;
     cerr << "   -e              enforce use of 'local' keyword for temporaries" << endl;
     cerr << "   -c              print warnings for all constructors with colliding operands" << endl;
-    cerr << "   -o              print warnings for temporaries which are too large" << endl;
     cerr << "   -s              treat register names as case sensitive" << endl;
     cerr << "   -DNAME=VALUE    defines a preprocessor macro NAME with value VALUE" << endl;
     exit(2);
@@ -3757,8 +3944,8 @@ int main(int argc,char **argv)
   bool allNopWarning = false;
   bool deadTempWarning = false;
   bool enforceLocalKeyWord = false;
-  bool largeTemporaryWarning = false;
   bool caseSensitiveRegisterNames = false;
+  bool debugOutput = false;
   
   bool compileAll = false;
   
@@ -3790,10 +3977,10 @@ int main(int argc,char **argv)
       deadTempWarning = true;
     else if (argv[i][1] == 'e')
       enforceLocalKeyWord = true;
-    else if (argv[i][1] == 'o')
-      largeTemporaryWarning = true;
     else if (argv[i][1] == 's')
       caseSensitiveRegisterNames = true;
+    else if (argv[i][1] == 'y')
+      debugOutput = true;
 #ifdef YYDEBUG
     else if (argv[i][1] == 'x')
       sleighdebug = 1;		// Debug option
@@ -3825,7 +4012,7 @@ int main(int argc,char **argv)
       sla.replace(slaspec.length() - slaspecExtLen, slaspecExtLen, SLAEXT);
       SleighCompile compiler;
       compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
-			     deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning, caseSensitiveRegisterNames);
+			     deadTempWarning, enforceLocalKeyWord, caseSensitiveRegisterNames, debugOutput);
       retval = compiler.run_compilation(slaspec,sla);
       if (retval != 0) {
 	return retval; // stop on first error
@@ -3861,7 +4048,7 @@ int main(int argc,char **argv)
     
     SleighCompile compiler;
     compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
-			   deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning,caseSensitiveRegisterNames);
+			   deadTempWarning, enforceLocalKeyWord,caseSensitiveRegisterNames,debugOutput);
     
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);

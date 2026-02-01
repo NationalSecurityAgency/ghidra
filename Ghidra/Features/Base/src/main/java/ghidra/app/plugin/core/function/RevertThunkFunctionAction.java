@@ -88,13 +88,7 @@ class RevertThunkFunctionAction extends ProgramContextAction {
 			return;
 		}
 
-		int txId = program.startTransaction("Revert Thunk");
-		try {
-			func.setThunkedFunction(null);
-		}
-		finally {
-			program.endTransaction(txId, true);
-		}
+		funcPlugin.getTool().execute("Revert Thunk", program, () -> func.setThunkedFunction(null));
 	}
 
 	@Override

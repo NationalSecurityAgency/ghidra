@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,51 +18,44 @@ package ghidra.app.plugin.core.compositeeditor;
 /**
  * Adapter for a composite editor model listener. 
  */
-public class CompositeEditorModelAdapter
-	implements CompositeEditorModelListener {
+public class CompositeEditorModelAdapter implements CompositeEditorModelListener {
 
 	public CompositeEditorModelAdapter() {
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#compositeEditStateChanged(int)
-	 */
+	@Override
 	public void compositeEditStateChanged(int type) {
+		// do nothing by default
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#endFieldEditing()
-	 */
+	@Override
 	public void endFieldEditing() {
+		// do nothing by default
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModelListener#componentDataChanged()
-	 */
+	@Override
 	public void componentDataChanged() {
+		// do nothing by default
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModelListener#compositeInfoChanged()
-	 */
+	@Override
 	public void compositeInfoChanged() {
+		// do nothing by default
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModelListener#statusChanged(java.lang.String, boolean)
-	 */
+	@Override
 	public void statusChanged(String message, boolean beep) {
+		// do nothing by default
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModelListener#selectionChanged()
-	 */
+	@Override
 	public void selectionChanged() {
+		// do nothing by default
 	}
 
+	@Override
 	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
-		// TODO Auto-generated method stub
-		
+		// do nothing by default
 	}
 
 }

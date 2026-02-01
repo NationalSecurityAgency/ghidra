@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.decompiler.component.hover;
 
 import javax.swing.JComponent;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -97,22 +99,38 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 		int offset = fieldToken.getOffset();
 		DataType fieldType = getFieldDataType(fieldToken);
 
+		String comment = null;
+		if (parentType instanceof Structure structure) {
+			DataTypeComponent dtc = structure.getComponentAt(offset);
+			if (dtc != null) {
+				comment = StringUtils.truncate(dtc.getComment(), 80); // arbitrary limit
+			}
+		}
+
 		//
 		// Parent:     BarBar
 		// Offset:     0x8
 		// Field Name: fooField
-		//
+		// Comment:    This is a comment
+		//		
 
 		StringBuilder buffy = new StringBuilder(HTMLUtilities.HTML);
 
 		//@formatter:off
 		buffy.append("<TABLE>");
 		buffy.append(
-			row("Parent: ",	HTMLUtilities.friendlyEncodeHTML(parentType.getName())));
+			row("Parent: ",	HTMLUtilities.friendlyEncodeHTML(
+				            parentType.getDataTypePath().toString())));
 		buffy.append(
 			row("Offset: ", NumericUtilities.toHexString(offset)));
 		buffy.append(
 			row("Field Name: ", HTMLUtilities.friendlyEncodeHTML(token.getText())));
+		
+		if (comment != null) {
+			buffy.append(
+				row("Comment: ", HTMLUtilities.friendlyEncodeHTML(comment)));
+		}
+		
 		buffy.append("</TABLE>");
 		//@formatter:on
 

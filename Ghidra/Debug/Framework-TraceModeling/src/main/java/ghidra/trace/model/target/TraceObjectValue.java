@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,11 @@
  */
 package ghidra.trace.model.target;
 
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 public interface TraceObjectValue {
 
@@ -44,15 +45,29 @@ public interface TraceObjectValue {
 	String getEntryKey();
 
 	/**
+	 * Check if the given key (or alias) matches this entry's key
+	 * 
+	 * @param keyOrAlias the key or alias
+	 * @return true if the key matches this entry's key, or it is an alias for it
+	 */
+	default boolean hasEntryKey(String keyOrAlias) {
+		TraceObject parent = getParent();
+		if (parent == null) {
+			return getEntryKey().equals(keyOrAlias);
+		}
+		return getEntryKey().equals(parent.getSchema().checkAliasedAttribute(keyOrAlias));
+	}
+
+	/**
 	 * Get the "canonical path" of this value
 	 * 
 	 * <p>
 	 * This is the parent's canonical path extended by this value's entry key. Note, in the case
 	 * this value has a child object, this is not necessarily its canonical path.
 	 * 
-	 * @return
+	 * @return the canonical path
 	 */
-	TraceObjectKeyPath getCanonicalPath();
+	KeyPath getCanonicalPath();
 
 	/**
 	 * Get the value
@@ -103,8 +118,8 @@ public interface TraceObjectValue {
 	 * 
 	 * @return the schema
 	 */
-	default TargetObjectSchema getTargetSchema() {
-		return getParent().getTargetSchema().getChildSchema(getEntryKey());
+	default TraceObjectSchema getTargetSchema() {
+		return getParent().getSchema().getChildSchema(getEntryKey());
 	}
 
 	/**
@@ -127,7 +142,7 @@ public interface TraceObjectValue {
 	 * uniquely determined at a given snap. Thus, when lifespans are being adjusted, such conflicts
 	 * must be resolved.
 	 * 
-	 * @param lifespan the new lifespan
+	 * @param span the new lifespan
 	 * @param resolution specifies how to resolve duplicate keys with intersecting lifespans
 	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */
@@ -206,6 +221,6 @@ public interface TraceObjectValue {
 		if (parent == null) {
 			return false;
 		}
-		return parent.getTargetSchema().isHidden(getEntryKey());
+		return parent.getSchema().isHidden(getEntryKey());
 	}
 }

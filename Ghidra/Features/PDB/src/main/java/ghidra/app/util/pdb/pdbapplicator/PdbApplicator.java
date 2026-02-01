@@ -18,6 +18,7 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.List;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
@@ -62,15 +63,18 @@ public interface PdbApplicator {
 	 * Returns the {@link PeCoffSectionMsSymbol}s from the "Linker" module
 	 * @return list of symbols
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon issue creating an iterator
 	 */
-	public List<PeCoffSectionMsSymbol> getLinkerPeCoffSectionSymbols() throws CancelledException;
+	public List<PeCoffSectionMsSymbol> getLinkerPeCoffSectionSymbols()
+			throws CancelledException, PdbException;
 
 	/**
 	 * Returns the compile symbol seen in the "Linker" module.  Should be one of
 	 * {@link Compile3MsSymbol} or {@link AbstractCompile2MsSymbol}
 	 * @return the compile symbol
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon issue creating an iterator
 	 */
-	public AbstractMsSymbol getLinkerModuleCompileSymbol() throws CancelledException;
+	public AbstractMsSymbol getLinkerModuleCompileSymbol() throws CancelledException, PdbException;
 
 }

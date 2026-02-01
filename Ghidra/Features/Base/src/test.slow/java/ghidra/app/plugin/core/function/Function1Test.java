@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
@@ -335,12 +336,12 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(func.isThunk());
 		assertEquals("RegQueryValueExW", func.getName());
 
-		undo(program);// undo changed function
+		undo(program, "Create Thunk Function");
 
 		assertTrue(func.isThunk());
 		assertEquals("CommDlgExtendedError", func.getName());
 
-		redo(program);// redo changed function
+		redo(program);
 
 		assertTrue(func.isThunk());
 		assertEquals("RegQueryValueExW", func.getName());
@@ -354,6 +355,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Function func = createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
 
 		assertTrue(cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0));
+		assertTrue(func.isThunk());
 
 		performAction(revertThunk, cb.getProvider(), false);
 
@@ -367,7 +369,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertFalse(func.isThunk());
 		assertEquals("FUN_010030d2", func.getName());
 
-		undo(program);// undo changed function
+		undo(program, "Revert Thunk");
 
 		assertTrue(func.isThunk());
 		assertEquals("CommDlgExtendedError", func.getName());
@@ -423,13 +425,13 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(func.getLocalVariables().length == 0);
 		assertEquals("RegQueryValueExW", func.getThunkedFunction(true).getName());
 
-		undo(program);// undo changed function
+		undo(program, "Create Thunk Function");
 
 		assertFalse(func.isThunk());
 		assertEquals("entry", func.getName());
 		assertTrue(func.getLocalVariables().length != 0);
 
-		redo(program);// redo changed function
+		redo(program);// redo Create Thunk Function
 
 		assertTrue(func.isThunk());
 		assertEquals("entry", func.getName());
@@ -450,9 +452,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForBusyTool();
 
 		assertNull(program.getListing().getFunctionAt(addr("0x10030d2")));
-		undo(program);// undo delete function
+		undo(program, "Delete Function");
 		assertNotNull(program.getListing().getFunctionAt(addr("0x10030d2")));
-		redo(program);// redo delete function
+		redo(program);// redo Create Thunk Function
 		assertNull(program.getListing().getFunctionAt(addr("0x10030d2")));
 	}
 
@@ -484,7 +486,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		cb.goToField(addr("0x1006443"), "Operands", 0, 0);
 		assertEquals("dword ptr [EBP + local_1c],ESP", cb.getCurrentFieldText());
 
-		undo(program);
+		undo(program, "Create Function");
 		assertNull(program.getListing().getFunctionAt(addr("0x1006420")));
 
 		cb.goToField(addr("0x1006443"), "Operands", 0, 0);
@@ -510,7 +512,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		performAction(deleteFunction, cb.getProvider(), true);
 		waitForBusyTool();
 		assertNull(program.getListing().getFunctionAt(addr("0x1006420")));
-		undo(program);// undo delete function
+		undo(program, "Delete Function");
 		assertNotNull(program.getListing().getFunctionAt(addr("0x1006420")));
 		redo(program);// redo delete function
 		assertNull(program.getListing().getFunctionAt(addr("0x1006420")));
@@ -530,6 +532,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		JTextArea textArea = findComponent(vcd, JTextArea.class);
 		triggerText(textArea, "My New Comment");
 		pressButtonByText(vcd.getComponent(), "OK");
+		waitForBusyTool(tool);
+
 		assertTrue(cb.goToField(addr("0x1006420"), "Variable Comment", 0, 0, 0));
 		assertEquals("My New Comment", cb.getCurrentFieldText());
 		assertTrue(deleteComment.isEnabledForContext(cb.getProvider().getActionContext(null)));
@@ -539,9 +543,11 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		textArea = findComponent(vcd, JTextArea.class);
 		triggerText(textArea, "more stuff");
 		pressButtonByText(vcd.getComponent(), "OK");
+		waitForBusyTool(tool);
+
 		assertTrue(cb.goToField(addr("0x1006420"), "Variable Comment", 0, 0, 0));
 		assertEquals("more stuff", cb.getCurrentFieldText());
-		undo(program);
+		undo(program, "Set Variable Comment");
 		assertEquals("My New Comment", cb.getCurrentFieldText());
 		assertTrue(deleteComment.isEnabledForContext(cb.getProvider().getActionContext(null)));
 
@@ -552,7 +558,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		performAction(deleteComment, cb.getProvider(), true);
 		assertFalse(cb.goToField(addr("0x1006420"), "Variable Comment", 0, 0, 0));
 
-		undo(program);
+		undo(program, "Set Variable Comment");
 		assertTrue(cb.goToField(addr("0x1006420"), "Variable Comment", 0, 0, 0));
 		assertEquals("more stuff", cb.getCurrentFieldText());
 	}
@@ -587,6 +593,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double entry(void)", function.getPrototypeString(false, false));
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble entry(void)", function.getPrototypeString(false, false));
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float entry(void)", function.getPrototypeString(false, false));
@@ -625,6 +634,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -693,6 +705,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -770,6 +785,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("double", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
 
 	}
@@ -789,7 +807,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Function function = program.getListing().getFunctionAt(addr("0x100248f"));
 		assertNotNull(function);// function created by FunctionStartAnalyzer
 
-		CompoundCmd cmd = new CompoundCmd("test");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("test");
 		for (Parameter parm : function.getParameters()) {
 			cmd.add(new DeleteVariableCmd(parm));
 		}
@@ -869,6 +887,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("double", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
 
 	}
@@ -886,8 +907,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Variable[] vars = function.getLocalVariables(VariableFilter.STACK_VARIABLE_FILTER);
 		tx(program, () -> {
 			DataType byteDT = program.getDataTypeManager()
-				.addDataType(new ByteDataType(),
-					DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new ByteDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			vars[1].setDataType(byteDT, SourceType.ANALYSIS);
 		});
 
@@ -1025,7 +1045,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForBusyTool();
 
 		assertEquals("undefined hello()", cb.getCurrentFieldText());
-		undo(program);
+		undo(program, "Edit Label");
 		cb.updateNow();
 		assertEquals("undefined entry()", cb.getCurrentFieldText());
 		redo(program);
@@ -1049,9 +1069,10 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> editorField.setText("fred"));
 
 		pressButtonByText(dialog, "OK");
+		waitForBusyTool();
 
 		assertEquals("fred", cb.getCurrentFieldText());
-		undo(program);
+		undo(program, "Edit Label");
 		vars = function.getLocalVariables();
 		assertEquals(vars[0].getName(), cb.getCurrentFieldText());
 		redo(program);
@@ -1076,8 +1097,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		pressButtonByText(dialog, "OK");
 		waitForBusyTool();
+
 		assertEquals("dword ptr [EBP + bob],0x0", cb.getCurrentFieldText());
-		undo(program);
+		undo(program, "Edit Label");
 		cb.updateNow();
 		assertEquals("dword ptr [EBP + fred],0x0", cb.getCurrentFieldText());
 		redo(program);
@@ -1101,7 +1123,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForBusyTool();
 		assertEquals("undefined entry()", cb.getCurrentFieldText());
 
-		undo(program);
+		undo(program, "Set Return Data Type");
 		cb.updateNow();
 		assertEquals("byte entry(void)", cb.getCurrentFieldText());
 		redo(program);
@@ -1114,7 +1136,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForBusyTool();
 		assertEquals("undefined", cb.getCurrentFieldText());
 
-		undo(program);
+		undo(program, "Set Local Variable Data-type");
 		cb.updateNow();
 		assertFalse(cb.getCurrentFieldText().equals("undefined"));
 		redo(program);
@@ -1152,7 +1174,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		String fieldText = cb.getCurrentFieldText();
 		assertTrue("Unexpected operand text: " + fieldText, fieldText.contains("[EBP + Stack["));
 
-		undo(program);
+		undo(program, "Delete Variable");
 		cb.updateNow();
 
 		assertEquals(varName, cb.getCurrentFieldText());
@@ -1265,9 +1287,19 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 		Function f = createFunctionAtEntry();
+		// Test requires a size-constrained register variable edit 
+		program.withTransaction("Update Signature",
+			() -> f.updateFunction(null, null, FunctionUpdateType.CUSTOM_STORAGE, true,
+				SourceType.ANALYSIS, new ParameterImpl("test", Undefined4DataType.dataType,
+					program.getRegister("EBX"), program)));
 		setCustomParameterStorage(f, true);
 
-		assertTrue(cb.goToField(addr("0x1006420"), "Variable Type", 0, 0));
+		waitForSwing();
+
+		// Set location to param_1 datatype field
+		assertTrue(cb.goToField(addr("0x1006420"), "Variable Type", 1, 0, 0));
+
+		waitForSwing();
 
 		performAction(chooseDataType, cb.getProvider(), false);
 		DataTypeSelectionDialog dialog = waitForDialogComponent(DataTypeSelectionDialog.class);
@@ -1278,6 +1310,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		// the following text (this is only a part of the status message, but is enough
 		// to verify the test):
 		assertTrue(dialog.getStatusText().contains("doesn't fit within"));
+		close(dialog);
 	}
 
 //==================================================================================================
@@ -1435,7 +1468,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		editComment = getAction(fp, "Edit Variable Comment");
 		deleteComment = getAction(fp, "Delete Function Variable Comment");
 		byteCycleAction = getAction(fp, "Cycle: byte,word,dword,qword");
-		floatCycleAction = getAction(fp, "Cycle: float,double");
+		floatCycleAction = getAction(fp, "Cycle: float,double,longdouble");
 		createArray = getAction(fp, "Define Array");
 		createPointer = getAction(fp, "Define pointer");
 		clearFunctionReturnTypeAction = getAction(fp, "Clear Function Return Type");
@@ -1484,8 +1517,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void waitForBusyTool() {
-		waitForBusyTool(tool);
 		program.flushEvents();
+		waitForBusyTool(tool);
 		waitForSwing();
 		cb.updateNow();
 	}
@@ -1493,9 +1526,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 	private void doCycleAction(DockingActionIf action) {
 		assertTrue(action.isEnabledForContext(cb.getProvider().getActionContext(null)));
 		performAction(action, cb.getProvider(), true);
-		program.flushEvents();
-		waitForSwing();
-		cb.updateNow();
+		waitForBusyTool();
 	}
 
 	private Function createFunctionAtEntry() {

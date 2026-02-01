@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,9 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
+import javax.swing.tree.TreePath;
+
+import org.jdom2.Element;
 import org.junit.*;
 
 import docking.DockingWindowManager;
@@ -29,6 +32,8 @@ import ghidra.util.StringUtilities;
 
 public class GTreeFilterTest extends AbstractDockingTest {
 
+	private DummyTool tool;
+	private TestTreeComponentProvider provider;
 	private GTree gTree;
 	private FilterTextField filterField;
 
@@ -36,14 +41,21 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 	@Before
 	public void setUp() throws Exception {
+
+		tool = new DummyTool();
+		winMgr = new DockingWindowManager(tool, null);
+		winMgr.setVisible(true);
+
+		buildTree();
+	}
+
+	private void buildTree() {
 		GTreeNode root = new TestRootNode();
 		gTree = new GTree(root);
 
 		filterField = (FilterTextField) gTree.getFilterField();
-
-		winMgr = new DockingWindowManager(new DummyTool(), null);
-		winMgr.addComponent(new TestTreeComponentProvider(gTree));
-		winMgr.setVisible(true);
+		provider = new TestTreeComponentProvider(tool, gTree);
+		winMgr.addComponent(provider);
 
 		waitForTree();
 	}
@@ -60,8 +72,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
-		assertEquals("Expected 4 of nodes to be in filtered tree!", 4,
-			viewRoot().getChildCount());
+		assertEquals("Expected 4 of nodes to be in filtered tree!", 4, viewRoot().getChildCount());
 
 		checkContainsNode("ABC");
 		checkContainsNode("XABC");
@@ -73,10 +84,6 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 		setFilterText("");
 		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
-	}
-
-	private GTreeNode viewRoot() {
-		return gTree.getViewRoot();
 	}
 
 	@Test
@@ -432,34 +439,289 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testSavingSelectedFilterType() {
-		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
+	public void testFilterPersistence() {
+
+		// default configuration
+		assertFilterOptions(TextFilterStrategy.CONTAINS);
+
+		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
 		setFilterText("ABC");
-		checkContainsNode("ABC");
-		assertEquals(1, viewRoot().getChildCount());
+		assertNodesByName(viewRoot(), "ABC");
 
-		Object originalValue = getInstanceField("uniquePreferenceKey", gTree);
-		setInstanceField("preferenceKey", gTree.getFilterProvider(), "XYZ");
-		setFilterOptions(TextFilterStrategy.STARTS_WITH, false);
-		checkContainsNode("ABC");
-		checkContainsNode("ABCX");
-		assertEquals(2, viewRoot().getChildCount());
+		setFilterOptions(TextFilterStrategy.STARTS_WITH);
+		setFilterText("ABC");
+		assertNodesByName(viewRoot(), "ABC", "ABCX");
 
-		setInstanceField("preferenceKey", gTree.getFilterProvider(), originalValue);
-		setInstanceField("optionsSet", gTree.getFilterProvider(), false);
-		restorePreferences();
-		checkContainsNode("ABC");
-		assertEquals(1, viewRoot().getChildCount());
+		// close and reopen the tree so we know the preferences are saved
+		triggerSaveAndReload();
 
+		assertFilterOptions(TextFilterStrategy.STARTS_WITH);
+		setFilterText("ABC");
+		assertNodesByName(viewRoot(), "ABC", "ABCX");
+
+		// put back, test, and then make sure the updated filter is restored
+		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
+		setFilterText("ABC");
+		assertNodesByName(viewRoot(), "ABC");
+
+		// close and reopen the tree to verify that the new tree uses the last used filter
+		triggerSaveAndReload();
+
+		assertFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
+		setFilterText("ABC");
+		assertNodesByName(viewRoot(), "ABC");
 	}
 
-	private void restorePreferences() {
+	@Test
+	public void testFilterOptionsOverride() {
+
+		//
+		// This is testing the special case of setting preferred options on the 
+		// DefaultGTreeFilterProvider.  When an API client sets the preferred options on that class,
+		// we have chosen to not save or restore user preferences for that filter.  It is not clear
+		// why we do that, but it is probably based on the assumption that the API client wants the
+		// filter to always start in the preferred state.  The prevents filter from being restored
+		// with a previous user filter that does not make sense for the general case.
+		//
+
+		// default configuration
+		assertFilterOptions(TextFilterStrategy.CONTAINS);
+
+		// 
+		// Change the options and reload the tree so we know the preferences are saved
+		//
+		setFilterOptions(TextFilterStrategy.STARTS_WITH);
+		triggerSaveAndReload();
+		assertFilterOptions(TextFilterStrategy.STARTS_WITH);
+
+		// set the filter settings manually via the API
+		FilterOptions newOptions =
+			new FilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false, false, false);
+		rebuildTreeWithPreferredFilter(newOptions);
+
+		// verify after building the tree with the preferred options that the previous persisted
+		// options are not applied
+		assertFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
+	}
+
+	private GTreeNode viewRoot() {
+		return gTree.getViewRoot();
+	}
+
+	private void assertFilterOptions(TextFilterStrategy expectedStrategy) {
+
+		GTreeFilterProvider filterProvider = runSwing(() -> gTree.getFilterProvider());
+		DefaultGTreeFilterProvider defaultProvider =
+			(DefaultGTreeFilterProvider) filterProvider;
+		FilterOptions filterOptions = defaultProvider.getFilterOptions();
+		TextFilterStrategy actualStrategy = filterOptions.getTextFilterStrategy();
+		assertEquals(expectedStrategy, actualStrategy);
+	}
+
+	private void triggerSaveAndReload() {
+
+		// trigger the window manager to save the table filter preferences to xml
+		Element xml = new Element("TOOL");
+		winMgr.saveToXML(xml);
+
+		runSwing(() -> {
+			winMgr.removeComponent(provider);
+			gTree.dispose();
+		});
+
+		// put the state back in the window manager
+		winMgr.restoreFromXML(xml);
+
+		// load the new table and let it pull the preferences from the window manager
+		buildTree();
+	}
+
+	private void rebuildTreeWithPreferredFilter(FilterOptions newOptions) {
+
+		winMgr.removeComponent(provider);
+		gTree.dispose();
+
+		GTreeNode root = new TestRootNode();
+		gTree = new GTree(root);
+
+		setPreferredFilter(newOptions);
+
+		filterField = (FilterTextField) gTree.getFilterField();
+		provider = new TestTreeComponentProvider(tool, gTree);
+		winMgr.addComponent(provider);
+
+		waitForTree();
+	}
+
+	private void setPreferredFilter(FilterOptions newOptions) {
 		runSwing(() -> {
 			GTreeFilterProvider filterProvider = gTree.getFilterProvider();
-			String key = (String) getInstanceField("uniquePreferenceKey", gTree);
-			Class<?>[] classes = new Class[] { DockingWindowManager.class, String.class };
-			Object[] objs = new Object[] { winMgr, key };
-			invokeInstanceMethod("loadFilterPreference", filterProvider, classes, objs);
+			DefaultGTreeFilterProvider defaultProvider =
+				(DefaultGTreeFilterProvider) filterProvider;
+			defaultProvider.setPreferredFilterOptions(
+				new FilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false, false, false));
+		});
+	}
+
+	@Test
+	public void testUsePath() {
+
+		/*
+		  Create a tree with the following nodes in order to test matching of a node name that 
+		  exists at multiple levels.
+		  
+		  	Root/XYZ
+		  	Root/folder1/XYZ
+			Root/folder1/folder1_1/XYZ
+			Root/folder1/folder1_1/folder1_1_1/XYZ
+			Root/folder2/XYZ
+		  
+		 */
+
+		String xyzName = "XYZ";
+		GTreeNode root = new TestRootNode();
+		TestNode folder1 = new TestNode("folder1");
+		LeafNode leaf1 = new LeafNode(xyzName);
+		folder1.addNode(leaf1);
+		TestNode folder1_1 = new TestNode("folder1_1");
+		LeafNode leaf1_1 = new LeafNode(xyzName);
+		folder1_1.addNode(leaf1_1);
+		TestNode folder1_1_1 = new TestNode("folder1_1_1");
+		LeafNode leaf1_1_1 = new LeafNode(xyzName);
+		folder1_1_1.addNode(leaf1_1_1);
+		TestNode folder2 = new TestNode("folder2");
+		LeafNode leaf2 = new LeafNode(xyzName);
+		folder2.addNode(leaf2);
+
+		folder1.addNode(folder1_1);
+		folder1_1.addNode(folder1_1_1);
+
+		root.addNode(folder1);
+		root.addNode(folder2);
+
+		gTree.setRootNode(root);
+		waitForTree();
+
+		setFilterOnPath(true);
+
+		// name only; match all
+		setFilterText(xyzName);
+		//@formatter:off
+		assertNodes(
+			root.getChild(xyzName),
+			leaf1,
+			leaf1_1,
+			leaf1_1_1,
+			leaf2
+		);
+		//@formatter:on
+
+		// folder1 and name; match all under folder1
+		setFilterText("*folder1*" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			leaf1,
+			leaf1_1,
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		// folder1_1 and name; match all under folder1_1
+		setFilterText("*folder1_1*" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			// leaf1,                   no match here
+			leaf1_1,
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		// folder1_1_1 and name; match only under folder1_1_1
+		setFilterText("*folder1_1_1*" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			// leaf1,                   no match here
+			// leaf1_1,                 no match here
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		// folder1_1_1 and name; match only under folder1_1_1
+		setFilterText("Root/folder1/folder1_1/folder1_1_1/" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			// leaf1,                   no match here
+			// leaf1_1,                 no match here
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		setFilterOnPath(false);
+		// folder1_1_1 and name; match only under folder1_1_1
+		setFilterText("*folder1_1_1*" + xyzName);
+		assertNoMatches();
+	}
+
+	private void assertNoMatches() {
+		assertEquals(0, viewRoot().getChildCount());
+	}
+
+	private void assertNodesByName(GTreeNode parent, String... nodes) {
+
+		int count = 0;
+		int rows = gTree.getRowCount();
+		for (int i = 0; i < rows; i++) {
+			TreePath path = gTree.getPathForRow(i);
+			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+			if (node.isLeaf()) {
+				if (node.isLeaf()) {
+					count++;
+				}
+			}
+		}
+
+		assertEquals(nodes.length, count);
+		for (String nodeName : nodes) {
+			GTreeNode child = parent.getChild(nodeName);
+			assertNotNull("No child found by name '%s'".formatted(nodeName), child);
+		}
+	}
+
+	private void assertNodes(GTreeNode... nodes) {
+
+		int count = 0;
+		int rows = gTree.getRowCount();
+		for (int i = 0; i < rows; i++) {
+			TreePath path = gTree.getPathForRow(i);
+			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+			if (node.isLeaf()) {
+				if (node.isLeaf()) {
+					count++;
+				}
+			}
+		}
+
+		assertEquals(nodes.length, count);
+		for (GTreeNode node : nodes) {
+			assertTrue(gTree.getRowForPath(node.getTreePath()) != -1);
+		}
+	}
+
+	private void setFilterOnPath(boolean usePath) {
+		runSwing(() -> {
+			FilterOptions filterOptions =
+				new FilterOptions(TextFilterStrategy.CONTAINS, true, false, false, usePath, false,
+					FilterOptions.DEFAULT_DELIMITER, MultitermEvaluationMode.AND);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider())
+					.setFilterOptions(filterOptions);
 		});
 		waitForTree();
 	}
@@ -491,24 +753,27 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		waitForTree();
 	}
 
+	private void setFilterOptions(final TextFilterStrategy filterStrategy) {
+		setFilterOptions(filterStrategy, false);
+	}
+
 	private void setFilterOptions(final TextFilterStrategy filterStrategy, final boolean inverted) {
 
 		runSwing(() -> {
 			FilterOptions filterOptions = new FilterOptions(filterStrategy, false, false, inverted);
-			((DefaultGTreeFilterProvider) gTree.getFilterProvider()).setFilterOptions(
-				filterOptions);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider())
+					.setFilterOptions(filterOptions);
 		});
 		waitForTree();
-
 	}
 
 	private void setFilterOptions(TextFilterStrategy filterStrategy, boolean inverted,
 			boolean multiTerm, char splitCharacter, MultitermEvaluationMode evalMode) {
 		runSwing(() -> {
 			FilterOptions filterOptions = new FilterOptions(filterStrategy, false, false, inverted,
-				multiTerm, splitCharacter, evalMode);
-			((DefaultGTreeFilterProvider) gTree.getFilterProvider()).setFilterOptions(
-				filterOptions);
+				false, multiTerm, splitCharacter, evalMode);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider())
+					.setFilterOptions(filterOptions);
 		});
 		waitForTree();
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 		super.setUp();
 
 		symbolTreePlugin = getPlugin(tool, SymbolTreePlugin.class);
-		treeProvider = (SymbolTreeProvider) getInstanceField("provider", symbolTreePlugin);
+		treeProvider = (SymbolTreeProvider) getInstanceField("connectedProvider", symbolTreePlugin);
 		showProvider(tool, treeProvider.getName());
 		symbolTree = (SymbolGTree) getInstanceField("tree", treeProvider);
 		showSymbolReferencesAction =
@@ -109,17 +109,16 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 	private Function addExternalFunctionReference(Address refAddr, String libraryName,
 			String extLabel, RefType refType) throws Exception {
 
-		List<ExternalLocation> locations =
-			program.getExternalManager().getExternalLocations(libraryName, extLabel);
-		assertEquals(1, locations.size());
-		ExternalLocation externalLocation = locations.get(0);
+		ExternalLocation externalLocation =
+			program.getExternalManager().getUniqueExternalLocation(libraryName, extLabel);
 
 		assertNotNull("External location not found: " + libraryName + "::" + extLabel,
 			externalLocation);
 		int txId = program.startTransaction("Add Ext Ref");
 		try {
-			program.getReferenceManager().addExternalReference(refAddr, 1, externalLocation,
-				SourceType.USER_DEFINED, refType);
+			program.getReferenceManager()
+					.addExternalReference(refAddr, 1, externalLocation, SourceType.USER_DEFINED,
+						refType);
 			return externalLocation.createFunction();
 		}
 		finally {
@@ -130,8 +129,9 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 	private void addThunk(Address thunkAddr, Function thunkedFunction) throws Exception {
 		int txId = program.startTransaction("Add Thunk");
 		try {
-			Function f = program.getFunctionManager().createFunction(null, thunkAddr,
-				new AddressSet(thunkAddr), SourceType.USER_DEFINED);
+			Function f = program.getFunctionManager()
+					.createFunction(null, thunkAddr, new AddressSet(thunkAddr),
+						SourceType.USER_DEFINED);
 			f.setThunkedFunction(thunkedFunction);
 		}
 		finally {

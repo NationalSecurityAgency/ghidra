@@ -32,4 +32,6 @@ task before
 
 <xsl:param name="section.autolabel" select="1"/>    <!-- Automatically number sections -->
 
+<xsl:param name="bibliography.numbered" select="1"/>  <!-- Number bibliography entries -->
+
 </xsl:stylesheet>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,10 @@
  */
 package ghidra.app.cmd.function;
 
+import java.util.ArrayList;
+import java.util.Stack;
+
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -28,20 +30,20 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.ArrayList;
-import java.util.Stack;
-
 /**
  * Command for analyzing the Stack; the command is run in the background.
  * NOTE: referenced thunk-functions should be created prior to this command
  */
-public class FunctionStackAnalysisCmd extends BackgroundCommand {
+public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
+
+	private boolean dontCreateNewVariables = false;
+
+	private final boolean forceProcessing;
+	private final boolean createStackParams;
+	private final boolean createLocalStackVars;
+
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
-	private boolean forceProcessing = false;
-	private boolean dontCreateNewVariables = false;
-	private boolean doParams = false;
-	private boolean doLocals = false;
 
 	static String DEFAULT_FUNCTION_COMMENT = " FUNCTION";
 
@@ -53,7 +55,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 	 *           has already been defined.
 	 */
 	public FunctionStackAnalysisCmd(AddressSetView entries, boolean forceProcessing) {
-		this(entries, true, true, forceProcessing);
+		this(entries, false, true, forceProcessing);
 	}
 
 	/**
@@ -64,7 +66,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 	 *           has already been defined.
 	 */
 	public FunctionStackAnalysisCmd(Address entry, boolean forceProcessing) {
-		this(new AddressSet(entry, entry), true, true, forceProcessing);
+		this(new AddressSet(entry, entry), false, true, forceProcessing);
 	}
 
 	public FunctionStackAnalysisCmd(AddressSetView entries, boolean doParameterAnalysis,
@@ -72,17 +74,13 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 		super("Create Function Stack Variables", true, true, false);
 		entryPoints.add(entries);
 		this.forceProcessing = forceProcessing;
-		doParams = doParameterAnalysis;
-		doLocals = doLocalAnalysis;
+		createStackParams = doParameterAnalysis;
+		createLocalStackVars = doLocalAnalysis;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		int count = 0;
 		monitor.initialize(entryPoints.getNumAddresses());
@@ -285,7 +283,8 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 //		return true;
 //	}
 
-	private void defineFuncVariable(Function func, Instruction instr, int opIndex, int stackOffset) {
+	private void defineFuncVariable(Function func, Instruction instr, int opIndex,
+			int stackOffset) {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 
@@ -358,16 +357,15 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 		Variable var = frame.getVariableContaining(frameLoc);
 		if (var == null) {
 			try {
-				if (!doLocals && frameLoc <= 0) {
+				if (!createLocalStackVars && frameLoc <= 0) {
 					return null;
 				}
-				if (!doParams && frameLoc > 0) {
+				if (!createStackParams && frameLoc > 0) {
 					return null;
 				}
 				// only create variables at locations where a variable doesn't exist
-				var =
-					frame.createVariable(null, frameLoc, Undefined.getUndefinedDataType(refSize),
-						SourceType.ANALYSIS);
+				var = frame.createVariable(null, frameLoc, Undefined.getUndefinedDataType(refSize),
+					SourceType.ANALYSIS);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException(e);

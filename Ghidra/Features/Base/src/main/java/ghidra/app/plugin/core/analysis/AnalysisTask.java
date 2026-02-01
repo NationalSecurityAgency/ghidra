@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +17,11 @@ package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class AnalysisTask extends BackgroundCommand {
+public class AnalysisTask extends BackgroundCommand<Program> {
 	AnalysisScheduler scheduler;
 	private MessageLog log;
 
@@ -34,9 +32,9 @@ public class AnalysisTask extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		try {
-			return scheduler.runAnalyzer((Program) obj, monitor, log);
+			return scheduler.runAnalyzer(program, monitor, log);
 		}
 		catch (CancelledException e) {
 			return false;

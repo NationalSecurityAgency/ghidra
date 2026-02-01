@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import java.util.NoSuchElementException;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
+import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.map.*;
 import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.model.address.*;
@@ -36,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
  * The map is stored within a database table.
  * @param <T> property value type
  */
-public abstract class PropertyMapDB<T> implements PropertyMap<T> {
+public abstract class PropertyMapDB<T> extends DatabaseObject implements PropertyMap<T> {
 
 	private static final String PROPERTY_TABLE_PREFIX = "Property Map - ";
 
@@ -62,7 +64,7 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	protected AddressMap addrMap;
 	protected String name;
 
-	protected ObjectCache cache = new ObjectCache(DEFAULT_CACHE_SIZE);
+	protected ObjectCache<T> cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 	protected Lock lock;
 
 	/**
@@ -75,6 +77,7 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	 */
 	PropertyMapDB(DBHandle dbHandle, ErrorHandler errHandler, ChangeManager changeMgr,
 			AddressMap addrMap, String name) {
+		super(null, 0); // DatabaseObject cache is not used
 
 		this.dbHandle = dbHandle;
 		this.errHandler = errHandler;
@@ -91,13 +94,28 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 		}
 	}
 
-	void checkMapVersion(int openMode, TaskMonitor monitor)
+	// Expose validate method to DBPropertyMapManager
+	@Override
+	protected boolean validate(Lock lck) {
+		return super.validate(lck);
+	}
+
+	/**
+	 * Check if a table upgrade should be performed or a version error thrown.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
+	 * @param monitor task monitor
+	 * @throws VersionException if the database version is not the expected version.
+	 * @throws CancelledException if the user cancels the upgrade operation.
+	 * @throws IOException if an IO error occurs
+	 */
+	void checkMapVersion(OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		if (propertyTable != null && addrMap.isUpgraded()) {
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				upgradeTable(monitor);
 			}
-			else if (openMode != -1) {
+			else if (openMode != null) {
 				throw new VersionException(true);
 			}
 		}
@@ -170,27 +188,43 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	/**
 	 * Create the default propertyTable.
-	 * This method may be called by add property methods if propertyTable
-	 * is null.
-	 * @param valueField property value field type
+	 * This method may be called by add property methods if propertyTable is null.
+	 * @param valueField property value field type (null corresponds to void map table)
 	 * @throws IOException if IO error occurs
 	 */
 	protected void createTable(Field valueField) throws IOException {
+		schema = getTableSchema(valueField);
+		propertyTable = dbHandle.createTable(getTableName(), schema);
+	}
+
+	private static Schema getTableSchema(Field valueField) {
 		if (valueField != null) {
 			// Create default table schema with a value column and an long Address key
 			Field[] fields = new Field[] { valueField };
-			schema = new Schema(0, "Address", fields, SCHEMA_FIELD_NAMES);
+			return new Schema(0, "Address", fields, SCHEMA_FIELD_NAMES);
 		}
-		else {
-			// Table contains only a long Address key
-			schema = new Schema(0, "Address", NO_SCHEMA_FIELDS, NO_SCHEMA_FIELD_NAMES);
-		}
-		propertyTable = dbHandle.createTable(getTableName(), schema);
+
+		// Table contains only a long Address key (i.e., void property map)
+		return new Schema(0, "Address", NO_SCHEMA_FIELDS, NO_SCHEMA_FIELD_NAMES);
 	}
 
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public void clear() {
+		if (propertyTable == null) {
+			return;
+		}
+		cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
+		try {
+			propertyTable.deleteAll();
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
 	}
 
 	/**
@@ -205,7 +239,6 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 		finally {
 			lock.release();
 		}
-
 	}
 
 	/**
@@ -217,8 +250,10 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	public void delete() throws IOException {
 		lock.acquire();
 		try {
+			checkDeleted();
+			setDeleted();
 			if (propertyTable != null) {
-				cache = null;
+				cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 				dbHandle.deleteTable(getTableName());
 				propertyTable = null;
 			}
@@ -230,12 +265,14 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public boolean intersects(Address startAddr, Address endAddr) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return false;
 		}
 		try {
 			AddressKeyIterator iter =
-				new AddressKeyIterator(propertyTable, addrMap, startAddr, endAddr, startAddr, true);
+				new AddressKeyIterator(table, addrMap, startAddr, endAddr, startAddr, true);
 			return iter.hasNext();
 		}
 		catch (IOException e) {
@@ -246,12 +283,14 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public boolean intersects(AddressSetView set) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return false;
 		}
 		try {
 			AddressKeyIterator iter =
-				new AddressKeyIterator(propertyTable, addrMap, set, set.getMinAddress(), true);
+				new AddressKeyIterator(table, addrMap, set, set.getMinAddress(), true);
 			return iter.hasNext();
 		}
 		catch (IOException e) {
@@ -262,13 +301,14 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public boolean removeRange(Address startAddr, Address endAddr) {
-		if (propertyTable == null) {
-			return false;
-		}
 		lock.acquire();
 		try {
+			checkDeleted();
+			if (propertyTable == null) {
+				return false;
+			}
 			if (AddressRecordDeleter.deleteRecords(propertyTable, addrMap, startAddr, endAddr)) {
-				cache = new ObjectCache(DEFAULT_CACHE_SIZE);
+				cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 				return true;
 			}
 		}
@@ -283,15 +323,16 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public boolean remove(Address addr) {
-		if (propertyTable == null) {
-			return false;
-		}
 		lock.acquire();
 		boolean result = false;
 		try {
-			long key = addrMap.getKey(addr, false);
-			cache.remove(key);
-			result = propertyTable.deleteRecord(key);
+			checkDeleted();
+			if (propertyTable == null) {
+				return false;
+			}
+			long addrKey = addrMap.getKey(addr, false);
+			cache.remove(addrKey);
+			result = propertyTable.deleteRecord(addrKey);
 			changeMgr.setPropertyChanged(name, addr, null, null);
 		}
 		catch (IOException e) {
@@ -305,33 +346,32 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public boolean hasProperty(Address addr) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return false;
 		}
-		lock.acquire();
-		boolean result = false;
 		try {
-			long key = addrMap.getKey(addr, false);
-			if (key != AddressMap.INVALID_ADDRESS_KEY) {
-				result = cache.contains(key) || propertyTable.hasRecord(key);
+			long addrKey = addrMap.getKey(addr, false);
+			if (addrKey != AddressMap.INVALID_ADDRESS_KEY) {
+				return cache.contains(addrKey) || table.hasRecord(addrKey);
 			}
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-		return result;
+		return false;
 	}
 
 	@Override
 	public Address getNextPropertyAddress(Address addr) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return null;
 		}
 		try {
-			AddressKeyIterator iter = new AddressKeyIterator(propertyTable, addrMap, addr, false);
+			AddressKeyIterator iter = new AddressKeyIterator(table, addrMap, addr, false);
 			return addrMap.decodeAddress(iter.next());
 		}
 		catch (NoSuchElementException e) {
@@ -345,11 +385,13 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public Address getPreviousPropertyAddress(Address addr) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return null;
 		}
 		try {
-			AddressKeyIterator iter = new AddressKeyIterator(propertyTable, addrMap, addr, true);
+			AddressKeyIterator iter = new AddressKeyIterator(table, addrMap, addr, true);
 			return addrMap.decodeAddress(iter.previous());
 		}
 		catch (NoSuchElementException e) {
@@ -363,11 +405,13 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public Address getFirstPropertyAddress() {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return null;
 		}
 		try {
-			AddressKeyIterator iter = new AddressKeyIterator(propertyTable, addrMap, true);
+			AddressKeyIterator iter = new AddressKeyIterator(table, addrMap, true);
 			return addrMap.decodeAddress(iter.next());
 		}
 		catch (NoSuchElementException e) {
@@ -381,11 +425,13 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public Address getLastPropertyAddress() {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return null;
 		}
 		try {
-			AddressKeyIterator iter = new AddressKeyIterator(propertyTable, addrMap,
+			AddressKeyIterator iter = new AddressKeyIterator(table, addrMap,
 				addrMap.getAddressFactory().getAddressSet().getMaxAddress(), false);
 			return addrMap.decodeAddress(iter.previous());
 		}
@@ -400,7 +446,9 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public int getSize() {
-		return propertyTable != null ? propertyTable.getRecordCount() : 0;
+		validate(lock);
+		Table table = propertyTable;
+		return table != null ? table.getRecordCount() : 0;
 	}
 
 	/**
@@ -413,13 +461,15 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	 */
 	public AddressKeyIterator getAddressKeyIterator(AddressSetView set, boolean atStart)
 			throws IOException {
-		if (propertyTable == null || (set != null && set.isEmpty())) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null || (set != null && set.isEmpty())) {
 			return AddressKeyIterator.EMPTY_ITERATOR;
 		}
 		if (atStart) {
-			return new AddressKeyIterator(propertyTable, addrMap, set, set.getMinAddress(), true);
+			return new AddressKeyIterator(table, addrMap, set, set.getMinAddress(), true);
 		}
-		return new AddressKeyIterator(propertyTable, addrMap, set, set.getMaxAddress(), false);
+		return new AddressKeyIterator(table, addrMap, set, set.getMaxAddress(), false);
 	}
 
 	/**
@@ -431,11 +481,12 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	 */
 	public AddressKeyIterator getAddressKeyIterator(Address start, boolean before)
 			throws IOException {
-
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return AddressKeyIterator.EMPTY_ITERATOR;
 		}
-		return new AddressKeyIterator(propertyTable, addrMap, start, before);
+		return new AddressKeyIterator(table, addrMap, start, before);
 	}
 
 	/**
@@ -449,14 +500,15 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	 */
 	public AddressKeyIterator getAddressKeyIterator(Address start, Address end, boolean atStart)
 			throws IOException {
-
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return AddressKeyIterator.EMPTY_ITERATOR;
 		}
 		if (atStart) {
-			return new AddressKeyIterator(propertyTable, addrMap, start, end, start, true);
+			return new AddressKeyIterator(table, addrMap, start, end, start, true);
 		}
-		return new AddressKeyIterator(propertyTable, addrMap, start, end, end, false);
+		return new AddressKeyIterator(table, addrMap, start, end, end, false);
 	}
 
 	@Override
@@ -485,12 +537,14 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public AddressIterator getPropertyIterator() {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return new EmptyAddressIterator();
 		}
 		AddressKeyIterator keyIter = null;
 		try {
-			keyIter = new AddressKeyIterator(propertyTable, addrMap, true);
+			keyIter = new AddressKeyIterator(table, addrMap, true);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -500,13 +554,14 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return new EmptyAddressIterator();
 		}
 		AddressKeyIterator keyIter = null;
 		try {
-			keyIter =
-				new AddressKeyIterator(propertyTable, addrMap, asv, asv.getMinAddress(), true);
+			keyIter = new AddressKeyIterator(table, addrMap, asv, asv.getMinAddress(), true);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -516,18 +571,18 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward) {
-		if (propertyTable == null || (asv != null && asv.isEmpty())) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null || (asv != null && asv.isEmpty())) {
 			return AddressIterator.EMPTY_ITERATOR;
 		}
 		AddressKeyIterator keyIter = null;
 		try {
 			if (forward) {
-				keyIter =
-					new AddressKeyIterator(propertyTable, addrMap, asv, asv.getMinAddress(), true);
+				keyIter = new AddressKeyIterator(table, addrMap, asv, asv.getMinAddress(), true);
 			}
 			else {
-				keyIter =
-					new AddressKeyIterator(propertyTable, addrMap, asv, asv.getMaxAddress(), false);
+				keyIter = new AddressKeyIterator(table, addrMap, asv, asv.getMaxAddress(), false);
 			}
 		}
 		catch (IOException e) {
@@ -538,12 +593,14 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 
 	@Override
 	public AddressIterator getPropertyIterator(Address start, boolean forward) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return new EmptyAddressIterator();
 		}
 		AddressKeyIterator keyIter = null;
 		try {
-			keyIter = new AddressKeyIterator(propertyTable, addrMap, start, forward);
+			keyIter = new AddressKeyIterator(table, addrMap, start, forward);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -554,23 +611,36 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 	/**
 	 * Invalidates the cache.
 	 */
-	public void invalidateCache() {
+	public void invalidate() {
 		lock.acquire();
 		try {
-			propertyTable = dbHandle.getTable(getTableName());
-			cache = new ObjectCache(DEFAULT_CACHE_SIZE);
+			setInvalid();
 		}
 		finally {
 			lock.release();
 		}
+	}
 
+	@Override
+	protected boolean refresh() {
+		cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
+		propertyTable = dbHandle.getTable(getTableName());
+		if (propertyTable != null) {
+			if (!propertyTable.getSchema().equals(schema)) {
+				propertyTable = null;
+				return false;
+			}
+		}
+		// Must assume lazy table and empty map
+		return true;
 	}
 
 	@Override
 	public void moveRange(Address start, Address end, Address newStart) {
 		lock.acquire();
 		try {
-			cache = new ObjectCache(DEFAULT_CACHE_SIZE);
+			checkDeleted();
+			cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 			if (propertyTable != null) {
 				try {
 					DatabaseTableUtils.updateAddressKey(propertyTable, addrMap, start, end,

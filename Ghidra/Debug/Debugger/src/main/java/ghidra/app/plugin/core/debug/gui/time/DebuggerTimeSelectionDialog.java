@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.time;
 
 import java.awt.BorderLayout;
+import java.awt.event.*;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.MessageType;
 import ghidra.util.Msg;
 
@@ -37,6 +39,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 
 	DebuggerSnapshotTablePanel snapshotPanel;
 	JTextField scheduleText;
+	TimeRadix radix = TimeRadix.DEFAULT;
 	TraceSchedule schedule;
 
 	JButton tickStep;
@@ -56,7 +59,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			if (stepped == null) {
 				return;
 			}
-			setScheduleText(stepped.toString());
+			setScheduleText(stepped.toString(radix));
 		}
 		catch (Throwable e) {
 			Msg.warn(this, e.getMessage());
@@ -71,6 +74,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			hbox.setBorder(BorderFactory.createTitledBorder("Schedule"));
 			hbox.add(new JLabel("Expression: "));
 			scheduleText = new JTextField();
+			scheduleText.getAccessibleContext().setAccessibleName("Schedule");
 			hbox.add(scheduleText);
 			hbox.add(new JLabel("Ticks: "));
 			hbox.add(tickBack = new GButton(DebuggerResources.ICON_STEP_BACK));
@@ -78,6 +82,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			hbox.add(new JLabel("Ops: "));
 			hbox.add(opBack = new GButton(DebuggerResources.ICON_STEP_BACK));
 			hbox.add(opStep = new GButton(DebuggerResources.ICON_STEP_INTO));
+			hbox.getAccessibleContext().setAccessibleName("Schedule");
 			workPanel.add(hbox, BorderLayout.NORTH);
 		}
 
@@ -88,6 +93,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 
 		{
 			snapshotPanel = new DebuggerSnapshotTablePanel(tool);
+			snapshotPanel.getAccessibleContext().setAccessibleName("Snapshot");
 			workPanel.add(snapshotPanel, BorderLayout.CENTER);
 		}
 
@@ -99,7 +105,24 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			if (schedule.getSnap() == snap.longValue()) {
 				return;
 			}
-			scheduleText.setText(snap.toString());
+			scheduleText.setText(radix.format(snap));
+		});
+		snapshotPanel.snapshotTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					close();
+				}
+			}
+		});
+		snapshotPanel.snapshotTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					close();
+					e.consume(); // lest it select the next row down
+				}
+			}
 		});
 
 		scheduleText.getDocument().addDocumentListener(new DocumentListener() {
@@ -118,7 +141,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 				scheduleTextChanged();
 			}
 		});
-
+		workPanel.getAccessibleContext().setAccessibleName("Debugger Time Selection");
 		addWorkPanel(workPanel);
 		addOKButton();
 		addCancelButton();
@@ -129,7 +152,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 	protected void scheduleTextChanged() {
 		schedule = null;
 		try {
-			schedule = TraceSchedule.parse(scheduleText.getText());
+			schedule = TraceSchedule.parse(scheduleText.getText(), radix);
 			snapshotPanel.setSelectedSnapshot(schedule.getSnap());
 			schedule.validate(getTrace());
 			setStatusText("");
@@ -166,6 +189,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 	public void close() {
 		super.close();
 		snapshotPanel.setTrace(null);
+		radix = TimeRadix.DEFAULT;
 		snapshotPanel.setSelectedSnapshot(null);
 	}
 
@@ -173,13 +197,14 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 	 * Prompts the user to select a snapshot and optionally specify a full schedule
 	 * 
 	 * @param trace the trace from whose snapshots to select
-	 * @param defaultTime, optionally the time to select initially
+	 * @param defaultTime optionally the time to select initially
 	 * @return the schedule, likely specifying just the snapshot selection
 	 */
 	public TraceSchedule promptTime(Trace trace, TraceSchedule defaultTime) {
 		snapshotPanel.setTrace(trace);
+		radix = trace.getTimeManager().getTimeRadix();
 		schedule = defaultTime;
-		scheduleText.setText(defaultTime.toString());
+		scheduleText.setText(defaultTime.toString(radix));
 		tool.showDialog(this);
 		return schedule;
 	}

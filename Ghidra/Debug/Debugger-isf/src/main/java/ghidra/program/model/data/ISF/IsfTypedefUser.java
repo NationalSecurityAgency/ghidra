@@ -15,19 +15,19 @@
  */
 package ghidra.program.model.data.ISF;
 
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.TypeDef;
 
-public class IsfTypedefUser implements IsfObject {
+public class IsfTypedefUser extends AbstractIsfObject {
 
 	public Integer size;
 	public String kind;
 	public IsfObject type;
 
 	public IsfTypedefUser(TypeDef typeDef, IsfObject typeObj) {
-		DataType baseType = typeDef.getBaseDataType();
+		super(typeDef);
 		size = typeDef.getLength();
-		kind = IsfUtilities.getKind(baseType);
+		kind = "typedef";
+		//kind = IsfUtilities.getKind(baseType);
 		type = typeObj;
 	}
 

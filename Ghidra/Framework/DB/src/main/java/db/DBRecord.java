@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -411,7 +411,7 @@ public class DBRecord implements Comparable<DBRecord> {
 
 	/**
 	 * Set the field to a null state.  For a non-sparse fixed-length column field this will
-	 * set the the value to zero and the null state will not be persisted when stored.
+	 * set the value to zero and the null state will not be persisted when stored.
 	 * @param colIndex field index
 	 * @throws IndexOutOfBoundsException if invalid columnIndex is specified
 	 */

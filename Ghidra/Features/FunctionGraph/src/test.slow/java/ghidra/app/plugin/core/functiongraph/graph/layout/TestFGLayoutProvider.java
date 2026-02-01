@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.layout.*;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 import ghidra.program.model.address.Address;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -77,7 +78,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 		}
 
 		@Override
-		protected Point2D getVertexLocation(FGVertex v, Column col, Row<FGVertex> row,
+		protected Point2D getVertexLocation(FGVertex v, Column<FGVertex> col, Row<FGVertex> row,
 				Rectangle bounds) {
 			return getCenteredVertexLocation(v, col, row, bounds);
 		}
@@ -257,8 +258,8 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 				// -->Maybe positioning is simple enough?
 				//
 
-				Column startCol = layoutLocations.col(startVertex);
-				Column endCol = layoutLocations.col(endVertex);
+				Column<FGVertex> startCol = layoutLocations.col(startVertex);
+				Column<FGVertex> endCol = layoutLocations.col(endVertex);
 				Point2D start = vertexLayoutLocations.get(startVertex);
 				Point2D end = vertexLayoutLocations.get(endVertex);
 				List<Point2D> articulations = new ArrayList<>();
@@ -373,5 +374,10 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 			"}";
 			//@formatter:on
 		}
+	}
+
+	@Override
+	public HelpLocation getHelpLocation() {
+		return null;
 	}
 }

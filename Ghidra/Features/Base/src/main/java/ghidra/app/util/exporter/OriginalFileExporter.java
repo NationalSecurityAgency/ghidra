@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.*;
+import ghidra.framework.Application;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.mem.FileBytes;
@@ -166,7 +167,7 @@ public class OriginalFileExporter extends Exporter {
 		// Write source program's file bytes to a temp file.
 		// This is done to ensure a random access write failure doesn't corrupt a file the user 
 		// might be overwriting.
-		File tempFile = File.createTempFile("ghidra_export_", null);
+		File tempFile = Application.createTempFile("ghidra_export_", null);
 		try (OutputStream out = new FileOutputStream(tempFile, false)) {
 			FileUtilities.copyStreamToStream(new FileBytesInputStream(fileBytes, true), out,
 				monitor);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,10 +52,13 @@ class StorageTableCellEditor extends AbstractCellEditor implements TableCellEdit
 	@Override
 	public Component getTableCellEditorComponent(final JTable table, Object value,
 			boolean isSelected, int row, int column) {
+
+		storage = null;
 		String stringValue = value == null ? "" : value.toString();
 		JTextField field = new JTextField(stringValue);
 		field.setBackground(getUneditableForegroundColor(isSelected));
 		field.setEditable(false);
+		field.setBorder(null);
 		ParameterTableModel tableModel = (ParameterTableModel) table.getModel();
 		FunctionVariableData rowData = tableModel.getRowObject(row);
 		final StorageAddressEditorDialog dialog = new StorageAddressEditorDialog(model.getProgram(),

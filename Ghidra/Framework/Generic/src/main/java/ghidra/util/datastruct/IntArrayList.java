@@ -26,6 +26,7 @@ import ghidra.util.Saveable;
  */
 public class IntArrayList implements Serializable, Saveable {
     private final static long serialVersionUID = 1;
+	private final static int[] EMPTY_INT_ARRAY = new int[0];
 
     public static final int MIN_SIZE = 4;
     int [] ints;
@@ -37,6 +38,10 @@ public class IntArrayList implements Serializable, Saveable {
     public IntArrayList() {
         ints = new int[MIN_SIZE];
     }
+
+	public IntArrayList(boolean useZeroSize) {
+		ints = useZeroSize ? EMPTY_INT_ARRAY : new int[MIN_SIZE];
+	}
 
 	/**
 	 * Creates a new intArrayList using the values in the given array
@@ -149,6 +154,10 @@ public class IntArrayList implements Serializable, Saveable {
 		return size;
 	}
 
+	public boolean isEmpty() {
+		return size == 0;
+	}
+
 	/**
 	 * Converts to a primitive array.
 	 * @return int[] int array for results.
@@ -163,11 +172,11 @@ public class IntArrayList implements Serializable, Saveable {
      * Doubles the size of the array.
      * @param size The new capacity of the array.
      */
-    private void growArray() {
-        int [] newints = new int[ints.length*2];
-        System.arraycopy(ints,0,newints,0,ints.length);
-        ints = newints;
-    }
+	private void growArray() {
+		int[] newints = new int[Math.max(ints.length * 2, MIN_SIZE)];
+		System.arraycopy(ints, 0, newints, 0, ints.length);
+		ints = newints;
+	}
 
     private void shrinkArray() {
     	int newsize = ints.length/2;
@@ -230,4 +239,5 @@ public class IntArrayList implements Serializable, Saveable {
 	public boolean isPrivate() {
 		return false;
 	}
+
 }

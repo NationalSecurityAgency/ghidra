@@ -92,14 +92,14 @@ public class ElfSymbol {
 	public static final byte STV_PROTECTED = 3;
 
 	private ElfSymbolTable symbolTable;
-	private int symbolTableIndex;
+	private final int symbolTableIndex;
 
-	private int st_name;
-	private long st_value;
-	private long st_size;
-	private byte st_info;
-	private byte st_other;
-	private short st_shndx;
+	private final int st_name;
+	private final long st_value;
+	private final long st_size;
+	private final byte st_info;
+	private final byte st_other;
+	private final short st_shndx;
 
 	private String nameAsString;
 
@@ -107,28 +107,36 @@ public class ElfSymbol {
 	 * Construct a new special null symbol which corresponds to symbol index 0.
 	 */
 	public ElfSymbol() {
-		this.nameAsString = "";
+		symbolTableIndex = 0;
+		st_name = 0;
+		st_value = 0;
+		st_size = 0;
+		st_info = 0;
+		st_other = 0;
+		st_shndx = 0;
+		nameAsString = "";
 	}
 
 	/**
 	 * Construct a normal ElfSymbol.
 	 * Warning! the routine initSymbolName() must be called on the symbol later
 	 * to initialize the string name.  This is a performance enhancement.
-	 * @param reader to read symbol from
+	 * @param reader to read symbol entry at current position 
+	 * 				(reader is not retained, position is altered)
 	 * @param symbolIndex index of the symbol to read
 	 * @param symbolTable symbol table to associate the symbol to
-	 * @param header else header
-	 * @throws IOException if an issue with reading occurs
+	 * @param header ELF header
+	 * @throws IOException if an IO error occurs during parse
 	 */
-	public ElfSymbol(BinaryReader reader, int symbolIndex,
-			ElfSymbolTable symbolTable, ElfHeader header) throws IOException {
+	public ElfSymbol(BinaryReader reader, int symbolIndex, ElfSymbolTable symbolTable,
+			ElfHeader header) throws IOException {
 		this.symbolTable = symbolTable;
 		this.symbolTableIndex = symbolIndex;
 
 		if (header.is32Bit()) {
 			st_name = reader.readNextInt();
-			st_value = Integer.toUnsignedLong(reader.readNextInt());
-			st_size = Integer.toUnsignedLong(reader.readNextInt());
+			st_value = reader.readNextUnsignedInt();
+			st_size = reader.readNextUnsignedInt();
 			st_info = reader.readNextByte();
 			st_other = reader.readNextByte();
 			st_shndx = reader.readNextShort();
@@ -171,7 +179,7 @@ public class ElfSymbol {
 	 * at the same time the reading buffer will jump around and significantly
 	 * degrade reading performance.
 	 * 
-	 * @param reader to read from
+	 * @param reader to read from (position remains unchanged)
 	 * @param stringTable stringTable to initialize symbol name
 	 */
 	public void initSymbolName(BinaryReader reader, ElfStringTable stringTable) {
@@ -492,8 +500,8 @@ public class ElfSymbol {
 		return nameAsString + " - " + "st_value: 0x" + Long.toHexString(st_value) + " - " +
 			"st_size: 0x" + Long.toHexString(st_size) + " - " + "st_info: 0x" +
 			Integer.toHexString(Byte.toUnsignedInt(st_info)) + " - " + "st_other: 0x" +
-			Integer.toHexString(Byte.toUnsignedInt(st_other)) +
-			" - " + "st_shndx: 0x" + Integer.toHexString(Short.toUnsignedInt(st_shndx));
+			Integer.toHexString(Byte.toUnsignedInt(st_other)) + " - " + "st_shndx: 0x" +
+			Integer.toHexString(Short.toUnsignedInt(st_shndx));
 	}
 
 }

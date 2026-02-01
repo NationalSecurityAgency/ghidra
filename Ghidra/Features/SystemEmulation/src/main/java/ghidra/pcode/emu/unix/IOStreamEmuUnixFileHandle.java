@@ -76,7 +76,6 @@ public class IOStreamEmuUnixFileHandle extends AbstractStreamEmuUnixFileHandle<b
 	 * @param cSpec the ABI of the target platform
 	 * @param input the stream representing the input side of the descriptor, if applicable
 	 * @param output the stream representing the output side of the descriptor, if applicable
-	 * @return the proxy's handle
 	 */
 	public IOStreamEmuUnixFileHandle(PcodeMachine<byte[]> machine, CompilerSpec cSpec,
 			InputStream input, OutputStream output) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
 
-		// -1 because one one of the edges was between two of the vertices being grouped
+		// -1 because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
@@ -89,7 +89,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 
 		group(ungroupedVertices);
 
-		// (size - 1) because one one of the edges was between two of the vertices being grouped
+		// (size - 1) because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
@@ -97,7 +97,8 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		//
 		// Clone the graph
 		//
-		FGController clonedController = cloneGraph();
+		FGProvider clonedProvider = cloneGraph();
+		FGController clonedController = clonedProvider.getController();
 		FGData clonedData = clonedController.getFunctionGraphData();
 		FunctionGraph clonedFunctionGraph = clonedData.getFunctionGraph();
 
@@ -415,7 +416,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		// Test the case that grouping the entry node will create a group that has incoming 
 		// edges.  In this case, there is no source node in the graph.  This will cause an 
 		// exception if the code does not create a fake source node before passing the graph
-		// the the algorithm for calculating dominance.
+		// to the algorithm for calculating dominance.
 		//
 
 		create12345GraphWithTransaction();

@@ -176,11 +176,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	}
 
 	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		// no-op
-	}
-
-	@Override
 	public int getDragAction() {
 		return dragAction;
 	}
@@ -207,11 +202,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public void move() {
-		// no-op
 	}
 
 	// For Junit tests

@@ -55,7 +55,8 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private RegisterTransitionFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
+	private RegisterTransitionFieldFactory(FieldFormatModel model,
+			ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 		initOptions(displayOptions, fieldOptions);
@@ -118,22 +119,22 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 		if (stackDepthStr != null) {
 			numElements++;
 		}
-		FieldElement[] fieldElements = new FieldElement[numElements];
+		List<FieldElement> elements = new ArrayList<>(numElements);
 		for (int i = 0; i < numRegisters; i++) {
 			Register register = transitionRegisters.get(i);
 			AttributedString str = new AttributedString(
 				"assume " + register.getName() + " = " +
 					getValueString(register, context, curAddress),
 				ListingColors.REGISTER, getMetrics());
-			fieldElements[i] = new TextFieldElement(str, i, 0);
+			elements.add(new TextFieldElement(str, i, 0));
 		}
 		if (stackDepthStr != null) {
 			AttributedString str =
 				new AttributedString(stackDepthStr, ListingColors.REGISTER, getMetrics());
-			fieldElements[numRegisters] = new TextFieldElement(str, numRegisters, 0);
+			elements.add(new TextFieldElement(str, numRegisters, 0));
 		}
-		return ListingTextField.createMultilineTextField(this, proxy, fieldElements,
-			startX + varWidth, width, Integer.MAX_VALUE, hlProvider);
+		return ListingTextField.createMultilineTextField(this, proxy, elements,
+			startX + varWidth, width, hlProvider);
 	}
 
 	private String getValueString(Register register, ProgramContext context, Address curAddress) {
@@ -242,7 +243,8 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel fieldFormatModel, ListingHighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel fieldFormatModel,
+			ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new RegisterTransitionFieldFactory(fieldFormatModel, hsProvider, displayOptions,
 			fieldOptions);

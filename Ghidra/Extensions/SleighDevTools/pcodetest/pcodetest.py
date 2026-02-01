@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 import os
 import glob
@@ -19,6 +19,7 @@ import re
 import fnmatch
 
 from build import Config, BuildUtil
+from defaults import *
 
 class PCodeTest(BuildUtil):
 
@@ -27,10 +28,9 @@ class PCodeTest(BuildUtil):
 
     def __init__(self, conf):
         super(PCodeTest, self).__init__()
-        self.config = Config(PCodeTest.defaults, conf)
-
+        self.config = Config(pcodeTestDefaults, conf)
         # calculate the toolchain_dir
-        self.config.toolchain_dir = self.config.format('%(toolchain_root)s/%(toolchain)s-gcc-%(gcc_version)s')
+        self.config.toolchain_dir = self.config.format('%(toolchain_root)s/%(toolchain)s-gcc-%(gcc_config)s')
         if not self.isdir(self.config.toolchain_dir):
             self.config.toolchain_dir = self.config.format('%(toolchain_root)s/%(toolchain)s')
 
@@ -39,16 +39,13 @@ class PCodeTest(BuildUtil):
 
         # can default the Processor directory name, usually the
         # initial string of 'language_id' (otherwise unused).
-
         if self.config.language_id:
             self.config.processor = self.config.language_id.split(':')[0]
 
         # expand all of the variables with printf escapes
-
         self.config.expand()
 
         # save the new PCodeTest in a dictionary for auto-enumeration
-
         PCodeTest.list[self.config.name] = self
 
     @classmethod
@@ -78,6 +75,8 @@ class PCodeTestBuild(BuildUtil):
             return PCodeBuildCCS(pcode_test)
         elif pcode_test.config.toolchain_type == 'sdcc':
             return PCodeBuildSDCC(pcode_test)
+        elif pcode_test.config.toolchain_type == 'llvm':
+            return PCodeBuildLLVM(pcode_test)
         else:
             raise Exception(pcode_test.config.format('Toolchain type %(toolchain_type)s not known'))
 
@@ -91,16 +90,23 @@ class PCodeTestBuild(BuildUtil):
     def main(self):
 
         # make sure compiler exists and runnable
-
+        self.config.compile_exe = self.config.exec_dir + self.config.exec_prefix + self.config.compile_exe
+        self.config.build_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.build_exe)
+        self.config.strip_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.strip_exe)
+        self.config.objdump_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.objdump_exe)
+        self.config.readelf_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.readelf_exe)
+        self.config.nm_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.nm_exe)
+        
         if not self.is_executable_file(self.which('compile_exe')):
             self.log_err(self.config.format('build the Toolchain before compilation'))
             return
 
         # save path to tpp
-        tpp_py = os.getcwd() + '/tpp.py'
+        tpp_py = os.path.join(os.path.dirname(os.path.abspath(__file__)),'tpp.py')
 
         # Get a list of strings to filter input files
         available_files = sorted(glob.glob(self.config.format('%(pcodetest_src)s/*')))
+
         if self.config.proc_test:
             available_files.extend(sorted(glob.glob(self.config.format('%(pcodetest_src)s/%(proc_test)s/*'))))
         
@@ -127,7 +133,6 @@ class PCodeTestBuild(BuildUtil):
             # This is the base name of the binary file, or for small
             # build, the directory name that will hold the small
             # binaries
-
             out_name = '%s_%s_%s_pcodetest' % (self.config.name, self.config.toolchain_type.upper(), opt_name)
             if self.config.architecture_test: pcodetest_base_name = self.config.architecture_test
             else: pcodetest_base_name = self.config.architecture
@@ -137,8 +142,8 @@ class PCodeTestBuild(BuildUtil):
             # This does not rebuild if the output directory is newer than the
             # input files. So it needs to know where the build
             # directory would be, before it is recreated.
-
             build_dir = self.build_dir(self.config.build_root, kind, out_name)
+            
             need_to_build = self.config.force or not self.isdir(build_dir)
             if not need_to_build:
                 mtime = self.getmtime(build_dir)
@@ -157,18 +162,16 @@ class PCodeTestBuild(BuildUtil):
             for f in available_files: self.copy(f, '.', verbose=False)
 
             # if requested, add an info file
-
             if self.config.add_info: self.mkinfo('INFO.c')
 
             # make tests, if needed
-
             for f_test in glob.glob('*.test'):
                 f_h = re.sub(r'[.]test', '.h', f_test)
                 if self.isfile(f_h) and self.getmtime(f_test) <= self.getmtime(f_h): continue
-                out, err = self.run(['python', tpp_py, f_test])
+                out, err = self.run(['python3', tpp_py, f_test])
                 if err:
                     self.log_err(err)
-            out, err = self.run(['python', tpp_py, '--entry', 'pcode_main.c'])
+            out, err = self.run(['python3', tpp_py, '--entry', 'pcode_main.c'])
             if err:
                 self.log_err(err)
 
@@ -184,14 +187,12 @@ class PCodeTestBuild(BuildUtil):
                 self.log_info('**** SMALL BUILD ****')
 
                 # Remove the previous directory, if it was there
-
                 build_dir = '%s/build-PCodeTest-%s/%s' % (self.config.build_root, out_name, out_name)
                 try: self.rmtree(build_dir)
                 except: pass
 
                 # Each small file ends with _BODY.c and it has a
                 # companion without _BODY.
-
                 for body_file in smallFiles:
                     small_name = body_file.replace('_BODY.c', '')
                     companion_file = small_name + '.c'
@@ -221,6 +222,54 @@ class PCodeTestBuild(BuildUtil):
             self.chdir(self.config.cwd)
             self.log_close()
 
+class PCodeBuildLLVM(PCodeTestBuild):
+
+    def __init__(self, PCodeTest):
+        super(PCodeBuildLLVM, self).__init__(PCodeTest)
+
+    # Set options for compiler depending on needs.
+    def cflags(self, output_file):
+        f = []
+        f += ['-DHAS_FLOAT=1' if self.config.has_float else '-DHAS_FLOAT_OVERRIDE=1']
+        f += ['-DHAS_DOUBLE=1' if self.config.has_double else '-DHAS_DOUBLE_OVERRIDE=1']
+        f += ['-DHAS_LONGLONG=1' if self.config.has_longlong else '-DHAS_LONGLONG_OVERRIDE=1']
+        if self.config.has_shortfloat: f += ['-DHAS_SHORTFLOAT=1']
+        if self.config.has_vector: f += ['-DHAS_VECTOR=1']
+        if self.config.has_decimal128: f += ['-DHAS_DECIMAL128=1']
+        if self.config.has_decimal32: f += ['-DHAS_DECIMAL32=1']
+        if self.config.has_decimal64: f += ['-DHAS_DECIMAL64=1']
+
+        f += ['-DNAME=NAME:%s' % output_file]
+
+        f += [self.config.format(g) for g in self.config.ccflags.split()]
+        f += [self.config.format(g) for g in self.config.add_ccflags.split()]
+        f += [self.config.format(g) for g in self.config.cclibs.split()]
+        f += [self.config.format(g) for g in self.config.add_cclibs.split()]
+
+        return f
+
+    def compile(self, input_files, opt_cflag, output_base):
+
+        # Name the output file, and delete it if it exists
+
+        output_file = '%s.out' % (output_base)
+        self.remove(output_file)
+
+        # Construct the compile command line and execute it
+        cmp = self.which('compile_exe')
+        cmd = [cmp] + input_files + self.cflags(output_file)  + [opt_cflag]
+        cmd += ['-o', output_file]
+        out, err = self.run(cmd)
+        if out: self.log_info(out)
+
+        # print error messages, which may just be warnings
+        if err: self.log_warn(err)
+
+        # return now if the error preempted the binary
+        if not self.is_readable_file(output_file):
+            self.log_err('output not created %s' % output_file)
+            return
+
 class PCodeBuildSDCC(PCodeTestBuild):
 
     def __init__(self, PCodeTest):
@@ -240,20 +289,20 @@ class PCodeBuildSDCC(PCodeTestBuild):
 
         f += ['-DNAME=NAME:%s' % output_file]
 
-        f += self.config.ccflags.split()
-        f += self.config.add_ccflags.split()
+        f += [self.config.format(g) for g in self.config.ccflags.split()]
+        f += [self.config.format(g) for g in self.config.add_ccflags.split()]
+        f += [self.config.format(g) for g in self.config.cclibs.split()]
+        f += [self.config.format(g) for g in self.config.add_cclibs.split()]
 
         return f
 
     def compile(self, input_files, opt_cflag, output_base):
 
         # Name the output file, and delete it if it exists
-
         output_file = '%s.out' % (output_base)
         self.remove(output_file)
 
         # Construct the compile command line and execute it
-
         cmp = self.which('compile_exe')
         cmd = [cmp] + input_files + self.cflags(output_file)
         if opt_cflag: cmd += [opt_cflag]
@@ -265,7 +314,6 @@ class PCodeBuildSDCC(PCodeTestBuild):
         if err: self.log_warn(err)
 
         # return now if the error preempted the binary
-
         if not self.is_readable_file(output_file):
             self.log_err('output not created %s' % output_file)
             return
@@ -289,9 +337,11 @@ class PCodeBuildCCS(PCodeTestBuild):
 
         f += ['-DNAME=NAME:%s' % output_file]
 
-        f += self.config.ccflags.split()
-        f += self.config.add_ccflags.split()
-
+        f += [self.config.format(g) for g in self.config.ccflags.split()]
+        f += [self.config.format(g) for g in self.config.add_ccflags.split()]
+        f += [self.config.format(g) for g in self.config.cclibs.split()]
+        f += [self.config.format(g) for g in self.config.add_cclibs.split()]
+        
         return f
 
     def compile(self, input_files, opt_cflag, output_base):
@@ -302,11 +352,9 @@ class PCodeBuildCCS(PCodeTestBuild):
         self.remove(output_file)
 
         # Construct the compile command line and execute it
-
         cmp = self.which('compile_exe')
         cmd = [cmp] + input_files + self.cflags(output_file)  + [opt_cflag]
-        cmd += ['-z', '-h', '-e', 'printf5']
-        cmd += [self.config.format('%(toolchain_dir)s/tools/compiler/ti-cgt-msp430_16.9.0.LTS/lib/libc.a')]
+        cmd += ['-z', '-off', '-llibc.a', '--make_global=noteTestMain', '--retain=*_main', '-cr', '-m', '%s.map'%(output_base), '-h', '--unused_section_elimination=off']
         cmd += ['-o', output_file]
         out, err = self.run(cmd)
         if out: self.log_info(out)
@@ -315,7 +363,6 @@ class PCodeBuildCCS(PCodeTestBuild):
         if err: self.log_warn(err)
 
         # return now if the error preempted the binary
-
         if not self.is_readable_file(output_file):
             self.log_err('output not created %s' % output_file)
             return
@@ -345,7 +392,7 @@ class PCodeBuildGCC(PCodeTestBuild):
 
         out, err = self.run([self.which('objdump_exe')]
                             + self.config.objdump_option.split()
-                            + ['-d', bin], stdout=('%s.d' % base))
+                            + ['-S','-d', bin], stdout=('%s.d' % base))
         if err: self.log_warn(err)
 
         out, err = self.run([self.which('objdump_exe')]
@@ -374,7 +421,7 @@ class PCodeBuildGCC(PCodeTestBuild):
         if err: self.log_warn(err)
 
         out, err = self.run(['grep', ' U ', '%s.nm' % base])
-        if out: self.log_warn('** UNRESOLVED:\n' + out + '**END')
+        if out: self.log_warn('** UNRESOLVED:\n' + str(out) + '**END')
         if err: self.log_warn(err)
 
     # Set options for compiler depending on needs.
@@ -389,9 +436,26 @@ class PCodeBuildGCC(PCodeTestBuild):
         if self.config.has_decimal32: f += ['-DHAS_DECIMAL32=1']
         if self.config.has_decimal64: f += ['-DHAS_DECIMAL64=1']
 
+        if self.config.gcc_version == 'latest':
+            self.config.gcc_actual_version = os.readlink(self.config.toolchain_dir).split('gcc-')[1]
+        else:
+            self.config.gcc_actual_version = self.config.gcc_version
+            
+        if not self.config.gcc_libdir:
+            if self.config.gcc_version == 'latest':
+                # latest gcc version needs to point to the right libgcc location
+                toolchain_dir = self.config.format('%(toolchain_root)s/%(toolchain)s-gcc-%(gcc_config)s')
+                toolchain_suffix = self.config.toolchain.split('/')[-1]
+                self.config.gcc_libdir = os.path.join(self.config.toolchain_dir, 'lib', 'gcc', toolchain_suffix, self.config.gcc_actual_version)
+            else:
+                toolchain_suffix = self.config.toolchain.split('/')[-1]
+                self.config.gcc_libdir = os.path.join(self.config.toolchain_dir, 'lib', 'gcc', toolchain_suffix, self.config.gcc_version)
+
+        
         f += ['-DNAME=NAME:%s' % output_file]
         # turn off -g because dwarf, not needed
-        f += ['-dA', '-w']
+        #f += ['-dA', '-w']
+        f += ['-Wno-discarded-qualifiers',]
         # for xc26: f += ['--no-data-init']
         # or maybe f += ['-Xlinker', '--no-data-init']
         # This helps to alleviate undefined main, etc
@@ -400,24 +464,26 @@ class PCodeBuildGCC(PCodeTestBuild):
         # can pass this if weak symbols aren't defined
         # f += ['-Xlinker', '--unresolved-symbols=ignore-all']
 
-        f += self.config.ccflags.split()
-        f += self.config.add_ccflags.split()
-
+        f += [self.config.format(g) for g in self.config.ccflags.split()]
+        f += [self.config.format(g) for g in self.config.add_ccflags.split()]
+        f += ['-L ' + self.config.format(self.config.gcc_libdir)]
+        f += [self.config.format(g) for g in self.config.cclibs.split()]
+        f += [self.config.format(g) for g in self.config.add_cclibs.split()]
+        
+        self.log_info('Compiler flags: %s' % f)
         return f
 
     def compile(self, input_files, opt_cflag, output_base):
 
         # Name the output file, and delete it if it exists
-
         output_file = '%s.out' % (output_base)
         self.remove(output_file)
 
         # set the library path
-
         self.set_library_path(self.config.ld_library_path)
 
         # Construct the compile/link command line and execute it
-
+            
         cmp = self.which('compile_exe')
         cmd = [cmp] + input_files + self.cflags(output_file)  + [opt_cflag, '-B', self.dirname(cmp), '-o', output_file]
         out, err = self.run(cmd)
@@ -427,13 +493,11 @@ class PCodeBuildGCC(PCodeTestBuild):
         if err: self.log_warn(err)
 
         # but return now if the error preempted the binary
-
         if not self.is_readable_file(output_file):
             self.log_err('output not created %s' % output_file)
             return
 
         # strip
-
         if self.config.strip_symbols:
             str = self.which('strip_exe')
             cmd = [str, '-s', output_file]
@@ -442,11 +506,9 @@ class PCodeBuildGCC(PCodeTestBuild):
 
         # Get associated information (identify file, output-file.d,
         # .li, .nm, and .readelf, identify file, unresolves symbols)
-
         self.associated_info(output_file, output_base)
 
         # build a BUILD_EXE version
-
         if self.config.build_exe:
             cmp = self.which('compile_exe')
             cmd = [cmp] + input_files + self.cflags(output_file)\

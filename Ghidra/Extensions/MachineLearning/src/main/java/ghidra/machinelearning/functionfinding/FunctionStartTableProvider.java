@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,18 @@
  */
 package ghidra.machinelearning.functionfinding;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.*;
 
 import javax.swing.*;
 
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -39,7 +42,7 @@ public class FunctionStartTableProvider extends ProgramAssociatedComponentProvid
 	private RandomForestFunctionFinderPlugin plugin;
 	private Program program;
 	private RandomForestRowObject modelRow;
-	private AddressSet toClassify;
+	private AddressSetView toClassify;
 	private boolean debug;
 	private String subTitle;
 	private GhidraTable startTable;
@@ -56,7 +59,7 @@ public class FunctionStartTableProvider extends ProgramAssociatedComponentProvid
 	 * @param debug whether to display debug version of table
 	 */
 	public FunctionStartTableProvider(RandomForestFunctionFinderPlugin plugin, Program program,
-			AddressSet toClassify, RandomForestRowObject modelRow, boolean debug) {
+			AddressSetView toClassify, RandomForestRowObject modelRow, boolean debug) {
 		super(
 			debug ? "Debug: Test Set Errors in " + program.getDomainFile().getPathname()
 					: "Potential Functions in " + program.getDomainFile().getPathname(),
@@ -84,27 +87,10 @@ public class FunctionStartTableProvider extends ProgramAssociatedComponentProvid
 		if (!isVisible()) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(RESTORED, FUNCTION_ADDED, FUNCTION_REMOVED, CODE_ADDED, CODE_REMOVED,
+			CODE_REPLACED, REFERENCE_TYPE_CHANGED, REFERENCE_ADDED, REFERENCE_REMOVED)) {
 			model.reload();
 			contextChanged();
-		}
-		for (int i = 0; i < ev.numRecords(); ++i) {
-			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
-			switch (eventType) {
-				case ChangeManager.DOCR_FUNCTION_ADDED:
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-				case ChangeManager.DOCR_CODE_ADDED:
-				case ChangeManager.DOCR_CODE_REMOVED:
-				case ChangeManager.DOCR_CODE_REPLACED:
-				case ChangeManager.DOCR_MEM_REF_TYPE_CHANGED:
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-					model.reload();
-					contextChanged();
-				default:
-					break;
-			}
 		}
 	}
 

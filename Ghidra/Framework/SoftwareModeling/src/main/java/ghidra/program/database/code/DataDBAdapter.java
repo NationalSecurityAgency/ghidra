@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.database.code;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -38,10 +39,10 @@ abstract class DataDBAdapter {
 
 	static final int DATA_TYPE_ID_COL = 0;
 
-	static DataDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static DataDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new DataDBAdapterV0(dbHandle, addrMap, true);
 		}
 
@@ -53,11 +54,11 @@ abstract class DataDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			DataDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;
@@ -136,13 +137,13 @@ abstract class DataDBAdapter {
 	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
-	 * Get the record before the given address address.
+	 * Get the record before the given address {@code addr}.
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract DBRecord getRecordBefore(Address addr) throws IOException;
 
 	/**
-	 * Get a record iterator starting at the given address address.
+	 * Get a record iterator starting at the given address {@code addr}.
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract RecordIterator getRecords(Address addr, boolean forward) throws IOException;
@@ -175,7 +176,7 @@ abstract class DataDBAdapter {
 	abstract int getRecordCount() throws IOException;
 
 	/**
-	 * Get the record at or before the given address address.
+	 * Get the record at or before the given address {@code addr}.
 	 * @param addr
 	 * @throws IOException if there was a problem accessing the database
 	 * @return

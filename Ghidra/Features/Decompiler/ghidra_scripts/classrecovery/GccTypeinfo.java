@@ -15,10 +15,7 @@
  */
 package classrecovery;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.Namespace;
@@ -30,7 +27,7 @@ public class GccTypeinfo extends Typeinfo {
 	private static final String VMI_CLASS_TYPEINFO_NAMESPACE = "__vmi_class_type_info";
 	
 	boolean isSpecialTypeinfo;
-	GccTypeinfo inheritedSpecialTypeinfo = null; 
+	Namespace inheritedSpecialTypeinfoNamespace = null;
 	Address vtableAddress;
 	boolean inProgramMemory;
 	String mangledNamespaceString = null;
@@ -53,13 +50,13 @@ public class GccTypeinfo extends Typeinfo {
 		return inProgramMemory;
 	}
 	
-	public void setInheritedSpecialTypeinfo(GccTypeinfo specialTypeinfo) {
-		inheritedSpecialTypeinfo = specialTypeinfo;
+	public void setInheritedSpecialTypeinfoNamespace(Namespace specialTypeinfoNamespace) {
+		inheritedSpecialTypeinfoNamespace = specialTypeinfoNamespace;
 	}
 		
 	
-	public GccTypeinfo getInheritedSpecialTypeinfo() {
-		return inheritedSpecialTypeinfo;
+	public Namespace getInheritedSpecialTypeinfoNamespace() {
+		return inheritedSpecialTypeinfoNamespace;
 	}
 	
 	
@@ -156,21 +153,21 @@ public class GccTypeinfo extends Typeinfo {
 	}
 	
 	public boolean isClassTypeinfo() {
-		if(inheritedSpecialTypeinfo.getNamespace().getName().equals(CLASS_TYPEINFO_NAMESPACE)) {
+		if (inheritedSpecialTypeinfoNamespace.getName().equals(CLASS_TYPEINFO_NAMESPACE)) {
 			return true;
 		}
 		return false;
 	}
 	
 	public boolean isSiClassTypeinfo() {
-		if(inheritedSpecialTypeinfo.getNamespace().getName().equals(SI_CLASS_TYPEINFO_NAMESPACE)) {
+		if (inheritedSpecialTypeinfoNamespace.getName().equals(SI_CLASS_TYPEINFO_NAMESPACE)) {
 			return true;
 		}
 		return false;
 	}
 	
 	public boolean isVmiClassTypeinfo() {
-		if(inheritedSpecialTypeinfo.getNamespace().getName().equals(VMI_CLASS_TYPEINFO_NAMESPACE)) {
+		if (inheritedSpecialTypeinfoNamespace.getName().equals(VMI_CLASS_TYPEINFO_NAMESPACE)) {
 			return true;
 		}
 		return false;

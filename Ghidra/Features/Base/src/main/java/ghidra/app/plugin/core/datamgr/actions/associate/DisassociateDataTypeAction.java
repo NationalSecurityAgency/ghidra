@@ -229,7 +229,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 	private void disassociate(DataTypeSynchronizer synchronizer, DataTypeManager dtm,
 			List<DataType> types, TaskMonitor monitor) throws CancelledException {
 
-		synchronizer.openTransactions();
+		int txId = dtm.startTransaction(getName());
 		try {
 			for (DataType dt : types) {
 				monitor.checkCancelled();
@@ -241,7 +241,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 			synchronizer.reSyncOutOfSyncInTimeOnlyDataTypes();
 		}
 		finally {
-			synchronizer.closeTransactions();
+			dtm.endTransaction(txId, true);
 		}
 	}
 }

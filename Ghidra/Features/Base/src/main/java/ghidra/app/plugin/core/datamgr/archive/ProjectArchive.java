@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.datamgr.archive;
 
 import java.awt.Component;
 import java.io.IOException;
-import java.util.Objects;
 
 import javax.swing.Icon;
 
@@ -25,23 +24,25 @@ import generic.theme.GIcon;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.util.exception.ClosedException;
 
 public class ProjectArchive implements DomainFileArchive {
 
 	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.project.closed");
 	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.project.open");
+
 	private DataTypeArchive dataTypeArchive;
-	private DomainFile originalDomainFile;
-	DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
+	private DomainFile sourceDomainFile;
+	private DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
 	private DataTypeManagerHandler archiveManager;
-	private DataTypeManager dataTypeManager;
+	private StandAloneDataTypeManager dataTypeManager;
 
 	ProjectArchive(DataTypeManagerHandler archiveManager, DataTypeArchive dataTypeArchive,
-			DomainFile originalDomainFile) {
+			DomainFile sourceDomainFile) {
 		this.archiveManager = archiveManager;
 		this.dataTypeArchive = dataTypeArchive;
 		this.dataTypeManager = dataTypeArchive.getDataTypeManager();
-		this.originalDomainFile = originalDomainFile;
+		this.sourceDomainFile = sourceDomainFile;
 		categoryListener = new ArchiveCategoryChangeListener();
 		dataTypeManager.addDataTypeManagerListener(categoryListener);
 	}
@@ -53,6 +54,9 @@ public class ProjectArchive implements DomainFileArchive {
 
 	@Override
 	public String getName() {
+		if (dataTypeManager == null) {
+			return null;
+		}
 		return dataTypeManager.getName();
 	}
 
@@ -68,38 +72,22 @@ public class ProjectArchive implements DomainFileArchive {
 	}
 
 	@Override
-	public int hashCode() {
-		return originalDomainFile.getFileID().hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		ProjectArchive other = (ProjectArchive) obj;
-		return Objects.equals(originalDomainFile.getFileID(), other.originalDomainFile.getFileID());
-	}
-
 	public boolean hasExclusiveAccess() {
 		return dataTypeArchive.hasExclusiveAccess();
 	}
 
 	@Override
 	public boolean isModifiable() {
-		DomainFile domainFile = getDomainObject().getDomainFile();
-		return domainFile.canSave();
+		if (dataTypeManager == null) {
+			return false;
+		}
+		DomainFile df = getDomainObject().getDomainFile();
+		return df.canSave();
 	}
 
 	@Override
 	public DomainFile getDomainFile() {
-		return originalDomainFile;
+		return sourceDomainFile;
 	}
 
 	@Override
@@ -109,33 +97,45 @@ public class ProjectArchive implements DomainFileArchive {
 
 	@Override
 	public boolean isChanged() {
-		DomainFile domainFile = dataTypeArchive.getDomainFile();
-		long lastModifiedTime = domainFile.getLastModifiedTime();
+		if (dataTypeManager == null) {
+			return false;
+		}
+		DomainFile df = dataTypeArchive.getDomainFile();
+		long lastModifiedTime = df.getLastModifiedTime();
 		return (lastModifiedTime == 0) || dataTypeArchive.isChanged();
 	}
 
 	@Override
 	public boolean isSavable() {
-		return !dataTypeArchive.getDomainFile().isReadOnly() && dataTypeArchive.isChangeable();
+		return dataTypeManager != null && !dataTypeArchive.getDomainFile().isReadOnly() &&
+			dataTypeArchive.isChangeable();
 	}
 
 	@Override
 	public void save() throws IOException {
+		if (dataTypeManager == null) {
+			throw new ClosedException();
+		}
 		archiveManager.save(getDomainObject());
 	}
 
 	@Override
 	public void close() {
-		dataTypeManager.close();
-		archiveManager.archiveClosed(this);
-		dataTypeManager = null;
+		if (dataTypeManager != null) {
+			dataTypeManager.close();
+			archiveManager.archiveClosed(this);
+			dataTypeManager = null;
+		}
 	}
 
 	@Override
 	public void saveAs(Component component) throws IOException {
+		if (dataTypeManager == null) {
+			throw new ClosedException();
+		}
 		archiveManager.saveAs(dataTypeArchive);
-		originalDomainFile = dataTypeArchive.getDomainFile();
-		dataTypeArchive.updateID();
+		sourceDomainFile = dataTypeArchive.getDomainFile(); // update with new domain file
+		dataTypeManager.updateID();
 	}
 
 	@Override
@@ -220,6 +220,11 @@ public class ProjectArchive implements DomainFileArchive {
 
 		@Override
 		public void programArchitectureChanged(DataTypeManager dtm) {
+			fireStateChanged();
+		}
+
+		@Override
+		public void restored(DataTypeManager dtm) {
 			fireStateChanged();
 		}
 	}

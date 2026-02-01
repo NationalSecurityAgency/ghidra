@@ -19,16 +19,15 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A contiguous set of bits within instruction stream, interpreted
  * as an integer value
  */
@@ -75,17 +74,11 @@ public class TokenField extends PatternValue {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#minValue()
-	 */
 	@Override
 	public long minValue() {
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#maxValue()
-	 */
 	@Override
 	public long maxValue() {
 		long res = -1;
@@ -94,18 +87,17 @@ public class TokenField extends PatternValue {
 		return ~res;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#getValue(ghidra.app.plugin.processors.sleigh.InstructionContext)
-	 */
 	@Override
 	public long getValue(ParserWalker walker) throws MemoryAccessException {
 		long res = getInstructionBytes(walker);
 
 		res >>= shift;
-		if (signbit)
+		if (signbit) {
 			res = signExtend(res, bitend - bitstart);
-		else
+		}
+		else {
 			res = zeroExtend(res, bitend - bitstart);
+		}
 		return res;
 	}
 
@@ -125,20 +117,17 @@ public class TokenField extends PatternValue {
 		return byteend;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("tokenfield");
-		bigendian = SpecXmlUtils.decodeBoolean(el.getAttribute("bigendian"));
-		signbit = SpecXmlUtils.decodeBoolean(el.getAttribute("signbit"));
-		bitstart = SpecXmlUtils.decodeInt(el.getAttribute("bitstart"));
-		bitend = SpecXmlUtils.decodeInt(el.getAttribute("bitend"));
-		bytestart = SpecXmlUtils.decodeInt(el.getAttribute("bytestart"));
-		byteend = SpecXmlUtils.decodeInt(el.getAttribute("byteend"));
-		shift = SpecXmlUtils.decodeInt(el.getAttribute("shift"));
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_TOKENFIELD);
+		bigendian = decoder.readBool(ATTRIB_BIGENDIAN);
+		signbit = decoder.readBool(ATTRIB_SIGNBIT);
+		bitstart = (int) decoder.readSignedInteger(ATTRIB_STARTBIT);
+		bitend = (int) decoder.readSignedInteger(ATTRIB_ENDBIT);
+		bytestart = (int) decoder.readSignedInteger(ATTRIB_STARTBYTE);
+		byteend = (int) decoder.readSignedInteger(ATTRIB_ENDBYTE);
+		shift = (int) decoder.readSignedInteger(ATTRIB_SHIFT);
+		decoder.closeElement(el);
 	}
 
 	public boolean hasSignbit() {
@@ -146,10 +135,10 @@ public class TokenField extends PatternValue {
 	}
 
 	/**
-	 * Build a long from the instruction bytes in pos
-	 * @param pos      Current instruction
-	 * @return
-	 * @throws MemoryAccessException
+	 * Build a long from the instruction bytes at the current point in the parse
+	 * @param walker is the instruction parse state
+	 * @return the recovered value
+	 * @throws MemoryAccessException for problems reading the bytes
 	 */
 	private long getInstructionBytes(ParserWalker walker) throws MemoryAccessException {
 		long res = 0;
@@ -171,8 +160,9 @@ public class TokenField extends PatternValue {
 			res = res << (8 * tmpsize);
 			res |= (tmp & 0xffffffffl);
 		}
-		if (!bigendian)
+		if (!bigendian) {
 			res = byteSwap(res, size);
+		}
 		return res;
 	}
 
@@ -180,15 +170,17 @@ public class TokenField extends PatternValue {
 	 * Sign extend -val- above -bit-
 	 * @param val     value to extend
 	 * @param bit     bit specifying sign
-	 * @return
+	 * @return the extended value
 	 */
 	public static long signExtend(long val, int bit) {
 		long mask = 0;
 		mask = (~mask) << bit;
-		if (((val >> bit) & 1) != 0)
+		if (((val >> bit) & 1) != 0) {
 			val |= mask;
-		else
+		}
+		else {
 			val &= (~mask);
+		}
 		return val;
 	}
 
@@ -196,7 +188,7 @@ public class TokenField extends PatternValue {
 	 * Clear all bits in -val- above -bit-
 	 * @param val   value to zero extend
 	 * @param bit   bit above which to zero extend
-	 * @return
+	 * @return the extended value
 	 */
 	public static long zeroExtend(long val, int bit) {
 		long mask = 0;
@@ -210,7 +202,7 @@ public class TokenField extends PatternValue {
 	 * Swap the least sig -size- bytes in -val-
 	 * @param val    value to be byte swapped
 	 * @param size   number of bytes involved in swap
-	 * @return
+	 * @return the byte swapped value
 	 */
 	public static long byteSwap(long val, int size) {
 		long res = 0;

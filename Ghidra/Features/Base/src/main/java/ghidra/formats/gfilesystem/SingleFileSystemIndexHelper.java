@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package ghidra.formats.gfilesystem;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+
 /**
  * A helper class used by GFilesystem implementors that have a single file to handle lookups
  * and requests for that file.
@@ -27,12 +29,13 @@ import java.util.*;
 public class SingleFileSystemIndexHelper {
 	private GFile rootDir;
 	private GFileImpl payloadFile;
+	private FileAttributes payloadAttrs;
 
 	/**
 	 * Creates a new instance.
 	 *
 	 * A "root" directory GFile will be auto-created for the filesystem.
-	 * <p>
+	 * 
 	 * @param fs the {@link GFileSystem} that this index will be for.
 	 * @param fsFSRL the {@link FSRLRoot fsrl} of the filesystem itself.
 	 * (this parameter is explicitly passed here so there is no possibility of trying to call
@@ -115,7 +118,7 @@ public class SingleFileSystemIndexHelper {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#getListing(GFile)} interface.
+	 * Mirrors {@link GFileSystem#getListing(GFile)} interface.
 	 *
 	 * @param directory {@link GFile} directory to get the list of child files that have been
 	 * added to this index, null means root directory.
@@ -130,7 +133,7 @@ public class SingleFileSystemIndexHelper {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * Mirrors {@link GFileSystem#lookup(String)} interface.
 	 * 
 	 * @param path path and filename of a file to find (either "/" for root or the payload file's
 	 * path).
@@ -141,7 +144,7 @@ public class SingleFileSystemIndexHelper {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * Mirrors {@link GFileSystem#lookup(String)} interface.
 	 * 
 	 * @param baseDir starting directory 
 	 * @param path path and filename of a file to find (either "/" for root or the payload file's
@@ -163,6 +166,14 @@ public class SingleFileSystemIndexHelper {
 		// with existing data that have malformed fsrls without a leading slash in the path) 
 		return nameComp.compare(path, payloadFile.getFSRL().getPath()) == 0 ||
 			nameComp.compare(path, payloadFile.getFSRL().getName()) == 0 ? payloadFile : null;
+	}
+
+	public void setPayloadFileAttributes(FileAttributes attrs) {
+		this.payloadAttrs = attrs;
+	}
+
+	public FileAttributes getFileAttributes(GFile file) {
+		return payloadAttrs != null && isPayloadFile(file) ? payloadAttrs : FileAttributes.EMPTY;
 	}
 
 	@Override

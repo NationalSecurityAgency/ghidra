@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,6 @@ import ghidra.util.timer.GTimer;
  * {@link ObfuscatedFileByteProvider}.
  * <p> 
  * Thread-safe.
- * <p>
  */
 public class FileSystemService {
 
@@ -81,7 +80,6 @@ public class FileSystemService {
 	 * and will be closed by the caller.
 	 * <p>
 	 * Example:
-	 * <p>
 	 * <pre>fsService.getDerivedByteProvider(
 	 *     containerFSRL, 
 	 *     null,
@@ -100,7 +98,7 @@ public class FileSystemService {
 		 * <p>
 		 * The implementation needs to return an {@link InputStream} that contains the bytes
 		 * of the derived file.
-		 * <p>
+		 * 
 		 * @return a new {@link InputStream} that will produce all the bytes of the derived file
 		 * @throws IOException if there is a problem while producing the InputStream
 		 * @throws CancelledException if the user canceled
@@ -115,7 +113,6 @@ public class FileSystemService {
 	 * The implementation needs to write bytes to the supplied {@link OutputStream}.
 	 * <p>
 	 * Example:
-	 * <p>
 	 * <pre>fsService.getDerivedByteProviderPush(
 	 *     containerFSRL, 
 	 *     null,
@@ -131,7 +128,7 @@ public class FileSystemService {
 		/**
 		 * Callback method intended to be implemented by the caller to
 		 * {@link FileSystemService#getDerivedByteProviderPush(FSRL, FSRL, String, long, DerivedStreamPushProducer, TaskMonitor) getDerivedByteProviderPush()}
-		 * <p>
+		 * 
 		 * @param os {@link OutputStream} that the implementor should write the bytes to.  Do
 		 * not close the stream when done
 		 * @throws IOException if there is a problem while writing to the OutputStream
@@ -258,11 +255,9 @@ public class FileSystemService {
 	 * @param fsrl {@link FSRL} of the desired file
 	 * @param monitor {@link TaskMonitor} so the user can cancel
 	 * @return a {@link RefdFile} which contains the resultant {@link GFile} and a
-	 * {@link FileSystemRef} that needs to be closed, or {@code null} if the filesystem
-	 * does not have the requested file.
-	 *
+	 * {@link FileSystemRef} that needs to be closed, never {@code null}
 	 * @throws CancelledException if the user cancels
-	 * @throws IOException if there was a file io problem
+	 * @throws IOException if file not found or there was a file io problem
 	 */
 	public RefdFile getRefdFile(FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
@@ -270,8 +265,8 @@ public class FileSystemService {
 		try {
 			GFile gfile = ref.getFilesystem().lookup(fsrl.getPath());
 			if (gfile == null) {
-				throw new IOException("File [" + fsrl + "] not found in filesystem [" +
-					ref.getFilesystem().getFSRL() + "]");
+				throw new IOException("File [%s] not found in filesystem [%s]"
+						.formatted(fsrl.getPath(), ref.getFilesystem().getFSRL()));
 			}
 			RefdFile result = new RefdFile(ref, gfile);
 			ref = null;
@@ -294,7 +289,7 @@ public class FileSystemService {
 	 * Never returns NULL, instead throws IOException if there is a problem.
 	 * <p>
 	 * The caller is responsible for releasing the {@link FileSystemRef}.
-	 * <p>
+	 * 
 	 * @param fsFSRL {@link FSRLRoot} of file system you want a reference to.
 	 * @param monitor {@link TaskMonitor} to allow the user to cancel.
 	 * @return a new {@link FileSystemRef} that the caller is responsible for closing when
@@ -394,7 +389,7 @@ public class FileSystemService {
 	 * If the file was not present in the cache, the {@link DerivedStreamProducer producer}
 	 * will be called and it will be responsible for returning an {@link InputStream}
 	 * which has the derived contents, which will be added to the file cache for next time.
-	 * <p>
+	 * 
 	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this 
 	 * derived file is based on
 	 * @param derivedFSRL (optional) {@link FSRL} to assign to the resulting ByteProvider
@@ -450,7 +445,7 @@ public class FileSystemService {
 	 * If the file was not present in the cache, the {@link DerivedStreamPushProducer pusher}
 	 * will be called and it will be responsible for producing and writing the derived
 	 * file's bytes to a {@link OutputStream}, which will be added to the file cache for next time.
-	 * <p>
+	 * 
 	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this 
 	 * derived file is based on
 	 * @param derivedFSRL (optional) {@link FSRL} to assign to the resulting ByteProvider
@@ -509,7 +504,7 @@ public class FileSystemService {
 	 * Temporary files that are written to disk are obfuscated to avoid interference from
 	 * overzealous virus scanners.  See {@link ObfuscatedInputStream} / 
 	 * {@link ObfuscatedOutputStream}.
-	 * <p>
+	 * 
 	 * @param sizeHint the expected size of the file, or -1 if unknown
 	 * @return {@link FileCacheEntryBuilder} that must be finalized by calling 
 	 * {@link FileCacheEntryBuilder#finish() finish()} 
@@ -577,7 +572,7 @@ public class FileSystemService {
 	public File createPlaintextTempFile(ByteProvider provider, String filenamePrefix,
 			TaskMonitor monitor) throws IOException {
 		File tmpFile =
-			File.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
+			Application.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
 		monitor.setMessage("Copying " + provider.getName() + " to temp file");
 		monitor.initialize(provider.length());
 		try {
@@ -642,7 +637,7 @@ public class FileSystemService {
 	/**
 	 * Returns true if the container file probably holds one of the currently supported
 	 * filesystem types.
-	 * <p>
+	 * 
 	 * @param containerFSRL {@link FSRL} of the file being queried.
 	 * @param monitor {@link TaskMonitor} to watch and update progress.
 	 * @return boolean true if the file probably is a container, false otherwise.
@@ -681,7 +676,7 @@ public class FileSystemService {
 		return probeFileForFilesystem(containerFSRL, monitor, conflictResolver,
 			FileSystemInfo.PRIORITY_LOWEST);
 	}
-
+	
 	/**
 	 * Auto-detects a filesystem in the container file pointed to by the FSRL.
 	 * <p>
@@ -710,13 +705,6 @@ public class FileSystemService {
 		synchronized (fsInstanceManager) {
 			FileSystemRef ref = fsInstanceManager.getFilesystemRefMountedAt(containerFSRL);
 			if (ref != null) {
-				return ref;
-			}
-
-			GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
-			if (subdirFS != null) {
-				ref = subdirFS.getRefManager().create();
-				fsInstanceManager.add(subdirFS);
 				return ref;
 			}
 		}
@@ -751,18 +739,6 @@ public class FileSystemService {
 		return null;
 	}
 
-	private GFileSystem probeForLocalSubDirFilesystem(FSRL containerFSRL) {
-		if (localFS.isLocalSubdir(containerFSRL)) {
-			try {
-				return localFS.getSubFileSystem(containerFSRL);
-			}
-			catch (IOException e) {
-				Msg.error(this, "Problem when probing for local directory: ", e);
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * Mount a specific file system (by class) using a specified container file.
 	 * <p>
@@ -771,7 +747,7 @@ public class FileSystemService {
 	 * <p>
 	 * The caller is responsible for closing the resultant file system instance when it is
 	 * no longer needed.
-	 * <p>
+	 * 
 	 * @param containerFSRL a reference to the file that contains the file system image
 	 * @param fsClass the GFileSystem derived class that implements the specific file system
 	 * @param monitor {@link TaskMonitor} to allow the user to cancel
@@ -808,7 +784,7 @@ public class FileSystemService {
 	 * <p>
 	 * The caller is responsible for closing the resultant file system instance when it is
 	 * no longer needed.
-	 * <p>
+	 * 
 	 * @param containerFSRL a reference to the file that contains the file system image
 	 * @param monitor {@link TaskMonitor} to allow the user to cancel
 	 * @return new {@link GFileSystem} instance, caller is responsible for closing() when done.
@@ -818,11 +794,6 @@ public class FileSystemService {
 	public GFileSystem openFileSystemContainer(FSRL containerFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
-		if (subdirFS != null) {
-			return subdirFS;
-		}
-
 		ByteProvider byteProvider = getByteProvider(containerFSRL, true, monitor);
 		return fsFactoryMgr.probe(byteProvider, this, null, FileSystemInfo.PRIORITY_LOWEST,
 			monitor);
@@ -831,7 +802,7 @@ public class FileSystemService {
 	/**
 	 * Returns a cloned copy of the {@code FSRL} that should have MD5 values specified.
 	 * (excluding GFile objects that don't have data streams)
-	 * <p>
+	 * 
 	 * @param fsrl {@link FSRL} of the file that should be forced to have a MD5
 	 * @param monitor {@link TaskMonitor} to watch and update with progress.
 	 * @return possibly new {@link FSRL} instance with a MD5 value.
@@ -915,7 +886,7 @@ public class FileSystemService {
 	 * <p>
 	 * As a FSRL is returned, there is no guarantee that the filesystem will still be
 	 * mounted when you later use values from the list.
-	 * <p>
+	 * 
 	 * @return {@link List} of {@link FSRLRoot} of currently mounted filesystems.
 	 */
 	public List<FSRLRoot> getMountedFilesystems() {

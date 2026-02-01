@@ -1,0 +1,188 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.app.util.bin.format.golang.rtti;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
+import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.data.LEB128;
+import ghidra.program.model.data.UnsignedLeb128DataType;
+import ghidra.program.model.listing.CommentType;
+
+/**
+ * Evaluates a sequence of (value_delta,pc_delta) leb128 pairs to calculate a value for a certain 
+ * PC location. 
+ */
+public class GoPcValueEvaluator {
+	private final int pcquantum;
+	private final long funcEntry;
+	private final BinaryReader reader;
+	private final long startPosition;
+	private final long pctabOffset;
+
+	private int value = -1;
+	private long pc;
+
+	/**
+	 * Creates a {@link GoPcValueEvaluator} instance, tied to the specified GoFuncData, starting
+	 * at the specified offset in the moduledata's pctab.
+	 * 
+	 * @param func {@link GoFuncData}
+	 * @param offset offset in moduledata's pctab
+	 * @throws IOException if error reading pctab
+	 */
+	public GoPcValueEvaluator(GoFuncData func, long offset) throws IOException {
+		GoModuledata moduledata = func.getModuledata();
+		
+		this.pcquantum = moduledata.getGoBinary().getMinLC();
+		this.reader = moduledata.getPcValueTable().getElementReader(1, (int) offset);
+		this.startPosition = reader.getPointerIndex();
+		this.pctabOffset = offset;
+
+		this.funcEntry = func.getFuncAddress().getOffset();
+		this.pc = funcEntry;
+	}
+
+	public long getPC() {
+		return pc;
+	}
+
+	public void reset() {
+		reader.setPointerIndex(startPosition);
+		value = -1;
+		pc = funcEntry;
+	}
+
+	/**
+	 * Returns the largest PC value calculated when evaluating the result of the table's sequence.
+	 * 
+	 * @return largest PC value encountered
+	 * @throws IOException if error evaluating result
+	 */
+	public long getMaxPC() throws IOException {
+		eval(Long.MAX_VALUE);
+		return pc;
+	}
+
+	/**
+	 * Returns the value encoded into the table at the specified pc.
+	 * 
+	 * @param targetPC pc
+	 * @return value at specified pc, or -1 if error evaluating table
+	 * @throws IOException if error reading data
+	 */
+	public int eval(long targetPC) throws IOException {
+		while (pc <= targetPC) {
+			if (!step()) {
+				return -1;
+			}
+		}
+		return value;
+	}
+
+	public int evalNext() throws IOException {
+		return eval(pc);
+	}
+
+	/**
+	 * Returns the set of all values for each unique pc section.
+	 * 
+	 * @param targetPC max pc to advance the sequence to when evaluating the table 
+	 * @return list of integer values
+	 * @throws IOException if error reading data
+	 */
+	public List<Integer> evalAll(long targetPC) throws IOException {
+		List<Integer> result = new ArrayList<Integer>();
+		while (pc <= targetPC) {
+			if (!step()) {
+				return result;
+			}
+			result.add(value);
+		}
+		return result;
+	}
+
+	private boolean step() throws IOException {
+		int uvdelta = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+		if (uvdelta == 0 && pc != funcEntry) {
+			// a delta of 0 is only valid on the first element
+			return false;
+		}
+		value += -(uvdelta & 1) ^ (uvdelta >> 1);
+
+		int pcdelta = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+		pc += pcdelta * pcquantum;
+
+		return true;
+	}
+
+	public void markup(MarkupSession session) throws IOException {
+		Address startAddr = session.getMappingContext().getDataAddress(startPosition);
+		if (session.getMarkedupAddresses().contains(startAddr)) {
+			return;
+		}
+		session.labelAddress(startAddr, "pctab[0x%x]".formatted(pctabOffset));
+		int count = 0;
+		while (markupStep(session)) {
+			count++;
+		}
+		long size = reader.getPointerIndex() - startPosition;
+		String msg = "stepcount=%d,size=%d".formatted(count, size);
+		DWARFUtil.appendComment(session.getProgram(), startAddr, CommentType.PRE, "", msg, ",");
+	}
+
+	private boolean markupStep(MarkupSession session) throws IOException {
+		LEB128Info uvdeltaInfo = reader.readNext(LEB128Info::unsigned);
+		Address uvdeltaAddr = session.getMappingContext().getDataAddress(uvdeltaInfo.getOffset());
+		if (session.getMarkedupAddresses().contains(uvdeltaAddr)) {
+			return false;
+		}
+		session.markupAddress(uvdeltaAddr, UnsignedLeb128DataType.dataType,
+			uvdeltaInfo.getLength());
+
+		int uvdelta = uvdeltaInfo.asUInt32();
+		if (uvdelta == 0 && pc != funcEntry) {
+			// a delta of 0 is only valid on the first element
+			DWARFUtil.appendComment(session.getProgram(), uvdeltaAddr, CommentType.EOL, "", "end",
+				",");
+			return false;
+		}
+
+		int vdelta = -(uvdelta & 1) ^ (uvdelta >> 1);
+		value += vdelta;
+		String msg = "value+%d=0x%x".formatted(vdelta, value);
+		DWARFUtil.appendComment(session.getProgram(), uvdeltaAddr, CommentType.EOL, "", msg, ",");
+
+		LEB128Info pcdeltaInfo = reader.readNext(LEB128Info::unsigned);
+		Address pcdeltaAddr = session.getMappingContext().getDataAddress(pcdeltaInfo.getOffset());
+		session.markupAddress(pcdeltaAddr, UnsignedLeb128DataType.dataType,
+			pcdeltaInfo.getLength());
+
+		int pcdelta = pcdeltaInfo.asUInt32();
+		pc += pcdelta * pcquantum;
+		msg = "pc+0x%x=+0x%08x".formatted(pcdelta * pcquantum, pc - funcEntry);
+		DWARFUtil.appendComment(session.getProgram(), pcdeltaAddr, CommentType.EOL, "", msg, ",");
+
+		return true;
+	}
+
+}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 import javax.swing.ToolTipManager;
 
@@ -23,19 +25,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.framework.SplashScreen;
+import generic.jar.ResourceFile;
 import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.Application;
 import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.framework.client.RepositoryAdapter;
-import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProjectManager;
-import ghidra.framework.project.extensions.ExtensionUtils;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
 import ghidra.util.exception.UsrException;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.task.TaskLauncher;
 
 /**
@@ -75,6 +76,11 @@ public class GhidraRun implements GhidraLaunchable {
 
 			log = LogManager.getLogger(GhidraRun.class);
 			log.info("User " + SystemUtilities.getUserName() + " started Ghidra.");
+			log.info("User settings directory: " + Application.getUserSettingsDirectory());
+			log.info("User temp directory: " + Application.getUserTempDirectory());
+			log.info("User cache directory: " + Application.getUserCacheDirectory());
+
+			writeLastRun();
 
 			initializeTooltips();
 
@@ -83,19 +89,35 @@ public class GhidraRun implements GhidraLaunchable {
 
 			ExtensionUtils.initializeExtensions();
 
-			// Allows handling of old content which did not have a content type property
-			DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 			updateSplashScreenStatusMessage("Checking for previous project...");
 			SystemUtilities.runSwingLater(() -> {
 				String projectPath = processArguments(args);
 				openProject(projectPath);
+				
+				log.info("Ghidra startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() +
+					" ms)");
 			});
 		};
 
 		// Start main thread in GhidraThreadGroup
 		Thread mainThread = new Thread(new GhidraThreadGroup(), mainTask, "Ghidra");
 		mainThread.start();
+	}
+
+	private void writeLastRun() {
+		// Write the Ghidra installation location to the "lastrun" file
+		File settingsDir = Application.getUserSettingsDirectory();
+		ResourceFile rootDir = Application.getApplicationRootDirectory();
+		if (settingsDir != null && rootDir != null) {
+			File lastRunFile = new File(settingsDir.getParentFile(), "lastrun");
+			try {
+				Files.writeString(lastRunFile.toPath(),
+					rootDir.getParentFile().getCanonicalPath() + "\n");
+			}
+			catch (IOException e) {
+				log.error("Failed to write 'lastrun' file", e);
+			}
+		}
 	}
 
 	private String processArguments(String[] args) {
@@ -188,9 +210,6 @@ public class GhidraRun implements GhidraLaunchable {
 		try {
 			ProjectManager pm = tool.getProjectManager();
 			Project activeProject = pm.openProject(projectLocator, true, false);
-			if (activeProject == null) {
-				return;
-			}
 
 			tool.setActiveProject(activeProject);
 
@@ -209,10 +228,7 @@ public class GhidraRun implements GhidraLaunchable {
 		catch (Throwable t) {
 			if (t instanceof UsrException) {
 				if (t instanceof LockException) {
-					Msg.showInfo(GhidraRun.class, null, "Project is Locked",
-						"Can't open project: " + projectLocator.toString() +
-							"\nProject is already locked");
-
+					Msg.showInfo(GhidraRun.class, null, "Project is Locked", t.getMessage());
 				}
 				else {
 					Msg.showInfo(GhidraRun.class, null, "Project Open Failed",

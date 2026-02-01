@@ -28,24 +28,23 @@ import java.util.Map;
 
 import javax.accessibility.Accessible;
 import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.MenuItemUI;
 
 import docking.util.GraphicsUtils;
 
 /**
  * This class exists to make menu items display content with proper alignment whether or not
- * they are displaying an icon.  That is, this class will introduce padding for absent icons 
+ * they are displaying an icon.  That is, this class will introduce padding for absent icons
  * within menu items so that the item lines up with those items that do contain icons.
  * <p>
  * This class has an additional feature that allows clients to display menu item content in a
  * tabular fashion.  A menu item using this UI can contain some combination of the of the following
- * items, in the given order: 
+ * items, in the given order:
  * <pre>
  * [Checkbox][Icon][Menu Item Content][Menu Pull-right/Accelerator Text]
  * </pre>
- * To display the <b>Menu Item Content</b> in a tabular fashion, use the <code>'\t'</code> character 
- * to delimit the data into columns.  This class will align all menu items in the given menu  
+ * To display the <b>Menu Item Content</b> in a tabular fashion, use the <code>'\t'</code> character
+ * to delimit the data into columns.  This class will align all menu items in the given menu
  * based upon the largest number of columns in the group and the largest width for each column.
  */
 public class DockingMenuItemUI extends MenuItemUI {
@@ -57,7 +56,7 @@ public class DockingMenuItemUI extends MenuItemUI {
 
 	protected MenuItemUI ui;
 
-	public static ComponentUI createUI(JComponent c) {
+	public static DockingMenuItemUI createUI(JComponent c) {
 		DockingMenuItemUI result = new DockingMenuItemUI();
 		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
@@ -170,7 +169,7 @@ public class DockingMenuItemUI extends MenuItemUI {
 	}
 
 	public static class MenuTabulator {
-		private ArrayList<Integer> columns = new ArrayList<Integer>();
+		private ArrayList<Integer> columns = new ArrayList<>();
 
 		public static MenuTabulator tabulate(JMenuItem c) {
 			MenuTabulator tabulator = get(c);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,10 +35,10 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 
 	/**
 	 * Used to signal that the updateManager has finished loading the final contents gathered
-	 * by this job.
+	 * by this job.  This is also updated if this job is cancelled.
 	 */
-	private final CountDownLatch completedCallbackLatch = new CountDownLatch(1);
-
+	private volatile CountDownLatch completedCallbackLatch = new CountDownLatch(1);
+	private volatile boolean isCancelled = false;
 	private volatile IncrementalUpdatingAccumulator incrementalAccumulator;
 
 	IncrementalLoadJob(ThreadedTableModel<ROW_OBJECT, ?> threadedModel,
@@ -56,7 +56,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		this.incrementalAccumulator = new IncrementalUpdatingAccumulator();
 
 		notifyStarted(monitor);
-
+		boolean error = false;
 		try {
 			doExecute(monitor);
 		}
@@ -68,51 +68,56 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 				// console. Plus, handling it here gives us a chance to notify that the process is
 				// complete.
 				String name = threadedModel.getName();
+				error = true;
 				Msg.showError(this, null, "Unexpected Exception",
 					"Unexpected exception loading table model \"" + name + "\"", e);
 			}
 		}
 
 		boolean interrupted = Thread.currentThread().isInterrupted();
-		notifyCompleted(monitor.isCancelled() || interrupted);
+		notifyCompleted(hasBeenCancelled(monitor) || interrupted || error);
+
+		// all data should have been posted at this point; clean up any data left in the accumulator
+		incrementalAccumulator.clear();
 	}
 
 	private void doExecute(TaskMonitor monitor) {
 		try {
 			threadedModel.doLoad(incrementalAccumulator, monitor);
-			if (!monitor.isCancelled()) { // in case the model didn't call checkCancelled()
-				flush(incrementalAccumulator);
-			}
+			flush(incrementalAccumulator, monitor);
 		}
 		catch (CancelledException e) {
 			// handled by the caller of this method
+			isCancelled = true;
 		}
 
-		if (monitor.isCancelled()) {
-			return; // must leave now or we will block in the call below
-		}
-
-		waitForThreadedTableUpdateManager();
 	}
 
-	private void waitForThreadedTableUpdateManager() {
-		try {
-			completedCallbackLatch.await();
-		}
-		catch (InterruptedException e) {
-			// This implies the user has cancelled the job by starting a new one or that we have
-			// been disposed.  Whatever the cause, we want to let the control flow continue as
-			// normal.
-			Thread.currentThread().interrupt(); // preserve the interrupt status
-		}
+	/**
+	 * This method tracks cancelled from the given monitor and from any cancelled exceptions that
+	 * happen during loading.  When loading, the client may trigger a cancelled exception even
+	 * though the monitor has not been cancelled.
+	 * @param monitor the task monitor
+	 * @return true if cancelled
+	 */
+	private boolean hasBeenCancelled(TaskMonitor monitor) {
+		return isCancelled || monitor.isCancelled();
 	}
 
-	private void flush(IncrementalUpdatingAccumulator accumulator) {
+	private void flush(IncrementalUpdatingAccumulator accumulator, TaskMonitor monitor) {
+
 		//
 		// Acquire the update manager lock so that it doesn't send out any events while we are
 		// giving it the data we just finished loading.
 		//
 		synchronized (updateManager.getSynchronizingLock()) {
+
+			if (hasBeenCancelled(monitor)) {
+				// Check for cancelled inside of this lock.  This guarantees that no events will be
+				// sent out before we can add our listener
+				return;
+			}
+
 			// push the data to the update manager...
 			accumulator.flushData();
 
@@ -134,8 +139,28 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			// -We release the lock
 			// -A block on jobDone() can now complete as we release the lock
 			// -jobDone() will notify listeners in an invokeLater(), which puts it behind ours
-			//
+			//			
 			Swing.runLater(() -> updateManager.addThreadedTableListener(IncrementalLoadJob.this));
+		}
+
+		waitForThreadedTableUpdateManagerToFinish();
+	}
+
+	/**
+	 * Waits for the final flushed data to be added to the table.  We will get called when the data
+	 * is finished loading or cancelled.  The latch will also be released if the cancel method of
+	 * this job is called.  This can happen if the work queue is told to cancel all jobs, which can
+	 * happen if a new reload job is requested.
+	 */
+	private void waitForThreadedTableUpdateManagerToFinish() {
+		try {
+			completedCallbackLatch.await();
+		}
+		catch (InterruptedException e) {
+			// This implies the user has cancelled the job by starting a new one or that we have
+			// been disposed.  Whatever the cause, we want to let the control flow continue as
+			// normal.
+			Thread.currentThread().interrupt(); // preserve the interrupt status
 		}
 	}
 
@@ -151,14 +176,20 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		}
 
 		updateManager.removeThreadedTableListener(this);
-
 	}
 
 	@Override
 	public void cancel() {
-		updateManager.getTaskMonitor().cancel();
-		// monitor.cancel();  TODO: are we handling this ??
+		super.cancel();
+		isCancelled = true;
 		incrementalAccumulator.cancel();
+		completedCallbackLatch.countDown();
+
+		// Note: cannot do this here, since the cancel() call may happen asynchronously and after
+		// a call to reload() on the table model.  Assume that the model itself has already
+		// cancelled the update manager when the worker queue was cancelled. See
+		// ThreadedTableModel.reload().
+		// updateManager.cancelAllJobs();
 	}
 
 	@Override
@@ -188,14 +219,15 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 	 * is being provided to the accumulator.
 	 */
 	private class IncrementalUpdatingAccumulator extends SynchronizedListAccumulator<ROW_OBJECT> {
-		private volatile boolean cancelledOrDone;
+		private volatile boolean isDone;
 		private Runnable runnable = () -> {
 
-			if (cancelledOrDone) {
+			if (isCancelledOrDone()) {
 				// this handles the case where a cancel request came in off the Swing
 				// thread whilst we were already posted
 				return;
 			}
+
 			try {
 				updateManager.reloadSpecificData(asList());
 			}
@@ -203,7 +235,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 
 				// note: check for cancelled again, as it may have been called after the initial
 				//       check above if the cancel call was requested off the Swing thread.
-				if (!cancelledOrDone) {
+				if (!isCancelledOrDone()) {
 					Msg.error(this, "Exception incrementally loading table data", e);
 				}
 			}
@@ -219,8 +251,11 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			swingUpdateManager.update();
 		}
 
+		private boolean isCancelledOrDone() {
+			return isCancelled || isDone;
+		}
+
 		void cancel() {
-			cancelledOrDone = true;
 			swingUpdateManager.dispose();
 		}
 
@@ -233,7 +268,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		}
 
 		void flushData() {
-			cancelledOrDone = true;
+			isDone = true;
 			swingUpdateManager.dispose();
 			updateManager.reloadSpecificData(asList());
 		}

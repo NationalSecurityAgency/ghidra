@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,10 @@ package ghidra.app.util.bin.format.golang;
 
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.util.NumericUtilities;
 
@@ -37,17 +38,15 @@ public class GoParamStorageAllocator {
 	private GoRegisterInfo callspecInfo;
 	private long stackOffset;
 	private boolean isBigEndian;
-	private PrototypeModel abiInternalCallingConvention;
-	private PrototypeModel abi0CallingConvention;
 	private String archDescription;
 
 	/**
-	 * Creates a new golang function call storage allocator for the specified Ghidra Language.
+	 * Creates a new Go function call storage allocator for the specified Ghidra Language.
 	 * <p>
 	 * See {@link GoRegisterInfoManager#getRegisterInfoForLang(Language, GoVer)}
 	 * 
 	 * @param program {@link Program}
-	 * @param goVersion version of go used to create the program
+	 * @param goVersion version of Go used to create the program
 	 */
 	public GoParamStorageAllocator(Program program, GoVer goVersion) {
 		Language lang = program.getLanguage();
@@ -57,9 +56,6 @@ public class GoParamStorageAllocator {
 		this.stackOffset = callspecInfo.getStackInitialOffset();
 		this.regs = List.of(callspecInfo.getIntRegisters(), callspecInfo.getFloatRegisters());
 		this.isBigEndian = lang.isBigEndian();
-		this.abiInternalCallingConvention =
-			program.getFunctionManager().getCallingConvention("abi-internal");
-		this.abi0CallingConvention = program.getFunctionManager().getCallingConvention("abi0");
 		this.archDescription =
 			"%s_%d".formatted(lang.getLanguageDescription().getProcessor().toString(),
 				lang.getLanguageDescription().getSize());
@@ -67,30 +63,19 @@ public class GoParamStorageAllocator {
 
 	private GoParamStorageAllocator(List<List<Register>> regs, int[] nextReg,
 			GoRegisterInfo callspecInfo, long stackOffset, boolean isBigEndian,
-			PrototypeModel abiInternalCallingConvention, PrototypeModel abi0CallingConvention,
 			String archDescription) {
 		this.regs = List.of(regs.get(INTREG), regs.get(FLOATREG));
 		this.nextReg = new int[] { nextReg[INTREG], nextReg[FLOATREG] };
 		this.callspecInfo = callspecInfo;
 		this.stackOffset = stackOffset;
 		this.isBigEndian = isBigEndian;
-		this.abiInternalCallingConvention = abiInternalCallingConvention;
-		this.abi0CallingConvention = abi0CallingConvention;
 		this.archDescription = archDescription;
 	}
 
 	@Override
 	public GoParamStorageAllocator clone() {
 		return new GoParamStorageAllocator(regs, nextReg, callspecInfo, stackOffset, isBigEndian,
-			abiInternalCallingConvention, abi0CallingConvention, archDescription);
-	}
-
-	public PrototypeModel getAbi0CallingConvention() {
-		return abi0CallingConvention;
-	}
-
-	public PrototypeModel getAbiInternalCallingConvention() {
-		return abiInternalCallingConvention;
+			archDescription);
 	}
 
 	public String getArchDescription() {
@@ -144,6 +129,24 @@ public class GoParamStorageAllocator {
 
 	public boolean isAbi0Mode() {
 		return regs.get(INTREG).isEmpty() && regs.get(FLOATREG).isEmpty();
+	}
+
+	/**
+	 * Returns the integer parameter that follows the supplied register.
+	 * 
+	 * @param reg register in the integer reg list
+	 * @return the following register of the queried register, or null if no following register
+	 * found
+	 */
+	public Register getNextIntParamRegister(Register reg) {
+		List<Register> intRegs = regs.get(INTREG);
+		for (int regNum = 0; regNum < intRegs.size() - 1; regNum++) {
+			Register tmpReg = intRegs.get(regNum);
+			if (tmpReg.equals(reg)) {
+				return intRegs.get(regNum + 1);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -220,6 +223,10 @@ public class GoParamStorageAllocator {
 			NumericUtilities.getUnsignedAlignedValue(stackOffset, callspecInfo.getMaxAlign());
 	}
 
+	public Register getClosureContextRegister() {
+		return callspecInfo.getClosureContextRegister();
+	}
+
 	private boolean countRegistersFor(DataType dt, List<Register> result) {
 		if (DWARFUtil.isZeroByteDataType(dt)) {
 			return false;
@@ -254,12 +261,12 @@ public class GoParamStorageAllocator {
 			return false;
 		}
 		if (dt instanceof Structure struct) {
-			DataTypeComponent prevDTC = null;
+//			DataTypeComponent prevDTC = null;
 			for (DataTypeComponent dtc : struct.getDefinedComponents()) {
-				int padding = prevDTC != null ? dtc.getOffset() - prevDTC.getOffset() : 0;
-				if (padding != 0) {
-
-				}
+//				int padding = prevDTC != null ? dtc.getOffset() - prevDTC.getOffset() : 0;
+//				if (padding != 0) {
+//
+//				}
 				if (!countRegistersFor(dtc.getDataType(), result)) {
 					return false;
 				}

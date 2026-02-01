@@ -94,8 +94,8 @@ public class DataTypeCellRenderer extends GTableCellRenderer {
 		displayName = HTMLUtilities.friendlyEncodeHTML(displayName);
 
 		String toolTipText = ToolTipUtils.getToolTipText(dataType);
-		String headerText = "<HTML><b>" + displayName + "</b><BR>";
-		toolTipText = toolTipText.replace("<HTML>", headerText);
+		String headerText = "<html><b>" + displayName + "</b><BR>";
+		toolTipText = toolTipText.replace("<html>", headerText);
 		return toolTipText;
 	}
 }

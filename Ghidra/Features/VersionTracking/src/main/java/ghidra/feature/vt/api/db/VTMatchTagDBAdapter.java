@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 

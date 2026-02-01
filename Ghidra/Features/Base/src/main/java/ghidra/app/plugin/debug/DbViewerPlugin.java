@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import resources.Icons;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Show database tables",
 	description = "This plugin is a debug aid that allows the user to browse database tables.",
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
@@ -41,7 +41,7 @@ import resources.Icons;
 //@formatter:on
 public class DbViewerPlugin extends Plugin {
 
-	private DbViewerProvider viewer;
+	private DbViewerProvider provider;
 	private DockingAction refreshAction;
 
 	public DbViewerPlugin(PluginTool tool) {
@@ -52,11 +52,11 @@ public class DbViewerPlugin extends Plugin {
 
 	@Override
 	protected void dispose() {
-		if (viewer != null) {
+		if (provider != null) {
 			deactivateViewer();
-			tool.removeComponentProvider(viewer);
-			viewer.dispose();
-			viewer = null;
+			tool.removeComponentProvider(provider);
+			provider.dispose();
+			provider = null;
 		}
 		super.dispose();
 	}
@@ -66,31 +66,31 @@ public class DbViewerPlugin extends Plugin {
 		refreshAction = new DockingAction("Refresh", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				if (viewer != null) {
-					viewer.refresh();
+				if (provider != null) {
+					provider.refresh();
 				}
 			}
 		};
-
+		refreshAction.markHelpUnnecessary();
 		refreshAction.setEnabled(false);
 		Icon icon = Icons.REFRESH_ICON;
 		refreshAction.setToolBarData(new ToolBarData(icon));
 	}
 
 	private void activateViewer(DomainObjectAdapterDB dobj) {
-		if (viewer == null) {
-			viewer = new DbViewerProvider(this);
-			tool.addComponentProvider(viewer, false);
-			tool.addLocalAction(viewer, refreshAction);
+		if (provider == null) {
+			provider = new DbViewerProvider(this);
+			tool.addComponentProvider(provider, false);
+			tool.addLocalAction(provider, refreshAction);
 		}
-		viewer.openDatabase(dobj.getName(), dobj.getDBHandle());
+		provider.openDatabase(dobj.getName(), dobj.getDBHandle());
 		refreshAction.setEnabled(true);
 	}
 
 	private void deactivateViewer() {
-		if (viewer != null) {
+		if (provider != null) {
 			refreshAction.setEnabled(false);
-			viewer.closeDatabase();
+			provider.closeDatabase();
 		}
 	}
 

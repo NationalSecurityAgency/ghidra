@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,15 +23,14 @@ import ghidra.formats.gfilesystem.factory.FileSystemInfoRec;
 /**
  * A callback interface used to choose which filesystem implementation to use when
  * multiple filesystem types indicate that they can open a container file.
- * <p>
  */
 public interface FileSystemProbeConflictResolver {
 
 	/**
 	 * Picks a single {@link FileSystemInfoRec} to use when mounting a filesystem.
-	 * <p>
+	 * 
 	 * @param factories a {@link List} of {@link FileSystemInfoRec}s.
-	 * @return the choosen FSIR, or null
+	 * @return the chosen FSIR, or null
 	 */
 	default public FileSystemInfoRec resolveFSIR(List<FileSystemInfoRec> factories) {
 		switch (factories.size()) {
@@ -49,9 +48,9 @@ public interface FileSystemProbeConflictResolver {
 	 * This method should be provided by the actual strategy implementation.
 	 * <p>
 	 * This method will only be called if the list contains more than a single item.
-	 * <p>
+	 * 
 	 * @param factories {@link List} of {@link FileSystemInfoRec}, always more than 1 element.
-	 * @return the choosen FSIR, or null
+	 * @return the chosen FSIR, or null
 	 */
 	public FileSystemInfoRec chooseFSIR(List<FileSystemInfoRec> factories);
 
@@ -68,7 +67,6 @@ public interface FileSystemProbeConflictResolver {
 
 	/**
 	 * Conflict handler that allows the user to pick the filesystem to use from a GUI list.
-	 * <p>
 	 */
 	public static FileSystemProbeConflictResolver GUI_PICKER =
 		new FileSystemProbeConflictResolver() {

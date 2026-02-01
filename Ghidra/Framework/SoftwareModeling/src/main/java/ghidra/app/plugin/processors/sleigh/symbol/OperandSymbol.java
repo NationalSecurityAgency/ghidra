@@ -19,21 +19,18 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.ArrayList;
 
-import ghidra.app.plugin.processors.sleigh.FixedHandle;
-import ghidra.app.plugin.processors.sleigh.ParserWalker;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.expression.OperandValue;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * Variable representing an operand to a specific Constructor
  */
 public class OperandSymbol extends SpecificSymbol {
@@ -77,17 +74,11 @@ public class OperandSymbol extends SpecificSymbol {
 		return codeaddress;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getPatternExpression()
-	 */
 	@Override
 	public PatternExpression getPatternExpression() {
 		return localexp;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getFixedHandle(ghidra.app.plugin.processors.sleigh.FixedHandle, ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
 	public void getFixedHandle(FixedHandle hnd, ParserWalker walker) {
 		FixedHandle h = walker.getFixedHandle(hand);
@@ -100,25 +91,26 @@ public class OperandSymbol extends SpecificSymbol {
 		hnd.temp_offset = h.temp_offset;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#print(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
 	public String print(ParserWalker walker) throws MemoryAccessException {
 		String res;
 		walker.pushOperand(hand);
 		if (triple != null) {
-			if (triple instanceof SubtableSymbol)
+			if (triple instanceof SubtableSymbol) {
 				res = walker.getConstructor().print(walker);
-			else
+			}
+			else {
 				res = triple.print(walker);
+			}
 		}
 		else {		// Must be expression resulting in a constant
 			long val = defexp.getValue(walker);
-			if (val >= 0)
+			if (val >= 0) {
 				res = "0x" + Long.toHexString(val);
-			else
+			}
+			else {
 				res = "-0x" + Long.toHexString(-val);
+			}
 		}
 		walker.popOperand();
 		return res;
@@ -129,10 +121,12 @@ public class OperandSymbol extends SpecificSymbol {
 			throws MemoryAccessException {
 		walker.pushOperand(hand);
 		if (triple != null) {
-			if (triple instanceof SubtableSymbol)
+			if (triple instanceof SubtableSymbol) {
 				walker.getConstructor().printList(walker, list);
-			else
+			}
+			else {
 				triple.printList(walker, list);
+			}
 		}
 		else {
 			FixedHandle handle = walker.getParentHandle();
@@ -144,32 +138,41 @@ public class OperandSymbol extends SpecificSymbol {
 		walker.popOperand();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.Symbol#restoreXml(org.jdom.Element, ghidra.app.plugin.processors.sleigh.SleighLanguage)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("operand_sym");
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+//		int el = decoder.openElement(ELEM_OPERAND_SYM);
 		defexp = null;
 		triple = null;
 		codeaddress = false;
-
-		hand = SpecXmlUtils.decodeInt(el.getAttribute("index"));
-
-		reloffset = SpecXmlUtils.decodeInt(el.getAttribute("off"));
-		offsetbase = SpecXmlUtils.decodeInt(el.getAttribute("base"));
-		minimumlength = SpecXmlUtils.decodeInt(el.getAttribute("minlen"));
-		String attrstr = el.getAttribute("subsym");
-		if (attrstr != null) {
-			int id = SpecXmlUtils.decodeInt(attrstr);
-			triple = (TripleSymbol) lang.getSymbolTable().findSymbol(id);
+		int attrib = decoder.getNextAttributeId();
+		while (attrib != 0) {
+			if (attrib == ATTRIB_INDEX.id()) {
+				hand = (int) decoder.readSignedInteger();
+			}
+			else if (attrib == ATTRIB_OFF.id()) {
+				reloffset = (int) decoder.readSignedInteger();
+			}
+			else if (attrib == ATTRIB_BASE.id()) {
+				offsetbase = (int) decoder.readSignedInteger();
+			}
+			else if (attrib == ATTRIB_MINLEN.id()) {
+				minimumlength = (int) decoder.readSignedInteger();
+			}
+			else if (attrib == ATTRIB_SUBSYM.id()) {
+				int id = (int) decoder.readUnsignedInteger();
+				triple = (TripleSymbol) lang.getSymbolTable().findSymbol(id);
+			}
+			else if (attrib == ATTRIB_CODE.id()) {
+				codeaddress = decoder.readBool();
+			}
+			attrib = decoder.getNextAttributeId();
 		}
-		codeaddress = SpecXmlUtils.decodeBoolean(el.getAttribute("code"));
 
-		localexp = (OperandValue) PatternExpression.restoreExpression(parser, lang);
-		if (!parser.peek().isEnd())
-			defexp = PatternExpression.restoreExpression(parser, lang);
-		parser.end(el);
+		localexp = (OperandValue) PatternExpression.decodeExpression(decoder, lang);
+		if (decoder.peekElement() != 0) {
+			defexp = PatternExpression.decodeExpression(decoder, lang);
+		}
+		decoder.closeElement(ELEM_OPERAND_SYM.id());
 	}
 
 	@Override

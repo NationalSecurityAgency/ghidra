@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,19 @@
  */
 package ghidra.framework.cmd;
 
+import java.util.ArrayList;
+
 import ghidra.framework.model.DomainObject;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.ArrayList;
-
 /**
  * Compound command to handle multiple background commands.
+ * 
+ * @param <T> {@link DomainObject} implementation interface
  */
-public class CompoundBackgroundCommand extends BackgroundCommand {
+public class CompoundBackgroundCommand<T extends DomainObject> extends BackgroundCommand<T> {
 
-	private ArrayList<BackgroundCommand> bkgroundCmdList;
-	private ArrayList<Command> cmdList;
+	private ArrayList<Command<T>> cmdList;
 
 	/**
 	 * Constructor
@@ -38,30 +38,25 @@ public class CompoundBackgroundCommand extends BackgroundCommand {
 	 */
 	public CompoundBackgroundCommand(String name, boolean modal, boolean canCancel) {
 		super(name, false, canCancel, modal);
-		bkgroundCmdList = new ArrayList<BackgroundCommand>();
-		cmdList = new ArrayList<Command>();
+		cmdList = new ArrayList<>();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		for (int i = 0; i < bkgroundCmdList.size(); i++) {
-			BackgroundCommand cmd = bkgroundCmdList.get(i);
-			if (!cmd.applyTo(obj, monitor)) {
-				setStatusMsg(cmd.getStatusMsg());
-				return false;
-			}
-		}
-		for (int i = 0; i < cmdList.size(); i++) {
+	public boolean applyTo(T obj, TaskMonitor monitor) {
+		// Run commands in the order they were added
+		for (Command<T> cmd : cmdList) {
 			if (monitor.isCancelled()) {
 				setStatusMsg("Cancelled");
 				return false;
 			}
-			Command cmd = cmdList.get(i);
-
-			if (!cmd.applyTo(obj)) {
+			boolean success;
+			if (cmd instanceof BackgroundCommand<T> bcmd) {
+				success = bcmd.applyTo(obj, monitor);
+			}
+			else {
+				success = cmd.applyTo(obj);
+			}
+			if (!success) {
 				setStatusMsg(cmd.getStatusMsg());
 				return false;
 			}
@@ -70,31 +65,26 @@ public class CompoundBackgroundCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Add a background command to this compound background command.
-	 */
-	public void add(BackgroundCommand cmd) {
-		bkgroundCmdList.add(cmd);
-	}
-
-	/**
 	 * Add a command to this compound background command.
+	 * @param cmd command to be added
 	 */
-	public void add(Command cmd) {
+	public void add(Command<T> cmd) {
 		cmdList.add(cmd);
 	}
 
 	/**
 	 * Get the number of background commands in this compound background
 	 * command.
+	 * @return the number of commands
 	 */
 	public int size() {
-		return bkgroundCmdList.size();
+		return cmdList.size();
 	}
 
 	/**
 	 * @return true if no sub-commands have been added
 	 */
 	public boolean isEmpty() {
-		return bkgroundCmdList.isEmpty();
+		return cmdList.isEmpty();
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,11 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 
 import docking.DockingWindowManager;
 import docking.ReusableDialogComponentProvider;
 import docking.tool.ToolConstants;
-import docking.widgets.HyperlinkComponent;
+import docking.widgets.GHyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.GhidraOptions;
@@ -57,11 +55,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	private static final String FILE_OFFSET_ANCHOR_NAME = "GoTo_File_Offset";
 	private static final int DEFAULT_MAX_GOTO_ENTRIES = 10;
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Instance fields                                                  //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	private Plugin plugin;
 	private JPanel mainPanel;
@@ -77,15 +75,15 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 
 	private Navigatable navigatable;
 
-	private HyperlinkComponent hyperlink;
+	private GHyperlinkComponent hyperlink;
 
 	private JCheckBox includeDynamicBox;
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Constructor                                                      //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	public GoToAddressLabelDialog(GoToService gotoService, Plugin plugin) {
 		super(DIALOG_TITLE, true, true, true, true);
@@ -184,24 +182,27 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(5, 5, 5, 5);
 
-		hyperlink = new HyperlinkComponent("<html>Enter an address, label, <a href=\"" +
-			EXPRESSION_ANCHOR_NAME + "\">expression</a>, or " + "<a href=\"" +
-			FILE_OFFSET_ANCHOR_NAME + "\">file offset</a>:");
+		hyperlink = new GHyperlinkComponent();
+		hyperlink.addText("Enter an address, label, ");
+		hyperlink.addLink("expression,", () -> {
+			HelpLocation loc = new HelpLocation(HelpTopics.NAVIGATION, EXPRESSION_ANCHOR_NAME);
+			DockingWindowManager.getHelpService().showHelp(loc);
+		});
 
-		HyperlinkListener hyperlinkListener = evt -> {
-			if (evt.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-				HelpLocation loc = new HelpLocation(HelpTopics.NAVIGATION, evt.getDescription());
-				DockingWindowManager.getHelpService().showHelp(loc);
-			}
-		};
-		hyperlink.addHyperlinkListener(EXPRESSION_ANCHOR_NAME, hyperlinkListener);
-		hyperlink.addHyperlinkListener(FILE_OFFSET_ANCHOR_NAME, hyperlinkListener);
+		hyperlink.addText(" or ");
+		hyperlink.addLink("file offset:", () -> {
+			HelpLocation loc = new HelpLocation(HelpTopics.NAVIGATION, FILE_OFFSET_ANCHOR_NAME);
+			DockingWindowManager.getHelpService().showHelp(loc);
+		});
 
 		inner.add(hyperlink, gbc);
 
 		comboBox = new GhidraComboBox<>();
 		comboBox.setEditable(true);
-		comboBox.addActionListener(evt -> okCallback());
+
+		String comboName = "Go To Address or Label Text Field / Combobox";
+		comboBox.setName(comboName);
+		comboBox.getAccessibleContext().setAccessibleName(comboName);
 
 		gbc.insets = new Insets(2, 5, 2, 0);
 		gbc.gridx = 0;
@@ -212,12 +213,18 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		caseSensitiveBox = new GCheckBox("Case sensitive", false);
 		gbc.gridy = 2;
 		gbc.gridwidth = 1;
+		String caseSensitiveCheckBoxName = "Case Sensitive Checkbox";
+		caseSensitiveBox.setName(caseSensitiveCheckBoxName);
+		caseSensitiveBox.getAccessibleContext().setAccessibleName(caseSensitiveCheckBoxName);
 		inner.add(caseSensitiveBox, gbc);
 
 		includeDynamicBox = new GCheckBox("Dynamic labels", true);
-		includeDynamicBox.setToolTipText("Include dynamic lables in the search (slower)");
+		includeDynamicBox.setToolTipText("Include dynamic labels in the search (slower)");
 		gbc.gridx = 1;
 		inner.add(includeDynamicBox, gbc);
+		String dynamicCheckBoxName = "Dynamic Checkbox";
+		includeDynamicBox.setName(dynamicCheckBoxName);
+		includeDynamicBox.getAccessibleContext().setAccessibleName(dynamicCheckBoxName);
 
 		mainPanel = new JPanel(new BorderLayout());
 		Border emptyBorder = BorderFactory.createEmptyBorder(5, 5, 0, 5);
@@ -236,9 +243,9 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	private void readHistory(SaveState saveState) {
 		String[] strs = saveState.getStrings("GO_TO_HISTORY", null);
 		if (strs != null) {
-			for (int i = 0; i < strs.length; i++) {
-				if (!history.contains(strs[i])) {
-					history.add(strs[i]);
+			for (String str : strs) {
+				if (!history.contains(str)) {
+					history.add(str);
 				}
 			}
 			truncateHistoryAsNeeded();
@@ -261,11 +268,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		saveState.putBoolean("INCLUDE_DYNAMIC", includeDynamicBox.isSelected());
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Overridden GhidraDialog methods                                  //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	@Override
 	public final void okCallback() {
@@ -318,7 +325,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------------------
 
 	public void maxEntrysChanged() {
 		truncateHistoryAsNeeded();
@@ -340,7 +347,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------------------
 
 	private void addToHistory(String input) {
 		history.remove(input);

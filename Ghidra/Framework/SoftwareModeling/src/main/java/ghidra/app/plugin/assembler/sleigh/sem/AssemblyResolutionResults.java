@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,27 +21,24 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.set.AbstractSetDecorator;
 
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-
 /**
  * A set of possible assembly resolutions for a single SLEIGH constructor
  * 
  * <p>
- * Since the assembler works from the leaves up, it unclear in what context a given token appears.
+ * Since the assembler works from the leaves up, it's unclear in what context a given token appears.
  * Thus, every possible encoding is collected and passed upward. As resolution continues, many of
  * the possible encodings are pruned out. When the resolver reaches the root, we end up with every
  * possible encoding (less some prefixes) of an instruction. This object stores the possible
  * encodings, including error records describing the pruned intermediate results.
  */
 public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyResolution> {
-	protected static final DbgTimer DBG = AssemblyTreeResolver.DBG;
 
 	public interface Applicator {
 		Iterable<? extends AssemblyResolution> getPatterns(AssemblyResolvedPatterns cur);
 
 		default AssemblyResolvedPatterns setDescription(
 				AssemblyResolvedPatterns res, AssemblyResolution from) {
-			AssemblyResolvedPatterns temp = res.withDescription(from.description);
+			AssemblyResolvedPatterns temp = res.withDescription(from.getDescription());
 			return temp;
 		}
 
@@ -92,18 +89,8 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 		resolutions = new LinkedHashSet<>();
 	}
 
-	private AssemblyResolutionResults(Set<AssemblyResolution> resolutions) {
+	protected AssemblyResolutionResults(Set<AssemblyResolution> resolutions) {
 		this.resolutions = resolutions;
-	}
-
-	/**
-	 * Construct an immutable single-entry set consisting of the one given resolution
-	 * 
-	 * @param rc the single resolution entry
-	 * @return the new resolution set
-	 */
-	public static AssemblyResolutionResults singleton(AssemblyResolvedPatterns rc) {
-		return new AssemblyResolutionResults(Collections.singleton(rc));
 	}
 
 	@Override
@@ -143,21 +130,19 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 		return this.resolutions.remove(ar);
 	}
 
-	protected AssemblyResolutionResults apply(Applicator applicator) {
-		AssemblyResolutionResults results = new AssemblyResolutionResults();
+	protected AssemblyResolutionResults apply(AbstractAssemblyResolutionFactory<?, ?> factory,
+			Applicator applicator) {
+		AssemblyResolutionResults results = factory.newAssemblyResolutionResults();
 		for (AssemblyResolution res : this) {
 			if (res.isError()) {
 				results.add(res);
 				continue;
 			}
-			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) res;
-			DBG.println("Current: " + rc.lineToString());
-			for (AssemblyResolution pat : applicator.getPatterns(rc)) {
-				DBG.println("Pattern: " + pat.lineToString());
-				AssemblyResolvedPatterns combined = applicator.combine(rc, pat);
-				DBG.println("Combined: " + (combined == null ? "(null)" : combined.lineToString()));
+			AssemblyResolvedPatterns rp = (AssemblyResolvedPatterns) res;
+			for (AssemblyResolution ar : applicator.getPatterns(rp)) {
+				AssemblyResolvedPatterns combined = applicator.combine(rp, ar);
 				if (combined == null) {
-					results.add(AssemblyResolution.error(applicator.describeError(rc, pat), rc));
+					results.add(factory.error(applicator.describeError(rp, ar), ar));
 					continue;
 				}
 				results.add(applicator.finish(combined));
@@ -166,14 +151,19 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 		return results;
 	}
 
-	protected AssemblyResolutionResults apply(
+	protected AssemblyResolutionResults apply(AbstractAssemblyResolutionFactory<?, ?> factory,
 			Function<AssemblyResolvedPatterns, AssemblyResolution> function) {
 		return stream().map(res -> {
-			assert !(res instanceof AssemblyResolvedBackfill);
-			if (res.isError()) {
-				return res;
+			if (res instanceof AssemblyResolvedBackfill) {
+				throw new AssertionError();
 			}
-			return function.apply((AssemblyResolvedPatterns) res);
-		}).collect(Collectors.toCollection(AssemblyResolutionResults::new));
+			if (res instanceof AssemblyResolvedError err) {
+				return err;
+			}
+			if (res instanceof AssemblyResolvedPatterns rp) {
+				return function.apply(rp);
+			}
+			throw new AssertionError();
+		}).collect(Collectors.toCollection(factory::newAssemblyResolutionResults));
 	}
 }

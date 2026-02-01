@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -62,20 +63,20 @@ abstract class SourceArchiveAdapter {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static SourceArchiveAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+	static SourceArchiveAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new SourceArchiveAdapterV0(handle, tablePrefix, true);
 		}
 		try {
 			return new SourceArchiveAdapterV0(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			SourceArchiveAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
@@ -98,7 +99,7 @@ abstract class SourceArchiveAdapter {
 	 * @param handle handle to the database whose table is to be upgraded to a newer version.
 	 * @param oldAdapter the adapter for the existing table to be upgraded.
 	 * @return the adapter for the new upgraded version of the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
 	 * @throws CancelledException if task is cancelled

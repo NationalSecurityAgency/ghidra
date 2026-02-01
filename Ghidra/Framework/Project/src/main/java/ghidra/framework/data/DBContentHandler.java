@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,9 +55,8 @@ public abstract class DBContentHandler<T extends DomainObjectAdapterDB>
 			FileSystem fs, String path, String name, TaskMonitor monitor)
 			throws InvalidNameException, CancelledException, IOException {
 		DBHandle dbh = domainObj.getDBHandle();
-		ManagedBufferFile bf =
-			fs.createDatabase(path, name, FileIDFactory.createFileID(), contentType,
-				dbh.getBufferSize(), SystemUtilities.getUserName(), null);
+		ManagedBufferFile bf = fs.createDatabase(path, name, FileIDFactory.createFileID(),
+			contentType, dbh.getBufferSize(), SystemUtilities.getUserName(), null);
 		long checkoutId = bf.getCheckinID();  // item remains checked-out after saveAs
 		boolean success = false;
 		try {

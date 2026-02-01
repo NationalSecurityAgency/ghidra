@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	 * @param handle handle to the database containing the table.
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException an IO error occured during table creation
 	 */
@@ -139,13 +139,18 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 		Field[] keys = enumTable.findRecords(new LongField(datatypeID.getValue()),
 			V1_ENUM_UNIVERSAL_DT_ID_COL);
 
-		for (int i = 0; i < keys.length; i++) {
-			DBRecord record = enumTable.getRecord(keys[i]);
+		for (Field key : keys) {
+			DBRecord record = enumTable.getRecord(key);
 			if (record.getLongValue(V1_ENUM_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public int getRecordCount() {
+		return enumTable.getRecordCount();
 	}
 
 }

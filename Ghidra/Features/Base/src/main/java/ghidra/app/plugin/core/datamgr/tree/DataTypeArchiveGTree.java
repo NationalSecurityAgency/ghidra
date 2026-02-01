@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.datamgr.tree;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -24,6 +25,9 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 
+import docking.DockingUtils;
+import docking.action.DockingAction;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
@@ -74,6 +78,21 @@ public class DataTypeArchiveGTree extends GTree {
 		}
 
 		addTreeExpansionListener(cleanupListener);
+
+		setAccessibleNamePrefix("Data Type Manager");
+
+		initializeKeyEvents();
+	}
+
+	private void initializeKeyEvents() {
+
+		// remove Java's default bindings for Copy/Paste on this tree, as they cause conflicts
+		// with Ghidra's key bindings
+		int ctrl = DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+		JTree jTree = getJTree();
+		KeyBindingUtils.clearKeyBinding(jTree, KeyStroke.getKeyStroke(KeyEvent.VK_C, ctrl));
+		KeyBindingUtils.clearKeyBinding(jTree, KeyStroke.getKeyStroke(KeyEvent.VK_V, ctrl));
+		KeyBindingUtils.clearKeyBinding(jTree, KeyStroke.getKeyStroke(KeyEvent.VK_X, ctrl));
 	}
 
 	private int getHeight(GTreeNode rootNode, DataTypeTreeRenderer renderer) {
@@ -120,6 +139,21 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	@Override
+	protected boolean isAddToPopup(DockingAction action) {
+
+		String name = action.getName();
+		switch (name) {
+			case "Tree Expand All":
+			case "Tree Expand Node":
+			case "Tree Collapse Node":
+				// case "Tree Collapse All": // this action seems ok
+				return false;
+			default:
+				return true;
+		}
+	}
+
+	@Override
 	public void dispose() {
 		((ArchiveRootNode) getModelRoot()).dispose();
 		PluginTool tool = plugin.getTool();
@@ -139,21 +173,51 @@ public class DataTypeArchiveGTree extends GTree {
 		super.dispose();
 	}
 
-	public void enableArrayFilter(boolean enabled) {
+	public void setFilterState(DtFilterState filterState) {
 		ArchiveRootNode root = (ArchiveRootNode) getModelRoot();
-		root.setFilterArray(enabled);
+		root.setFilterState(filterState);
 		reloadTree();
 	}
 
-	public void enablePointerFilter(boolean enabled) {
-		ArchiveRootNode root = (ArchiveRootNode) getModelRoot();
-		root.setFilterPointer(enabled);
+	public void updateDataTransformer(DataTypesProvider provider) {
+
+		boolean includeMembers = provider.isIncludeDataMembersInSearch();
+		boolean filterOnNameOnly = provider.isFilterOnNameOnly();
+
+		DefaultDtTreeDataTransformer transformer;
+		if (includeMembers) {
+			transformer = new DataTypeTransformer(filterOnNameOnly);
+		}
+		else {
+			transformer = new DefaultDtTreeDataTransformer(filterOnNameOnly);
+		}
+
+		setDataTransformer(transformer);
+
 		reloadTree();
 	}
 
-	public void setIncludeDataTypeMembersInSearch(boolean includeDataTypes) {
-		setDataTransformer(
-			includeDataTypes ? new DataTypeTransformer() : new DefaultGTreeDataTransformer());
+	/**
+	 * Signals to this tree that it should configure itself for use inside of a widget that allows
+	 * the user to choose a data type.
+	 */
+	public void updateFilterForChoosingDataType() {
+
+		// Only filter on the name so that any extra display text will not cause a filter failure
+		// when attempting to pick a type by its name.
+		boolean filterOnNameOnly = true;
+		boolean includeMembers = false;
+
+		DefaultDtTreeDataTransformer transformer;
+		if (includeMembers) {
+			transformer = new DataTypeTransformer(filterOnNameOnly);
+		}
+		else {
+			transformer = new DefaultDtTreeDataTransformer(filterOnNameOnly);
+		}
+
+		setDataTransformer(transformer);
+
 		reloadTree();
 	}
 
@@ -242,7 +306,30 @@ public class DataTypeArchiveGTree extends GTree {
 // Inner Classes
 //==================================================================================================
 
-	private class DataTypeTransformer extends DefaultGTreeDataTransformer {
+	/** Only filters on name or display name, not dt contents */
+	private class DefaultDtTreeDataTransformer extends DefaultGTreeDataTransformer {
+
+		private boolean filterOnNameOnly;
+
+		DefaultDtTreeDataTransformer(boolean filterOnNameOnly) {
+			this.filterOnNameOnly = filterOnNameOnly;
+		}
+
+		@Override
+		protected String toString(GTreeNode node) {
+			if (filterOnNameOnly) {
+				return node.getName(); // the node name is the type name
+			}
+			return super.toString(node); // display text
+		}
+	}
+
+	/** Filters on dt contents */
+	private class DataTypeTransformer extends DefaultDtTreeDataTransformer {
+
+		DataTypeTransformer(boolean filterOnNameOnly) {
+			super(filterOnNameOnly);
+		}
 
 		@Override
 		public List<String> transform(GTreeNode node) {
@@ -320,7 +407,6 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	private class DataTypeTreeRenderer extends GTreeRenderer {
-		private static final int ICON_WIDTH = 24;
 		private static final int ICON_HEIGHT = 18;
 
 		@Override

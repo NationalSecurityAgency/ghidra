@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.app.plugin.core.colorizer;
 
+import java.awt.Color;
+
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 
-import java.awt.Color;
-
-class SetColorCommand implements Command {
+class SetColorCommand implements Command<DomainObject> {
 
 	private final Color color;
 	private final AddressSetView set;

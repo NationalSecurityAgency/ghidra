@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb.*;
+import ghidra.app.util.pdb.classtype.ClassFieldAttributes;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
@@ -27,65 +26,52 @@ import ghidra.util.exception.CancelledException;
  */
 public class DefaultPdbUniversalMember extends PdbMember {
 
-	private MsTypeApplier applier;
 	private DataType dataType;
+	private ClassFieldAttributes attributes;
+	private boolean isZeroLengthArray;
 
 	/**
 	 * Default PDB member construction
-	 * @param applicator {@link DefaultPdbApplicator} for which we are working.
-	 * @param name member field name.  For bitfields this also conveys the bit-size
-	 * and optionally the bit-offset.
-	 * @param applier fieldApplier for the field datatype or base datatype associated with the
-	 * bitfield.
-	 * @param offset member's byte offset within the root composite.
-	 */
-	DefaultPdbUniversalMember(DefaultPdbApplicator applicator, String name, MsTypeApplier applier,
-			int offset) {
-		this(applicator, name, applier, offset, null);
-		dataType = null;
-	}
-
-	/**
-	 * Default PDB member construction
-	 * @param applicator {@link DefaultPdbApplicator} for which we are working.
-	 * @param name member field name.  For bitfields this also conveys the bit-size
-	 * and optionally the bit-offset.
-	 * @param applier fieldApplier for the field datatype or base datatype associated with the
-	 * bitfield.
-	 * @param offset member's byte offset within the root composite.
-	 * @param memberComment comment for member field
-	 */
-	DefaultPdbUniversalMember(DefaultPdbApplicator applicator, String name, MsTypeApplier applier,
-			int offset, String memberComment) {
-		super(name, applier.getDataType().getName(), offset, memberComment);
-		this.applier = applier;
-		dataType = null;
-	}
-
-	/**
-	 * Default PDB member construction
-	 * @param applicator {@link DefaultPdbApplicator} for which we are working.
 	 * @param name member field name.  For bitfields this also conveys the bit-size
 	 * and optionally the bit-offset.
 	 * @param dataType for the field.
 	 * @param offset member's byte offset within the root composite.
 	 */
-	DefaultPdbUniversalMember(DefaultPdbApplicator applicator, String name, DataType dataType,
-			int offset) {
+	DefaultPdbUniversalMember(String name, DataType dataType, int offset) {
 		super(name, dataType.getName(), offset, null);
-		this.applier = null;
 		this.dataType = dataType;
+		this.attributes = ClassFieldAttributes.BLANK;
+		this.isZeroLengthArray = false;
 	}
 
-	MsTypeApplier getApplier() {
-		return applier;
+	/**
+	 * Default PDB member construction
+	 * @param name member field name.  For bitfields this also conveys the bit-size
+	 * and optionally the bit-offset.
+	 * @param dataType for the field.
+	 * @param isZeroLengthArray indicates if, when an array, it is a zero-length (flex) array
+	 * @param offset member's byte offset within the root composite.
+	 * @param attributes the attributes of the member
+	 * @param memberComment optional member comment (may be null)
+	 */
+	DefaultPdbUniversalMember(String name, DataType dataType, boolean isZeroLengthArray, int offset,
+			ClassFieldAttributes attributes, String memberComment) {
+		super(name, dataType.getName(), offset, memberComment);
+		this.dataType = dataType;
+		this.attributes = attributes;
+		this.isZeroLengthArray = isZeroLengthArray;
 	}
 
 	private DataType getDataTypeInternal() {
-		if (applier != null) {
-			return applier.getDataType();
-		}
 		return dataType;
+	}
+
+	public boolean isZeroLengthArray() {
+		return isZeroLengthArray;
+	}
+
+	public ClassFieldAttributes getAttributes() {
+		return attributes;
 	}
 
 	@Override
@@ -123,12 +109,7 @@ public class DefaultPdbUniversalMember extends PdbMember {
 	@Override
 	protected WrappedDataType getDataType() throws CancelledException {
 		DataType dt = getDataTypeInternal();
-		if (applier != null && applier instanceof ArrayTypeApplier) {
-			if (BigInteger.ZERO.compareTo(applier.getSize()) == 0) {
-				return new WrappedDataType(dt, true, false);
-			}
-		}
-		return new WrappedDataType(dt, false, false);
+		return new WrappedDataType(dt, isZeroLengthArray, false);
 	}
 
 }

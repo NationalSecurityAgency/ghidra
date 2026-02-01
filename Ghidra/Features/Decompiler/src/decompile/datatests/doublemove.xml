@@ -1,0 +1,42 @@
+<decompilertest>
+  <!--
+     Functions with variables that are LOADed are STOREed in two stages,
+     but also used as a logical whole.
+  -->
+<binaryimage arch="MIPS:BE:32:default:default">
+<bytechunk space="ram" offset="0x400000" readonly="true">
+        3c020042d4424318afa40000
+c4414318c440431cafa60008afa7000c
+03e0000846201000
+</bytechunk>
+<bytechunk space="ram" offset="0x410000" readonly="true">
+        3c020042d7a20028afa40000
+c4414320c440432446201000e4414308
+e440430c03e0000846201000
+</bytechunk>
+<bytechunk space="ram" offset="0x424320" readonly="true">
+                401c000000000000
+</bytechunk>
+<symbol space="ram" offset="0x400000" name="loaddouble"/>
+<symbol space="ram" offset="0x410000" name="storedouble"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>map addr r0x424318 float8 glob1</com>
+  <com>map addr r0x424308 float8 glob2</com>
+  <com>lo fu loaddouble</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>print raw</com>
+  <com>lo fu storedouble</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>print raw</com>
+</script>
+<stringmatch name="Double precision move #1" min="1" max="1">return glob1 \+ glob1;</stringmatch>
+<stringmatch name="Double precision move #2" min="1" max="1">r0x00424318:8\(i\) \+ r0x00424318:8\(i\)</stringmatch>
+<stringmatch name="Double precision move #3" min="1" max="1">r0x00424318:8\(0x.*\) = r0x00424318:8\(i\)</stringmatch>
+<stringmatch name="Double precision move #4" min="1" max="1">glob2 = in_stack_00000028 \+ 7\.0;</stringmatch>
+<stringmatch name="Double precision move #5" min="1" max="1">r0x00424308.* = f0_1.*</stringmatch>
+<stringmatch name="Double precision move #6" min="1" max="1">r0x00424308.* = r0x00424308.*</stringmatch>
+</decompilertest>

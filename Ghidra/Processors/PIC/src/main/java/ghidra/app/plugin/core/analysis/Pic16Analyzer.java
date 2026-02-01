@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,12 @@ import java.math.BigInteger;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
+import ghidra.program.model.symbol.FlowType;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.VarnodeContext;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,6 +54,9 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 	
 	@Override
 	public boolean canAnalyze(Program p) {
+		if (!super.canAnalyze(p)) {
+			return false;
+		}
 		Language lang = p.getLanguage();
 		statusReg = p.getRegister("STATUS");
 		pclathReg = p.getRegister("PCLATH");
@@ -62,6 +66,10 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 		
 		rpStatusReg = p.getRegister("RP");
 		irpStatusReg = p.getRegister("IRP");
+		
+		// set default analysis options
+		minSpeculativeRefAddress = 4;
+		minStoreLoadRefAddress = 4;
 		
 		return lang.getProcessor() == PicProcessor.PROCESSOR_PIC_16 && pclathReg != null;
 	}
@@ -83,25 +91,6 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 		ConstantPropagationContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 			
 			@Override
-			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
-					int size, DataType dataType, RefType refType) {
-				AddressSpace space = address.getAddressSpace();
-
-				if (address.isExternalAddress()) {
-					return true;
-				}
-				
-				if (space.hasMappedRegisters()) {
-					return true;
-				}
-				boolean isCodeSpace = address.getAddressSpace().getName().equals(CODE_SPACE_NAME);
-				if (refType.isComputed() && refType.isFlow() && isCodeSpace) {
-					return true;
-				}
-				return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
-			}
-			
-			@Override
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
 				FlowType flowType = instruction.getFlowType();
 				if (!flowType.isFlow()) {
@@ -111,11 +100,9 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 				Reference[] refs = instruction.getReferencesFrom();
 				if (refs.length == 1 && refs[0].getReferenceType().isFlow()) {
 					writeContext(refs[0].getToAddress(), context);
-					Address dest = refs[0].getToAddress();
-					disassemblyPoints.addRange(dest, dest);
 				}
 				
-				return false;
+				return super.evaluateDestination(context, instruction);
 			}
 
 			private void writeContext(Address dest, VarnodeContext context) {
@@ -148,7 +135,7 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 		};
 		
 	    eval.setTrustWritableMemory(trustWriteMemOption)
-		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMinSpeculativeOffset(minSpeculativeRefAddress)
 		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
 		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
 		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
@@ -157,11 +144,6 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 		
 		AddressSet result = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
-		if (!disassemblyPoints.isEmpty()) {
-			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
-			mgr.disassemble(disassemblyPoints);
-		}
-		
 		return result;
 	}
 	

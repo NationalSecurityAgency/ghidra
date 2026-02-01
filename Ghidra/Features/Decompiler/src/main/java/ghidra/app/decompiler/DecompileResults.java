@@ -73,6 +73,7 @@ public class DecompileResults {
 		hfunc = null;
 		hparamid = null;
 		docroot = null;
+		this.processState = processState;
 		//dumpResults(raw);
 		decodeStream(decoder);
 	}
@@ -144,6 +145,14 @@ public class DecompileResults {
 		return processState == DecompileProcess.DisposeState.DISPOSED_ON_STARTUP_FAILURE;
 	}
 
+	/** 
+	 * Returns true if the decompile completed normally
+	 * @return true if the decompile completed normally
+	 */
+	public boolean isValid() {
+		return errMsg == null || errMsg.isBlank();
+	}
+
 	/**
 	 * Return any error message associated with the
 	 * decompilation producing these results.  Generally,
@@ -180,7 +189,7 @@ public class DecompileResults {
 	/**
 	 * Get the marked up C code associated with these
 	 * decompilation results. If there was an error, or
-	 * code generation was turned off, retur null
+	 * code generation was turned off, return null
 	 * @return the resulting root of C markup
 	 */
 	public ClangTokenGroup getCCodeMarkup() {

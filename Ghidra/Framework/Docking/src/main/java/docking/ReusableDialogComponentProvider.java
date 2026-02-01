@@ -24,7 +24,7 @@ import ghidra.util.task.Task;
 
 /**
  * A version of {@link DialogComponentProvider} for clients to extend when they intend for their
- * dialog to be reused.   Typically, dialogs are used once and then no longer referenced.  
+ * dialog to be reused.   Typically, dialogs are used once and then no longer referenced.
  * Alternatively, some clients create a dialog and use it for the lifetime of their code.  This
  * is typical of non-modal plugins.
  * <p>
@@ -32,7 +32,7 @@ import ghidra.util.task.Task;
  * with the dialog, such as in your plugin's {@code dispose()} method.
  * <p>
  * The primary benefit of using this dialog is that any updates to the current theme will update
- * this dialog, even when the dialog is not visible.  For dialogs that extend 
+ * this dialog, even when the dialog is not visible.  For dialogs that extend
  * {@link DialogComponentProvider} directly, they only receive theme updates if they are visible.
  * 
  * @see DialogComponentProvider
@@ -62,12 +62,7 @@ public class ReusableDialogComponentProvider extends DialogComponentProvider {
 	}
 
 	private void themeChanged(ThemeEvent ev) {
-		if (!ev.isLookAndFeelChanged()) {
-			return;  // we only care if the Look and Feel changes
-		}
-
-		// if we are visible, then we don't need to update as the system updates all 
-		// visible components
+		// if we are visible, then we don't need to update as the system updates all visible components
 		if (isVisible()) {
 			return;
 		}

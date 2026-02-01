@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,10 @@ import java.util.Random;
 
 import org.junit.*;
 
-import db.*;
+import db.DBHandle;
+import db.Table;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -32,10 +34,8 @@ import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.task.TaskMonitor;
 
-/**
- *
- */
-public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest implements ErrorHandler {
+public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
+		implements ErrorHandler {
 
 	private DBHandle db;
 	private ProgramDB program;
@@ -86,7 +86,7 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private void createPropertyMap(String name) throws Exception {
-		propertyMap = new ObjectPropertyMapDB<>(db, DBConstants.CREATE, this, null, addrMap, name,
+		propertyMap = new ObjectPropertyMapDB<>(db, OpenMode.CREATE, this, null, addrMap, name,
 			TestSaveable.class, TaskMonitor.DUMMY, true);
 		propertyMap.setCacheSize(2);
 	}

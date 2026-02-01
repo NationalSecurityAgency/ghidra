@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,9 @@ import java.math.BigInteger;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.lang.Endian;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -61,6 +63,8 @@ public interface PcodeArithmetic<T> {
 		LOAD(Reason.EXECUTE_READ),
 		/** The value will be used as the address of a value to store */
 		STORE(Reason.EXECUTE_READ),
+		/** The p-code specification defines the operand as a constant */
+		BY_DEF(Reason.EXECUTE_READ),
 		/** Some other reason, perhaps for userop library use */
 		OTHER(Reason.EXECUTE_READ),
 		/** The user or a tool is inspecting the value */
@@ -76,6 +80,13 @@ public interface PcodeArithmetic<T> {
 			return reason;
 		}
 	}
+
+	/**
+	 * Get the type of values over which this arithmetic operates.
+	 * 
+	 * @return the domain
+	 */
+	Class<T> getDomain();
 
 	/**
 	 * Get the endianness of this arithmetic
@@ -146,8 +157,7 @@ public interface PcodeArithmetic<T> {
 	 * @implNote {@link OpBehaviorFactory#getOpBehavior(int)} for the given opcode is guaranteed to
 	 *           return a derivative of {@link BinaryOpBehavior}.
 	 * 
-	 * @param op the operation
-	 * @param b the behavior of the operator
+	 * @param opcode the operation's opcode. See {@link PcodeOp}.
 	 * @param sizeout the size (in bytes) of the output variable
 	 * @param sizein1 the size (in bytes) of the first (left) input variable
 	 * @param in1 the first (left) input value
@@ -168,9 +178,9 @@ public interface PcodeArithmetic<T> {
 	 * @implNote {@link OpBehaviorFactory#getOpBehavior(int)} for the given opcode is guaranteed to
 	 *           return a derivative of {@link BinaryOpBehavior}.
 	 * 
-	 * @param op
-	 * @param in1
-	 * @param in2
+	 * @param op the operation
+	 * @param in1 the first (left) input value
+	 * @param in2 the second (right) input value
 	 * @return the output value
 	 */
 	default T binaryOp(PcodeOp op, T in1, T in2) {
@@ -216,7 +226,7 @@ public interface PcodeArithmetic<T> {
 	 * The "pointer subfield" op takes two operands: base, offset; and is used as a more specific
 	 * representation of structure field address computation. Its behavior is exactly equivalent to
 	 * {@link PcodeOp#INT_ADD}. Suppose {@code st} is a structure pointer with a field {@code f}
-	 * located {@link offset} bytes into the structure, and {@code st} has the value {@code base}.
+	 * located {@code inOffset} bytes into the structure, and {@code st} has the value {@code base}.
 	 * The decompiler would likely render the {@link PcodeOp#PTRSUB} op as {@code &st->f}. An
 	 * equivalent SLEIGH expression is {@code base + offset}.
 	 * 
@@ -240,32 +250,70 @@ public interface PcodeArithmetic<T> {
 	 * 
 	 * <p>
 	 * This implements any abstractions associated with {@link PcodeOp#STORE}. This is called on the
-	 * address/offset and the value before the value is actually stored into the state.
+	 * offset and the value before the value is actually stored into the state. <b>NOTE:</b> STORE
+	 * ops always quantize the offset.
 	 * 
-	 * @param sizeout the size (in bytes) of the output variable
-	 * @param sizeinAddress the size (in bytes) of the variable used for indirection
-	 * @param inAddress the value used as the address (or offset)
-	 * @param sizeinValue the size (in bytes) of the variable to store
+	 * @param sizeinOffset the size (in bytes) of the variable used for indirection
+	 * @param space the address space
+	 * @param inOffset the value used as the address (or offset)
+	 * @param sizeinValue the size (in bytes) of the variable to store and of the output variable
 	 * @param inValue the value to store
 	 * @return the modified value to store
 	 */
-	T modBeforeStore(int sizeout, int sizeinAddress, T inAddress, int sizeinValue, T inValue);
+	T modBeforeStore(int sizeinOffset, AddressSpace space, T inOffset, int sizeinValue, T inValue);
+
+	/**
+	 * Apply any modifications before a value is stored
+	 * 
+	 * <p>
+	 * This provides the full p-code op, allowing deeper inspection of the code. <b>NOTE:</b> STORE
+	 * ops always quantize the offset.
+	 * 
+	 * @param op the operation
+	 * @param space the address space
+	 * @param inOffset the value used as the offset
+	 * @param inValue the value to store
+	 * @return the modified value to store
+	 */
+	default T modBeforeStore(PcodeOp op, AddressSpace space, T inOffset, T inValue) {
+		return modBeforeStore(op.getInput(1).getSize(), space, inOffset, op.getInput(2).getSize(),
+			inValue);
+	}
 
 	/**
 	 * Apply any modifications after a value is loaded
 	 * 
 	 * <p>
 	 * This implements any abstractions associated with {@link PcodeOp#LOAD}. This is called on the
-	 * address/offset and the value after the value is actually loaded from the state.
+	 * address/offset and the value after the value is actually loaded from the state. <b>NOTE:</b>
+	 * LOAD ops always quantize the offset.
 	 * 
-	 * @param sizeout the size (in bytes) of the output variable
-	 * @param sizeinAddress the size (in bytes) of the variable used for indirection
-	 * @param inAddress the value used as the address (or offset)
-	 * @param sizeinValue the size (in bytes) of the variable loaded
+	 * @param sizeinOffset the size (in bytes) of the variable used for indirection
+	 * @param space the address space
+	 * @param inOffset the value used as the offset
+	 * @param sizeinValue the size (in bytes) of the variable loaded and of the output variable
 	 * @param inValue the value loaded
 	 * @return the modified value loaded
 	 */
-	T modAfterLoad(int sizeout, int sizeinAddress, T inAddress, int sizeinValue, T inValue);
+	T modAfterLoad(int sizeinOffset, AddressSpace space, T inOffset, int sizeinValue, T inValue);
+
+	/**
+	 * Apply any modifications after a value is loaded
+	 * 
+	 * <p>
+	 * This provides the full p-code op, allowing deeper inspection of the code. <b>NOTE:</b> LOAD
+	 * ops always quantize the offset.
+	 * 
+	 * @param op the operation
+	 * @param space the address space
+	 * @param inOffset the value used as the offset
+	 * @param inValue the value loaded
+	 * @return the modified value loaded
+	 */
+	default T modAfterLoad(PcodeOp op, AddressSpace space, T inOffset, T inValue) {
+		return modAfterLoad(op.getInput(1).getSize(), space, inOffset, op.getOutput().getSize(),
+			inValue);
+	}
 
 	/**
 	 * Convert the given constant concrete value to type {@code T} having the same size.
@@ -274,6 +322,39 @@ public interface PcodeArithmetic<T> {
 	 * @return the value as a {@code T}
 	 */
 	T fromConst(byte[] value);
+
+	/**
+	 * Convert a {@code byte} to {@code T}, with unsigned extension
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConst(byte value, int size) {
+		return fromConst(Byte.toUnsignedLong(value), size);
+	}
+
+	/**
+	 * Convert a {@code short} to {@code T}, with unsigned extension
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConst(short value, int size) {
+		return fromConst(Short.toUnsignedLong(value), size);
+	}
+
+	/**
+	 * Convert an {@code int} to {@code T}, with unsigned extension
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConst(int value, int size) {
+		return fromConst(Integer.toUnsignedLong(value), size);
+	}
 
 	/**
 	 * Convert the given constant concrete value to type {@code T} having the given size.
@@ -289,6 +370,50 @@ public interface PcodeArithmetic<T> {
 	 */
 	default T fromConst(long value, int size) {
 		return fromConst(Utils.longToBytes(value, size, getEndian().isBigEndian()));
+	}
+
+	/**
+	 * Convert a {@code float} to {@code T}
+	 * 
+	 * <p>
+	 * If size is not {@value Float#BYTES}, bytes are truncated or passed with 0s, according to
+	 * machine endianness.
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConst(float value, int size) {
+		return fromConst(Float.floatToRawIntBits(value), size);
+	}
+
+	/**
+	 * Convert a {@code double} to {@code T}
+	 * 
+	 * <p>
+	 * If size is not {@value Double#BYTES}, bytes are truncated or passed with 0s, according to
+	 * machine endianness.
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConst(double value, int size) {
+		return fromConst(Double.doubleToRawLongBits(value), size);
+	}
+
+	/**
+	 * Convert a {@code boolean} to {@code T}
+	 * 
+	 * <p>
+	 * {@code true} is represented as 1, and {@code false} as 0, padded to the given size.
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConst(boolean value, int size) {
+		return fromConst(value ? 1L : 0L, size);
 	}
 
 	/**
@@ -312,23 +437,50 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
+	 * Convert the given constant concrete register value to type {@code T}
+	 * 
+	 * @param value the register value
+	 * @return the value as a {@code T}
+	 */
+	default T fromConst(RegisterValue value) {
+		return fromConst(value.getUnsignedValue(), value.getRegister().getNumBytes(),
+			value.getRegister().isProcessorContext());
+	}
+
+	/**
 	 * Convert the given constant concrete value to type {@code T} having the given size.
 	 * 
 	 * <p>
 	 * The value is assumed <em>not</em> to be for the disassembly context register.
 	 * 
 	 * @see #fromConst(BigInteger, int, boolean)
+	 * @param value the constant value
+	 * @param size the size (in bytes) of the variable into which the value is to be stored
+	 * @return the value as a {@code T}
 	 */
 	default T fromConst(BigInteger value, int size) {
 		return fromConst(value, size, false);
 	}
 
 	/**
+	 * Convert the given concrete address to type {@code T}.
+	 * 
+	 * <p>
+	 * The value will have the pointer size of the address' space. Other than deriving that size,
+	 * the returned value has nothing to do with the address space.
+	 * 
+	 * @param address the address
+	 * @return the value
+	 */
+	default T fromConst(Address address) {
+		return fromConst(address.getOffset(), address.getAddressSpace().getPointerSize());
+	}
+
+	/**
 	 * Convert, if possible, the given abstract value to a concrete byte array
 	 * 
 	 * @param value the abstract value
-	 * @param size the expected size (in bytes) of the array
-	 * @param the reason why the emulator needs a concrete value
+	 * @param purpose the purpose for which the emulator needs a concrete value
 	 * @return the array
 	 * @throws ConcretionError if the value cannot be made concrete
 	 */
@@ -349,6 +501,22 @@ public interface PcodeArithmetic<T> {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Convert, if possible, the given abstract value to a concrete register value
+	 * 
+	 * @param register the register
+	 * @param value the abstract value
+	 * @param purpose the reason why the emulator needs a concrete value
+	 * @return the concrete value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default RegisterValue toRegisterValue(Register register, T value, Purpose purpose) {
+		if (register.isProcessorContext()) {
+			purpose = Purpose.CONTEXT;
+		}
+		return new RegisterValue(register, toBigInteger(value, purpose));
 	}
 
 	/**
@@ -386,6 +554,50 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
+	 * Convert, if possible, the given abstract value to a concrete float
+	 * 
+	 * <p>
+	 * If value does not have size {@value Float#BYTES}, it is truncated or padded, according to
+	 * machine endianness, before the raw bits are converted to a float.
+	 * 
+	 * @param value the abstract value
+	 * @param purpose the reason why the emulator needs a concrete value
+	 * @return the concrete value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default float toFloat(T value, Purpose purpose) {
+		return Float.intBitsToFloat((int) toLong(value, purpose));
+	}
+
+	/**
+	 * Convert, if possible, the given abstract value to a concrete double
+	 * 
+	 * <p>
+	 * If value does not have size {@value Double#BYTES}, it is truncated or padded, according to
+	 * machine endianness, before the raw bits are converted to a double.
+	 * 
+	 * @param value the abstract value
+	 * @param purpose the reason why the emulator needs a concrete value
+	 * @return the concrete value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default double toDouble(T value, Purpose purpose) {
+		return Double.longBitsToDouble(toLong(value, purpose));
+	}
+
+	/**
+	 * Convert, if possible, the given abstract value to a concrete address in the given space
+	 * 
+	 * @param value the abstract value
+	 * @param space the destination address space
+	 * @param purpose the reason why the emulator needs a concrete value
+	 * @return the address
+	 */
+	default Address toAddress(T value, AddressSpace space, Purpose purpose) {
+		return space.getAddress(toLong(value, purpose));
+	}
+
+	/**
 	 * Get the size in bytes, if possible, of the given abstract value
 	 * 
 	 * <p>
@@ -400,7 +612,7 @@ public interface PcodeArithmetic<T> {
 	 * Get the size in bytes, if possible, of the given abstract value, as an abstract value
 	 * 
 	 * <p>
-	 * The returned size should itself has a size of {@link #SIZEOF_SIZEOF}.
+	 * The returned size should have a size of {@link #SIZEOF_SIZEOF}.
 	 * 
 	 * @param value the abstract value
 	 * @return the size in bytes, as an abstract value

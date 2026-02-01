@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.ApplyFunctionDataTypesCmd;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
@@ -84,7 +85,7 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		if ("golang".equals(program.getCompilerSpec().getCompilerSpecID().toString())) {
+		if (GoRttiMapper.isGolangProgram(program)) {
 			return false;
 		}
 		return super.getDefaultEnablement(program);
@@ -126,14 +127,15 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 		options.registerOption(OPTION_NAME_ARCHIVE_CHOOSER, OptionType.STRING_TYPE,
 			CHOOSER_AUTO_DETECT, null, OPTION_DESCRIPTION_ARCHIVE_CHOOSER,
-			new StringWithChoicesEditor(chooserList));
+			() -> new StringWithChoicesEditor(chooserList));
 
 		options.registerOption(OPTION_NAME_GDT_FILEPATH, OptionType.FILE_TYPE, null, null,
 			OPTION_DESCRIPTION_GDT_FILEPATH,
-			new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
+			() -> new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
 		options.registerOption(OPTION_NAME_PROJECT_PATH, OptionType.STRING_TYPE, null, null,
-			OPTION_DESCRIPTION_PROJECT_PATH, new ProjectPathChooserEditor(
-				"Choose Data Type Archive", DATATYPEARCHIVE_PROJECT_FILTER));
+			OPTION_DESCRIPTION_PROJECT_PATH,
+			() -> new ProjectPathChooserEditor("Choose Data Type Archive",
+				new DefaultDomainFileFilter(DataTypeArchive.class, false)));
 	}
 
 	@Override
@@ -288,6 +290,4 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 				.collect(Collectors.toMap(f -> f.getName(), f -> f));
 	}
 
-	private static final DomainFileFilter DATATYPEARCHIVE_PROJECT_FILTER =
-		df -> DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass());
 }

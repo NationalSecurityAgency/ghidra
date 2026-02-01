@@ -763,6 +763,28 @@ public class AddressSetTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testForwardRangeIteratorRemove() {
+		AddressSet set = set(0x100, 0x110, 0x200, 0x210, 0x300, 0x305);
+		assertEquals(40, set.getNumAddresses());
+		assertEquals(3, set.getNumAddressRanges());
+
+		Iterator<AddressRange> it = set.iterator(true);
+		Assert.assertEquals(range(0x100, 0x110), it.next());
+		Assert.assertEquals(range(0x200, 0x210), it.next());
+		it.remove();
+		Assert.assertEquals(range(0x300, 0x305), it.next());
+		assertTrue(!it.hasNext());
+
+		it = set.iterator(true);
+		Assert.assertEquals(range(0x100, 0x110), it.next());
+		Assert.assertEquals(range(0x300, 0x305), it.next());
+		assertTrue(!it.hasNext());
+
+		assertEquals(23, set.getNumAddresses());
+		assertEquals(2, set.getNumAddressRanges());
+	}
+
+	@Test
 	public void testBackwardRangeIterator() {
 		AddressSet set = set(0x100, 0x110, 0x200, 0x210, 0x300, 0x305);
 		Iterator<AddressRange> it = set.iterator(false);
@@ -770,6 +792,28 @@ public class AddressSetTest extends AbstractGenericTest {
 		Assert.assertEquals(range(0x200, 0x210), it.next());
 		Assert.assertEquals(range(0x100, 0x110), it.next());
 		assertTrue(!it.hasNext());
+	}
+
+	@Test
+	public void testBackwardRangeIteratorRemove() {
+		AddressSet set = set(0x100, 0x110, 0x200, 0x210, 0x300, 0x305);
+		assertEquals(40, set.getNumAddresses());
+		assertEquals(3, set.getNumAddressRanges());
+
+		Iterator<AddressRange> it = set.iterator(false);
+		Assert.assertEquals(range(0x300, 0x305), it.next());
+		Assert.assertEquals(range(0x200, 0x210), it.next());
+		it.remove();
+		Assert.assertEquals(range(0x100, 0x110), it.next());
+		assertTrue(!it.hasNext());
+
+		it = set.iterator(false);
+		Assert.assertEquals(range(0x300, 0x305), it.next());
+		Assert.assertEquals(range(0x100, 0x110), it.next());
+		assertTrue(!it.hasNext());
+
+		assertEquals(23, set.getNumAddresses());
+		assertEquals(2, set.getNumAddressRanges());
 	}
 
 	@Test

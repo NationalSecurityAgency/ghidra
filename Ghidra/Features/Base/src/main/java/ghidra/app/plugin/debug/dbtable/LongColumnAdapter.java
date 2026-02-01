@@ -19,6 +19,10 @@ import db.DBRecord;
 
 public class LongColumnAdapter extends AbstractColumnAdapter {
 
+	LongColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
 	@Override
 	Class<?> getValueClass() {
 		return Long.class;
@@ -32,5 +36,10 @@ public class LongColumnAdapter extends AbstractColumnAdapter {
 	@Override
 	Object getValue(DBRecord rec, int col) {
 		return Long.valueOf(rec.getLongValue(col));
+	}
+
+	@Override
+	public LongRenderer getColumnRenderer() {
+		return longRenderer;
 	}
 }

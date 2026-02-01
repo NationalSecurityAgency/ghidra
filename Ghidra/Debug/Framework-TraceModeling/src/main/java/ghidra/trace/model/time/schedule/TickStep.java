@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.trace.model.time.schedule;
 
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -24,9 +25,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public class TickStep extends AbstractStep {
 
-	public static TickStep parse(long threadKey, String stepSpec) {
+	public static TickStep parse(long threadKey, String stepSpec, TimeRadix radix) {
 		try {
-			return new TickStep(threadKey, Long.parseLong(stepSpec));
+			return new TickStep(threadKey, radix.decode(stepSpec));
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Cannot parse tick step: '" + stepSpec + "'");
@@ -49,8 +50,13 @@ public class TickStep extends AbstractStep {
 	}
 
 	@Override
-	protected String toStringStepPart() {
-		return Long.toString(tickCount);
+	public long getSkipCount() {
+		return 0;
+	}
+
+	@Override
+	protected String toStringStepPart(TimeRadix radix) {
+		return radix.format(tickCount);
 	}
 
 	@Override
@@ -66,7 +72,7 @@ public class TickStep extends AbstractStep {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
+	public void execute(PcodeThread<?> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		for (int i = 0; i < tickCount; i++) {
 			monitor.incrementProgress(1);

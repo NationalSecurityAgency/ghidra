@@ -21,7 +21,7 @@ import docking.tool.ToolConstants;
 
 /**
  * A marker interface to signal that the implementing action serves as an action that should
- * not be itself used in the tool, but should only be used to register and manager keybindings.
+ * not itself be used in the tool, but should only be used to register and manage keybindings.
  * 
  * 
  * <p>This action is merely a tool by which transient components can ensure that their actions

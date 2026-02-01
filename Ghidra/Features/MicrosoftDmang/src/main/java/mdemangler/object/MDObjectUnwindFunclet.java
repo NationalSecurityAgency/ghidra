@@ -15,7 +15,8 @@
  */
 package mdemangler.object;
 
-import mdemangler.*;
+import mdemangler.MDException;
+import mdemangler.MDMang;
 
 /**
  * This class represents a MSFT <b><code>__unwindfunclet$</code></b> (prefix) symbol.  We have
@@ -28,7 +29,7 @@ import mdemangler.*;
 */
 public class MDObjectUnwindFunclet extends MDObjectReserved {
 	private String digits;
-	private MDParsableItem internalItem;
+	private MDObjectCPP objCpp;
 
 	public MDObjectUnwindFunclet(MDMang dmang) {
 		super(dmang);
@@ -37,12 +38,13 @@ public class MDObjectUnwindFunclet extends MDObjectReserved {
 	@Override
 	public void insert(StringBuilder builder) {
 		super.insert(builder);
-		dmang.appendString(builder, "[UnwindFunclet," + digits + "]{" + internalItem + "}");
+		dmang.appendString(builder, "[UnwindFunclet," + digits + "]{" + objCpp + "}");
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		internalItem = MDMangObjectParser.determineItemAndParse(dmang);
+		objCpp = new MDObjectCPP(dmang);
+		objCpp.parse();
 		dmang.increment(); // '$'
 		//Here, we have seen $9 and $10 (two digits for $10).
 		//TODO: forward programming to test beyond one digit.

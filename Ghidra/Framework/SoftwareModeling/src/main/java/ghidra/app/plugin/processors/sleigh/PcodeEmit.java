@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ public abstract class PcodeEmit {
 			addressFactory = language.getAddressFactory();
 			uniq_space = addressFactory.getUniqueSpace();
 			uniquemask = language.getUniqueAllocationMask();
-			uniqueoffset = (startAddress.getOffset() & uniquemask) << 4;
+			uniqueoffset = (startAddress.getOffset() & uniquemask) << 8;
 		}
 		else {		// This can happen for CallFixup snippets, but these don't need their temporary vars patched up
 			language = null;
@@ -120,7 +120,7 @@ public abstract class PcodeEmit {
 	}
 
 	private void setUniqueOffset(Address addr) {
-		uniqueoffset = (addr.getOffset() & uniquemask) << 4;
+		uniqueoffset = (addr.getOffset() & uniquemask) << 8;
 	}
 
 	public Address getStartAddress() {
@@ -182,7 +182,8 @@ public abstract class PcodeEmit {
 	 */
 	void resolveFinalFallthrough() throws IOException {
 		try {
-			if (fallOverride == null || fallOverride.equals(getStartAddress().add(fallOffset))) {
+			if (fallOverride == null) {
+				// handles both length-override and fallthrough override cases
 				return;
 			}
 		}
@@ -503,6 +504,10 @@ public abstract class PcodeEmit {
 		VarnodeData[] dyncache = null;
 		VarnodeTpl vn, outvn;
 		int isize = opt.getInput().length;
+
+		if (isize > incache.length) {
+			incache = new VarnodeData[isize];
+		}
 
 		// First build all the inputs
 		for (int i = 0; i < isize; ++i) {

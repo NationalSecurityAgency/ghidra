@@ -15,11 +15,12 @@
  */
 package ghidra.feature.fid.debug;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -63,8 +64,13 @@ public class FidSearchResultFrame extends JFrame implements FidQueryCloseListene
 	}
 
 	private void buildFrame() {
-		GTableCellRenderer renderer = new GTableCellRenderer();
-		renderer.setFont(renderer.getFixedWidthFont());
+		GTableCellRenderer renderer = new GTableCellRenderer() {
+			@Override
+			protected Font getDefaultFont() {
+				return fixedWidthFont;
+			}
+		};
+
 		int columnCount = table.getColumnCount();
 		for (int ii = 0; ii < columnCount; ++ii) {
 			Class<?> columnClass = table.getColumnClass(ii);
@@ -314,7 +320,7 @@ public class FidSearchResultFrame extends JFrame implements FidQueryCloseListene
 	}
 
 	@Override
-	public void fidQueryClosed(FidQueryService service) {
+	public void fidQueryClosed(FidQueryService fqs) {
 		dispose();
 	}
 }

@@ -8,8 +8,10 @@
 @define ALIGN "1"
 @endif
 
+@ifndef ALREADY_ENDIAN_ALIGN
 define endian=$(ENDIAN);
 define alignment=$(ALIGN);
+@endif
 
 define space ram type=ram_space size=$(SIZE) wordsize=$(WORDSIZE) default;
 
@@ -18,6 +20,10 @@ define space register type=register_space size=2;
 define register offset=0x1000 size=$(SIZE) [
        r0  r1  r2  r3  r4  r5  r6  r7
        r8  r9 r10 r11 r12  sp  lr  pc
+];
+
+define ram offset=0x0 size=$(SIZE) [
+       mmr0
 ];
 
 # STATUS REGISTER MAP: (LOW)

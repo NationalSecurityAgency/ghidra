@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.Symbol;
@@ -186,9 +185,13 @@ public class ToolTipUtils {
 		if (includeSymbolDetails) {
 			buf.append("Function");
 			buf.append(HTML_SPACE).append("-").append(HTML_SPACE);
-			String functionName = function.getSymbol().getName(true);
+			Symbol symbol = function.getSymbol();
+			String functionName = symbol.getName(true);
 			functionName = StringUtilities.trimMiddle(functionName, LINE_LENGTH);
 			buf.append(friendlyEncodeHTML(functionName));
+			buf.append("&nbsp;&nbsp;&nbsp;&lt;");
+			buf.append(friendlyEncodeHTML(symbol.getSource().getDisplayString()));
+			buf.append("&gt;");
 			if (extLoc != null) {
 				Address addr = extLoc.getAddress();
 				if (addr != null) {
@@ -289,12 +292,12 @@ public class ToolTipUtils {
 		}
 		buffy.append(friendlyEncodeHTML(function.getReturnType().getName()));
 		buffy.append(HTML_SPACE);
-		
+
 		String callingConvention = function.getCallingConventionName();
 		if (callingConvention.equals(Function.DEFAULT_CALLING_CONVENTION_STRING)) {
 			callingConvention = function.getCallingConvention().getName();
 		}
-		if (!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+		if (!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConvention)) {
 			String ccHtml = friendlyEncodeHTML(callingConvention);
 			if (function.hasUnknownCallingConventionName()) {
 				ccHtml = colorString(Color.RED, ccHtml);
@@ -302,7 +305,7 @@ public class ToolTipUtils {
 			buffy.append(ccHtml);
 			buffy.append(HTML_SPACE);
 		}
-		
+
 		String functionName = StringUtilities.trimMiddle(function.getName(), LINE_LENGTH);
 		buffy.append(colorString(FunctionColors.NAME, friendlyEncodeHTML(functionName)));
 		buffy.append(HTML_SPACE).append("(");

@@ -1,0 +1,59 @@
+define pcodeop gcsrxchg;
+
+#lvz.txt gcsrxchg mask=0x05000000	[@lvz]
+#0x05000000	0xff000000	r0:5, r5:5,u10:14	['reg0_5_s0', 'reg5_5_s0', 'imm10_14_s0']
+:gcsrxchg RD, RJsrc,imm10_14  is op24_31=0x5 & RD & RJsrc & imm10_14 {
+	RD = gcsrxchg(RD, RJsrc, imm10_14:$(REGSIZE));
+}
+
+define pcodeop gtlbclr;
+
+#lvz.txt gtlbclr mask=0x06482001	[@lvz]
+:gtlbclr                   is instword=0x06482001 {
+	gtlbclr();
+}
+
+define pcodeop gtlbflush;
+
+#lvz.txt gtlbflush mask=0x06482401	[@lvz]
+#0x06482401	0xffffffff		['']
+:gtlbflush                 is instword=0x06482401 {
+	gtlbflush();
+}
+
+define pcodeop gtlbsrch;
+
+#lvz.txt gtlbsrch mask=0x06482801	[@lvz]
+:gtlbsrch                  is instword=0x06482801 {
+	gtlbsrch();
+}
+
+define pcodeop gtlbrd;
+
+#lvz.txt gtlbrd mask=0x06482c01	[@lvz]
+:gtlbrd                    is instword=0x06482c01 {
+	gtlbrd();
+}
+
+define pcodeop gtlbwr;
+
+#lvz.txt gtlbwr mask=0x06483001	[@lvz]
+:gtlbwr                    is instword=0x06483001 {
+	gtlbwr();
+}
+
+define pcodeop gtlbfill;
+
+#lvz.txt gtlbfill mask=0x06483401	[@lvz]
+:gtlbfill                  is instword=0x06483401 {
+	gtlbfill();
+}
+
+define pcodeop hvcl;
+
+#lvz.txt hypcall mask=0x002b8000	[@lvz, @orig_name=hvcl]
+#0x002b8000	0xffff8000	u0:15	['imm0_15_s0']
+:hvcl imm0_15              is op15_31=0x57 & imm0_15 {
+	hvcl(imm0_15:$(REGSIZE));
+}
+

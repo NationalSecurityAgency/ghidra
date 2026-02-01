@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
  * </ol>
  * <p>
  * Not all the update functions are performed on a run of a TableUpdateJob.  If the reloadData flag is
- * not set, the the data is just copied from the model's current list, instead of calling the model's
+ * not set, then the data is just copied from the model's current list, instead of calling the model's
  * loadData() method. If the sortComparator is null,
  * then the data is not sorted (for example, when only filtering needs to be done).  If there
  * are no add/removes in the list, then that step does nothing.
@@ -191,18 +191,18 @@ public class TableUpdateJob<T> {
 	 * effect depends on the running job's state:
 	 * <ul>
 	 *     <li>If the sort state hasn't happened yet, all it does is set the comparator for when
-	 *      the sort occurs.
+	 *      the sort occurs.</li>
 	 *     <li>If the sort state has already been started or completed, then this method attempts
 	 *      to stop the current process phase and cause the state machine to return to the sort
-	 *      phase.
+	 *      phase.</li>
 	 *     <li>If the current job has already entered the DONE state, then the sort cannot take
 	 *      effect in this job and a false value is returned to indicate the
-	 * sort was not handled by this job.
+	 * sort was not handled by this job.</li>
 	 * </ul>
 	 * @param newSortingContext the TableColumnComparator to use to sort the data.
 	 * @param forceSort True signals to re-sort, even if this is already sorted
 	 * @return true if the sort can be processed by this job, false if this job is essentially
-	 *         already completed and therefor cannot perform the sort job.
+	 *         already completed and therefore cannot perform the sort job.
 	 */
 	public synchronized boolean requestSort(TableSortingContext<T> newSortingContext,
 			boolean forceSort) {
@@ -225,16 +225,16 @@ public class TableUpdateJob<T> {
 	 * depends on the running job's state:
 	 * <ul>
 	 * 	  <li>If the filter state hasn't happened yet, then nothing needs to be done as this job
-	 * 			will filter later anyway.
+	 * 			will filter later anyway.</li>
 	 *    <li>If the filter state has already been started or completed, then this method
 	 *    		attempts to stop the current process phase and cause the state machine to return to
-	 *          the filter phase.
+	 *          the filter phase.</li>
 	 *    <li>If the current job has already entered the DONE state, then the filter cannot take
 	 *     		effect in this job and a false value is returned to indicate the filter was not
-	 *          handled by this job.
+	 *          handled by this job.</li>
 	 * </ul>
 	 * @return true if the filter can be processed by this job, false if this job is essentially
-	 * already completed and therefor cannot perform the filter job.
+	 * already completed and therefore cannot perform the filter job.
 	 */
 	public synchronized boolean requestFilter() {
 		if (currentState == DONE) {
@@ -718,7 +718,7 @@ public class TableUpdateJob<T> {
 	}
 
 	/**
-	 * Wraps a comparator<T> to add progress monitoring and cancel checking
+	 * Wraps a {@link Comparator} to add progress monitoring and cancel checking
 	 *
 	 * @param <T> The type of data being sorted
 	 */

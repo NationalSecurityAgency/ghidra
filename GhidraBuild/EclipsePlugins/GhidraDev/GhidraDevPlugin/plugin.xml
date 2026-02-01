@@ -39,6 +39,23 @@
       </wizard>
    </extension>
    <extension
+         point="org.eclipse.ui.importWizards">
+      <category
+            id="GhidraCategory"
+            name="Ghidra">
+      </category>
+      <wizard
+            category="GhidraCategory"
+            class="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleSourceWizard"
+            icon="icons/brick_add.png"
+            id="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleSourceWizard"
+            name="Ghidra Module Source">
+         <description>
+            Imports a Ghidra module source directory to a new project.
+         </description>
+      </wizard>
+   </extension>
+   <extension
          point="org.eclipse.ui.exportWizards">
       <category
             id="GhidraCategory"
@@ -50,6 +67,9 @@
             icon="icons/brick_go.png"
             id="ghidradev.ghidraprojectcreator.wizards.ExportGhidraModuleWizard"
             name="Ghidra Module Extension">
+         <description>
+            Exports a Ghidra module project to a zipped Ghidra extension.
+         </description>
       </wizard>
    </extension>
    <extension
@@ -143,6 +163,19 @@
                   <parameter
                         name="newWizardId"
                         value="ghidradev.ghidraprojectcreator.wizards.CreateGhidraModuleProjectWizard">
+                  </parameter>
+               </command>
+            </menu>
+            <menu
+                  label="Import">
+               <command
+                     commandId="org.eclipse.ui.file.import"
+                     icon="icons/brick_add.png"
+                     label="Ghidra Module Source"
+                     style="push">
+                  <parameter
+                        name="importWizardId"
+                        value="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleSourceWizard">
                   </parameter>
                </command>
             </menu>
@@ -332,14 +365,23 @@
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
+            allowPrototypes="true"
             delegate="ghidradev.ghidraprojectcreator.launchers.GhidraLaunchDelegate"
             id="GhidraGuiLaunchConfigurationType"
-            name="Ghidra">
+            migrationDelegate="org.eclipse.jdt.internal.launching.JavaMigrationDelegate"
+            name="Ghidra"
+            sourceLocatorId="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"
+            sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer">
       </launchConfigurationType>
       <launchConfigurationType
             delegate="ghidradev.ghidraprojectcreator.launchers.GhidraLaunchDelegate"
             id="GhidraHeadlessLaunchConfigurationType"
             name="Ghidra Headless">
+      </launchConfigurationType>
+      <launchConfigurationType
+            delegate="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchDelegate"
+            id="PyGhidraGuiLaunchConfigurationType"
+            name="PyGhidra">
       </launchConfigurationType>
    </extension>
    <extension
@@ -353,6 +395,11 @@
             configTypeID="GhidraHeadlessLaunchConfigurationType"
             icon="icons/GhidraIcon16_bw.png"
             id="GhidraHeadlessLaunchConfigurationTypeImage">
+      </launchConfigurationTypeImage>
+      <launchConfigurationTypeImage
+            configTypeID="PyGhidraGuiLaunchConfigurationType"
+            icon="icons/python.png"
+            id="PyGhidraGuiLaunchConfigurationTypeImage">
       </launchConfigurationTypeImage>
    </extension>
    <extension
@@ -371,6 +418,13 @@
             name="Ghidra Headless"
             type="GhidraHeadlessLaunchConfigurationType">
       </launchDelegate>
+      <launchDelegate
+            delegate="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchDelegate"
+            id="PyGhidraGuiLaunchDelegate"
+            modes="run, debug"
+            name="PyGhidra GUI"
+            type="PyGhidraGuiLaunchConfigurationType">
+      </launchDelegate>
    </extension>
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTabGroups">
@@ -385,6 +439,12 @@
             description="Run and debug Ghidra modules and scripts in headless mode"
             id="GhidraHeadlessLaunchConfigurationTabGroup"
             type="GhidraHeadlessLaunchConfigurationType">
+      </launchConfigurationTabGroup>
+      <launchConfigurationTabGroup
+            class="org.python.pydev.debug.ui.PythonTabGroup"
+            description="Run and debug PyGhidra modules and scripts"
+            id="PyGhidraGuiLaunchConfigurationTabGroup"
+            type="PyGhidraGuiLaunchConfigurationType">
       </launchConfigurationTabGroup>
    </extension>
    <extension
@@ -437,6 +497,30 @@
             </enablement>
          </contextualLaunch>
       </shortcut>
+      <shortcut
+            class="ghidradev.ghidraprojectcreator.launchers.PyGhidraGuiLaunchShortcut"
+            icon="icons/python.png"
+            id="PyGhidraGuiLaunchShortcut"
+            label="PyGhidra"
+            modes="run, debug">
+         <contextualLaunch>
+            <enablement>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false">
+                     <test
+                           property="ghidradev.ghidraprojectcreator.testers.isPyGhidraProject"
+                           value="true">
+                     </test>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
    </extension>
    <extension
          point="org.eclipse.core.expressions.propertyTesters">
@@ -466,6 +550,13 @@
             id="GhidraModuleProjectPropertyTester"
             namespace="ghidradev.ghidraprojectcreator.testers"
             properties="isGhidraModuleProject"
+            type="java.lang.Object">
+      </propertyTester>
+      <propertyTester
+            class="ghidradev.ghidraprojectcreator.testers.PyGhidraProjectPropertyTester"
+            id="PyGhidraProjectPropertyTester"
+            namespace="ghidradev.ghidraprojectcreator.testers"
+            properties="isPyGhidraProject"
             type="java.lang.Object">
       </propertyTester>
    </extension>

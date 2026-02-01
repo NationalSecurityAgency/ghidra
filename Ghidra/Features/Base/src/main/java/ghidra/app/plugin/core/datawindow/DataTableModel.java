@@ -44,7 +44,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 	private DataWindowPlugin plugin;
 	private AddressMapImpl addressMap;
 	private Listing listing;
-	private AddressSet addresses;
+	private AddressSet restrictedAddresses;
 
 	DataTableModel(DataWindowPlugin plugin) {
 		super("Data", plugin.getTool(), null, null);
@@ -66,7 +66,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 
 	void reload(Program newProgram) {
 		this.setProgram(newProgram);
-		addresses = plugin.getLimitedAddresses();
+		restrictedAddresses = plugin.getLimitedAddresses();
 		if (newProgram != null) {
 			addressMap = new AddressMapImpl();
 			listing = newProgram.getListing();
@@ -88,12 +88,14 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 	@Override
 	protected void doLoad(Accumulator<DataRowObject> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-		LongIterator it = LongIterator.EMPTY;
-		if (listing != null) {
-			it = new DataKeyIterator();
+
+		if (listing == null) {
+			return;
 		}
+
 		monitor.initialize(getKeyCount());
 		int progress = 0;
+		LongIterator it = new DataKeyIterator();
 		while (it.hasNext()) {
 			monitor.setProgress(progress++);
 			monitor.checkCancelled();
@@ -104,51 +106,18 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 		}
 	}
 
-	public boolean filterAccepts(long key) {
+	private boolean filterAccepts(long key) {
 		if (listing == null || addressMap == null) {
 			return false;
 		}
 
-		Data curData = listing.getDataAt(addressMap.decodeAddress(key));
-		String displayName = curData.getDataType().getDisplayName();
-		if (addresses != null) {
-			return plugin.typeEnabled(displayName) && addresses.contains(curData.getMinAddress());
+		Data data = listing.getDataAt(addressMap.decodeAddress(key));
+		String displayName = data.getDataType().getDisplayName();
+		if (restrictedAddresses != null) {
+			Address minAddress = data.getMinAddress();
+			return plugin.isTypeEnabled(displayName) && restrictedAddresses.contains(minAddress);
 		}
-		return plugin.typeEnabled(displayName);
-	}
-
-	private class DataKeyIterator implements LongIterator {
-		private DataIterator itr;
-
-		DataKeyIterator() {
-			itr = listing.getDefinedData(getProgram().getMemory(), true);
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (itr == null || getProgram() == null)
-				return false;
-			return itr.hasNext();
-		}
-
-		@Override
-		public long next() {
-			Data data = itr.next();
-			if (addressMap != null) {
-				return addressMap.getKey(data.getMinAddress());
-			}
-			return 0;
-		}
-
-		@Override
-		public boolean hasPrevious() {
-			return false;
-		}
-
-		@Override
-		public long previous() {
-			return -1;
-		}
+		return plugin.isTypeEnabled(displayName);
 	}
 
 	void dataAdded(Address addr) {
@@ -191,6 +160,41 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 // Inner Classes
 //==================================================================================================
 
+	private class DataKeyIterator implements LongIterator {
+		private DataIterator it;
+
+		DataKeyIterator() {
+			it = listing.getDefinedData(getProgram().getMemory(), true);
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (it == null || getProgram() == null) {
+				return false;
+			}
+			return it.hasNext();
+		}
+
+		@Override
+		public long next() {
+			Data data = it.next();
+			if (addressMap != null) {
+				return addressMap.getKey(data.getMinAddress());
+			}
+			return 0;
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return false;
+		}
+
+		@Override
+		public long previous() {
+			return -1;
+		}
+	}
+
 	private class DataValueTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<DataRowObject, String> {
 
@@ -200,7 +204,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 		}
 
 		@Override
-		public String getValue(DataRowObject rowObject, Settings settings, Program program,
+		public String getValue(DataRowObject rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			Data data = getDataForRowObject(rowObject);
 			if (data == null) {
@@ -222,7 +226,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 		}
 
 		@Override
-		public String getValue(DataRowObject rowObject, Settings settings, Program program,
+		public String getValue(DataRowObject rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			Data data = getDataForRowObject(rowObject);
 			if (data == null) {
@@ -243,7 +247,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 		}
 
 		@Override
-		public Integer getValue(DataRowObject rowObject, Settings settings, Program program,
+		public Integer getValue(DataRowObject rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			Data data = getDataForRowObject(rowObject);
 			if (data == null) {

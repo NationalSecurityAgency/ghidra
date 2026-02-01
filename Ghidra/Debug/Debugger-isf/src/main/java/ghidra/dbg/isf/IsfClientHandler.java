@@ -130,7 +130,7 @@ public class IsfClientHandler {
 	private String lookType(String ns, String key) throws IOException {
 		IsfDataTypeWriter isfWriter = createDataTypeWriter(server.getDataTypeManager(ns));
 		isfWriter.setSkipSymbols(true);
-		isfWriter.requestType(key);
+		//isfWriter.requestType(key);
 		return writeFrom(isfWriter);
 	}
 
@@ -198,7 +198,7 @@ public class IsfClientHandler {
 
 	private IsfDataTypeWriter createDataTypeWriter(DataTypeManager dtm) throws IOException {
 		StringWriter out = new StringWriter();
-		return new IsfDataTypeWriter(dtm, out);
+		return new IsfDataTypeWriter(dtm, null, out);
 	}
 
 	private String writeFrom(IsfDataTypeWriter dataTypeWriter) throws IOException {

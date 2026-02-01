@@ -1,0 +1,298 @@
+
+attach variables [ sr ] [
+#    0x...0         0x...4      0x...8      0x...c
+     LBEG           LEND        LCOUNT      SAR         # 0x0_
+     BR             LITBASE     _           _           # 0x1_
+     _              _           _           _           # 0x2_
+     SCOMPARE1      _           _           _           # 0x3_
+     ACCLO          ACCHI       _           _           # 0x4_
+     _              _           _           _           # 0x5_
+     _              _           _           _           # 0x6_
+     _              _           _           _           # 0x7_
+     M0             M1          M2          M3          # 0x8_
+     _              _           _           _           # 0x9_
+     _              _           _           _           # 0xa_
+     _              _           _           _           # 0xb_
+     _              _           _           _           # 0xc_
+     _              _           _           _           # 0xd_
+     _              _           _           _           # 0xe_
+     _              _           _           _           # 0xf_
+#    0x...0         0x...4      0x...8      0x...c
+     _              _           _           _           # 0x10_
+     _              _           _           _           # 0x11_
+     WindowBase     WindowStart _           _           # 0x12_
+     _              _           _           _           # 0x13_
+     _              _           _           PTEVADDR    # 0x14_
+     _              _           _           _           # 0x15_
+     _              MMID        RASID       ITLBCFG     # 0x16_
+     DTLBCFG        _           _           _           # 0x17_
+     IBREAKENABLE   MEMCTL      CACHEATTR   ATOMCTL     # 0x18_
+     _              _           _           _           # 0x19_
+     DDR            _           MEPC        MEPS        # 0x1a_
+     MESAVE         MESR        MECR        MEVADDR     # 0x1b_
+     _              _           _           _           # 0x1c_
+     _              _           _           _           # 0x1d_
+     _              _           _           _           # 0x1e_
+     _              _           _           _           # 0x1f_
+#    0x...0         0x...4      0x...8      0x...c
+     IBREAKA0       IBREAKA1    _           _           # 0x20_
+     _              _           _           _           # 0x21_
+     _              _           _           _           # 0x22_
+     _              _           _           _           # 0x23_
+     DBREAKA0       DBREAKA1    _           _           # 0x24_
+     _              _           _           _           # 0x25_
+     _              _           _           _           # 0x26_
+     _              _           _           _           # 0x27_
+     DBREAKC0       DBREAKC1    _           _           # 0x28_
+     _              _           _           _           # 0x29_
+     _              _           _           _           # 0x2a_
+     _              _           _           _           # 0x2b_
+     _              EPC1        EPC2        EPC3        # 0x2c_
+     EPC4           EPC5        EPC6        EPC7        # 0x2d_
+     _              _           _           _           # 0x2e_
+     _              _           _           _           # 0x2f_
+#    0x...0         0x...4      0x...8      0x...c
+     DEPC           _           EPS2        EPS3        # 0x30_
+     EPS4           EPS5        EPS6        EPS7        # 0x31_
+     _              _           _           _           # 0x32_
+     _              _           _           _           # 0x33_
+     _              EXCSAVE1    EXCSAVE2    EXCSAVE3    # 0x34_
+     EXCSAVE4       EXCSAVE5    EXCSAVE6    EXCSAVE7    # 0x35_
+     _              _           _           _           # 0x36_
+     _              _           _           _           # 0x37_
+     CPENABLE       INTERRUPT   INTSET      INTCLEAR    # 0x38_
+     INTENABLE      _           PS          VECBASE     # 0x39_
+     EXCCAUSE       DEBUGCAUSE  CCOUNT      PRID        # 0x3a_
+     ICOUNT         ICOUNTLEVEL EXCVADDR    _           # 0x3b_
+     CCOMPARE0      CCOMPARE1   CCOMPARE2   _           # 0x3c_
+     MISC0          MISC1       MISC2       MISC3       # 0x3d_
+     _              _           _           _           # 0x3e_
+     _              _           _           _           # 0x3f_
+#    0x...0         0x...4      0x...8      0x...c
+];
+
+attach variables [ ar as at n_ar n_as n_at ] [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+];
+
+attach variables [ fr fs ft ] [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+];
+
+attach variables [ br bs bt ] [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+# Various 32-bit pointers relative to PC. Any operands that are split across non-consecutive
+# bits are named foo_LL.LM_ML.MM, where LL is the least significant bits of the least
+# singificant operand half, LM the most significant bits of the least significant operand half, etc.
+
+attach variables [ mw_12_13 ] [
+	M0 M1 M2 M3
+];
+
+attach variables [ m2m3_6_6 ] [
+	M2 M3
+];
+
+attach variables [ m0m1_14_14 ] [
+	M0 M1
+];
+
+
+#implemented pcodeops
+define pcodeop breakpoint;
+define pcodeop dhi;
+define pcodeop dhu;
+define pcodeop dhwb;
+define pcodeop dhwbi;
+define pcodeop dii;
+define pcodeop diu;
+define pcodeop diwb;
+define pcodeop diwbi;
+define pcodeop dpfl;
+define pcodeop dpfr;
+define pcodeop dpfro;
+define pcodeop dpfw;
+define pcodeop dpfwo;
+define pcodeop dsync;
+define pcodeop esync;
+define pcodeop excw;
+define pcodeop extw;
+define pcodeop idtlb;
+define pcodeop ihi;
+define pcodeop ihu;
+define pcodeop iii;
+define pcodeop iitlb;
+define pcodeop iiu;
+define pcodeop ill;
+define pcodeop ipf;
+define pcodeop ipfl;
+define pcodeop isync;
+define pcodeop acquire;
+define pcodeop ldct;
+define pcodeop lict;
+define pcodeop licw;
+define pcodeop memw;
+define pcodeop nsa;
+define pcodeop nsau;
+define pcodeop pdtlb;
+define pcodeop pitlb;
+define pcodeop rdtlb0;
+define pcodeop rdtlb1;
+define pcodeop rer;
+define pcodeop restore4;
+define pcodeop restore8;
+define pcodeop restore12;
+define pcodeop rfdd;
+define pcodeop rfde;
+define pcodeop rfdo;
+define pcodeop rfe;
+define pcodeop rfi;
+define pcodeop rfme;
+define pcodeop rfue;
+define pcodeop rfwo;
+define pcodeop rfwu;
+define pcodeop ritlb0;
+define pcodeop ritlb1;
+define pcodeop rsil;
+define pcodeop rsr;
+define pcodeop rsync;
+define pcodeop rur;
+define pcodeop s32c1i;
+define pcodeop release;
+define pcodeop restoreRegWindow;
+define pcodeop rotateRegWindow;
+define pcodeop sdct;
+define pcodeop sict;
+define pcodeop sicw;
+define pcodeop simcall;
+define pcodeop syscall;
+define pcodeop swap4;
+define pcodeop swap8;
+define pcodeop swap12;
+define pcodeop waiti;
+define pcodeop wdtlb;
+define pcodeop wer;
+define pcodeop witlb;
+define pcodeop wsr;
+define pcodeop wur;
+define pcodeop xsr;
+
+
+# Various 32-bit pointers relative to PC. Any operands that are split across non-consecutive
+# bits are named foo_LL_LM_ML_MM, where LL is the least significant bits of the least
+# singificant operand half, LM the most significant bits of the least significant operand half, etc.
+
+srel_16_23: rel is s8_16_23  [ rel = inst_start + s8_16_23  + 4; ] { export *:4 rel; }
+
+srel_12_23: rel is s12_12_23 [ rel = inst_start + s12_12_23 + 4; ] { export *:4 rel; }
+
+srel_6_23:  rel is s8_6_23   [ rel = inst_start + s8_6_23   + 4; ] { export *:4 rel; }
+
+urel_12_15_4_5: rel is n_u2_4_5 & n_u4_12_15 [
+    rel = inst_start + ((n_u2_4_5 << 4) | n_u4_12_15) + 4;
+] { export *:4 rel; }
+
+srel_6_23_sb2: rel is s8_6_23 [
+    rel = (inst_start & ~3) + ( s8_6_23 << 2 ) + 4;
+] { export *:4 rel; }
+
+srel_8_23_oex_sb2: rel is u16_8_23 [
+    rel = ((inst_start + 3) & ~3) + ((u16_8_23 | 0xffff0000) << 2);
+] { export *:4 rel; }
+
+# Immediates split across the instruction.
+u5_8_11_20: tmp is u1_20 & u4_8_11  [ tmp = (u1_20 << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+u5_4_7_20:  tmp is u1_20 & u4_4_7   [ tmp = 32 - ((u1_20 << 4) | u4_4_7);  ] { export *[const]:4 tmp; }
+u5_8_11_16: tmp is u1_16 & u4_8_11  [ tmp = (u1_16 << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+u5_4_7_12:  tmp is u1_12 & u4_4_7   [ tmp = (u1_12 << 4) | u4_4_7;  ] { export *[const]:4 tmp; }
+u5_8_11_4:  tmp is u1_4 & u4_8_11   [ tmp = (u1_4  << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+
+# Signed 12-bit (extended to 16) immediate, used by MOVI.
+s16_16_23_8_11: tmp is s4_8_11 & u8_16_23 [
+   tmp = (s4_8_11 << 8) | u8_16_23;
+] { export *[const]:2 tmp; }
+
+# An “asymmetric” immediate from -32..95, used by MOVI.N.
+n_s8_12_15_4_6_asymm: tmp is n_s3_4_6 & n_s4_12_15 [
+    tmp = ((((n_s3_4_6 & 7) << 4) | (n_s4_12_15 & 15)) |
+          ((((n_s3_4_6 >> 2) & 1) & ((n_s3_4_6 >> 1) & 1)) << 7));
+] { export *[const]:1 tmp; }
+
+# Immediates shifted or with offset.
+s16_16_23_sb8:  tmp is s8_16_23     [ tmp = s8_16_23  << 8; ] { export *[const]:4 tmp; }
+u15_12_23_sb3:  tmp is u12_12_23    [ tmp = u12_12_23 << 3; ] { export *[const]:4 tmp; }
+u10_16_23_sb2:  tmp is u8_16_23     [ tmp = u8_16_23  << 2; ] { export *[const]:4 tmp; }
+u9_16_23_sb1:   tmp is u8_16_23     [ tmp = u8_16_23  << 1; ] { export *[const]:4 tmp; }
+u5_20_23_plus1: tmp is u4_20_23     [ tmp = u4_20_23   + 1; ] { export *[const]:4 tmp; }
+u8_20_23_sb4:   tmp is u4_20_23     [ tmp = u4_20_23  << 4; ] { export *[const]:4 tmp; }
+u5_4_7_plus7:   tmp is u4_4_7       [ tmp = u4_4_7     + 7; ] { export *[const]:4 tmp; }
+
+n_u6_12_15_sb2: tmp is n_u4_12_15  [ tmp = n_u4_12_15 << 2; ] { export *[const]:4 tmp; }
+
+# One-extended. FIXME: Verify this. Only used by [LS]32E (window extension), which aren’t yet
+# implemented.
+s5_12_15_oex:  tmp is u4_12_15      [ tmp = (u4_12_15 << 2) - 64; ] { export *[const]:2 tmp; }
+
+# Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
+
+# n_u4_4_7 with 0 being -1, used by ADDI.N.
+n_s4_4_7_nozero: tmp is n_u4_4_7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4_7_nozero: tmp is n_u4_4_7      [ tmp = n_u4_4_7+0; ] { export *[const]:4 tmp; }
+
+# B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
+r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 1         [ tmp = 0x1; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 2         [ tmp = 0x2; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 3         [ tmp = 0x3; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 4         [ tmp = 0x4; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 5         [ tmp = 0x5; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 6         [ tmp = 0x6; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 7         [ tmp = 0x7; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 8         [ tmp = 0x8; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 9         [ tmp = 0xa; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 10        [ tmp = 0xc; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 11        [ tmp = 0x10; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 12        [ tmp = 0x20; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 13        [ tmp = 0x40; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 14        [ tmp = 0x80; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 15        [ tmp = 0x100; ]      { export *[const]:4 tmp; }
+
+# B4CONSTU(ar) (Branch Unsigned Immediate) encodings, pg. 42.
+r_b4constu: tmp is ar = 0         [ tmp = 0x8000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 1         [ tmp = 0x1000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 2         [ tmp = 0x2; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 3         [ tmp = 0x3; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 4         [ tmp = 0x4; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 5         [ tmp = 0x5; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 6         [ tmp = 0x6; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 7         [ tmp = 0x7; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 8         [ tmp = 0x8; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 9         [ tmp = 0xa; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 10        [ tmp = 0xc; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 11        [ tmp = 0x10; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 12        [ tmp = 0x20; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 13        [ tmp = 0x40; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 14        [ tmp = 0x80; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 15        [ tmp = 0x100; ]  { export *[const]:4 tmp; }
+
+Ret4: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0x40000000; ] { ret:4 = loc; export ret; }
+Ret8: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0x80000000; ] { ret:4 = loc; export ret; }
+Ret12: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0xc0000000; ] { ret:4 = loc; export ret; }
+
+:^instruction is phase=0 & loopMode=1 & instruction [ phase=1; ] {
+	build instruction;
+	if (LCOUNT == 0 || $(PS_EXCM)) goto inst_next;
+	LCOUNT = LCOUNT - 1;
+	goto [LBEG];
+}
+:^instruction is phase=0 & loopMode=1 & loopEnd=1 & instruction
+	[ loopMode=0; phase=1; ] {
+	build instruction;
+}
+
+:^instruction is phase=0 & loopMode=0 & instruction
+	[ phase=1; ] {
+	build instruction;
+}

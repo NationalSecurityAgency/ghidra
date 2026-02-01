@@ -15,20 +15,20 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.TokenPattern;
 import ghidra.pcodeCPort.slghpattern.DisjointPattern;
 import ghidra.pcodeCPort.slghpattern.Pattern;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class SubtableSymbol extends TripleSymbol {
@@ -43,7 +43,7 @@ public class SubtableSymbol extends TripleSymbol {
 		super(location);
 		pattern = null;
 		decisiontree = null;
-	} // For use with restoreXml
+	}
 
 	public boolean isBeingBuilt() {
 		return beingbuilt;
@@ -114,50 +114,25 @@ public class SubtableSymbol extends TripleSymbol {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
+	public void encode(Encoder encoder) throws IOException {
 		if (decisiontree == null) {
 			return; // Not fully formed
 		}
-		s.append("<subtable_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.append(" numct=\"").print(construct.size());
-		s.append("\">\n");
+		encoder.openElement(ELEM_SUBTABLE_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.writeSignedInteger(ATTRIB_NUMCT, construct.size());
 		for (int i = 0; i < construct.size(); ++i) {
-			construct.get(i).saveXml(s);
+			construct.get(i).encode(encoder);
 		}
-		decisiontree.saveXml(s);
-		s.append("</subtable_sym>\n");
+		decisiontree.encode(encoder);
+		encoder.closeElement(ELEM_SUBTABLE_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<subtable_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		int numct = XmlUtils.decodeUnknownInt(el.getAttributeValue("numct"));
-		construct.reserve(numct);
-
-		List<?> children = el.getChildren();
-		Iterator<?> iter = children.iterator();
-		while (iter.hasNext()) {
-			Element child = (Element) iter.next();
-			if (child.getName().equals("constructor")) {
-				Constructor ct = new Constructor(null);
-				addConstructor(ct);
-				ct.restoreXml(child, trans);
-			}
-			else if (child.getName().equals("decision")) {
-				decisiontree = new DecisionNode();
-				decisiontree.restoreXml(child, null, this);
-			}
-		}
-		pattern = null;
-		beingbuilt = false;
-		errors = false;
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SUBTABLE_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_SUBTABLE_SYM_HEAD);
 	}
 
 	// Associate pattern disjoints to constructors

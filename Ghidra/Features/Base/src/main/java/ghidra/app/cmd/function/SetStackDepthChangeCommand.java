@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,40 +16,41 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
-public class SetStackDepthChangeCommand implements Command {
-	
-	private Program program;
+public class SetStackDepthChangeCommand implements Command<Program> {
+
 	private Address address;
 	private int stackDepthChange;
 	private String errMsg = null;
-	
-	public SetStackDepthChangeCommand(Program program, Address address, int newStackDepthChange) {
-		this.program = program;
+
+	public SetStackDepthChangeCommand(Address address, int newStackDepthChange) {
 		this.address = address;
 		this.stackDepthChange = newStackDepthChange;
 	}
-	
-	public boolean applyTo(DomainObject obj) {
+
+	@Override
+	public boolean applyTo(Program program) {
 		try {
 			CallDepthChangeInfo.setStackDepthChange(program, address, stackDepthChange);
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			errMsg = e.getMessage();
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			return false;
 		}
 	}
 
+	@Override
 	public String getName() {
 		return "Set Stack Depth Change";
 	}
 
+	@Override
 	public String getStatusMsg() {
 		return errMsg;
 	}

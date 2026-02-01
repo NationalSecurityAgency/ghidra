@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,42 +16,46 @@
 package docking.actions;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.Objects;
 
 import javax.swing.*;
 import javax.swing.text.*;
 
-import docking.DialogComponentProvider;
-import docking.KeyEntryTextField;
-import docking.action.*;
+import docking.*;
+import docking.action.DockingActionIf;
+import docking.action.KeyBindingData;
 import docking.tool.ToolConstants;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GAttributes;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.util.action.ReservedKeyBindings;
+import generic.theme.Gui;
 import ghidra.util.HelpLocation;
 import resources.Icons;
 
 /**
- * Dialog to set the key binding on an action; it is popped up when the F4 key
- * is hit.
+ * Dialog to set the key binding on an action. It is triggered by the F4 key.
  */
 public class KeyEntryDialog extends DialogComponentProvider {
 
+	private KeyBindings keyBindings;
 	private ToolActions toolActions;
 	private DockingActionIf action;
+
 	private JPanel defaultPanel;
-	private KeyEntryTextField keyEntryField;
+	private KeyEntryPanel keyEntryPanel;
 	private JTextPane collisionPane;
 	private StyledDocument doc;
-	private SimpleAttributeSet tabAttrSet;
-	private SimpleAttributeSet textAttrSet;
+
+	private SimpleAttributeSet textAttrs;
 	private Color bgColor;
 
-	public KeyEntryDialog(DockingActionIf action, ToolActions actions) {
+	public KeyEntryDialog(Tool tool, DockingActionIf action) {
 		super("Set Key Binding for " + action.getName(), true);
 		this.action = action;
-		this.toolActions = actions;
+		this.toolActions = (ToolActions) tool.getToolActions();
+
+		this.keyBindings = new KeyBindings(tool);
+
 		setUpAttributes();
 		createPanel();
 		KeyStroke keyBinding = action.getKeyBinding();
@@ -69,9 +73,11 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		defaultPanel = new JPanel(new BorderLayout());
 		defaultPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
+		defaultPanel.getAccessibleContext().setAccessibleName("Default");
 
 		JLabel imageLabel = new GIconLabel(Icons.INFO_ICON);
 		bgColor = imageLabel.getBackground();
+		imageLabel.getAccessibleContext().setAccessibleName("Image");
 		JTextPane pane = new JTextPane();
 		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 2, 5));
 		pane.setBackground(bgColor);
@@ -79,8 +85,8 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		StyledDocument document = pane.getStyledDocument();
 		try {
-			document.insertString(0, "To add or change a key binding, type any key combination.\n" +
-				"To remove a key binding, press <Enter> or <Backspace>.", null);
+			document.insertString(0, "To add or change a key binding, type any key combination",
+				null);
 		}
 		catch (BadLocationException e1) {
 			// shouldn't be possible
@@ -88,6 +94,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		labelPanel.getAccessibleContext().setAccessibleName("Label");
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
@@ -96,7 +103,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		labelPanel.add(pane);
 		labelPanel.add(Box.createHorizontalStrut(5));
 
-		keyEntryField = new KeyEntryTextField(20, keyStroke -> {
+		keyEntryPanel = new KeyEntryPanel(20, keyStroke -> {
 			okButton.setEnabled(true);
 			updateCollisionPane(keyStroke);
 		});
@@ -105,17 +112,19 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		defaultPanel.setBorder(BorderFactory.createLoweredBevelBorder());
 		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		p.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-		p.add(keyEntryField);
+		p.add(keyEntryPanel);
+		p.getAccessibleContext().setAccessibleName("Key Entry");
 		KeyStroke keyBinding = action.getKeyBinding();
 		if (keyBinding != null) {
-			keyEntryField.setText(KeyBindingUtils.parseKeyStroke(keyBinding));
+			keyEntryPanel.setKeyStroke(keyBinding);
 		}
-		setFocusComponent(keyEntryField);
+		setFocusComponent(keyEntryPanel);
 		defaultPanel.add(p, BorderLayout.CENTER);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(defaultPanel, BorderLayout.NORTH);
 		mainPanel.add(createCollisionPanel(), BorderLayout.CENTER);
+		mainPanel.getAccessibleContext().setAccessibleName("Key Entry");
 		return mainPanel;
 	}
 
@@ -129,9 +138,11 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		doc = collisionPane.getStyledDocument();
 		noWrapPanel.add(collisionPane, BorderLayout.CENTER);
 		JScrollPane sp = new JScrollPane(noWrapPanel);
+		sp.getAccessibleContext().setAccessibleName("Scroll");
 		Dimension d = defaultPanel.getPreferredSize();
 		sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, d.height));
 		parent.add(sp, BorderLayout.CENTER);
+		parent.getAccessibleContext().setAccessibleName("Collision");
 		return parent;
 	}
 
@@ -140,7 +151,8 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	 * @param ks the keystroke to set
 	 */
 	public void setKeyStroke(KeyStroke ks) {
-		keyEntryField.setKeyStroke(ks);
+		keyEntryPanel.setKeyStroke(ks);
+		updateCollisionPane(ks);
 	}
 
 	@Override
@@ -150,34 +162,29 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		KeyStroke newKeyStroke = keyEntryField.getKeyStroke();
-		if (newKeyStroke != null && ReservedKeyBindings.isReservedKeystroke(newKeyStroke)) {
-			setStatusText(keyEntryField.getText() + " is a reserved keystroke");
+		KeyStroke newKs = keyEntryPanel.getKeyStroke();
+		String errorMessage = toolActions.validateActionKeyBinding(action, newKs);
+		if (errorMessage != null) {
+			setStatusText(errorMessage);
 			return;
 		}
 
 		clearStatusText();
 
 		KeyStroke existingKeyStroke = action.getKeyBinding();
-		if (Objects.equals(existingKeyStroke, newKeyStroke)) {
+		if (Objects.equals(existingKeyStroke, newKs)) {
 			setStatusText("Key binding unchanged");
 			return;
 		}
 
-		action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
+		action.setUnvalidatedKeyBindingData(newKs == null ? null : new KeyBindingData(newKs));
 
 		close();
 	}
 
 	private void setUpAttributes() {
-		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		textAttrSet.addAttribute(StyleConstants.Foreground, Messages.NORMAL);
-
-		tabAttrSet = new SimpleAttributeSet();
-		TabStop tabs = new TabStop(20, StyleConstants.ALIGN_LEFT, TabStop.LEAD_NONE);
-		StyleConstants.setTabSet(tabAttrSet, new TabSet(new TabStop[] { tabs }));
+		Font font = Gui.getFont("font.standard");
+		textAttrs = new GAttributes(font, Messages.NORMAL);
 	}
 
 	private void updateCollisionPane(KeyStroke ks) {
@@ -193,64 +200,14 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return;
 		}
 
-		List<DockingActionIf> list = getManagedActionsForKeyStroke(ks);
-		if (list.size() == 0) {
-			return;
-		}
-
-		list.sort((a1, a2) -> {
-			String s1 = a1.getName() + a1.getOwnerDescription();
-			String s2 = a2.getName() + a2.getOwnerDescription();
-			return s1.compareToIgnoreCase(s2);
-		});
-
-		String ksName = KeyBindingUtils.parseKeyStroke(ks);
+		String text = keyBindings.getActionsForKeyStrokeText(ks);
 		try {
-			doc.insertString(0, "Actions mapped to " + ksName + "\n\n", textAttrSet);
-			for (DockingActionIf a : list) {
-				String collisionStr = "\t" + a.getName() + " (" + a.getOwnerDescription() + ")\n";
-				int offset = doc.getLength();
-				doc.insertString(offset, collisionStr, textAttrSet);
-				doc.setParagraphAttributes(offset, 1, tabAttrSet, false);
-			}
+			doc.insertString(0, text, textAttrs);
 			collisionPane.setCaretPosition(0);
 		}
 		catch (BadLocationException e) {
 			// shouldn't be possible
 		}
 
-	}
-
-	private List<DockingActionIf> getManagedActionsForKeyStroke(KeyStroke keyStroke) {
-		MultipleKeyAction multiAction = getMultipleKeyAction(keyStroke);
-		if (multiAction == null) {
-			return Collections.emptyList();
-		}
-
-		List<DockingActionIf> list = multiAction.getActions();
-		Map<String, DockingActionIf> nameMap = new HashMap<>(list.size());
-
-		// the list may have multiple matches for a single owner, which we do not want (see
-		// SharedStubKeyBindingAction)
-		for (DockingActionIf dockableAction : list) {
-			if (shouldAddAction(dockableAction)) {
-				// this overwrites same named actions
-				nameMap.put(dockableAction.getName() + dockableAction.getOwner(), dockableAction);
-			}
-		}
-
-		return new ArrayList<>(nameMap.values());
-	}
-
-	private MultipleKeyAction getMultipleKeyAction(KeyStroke ks) {
-		Action keyAction = toolActions.getAction(ks);
-		if (keyAction instanceof MultipleKeyAction) {
-			return (MultipleKeyAction) keyAction;
-		}
-		return null;
-	}
-
-	private boolean shouldAddAction(DockingActionIf dockableAction) {
-		return dockableAction.getKeyBindingType().isManaged();
 	}
 }

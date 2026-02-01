@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,22 +17,22 @@ package ghidra.app.plugin.core.programtree;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
-import docking.EditListener;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -42,7 +42,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	private JTabbedPane tabbedPane;
 	private ViewManagerComponentProvider provider;
-	private HashMap<String, ViewProviderService> map;
+	private Map<String, ViewProviderService> map;
 	private DockingAction closeAction;
 	private DockingAction deleteAction;
 	private DockingAction renameAction;
@@ -69,10 +69,6 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 * @param vp view provider
 	 */
 	void addView(ViewProviderService vp) {
-
-		if (!provider.isInTool()) {
-			provider.addToTool();
-		}
 
 		String name = vp.getViewName();
 		if (map.remove(name) != null) {
@@ -103,6 +99,9 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	boolean removeView(ViewProviderService vps) {
 		String viewName = vps.getViewName();
+		if (!map.containsKey(viewName)) {
+			return false; // view not found (may have already be removed)
+		}
 		tabbedPane.removeChangeListener(this);
 		// remove us as a listener so that the viewChanged() method is
 		// not called while we are removing the view provider
@@ -122,10 +121,6 @@ class ViewPanel extends JPanel implements ChangeListener {
 		finally {
 			tabbedPane.addChangeListener(this);
 		}
-
-		/*if (isEmpty()) {
-			provider.removeFromTool();
-		}*/
 
 		return true;
 	}
@@ -178,10 +173,8 @@ class ViewPanel extends JPanel implements ChangeListener {
 		tabbedPane.setSelectedComponent(c); // causes a state change event
 
 		updateLocalActions(v);
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
+		for (String key : map.keySet()) {
 
-			String key = iter.next();
 			ViewProviderService vps = map.get(key);
 			JComponent comp = vps.getViewComponent();
 			if (c != comp) {
@@ -225,9 +218,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 	}
 
 	ViewProviderService getViewProviderForComponent(Component component) {
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = iter.next();
+		for (String name : map.keySet()) {
 			ViewProviderService v = map.get(name);
 			if (v.getViewComponent() == component) {
 				return v;
@@ -351,16 +342,23 @@ class ViewPanel extends JPanel implements ChangeListener {
 		setPreferredSize(new Dimension(200, 300));
 	}
 
+	void treeViewsRestored(Collection<TreeViewProvider> treeViews) {
+
+		map.clear();
+
+		for (TreeViewProvider treeProvider : treeViews) {
+			addView(treeProvider);
+		}
+	}
+
 	/**
 	 * If the panel is active, then set the current view to be active and all
 	 * others to be inactive.
 	 */
 	private void viewChanged() {
 		JComponent c = (JComponent) tabbedPane.getSelectedComponent();
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
+		for (String key : map.keySet()) {
 
-			String key = iter.next();
 			ViewProviderService v = map.get(key);
 			if (c == v.getViewComponent()) {
 				v.setHasFocus(true);
@@ -452,52 +450,24 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 */
 	private void renameView() {
 		ViewProviderService vps = getCurrentViewProvider();
-		int tabIndex = tabbedPane.getSelectedIndex();
 		String oldName = vps.getViewName();
-		Rectangle rect = tabbedPane.getBoundsAt(tabIndex);
-		tool.showEditWindow(oldName, tabbedPane, rect, new RenameListener(vps, tabIndex));
-	}
+		String newName =
+			OptionDialog.showInputSingleLineDialog(tabbedPane, "Rename Tab", "New name:", oldName);
 
-//==================================================================================================
-// Inner Classes
-//==================================================================================================	
-
-	private class RenameListener implements EditListener {
-
-		private ViewProviderService vps;
-		private int tabIndex;
-
-		RenameListener(ViewProviderService vps, int tabIndex) {
-			this.vps = vps;
-			this.tabIndex = tabIndex;
+		if (StringUtils.isBlank(newName)) {
+			return;
 		}
 
-		@Override
-		public void editCompleted(String newName) {
-
-			if (newName.length() == 0) {
-
-				Msg.showError(getClass(), null, "Invalid Name", "Please enter a valid name.");
-
-				String oldName = vps.getViewName();
-				Rectangle rect = tabbedPane.getBoundsAt(tabIndex);
-				tool.showEditWindow(oldName, tabbedPane, rect, this);
-				return;
+		if (!newName.equals(oldName)) {
+			if (vps.viewRenamed(newName)) {
+				int selectedIndex = tabbedPane.getSelectedIndex();
+				tabbedPane.setTitleAt(selectedIndex, newName);
+				DockingTabRenderer renderer =
+					(DockingTabRenderer) tabbedPane.getTabComponentAt(selectedIndex);
+				renderer.setTitle(newName, newName);
+				map.remove(oldName);
+				map.put(newName, vps);
 			}
-
-			String oldName = vps.getViewName();
-			if (!newName.equals(oldName)) {
-				if (vps.viewRenamed(newName)) {
-					int selectedIndex = tabbedPane.getSelectedIndex();
-					tabbedPane.setTitleAt(selectedIndex, newName);
-					DockingTabRenderer renderer =
-						(DockingTabRenderer) tabbedPane.getTabComponentAt(selectedIndex);
-					renderer.setTitle(newName, newName);
-					map.remove(oldName);
-					map.put(newName, vps);
-				}
-			}
-
 		}
 	}
 

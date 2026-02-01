@@ -19,11 +19,13 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.awt.Color;
+import java.util.Iterator;
 import java.util.List;
 
 //import ghidra.app.plugin.core.decompile.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.scalar.Scalar;
 
 /**
  * Class representing a source code language token.
@@ -257,6 +259,9 @@ public class ClangToken implements ClangNode {
 		else if (node == ELEM_FIELD.id()) {
 			token = new ClangFieldToken(par);
 		}
+		else if (node == ELEM_VALUE.id()) {
+			token = new ClangCaseToken(par);
+		}
 		else {
 			throw new DecoderException("Expecting token element");
 		}
@@ -318,5 +323,24 @@ public class ClangToken implements ClangNode {
 	 */
 	public PcodeOp getPcodeOp() {
 		return null;
+	}
+
+	/**
+	 * If the token represents an underlying integer constant, return the constant as a Scalar.
+	 * Otherwise return null.
+	 * @return the Scalar that the token represents or null
+	 */
+	public Scalar getScalar() {
+		return null;
+	}
+
+	/**
+	 * Get an iterator over tokens starting with this ClangToken.  Tokens are returned in normal
+	 * display order (forward=true) or in the reverse of normal display order (forward=false)
+	 * @param forward is true for forward iterator, false for a backward iterator
+	 * @return the Iterator object
+	 */
+	public Iterator<ClangToken> iterator(boolean forward) {
+		return new TokenIterator(this, forward);
 	}
 }

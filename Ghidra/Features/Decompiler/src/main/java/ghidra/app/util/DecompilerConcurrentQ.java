@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,7 @@ import utility.function.Dummy;
  * 		{@link #waitForResults()}.</li>
  * 		<li>For non-blocking usage, simply call
  * 		{@link #process(Iterator, Consumer)}, passing the consumer of the results.</li>
- * </ol>
- * <p>
+ * </ul>
  *
  * @param <I> The input data needed by the supplied {@link QCallback}
  * @param <R> The result data (can be the same as {@code I} if there is no result) returned
@@ -133,7 +132,7 @@ public class DecompilerConcurrentQ<I, R> {
 
 	/**
 	 * Calls dispose on the queue being processed.  Further, the call will block for up to
-	 * <tt>timeoutSeconds</tt> while waiting for the queue to finish processing.
+	 * {@code timeoutSeconds} while waiting for the queue to finish processing.
 	 *
 	 * @param timeoutSeconds the number of seconds to wait for the disposed queue to finish
 	 *        processing

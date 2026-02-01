@@ -27,7 +27,7 @@ import ghidra.util.exception.AssertException;
 
 public class LoggingInitialization {
 
-	private static final String LOG4J2_CONFIGURATION_PROPERTY = "log4j.configurationFile";
+	public static final String LOG4J2_CONFIGURATION_PROPERTY = "log4j.configurationFile";
 
 	private static final String PRODUCTION_LOGGING_CONFIGURATION_FILE = "generic.log4j.xml";
 	private static final String DEVELOPMENT_LOGGING_CONFIGURATION_FILE = "generic.log4jdev.xml";

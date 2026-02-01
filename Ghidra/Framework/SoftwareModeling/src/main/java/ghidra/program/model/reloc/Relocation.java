@@ -38,7 +38,7 @@ public class Relocation {
 		UNKNOWN(0, true),
 
 		/**
-		 * Relocation has be intentionally skipped and should not be treated as a failure.
+		 * Relocation has been intentionally skipped and should not be treated as a failure.
 		 */
 		SKIPPED(1, false),
 
@@ -105,8 +105,7 @@ public class Relocation {
 					return s;
 				}
 			}
-			throw new IllegalArgumentException(
-				"Undefined Status value: " + value);
+			throw new IllegalArgumentException("Undefined Status value: " + value);
 		}
 	}
 

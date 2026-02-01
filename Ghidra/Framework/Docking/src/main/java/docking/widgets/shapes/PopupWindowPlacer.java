@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,6 @@ import ghidra.util.exception.AssertException;
  *
  * </pre>
  * <p>
- *
  * These cells are shown in their nominal placement locations (where they touch the inner bounds,
  * marked with an X).  However we will shift these locations by particular amounts so that these
  * locations still fit within the outer bounds.  For instance, if we allow the BOTTOM cell
@@ -115,7 +114,7 @@ import ghidra.util.exception.AssertException;
  * and <B>minorEnd</B> {@link Location Locations}.  The major Location specifies the <B>edge</B>
  * for an {@link EdgePopupPlacer} and the minorBegin Location specifies the placement <B>cell</B>
  * on this edge and the minorEnds specifies the last cell (amount of shift allowed), starting
- * from the minorBegin Location.  For a CENTER minorBeing Location, the minorEnd cell may be
+ * from the minorBegin Location.  For a CENTER minorBegin Location, the minorEnd cell may be
  * any of the three allowed Locations on that major edge as well as null, representing that a
  * shift is allowed in either direction.  When the minorEnd Location is set to the minorBegin
  * Location, then no shift is permitted.

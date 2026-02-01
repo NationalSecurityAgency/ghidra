@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  * NOTE: Refernence typo is being perpetuated
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +16,9 @@
  */
 package ghidra.app.plugin.core.reloc;
 
+import java.util.Iterator;
+
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -28,9 +28,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.Iterator;
-
-public class RelocationFixupCommand extends BackgroundCommand {
+public class RelocationFixupCommand extends BackgroundCommand<Program> {
 	private RelocationFixupHandler relocationHandler;
 	private RelocationFixupHandler genericHandler;
 	private Address oldImageBase;
@@ -47,8 +45,8 @@ public class RelocationFixupCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
+
 		RelocationTable relocationTable = program.getRelocationTable();
 
 		Iterator<Relocation> iterator = relocationTable.getRelocations();
@@ -68,12 +66,9 @@ public class RelocationFixupCommand extends BackgroundCommand {
 
 		}
 		if (hasUnhandledRelocations) {
-			Msg.showError(
-				this,
-				null,
-				"Unhandled Relocation Fixups",
-				"One or more relocation fix-ups were not handled for the image rebase.\n"
-					+ "Bookmarks were created with the category \"Unhandled Image Base Relocation Fixup\"");
+			Msg.showError(this, null, "Unhandled Relocation Fixups",
+				"One or more relocation fix-ups were not handled for the image rebase.\n" +
+					"Bookmarks were created with the category \"Unhandled Image Base Relocation Fixup\"");
 		}
 
 		return true;

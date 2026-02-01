@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,10 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A fixed-length UTF-8 string {@link DataType}.
- * <p>
  */
 public class StringUTF8DataType extends AbstractStringDataType {
 	public static final StringUTF8DataType dataType = new StringUTF8DataType();
@@ -33,7 +34,7 @@ public class StringUTF8DataType extends AbstractStringDataType {
 			"STR", // default label prefix
 			"s", // default abbrev label prefix
 			"String (Fixed Length UTF-8 Unicode)", // description
-			CharsetInfo.UTF8, // charset
+			CharsetInfoManager.UTF8, // charset
 			CharDataType.dataType, // replacement data type
 			StringLayoutEnum.FIXED_LEN, // StringLayoutEnum
 			dtm// data type manager

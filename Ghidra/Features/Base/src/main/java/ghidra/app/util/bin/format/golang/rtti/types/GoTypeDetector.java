@@ -21,9 +21,9 @@ import ghidra.app.util.bin.format.golang.structmapping.StructureMapping;
 /**
  * Small stub that is only used to fetch the "kind" field so that the real gotype can be detected
  */
-@StructureMapping(structureName = "runtime._type")
+@StructureMapping(structureName = {"runtime._type", "internal/abi.Type"})
 public class GoTypeDetector {
-	@FieldMapping
+	@FieldMapping(fieldName = {"kind", "Kind_"})
 	private int kind;
 
 	public GoKind getKind() {

@@ -18,6 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -36,21 +37,21 @@ abstract class FunctionTagMappingAdapter {
 	static final int FUNCTION_ID_COL = 0;
 	static final int TAG_ID_COL = 1;
 
-	static FunctionTagMappingAdapter getAdapter(DBHandle handle, int openMode,
+	static FunctionTagMappingAdapter getAdapter(DBHandle handle, OpenMode openMode,
 			TaskMonitor monitor) throws VersionException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new FunctionTagMappingAdapterV0(handle, true);
 		}
 		try {
 			return new FunctionTagMappingAdapterV0(handle, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			FunctionTagMappingAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, monitor);
 			}
 			return adapter;
@@ -62,9 +63,7 @@ abstract class FunctionTagMappingAdapter {
 	}
 
 	private static FunctionTagMappingAdapter upgrade(DBHandle handle,
-			FunctionTagMappingAdapter oldAdapter,
-			TaskMonitor monitor)
-			throws VersionException {
+			FunctionTagMappingAdapter oldAdapter, TaskMonitor monitor) throws VersionException {
 		return new FunctionTagMappingAdapterV0(handle, true);
 	}
 
@@ -96,8 +95,7 @@ abstract class FunctionTagMappingAdapter {
 	 * @return newly-created database record
 	 * @throws IOException if database error occurs
 	 */
-	abstract DBRecord createFunctionTagRecord(long functionID, long tagID)
-			throws IOException;
+	abstract DBRecord createFunctionTagRecord(long functionID, long tagID) throws IOException;
 
 	/**
 	 * Removes the record with the given function and tag IDs. There should be at most
@@ -108,8 +106,7 @@ abstract class FunctionTagMappingAdapter {
 	 * @return true if the remove was performed
 	 * @throws IOException if database error occurs
 	 */
-	abstract boolean removeFunctionTagRecord(long functionID, long tagID)
-			throws IOException;
+	abstract boolean removeFunctionTagRecord(long functionID, long tagID) throws IOException;
 
 	/**
 	 * Removes all records containing the given tag ID. This should be called

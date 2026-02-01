@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.debug.gui.thread;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -57,8 +58,7 @@ public class DebuggerThreadsPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.coordinatesActivated(ev.getActiveCoordinates());
 		}
 	}

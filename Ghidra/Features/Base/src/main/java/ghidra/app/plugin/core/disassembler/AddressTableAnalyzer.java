@@ -23,8 +23,10 @@ import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -84,11 +86,14 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 	private boolean relocationGuideEnabled = OPTION_DEFAULT_RELOCATION_GUIDE_ENABLED;
 
 	private boolean allowOffcutReferences = OPTION_DEFAULT_ALLOW_OFFCUT_REFERENCES;
-
-	private boolean ignoreBookmarks = false;
+	
+	private static final String ADDRESS_TABLE_BOOKMARK_TYPENAME = "Address Table";
 
 	// true if the processor uses Address low bit to refer to code
 	private boolean processorHasLowBitCode = false;
+
+	private long lastID;
+
 
 	public AddressTableAnalyzer() {
 		super("Create Address Tables", DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
@@ -107,22 +112,30 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		processorHasLowBitCode = PseudoDisassembler.hasLowBitCodeModeInAddrValues(program);
 		// don't align based on instruction start rules, data is important too.
 		//   if do this, will miss, runs of ptrs to data/code/data/code/....
-				// ptrAlignment = program.getLanguage().getInstructionAlignment();
-				// if (processorHasLowBitCode) {
-				// 	ptrAlignment = 1;
-				// }
+		// ptrAlignment = program.getLanguage().getInstructionAlignment();
+		// if (processorHasLowBitCode) {
+		// 	ptrAlignment = 1;
+		// }
 		return (addrSize == 32 || addrSize == 64);
 	}
 
 	@Override
 	public boolean added(Program program, AddressSetView addrSet, TaskMonitor monitor,
-			MessageLog log) {
+			MessageLog log) throws CancelledException {
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 
+		// remove memory blocks that should not be searched
 		addrSet = removeNonSearchableMemory(program, addrSet);
 
+		// remove defined locations that can't be part of an address table
+		// only do this the first time entering
+		long id = mgr.getProgram().getCurrentTransactionInfo().getID();
+		if (id != lastID) {
+			lastID = id;
+			addrSet = removeDefined(program, addrSet);
+		}
+		
 		if (addrSet.isEmpty()) {
-			ignoreBookmarks = false;
 			return true;
 		}
 
@@ -142,7 +155,10 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 		AddressIterator addrIter = addrSet.getAddresses(true);
 
-		while (addrIter.hasNext() && !monitor.isCancelled()) {
+		boolean didTable = false;
+		while (!didTable && addrIter.hasNext()) {
+			monitor.checkCancelled();
+			
 			addrCount++;
 			monitor.setProgress(addrCount);
 			Address start = addrIter.next();
@@ -155,88 +171,28 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			if ((addrCount % 2048) == 1) {
 				monitor.setMessage("Analyze Tables " + start);
 			}
-			AddressTable tableEntry =
+
+			AddressTable addressTable =
 				AddressTable.getEntry(program, start, monitor, true, minimumTableSize, ptrAlignment,
 					0, AddressTable.MINIMUM_SAFE_ADDRESS, relocationGuideEnabled);
-			if (tableEntry != null) {
-				int tableLen = checkTable(tableEntry, program);
-				if (tableLen < minimumTableSize) {
-					continue;
-				}
-
-				Bookmark bookmark = program.getBookmarkManager().getBookmark(
-					tableEntry.getTopAddress(), BookmarkType.ANALYSIS, "Address Table");
-
-				// nothing to see here, already done.
-				if (!ignoreBookmarks && bookmark != null) {
-					// skip over this table, assumes the table is good as found...
-					//   This is likely a good assumption, since the table analysis already did this area.
-					Address nextAddr = start.add(tableEntry.getByteLength());
-					addrIter = addrSet.getAddresses(nextAddr, true);
-					maxAddr = nextAddr;
-					continue;
-				}
-
-				// make the table
-				tableEntry.makeTable(program, 0, tableLen - 1, autoLabelTable, false);
-
-				Address startTable = tableEntry.getTopAddress();
-				Address endTable = start.add(tableEntry.getByteLength());
-				mgr.codeDefined(new AddressSet(startTable, endTable));
-
-				// put info bookmark in
-				if (createBookmarksEnabled) {
-					program.getBookmarkManager().setBookmark(tableEntry.getTopAddress(),
-						BookmarkType.ANALYSIS, "Address Table",
-						"Address table[" + tableEntry.getNumberAddressEntries() + "] created");
-				}
-
-				// if all are valid code, disassemble
-				List<Address> validCodeList = tableEntry.getFunctionEntries(program, 0);
-				if (validCodeList != null &&
-					validCodeList.size() >= tableEntry.getNumberAddressEntries()) {
-					AddressSet validCodeSet = new AddressSet();
-					AddressSet validFuncSet = new AddressSet();
-					for (Address addr : validCodeList) {
-						// set target context correctly. Target address will get
-						// aligned in DisassembleCmd
-						PseudoDisassembler.setTargetContextForDisassembly(program, addr);
-
-						// even though they are valid code, don't do them if
-						// there is already code there.
-						if (program.getListing().getCodeUnitContaining(addr) == null) {
-							validCodeSet.addRange(addr, addr);
-						}
-						// For Now, Never make functions from address tables,
-						// Could later be an option
-						// if (pdis.isValidSubroutine(addr, true)) {
-						// validFuncSet.addRange(addr, addr);
-						// }
-					}
-					// disassemble valid code
-					if (!validCodeSet.isEmpty()) {
-						mgr.disassemble(validCodeSet,
-							AnalysisPriority.DATA_TYPE_PROPOGATION.before());
-					}
-					// if valid functions, schedule much later, so switch table analysis can pick it up.
-					if (!validFuncSet.isEmpty()) {
-						//  For Now, Never make functions from address tables, Could later be an option
-						//		mgr.createFunction(validFuncSet, true,
-						//		AnalysisPriority.DATA_TYPE_PROPOGATION.getNext());
-					}
-				}
-
-				// jump the address iterator by the size of the table entry
-				int tableByteLen = tableEntry.getByteLength(0, tableLen - 1, false);
-				addrCount += tableByteLen;
-				addrIter = skipBytes(addrIter, addrSet, start, tableByteLen);
-				try {
-					maxAddr = maxAddr.addNoWrap(tableByteLen - 1);
-				}
-				catch (AddressOverflowException e) {
-					// pass
-				}
-				break;
+			
+			if (addressTable == null) {
+				continue;
+			}
+			
+			didTable = processAddressTable(addressTable, program, mgr, monitor);
+			
+			// Assumes that the entire table found was processed
+			long tableByteLen = addressTable.getByteLength();
+			addrCount += tableByteLen;
+			
+			// update maximum addresses consumed by table
+			try {
+				maxAddr = start.addNoWrap(tableByteLen-1);
+				addrIter = addrSet.getAddresses(maxAddr.addNoWrap(1), true);
+			}
+			catch (AddressOverflowException e) {
+				// ignore, just keep using current iterator
 			}
 		} // end of while (addrIt.hasNext())
 
@@ -248,16 +204,148 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		if (!set.isEmpty()) {
 			mgr.scheduleOneTimeAnalysis(this, set);
 		}
-		else {
-			// don't ignore address table bookmarks anymore
-			ignoreBookmarks = false;
-		}
 		return true;
+	}
+
+	/**
+	 * Process the table of addresses.  This could create multiple address tables if the
+	 * table has an entry that breaks the table.
+	 * 
+	 * Note: current algorithm processes the entire table, if this changes, code that
+	 *       assumes this must be re-factored to know how many bytes were consumed
+	 * 
+	 * @param addressTable address table
+	 * @param program program
+	 * @param mgr autoAnalysis manager
+	 * @param monitor monitor for checking if table creation canceled
+	 * @return true if a table was actually made, false otherwise
+	 * @throws CancelledException if use cancels
+	 */
+	private boolean processAddressTable(AddressTable addressTable, Program program, AutoAnalysisManager mgr,
+			TaskMonitor monitor) throws CancelledException {
+		boolean didTable = false;
+		
+		while (addressTable != null) {
+			Address startTableAddr = addressTable.getTopAddress();
+
+			int tableLen = checkTable(addressTable, program, monitor);
+			
+			// check if there is already an address table bookmark here
+			Bookmark bookmark = program.getBookmarkManager()
+					.getBookmark(addressTable.getTopAddress(), BookmarkType.ANALYSIS,
+						ADDRESS_TABLE_BOOKMARK_TYPENAME);
+
+			// if table too small, or bookmark already here
+			// - skip the bad tableLen entries
+			// - continue with any additional entries in the table
+			if (bookmark != null || tableLen < minimumTableSize) {
+				// There might be more to the table. Get a new smaller table.
+				// This will skip one element in the table, that is assumed to have
+				// broken the table up, thus (tableLen+1)
+				//
+				// table entry will be null if no more table entries beyond tableLen+1
+				addressTable = addressTable.newRemainingAddressTable(tableLen+1);
+				continue;
+			}
+
+			// make the table
+			addressTable.makeTable(program, 0, tableLen - 1, autoLabelTable, false);
+
+			int tableByteLen = addressTable.getByteLength(0, tableLen - 1, false);
+			Address endTableAddr = startTableAddr.add(tableByteLen-1);
+			mgr.codeDefined(new AddressSet(startTableAddr, endTableAddr));
+
+			// put info bookmark in
+			if (createBookmarksEnabled) {
+				program.getBookmarkManager()
+						.setBookmark(addressTable.getTopAddress(), BookmarkType.ANALYSIS,
+							ADDRESS_TABLE_BOOKMARK_TYPENAME, "Address table[" + tableLen + "] created");
+			}
+
+			// if all are valid code, disassemble
+			List<Address> validCodeList = addressTable.getFunctionEntries(program, 0);
+			if (validCodeList != null &&
+				validCodeList.size() >= addressTable.getNumberAddressEntries()) {
+				AddressSet validCodeSet = new AddressSet();
+				AddressSet validFuncSet = new AddressSet();
+				for (Address addr : validCodeList) {
+					// set target context correctly. Target address will get
+					// aligned in DisassembleCmd
+					PseudoDisassembler.setTargetContextForDisassembly(program, addr);
+
+					// even though they are valid code, don't do them if
+					// there is already code there.
+					if (program.getListing().getCodeUnitContaining(addr) == null) {
+						validCodeSet.addRange(addr, addr);
+					}
+					// For Now, Never make functions from address tables,
+					// Could later be an option
+					// if (pdis.isValidSubroutine(addr, true)) {
+					// validFuncSet.addRange(addr, addr);
+					// }
+				}
+				// disassemble valid code
+				if (!validCodeSet.isEmpty()) {
+					mgr.disassemble(validCodeSet,
+						AnalysisPriority.DATA_TYPE_PROPOGATION.before());
+				}
+				// if valid functions, schedule much later, so switch table analysis can pick it up.
+				if (!validFuncSet.isEmpty()) {
+					//  For Now, Never make functions from address tables, Could later be an option
+					//		mgr.createFunction(validFuncSet, true,
+					//		AnalysisPriority.DATA_TYPE_PROPOGATION.getNext());
+				}
+			}
+			
+			// There might be more to the table. Get a new smaller table.
+			// This will skip one element in the table, that is assumed to have
+			// broken the table up, thus (tableLen+1)
+			//
+			// table entry will be null if no more table entries beyond tableLen+1
+			addressTable = addressTable.newRemainingAddressTable(tableLen+1);
+			didTable = true;
+		}
+		
+		return didTable;
+	}
+
+	/**
+	 * Remove any addresses from set where instructions or defined data exists that would
+	 * get filtered during address table creation.
+	 */
+	private AddressSetView removeDefined(Program program, AddressSetView addrSet) {
+		AddressSet subSet = new AddressSet();
+
+		// find defined data that should be removed
+		DataIterator definedData = program.getListing().getDefinedData(addrSet, true);
+		for (Data data : definedData) {
+			DataType dataType = data.getDataType();			
+			if (dataType instanceof Undefined) {
+				continue;
+			}
+			
+			if (data.isPointer()) {
+				continue;
+			}
+
+			// anything else, add to subset to be removed
+			subSet.add(data.getMinAddress(), data.getMaxAddress());
+		}
+		addrSet = addrSet.subtract(subSet);
+		
+		// Find defined instructions that should be removed
+		subSet = new AddressSet();
+		InstructionIterator instructions = program.getListing().getInstructions(addrSet, true);
+		for (Instruction instruction : instructions) {
+			subSet.add(instruction.getMinAddress(), instruction.getMaxAddress());
+		}
+		addrSet = addrSet.subtract(subSet);
+		
+		return addrSet;
 	}
 
 	private AddressSetView removeNonSearchableMemory(Program program, AddressSetView addrSet) {
 		// get rid of any non-initialized blocks
-		ignoreBookmarks = ignoreBookmarks | addrSet.hasSameAddresses(program.getMemory());
 
 		addrSet = addrSet.intersect(program.getMemory().getLoadedAndInitializedAddressSet());
 
@@ -268,8 +356,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		//
 		AddressSet badBlocks = new AddressSet();
 		for (MemoryBlock memoryBlock : blocks) {
-			if (memoryBlock.isWrite() || memoryBlock.isRead() || memoryBlock.isExecute() ||
-				memoryBlock.isVolatile()) {
+			if (memoryBlock.isWrite() || memoryBlock.isRead() || memoryBlock.isExecute()) {
 				continue;
 			}
 
@@ -282,21 +369,32 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * @param tableEntry
-	 * @param program
-	 * @return number of entries in table before hitting entry that overlaps a string
+	 * Check the table for consistency and return the number of good entries before a bad
+	 * entry is found.
+	 * <ul>
+	 * <li> check possible strings</li>
+	 * <li> pointers that jump all over memory</li>
+	 * <li> pointers to offcut instructions</li>
+	 * <li> allow offcut strings</li>
+	 * </ul>
+	 * 
+	 * @param tableEntry address table to check
+	 * @param program program
+	 * @return number of entries in table before hitting an inconsistent entry
+	 * @throws CancelledException if user cancels
 	 */
-	private int checkTable(AddressTable tableEntry, Program program) {
+	private int checkTable(AddressTable tableEntry, Program program, TaskMonitor monitor) throws CancelledException {
 		// search for unicode strings first.
 		//   don't create an address table that overlaps a unicode string.
 		AddressSetView addrSet = tableEntry.getTableBody();
-		AddressSet possibleStrings = findPossibleStrings(program, addrSet);
+		AddressSet possibleStrings = findPossibleStrings(program, addrSet, monitor);
 
 		// trim from the first offcut entry on
 		Address start = tableEntry.getTopAddress();
 		int tableLen = tableEntry.getNumberAddressEntries();
 		Address addrs[] = tableEntry.getTableElements();
 		for (int i = 0; i < tableLen; i++) {
+			monitor.checkCancelled();
 			Address tableEntryAddr = start.add(i * 4);
 			Address targetAddr = addrs[i];
 			if (possibleStrings.contains(tableEntryAddr)) {
@@ -321,6 +419,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			if (cu == null) {
 				continue;
 			}
+
 			boolean atStartOfCU = cu.getMinAddress().equals(targetAddr);
 			if (!allowOffcutReferences && !atStartOfCU) {
 				// if the processor uses low bit to reference instructions
@@ -333,21 +432,24 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		return tableLen;
 	}
 
-	private AddressSet findPossibleStrings(Program program, AddressSetView addrSet) {
+	private AddressSet findPossibleStrings(Program program, AddressSetView addrSet, TaskMonitor monitor) throws CancelledException {
 		AddressSet possibleStrSet = new AddressSet();
 		Memory memory = program.getMemory();
 
 		AddressIterator addrIter = addrSet.getAddresses(true);
 		long maxBytes = addrSet.getNumAddresses();
-		
-		MemoryBufferImpl buffer = new MemoryBufferImpl(memory, addrSet.getMinAddress(), (int) (maxBytes > 1024 ? 1024 : maxBytes));
+
+		MemoryBufferImpl buffer = new MemoryBufferImpl(memory, addrSet.getMinAddress(),
+			(int) (maxBytes > 1024 ? 1024 : maxBytes));
 
 		while (addrIter.hasNext()) {
 			Address start = addrIter.next();
+			
+			monitor.checkCancelled();
 
 			// skip over anything that smells like a unicode string
 			//
-			int strLen = getWStrLen(buffer, start, (int)(maxBytes / 2));
+			int strLen = getWStrLen(buffer, start, (int) (maxBytes / 2));
 			if (strLen > 4) {
 				int numBytes = strLen * 2;
 				addrIter = skipBytes(addrIter, addrSet, start, numBytes);

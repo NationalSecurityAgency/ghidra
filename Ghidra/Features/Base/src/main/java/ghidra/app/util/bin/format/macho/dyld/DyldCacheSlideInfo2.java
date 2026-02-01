@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,14 +51,12 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	 * Create a new {@link DyldCacheSlideInfo2}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 2
-	 * @param mappingAddress The base address of where the slide fixups will take place
-	 * @param mappingSize The size of the slide fixups block
-	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
+	 * @param mappingInfo The {@link DyldCacheMappingInfo} of where the slide fixups will take place
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info 2
 	 */
-	public DyldCacheSlideInfo2(BinaryReader reader, long mappingAddress, long mappingSize,
-			long mappingFileOffset) throws IOException {
-		super(reader, mappingAddress, mappingSize, mappingFileOffset);
+	public DyldCacheSlideInfo2(BinaryReader reader, DyldCacheMappingInfo mappingInfo)
+			throws IOException {
+		super(reader, mappingInfo);
 		pageSize = reader.readNextInt();
 		pageStartsOffset = reader.readNextInt();
 		pageStartsCount = reader.readNextInt();
@@ -134,10 +132,10 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	}
 
 	@Override
-	public List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
-			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
+	public List<DyldFixup> getSlideFixups(BinaryReader reader, int pointerSize, MessageLog log,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>();
+		List<DyldFixup> fixups = new ArrayList<>();
 
 		monitor.initialize(pageStartsCount, "Getting DYLD Cache V2 slide fixups...");
 		for (int index = 0; index < pageStartsCount; index++) {
@@ -172,23 +170,22 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	}
 
 	/**
-	 * Walks the pointer chain at the given reader offset to find necessary 
-	 * {@link DyldCacheSlideFixup}s
+	 * Walks the pointer chain at the given reader offset to find necessary {@link DyldFixup}s
 	 * 
 	 * @param segmentOffset The segment offset
 	 * @param pageOffset The page offset
 	 * @param reader A reader positioned at the start of the segment to fix
 	 * @param pointerSize The size of a pointer in bytes
 	 * @param monitor A cancellable monitor
-	 * @return A {@link List} of {@link DyldCacheSlideFixup}s
+	 * @return A {@link List} of {@link DyldFixup}s
 	 * @throws IOException If an IO-related error occurred
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	private List<DyldCacheSlideFixup> processPointerChain(long segmentOffset, long pageOffset,
+	private List<DyldFixup> processPointerChain(long segmentOffset, long pageOffset,
 			BinaryReader reader, int pointerSize, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>(1024);
+		List<DyldFixup> fixups = new ArrayList<>(1024);
 		long valueMask = ~deltaMask;
 		long deltaShift = Long.numberOfTrailingZeros(deltaMask);
 
@@ -203,7 +200,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 			chainValue &= valueMask;
 			if (chainValue != 0) {
 				chainValue += valueAdd /* + slide */;
-				fixups.add(new DyldCacheSlideFixup(dataOffset, chainValue, pointerSize));
+				fixups.add(new DyldFixup(dataOffset, chainValue, pointerSize, null, null));
 			}
 		}
 

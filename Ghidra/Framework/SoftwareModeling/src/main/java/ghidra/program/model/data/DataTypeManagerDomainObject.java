@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.program.model.data;
 
 import ghidra.app.merge.DataTypeManagerOwner;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 
-public interface DataTypeManagerDomainObject extends UndoableDomainObject, DataTypeManagerOwner {
+public interface DataTypeManagerDomainObject extends DomainObject, DataTypeManagerOwner {
 }

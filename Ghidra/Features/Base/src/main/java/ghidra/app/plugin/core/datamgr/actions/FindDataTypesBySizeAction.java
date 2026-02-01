@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,7 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.dialogs.NumberRangeInputDialog;
-import docking.widgets.tree.*;
-import docking.widgets.tree.support.CombinedGTreeFilter;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeFilter;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
@@ -64,30 +63,12 @@ public class FindDataTypesBySizeAction extends DockingAction {
 		newProvider.setTitle(getName());
 		DataTypeArchiveGTree tree = newProvider.getGTree();
 		GTreeFilter filter = createFilter(values);
-		tree.setFilterProvider(new MyTreeFilterProvider(tree, filter));
+		tree.setFilterProvider(new SecondaryTreeFilterProvider(tree, filter));
 		newProvider.setVisible(true);
 	}
 
 	protected GTreeFilter createFilter(SortedRangeList values) {
 		return new SizeGTreeFilter(values);
-	}
-
-	private class MyTreeFilterProvider extends DefaultGTreeFilterProvider {
-		private GTreeFilter secondaryFilter;
-
-		MyTreeFilterProvider(GTree tree, GTreeFilter secondaryFilter) {
-			super(tree);
-			this.secondaryFilter = secondaryFilter;
-		}
-
-		@Override
-		public GTreeFilter getFilter() {
-			GTreeFilter filter = super.getFilter();
-			if (filter == null) {
-				return secondaryFilter;
-			}
-			return new CombinedGTreeFilter(filter, secondaryFilter);
-		}
 	}
 
 	private class SizeGTreeFilter implements GTreeFilter {
@@ -111,6 +92,10 @@ public class FindDataTypesBySizeAction extends DockingAction {
 			DataTypeNode dataTypeNode = (DataTypeNode) node;
 			DataType dt = dataTypeNode.getDataType();
 			int length = dt.getLength();
+			if (dt.isZeroLength()) {
+				length = 0;
+			}
+
 			for (Range range : sizes) {
 				if (range.contains(length)) {
 					return true;

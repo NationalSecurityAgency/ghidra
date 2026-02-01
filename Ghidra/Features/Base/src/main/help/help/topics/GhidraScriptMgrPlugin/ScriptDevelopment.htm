@@ -127,10 +127,17 @@
         </P>
 
         <BLOCKQUOTE>
-          <P>The tag indicates the top-level menu path. Path levels are delimited using the "."
-          character.</P>
+          <P>This tag indicates the top-level menu path. Path levels are delimited using the "."
+          character. A mnemonic can be defined by adding an ampersand ("&") in front of the mnemonic 
+          key. Ampersands can be escaped by adding another ampersand ("&&"). </P>
 
-          <P>For example, <TT>"@menupath File.Run.My Script"</TT>.</P>
+          <P>For example:</P>
+          <BLOCKQUOTE>
+            <P><TT>@menupath File.Run.My Script<BR>
+             @menupath File.Run.My &Script<BR>
+             @menupath File.Run.Me && My &Script<BR>
+            </TT></P>
+          </BLOCKQUOTE>
         </BLOCKQUOTE>
 
         <P><CODE><B>@toolbar</B></CODE></P>
@@ -142,7 +149,20 @@
           then in the Ghidra installation. If the image does not exists, a toolbar button will be
           created using the default Ghidra <IMG src="images/core.png" alt=""> image.<BR>
           <BR>
-           For example, <TT>"@toolbar myScriptImage.gif"</TT>.<BR>
+          For example, <TT>"@toolbar myScriptImage.gif"</TT>.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <P><CODE><B>@runtime</B></CODE></P>
+
+        <BLOCKQUOTE>
+          <P>This tag indicates which Ghidra script runtime environment is required to execute the 
+          script. It allows for greater control when more than one Ghidra script runtime environment
+          uses the same script file extension. If left unspecified, the first Ghidra script runtime
+          environment that matches the script's extension will be used.<BR>
+          <BR>
+          For example, specify <TT>"@runtime Jython"</TT> if the script is targetted for a Jython 2
+          runtime environment rather than a Python 3 runtime environment.
           </P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>

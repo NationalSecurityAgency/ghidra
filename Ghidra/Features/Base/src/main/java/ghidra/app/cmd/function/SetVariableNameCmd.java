@@ -16,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
@@ -27,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command to rename a stack variable.
  */
-public class SetVariableNameCmd implements Command {
+public class SetVariableNameCmd implements Command<Program> {
 
 	private Address fnEntry;
 	private String varName;
@@ -64,27 +63,18 @@ public class SetVariableNameCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		if (!(obj instanceof Program)) {
-			return false;
-		}
-		Program p = (Program) obj;
-
-		Function f = p.getFunctionManager().getFunctionAt(fnEntry);
+		Function f = program.getFunctionManager().getFunctionAt(fnEntry);
 		if (f == null) {
 			status = "Function not found";
 			return false;
 		}
 
-		Symbol s = p.getSymbolTable().getParameterSymbol(varName, f);
+		Symbol s = program.getSymbolTable().getParameterSymbol(varName, f);
 		if (s == null) {
-			s = p.getSymbolTable().getLocalVariableSymbol(varName, f);
+			s = program.getSymbolTable().getLocalVariableSymbol(varName, f);
 		}
 		if (s == null) {
 			status = "Variable not found";
@@ -106,17 +96,11 @@ public class SetVariableNameCmd implements Command {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return status;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Rename " + (isParm ? "Parameter" : "Variable");

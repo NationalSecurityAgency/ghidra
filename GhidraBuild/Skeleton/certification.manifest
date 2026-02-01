@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||reviewed||END|
+README.md||GHIDRA||||END|
 data/README.txt||GHIDRA||||END|
 data/buildLanguage.xml||GHIDRA||||END|
 data/languages/skel.cspec||GHIDRA||||END|
@@ -11,6 +12,7 @@ data/languages/skel.slaspec||GHIDRA||||END|
 data/sleighArgs.txt||GHIDRA||||END|
 extension.properties||GHIDRA||||END|
 ghidra_scripts/README.txt||GHIDRA||||END|
+gitignore||GHIDRA||||END|
 lib/README.txt||GHIDRA||||END|
 os/linux_x86_64/README.txt||GHIDRA||||END|
 os/mac_x86_64/README.txt||GHIDRA||||END|

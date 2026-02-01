@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import db.Transaction;
 import docking.ActionContext;
@@ -43,7 +43,6 @@ import generic.theme.GColor;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.data.AbstractSettingsDialog;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
@@ -54,9 +53,11 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.debug.api.watch.WatchRow;
 import ghidra.docking.settings.*;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -74,18 +75,17 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		implements DebuggerWatchesService {
@@ -108,8 +108,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
@@ -149,14 +148,28 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
+	protected enum WatchTableColumns
+		implements EnumeratedTableColumn<WatchTableColumns, DefaultWatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
-		ADDRESS("Address", Address.class, WatchRow::getAddress),
+		COMMENT("Comment", String.class, WatchRow::getComment, WatchRow::setComment),
+		ADDRESS("Address", Address.class, WatchRow::getAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
 		SYMBOL("Symbol", Symbol.class, WatchRow::getSymbol),
-		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, //
-				WatchRow::isRawValueEditable),
+		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString,
+				WatchRow::isRawValueEditable) {
+			private static final WatchValueCellRenderer RENDERER = new WatchValueCellRenderer();
+
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return RENDERER;
+			}
+		},
 		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
-		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString, //
+		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString,
 				WatchRow::isValueEditable),
 		ERROR("Error", String.class, WatchRow::getErrorMessage);
 
@@ -191,7 +204,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public Object getValueOf(WatchRow row) {
+		public Object getValueOf(DefaultWatchRow row) {
 			return getter.apply(row);
 		}
 
@@ -201,18 +214,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public void setValueOf(WatchRow row, Object value) {
+		public void setValueOf(DefaultWatchRow row, Object value) {
 			setter.accept(row, value);
 		}
 
 		@Override
-		public boolean isEditable(WatchRow row) {
+		public boolean isEditable(DefaultWatchRow row) {
 			return setter != null && (editable == null || editable.test(row));
 		}
 	}
 
 	protected static class WatchTableModel
-			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, WatchRow> {
+			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, DefaultWatchRow> {
 		public WatchTableModel(PluginTool tool) {
 			super(tool, "Watches", WatchTableColumns.class);
 		}
@@ -228,7 +241,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		if (!Objects.equals(a.getPlatform(), b.getPlatform())) {
 			return false;
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTrace(), b.getTrace())) {
 			return false; // May need to read target
 		}
 		if (!Objects.equals(a.getTime(), b.getTime())) {
@@ -245,27 +258,30 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	class ForDepsListener extends TraceDomainObjectListener {
 		public ForDepsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::stateChanged);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
+			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::stateChanged);
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			changed.add(current.getView().getMemory());
-			changeDebouncer.contact(null);
-		}
-
-		private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-			if (space.getThread() == current.getThread() || space.getThread() == null) {
-				changed.add(range.getRange());
-				changeDebouncer.contact(null);
+			for (AddressSpace space : current.getTrace()
+					.getBaseAddressFactory()
+					.getAllAddressSpaces()) {
+				if (space.isRegisterSpace() || space.isMemorySpace()) {
+					addChanged(new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()));
+				}
 			}
 		}
 
-		private void stateChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-			if (space.getThread() == current.getThread() || space.getThread() == null) {
-				changed.add(range.getRange());
-				changeDebouncer.contact(null);
+		private void bytesChanged(AddressSpace space, TraceAddressSnapRange range) {
+			if (space.isMemorySpace() || current.isRegisterSpace(space)) {
+				addChanged(range.getRange());
+			}
+		}
+
+		private void stateChanged(AddressSpace space, TraceAddressSnapRange range) {
+			if (space.isMemorySpace() || current.isRegisterSpace(space)) {
+				addChanged(range.getRange());
 			}
 		}
 	}
@@ -289,10 +305,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class WatchValueCellRenderer extends AbstractGColumnRenderer<String> {
+	static class WatchValueCellRenderer extends AbstractGColumnRenderer<String> {
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
+			setFont(getFixedWidthFont());
 			WatchRow row = (WatchRow) data.getRowObject();
 			if (!row.isKnown()) {
 				if (data.isSelected()) {
@@ -356,7 +373,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	protected final WatchTableModel watchTableModel;
 	protected GhidraTable watchTable;
-	protected GhidraTableFilterPanel<WatchRow> watchFilterPanel;
+	protected GhidraTableFilterPanel<DefaultWatchRow> watchFilterPanel;
 
 	ToggleDockingAction actionEnableEdits;
 	DockingAction actionApplyDataType;
@@ -393,6 +410,21 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		changeDebouncer.addListener(__ -> doCheckDepsAndReevaluate());
 	}
 
+	private void addChanged(AddressRange toAdd) {
+		synchronized (changed) {
+			changed.add(toAdd);
+			changeDebouncer.contact(null);
+		}
+	}
+
+	private AddressSetView clearChanged(boolean get) {
+		synchronized (changed) {
+			AddressSetView result = get ? new AddressSet(changed) : null;
+			changed.clear();
+			return result;
+		}
+	}
+
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (myActionContext != null) {
@@ -406,6 +438,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		mainPanel.add(new JScrollPane(watchTable));
 		watchFilterPanel = new GhidraTableFilterPanel<>(watchTable, watchTableModel);
 		mainPanel.add(watchFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Watches";
+		watchTable.setAccessibleNamePrefix(namePrefix);
+		watchFilterPanel.setAccessibleNamePrefix(namePrefix);
 
 		watchTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
@@ -431,10 +467,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		});
 
 		TableColumnModel columnModel = watchTable.getColumnModel();
-		TableColumn addrCol = columnModel.getColumn(WatchTableColumns.ADDRESS.ordinal());
-		addrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		TableColumn valCol = columnModel.getColumn(WatchTableColumns.VALUE.ordinal());
-		valCol.setCellRenderer(new WatchValueCellRenderer());
 		TableColumn typeCol = columnModel.getColumn(WatchTableColumns.TYPE.ordinal());
 		typeCol.setCellEditor(new WatchDataTypeEditor());
 	}
@@ -457,8 +489,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		int modelCol = watchTable.convertColumnIndexToModel(watchTable.getSelectedColumn());
 		Throwable error = row.getError(); // I don't care the selected column for errors
 		if (error != null) {
-			Msg.showError(this, getComponent(), "Evaluation error",
-				"Could not evaluate watch", error);
+			Msg.showError(this, getComponent(), "Evaluation error", "Could not evaluate watch",
+				error);
 		}
 		else if (modelCol == WatchTableColumns.ADDRESS.ordinal()) {
 			Address address = row.getAddress();
@@ -467,7 +499,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			}
 		}
 		else if (modelCol == WatchTableColumns.REPR.ordinal()) {
-			Object val = row.getValueObj();
+			Object val = row.getValueObject();
 			if (val instanceof Address) {
 				navigateToAddress((Address) val);
 			}
@@ -479,7 +511,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			return;
 		}
 		if (address.isMemoryAddress()) {
-			listingService.goTo(address, true);
+			ProgramLocation loc = new ProgramLocation(current.getView(), address);
+			listingService.goTo(loc, true);
 			return;
 		}
 	}
@@ -507,9 +540,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 					selHasMemoryReads(ctx))
 				.onAction(this::activatedSelectReads)
 				.buildAndInstallLocal(this);
-		actionAdd = AddAction.builder(plugin)
-				.onAction(this::activatedAdd)
-				.buildAndInstallLocal(this);
+		actionAdd =
+			AddAction.builder(plugin).onAction(this::activatedAdd).buildAndInstallLocal(this);
 		actionRemove = RemoveAction.builder(plugin)
 				.withContext(DebuggerWatchActionContext.class)
 				.enabledWhen(ctx -> !ctx.getWatchRows().isEmpty())
@@ -607,8 +639,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 					return;
 				}
 			}
-			try (Transaction tx =
-				current.getTrace().openTransaction("Apply Watch Data Type")) {
+			try (Transaction tx = current.getTrace().openTransaction("Apply Watch Data Type")) {
 				try {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					Data data = listing.createData(address, dataType, size);
@@ -806,8 +837,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public WatchRow addWatch(String expression) {
-		WatchRow row = new WatchRow(this, "");
+	public DefaultWatchRow addWatch(String expression) {
+		DefaultWatchRow row = new DefaultWatchRow(this, "");
 		watchTableModel.add(row);
 		row.setExpression(expression);
 		return row;
@@ -815,7 +846,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	@Override
 	public void removeWatch(WatchRow row) {
-		watchTableModel.delete(row);
+		watchTableModel.delete((DefaultWatchRow) row);
 	}
 
 	@Override
@@ -849,7 +880,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		removeOldListeners();
 		this.currentTrace = trace;
 		addNewListeners();
-		for (WatchRow row : watchTableModel.getModelData()) {
+		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			row.updateType();
 		}
 	}
@@ -873,12 +904,32 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			language = null;
 		}
 
-		asyncWatchExecutor = current.getPlatform() == null ? null
-				: DebuggerPcodeUtils.buildWatchExecutor(tool, current);
-		prevValueExecutor = current.getPlatform() == null || previous.getPlatform() == null ? null
-				: TraceSleighUtils.buildByteExecutor(previous.getPlatform(),
-					previous.getViewSnap(), previous.getThread(), previous.getFrame());
+		try {
+			asyncWatchExecutor = current.getPlatform() == null ? null
+					: DebuggerPcodeUtils.buildWatchExecutor(tool, current);
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error constructing watch executor: " + e);
+			asyncWatchExecutor = null;
+		}
+		try {
+			prevValueExecutor =
+				current.getPlatform() == null || previous.getPlatform() == null ? null
+						: TraceSleighUtils.buildByteExecutor(previous.getPlatform(),
+							previous.getViewSnap(), previous.getThread(), previous.getFrame());
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error constructing previous-value executor: " + e);
+			prevValueExecutor = null;
+		}
 		reevaluate();
+	}
+
+	public void traceClosed(Trace trace) {
+		if (previous.getTrace() == trace) {
+			previous = DebuggerCoordinates.NOWHERE;
+			prevValueExecutor = null;
+		}
 	}
 
 	protected void clearCachedState() {
@@ -891,11 +942,12 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	public synchronized void doCheckDepsAndReevaluate() {
+		AddressSetView changed = clearChanged(true);
 		if (asyncWatchExecutor == null) {
 			return;
 		}
-		List<WatchRow> toReevaluate = new ArrayList<>();
-		for (WatchRow row : watchTableModel.getModelData()) {
+		List<DefaultWatchRow> toReevaluate = new ArrayList<>();
+		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			AddressSetView reads = row.getReads();
 			if (reads == null || reads.intersects(changed)) {
 				toReevaluate.add(row);
@@ -903,29 +955,28 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 		if (!toReevaluate.isEmpty()) {
 			clearCachedState();
-			for (WatchRow row : toReevaluate) {
+			for (DefaultWatchRow row : toReevaluate) {
 				row.reevaluate();
 			}
 		}
-		changed.clear();
 	}
 
 	public void reevaluate() {
+		clearChanged(false);
 		if (asyncWatchExecutor == null) {
 			return;
 		}
 		clearCachedState();
-		for (WatchRow row : watchTableModel.getModelData()) {
+		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			row.reevaluate();
 		}
-		changed.clear();
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		List<WatchRow> rows = List.copyOf(watchTableModel.getModelData());
+		List<DefaultWatchRow> rows = List.copyOf(watchTableModel.getModelData());
 		saveState.putInt(KEY_ROW_COUNT, rows.size());
 		for (int i = 0; i < rows.size(); i++) {
-			WatchRow row = rows.get(i);
+			DefaultWatchRow row = rows.get(i);
 			String stateName = PREFIX_ROW + i;
 			SaveState rowState = new SaveState();
 			row.writeConfigState(rowState);
@@ -935,12 +986,12 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	public void readConfigState(SaveState saveState) {
 		int rowCount = saveState.getInt(KEY_ROW_COUNT, 0);
-		List<WatchRow> rows = new ArrayList<>();
+		List<DefaultWatchRow> rows = new ArrayList<>();
 		for (int i = 0; i < rowCount; i++) {
 			String stateName = PREFIX_ROW + i;
 			Element rowElement = saveState.getXmlElement(stateName);
 			if (rowElement != null) {
-				WatchRow r = new WatchRow(this, "");
+				DefaultWatchRow r = new DefaultWatchRow(this, "");
 				SaveState rowState = new SaveState(rowElement);
 				r.readConfigState(rowState);
 				rows.add(r);
@@ -960,7 +1011,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	public void waitEvaluate(int timeoutMs) {
 		try {
-			CompletableFuture.runAsync(() -> {
+			changeDebouncer.stable().thenRunAsync(() -> {
 			}, workQueue).get(timeoutMs, TimeUnit.MILLISECONDS);
 		}
 		catch (ExecutionException | InterruptedException | TimeoutException e) {

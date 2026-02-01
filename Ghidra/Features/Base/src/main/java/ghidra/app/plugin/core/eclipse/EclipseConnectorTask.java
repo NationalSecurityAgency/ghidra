@@ -102,7 +102,7 @@ class EclipseConnectorTask extends Task {
 		Process process = null;
 		try {
 			ProcessBuilder processBuilder = createEclipseProcessBuilder(eclipseExecutableFile,
-				eclipseService.getEclipseWorkspaceDir());
+				eclipseService.getEclipseWorkspaceDir(), eclipseService.getEclipseDropinsDir());
 			processBuilder.redirectErrorStream(true);
 			processBuilder.directory(eclipseExecutableFile.getParentFile());
 			process = processBuilder.start();
@@ -163,10 +163,11 @@ class EclipseConnectorTask extends Task {
 	 * 
 	 * @param eclipseExecutableFile The Eclipse executable file.
 	 * @param eclipseWorkspaceDir The Eclipse workspace directory.  Could be null.
+	 * @param eclipseDropinsDir The eclipse dropins directory.
 	 * @return A {@link ProcessBuilder} to launch Eclipse.
 	 */
 	private ProcessBuilder createEclipseProcessBuilder(File eclipseExecutableFile,
-			File eclipseWorkspaceDir) {
+			File eclipseWorkspaceDir, File eclipseDropinsDir) {
 		List<String> args = new ArrayList<>();
 		args.add(eclipseExecutableFile.getAbsolutePath());
 
@@ -178,6 +179,7 @@ class EclipseConnectorTask extends Task {
 		args.add("--launcher.appendVmargs");
 		args.add("-vmargs");
 		args.add("-Dghidra.install.dir=" + Application.getInstallationDirectory());
+		args.add("-Dorg.eclipse.equinox.p2.reconciler.dropins.directory=" + eclipseDropinsDir);
 
 		// Eclipse on OS X can have file locking issues if the user home directory is networked.
 		// The following property is set in the launch script if we should disable file locking

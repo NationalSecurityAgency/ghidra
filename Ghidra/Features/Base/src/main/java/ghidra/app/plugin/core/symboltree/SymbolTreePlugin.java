@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,21 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.GoToService;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HelpLocation;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 
 //@formatter:off
 @PluginInfo(
@@ -33,24 +38,31 @@ import ghidra.program.util.ProgramLocation;
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Symbol Tree",
 	description = "This plugin shows the symbols from the program " +
-			"in a tree hierarchy.  All symbols (except for the global namespace symbol)" +
-			" have a parent symbol.  From the tree, symbols can be renamed, deleted, or " +
+			"in a tree hierarchy.  All symbols (except for the global namespace symbol) " +
+			"have a parent symbol.  From the tree, symbols can be renamed, deleted, or " +
 			"reorganized.",
-	eventsConsumed = { ProgramActivatedPluginEvent.class, ProgramLocationPluginEvent.class, ProgramClosedPluginEvent.class }
+	eventsConsumed = { ProgramActivatedPluginEvent.class, ProgramLocationPluginEvent.class, ProgramClosedPluginEvent.class },
+	servicesProvided = { SymbolTreeService.class }
 )
 //@formatter:on
-public class SymbolTreePlugin extends Plugin {
+public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 
-	public static final String PLUGIN_NAME = "SymbolTreePlugin";
+	private static final String OPTIONS_CATEGORY = "Symbol Tree";
+	private static final String OPTION_NAME_GROUP_THRESHOLD = "Group Threshold";
 
-	private SymbolTreeProvider provider;
+	private SymbolTreeProvider connectedProvider;
+	private List<SymbolTreeProvider> disconnectedProviders = new ArrayList<>();
 	private Program program;
 	private GoToService goToService;
 	private boolean processingGoTo;
 
+	private OptionsChangeListener optionsListener = new SymbolTreeOptionsListener();
+	private int nodeGroupThreshold = 200;
+
 	public SymbolTreePlugin(PluginTool tool) {
 		super(tool);
-		provider = new SymbolTreeProvider(tool, this);
+
+		connectedProvider = new SymbolTreeProvider(tool, this);
 	}
 
 	@Override
@@ -60,14 +72,13 @@ public class SymbolTreePlugin extends Plugin {
 			Program oldProgram = program;
 			program = ev.getActiveProgram();
 			if (oldProgram != null) {
-				provider.programDeactivated(oldProgram);
+				connectedProvider.programDeactivated(oldProgram);
 			}
-			if (program != null) {
-				provider.programActivated(program);
-			}
+
+			connectedProvider.setProgram(program);
 		}
 		else if (event instanceof ProgramClosedPluginEvent) {
-			provider.programClosed(((ProgramClosedPluginEvent) event).getProgram());
+			programClosed(((ProgramClosedPluginEvent) event).getProgram());
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			if (processingGoTo) {
@@ -75,30 +86,71 @@ public class SymbolTreePlugin extends Plugin {
 			}
 
 			ProgramLocation loc = ((ProgramLocationPluginEvent) event).getLocation();
-			provider.locationChanged(loc);
+			connectedProvider.locationChanged(loc);
+
+			for (SymbolTreeProvider provider : disconnectedProviders) {
+				provider.locationChanged(loc);
+			}
 		}
+	}
+
+	private void programClosed(Program p) {
+
+		connectedProvider.programClosed(p);
+
+		List<SymbolTreeProvider> copy = new ArrayList<>(disconnectedProviders);
+		for (SymbolTreeProvider provider : copy) {
+			if (provider.getProgram() == p) {
+				closeDisconnectedProvider(provider);
+			}
+		}
+	}
+
+	void closeDisconnectedProvider(SymbolTreeProvider provider) {
+		disconnectedProviders.remove(provider);
+		tool.removeComponentProvider(provider);
+		provider.dispose();
 	}
 
 	@Override
 	protected void init() {
 		goToService = tool.getService(GoToService.class);
+
+		initializeOptions();
+	}
+
+	private void initializeOptions() {
+
+		ToolOptions options = tool.getOptions(OPTIONS_CATEGORY);
+		options.addOptionsChangeListener(optionsListener);
+
+		HelpLocation help = new HelpLocation("SymbolTreePlugin", "GroupNode");
+		options.registerOption(OPTION_NAME_GROUP_THRESHOLD, nodeGroupThreshold, help,
+			"The max number of children before nodes are organized by name");
+
+		nodeGroupThreshold = options.getInt(OPTION_NAME_GROUP_THRESHOLD, nodeGroupThreshold);
 	}
 
 	@Override
 	protected void dispose() {
-		tool.removeComponentProvider(provider);
-		provider.dispose();
+		tool.removeComponentProvider(connectedProvider);
+		connectedProvider.dispose();
 		program = null;
+
+		List<SymbolTreeProvider> copy = new ArrayList<>(disconnectedProviders);
+		for (SymbolTreeProvider provider : copy) {
+			closeDisconnectedProvider(provider);
+		}
 	}
 
 	@Override
 	public void readConfigState(SaveState saveState) {
-		provider.readConfigState(saveState);
+		connectedProvider.readConfigState(saveState);
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
-		provider.writeConfigState(saveState);
+		connectedProvider.writeConfigState(saveState);
 	}
 
 	public void goTo(Symbol symbol) {
@@ -145,6 +197,45 @@ public class SymbolTreePlugin extends Plugin {
 	}
 
 	SymbolTreeProvider getProvider() {
-		return provider;
+		return connectedProvider;
+	}
+
+	public DisconnectedSymbolTreeProvider createNewDisconnectedProvider(Program p) {
+		DisconnectedSymbolTreeProvider newProvider =
+			new DisconnectedSymbolTreeProvider(tool, this, p);
+		disconnectedProviders.add(newProvider);
+		tool.showComponentProvider(newProvider, true);
+		return newProvider;
+	}
+
+	@Override
+	public void selectSymbol(Symbol symbol) {
+		connectedProvider.selectSymbol(symbol);
+
+	}
+
+	void setNodeGroupThreshold(int threshold) {
+		nodeGroupThreshold = threshold;
+	}
+
+	int getNodeGroupThreshold() {
+		return nodeGroupThreshold;
+	}
+
+	private class SymbolTreeOptionsListener implements OptionsChangeListener {
+
+		@Override
+		public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+				Object newValue) throws OptionsVetoException {
+
+			if (OPTION_NAME_GROUP_THRESHOLD.equals(optionName)) {
+				nodeGroupThreshold = (int) newValue;
+				connectedProvider.rebuildTree();
+				for (SymbolTreeProvider provider : disconnectedProviders) {
+					provider.rebuildTree();
+				}
+			}
+		}
+
 	}
 }

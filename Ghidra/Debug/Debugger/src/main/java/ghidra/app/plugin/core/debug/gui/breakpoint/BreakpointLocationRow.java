@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,29 +19,34 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointSpec;
 
 public class BreakpointLocationRow {
 	private final DebuggerBreakpointsProvider provider;
-	private final TraceBreakpoint loc;
+	private final TraceBreakpointLocation loc;
 
-	public BreakpointLocationRow(DebuggerBreakpointsProvider provider, TraceBreakpoint loc) {
+	public BreakpointLocationRow(DebuggerBreakpointsProvider provider,
+			TraceBreakpointLocation loc) {
 		this.provider = provider;
 		this.loc = loc;
 	}
 
+	private long getSnap() {
+		return provider.traceManager.getCurrentFor(loc.getTrace()).getSnap();
+	}
+
 	public String getName() {
-		return loc.getName();
+		return loc.getName(getSnap());
 	}
 
 	public boolean isEnabled() {
-		long snap = provider.traceManager.getCurrentFor(loc.getTrace()).getSnap();
-		return loc.isEnabled(snap);
+		return loc.isEnabled(getSnap());
 	}
 
 	public State getState() {
@@ -74,12 +79,16 @@ public class BreakpointLocationRow {
 
 	public void setName(String name) {
 		try (Transaction tid = loc.getTrace().openTransaction("Set breakpoint name")) {
-			loc.setName(name);
+			loc.setName(getSnap(), name);
 		}
 	}
 
 	public Address getAddress() {
-		return loc.getMinAddress();
+		return loc.getMinAddress(getSnap());
+	}
+
+	public ProgramLocation getProgramLocation() {
+		return new ProgramLocation(loc.getTrace().getProgramView(), getAddress());
 	}
 
 	public String getTraceName() {
@@ -87,28 +96,38 @@ public class BreakpointLocationRow {
 	}
 
 	public String getThreads() {
-		return loc.getThreads()
+		long snap = getSnap();
+		return loc.getThreads(snap)
 				.stream()
-				.map(TraceThread::getName)
+				.map(t -> t.getName(snap))
 				.collect(Collectors.toSet())
 				.toString();
 	}
 
 	public String getComment() {
-		return loc.getComment();
+		return loc.getComment(getSnap());
 	}
 
 	public void setComment(String comment) {
 		try (Transaction tid = loc.getTrace().openTransaction("Set breakpoint comment")) {
-			loc.setComment(comment);
+			loc.setComment(getSnap(), comment);
 		}
 	}
 
-	public boolean hasSleigh() {
-		return !SleighUtils.UNCONDITIONAL_BREAK.equals(loc.getEmuSleigh());
+	public String getExpression() {
+		TraceBreakpointSpec spec = loc.getSpecification();
+		if (spec == null) {
+			// Shouldn't happen, but may in the interim
+			return "";
+		}
+		return spec.getExpression(getSnap());
 	}
 
-	public TraceBreakpoint getTraceBreakpoint() {
+	public boolean hasSleigh() {
+		return !SleighUtils.UNCONDITIONAL_BREAK.equals(loc.getEmuSleigh(getSnap()));
+	}
+
+	public TraceBreakpointLocation getTraceBreakpoint() {
 		return loc;
 	}
 }

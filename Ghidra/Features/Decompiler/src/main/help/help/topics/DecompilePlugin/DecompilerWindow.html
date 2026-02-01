@@ -4,7 +4,7 @@
 <title>Decompiler Window</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerOptions.html" title="Decompiler Options">
@@ -305,6 +305,34 @@
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarEliminateUnreachableCode"></a>Eliminate Unreachable Code</h3></div></div></div>
+  
+  <p>
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="icon.decompiler.action.provider.unreachable" width="16" height="16"></span>
+      </span> - toggle button
+  </p>
+  <p>
+	Quickly turn off the <a class="xref" href="DecompilerOptions.html#AnalysisUnreachable"><span class="bold"><strong>Eliminate unreachable code</strong></span></a> decompiler setting.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarRespectReadOnly"></a>Respect Read-only Flags</h3></div></div></div>
+  
+  <p>
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="icon.decompiler.action.provider.readonly" width="16" height="16"></span>
+      </span> - toggle button
+  </p>
+  <p>
+	Quickly turn off the <a class="xref" href="DecompilerOptions.html#AnalysisReadOnly"><span class="bold"><strong>Respect read-only flags</strong></span></a> decompiler setting.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
 <a name="ToolBarCopy"></a>Copy</h3></div></div></div>
   
   <p>
@@ -505,8 +533,10 @@
   
   <p>
     Highlights every occurrence of a variable, constant, or operator represented by the selected
-    token, within the Decompiler window.
+    token, within the Decompiler window.   There are actions available from the popup menu and from
+    the keyboard to navigate to each highlighted token.
   </p>
+
 </div>
 
 </div>
@@ -523,7 +553,7 @@
     variable or operation affected.
   </p>
   <p>
-    Many of the actions have have a key binding, which, if it exists, will be listed in the pop-up menu.
+    Many of the actions have a key binding, which, if it exists, will be listed in the pop-up menu.
     If the key binding is used to activate the action, local context is determined by the current cursor
     position.  Key bindings can be reassigned from the
     <a class="ulink" href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option" target="_top">Key Bindings</a>
@@ -932,6 +962,19 @@
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
+<a name="GoToMiddleMouseHighlight"></a>Go To Next/Previous Highlight</h3></div></div></div>
+  
+  <p>
+  	These actions are available from the popup menu and keyboard.   Only tokens highlighted from the
+    middle-mouse will be navigated.   <span class="bold"><strong>Shift-Comma</strong></span> will 
+    go to the previous highlighted token.    <span class="bold"><strong>Shift-Period</strong></span>
+    will go to the next highlighted token.   These key bindings can be changed via the
+    <a class="ulink" href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option" target="_top">Tool Options Dialog</a>.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
 <a name="ActionHighlight"></a>Highlight</h3></div></div></div>
   
   <p>
@@ -1080,6 +1123,21 @@
     parameter information by setting the function's prototype directly (see the
     <a class="xref" href="DecompilerWindow.html#ActionCommitParams" title="Commit Params/Return">Commit Params/Return</a> command).  In this situation, the "Override Signature"
     command is still possible, but it will bring up a confirmation dialog.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionEditOverride"></a>Edit Signature Override</h3></div></div></div>
+  
+  <p>
+    Edit the overriding function prototype applied previously to the called function under the cursor.
+  </p>
+  <p>
+  	This action can only be triggered at call sites with an existing signature override. As with the Override 
+  	Signature command, users must select either the token representing the called function's name or the 
+  	tokens representing the function pointer at the call site. The action brings up a dialog where the user 
+  	can edit the current overriding function prototype. 
   </p>
 </div>
 
@@ -1317,7 +1375,7 @@
   <p>
     Decompilation is triggered again to incorporate the
     new name, causing local variable declarations to be reordered and line breaks to
-    change, but otherwise the the output is unaffected.
+    change, but otherwise the output is unaffected.
   </p>
   <p>
     Local variables and parameters presented by the Decompiler may be invented on-the-fly

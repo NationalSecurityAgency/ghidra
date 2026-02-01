@@ -197,7 +197,9 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	private void setup(boolean canCancel) {
 		monitorComponent = new TaskMonitorComponent(false, false);
+		monitorComponent.getAccessibleContext().setAccessibleName("Monitor");
 		activityPanel = new ChompingBitsAnimationPanel();
+		activityPanel.getAccessibleContext().setAccessibleName("Activity");
 
 		setCancelEnabled(canCancel);
 		setRememberLocation(false);
@@ -205,6 +207,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		setTransient(true);
 
 		mainPanel = new JPanel(new BorderLayout());
+		mainPanel.getAccessibleContext().setAccessibleName("Task");
 		addWorkPanel(mainPanel);
 
 		if (supportsProgress) {

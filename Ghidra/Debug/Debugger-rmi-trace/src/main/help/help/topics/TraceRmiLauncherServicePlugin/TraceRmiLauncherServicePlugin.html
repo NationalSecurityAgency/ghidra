@@ -1,0 +1,166 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Launchers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Launchers</H1>
+
+    <P>The Debugger has an updated and simplified launcher system. A nice collection of basic
+    launchers for our supported platforms are provided out of the box. For Linux, we provide a
+    suite of GDB-based launchers. For macOS, we provide a suite of LLDB-based launchers (though,
+    these work on Linux, too). For Windows, we provide a launcher based on the Windows Debugger
+    (<TT>dbgeng.dll</TT> and <TT>dbgmodel.dll</TT>). Help is available for each in its respective
+    sub-topic.</P>
+
+    <P>Each launcher automates the creation of a Trace RMI <A href=
+    "help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html#connect_accept">acceptor</A>,
+    executes the back-end shell script in a Terminal, then waits for the resulting target trace. In
+    contrast to the previous system, the Terminal is the first and most basic interface presented.
+    Even if just about everything else goes wrong, the terminal should still be faithfully
+    operational:</P>
+
+    <DIV class="image">
+      <IMG alt="" src="images/GdbTerminal.png">
+    </DIV>
+
+    <P>The Terminal is fully integrated into Ghidra's UI and so can be docked or undocked just like
+    the rest of Ghidra's windows. It provides fairly robust VT-100 emulation. Thus, the user
+    experience from the Terminal is nearly identical to using the same debugger outside of Ghidra.
+    This terminal-first approach also ensures that you interact with the target application's
+    standard I/O. This was not possible in the previous system, as we re-implemented the CLI using
+    the back end's <TT>execute</TT> method. The debugger's (and so also the target's) actual I/O
+    streams were hidden away within a GDB/MI wrapper.</P>
+
+    <P>Each launcher script sets up a &mdash; usually Python &mdash; environment, launches the
+    actual debugger, and provides a sequence of commands for it to load the Trace RMI plugin,
+    connect back to Ghidra, launch the actual target process, and start the target trace. At this
+    point, the plugin generally takes over, reacting to user and target events, accepting front-end
+    requests, and generally keeping Ghidra and the back end synchronized.</P>
+
+    <P><A name="launch_tracermi"></A>The list of launchers can be accessed in either of two places:
+    1) In the <B>Debugger &rarr; Configure and Launch ...</B> menu or more conveniently from the
+    <B>Launch</B> button in the main toolbar. This is the blue bug <IMG alt="" src="icon.debugger">
+    button near the top center. The <B>Configure and Launch ...</B> menu lists all available
+    launchers. Selecting one will prompt for its options then launch. To re-launch quickly, use the
+    <B>Launch</B> button. Clicking it will re-launch using the most recent launcher and
+    configuration for the current program. If this is the first launch of the given program, the
+    button will instead activate its drop-down menu. The drop-down is also accessible by clicking
+    the down arrow next to the <B>Launch</B> button. The drop-down lists all launchers that have
+    been previously configured for the current program. Clicking one will immediately launch the
+    program without prompting. The <B>Configure and Launch ...</B> sub-menu of the drop-down
+    functions exactly like in the <B>Debugger</B> menu.</P>
+
+    <P>The Terminal provides some fairly standard actions. Other keyboard control sequences,
+    notably <B>CTRL-C</B>, are interpreted by the terminal, rather than Ghidra's action system, to
+    achieve their expected behavior, e.g., interrupt.</P>
+
+    <H3><A name="copy"></A>Copy</H3>
+
+    <P>This is accessed using the toolbar button or the key sequence <B>CTRL-SHIFT-C</B>. As
+    expected, it copies the current selection to the system clipboard.</P>
+
+    <H3><A name="paste"></A>Paste</H3>
+
+    <P>This is accessed using the toolbar button or the key sequence <B>CTRL-SHIFT-V</B>. As
+    expected, it pastes the text contents of the system clipboard into the terminal, as if
+    typed.</P>
+
+    <H3><A name="find"></A>Find</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-F</B>. It
+    displays a dialog for searching the terminal's scrollback buffer.</P>
+
+    <H3><A name="find_next"></A><A name="find_previous"></A>Find Next/Previous</H3>
+
+    <P>These actions are accessed using the local drop-down menu or the key sequence
+    <B>CTRL-SHIFT-H</B> or <B>CTRL-SHIFT-G</B>, respectively. They repeat the last search in the
+    forward or backward direction.</P>
+
+    <H3><A name="select_all"></A>Select All</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-A</B>. It
+    selects all text in the terminal, including its scrollback buffer. If all the text is already
+    selected, then this selects nothing, so that pressing the keystroke twice is effectively
+    "Select None."</P>
+
+    <H3><A name="increase_font_size"></A>Increase Font Size</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-PLUS</B>.
+    It increases the font size for this terminal.</P>
+
+    <H3><A name="decrease_font_size"></A>Decrease Font Size</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-MINUS</B>. It
+    decreases the font size for this terminal.</P>
+
+    <H3><A name="reset_font_size"></A>Reset Font Size</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-0</B>. It resets
+    the font size for this terminal according to the theme's configuration'.</P>
+
+    <H3><A name="terminate"></A>Terminate</H3>
+
+    <P>This action is accessed using the local drop-down menu. It will terminate the Terminal's
+    current session. Exactly what that means is determined by the Terminal's creator. In general,
+    it means to destroy the full debugging session associated with the Terminal. That may cause
+    related terminals, e.g., a secondary terminal for target I/O and associated target traces, to
+    be terminated as well. <B>NOTE:</B> This action is <EM>not</EM> implied by closing the Terminal
+    window. Closing the window with an active session merely hides it. It can be recalled using the
+    <B>Window &rarr; Terminals</B> menu. If the session has already been terminated (indicated by
+    an orange border) then closing the window will, in fact, destroy the Terminal.</P>
+
+    <H2>Development and Diagnostic Launchers</H2>
+
+    <P><A name="python_raw"></A>We currently provide a launcher for Trace RMI API exploration and
+    development: The "<TT>raw python</TT>" launcher runs Python in a Terminal window, connects a
+    Trace RMI client back to Ghidra, then starts a blank trace. Once running, it presents the
+    Python interpreter, with the <TT>ghidratrace</TT> and <TT>ghidratrace.client</TT> packages
+    imported into the local namespace. Thus, a developer can explore the API, invoke methods, and
+    observer how Ghidra reacts.</P>
+
+    <H3>Setup</H3>
+
+    <P>If you have access to PyPI, setting up your Python 3 environment is done using Pip. Please
+    note the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install protobuf>=3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd /path/to/ghidra_<EM>
+version</EM>/Ghidra/Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B><TT>python</TT> command</B>: This is the command or path to <TT>python</TT> version 3.
+      Python 2 is not supported.</LI>
+
+      <LI><B>Ghidra Language</B>: The LanguageID for the blank trace.</LI>
+
+      <LI><B>Ghidra Compiler</B>: The CompilerSpecID for the blank trace.</LI>
+    </UL>
+  </BODY>
+</HTML>

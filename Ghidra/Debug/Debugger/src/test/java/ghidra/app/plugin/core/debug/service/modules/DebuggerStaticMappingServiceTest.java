@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProviderTest;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.framework.model.DomainFile;
@@ -33,14 +34,21 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.Msg;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
-public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	// TODO: Make change listener more detailed, and test it, too!
 
 	protected DebuggerStaticMappingService mappingService;
@@ -95,6 +103,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		try (ToyDBTraceBuilder r = new ToyDBTraceBuilder(saved)) {
 			assertNotSame(tb.trace, r.trace);
 			traceManager.openTrace(r.trace);
+			waitForDomainObject(r.trace);
 			return r.trace;
 		}
 	}
@@ -240,10 +249,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceMissWayBefore() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceMissWayBefore() throws Throwable {
 		addMapping();
 		copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00000bad)));
@@ -251,10 +261,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceMissJustBefore() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceMissJustBefore() throws Throwable {
 		addMapping();
 		copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x001fffff)));
@@ -262,10 +273,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceHitAtStart() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceHitAtStart() throws Throwable {
 		addMapping();
 		Trace copy = copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200000)));
@@ -281,10 +293,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceHitInMiddle() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceHitInMiddle() throws Throwable {
 		addMapping();
 		Trace copy = copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200833)));
@@ -298,10 +311,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceHitAtEnd() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceHitAtEnd() throws Throwable {
 		addMapping();
 		Trace copy = copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200fff)));
@@ -315,10 +329,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceMissJustAfter() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceMissJustAfter() throws Throwable {
 		addMapping();
 		copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00201000)));
@@ -326,10 +341,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCopyAndTranslateStaticToTraceMissWayAfter() throws Exception {
+	public void testAddMappingThenCopyAndTranslateStaticToTraceMissWayAfter() throws Throwable {
 		addMapping();
 		copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Set<TraceLocation> locations = mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0xbadbadbadL)));
@@ -377,10 +393,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenTranslateStaticViewToTraceEmpty() throws Exception {
+	public void testAddMappingThenTranslateStaticViewToTraceEmpty() throws Throwable {
 		addMapping();
 		copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		Map<TraceSpan, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(program, new AddressSet());
@@ -388,10 +405,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenTranslateStaticViewToTraceReplete() throws Exception {
+	public void testAddMappingThenTranslateStaticViewToTraceReplete() throws Throwable {
 		addMapping();
 		Trace copy = copyTrace();
 		add2ndMapping();
+		waitOn(mappingService.changesSettled());
 
 		AddressSet set = new AddressSet();
 		// Before
@@ -438,10 +456,12 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCloseStaticAndOpenMappedMissWayBefore() throws Exception {
+	public void testAddMappingThenCloseStaticAndOpenMappedMissWayBefore() throws Throwable {
 		// NOTE: Does not make sense to test program->trace, as program has no mapping records
 		addMapping();
 		programManager.closeProgram(program, true);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
 
 		AddressSet addrSet = new AddressSet(dynSpace.getAddress(0x00000bad));
 		Set<Program> programSet =
@@ -451,9 +471,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCloseStaticAndOpenMappedHitInMiddle() throws Exception {
+	public void testAddMappingThenCloseStaticAndOpenMappedHitInMiddle() throws Throwable {
 		addMapping();
 		programManager.closeProgram(program, true);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
 
 		AddressSet addrSet = new AddressSet(dynSpace.getAddress(0x00100c0d));
 		Set<Program> programSet =
@@ -465,9 +487,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testAddMappingThenCloseStaticAndOpenMappedMissWayAfter() throws Exception {
+	public void testAddMappingThenCloseStaticAndOpenMappedMissWayAfter() throws Throwable {
 		addMapping();
 		programManager.closeProgram(program, true);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
 
 		AddressSet addrSet = new AddressSet(dynSpace.getAddress(0xbadbadbadL));
 		Set<Program> programSet =
@@ -478,14 +502,17 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testAddMappingThenCloseStaticAndTranslateTraceToStaticHitInMiddle()
-			throws Exception {
+			throws Throwable {
 		addMapping();
+		waitOn(mappingService.changesSettled());
 		// pre-check
 		assertNotNull(mappingService.getOpenMappedLocation(
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				dynSpace.getAddress(0x00100c0d))));
 
 		programManager.closeProgram(program, true);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
 
 		assertNull(mappingService.getOpenMappedLocation(
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
@@ -494,14 +521,16 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testAddMappingThenCloseTraceAndTranslateStaticToTraceHitInMiddle()
-			throws Exception {
+			throws Throwable {
 		addMapping();
+		waitOn(mappingService.changesSettled());
 		// pre-check
 		assertEquals(1, mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).size());
 
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
 
 		assertTrue(mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).isEmpty());
@@ -509,9 +538,11 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testAddMappingThenCloseAndReopenStaticAndTranslateTraceToStaticHitInMiddle()
-			throws Exception {
+			throws Throwable {
 		addMapping();
 		programManager.closeProgram(program, true);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
 		// pre-check
 		assertNull(mappingService.getOpenMappedLocation(
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
@@ -519,6 +550,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 		programManager.openProgram(program);
 		waitForProgram(program);
+		waitOn(mappingService.changesSettled());
 
 		assertNotNull(mappingService.getOpenMappedLocation(
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
@@ -527,17 +559,19 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testAddMappingThenCloseAndReopenTraceAndTranslateStaticToTraceHitInMiddle()
-			throws Exception {
+			throws Throwable {
 		addMapping();
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
 
 		// pre-check
 		assertTrue(mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).isEmpty());
 
 		traceManager.openTrace(tb.trace);
-		waitForSwing();
+		waitForDomainObject(tb.trace);
+		waitOn(mappingService.changesSettled());
 
 		assertEquals(1, mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).size());
@@ -545,7 +579,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testAddMappingThenRemoveButAbortThenTranslateTraceToStaticHitInMiddle()
-			throws Exception {
+			throws Throwable {
 		addMapping();
 		TraceLocation goodLoc =
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
@@ -553,19 +587,23 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		try (Transaction tx = tb.startTransaction()) {
 			mappingManager.findContaining(dynSpace.getAddress(0x00100000), 0).delete();
 			waitForDomainObject(tb.trace);
+			waitOn(mappingService.changesSettled());
 			// pre-check
 			assertNull(mappingService.getOpenMappedLocation(goodLoc));
 			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
+		waitOn(mappingService.changesSettled());
 
 		assertNotNull(mappingService.getOpenMappedLocation(goodLoc));
 	}
 
 	@Test
 	public void testAddCorrelationRemoveButUndoThenRequestMappingDynamicToStaticWithin()
-			throws Exception {
+			throws Throwable {
 		addMapping();
+		waitOn(mappingService.changesSettled());
+
 		TraceLocation goodLoc =
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				dynSpace.getAddress(0x00100c0d));
@@ -577,11 +615,13 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			mappingManager.findContaining(dynSpace.getAddress(0x00100000), 0).delete();
 		}
 		waitForDomainObject(tb.trace);
+		waitOn(mappingService.changesSettled());
 
 		// pre-check
 		assertNull(mappingService.getOpenMappedLocation(goodLoc));
 
 		undo(tb.trace, true);
+		waitOn(mappingService.changesSettled());
 
 		assertNotNull(mappingService.getOpenMappedLocation(goodLoc));
 	}
@@ -595,13 +635,14 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		TraceMemoryRegion echoText, echoData, libText, libData;
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 		try (Transaction tx = tb.startTransaction()) {
-			echoText = mm.createRegion("Memory.Regions[/bin/echo (0x00400000)]",
+			tb.createRootObject("Target");
+			echoText = mm.createRegion("Memory[/bin/echo (0x00400000)]",
 				0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			echoData = mm.createRegion("Memory.Regions[/bin/echo (0x00600000)]",
+			echoData = mm.createRegion("Memory[/bin/echo (0x00600000)]",
 				0, tb.range(0x00600000, 0x00600fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
-			libText = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff00000)]",
+			libText = mm.createRegion("Memory[/lib/libc.so (0x7ff00000)]",
 				0, tb.range(0x7ff00000, 0x7ff0ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			libData = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff20000)]",
+			libData = mm.createRegion("Memory[/lib/libc.so (0x7ff20000)]",
 				0, tb.range(0x7ff20000, 0x7ff20fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 
@@ -619,7 +660,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	@Test
-	public void testMapFullSpace() throws Exception {
+	public void testMapFullSpace() throws Throwable {
 		try (Transaction tx = tb.startTransaction()) {
 			TraceLocation traceLoc =
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0));
@@ -627,9 +668,29 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			// NB. 0 indicates 1 << 64
 			mappingService.addMapping(traceLoc, progLoc, 0, true);
 		}
-		waitForPass(() -> assertMapsTwoWay(0L, 0L));
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
+
+		assertMapsTwoWay(0L, 0L);
 		assertMapsTwoWay(-1L, -1L);
 		assertMapsTwoWay(Long.MAX_VALUE, Long.MAX_VALUE);
 		assertMapsTwoWay(Long.MIN_VALUE, Long.MIN_VALUE);
+	}
+
+	@Test
+	public void testProposeModuleMappingNullBase() throws Throwable {
+		DBTraceObject objModBash;
+		try (Transaction tx = tb.startTransaction()) {
+			SchemaContext ctx = XmlSchemaContext.deserialize(DebuggerModulesProviderTest.CTX_XML);
+			DBTraceObjectManager objects = tb.trace.getObjectManager();
+			objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
+			objModBash =
+				objects.createObject(KeyPath.parse("Processes[1].Modules[/bin/bash]"));
+			objModBash.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+		}
+
+		TraceModule modBash = objModBash.queryInterface(TraceModule.class);
+		assertEquals(Map.of(),
+			mappingService.proposeModuleMaps(List.of(modBash), 0, List.of(program)));
 	}
 }

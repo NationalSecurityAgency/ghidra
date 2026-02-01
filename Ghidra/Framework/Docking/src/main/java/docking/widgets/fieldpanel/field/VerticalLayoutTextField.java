@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -134,7 +134,11 @@ public class VerticalLayoutTextField implements TextField {
 		StringBuilder buf = new StringBuilder();
 		int n = elements.size() - 1;
 		for (int i = 0; i < n; i++) {
-			buf.append(elements.get(i).getText()).append(delimiter);
+			String text = elements.get(i).getText();
+			buf.append(text);
+			if (!text.endsWith(delimiter)) { // prevent 2 spaces between merged lines
+				buf.append(delimiter);
+			}
 		}
 		buf.append(elements.get(n).getText());
 		return buf.toString();
@@ -488,11 +492,19 @@ public class VerticalLayoutTextField implements TextField {
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 
-		FieldRow fieldRow = getFieldRowFromDataRow(dataRow);
-		TextField field = fieldRow.field;
-		RowColLocation location = field.dataToScreenLocation(dataRow, dataColumn);
-		int screenRow = fieldRow.screenRow;
-		return location.withRow(screenRow);
+		// search each line looking for a match for the given row and column
+		for (int i = 0; i < subFields.size(); i++) {
+			FieldRow row = subFields.get(i);
+			RowColLocation loc = row.field.dataToScreenLocation(dataRow, dataColumn);
+
+			// A DefaultRowColLocation means that the line did not have an exact match for
+			// the dataRow and dataColumn, so need to keep looking at each line.
+			if (!(loc instanceof DefaultRowColLocation)) {
+				return new RowColLocation(i, loc.col());
+			}
+		}
+
+		return new DefaultRowColLocation();
 	}
 
 	@Override
@@ -501,12 +513,18 @@ public class VerticalLayoutTextField implements TextField {
 			return getText().length();
 		}
 		int extraSpace = rowSeparator.length();
-		int len = 0;
+		int offset = 0;
 		for (int i = 0; i < row; i++) {
-			len += lines.get(i).length() + extraSpace;
+			String line = lines.get(i);
+			int len = line.length();
+			if (!line.endsWith(rowSeparator)) {
+				len += extraSpace; // getText() performs this same check; be consistent
+			}
+
+			offset += len;
 		}
-		len += Math.min(col, lines.get(row).length());
-		return len;
+		offset += Math.min(col, lines.get(row).length());
+		return offset;
 	}
 
 	@Override
@@ -515,11 +533,15 @@ public class VerticalLayoutTextField implements TextField {
 		int extraSpace = rowSeparator.length();
 		int n = subFields.size();
 		for (int i = 0; i < n; i++) {
-			int len = lines.get(i).length();
-			if (absoluteOffset < len + extraSpace) {
+			String line = lines.get(i);
+			int len = line.length();
+			if (!line.endsWith(rowSeparator)) {
+				len += extraSpace; // getText() performs this same check; be consistent
+			}
+			if (absoluteOffset < len) {
 				return new RowColLocation(i, absoluteOffset);
 			}
-			absoluteOffset -= len + extraSpace;
+			absoluteOffset -= len;
 		}
 
 		int lastRow = n - 1;
@@ -548,18 +570,6 @@ public class VerticalLayoutTextField implements TextField {
 		return subFields.get(screenRow).field;
 	}
 
-	private FieldRow getFieldRowFromDataRow(int dataRow) {
-		int currentRow = 0;
-		for (FieldRow row : subFields) {
-			int length = row.field.getNumDataRows();
-			if (currentRow + length > dataRow) {
-				return row;
-			}
-			currentRow += length;
-		}
-		return subFields.get(subFields.size() - 1);
-	}
-
 	private int getDataRow(TextField field) {
 		for (FieldRow fieldRow : subFields) {
 			if (fieldRow.field == field) {
@@ -572,6 +582,7 @@ public class VerticalLayoutTextField implements TextField {
 	private class FieldRow {
 		private TextField field;
 		private int dataRow;
+		@SuppressWarnings("unused") // used by Json
 		private int screenRow;
 
 		FieldRow(TextField field, int dataRow, int screenRow) {

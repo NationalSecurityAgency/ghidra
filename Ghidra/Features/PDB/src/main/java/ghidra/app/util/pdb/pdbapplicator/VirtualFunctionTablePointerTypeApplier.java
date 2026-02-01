@@ -15,93 +15,50 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractVirtualFunctionTablePointerMsType} and
  * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} types.
  */
-public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
+public class VirtualFunctionTablePointerTypeApplier extends MsDataTypeComponentApplier {
 
+	// Intended for: AbstractVirtualFunctionTablePointerMsType or
+	//  AbstractVirtualFunctionTablePointerWithOffsetMsType
 	/**
-	 * Constructor for enum type applier, for transforming a enum into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractVirtualFunctionTablePointerMsType} or
-	 * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} to process.
+	 * Constructor for enum type applier, for transforming a enum into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator,
-			AbstractMsType msType) throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator)
+			throws IllegalArgumentException {
+		super(applicator);
 	}
 
-	@Override
-	BigInteger getSize() {
-		return BigInteger.valueOf(applicator.getDataOrganization().getPointerSize());
-	}
-
-	/**
-	 * Returns the offset of the Virtual Function Table Pointer.
-	 * @return Name of the nested type.
-	 */
-	int getOffset() {
-		if (msType instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType) {
-			return ((AbstractVirtualFunctionTablePointerWithOffsetMsType) msType).getOffset();
+	int getOffset(AbstractMsType type) {
+		if (type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType offType) {
+			return offType.getOffset();
 		}
 		return 0;
 	}
 
 	/**
 	 * Returns the name to use.
+	 * @param type the PDB type being inspected
 	 * @return Name of the pointer type.
 	 */
-	String getMemberName() {
-		return "VFTablePtr" + getOffset();
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		if (msType instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType vftPtrWOffset) {
-			dataType = applyPointer(
-				vftPtrWOffset.getPointerTypeRecordNumber());
-		}
-		else if (msType instanceof AbstractVirtualFunctionTablePointerMsType vftPtr) {
-			dataType = applyPointer(vftPtr.getPointerTypeRecordNumber());
-		}
-		else {
-			dataType = VoidDataType.dataType;
-			applicator.appendLogMsg(
-				"PDB Warning: Type not handled: " + msType.getClass().getSimpleName());
-		}
-	}
-
-	private DataType applyPointer(RecordNumber pointerTypeRecordNumber) {
-		MsTypeApplier rawApplier = applicator.getTypeApplier(pointerTypeRecordNumber);
-		if (rawApplier instanceof PointerTypeApplier pointerApplier) {
-			return pointerApplier.getDataType();
-		}
-		applicator.appendLogMsg("cannot process " + rawApplier.getClass().getSimpleName() + "for " +
-			getClass().getSimpleName());
-		return null;
+	String getMemberName(AbstractMsType type) {
+		return "VFTablePtr" + getOffset(type);
 	}
 
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
-		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType) &&
-			!(type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType)) {
+		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType vftPtrType)) {
 			throw new IllegalArgumentException(
 				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
 					VirtualFunctionTablePointerTypeApplier.class.getSimpleName());
 		}
-		return type;
+		return vftPtrType;
 	}
 
 }

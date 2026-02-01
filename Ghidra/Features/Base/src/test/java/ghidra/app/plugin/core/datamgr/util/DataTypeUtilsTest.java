@@ -21,9 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGTest;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComparator;
-import ghidra.program.model.data.StubDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.UniversalIdGenerator;
 
 public class DataTypeUtilsTest {
@@ -48,7 +46,7 @@ public class DataTypeUtilsTest {
 		}
 
 		// sort them how our data will be sorted
-		Collections.sort(data, new DataTypeComparator());
+		Collections.sort(data, DataTypeComparator.INSTANCE);
 		List<DataType> finalData = Collections.unmodifiableList(data);
 
 		// a

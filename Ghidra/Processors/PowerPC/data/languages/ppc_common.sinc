@@ -1064,9 +1064,14 @@ define token instrvle(16)
 	LK0_VLE=(0,0)
 ;
 
-EVUIMM_2_RAt:       val^"("^A^")"	    is A & EVUIMM_2	[ val = EVUIMM_2*2; ]	{ tmp:4 = A+(EVUIMM_2*2); export tmp; }
-EVUIMM_4_RAt:       val^"("^A^")"	    is A & EVUIMM_4	[ val = EVUIMM_4*4; ]	{ tmp:4 = A+(EVUIMM_4*4); export tmp; }
-EVUIMM_8_RAt:       val^"("^A^")"	    is A & EVUIMM_8	[ val = EVUIMM_8*8; ]	{ tmp:4 = A+(EVUIMM_8*8); export tmp; }
+EVUIMM_2_RAt:       val^"("^RA^")"	    is RA & A   & EVUIMM_2	[ val = EVUIMM_2*2; ]	{ tmp:$(REGISTER_SIZE) = RA+zext(val:4); export tmp; }
+EVUIMM_2_RAt:       val^"("^RA^")"	    is RA & A=0 & EVUIMM_2	[ val = EVUIMM_2*2; ]	{ tmp:$(REGISTER_SIZE) =    zext(val:4); export tmp; }
+
+EVUIMM_4_RAt:       val^"("^RA^")"	    is RA & A & EVUIMM_4	[ val = EVUIMM_4*4; ]	{ tmp:$(REGISTER_SIZE) = RA+zext(val:4); export tmp; }
+EVUIMM_4_RAt:       val^"("^RA^")"	    is RA & A=0 & EVUIMM_4	[ val = EVUIMM_4*4; ]	{ tmp:$(REGISTER_SIZE) =    zext(val:4); export tmp; }
+
+EVUIMM_8_RAt:       val^"("^RA^")"	    is RA & A & EVUIMM_8	[ val = EVUIMM_8*8; ]	{ tmp:$(REGISTER_SIZE) = RA+zext(val:4); export tmp; }
+EVUIMM_8_RAt:       val^"("^RA^")"	    is RA & A=0 & EVUIMM_8	[ val = EVUIMM_8*8; ]	{ tmp:$(REGISTER_SIZE) =    zext(val:4); export tmp; }
 
 attach variables [ T ]
 	[ vs0    vs1   vs2   vs3   vs4   vs5   vs6   vs7   vs8   vs9  vs10  vs11  vs12  vs13  vs14  vs15  
@@ -1857,8 +1862,8 @@ TOm: ""			is TO { }
 CTR_DEC: "z"	is BO_3=1  	{CTR = CTR-1; tmp:1 = (CTR == 0); export tmp; }
 CTR_DEC: "nz"	is BO_3=0  	{CTR = CTR-1; tmp:1 = (CTR != 0); export tmp; }
 
-CC_TF: "t"		is BO_1=1	{}
-CC_TF: "f"		is BO_1=0	{}
+CC_TF: "t"		is BO_1=1	{ tmp:1 = 1; export tmp; }
+CC_TF: "f"		is BO_1=0	{ tmp:1 = 0; export tmp; }
 
 # OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=129 & BIT_0=0
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import ghidra.app.util.demangler.DemangledObject;
 import ghidra.feature.fid.db.FidQueryService;
 import ghidra.feature.fid.service.*;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -31,7 +30,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class ApplyFidEntriesCommand extends BackgroundCommand {
+public class ApplyFidEntriesCommand extends BackgroundCommand<Program> {
 	public static final String FID_CONFLICT = "FID_conflict:";
 	public static final String FID_BOOKMARK_CATEGORY = "Function ID Analyzer";
 	public static final String FIDCONFLICT_BOOKMARK_CATEGORY = "Function ID Conflict";
@@ -58,55 +57,49 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		FidService service = new FidService();
-
-		if (obj instanceof Program) {
-			Program program = (Program) obj;
-
-			if (!service.canProcess(program.getLanguage())) {
-				return false;
-			}
-
-			try (FidQueryService fidQueryService =
-				service.openFidQueryService(program.getLanguage(), false)) {
-
-				monitor.setMessage("FID Analysis");
-				List<FidSearchResult> processProgram =
-					service.processProgram(program, fidQueryService, scoreThreshold, monitor);
-				if (processProgram == null) {
-					return false;
-				}
-
-				for (FidSearchResult entry : processProgram) {
-					monitor.checkCancelled();
-
-					monitor.incrementProgress(1);
-					if (entry.function.isThunk()) {
-						continue;
-					}
-
-					if (!entry.matches.isEmpty()) {
-						processMatches(entry, program, monitor);
-					}
-					else {
-						Msg.trace(this, "no results for function " + entry.function.getName() +
-							" at " + entry.function.getEntryPoint());
-					}
-				}
-				applyConflictLabels(program);
-			}
-			catch (CancelledException e) {
-				return false;
-			}
-			catch (VersionException | IOException e) {
-				setStatusMsg(e.getMessage());
-				return false;
-			}
-
-			return true;
+		if (!service.canProcess(program.getLanguage())) {
+			return false;
 		}
-		return false;
+
+		try (FidQueryService fidQueryService =
+			service.openFidQueryService(program.getLanguage(), false)) {
+
+			monitor.setMessage("FID Analysis");
+			List<FidSearchResult> processProgram =
+				service.processProgram(program, fidQueryService, scoreThreshold, monitor);
+			if (processProgram == null) {
+				return false;
+			}
+
+			for (FidSearchResult entry : processProgram) {
+				monitor.checkCancelled();
+
+				monitor.incrementProgress(1);
+				if (entry.function.isThunk()) {
+					continue;
+				}
+
+				if (!entry.matches.isEmpty()) {
+					processMatches(entry, program, monitor);
+				}
+				else {
+					Msg.trace(this, "no results for function " + entry.function.getName() + " at " +
+						entry.function.getEntryPoint());
+				}
+			}
+			applyConflictLabels(program);
+		}
+		catch (CancelledException e) {
+			return false;
+		}
+		catch (VersionException | IOException e) {
+			setStatusMsg(e.getMessage());
+			return false;
+		}
+
+		return true;
 	}
 
 	private void processMatches(FidSearchResult result, Program program, TaskMonitor monitor)
@@ -264,8 +257,8 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		if (bookmarkContents != null && !bookmarkContents.equals("")) {
 			function.getProgram()
 					.getBookmarkManager()
-					.setBookmark(function.getEntryPoint(),
-						BookmarkType.ANALYSIS, FID_BOOKMARK_CATEGORY, bookmarkContents);
+					.setBookmark(function.getEntryPoint(), BookmarkType.ANALYSIS,
+						FID_BOOKMARK_CATEGORY, bookmarkContents);
 		}
 	}
 
@@ -280,9 +273,8 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(function.getEntryPoint());
 		for (Symbol symbol : symbols) {
-			SourceType sourceType = symbol.getSource();
-			if (sourceType == SourceType.USER_DEFINED || sourceType == SourceType.IMPORTED) {
-				return true;
+			if (symbol.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
+				return true; // symbol has trusted source
 			}
 		}
 		return false;
@@ -376,8 +368,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 			if (createBookmarksEnabled) {
 				BookmarkManager bookmarkManager = function.getProgram().getBookmarkManager();
 				bookmarkManager.setBookmark(addr, BookmarkType.ANALYSIS,
-					FIDCONFLICT_BOOKMARK_CATEGORY,
-					"Multiple likely matching functions");
+					FIDCONFLICT_BOOKMARK_CATEGORY, "Multiple likely matching functions");
 			}
 		}
 	}

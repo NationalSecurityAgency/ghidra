@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 /**
  * Metrics captured during the application of a PDB.  This is a Ghidra class separate from the
  * PDB API that we have crafted to help us quantify and qualify the ability apply the PDB
- * to a {@link DataTypeManager} and/or {@link Program}. 
+ * to a {@link DataTypeManager} and/or {@link Program}.
  */
 public class PdbApplicatorMetrics {
 
@@ -68,7 +68,7 @@ public class PdbApplicatorMetrics {
 		LocalThreadStorage3216MsSymbol.PDB_ID,
 		LocalThreadStorage32MsSymbol.PDB_ID,
 		LocalThreadStorage32StMsSymbol.PDB_ID,
-		
+
 		// AbstractUserDefinedTypeMsSymbol
 		CobolUserDefinedType16MsSymbol.PDB_ID,
 		CobolUserDefinedTypeMsSymbol.PDB_ID,
@@ -89,7 +89,7 @@ public class PdbApplicatorMetrics {
 	 * List of symbols seen (by their ID) as Public symbols.
 	 */
 	//@formatter:off
-	private static final Set<Integer> EXPECTED_LINKER_SYMBOLS = Set.of(	
+	private static final Set<Integer> EXPECTED_LINKER_SYMBOLS = Set.of(
 		PeCoffSectionMsSymbol.PDB_ID,
 		TrampolineMsSymbol.PDB_ID,
 		ObjectNameMsSymbol.PDB_ID,
@@ -108,9 +108,12 @@ public class PdbApplicatorMetrics {
 	private Set<Class<? extends AbstractMsType>> unexpectedMemberFunctionContainerTypes =
 		new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> cannotApplySymbols = new HashSet<>();
+	private Set<Class<? extends AbstractMsSymbol>> nonNestableSymbols = new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> unexpectedGlobalSymbols = new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> unexpectedPublicSymbols = new HashSet<>();
 	private boolean witnessEnumerateNarrowing = false;
+	private boolean witnessC11Lines = false;
+	private boolean witnessC13InlineeLines = false;
 
 	/**
 	 * Method to capture data/item type that cannot be applied.
@@ -126,6 +129,14 @@ public class PdbApplicatorMetrics {
 	 */
 	void witnessCannotApplySymbolType(AbstractMsSymbol symbol) {
 		cannotApplySymbols.add(symbol.getClass());
+	}
+
+	/**
+	 * Method to capture symbol type that we cannot currently process as a nested symbol
+	 * @param symbol The symbol type witnessed
+	 */
+	void witnessNonNestableSymbolType(AbstractMsSymbol symbol) {
+		nonNestableSymbols.add(symbol.getClass());
 	}
 
 	/**
@@ -167,36 +178,59 @@ public class PdbApplicatorMetrics {
 
 	/**
 	 * Method to capture unusual this pointer types.
-	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
+	 * @param type the {@AbstractMsType} for the supposed this pointer
 	 */
-	void witnessMemberFunctionThisPointer(MsTypeApplier applier) {
+	void witnessMemberFunctionThisPointer(AbstractMsType type) {
 		// We know that we have seen PrimitiveMsTypes that are pointer types.
-		if (applier instanceof PointerTypeApplier) {
+		if (type == null) {
 			return;
 		}
-		unexpectedMemberFunctionThisPointerTypes.add(applier.getMsType().getClass());
+		if (type instanceof AbstractPointerMsType ptrType) {
+			witnessMemberFunctionThisPointerUnderlyingType(ptrType.getUnderlyingType());
+			return;
+		}
+		unexpectedMemberFunctionThisPointerTypes.add(type.getClass());
 	}
 
 	/**
 	 * Method to capture unusual underlying types for a normal pointer for this pointer.
-	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
+	 * @param type the {@AbstractMsType} for the supposed this pointer
 	 */
-	void witnessMemberFunctionThisPointerUnderlyingType(MsTypeApplier applier) {
-		if (applier instanceof CompositeTypeApplier) {
+	void witnessMemberFunctionThisPointerUnderlyingType(AbstractMsType type) {
+		if (type == null || type instanceof AbstractCompositeMsType) {
 			return;
 		}
-		unexpectedMemberFunctionThisPointerUnderlyingTypes.add(applier.getMsType().getClass());
+		if (type instanceof AbstractModifierMsType) {
+			return;
+		}
+		unexpectedMemberFunctionThisPointerUnderlyingTypes.add(type.getClass());
 	}
 
 	/**
-	 * Method to capture unusual containing types for a member function.
-	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
+	 * Method to capture unusual containing types for a member function
+	 * @param type the {@AbstractMsType} for the supposed this container
 	 */
-	void witnessMemberFunctionContainingType(MsTypeApplier applier) {
-		if (applier instanceof CompositeTypeApplier) {
+	void witnessMemberFunctionContainingType(AbstractMsType type) {
+		if (type == null || type instanceof AbstractCompositeMsType) {
 			return;
 		}
-		unexpectedMemberFunctionContainerTypes.add(applier.getMsType().getClass());
+		unexpectedMemberFunctionContainerTypes.add(type.getClass());
+	}
+
+	/**
+	 * Method to capture witnessing of C11Lines.
+	 */
+	void witnessC11Lines() {
+		witnessC11Lines = true;
+	}
+
+	/**
+	 * Method to capture witnessing of C13InlineeLines.
+	 */
+	void witnessC13InlineeLines() {
+		// C13InlineeLines are prevalent, but we want to be able to inform the user that
+		//  we haven't processed them
+		witnessC13InlineeLines = true;
 	}
 
 	//==============================================================================================
@@ -213,9 +247,11 @@ public class PdbApplicatorMetrics {
 		builder.append(reportUnunsualThisPointerUnderlyingTypes());
 		builder.append(reportUnunsualMemberFunctionContainerTypes());
 		builder.append(reportNonappliableSymbols());
+		builder.append(reportNonNestableSymbols());
 		builder.append(reportUnexpectedPublicSymbols());
 		builder.append(reportUnexpectedGlobalSymbols());
 		builder.append(reportEnumerateNarrowing());
+		builder.append(reportSourceLineProcessing()); // can be removed once we can process
 
 		if (builder.length() == 0) {
 			return; // nothing reported
@@ -273,6 +309,15 @@ public class PdbApplicatorMetrics {
 		return builder.toString();
 	}
 
+	private String reportNonNestableSymbols() {
+		StringBuilder builder = new StringBuilder();
+		for (Class<? extends AbstractMsSymbol> clazz : nonNestableSymbols) {
+			builder.append("Could not nest one or more instances of a PDB symbol type: " +
+				clazz.getSimpleName() + "\n");
+		}
+		return builder.toString();
+	}
+
 	private String reportUnexpectedPublicSymbols() {
 		StringBuilder builder = new StringBuilder();
 		for (Class<? extends AbstractMsSymbol> clazz : unexpectedPublicSymbols) {
@@ -296,6 +341,19 @@ public class PdbApplicatorMetrics {
 			return "Enumerate narrowing was witnessed\n";
 		}
 		return "";
+	}
+
+	// Routine can be modified to remove each as we can process each.  Routine can be removed once
+	//  we can process both.
+	private String reportSourceLineProcessing() {
+		String result = "";
+		if (witnessC11Lines) {
+			result = "Could not process C11Lines\n";
+		}
+		if (witnessC13InlineeLines) {
+			result += "Could not process C13InlineeLines\n";
+		}
+		return result;
 	}
 
 }

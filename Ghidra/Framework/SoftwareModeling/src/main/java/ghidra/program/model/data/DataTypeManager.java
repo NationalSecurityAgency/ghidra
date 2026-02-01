@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import db.Transaction;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.lang.*;
@@ -27,6 +28,8 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.ExceptionalCallback;
+import utility.function.ExceptionalSupplier;
 
 /**
  * Interface for Managing data types.
@@ -72,7 +75,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Get the program architecture information which has been associated with this 
-	 * datatype manager.  If {@link #getProgramArchitecture()} returns null this method
+	 * data type manager.  If {@link #getProgramArchitecture()} returns null this method
 	 * may still return information if the program architecture was set on an archive but unable
 	 * to properly instantiate.
 	 * @return program architecture summary if it has been set
@@ -80,15 +83,17 @@ public interface DataTypeManager {
 	public String getProgramArchitectureSummary();
 
 	/**
-	 * Returns true if the given category path exists in this datatype manager
+	 * Returns true if the given category path exists in this data type manager
 	 * @param path the path
-	 * @return true if the given category path exists in this datatype manager
+	 * @return true if the given category path exists in this data type manager
 	 */
 	public boolean containsCategory(CategoryPath path);
 
 	/**
-	 * Returns a unique name not currently used by any other dataType or category
-	 * with the same baseName
+	 * Returns a unique name not currently used by any other data type or category
+	 * with the same baseName.  This does not produce a conflict name and is intended 
+	 * to be used when generating an artificial data type name only (e.g., {@code temp_1},
+	 * {@code temp_2}; for {@code baseName="temp"}.
 	 *
 	 * @param path the path of the name
 	 * @param baseName the base name to be made unique
@@ -97,12 +102,11 @@ public interface DataTypeManager {
 	public String getUniqueName(CategoryPath path, String baseName);
 
 	/**
-	 * Returns a dataType that is "in" (ie suitable implementation) this
-	 * Manager, creating a new one if necessary.  Also the returned dataType
-	 * will be in a category in this dataTypeManager that is equivalent to the
-	 * category of the passed in dataType.
+	 * Returns a data type that is "in" this Manager, creating a new one if necessary.  Also the 
+	 * returned data type will be in a category in this manager that is equivalent to the
+	 * category of the passed in data type.
 	 * @param dataType the dataType to be resolved.
-	 * @param handler used to resolve conflicts with existing dataTypes.
+	 * @param handler used to resolve conflicts with existing data types.
 	 * @return an equivalent dataType that "belongs" to this dataTypeManager.
 	 */
 	public DataType resolve(DataType dataType, DataTypeConflictHandler handler);
@@ -165,17 +169,24 @@ public interface DataTypeManager {
 	public Iterator<FunctionDefinition> getAllFunctionDefinitions();
 
 	/**
-	 * Begin searching at the root category for all data types with the
-	 * given name. Places all the data types in this data type manager
-	 * with the given name into the list.
-	 * @param name name of the data type
+	 * Begin searching at the root category for all data types with the given name. Places all the 
+	 * data types in this data type manager with the given name into the list.  The presence of 
+	 * {@code .conflict} extension will be ignored and thus included in the results.
+	 * 
+	 * @param name name of the data type (wildcards are not supported and will be treated
+	 * as explicit search characters)
 	 * @param list list that will be populated with matching DataType objects
 	 */
 	public void findDataTypes(String name, List<DataType> list);
 
 	/**
-	 * Begin searching at the root category for all data types with names
-	 * that match the given name that may contain wildcards.
+	 * Begin searching at the root category for all data types with names that match the given name
+	 * that may contain wildcards using familiar globbing characters '*' and '?'.
+	 * <p>
+	 * Unlike {@link #findDataTypes(String, List)}, data types with a {@code .conflict} extension 
+	 * will not be included in the results of this method unless they explicitly match the provided
+	 * name.
+	 * 
 	 * @param name name to match; may contain wildcards
 	 * @param list list that will be populated with matching DataType objects
 	 * @param caseSensitive true if the match is case sensitive
@@ -300,15 +311,48 @@ public interface DataTypeManager {
 	public void removeInvalidatedListener(InvalidatedListener listener);
 
 	/**
-	 * Remove the given datatype from this manager
-	 * @param dataType the dataType to be removed
-	 * @param monitor the task monitor
+	 * Remove the given data type from this manager.
+	 * <br>
+	 * NOTE: Any use of the specified datatype within a {@link FunctionDefinition} will be 
+	 * converted to the {@link DataType#DEFAULT default 'undefined' datatype}.  Any use within
+	 * a {@link Structure} or {@link Union} will be converted to the {@link BadDataType} as
+	 * a placeholder to retain the component's field name and length (the comment will be prefixed
+	 * with a message indicating the removal of the old datatype.
+	 * 
+	 * @param dataType the data type to be removed
 	 * @return true if the data type existed and was removed
 	 */
-	public boolean remove(DataType dataType, TaskMonitor monitor);
+	public boolean remove(DataType dataType);
 
 	/**
-	 * Return true if the given dataType exists in this data type manager
+	 * Deprecated.  Use {@link #remove(DataType)}.
+	 * @param dataType the data type
+	 * @param monitor the monitor
+	 * @return true if the data type existed and was removed
+	 * @deprecated use {@link #remove(DataType)}
+	 */
+	@Deprecated(since = "10.4", forRemoval = true)
+	public default boolean remove(DataType dataType, TaskMonitor monitor) {
+		return remove(dataType);
+	}
+
+	/**
+	 * Remove the given data types from this manager.
+	 * <br>
+	 * NOTE: Any use of the specified data types within a {@link FunctionDefinition} will be 
+	 * converted to the {@link DataType#DEFAULT default 'undefined' datatype}.  Any use within
+	 * a {@link Structure} or {@link Union} will be converted to the {@link BadDataType} as
+	 * a placeholder to retain the component's field name and length (the comment will be prefixed
+	 * with a message indicating the removal of the old datatype.
+	 * 
+	 * @param dataTypes the data types to be removed
+	 * @param monitor the monitor
+	 * @throws CancelledException if the user cancels
+	 */
+	public void remove(List<DataType> dataTypes, TaskMonitor monitor) throws CancelledException;
+
+	/**
+	 * Return true if the given data type exists in this data type manager
 	 *
 	 * @param dataType the type
 	 * @return true if the type is in this manager
@@ -372,11 +416,91 @@ public interface DataTypeManager {
 	public int startTransaction(String description);
 
 	/**
-	 * Ends the current transaction
+	 * Ends the current transaction.
+	 * <P>
+	 * NOTE: If multiple transactions are outstanding the full transaction will not be ended
+	 * until all transactions have been ended.  If any of the transactions indicate a 
+	 * false for {@code commit} the transaction will ultimately be rolled-back when the final
+	 * transaction is ended.
+	 * <P>
+	 * NOTE: Use of rollback ({@code commit=false} should be avoided unless absolutely
+	 * necessary since it will incur overhead to revert changes and may rollback multiple
+	 * concurrent transactions if they exist.
+	 * <P>
+	 * NOTE: If this manager is part of a larger {@link DomainObject} its transactions may become
+	 * entangled with other transactions at a higher level.  In such cases, use of  the 
+	 * {@link DomainObject} transaction interface is preferred.  The return value from this
+	 * method cannot be relied on in such cases. 
 	 * @param transactionID id of the transaction to end
-	 * @param commit true if changes are committed, false if changes in transaction are revoked
+	 * @param commit true if changes are committed, false if changes in transaction should be
+	 * rolled back.
+	 * @return true if this invocation was the final transaction and all changes were comitted.
 	 */
-	public void endTransaction(int transactionID, boolean commit);
+	public boolean endTransaction(int transactionID, boolean commit);
+
+	/**
+	 * Performs the given callback inside of a transaction.  Use this method in place of the more
+	 * verbose try/catch/finally semantics.
+	 * <pre>
+	 * program.withTransaction("My Description", () -> {
+	 * 	// ... Do something
+	 * });
+	 * </pre>
+	 * 
+	 * <p>
+	 * Note: the transaction created by this method will always be committed when the call is 
+	 * finished.  If you need the ability to abort transactions, then you need to use the other 
+	 * methods on this interface.
+	 * 
+	 * @param description brief description of transaction
+	 * @param callback the callback that will be called inside of a transaction
+	 * @throws E any exception that may be thrown in the given callback
+	 */
+	public default <E extends Exception> void withTransaction(String description,
+			ExceptionalCallback<E> callback) throws E {
+		int id = startTransaction(description);
+		try {
+			callback.call();
+		}
+		finally {
+			endTransaction(id, true);
+		}
+	}
+
+	/**
+	 * Calls the given supplier inside of a transaction.  Use this method in place of the more
+	 * verbose try/catch/finally semantics.
+	 * <pre>
+	 * program.withTransaction("My Description", () -> {
+	 * 	// ... Do something
+	 * 	return result;
+	 * });
+	 * </pre>
+	 * <p>
+	 * If you do not need to supply a result, then use 
+	 * {@link #withTransaction(String, ExceptionalCallback)} instead.
+	 * 
+	 * @param <E> the exception that may be thrown from this method 
+	 * @param <T> the type of result returned by the supplier
+	 * @param description brief description of transaction
+	 * @param supplier the supplier that will be called inside of a transaction
+	 * @return the result returned by the supplier
+	 * @throws E any exception that may be thrown in the given callback
+	 */
+	public default <E extends Exception, T> T withTransaction(String description,
+			ExceptionalSupplier<T, E> supplier) throws E {
+		T t = null;
+		boolean success = false;
+		int id = startTransaction(description);
+		try {
+			t = supplier.get();
+			success = true;
+		}
+		finally {
+			endTransaction(id, success);
+		}
+		return t;
+	}
 
 	/**
 	 * Force all pending notification events to be flushed
@@ -509,7 +633,9 @@ public interface DataTypeManager {
 	public SourceArchive getLocalSourceArchive();
 
 	/**
-	 * Change the given data type so that its source archive is the given archive
+	 * Change the given data type and its dependencies so their source archive is set to
+	 * given archive.  Only those data types not already associated with a source archive
+	 * will be changed.
 	 *
 	 * @param datatype the type
 	 * @param archive the archive
@@ -629,7 +755,7 @@ public interface DataTypeManager {
 	public Collection<String> getDefinedCallingConventionNames();
 
 	/**
-	 * Get the default calling convention's prototype model in this datatype manager if known.
+	 * Get the default calling convention's prototype model in this data type manager if known.
 	 *
 	 * @return the default calling convention prototype model or null.
 	 */

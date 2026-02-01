@@ -64,7 +64,7 @@ public class CustomNimbusLookAndFeel extends NimbusLookAndFeel {
 	}
 
 	protected void installJavaDefaultsIntoThemeManager(UiDefaultsMapper uiDefaultsMapper) {
-		GThemeValueMap javaDefaults = uiDefaultsMapper.getJavaDefaults();
+		GThemeValueMap javaDefaults = uiDefaultsMapper.getNormalizedJavaDefaults();
 		themeManager.setJavaDefaults(javaDefaults);
 	}
 

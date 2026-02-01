@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.script;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -28,10 +26,9 @@ import docking.widgets.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.script.ScriptInfo;
 import ghidra.util.HTMLUtilities;
-import ghidra.util.UserSearchUtils;
 
 /**
- * A widget that allows the user to choose an existing script by typing its name or picking it 
+ * A widget that allows the user to choose an existing script by typing its name or picking it
  * from a list.
  */
 public class ScriptSelectionEditor {
@@ -102,7 +99,7 @@ public class ScriptSelectionEditor {
 
 	/**
 	 * Adds a document listener to the text field editing component of this editor so that users
-	 * can be notified when the text contents of the editor change.  You may verify whether the 
+	 * can be notified when the text contents of the editor change.  You may verify whether the
 	 * text changes represent a valid DataType by calling {@link #validateUserSelection()}.
 	 * @param listener the listener to add.
 	 * @see #validateUserSelection()
@@ -176,7 +173,7 @@ public class ScriptSelectionEditor {
 	}
 
 	private boolean containsValidScript() {
-		// look for the case where the user made a selection from the matching window, but 
+		// look for the case where the user made a selection from the matching window, but
 		// then changed the text field text.
 		ScriptInfo selectedInfo = selectionField.getSelectedValue();
 		if (selectedInfo != null &&
@@ -211,7 +208,7 @@ public class ScriptSelectionEditor {
 
 //=================================================================================================
 // Inner Classes
-//=================================================================================================	
+//=================================================================================================
 
 	private class ScriptTextFieldModel extends DefaultDropDownSelectionDataModel<ScriptInfo> {
 
@@ -222,24 +219,10 @@ public class ScriptSelectionEditor {
 		}
 
 		@Override
-		public List<ScriptInfo> getMatchingData(String searchText) {
-
-			// This pattern will: 1) allow users to match the typed text anywhere in the
-			// script names and 2) allow the use of globbing characters
-			Pattern pattern = UserSearchUtils.createContainsPattern(searchText, true,
-				Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-
-			List<ScriptInfo> results = new ArrayList<>();
-			for (ScriptInfo info : data) {
-				String name = info.getName();
-				Matcher m = pattern.matcher(name);
-				if (m.matches()) {
-					results.add(info);
-				}
-			}
-
-			return results;
+		public List<SearchMode> getSupportedSearchModes() {
+			return List.of(SearchMode.WILDCARD, SearchMode.CONTAINS, SearchMode.STARTS_WITH);
 		}
+
 	}
 
 	private class ScriptSelectionTextField extends DropDownSelectionTextField<ScriptInfo> {
@@ -252,7 +235,7 @@ public class ScriptSelectionEditor {
 		protected boolean shouldReplaceTextFieldTextWithSelectedItem(String textFieldText,
 				ScriptInfo selectedItem) {
 
-			// This is called when the user presses Enter with a list item selected.  By 
+			// This is called when the user presses Enter with a list item selected.  By
 			// default, the text field will not replace the text field text if the given item
 			// does not match the text.  This is to allow users to enter custom text.  We do
 			// not want custom text, as the user must pick an existing script.  Thus, we always
@@ -265,7 +248,7 @@ public class ScriptSelectionEditor {
 
 		@Override
 		public String getString(ScriptInfo info) {
-			StringBuilder buffy = new StringBuilder("<HTML><P>");
+			StringBuilder buffy = new StringBuilder("<html><P>");
 
 			KeyStroke keyBinding = info.getKeyBinding();
 			if (keyBinding != null) {
@@ -289,9 +272,9 @@ public class ScriptSelectionEditor {
 		private String formatDescription(String description) {
 			//
 			// We are going to wrap lines at 50 columns so that they fit the tooltip window.  We
-			// will also try to keep the original structure of manually separated lines by 
+			// will also try to keep the original structure of manually separated lines by
 			// preserving empty lines included in the original description.  Removing all newlines
-			// except for the blank lines allows the line wrapping utility to create the best 
+			// except for the blank lines allows the line wrapping utility to create the best
 			// output.
 			//
 
@@ -309,7 +292,7 @@ public class ScriptSelectionEditor {
 			}
 
 			// Remove all newlines, except for consecutive newlines, which represent blank lines.
-			// Then, for any remaining newline, add back the extra blank line.  
+			// Then, for any remaining newline, add back the extra blank line.
 			String trimmed = bufffy.toString();
 			String stripped = trimmed.replaceAll("(?<!\n)\n", "");
 			stripped = stripped.replaceAll("\n", "\n\n");

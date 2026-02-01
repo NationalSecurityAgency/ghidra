@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,108 +18,62 @@ package docking.help;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
-import java.io.File;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.URL;
+import java.time.Duration;
 import java.util.*;
-import java.util.regex.*;
 
 import javax.help.*;
-import javax.help.DefaultHelpModel.DefaultHighlight;
 import javax.help.search.SearchEngine;
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
-import docking.widgets.*;
+import docking.widgets.FindDialog;
+import docking.widgets.SearchLocation;
+import docking.widgets.search.*;
 import generic.util.WindowUtilities;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.worker.Worker;
 
 /**
  * Enables the Find Dialog for searching through the current page of a help document.
  */
 class HelpViewSearcher {
 
-	private static final String DIALOG_TITLE_PREFIX = "Whole Word Search in ";
 	private static final String FIND_ACTION_NAME = "find.action";
 
 	private static KeyStroke FIND_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
-	private Comparator<SearchHit> searchResultComparator =
-		(o1, o2) -> o1.getBegin() - o2.getBegin();
-
-	private Comparator<? super SearchHit> searchResultReverseComparator =
-		(o1, o2) -> o2.getBegin() - o1.getBegin();
-
 	private JHelp jHelp;
 	private SearchEngine searchEngine;
-	private HelpModel helpModel;
 
 	private JEditorPane htmlEditorPane;
 
 	private FindDialog findDialog;
 
-	private boolean startSearchFromBeginning;
-	private boolean settingHighlights;
-
-	HelpViewSearcher(JHelp jHelp, HelpModel helpModel) {
+	HelpViewSearcher(JHelp jHelp) {
 		this.jHelp = jHelp;
-		this.helpModel = helpModel;
-
-		findDialog = new FindDialog(DIALOG_TITLE_PREFIX, new Searcher()) {
-			@Override
-			public void close() {
-				super.close();
-				clearHighlights();
-			}
-		};
-
-//		URL startURL = helpModel.getCurrentURL();
-//		if (isValidHelpURL(startURL)) {
-//			currentPageURL = startURL;
-//		}
 
 		grabSearchEngine();
 
 		JHelpContentViewer contentViewer = jHelp.getContentViewer();
-		contentViewer.addTextHelpModelListener(e -> {
-			if (settingHighlights) {
-				return; // ignore our changes
-			}
-			clearSearchState();
-		});
-
-		contentViewer.addHelpModelListener(e -> {
-			URL url = e.getURL();
-			if (!isValidHelpURL(url)) {
-				// invalid file--don't enable searching for it
-				return;
-			}
-
-//				currentPageURL = url;
-
-			String file = url.getFile();
-			int separatorIndex = file.lastIndexOf(File.separator);
-			file = file.substring(separatorIndex + 1);
-			findDialog.setTitle(DIALOG_TITLE_PREFIX + file);
-
-			clearSearchState();  // new page
-		});
 
 		// note: see HTMLEditorKit$LinkController.mouseMoved() for inspiration
 		htmlEditorPane = getHTMLEditorPane(contentViewer);
+
+		HtmlTextSearcher searcher = new HtmlTextSearcher(htmlEditorPane);
+		findDialog = new FindDialog("Help Find", searcher);
 
 		htmlEditorPane.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				htmlEditorPane.getCaret().setVisible(true);
-				startSearchFromBeginning = false;
 			}
 		});
 
@@ -129,14 +83,6 @@ class HelpViewSearcher {
 // if we ever need any highlight manipulation (currently done by BasicHelpContentViewUI)
 //		Highlighter highlighter = htmlEditorPane.getHighlighter();
 //		highlighter.addHighlight(0, 0, null)
-	}
-
-	private boolean isValidHelpURL(URL url) {
-		if (url == null) {
-			return false;
-		}
-		String file = url.getFile();
-		return new File(file).exists();
 	}
 
 	private void grabSearchEngine() {
@@ -214,14 +160,6 @@ class HelpViewSearcher {
 		return (JEditorPane) viewport.getView();
 	}
 
-	private void clearSearchState() {
-		startSearchFromBeginning = true;
-	}
-
-	private void clearHighlights() {
-		((TextHelpModel) helpModel).removeAllHighlights();
-	}
-
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -239,156 +177,156 @@ class HelpViewSearcher {
 		}
 	}
 
-	private class Searcher implements FindDialogSearcher {
+	private class HtmlTextSearcher extends TextComponentSearcher {
 
-		@Override
-		public CursorPosition getCursorPosition() {
-			if (startSearchFromBeginning) {
-				startSearchFromBeginning = false;
-				return new CursorPosition(0);
-			}
-
-			int caretPosition = htmlEditorPane.getCaretPosition();
-			return new CursorPosition(caretPosition);
+		public HtmlTextSearcher(JEditorPane editorPane) {
+			super(editorPane);
 		}
 
 		@Override
-		public CursorPosition getStart() {
-			return new CursorPosition(0);
-		}
+		protected HtmlSearchResults createSearchResults(
+				Worker worker, JEditorPane jEditorPane, String searchText,
+				TreeMap<Integer, TextComponentSearchLocation> matchesByPosition) {
 
-		@Override
-		public CursorPosition getEnd() {
-			int length = htmlEditorPane.getDocument().getLength();
-			return new CursorPosition(length - 1);
-		}
+			HtmlSearchResults results = new HtmlSearchResults(worker, jEditorPane, searchText,
+				matchesByPosition);
 
-		@Override
-		public void setCursorPosition(CursorPosition position) {
-			int cursorPosition = position.getPosition();
-			htmlEditorPane.setCaretPosition(cursorPosition);
-		}
-
-		@Override
-		public void highlightSearchResults(SearchLocation location) {
-			if (location == null) {
-				((TextHelpModel) helpModel).setHighlights(new DefaultHighlight[0]);
-				return;
-			}
-
-			int start = location.getStartIndexInclusive();
-			DefaultHighlight[] h = new DefaultHighlight[] {
-				new DefaultHighlight(start, location.getEndIndexInclusive()) };
-
-			// using setHighlights() instead of removeAll + add
-			// avoids one highlighting event
-			try {
-				settingHighlights = true;
-				((TextHelpModel) helpModel).setHighlights(h);
-				htmlEditorPane.getCaret().setVisible(true); // bug
-			}
-			finally {
-				settingHighlights = false;
-			}
-
-			try {
-				Rectangle2D rectangle = htmlEditorPane.modelToView2D(start);
-				htmlEditorPane.scrollRectToVisible(rectangle.getBounds());
-			}
-			catch (BadLocationException e) {
-				// shouldn't happen
-			}
-		}
-
-		@Override
-		public SearchLocation search(String text, CursorPosition cursorPosition,
-				boolean searchForward, boolean useRegex) {
-			ScreenSearchTask searchTask = new ScreenSearchTask(text, useRegex);
-			new TaskLauncher(searchTask, htmlEditorPane);
-
-			List<SearchHit> searchResults = searchTask.getSearchResults();
-			int position = cursorPosition.getPosition(); // move to the next item
-
-			if (searchForward) {
-				Collections.sort(searchResults, searchResultComparator);
-				for (SearchHit searchHit : searchResults) {
-					int begin = searchHit.getBegin();
-					if (begin <= position) {
-						continue;
-					}
-					return new SearchLocation(begin, searchHit.getEnd(), text, searchForward);
-				}
-			}
-			else {
-				Collections.sort(searchResults, searchResultReverseComparator);
-				for (SearchHit searchHit : searchResults) {
-					int begin = searchHit.getBegin();
-					if (begin >= position) {
-						continue;
-					}
-					return new SearchLocation(begin, searchHit.getEnd(), text, searchForward);
-				}
-			}
-
-			return null; // no more matches in the current direction
+			TextHelpModel model = jHelp.getModel();
+			URL url = model.getCurrentURL();
+			results.setUrl(url);
+			return results;
 		}
 	}
 
-	private class ScreenSearchTask extends Task {
+	private class HtmlSearchResults extends TextComponentSearchResults {
 
-		private String text;
-		private List<SearchHit> searchHits = new ArrayList<>();
-		private boolean useRegex;
+		private PageLoadedListener pageLoadListener;
+		private URL searchUrl;
 
-		ScreenSearchTask(String text, boolean useRegex) {
-			super("Help Search Task", true, false, true, true);
-			this.text = text;
-			this.useRegex = useRegex;
+		// we use the document length to know when our page is finished loading on a reload
+		private int fullDocumentLength;
+
+		private String name;
+
+		HtmlSearchResults(Worker worker, JEditorPane editorPane, String searchText,
+				TreeMap<Integer, TextComponentSearchLocation> matchesByPosition) {
+			super(worker, editorPane, searchText, matchesByPosition);
+
+			pageLoadListener = new PageLoadedListener(this);
+			editorPane.addPropertyChangeListener("page", pageLoadListener);
+
+			Document doc = editorPane.getDocument();
+			fullDocumentLength = doc.getLength();
 		}
 
 		@Override
-		public void run(TaskMonitor monitor) {
-			Document document = htmlEditorPane.getDocument();
-			try {
-				String screenText = document.getText(0, document.getLength());
+		public String getName() {
+			return name;
+		}
 
-				if (useRegex) {
-					Pattern pattern =
-						Pattern.compile(text, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-					Matcher matcher = pattern.matcher(screenText);
-					while (matcher.find()) {
-						int start = matcher.start();
-						int end = matcher.end();
-						searchHits.add(new SearchHit(1D, start, end));
-					}
-				}
-				else {
-					int start = 0;
-					int wordOffset = text.length();
-					while (wordOffset < document.getLength()) {
-						String searchFor = screenText.substring(start, wordOffset);
-						if (text.compareToIgnoreCase(searchFor) == 0) { //Case insensitive
-							searchHits.add(new SearchHit(1D, start, wordOffset));
-						}
-						start++;
-						wordOffset++;
-					}
-				}
+		@Override
+		protected boolean isInvalid(String otherSearchText) {
+			if (!isMyHelpPageShowing()) {
+				return true;
 			}
-			catch (BadLocationException e) {
-				// shouldn't happen
-				Msg.debug(this, "Unexpected exception retrieving help text", e);
+			return super.isInvalid(otherSearchText);
+		}
+
+		private boolean isMyHelpPageShowing() {
+			TextHelpModel model = jHelp.getModel();
+			URL htmlViewerURL = model.getCurrentURL();
+			if (!Objects.equals(htmlViewerURL, searchUrl)) {
+				// the help does not have my page
+				return false;
 			}
-			catch (PatternSyntaxException e) {
-				Msg.showError(this, htmlEditorPane, "Regular Expression Syntax Error",
-					e.getMessage());
+
+			// The document gets loaded asynchronously.  Use the length to know when it is finished
+			// loaded.  This will not work correctly when the lengths are the same between two 
+			// documents, but that should be a low occurrence event.
+			Document doc = editorPane.getDocument();
+			int currentLength = doc.getLength();
+			return fullDocumentLength == currentLength;
+		}
+
+		private void loadMyHelpPage(TaskMonitor m) {
+			if (isMyHelpPageShowing()) {
+				return; // no need to reload
+			}
+
+			// Trigger the URL of the results to load and then activate the results
+			jHelp.setCurrentURL(searchUrl);
+		}
+
+		/**
+		 * Start an asynchronous activation. When we activate, we have to tell the viewer to load a
+		 * new html page, which is asynchronous.    
+		 * @return the future
+		 */
+		@Override
+		protected ActivationJob createActivationJob() {
+
+			// start a new page load and then wait for it to finish
+			return (ActivationJob) super.createActivationJob()
+					.thenRun(this::loadMyHelpPage)
+					.thenWait(this::isMyHelpPageShowing, Duration.ofSeconds(3));
+		}
+
+		@Override
+		public void activate() {
+			//
+			// When we activate, a new page load may get triggered.  When that happens the caret 
+			// position will get moved by the help viewer.  We will put back the last active search
+			// location after the load has finished.
+			//
+			SearchLocation lastActiveLocation = getActiveLocation();
+			FindJob job = startActivation()
+					.thenRunSwing(() -> restoreLocation(lastActiveLocation));
+
+			runActivationJob((ActivationJob) job);
+		}
+
+		private void restoreLocation(SearchLocation lastActiveLocation) {
+			if (lastActiveLocation != null) {
+				setActiveLocation(null);
+				setActiveLocation(lastActiveLocation);
 			}
 		}
 
-		List<SearchHit> getSearchResults() {
-			return searchHits;
+		@Override
+		public void dispose() {
+			editorPane.removePropertyChangeListener("page", pageLoadListener);
+			super.dispose();
+		}
+
+		void setUrl(URL url) {
+			searchUrl = url;
+			name = getFilename(searchUrl);
+		}
+
+		private URL getUrl() {
+			return searchUrl;
+		}
+
+		private class PageLoadedListener implements PropertyChangeListener {
+
+			private HtmlSearchResults htmlResults;
+
+			PageLoadedListener(HtmlSearchResults htmlResults) {
+				this.htmlResults = htmlResults;
+			}
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+
+				URL newPage = (URL) evt.getNewValue();
+				if (!Objects.equals(newPage, htmlResults.getUrl())) {
+					htmlResults.deactivate();
+				}
+			}
+
 		}
 	}
+
 //
 //	private class IndexerSearchTask extends Task {
 //

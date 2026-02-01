@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -176,7 +177,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		 * and sets an appropriate comment for the new structure.
 		 */
 		String comment = "(FDE) Length";
-		createAndCommentData(program, addr, dwordDT, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, dwordDT, comment, CommentType.EOL);
 		intLength = program.getMemory().getInt(addr);
 
 		return addr.add(DWORD_LEN);
@@ -201,7 +202,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		DataType locType = new DWordDataType();
 		int locTypeSize = locType.getLength();
 
-		createAndCommentData(program, addr, locType, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, locType, comment, CommentType.EOL);
 
 		intPtr = (int) GccAnalysisUtils.readDWord(program, addr);
 
@@ -228,8 +229,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		curSize += locTypeSize;
 
-		program.getReferenceManager().addMemoryReference(addr, cieAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(addr, cieAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 
 		return addr.add(locTypeSize);
 	}
@@ -265,10 +266,10 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		DataType encodedDt = cie.getFDEDecoder().getDataType(program);
 
-		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 		if (pcBeginAddr.getOffset() != 0x0) {
-			program.getReferenceManager().addMemoryReference(addr, pcBeginAddr, RefType.DATA,
-				SourceType.ANALYSIS, 0);
+			program.getReferenceManager()
+					.addMemoryReference(addr, pcBeginAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 		}
 
 		curSize += encodedLen;
@@ -293,7 +294,12 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		 */
 		String comment = "(FDE) PcRange";
 
-		intPcRange = (int) GccAnalysisUtils.readDWord(program, addr);
+		DataType dataType = getAddressSizeDataType();
+		byte[] range = new byte[dataType.getLength()];
+		GccAnalysisUtils.readBytes(program, addr, range);
+		DataConverter converter = DataConverter.getInstance(program.getMemory().isBigEndian());
+		intPcRange = (int) converter.getSignedValue(range, range.length);
+
 		if (intPcRange < 0) {
 			return null;
 		}
@@ -303,7 +309,6 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		}
 		pcEndAddr = pcBeginAddr.add(intPcRange - 1);
 
-		DataType dataType = getAddressSizeDataType();
 		if (dataType.getLength() == 8) {
 			// While this is 64-bit system, this length may be encoded as a 32-bit value, 
 			// arguing a length needn't use all 8 bytes. If it *is* encoded in 8 bytes, the 
@@ -319,7 +324,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		}
 
 		int dtLength = dataType.getLength();
-		createAndCommentData(program, addr, dataType, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, dataType, comment, CommentType.EOL);
 
 		curSize += dtLength;
 
@@ -353,7 +358,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		intAugmentationDataLength = (int) uleb128.asLong();
 
 		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		curSize += uleb128.getLength();
 
@@ -372,7 +377,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		 * Create a new Augmentation Data field at the specified address 
 		 * and sets an appropriate comment for the new structure.
 		 */
-		SetCommentCmd.createComment(program, addr, "(FDE) Augmentation Data", CodeUnit.EOL_COMMENT);
+		SetCommentCmd.createComment(program, addr, "(FDE) Augmentation Data", CommentType.EOL);
 
 		this.augmentationData = new byte[intAugmentationDataLength];
 		program.getMemory().getBytes(addr, augmentationData);
@@ -389,8 +394,6 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	 * @throws MemoryAccessException if the required memory can't be read
 	 */
 	private Address createCallFrameInstructions(Address addr) throws MemoryAccessException {
-		CreateArrayCmd arrayCmd = null;
-
 		// Create initial instructions array with remaining bytes.
 		int instructionLength = intLength - curSize;
 		ArrayDataType adt = new ArrayDataType(ByteDataType.dataType, instructionLength, BYTE_LEN);
@@ -403,7 +406,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		}
 
 		SetCommentCmd.createComment(program, addr, "(FDE) Call Frame Instructions",
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		callFrameInstructions = new byte[instructionLength];
 		program.getMemory().getBytes(addr, callFrameInstructions);
@@ -509,8 +512,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	}
 
 	private void markEndOfFrame(Address addr) {
-		createAndCommentData(program, addr, dwordDT, "End of Frame", CodeUnit.EOL_COMMENT);
-		SetCommentCmd commentCmd = new SetCommentCmd(addr, CodeUnit.PLATE_COMMENT, "END OF FRAME");
+		createAndCommentData(program, addr, dwordDT, "End of Frame", CommentType.EOL);
+		SetCommentCmd commentCmd = new SetCommentCmd(addr, CommentType.PLATE, "END OF FRAME");
 		commentCmd.applyTo(program);
 	}
 
@@ -523,7 +526,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		if (intLength == -1) {
 			hasExtLength = true;
 			String comment = "(FDE) Extended Length";
-			createAndCommentData(program, addr, new QWordDataType(), comment, CodeUnit.EOL_COMMENT);
+			createAndCommentData(program, addr, new QWordDataType(), comment, CommentType.EOL);
 			// prog.getMemory().getBytes(addr, extLength);
 			addr = addr.add(QWORD_LEN);
 			curSize += QWORD_LEN;
@@ -589,16 +592,17 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 					createData(program, augmentationDataAddr, DWordDataType.dataType);
 
-					program.getReferenceManager().addMemoryReference(augmentationDataAddr,
-						augmentationDataExAddr, RefType.DATA, SourceType.ANALYSIS, 0);
+					program.getReferenceManager()
+							.addMemoryReference(augmentationDataAddr, augmentationDataExAddr,
+								RefType.DATA, SourceType.ANALYSIS, 0);
 
 					try {
 
 						String label = "eh_augmentation_" + pcBeginAddr + ".." + pcEndAddr + "_" +
 							augmentationDataExAddr;
 
-						program.getSymbolTable().createLabel(augmentationDataExAddr, label,
-							SourceType.ANALYSIS);
+						program.getSymbolTable()
+								.createLabel(augmentationDataExAddr, label, SourceType.ANALYSIS);
 					}
 					catch (InvalidInputException e) {
 						// ignored
@@ -627,15 +631,16 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		String lsdaComment = "(FDE Augmentation Data) LSDA Data Pointer";
 		createAndCommentData(program, augmentationDataAddr, lsdaDecoder.getDataType(program),
-			lsdaComment, CodeUnit.EOL_COMMENT);
+			lsdaComment, CommentType.EOL);
 
 		if (augmentationDataAddr.equals(lsdaAddr)) {
 			// decoded a reference that returned here -- a null reference
 			return;
 		}
 
-		program.getReferenceManager().addMemoryReference(augmentationDataAddr, lsdaAddr,
-			RefType.DATA, SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(augmentationDataAddr, lsdaAddr, RefType.DATA,
+					SourceType.ANALYSIS, 0);
 
 		if (!program.getMemory().getAllInitializedAddressSet().contains(lsdaAddr)) {
 

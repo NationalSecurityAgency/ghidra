@@ -53,7 +53,7 @@ public class StubVTController implements VTController {
 	}
 
 	@Override
-	public void openVersionTrackingSession(DomainFile domainFile) {
+	public boolean openVersionTrackingSession(DomainFile domainFile) {
 		throw new UnsupportedOperationException();
 	}
 

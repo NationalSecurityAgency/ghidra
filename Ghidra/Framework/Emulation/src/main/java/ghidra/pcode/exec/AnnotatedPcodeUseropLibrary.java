@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,16 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.*;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.reflect.TypeUtils;
 
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import utilities.util.AnnotationUtilities;
 
@@ -80,7 +83,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 				opdef.posLib = pos;
 			}
 		},
-		OUTPUT(OpOutput.class, Varnode.class) {
+		OUTPUT(OpOutput.class, Varnode.class, int[].class) {
 			@Override
 			int getPos(AnnotatedPcodeUseropDefinition<?> opdef) {
 				return opdef.posOut;
@@ -89,6 +92,17 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			@Override
 			void setPos(AnnotatedPcodeUseropDefinition<?> opdef, int pos) {
 				opdef.posOut = pos;
+			}
+		},
+		OP(OpOp.class, PcodeOp.class) {
+			@Override
+			int getPos(AnnotatedPcodeUseropDefinition<?> opdef) {
+				return opdef.posOp;
+			}
+
+			@Override
+			void setPos(AnnotatedPcodeUseropDefinition<?> opdef, int pos) {
+				opdef.posOp = pos;
 			}
 		};
 
@@ -114,11 +128,11 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		}
 
 		private final Class<? extends Annotation> annotCls;
-		private final Class<?> paramCls;
+		private final List<Class<?>> allowedClsList;
 
-		private ParamAnnotProc(Class<? extends Annotation> annotCls, Class<?> paramCls) {
+		private ParamAnnotProc(Class<? extends Annotation> annotCls, Class<?>... paramCls) {
 			this.annotCls = annotCls;
-			this.paramCls = paramCls;
+			this.allowedClsList = List.of(paramCls);
 		}
 
 		abstract int getPos(AnnotatedPcodeUseropDefinition<?> opdef);
@@ -129,7 +143,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			return p.getAnnotation(annotCls) != null;
 		}
 
-		Type getArgumentType(Type opType) {
+		static Type parameterize(Class<?> paramCls, Type opType) {
 			TypeVariable<?>[] typeParams = paramCls.getTypeParameters();
 			if (typeParams.length == 0) {
 				return paramCls;
@@ -140,6 +154,25 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			throw new AssertionError();
 		}
 
+		String nameAllowedArgumentTypes(Type opType) {
+			return allowedClsList.stream()
+					.map(cls -> parameterize(cls, opType).toString())
+					.collect(Collectors.joining(","));
+		}
+
+		record MatchedClassWithArgs(Class<?> paramCls, Map<TypeVariable<?>, Type> typeArgs) {
+			static MatchedClassWithArgs find(Type paramType, List<Class<?>> allowed) {
+				for (Class<?> cls : allowed) {
+					Map<TypeVariable<?>, Type> typeArgs =
+						TypeUtils.getTypeArguments(paramType, cls);
+					if (typeArgs != null) {
+						return new MatchedClassWithArgs(cls, typeArgs);
+					}
+				}
+				return null;
+			}
+		}
+
 		void processParameterPerAnnot(AnnotatedPcodeUseropDefinition<?> opdef, Type declClsOpType,
 				int i, Parameter p) {
 			if (getPos(opdef) != -1) {
@@ -147,20 +180,21 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 					"Can only have one parameter with @" + annotCls.getSimpleName());
 			}
 			Type pType = p.getParameterizedType();
-			Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(pType, paramCls);
-			if (typeArgs == null) {
+			MatchedClassWithArgs match = MatchedClassWithArgs.find(pType, allowedClsList);
+			if (match == null) {
 				throw new IllegalArgumentException("Parameter " + p.getName() + " with @" +
-					annotCls.getSimpleName() + " must acccept " + getArgumentType(declClsOpType));
+					annotCls.getSimpleName() + " must acccept " +
+					nameAllowedArgumentTypes(declClsOpType));
 			}
-			if (typeArgs.isEmpty()) {
+			if (match.typeArgs.isEmpty()) {
 				// Nothing
 			}
-			else if (typeArgs.size() == 1) {
-				Type declMthOpType = typeArgs.get(paramCls.getTypeParameters()[0]);
+			else if (match.typeArgs.size() == 1) {
+				Type declMthOpType = match.typeArgs.get(match.paramCls.getTypeParameters()[0]);
 				if (!Objects.equals(declClsOpType, declMthOpType)) {
 					throw new IllegalArgumentException("Parameter " + p.getName() + " with @" +
 						annotCls.getSimpleName() + " must acccept " +
-						getArgumentType(declClsOpType));
+						nameAllowedArgumentTypes(declClsOpType));
 				}
 			}
 			else {
@@ -179,32 +213,63 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	protected static abstract class AnnotatedPcodeUseropDefinition<T>
 			implements PcodeUseropDefinition<T> {
 
+		protected static boolean isPrimitive(Type type) {
+			return type instanceof Class<?> cls && cls.isPrimitive();
+		}
+
 		protected static <T> AnnotatedPcodeUseropDefinition<T> create(PcodeUserop annot,
 				AnnotatedPcodeUseropLibrary<T> library, Type opType, Lookup lookup, Method method) {
 			if (annot.variadic()) {
 				return new VariadicAnnotatedPcodeUseropDefinition<>(library, opType, lookup,
-					method);
+					method, annot);
 			}
-			else {
-				return new FixedArgsAnnotatedPcodeUseropDefinition<>(library, opType, lookup,
-					method);
-			}
+			return new FixedArgsAnnotatedPcodeUseropDefinition<>(library, opType, lookup,
+				method, annot);
+		}
+
+		@SuppressWarnings("unchecked")
+		protected static <T> T fromPrimitive(Object value, int size,
+				PcodeArithmetic<T> arithmetic) {
+			return switch (value) {
+				case null -> null;
+				case Byte v -> arithmetic.fromConst(v, size);
+				case Short v -> arithmetic.fromConst(v, size);
+				case Integer v -> arithmetic.fromConst(v, size);
+				case Long v -> arithmetic.fromConst(v, size);
+				case Float v -> arithmetic.fromConst(v, size);
+				case Double v -> arithmetic.fromConst(v, size);
+				case Boolean v -> arithmetic.fromConst(v, size);
+				default -> (T) value;
+			};
 		}
 
 		protected final Method method;
+		private final AnnotatedPcodeUseropLibrary<T> library;
+		private final boolean isFunctional;
+		private final boolean hasSideEffects;
+		private final boolean modifiesContext;
+		private final boolean canInline;
 		private final MethodHandle handle;
 
 		private int posExecutor = -1;
 		private int posState = -1;
 		private int posLib = -1;
 		private int posOut = -1;
+		private int posOp = -1;
 
 		public AnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library, Type opType,
-				Lookup lookup, Method method) {
+				Lookup lookup, Method method, PcodeUserop annot) {
 			initStarting();
 			this.method = method;
+			this.library = library;
 			try {
-				this.handle = lookup.unreflect(method).bindTo(library);
+				MethodHandle unbound = lookup.unreflect(method);
+				if (Modifier.isStatic(method.getModifiers())) {
+					this.handle = unbound;
+				}
+				else {
+					this.handle = lookup.unreflect(method).bindTo(library);
+				}
 			}
 			catch (IllegalAccessException e) {
 				throw new IllegalArgumentException(
@@ -214,11 +279,12 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			}
 			Type declClsOpType = PcodeUseropLibrary.getOperandType(method.getDeclaringClass());
 			Type rType = method.getGenericReturnType();
-			if (rType != void.class && !TypeUtils.isAssignable(rType, declClsOpType)) {
-				throw new IllegalArgumentException(
-					"Method " + method.getName() + " with @" +
-						PcodeUserop.class.getSimpleName() +
-						" annotation must return void or a type assignable to " + declClsOpType);
+			if (!isPrimitive(rType) && !TypeUtils.isAssignable(rType, declClsOpType) ||
+				rType == char.class) {
+				throw new IllegalArgumentException("""
+						Method %s with @%s annotation must return a non-char primitive type, \
+						void, or a type assignable to %s.""".formatted(
+					method.getName(), PcodeUserop.class.getSimpleName(), declClsOpType));
 			}
 
 			Parameter[] params = method.getParameters();
@@ -230,6 +296,10 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 				}
 			}
 			initFinished();
+			this.isFunctional = annot.functional();
+			this.hasSideEffects = annot.hasSideEffects();
+			this.modifiesContext = annot.modifiesContext();
+			this.canInline = annot.canInline();
 		}
 
 		@Override
@@ -239,7 +309,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 
 		@Override
 		public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-				Varnode outVar, List<Varnode> inVars) {
+				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 			validateInputs(inVars);
 
 			PcodeExecutorStatePiece<T, T> state = executor.getState();
@@ -257,13 +327,16 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			if (posOut != -1) {
 				args.set(posOut, outVar);
 			}
+			if (posOp != -1) {
+				args.set(posOp, op);
+			}
 			placeInputs(executor, args, inVars);
 
 			try {
-				@SuppressWarnings("unchecked")
-				T result = (T) handle.invokeWithArguments(args);
+				Object result = handle.invokeWithArguments(args);
 				if (result != null && outVar != null) {
-					state.setVar(outVar, result);
+					state.setVar(outVar,
+						fromPrimitive(result, outVar.getSize(), executor.getArithmetic()));
 				}
 			}
 			catch (PcodeExecutionException e) {
@@ -272,6 +345,44 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			catch (Throwable e) {
 				throw new PcodeExecutionException("Error executing userop", null, e);
 			}
+		}
+
+		@Override
+		public boolean isFunctional() {
+			return isFunctional;
+		}
+
+		@Override
+		public boolean hasSideEffects() {
+			return hasSideEffects;
+		}
+
+		@Override
+		public boolean modifiesContext() {
+			return modifiesContext;
+		}
+
+		@Override
+		public boolean canInlinePcode() {
+			return canInline;
+		}
+
+		@Override
+		public Class<?> getOutputType() {
+			if (posOut == -1) {
+				return method.getReturnType();
+			}
+			return method.getParameterTypes()[posOut];
+		}
+
+		@Override
+		public Method getJavaMethod() {
+			return method;
+		}
+
+		@Override
+		public PcodeUseropLibrary<T> getDefiningLibrary() {
+			return library;
 		}
 
 		protected void initStarting() {
@@ -301,18 +412,120 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	protected static class FixedArgsAnnotatedPcodeUseropDefinition<T>
 			extends AnnotatedPcodeUseropDefinition<T> {
 
-		private List<Integer> posIns;
-		private Set<Integer> posTs;
+		interface UseropInputParam {
+			int position();
+
+			<T> Object convert(Varnode vn, PcodeExecutor<T> executor);
+		}
+
+		record VarnodeUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				return vn;
+			}
+		}
+
+		record TValUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<?, ?> state = executor.getState();
+				return state.getVar(vn, executor.getReason());
+			}
+		}
+
+		record ByteUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return (byte) arithmetic.toLong(state.getVar(vn, executor.getReason()),
+					Purpose.OTHER);
+			}
+		}
+
+		record ShortUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return (short) arithmetic.toLong(state.getVar(vn, executor.getReason()),
+					Purpose.OTHER);
+			}
+		}
+
+		record IntUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return (int) arithmetic.toLong(state.getVar(vn, executor.getReason()),
+					Purpose.OTHER);
+			}
+		}
+
+		record LongUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return arithmetic.toLong(state.getVar(vn, executor.getReason()), Purpose.OTHER);
+			}
+		}
+
+		record IntArrayUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				BigInteger value =
+					arithmetic.toBigInteger(state.getVar(vn, executor.getReason()), Purpose.OTHER);
+				int[] result = new int[(vn.getSize() + 3) / 4];
+				// This is terribly slow
+				for (int i = 0; i < result.length; i++) {
+					result[i] = value.intValue();
+					value = value.shiftRight(Integer.SIZE);
+				}
+				return result;
+			}
+		}
+
+		record FloatUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return arithmetic.toFloat(state.getVar(vn, executor.getReason()), Purpose.OTHER);
+			}
+		}
+
+		record DoubleUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return arithmetic.toDouble(state.getVar(vn, executor.getReason()), Purpose.OTHER);
+			}
+		}
+
+		record BooleanUseropInputParam(int position) implements UseropInputParam {
+			@Override
+			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
+				PcodeExecutorStatePiece<T, T> state = executor.getState();
+				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
+				return arithmetic.isTrue(state.getVar(vn, executor.getReason()), Purpose.OTHER);
+			}
+		}
+
+		private List<UseropInputParam> paramsIn;
 
 		public FixedArgsAnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library,
-				Type opType, Lookup lookup, Method method) {
-			super(library, opType, lookup, method);
+				Type opType, Lookup lookup, Method method, PcodeUserop annot) {
+			super(library, opType, lookup, method, annot);
 		}
 
 		@Override
 		protected void initStarting() {
-			posIns = new ArrayList<>();
-			posTs = new HashSet<>();
+			paramsIn = new ArrayList<>();
 		}
 
 		@Override
@@ -320,26 +533,52 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 				Parameter p) {
 			Type pType = p.getParameterizedType();
 			if (TypeUtils.isAssignable(Varnode.class, pType)) {
-				// Just use the Varnode by default
+				paramsIn.add(new VarnodeUseropInputParam(i));
 			}
 			else if (TypeUtils.isAssignable(declClsOpType, pType)) {
-				posTs.add(i);
+				paramsIn.add(new TValUseropInputParam(i));
+			}
+			else if (pType == byte.class) {
+				paramsIn.add(new ByteUseropInputParam(i));
+			}
+			else if (pType == short.class) {
+				paramsIn.add(new ShortUseropInputParam(i));
+			}
+			else if (pType == int.class) {
+				paramsIn.add(new IntUseropInputParam(i));
+			}
+			else if (pType == long.class) {
+				paramsIn.add(new LongUseropInputParam(i));
+			}
+			else if (pType == int[].class) {
+				paramsIn.add(new IntArrayUseropInputParam(i));
+			}
+			else if (pType == float.class) {
+				paramsIn.add(new FloatUseropInputParam(i));
+			}
+			else if (pType == double.class) {
+				paramsIn.add(new DoubleUseropInputParam(i));
+			}
+			else if (pType == boolean.class) {
+				paramsIn.add(new BooleanUseropInputParam(i));
 			}
 			else {
-				throw new IllegalArgumentException("Input parameter " + p.getName() +
-					" of userop " + method.getName() + " must be " +
-					Varnode.class.getSimpleName() + " or accept " + declClsOpType);
+				throw new IllegalArgumentException("""
+						Input parameter %s of userop %s must be non-char primitive type, \
+						%s, or accept %s. Was %s.
+						""".formatted(
+					p.getName(), method.getName(), Varnode.class.getSimpleName(), declClsOpType,
+					pType));
 			}
-			posIns.add(i);
 		}
 
 		@Override
 		protected void validateInputs(List<Varnode> inVars)
 				throws PcodeExecutionException {
-			if (inVars.size() != posIns.size()) {
+			if (inVars.size() != paramsIn.size()) {
 				throw new PcodeExecutionException(
 					"Incorrect input parameter count for userop " +
-						method.getName() + ". Expected " + posIns.size() + " but got " +
+						method.getName() + ". Expected " + paramsIn.size() + " but got " +
 						inVars.size());
 			}
 		}
@@ -347,21 +586,15 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		@Override
 		protected void placeInputs(PcodeExecutor<T> executor, List<Object> args,
 				List<Varnode> inVars) {
-			PcodeExecutorStatePiece<T, T> state = executor.getState();
-			for (int i = 0; i < posIns.size(); i++) {
-				int pos = posIns.get(i);
-				if (posTs.contains(pos)) {
-					args.set(pos, state.getVar(inVars.get(i), executor.getReason()));
-				}
-				else {
-					args.set(pos, inVars.get(i));
-				}
+			for (int i = 0; i < paramsIn.size(); i++) {
+				UseropInputParam ip = paramsIn.get(i);
+				args.set(ip.position(), ip.convert(inVars.get(i), executor));
 			}
 		}
 
 		@Override
 		public int getInputCount() {
-			return posIns.size();
+			return paramsIn.size();
 		}
 	}
 
@@ -377,8 +610,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		private Class<?> opRawType;
 
 		public VariadicAnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library,
-				Type opType, Lookup lookup, Method method) {
-			super(library, opType, lookup, method);
+				Type opType, Lookup lookup, Method method, PcodeUserop annot) {
+			super(library, opType, lookup, method, annot);
 		}
 
 		@Override
@@ -483,9 +716,47 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	@Target(ElementType.METHOD)
 	public @interface PcodeUserop {
 		/**
-		 * Set to true to receive all inputs in an array
+		 * Set to true to receive all inputs in an array.
 		 */
 		boolean variadic() default false;
+
+		/**
+		 * Set to true to attest that the userop is a pure function.
+		 * 
+		 * <p>
+		 * An incorrect attestation can lead to erroneous execution results.
+		 * 
+		 * @see PcodeUseropLibrary.PcodeUseropDefinition#isFunctional()
+		 */
+		boolean functional() default false;
+
+		/**
+		 * Set to false to attest the userop has no side effects.
+		 * 
+		 * <p>
+		 * An incorrect attestation can lead to erroneous execution results.
+		 * 
+		 * @see PcodeUseropLibrary.PcodeUseropDefinition#hasSideEffects()
+		 */
+		boolean hasSideEffects() default true;
+
+		/**
+		 * Set to true to indicate the userop can modify the decode context.
+		 * 
+		 * <p>
+		 * Failure to indicate context modifications can lead to erroneous decodes and thus
+		 * incorrect execution results.
+		 * 
+		 * @see PcodeUseropLibrary.PcodeUseropDefinition#modifiesContext()
+		 */
+		boolean modifiesContext() default false;
+
+		/**
+		 * Set to true to suggest inlining.
+		 * 
+		 * @see PcodeUseropLibrary.PcodeUseropDefinition#canInlinePcode()
+		 */
+		boolean canInline() default false;
 	}
 
 	/**
@@ -535,11 +806,23 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 * An annotation to receive the output varnode into a parameter
 	 * 
 	 * <p>
-	 * The annotated parameter must have type {@link Varnode}.
+	 * The annotated parameter must have type {@link Varnode} (or {@code int[]} for direct
+	 * invocation when the output is a multi-precision integer}).
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
 	public @interface OpOutput {
+	}
+
+	/**
+	 * An annotation to receive the CALLOTHER p-code op into a parameter
+	 * 
+	 * <p>
+	 * The annotated parameter must have type {@link PcodeOp}).
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface OpOp {
 	}
 
 	protected Map<String, PcodeUseropDefinition<T>> ops = new HashMap<>();

@@ -15,7 +15,7 @@
  */
 package ghidra.feature.vt.db;
 
-import static ghidra.feature.vt.db.VTTestUtils.createProgramCorrelator;
+import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
 
 import java.util.Collection;
@@ -51,7 +51,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 	@Test
 	public void testAddMatch() throws Exception {
 		VTProgramCorrelator correlator =
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram());
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram());
 		VTMatchSet matchSet = db.createMatchSet(correlator);
 		assertNotNull(matchSet);
 
@@ -70,7 +70,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 	@Test
 	public void testRejectAvailableMatch() throws Exception {
 		VTProgramCorrelator correlator =
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram());
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram());
 		VTMatchSet matchSet = db.createMatchSet(correlator);
 		assertNotNull(matchSet);
 
@@ -100,7 +100,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 	@Test
 	public void testRejectAcceptedMatchFailure() throws Exception {
 		VTProgramCorrelator correlator =
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram());
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram());
 		VTMatchSet matchSet = db.createMatchSet(correlator);
 		assertNotNull(matchSet);
 
@@ -144,7 +144,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 	@Test
 	public void testRejectBlockedMatch() throws Exception {
 		VTProgramCorrelator correlator =
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram());
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram());
 		VTMatchSet matchSet = db.createMatchSet(correlator);
 		assertNotNull(matchSet);
 
@@ -163,7 +163,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void assertEquivalent(String failureMessage, VTMatchInfo info, VTMatch match) {
 		VTAssociation association = match.getAssociation();

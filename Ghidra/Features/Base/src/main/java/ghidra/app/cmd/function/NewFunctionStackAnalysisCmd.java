@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
@@ -39,60 +38,75 @@ import ghidra.util.task.TaskMonitor;
  * Command for analyzing the Stack; the command is run in the background.
  * NOTE: referenced thunk-functions should be created prior to this command
  */
-public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
+public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 
 	private static final int MAX_PARAM_OFFSET = 2048;        // max size of param reference space
 	private static final int MAX_LOCAL_OFFSET = -(64 * 1024);  // max size of local reference space
 
+	private final static String X86_NAME = "x86";
+
+	private boolean dontCreateNewVariables = false;
+
+	private final boolean forceProcessing;
+	private final boolean createStackParams;
+	private final boolean createLocalStackVars;
+
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
-	private boolean forceProcessing = false;
-	private boolean dontCreateNewVariables = false;
-	private boolean doParams = false;
-	private boolean doLocals = false;
 	private Register stackReg;
 	private int purge = 0;
+
+	private boolean isX86 = false;
 
 	static String DEFAULT_FUNCTION_COMMENT = " FUNCTION";
 
 	/**
-	 * Constructs a new command for analyzing the Stack.
+	 * Constructs a new command for analyzing the Stack.  All stack references will be
+	 * marked-up and local stack variables created.  Stack parameters are not created 
+	 * by default to avoid setting an incomplete function signature.
 	 * @param entries and address set indicating the entry points of functions that have 
 	 * stacks to be analyzed.
 	 * @param forceProcessing flag to force processing of stack references even if the stack
 	 *           has already been defined.
 	 */
 	public NewFunctionStackAnalysisCmd(AddressSetView entries, boolean forceProcessing) {
-		this(entries, true, true, forceProcessing);
+		this(entries, false, true, forceProcessing);
 	}
 
 	/**
-	 * Constructs a new command for analyzing the Stack.
+	 * Constructs a new command for analyzing the Stack.  All stack references will be
+	 * marked-up and local stack variables created.  Stack parameters are not created 
+	 * by default to avoid setting an incomplete function signature.
 	 * @param entry the entry point of the function that contains the stack to
 	 *           be analyzed.
 	 * @param forceProcessing flag to force processing of stack references even if the stack
 	 *           has already been defined.
 	 */
 	public NewFunctionStackAnalysisCmd(Address entry, boolean forceProcessing) {
-		this(new AddressSet(entry, entry), true, true, forceProcessing);
-	}
-
-	public NewFunctionStackAnalysisCmd(AddressSetView entries, boolean doParameterAnalysis,
-			boolean doLocalAnalysis, boolean forceProcessing) {
-		super("Create Function Stack Variables", true, true, false);
-		entryPoints.add(entries);
-		this.forceProcessing = forceProcessing;
-		doParams = doParameterAnalysis;
-		doLocals = doLocalAnalysis;
+		this(new AddressSet(entry, entry), false, true, forceProcessing);
 	}
 
 	/**
 	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
+	 * @param entries
+	 * @param createStackParams
+	 * @param createLocalStackVars
+	 * @param forceProcessing
 	 */
+	public NewFunctionStackAnalysisCmd(AddressSetView entries, boolean createStackParams,
+			boolean createLocalStackVars, boolean forceProcessing) {
+		super("Create Function Stack Variables", true, true, false);
+		entryPoints.add(entries);
+		this.forceProcessing = forceProcessing;
+		this.createStackParams = createStackParams;
+		this.createLocalStackVars = createLocalStackVars;
+	}
+
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
+
+		isX86 = checkForX86(p);
 
 		int count = 0;
 		long numAddresses = entryPoints.getNumAddresses();
@@ -130,10 +144,17 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		return true;
 	}
 
+	private boolean checkForX86(Program p) {
+		return program.getLanguage()
+				.getProcessor()
+				.equals(Processor.findOrPossiblyCreateProcessor(X86_NAME)) &&
+			program.getDefaultPointerSize() <= 32;
+	}
+
 	/**
 	 * Analyze a function to build a stack frame based on stack references.
 	 * 
-	 * @param entry   The address of the entry point for the new function
+	 * @param f   function to analyze
 	 * @param monitor the task monitor that is checked to see if the command has
 	 * been cancelled.
 	 * @throws CancelledException if the user canceled this command
@@ -164,9 +185,8 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			// Later this should change to stack locked.
 			Variable[] variables = func.getVariables(VariableFilter.STACK_VARIABLE_FILTER);
 			boolean hasReferences = false;
-			for (int i = 0; i < variables.length; i++) {
-				Reference[] referencesTo =
-					program.getReferenceManager().getReferencesTo(variables[i]);
+			for (Variable variable : variables) {
+				Reference[] referencesTo = program.getReferenceManager().getReferencesTo(variable);
 				if (referencesTo.length != 0) {
 					hasReferences = true;
 					break;
@@ -203,7 +223,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 
 	private boolean isProtectedVariable(Variable var) {
 		return !var.isStackVariable() || !Undefined.isUndefined(var.getDataType()) ||
-			var.getSource() == SourceType.IMPORTED || var.getSource() == SourceType.USER_DEFINED ||
+			var.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED) ||
 			var.isCompoundVariable();
 	}
 
@@ -238,7 +258,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	 * 
 	 * @param func - function to analyze stack pointer references
 	 */
-	private int createStackPointerVariables(Function func, TaskMonitor monitor)
+	private int createStackPointerVariables(final Function func, TaskMonitor monitor)
 			throws CancelledException {
 		// check if this is a jump thunk through a function pointer
 //		if (checkThunk(func, monitor)) {
@@ -252,7 +272,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		// Add stack variables with undefined types to map to simplify merging
 		addFunctionStackVariablesToSortedList(func, sortedVariables);
 
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropogator symEval = new SymbolicPropogator(program, false);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);
@@ -264,7 +284,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			@Override
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
 				if (instr.getFlowType().isTerminal()) {
-					RegisterValue value = context.getRegisterValue(stackReg, instr.getMaxAddress());
+					RegisterValue value = context.getRegisterValue(stackReg);
 					if (value != null) {
 						BigInteger signedValue = value.getSignedValue();
 						if (signedValue != null) {
@@ -272,7 +292,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 						}
 					}
 				}
-				if (instr.getMnemonicString().equals("LEA")) {
+				if (isX86 && instr.getMnemonicString().equals("LEA")) {
 					Register destReg = instr.getRegister(0);
 					if (destReg != null) {
 						Varnode value = context.getRegisterVarnodeValue(destReg);
@@ -313,8 +333,9 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 					if (opIndex == -1) {
 						return;
 					}
+					// if restoring the same value into the register, don't record the reference
 					// TODO: Dirty Dirty nasty Hack for POP EBP problem, only very few cases of this!
-					if (instr.getMnemonicString().equals("POP")) {
+					if (isX86 && instr.getMnemonicString().equals("POP")) {
 						Register reg = instr.getRegister(opIndex);
 						if (reg != null && reg.getName().contains("BP")) {
 							return;
@@ -322,9 +343,9 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 					}
 					long extendedOffset =
 						extendOffset(address.getOffset(), stackReg.getBitLength());
-					Function func =
-						program.getFunctionManager().getFunctionContaining(instr.getMinAddress());
-					defineFuncVariable(func, instr, opIndex, (int) extendedOffset, sortedVariables);
+
+					defineFuncVariable(symEval, func, instr, opIndex, (int) extendedOffset,
+						sortedVariables);
 				}
 			}
 
@@ -335,9 +356,10 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		};
 
 		// set the stack pointer to be tracked
-		symEval.setRegister(func.getEntryPoint(), stackReg);
+		Address entryPoint = func.getEntryPoint();
+		symEval.setRegister(entryPoint, stackReg);
 
-		symEval.flowConstants(func.getEntryPoint(), func.getBody(), eval, true, monitor);
+		symEval.flowConstants(entryPoint, func.getBody(), eval, true, monitor);
 
 		if (sortedVariables.size() != 0) {
 
@@ -485,8 +507,6 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 
 	}
 
-	private static final int MAX_PARAM_FILLIN_COUNT = 10;
-
 	private int addMissingParameters(Variable stackVar, int nextCopyParamIndex,
 			Parameter[] oldParamList, List<Variable> newParamList, PrototypeModel callingConvention,
 			boolean hasStackParams) {
@@ -520,37 +540,6 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 				}
 			}
 			++nextCopyParamIndex;
-		}
-
-		// fill-in missing params - don't bother if we already have 
-		// too many or no stack param block defined
-		int nextOrdinal = newParamList.size();
-		if ((!hasStackParams) || nextOrdinal >= MAX_PARAM_FILLIN_COUNT) {
-			return nextCopyParamIndex;
-		}
-
-		VariableStorage argLocation;
-		try {
-			Parameter[] params = new Parameter[nextOrdinal];
-			argLocation = callingConvention.getArgLocation(nextOrdinal,
-				newParamList.toArray(params), DataType.DEFAULT, program);
-			while (!argLocation.intersects(stackVar.getVariableStorage()) &&
-				nextOrdinal < MAX_PARAM_FILLIN_COUNT) {
-				// TODO: it feels bad to add a bunch of register variables
-				Parameter p = new ParameterImpl(null, DataType.DEFAULT, argLocation, program);
-				newParamList.add(p);
-				++nextOrdinal;
-				params = new Parameter[nextOrdinal];
-				argLocation = callingConvention.getArgLocation(nextOrdinal,
-					newParamList.toArray(params), DataType.DEFAULT, program);
-			}
-		}
-		catch (InvalidInputException e) {
-			throw new RuntimeException(e); // unexpected
-		}
-
-		if (!argLocation.isStackStorage()) {
-			return nextCopyParamIndex;
 		}
 
 		return nextCopyParamIndex;
@@ -594,18 +583,21 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 				if (local_offset == offset) {
 					return opIndex;
 				}
+				if ((local_offset & 0xffff) == offset) {
+					return opIndex;
+				}
 			}
 		}
 		return -1;
 	}
 
-	/**
-	 * Checks the indicated function in the program to determine if it is a jump thunk
-	 * through a function pointer.
-	 * @param func the function to check
-	 * @param monitor status monitor for indicating progress and allowing cancel.
-	 * @returntrue if check if this is a jump thunk through a function pointer
-	 */
+//	/**
+//	 * Checks the indicated function in the program to determine if it is a jump thunk
+//	 * through a function pointer.
+//	 * @param func the function to check
+//	 * @param monitor status monitor for indicating progress and allowing cancel.
+//	 * @returntrue if check if this is a jump thunk through a function pointer
+//	 */
 //	private boolean checkThunk(Function func, TaskMonitor monitor) {
 //		Instruction instr = program.getListing().getInstructionAt(func.getEntryPoint());
 //		if (instr == null) {
@@ -649,11 +641,11 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 //		return true;
 //	}
 
-	private void defineFuncVariable(Function func, Instruction instr, int opIndex, int stackOffset,
-			List<Variable> sortedVariables) {
+	private void defineFuncVariable(SymbolicPropogator symEval, Function func, Instruction instr,
+			int opIndex, int stackOffset, List<Variable> sortedVariables) {
 
 		ReferenceManager refMgr = program.getReferenceManager();
-		int refSize = getRefSize(instr, opIndex);
+		int refSize = getRefSize(symEval, instr, opIndex);
 		try {
 			// don't create crazy offsets
 			if (stackOffset > MAX_PARAM_OFFSET || stackOffset < MAX_LOCAL_OFFSET) {
@@ -686,15 +678,16 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 
 	/**
 	 * Look at the result register to try and figure out stack access size.
+	 * @param symEval 
 	 * 
 	 * @param instr instruction being analyzed
 	 * @param opIndex operand that has a stack reference.
 	 * 
 	 * @return size of value referenced on the stack
 	 */
-	private int getRefSize(Instruction instr, int opIndex) {
+	private int getRefSize(SymbolicPropogator symEval, Instruction instr, int opIndex) {
 		if (instr.getProgram().getLanguage().supportsPcode()) {
-			PcodeOp[] pcode = instr.getPcode();
+			PcodeOp[] pcode = symEval.getInstructionPcode(instr);
 			for (int i = pcode.length - 1; i >= 0; i--) {
 				if (pcode[i].getOpcode() == PcodeOp.LOAD) {
 					Varnode out = pcode[i].getOutput();
@@ -798,10 +791,10 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			(growsNegative && offset >= paramOffset) || (!growsNegative && offset <= paramOffset);
 
 		// Check exclusion options
-		if (!doLocals && !isParam) {
+		if (!createLocalStackVars && !isParam) {
 			return;
 		}
-		if (!doParams && isParam) {
+		if (!createStackParams && isParam) {
 			return;
 		}
 
@@ -836,7 +829,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			offset = minOffset;
 		}
 		else {
-			dt = Undefined.getUndefinedDataType(size);
+			dt = Undefined.getUndefinedDataType(refSize);
 		}
 
 		Variable var;

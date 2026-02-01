@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ import java.awt.dnd.DnDConstants;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.tree.GTree;
@@ -37,10 +37,10 @@ import docking.widgets.tree.support.GTreeNodeTransferable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.util.viewer.field.LabelFieldFactory;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.listing.GhidraClass;
@@ -51,9 +51,6 @@ import ghidra.test.TestEnv;
 
 /**
  * More tests for the SymbolTreePlugin.
- *
- *
- *
  */
 public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
@@ -114,7 +111,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		DataFlavor flavor = ((SymbolTreeNode) gNode).getNodeDataFlavor();
 
 		GTreeDragNDropHandler dnd = util.getTree().getDragNDropHandler();
-		assertTrue(!dnd.isDropSiteOk(dNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_MOVE));
+		assertFalse(dnd.isDropSiteOk(dNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_MOVE));
 	}
 
 	@Test
@@ -133,27 +130,10 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		DataFlavor flavor = ((SymbolTreeNode) gNode).getNodeDataFlavor();
 
 		GTreeDragNDropHandler dnd = util.getTree().getDragNDropHandler();
-		assertTrue(
-			!dnd.isDropSiteOk(extNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_MOVE));
-		assertTrue(
-			!dnd.isDropSiteOk(extNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_COPY));
+		DataFlavor[] flavors = new DataFlavor[] { flavor };
+		assertFalse(dnd.isDropSiteOk(extNode, flavors, DnDConstants.ACTION_MOVE));
+		assertFalse(dnd.isDropSiteOk(extNode, flavors, DnDConstants.ACTION_COPY));
 
-	}
-
-	@Test
-	public void testStartDragOK() throws Exception {
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-		GTreeNode gNode = fNode.getChild(1);
-		util.expandNode(gNode);
-		GTreeNode pNode = gNode.getChild(0);
-		List<GTreeNode> list = new ArrayList<>();
-		list.add(pNode);
-		GTreeNode p2Node = gNode.getChild(1);
-		list.add(p2Node);
-
-		GTreeDragNDropHandler dnd = util.getTree().getDragNDropHandler();
-		assertTrue(!dnd.isStartDragOk(list, DnDConstants.ACTION_MOVE));
 	}
 
 	@Test
@@ -192,13 +172,13 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void doDrag(final GTreeNode destinationNode, final int dragAction,
 			GTreeNode... dragNode) {
-		final GTreeDragNDropHandler dragNDropHandler = util.getTree().getDragNDropHandler();
+		GTreeDragNDropHandler dragNDropHandler = util.getTree().getDragNDropHandler();
 		List<GTreeNode> dropList = new ArrayList<>();
 		for (GTreeNode gTreeNode : dragNode) {
 			dropList.add(gTreeNode);
 		}
 
-		final Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, dropList);
+		Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, dropList);
 
 		executeOnSwingWithoutBlocking(
 			() -> dragNDropHandler.drop(destinationNode, transferable, dragAction));
@@ -208,10 +188,10 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDragDropLabelOnClass() throws Exception {
-		final ToggleDockingAction goToToggleAction =
-			(ToggleDockingAction) getAction(plugin, "Navigation");
+		final ToggleDockingAction navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
 
-		SwingUtilities.invokeAndWait(() -> goToToggleAction.setSelected(true));
+		runSwing(() -> navigateIncomingAction.setSelected(true));
 		GTreeNode cNode = rootNode.getChild(4);
 		GTreeNode nsNode = util.createObject(cNode, "MyClass", createClassAction);
 		assertNotNull(nsNode);
@@ -264,18 +244,13 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		String[] names =
 			new String[] { "aNamespace", "MYnamespace", "Bnamespace", "AaNamespace", "Cnamespace" };
 		List<Symbol> list = new ArrayList<>();
-		int transactionID = program.startTransaction("test");
-
-		try {
+		tx(program, () -> {
 			for (String element : names) {
 				Namespace ns = symTable.createNameSpace(program.getGlobalNamespace(), element,
 					SourceType.USER_DEFINED);
 				list.add(ns.getSymbol());
 			}
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
 		Collections.sort(list, util.getSymbolComparator());
 
@@ -306,13 +281,13 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 			        .filter(symbol -> symbol.getSymbolType() == SymbolType.NAMESPACE)
 			        .map(symbol -> symbol.getName())
 			        .collect(Collectors.toList());
-		//@formatter:off
+		//@formatter:on
 
 		//
 		// This is the way we currently sort, documented here for posterity.
 		//
-		List<String>  expectedOrder =
-			Arrays.asList( "AaNamespace", "aNamespace", "Bnamespace", "Cnamespace", "MYnamespace" );
+		List<String> expectedOrder =
+			Arrays.asList("AaNamespace", "aNamespace", "Bnamespace", "Cnamespace", "MYnamespace");
 
 		assertEquals(expectedOrder.size(), symbolNames.size());
 		assertEquals(expectedOrder, symbolNames);
@@ -324,21 +299,16 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		String[] names =
 			new String[] { "BClass", "MYclass", "bBClass", "Aaclass", "Cclass", "_anotherClass" };
 		List<Symbol> list = new ArrayList<>();
-		int transactionID = program.startTransaction("test");
 
-		try {
+		tx(program, () -> {
 			for (String element : names) {
 				GhidraClass gc = symTable.createClass(program.getGlobalNamespace(), element,
 					SourceType.USER_DEFINED);
 				list.add(gc.getSymbol());
 			}
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
 		program.flushEvents();
-		waitForSwing();
 		util.waitForTree();
 
 		GTreeNode cnode = rootNode.getChild(4);
@@ -351,12 +321,12 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 			        .filter(symbol -> symbol.getSymbolType() == SymbolType.CLASS)
 			        .map(symbol -> symbol.getName())
 			        .collect(Collectors.toList());
-		//@formatter:off
+		//@formatter:on
 
 		//
 		// This is the way we currently sort, documented here for posterity.
 		//
-		List<String>  expectedOrder =
+		List<String> expectedOrder =
 			Arrays.asList("_anotherClass", "Aaclass", "bBClass", "BClass", "Cclass", "MYclass");
 
 		assertEquals(expectedOrder.size(), symbolNames.size());
@@ -365,18 +335,18 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSaveState() throws Exception {
-		final ToggleDockingAction goToToggleAction =
-			(ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
-		SwingUtilities.invokeAndWait(() -> goToToggleAction.setSelected(true));
+		ToggleDockingAction navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
+		setToggleActionSelected(navigateIncomingAction, new DefaultActionContext(), true);
 
 		SaveState saveState = new SaveState("Test");
 		plugin.writeConfigState(saveState);
 
-		assertTrue(saveState.getBoolean("GO_TO_TOGGLE_STATE", false));
+		assertTrue(saveState.getBoolean("NAVIGATE_INCOMING", false));
 
-		SwingUtilities.invokeAndWait(() -> {
-			tool.removePlugins(new Plugin[] { plugin });
+		runSwing(() -> {
+			tool.removePlugins(List.of(plugin));
 			try {
 				tool.addPlugin(SymbolTreePlugin.class.getName());
 			}
@@ -388,13 +358,13 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(plugin);
 		util.setPlugin(plugin);
 
-		ToggleDockingAction goToToggleAction2 =
-			(ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction2);
-		assertTrue(!goToToggleAction2.isSelected());
+		navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
+		assertFalse(navigateIncomingAction.isSelected());
 		plugin.readConfigState(saveState);
 
-		assertTrue(goToToggleAction2.isSelected());
+		assertTrue(navigateIncomingAction.isSelected());
 	}
 
 	@Test
@@ -406,7 +376,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		program.flushEvents();
 		util.waitForTree();
 
-		SwingUtilities.invokeAndWait(() -> util.getTree().stopEditing());
+		runSwing(() -> util.getTree().stopEditing());
 
 		GTreeNode nsParentNode = rootNode.getChild(5);
 		util.expandNode(nsParentNode);
@@ -418,11 +388,11 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode classesRoot = rootNode.getChild("Classes");
 		util.selectNode(classesRoot);
 		assertTrue(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
-		performAction(createClassAction,util.getSymbolTreeContext(),  true);
+		performAction(createClassAction, util.getSymbolTreeContext(), true);
 		program.flushEvents();
 		util.waitForTree();
 
-		SwingUtilities.invokeAndWait(() -> util.getTree().stopEditing());
+		runSwing(() -> util.getTree().stopEditing());
 		GTreeNode cParentNode = rootNode.getChild(4);
 		util.expandNode(cParentNode);
 		assertEquals(1, cParentNode.getChildCount());
@@ -433,14 +403,14 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode cNode = rootNode.getChild(4);
 		util.selectNode(cNode);
 		assertTrue(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
-		assertTrue(!createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
+		assertFalse(createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 
 	@Test
 	public void testActionsEnabledOnNamespaceNode() throws Exception {
 		GTreeNode nsParentNode = rootNode.getChild(5);
 		util.selectNode(nsParentNode);
-		assertTrue(!createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
+		assertFalse(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
 		assertTrue(createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 }

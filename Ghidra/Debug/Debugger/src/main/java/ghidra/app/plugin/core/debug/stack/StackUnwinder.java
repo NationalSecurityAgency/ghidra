@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.stack;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
@@ -58,12 +58,12 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * The usage pattern is typically:
  * 
- * <pre>
+ * <pre>{@code
  * StackUnwinder unwinder = new StackUnwinder(tool, coordinates.getPlatform());
  * for (AnalysisUnwoundFrame<WatchValue> frame : unwinder.frames(coordinates.frame(0), monitor)) {
  * 	// check and/or cache the frame
  * }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * Typically, a frame is sought either by its level or by its function. Once found, several
@@ -178,12 +178,18 @@ public class StackUnwinder {
 		Address pcVal = null;
 		TraceThread thread = coordinates.getThread();
 		long viewSnap = coordinates.getViewSnap();
-		TraceStack stack = trace.getStackManager().getLatestStack(thread, viewSnap);
-		if (stack != null) {
-			TraceStackFrame frame = stack.getFrame(level, false);
-			if (frame != null) {
-				pcVal = frame.getProgramCounter(viewSnap);
+		try {
+			TraceStack stack = trace.getStackManager().getLatestStack(thread, viewSnap);
+			if (stack != null) {
+				TraceStackFrame frame = stack.getFrame(viewSnap, level, false);
+				if (frame != null) {
+					pcVal = frame.getProgramCounter(viewSnap);
+				}
 			}
+		}
+		catch (IllegalStateException e) {
+			// Schema does not specify a stack
+			// leave pcVal = null, so we'll get it from registers
 		}
 		TraceMemorySpace regs = Objects.requireNonNull(
 			trace.getMemoryManager().getMemoryRegisterSpace(thread, level, false),
@@ -203,8 +209,7 @@ public class StackUnwinder {
 		return unwind(coordinates, level, pcVal, spVal, state, new SavedRegisterMap(), monitor);
 	}
 
-	record StaticAndUnwind(Address staticPc, UnwindInfo info) {
-	}
+	record StaticAndUnwind(Address staticPc, UnwindInfo info) {}
 
 	/**
 	 * Compute the unwind information for the given program counter and context

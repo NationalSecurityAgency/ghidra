@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,18 @@ rootProject.assembleDistribution {
 	}
 }
 
+rootProject.assembleMarkdownToHtml {
+	from (this.project.file("Common/support")) {
+		include "*.md"
+		into "support"
+	}
+	
+	from (this.project.file("Common/server")) {
+		include "*.md"
+		into "server"
+	}
+}
+
 rootProject.PLATFORMS.each { platform ->
 	rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 		def p = this.project
@@ -39,7 +51,11 @@ rootProject.PLATFORMS.each { platform ->
 			t.from ("${p.projectDir}/Linux/server") {
 				into "server"
 			}
-			t.from (p.file("Linux/ghidraRun")) 
+			t.from ("${rootProject.projectDir}") {
+				include "gradlew"
+				into "support/gradle"
+			}
+			t.from (p.file("Linux/ghidraRun"))
 		}
 
 		if (isWindows(platform.name)) {
@@ -49,8 +65,12 @@ rootProject.PLATFORMS.each { platform ->
 			t.from ("${p.projectDir}/Windows/server") {
 				into "server"
 			}
+			t.from ("${rootProject.projectDir}") {
+				include "gradlew.bat"
+				into "support/gradle"
+			}
 			t.from (p.file("Windows/ghidraRun.bat"))
-		}		
+		}
 	}
 }
 

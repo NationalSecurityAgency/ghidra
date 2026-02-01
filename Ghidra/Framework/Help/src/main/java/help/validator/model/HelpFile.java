@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import ghidra.util.exception.AssertException;
-import help.HelpBuildUtils;
+import help.*;
 import help.validator.*;
 import help.validator.location.HelpModuleLocation;
 
@@ -75,8 +75,9 @@ public class HelpFile {
 	}
 
 	public AnchorDefinition getAnchorDefinition(Path helpPath) {
-		Map<String, AnchorDefinition> anchorsByHelpPath = anchorManager.getAnchorsByHelpPath();
-		return anchorsByHelpPath.get(helpPath.toString());
+		Map<PathKey, AnchorDefinition> anchorsByHelpPath = anchorManager.getAnchorsByHelpPath();
+		AnchorDefinition def = anchorsByHelpPath.get(new PathKey(helpPath));
+		return def;
 	}
 
 	public Collection<AnchorDefinition> getAllAnchorDefinitions() {
@@ -117,9 +118,9 @@ public class HelpFile {
 				HTMLFileParser.scanHtmlFile(file, tagProcessor);
 			}
 			catch (IOException e) {
-				System.err.println("Exception parsing file: " + file.toUri() + "\n");
-				System.err.println(e.getMessage());
-				e.printStackTrace();
+				String msg =
+					"Exception parsing file: %s\n%s".formatted(file.toUri(), e.getMessage());
+				GHelpMsg.error(msg, e);
 			}
 		}
 		else {

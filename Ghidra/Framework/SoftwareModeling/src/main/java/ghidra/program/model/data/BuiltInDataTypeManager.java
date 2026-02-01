@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,8 +67,10 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	private BuiltInDataTypeManager() {
 		super(BUILT_IN_DATA_TYPES_NAME);
 		initialize();
+		setImmutable();
 	}
 
+	@Override
 	protected final void setProgramArchitecture(ProgramArchitecture programArchitecture,
 			VariableStorageManager variableStorageMgr, boolean force, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -90,11 +92,21 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	}
 
 	@Override
-	public synchronized void endTransaction(int transactionID, boolean commit) {
+	public synchronized boolean endTransaction(int transactionID, boolean commit) {
 		if (manager != null) {
 			throw new UnsupportedOperationException();
 		}
-		super.endTransaction(transactionID, commit);
+		return super.endTransaction(transactionID, commit);
+	}
+
+	@Override
+	public synchronized boolean canUndo() {
+		return false;
+	}
+
+	@Override
+	public synchronized boolean canRedo() {
+		return false;
 	}
 
 	@Override
@@ -168,9 +180,8 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		if (dataType instanceof BuiltInDataType) {
 			return DataTypeManager.BUILT_IN_ARCHIVE_UNIVERSAL_ID;
 		}
-		throw new IllegalArgumentException(
-			"Only Built-in data types can be resolved by the " + getClass().getSimpleName() +
-				" manager.");
+		throw new IllegalArgumentException("Only Built-in data types can be resolved by the " +
+			getClass().getSimpleName() + " manager.");
 	}
 
 	@Override
@@ -199,7 +210,7 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	}
 
 	@Override
-	public boolean remove(DataType dataType, TaskMonitor monitor) {
+	public boolean remove(DataType dataType) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.*;
 
 import db.Transaction;
 import ghidra.feature.vt.api.main.*;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -92,6 +93,16 @@ public class EmptyVTSession implements VTSession {
 	}
 
 	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
+		// do nothing
+	}
+
+	@Override
 	public EventQueueID createPrivateEventQueue(DomainObjectListener listener, int maxDelay) {
 		return null;
 	}
@@ -154,9 +165,8 @@ public class EmptyVTSession implements VTSession {
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
-		// do nothing
-
+	public boolean endTransaction(int transactionID, boolean commit) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

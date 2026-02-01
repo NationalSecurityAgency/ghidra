@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,12 @@ import static org.junit.Assert.*;
 
 import java.awt.Window;
 
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import ghidra.app.plugin.core.compositeeditor.CompositeEditorProvider;
 import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
@@ -140,6 +140,29 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 	}
 
 	@Test
+	public void testEditUsingArrowKeys() throws Exception {
+
+		init(SIMPLE_STACK);
+
+		int row = 1;
+		int column = model.getNameColumn();
+		clickTableCell(getTable(), row, column, 1);
+		assertColumn(column);
+		performAction(editFieldAction, provider, true);
+
+		// change name
+		JTextField tf = getCellEditorTextField();
+		setText(tf, tf.getText() + "change");
+
+		downArrow(tf);
+		assertRow(row + 1);
+		assertColumn(column);
+
+		assertIsEditingField(row + 1, column);
+		escape();
+	}
+
+	@Test
 	public void testDeleteAssociatedFunction() throws Exception {
 		Window dialog;
 		// Create the stack frame @ 00000200.
@@ -150,9 +173,10 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		Function f = program.getFunctionManager().getFunctionAt(addr("0x200"));
 		assertStackEditorShowing(f);
+		CompositeEditorProvider<?, ?> p = getComponentProvider(CompositeEditorProvider.class);
+		assertNotNull(p);
+		installProvider(p);
 
-		installProvider(stackEditorMgr.getProvider(program, "FUN_00000200"));
-		assertNotNull(provider);
 		model = ((StackEditorProvider) provider).getModel();
 		assertNotNull(model);
 
@@ -170,7 +194,7 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 				failWithException("Editor apply failure", e);
 			}
 		});
-		
+
 		deleteFunction("0x200");
 
 		// Verify the Reload Stack Editor? dialog is not displayed.
@@ -299,6 +323,8 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		int parameterIndex = 0;
 		Parameter parameter = renameParameterInListing(parameterIndex, "listing.test.name");
 
+		waitForSwing();
+
 		// Verify the provider's name for that parameter is updated
 		String modelParameterName = getParameterNameFromModel(parameterIndex);
 		assertEquals(parameter.getName(), modelParameterName);
@@ -317,6 +343,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		// Change the name of a parameter in the Listing
 		renameParameterInListing(parameterIndex, "listing.test.name");
 
+		JDialog reloadDialog = waitForJDialog("Reload Stack Editor?");
+		pressButton(reloadDialog, "No");
+
 		// Verify the name of the parameter in the provider is not changed from the original edit
 		String currentModelName = getParameterNameFromModel(parameterIndex);
 		assertEquals(newModelName, currentModelName);
@@ -334,6 +363,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		// Change the name of a parameter in the Listing
 		renameParameterInListing(parameterIndex, "listing.test.name");
+
+		JDialog reloadDialog = waitForJDialog("Reload Stack Editor?");
+		pressButton(reloadDialog, "No");
 
 		// Press Apply
 		apply();
@@ -361,6 +393,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		String newListingText = "listing.test.name";
 		renameParameterInListing(parameterIndex, newListingText);
 
+		JDialog reloadDialog = waitForJDialog("Reload Stack Editor?");
+		pressButton(reloadDialog, "No");
+
 		// Press Apply
 		apply();
 
@@ -378,7 +413,6 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 	@Test
 	public void testUndoApplyComponentChanges() throws Exception {
-		Window dialog;
 
 		editStack(function.getEntryPoint().toString());
 
@@ -404,7 +438,7 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		// Verify the Reload Stack Editor? dialog is displayed.
 		waitForSwing();
-		dialog = getWindow("Reload Stack Editor?");
+		Window dialog = getWindow("Reload Stack Editor?");
 		assertNull(dialog);
 		sv = stack.getVariableContaining(-0x8);
 		assertNotNull(sv);
@@ -428,41 +462,60 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 	}
 
 	@Test
-	public void testUndoNewDtComponent() throws Exception {
+	public void testUndoNewDtComponentWithChange() throws Exception {
 
-		// NOTE: This test appears to verify that the undefined*16 type
-		// resolved against the program DTM used by the stack editor
-		// is removed on the first undo - unfortunately, the redo
-		// does not restore the editor state.  It is unclear why a private 
-		// DTM is not employed similar to the Structure editor which 
-		// would allow the new undefined*16 type to persist after the undo (see SCR 10280)
+		editStack(function.getEntryPoint().toString());
 
-		Window dialog;
+		// Put 2 byte pointer at -0x1b
+		DataType ptr = new Pointer16DataType();
+		setType(ptr, 4);
+
+		apply();
+		waitForSwing();
+
+		// Put word pointer at -0x1b
+		setType(WordDataType.dataType, 4);
+
+		// Undo the apply of a new data type to an editor component.
+		undo(program, false);
+
+		// Verify the Reload Stack Editor? dialog is displayed.
+		Window dialog = waitForWindow("Reload Stack Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "No");
+
+		waitForSwing();
+
+		// Redo the apply
+		redo(program, false);
+
+		dialog = waitForWindow("Reload Stack Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		assertTrue(ptr.isEquivalent(getDataType(4)));
+	}
+
+	@Test
+	public void testUndoNewDtComponentWithoutChange() throws Exception {
 
 		editStack(function.getEntryPoint().toString());
 
 		// Put 2 byte pointer at -0x1b
 		setType(new Pointer16DataType(), 4);
 
+		apply();
+		waitForSwing();
+
 		// Undo the apply of a new data type to an editor component.
 		undo(program, false);
 
 		// Verify the Reload Stack Editor? dialog is displayed.
-		dialog = waitForWindow("Reload Stack Editor?");
-		assertNotNull(dialog);
-		pressButton(dialog, "No");
-		dialog.dispose();
 		waitForSwing();
-
-		dialog = getWindow("Reload Stack Editor?");
+		Window dialog = getWindow("Reload Stack Editor?");
 		assertNull(dialog);
 
-		// Redo the apply
-		redo(program, false);
-		waitForSwing();
-		dialog = getWindow("Reload Stack Editor?");
-		assertNull(dialog);
-
-		cleanup();
+		assertEquals(DataType.DEFAULT, getDataType(4));
 	}
 }

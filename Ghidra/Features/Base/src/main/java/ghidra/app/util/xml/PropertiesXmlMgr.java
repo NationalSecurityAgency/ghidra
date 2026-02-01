@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,7 @@ class PropertiesXmlMgr {
 		}
 
 		if (!overwrite && !"bookmarks".equals(type)) {
-			PropertyMap map = propMapMgr.getPropertyMap(name);
+			PropertyMap<?> map = propMapMgr.getPropertyMap(name);
 			if (map != null && map.hasProperty(addr)) {
 				log.appendMsg("Conflicting '" + name + "' PROPERTY ignored at: " + addr);
 				return; // skip - property conflicts
@@ -166,7 +166,7 @@ class PropertiesXmlMgr {
 			strMap.add(addr, str);
 		}
 		else if ("bookmarks".equals(type)) {
-			// Must retain for backward compatibility with old Ver-1 Note bookmarks which 
+			// Must retain for backward compatibility with old Ver-1 Note bookmarks which
 			// were saved as simple properties
 			BookmarkManager bmMgr = program.getBookmarkManager();
 			if (!overwrite) {
@@ -254,8 +254,7 @@ class PropertiesXmlMgr {
 			list.setDate(name, new Date(value));
 		}
 		else if ("color".equals(type)) {
-			Color color =
-				ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute("VALUE")));
+			Color color = ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute("VALUE")));
 			list.setColor(name, color);
 		}
 		else if ("file".equals(type)) {
@@ -280,7 +279,19 @@ class PropertiesXmlMgr {
 			String xmlString = XmlUtilities.unEscapeElementEntities(escapedXML);
 			KeyStroke keyStroke =
 				(KeyStroke) OptionType.KEYSTROKE_TYPE.convertStringToObject(xmlString);
-			list.setKeyStroke(name, keyStroke);
+
+			ActionTrigger trigger = null;
+			if (keyStroke != null) {
+				trigger = new ActionTrigger(keyStroke);
+			}
+			list.setActionTrigger(name, trigger);
+		}
+		else if ("actionTrigger".equals(type)) {
+			String escapedXML = element.getAttribute("VALUE");
+			String xmlString = XmlUtilities.unEscapeElementEntities(escapedXML);
+			ActionTrigger actionTrigger =
+				(ActionTrigger) OptionType.ACTION_TRIGGER.convertStringToObject(xmlString);
+			list.setActionTrigger(name, actionTrigger);
 		}
 		else if ("custom".equals(type)) {
 			String escapedXML = element.getAttribute("VALUE");
@@ -401,9 +412,15 @@ class PropertiesXmlMgr {
 						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
 						break;
 					case KEYSTROKE_TYPE:
-						attrs.addAttribute("TYPE", "keyStroke");
-						KeyStroke keyStroke = propList.getKeyStroke(name, null);
-						xmlString = OptionType.KEYSTROKE_TYPE.convertObjectToString(keyStroke);
+						attrs.addAttribute("TYPE", "actionTrigger");
+						ActionTrigger trigger = propList.getActionTrigger(name, null);
+						xmlString = OptionType.ACTION_TRIGGER.convertObjectToString(trigger);
+						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
+						break;
+					case ACTION_TRIGGER:
+						attrs.addAttribute("TYPE", "actionTrigger");
+						ActionTrigger actionTrigger = propList.getActionTrigger(name, null);
+						xmlString = OptionType.ACTION_TRIGGER.convertObjectToString(actionTrigger);
 						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
 						break;
 					case CUSTOM_TYPE:

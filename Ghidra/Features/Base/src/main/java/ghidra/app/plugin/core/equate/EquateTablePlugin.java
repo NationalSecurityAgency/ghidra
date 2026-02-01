@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.equate;
+
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
 
 import java.util.List;
 
@@ -23,7 +26,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -31,7 +35,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.OperandFieldLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.SwingUpdateManager;
@@ -76,11 +79,11 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 		super.dispose();
 	}
 
-	////////////////////////////////////////////////////////////////////////////
+	//---------------------------------------------------------------------------------------
 	//
 	//  Implementation of DomainObjectListener
 	//
-	////////////////////////////////////////////////////////////////////////////
+	//---------------------------------------------------------------------------------------
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
@@ -88,36 +91,33 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(RESTORED)) {
 			updateMgr.updateNow();
 			return;
 		}
-		if (ev.containsEvent(ChangeManager.DOCR_EQUATE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_EQUATE_REFERENCE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_EQUATE_REFERENCE_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_EQUATE_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_EQUATE_RENAMED) ||
-
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED) ||
-
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_REMOVED) ||
-
-			ev.containsEvent(ChangeManager.DOCR_CODE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED) ||
-
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED)) {
+		// @formatter:off
+		if (ev.contains(EQUATE_ADDED,
+						EQUATE_REFERENCE_ADDED,
+						EQUATE_REFERENCE_REMOVED,
+						EQUATE_REMOVED,
+						EQUATE_RENAMED,
+						SYMBOL_ADDED,
+						SYMBOL_REMOVED,
+						SYMBOL_RENAMED,
+						MEMORY_BLOCK_ADDED,
+						MEMORY_BLOCK_MOVED,
+						MEMORY_BLOCK_REMOVED,
+						FUNCTION_ADDED,
+						FUNCTION_CHANGED, 
+						FUNCTION_REMOVED,
+						CODE_ADDED, 
+						FRAGMENT_CHANGED,
+						CODE_REMOVED,
+						DATA_TYPE_CHANGED)) {
 
 			updateMgr.update();
 		}
+		// @formatter:on
 
 	}
 
@@ -158,7 +158,7 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 			OptionDialog.QUESTION_MESSAGE);
 
 		if (option != OptionDialog.CANCEL_OPTION) {
-			tool.execute(new RemoveEquateCmd(equateNames, getTool()), currentProgram);
+			tool.execute(new RemoveEquateCmd(equateNames), currentProgram);
 		}
 	}
 
@@ -206,7 +206,7 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 		}
 
 		if (isValid(oldEquate, newEquateName)) {
-			Command cmd = new RenameEquatesCmd(oldEquateName, newEquateName);
+			Command<Program> cmd = new RenameEquatesCmd(oldEquateName, newEquateName);
 			tool.execute(cmd, currentProgram);
 		}
 	}

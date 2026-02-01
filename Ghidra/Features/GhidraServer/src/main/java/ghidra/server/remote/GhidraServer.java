@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,8 +45,8 @@ import generic.random.SecureRandomFactory;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.remote.*;
-import ghidra.net.ApplicationKeyManagerFactory;
-import ghidra.net.SSLContextInitializer;
+import ghidra.net.DefaultKeyManagerFactory;
+import ghidra.net.DefaultSSLContextInitializer;
 import ghidra.server.RepositoryManager;
 import ghidra.server.UserManager;
 import ghidra.server.security.*;
@@ -69,6 +69,10 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	private static final String SERIAL_FILTER_FILE = "serial.filter";
 
 	private static final String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
+	private static final String TLS_ENABLED_CIPHERS_PROPERTY = "jdk.tls.server.cipherSuites";
+
+	private static final String SERIALIZATION_FILTER_DISABLED_PROPERTY =
+		"ghidra.server.serialization.filter.disabled";
 
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
@@ -207,7 +211,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		GhidraServer.server = this;
 
-		// Establish serialization filter to address deserialization vulnerabity concerns
+		// Establish serialization filter to address deserialization vulnerabity concerns.
 		setGlobalSerializationFilter();
 
 		// Start block stream server - use RMI serverSocketFactory
@@ -246,12 +250,12 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	@Override
-	public void checkCompatibility(int serverInterfaceVersion) throws RemoteException {
-		if (serverInterfaceVersion > INTERFACE_VERSION) {
+	public void checkCompatibility(int minServerInterfaceVersion) throws RemoteException {
+		if (minServerInterfaceVersion > INTERFACE_VERSION) {
 			throw new RemoteException(
 				"Incompatible server interface, a newer Ghidra Server version is required.");
 		}
-		else if (serverInterfaceVersion < INTERFACE_VERSION) {
+		else if (minServerInterfaceVersion < MINIMUM_INTERFACE_VERSION) {
 			throw new RemoteException(
 				"Incompatible server interface, the minimum supported Ghidra version is " +
 					MIN_GHIDRA_VERSION);
@@ -727,7 +731,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		Application.initializeLogging(serverLogFile, serverLogFile);
 
 		// In the absence of module initialization - we must invoke directly
-		SSLContextInitializer.initialize();
+		DefaultSSLContextInitializer.initialize();
 
 		log = LogManager.getLogger(GhidraServer.class); // init log *after* initializing log system
 
@@ -748,13 +752,12 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// Ensure that remote access hostname is properly set for RMI registration
 			String hostname = initRemoteAccessHostname();
 
-			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
+			if (DefaultKeyManagerFactory.getPreferredKeyStore() == null) {
 				// keystore has not been identified - use self-signed certificate
-				ApplicationKeyManagerFactory.setDefaultIdentity(
-					new X500Principal("CN=GhidraServer"));
-				ApplicationKeyManagerFactory.addSubjectAlternativeName(hostname);
+				DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
+				DefaultKeyManagerFactory.addSubjectAlternativeName(hostname);
 			}
-			if (!ApplicationKeyManagerFactory.initialize()) {
+			if (!DefaultKeyManagerFactory.initialize()) {
 				log.fatal("Failed to initialize PKI/SSL keystore");
 				System.exit(0);
 				return;
@@ -796,6 +799,15 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 			log.info(
 				"   Anonymous server access: " + (allowAnonymousAccess ? "enabled" : "disabled"));
+
+			String enabledCiphers = System.getProperty(TLS_ENABLED_CIPHERS_PROPERTY);
+			if (enabledCiphers != null) {
+				String[] cipherList = enabledCiphers.split(",");
+				log.info("   Enabled cipher suites:");
+				for (String s : cipherList) {
+					log.info("       " + s);
+				}
+			}
 
 			serverSocketFactory = new SslRMIServerSocketFactory(null, getEnabledTlsProtocols(),
 				authMode == PKI_LOGIN) {
@@ -865,7 +877,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	private static void setGlobalSerializationFilter() throws IOException {
-		
+
+		// NOTE: Serialization filter may need to be disabled when profiling with VisualVM
+		String disabledStr = System.getProperty(SERIALIZATION_FILTER_DISABLED_PROPERTY);
+		if (Boolean.valueOf(disabledStr)) {
+			return;
+		}
+
 		ObjectInputFilter patternFilter = readSerialFilterPatternFile();
 
 		ObjectInputFilter filter = new ObjectInputFilter() {
@@ -884,11 +902,10 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					return status;
 				}
 
-
 				if (clazz == null) {
 					return Status.ALLOWED;
 				}
-				
+
 				Class<?> componentType = clazz.getComponentType();
 				if (componentType != null && componentType.isPrimitive()) {
 					return Status.ALLOWED; // allow all primitive arrays

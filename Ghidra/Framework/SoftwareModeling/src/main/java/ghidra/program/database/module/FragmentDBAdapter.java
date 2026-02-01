@@ -17,7 +17,9 @@ package ghidra.program.database.module;
 
 import java.io.IOException;
 
-import db.*;
+import db.DBHandle;
+import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 
 abstract class FragmentDBAdapter {
@@ -36,9 +38,9 @@ abstract class FragmentDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	static FragmentDBAdapter getAdapter(DBHandle handle, int openMode, long treeID)
+	static FragmentDBAdapter getAdapter(DBHandle handle, OpenMode openMode, long treeID)
 			throws VersionException, IOException {
-		return new FragmentDBAdapterV0(handle, openMode == DBConstants.CREATE, treeID);
+		return new FragmentDBAdapterV0(handle, openMode == OpenMode.CREATE, treeID);
 	}
 
 	static final String getTableName(long treeID) {

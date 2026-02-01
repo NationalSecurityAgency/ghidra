@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 
 		@Override
 		protected NodeType getType() {
-			return NodeType.values()[(typeAndChildCount >> NODE_TYPE_SHIFT) & NODE_TYPE_MASK];
+			return NodeType.VALUES.get((typeAndChildCount >> NODE_TYPE_SHIFT) & NODE_TYPE_MASK);
 		}
 
 		@Override
@@ -512,6 +512,12 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		public static TraceAddressSnapRangeQuery mostRecent(Address address, Lifespan span) {
 			return intersecting(
 				new ImmutableTraceAddressSnapRange(address, span),
+				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
+		}
+
+		public static TraceAddressSnapRangeQuery mostRecent(AddressRange range, Lifespan span) {
+			return intersecting(
+				new ImmutableTraceAddressSnapRange(range, span),
 				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
 		}
 

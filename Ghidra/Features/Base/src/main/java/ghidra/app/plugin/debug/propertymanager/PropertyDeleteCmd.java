@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.plugin.debug.propertymanager;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.PropertyMap;
@@ -26,12 +24,12 @@ import ghidra.program.model.util.PropertyMapManager;
 /**
  * PropertyDeletedCmd
  */
-class PropertyDeleteCmd implements Command {
-	
+class PropertyDeleteCmd implements Command<Program> {
+
 	private String propName;
 	private AddressSetView restrictedView;
 	private String cmdName;
-	
+
 	/**
 	 * Construct command for deleting program properties
 	 * @param propName property name
@@ -43,32 +41,27 @@ class PropertyDeleteCmd implements Command {
 		this.restrictedView = restrictedView;
 		this.cmdName = "Delete " + propName + " Properties";
 	}
-	
+
+	@Override
 	public String getName() {
 		return cmdName;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		
-		if (!(obj instanceof Program)) {
-			throw new IllegalArgumentException("Program expected");
-		}
-		Program program = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
+
 		PropertyMapManager propMgr = program.getUsrPropertyManager();
-		
+
 		if (restrictedView != null && !restrictedView.isEmpty()) {
-			PropertyMap map = propMgr.getPropertyMap(propName);
+			PropertyMap<?> map = propMgr.getPropertyMap(propName);
 			AddressRangeIterator ranges = restrictedView.getAddressRanges();
 			while (ranges.hasNext()) {
 				AddressRange range = ranges.next();
-				map.removeRange(range.getMinAddress(), range.getMaxAddress());	
+				map.removeRange(range.getMinAddress(), range.getMaxAddress());
 			}
 		}
 		else {
-			propMgr.removePropertyMap(propName);	
+			propMgr.removePropertyMap(propName);
 		}
 		return true;
 	}
@@ -76,6 +69,7 @@ class PropertyDeleteCmd implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return null;
 	}

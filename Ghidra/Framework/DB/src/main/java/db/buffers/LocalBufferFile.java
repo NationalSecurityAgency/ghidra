@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package db.buffers;
 import java.io.*;
 import java.util.*;
 
+import ghidra.framework.Application;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.IntSet;
@@ -197,8 +198,7 @@ public class LocalBufferFile implements BufferFile {
 		this.blockSize = bufferSize + BUFFER_PREFIX_SIZE;
 		this.readOnly = false;
 		this.temporary = true;
-		file = File.createTempFile(tmpPrefix, tmpExtension);
-//		file.deleteOnExit();
+		file = Application.createTempFile(tmpPrefix, tmpExtension);
 		raf = new RandomAccessFile(file, "rw");
 	}
 
@@ -1062,7 +1062,7 @@ public class LocalBufferFile implements BufferFile {
 	 * @param in input block stream
 	 * @param out output block stream
 	 * @param monitor progress and cancel monitor
-	 * @throws CancelledException the the operation is cancelled
+	 * @throws CancelledException the operation is cancelled
 	 * @throws IOException if an I/O error occurs
 	 */
 	static void completeBlockStreamTransfer(InputBlockStream in, OutputBlockStream out,

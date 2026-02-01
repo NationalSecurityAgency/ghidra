@@ -18,6 +18,7 @@ package ghidra.program.database.code;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
@@ -44,10 +45,11 @@ abstract class CommentHistoryAdapter {
 	static final int HISTORY_USER_COL = 5;
 	static final int HISTORY_DATE_COL = 6;
 
-	static CommentHistoryAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
-			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
+	static CommentHistoryAdapter getAdapter(DBHandle dbHandle, OpenMode openMode,
+			AddressMap addrMap, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new CommentHistoryAdapterV0(dbHandle, addrMap, true);
 		}
 
@@ -59,11 +61,11 @@ abstract class CommentHistoryAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			CommentHistoryAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;

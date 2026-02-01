@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import ghidra.util.SystemUtilities;
 
 /**
  * {@link FloatFormat} provides IEEE 754 floating-point encoding formats in support of
- * floating-point data types and floating-point emulation.  A combination of Java 
- * float/double and {@link BigFloat} are used to facilitate floating-point operations. 
+ * floating-point data types and floating-point emulation. A combination of Java float/double and
+ * {@link BigFloat} are used to facilitate floating-point operations.
  */
 public class FloatFormat {
 
@@ -116,8 +116,8 @@ public class FloatFormat {
 		}
 		else if (size == 10) {
 			/**
-			 * 80-bit double extended precision format
-			 * See https://en.wikipedia.org/wiki/Extended_precision
+			 * 80-bit double extended precision format. See
+			 * https://en.wikipedia.org/wiki/Extended_precision
 			 */
 			signbit_pos = 79;
 			exp_pos = 64;
@@ -155,6 +155,7 @@ public class FloatFormat {
 
 	/**
 	 * Get the maximum finite {@link BigFloat} value for this format
+	 * 
 	 * @return maximum finite {@link BigFloat} value
 	 */
 	public BigFloat getMaxBigFloat() {
@@ -163,25 +164,11 @@ public class FloatFormat {
 
 	/**
 	 * Get the minimum finite subnormal {@link BigFloat} value for this format
+	 * 
 	 * @return minimum finite subnormal {@link BigFloat} value
 	 */
 	public BigFloat getMinBigFloat() {
 		return minValue;
-	}
-
-	// Create a double given sign, 8-byte normalized mantissa, and unbiased scale
-	static double createDouble(boolean sgn, long mantissa, int scale) {
-		long exp = scale + 1023;
-		long bits = mantissa >>> 11;// 11 = 64 (long size) - 52 (frac size)  - 1 (jbit))
-		if (exp != 1) { // normal
-			bits &= 0xfffffffffffffL;
-			bits |= exp << 52;
-		}
-
-		if (sgn) {
-			bits |= 0x8000000000000000L;
-		}
-		return Double.longBitsToDouble(bits);
 	}
 
 	FloatKind extractKind(long encoding) {
@@ -252,8 +239,7 @@ public class FloatFormat {
 
 	// set sign bit and return the result if size <= 8
 	private long setSign(long x, boolean sign) {
-		if (!sign)
-		 {
+		if (!sign) {
 			return x; // Assume bit is already zero
 		}
 		long mask = 1;
@@ -288,8 +274,7 @@ public class FloatFormat {
 
 	public BigFloat getBigZero(boolean sgn) {
 		return new BigFloat(effective_frac_size, exp_size, FloatKind.FINITE, sgn ? -1 : +1,
-			BigInteger.ZERO,
-			2 - (1 << (exp_size - 1)));
+			BigInteger.ZERO, 2 - (1 << (exp_size - 1)));
 	}
 
 	public BigInteger getBigInfinityEncoding(boolean sgn) {
@@ -335,8 +320,8 @@ public class FloatFormat {
 	/**
 	 * Decode {@code encoding} to a BigFloat using this format.
 	 * 
-	 * The method {@link #decodeBigFloat(BigInteger)} should be used for encodings 
-	 * larger than 8 bytes.
+	 * The method {@link #decodeBigFloat(BigInteger)} should be used for encodings larger than 8
+	 * bytes.
 	 * 
 	 * @param encoding the encoding
 	 * @return the decoded value as a BigFloat
@@ -387,7 +372,7 @@ public class FloatFormat {
 		int exp = extractExponentCode(encoding);
 		long frac = extractFractionalCode(encoding);
 		FloatKind kind = extractKind(encoding);
-	
+
 		int scale;
 		long unscaled = frac;
 		if (kind == FloatKind.FINITE) {
@@ -410,6 +395,16 @@ public class FloatFormat {
 
 	// Convert floating point encoding into host's double if size <= 8
 	public double decodeHostFloat(long encoding) {
+
+		if (size == 8) { // assume IEEE-754 8-byte format which matches Java double encoding
+			return Double.longBitsToDouble(encoding);
+		}
+
+		if (size > 8) {
+			throw new UnsupportedOperationException(
+				"method not supported for float size of " + size);
+		}
+
 		boolean sgn = extractSign(encoding);
 		int exp = extractExponentCode(encoding);
 		long frac = extractFractionalCode(encoding);
@@ -428,15 +423,42 @@ public class FloatFormat {
 			return Double.NaN;
 		}
 
-		// Get unbiased scale and normalized mantissa
 		exp -= bias;
-		long mantissa = frac << (8 * 8 - frac_size);
-		if (!subnormal && jbitimplied) {
-			mantissa >>= 1; // Make room for 1 jbit
-			mantissa |= 0x8000000000000000L; // set bit in at top of normalized frac
+
+		long msbit = 1 << (frac_size - 1); // most-significant fractional/mantissa bit
+
+		if (!subnormal && !jbitimplied) {
+			frac &= ~msbit; // remove explicit jbit
+			frac <<= 1;
+			--exp;
 		}
 
-		return createDouble(sgn, mantissa, exp);
+		if (subnormal) {
+			// attempt to normalize
+			exp = -bias;
+
+			while (exp > -1023 && (frac & msbit) == 0 && frac != 0) {
+				frac <<= 1;
+				--exp;
+			}
+
+			// establish implied jbit
+			if (exp > -1023 && (frac & msbit) != 0 && frac != 0) {
+				frac <<= 1;
+			}
+			else {
+				--exp;
+			}
+
+			// mask-off implied jbit
+			frac &= ~-(1 << frac_size);
+		}
+
+		exp += 1023;
+		frac <<= 52 - frac_size;
+
+		long encodedDouble = (sgn ? (1L << 63) : 0) | ((long) exp << 52) | frac;
+		return Double.longBitsToDouble(encodedDouble);
 	}
 
 	public BigFloat decodeBigFloat(BigInteger encoding) {
@@ -475,7 +497,7 @@ public class FloatFormat {
 		switch (value.kind) {
 			case QUIET_NAN:
 			case SIGNALING_NAN:
-				return getNaNEncoding(false);
+				return getNaNEncoding(value.sign < 0);
 			case INFINITE:
 				return getInfinityEncoding(value.sign < 0);
 			case FINITE:
@@ -601,8 +623,9 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Perform appropriate rounding and conversion to BigDecimal prior to generating
-	 * a formatted decimal string of the specified BigFloat value.
+	 * Perform appropriate rounding and conversion to BigDecimal prior to generating a formatted
+	 * decimal string of the specified BigFloat value.
+	 * 
 	 * @param bigFloat value
 	 * @return decimal string representation
 	 */
@@ -611,11 +634,13 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Perform appropriate rounding and conversion to BigDecimal prior to generating
-	 * a formatted decimal string of the specified BigFloat value.
+	 * Perform appropriate rounding and conversion to BigDecimal prior to generating a formatted
+	 * decimal string of the specified BigFloat value.
+	 * 
 	 * @param bigFloat value
 	 * @param compact if true the precision will be reduced to a form which is still equivalent at
-	 * the binary encoding level for this format.  Enabling this will incur additional overhead.
+	 *            the binary encoding level for this format. Enabling this will incur additional
+	 *            overhead.
 	 * @return decimal string representation
 	 */
 	public String toDecimalString(BigFloat bigFloat, boolean compact) {
@@ -623,8 +648,8 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Convert an encoded value to a binary floating point representation.
-	 * This is intended for diagnostic purposes only.
+	 * Convert an encoded value to a binary floating point representation. This is intended for
+	 * diagnostic purposes only.
 	 * 
 	 * NB: this method should not be used if {@link #size}&gt;8
 	 * 
@@ -672,8 +697,8 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Convert an encoded value to a binary floating point representation.
-	 * This is intended for diagnostic purposes only.
+	 * Convert an encoded value to a binary floating point representation. This is intended for
+	 * diagnostic purposes only.
 	 * 
 	 * @param encoding the encoding of a floating point value in this format
 	 * @return a binary string representation of the encoded floating point {@code encoding}
@@ -721,6 +746,7 @@ public class FloatFormat {
 
 	/**
 	 * Convert a native float to {@link BigFloat} using 4-byte IEEE 754 encoding
+	 * 
 	 * @param f a float
 	 * @return {@link BigFloat} equal to {@code f}
 	 */
@@ -730,6 +756,7 @@ public class FloatFormat {
 
 	/**
 	 * Convert a native double to {@link BigFloat} using 8-byte IEEE 754 encoding
+	 * 
 	 * @param d a double
 	 * @return {@link BigFloat} equal to {@code f}
 	 */
@@ -742,8 +769,9 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Get 4-byte binary encoding for the specified native float value.  
-	 * This is intended for diagnostic purposes only.
+	 * Get 4-byte binary encoding for the specified native float value. This is intended for
+	 * diagnostic purposes only.
+	 * 
 	 * @param f a float
 	 * @return binary representation of {@code f}
 	 */
@@ -752,8 +780,9 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Get 8-byte binary encoding for the specified native double value.  
-	 * This is intended for diagnostic purposes only.
+	 * Get 8-byte binary encoding for the specified native double value. This is intended for
+	 * diagnostic purposes only.
+	 * 
 	 * @param d a double
 	 * @return binary representation of {@code f}
 	 */
@@ -762,8 +791,9 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Get binary encoding for the specified rounded {@link BigFloat} value.  
-	 * This is intended for diagnostic purposes only.
+	 * Get binary encoding for the specified rounded {@link BigFloat} value. This is intended for
+	 * diagnostic purposes only.
+	 * 
 	 * @param value floating point value
 	 * @return binary representation of {@code value}
 	 */
@@ -780,9 +810,11 @@ public class FloatFormat {
 	}
 
 	/**
-	 * right shift and round to nearest even or left shift to an integer with lead bit at newLeadBit.
+	 * right shift and round to nearest even or left shift to an integer with lead bit at
+	 * newLeadBit.
 	 * 
-	 * The final round up might cause a carry that propagates up, so this must be followed by a test.
+	 * The final round up might cause a carry that propagates up, so this must be followed by a
+	 * test.
 	 * 
 	 * @param i integer representation of mantissa 1.xxxxx
 	 * @param newLeadBit the bit position we want as a new lead bit
@@ -846,8 +878,8 @@ public class FloatFormat {
 		/**
 		 * Construct SmallFloat Data. (similar to BigFloat)
 		 * 
-		 * @param fracbits number of fractional bits (positive non-zero value; includes additional 
-		 * implied bit if relavent).
+		 * @param fracbits number of fractional bits (positive non-zero value; includes additional
+		 *            implied bit if relavent).
 		 * @param expbits maximum number of bits in exponent
 		 * @param kind the Kind, FINITE, INFINITE, ...
 		 * @param sign +1 or -1
@@ -1124,7 +1156,7 @@ public class FloatFormat {
 		fa.round();
 		return getEncoding(fa);
 	}
-	
+
 	public BigFloat getBigFloat(BigInteger value) {
 
 		if (size == 8) {
@@ -1158,16 +1190,15 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Constructs a {@code BigFloat} initialized to the value
-	 * represented by the specified decimal {@code String}, as performed
-	 * by {@link BigDecimal#BigDecimal(String)}.  Other values permitted
-	 * are (case-insenstive): "NaN", "Infinity", "+Infinity", "-Infinity"
-	 * (See {@link BigFloat#NAN}, {@link BigFloat#INFINITY}, {@link BigFloat#POSITIVE_INFINITY}, 
+	 * Constructs a {@code BigFloat} initialized to the value represented by the specified decimal
+	 * {@code String}, as performed by {@link BigDecimal#BigDecimal(String)}. Other values permitted
+	 * are (case-insenstive): "NaN", "Infinity", "+Infinity", "-Infinity" (See {@link BigFloat#NAN},
+	 * {@link BigFloat#INFINITY}, {@link BigFloat#POSITIVE_INFINITY},
 	 * {@link BigFloat#NEGATIVE_INFINITY}).
 	 *
 	 * @param string the string to be parsed.
 	 * @return value as a {@link BigFloat}
-	 * @throws NullPointerException  if the string is null
+	 * @throws NullPointerException if the string is null
 	 * @throws NumberFormatException if the string parse fails.
 	 */
 	public BigFloat getBigFloat(String string) throws NumberFormatException {
@@ -1186,12 +1217,12 @@ public class FloatFormat {
 	}
 
 	/**
-	 * Constructs a {@code BigFloat} initialized to the value
-	 * represented by the specified {@code BigDecimal}.
+	 * Constructs a {@code BigFloat} initialized to the value represented by the specified
+	 * {@code BigDecimal}.
 	 *
 	 * @param value the decimal value.
 	 * @return value as a {@link BigFloat}
-	 * @throws NullPointerException  if the string is null
+	 * @throws NullPointerException if the string is null
 	 * @throws NumberFormatException if the string parse fails.
 	 */
 	public BigFloat getBigFloat(BigDecimal value) {

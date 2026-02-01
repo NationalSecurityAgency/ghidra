@@ -29,7 +29,6 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.listing.Data;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
@@ -66,8 +65,8 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	protected FieldFactory(String name, FieldFormatModel model,
-			ListingHighlightProvider highlightProvider,
-			Options displayOptions, Options fieldOptions) {
+			ListingHighlightProvider highlightProvider, Options displayOptions,
+			Options fieldOptions) {
 		this.name = name;
 		this.model = model;
 		this.hlProvider = highlightProvider;
@@ -135,7 +134,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		if (optionName.equals(FONT_OPTION_NAME)) {
-			baseFont = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
+			baseFont = (Font) newValue;
 			setMetrics(baseFont);
 		}
 		else if (optionName.equals(styleOptionName)) {
@@ -225,7 +224,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 	/**
 	 * Returns true if this given field represents the given location
 	 * @param listingField the field
-	 * @param location the location 
+	 * @param location the location
 	 * @return true if this given field represents the given location
 	 */
 	public boolean supportsLocation(ListingField listingField, ProgramLocation location) {

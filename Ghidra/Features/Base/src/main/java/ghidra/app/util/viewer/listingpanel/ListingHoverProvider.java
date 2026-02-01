@@ -49,11 +49,10 @@ public class ListingHoverProvider extends AbstractHoverProvider {
 			Rectangle fieldBounds, MouseEvent event) {
 
 		ProgramLocation loc = null;
-		if (field instanceof ListingField) {
-			ListingField listingField = (ListingField) field;
+		if (field instanceof ListingField listingField) {
 			loc = listingField.getFieldFactory()
-					.getProgramLocation(fieldLocation.getRow(),
-						fieldLocation.getCol(), listingField);
+					.getProgramLocation(fieldLocation.getRow(), fieldLocation.getCol(),
+						listingField);
 		}
 
 		return loc;

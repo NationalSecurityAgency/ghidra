@@ -16,11 +16,12 @@
 package ghidra.app.plugin.core.scalartable;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-import javax.swing.*;
-import javax.swing.table.TableModel;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
@@ -321,7 +322,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 //==================================================================================================
 // Columns & Column helpers
-//==================================================================================================	
+//==================================================================================================
 
 	private class ScalarComparator implements Comparator<Scalar> {
 
@@ -339,8 +340,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				return (o1.isSigned() ? 1 : -1);
 			}
 
-			return o1.isSigned()
-					? Long.compare(o1.getSignedValue(), o2.getSignedValue())
+			return o1.isSigned() ? Long.compare(o1.getSignedValue(), o2.getSignedValue())
 					: Long.compareUnsigned(o1.getUnsignedValue(), o2.getUnsignedValue());
 		}
 	}
@@ -410,15 +410,14 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			}
 
 			@Override
-			protected void configureFont(JTable table, TableModel model, int column) {
-				setFont(fixedWidthFont);
+			protected Font getDefaultFont() {
+				return fixedWidthFont;
 			}
 
 			@Override
 			public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
 				return ColumnConstraintFilterMode.ALLOW_ALL_FILTERS;
 			}
-
 		};
 
 		@Override
@@ -440,10 +439,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		public Scalar getValue(ScalarRowObject rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			Scalar scalar = rowObject.getScalar();
-
-			Scalar unsigned = new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), false);
-			return unsigned;
-
+			return new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), false);
 		}
 	}
 

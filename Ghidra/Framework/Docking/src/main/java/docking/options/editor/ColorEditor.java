@@ -46,6 +46,7 @@ public class ColorEditor extends PropertyEditorSupport {
 		previewLabel.setOpaque(true);
 		previewLabel.setPreferredSize(new Dimension(100, 20));
 		previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		previewLabel.getAccessibleContext().setAccessibleName("Preview");
 		previewLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent evt) {
@@ -64,6 +65,7 @@ public class ColorEditor extends PropertyEditorSupport {
 		JPanel dialogPanel = new JPanel();
 		dialogPanel.setLayout(new BorderLayout());
 		dialogPanel.add(new ColorEditorPanel(), BorderLayout.CENTER);
+		dialogPanel.getAccessibleContext().setAccessibleName(parentComponent.getName());
 		EditorProvider provider = new EditorProvider(dialogPanel);
 		DockingWindowManager.showDialog(previewLabel, provider);
 	}
@@ -91,7 +93,7 @@ public class ColorEditor extends PropertyEditorSupport {
 		String colorString =
 			WebColors.toString(ColorUtils.contrastForegroundColor(newColor), false);
 		previewLabel.setText(
-			"<HTML><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
+			"<html><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
 
 		previewLabel.setBackground(color);
 	}

@@ -15,11 +15,16 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.Objects;
 
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.Msf;
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfParser;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -54,15 +59,63 @@ public class PdbParser {
 	 * @throws PdbException on parsing issues
 	 * @throws CancelledException upon user cancellation
 	 */
+	@Deprecated
 	public static AbstractPdb parse(String filename, PdbReaderOptions pdbOptions,
 			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
 		Objects.requireNonNull(filename, "filename cannot be null");
 		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
 		Objects.requireNonNull(monitor, "monitor cannot be null");
+		File file = new File(filename);
+		return parse(file, pdbOptions, monitor);
+	}
+
+	/**
+	 * Static method to open a PDB file, determine its version, and return an {@link AbstractPdb}
+	 *  appropriate for that version; it will not have been deserialized.  The main method
+	 *  to deserialize it is {@link AbstractPdb#deserialize()}; the method
+	 *  used to deserialize its main identifiers (signature, age, guid (if available)) is
+	 *  {@link AbstractPdb#deserializeIdentifiersOnly(TaskMonitor monitor)}
+	 * @param file of the PDB file to parse
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return {@link AbstractPdb} class object for the file
+	 * @throws IOException on file I/O issues
+	 * @throws PdbException on parsing issues
+	 * @throws CancelledException upon user cancellation
+	 */
+	public static AbstractPdb parse(File file, PdbReaderOptions pdbOptions, TaskMonitor monitor)
+			throws IOException, PdbException, CancelledException {
+		Objects.requireNonNull(file, "file cannot be null");
+		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
+		Objects.requireNonNull(monitor, "monitor cannot be null");
+		ByteProvider byteProvider = new FileByteProvider(file,
+			FileSystemService.getInstance().getLocalFSRL(file), AccessMode.READ);
+		return parse(byteProvider, pdbOptions, monitor);
+	}
+
+	/**
+	 * Static method to open a PDB file, determine its version, and return an {@link AbstractPdb}
+	 *  appropriate for that version; it will not have been deserialized.  The main method
+	 *  to deserialize it is {@link AbstractPdb#deserialize()}; the method
+	 *  used to deserialize its main identifiers (signature, age, guid (if available)) is
+	 *  {@link AbstractPdb#deserializeIdentifiersOnly(TaskMonitor monitor)}
+	 * @param byteProvider the ByteProvider providing bytes for the PDB
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return {@link AbstractPdb} class object for the file
+	 * @throws IOException on file I/O issues
+	 * @throws PdbException on parsing issues
+	 * @throws CancelledException upon user cancellation
+	 */
+	public static AbstractPdb parse(ByteProvider byteProvider, PdbReaderOptions pdbOptions,
+			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
+		Objects.requireNonNull(byteProvider, "byteProvider cannot be null");
+		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
+		Objects.requireNonNull(monitor, "monitor cannot be null");
 
 		// Do not do a try with resources here, as the msf must live within the PDB that is
 		//  created below.
-		Msf msf = MsfParser.parse(filename, pdbOptions, monitor);
+		Msf msf = MsfParser.parse(byteProvider, pdbOptions, monitor);
 
 		int versionNumber = AbstractPdb.deserializeVersionNumber(msf, monitor);
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ import utility.function.Callback;
  * 	<LI>Results must be cached for speed, but may cleared as the graph is mutated</LI>
  *  <LI>Algorithms must not block the UI thread</LI>
  *  <LI>Related actions (i.e., hover vs. selection) should cancel any pending action, but not 
- *      unrelated actions (e.g., a new hover request should cancel a pending hover update)
+ *      unrelated actions (e.g., a new hover request should cancel a pending hover update)</LI>
  * </UL>
  * 
  * Based on these requirements, we need to use multi-threading.  Further complicating the need

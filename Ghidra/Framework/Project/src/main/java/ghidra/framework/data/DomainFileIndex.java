@@ -181,57 +181,31 @@ class DomainFileIndex implements DomainFolderChangeListener {
 		return null;
 	}
 
+	@Override
 	public void domainFileAdded(DomainFile file) {
 		updateFileEntry((GhidraFile) file);
 	}
 
+	@Override
 	public void domainFileMoved(DomainFile file, DomainFolder oldParent, String oldName) {
 		updateFileEntry((GhidraFile) file);
 	}
 
-	public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-		// no-op
-	}
-
-	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-		// no-op
-	}
-
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		// no-op
-	}
-
+	@Override
 	public void domainFileRemoved(DomainFolder parent, String name, String fileID) {
 		fileIdToPathIndex.remove(fileID);
 	}
 
+	@Override
 	public void domainFileRenamed(DomainFile file, String oldName) {
 		updateFileEntry((GhidraFile) file);
 	}
 
+	@Override
 	public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 		if (fileIDset) {
 			updateFileEntry((GhidraFile) file);
 		}
 	}
 
-	public void domainFolderAdded(DomainFolder folder) {
-		// no-op
-	}
-
-	public void domainFolderMoved(DomainFolder folder, DomainFolder oldParent) {
-		// no-op
-	}
-
-	public void domainFolderRemoved(DomainFolder parent, String name) {
-		// no-op
-	}
-
-	public void domainFolderRenamed(DomainFolder folder, String oldName) {
-		// no-op
-	}
-
-	public void domainFolderSetActive(DomainFolder folder) {
-		// no-op
-	}
 }

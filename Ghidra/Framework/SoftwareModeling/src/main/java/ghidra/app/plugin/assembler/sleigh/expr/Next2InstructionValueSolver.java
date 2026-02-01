@@ -39,9 +39,10 @@ public class Next2InstructionValueSolver extends AbstractExpressionSolver<Next2I
 	}
 
 	@Override
-	public AssemblyResolution solve(Next2InstructionValue iv, MaskedLong goal,
-			Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			Next2InstructionValue exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException {
 		throw new AssertionError(
 			"INTERNAL: Should never be asked to solve for " + AssemblyTreeResolver.INST_NEXT2);
 	}

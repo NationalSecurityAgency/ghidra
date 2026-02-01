@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -35,14 +36,13 @@ import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -238,11 +238,10 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	protected final Map<Byte, AbstractDBTraceSymbolSingleTypeView<?>> symbolViews = new HashMap<>();
 
-	public DBTraceSymbolManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceSymbolManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTraceDataTypeManager dataTypeManager,
-			DBTraceOverlaySpaceAdapter overlayAdapter)
-			throws VersionException, IOException {
+			DBTraceOverlaySpaceAdapter overlayAdapter) throws VersionException, IOException {
 		this.trace = trace;
 		this.lock = lock;
 		this.threadManager = threadManager;
@@ -278,8 +277,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		allNamespaces = new DBTraceSymbolMultipleTypesView<>(this, namespaces, classes);
 		uniqueNamespaces =
 			new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
-		notLabels =
-			new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
+		notLabels = new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
 		allSymbols = new DBTraceSymbolMultipleTypesView<>(this, labels, namespaces, classes);
 	}
 
@@ -357,7 +355,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	// Internal
-	public void replaceDataTypes(long oldID, long newID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		// Would apply to functions and variables, but those are not supported.
 	}
 
@@ -520,30 +518,22 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		if (symbol.getAddress().isMemoryAddress()) {
 			delID(thread, symbol.getAddress().getAddressSpace(), symbol.getID());
 		}
-		// TODO: Remove from other space maps, once implemented.
-		trace.setChanged(
-			new TraceChangeRecord<>(TraceSymbolChangeType.DELETED, symbol.getSpace(), symbol, null,
-				null));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_DELETED,
+			symbol.getAddressSpace(), symbol, null, null));
 		return true;
 	}
 
-	protected void putID(Lifespan lifespan, TraceThread thread, Address address, long id) {
-		idMap.get(DBTraceSpaceKey.create(address.getAddressSpace(), thread, 0), true)
-				.put(address, lifespan, id);
-		// TODO: Add to ancestors' too?
-		// NOTE: Might be hard to remove because of overlaps
+	protected void putID(Lifespan lifespan, Address address, long id) {
+		idMap.get(address.getAddressSpace(), true).put(address, lifespan, id);
 	}
 
 	protected void putID(Lifespan lifespan, TraceThread thread, AddressRange rng, long id) {
-		idMap.get(DBTraceSpaceKey.create(rng.getAddressSpace(), thread, 0), true)
-				.put(rng, lifespan, id);
-		// TODO: Add to ancestors' too?
-		// NOTE: Might be hard to remove because of overlaps
+		idMap.get(rng.getAddressSpace(), true).put(rng, lifespan, id);
 	}
 
 	protected void delID(TraceThread thread, AddressSpace addressSpace, long id) {
 		DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space =
-			idMap.get(DBTraceSpaceKey.create(addressSpace, thread, 0), false);
+			idMap.get(addressSpace, false);
 		if (space == null) {
 			return;
 		}
@@ -555,10 +545,10 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	protected void assertNotDuplicate(AbstractDBTraceSymbol exclude, Lifespan lifespan,
-			TraceThread thread, Address address, String name, DBTraceNamespaceSymbol parent)
+			Address address, String name, DBTraceNamespaceSymbol parent)
 			throws DuplicateNameException {
 		if (address.isMemoryAddress()) {
-			for (AbstractDBTraceSymbol duplicate : labels.getIntersecting(lifespan, thread,
+			for (AbstractDBTraceSymbol duplicate : labels.getIntersecting(lifespan,
 				new AddressRangeImpl(address, address), false, true)) {
 				if (duplicate == exclude) {
 					continue;
@@ -592,10 +582,10 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		}
 		Collection<Long> result = new ArrayList<>();
 		for (DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space : idMap
-				.getActiveMemorySpaces()) {
-			result.addAll(space
-					.reduce(TraceAddressSnapRangeQuery.added(from, to, space.getAddressSpace()))
-					.values());
+				.getActiveSpaces()) {
+			result.addAll(
+				space.reduce(TraceAddressSnapRangeQuery.added(from, to, space.getAddressSpace()))
+						.values());
 		}
 		return result;
 	}
@@ -607,10 +597,10 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		}
 		Collection<Long> result = new ArrayList<>();
 		for (DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space : idMap
-				.getActiveMemorySpaces()) {
-			result.addAll(space
-					.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.getAddressSpace()))
-					.values());
+				.getActiveSpaces()) {
+			result.addAll(
+				space.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.getAddressSpace()))
+						.values());
 		}
 		return result;
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,14 +23,14 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ReaderFunc;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -38,11 +38,12 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Handles marking up and program info for basic ELF note (and note-like) sections.
  * <ul>
- * 	<li>NoteAbiTag
- * 	<li>NoteGnuBuildId
- * 	<li>NoteGnuProperty
- * 	<li>GnuDebugLink (not a note)
- *  <li>ElfComment (not a note)
+ * 	<li>NoteAbiTag</li>
+ * 	<li>NoteGnuBuildId</li>
+ * 	<li>NoteGnuProperty</li>
+ * 	<li>GnuDebugLink (not a note)</li>
+ * 	<li>GnuDebugAltLink (not a note)</li>
+ *  <li>ElfComment (not a note)</li>
  * </ul>
  * <p>
  * Runs after other ElfInfoProducers that have a normal priority.
@@ -53,11 +54,15 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 	public static final CategoryPath ELF_CATEGORYPATH = new CategoryPath("/ELF");
 
 	private static final Map<String, ReaderFunc<ElfInfoItem>> STANDARD_READERS = Map.of(
+	//@formatter:off		
 		GnuDebugLink.SECTION_NAME, GnuDebugLink::read,
+		GnuDebugAltLink.SECTION_NAME, GnuDebugAltLink::read,
 		NoteAbiTag.SECTION_NAME, (br, prg) -> NoteAbiTag.read(ElfNote.read(br), prg),
 		NoteGnuBuildId.SECTION_NAME, (br, prg) -> NoteGnuBuildId.read(ElfNote.read(br), prg),
 		NoteGnuProperty.SECTION_NAME, (br, prg) -> NoteGnuProperty.read(ElfNote.read(br), prg),
-		ElfComment.SECTION_NAME, ElfComment::read);
+		ElfComment.SECTION_NAME, ElfComment::read,
+		GnuBuildAttributes.SECTION_NAME, GnuBuildAttributes::read);
+	//@formatter:on
 
 	private ElfLoadHelper elfLoadHelper;
 
@@ -78,10 +83,10 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 
 			ElfInfoItem.markupElfInfoItemSection(program, sectionName, readFunc);
 		}
-		markupPTNOTESections(monitor);
+		markupPtNoteSegments(monitor);
 	}
 
-	private void markupPTNOTESections(TaskMonitor monitor) throws CancelledException {
+	private void markupPtNoteSegments(TaskMonitor monitor) throws CancelledException {
 		Program program = elfLoadHelper.getProgram();
 		Memory memory = program.getMemory();
 		for (ElfProgramHeader elfProgramHeader : elfLoadHelper.getElfHeader()
@@ -90,42 +95,65 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 
 			Address addr = elfLoadHelper.findLoadAddress(elfProgramHeader, 0);
 			if (addr == null) {
+				elfLoadHelper.log("Failed to identify PT_NOTE load address");
 				continue;
 			}
-			MemoryBlock memBlock = memory.getBlock(addr);
-			if (memBlock == null) {
-				continue;
-			}
-			try (ByteProvider bp =
-				MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), memBlock)) {
-				BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
-				while (br.hasNext()) {
-					monitor.checkCancelled();
 
-					long start = br.getPointerIndex();
-					ElfNote note = br.readNext(ElfNote::read);
-					br.align(4);	// fix any notes with non-aligned size payloads
-					long noteLength = br.getPointerIndex() - start;
-
-					try {
-						StructureDataType struct = note.toStructure(program.getDataTypeManager());
-						DataUtilities.createData(program, addr, struct, -1, false,
-							ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-						String comment =
-							"ELF Note \"%s\", %xh".formatted(note.getName(), note.getVendorType());
-						program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, comment);
+			try {
+				Address endAddr = null;
+				MemoryBlock memBlock = memory.getBlock(addr);
+				if (memBlock != null) {
+					long loadSize = elfProgramHeader.getAdjustedLoadSize();
+					if (loadSize > 0) {
+						endAddr = addr.add(loadSize - 1);
 					}
-					catch (CodeUnitInsertionException e) {
-						// ignore, continue to next note
-					}
+				}
 
-					addr = addr.addWrap(noteLength);
+				if (endAddr == null) {
+					elfLoadHelper.log("Failed to markup non-loaded PT_NOTE at " + addr);
+					continue;
+				}
+
+				try (ByteProvider bp = new MemoryByteProvider(program.getMemory(), addr, endAddr)) {
+					BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
+					markupPtNote(br, program, addr, monitor);
 				}
 			}
-			catch (IOException e) {
-				Msg.warn(this, "Failed to read ELF Note at %s".formatted(addr), e);
+			catch (Exception e) {
+				// NOTE: There are some unsupported formats which may throw severe exceptions
+				elfLoadHelper.log("Failed to parse and markup ELF Note starting at " + addr);
 			}
 
+		}
+	}
+
+	private void markupPtNote(BinaryReader br, Program program, Address noteAddr,
+			TaskMonitor monitor)
+			throws CancelledException, AddressOutOfBoundsException, IOException {
+		while (br.hasNext()) {
+			monitor.checkCancelled();
+
+			long start = br.getPointerIndex();
+			ElfNote note = br.readNext(ElfNote::read);
+			br.align(4);	// fix any notes with non-aligned size payloads
+			long noteLength = br.getPointerIndex() - start;
+
+			if (DataUtilities.isUndefinedData(program, noteAddr)) {
+				try {
+					StructureDataType struct = note.toStructure(program.getDataTypeManager());
+					DataUtilities.createData(program, noteAddr, struct, -1, false,
+						ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+					String comment =
+						"ELF Note \"%s\", %xh".formatted(note.getName(), note.getVendorType());
+					program.getListing().setComment(noteAddr, CommentType.EOL, comment);
+				}
+				catch (CodeUnitInsertionException e) {
+					elfLoadHelper
+							.log("Failed to markup ELF Note at " + noteAddr + ": data conflict");
+				}
+			}
+
+			noteAddr = noteAddr.add(noteLength);
 		}
 	}
 

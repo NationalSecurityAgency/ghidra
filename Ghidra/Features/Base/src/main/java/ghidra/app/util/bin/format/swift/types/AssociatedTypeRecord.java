@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,17 +18,18 @@ package ghidra.app.util.bin.format.swift.types;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.SwiftStructure;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift AssociatedTypeRecord structure
+ * Represents a Swift {@code AssociatedTypeRecord} structure
  * 
- * @see <a href="https://github.com/apple/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
-public final class AssociatedTypeRecord implements SwiftStructure {
+public final class AssociatedTypeRecord extends SwiftTypeMetadataStructure {
 
 	/**
 	 * The size (in bytes) of an {@link AssociatedTypeRecord} structure
@@ -45,23 +46,20 @@ public final class AssociatedTypeRecord implements SwiftStructure {
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public AssociatedTypeRecord(BinaryReader reader) throws IOException {
+		super(reader.getPointerIndex());
 		name = reader.readNext(SwiftUtils::relativeString);
 		substitutedTypeName = reader.readNext(SwiftUtils::relativeString);
 	}
 
 	/**
-	 * Gets the name
-	 * 
-	 * @return The name
+	 * {@return the name}
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * Gets the substituted type name
-	 * 
-	 * @return The substituted type name
+	 * {@return the substituted type name}
 	 */
 	public String getSubstitutedTypeName() {
 		return substitutedTypeName;
@@ -79,10 +77,9 @@ public final class AssociatedTypeRecord implements SwiftStructure {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
 		struct.add(SwiftUtils.PTR_STRING, "Name", "");
 		struct.add(SwiftUtils.PTR_STRING, "SubstitutedTypeName", "");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

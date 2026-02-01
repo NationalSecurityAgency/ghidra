@@ -15,14 +15,18 @@
     <P>The Theming feature allows users to customize the colors, fonts, and icons used throughout
     the application. The active theme determines the Java Look and Feel, whether the theme should
     use light or dark defaults, and any custom colors, fonts, and icons that override the default
-    values. Users can can easily switch between any of the built-in themes or any saved themes found
+    values. Users can easily switch between any of the built-in themes or any saved themes found
     in their home application directory</P>
 
     <P>Users can also edit and create their own themes using the Theme Editor. Custom themes are
-    stored in the user's <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code> directory. 
+    stored in the user's <code>&lt;user settings&gt;/themes</code> directory. 
     These theme files are simple text files that can
     easily be modified using any text editor. Also, users can share themes by exporting them to a
     file that can be given to other users who can them import them into their application.</P>
+	
+    <P><b>NOTE: </b> The <code>&lt;user settings&gt;</code> directory is platform/configuration
+    specific. Its value can be found in the Ghidra Front End GUI, under <code>Help -> 
+    Runtime Information -> Application Layout -> Settings Directory</code></P>
 
 	</BlOCKQUOTE>
     <H2>Theme Chooser Dialog<A name="Switch_Theme"></A></H2>
@@ -32,10 +36,10 @@
     <P align="center"><IMG alt="" src="images/ThemeChooserDialog.png"><BR>
      &nbsp;</P>
 
-    <P>The Theme Chooser dialog displays a list of all the know themes, both built-in and custom.
-    As you pick different themes, the application will switch to that theme. Press the "OK" button
-    when the desired theme is selected. Pressing the "Cancel" button will restore the theme to
-    the what it was when the dialog was invoked.</P>
+    <P>The Theme Chooser dialog displays a list of all the known themes, both built-in and custom.
+    Select the desired theme and press the "OK" button to have the application switch to that
+    theme. Pressing the "Cancel" button will exit the dialog without changing the theme. You
+    can also double click on a theme to switch to that theme and exit the dialog.</P>
     
     </BlOCKQUOTE>
     
@@ -86,7 +90,7 @@
     revert back to its previous value.</P>
 
     <P>If any values have been changed, the <B>Save</B> button will become enabled, allowing you to save
-    any changes you have made. (Pressing the <B>Dismiss</B> button will also give the the option to 
+    any changes you have made. (Pressing the <B>Dismiss</B> button will also give the option to 
     save.) When saving, if the
     current theme is a built-in theme, you will first have to supply a new theme name. If the
     current theme is a not a built-in theme, you will have the option to overwrite the existing
@@ -233,9 +237,9 @@
 	<BlOCKQUOTE>
 
     <P>Theme Property Names (also referred to as IDs or keys) that are defined by the application
-    use a common format to help make sorting and viewing properties more intuitive as to their use. See
-    the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more details on the property ID
-    format and naming conventions.</P>
+    use a common format to help make sorting and viewing properties more intuitive as to their use. 
+    See the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more 
+    details on the property ID format and naming conventions.</P>
 
 	</BlOCKQUOTE>
     <H2>Theme Files</H2>
@@ -243,10 +247,10 @@
 
       <P>Theme Files are used to store saved custom themes. They are simple text files and are 
       stored in the user's home application directory under 
-      <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>. The first three properties are always the
-      theme name, the Look and Feel name, and whether the theme uses standard defaults or dark
-      defaults. Finally, there is a list of overridden property "name = value" lines. The format
-      is:</P>
+      <code>&lt;user settings&gt;/themes</code>. The first three properties 
+      are always the theme name, the Look and Feel name, and whether the theme uses standard 
+      defaults or dark defaults. Finally, there is a list of overridden property "name = value" 
+      lines. The format is:</P>
     <CODE>
 	<PRE>
         name = [theme name]
@@ -270,18 +274,18 @@
 		
         color.bg = Black
         color.bg.foo = #012345
-        [color]Panel.background = Red
         font.button = dialog-PLAIN-14
         icon.refresh = images/reload3.png    
         color.bg.bar = color.bg.foo   
-        color.bg.xxx = [color]Panel.background
+        [laf.color]Panel.background = silver
+        [laf.color]TextArea.background = [laf.color]Panel.background
 	</PRE>
 
 
       <P>Each property line is expected to begin with either "color.", "font.", or "icon." Since
-      java defined properties don't start with these prefixes, they will have "[color]", "[font]",
-      or "[icon]" prepended to their property name. These brackets are only used to aid in 
-      parsing this file. When the properties are used in Ghidra, the bracketed prefixes are
+      java defined properties don't start with these prefixes, they will have "[laf.color]", 
+      "[laf.font]", or "[laf.icon]" prepended to their property name. These brackets are only used 
+      to aid in parsing this file. When the properties are used in Ghidra, the bracketed prefixes are
       removed.</P>
 
       <P>Also, note that the values of these properties can reference other property names. If the

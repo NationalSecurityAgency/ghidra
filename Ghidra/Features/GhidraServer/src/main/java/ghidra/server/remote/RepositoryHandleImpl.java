@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.Unreferenced;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 
 import db.buffers.*;
 import ghidra.framework.remote.*;
@@ -39,8 +38,8 @@ import ghidra.util.exception.FileInUseException;
  * <code>RepositoryHandleImpl</code> provides a Repository handle to a
  * remote user.
  */
-public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteRepositoryHandle,
-		Unreferenced {
+public class RepositoryHandleImpl extends UnicastRemoteObject
+		implements RemoteRepositoryHandle, Unreferenced {
 
 //	private final RepositoryChangeEvent NULL_EVENT = new RepositoryChangeEvent(
 //		RepositoryChangeEvent.REP_NULL_EVENT, null, null, null, null);
@@ -118,7 +117,9 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 		try {
 			repository.log(null, "Clearning " + transientCheckouts.size() + " transiet checkouts",
 				currentUser);
-			for (String pathname : transientCheckouts.keySet()) {
+
+			ArrayList<String> pathnames = new ArrayList<>(transientCheckouts.keySet());
+			for (String pathname : pathnames) {
 				int index = pathname.lastIndexOf(FileSystem.SEPARATOR_CHAR);
 				String parentPath = FileSystem.SEPARATOR;
 				if (index != 0) {
@@ -127,10 +128,12 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 				String itemName = pathname.substring(index + 1);
 
 				ItemCheckoutStatus transientCheckout = transientCheckouts.get(pathname);
-
-				// Since dropped transient checkouts could occur in large volume due to headless
-				// processing, don't bother sending notification
-				terminateCheckout(parentPath, itemName, transientCheckout.getCheckoutId(), false);
+				if (transientCheckout != null) {
+					// Since dropped transient checkouts could occur in large volume due to headless
+					// processing, don't bother sending notification
+					terminateCheckout(parentPath, itemName, transientCheckout.getCheckoutId(),
+						false);
+				}
 			}
 		}
 		catch (IOException e) {
@@ -191,8 +194,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 		}
 
 		RepositoryChangeEvent openFileCountEvent =
-			new RepositoryChangeEvent(RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT, null, null,
-				null, Integer.toString(RemoteBufferFileImpl.getOpenFileCount(this)));
+			new RepositoryChangeEvent(RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT, null, null, null,
+				Integer.toString(RemoteBufferFileImpl.getOpenFileCount(this)));
 
 		synchronized (eventQueue) {
 			if (clientActive) {
@@ -211,31 +214,6 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 		}
 		RepositoryManager.log(repository.getName(), null, "not listening!", currentUser);
 		dispose();
-	}
-
-	public void fireOpenFileCountChanged() {
-//		if (!isValid) {
-//			return;
-//		}
-//
-//		RepositoryChangeEvent event =
-//			new RepositoryChangeEvent(RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT, null, null,
-//				null, Integer.toString(RemoteBufferFileImpl.getOpenFileCount(this)));
-//		synchronized (eventQueue) {
-//
-//			// Remove existing queued event
-//			Iterator<RepositoryChangeEvent> iterator = eventQueue.iterator();
-//			while (iterator.hasNext()) {
-//				RepositoryChangeEvent queuedEvent = iterator.next();
-//				if (queuedEvent.type == RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT) {
-//					iterator.remove();
-//					break;
-//				}
-//			}
-//
-//			eventQueue.add(event);
-//			eventQueue.notifyAll();
-//		}
 	}
 
 	@Override
@@ -404,6 +382,22 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 	}
 
 	@Override
+	public void createTextDataFile(String parentPath, String itemName, String fileID,
+			String contentType, String textData, String comment)
+			throws InvalidNameException, IOException {
+		synchronized (syncObject) {
+			validate();
+			repository.validateWritePrivilege(currentUser);
+			RepositoryFolder folder = repository.getFolder(currentUser, parentPath, true);
+			if (folder == null) {
+				throw new IOException("Failed to create repository Folder " + parentPath);
+			}
+			folder.createTextDataFile(itemName, fileID, contentType, textData, comment,
+				currentUser);
+		}
+	}
+
+	@Override
 	public RemoteManagedBufferFileHandle createDatabase(String parentPath, String itemName,
 			String fileID, int bufferSize, String contentType, String projectPath)
 			throws InvalidNameException, IOException {
@@ -414,16 +408,15 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			if (folder == null) {
 				throw new IOException("Failed to create repository Folder " + parentPath);
 			}
-			LocalManagedBufferFile bf =
-				folder.createDatabase(itemName, fileID, bufferSize, contentType, currentUser,
-					projectPath);
+			LocalManagedBufferFile bf = folder.createDatabase(itemName, fileID, bufferSize,
+				contentType, currentUser, projectPath);
 			return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
 		}
 	}
 
 	@Override
-	public RemoteManagedBufferFileImpl openDatabase(String parentPath, String itemName,
-			int version, int minChangeDataVer) throws IOException {
+	public RemoteManagedBufferFileImpl openDatabase(String parentPath, String itemName, int version,
+			int minChangeDataVer) throws IOException {
 		synchronized (syncObject) {
 			validate();
 			RepositoryFile rf = getFile(parentPath, itemName);
@@ -481,9 +474,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			validate();
 			repository.validateWritePrivilege(currentUser);
 			checkFolderInUse(oldParentPath, oldFolderName);
-			RepositoryFolder folder =
-				repository.getFolder(currentUser, oldParentPath + FileSystem.SEPARATOR +
-					oldFolderName, false);
+			RepositoryFolder folder = repository.getFolder(currentUser,
+				oldParentPath + FileSystem.SEPARATOR + oldFolderName, false);
 			RepositoryFolder newParent = repository.getFolder(currentUser, newParentPath, true);
 			if (folder != null) {
 				folder.moveTo(newParent, newFolderName, currentUser);
@@ -511,9 +503,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 	}
 
 	private void checkFileInUse(String parentPath, String itemName) throws FileInUseException {
-		String[] openFileUsers =
-			RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
-				getPathname(parentPath, itemName));
+		String[] openFileUsers = RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
+			getPathname(parentPath, itemName));
 		if (openFileUsers != null) {
 			StringBuffer buf = new StringBuffer("");
 			for (String user : openFileUsers) {
@@ -553,9 +544,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			if (rf.hasCheckouts()) {
 				return true;
 			}
-			String[] openFileUsers =
-				RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
-					getPathname(folder.getPathname(), rf.getName()));
+			String[] openFileUsers = RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
+				getPathname(folder.getPathname(), rf.getName()));
 			if (openFileUsers != null) {
 				return true;
 			}
@@ -622,7 +612,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 	}
 
 	@Override
-	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName) throws IOException {
+	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName)
+			throws IOException {
 		synchronized (syncObject) {
 			validate();
 			RepositoryFile rf = getFile(parentPath, itemName);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,8 @@ class PointerDB extends DataTypeDB implements Pointer {
 		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
 
 	private PointerDBAdapter adapter;
-	private String displayName;
+
+	private String displayName; // lazy initialization
 
 	/**
 	 * <code>isEquivalentActive</code> is used to break cyclical recursion when
@@ -126,7 +127,8 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return this;
 		}
 		// don't clone referenced data-type to avoid potential circular reference
-		return new PointerDataType(getDataType(), hasLanguageDependantLength() ? -1 : getLength(), dtm);
+		return new PointerDataType(getDataType(), hasLanguageDependantLength() ? -1 : getLength(),
+			dtm);
 	}
 
 	@Override
@@ -143,7 +145,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if ( displayName == null ) {
+			if (displayName == null) {
 				// NOTE: Pointer display name only specifies length if null base type
 				DataType dt = getDataType();
 				if (dt == null) {
@@ -284,7 +286,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dt) {
+	protected boolean isEquivalent(DataType dt, DataTypeConflictHandler handler) {
 		if (dt == null) {
 			return false;
 		}
@@ -322,7 +324,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return false;
 		}
 
-		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can 
+		// NOTE: The pointer deep-dive equivalence checking on the referenced datatype can 
 		// cause types containing pointers (composites, functions) to conflict when in
 		// reality the referenced type simply has multiple implementations which differ.
 		// Although without doing this Ghidra may fail to resolve dependencies which differ
@@ -337,11 +339,19 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 		isEquivalentActive.set(true);
 		try {
-			return getDataType().isEquivalent(otherDataType);
+			if (handler != null) {
+				handler = handler.getSubsequentHandler();
+			}
+			return DataTypeDB.isEquivalent(referencedDataType, otherDataType, handler);
 		}
 		finally {
 			isEquivalentActive.set(false);
 		}
+	}
+
+	@Override
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
 	}
 
 	@Override
@@ -351,12 +361,36 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 		lock.acquire();
 		try {
-			String myOldName = getOldName();
 			if (checkIsValid() && getDataType() == oldDt) {
+
+				// check for existing pointer to newDt
+				PointerDataType newPtr = new PointerDataType(newDt,
+					hasLanguageDependantLength() ? -1 : getLength(), dataMgr);
+				DataType existingPtr =
+					dataMgr.getDataType(newDt.getCategoryPath(), newPtr.getName());
+				if (existingPtr != null && existingPtr != this) {
+					// avoid duplicate pointer - replace this pointer with existing one
+					dataMgr.addDataTypeToReplace(this, existingPtr);
+					return;
+				}
+
+				if (!newDt.getCategoryPath().equals(oldDt.getCategoryPath())) {
+					// move this pointer to same category as newDt
+					try {
+						super.setCategoryPath(newDt.getCategoryPath());
+					}
+					catch (DuplicateNameException e) {
+						throw new RuntimeException(e); // already checked
+					}
+				}
+
+				String myOldName = getOldName();
 				oldDt.removeParent(this);
 				newDt.addParent(this);
+
 				record.setLongValue(PointerDBAdapter.PTR_DT_ID_COL, dataMgr.getResolvedID(newDt));
 				refreshName();
+
 				if (!oldDt.getName().equals(newDt.getName())) {
 					notifyNameChanged(myOldName);
 				}

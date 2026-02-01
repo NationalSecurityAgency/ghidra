@@ -65,7 +65,7 @@ public class AudioPlayer implements Playable, LineListener {
 			clip.start();
 		}
 		catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-			Msg.debug(this, "Unable to play audio", e);
+			Msg.error(this, "Unable to play audio", e);
 		}
 	}
 

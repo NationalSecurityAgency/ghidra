@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
@@ -34,6 +35,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator {
@@ -68,24 +70,16 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 			TraceSymbolManager symbolManager = tb.trace.getSymbolManager();
 			TraceNamespaceSymbol global = symbolManager.getGlobalNamespace();
 
-			TraceSymbol mainLabel = symbolManager
-					.labels()
-					.create(snap, null, tb.addr(0x00400000),
-						"main", global, SourceType.USER_DEFINED);
+			TraceSymbol mainLabel = symbolManager.labels()
+					.create(snap, tb.addr(0x00400000), "main", global, SourceType.USER_DEFINED);
 			@SuppressWarnings("unused")
-			TraceSymbol cloneLabel = symbolManager
-					.labels()
-					.create(snap, null, tb.addr(0x00400060),
-						"clone", global, SourceType.USER_DEFINED);
-			TraceSymbol childLabel = symbolManager
-					.labels()
-					.create(snap, null, tb.addr(0x00400032),
-						"child", global, SourceType.USER_DEFINED);
+			TraceSymbol cloneLabel = symbolManager.labels()
+					.create(snap, tb.addr(0x00400060), "clone", global, SourceType.USER_DEFINED);
+			TraceSymbol childLabel = symbolManager.labels()
+					.create(snap, tb.addr(0x00400032), "child", global, SourceType.USER_DEFINED);
 			@SuppressWarnings("unused")
-			TraceSymbol exitLabel = symbolManager
-					.labels()
-					.create(snap, null, tb.addr(0x00400061),
-						"exit", global, SourceType.USER_DEFINED);
+			TraceSymbol exitLabel = symbolManager.labels()
+					.create(snap, tb.addr(0x00400061), "exit", global, SourceType.USER_DEFINED);
 
 			Assembler assembler = Assemblers.getAssembler(tb.trace.getProgramView());
 
@@ -114,6 +108,9 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 			regs.setValue(snap, new RegisterValue(tb.language.getProgramCounter(),
 				childLabel.getAddress().getOffsetAsBigInteger()));
 		}
+
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		root.createFile("echo", tb.trace, TaskMonitor.DUMMY);
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);

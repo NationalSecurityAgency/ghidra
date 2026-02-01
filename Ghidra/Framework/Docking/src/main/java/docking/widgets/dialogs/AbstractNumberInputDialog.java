@@ -102,7 +102,11 @@ public abstract class AbstractNumberInputDialog extends DialogComponentProvider 
 	 */
 	protected JPanel buildMainPanel(String prompt, boolean showAsHex) {
 		JPanel panel = createPanel(prompt);
-		numberInputField.addActionListener(e -> okCallback());
+		numberInputField.addActionListener(e -> {
+			if (okButton.isEnabled()) {
+				okCallback();
+			}
+		});
 
 		if (showAsHex) {
 			numberInputField.setHexMode();
@@ -258,7 +262,7 @@ public abstract class AbstractNumberInputDialog extends DialogComponentProvider 
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Create the main panel.

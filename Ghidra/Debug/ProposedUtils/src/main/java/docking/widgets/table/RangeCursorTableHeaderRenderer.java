@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package docking.widgets.table;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.function.Consumer;
 
 import javax.swing.JTable;
@@ -34,8 +33,31 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 
 	protected class ForSeekMouseListener extends MouseAdapter {
 
+		private boolean checkRemove() {
+			if (savedTable == null) {
+				return false;
+			}
+			TableModel unwrapped = RowObjectTableModel.unwrap(savedTable.getModel());
+			if (!(unwrapped instanceof DynamicColumnTableModel<?> model)) {
+				setSavedTable(null);
+				return true;
+			}
+			int count = savedTable.getColumnCount();
+			for (int i = 0; i < count; i++) {
+				int j = savedTable.convertColumnIndexToModel(i);
+				if (model.getColumn(j) == col) {
+					return false;
+				}
+			}
+			setSavedTable(null);
+			return true;
+		}
+
 		@Override
 		public void mouseClicked(MouseEvent e) {
+			if (checkRemove()) {
+				return;
+			}
 			if ((e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) != 0) {
 				return;
 			}
@@ -43,18 +65,19 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 				return;
 			}
 			doSeek(e);
-			e.consume();
 		}
 
 		@Override
 		public void mouseDragged(MouseEvent e) {
+			if (checkRemove()) {
+				return;
+			}
 			int onmask = MouseEvent.BUTTON1_DOWN_MASK;
 			int offmask = MouseEvent.SHIFT_DOWN_MASK;
 			if ((e.getModifiersEx() & (onmask | offmask)) != onmask) {
 				return;
 			}
 			doSeek(e);
-			e.consume();
 		}
 
 		protected void doSeek(MouseEvent e) {
@@ -84,7 +107,8 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 
 			double pos =
 				span * (e.getX() - colX) / myViewCol.getWidth() + fullRangeDouble.min();
-			listeners.fire.accept(pos);
+			e.consume();
+			listeners.invoke().accept(pos);
 		}
 	}
 
@@ -99,16 +123,18 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	protected Span<N, ?> fullRange;
 
 	protected N pos;
+	protected final DynamicTableColumn<?, ?, ?> col;
 	protected double doublePos;
 
 	private JTable savedTable;
 	private int savedViewColumn;
 
 	private final ForSeekMouseListener forSeekMouseListener = new ForSeekMouseListener();
-	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class);
+	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class, true);
 
-	public RangeCursorTableHeaderRenderer(N pos) {
+	public RangeCursorTableHeaderRenderer(N pos, DynamicTableColumn<?, ?, ?> col) {
 		this.pos = pos;
+		this.col = col;
 	}
 
 	@Override
@@ -123,6 +149,9 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	}
 
 	protected void setSavedTable(JTable table) {
+		if (savedTable == table) {
+			return;
+		}
 		if (savedTable != null) {
 			JTableHeader header = savedTable.getTableHeader();
 			header.removeMouseListener(forSeekMouseListener);
@@ -131,8 +160,23 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 		savedTable = table;
 		if (savedTable != null) {
 			JTableHeader header = savedTable.getTableHeader();
+			// I need firstsies. SHIFT key will pass event down the chain.
+			MouseListener[] curMouseListeners = header.getMouseListeners();
+			MouseMotionListener[] curMotionListeners = header.getMouseMotionListeners();
+			for (MouseListener l : curMouseListeners) {
+				header.removeMouseListener(l);
+			}
+			for (MouseMotionListener l : curMotionListeners) {
+				header.removeMouseMotionListener(l);
+			}
 			header.addMouseListener(forSeekMouseListener);
 			header.addMouseMotionListener(forSeekMouseListener);
+			for (MouseListener l : curMouseListeners) {
+				header.addMouseListener(l);
+			}
+			for (MouseMotionListener l : curMotionListeners) {
+				header.addMouseMotionListener(l);
+			}
 		}
 	}
 

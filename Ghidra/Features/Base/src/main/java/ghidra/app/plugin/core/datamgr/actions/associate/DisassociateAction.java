@@ -156,7 +156,7 @@ public class DisassociateAction extends DockingAction {
 			List<DataTypeSyncInfo> typesToDisassociate, List<DataTypeSyncInfo> allAssociatedTypes,
 			TaskMonitor monitor) throws CancelledException {
 
-		synchronizer.openTransactions();
+		int txId = dtm.startTransaction("Disassociate from Archive");
 		try {
 
 			monitor.initialize(typesToDisassociate.size());
@@ -172,7 +172,7 @@ public class DisassociateAction extends DockingAction {
 
 		}
 		finally {
-			synchronizer.closeTransactions();
+			dtm.endTransaction(txId, true);
 		}
 	}
 

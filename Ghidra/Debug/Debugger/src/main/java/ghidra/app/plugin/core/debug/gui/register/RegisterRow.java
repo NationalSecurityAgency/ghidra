@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.gui.register;
 import java.math.BigInteger;
 import java.util.Objects;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerControlService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -170,7 +170,7 @@ public class RegisterRow {
 	/**
 	 * Check if the register's value can be set via its data type's representation
 	 * 
-	 * @return
+	 * @return true if the representation cell is editable
 	 */
 	public boolean isRepresentationEditable() {
 		return provider.canWriteRegisterRepresentation(register);
@@ -210,5 +210,14 @@ public class RegisterRow {
 	 */
 	public DebuggerCoordinates getCurrent() {
 		return provider.getCurrent();
+	}
+
+	/**
+	 * Get the table's previous coordinates (for change indication)
+	 * 
+	 * @return the coordinates
+	 */
+	public DebuggerCoordinates getPrevious() {
+		return provider.getPrevious();
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,35 +29,59 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class SymbolCategoryNode extends SymbolTreeNode {
-	public static final int MAX_NODES_BEFORE_ORGANIZING = 40;
-	public static final int MAX_NODES_BEFORE_CLOSING = 200;
 
 	protected SymbolCategory symbolCategory;
 	protected SymbolTable symbolTable;
 	protected GlobalNamespace globalNamespace;
 	protected Program program;
 
-	// dummy constructor for no program
-	protected SymbolCategoryNode() {
-		symbolCategory = null;
-		symbolTable = null;
-		globalNamespace = null;
-		program = null;
+	protected boolean isEnabled = true;
+
+	public SymbolCategoryNode(SymbolCategory symbolCategory, Program p) {
+		this.symbolCategory = symbolCategory;
+		this.program = p;
+		this.symbolTable = p == null ? null : p.getSymbolTable();
+		this.globalNamespace = p == null ? null : (GlobalNamespace) p.getGlobalNamespace();
 	}
 
-	public SymbolCategoryNode(SymbolCategory symbolCategory, Program program) {
-		this.symbolCategory = symbolCategory;
-		this.program = program;
-		this.symbolTable = program.getSymbolTable();
-		this.globalNamespace = (GlobalNamespace) program.getGlobalNamespace();
+	public void setEnabled(boolean enabled) {
+		if (isEnabled == enabled) {
+			return;
+		}
+
+		isEnabled = enabled;
+		unloadChildren();
+
+		GTree gTree = getTree();
+		if (gTree != null) {
+			SymbolCategoryNode modelNode = (SymbolCategoryNode) gTree.getModelNode(this);
+			if (this != modelNode) {
+				modelNode.setEnabled(enabled);
+			}
+		}
+	}
+
+	public boolean isEnabled() {
+		return isEnabled;
 	}
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+		if (!isEnabled) {
+			return List.of();
+		}
+
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		if (root == null) {
+			// this can happen if the tree is reloaded while we are searching in a background task
+			return List.of();
+		}
+
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
 		monitor.checkCancelled();
-		return OrganizationNode.organize(list, MAX_NODES_BEFORE_ORGANIZING, monitor);
+		int groupThreshold = root.getNodeGroupThreshold();
+		return OrganizationNode.organize(list, groupThreshold, monitor);
 	}
 
 	public Program getProgram() {
@@ -154,7 +178,9 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 			dataFlavor == ClassSymbolNode.LOCAL_DATA_FLAVOR;
 	}
 
-	public SymbolNode symbolAdded(Symbol symbol) {
+	protected abstract boolean supportsSymbol(Symbol symbol);
+
+	public SymbolNode symbolAdded(Symbol symbol, TaskMonitor monitor) {
 
 		if (!isLoaded()) {
 			return null;
@@ -172,7 +198,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		Namespace parentNamespace = symbol.getParentNamespace();
 		Symbol namespaceSymbol = parentNamespace.getSymbol();
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
-		parentNode = findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
+		parentNode = findSymbolTreeNode(key, false, monitor);
 		if (parentNode == null) {
 			return null;
 		}
@@ -211,11 +237,17 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		}
 
 		parentNode.addNode(index, newNode);
-		if (parentNode.isLoaded() && parentNode.getChildCount() > MAX_NODES_BEFORE_CLOSING) {
+		if (!parentNode.isLoaded()) {
+			return;
+		}
+
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		int reOrgLimit = root.getReorganizeLimit();
+		if (parentNode.getChildCount() > reOrgLimit) {
 			GTree tree = parentNode.getTree();
-			// tree needs to be reorganized, close this category node to clear its children
-			// and force a reorganization next time it is opened
-			// also need to clear the selection so that it doesn't re-open the category
+			// The tree needs to be reorganized, close this category node to clear its children
+			// and force a reorganization next time it is opened. Also need to clear the selection 
+			// so that it doesn't re-open the category.
 			tree.clearSelectionPaths();
 			tree.runTask(new GTreeCollapseAllTask(tree, parentNode));
 		}
@@ -230,6 +262,10 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 			return;
 		}
 
+		if (!supportsSymbol(symbol)) {
+			return;
+		}
+
 		SymbolNode key = SymbolNode.createKeyNode(symbol, oldName, program);
 		GTreeNode foundNode = findSymbolTreeNode(key, false, monitor);
 		if (foundNode == null) {
@@ -240,12 +276,45 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		foundParent.removeNode(foundNode);
 	}
 
-	protected boolean supportsSymbol(Symbol symbol) {
-		if (!symbol.isGlobal() || symbol.isExternal()) {
-			return false;
+	public void symbolRemoved(Symbol symbol, Namespace oldNamespace, TaskMonitor monitor) {
+		// Most categories will treat a symbol moved as a remove; symbolAdded() will get called 
+		// after this to restore the symbol.  Subclasses that depend on scope will override this 
+		// method.
+		symbolRemoved(symbol, monitor);
+	}
+
+	/**
+	 * Returns the last Namespace tree node in the given path of namespaces.  Each Namespace in the
+	 * list from 0 to n will be used to find the last tree node, starting at the given parent
+	 * node. 
+	 * 
+	 * @param parentNode the node at which to start the search
+	 * @param namespaces the list of namespaces to traverse.
+	 * @param loadChildren true to load children if they have not been loaded
+	 * @param monitor the task monitor
+	 * @return the namespace node or null if it is not open in the tree
+	 */
+	protected GTreeNode getNamespaceNode(GTreeNode parentNode, List<Namespace> namespaces,
+			boolean loadChildren, TaskMonitor monitor) {
+
+		if (!loadChildren && !parentNode.isLoaded() || monitor.isCancelled()) {
+			return null;
 		}
-		SymbolType symbolType = symbol.getSymbolType();
-		return symbolType == symbolCategory.getSymbolType();
+
+		if (namespaces.isEmpty()) {
+			return null;
+		}
+
+		Namespace namespace = namespaces.remove(0);
+		Symbol nsSymbol = namespace.getSymbol();
+		SymbolNode key = SymbolNode.createKeyNode(nsSymbol, nsSymbol.getName(), program);
+		GTreeNode namespaceNode = findNode(parentNode, key, loadChildren, monitor);
+		if (namespaceNode == null || namespaces.isEmpty()) {
+			return namespaceNode; // we hit the last namespace
+		}
+
+		// move to the next namespace
+		return getNamespaceNode(namespaceNode, namespaces, loadChildren, monitor);
 	}
 
 	@Override
@@ -257,6 +326,9 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
+		}
+		if (o == null) {
+			return false;
 		}
 		if (getClass() != o.getClass()) {
 			return false;

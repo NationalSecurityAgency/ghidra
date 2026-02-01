@@ -35,11 +35,11 @@ public class AssemblyOperandStateGenerator
 	 * Construct the operand state generator
 	 * 
 	 * @param resolver the resolver
-	 * @param node the ndoe from which to generate the state
+	 * @param node the node from which to generate the state
 	 * @param fromLeft the accumulated patterns from the left sibling or parent
 	 * @param opSym the operand symbol
 	 */
-	public AssemblyOperandStateGenerator(AssemblyTreeResolver resolver,
+	public AssemblyOperandStateGenerator(AbstractAssemblyTreeResolver<?> resolver,
 			AssemblyParseNumericToken node, OperandSymbol opSym,
 			AssemblyResolvedPatterns fromLeft) {
 		super(resolver, node, fromLeft);

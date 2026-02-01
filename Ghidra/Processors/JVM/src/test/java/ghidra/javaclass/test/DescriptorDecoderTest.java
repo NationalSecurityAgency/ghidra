@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -258,7 +258,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		String referenceDescriptor = "Ljava/lang/Integer;";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(referenceDescriptor, dtm);
-		DataType intRef = new PointerDataType(dtInteger);
+		DataType intRef = dtm.getPointer(dtInteger);
 		assertTrue(computedType.equals(intRef));
 
 		String doubleDescriptor = "D";
@@ -441,12 +441,12 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		String ItoInt = "(I)Ljava/lang/Integer;";
 
 		DataType type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(ItoInt, dtm);
-		assertEquals(new PointerDataType(dtInteger), type);
+		assertEquals(dtm.getPointer(dtInteger), type);
 
 		String IntIntInttoInt =
 			"(Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/lang/Integer;";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(IntIntInttoInt, dtm);
-		assertEquals(new PointerDataType(dtInteger), type);
+		assertEquals(dtm.getPointer(dtInteger), type);
 
 		String voidTovoid = "()V";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(voidTovoid, dtm);
@@ -460,7 +460,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 			"([Ljava/lang/Integer;[[Ljava/lang/Integer;)Ljava/lang/Integer;";
 
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(OneDIntTwoDInttoInt, dtm);
-		assertEquals(new PointerDataType(dtInteger), type);
+		assertEquals(dtm.getPointer(dtInteger), type);
 
 		String DDtoD = "(DD)D";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(DDtoD, dtm);
@@ -468,11 +468,11 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		String crazy = "(DJLjava/lang/Integer;[[Ljava/lang/Integer;)[[Ljava/lang/Integer;";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(crazy, dtm);
-		assertEquals(dtm.getPointer(DWordDataType.dataType), type);
+		assertEquals(dtm.getPointer(dtm.getPointer(dtInteger)), type);
 
 		String getClass = "()Ljava/lang/Class";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(getClass, dtm);
-		assertEquals(PointerDataType.dataType, type);
+		assertEquals(dtm.getPointer(null), type);
 	}
 
 	@Test

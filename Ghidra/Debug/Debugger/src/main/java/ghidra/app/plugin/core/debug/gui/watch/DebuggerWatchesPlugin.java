@@ -19,6 +19,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -32,6 +33,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
 	},
 	servicesProvided = {
 		DebuggerWatchesService.class,
@@ -64,9 +66,12 @@ public class DebuggerWatchesPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.coordinatesActivated(ev.getActiveCoordinates());
+		}
+		else if (event instanceof TraceClosedPluginEvent ev) {
+			// Activation not good enough. Need to know if "previous" was closed
+			provider.traceClosed(ev.getTrace());
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.feature.vt.gui;
 
 import static docking.test.AbstractDockingTest.*;
+import static generic.test.AbstractGenericTest.*;
+import static generic.test.AbstractGuiTest.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,9 +33,9 @@ import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.plugin.*;
+import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemsTableProvider;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableModel;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -54,9 +56,10 @@ public class VTTestEnv extends TestEnv {
 
 	public VTTestEnv() throws Exception {
 
-		PluginTool tool = getTool();
-		tool.removePlugins(new Plugin[] { getPlugin(ProgramManagerPlugin.class) });
-		tool.addPlugin(VTPlugin.class.getName());
+		PluginTool pluignTool = getTool();
+		pluignTool.removePlugins(List.of(getPlugin(ProgramManagerPlugin.class)));
+		pluignTool.addPlugin(VTPlugin.class.getName());
+
 		plugin = getPlugin(VTPlugin.class);
 		controller = (VTController) getInstanceField("controller", plugin);
 		matchTableProvider = (VTMatchTableProvider) getInstanceField("matchesProvider", plugin);
@@ -67,9 +70,9 @@ public class VTTestEnv extends TestEnv {
 		sourceProgram = getProgram(sourceProgramName);
 		destinationProgram = getProgram(destinationProgramName);
 
-		session = VTSessionDB.createVTSession("Test", sourceProgram, destinationProgram, getTool());
+		session = new VTSessionDB("Test", sourceProgram, destinationProgram, this);
 
-		VTProgramCorrelator correlator = factory.createCorrelator(getTool(), sourceProgram,
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), null);
 
 		int id = session.startTransaction("Correlate");
@@ -85,7 +88,7 @@ public class VTTestEnv extends TestEnv {
 			throw new AssertionFailedError("You must create the session before you can add items");
 		}
 
-		VTProgramCorrelator correlator = factory.createCorrelator(getTool(), sourceProgram,
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), null);
 
 		int id = session.startTransaction("Correlate");
@@ -109,7 +112,7 @@ public class VTTestEnv extends TestEnv {
 	}
 
 	private VTSessionDB createAndOpenVTSession() throws IOException {
-		session = VTSessionDB.createVTSession("Test", sourceProgram, destinationProgram, getTool());
+		session = new VTSessionDB("Test", sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session), false);
 
@@ -120,7 +123,7 @@ public class VTTestEnv extends TestEnv {
 
 	public VTProgramCorrelator correlate(VTProgramCorrelatorFactory factory, VTOptions options,
 			TaskMonitor monitor) throws CancelledException {
-		VTProgramCorrelator correlator = factory.createCorrelator(getTool(), sourceProgram,
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), options);
 
 		int id = session.startTransaction("Correlate");
@@ -236,7 +239,19 @@ public class VTTestEnv extends TestEnv {
 	}
 
 	public void focusMatchTable() {
-		runSwing(() -> matchTableProvider.getComponent().requestFocus());
+		runSwing(() -> matchTableProvider.requestFocus());
+	}
+
+	public VTMarkupItemsTableProvider getMarkupItemsProvider() {
+		return (VTMarkupItemsTableProvider) getInstanceField("markupProvider", plugin);
+	}
+
+	public void focusMarkupItemsTable() {
+		VTMarkupItemsTableProvider markupProvider = getMarkupItemsProvider();
+		runSwing(() -> {
+			markupProvider.toFront();
+			markupProvider.requestFocus();
+		});
 	}
 
 	public void triggerMatchTableDataChanged() {
@@ -248,4 +263,5 @@ public class VTTestEnv extends TestEnv {
 	public VTMatchTableProvider getMatchTableProvider() {
 		return matchTableProvider;
 	}
+
 }

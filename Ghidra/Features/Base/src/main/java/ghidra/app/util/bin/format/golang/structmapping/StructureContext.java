@@ -19,8 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.*;
 
 /**
  * Information about an instance of a structure that has been read from the memory of a 
@@ -45,6 +44,7 @@ import ghidra.program.model.data.Structure;
 public class StructureContext<T> {
 	protected final DataTypeMapper dataTypeMapper;
 	protected final StructureMappingInfo<T> mappingInfo;
+	protected final DataType containingFieldDataType;
 	protected final BinaryReader reader;
 	protected final long structureStart;
 	protected T structureInstance;
@@ -55,14 +55,31 @@ public class StructureContext<T> {
 	 * 
 	 * @param dataTypeMapper mapping context for the program
 	 * @param mappingInfo mapping information about this structure
-	 * @param reader {@link BinaryReader} positioned at the start of the structure to be read
+	 * @param reader {@link BinaryReader} positioned at the start of the structure to be read, or
+	 * null if this is a limited-use context object
 	 */
 	public StructureContext(DataTypeMapper dataTypeMapper, StructureMappingInfo<T> mappingInfo,
 			BinaryReader reader) {
+		this(dataTypeMapper, mappingInfo, null, reader);
+	}
+
+	/**
+	 * Creates an instance of a {@link StructureContext}.
+	 * 
+	 * @param dataTypeMapper mapping context for the program
+	 * @param mappingInfo mapping information about this structure
+	 * @param containingFieldDataType optional, the DataType of the field that contained the
+	 * instance being deserialized
+	 * @param reader {@link BinaryReader} positioned at the start of the structure to be read, or
+	 * null if this is a limited-use context object
+	 */
+	public StructureContext(DataTypeMapper dataTypeMapper, StructureMappingInfo<T> mappingInfo,
+			DataType containingFieldDataType, BinaryReader reader) {
 		this.dataTypeMapper = dataTypeMapper;
 		this.mappingInfo = mappingInfo;
+		this.containingFieldDataType = containingFieldDataType;
 		this.reader = reader;
-		this.structureStart = reader.getPointerIndex();
+		this.structureStart = reader != null ? reader.getPointerIndex() : -1;
 		this.structureDataType = mappingInfo.getStructureDataType();
 	}
 
@@ -106,6 +123,22 @@ public class StructureContext<T> {
 	 */
 	public DataTypeMapper getDataTypeMapper() {
 		return dataTypeMapper;
+	}
+
+	/**
+	 * Returns the {@link DataType} of the field that this object instance was contained inside of,
+	 * or null if this instance was not a field inside another structure.
+	 * <p>
+	 * For instance, if a structure was being deserialized because it was a field inside 
+	 * another structure, the actual Ghidra data type of the field may be slightly different
+	 * than the structure data type defined at the top of the structmapped 
+	 * class (ie. {@code @StructureMapping(structureName='struct')}.  The containing field's
+	 * data type could allow custom logic to enrich or modify this struct's behavior.
+	 * 
+	 * @return {@link DataType} of the field that this object instance was contained inside of
+	 */
+	public DataType getContainingFieldDataType() {
+		return containingFieldDataType;
 	}
 
 	/**

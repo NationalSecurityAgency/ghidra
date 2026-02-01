@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,7 @@ public enum OperatingSystem {
 	WINDOWS("Windows"),
 	LINUX("Linux"),
 	MAC_OS_X("Mac OS X"),
+	FREE_BSD("FreeBSD"),
 	UNSUPPORTED("Unsupported Operating System");
 
 	/**

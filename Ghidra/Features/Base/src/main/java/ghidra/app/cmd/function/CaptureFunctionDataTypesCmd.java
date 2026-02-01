@@ -16,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -27,8 +26,8 @@ import ghidra.util.task.TaskMonitor;
  * Capture all selected function signature data types from the current program and put them 
  * in the data type manager.
  */
-public class CaptureFunctionDataTypesCmd extends BackgroundCommand {
-	private Program program;
+public class CaptureFunctionDataTypesCmd extends BackgroundCommand<Program> {
+
 	private DataTypeManager dtm;
 	private AddressSetView set;
 	private CaptureFunctionDataTypesListener listener;
@@ -40,6 +39,7 @@ public class CaptureFunctionDataTypesCmd extends BackgroundCommand {
 	 * @param dtm data type manager containing the function signature data types
 	 * @param set set of addresses containing the entry points of the functions whose signatures
 	 * are to be turned into data types.
+	 * @param listener 
 	 */
 	public CaptureFunctionDataTypesCmd(DataTypeManager dtm, AddressSetView set,
 			CaptureFunctionDataTypesListener listener) {
@@ -49,13 +49,8 @@ public class CaptureFunctionDataTypesCmd extends BackgroundCommand {
 		this.listener = listener;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		monitor.setMessage("Capturing Function Data Types");
 		boolean success = false;

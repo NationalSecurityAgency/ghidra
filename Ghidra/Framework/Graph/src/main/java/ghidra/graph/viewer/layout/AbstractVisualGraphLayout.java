@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import com.google.common.base.Function;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer.EdgeLabel;
 import ghidra.graph.VisualGraph;
@@ -126,7 +127,8 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	@Override
-	public Function<E, Shape> getEdgeShapeTransformer() {
+	public Function<E, Shape> getEdgeShapeTransformer(RenderContext<V, E> context) {
+		edgeShapeTransformer.setRenderContext(context);
 		return edgeShapeTransformer;
 	}
 
@@ -282,7 +284,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		for (Entry<V, Point2D> entry : entrySet) {
 			V vertex = entry.getKey();
 			Point2D location = entry.getValue();
-			setLocation(vertex, location);
+			setLocation(vertex, location, ChangeType.RESTORE);
 			vertex.setLocation(location);
 		}
 	}
@@ -337,7 +339,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		}
 
 		// DEGUG triggers grid lines to be printed; useful for debugging
-		// VisualGraphRenderer.DEBUG_ROW_COL_MAP.put(this, layoutLocations.copy());
+		// VisualGraphRenderer.setGridPainter(new GridPainter(layoutLocations.getGridCoordinates()));
 
 		layoutLocations.dispose();
 		gridLocations.dispose();
@@ -356,7 +358,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			monitor.checkCancelled();
 
 			Row<V> row = layoutLocations.row(vertex);
-			Column column = layoutLocations.col(vertex);
+			Column<V> column = layoutLocations.col(vertex);
 
 			Shape shape = transformer.apply(vertex);
 			Rectangle bounds = shape.getBounds();
@@ -366,7 +368,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		return newLocations;
 	}
 
-	protected Point2D getVertexLocation(V v, Column col, Row<V> row, Rectangle bounds) {
+	protected Point2D getVertexLocation(V v, Column<V> col, Row<V> row, Rectangle bounds) {
 		int x = col.x - bounds.x;
 		int y = row.y - bounds.y;
 		return new Point2D.Double(x, y);
@@ -381,7 +383,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	 * @param bounds the bounds of the vertex in the layout space
 	 * @return the centered location
 	 */
-	protected Point2D getCenteredVertexLocation(V v, Column col, Row<V> row, Rectangle bounds) {
+	protected Point2D getCenteredVertexLocation(V v, Column<V> col, Row<V> row, Rectangle bounds) {
 		//
 		// Move x over to compensate for vertex painting.   Edges are drawn from the center of the
 		// vertex.  Thus, if you have vertices with two different widths, then the edge between
@@ -409,9 +411,9 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			monitor.checkCancelled();
 
 			List<Point2D> newArticulations = new ArrayList<>();
-			for (Point gridPoint : layoutLocations.articulations(edge)) {
-				Row<V> row = layoutLocations.row(gridPoint.y);
-				Column column = layoutLocations.col(gridPoint.x);
+			for (GridPoint gridPoint : layoutLocations.articulations(edge)) {
+				Row<V> row = layoutLocations.row(gridPoint.row);
+				Column<V> column = layoutLocations.col(gridPoint.col);
 
 				Point2D location = getEdgeLocation(column, row);
 				newArticulations.add(location);
@@ -421,11 +423,11 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		return newEdgeArticulations;
 	}
 
-	protected Point2D getEdgeLocation(Column col, Row<V> row) {
+	protected Point2D getEdgeLocation(Column<V> col, Row<V> row) {
 		return new Point2D.Double(col.x, row.y);
 	}
 
-	protected Point2D getCenteredEdgeLocation(Column col, Row<V> row) {
+	protected Point2D getCenteredEdgeLocation(Column<V> col, Row<V> row) {
 		//
 		// half-height offsets the articulation points, which keeps long edge lines from
 		// overlapping as much
@@ -698,10 +700,10 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	private void fireVertexLocationChanged(V v, Point2D p) {
-		fireVertexLocationChanged(v, p, ChangeType.USER);
+		fireVertexLocationChanged(v, p, ChangeType.API);
 	}
 
-	private void fireVertexLocationChanged(V v, Point2D p, ChangeType type) {
+	protected void fireVertexLocationChanged(V v, Point2D p, ChangeType type) {
 		Iterator<LayoutListener<V, E>> iterator = listeners.iterator();
 		for (; iterator.hasNext();) {
 			LayoutListener<V, E> layoutListener = iterator.next();

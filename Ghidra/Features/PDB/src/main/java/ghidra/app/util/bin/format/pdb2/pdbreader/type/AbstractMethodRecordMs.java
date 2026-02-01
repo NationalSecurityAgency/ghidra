@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,31 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 		this.pdb = pdb;
 	}
 
+	/**
+	 * Returns the attributes of this procedure
+	 * @return the attributes
+	 */
+	public ClassFieldMsAttributes getAttributes() {
+		return attributes;
+	}
+
+	/**
+	 * Returns the record number of the data type (?) for this procedure
+	 * @return the record number
+	 */
+	public RecordNumber getProcedureTypeRecordNumber() {
+		return procedureRecordNumber;
+	}
+
+	/**
+	 * Returns the offset of the procedure in the VFTable if intro/virtual. Value of -1 means
+	 *  there was not a value
+	 * @return the offset
+	 */
+	public long getOptionalOffset() {
+		return optionalOffset;
+	}
+
 	@Override
 	public void emit(StringBuilder builder) {
 		// Making this up; no API for output.
@@ -50,7 +75,7 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 		builder.append(attributes);
 		builder.append(": ");
 		builder.append(pdb.getTypeRecord(procedureRecordNumber));
-		if (attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) {
+		if (optionalOffset != -1) {
 			builder.append(",");
 			builder.append(optionalOffset);
 		}

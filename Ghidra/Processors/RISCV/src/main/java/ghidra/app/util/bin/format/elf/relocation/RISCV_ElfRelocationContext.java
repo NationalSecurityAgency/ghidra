@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,10 @@ import java.util.*;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 
-class RISCV_ElfRelocationContext extends ElfRelocationContext {
+class RISCV_ElfRelocationContext extends ElfRelocationContext<RISCV_ElfRelocationHandler> {
 
-	protected RISCV_ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-			Map<ElfSymbol, Address> symbolMap) {
+	protected RISCV_ElfRelocationContext(RISCV_ElfRelocationHandler handler,
+			ElfLoadHelper loadHelper, Map<ElfSymbol, Address> symbolMap) {
 		super(handler, loadHelper, symbolMap);
 	}
 
@@ -52,7 +52,7 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 	}
 
 	/**
-	 * Find the HI20 relocation whose offset matches the value of of the specified symbol.
+	 * Find the HI20 relocation whose offset matches the value of the specified symbol.
 	 * @param hi20Symbol ELF symbol which corresponds to HI20 relocation
 	 * @return matching relocation or null if not found
 	 */
@@ -72,11 +72,12 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 		}
 		// look for hi20 relocation
 		while (relIndex < relocations.length && relocations[relIndex].getOffset() == symValue) {
-			int type = relocations[relIndex].getType();
-			if ((type == RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20) ||
-				(type == RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20)) {
+			int typeId = relocations[relIndex].getType();
+			if ((typeId == RISCV_ElfRelocationType.R_RISCV_PCREL_HI20.typeId) ||
+				(typeId == RISCV_ElfRelocationType.R_RISCV_GOT_HI20.typeId)) {
 				return relocations[relIndex];
 			}
+			++relIndex;
 		}
 		return null;
 	}

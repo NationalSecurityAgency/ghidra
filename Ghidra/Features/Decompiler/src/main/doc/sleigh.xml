@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article [
+<!ENTITY acute    "&#x301;"> <!-- Accent -->
+]>
 <article id="sleigh_title">
 <info>
   <title>SLEIGH</title>
   <subtitle>A Language for Rapid Processor Specification</subtitle>
   <pubdate>Originally published December 16, 2005</pubdate>
-  <releaseinfo>Last updated March 2, 2023</releaseinfo>
+  <releaseinfo>Last updated October 31, 2023</releaseinfo>
 </info>
 <simplesect id="sleigh_history">
 <info>
@@ -17,7 +20,8 @@
   several redesign iterations, but it can still trace its heritage
   from the language SLED, from whom its name is derived. SLED, the
   “Specification Language for Encoding and Decoding”, was defined by
-  Norman Ramsey and Mary F. Fernandez as a concise way to define the
+  Norman Ramsey and Mary F. Ferna&acute;ndez in <xref linkend="Ramsey97"/>
+  as a concise way to define the
   translation, in both directions, between machine instructions and
   their corresponding assembly statements. This facilitated the
   development of architecture independent disassemblers and
@@ -27,13 +31,91 @@
   The direct predecessor of SLEIGH was an implementation of SLED for
   GHIDRA, which concentrated on its reverse-engineering
   capabilities. The main addition of SLEIGH is the ability to provide
-  semantic descriptions of instructions for data-flow and
-  decompilation analysis. This piece of SLEIGH was originally a
-  separate language, the Semantic Syntax Language (SSL), very loosely
-  based on concepts and a language of the same name developed by
-  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey, for the
-  University of Queensland Binary Translator (UQBT) project.
+  semantic descriptions of instructions for data-flow and decompilation
+  analysis. This piece of SLEIGH borrowed ideas from the Semantic Syntax Language (SSL),
+  a specification language developed in <xref linkend="Cifuentes00"/> for the
+  University of Queensland Binary Translator (UQBT) project by
+  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey.
 </para>
+<para>
+  Dr. Cristina Cifuentes' work, in general, was an important starting point for the GHIDRA decompiler.
+  Its design follows the basic structure layed out in her 1994 thesis "Reverse Compilation Techniques":
+  <informalexample>
+  <itemizedlist mark='bullet' spacing='compact'>
+    <listitem>
+      Disassembly of machine instructions and translation to an intermediate representation (IR).
+    </listitem>
+    <listitem>
+      Transformation toward a high-level representation via
+      <itemizedlist mark='circle' spacing='compact'>
+	    <listitem>
+          Data-flow analysis, including dead code analysis and copy propagation.
+	    </listitem>
+	    <listitem>
+          Control-flow analysis, using graph reducibility to achieve a structured representation.
+	    </listitem>
+      </itemizedlist>
+    </listitem>
+    <listitem>
+      Back-end code generation from the transformed representation.
+    </listitem>
+  </itemizedlist>
+  </informalexample>
+  In keeping with her philosophy of decompilation, SLEIGH is GHIDRA's implementation of the first step.
+  It efficiently couples disassembly of machine instructions with the initial translation into an IR.
+</para>
+<bibliolist>
+  <title>References</title>
+  <biblioentry id="Cifuentes94">
+    <authorgroup>
+      <author><personname>
+	<firstname>Cristina</firstname><surname>Cifuentes</surname>
+      </personname></author>
+    </authorgroup>
+    <title>Reverse Compilation Techniques</title>
+    <pubdate>1994</pubdate>
+    <publisher>
+      <publishername>Ph.D. Dissertation. Queensland University of Technology</publishername>
+      <address><city>Brisbane City</city>, <state>QLD</state>, <country>Australia</country></address>
+    </publisher>
+  </biblioentry>
+  <biblioentry id="Cifuentes00">
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><personname>
+	<firstname>Cristina</firstname><surname>Cifuentes</surname>
+      </personname></author>
+      <author><personname>
+	<firstname>Mike</firstname><surname>Van Emmerik</surname>
+      </personname></author>
+    </authorgroup>
+    <title>UQBT: Adaptable Binary Translation at Low Cost</title>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>Computer</title>
+    <date>(Mar. 2000)</date>
+    <pagenums>pp. 60-66</pagenums>
+  </biblioset>
+  </biblioentry>
+  <biblioentry id="Ramsey97">
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><personname>
+	<firstname>Norman</firstname><surname>Ramsey</surname>
+      </personname></author>
+      <author><personname>
+	<firstname>Mary F.</firstname><surname>Ferna&acute;ndez</surname>
+      </personname></author>
+    </authorgroup>
+    <title>Specifying Representations of Machine Instructions</title>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>ACM Trans. Programming Languages and Systems</title>
+    <date>(May 1997)</date>
+    <pagenums>pp. 492-524</pagenums>
+  </biblioset>
+  </biblioentry>
+</bibliolist>
 </simplesect>
 
 <simplesect id="sleigh_overview">
@@ -212,7 +294,7 @@ forces an interpretation on each varnode that it uses, as either an
 integer, a floating-point number, or a boolean value. In the case of
 an integer, the varnode is interpreted as having a big endian or
 little endian encoding, depending on the specification (see
-<xref linkend="sleigh_endianess_definition"/>). Certain instructions
+<xref linkend="sleigh_endianness_definition"/>). Certain instructions
 also distinguish between signed and unsigned interpretations. For a
 signed integer, the varnode is considered to have a standard twos
 complement encoding. For a boolean interpretation, the varnode must be
@@ -563,10 +645,10 @@ SLEIGH files must start with all the definitions needed by the rest of
 the specification. All definition statements start with the keyword
 <emphasis role="bold">define</emphasis> and end with a semicolon ‘;’.
 </para>
-<sect2 id="sleigh_endianess_definition">
-<title>Endianess Definition</title>
+<sect2 id="sleigh_endianness_definition">
+<title>Endianness Definition</title>
 <para>
-The first definition in any SLEIGH specification must be for endianess. Either
+The first definition in any SLEIGH specification must be for endianness. Either
 <informalexample>
 <programlisting>
 define endian=big;            <emphasis>OR</emphasis>
@@ -577,11 +659,11 @@ This defines how the processor interprets contiguous sequences of
 bytes as integers or other values and globally affects values across
 all address spaces. It also affects how integer fields
 within an instruction are interpreted, (see <xref linkend="sleigh_defining_tokens"/>),
-although it is possible to override this setting in the rare case that endianess is
+although it is possible to override this setting in the rare case that endianness is
 different for data versus instruction encoding.
 The specification designer generally only needs to worry about
-endianess when labeling instruction fields and when defining overlapping registers,
-otherwise the specification language hides endianess issues.
+endianness when labeling instruction fields and when defining overlapping registers,
+otherwise the specification language hides endianness issues.
 </para>
 </sect2>
 <sect2 id="sleigh_alignment_definition">
@@ -614,7 +696,7 @@ and <emphasis>attributes</emphasis> looks like zero or more of the
 following lines:
 <informalexample>
 <programlisting>
-type=(ram_space|rom_space|register_space)
+type=(ram_space|register_space)
 size=<emphasis role="bold">integer</emphasis>
 default
 wordsize=<emphasis role="bold">integer</emphasis>
@@ -674,11 +756,6 @@ with <emphasis role="bold">register_space</emphasis>.
   </listitem>
 </itemizedlist>
 </informalexample>
-</para>
-<para>
-A space of type <emphasis role="bold">rom_space</emphasis> has seen
-little use so far but is intended to be the same as
-a <emphasis role="bold">ram_space</emphasis> that is not writable.
 </para>
 <para>
 At least one space needs to be labeled with
@@ -1065,9 +1142,9 @@ field and the range of bits within the token making up the field. The
 size of a field does <emphasis>not</emphasis> need to be a multiple of
 8. The range is inclusive where the least significant bit in the token
 is labeled 0. When defining tokens that are bigger than 1 byte, the
-global endianess setting (See <xref linkend="sleigh_endianess_definition"/>)
+global endianness setting (See <xref linkend="sleigh_endianness_definition"/>)
 will affect this labeling. Although it is rarely required, it is possible to override
-the global endianess setting for a specific token by appending either the qualifier
+the global endianness setting for a specific token by appending either the qualifier
 <emphasis role="bold">endian=little</emphasis> or <emphasis role="bold">endian=big</emphasis>
 immediately after the token name and size. For instance:
 <informalexample>
@@ -1225,7 +1302,7 @@ encodings.
 SLEIGH supports the concept of <emphasis>context
 variables</emphasis>. For the most part processor instructions can be
 unambiguously decoded by examining only the bits of the instruction
-encoding. But in some cases, decoding may depend on the state of
+encoding. But in some cases, decoding may depend on the state of the
 processor. Typically, the processor will have some set of status flags
 that indicate what mode is being used to process instructions. In
 terms of SLEIGH, a context variable is a <emphasis>field</emphasis>
@@ -1304,7 +1381,7 @@ multiple constructors into a single table are addressed in <xref linkend="sleigh
 <para>
 A single complex statement in the specification file describes a
 constructor. This statement is always made up of five distinct
-sections that are listed below in the order in which the must occur.
+sections that are listed below in the order in which they must occur.
 <informalexample>
 <orderedlist spacing='compact'>
   <listitem>
@@ -3719,7 +3796,7 @@ select <emphasis>s</emphasis> registers. As is described in
 <xref linkend="sleigh_local_change"/>, these assignments by themselves
 cause only a local context change.  However, the
 subsequent <emphasis role="bold">globalset</emphasis> directives make
-the change persist outside of the the instructions
+the change persist outside of the instructions
 themselves. The <emphasis role="bold">globalset</emphasis> directive
 takes two parameters, the second being the particular context variable
 being changed. The first parameter indicates the first address where
@@ -4217,7 +4294,7 @@ to lowest.
   <td>Allocate object of type described by v0.</td>
 </tr>
 <tr>
-  <td><code><emphasis>USER_DEFINED</emphasis></code></td>
+  <td><code><emphasis>CALLOTHER</emphasis></code></td>
   <td><code><emphasis>ident</emphasis>(v0,...)</code></td>
   <td>User defined operator <emphasis>ident</emphasis>, with functional syntax.</td>
 </tr>
@@ -4273,7 +4350,7 @@ The following table lists the basic forms of a semantic statement.
   </td>
 </tr>
 <tr>
-  <td><code><emphasis>USER_DEFINED</emphasis></code></td>
+  <td><code><emphasis>CALLOTHER</emphasis></code></td>
   <td><code><emphasis>ident</emphasis>(v0,...);</code></td>
   <td>Invoke user-defined operation ident as a standalone statement, with no output.</td>
 </tr>

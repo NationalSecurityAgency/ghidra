@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +22,7 @@ import java.util.List;
 import docking.widgets.tree.GTreeNode;
 
 /**
- * A generic transfer handler used by GTrees to handle transfering drag/drop data and clipboard
+ * A generic transfer handler used by GTrees to handle transferring drag/drop data and clipboard
  * data.
  */
 public interface GTreeTransferHandler {
@@ -35,16 +34,16 @@ public interface GTreeTransferHandler {
 	 * @return the DataFlavors for the types of data that this transferable supports, based upon
 	 * the given selection.
 	 */
-    public DataFlavor[] getSupportedDataFlavors(List<GTreeNode> transferNodes);
+	public DataFlavor[] getSupportedDataFlavors(List<GTreeNode> transferNodes);
 
-    /**
-     * Gets the transfer data from the selection based upon the given flavor.
-     * @param transferNodes The nodes from which to get the data.
-     * @param flavor The flavor of data to retrieve from the given selection.
-     * @return the transfer data from the selection based upon the given flavor.
-     * @throws UnsupportedFlavorException if the given flavor is not one of the supported flavors
-     * returned by {@link #getSupportedDataFlavors(List)}.
-     */
-    public Object getTransferData(List<GTreeNode> transferNodes,
-        DataFlavor flavor) throws UnsupportedFlavorException;
+	/**
+	 * Gets the transfer data from the selection based upon the given flavor.
+	 * @param transferNodes The nodes from which to get the data.
+	 * @param flavor The flavor of data to retrieve from the given selection.
+	 * @return the transfer data from the selection based upon the given flavor.
+	 * @throws UnsupportedFlavorException if the given flavor is not one of the supported flavors
+	 * returned by {@link #getSupportedDataFlavors(List)}.
+	 */
+	public Object getTransferData(List<GTreeNode> transferNodes, DataFlavor flavor)
+			throws UnsupportedFlavorException;
 }

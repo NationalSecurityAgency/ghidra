@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import java.util.stream.*;
 
 import javax.swing.JPanel;
 import javax.swing.JTree;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.GTree;
@@ -29,12 +31,14 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.util.Swing;
 
 public class ObjectsTreePanel extends JPanel {
 
@@ -95,10 +99,84 @@ public class ObjectsTreePanel extends JPanel {
 		}
 	}
 
+	protected static class DelayedSwingHack implements Runnable {
+		public static void runWayLater(int delay, Runnable runnable) {
+			Swing.runLater(new DelayedSwingHack(delay, runnable));
+		}
+
+		private int delay;
+		private final Runnable runnable;
+
+		public DelayedSwingHack(int delay, Runnable runnable) {
+			this.delay = delay;
+			this.runnable = runnable;
+		}
+
+		@Override
+		public void run() {
+			if (--delay == 0) {
+				runnable.run();
+			}
+			else {
+				Swing.runLater(this);
+			}
+		}
+	}
+
+	protected class ListenerForShowing implements AncestorListener {
+		boolean showing = false;
+		int version = 0;
+
+		@Override
+		public void ancestorRemoved(AncestorEvent event) {
+			updateShowing();
+		}
+
+		@Override
+		public void ancestorMoved(AncestorEvent event) {
+			updateShowing();
+		}
+
+		@Override
+		public void ancestorAdded(AncestorEvent event) {
+			updateShowing();
+		}
+
+		public void updateShowing() {
+			/**
+			 * There may be several changes to visibility throughout some routines running on the
+			 * Swing thread. To avoid processing such frantic changes, we aim to wait for the last
+			 * change. Thus, we increment a version counter and schedule a delayed lambda on the
+			 * Swing thread. That lambda will only actually do anything if the version number hasn't
+			 * been incremented, i.e., some additional change hasn't occurred. This should prevent
+			 * intermediate changes, e.g., when re-docking the window, from causing needless
+			 * updates.
+			 */
+			final int v = ++version;
+			DelayedSwingHack.runWayLater(2, () -> {
+				if (v == version) {
+					version = 0;
+					setShowing(ObjectsTreePanel.this.isShowing());
+				}
+			});
+		}
+
+		private void setShowing(boolean showing) {
+			if (this.showing == showing) {
+				return;
+			}
+			this.showing = showing;
+			showingChanged(showing);
+		}
+	}
+
 	protected final ObjectTreeModel treeModel;
 	protected final ObjectGTree tree;
 
+	protected boolean showing = false;
+	protected Set<KeyPath> savedSelection = null;
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
+	protected DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	protected boolean limitToSnap = true;
 	protected boolean showHidden = false;
 	protected boolean showPrimitives = false;
@@ -107,8 +185,13 @@ public class ObjectsTreePanel extends JPanel {
 	protected Color diffColor = DebuggerResources.COLOR_VALUE_CHANGED;
 	protected Color diffColorSel = DebuggerResources.COLOR_VALUE_CHANGED_SEL;
 
+	protected final ListenerForShowing listenerForShowing = new ListenerForShowing();
+
 	public ObjectsTreePanel() {
 		super(new BorderLayout());
+
+		addAncestorListener(listenerForShowing);
+
 		treeModel = createModel();
 		tree = new ObjectGTree(treeModel.getRoot());
 
@@ -124,6 +207,22 @@ public class ObjectsTreePanel extends JPanel {
 		return new KeepTreeState(tree);
 	}
 
+	protected void showingChanged(boolean showing) {
+		if (!showing) {
+			savedSelection = getSelectedKeyPaths();
+		}
+		this.showing = showing;
+		updateTreeModelForCoordinates();
+		updateTreeModelForSpan();
+		updateTreeModelForShowHidden();
+		updateTreeModelForShowPrimitives();
+		updateTreeModelForShowMethods();
+		if (showing && savedSelection != null) {
+			setSelectedKeyPaths(savedSelection, EventOrigin.INTERNAL_GENERATED);
+		}
+		// Restore expansion? Nah.
+	}
+
 	protected Trace computeDiffTrace(Trace current, Trace previous) {
 		if (current == null) {
 			return null;
@@ -135,14 +234,23 @@ public class ObjectsTreePanel extends JPanel {
 	}
 
 	public void goToCoordinates(DebuggerCoordinates coords) {
-		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
+		if (DebuggerCoordinates.equalsIgnoreTargetAndView(current, coords)) {
 			return;
 		}
-		DebuggerCoordinates previous = current;
-		this.current = coords;
+		previous = current;
+		current = coords;
 		if (previous.getSnap() == current.getSnap() &&
 			previous.getTrace() == current.getTrace() &&
 			previous.getObject() == current.getObject()) {
+			return;
+		}
+		updateTreeModelForCoordinates();
+	}
+
+	protected void updateTreeModelForCoordinates() {
+		if (!showing) {
+			// Clear it out and have it remove its listeners
+			treeModel.setTrace(null);
 			return;
 		}
 		try (KeepTreeState keep = keepTreeState()) {
@@ -153,8 +261,22 @@ public class ObjectsTreePanel extends JPanel {
 			if (limitToSnap) {
 				treeModel.setSpan(Lifespan.at(current.getSnap()));
 			}
-			tree.filterChanged();
+			//tree.filterChanged();
 			// Repaint for bold current path is already going to happen
+
+			// Repaint is not enough, as node sizes may change
+			for (KeyPath path = current.getPath(); path != null; path = path.parent()) {
+				AbstractNode node = treeModel.getNode(path);
+				if (node != null) {
+					node.fireNodeChanged();
+				}
+			}
+			for (KeyPath path = previous.getPath(); path != null; path = path.parent()) {
+				AbstractNode node = treeModel.getNode(path);
+				if (node != null) {
+					node.fireNodeChanged();
+				}
+			}
 		}
 	}
 
@@ -163,6 +285,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.limitToSnap = limitToSnap;
+		updateTreeModelForSpan();
+	}
+
+	protected void updateTreeModelForSpan() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setSpan(limitToSnap ? Lifespan.at(current.getSnap()) : Lifespan.ALL);
 		}
@@ -177,6 +306,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showHidden = showHidden;
+		updateTreeModelForShowHidden();
+	}
+
+	protected void updateTreeModelForShowHidden() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowHidden(showHidden);
 		}
@@ -191,6 +327,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showPrimitives = showPrimitives;
+		updateTreeModelForShowPrimitives();
+	}
+
+	protected void updateTreeModelForShowPrimitives() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowPrimitives(showPrimitives);
 		}
@@ -205,6 +348,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showMethods = showMethods;
+		updateTreeModelForShowMethods();
+	}
+
+	protected void updateTreeModelForShowMethods() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowMethods(showMethods);
 		}
@@ -249,7 +399,11 @@ public class ObjectsTreePanel extends JPanel {
 	protected <R, A> R getItemsFromPaths(TreePath[] paths,
 			Collector<? super AbstractNode, A, R> collector) {
 		return Stream.of(paths)
-				.map(p -> (AbstractNode) p.getLastPathComponent())
+				.<AbstractNode> mapMulti((path, consumer) -> {
+					if (path.getLastPathComponent() instanceof AbstractNode node) {
+						consumer.accept(node);
+					}
+				})
 				.collect(collector);
 	}
 
@@ -268,13 +422,14 @@ public class ObjectsTreePanel extends JPanel {
 		return getItemFromPath(tree.getSelectionPath());
 	}
 
-	public AbstractNode getNode(TraceObjectKeyPath path) {
+	public AbstractNode getNode(KeyPath path) {
 		return treeModel.getNode(path);
 	}
 
-	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths, EventOrigin origin) {
+	public void setSelectedKeyPaths(Collection<KeyPath> keyPaths, EventOrigin origin) {
+		savedSelection = keyPaths instanceof Set<KeyPath> s ? s : Set.copyOf(keyPaths);
 		List<TreePath> treePaths = new ArrayList<>();
-		for (TraceObjectKeyPath path : keyPaths) {
+		for (KeyPath path : keyPaths) {
 			AbstractNode node = getNode(path);
 			if (node != null) {
 				treePaths.add(node.getTreePath());
@@ -283,7 +438,21 @@ public class ObjectsTreePanel extends JPanel {
 		tree.setSelectionPaths(treePaths.toArray(TreePath[]::new), origin);
 	}
 
-	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
+	public Set<KeyPath> getSelectedKeyPaths() {
+		Set<KeyPath> result = new HashSet<>();
+		for (AbstractNode node : getSelectedItems()) {
+			TraceObjectValue value = node.getValue();
+			if (value == null) {
+				result.add(KeyPath.of());
+			}
+			else {
+				result.add(value.getCanonicalPath());
+			}
+		}
+		return result;
+	}
+
+	public void setSelectedKeyPaths(Collection<KeyPath> keyPaths) {
 		setSelectedKeyPaths(keyPaths, EventOrigin.API_GENERATED);
 	}
 
@@ -298,7 +467,6 @@ public class ObjectsTreePanel extends JPanel {
 			tree.expandPath(parentPath);
 		}
 	}
-	
 
 	public void setSelectedObject(TraceObject object) {
 		if (object == null) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +18,8 @@ package docking;
 import javax.swing.KeyStroke;
 
 /**
- * Interface used to notify listener when a keystroke was entered in the
- * KeyEntryPanel.
- * 
- * 
+ * Interface used to notify listener when a keystroke has changed.
  */
 public interface KeyEntryListener {
-
 	public void processEntry(KeyStroke keyStroke);
 }

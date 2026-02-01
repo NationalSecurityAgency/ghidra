@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import javax.swing.*;
 
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
-import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.DataTreeDialog;
+import docking.widgets.textfield.ElidingFilePathTextField;
+import ghidra.framework.main.*;
 import ghidra.framework.model.*;
 
 class BatchProjectDestinationPanel extends JPanel {
@@ -44,7 +44,7 @@ class BatchProjectDestinationPanel extends JPanel {
 	private void build() {
 		setLayout(new BorderLayout());
 
-		folderNameTextField = new JTextField();
+		folderNameTextField = new ElidingFilePathTextField();
 		folderNameTextField.setEditable(false);
 		folderNameTextField.setFocusable(false);
 		folderNameTextField.setText(getProjectRootFolder().toString());
@@ -96,7 +96,7 @@ class BatchProjectDestinationPanel extends JPanel {
 
 	private void browseFolders() {
 		DataTreeDialog dataTreeDialog =
-			new DataTreeDialog(parent, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			new DataTreeDialog(parent, "Choose a project folder", DataTreeDialogType.CHOOSE_FOLDER);
 		dataTreeDialog.addOkActionListener(e -> {
 			dataTreeDialog.close();
 			setFolder(dataTreeDialog.getDomainFolder());

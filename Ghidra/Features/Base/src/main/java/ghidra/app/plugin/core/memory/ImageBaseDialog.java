@@ -24,7 +24,6 @@ import javax.swing.event.DocumentListener;
 import docking.DialogComponentProvider;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
@@ -68,6 +67,8 @@ class ImageBaseDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new MiddleLayout());
 		textField = new JTextField(20);
 		textField.setText(currentAddr.toString());
+		textField.getAccessibleContext().setAccessibleName("Image Base Address");
+
 		textField.selectAll();
 		textField.addActionListener(e -> {
 			if (addr != null) {
@@ -115,7 +116,7 @@ class ImageBaseDialog extends DialogComponentProvider {
 	protected void okCallback() {
 		if (addr != null && !addr.equals(currentAddr)) {
 			Msg.info(this, "old base = " + program.getImageBase());
-			Command cmd = new SetBaseCommand(addr);
+			SetBaseCommand cmd = new SetBaseCommand(addr);
 			if (!tool.execute(cmd, program)) {
 				setStatusText(cmd.getStatusMsg());
 				return;
@@ -127,7 +128,7 @@ class ImageBaseDialog extends DialogComponentProvider {
 
 }
 
-class SetBaseCommand implements Command {
+class SetBaseCommand implements Command<Program> {
 	private Address addr;
 	private String msg;
 
@@ -139,10 +140,9 @@ class SetBaseCommand implements Command {
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		ProgramDB p = (ProgramDB) obj;
+	public boolean applyTo(Program program) {
 		try {
-			p.setImageBase(addr, true);
+			program.setImageBase(addr, true);
 		}
 		catch (IllegalStateException e) {
 			msg = e.getMessage();
@@ -160,17 +160,11 @@ class SetBaseCommand implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Set Image Base";

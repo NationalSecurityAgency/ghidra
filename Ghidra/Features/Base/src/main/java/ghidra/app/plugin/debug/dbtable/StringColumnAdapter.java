@@ -20,6 +20,10 @@ import db.StringField;
 
 public class StringColumnAdapter extends AbstractColumnAdapter {
 
+	StringColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
 	@Override
 	Class<?> getValueClass() {
 		return String.class;
@@ -32,6 +36,6 @@ public class StringColumnAdapter extends AbstractColumnAdapter {
 
 	@Override
 	Object getValue(DBRecord rec, int col) {
-		return "  " + rec.getString(col);
+		return rec.getString(col);
 	}
 }

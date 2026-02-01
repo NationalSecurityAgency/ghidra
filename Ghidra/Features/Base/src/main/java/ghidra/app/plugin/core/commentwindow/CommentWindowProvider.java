@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import javax.swing.table.JTableHeader;
 import docking.ActionContext;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -104,7 +104,7 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(commentModel, 1000);
 		commentTable = threadedTablePanel.getTable();
-		commentTable.setName("CommentTable");
+		commentTable.getAccessibleContext().setAccessibleName("Comment Table");
 		commentTable.setAutoLookupColumn(CommentTableModel.TYPE_COL);
 		commentTable.setPreferredScrollableViewportSize(new Dimension(600, 400));
 		commentTable.setRowSelectionAllowed(true);
@@ -137,15 +137,15 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
 
+		String namePrefix = "Comments";
+		commentTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return panel;
 	}
 
 	private void notifyContextChanged() {
 		tool.contextChanged(this);
-	}
-
-	ProgramSelection selectComment() {
-		return commentTable.getProgramSelection();
 	}
 
 	void reload() {
@@ -154,13 +154,13 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	void commentAdded(Address address, int commentType) {
+	void commentAdded(Address address, CommentType commentType) {
 		if (isVisible()) {
 			commentModel.commentAdded(address, commentType);
 		}
 	}
 
-	void commentRemoved(Address address, int commentType) {
+	void commentRemoved(Address address, CommentType commentType) {
 		if (isVisible()) {
 			commentModel.commentRemoved(address, commentType);
 		}

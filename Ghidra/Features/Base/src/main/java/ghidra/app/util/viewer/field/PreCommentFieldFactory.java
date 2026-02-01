@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	private final static String GROUP_TITLE = "Format Code";
 	private final static String FIELD_GROUP_TITLE = "Pre-comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
-		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
+		FIELD_GROUP_TITLE + Options.DELIMITER + FieldUtils.WORD_WRAP_OPTION_NAME;
 	public final static String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Always Show the Automatic Comment";
 
@@ -112,8 +112,9 @@ public class PreCommentFieldFactory extends FieldFactory {
 		String[] autoComment = getAutoPreComments(cu);
 
 		String[] comments = getDefinedPreComments(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.PRE);
 
-		return getTextField(comments, autoComment, proxy, x);
+		return getTextField(comments, autoComment, offcutComments, proxy, x);
 	}
 
 	private String[] getDefinedPreComments(CodeUnit cu) {
@@ -129,7 +130,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		return cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		return cu.getCommentAsArray(CommentType.PRE);
 	}
 
 	private String[] getAutoPreComments(CodeUnit cu) {
@@ -146,13 +147,13 @@ public class PreCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) obj;
-		String[] comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PRE);
 		int[] cpath = null;
 		if (cu instanceof Data) {
 			cpath = ((Data) cu).getComponentPath();
 		}
 		return new CommentFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, comment,
-			CodeUnit.PRE_COMMENT, row, col);
+			CommentType.PRE, row, col);
 	}
 
 	@Override
@@ -163,7 +164,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation loc = (CommentFieldLocation) programLoc;
-		if (loc.getCommentType() != CodeUnit.PRE_COMMENT) {
+		if (loc.getCommentType() != CommentType.PRE) {
 			return null;
 		}
 		return new FieldLocation(index, fieldNum, loc.getRow(), loc.getCharOffset());
@@ -242,7 +243,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * A composite which immediately preceeds the current address may contain trailing zero-length 
+	 * A composite which immediately precedes the current address may contain trailing zero-length 
 	 * components which implicitly refer to this address and are not rendered by the opened composite.
 	 * This comment is intended to convey the existence of such hidden components which correspond
 	 * to addr.
@@ -353,7 +354,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	private ListingTextField getTextField(String[] comments, String[] autoComment,
-			ProxyObj<?> proxy, int xStart) {
+			List<String> offcutComments, ProxyObj<?> proxy, int xStart) {
 
 		if (comments == null) {
 			comments = EMPTY_STRING_ARRAY;
@@ -364,7 +365,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 		int nLinesAutoComment =
 			(comments.length == 0 || alwaysShowAutomatic) ? autoComment.length : 0;
-		if (comments.length == 0 && nLinesAutoComment == 0) {
+
+		if (comments.length == 0 && nLinesAutoComment == 0 && offcutComments.isEmpty()) {
 			return null;
 		}
 
@@ -382,24 +384,23 @@ public class PreCommentFieldFactory extends FieldFactory {
 			fields.add(CommentUtils.parseTextForAnnotations(comment, program, prototypeString,
 				fields.size()));
 		}
+		for (String offcutComment : offcutComments) {
+			AttributedString as = new AttributedString(offcutComment, CommentColors.OFFCUT,
+				getMetrics(style), false, null);
+			fields.add(new TextFieldElement(as, fields.size(), 0));
+		}
+
 		if (isWordWrap) {
 			fields = FieldUtils.wrap(fields, width);
 		}
 
-		FieldElement[] elements = fields.toArray(new FieldElement[fields.size()]);
-
-		return ListingTextField.createMultilineTextField(this, proxy, elements, xStart, width,
-			Integer.MAX_VALUE, hlProvider);
+		return ListingTextField.createMultilineTextField(this, proxy, fields, xStart, width,
+			hlProvider);
 	}
 
 	private void init(Options options) {
 		options.registerOption(ENABLE_WORD_WRAP_MSG, false, null,
-			"Enables word wrapping in the pre-comments field.  If word " +
-				"wrapping is on, user enter new lines are ignored and the " +
-				"entire comment is displayed in paragraph form.  If word " +
-				"wrapping is off, comments are displayed in line format " +
-				"however the user entered them.  Lines that are too long " +
-				"for the field, are truncated.");
+			FieldUtils.WORD_WRAP_OPTION_DESCRIPTION);
 		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null,
 			"Toggles the display of the automatic pre-comment");
 

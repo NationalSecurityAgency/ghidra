@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.plugin.core.disassembler;
 
 import java.util.*;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -34,7 +36,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class AddressTable {
@@ -94,6 +97,28 @@ public class AddressTable {
 		this.addrSize = addrByteSize;
 		this.skipAmount = skipAmount;
 		this.shiftedAddr = shiftedAddr;
+	}
+
+	/**
+	 * Create a new address table from any remaining table entries starting at startPos
+	 * 
+	 * @param startPos new start position in list of existing table entries
+	 * @return new address table if any elements left, null otherwise
+	 */
+	public AddressTable newRemainingAddressTable(int startPos) {
+		if (topIndexAddress != null) {
+			return null;
+		}
+		if (startPos <= 0 || startPos >= tableElements.length) {
+			return null;
+		}
+		int byteLength = getByteLength(0, startPos - 1, false);
+		Address newTop = topAddress.add(byteLength);
+
+		Address newElementArray[] =
+			ArrayUtils.subarray(tableElements, startPos, tableElements.length);
+
+		return new AddressTable(newTop, newElementArray, addrSize, skipAmount, shiftedAddr);
 	}
 
 	/**
@@ -363,8 +388,7 @@ public class AddressTable {
 
 		Address lastAddress = null;
 		DataType ptrDT = program.getDataTypeManager()
-				.addDataType(
-					PointerDataType.getPointer(null, addrSize), null);
+				.addDataType(PointerDataType.getPointer(null, addrSize), null);
 		for (int i = 0; i < tableSize; i++) {
 			Address loc = tableAddr.add(i * addrSize);
 			try {
@@ -447,8 +471,8 @@ public class AddressTable {
 			if (!flagNewCode || !newCodeFound) {
 				// create a case label
 				if (!ftype.isCall()) {
-					AddLabelCmd lcmd = new AddLabelCmd(target,
-						caseName + Integer.toHexString(i), true, SourceType.ANALYSIS);
+					AddLabelCmd lcmd = new AddLabelCmd(target, caseName + Integer.toHexString(i),
+						true, SourceType.ANALYSIS);
 					switchLabelList.add(lcmd);
 				}
 
@@ -471,7 +495,7 @@ public class AddressTable {
 		}
 
 		if (comment != null) {
-			program.getListing().setComment(topAddress, CodeUnit.EOL_COMMENT, comment);
+			program.getListing().setComment(topAddress, CommentType.EOL, comment);
 		}
 
 		if (flagNewCode && newCodeFound) {
@@ -549,8 +573,9 @@ public class AddressTable {
 		// not putting switch into functions anymore
 		//    program.getSymbolTable().getNamespace(start_inst.getMinAddress());
 		try {
-			space = program.getSymbolTable().createNameSpace(null,
-				"switch_" + start_inst.getMinAddress(), SourceType.ANALYSIS);
+			space = program.getSymbolTable()
+					.createNameSpace(null, "switch_" + start_inst.getMinAddress(),
+						SourceType.ANALYSIS);
 		}
 		catch (DuplicateNameException e) {
 			// just go with default space
@@ -582,8 +607,8 @@ public class AddressTable {
 		}
 
 		// make sure the reference is associated with this symbol
-		Symbol s = program.getSymbolTable().getGlobalSymbol(tableNameLabel.getLabelName(),
-			tableNameLabel.getLabelAddr());
+		Symbol s = program.getSymbolTable()
+				.getGlobalSymbol(tableNameLabel.getLabelName(), tableNameLabel.getLabelAddr());
 		for (int op = 0; op < start_inst.getNumOperands(); op++) {
 			Reference fromRefs[] = start_inst.getOperandReferences(op);
 			for (Reference fromRef : fromRefs) {
@@ -671,9 +696,8 @@ public class AddressTable {
 					func.setBody(funcBody);
 				}
 				catch (OverlappingFunctionException e2) {
+					// do nothing
 				}
-			}
-			catch (CancelledException e3) {
 			}
 		}
 	}
@@ -1099,15 +1123,6 @@ public class AddressTable {
 
 				// See if the tested address is contained in memory
 				if (!memory.contains(testAddr)) {
-//					if (addrSize == 8) {  // don't try to look up in database, it polutes the key lookup in the DB
-//						break;
-//					}
-//
-//					// TODO: what is this doing?  doesn't seem like anything, always breaks!
-//					Symbol syms[] = program.getSymbolTable().getSymbols(testAddr);
-//					if (syms == null || syms.length == 0 || syms[0].getSource() == SourceType.DEFAULT) {
-//						break;
-//					}
 					break;
 				}
 
@@ -1208,7 +1223,7 @@ public class AddressTable {
 				Data data = definedData.next();
 				// no data found or past end of table
 				Address dataAddr = data.getMinAddress();
-				if (data == null || dataAddr.compareTo(endAddr) > 0) {
+				if (dataAddr.compareTo(endAddr) > 0) {
 					break;
 				}
 				// data found at start of pointer
@@ -1218,6 +1233,12 @@ public class AddressTable {
 						continue;
 					}
 				}
+
+				// undefined data is OK, could be a pointer
+				if (data.getDataType() instanceof Undefined) {
+					continue;
+				}
+
 				// data intersects, calculate valid entries and stop looking
 				if (pointerSet.intersects(dataAddr, data.getMaxAddress())) {
 					count = (int) (dataAddr.subtract(topAddr) / (addrSize + skipAmount));

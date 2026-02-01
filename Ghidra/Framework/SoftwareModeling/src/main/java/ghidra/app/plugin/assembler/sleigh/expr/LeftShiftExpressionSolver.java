@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.LeftShiftExpression;
 import ghidra.util.Msg;
 
@@ -60,13 +59,14 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 	}
 
 	@Override
-	protected AssemblyResolution solveTwoSided(LeftShiftExpression exp, MaskedLong goal,
-			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException, SolverException {
+	protected AssemblyResolution solveTwoSided(AbstractAssemblyResolutionFactory<?, ?> factory,
+			LeftShiftExpression exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
 		// Do not guess the same parameter recursively
 		if (hints.contains(DefaultSolverHint.GUESSING_LEFT_SHIFT_AMOUNT)) {
 			// NOTE: Nested left shifts ought to be written as a left shift by a sum
-			return super.solveTwoSided(exp, goal, vals, cur, hints, description);
+			return super.solveTwoSided(factory, exp, goal, vals, cur, hints, description);
 		}
 		// Count the number of zeros to the right, and consider this the maximum shift value
 		// Any higher shift amount would produce too many zeros to the right
@@ -79,8 +79,8 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 			// If the goal is 0s, then any shift will do, so long as the shifted value is 0
 			try {
 				// NB. goal is already 0s, so just use it as subgoal for lhs of shift
-				AssemblyResolution lres =
-					solver.solve(exp.getLeft(), goal, vals, cur, hintsWithLShift, description);
+				AssemblyResolution lres = solver.solve(factory, exp.getLeft(), goal, vals, cur,
+					hintsWithLShift, description);
 				if (lres.isError()) {
 					throw new SolverException("Solving left:=0 failed");
 				}
@@ -97,13 +97,13 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 				MaskedLong reqr = MaskedLong.fromLong(shift);
 				MaskedLong reql = computeLeft(reqr, goal);
 
-				AssemblyResolution lres =
-					solver.solve(exp.getLeft(), reql, vals, cur, hintsWithLShift, description);
+				AssemblyResolution lres = solver.solve(factory, exp.getLeft(), reql, vals, cur,
+					hintsWithLShift, description);
 				if (lres.isError()) {
 					throw new SolverException("Solving left failed");
 				}
 				AssemblyResolution rres =
-					solver.solve(exp.getRight(), reqr, vals, cur, hints, description);
+					solver.solve(factory, exp.getRight(), reqr, vals, cur, hints, description);
 				if (rres.isError()) {
 					throw new SolverException("Solving right failed");
 				}
@@ -121,6 +121,6 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 				// try the next
 			}
 		}
-		return super.solveTwoSided(exp, goal, vals, cur, hints, description);
+		return super.solveTwoSided(factory, exp, goal, vals, cur, hints, description);
 	}
 }

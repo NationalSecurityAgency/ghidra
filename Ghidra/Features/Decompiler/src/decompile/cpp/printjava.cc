@@ -234,7 +234,7 @@ void PrintJava::opLoad(const PcodeOp *op)
     pushOp(&subscript,op);
   pushVn(op->getIn(1),op,m);
   if (printArrayRef)
-    push_integer(0,4,false,(Varnode *)0,op);
+    push_integer(0,4,false,syntax,(Varnode *)0,op);
 }
 
 void PrintJava::opStore(const PcodeOp *op)
@@ -245,7 +245,7 @@ void PrintJava::opStore(const PcodeOp *op)
   if (needZeroArray(op->getIn(1))) {
     pushOp(&subscript,op);
     pushVn(op->getIn(1),op,m);
-    push_integer(0,4,false,(Varnode *)0,op);
+    push_integer(0,4,false,syntax,(Varnode *)0,op);
     pushVn(op->getIn(2),op,mods);
   }
   else {

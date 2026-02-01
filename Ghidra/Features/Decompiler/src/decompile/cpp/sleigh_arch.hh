@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,7 +106,7 @@ public:
 /// Generally a \e language \e id (i.e. x86:LE:64:default) is provided, then this
 /// object is able to automatically load in configuration and construct the Translate object.
 class SleighArchitecture : public Architecture {
-  static map<int4,Sleigh *> translators;		///< Map from language index to instantiated translators
+  static map<int4,Sleigh> translators;		///< Map from language index to instantiated translators
   static vector<LanguageDescription> description;	///< List of languages we know about
   int4 languageindex;					///< Index (within LanguageDescription array) of the active language
   string filename;					///< Name of active load-image file
@@ -120,6 +120,7 @@ protected:
   virtual Translate *buildTranslator(DocumentStorage &store);
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void);
   virtual void buildTypegrp(DocumentStorage &store);
+  virtual void buildCoreTypes(DocumentStorage &store);
   virtual void buildCommentDB(DocumentStorage &store);
   virtual void buildStringManager(DocumentStorage &store);
   virtual void buildConstantPool(DocumentStorage &store);
@@ -139,7 +140,7 @@ public:
   virtual string getDescription(void) const;
 
   static string normalizeProcessor(const string &nm);		///< Try to recover a \e language \e id processor field
-  static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianess field
+  static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianness field
   static string normalizeSize(const string &nm);		///< Try to recover a \e language \e id size field
   static string normalizeArchitecture(const string &nm);	///< Try to recover a \e language \e id string
   static void scanForSleighDirectories(const string &rootpath);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,10 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A {@link Loader} for processing Microsoft DEF files.
@@ -80,18 +77,21 @@ public class DefLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException {
+	public void load(Program prog, ImporterSettings settings) throws IOException {
 
 		if (!prog.getExecutableFormat().equals(PeLoader.PE_NAME)) {
 			throw new IOException("Program must be a " + PeLoader.PE_NAME);
 		}
 
 		SymbolTable symtab = prog.getSymbolTable();
-		Consumer<String> errorConsumer = err -> log.error("DefLoader", err);
-		for (DefExportLine def : parseExports(provider)) {
+		Consumer<String> errorConsumer = err -> settings.log().appendMsg("DefLoader", err);
+		for (DefExportLine def : parseExports(settings.provider())) {
+			Integer ordinal = def.getOrdinal();
+			if (ordinal == null) {
+				continue;
+			}
 			Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(prog,
-				SymbolUtilities.ORDINAL_PREFIX + def.getOrdinal(), errorConsumer);
+				SymbolUtilities.ORDINAL_PREFIX + ordinal, errorConsumer);
 			if (symbol == null) {
 				continue;
 			}
@@ -101,7 +101,7 @@ public class DefLoader extends AbstractProgramWrapperLoader {
 				label.setPrimary();
 			}
 			catch (InvalidInputException e) {
-				log.appendMsg(e.getMessage());
+				settings.log().appendMsg(e.getMessage());
 			}
 		}
 	}
@@ -109,5 +109,10 @@ public class DefLoader extends AbstractProgramWrapperLoader {
 	@Override
 	public String getName() {
 		return DEF_NAME;
+	}
+
+	@Override
+	public boolean supportsLoadIntoProgram(Program program) {
+		return true;
 	}
 }

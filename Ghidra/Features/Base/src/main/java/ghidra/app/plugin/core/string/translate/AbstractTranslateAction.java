@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string.translate;
 
-import java.util.*;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -54,22 +54,20 @@ public abstract class AbstractTranslateAction extends DockingAction {
 			setPopupMenuData(dataListMenuData);
 			return isEnabledForContext((DataLocationListContext) context);
 		}
-		else if (context instanceof CodeViewerActionContext) {
+		else if (context instanceof CodeViewerActionContext cvac) {
 			setPopupMenuData(codeViewerMenuData);
-			return isEnabledForContext((CodeViewerActionContext) context);
+			return isEnabledForContext(cvac);
 		}
 		return false;
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (context instanceof DataLocationListContext) {
-			DataLocationListContext dataContext = (DataLocationListContext) context;
-			actionPerformed(dataContext.getProgram(), getStringLocations(dataContext));
+		if (context instanceof DataLocationListContext dllc) {
+			actionPerformed(dllc.getProgram(), getStringLocations(dllc));
 		}
-		else if (context instanceof CodeViewerActionContext) {
-			CodeViewerActionContext codeContext = (CodeViewerActionContext) context;
-			actionPerformed(codeContext.getProgram(), getStringLocations(codeContext));
+		else if (context instanceof CodeViewerActionContext cvac) {
+			actionPerformed(cvac.getProgram(), getStringLocations(cvac));
 		}
 		else {
 			throw new AssertException("This can't happen!");
@@ -91,9 +89,9 @@ public abstract class AbstractTranslateAction extends DockingAction {
 	protected List<ProgramLocation> getStringLocations(CodeViewerActionContext context) {
 		Data data = DataUtilities.getDataAtLocation(context.getLocation());
 		if (data == null || !StringDataInstance.isString(data)) {
-			return Collections.emptyList();
+			return List.of();
 		}
-		return Arrays.asList(context.getLocation());
+		return List.of(context.getLocation());
 	}
 
 	protected List<ProgramLocation> getStringLocations(DataLocationListContext context) {

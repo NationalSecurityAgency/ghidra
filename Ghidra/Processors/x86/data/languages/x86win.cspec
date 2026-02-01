@@ -28,6 +28,7 @@
   
   <global>
     <range space="ram"/>
+    <register name="MXCSR"/>
   </global>
   <stackpointer register="ESP" space="ram"/>
   <returnaddress>
@@ -377,4 +378,21 @@
   </pcode>
 </callfixup>
 
+<callfixup name="__RTC_CheckEsp">
+  <target name="__RTC_CheckEsp"/>
+  <pcode>
+   <body><![CDATA[
+      temp:4 = 0;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="security_check_cookie">
+    <target name="__security_check_cookie"/>
+    <pcode>
+      <body><![CDATA[
+        tmpzero:4 = 0;
+      ]]></body>
+    </pcode>
+</callfixup>
 </compiler_spec>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,14 +30,17 @@ import generic.theme.*;
 import generic.util.action.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Manages installing and updating a {@link LookAndFeel}
  */
 public abstract class LookAndFeelManager {
 
+	private static final int DEFAULT_CURSOR_BLINK_RATE = 500;
 	private LafType laf;
 	private Map<String, ComponentFontRegistry> fontRegistryMap = new HashMap<>();
+	private Map<Component, String> componentToIdMap = new WeakHashMap<>();
 	protected ApplicationThemeManager themeManager;
 	protected Map<String, String> normalizedIdToLafIdMap;
 
@@ -70,7 +73,6 @@ public abstract class LookAndFeelManager {
 		doInstallLookAndFeel();
 		processJavaDefaults();
 		fixupLookAndFeelIssues();
-		installGlobalProperties();
 		installCustomLookAndFeelActions();
 		updateComponentUis();
 	}
@@ -157,22 +159,26 @@ public abstract class LookAndFeelManager {
 
 	/**
 	 * Called when one or more fonts have changed.
-	 * @param changedJavaFontIds the set of Java Font ids that are affected by this change
+	 * <p>
+	 * This will update the Java {@link UIManager} and trigger a reload of the UIs.
+	 *
+	 * @param changedFontIds the set of Java Font ids that are affected by this change; these are
+	 * the normalized ids
 	 */
-	public void fontsChanged(Set<String> changedJavaFontIds) {
+	public void fontsChanged(Set<String> changedFontIds) {
 		UIDefaults defaults = UIManager.getDefaults();
-		for (String changedFontId : changedJavaFontIds) {
+		for (String changedFontId : changedFontIds) {
 			// even though all these derive from the new font, they might be different
 			// because of FontModifiers.
 			Font font = Gui.getFont(changedFontId);
-			String lafFontId = normalizedIdToLafIdMap.get(changedFontId);
-			if (lafFontId != null) {
+			String javaFontId = normalizedIdToLafIdMap.get(changedFontId);
+			if (javaFontId != null) {
 				// lafFontId is null for group ids
-				defaults.put(lafFontId, new FontUIResource(font));
+				defaults.put(javaFontId, new FontUIResource(font));
 			}
 		}
 
-		if (!changedJavaFontIds.isEmpty()) {
+		if (!changedFontIds.isEmpty()) {
 			updateComponentUis();
 		}
 
@@ -199,10 +205,71 @@ public abstract class LookAndFeelManager {
 	 * @param fontId the id of the font to register with the given component
 	 */
 	public void registerFont(Component component, String fontId) {
+
+		checkForAlreadyRegistered(component, fontId);
+		componentToIdMap.put(component, fontId);
+
 		ComponentFontRegistry register =
 			fontRegistryMap.computeIfAbsent(fontId, id -> new ComponentFontRegistry(id));
 
 		register.addComponent(component);
+	}
+
+	/**
+	 * Binds the component to the font identified by the given font id. Whenever the font for
+	 * the font id changes, the component will be updated with the new font.
+	 * <p>
+	 * This method is fairly niche and should not be called by most clients.  Instead, call
+	 * {@link #registerFont(Component, String)}.
+	 *
+	 * @param component the component to set/update the font
+	 * @param fontId the id of the font to register with the given component
+	 * @param fontStyle the font style
+	 */
+	public void registerFont(Component component, String fontId, int fontStyle) {
+
+		checkForAlreadyRegistered(component, fontId);
+		componentToIdMap.put(component, fontId);
+
+		ComponentFontRegistry register =
+			fontRegistryMap.computeIfAbsent(fontId, id -> new ComponentFontRegistry(id));
+
+		register.addComponent(component, fontStyle);
+	}
+
+	/**
+	 * Removes the given component and id binding from this class.
+	 * @param component the component to remove
+	 * @param fontId the id used when originally registered
+	 * @see #registerFont(Component, String)
+	 */
+	public void unRegisterFont(JComponent component, String fontId) {
+		componentToIdMap.remove(component);
+
+		ComponentFontRegistry registry = fontRegistryMap.get(fontId);
+		if (registry != null) {
+			registry.removeComponent(component);
+		}
+	}
+
+	private void checkForAlreadyRegistered(Component component, String newFontId) {
+		String existingFontId = componentToIdMap.get(component);
+		if (existingFontId == null) {
+			return; // never registered before
+		}
+
+		if (component instanceof FontChangeListener) {
+			// Special Case: this allows clients to control how they listen to font changes.  We 
+			// have guilty knowledge that some clients will use one listener to listen to multiple
+			// font ids, so don't print a warning for this case.
+			return;
+		}
+
+		Msg.warn(this, """
+				Component has a Font ID registered more than once. \
+				Previously registered ID: '%s'.  Newly registered ID: '%s'.
+					""".formatted(existingFontId, newFontId),
+			ReflectionUtilities.createJavaFilteredThrowable());
 	}
 
 	private Font toUiResource(Font font) {
@@ -231,10 +298,24 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Subclass may override this method to do specific LookAndFeel fix ups
+	 * Subclass may override this method to do specific LookAndFeel fixes.
+	 * <p>
+	 * This will get called after default values are loaded.  This means that any values installed
+	 * by this method will overwrite any values registered by the theme.
+	 * <p>
+	 * Standard properties, such as strings and booleans, can be set inside of the theme
+	 * properties files.  For more complicated UIManager properties, look and feel classes will
+	 * need to override this method and install those directly.
+	 * <p>
+	 * Any property installed here will not fully be part of the theme system, but rather will be
+	 * directly installed into the Java Look and Feel.  Thus, properties installed here will be
+	 * hard-coded overrides for the system.  If we decided that a hard-coded value should be put
+	 * into the theme system, then we will need to add support for that property type so that it
+	 * can be used when loading the theme files.
 	 */
 	protected void fixupLookAndFeelIssues() {
-		// no generic fix-ups at this time.
+		installGlobalFontSizeOverride();
+		installCursorBlinkingProperties();
 	}
 
 	/**
@@ -244,15 +325,14 @@ public abstract class LookAndFeelManager {
 	 */
 	protected void processJavaDefaults() {
 		UIDefaults defaults = UIManager.getDefaults();
-		UiDefaultsMapper uiDefaultsMapper = getUiDefaultsMapper(defaults);
-
-		GThemeValueMap javaDefaults = uiDefaultsMapper.getJavaDefaults();
+		UiDefaultsMapper uiDefaultsMapper = createUiDefaultsMapper(defaults);
+		GThemeValueMap javaDefaults = uiDefaultsMapper.getNormalizedJavaDefaults();
 		themeManager.setJavaDefaults(javaDefaults);
 		uiDefaultsMapper.installValuesIntoUIDefaults(themeManager.getCurrentValues());
 		normalizedIdToLafIdMap = uiDefaultsMapper.getNormalizedIdToLafIdMap();
 	}
 
-	protected abstract UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults);
+	protected abstract UiDefaultsMapper createUiDefaultsMapper(UIDefaults defaults);
 
 	protected String findLookAndFeelClassName(String lookAndFeelName) {
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
@@ -281,32 +361,13 @@ public abstract class LookAndFeelManager {
 
 		KeyStroke existingKs = KeyStroke.getKeyStroke(existingKsText);
 		KeyStroke newKs = KeyStroke.getKeyStroke(newKsText);
-
+		UIDefaults uiDefaults = UIManager.getDefaults();
 		for (String properyPrefix : prefixValues) {
-
-			UIDefaults defaults = UIManager.getDefaults();
-			Object object = defaults.get(properyPrefix + ".focusInputMap");
+			Object object = uiDefaults.get(properyPrefix + ".focusInputMap");
 			InputMap inputMap = (InputMap) object;
 			Object action = inputMap.get(existingKs);
 			inputMap.put(newKs, action);
 		}
-	}
-
-	private void installGlobalLookAndFeelAttributes() {
-		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = new Font("Monospaced", Font.PLAIN, 12);
-		UIManager.put("PasswordField.font", f);
-		UIManager.put("TextArea.font", f);
-
-		// We like buttons that change on hover, so force that to happen (see Tracker SCR 3966)
-		UIManager.put("Button.rollover", Boolean.TRUE);
-		UIManager.put("ToolBar.isRollover", Boolean.TRUE);
-	}
-
-	private void installPopupMenuSettingsOverride() {
-		// Java 1.6 UI consumes MousePressed event when dismissing popup menu
-		// which prevents application components from getting this event.
-		UIManager.put("PopupMenu.consumeEventOnClose", Boolean.FALSE);
 	}
 
 	private void installGlobalFontSizeOverride() {
@@ -318,6 +379,15 @@ public abstract class LookAndFeelManager {
 		}
 
 		setGlobalFontSizeOverride(overrideFontInteger);
+	}
+
+	public void installCursorBlinkingProperties() {
+		UIDefaults defaults = UIManager.getDefaults();
+
+		int blinkRate = themeManager.isBlinkingCursors() ? DEFAULT_CURSOR_BLINK_RATE : 0;
+		defaults.put("TextPane.caretBlinkRate", blinkRate);
+		defaults.put("TextField.caretBlinkRate", blinkRate);
+		defaults.put("TextArea.caretBlinkRate", blinkRate);
 	}
 
 	private void installCustomLookAndFeelActions() {
@@ -351,9 +421,7 @@ public abstract class LookAndFeelManager {
 		UIDefaults defaults = UIManager.getDefaults();
 
 		Set<Entry<Object, Object>> set = defaults.entrySet();
-		Iterator<Entry<Object, Object>> iterator = set.iterator();
-		while (iterator.hasNext()) {
-			Entry<Object, Object> entry = iterator.next();
+		for (Entry<Object, Object> entry : set) {
 			Object key = entry.getKey();
 
 			if (key.toString().toLowerCase().indexOf("font") != -1) {
@@ -375,12 +443,6 @@ public abstract class LookAndFeelManager {
 		}
 	}
 
-	private void installGlobalProperties() {
-		installGlobalLookAndFeelAttributes();
-		installGlobalFontSizeOverride();
-		installPopupMenuSettingsOverride();
-	}
-
 	/**
 	 * Searches the given UIDefaults for ids whose value matches the given class
 	 * @param defaults the UIDefaults to search
@@ -400,5 +462,4 @@ public abstract class LookAndFeelManager {
 		}
 		return colorKeys;
 	}
-
 }

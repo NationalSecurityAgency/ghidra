@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,17 @@
 package docking.widgets.table;
 
 import java.util.*;
+import java.util.function.Function;
+
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.Msg;
 
 public class TableColumnDescriptor<ROW_TYPE> {
 	private List<TableColumnInfo> columns = new ArrayList<>();
 
 	public List<DynamicTableColumn<ROW_TYPE, ?, ?>> getAllColumns() {
-		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list =
-			new ArrayList<>();
+		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list = new ArrayList<>();
 		for (TableColumnInfo info : columns) {
 			list.add(info.column);
 		}
@@ -30,8 +34,7 @@ public class TableColumnDescriptor<ROW_TYPE> {
 	}
 
 	public List<DynamicTableColumn<ROW_TYPE, ?, ?>> getDefaultVisibleColumns() {
-		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list =
-			new ArrayList<>();
+		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list = new ArrayList<>();
 		for (TableColumnInfo info : columns) {
 			if (info.isVisible) {
 				list.add(info.column);
@@ -60,20 +63,31 @@ public class TableColumnDescriptor<ROW_TYPE> {
 		return editor.createTableSortState();
 	}
 
-	private int remove(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
-		for (int i = 0; i < columns.size(); i++) {
-			TableColumnDescriptor<ROW_TYPE>.TableColumnInfo info = columns.get(i);
-			if (info.column == column) {
-				columns.remove(i);
-				return i;
-			}
+	public void setVisible(String columnName, boolean visible) {
+		TableColumnInfo info = getColumn(columnName);
+		if (info == null) {
+			Msg.debug(this,
+				"Unable to change visibility state of column '%s'".formatted(columnName));
+			return;
 		}
-		return -1;
+		if (visible) {
+			info.isVisible = true;
+		}
+		else {
+			// remove and add a new info to clear any sort state info for a hidden column
+			int index = columns.indexOf(info);
+			columns.set(index, new TableColumnInfo(info.column));
+		}
 	}
 
-	public void setHidden(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
-		int index = remove(column);
-		columns.add(index, new TableColumnInfo(column));
+	private TableColumnInfo getColumn(String name) {
+		for (TableColumnInfo info : columns) {
+			String columnName = info.column.getColumnName();
+			if (columnName.equals(name)) {
+				return info;
+			}
+		}
+		return null;
 	}
 
 	public void addHiddenColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
@@ -95,6 +109,99 @@ public class TableColumnDescriptor<ROW_TYPE> {
 		columns.add(new TableColumnInfo(column, true, sortOrdinal, ascending));
 	}
 
+	/**
+	 * Adds a column to the descriptor via an anonymous accessor function instead.
+	 * <P>
+	 * If you would like to control the sorting behavior of your column, then use 
+	 * {@link #addVisibleColumn(String, Class, Function, int, boolean)}.
+	 * <P>
+	 * Note: any columns created via this method will not be discoverable by other tables.  To use
+	 * that feature, you must create a separate column class that extends 
+	 * {@link DynamicTableColumnExtensionPoint}.
+	 * 
+	 * @param name the column name, visible in the UI
+	 * @param columnTypeClass the column class type
+	 * @param rowToColumnFunction a function to convert a row object to the column object
+	 * @param <COLUMN_TYPE> the column type
+	 */
+	public <COLUMN_TYPE> void addVisibleColumn(String name, Class<COLUMN_TYPE> columnTypeClass,
+			Function<ROW_TYPE, COLUMN_TYPE> rowToColumnFunction) {
+		addVisibleColumn(name, columnTypeClass, rowToColumnFunction, -1, true);
+	}
+
+	/**
+	 * Adds a column to the descriptor via an anonymous accessor function instead.
+	 * <P>
+	 * Note: any columns created via this method will not be discoverable by other tables.  To use
+	 * that feature, you must create a separate column class that extends 
+	 * {@link DynamicTableColumnExtensionPoint}.
+	 *
+	 * @param name the column name, visible in the UI
+	 * @param columnTypeClass the column class type
+	 * @param rowToColumnFunction a function to convert a row object to the column object
+	 * @param sortOrdinal the <b>ordinal (i.e., 1, 2, 3...n)</b>, not the index (i.e, 0, 1, 2...n)
+	 * @param ascending true for sort ascending; false for descending
+	 * @param <COLUMN_TYPE> the column type
+	 */
+	public <COLUMN_TYPE> void addVisibleColumn(String name, Class<COLUMN_TYPE> columnTypeClass,
+			Function<ROW_TYPE, COLUMN_TYPE> rowToColumnFunction, int sortOrdinal,
+			boolean ascending) {
+
+		AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object> column =
+			createColumnStub(name, columnTypeClass, rowToColumnFunction);
+		addVisibleColumn(column, sortOrdinal, ascending);
+	}
+
+	/**
+	 * Adds a column to the descriptor via an anonymous accessor function instead.  The column added
+	 * will not be displayed until enabled by the user.
+	 * <P>
+	 * Note: any columns created via this method will not be discoverable by other tables.  To use
+	 * that feature, you must create a separate column class that extends 
+	 * {@link DynamicTableColumnExtensionPoint}.
+	 * 
+	 * @param name the column name, visible in the UI
+	 * @param columnTypeClass the column class type
+	 * @param rowToColumnFunction a function to convert a row object to the column object
+	 * @param <COLUMN_TYPE> the column type
+	 */
+	public <COLUMN_TYPE> void addHiddenColumn(String name, Class<COLUMN_TYPE> columnTypeClass,
+			Function<ROW_TYPE, COLUMN_TYPE> rowToColumnFunction) {
+
+		AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object> column =
+			createColumnStub(name, columnTypeClass, rowToColumnFunction);
+		addHiddenColumn(column);
+	}
+
+	private <COLUMN_TYPE> AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object> createColumnStub(
+			String name, Class<COLUMN_TYPE> columnTypeClass,
+			Function<ROW_TYPE, COLUMN_TYPE> rowToColumnFunction) {
+
+		return new AbstractDynamicTableColumn<>() {
+			@Override
+			public String getColumnName() {
+				return name;
+			}
+
+			@Override
+			public COLUMN_TYPE getValue(ROW_TYPE rowObject, Settings settings, Object data,
+					ServiceProvider serviceProvider) throws IllegalArgumentException {
+				return rowToColumnFunction.apply(rowObject);
+			}
+
+			@Override
+			public Class<COLUMN_TYPE> getColumnClass() {
+				return columnTypeClass;
+			}
+
+			@Override
+			public Class<ROW_TYPE> getSupportedRowType() {
+				// returning null means this column will not be available to use in other tables
+				return null;
+			}
+		};
+	}
+
 	private class TableColumnInfo implements Comparable<TableColumnInfo> {
 		private DynamicTableColumn<ROW_TYPE, ?, ?> column;
 		private boolean isVisible = false;
@@ -105,8 +212,8 @@ public class TableColumnDescriptor<ROW_TYPE> {
 			this.column = column;
 		}
 
-		TableColumnInfo(DynamicTableColumn<ROW_TYPE, ?, ?> column, boolean isVisible,
-				int sortIndex, boolean ascending) {
+		TableColumnInfo(DynamicTableColumn<ROW_TYPE, ?, ?> column, boolean isVisible, int sortIndex,
+				boolean ascending) {
 			this.column = column;
 			this.isVisible = isVisible;
 			this.sortIndex = sortIndex;

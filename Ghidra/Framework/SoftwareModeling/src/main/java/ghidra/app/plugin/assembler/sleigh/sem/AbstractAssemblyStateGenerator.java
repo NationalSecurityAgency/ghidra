@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 
 /**
  * Base class for generating prototype nodes ("states") from a parse tree node
@@ -29,7 +28,6 @@ import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
  * @param <N> the type of parse tree node to process
  */
 public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTreeNode> {
-	protected static final DbgTimer DBG = AssemblyTreeResolver.DBG;
 
 	/**
 	 * Context to pass along as states are generated
@@ -47,8 +45,8 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 				path.stream().map(sem -> sem.getLocation()).collect(Collectors.joining(",")) + "]";
 		}
 
-		final List<AssemblyConstructorSemantic> path;
-		final int shift;
+		public final List<AssemblyConstructorSemantic> path;
+		public final int shift;
 
 		/**
 		 * Construct a context
@@ -73,18 +71,9 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 			path.add(cons);
 			return new GeneratorContext(path, this.shift + shift);
 		}
-
-		/**
-		 * Print a debug line
-		 * 
-		 * @param string the message
-		 */
-		public void dbg(String string) {
-			DBG.println(pathToString(path) + ":" + string);
-		}
 	}
 
-	protected final AssemblyTreeResolver resolver;
+	protected final AbstractAssemblyTreeResolver<?> resolver;
 	protected final N node;
 	protected final AssemblyResolvedPatterns fromLeft;
 
@@ -95,7 +84,7 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 	 * @param node the node from which to generate states
 	 * @param fromLeft the accumulated patterns from the left sibling or the parent
 	 */
-	public AbstractAssemblyStateGenerator(AssemblyTreeResolver resolver, N node,
+	public AbstractAssemblyStateGenerator(AbstractAssemblyTreeResolver<?> resolver, N node,
 			AssemblyResolvedPatterns fromLeft) {
 		this.resolver = resolver;
 		this.node = node;

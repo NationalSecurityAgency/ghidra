@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,8 +22,7 @@ import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -32,10 +30,13 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.memory.TraceMemory;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.thread.TraceProcess;
 
-public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceObjectMemoryRegion> {
+public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceMemoryRegion> {
 
 	private static class RegionKeyColumn extends TraceValueKeyColumn {
 		@Override
@@ -66,7 +67,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class RegionStartColumn extends AbstractTraceValueObjectAddressColumn {
 		public RegionStartColumn() {
-			super(TargetMemoryRegion.RANGE_ATTRIBUTE_NAME);
+			super(TraceMemoryRegion.KEY_RANGE);
 		}
 
 		@Override
@@ -82,7 +83,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class RegionEndColumn extends AbstractTraceValueObjectAddressColumn {
 		public RegionEndColumn() {
-			super(TargetMemoryRegion.RANGE_ATTRIBUTE_NAME);
+			super(TraceMemoryRegion.KEY_RANGE);
 		}
 
 		@Override
@@ -98,7 +99,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class RegionLengthColumn extends AbstractTraceValueObjectLengthColumn {
 		public RegionLengthColumn() {
-			super(TargetMemoryRegion.RANGE_ATTRIBUTE_NAME);
+			super(TraceMemoryRegion.KEY_RANGE);
 		}
 
 		@Override
@@ -120,7 +121,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public static class RegionReadColumn extends RegionFlagColumn {
 		public RegionReadColumn() {
-			super(TargetMemoryRegion.READABLE_ATTRIBUTE_NAME);
+			super(TraceMemoryRegion.KEY_READABLE);
 		}
 
 		@Override
@@ -131,7 +132,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public static class RegionWriteColumn extends RegionFlagColumn {
 		public RegionWriteColumn() {
-			super(TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME);
+			super(TraceMemoryRegion.KEY_WRITABLE);
 		}
 
 		@Override
@@ -142,7 +143,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public static class RegionExecuteColumn extends RegionFlagColumn {
 		public RegionExecuteColumn() {
-			super(TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME);
+			super(TraceMemoryRegion.KEY_EXECUTABLE);
 		}
 
 		@Override
@@ -172,39 +173,43 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 	}
 
-	protected static ModelQuery successorRegions(TargetObjectSchema rootSchema, List<String> path) {
-		TargetObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TargetMemoryRegion.class, path, true));
+	protected static ModelQuery successorRegions(TraceObjectSchema rootSchema, KeyPath path) {
+		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
+		return new ModelQuery(schema.searchFor(TraceMemoryRegion.class, path, true));
 	}
 
-	protected static Set<TraceMemoryRegion> getSelectedRegions(DebuggerObjectActionContext ctx) {
-		return ctx == null ? null
-				: AbstractObjectsTableBasedPanel.getSelected(ctx, TraceObjectMemoryRegion.class)
-						.collect(Collectors.toSet());
+	protected Set<TraceMemoryRegion> getSelectedRegions(DebuggerObjectActionContext ctx) {
+		return ctx == null ? null : getSelected(ctx).collect(Collectors.toSet());
 	}
 
 	public DebuggerRegionsPanel(DebuggerRegionsProvider provider) {
-		super(provider.plugin, provider, TraceObjectMemoryRegion.class);
+		super(provider.plugin, provider, TraceMemoryRegion.class);
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new RegionTableModel(plugin);
 	}
 
 	@Override
 	protected ModelQuery computeQuery(TraceObject object) {
-		TargetObjectSchema rootSchema = object.getRoot().getTargetSchema();
-		List<String> seedPath = object.getCanonicalPath().getKeyList();
-		List<String> processPath = rootSchema.searchForAncestor(TargetProcess.class, seedPath);
+		TraceObjectSchema rootSchema = object.getRoot().getSchema();
+		KeyPath seedPath = object.getCanonicalPath();
+		KeyPath processPath = rootSchema.searchForAncestor(TraceProcess.class, seedPath);
 		if (processPath != null) {
-			return successorRegions(rootSchema, processPath);
+			ModelQuery result = successorRegions(rootSchema, processPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		List<String> memoryPath = rootSchema.searchForSuitable(TargetMemory.class, seedPath);
+		KeyPath memoryPath = rootSchema.searchForSuitable(TraceMemory.class, seedPath);
 		if (memoryPath != null) {
-			return successorRegions(rootSchema, memoryPath);
+			ModelQuery result = successorRegions(rootSchema, memoryPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		return successorRegions(rootSchema, List.of());
+		return successorRegions(rootSchema, KeyPath.ROOT);
 	}
 
 	public void setSelectedRegions(Set<TraceMemoryRegion> sel) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,9 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Collection;
+
+import org.apache.commons.lang3.StringUtils;
 
 import db.DBRecord;
 import ghidra.docking.settings.*;
@@ -54,11 +55,18 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		this.dataMgr = dataMgr;
 		this.record = record;
 		this.lock = dataMgr.lock;
-		refreshName();
 	}
 
+	/**
+	 * Clears the current name so that the next invocation of {@link #getName()} will
+	 * force its update via {@link #doGetName()}.  It is important that {@link #doGetName()}
+	 * does not get invoked during a {@link #refresh()} to avoid problematic recursion during the
+	 * refresh caused by recursive use of {@link #checkIsValid()} on the same object.
+	 * <P>
+	 * NOTE: This must only be invoked while in a locked-state
+	 */
 	protected void refreshName() {
-		name = doGetName();
+		name = null;
 	}
 
 	/**
@@ -142,8 +150,21 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public final String getName() {
-		validate(lock);
-		return name;
+		String n = name;
+		if (n != null && !isInvalid()) {
+			return n;
+		}
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (name == null) {
+				name = doGetName();
+			}
+			return name;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -184,11 +205,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		finally {
 			lock.release();
 		}
-	}
-
-	@Override
-	public URL getDocs() {
-		return null;
 	}
 
 	/**
@@ -392,7 +408,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			// generate a name that would not cause a duplicate in either the current path
 			// or
 			// the new path. Use the new name if possible.
-			String uniqueName = dataMgr.getUniqueName(path, getCategoryPath(), name);
+			String uniqueName = dataMgr.getTemporaryUniqueName(path, getCategoryPath(), name);
 			doSetName(uniqueName);
 
 			// set the path - this is guaranteed to work since we make a name that won't
@@ -583,6 +599,43 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
 			throws DataTypeEncodeException {
 		throw new DataTypeEncodeException("Encoding not supported", repr, this);
+	}
+
+	/**
+	 * Perform equivalence check while resolving the specified dataType.  If the specified conflict 
+	 * handler under a conflict situation indicates that the existing data type (i.e., this type)
+	 * be used in place of the specified dataType this method will return true.
+	 * @param dataType datatype being resolved
+	 * @param handler resolve conflict handler (if null perform normal {@link #isEquivalent(DataType)}
+	 * @return true if the specified dataType should be considered equivalent to this datatype.
+	 */
+	protected abstract boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler);
+
+	/**
+	 * If possible, perform equivalence check while resolving the specified dataType if the 
+	 * existingDataType is an instance of DataTypeDB.  Otherwise, perform a normal 
+	 * isEquivalent operation.  If the specified conflict 
+	 * handler under a conflict situation indicates that the existing data type (i.e., this type)
+	 * be used in place of the specified dataType this method will return true.
+	 * @param existingDataType existing datatype
+	 * @param otherDataType datatype being resolved
+	 * @param handler resolve conflict handler (if null perform normal {@link #isEquivalent(DataType)}
+	 * @return true if the specified dataType should be considered equivalent to this datatype.
+	 */
+	static boolean isEquivalent(DataType existingDataType, DataType otherDataType,
+			DataTypeConflictHandler handler) {
+		if (existingDataType instanceof DataTypeDB existingDataTypeDB) {
+			return existingDataTypeDB.isEquivalent(otherDataType, handler);
+		}
+		return existingDataType.isEquivalent(otherDataType);
+	}
+
+	static String prependComment(String additionalComment, String oldComment) {
+		String comment = additionalComment;
+		if (!StringUtils.isBlank(oldComment)) {
+			comment += "; " + oldComment;
+		}
+		return comment;
 	}
 
 }

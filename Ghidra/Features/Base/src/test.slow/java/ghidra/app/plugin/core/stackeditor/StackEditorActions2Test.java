@@ -183,8 +183,9 @@ public class StackEditorActions2Test extends AbstractStackEditorTest {
 
 		sv = stack.getVariableContaining(0xc);
 		assertNotNull(sv);
-		assertTrue(sv.getDataType().isEquivalent(
-			PointerDataType.getPointer(StringDataType.dataType, program.getDataTypeManager())));
+		assertTrue(sv.getDataType()
+				.isEquivalent(PointerDataType.getPointer(StringDataType.dataType,
+					program.getDataTypeManager())));
 	}
 
 	@Test
@@ -515,7 +516,7 @@ public class StackEditorActions2Test extends AbstractStackEditorTest {
 		assertEquals("", model.getStatus());
 		assertEquals(num, model.getNumComponents());
 		assertCellString("pointer32 *", ordinal, model.getDataTypeColumn());
-		assertEquals("pointer32 *", getDataType(ordinal).getName());
+		assertEquals("pointer32 *32", getDataType(ordinal).getName());
 		assertTrue(((Pointer) getDataType(ordinal)).getDataType().isEquivalent(dt));
 		assertEquals(4, getDataType(ordinal).getLength());
 		assertEquals(4, model.getComponent(ordinal).getLength());

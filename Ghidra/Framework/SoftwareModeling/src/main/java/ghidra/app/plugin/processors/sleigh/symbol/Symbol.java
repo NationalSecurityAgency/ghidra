@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,32 +19,39 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.program.model.lang.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * Base class for symbols in sleigh
  */
 public abstract class Symbol {
 	private String name;
 	private int id;			// Unique id across all symbols
 	private int scopeid;	// id of scope this symbol is in
-	
-	public String getName() { return name; }
-	public int getId() { return id; }
-	public int getScopeId() { return scopeid; }
-	
-	public void restoreHeaderXml(XmlPullParser parser) {
-	    XmlElement el = parser.start();
-		name = el.getAttribute("name");
-		id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
-		scopeid = SpecXmlUtils.decodeInt(el.getAttribute("scope"));
-		parser.end(el);
+
+	public String getName() {
+		return name;
 	}
-	
-	public abstract void restoreXml(XmlPullParser parser,SleighLanguage sleigh) throws UnknownInstructionException;	// Always overridden by subclass
+
+	public int getId() {
+		return id;
+	}
+
+	public int getScopeId() {
+		return scopeid;
+	}
+
+	public void decodeHeader(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement();
+		name = decoder.readString(ATTRIB_NAME);
+		id = (int) decoder.readUnsignedInteger(ATTRIB_ID);
+		scopeid = (int) decoder.readUnsignedInteger(ATTRIB_SCOPE);
+		decoder.closeElement(el);
+	}
+
+	public abstract void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException;
 }

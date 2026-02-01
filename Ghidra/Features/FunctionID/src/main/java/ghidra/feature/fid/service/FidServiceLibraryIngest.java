@@ -30,8 +30,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -619,15 +618,13 @@ class FidServiceLibraryIngest {
 	 * @return whether the function is external
 	 */
 	private static boolean functionIsExternal(Function function) {
-		if (function.isExternal()) {
-			return true;
-		}
+		Memory mem = function.getProgram().getMemory();
 		Address entryPoint = function.getEntryPoint();
-		MemoryBlock block = function.getProgram().getMemory().getBlock(entryPoint);
-		if (!block.isInitialized()) {
+		if (function.isExternal() || !mem.contains(entryPoint)) {
 			return true;
 		}
-		return false;
+		MemoryBlock block = function.getProgram().getMemory().getBlock(entryPoint);
+		return block == null || !block.isInitialized() || block.isExternalBlock();
 	}
 
 	private void exclude(DomainFile domainFile, Function function,

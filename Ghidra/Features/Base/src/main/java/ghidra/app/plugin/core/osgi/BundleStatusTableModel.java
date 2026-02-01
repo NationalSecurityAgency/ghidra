@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 /**
- * Model for {@link BundleStatus} objects. 
+ * Model for {@link BundleStatus} objects.
  */
 public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
@@ -50,7 +50,7 @@ public class BundleStatusTableModel
 	private static final Color COLOR_BUNDLE_DISABLED = new GColor("color.fg.table.bundle.disabled");
 	private static final Color COLOR_BUNDLE_BUSY = new GColor("color.fg.table.bundle.busy");
 	private static final Color COLOR_BUNDLE_INACTIVE = new GColor("color.fg.table.bundle.inactive");
-	private static final Color COLOR_BUNDLE_ACTIVE = new GColor("color.fg.table.bundle.active"); 
+	private static final Color COLOR_BUNDLE_ACTIVE = new GColor("color.fg.table.bundle.active");
 	//@formatter:on
 
 	private BundleHost bundleHost;
@@ -226,7 +226,7 @@ public class BundleStatusTableModel
 	}
 
 	/**
-	 * return the row objects corresponding an array of model row indices.  
+	 * return the row objects corresponding an array of model row indices.
 	 * 
 	 * @param modelRowIndices row indices
 	 * @return status objects
@@ -240,7 +240,7 @@ public class BundleStatusTableModel
 	}
 
 	/**
-	 * overridden to avoid generating events when nothing changed 
+	 * overridden to avoid generating events when nothing changed
 	 */
 	@Override
 	protected void sort(List<BundleStatus> data, TableSortingContext<BundleStatus> sortingContext) {
@@ -278,7 +278,7 @@ public class BundleStatusTableModel
 		}
 	}
 
-	/** 
+	/**
 	 * (re)compute cached mapping from bundleloc to bundlepath
 	 * 
 	 * <p>only used in testing
@@ -337,7 +337,7 @@ public class BundleStatusTableModel
 				for (GhidraBundle bundle : bundles) {
 					addNewStatusNoFire(bundle);
 				}
-				fireTableRowsInserted(index, bundles.size() - 1);
+				fireTableRowsInserted(index, index + bundles.size() - 1);
 			});
 		}
 
@@ -396,6 +396,7 @@ public class BundleStatusTableModel
 		columnDescriptor.addVisibleColumn(new BuildSummaryColumn());
 		columnDescriptor.addHiddenColumn(new OSGiStatusColumn());
 		columnDescriptor.addHiddenColumn(new BundleTypeColumn());
+		columnDescriptor.addHiddenColumn(new BundleLocationId());
 
 		return columnDescriptor;
 	}
@@ -548,6 +549,27 @@ public class BundleStatusTableModel
 		}
 
 	}
+	
+	private class BundleLocationId extends Column<String> {
+
+		BundleLocationId() {
+			super("Bundle Location ID");
+		}
+
+		@Override
+		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
+				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+			GhidraBundle bundle = bundleHost.getGhidraBundle(status.getFile());
+			if (bundle != null) {
+				String id = bundle.getLocationIdentifier();
+				if (id != null) {
+					return id;
+				}
+			}
+			return "";
+		}
+
+	}
 
 	private class BundleFileRenderer extends AbstractGColumnRenderer<ResourceFile> {
 
@@ -560,20 +582,24 @@ public class BundleStatusTableModel
 			GhidraBundle bundle = bundleHost.getGhidraBundle(file);
 			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
 				label.setForeground(COLOR_BUNDLE_ERROR);
+				return label;
+			}
+
+			if (data.isSelected()) {
+				return label; // use default selection colors
+			}
+
+			if (status.isBusy()) {
+				label.setForeground(COLOR_BUNDLE_BUSY);
+			}
+			else if (!status.isEnabled()) {
+				label.setForeground(COLOR_BUNDLE_DISABLED);
+			}
+			else if (status.isActive()) {
+				label.setForeground(COLOR_BUNDLE_ACTIVE);
 			}
 			else {
-				if (status.isBusy()) {
-					label.setForeground(COLOR_BUNDLE_BUSY);
-				}
-				else if (!status.isEnabled()) {
-					label.setForeground(COLOR_BUNDLE_DISABLED);
-				}
-				else if (status.isActive()) {
-					label.setForeground(COLOR_BUNDLE_ACTIVE);
-				}
-				else {
-					label.setForeground(COLOR_BUNDLE_INACTIVE);
-				}
+				label.setForeground(COLOR_BUNDLE_INACTIVE);
 			}
 
 			return label;

@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataUtilities;
@@ -37,8 +36,7 @@ import ghidra.util.task.TaskMonitor;
  * of a pointer, then a pointer to dataType will only be created if there are
  * enough undefined bytes following to make a pointer.
  */
-public class CreateDataBackgroundCmd extends BackgroundCommand {
-	private static final int EVENT_LIMIT = 1000;
+public class CreateDataBackgroundCmd extends BackgroundCommand<Program> {
 
 	private AddressSetView addrSet;
 	private DataType newDataType;
@@ -76,12 +74,7 @@ public class CreateDataBackgroundCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		return doApplyTo(obj, monitor);
-	}
-
-	public boolean doApplyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		Listing listing = program.getListing();
 		InstructionIterator iter = listing.getInstructions(addrSet, true);
 		if (iter.hasNext()) {

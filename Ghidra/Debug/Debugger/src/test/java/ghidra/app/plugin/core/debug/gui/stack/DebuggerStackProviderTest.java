@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,21 +26,14 @@ import org.junit.*;
 
 import db.Transaction;
 import docking.widgets.table.DynamicTableColumn;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.dbg.target.TargetStackFrame;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.Register;
@@ -47,18 +41,75 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * NOTE: I no longer synthesize a stack frame when the stack is absent. It's a bit of a hack, and I
  * don't know if it's really valuable. In fact, in might obscure the fact that the stack is absent.
  */
-public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Processes' schema='ProcessContainer' />
+			    </schema>
+			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Process' />
+			    </schema>
+			    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Memory' schema='RegionContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <interface name='Aggregate' />
+			        <attribute name='Stack' schema='Stack' />
+			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='Stack' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='StackFrame' />
+			        <interface name='Activatable' />
+			    </schema>
+			    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <interface name='RegisterContainer' />
+			        <element schema='Register' />
+			    </schema>
+			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Register' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			    </schema>
+			</context>
+			""";
+
 	protected DebuggerStackPlugin stackPlugin;
 	protected DebuggerStackProvider stackProvider;
 	protected DebuggerStaticMappingService mappingService;
@@ -109,97 +160,49 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 	public void activateObjectsMode() throws Exception {
 		// NOTE the use of index='1' allowing object-based managers to ID unique path
-		ctx = XmlSchemaContext.deserialize("""
-				<context>
-				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Processes' schema='ProcessContainer' />
-				    </schema>
-				    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Process' />
-				    </schema>
-				    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Threads' schema='ThreadContainer' />
-				        <attribute name='Memory' schema='RegionContainer' />
-				    </schema>
-				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Thread' />
-				    </schema>
-				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Thread' />
-				        <interface name='Aggregate' />
-				        <attribute name='Stack' schema='Stack' />
-				        <attribute name='Registers' schema='RegisterContainer' />
-				    </schema>
-				    <schema name='Stack' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <interface name='Stack' />
-				        <element schema='Frame' />
-				    </schema>
-				    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='StackFrame' />
-				    </schema>
-				    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='NEVER'>
-				        <interface name='RegisterContainer' />
-				        <element schema='Register' />
-				    </schema>
-				    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Register' />
-				    </schema>
-				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Region' />
-				    </schema>
-				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='MemoryRegion' />
-				    </schema>
-				</context>
-				""");
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
 	}
 
-	protected TraceObjectThread addThread(int n) {
-		PathPattern threadPattern = new PathPattern(PathUtils.parse("Processes[1].Threads[]"));
-		TraceObjectKeyPath threadPath =
-			TraceObjectKeyPath.of(threadPattern.applyIntKeys(n).getSingletonPath());
+	protected TraceThread addThread(int n) {
+		PathPattern threadPattern = PathFilter.parse("Processes[1].Threads[]");
+		KeyPath threadPath = threadPattern.applyIntKeys(n).getSingletonPath();
 		try (Transaction tx = tb.startTransaction()) {
 			return Objects.requireNonNull(tb.trace.getObjectManager()
 					.createObject(threadPath)
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectThread.class));
+					.queryInterface(TraceThread.class));
 		}
 	}
 
-	protected TraceObjectStack addStack(TraceObjectThread thread) {
-		TraceObjectKeyPath stackPath = thread.getObject().getCanonicalPath().extend("Stack");
+	protected TraceStack addStack(TraceThread thread) {
+		KeyPath stackPath = thread.getObject().getCanonicalPath().extend("Stack");
 		try (Transaction tx = tb.startTransaction()) {
 			return Objects.requireNonNull(tb.trace.getObjectManager()
 					.createObject(stackPath)
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectStack.class));
+					.queryInterface(TraceStack.class));
 		}
 	}
 
-	protected void addStackFrames(TraceObjectStack stack) {
+	protected void addStackFrames(TraceStack stack) {
 		addStackFrames(stack, 2);
 	}
 
-	protected void addStackFrames(TraceObjectStack stack, int count) {
-		TraceObjectKeyPath stackPath = stack.getObject().getCanonicalPath();
+	protected void addStackFrames(TraceStack stack, int count) {
+		KeyPath stackPath = stack.getObject().getCanonicalPath();
 		TraceObjectManager om = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
 			for (int i = 0; i < count; i++) {
 				TraceObject frame = om.createObject(stackPath.index(i))
 						.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 						.getDestination(null);
-				frame.setAttribute(Lifespan.nowOn(0), TargetStackFrame.PC_ATTRIBUTE_NAME,
+				frame.setAttribute(Lifespan.nowOn(0), TraceStackFrame.KEY_PC,
 					tb.addr(0x00400100 + 0x100 * i));
 			}
 		}
@@ -215,15 +218,20 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 	protected void assertRow(int level, Address pcVal, Function func) {
 		ValueRow row = stackProvider.panel.getAllItems().get(level);
+		var tableModel = QueryPanelTestHelper.getTableModel(stackProvider.panel);
+		GhidraTable table = QueryPanelTestHelper.getTable(stackProvider.panel);
 
-		DynamicTableColumn<ValueRow, String, Trace> levelCol =
-			stackProvider.panel.getColumnByNameAndType("Level", String.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> pcCol =
-			stackProvider.panel.getColumnByNameAndType("PC", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, Function, Trace> funcCol =
-			stackProvider.panel.getColumnByNameAndType("Function", Function.class).getValue();
+		DynamicTableColumn<ValueRow, String, Trace> levelCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Level", String.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> pcCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "PC", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> funcCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Function", ValueProperty.class)
+				.column();
 
-		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));
+		assertEquals(KeyPath.makeKey(KeyPath.makeIndex(level)), rowColVal(row, levelCol));
 		assertEquals(pcVal, rowColVal(row, pcCol));
 		assertEquals(func, rowColVal(row, funcCol));
 	}
@@ -254,7 +262,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadNoStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
+		TraceThread thread = addThread(1);
 		waitForDomainObject(tb.trace);
 
 		traceManager.activateObject(thread.getObject());
@@ -267,7 +275,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadThenAddEmptyStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
+		TraceThread thread = addThread(1);
 		addStack(thread);
 		waitForDomainObject(tb.trace);
 
@@ -281,9 +289,9 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadThenAddStackPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
+		TraceThread thread = addThread(1);
 		traceManager.activateObject(thread.getObject());
-		TraceObjectStack stack = addStack(thread);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 		waitForTasks();
@@ -295,8 +303,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testAddStackThenActivateThreadPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -309,13 +317,13 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	/**
 	 * Because keys are strings, we need to ensure they get sorted numerically
 	 * 
-	 * @throws Exception
+	 * @throws Exception because
 	 */
 	@Test
 	public void testTableSortedCorrectly() throws Exception {
 		createAndOpenTrace();
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack, 15);
 		waitForDomainObject(tb.trace);
 
@@ -326,7 +334,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			assertTableSize(15);
 			List<ValueRow> allItems = stackProvider.panel.getAllItems();
 			for (int i = 0; i < 15; i++) {
-				assertEquals(PathUtils.makeKey(PathUtils.makeIndex(i)), allItems.get(i).getKey());
+				assertEquals(KeyPath.makeKey(KeyPath.makeIndex(i)), allItems.get(i).getKey());
 			}
 		});
 	}
@@ -335,8 +343,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testAppendStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -350,7 +358,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 					.createObject(stack.getObject().getCanonicalPath().index(2))
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null);
-			frame2.setAttribute(Lifespan.nowOn(0), TargetStackFrame.PC_ATTRIBUTE_NAME,
+			frame2.setAttribute(Lifespan.nowOn(0), TraceStackFrame.KEY_PC,
 				tb.addr(0x00400300));
 		}
 		waitForDomainObject(tb.trace);
@@ -368,8 +376,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testRemoveFrameUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -394,8 +402,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testRemoveStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -417,9 +425,9 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateOtherThreadEmptiesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread1 = addThread(1);
-		TraceObjectThread thread2 = addThread(2);
-		TraceObjectStack stack1 = addStack(thread1);
+		TraceThread thread1 = addThread(1);
+		TraceThread thread2 = addThread(2);
+		TraceStack stack1 = addStack(thread1);
 		addStackFrames(stack1);
 		waitForDomainObject(tb.trace);
 
@@ -438,8 +446,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateSnap() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -471,8 +479,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testCloseCurrentTraceEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -491,8 +499,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateFrameSelectsRow() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -518,8 +526,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testDoubleClickRowActivateFrame() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -551,8 +559,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		traceManager.openTrace(tb.trace);
 		programManager.openProgram(program);
 
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
+		TraceThread thread = addThread(1);
+		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
@@ -574,13 +582,13 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitForDomainObject(program);
 
 		try (Transaction tx = tb.startTransaction()) {
-			TraceObjectMemoryRegion region = Objects.requireNonNull(tb.trace.getObjectManager()
-					.createObject(TraceObjectKeyPath.parse("Processes[1].Memory[bin:.text]"))
+			TraceMemoryRegion region = Objects.requireNonNull(tb.trace.getObjectManager()
+					.createObject(KeyPath.parse("Processes[1].Memory[bin:.text]"))
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
-					.queryInterface(TraceObjectMemoryRegion.class));
+					.queryInterface(TraceMemoryRegion.class));
 			region.getObject()
-					.setAttribute(Lifespan.nowOn(0), TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
+					.setAttribute(Lifespan.nowOn(0), TraceMemoryRegion.KEY_RANGE,
 						tb.drng(0x00400000, 0x00400fff));
 
 			TraceLocation dloc =

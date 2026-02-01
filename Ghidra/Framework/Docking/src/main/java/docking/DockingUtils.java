@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,10 +78,10 @@ import resources.ResourceManager;
  * (ie. when displaying an error to the user about a bad file, don't put the filename
  * value at the start of the string, but instead put a quote or some other delimiter to prevent
  * html mode).
- * <p>
+ * 
  * <h3>Recommended Ghidra UI Components:</h3>
- * <p>
- * <table border=1><caption></caption>
+ * 
+ * <table border=1>
  * 	<tr><th>Native Component</th><th>Recommended Component</th></tr>
  * 	<tr><td>{@link JLabel}</td><td>{@link GLabel}<br>{@link GDLabel}<br>{@link GHtmlLabel}<br>{@link GDHtmlLabel}<br>{@link GIconLabel}</td></tr>
  * 	<tr><td>{@link JCheckBox}</td><td>{@link GCheckBox}<br>{@link GHtmlCheckBox}</td></tr>
@@ -123,6 +123,8 @@ public class DockingUtils {
 		KeyStroke.getKeyStroke(KeyEvent.VK_Z, CONTROL_KEY_MODIFIER_MASK);
 	private static final KeyStroke REDO_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_Y, CONTROL_KEY_MODIFIER_MASK);
+
+	private static boolean globalTooltipsEnabled = true;
 
 	public static JSeparator createToolbarSeparator() {
 		Dimension sepDim = new Dimension(2, ICON_SIZE + 2);
@@ -299,7 +301,7 @@ public class DockingUtils {
 	}
 
 	/**
-	 * Perform some operation on a component and all of its descendents, recursively.
+	 * Perform some operation on a component and all of its descendants, recursively.
 	 *
 	 * This applies the operation to all components in the tree, children first.
 	 *
@@ -355,11 +357,24 @@ public class DockingUtils {
 	}
 
 	/**
-	 * Sets the application-wide Java tooltip enablement.  
-	 * @param enabled true if enabled; false prevents all Java tooltips
+	 * Not meant for public consumption.   This is for application code to control tooltips on 
+	 * behalf of the user.
+	 * @param enabled true if enabled
 	 */
-	public static void setTipWindowEnabled(boolean enabled) {
+	public static void setGlobalTooltipEnabledOption(boolean enabled) {
+		globalTooltipsEnabled = enabled;
 		Swing.runLater(() -> ToolTipManager.sharedInstance().setEnabled(enabled));
+	}
+
+	/** 
+	 * Note: calling this method has no effect
+	 * @param enabled true if enabled; false prevents all Java tooltips
+	 * @deprecated this method is not longer supported; controlling application tooltips should be
+	 * done through tool options in the UI
+	 */
+	@Deprecated(forRemoval = true, since = "12")
+	public static void setTipWindowEnabled(boolean enabled) {
+		// no-op
 	}
 
 	/**
@@ -367,7 +382,11 @@ public class DockingUtils {
 	 * @return true if application-wide Java tooltips are enabled.
 	 */
 	public static boolean isTipWindowEnabled() {
-		return Swing.runNow(() -> ToolTipManager.sharedInstance().isEnabled());
+		// Note: using this call would allow for client code to control tooltip enablement.  We use
+		// tool options to control enablement, which is reflected in the boolean used below.
+		// return Swing.runNow(() -> ToolTipManager.sharedInstance().isEnabled());
+
+		return globalTooltipsEnabled;
 	}
 
 	/** Hides any open tooltip window */

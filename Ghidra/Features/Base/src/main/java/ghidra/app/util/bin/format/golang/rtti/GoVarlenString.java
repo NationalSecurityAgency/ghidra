@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,26 @@ package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.golang.GoVer;
+import ghidra.app.util.bin.format.golang.GoVerRange;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
+import ghidra.util.BigEndianDataConverter;
 
 /**
- * A pascal-ish string, using a LEB128 value as the length of the following bytes.
+ * A pascal-ish string, using a LEB128 (or a uint16 in pre-1.16) value as the length of the
+ * following bytes.
  * <p>
- * Used mainly in lower-level RTTI structures, this class is a ghidra'ism used to parse the
- * golang rtti data and does not have a counterpart in the golang src. 
+ * Used mainly in lower-level RTTI structures, this class is a Ghidra'ism used to parse the
+ * Go RTTI data and does not have a counterpart in the Go src. 
  */
 @StructureMapping(structureName = "GoVarlenString")
 public class GoVarlenString implements StructureReader<GoVarlenString> {
+	
+	private static final GoVerRange VERSIONS_THAT_USE_LEB128 = GoVerRange.parse("1.17+");
 
 	@ContextField
 	private StructureContext<GoVarlenString> context;
@@ -50,37 +57,82 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 		readFrom(context.getReader());
 	}
 
+	private boolean useLEB128() {
+		GoVer ver = ((GoRttiMapper) context.getDataTypeMapper()).getGoVer();
+		return VERSIONS_THAT_USE_LEB128.contains(ver);
+	}
+
 	private void readFrom(BinaryReader reader) throws IOException {
 		long startPos = reader.getPointerIndex();
-		int strLen = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+		int strLen = useLEB128()
+				? reader.readNextUnsignedVarIntExact(LEB128::unsigned)
+				: reader.readNextUnsignedShort(BigEndianDataConverter.INSTANCE);
 		this.strlenLen = (int) (reader.getPointerIndex() - startPos);
 		this.bytes = reader.readNextByteArray(strLen);
 	}
 
+	/**
+	 * Returns the string's length
+	 * 
+	 * @return string's length
+	 */
 	public int getStrlen() {
 		return bytes.length;
 	}
 
+	/**
+	 * Returns the size of the string length field.  
+	 * 
+	 * @return size of the string length field
+	 */
 	public int getStrlenLen() {
 		return strlenLen;
 	}
 
+	/**
+	 * Returns the raw bytes of the string
+	 * 
+	 * @return raw bytes of the string
+	 */
 	public byte[] getBytes() {
 		return bytes;
 	}
 
+	/**
+	 * Returns the string value.
+	 * 
+	 * @return string value
+	 */
 	public String getString() {
 		return new String(bytes, StandardCharsets.UTF_8);
 	}
 
+	/**
+	 * Returns the data type that is needed to hold the string length field.
+	 * 
+	 * @return data type needed to hold the string length field
+	 */
 	public DataTypeInstance getStrlenDataType() {
-		return DataTypeInstance.getDataTypeInstance(UnsignedLeb128DataType.dataType, strlenLen,
-			false);
+		DataType dt = useLEB128()
+				? UnsignedLeb128DataType.dataType
+				: AbstractIntegerDataType.getUnsignedDataType(2, null);
+
+		return DataTypeInstance.getDataTypeInstance(dt, strlenLen, false);
 	}
 
+	/**
+	 * Returns the data type that holds the raw string value.
+	 * 
+	 * @return data type that holds the raw string value.
+	 */
 	public DataType getValueDataType() {
 		return new ArrayDataType(CharDataType.dataType, bytes.length, -1,
 			context.getDataTypeMapper().getDTM());
 	}
 
+	@Override
+	public String toString() {
+		return String.format("GoVarlenString [context=%s, strlenLen=%s, bytes=%s, getString()=%s]",
+			context, strlenLen, Arrays.toString(bytes), getString());
+	}
 }

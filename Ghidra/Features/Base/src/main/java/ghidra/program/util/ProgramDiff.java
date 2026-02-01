@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,19 @@ package ghidra.program.util;
 
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
+import org.apache.commons.collections4.CollectionUtils;
+
 import ghidra.program.database.properties.UnsupportedMapDB;
+import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.sourcemap.SourceFileManager;
+import ghidra.program.model.sourcemap.SourceMapEntry;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
@@ -40,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
  * equivalent address spaces. If the programs have different program context
  * registers, the Diff can still occur but will not determine program context
  * differences.
- * <P>
+ * 
  * @see ghidra.program.util.ProgramDiffFilter
  */
 
@@ -403,7 +410,7 @@ public class ProgramDiff {
 	 * program1 and program2.
 	 * @return the initialized memory addresses in common between
 	 * program1 and program2.
-	 * The addresses in the this set are derived from program1.
+	 * The addresses in this set are derived from program1.
 	 */
 	public AddressSet getInitializedInCommon() {
 		return pgmMemComp.getInitializedAddressesInCommon();
@@ -480,10 +487,8 @@ public class ProgramDiff {
 	synchronized public AddressSetView getDifferences(ProgramDiffFilter filter, TaskMonitor monitor)
 			throws CancelledException {
 		cancelled = false;
-		if (monitor == null) {
-			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitor.DUMMY;
-		}
+
+		monitor = TaskMonitor.dummyIfNull(monitor);
 
 		if (!filterChanged && ((filter != null) && (filter.equals(this.pdf)))) {
 			return diffsToReturn;
@@ -496,6 +501,7 @@ public class ProgramDiff {
 		// Create any required address sets.
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
+
 			// Are we interested in this difference type?
 			if (pdf.getFilter(element)) {
 				Integer key = element;
@@ -637,33 +643,32 @@ public class ProgramDiff {
 			case ProgramDiffFilter.EOL_COMMENT_DIFFS:
 				monitorMsg = "Checking End of Line Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.EOL_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.EOL_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.EOL, addrs,
+					new CommentTypeComparator(CommentType.EOL), monitor);
 				break;
 			case ProgramDiffFilter.REPEATABLE_COMMENT_DIFFS:
 				monitorMsg = "Checking Repeatable Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.REPEATABLE_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.REPEATABLE_COMMENT),
-					monitor);
+				as = getCommentDiffs(CommentType.REPEATABLE, addrs,
+					new CommentTypeComparator(CommentType.REPEATABLE), monitor);
 				break;
 			case ProgramDiffFilter.PRE_COMMENT_DIFFS:
 				monitorMsg = "Checking Pre-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PRE_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.PRE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PRE, addrs,
+					new CommentTypeComparator(CommentType.PRE), monitor);
 				break;
 			case ProgramDiffFilter.POST_COMMENT_DIFFS:
 				monitorMsg = "Checking Post-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.POST_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.POST_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.POST, addrs,
+					new CommentTypeComparator(CommentType.POST), monitor);
 				break;
 			case ProgramDiffFilter.PLATE_COMMENT_DIFFS:
 				monitorMsg = "Checking Plate Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PLATE_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.PLATE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PLATE, addrs,
+					new CommentTypeComparator(CommentType.PLATE), monitor);
 				break;
 			case ProgramDiffFilter.REFERENCE_DIFFS:
 				monitorMsg = "Checking Reference Differences";
@@ -921,33 +926,32 @@ public class ProgramDiff {
 			case ProgramDiffFilter.EOL_COMMENT_DIFFS:
 				monitorMsg = "Checking End of Line Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.EOL_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.EOL_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.EOL, checkAddressSet,
+					new CommentTypeComparator(CommentType.EOL), monitor);
 				break;
 			case ProgramDiffFilter.REPEATABLE_COMMENT_DIFFS:
 				monitorMsg = "Checking Repeatable Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.REPEATABLE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.REPEATABLE_COMMENT),
-					monitor);
+				as = getCommentDiffs(CommentType.REPEATABLE, checkAddressSet,
+					new CommentTypeComparator(CommentType.REPEATABLE), monitor);
 				break;
 			case ProgramDiffFilter.PRE_COMMENT_DIFFS:
 				monitorMsg = "Checking Pre-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PRE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.PRE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PRE, checkAddressSet,
+					new CommentTypeComparator(CommentType.PRE), monitor);
 				break;
 			case ProgramDiffFilter.POST_COMMENT_DIFFS:
 				monitorMsg = "Checking Post-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.POST_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.POST_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.POST, checkAddressSet,
+					new CommentTypeComparator(CommentType.POST), monitor);
 				break;
 			case ProgramDiffFilter.PLATE_COMMENT_DIFFS:
 				monitorMsg = "Checking Plate Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PLATE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.PLATE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PLATE, checkAddressSet,
+					new CommentTypeComparator(CommentType.PLATE), monitor);
 				break;
 			case ProgramDiffFilter.REFERENCE_DIFFS:
 				monitorMsg = "Checking Reference Differences";
@@ -983,6 +987,11 @@ public class ProgramDiff {
 				monitorMsg = "Checking Function Tag Differences";
 				monitor.setMessage(monitorMsg);
 				as = getFunctionTagDifferences(checkAddressSet, monitor);
+				break;
+			case ProgramDiffFilter.SOURCE_MAP_DIFFS:
+				monitorMsg = "Checking Source Map Differences";
+				monitor.setMessage(monitorMsg);
+				as = getSourceMapDifferences(checkAddressSet, monitor);
 				break;
 		}
 		if (as != null) {
@@ -1417,17 +1426,16 @@ public class ProgramDiff {
 	 */
 	private AddressSet getLabelDifferences(AddressSetView addressSet, TaskMonitor monitor)
 			throws CancelledException {
-		SymbolIterator iter1;
-		SymbolIterator iter2;
+
 		if (addressSet == null) {
-			iter1 = program1.getSymbolTable().getPrimarySymbolIterator(true);
-			iter2 = program2.getSymbolTable().getPrimarySymbolIterator(true);
+			addressSet = program1.getMemory();
 		}
-		else {
-			iter1 = program1.getSymbolTable().getPrimarySymbolIterator(addressSet, true);
-			AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
-			iter2 = program2.getSymbolTable().getPrimarySymbolIterator(addressSet2, true);
-		}
+
+		SymbolIterator iter1 = program1.getSymbolTable().getPrimarySymbolIterator(addressSet, true);
+		AddressSetView addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
+		SymbolIterator iter2 =
+			program2.getSymbolTable().getPrimarySymbolIterator(addressSet2, true);
+
 		SymbolComparator c = new SymbolComparator();
 		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
@@ -1534,17 +1542,15 @@ public class ProgramDiff {
 	 */
 	private AddressSet getFunctionDifferences(AddressSetView addressSet, TaskMonitor monitor)
 			throws CancelledException {
-		FunctionIterator iter1;
-		FunctionIterator iter2;
+
 		if (addressSet == null) {
-			iter1 = program1.getListing().getFunctions(true);
-			iter2 = program2.getListing().getFunctions(true);
+			addressSet = program1.getMemory();
 		}
-		else {
-			iter1 = program1.getListing().getFunctions(addressSet, true);
-			AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
-			iter2 = program2.getListing().getFunctions(addressSet2, true);
-		}
+
+		FunctionIterator iter1 = program1.getListing().getFunctions(addressSet, true);
+		AddressSetView addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
+		FunctionIterator iter2 = program2.getListing().getFunctions(addressSet2, true);
+
 		FunctionComparator c = new FunctionComparator();
 		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
@@ -1570,11 +1576,204 @@ public class ProgramDiff {
 		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
+	/**
+	 * Determines the source map differences for the addresses in {@code addressSet}.  Source map
+	 * entries which intersect but are not contained within {@code addressSet} are ignored.
+	 * The returned {@link AddressSet} consists of the minimum addresses of all of the differing
+	 * source map entries.  This method does not check for differences between non-mapped 
+	 * {@link SourceFile}s. 
+	 * 
+	 * @param addressSet addresses to check for differences (from program1)
+	 * @param monitor task monitor
+	 * @return minimum addresses of differing ranges
+	 * @throws CancelledException if user cancels
+	 */
+	private AddressSet getSourceMapDifferences(AddressSetView addressSet, TaskMonitor monitor)
+			throws CancelledException {
+		SourceFileManager p1Manager = program1.getSourceFileManager();
+		SourceFileManager p2Manager = program2.getSourceFileManager();
+
+		List<SourceFile> p1Sources = program1.getSourceFileManager().getMappedSourceFiles();
+		List<SourceFile> p2Sources = program2.getSourceFileManager().getMappedSourceFiles();
+
+		Collection<SourceFile> differingPaths = CollectionUtils.disjunction(p1Sources, p2Sources);
+
+		Collection<SourceFile> p1Only = CollectionUtils.intersection(p1Sources, differingPaths);
+		Collection<SourceFile> p2Only = CollectionUtils.intersection(p2Sources, differingPaths);
+
+		AddressSet differences =
+			processDifferingSourceFiles(addressSet, p1Only, p2Only, p1Manager, p2Manager, monitor);
+
+		// now consider the mapping info for the source files the programs have in common
+		Collection<SourceFile> commonSources = CollectionUtils.intersection(p1Sources, p2Sources);
+
+		// first check the entries in program1
+		// only need to check an address once, even if there are multiple entries based at it
+		AddressSet p1CheckedAddresses = new AddressSet();
+		AddressSet p2CheckedAddresses = new AddressSet();
+
+		for (SourceFile common : commonSources) {
+			for (SourceMapEntry p1Entry : p1Manager.getSourceMapEntries(common)) {
+				monitor.checkCancelled();
+				Address p1Base = p1Entry.getBaseAddress();
+				if (p1CheckedAddresses.contains(p1Base)) {
+					continue;
+				}
+
+				Address p2Base = SimpleDiffUtility.getCompatibleAddress(program1, p1Base, program2);
+				if (p2Base == null) {
+					p1CheckedAddresses.add(p1Base);
+					continue;
+				}
+
+				long p1Length = p1Entry.getLength();
+				if (p1Length != 0) {
+					Address p1End = p1Base.add(p1Length - 1);
+					if (!addressSet.contains(p1Base, p1End)) {
+						if (addressSet.intersects(p1Base, p1End)) {
+							logSkippedEntry(p1Entry, program1);
+						}
+						continue;
+					}
+				}
+				p1CheckedAddresses.add(p1Base);
+				p2CheckedAddresses.add(p2Base);
+				List<SourceMapEntry> p1Entries = p1Manager.getSourceMapEntries(p1Base);
+				List<SourceMapEntry> p2Entries = p2Manager.getSourceMapEntries(p2Base);
+				if (p1Entries.size() != p2Entries.size()) {
+					differences.add(p1Base);
+					continue;
+				}
+				for (SourceMapEntry e1 : p1Entries) {
+					if (Collections.binarySearch(p2Entries, e1) < 0) {
+						differences.add(p1Base);
+						break;
+					}
+				}
+			}
+		}
+
+		AddressSet unmatchedP2Addrs =
+			findUnmatchedP2Addrs(addressSet, p2CheckedAddresses, commonSources, monitor);
+		differences.add(unmatchedP2Addrs);
+
+		return differences;
+
+	}
+
+	// look for addresses in program2 that have entries where the corresponding
+	// address in program1 does not have any entries
+	private AddressSet findUnmatchedP2Addrs(AddressSetView addressSet,
+			AddressSet p2CheckedAddresses, Collection<SourceFile> commonSources,
+			TaskMonitor monitor) throws CancelledException {
+		AddressSet results = new AddressSet();
+		SourceFileManager p2Manager = program2.getSourceFileManager();
+		for (SourceFile p2Source : commonSources) {
+			for (SourceMapEntry p2Entry : p2Manager.getSourceMapEntries(p2Source)) {
+				monitor.checkCancelled();
+				Address p2Base = p2Entry.getBaseAddress();
+				if (p2CheckedAddresses.contains(p2Base)) {
+					continue;
+				}
+				Address p1Base = SimpleDiffUtility.getCompatibleAddress(program2, p2Base, program1);
+				p2CheckedAddresses.add(p2Base);
+				if (p1Base == null) {
+					continue;
+				}
+				if (!addressSet.contains(p1Base)) {
+					continue;
+				}
+				List<SourceMapEntry> p1Entries =
+					program1.getSourceFileManager().getSourceMapEntries(p1Base);
+				boolean p1BaseAlreadyChecked = false;
+				for (SourceMapEntry p1Entry : p1Entries) {
+					if (p1Entry.getBaseAddress().equals(p1Base)) {
+						p1BaseAlreadyChecked = true;
+						break;
+					}
+				}
+				if (!p1BaseAlreadyChecked) {
+					results.add(p1Base);
+				}
+			}
+		}
+		return results;
+	}
+
+	// process SourceFiles with mapping info in exactly one program
+	// any associated SourceMapEntry must be a difference
+	// so just check that the range is part of addressSet
+	private AddressSet processDifferingSourceFiles(AddressSetView addressSet,
+			Collection<SourceFile> p1Only, Collection<SourceFile> p2Only,
+			SourceFileManager p1Manager, SourceFileManager p2Manager, TaskMonitor monitor)
+			throws CancelledException {
+		AddressSet result = new AddressSet();
+
+		for (SourceFile p1Source : p1Only) {
+			List<SourceMapEntry> p1Entries = p1Manager.getSourceMapEntries(p1Source);
+			for (SourceMapEntry p1Entry : p1Entries) {
+				monitor.checkCancelled();
+				Address p1Base = p1Entry.getBaseAddress();
+				if (p1Entry.getLength() == 0) {
+					if (addressSet.contains(p1Base)) {
+						result.add(p1Base);
+					}
+					continue;
+				}
+				Address p1End = p1Base.add(p1Entry.getLength() - 1);
+				if (addressSet.contains(p1Base, p1End)) {
+					result.add(p1Base);
+					continue;
+				}
+				if (addressSet.intersects(p1Base, p1End)) {
+					logSkippedEntry(p1Entry, program1);
+				}
+			}
+		}
+
+		for (SourceFile p2Source : p2Only) {
+			List<SourceMapEntry> p2Entries = p2Manager.getSourceMapEntries(p2Source);
+			for (SourceMapEntry p2Entry : p2Entries) {
+				monitor.checkCancelled();
+				Address p2Base = p2Entry.getBaseAddress();
+				Address p1Base = SimpleDiffUtility.getCompatibleAddress(program2, p2Base, program1);
+				if (p1Base == null) {
+					continue;
+				}
+				long p2Length = p2Entry.getLength();
+				if (p2Length == 0) {
+					if (addressSet.contains(p1Base)) {
+						result.add(p1Base);
+					}
+					continue;
+				}
+				Address p2End = p2Base.add(p2Length - 1);
+				Address p1End = SimpleDiffUtility.getCompatibleAddress(program2, p2End, program1);
+				if (p1End == null) {
+					continue;
+				}
+				if (addressSet.contains(p1Base, p1End)) {
+					result.add(p1Base);
+					continue;
+				}
+				if (addressSet.intersects(p1Base, p1End)) {
+					logSkippedEntry(p2Entry, program2);
+				}
+			}
+		}
+		return result;
+	}
+
+	private void logSkippedEntry(SourceMapEntry entry, Program program) {
+		Msg.warn(this,
+			"Skipping source map entry " + entry.toString() + " in program " + program.getName());
+	}
+
 	/** 
 	 * Determines the code unit addresses where there are differences of the
 	 * indicated type between program1 and program2.
 	 * @param cuiType the type of difference on the code unit. These are defined
-	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT_PROPERTY).
+	 * in <CODE>CodeUnit</CODE>. (i.e. CommentType.EOL_PROPERTY).
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
 	 * @param c the comparator to use for determining where the differences are.
@@ -1588,8 +1787,7 @@ public class ProgramDiff {
 	 * @see ghidra.program.model.listing.CodeUnit
 	 */
 	private AddressSet getCuiDiffs(String cuiType, AddressSetView addressSet,
-			CodeUnitComparator<CodeUnit> c,
-			TaskMonitor monitor) throws CancelledException {
+			CodeUnitComparator<CodeUnit> c, TaskMonitor monitor) throws CancelledException {
 		CodeUnitIterator iter1 = listing1.getCodeUnitIterator(cuiType, addressSet, true);
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 		CodeUnitIterator iter2 = listing2.getCodeUnitIterator(cuiType, addressSet2, true);
@@ -1600,7 +1798,7 @@ public class ProgramDiff {
 	 * Determines the code unit addresses where there are comment differences of the
 	 * indicated type between program1 and program2.
 	 * @param commentType the type of comment. These are defined
-	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT).
+	 * in <CODE>CodeUnit</CODE>. (i.e. CommentType.EOL).
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
 	 * @param c the comparator to use for determining where the differences are.
@@ -1612,7 +1810,7 @@ public class ProgramDiff {
 	 * The addresses in this address set are derived from program1.
 	 * @throws CancelledException if the user cancelled the Diff.
 	 */
-	private AddressSet getCommentDiffs(int commentType, AddressSetView addressSet,
+	private AddressSet getCommentDiffs(CommentType commentType, AddressSetView addressSet,
 			CommentTypeComparator c, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter1 = listing1.getCommentAddressIterator(commentType, addressSet, true);
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
@@ -2440,13 +2638,13 @@ public class ProgramDiff {
 	private class CommentTypeComparator extends ProgramDiffComparatorImpl<Address> {
 		/**
 		 * the type of comment to compare
-		 * <br>CodeUnit.PLATE_COMMENT
-		 * <br>CodeUnit.PRE_COMMENT
-		 * <br>CodeUnit.EOL_COMMENT
-		 * <br>CodeUnit.REPEATABLE_COMMENT
-		 * <br>CodeUnit.POST_COMMENT
+		 * <br>CommentType.PLATE
+		 * <br>CommentType.PRE
+		 * <br>CommentType.EOL
+		 * <br>CommentType.REPEATABLE
+		 * <br>CommentType.POST
 		 */
-		int type;
+		CommentType type;
 		private Listing comparatorListing1;
 		private Listing comparatorListing2;
 
@@ -2454,7 +2652,7 @@ public class ProgramDiff {
 		 * Generic constructor for comparing program differences.
 		 * @param type the comment type
 		 */
-		private CommentTypeComparator(int type) {
+		private CommentTypeComparator(CommentType type) {
 			this.type = type;
 			comparatorListing1 = program1.getListing();
 			comparatorListing2 = program2.getListing();
@@ -2682,8 +2880,9 @@ public class ProgramDiff {
 				return false;
 			}
 		}
-		Symbol p1Symbol = p2ToP1Translator.getDestinationProgram().getSymbolTable().getSymbol(
-			p1Ref.getSymbolID());
+		Symbol p1Symbol = p2ToP1Translator.getDestinationProgram()
+				.getSymbolTable()
+				.getSymbol(p1Ref.getSymbolID());
 		Symbol p2Symbol =
 			p2ToP1Translator.getSourceProgram().getSymbolTable().getSymbol(p2Ref.getSymbolID());
 		if (!ProgramDiff.equivalentSymbols(p2ToP1Translator, p1Symbol, p2Symbol)) {
@@ -2871,6 +3070,7 @@ public class ProgramDiff {
 			if (i1 == i2) {
 				return true;
 			}
+			// Checking length and prototype will handle use of length-override
 			if (i1.getLength() != i2.getLength()) {
 				return false;
 			}
@@ -2888,7 +3088,9 @@ public class ProgramDiff {
 			}
 
 			try {
-				if (!Arrays.equals(i1.getBytes(), i2.getBytes())) {
+				byte[] bytes1 = i1.getParsedBytes();
+				byte[] bytes2 = i2.getParsedBytes();
+				if (!Arrays.equals(bytes1, bytes2)) {
 					return false; // bytes differ
 				}
 			}
@@ -2966,6 +3168,30 @@ public class ProgramDiff {
 			// Detect that data type name or path differs?
 			if (!dt1.getPathName().equals(dt2.getPathName())) {
 				return false;
+			}
+
+			// assume only top-level data code units are compared
+			// we should not be a DataComponent (i.e., no parent)
+			if (d1.getParent() != null || d2.getParent() != null) {
+				throw new UnsupportedOperationException("Expecting top-level Data only");
+			}
+
+			// Only top-level Data instance Settings are supported 
+
+			String[] settingNames1 = d1.getNames();
+			Arrays.sort(settingNames1);
+			String[] settingNames2 = d2.getNames();
+			Arrays.sort(settingNames2);
+			if (!Arrays.equals(settingNames1, settingNames2)) {
+				return false;
+			}
+
+			for (int i = 0; i < settingNames1.length; i++) {
+				Object v1 = d1.getValue(settingNames1[i]);
+				Object v2 = d2.getValue(settingNames2[i]);
+				if (!Objects.equals(v1, v2)) {
+					return false;
+				}
 			}
 
 			return true;

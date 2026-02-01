@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,11 @@
  */
 package ghidra.app.util.datatype;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.TreePath;
 
@@ -29,6 +31,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.*;
 import ghidra.util.data.DataTypeParser;
+import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -68,13 +71,33 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	// optional path to initially select in the data type chooser tree
 	private TreePath initiallySelectedTreePath;
 
-	public DataTypeSelectionEditor(ServiceProvider serviceProvider,
+	/**
+	 * Creates a new instance.
+	 * 
+	 * @param dtm the preferred {@link DataTypeManager}.  Extra copies of data types that are 
+	 * already in the preferred DTM will be suppressed.
+	 * @param serviceProvider {@link ServiceProvider} 
+	 * @param allowedDataTypes {@link AllowedDataTypes} option enum, controls what kind of
+	 * data types that will be shown  
+	 */
+	public DataTypeSelectionEditor(DataTypeManager dtm, ServiceProvider serviceProvider,
 			DataTypeParser.AllowedDataTypes allowedDataTypes) {
-		this(serviceProvider.getService(DataTypeManagerService.class), allowedDataTypes);
+		this(dtm, serviceProvider.getService(DataTypeManagerService.class), allowedDataTypes);
 	}
 
-	public DataTypeSelectionEditor(DataTypeManagerService service,
+	/**
+	 * Creates a new instance.
+	 * 
+	 * @param dtm the preferred {@link DataTypeManager}.  Extra copies of data types that are 
+	 * already in the preferred DTM will be suppressed.
+	 * @param service {@link DataTypeManagerService} 
+	 * @param allowedDataTypes {@link AllowedDataTypes} option enum, controls what kind of
+	 * data types that will be shown  
+	 */
+	public DataTypeSelectionEditor(DataTypeManager dtm, DataTypeManagerService service,
 			DataTypeParser.AllowedDataTypes allowedDataTypes) {
+
+		this.dataTypeManager = dtm;
 
 		if (service == null) {
 			throw new NullPointerException("DataTypeManagerService cannot be null");
@@ -84,19 +107,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		this.allowedDataTypes = allowedDataTypes;
 
 		init();
-	}
-
-	/**
-	 * Sets the {@link DataTypeManager} to use when the chooser is forced to parse the given
-	 * data type text to resolve the data type.  If the users chooses a type, then this value
-	 * is not used.  Note that setting this value does not restrict the parser to just the
-	 * given value, but rather the given value is the preferred manager and is thus searched
-	 * first.
-	 *
-	 * @param dataTypeManager the preferred data type manager
-	 */
-	public void setPreferredDataTypeManager(DataTypeManager dataTypeManager) {
-		this.dataTypeManager = dataTypeManager;
 	}
 
 	/**
@@ -116,7 +126,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	private void init() {
 		selectionField = createDropDownSelectionTextField(
-			new DataTypeDropDownSelectionDataModel(dataTypeManagerService));
+			new DataTypeDropDownSelectionDataModel(dataTypeManager, dataTypeManagerService));
 		selectionField.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
@@ -133,16 +143,16 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 		selectionField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 
-		browseButton = new BrowseButton();
-		browseButton.setToolTipText("Browse the Data Manager");
-		browseButton.addActionListener(e -> showDataTypeBrowser());
+		JPanel browsePanel = buildBrowsePanel();
 
 		editorPanel = new JPanel();
+		editorPanel.setOpaque(false);
 		editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
 		editorPanel.add(selectionField);
-		editorPanel.add(Box.createHorizontalStrut(5));
-		editorPanel.add(browseButton);
+		editorPanel.add(browsePanel);
 
+		// This listener is not installed under certain conditions, such as when 
+		// setTabCommitsEdit(true) is called.  
 		keyListener = new KeyAdapter() {
 
 			@Override
@@ -161,6 +171,61 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 				}
 			}
 		};
+	}
+
+	private JPanel buildBrowsePanel() {
+
+		// We override the various sizes to make sure the button does not get too big or too small,
+		// which changes depending upon the theme being used.
+		JPanel browsePanel = new JPanel() {
+
+			@Override
+			public Dimension getPreferredSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			@Override
+			public Dimension getMinimumSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			@Override
+			public Dimension getMaximumSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			private int getBestWidth() {
+				Font f = getFont();
+				FontMetrics fm = getFontMetrics(f);
+				int width = fm.stringWidth(" . . . ");
+				return width;
+			}
+		};
+
+		browsePanel.setLayout(new BorderLayout());
+		browsePanel.setOpaque(false);
+
+		// Space the button so that it pops out visually.  This was chosen by trial-and-error and 
+		// looks reasonable on all themes.  
+		Border empty = BorderFactory.createEmptyBorder(2, 2, 1, 1);
+		browsePanel.setBorder(empty);
+
+		browseButton = new BrowseButton();
+		browseButton.setToolTipText("Browse the Data Manager");
+		browseButton.addActionListener(e -> showDataTypeBrowser());
+
+		browsePanel.add(browseButton);
+
+		return browsePanel;
 	}
 
 	@Override

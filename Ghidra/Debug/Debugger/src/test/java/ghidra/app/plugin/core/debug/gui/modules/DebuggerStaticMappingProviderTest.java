@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.framework.plugintool.util.PluginException;
@@ -43,7 +43,7 @@ import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class)
-public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerStaticMappingPlugin mappingsPlugin;
 	protected DebuggerStaticMappingProvider mappingsProvider;
 
@@ -115,8 +115,9 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		intoProject(program);
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.trace.getMemoryManager()
-					.addRegion(".text", Lifespan.nowOn(0),
+					.addRegion("Memory[.text]", Lifespan.nowOn(0),
 						tb.range(0xdeadbeefL, 0xdeadbeefL + 0xff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -139,7 +140,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 
 		ProgramSelection traceSel =
 			new ProgramSelection(tb.addr(0xdeadbeefL), tb.addr(0xdeadbeefL + 0x0f));
-		listingPlugin.getProvider().setSelection(traceSel);
+		runSwing(() -> listingPlugin.getProvider().setSelection(traceSel));
 		codeViewerPlugin.goTo(new ProgramLocation(program, addr(program, 0xc0de1234L)), true);
 		waitForSwing();
 

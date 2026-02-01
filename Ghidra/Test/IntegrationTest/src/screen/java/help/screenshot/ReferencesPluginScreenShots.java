@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package help.screenshot;
+
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -28,9 +30,8 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.references.*;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.LoadResults;
-import ghidra.app.util.opinion.LoaderService;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.Project;
 import ghidra.program.model.listing.CodeUnit;
@@ -38,7 +39,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
@@ -61,7 +63,7 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 
 		runSwing(() -> {
 			DataTreeDialog dialog = new DataTreeDialog(tool.getToolFrame(),
-				"Choose External Program (" + "Kernel32.dll" + ")", DataTreeDialog.OPEN);
+				"Choose External Program (" + "Kernel32.dll" + ")", OPEN);
 			tool.showDialog(dialog);
 		}, false);
 		captureDialog();
@@ -230,15 +232,24 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr(0x401008));
 		ReferencesPlugin plugin = getPlugin(tool, ReferencesPlugin.class);
 		final EditReferenceDialog dialog = new EditReferenceDialog(plugin);
-		dialog.initDialog(cu, 0, 0, null);
+
 		runSwing(() -> {
-			JRadioButton choiceButton = (JRadioButton) getInstanceField("memRefChoice", dialog);
-			invokeInstanceMethod("refChoiceActivated", dialog,
-				new Class<?>[] { JRadioButton.class }, new Object[] { choiceButton });
+			dialog.initDialog(cu, 0, 0, null);
 		}, true);
-		showDialogWithoutBlocking(tool, dialog);
+
+		JRadioButton choiceButton = (JRadioButton) getInstanceField("memRefChoice", dialog);
+		pressButton(choiceButton);
 
 		final JPanel panel = (JPanel) getInstanceField("memRefPanel", dialog);
+
+		runSwing(() -> {
+			JCheckBox ovCheckbox =
+				(JCheckBox) getInstanceField("includeOtherOverlaysCheckbox", panel);
+			ovCheckbox.setSelected(true);
+		});
+
+		showDialogWithoutBlocking(tool, dialog);
+
 		JButton button = (JButton) getInstanceField("addrHistoryButton", panel);
 		Rectangle buttonBounds = button.getBounds();
 		buttonBounds = SwingUtilities.convertRectangle(button.getParent(), buttonBounds, panel);
@@ -246,7 +257,8 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 		buttonBounds.y += buttonBounds.height / 2 + 20;  // half button height + padding added by takeSnippet()
 		System.out.println("Button bounds = " + buttonBounds);
 		Rectangle bounds = panel.getBounds();
-		bounds.height = 3 * bounds.height / 5;  // get rid of empty space
+		bounds.y -= 10;
+		bounds.height = 4 * bounds.height / 5;  // get rid of empty space
 		bounds = SwingUtilities.convertRectangle(panel.getParent(), bounds, null);
 		captureDialog();
 		takeSnippet(bounds);
@@ -257,7 +269,8 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 			checkbox.setSelected(true);
 		});
 		bounds = panel.getBounds();
-		bounds.height = 3 * bounds.height / 5;
+		bounds.y -= 10;
+		bounds.height = 4 * bounds.height / 5;
 		bounds = SwingUtilities.convertRectangle(panel.getParent(), bounds, null);
 		captureDialog();
 		takeSnippet(bounds);
@@ -288,20 +301,15 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 
 	}
 
-	private void importFile(File file) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		String programNameOverride = null;
+	private void importFile(File file)
+			throws CancelledException, VersionException, IOException, InvalidNameException {
 		Project project = env.getProject();
-		LoadResults<Program> loadResults = AutoImporter.importFresh(file, project,
-			project.getProjectData().getRootFolder().getPathname(), this, new MessageLog(),
-			TaskMonitor.DUMMY, LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-			programNameOverride, OptionChooser.DEFAULT_OPTIONS);
-
-		try {
-			loadResults.getPrimary().save(project, new MessageLog(), TaskMonitor.DUMMY);
-		}
-		finally {
-			loadResults.release(this);
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.projectFolderPath(project.getProjectData().getRootFolder().getPathname())
+				.load()) {
+			loadResults.getPrimary().save(TaskMonitor.DUMMY);
 		}
 	}
 

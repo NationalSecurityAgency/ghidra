@@ -40,7 +40,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.*;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
@@ -48,9 +48,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.database.ObjectKey;
@@ -94,9 +94,8 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class MappingTableModel
-			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
-					StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
+	protected static class MappingTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
+			StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
 
 		public MappingTableModel(PluginTool tool) {
 			super(tool, "Mappings", StaticMappingTableColumns.class,
@@ -107,9 +106,9 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 
 	protected class ListenerForStaticMappingDisplay extends TraceDomainObjectListener {
 		public ListenerForStaticMappingDisplay() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
-			listenFor(TraceStaticMappingChangeType.ADDED, this::staticMappingAdded);
-			listenFor(TraceStaticMappingChangeType.DELETED, this::staticMappingDeleted);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+			listenFor(TraceEvents.MAPPING_ADDED, this::staticMappingAdded);
+			listenFor(TraceEvents.MAPPING_DELETED, this::staticMappingDeleted);
 		}
 
 		private void objectRestored() {
@@ -216,12 +215,15 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		mainPanel.add(new JScrollPane(mappingTable));
 		mappingFilterPanel = new GhidraTableFilterPanel<>(mappingTable, mappingTableModel);
 		mainPanel.add(mappingFilterPanel, BorderLayout.SOUTH);
-
 		mappingTable.getSelectionModel().addListSelectionListener(evt -> {
 			myActionContext = new DebuggerStaticMappingActionContext(this,
 				mappingFilterPanel.getSelectedItems(), mappingTable);
 			contextChanged();
 		});
+
+		String namePrefix = "Static Mappings";
+		mappingTable.setAccessibleNamePrefix(namePrefix);
+		mappingFilterPanel.setAccessibleNamePrefix(namePrefix);
 
 		TableColumnModel columnModel = mappingTable.getColumnModel();
 		TableColumn dynAddrCol =

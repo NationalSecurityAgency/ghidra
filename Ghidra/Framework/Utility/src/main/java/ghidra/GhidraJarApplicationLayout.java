@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ import java.util.*;
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
-import utility.application.ApplicationLayout;
+import ghidra.util.Msg;
 import utility.module.ModuleUtilities;
 
 /**
- * The Ghidra jar application layout defines the customizable elements of the Ghidra application's 
+ * The Ghidra jar application layout defines the customizable elements of the Ghidra application's
  * directory structure when running in "single jar mode."
  */
 public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
@@ -48,13 +48,14 @@ public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
 	}
 
 	@Override
-	protected Collection<ResourceFile> findGhidraApplicationRootDirs() {
-		List<ResourceFile> dirs = new ArrayList<>();
+	protected SequencedCollection<ResourceFile> findGhidraApplicationRootDirs() {
 		String appPropPath = "/_Root/Ghidra/" + ApplicationProperties.PROPERTY_FILE;
-		URL appPropUrl = ApplicationLayout.class.getResource(appPropPath);
-		ResourceFile rootDir = fromUrl(appPropUrl).getParentFile();
-		dirs.add(rootDir);
-		return dirs;
+		URL appPropUrl = getClass().getResource(appPropPath);
+		if (appPropUrl == null) {
+			throw new IllegalStateException(
+				"The Ghidra Jar must have an application.properties file at " + appPropPath);
+		}
+		return List.of(fromUrl(appPropUrl).getParentFile());
 	}
 
 	@Override
@@ -79,7 +80,12 @@ public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
 
 	@Override
 	protected List<ResourceFile> findExtensionInstallationDirectories() {
-		URL extensionInstallUrl = ApplicationLayout.class.getResource("/_Root/Ghidra/Extensions");
+		String path = "/_Root/Ghidra/Extensions";
+		URL extensionInstallUrl = getClass().getResource(path);
+		if (extensionInstallUrl == null) {
+			Msg.debug(this, "No Extensions dir found at " + path);
+			return List.of();
+		}
 		ResourceFile extensionInstallDir = fromUrl(extensionInstallUrl);
 		return Collections.singletonList(extensionInstallDir);
 	}
@@ -94,7 +100,7 @@ public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
 		String urlString = url.toExternalForm();
 		try {
 			// Decode the URL to replace things like %20 with real spaces.
-			// Note: can't use URLDecoder.decode(String, Charset) because Utility must be 
+			// Note: can't use URLDecoder.decode(String, Charset) because Utility must be
 			// Java 1.8 compatible.
 			urlString = URLDecoder.decode(urlString, "UTF-8");
 		}

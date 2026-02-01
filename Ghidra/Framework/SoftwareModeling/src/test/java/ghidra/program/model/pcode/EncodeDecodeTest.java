@@ -31,7 +31,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	private AddressFactory addrFactory;
 
-	private void testSignedAttributes(Encoder encoder, Decoder decoder)
+	private void testSignedAttributes(CachedEncoder encoder, Decoder decoder)
 			throws DecoderException, IOException
 
 	{
@@ -50,7 +50,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testSignedAttributes");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int el = decoder.openElement(ELEM_ADDR);
 		int flags = 0;
@@ -109,7 +109,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		assertEquals(flags, 0x1ff);
 	}
 
-	private void testUnsignedAttributes(Encoder encoder, Decoder decoder)
+	private void testUnsignedAttributes(CachedEncoder encoder, Decoder decoder)
 			throws DecoderException, IOException
 
 	{
@@ -129,7 +129,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testUnsignedAttributes");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int el = decoder.openElement(ELEM_ADDR);
 		long val = decoder.readUnsignedInteger(ATTRIB_ALIGN);
@@ -155,7 +155,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		decoder.closeElement(el);
 	}
 
-	private void testMixedAttributes(Encoder encoder, Decoder decoder)
+	private void testMixedAttributes(CachedEncoder encoder, Decoder decoder)
 			throws DecoderException, IOException {
 		encoder.openElement(ELEM_ADDR);
 		encoder.writeSignedInteger(ATTRIB_ALIGN, 456);
@@ -165,7 +165,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testMixedAttributes");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int alignVal = -1;
 		int extrapopVal = -1;
@@ -187,7 +187,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		assertEquals(extrapopVal, 800);
 	}
 
-	private void testAttributes(Encoder encoder, Decoder decoder)
+	private void testAttributes(CachedEncoder encoder, Decoder decoder)
 			throws DecoderException, IOException
 
 	{
@@ -209,7 +209,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testAttributes");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int el = decoder.openElement(ELEM_DATA);
 		boolean bval = decoder.readBool(ATTRIB_ALIGN);
@@ -229,7 +229,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		decoder.closeElement(el);
 	}
 
-	private void testHierarchy(Encoder encoder, Decoder decoder)
+	private void testHierarchy(CachedEncoder encoder, Decoder decoder)
 			throws IOException, DecoderException
 
 	{
@@ -273,7 +273,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testHierarchy");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int el1 = decoder.openElement(ELEM_DATA);
 		// Skip over the bool
@@ -303,7 +303,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		decoder.closeElementSkipping(el1);
 	}
 
-	private void testUnexpectedEof(Encoder encoder, Decoder decoder) throws IOException
+	private void testUnexpectedEof(CachedEncoder encoder, Decoder decoder) throws IOException
 
 	{
 		encoder.openElement(ELEM_DATA);
@@ -316,7 +316,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 			encoder.writeTo(outStream);
 			ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 			decoder.open(1 << 20, "testAttributes");
-			decoder.ingestStream(inStream);
+			decoder.ingestStreamToNextTerminator(inStream);
 			decoder.endIngest();
 			int el1 = decoder.openElement(ELEM_DATA);
 			int el2 = decoder.openElement(ELEM_INPUT);
@@ -329,7 +329,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		assertTrue(sawUnexpectedError);
 	}
 
-	public void testNoremaining(Encoder encoder, Decoder decoder)
+	public void testNoremaining(CachedEncoder encoder, Decoder decoder)
 			throws IOException, DecoderException
 
 	{
@@ -341,7 +341,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testNoremaining");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		decoder.openElement(ELEM_INPUT);
 		int el2 = decoder.openElement(ELEM_OFF);
@@ -356,7 +356,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		assertTrue(sawNoRemaining);
 	}
 
-	private void testOpenmismatch(Encoder encoder, Decoder decoder)
+	private void testOpenmismatch(CachedEncoder encoder, Decoder decoder)
 			throws IOException, DecoderException
 
 	{
@@ -368,7 +368,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testOpenmismatch");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		decoder.openElement(ELEM_INPUT);
 		boolean sawOpenMismatch = false;
@@ -381,7 +381,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		assertTrue(sawOpenMismatch);
 	}
 
-	private void testClosemismatch(Encoder encoder, Decoder decoder)
+	private void testClosemismatch(CachedEncoder encoder, Decoder decoder)
 			throws IOException, DecoderException
 
 	{
@@ -393,7 +393,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.writeTo(outStream);
 		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
 		decoder.open(1 << 20, "testClosemismatch");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int el1 = decoder.openElement(ELEM_INPUT);
 		boolean sawCloseMismatch = false;
@@ -419,7 +419,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMarshalSignedPacked() throws DecoderException, IOException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testSignedAttributes(encoder, decoder);
@@ -427,7 +427,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalUnsignedPacked() throws DecoderException, IOException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testUnsignedAttributes(encoder, decoder);
@@ -435,7 +435,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalMixedPacked() throws DecoderException, IOException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testMixedAttributes(encoder, decoder);
@@ -443,7 +443,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalAttribsPacked() throws DecoderException, IOException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testAttributes(encoder, decoder);
@@ -451,7 +451,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalHierarchyPacked() throws DecoderException, IOException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testHierarchy(encoder, decoder);
@@ -459,7 +459,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalUnexpectedPacked() throws IOException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testUnexpectedEof(encoder, decoder);
@@ -467,7 +467,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalNoremainingPacked() throws IOException, DecoderException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testNoremaining(encoder, decoder);
@@ -475,7 +475,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalOpenmismatchPacked() throws IOException, DecoderException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testOpenmismatch(encoder, decoder);
@@ -483,7 +483,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 
 	@Test
 	public void marshalClosemismatchPacked() throws IOException, DecoderException {
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testClosemismatch(encoder, decoder);
@@ -492,7 +492,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 	@Test
 	public void marshalBufferpad() throws IOException, DecoderException {
 		assertEquals(LinkedByteBuffer.BUFFER_SIZE, 1024);
-		PackedEncode encoder = new PackedEncode();
+		PatchPackedEncode encoder = new PatchPackedEncode();
 		encoder.clear();
 		encoder.openElement(ELEM_INPUT);		// 1-byte
 		for (int i = 0; i < 511; ++i) {
@@ -506,7 +506,7 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		ByteArrayInputStream inStream = new ByteArrayInputStream(bytesOut);
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		decoder.open(1 << 20, "marshalBufferpad");
-		decoder.ingestStream(inStream);
+		decoder.ingestStreamToNextTerminator(inStream);
 		decoder.endIngest();
 		int el = decoder.openElement(ELEM_INPUT);
 		for (int i = 0; i < 511; ++i) {

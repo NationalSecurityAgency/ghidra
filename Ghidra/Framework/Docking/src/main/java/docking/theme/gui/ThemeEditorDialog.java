@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 
 	private JButton saveButton;
 	private GhidraComboBox<LafType> combo;
-	private ItemListener comboListener = this::themeComboChanged;
+	private ItemListener comboListener = this::lafTypeComboChanged;
 	private ThemeListener listener = new DialogThemeListener();
 	private JTabbedPane tabbedPane;
 
@@ -174,31 +174,76 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		updateButtons();
 	}
 
-	private void themeComboChanged(ItemEvent e) {
+	private void resetSelectedLookAndFeel() {
+		Swing.runLater(() -> {
+
+			LafType lafType = themeManager.getLookAndFeelType();
+			Object currentItem = combo.getSelectedItem();
+			if (lafType == currentItem) {
+				return;
+			}
+
+			try {
+				combo.removeItemListener(comboListener);
+				combo.setSelectedItem(lafType);
+			}
+			finally {
+				combo.addItemListener(comboListener);
+			}
+		});
+	}
+
+	private void lafTypeComboChanged(ItemEvent e) {
 
 		if (e.getStateChange() != ItemEvent.SELECTED) {
 			return;
 		}
 
 		LafType lafType = (LafType) e.getItem();
-		Swing.runLater(() -> {
+		LafType currentLafType = themeManager.getLookAndFeelType();
+		if (currentLafType == lafType) {
+			return;
+		}
 
-			themeManager.setLookAndFeel(lafType, lafType.usesDarkDefaults());
-			if (lafType == LafType.GTK) {
-				setStatusText(
-					"Warning - Themes using the GTK LookAndFeel do not support changing java " +
-						"component colors, fonts or icons.",
-					MessageType.ERROR);
-			}
-			else {
-				setStatusText("");
-			}
-			colorTree.rebuild();
-			colorTable.reloadAll();
-			paletteTable.reloadAll();
-			fontTable.reloadAll();
-			iconTable.reloadAll();
-		});
+		if (!themeManager.hasThemeValueChanges()) {
+			// This allows the user to toggle the them lafType repeatedly without having to save, as
+			// long as they have not changed any other theme values.
+			setLookAndFeel(lafType);
+			return;
+		}
+
+		//@formatter:off
+		int result = OptionDialog.showOptionDialog(null, "Discard Changes?",
+			"Changing the Look and Feel type will cause you to lose your changes.\n" +
+			"If you would like to keep your changes, cancel this dialog and then save the theme\n" +
+			"Would you like to continue?",
+			"Lose Changes");
+		//@formatter:on
+		if (result == OptionDialog.CANCEL_OPTION) {
+			resetSelectedLookAndFeel();
+			return;
+		}
+
+		setLookAndFeel(lafType);
+	}
+
+	private void setLookAndFeel(LafType lafType) {
+
+		themeManager.setLookAndFeel(lafType, lafType.usesDarkDefaults());
+		if (lafType == LafType.GTK) {
+			setStatusText(
+				"Warning - Themes using the GTK LookAndFeel do not support changing java " +
+					"component colors, fonts or icons.",
+				MessageType.WARNING);
+		}
+		else {
+			setStatusText("");
+		}
+		colorTree.rebuild();
+		colorTable.reloadAll();
+		paletteTable.reloadAll();
+		fontTable.reloadAll();
+		iconTable.reloadAll();
 	}
 
 	private void updateButtons() {
@@ -212,6 +257,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		panel.setLayout(new BorderLayout());
 		panel.add(buildControlPanel(), BorderLayout.NORTH);
 		panel.add(buildTabedTables());
+		panel.getAccessibleContext().setAccessibleName("Theme Editor");
 		return panel;
 	}
 
@@ -220,13 +266,13 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildThemeCombo(), BorderLayout.WEST);
 		panel.setName("gthemePanel");
+		panel.getAccessibleContext().setAccessibleName("Theme");
 		return panel;
 	}
 
 	private Component buildThemeCombo() {
 		JPanel panel = new JPanel();
 		List<LafType> lafs = getSupportedLookAndFeels();
-
 		combo = new GhidraComboBox<>(lafs);
 		combo.setSelectedItem(themeManager.getActiveTheme().getLookAndFeelType());
 		combo.addItemListener(comboListener);
@@ -234,12 +280,14 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		panel.add(new JLabel("Look And Feel: "), BorderLayout.WEST);
 		panel.add(combo);
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		panel.getAccessibleContext().setAccessibleName("Themes");
 		return panel;
 	}
 
 	private List<LafType> getSupportedLookAndFeels() {
 		LafType[] lafTypes = LafType.values();
-		Comparator<LafType> comparator = (a, b) -> a.getName().compareTo(b.getName());
+		Comparator<LafType> comparator =
+			(a, b) -> a.getDisplayString().compareTo(b.getDisplayString());
 		return Arrays.stream(lafTypes).filter(laf -> laf.isSupported()).sorted(comparator).toList();
 	}
 
@@ -249,17 +297,22 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		valuesCache = new GThemeValuesCache(themeManager);
 
 		colorTable = new ThemeColorTable(themeManager, valuesCache);
+		colorTable.getAccessibleContext().setAccessibleName("Colors");
 		iconTable = new ThemeIconTable(themeManager, valuesCache);
+		iconTable.getAccessibleContext().setAccessibleName("Icons");
 		fontTable = new ThemeFontTable(themeManager, valuesCache);
+		fontTable.getAccessibleContext().setAccessibleName("Fonts");
 		colorTree = new ThemeColorTree(themeManager);
+		colorTree.getAccessibleContext().setAccessibleName("Color");
 		paletteTable = new ThemeColorPaletteTable(themeManager, valuesCache);
+		paletteTable.getAccessibleContext().setAccessibleName("Color Palette");
 
 		tabbedPane.add("Colors", colorTable);
 		tabbedPane.add("Fonts", fontTable);
 		tabbedPane.add("Icons", iconTable);
 		tabbedPane.add("Color Tree", colorTree);
 		tabbedPane.add("Palette", paletteTable);
-
+		tabbedPane.getAccessibleContext().setAccessibleName("Theme Details");
 		return tabbedPane;
 	}
 
@@ -267,6 +320,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		saveButton = new JButton("Save");
 		saveButton.setMnemonic('S');
 		saveButton.setName("Save");
+		saveButton.getAccessibleContext().setAccessibleName("Save");
 		saveButton.addActionListener(e -> saveCallback());
 		saveButton.setToolTipText("Saves changed values to a new Theme");
 		return saveButton;
@@ -303,6 +357,10 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		return contextProvider.getActionContext(event);
 	}
 
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
 	private class DialogThemeListener implements ThemeListener {
 		@Override
 		public void themeChanged(ThemeEvent event) {
@@ -324,7 +382,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			}
 
 			updateButtons();
+			resetSelectedLookAndFeel();
 		}
 	}
-
 }

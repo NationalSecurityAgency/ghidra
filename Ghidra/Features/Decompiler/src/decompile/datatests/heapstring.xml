@@ -1,0 +1,70 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa48ba4d6573736167653a488b
+07488910c6400820c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100040" readonly="true">
+f30f1efa488b07660f6f05f1000000b9
+0a000000c7401058585858668948140f
+110083fe03740983fe04741cc3
+</bytechunk>
+<bytechunk space="ram" offset="0x100070" readonly="true">
+488b07488d44100ec70054485245c640
+0445c30000000000488b07c744100f46
+4f5552c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000a0" readonly="true">
+f30f1efa488b0748ba454c4556454e54
+5748891048ba454e5457454c56454889
+5004c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000c5" readonly="true">
+          488b0748ba770061007200
+6e0048891048ba69006e006700210048
+895008c348b84e454741544956454889
+47f9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100140" readonly="true">
+546865206e756d626572206973205858
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="fillin"/>
+<symbol space="ram" offset="0x100040" name="fillin_edit"/>
+<symbol space="ram" offset="0x1000a0" name="overlap"/>
+<symbol space="ram" offset="0x1000c5" name="fillin_wide"/>
+<symbol space="ram" offset="0x1000e4" name="negative_ptr"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line struct mystring { char *val; int4 len; };</com>
+  <com>parse line struct mywide { wchar2 *wval; int4 len; };</com>
+  <com>parse line extern void fillin(mystring *ptr);</com>
+  <com>parse line extern void fillin_edit(mystring *ptr,int4 extra,int8 pos);</com>
+  <com>parse line extern void overlap(mystring *ptr);</com>
+  <com>parse line extern void fillin_wide(mywide *ptr);</com>
+  <com>parse line extern void negative_ptr(char *negptr);</com>
+  <com>lo fu fillin</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu fillin_edit</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu overlap</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu fillin_wide</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu negative_ptr</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Heap string #1" min="1" max="1">builtin_strncpy\(ptr-\>val,"Message: ",9\);</stringmatch>
+<stringmatch name="Heap string #2" min="1" max="1">builtin_strncpy\(ptr-\>val,"The number is XXXXXX\\n",0x16\);</stringmatch>
+<stringmatch name="Heap string #3" min="1" max="1">builtin_strncpy\(ptr-\>val \+ pos \+ 0xe,"THREE",5\);</stringmatch>
+<stringmatch name="Heap string #4" min="1" max="1">builtin_strncpy\(ptr-\>val \+ pos \+ 0xf,"FOUR",4\);</stringmatch>
+<stringmatch name="Heap string #5" min="1" max="1">builtin_strncpy\(ptr-\>val,"ELEVENTWELVE",0xc\);</stringmatch>
+<stringmatch name="Heap string #6" min="1" max="1">builtin_memcpy\(ptr-\>wval,L"warning!",0x10\);</stringmatch>
+<stringmatch name="Heap string #7" min="1" max="1">builtin_strncpy\(negptr \+ -7,"NEGATIVE",8\);</stringmatch>
+</decompilertest>

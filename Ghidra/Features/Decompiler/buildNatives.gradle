@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ if (findProject(':Generic') == null) {
  * Define the "native build model" for building the decompiler executables.
  */
 model {
-	
 	// Define the source files that are compiled and linked to become the decompiler.
 	// The decompiler source is a bit weird in that all the cpp and headers all live in
 	// the same directory with other files that are not used by the decompiler.
@@ -39,10 +38,13 @@ model {
 									
 			// these tell gradle for which platforms to build a decompiler executable.
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -71,6 +73,7 @@ model {
 		                include "cpool.cc"
 		                include "comment.cc"
 						include "stringmanage.cc"
+						include "modelrules.cc"
 		                include "fspec.cc"
 		                include "action.cc"
 		                include "loadimage.cc"
@@ -84,6 +87,8 @@ model {
 		                include "emulateutil.cc"
 		                include "flow.cc"
 		                include "userop.cc"
+		                include "expression.cc"
+		                include "multiprecision.cc"
 		                include "funcdata.cc"
 		                include "funcdata_block.cc"
 		                include "funcdata_varnode.cc"
@@ -99,6 +104,7 @@ model {
 		                include "blockaction.cc"
 		                include "merge.cc"
 		                include "double.cc"
+		                include "constseq.cc"
 		                include "coreaction.cc"
 		                include "condexe.cc"
 		                include "override.cc"
@@ -122,6 +128,8 @@ model {
 		                include "ghidra_process.cc"
 		                include "comment_ghidra.cc"
 						include "string_ghidra.cc"
+						include "signature.cc"
+						include "signature_ghidra.cc"
 		         //       include "callgraph.cc"			// uncomment for debug
 		         //       include "ifacedecomp.cc"			// uncomment for debug
 		         //       include "ifaceterm.cc"			// uncomment for debug
@@ -141,10 +149,13 @@ model {
 		
 		sleigh(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -169,6 +180,8 @@ model {
 						include "slghpattern.cc"
 						include "semantics.cc"
 						include "context.cc"
+						include "slaformat.cc"
+						include "compression.cc"
 						include "filemanage.cc"
 						include "slgh_compile.cc"
 						
@@ -183,7 +196,21 @@ model {
 						srcDir "src/decompile/cpp"
 					}
 				} // end cpp
+				
+				c {
+					source {
+						srcDir "src/decompile/zlib"
+						include "*.c"
+					}
+				}
 			} // end sources (sleigh)
+			
+			binaries {
+				all{ b ->
+					b.cppCompiler.define "LOCAL_ZLIB"
+					b.cCompiler.define "NO_GZIP"
+				}
+			} // end binaries.all (sleigh)
 		} // end sleigh
 		
 	}  // end components
@@ -206,9 +233,14 @@ model {
 				b.cppCompiler.args "/EHsc"
 				b.cppCompiler.define "_SECURE_SCL=0"
 				b.cppCompiler.define "_HAS_ITERATOR_DEBUGGING=0"
+				b.cppCompiler.args "/W3"
+				b.cppCompiler.args "/O2"
+				b.cppCompiler.args "/Oy"			// Omit frame pointer
+				b.cppCompiler.args "/GL"
 				// b.cppCompiler.args "/Zi"		// for DEBUG, uncomment this line
 				// b.cppCompiler.args "/FS"		// for DEBUG, uncomment this line
 				// b.linker.args "/DEBUG"		// for DEBUG, uncomment this line
+				b.linker.args "/LTCG"
 				if (b.targetPlatform.operatingSystem.windows) {
 					b.cppCompiler.define "WINDOWS"
 					b.cppCompiler.define "_WINDOWS"
@@ -218,7 +250,14 @@ model {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
 					}	
-				}	
+				}
+				b.cCompiler.args "/W3"
+				b.cCompiler.args "/O2"
+				b.cCompiler.args "/Oy"			// Omit frame pointer
+				b.cCompiler.args "/GL"
+				b.cCompiler.define "_CRT_SECURE_NO_DEPRECATE"
+				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
+				b.cCompiler.define "ZLIB_WINAPI"
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"

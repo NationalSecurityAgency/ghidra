@@ -65,28 +65,32 @@ public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
 
 		repositoryServerAdapter =
 			ClientUtil.getRepositoryServer(url.getHost(), url.getPort(), true);
+		if (!repositoryServerAdapter.isConnected()) {
+			if (repositoryServerAdapter.isCancelled()) {
+				return statusCode;
+			}
+			Throwable t = repositoryServerAdapter.getLastConnectError();
+			if (t instanceof LoginException) {
+				statusCode = StatusCode.UNAUTHORIZED;
+			}
+			return statusCode;
+		}
 
 		if (repositoryName == null) {
+			if (repositoryServerAdapter.isReadOnly()) {
+				this.readOnly = true; // write access not permitted
+				Msg.warn(this, "User does not have write permission for server");
+			}
 			statusCode = StatusCode.OK;
 			return statusCode;
 		}
 
 		repositoryAdapter = repositoryServerAdapter.getRepository(repositoryName);
-		if (repositoryServerAdapter.isConnected()) {
-			try {
-				repositoryAdapter.connect();
-			}
-			catch (RepositoryNotFoundException e) {
-				statusCode = StatusCode.NOT_FOUND;
-				return statusCode;
-			}
+		try {
+			repositoryAdapter.connect();
 		}
-		else if (!repositoryServerAdapter.isCancelled()) {
-			Throwable t = repositoryServerAdapter.getLastConnectError();
-			if (t instanceof LoginException) {
-				statusCode = StatusCode.UNAUTHORIZED;
-			}
-			//throw new NotConnectedException("Not connected to repository server", t);
+		catch (RepositoryNotFoundException e) {
+			statusCode = StatusCode.NOT_FOUND;
 			return statusCode;
 		}
 

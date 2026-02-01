@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,12 +60,17 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 				// with Tool-based service.
 				dtList = new ArrayList<>(super.getSortedDataTypeList());
 				program.getDataTypeManager().getAllDataTypes(dtList);
-				Collections.sort(dtList, new NameComparator());
+				Collections.sort(dtList, DataTypeComparator.INSTANCE);
 				return dtList;
 			}
 
 			@Override
 			public DataType getDataType(String filterText) {
+				return promptForDataType(filterText);
+			}
+
+			@Override
+			public DataType promptForDataType(String filterText) {
 				// method only called if no results or multiple results were found.
 				// Tool based implementation will prompt user, test will pick last one
 				ArrayList<DataType> list = new ArrayList<>();
@@ -81,17 +86,6 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		};
 
 		parser = new FunctionSignatureParser(program.getDataTypeManager(), service);
-	}
-
-	private class NameComparator implements Comparator<DataType> {
-		@Override
-		public int compare(DataType d1, DataType d2) {
-			int c = d1.getName().compareTo(d2.getName());
-			if (c == 0) {
-				return d1.getCategoryPath().compareTo(d2.getCategoryPath());
-			}
-			return c;
-		}
 	}
 
 	@Test
@@ -391,16 +385,16 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		FunctionSignature f = fun("int", "Bob");
 		FunctionDefinitionDataType dt =
 			parser.parse(f, "unsigned long[3] Foo(unsigned long long *, signed int[3], StructA*)");
-		assertTrue((new ArrayDataType(UnsignedLongDataType.dataType, 3, -1)).isEquivalent(
-			dt.getReturnType()));
+		assertTrue((new ArrayDataType(UnsignedLongDataType.dataType, 3, -1))
+				.isEquivalent(dt.getReturnType()));
 		assertEquals("Foo", dt.getName());
 		ParameterDefinition[] args = dt.getArguments();
 		assertEquals(3, args.length);
-		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType)).isEquivalent(
-			args[0].getDataType()));
+		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType))
+				.isEquivalent(args[0].getDataType()));
 		assertEquals("", args[0].getName());
-		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1)).isEquivalent(
-			args[1].getDataType()));
+		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1))
+				.isEquivalent(args[1].getDataType()));
 		assertEquals("", args[1].getName());
 		assertTrue(args[2].getDataType() instanceof Pointer);
 		assertEquals("", args[2].getName());
@@ -430,11 +424,11 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 			"unsigned long[3] Bob(unsigned long long *foo, signed int[3] bar, StructA *s)");
 		ParameterDefinition[] args = dt.getArguments();
 		assertEquals(3, args.length);
-		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType)).isEquivalent(
-			args[0].getDataType()));
+		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType))
+				.isEquivalent(args[0].getDataType()));
 		assertEquals("foo", args[0].getName());
-		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1)).isEquivalent(
-			args[1].getDataType()));
+		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1))
+				.isEquivalent(args[1].getDataType()));
 		assertEquals("bar", args[1].getName());
 		assertTrue(args[2].getDataType() instanceof Pointer);
 		assertEquals("s", args[2].getName());

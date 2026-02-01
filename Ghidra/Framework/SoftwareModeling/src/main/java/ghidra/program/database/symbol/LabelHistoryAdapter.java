@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
@@ -43,10 +44,10 @@ abstract class LabelHistoryAdapter {
 	static final int HISTORY_USER_COL = 3;
 	static final int HISTORY_DATE_COL = 4;
 
-	static LabelHistoryAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static LabelHistoryAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new LabelHistoryAdapterV0(dbHandle, true);
 		}
 
@@ -58,11 +59,11 @@ abstract class LabelHistoryAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			LabelHistoryAdapter adapter = findReadOnlyAdapter(dbHandle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = LabelHistoryAdapterV0.upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;

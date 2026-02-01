@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.framework.cmd.BinaryAnalysisCommand;
-import ghidra.framework.options.Options;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -54,9 +53,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 	@Override
 	public boolean canApply(Program program) {
 		try {
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			String format = options.getString("Executable Format", null);
-			if (!BinaryLoader.BINARY_NAME.equals(format)) {
+			if (!BinaryLoader.BINARY_NAME.equals(program.getExecutableFormat())) {
 				return false;
 			}
 			Memory memory = program.getMemory();
@@ -187,7 +184,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			createFragment(sectionDT.getName(), sectionStart, sectionDT.getLength());
 
 			CodeUnit cu = listing.getCodeUnitAt(addr(offset));
-			cu.setComment(CodeUnit.PLATE_COMMENT,
+			cu.setComment(CommentType.PLATE,
 				"#" + i + ") " + name + " at 0x" + Long.toHexString(sections[i].getAddress()));
 
 			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
@@ -206,7 +203,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			}
 
 			cu = listing.getCodeUnitAt(dataStart);
-			cu.setComment(CodeUnit.PRE_COMMENT, sections[i].getNameAsString() + " Size: 0x" +
+			cu.setComment(CommentType.PRE, sections[i].getNameAsString() + " Size: 0x" +
 				Long.toHexString(sections[i].getSize()));
 		}
 	}
@@ -231,7 +228,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		for (int i = 0; i < programHeaders.length; i++) {
 			monitor.checkCancelled();
 			Data d = array.getComponent(i);
-			d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
+			d.setComment(CommentType.EOL, programHeaders[i].getComment());
 
 			Address addr = addr(programHeaders[i].getOffset());
 
@@ -241,8 +238,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 	private void processInterpretor(ElfHeader elf, ByteProvider provider, Program program)
 			throws CancelledException {
-		for (ElfProgramHeader programHeader : elf.getProgramHeaders(
-			ElfProgramHeaderConstants.PT_INTERP)) {
+		for (ElfProgramHeader programHeader : elf
+				.getProgramHeaders(ElfProgramHeaderConstants.PT_INTERP)) {
 			monitor.checkCancelled();
 			long offset = programHeader.getOffset();
 			if (offset == 0) {
@@ -295,7 +292,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 					dynamicType != null ? (dynamicType.name + " - " + dynamicType.description)
 							: ("DT_0x" + StringUtilities.pad(Integer.toHexString(tagType), '0', 8));
 
-				dynamicData.setComment(CodeUnit.EOL_COMMENT, comment);
+				dynamicData.setComment(CommentType.EOL, comment);
 
 				Data valueData = dynamicData.getComponent(1);
 
@@ -326,7 +323,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		if (dynamicStringTable != null) {
 			String str = dynamicStringTable.readString(reader, dynamic.getValue());
 			if (str != null && str.length() != 0) {
-				data.setComment(CodeUnit.EOL_COMMENT, str);
+				data.setComment(CommentType.EOL, str);
 			}
 		}
 	}
@@ -342,8 +339,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		}
 
 		Address refAddr = addr(programLoadHeader.getOffset(dynamicRefAddr));
-		program.getReferenceManager().addMemoryReference(fromAddr, refAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(fromAddr, refAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 
 		try {
 			createLabel(refAddr, "_" + dynamic.getTagAsString(), true, SourceType.ANALYSIS);
@@ -387,7 +384,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 				try {
 					Address currAddr = symbolTableAddr.add(j * symbolTable2.getEntrySize());
-					listing.setComment(currAddr, CodeUnit.EOL_COMMENT,
+					listing.setComment(currAddr, CommentType.EOL,
 						name + " at 0x" + Long.toHexString(symbols[j].getValue()));
 				}
 				catch (Exception e) {
@@ -421,7 +418,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 					createData(relocationTableAddress, dataType);
 				}
 				else {
-					listing.setComment(relocationTableAddress, CodeUnit.PRE_COMMENT,
+					listing.setComment(relocationTableAddress, CommentType.PRE,
 						"ELF Relocation Table (markup not yet supported)");
 				}
 			}

@@ -27,7 +27,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.Category;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.EnumDataType;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.task.TaskMonitor;
 
@@ -386,7 +386,7 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
 			for (int i = 0; i < ev.numRecords(); i++) {
 				DomainObjectChangeRecord rec = ev.getChangeRecord(i);
-				if (rec.getEventType() == ChangeManager.DOCR_DATA_TYPE_CHANGED) {
+				if (rec.getEventType() == ProgramEvent.DATA_TYPE_CHANGED) {
 					++count;
 				}
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +23,11 @@ import java.util.List;
 import docking.widgets.fieldpanel.internal.LayoutBackgroundColorManager;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.plugin.core.byteviewer.*;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.colors.*;
 import ghidra.app.plugin.core.debug.gui.colors.MultiSelectionBlendedLayoutBackgroundColorManager.ColoredFieldSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -118,9 +117,8 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 	private final List<SelectionGenerator> selectionGenerators;
 
 	public DebuggerMemoryByteViewerComponent(DebuggerMemoryBytesPanel vpanel,
-			ByteViewerLayoutModel layoutModel, DataFormatModel model, int bytesPerLine,
-			FontMetrics fm) {
-		super(vpanel, layoutModel, model, bytesPerLine, fm);
+			ByteViewerLayoutModel layoutModel, DataFormatModel model, int bytesPerLine) {
+		super(vpanel, layoutModel, model, bytesPerLine);
 		// TODO: I don't care much for this reverse path
 		this.panel = vpanel;
 

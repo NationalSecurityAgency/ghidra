@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class HintTextField extends JTextField {
 	 * @param hint the hint text
 	 */
 	public HintTextField(String hint) {
-		this(hint, false, null);
+		this(null, hint, false, null);
 	}
 
 	/**
@@ -62,24 +62,37 @@ public class HintTextField extends JTextField {
 	 * @param required true if the field should be marked as required
 	 */
 	public HintTextField(String hint, boolean required) {
-		this(hint, required, null);
+		this(null, hint, required, null);
 	}
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param hint the hint text
 	 * @param required true, if the field should be marked as required
 	 * @param verifier input verifier, or null if none needed
 	 */
 	public HintTextField(String hint, boolean required, InputVerifier verifier) {
+		this(null, hint, required, verifier);
+	}
+
+	public HintTextField(String text, String hint, boolean required, InputVerifier verifier) {
+		super(text);
+
 		this.hint = hint;
 		this.required = required;
 		this.verifier = verifier;
 
 		addListeners();
-		setFont(getFont().deriveFont(Font.PLAIN));
 		validateField();
+	}
+
+	/**
+	 * Sets the hint for this text field
+	 * @param hint the hint text
+	 */
+	public void setHint(String hint) {
+		this.hint = hint;
 	}
 
 	/**
@@ -133,17 +146,24 @@ public class HintTextField extends JTextField {
 		g2.setFont(g2.getFont().deriveFont(Font.ITALIC));
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+		// center the mid-line of the hint text with the mid-line of the field
 		Dimension size = getSize();
 		Insets insets = getInsets();
+		FontMetrics fm = g2.getFontMetrics();
+
+		int fontHt = fm.getDescent() + fm.getAscent();
+		int compHt = size.height - insets.top - insets.bottom;
+
 		int x = 10; // offset
-		int y = size.height - insets.bottom - 1;
+		int y = insets.top + fm.getAscent() + ((compHt - fontHt) / 2);
+
 		g2.drawString(hint, x, y);
 	}
 
 	/**
 	 * Sets whether the field is required or not. If so, it will be rendered
 	 * differently to indicate that to the user.
-	 * 
+	 *
 	 * @param required true if required, false otherwise
 	 */
 	public void setRequired(boolean required) {
@@ -161,7 +181,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Returns true if the field contains valid input.
-	 * 
+	 *
 	 * @return true if valid, false otherwise
 	 */
 	public boolean isFieldValid() {
@@ -179,7 +199,7 @@ public class HintTextField extends JTextField {
 	}
 
 	/**
-	 * Checks the validity of the field and sets the appropriate 
+	 * Checks the validity of the field and sets the appropriate
 	 * field attributes.
 	 */
 	private void validateField() {

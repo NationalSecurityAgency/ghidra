@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,24 +23,49 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataTypePath;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.program.util.ProgramEvent;
+import ghidra.util.task.SwingUpdateManager;
 
 /**
  * Editor for a Function Stack.
  */
-public class StackEditorProvider extends CompositeEditorProvider implements DomainObjectListener {
+public class StackEditorProvider
+		extends CompositeEditorProvider<StackFrameDataType, StackEditorModel>
+		implements DomainObjectListener {
 
 	private Program program;
 	private Function function;
 	private StackEditorModel stackModel;
+
+	boolean scheduleRefreshName = false;
+	boolean scheduleReload = false;
+
+	/**
+	 * Delay model update caused by Program change events.
+	 */
+	SwingUpdateManager delayedUpdateMgr = new SwingUpdateManager(200, 200, () -> {
+		try {
+			if (function.isDeleted()) {
+				stackModel.functionChanged(false);
+				return;
+			}
+			if (scheduleRefreshName) {
+				updateTitle();
+			}
+			if (scheduleReload) {
+				stackModel.functionChanged(false);
+			}
+		}
+		finally {
+			scheduleRefreshName = false;
+			scheduleReload = false;
+		}
+	});
 
 	public StackEditorProvider(Plugin plugin, Function function) {
 		super(plugin);
@@ -53,15 +78,21 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 
 		initializeActions();
 		editorPanel = new StackEditorPanel(program, stackModel, this);
-		setTitle(getName() + " - " + getProviderSubTitle(function));
+		updateTitle();
 		plugin.getTool().addComponentProvider(this, true);
 
 		addActionsToTool();
-		editorPanel.getTable().requestFocus();
+	}
+
+	@Override
+	protected void updateTitle() {
+		setTabText(function.getName());
+		setTitle(getName() + " - " + getProviderSubTitle(function));
 	}
 
 	@Override
 	public void dispose() {
+		delayedUpdateMgr.dispose();
 		program.removeListener(this);
 		super.dispose();
 	}
@@ -79,6 +110,11 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	@Override
 	public String getName() {
 		return "Stack Editor";
+	}
+
+	@Override
+	protected String getDisplayName() {
+		return "stack frame: " + function.getName();
 	}
 
 	@Override
@@ -135,45 +171,13 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	@Override
-	protected CompositeEditorModel getModel() {
+	protected StackEditorModel getModel() {
 		return stackModel;
 	}
 
 	@Override
 	protected CompositeEditorTableAction[] getActions() {
 		return actionMgr.getAllActions();
-	}
-
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		refreshName();
-		editorPanel.domainObjectRestored(domainObject);
-	}
-
-	private void refreshName() {
-		StackFrameDataType origDt = (StackFrameDataType) stackModel.getOriginalComposite();
-		StackFrameDataType viewDt = stackModel.getViewComposite();
-		String oldName = origDt.getName();
-		String newName = function.getName();
-		if (oldName.equals(newName)) {
-			return;
-		}
-
-		setTitle("Stack Editor: " + newName);
-		try {
-			origDt.setName(newName);
-			if (viewDt.getName().equals(oldName)) {
-				viewDt.setName(newName);
-			}
-		}
-		catch (InvalidNameException e) {
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-		}
-
-		CategoryPath oldCategoryPath = origDt.getCategoryPath();
-		DataTypePath oldDtPath = new DataTypePath(oldCategoryPath, oldName);
-		DataTypePath newDtPath = new DataTypePath(oldCategoryPath, newName);
-		stackModel.dataTypeRenamed(stackModel.getOriginalDataTypeManager(), oldDtPath, newDtPath);
 	}
 
 	@Override
@@ -184,62 +188,61 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 
 		int recordCount = event.numRecords();
 		for (int i = 0; i < recordCount; i++) {
-			DomainObjectChangeRecord rec = event.getChangeRecord(i);
-			int eventType = rec.getEventType();
-			switch (eventType) {
-				case DomainObject.DO_OBJECT_RESTORED:
-					Object source = event.getSource();
-					if (source instanceof Program) {
-						Program restoredProgram = (Program) source;
-						domainObjectRestored(restoredProgram);
-					}
-					return;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					Function func = (Function) ((ProgramChangeRecord) rec).getObject();
-					if (func == function) {
-						this.dispose();
-						tool.setStatusInfo("Stack Editor was closed for " + getName());
-					}
-					return;
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
-					Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-					SymbolType symType = sym.getSymbolType();
-					if (symType == SymbolType.LABEL) {
-						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
-							refreshName();
-						}
-					}
-					else if (inCurrentFunction(rec)) {
-						reloadFunction();
-					}
-					break;
-				case ChangeManager.DOCR_FUNCTION_CHANGED:
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-				case ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED:
-					if (inCurrentFunction(rec)) {
-						reloadFunction();
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
-					sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-					symType = sym.getSymbolType();
-					if (symType == SymbolType.LABEL &&
-						sym.getAddress().equals(function.getEntryPoint())) {
-						refreshName();
-					}
-			}
-		}
-	}
 
-	private void reloadFunction() {
-		if (!stackModel.hasChanges()) {
-			stackModel.load(function);
-		}
-		else {
-			stackModel.stackChangedExternally(true);
-			editorPanel.setStatus("Stack may have been changed externally--data may be stale.");
+			DomainObjectChangeRecord rec = event.getChangeRecord(i);
+			EventType eventType = rec.getEventType();
+
+			// NOTE: RESTORED event can be ignored here since the model will be notified 
+			// of restored datatype manager via the CompositeViewerModel's 
+			// DataTypeManagerChangeListener restored method.
+
+			if (eventType == DomainObjectEvent.FILE_CHANGED) {
+				scheduleRefreshName = true;
+				delayedUpdateMgr.updateLater();
+				continue;
+			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case FUNCTION_REMOVED:
+						Function func = (Function) ((ProgramChangeRecord) rec).getObject();
+						if (func == function) {
+							// Close the Editor.
+							tool.setStatusInfo("Stack Editor was closed for " + getName());
+							dispose();
+							return;
+						}
+						break;
+					case SYMBOL_RENAMED:
+					case SYMBOL_DATA_CHANGED:
+						Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
+						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
+							scheduleRefreshName = true;
+							delayedUpdateMgr.updateLater();
+						}
+						else if (inCurrentFunction(rec)) {
+							scheduleReload = true;
+							delayedUpdateMgr.updateLater();
+						}
+						break;
+					case FUNCTION_CHANGED:
+					case SYMBOL_ADDED:
+					case SYMBOL_REMOVED:
+					case SYMBOL_ADDRESS_CHANGED:
+						if (inCurrentFunction(rec)) {
+							scheduleReload = true;
+							delayedUpdateMgr.updateLater();
+						}
+						break;
+					case SYMBOL_PRIMARY_STATE_CHANGED:
+						sym = (Symbol) rec.getNewValue();
+						if (sym.getAddress().equals(function.getEntryPoint())) {
+							scheduleRefreshName = true;
+							delayedUpdateMgr.updateLater();
+						}
+						break;
+					default:
+				}
+			}
 		}
 	}
 

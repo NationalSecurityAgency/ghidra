@@ -97,4 +97,9 @@ class PointerDBAdapterV1 extends PointerDBAdapter {
 		handle.deleteTable(POINTER_TABLE_NAME);
 	}
 
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
+	}
+
 }

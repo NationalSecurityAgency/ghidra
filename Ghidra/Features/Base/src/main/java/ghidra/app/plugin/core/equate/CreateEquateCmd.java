@@ -20,8 +20,6 @@ import java.util.Objects;
 import ghidra.app.cmd.equate.SetEquateCmd;
 import ghidra.app.context.ListingActionContext;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.symbol.EquateManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
@@ -36,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Class to handle creating new equates for a selection or the whole program
  */
-public class CreateEquateCmd extends BackgroundCommand {
+public class CreateEquateCmd extends BackgroundCommand<Program> {
 
 	private CodeUnitIterator iterator; //iterator over selected instructions or null if no selection
 	private String equateName; // user defined equate name
@@ -84,7 +82,7 @@ public class CreateEquateCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject domain, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Creating Equate");
@@ -92,16 +90,16 @@ public class CreateEquateCmd extends BackgroundCommand {
 		while (iterator.hasNext() && !monitor.isCancelled()) {
 			CodeUnit cu = iterator.next();
 			if (cu instanceof Instruction) {
-				maybeCreateEquate(domain, (Instruction) cu);
+				maybeCreateEquate(program, (Instruction) cu);
 			}
 			else if (cu instanceof Data) {
-				maybeCreateEquate(domain, (Data) cu);
+				maybeCreateEquate(program, (Data) cu);
 			}
 		}
 		return true;
 	}
 
-	private void maybeCreateEquate(DomainObject domain, Data data) {
+	private void maybeCreateEquate(Program program, Data data) {
 
 		if (!data.isDefined()) {
 			return;
@@ -118,10 +116,10 @@ public class CreateEquateCmd extends BackgroundCommand {
 		}
 
 		int opIndex = getOperandIndex();
-		createEquate(domain, data, opIndex, scalar);
+		createEquate(program, data, opIndex, scalar);
 	}
 
-	private void maybeCreateEquate(DomainObject domain, Instruction instruction) {
+	private void maybeCreateEquate(Program program, Instruction instruction) {
 		for (int opIndex = 0; opIndex < instruction.getNumOperands(); opIndex++) {
 			Object[] opObjects = instruction.getOpObjects(opIndex);
 			for (Object opObject : opObjects) {
@@ -134,13 +132,12 @@ public class CreateEquateCmd extends BackgroundCommand {
 					continue;
 				}
 
-				createEquate(domain, instruction, opIndex, scalar);
+				createEquate(program, instruction, opIndex, scalar);
 			}
 		}
 	}
 
-	private void createEquate(DomainObject domain, CodeUnit codeUnit, int opIndex,
-			Scalar scalar) {
+	private void createEquate(Program program, CodeUnit codeUnit, int opIndex, Scalar scalar) {
 
 		EquateTable equateTable = codeUnit.getProgram().getEquateTable();
 		Address address = codeUnit.getAddress();
@@ -151,12 +148,13 @@ public class CreateEquateCmd extends BackgroundCommand {
 		}
 
 		if (curEquate == null) {
-			Command cmd = new SetEquateCmd(equateName, address, opIndex, targetScalarValue);
-			cmd.applyTo(domain);
+			SetEquateCmd cmd = new SetEquateCmd(equateName, address, opIndex, targetScalarValue);
+			cmd.applyTo(program);
 		}
 		else if (overwriteExisting) {
-			Command cmd = new RenameEquateCmd(curEquate.getName(), equateName, address, opIndex);
-			cmd.applyTo(domain);
+			RenameEquateCmd cmd =
+				new RenameEquateCmd(curEquate.getName(), equateName, address, opIndex);
+			cmd.applyTo(program);
 		}
 	}
 

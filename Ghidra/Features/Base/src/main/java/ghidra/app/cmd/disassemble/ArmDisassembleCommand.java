@@ -15,7 +15,8 @@
  */
 package ghidra.app.cmd.disassemble;
 
-import ghidra.framework.model.DomainObject;
+import java.math.BigInteger;
+
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -23,8 +24,6 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.math.BigInteger;
 
 /**
  * Command object for performing Arm/Thumb disassembly
@@ -70,8 +69,7 @@ public class ArmDisassembleCommand extends DisassembleCommand {
 	}
 
 	@Override
-	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	synchronized public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		disassemblyPerformed = false;
 		unalignedStart = false;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -51,6 +50,7 @@ public class PrototypeModel {
 	private Varnode[] killedbycall;	// Memory ranges definitely affected by calls
 	private Varnode[] returnaddress;	// Memory used to store the return address
 	private Varnode[] likelytrash;	// Memory likely to be meaningless on input
+	private Varnode[] internalstorage;	// Registers holding internal compiler constants
 	private PrototypeModel compatModel;	// The model this is an alias of
 	private AddressSet localRange;	// Range on the stack considered for local storage
 	private AddressSet paramRange;	// Range on the stack considered for parameter storage
@@ -82,6 +82,7 @@ public class PrototypeModel {
 		killedbycall = model.killedbycall;
 		returnaddress = model.returnaddress;
 		likelytrash = model.likelytrash;
+		internalstorage = model.internalstorage;
 		compatModel = model;
 		localRange = new AddressSet(model.localRange);
 		paramRange = new AddressSet(model.paramRange);
@@ -102,6 +103,7 @@ public class PrototypeModel {
 		killedbycall = null;
 		returnaddress = null;
 		likelytrash = null;
+		internalstorage = null;
 		compatModel = null;
 		localRange = null;
 		paramRange = null;
@@ -139,6 +141,16 @@ public class PrototypeModel {
 			likelytrash = new Varnode[0];
 		}
 		return likelytrash;
+	}
+
+	/**
+	 * @return list of registers used to store internal compiler constants
+	 */
+	public Varnode[] getInternalStorage() {
+		if (internalstorage == null) {
+			internalstorage = new Varnode[0];
+		}
+		return internalstorage;
 	}
 
 	/**
@@ -222,24 +234,27 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * @deprecated
 	 * Get the preferred return location given the specified dataType.
-	 * In truth, there is no one location.  The routines that use this method tend
-	 * to want the default storage location for integer or pointer return values.
+	 * If the return value is passed back through a hidden input pointer,
+	 * i.e. {@link AutoParameterType#RETURN_STORAGE_PTR}, this routine will not pass back
+	 * the storage location of the pointer, but will typically pass
+	 * back the location of the normal return register which holds a copy of the pointer.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
+	 * or zero-length datatype.
+	 * 
 	 * @param dataType first parameter dataType or null for an undefined type.
 	 * @param program is the Program
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
-	@Deprecated
 	public VariableStorage getReturnLocation(DataType dataType, Program program) {
 		DataType clone = dataType.clone(program.getDataTypeManager());
-		DataType[] arr = new DataType[1];
-		arr[0] = clone;
-		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, arr, res, false);
+		PrototypePieces proto = new PrototypePieces(this, clone);
+		ArrayList<ParameterPieces> res = new ArrayList<>();
+		outputParams.assignMap(proto, program.getDataTypeManager(), res, false);
 		if (res.size() > 0) {
-			return res.get(0);
+			return res.get(0).getVariableStorage(program);
 		}
 		return null;
 	}
@@ -248,10 +263,22 @@ public class PrototypeModel {
 	 * Get the preferred parameter location for a new parameter which will appended
 	 * to the end of an existing set of params.  If existing parameters use custom
 	 * storage, this method should not be used.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
+	 * zero-length datatype, or any subsequent parameter following such a parameter.
+	 * <br>
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
+	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
+	 * method.  Parameter storage allocation may be affected by the return datatype
+	 * specified (e.g., hidden return storage parameter).
+	 *  
 	 * @param params existing set parameters to which the next parameter will
-	 * be appended. (may be null)
+	 * be appended (may be null). Element-0 corresponds to the return datatype. 
 	 * @param dataType dataType associated with next parameter location or null
-	 * for a default undefined type.
+	 * for a default undefined type.  If null the speculative first parameter storage
+	 * is returned. 
 	 * @param program is the Program
 	 * @return next parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
@@ -265,9 +292,24 @@ public class PrototypeModel {
 	 * Get the preferred parameter location for a specified index,
 	 * which will be added/inserted within the set of existing function params.
 	 * If existing parameters use custom storage, this method should not be used.
-	 * @param argIndex is the index
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
+	 * zero-length datatype, or any subsequent parameter following such a parameter.
+	 * <br>
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
+	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
+	 * method.  Parameter storage allocation may be affected by the return datatype
+	 * specified (e.g., hidden return storage parameter).
+	 *  
+	 * @param argIndex is the index (0: return storage, 1..n: parameter storage)
 	 * @param params existing set parameters to which the parameter specified by
-	 * argIndex will be added/inserted be appended (may be null).
+	 * argIndex will be added/inserted be appended. Element-0 corresponds to the return
+	 * datatype. Parameter elements prior to the argIndex are required for an accurate 
+	 * storage determination to be made.  Any preceeding parameters not specified will be assumed 
+	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.  
+	 * A null params list will cause all preceeding params to be assumed in a similar fashion.
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.
 	 * @param program is the Program
@@ -291,7 +333,7 @@ public class PrototypeModel {
 				arr[i + 1] = params[i].getDataType();			// Copy in current types if we have them
 			}
 			else {
-				arr[i + 1] = DataType.DEFAULT;				// Otherwise assume default (integer) type
+				arr[i + 1] = Undefined1DataType.dataType;		// Otherwise assume 1-byte (integer) type
 			}
 		}
 		arr[argIndex + 1] = dataType;
@@ -301,12 +343,55 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given function and set of return/parameter datatypes 
-	 * defined by an array of data types.
+	 * Calculate input and output storage locations given a function prototype
+	 * 
+	 * The data-types of the function prototype are passed in. Based on this model, a
+	 * location is selected for each (input and output) parameter and passed back to the
+	 * caller.  The passed back storage locations are ordered with the output storage
+	 * as the first entry, followed by the input storage locations.  The model has the option
+	 * of inserting a hidden return value pointer in the input storage locations.
+	 * 
+	 * If the model cannot assign storage, the ParameterPieces will have a null Address.
+	 * @param proto is the function prototype parameter data-types
+	 * @param dtManager is the manager used to create indirect data-types
+	 * @param res will hold the storage addresses for each parameter
+	 * @param addAutoParams is true if auto parameters (like the this pointer) should be processed
+	 */
+	public void assignParameterStorage(PrototypePieces proto, DataTypeManager dtManager,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
+		outputParams.assignMap(proto, dtManager, res, addAutoParams);
+		inputParams.assignMap(proto, dtManager, res, addAutoParams);
+
+		if (hasThis && addAutoParams && res.size() > 1) {
+			int thisIndex = 1;
+			if (res.get(1).hiddenReturnPtr && res.size() > 2) {
+				if (inputParams.isThisBeforeRetPointer()) {
+					// pointer has been bumped by auto-return-storage
+					res.get(1).swapMarkup(res.get(2));	// must swap storage and position for slots 1 and 2
+				}
+				else {
+					thisIndex = 2;
+				}
+			}
+			res.get(thisIndex).isThisPointer = true;
+		}
+	}
+
+	/**
+	 * Compute the variable storage for a given array of return/parameter datatypes.  The first array element
+	 * is the return datatype, which is followed by any input parameter datatypes in order.
+	 * If addAutoParams is true, pointer datatypes will automatically be inserted for "this" or "hidden return"
+	 * input parameters, if needed.  In this case, the dataTypes array should not include explicit entries for
+	 * these parameters.  If addAutoParams is false, the dataTypes array is assumed to already contain explicit
+	 * entries for any of these parameters.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
+	 * or zero-length datatypes or any subsequent parameter following such a parameter.
+	 * 
 	 * @param program is the Program
 	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
 	 * i.e., minimum array length is 1)
-	 * @param addAutoParams TODO
+	 * @param addAutoParams true if auto-parameter storage locations can be generated
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
 	 * return storage. The returned array may also include additional auto-parameter storage 
 	 * locations. 
@@ -314,61 +399,21 @@ public class PrototypeModel {
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
 
-		boolean injectAutoThisParam = false;
+		DataType injectedThis = null;
 		if (addAutoParams && hasThis) {
 			// explicit support for auto 'this' parameter
 			// must inject pointer arg to obtain storage assignment
-			injectAutoThisParam = true;
-			DataType[] ammendedTypes = new DataType[dataTypes.length + 1];
-			ammendedTypes[0] = dataTypes[0];
-			ammendedTypes[1] = new PointerDataType(program.getDataTypeManager());
-			if (dataTypes.length > 1) {
-				System.arraycopy(dataTypes, 1, ammendedTypes, 2, dataTypes.length - 1);
-			}
-			dataTypes = ammendedTypes;
+			injectedThis = new PointerDataType(program.getDataTypeManager());
 		}
+		PrototypePieces proto = new PrototypePieces(this, dataTypes, injectedThis);
 
-		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, dataTypes, res, addAutoParams);
-		inputParams.assignMap(program, dataTypes, res, addAutoParams);
+		ArrayList<ParameterPieces> res = new ArrayList<>();
+		assignParameterStorage(proto, program.getDataTypeManager(), res, addAutoParams);
 		VariableStorage[] finalres = new VariableStorage[res.size()];
-		res.toArray(finalres);
 
-		if (injectAutoThisParam) {
-
-			Varnode[] thisVarnodes = finalres[1].getVarnodes();
-
-			int thisIndex = 1;
-			try {
-				if (finalres[1].isAutoStorage()) {
-					if (inputParams.isThisBeforeRetPointer()) {
-						// pointer has been bumped by auto-return-storage
-						// must swap storage and position for slots 1 and 2 
-						finalres[2] = new DynamicVariableStorage(program,
-							finalres[1].getAutoParameterType(), finalres[2].getVarnodes());
-					}
-					else {
-						thisIndex = 2;
-						thisVarnodes = finalres[2].getVarnodes();
-					}
-				}
-
-				if (thisVarnodes.length != 0) {
-					finalres[thisIndex] =
-						new DynamicVariableStorage(program, AutoParameterType.THIS, thisVarnodes);
-				}
-				else {
-					finalres[thisIndex] =
-						DynamicVariableStorage.getUnassignedDynamicStorage(AutoParameterType.THIS);
-				}
-			}
-			catch (InvalidInputException e) {
-				finalres[thisIndex] =
-					DynamicVariableStorage.getUnassignedDynamicStorage(AutoParameterType.THIS);
-			}
-
+		for (int i = 0; i < finalres.length; ++i) {
+			finalres[i] = res.get(i).getVariableStorage(program);
 		}
-
 		return finalres;
 	}
 
@@ -458,6 +503,11 @@ public class PrototypeModel {
 			encoder.openElement(ELEM_LIKELYTRASH);
 			encodeVarnodes(encoder, likelytrash);
 			encoder.closeElement(ELEM_LIKELYTRASH);
+		}
+		if (internalstorage != null) {
+			encoder.openElement(ELEM_INTERNAL_STORAGE);
+			encodeVarnodes(encoder, internalstorage);
+			encoder.closeElement(ELEM_INTERNAL_STORAGE);
 		}
 		if (returnaddress != null) {
 			encoder.openElement(ELEM_RETURNADDRESS);
@@ -577,44 +627,44 @@ public class PrototypeModel {
 		inputParams = null;
 		outputParams = null;
 		XmlElement protoElement = parser.start();
-		name = protoElement.getAttribute("name");
+		name = protoElement.getAttribute(ATTRIB_NAME.name());
 		if (!SpecExtension.isValidFormalName(name)) {
 			throw new XmlParseException("Prototype name uses illegal characters");
 		}
 		extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-		String extpopStr = protoElement.getAttribute("extrapop");
+		String extpopStr = protoElement.getAttribute(ATTRIB_EXTRAPOP.name());
 		if (!extpopStr.equals("unknown")) {
 			extrapop = SpecXmlUtils.decodeInt(extpopStr);
 		}
-		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute("stackshift"));
+		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute(ATTRIB_STACKSHIFT.name()));
 		hasThis = false;
 		isConstruct = false;
-		String thisString = protoElement.getAttribute("hasthis");
+		String thisString = protoElement.getAttribute(ATTRIB_HASTHIS.name());
 		if (thisString != null) {
 			hasThis = SpecXmlUtils.decodeBoolean(thisString);
 		}
 		else {
 			hasThis = name.equals(CompilerSpec.CALLING_CONVENTION_thiscall);
 		}
-		String constructString = protoElement.getAttribute("constructor");
+		String constructString = protoElement.getAttribute(ATTRIB_CONSTRUCTOR.name());
 		if (constructString != null) {
 			isConstruct = SpecXmlUtils.decodeBoolean(constructString);
 		}
 
-		buildParamList(protoElement.getAttribute("strategy"));
+		buildParamList(protoElement.getAttribute(ATTRIB_STRATEGY.name()));
 		while (parser.peek().isStart()) {
 			XmlElement subel = parser.peek();
 			String elName = subel.getName();
-			if (elName.equals("input")) {
+			if (elName.equals(ELEM_INPUT.name())) {
 				inputParams.restoreXml(parser, cspec);
 			}
-			else if (elName.equals("output")) {
+			else if (elName.equals(ELEM_OUTPUT.name())) {
 				outputParams.restoreXml(parser, cspec);
 			}
-			else if (elName.equals("pcode")) {
+			else if (elName.equals(ELEM_PCODE.name())) {
 				XmlElement el = parser.peek();
 				String source = "Compiler spec=" + cspec.getCompilerSpecID().getIdAsString();
-				if (el.getAttribute("inject").equals("uponentry")) {
+				if (el.getAttribute(ATTRIB_INJECT.name()).equals("uponentry")) {
 					hasUponEntry = true;
 				}
 				else {
@@ -624,22 +674,25 @@ public class PrototypeModel {
 						.restoreXmlInject(source, getInjectName(), InjectPayload.CALLMECHANISM_TYPE,
 							parser);
 			}
-			else if (elName.equals("unaffected")) {
+			else if (elName.equals(ELEM_UNAFFECTED.name())) {
 				unaffected = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("killedbycall")) {
+			else if (elName.equals(ELEM_KILLEDBYCALL.name())) {
 				killedbycall = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("returnaddress")) {
+			else if (elName.equals(ELEM_RETURNADDRESS.name())) {
 				returnaddress = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("likelytrash")) {
+			else if (elName.equals(ELEM_LIKELYTRASH.name())) {
 				likelytrash = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("localrange")) {
+			else if (elName.equals(ELEM_INTERNAL_STORAGE.name())) {
+				internalstorage = readVarnodes(parser, cspec);
+			}
+			else if (elName.equals(ELEM_LOCALRANGE.name())) {
 				localRange = readAddressSet(parser, cspec);
 			}
-			else if (elName.equals("paramrange")) {
+			else if (elName.equals(ELEM_PARAMRANGE.name())) {
 				paramRange = readAddressSet(parser, cspec);
 			}
 			else {
@@ -742,6 +795,9 @@ public class PrototypeModel {
 			return false;
 		}
 		if (!SystemUtilities.isArrayEqual(likelytrash, obj.likelytrash)) {
+			return false;
+		}
+		if (!SystemUtilities.isArrayEqual(internalstorage, obj.internalstorage)) {
 			return false;
 		}
 		String compatName = (compatModel != null) ? compatModel.getName() : "";

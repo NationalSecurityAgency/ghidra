@@ -45,9 +45,6 @@ class MemoryMapDBAdapterV1 extends MemoryMapDBAdapterV0 {
 //								"Source Block ID","Segment"});
 //
 
-	/**
-	 * @param handle
-	 */
 	MemoryMapDBAdapterV1(DBHandle handle, MemoryMapDB memMap) throws VersionException, IOException {
 		super(handle, memMap, VERSION);
 	}

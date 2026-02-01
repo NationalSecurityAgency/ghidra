@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.elf;
 
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.ElfLoaderOptionsFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
@@ -104,10 +105,13 @@ public interface ElfLoadHelper {
 			Address indirectPointerAddr);
 
 	/**
-	 * Create an undefined data item to reserve the location as data, without specifying the type
+	 * Create an undefined data item to reserve the location as data, without specifying the type.
+	 * If {@link ElfLoaderOptionsFactory#applyUndefinedSymbolData(java.util.List)} returns false
+	 * data will not be applied and null will be returned.
+	 * 
 	 * @param address  location of undefined data to create
 	 * @param length  size of the undefined data item
-	 * @return {@link Data} which was created or null if conflict occurs
+	 * @return {@link Data} which was created or null if conflict occurs or disabled by option
 	 */
 	Data createUndefinedData(Address address, int length);
 
@@ -220,8 +224,8 @@ public interface ElfLoadHelper {
 	 * performed during the ELF import processing.  A relocation type of 0 and a status of 
 	 * {@link Status#APPLIED_OTHER} will be applied to the relocation entry.  
 	 * NOTE: The number of recorded original FileBytes currently ignores the specified length.
-	 * However, the length is still used to verify that that the intended modification region
-	 * dose not intersect another relocation.
+	 * However, the length is still used to verify that the intended modification region
+	 * does not intersect another relocation.
 	 * @param address relocation address
 	 * @param length number of bytes affected
 	 * @return true if recorded successfully, or false if conflict with existing relocation 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +17,7 @@ package ghidra.app.plugin.core.reloc;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.Reference;
@@ -31,6 +29,10 @@ public class InstructionStasher {
 	private Address address;
 	private InstructionPrototype prototype;
 	private Reference[] referencesFrom;
+	private FlowOverride flowOverride;
+	private Address fallthroughOverride;
+	private int lengthOverride;
+
 	private Address minAddress;
 
 	public InstructionStasher(Program program, Address address) {
@@ -47,6 +49,12 @@ public class InstructionStasher {
 		minAddress = instruction.getMinAddress();
 		prototype = instruction.getPrototype();
 		referencesFrom = instruction.getReferencesFrom();
+		flowOverride = instruction.getFlowOverride();
+		fallthroughOverride =
+			instruction.isFallThroughOverridden() ? instruction.getFallThrough() : null;
+		// Relocation data change may mutate instruction.  Do not force length of instruction 
+		// unless it was previously overriden.  A value of 0 allows length to match prototoype.
+		lengthOverride = instruction.isLengthOverridden() ? instruction.getLength() : 0;
 		program.getListing().clearCodeUnits(minAddress, instruction.getMaxAddress(), false);
 	}
 
@@ -57,7 +65,16 @@ public class InstructionStasher {
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), minAddress);
 		ProcessorContext context =
 			new ProgramProcessorContext(program.getProgramContext(), minAddress);
-		program.getListing().createInstruction(minAddress, prototype, buf, context);
+		Instruction instr = program.getListing()
+				.createInstruction(minAddress, prototype, buf, context, lengthOverride);
+
+		if (flowOverride != FlowOverride.NONE) {
+			instr.setFlowOverride(flowOverride);
+		}
+
+		if (fallthroughOverride != null) {
+			instr.setFallThrough(fallthroughOverride);
+		}
 
 		for (Reference reference : referencesFrom) {
 			if (reference.getSource() != SourceType.DEFAULT) {

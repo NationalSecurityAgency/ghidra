@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import javax.swing.*;
 
 import docking.action.*;
 import docking.menu.*;
+import generic.theme.CloseIcon;
 import generic.theme.GColor;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
@@ -32,7 +33,7 @@ import ghidra.util.task.SwingUpdateManager;
  */
 class DockableToolBarManager {
 	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
-	private static final Icon CLOSE_ICON = new CloseIcon(false, BUTTON_COLOR);
+	private static final Icon CLOSE_ICON = new CloseIcon(false);
 	private Icon MENU_ICON = new DropDownMenuIcon(BUTTON_COLOR);
 	private GenericHeader dockableHeader;
 	private ToolBarManager toolBarManager;
@@ -206,8 +207,19 @@ class DockableToolBarManager {
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
+			DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
 			ComponentProvider provider = context.getComponentProvider();
-			return provider == dockableComponent.getComponentProvider();
+			if (provider == null) {
+				// Some context providers do not specify the provider when creating a contexts
+				provider = dwm.getActiveComponentProvider();
+			}
+
+			if (provider != dockableComponent.getComponentProvider()) {
+				return false;
+			}
+
+			// don't allow the last component in a window to be closed to prevent an empty window
+			return dwm != null && !dwm.isLastComponentInWindow(provider);
 		}
 	}
 

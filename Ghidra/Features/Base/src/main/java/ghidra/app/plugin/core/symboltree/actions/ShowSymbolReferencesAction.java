@@ -59,7 +59,7 @@ public class ShowSymbolReferencesAction extends SymbolTreeContextAction {
 		super(AbstractFindReferencesDataTypeAction.NAME, owner, KeyBindingType.SHARED);
 		this.tool = tool;
 
-		setPopupMenuData(new MenuData(new String[] { "Show References to" }, "0Middle"));
+		setPopupMenuData(new MenuData(new String[] { "Show References to" }, MIDDLE_MENU_GROUP));
 
 		installHelpLocation();
 

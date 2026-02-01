@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,10 +123,10 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void endTransaction(int transactionID, boolean commit) {
-
+		public boolean endTransaction(int transactionID, boolean commit) {
 			assertEquals(ID, transactionID);
 			transactionCommited = commit;
+			return transactionCommited;
 		}
 
 		boolean wasCommitted() {
@@ -134,7 +134,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 		}
 	}
 
-	private class SuccessfulDummyCommand extends BackgroundCommand {
+	private class SuccessfulDummyCommand extends BackgroundCommand<DomainObject> {
 
 		SuccessfulDummyCommand() {
 			super("Dummy", true, true, false);
@@ -147,7 +147,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 
 	}
 
-	private class NullPointerExceptionCommand extends BackgroundCommand {
+	private class NullPointerExceptionCommand extends BackgroundCommand<DomainObject> {
 
 		NullPointerExceptionCommand() {
 			super("Dummy", true, true, false);
@@ -160,7 +160,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 
 	}
 
-	private class RollbackExceptionCommand extends BackgroundCommand {
+	private class RollbackExceptionCommand extends BackgroundCommand<DomainObject> {
 		RollbackExceptionCommand() {
 			super("Dummy", true, true, false);
 		}
@@ -171,7 +171,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 		}
 	}
 
-	private class DomainObjectLockedExceptionCommand extends BackgroundCommand {
+	private class DomainObjectLockedExceptionCommand extends BackgroundCommand<DomainObject> {
 		DomainObjectLockedExceptionCommand() {
 			super("Dummy", true, true, false);
 		}

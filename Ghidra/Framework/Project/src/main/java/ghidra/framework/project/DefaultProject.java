@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,14 @@ import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.project.tool.GhidraToolTemplate;
@@ -119,22 +120,15 @@ public class DefaultProject implements Project {
 	}
 
 	/**
-	 * Constructor for opening a URL-based project
+	 * Construct a project with specific project manager and data
 	 * 
 	 * @param projectManager the manager of this project
-	 * @param connection project URL connection (not previously used)
-	 * @throws IOException if I/O error occurs.
+	 * @param projectData the project data
 	 */
-	protected DefaultProject(DefaultProjectManager projectManager, GhidraURLConnection connection)
-			throws IOException {
+	protected DefaultProject(DefaultProjectManager projectManager, DefaultProjectData projectData) {
 
 		this.projectManager = projectManager;
-
-		Msg.info(this, "Opening project/repository: " + connection.getURL());
-		projectData = (DefaultProjectData) connection.getProjectData();
-		if (projectData == null) {
-			throw new IOException("Failed to open project/repository: " + connection.getURL());
-		}
+		this.projectData = projectData;
 
 		projectLocator = projectData.getProjectLocator();
 		if (!SystemUtilities.isInHeadlessMode()) {
@@ -291,16 +285,32 @@ public class DefaultProject implements Project {
 				throw new IOException("Invalid Ghidra URL specified: " + url);
 			}
 
-			ProjectData projectData = otherViewsMap.get(url);
-			if (projectData == null) {
-				projectData = openProjectView(url);
+			if (url.equals(projectLocator.getURL())) {
+				return projectData;
 			}
 
-			if (projectData != null && visible && visibleViews.add(url)) {
+			ProjectData viewedProjectData = otherViewsMap.get(url);
+			if (viewedProjectData == null) {
+				viewedProjectData = openProjectView(url);
+			}
+
+			if (viewedProjectData != null && visible && visibleViews.add(url)) {
 				notifyVisibleViewAdded(url);
 			}
 
+			return viewedProjectData;
+		}
+	}
+
+	@Override
+	public ProjectData getProjectData(URL url) {
+
+		if (url.equals(projectLocator.getURL())) {
 			return projectData;
+		}
+
+		synchronized (otherViewsMap) {
+			return otherViewsMap.get(url);
 		}
 	}
 
@@ -377,6 +387,11 @@ public class DefaultProject implements Project {
 	public void close() {
 		synchronized (otherViewsMap) {
 			isClosed = true;
+
+			// Clear active project if this is the current active project.
+			if (AppInfo.getActiveProject() == this) {
+				AppInfo.setActiveProject(null);
+			}
 
 			for (DefaultProjectData dataMgr : otherViewsMap.values()) {
 				if (dataMgr != null) {
@@ -563,7 +578,7 @@ public class DefaultProject implements Project {
 			File saveFile = new File(projectData.getProjectDir(), PROJECT_STATE);
 			OutputStream os = new FileOutputStream(saveFile);
 			Document doc = new Document(root);
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 			os.close();
 

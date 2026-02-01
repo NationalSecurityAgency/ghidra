@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,35 +15,41 @@
  */
 package ghidra.app.script;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.Color;
 import java.io.*;
 import java.rmi.ConnectException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
+import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.PasswordDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.values.*;
 import generic.jar.ResourceFile;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.table.TableComponentProvider;
-import ghidra.app.services.*;
+import ghidra.app.services.GoToService;
+import ghidra.app.services.ProgramManager;
 import ghidra.app.tablechooser.TableChooserDialog;
 import ghidra.app.tablechooser.TableChooserExecutor;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.app.util.dialog.AskAddrDialog;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.app.util.query.TableService;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.app.util.viewer.field.CommentUtils;
+import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -136,6 +142,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	protected ResourceFile sourceFile;
 	protected GhidraState state;
 	protected PrintWriter writer;
+	protected PrintWriter errorWriter;
+	protected boolean decorateOutput;
 	protected Address currentAddress;
 	protected ProgramLocation currentLocation;
 	protected ProgramSelection currentSelection;
@@ -186,16 +194,45 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Set the context for this script.
+	 * <p>
+	 * This method will use the given {@link PrintWriter} for both {@code stdout} and 
+	 * {@code stderr}.
 	 *
 	 * @param state state object
 	 * @param monitor the monitor to use during run
-	 * @param writer the target of script "print" statements
+	 * @param writer the target of script "print" statements (may be null)
+	 * @deprecated Use {@link #set(GhidraState)} or {@link #set(GhidraState, ScriptControls)}
+	 *   instead
 	 */
+	@Deprecated(since = "12.0")
 	public final void set(GhidraState state, TaskMonitor monitor, PrintWriter writer) {
+		set(state, new ScriptControls(writer, writer, monitor));
+	}
+
+	/**
+	 * Set the context for this script.
+	 *
+	 * @param state the new state
+	 */
+	public final void set(GhidraState state) {
 		this.state = state;
-		this.monitor = monitor;
-		this.writer = writer;
 		loadVariablesFromState();
+	}
+
+	/**
+	 * Set the state and controls for this script.
+	 *
+	 * @param state the new state
+	 * @param controls new the controls
+	 */
+	public final void set(GhidraState state, ScriptControls controls) {
+		this.state = state;
+		loadVariablesFromState();
+
+		this.writer = controls.getWriter();
+		this.errorWriter = controls.getErrorWriter();
+		this.decorateOutput = controls.shouldDecorateOutput();
+		this.monitor = controls.getMonitor();
 	}
 
 	/**
@@ -219,17 +256,38 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Execute/run script and {@link #doCleanup} afterwards.
+	 * <p>
+	 * This method will use the given {@link PrintWriter} for both {@code stdout} and 
+	 * {@code stderr}.
 	 *
 	 * @param runState state object
 	 * @param runMonitor the monitor to use during run
-	 * @param runWriter the target of script "print" statements
+	 * @param runWriter the target of script "print" statements (may be null)
+	 * @throws Exception if the script excepts
+	 * @deprecated Use {@link #execute(GhidraState, ScriptControls)} instead to also set a 
+	 *   {@link PrintWriter} for {@code stderr}
+	 */
+	@Deprecated(since = "12.0")
+	public final void execute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
+			throws Exception {
+		execute(runState, new ScriptControls(runWriter, runWriter, runMonitor));
+	}
+
+	/**
+	 * Execute/run script with the given {@link GhidraState state} and 
+	 * {@link ScriptControls controls} and {@link #doCleanup} afterwards. 
+	 * <p>
+	 * NOTE: This method is not intended to be called by script writers.
+	 *
+	 * @param runState state object
+	 * @param runControls controls object
 	 * @throws Exception if the script excepts
 	 */
-	public final void execute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
+	public final void execute(GhidraState runState, ScriptControls runControls)
 			throws Exception {
 		boolean success = false;
 		try {
-			doExecute(runState, runMonitor, runWriter);
+			doExecute(runState, runControls);
 			success = true;
 		}
 		finally {
@@ -237,11 +295,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 	}
 
-	private void doExecute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
+	private void doExecute(GhidraState runState, ScriptControls runControls)
 			throws Exception {
 		this.state = runState;
-		this.monitor = runMonitor;
-		this.writer = runWriter;
+		this.writer = runControls.getWriter();
+		this.errorWriter = runControls.getErrorWriter();
+		this.decorateOutput = runControls.shouldDecorateOutput();
+		this.monitor = runControls.getMonitor();
 		loadVariablesFromState();
 
 		loadPropertiesFile();
@@ -254,7 +314,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			executeNormal();
 		}
 		else {
-			executeAsAnalysisWorker(scriptAnalysisMode == AnalysisMode.SUSPENDED, runMonitor);
+			executeAsAnalysisWorker(scriptAnalysisMode == AnalysisMode.SUSPENDED,
+				runControls.getMonitor());
 		}
 		updateStateFromVariables();
 	}
@@ -510,6 +571,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	public final GhidraState getState() {
 		updateStateFromVariables();
 		return state;
+	}
+
+	/**
+	 * {@return the current script controls}
+	 */
+	public final ScriptControls getControls() {
+		return new ScriptControls(writer, errorWriter, decorateOutput, monitor);
 	}
 
 	/**
@@ -794,7 +862,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * The script being run uses the given {@link GhidraState} (e.g., script variables)
 	 * Any changes to the state by the script being run will be reflected in the given state
-	 * object.  If the given object is the current state, the this scripts state may be changed
+	 * object.  If the given object is the current state, this scripts state may be changed
 	 * by the called script.
 	 *
 	 * @param scriptName the name of the script to run
@@ -816,7 +884,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * The script being run uses the given {@link GhidraState} (e.g., script variables)
 	 * Any changes to the state by the script being run will be reflected in the given state
-	 * object.  If the given object is the current state, the this scripts state may be changed
+	 * object.  If the given object is the current state, this scripts state may be changed
 	 * by the called script.
 	 *
 	 * @param scriptName the name of the script to run
@@ -838,7 +906,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 					"': unable to run this script type.");
 			}
 
-			GhidraScript script = provider.getScriptInstance(scriptSource, writer);
+			GhidraScript script = provider.getScriptInstance(scriptSource, errorWriter);
 			script.setScriptArgs(scriptArguments);
 
 			if (potentialPropertiesFileLocs.size() > 0) {
@@ -849,7 +917,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				updateStateFromVariables();
 			}
 
-			script.execute(scriptState, monitor, writer);
+			script.execute(scriptState, getControls());
 
 			if (scriptState == state) {
 				loadVariablesFromState();
@@ -878,7 +946,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param cmd the command to run
 	 * @return true if the command successfully ran
 	 */
-	public final boolean runCommand(Command cmd) {
+	public final boolean runCommand(Command<Program> cmd) {
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -889,7 +957,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param cmd the background command to run
 	 * @return true if the background command successfully ran
 	 */
-	public final boolean runCommand(BackgroundCommand cmd) {
+	public final boolean runCommand(BackgroundCommand<Program> cmd) {
 		return cmd.applyTo(currentProgram, monitor);
 	}
 
@@ -932,85 +1000,109 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * Returns a demangled version of the mangled string.
 	 *
 	 * @param mangled the mangled string to demangled
-	 * @return a demangled version of the mangled string
+	 * @return a demangled version of the mangled string, or null if it could not be demangled
+	 * @deprecated Use {@link DemanglerUtil#demangle(Program, String, Address)} instead
 	 */
+	@Deprecated(since = "12.0")
 	public String getDemangled(String mangled) {
-		DemangledObject demangledObj = DemanglerUtil.demangle(mangled);
-		if (demangledObj != null) {
-			return demangledObj.getSignature(false);
+		List<DemangledObject> demangledObjs = DemanglerUtil.demangle(currentProgram, mangled, null);
+		if (!demangledObjs.isEmpty()) {
+			return demangledObjs.getFirst().getSignature(false);
 		}
 		return null;
 	}
 
 	/**
-	 * Prints a newline.
-	 *
-	 * @see #printf(String, Object...)
+	 * Prints a newline to this script's {@code stdout} {@link PrintWriter}, which is set by 
+	 * {@link #set(GhidraState, ScriptControls)}.
+	 * <p>
+	 * Additionally, the newline is written to Ghidra's log.
 	 */
 	public void println() {
 		println("");
 	}
 
 	/**
-	 * Prints the message to the console followed by a line feed.
+	 * Prints the {@link #decorateOutput optionally} {@link #decorate(String) decorated} message
+	 * followed by a line feed to this script's {@code stdout} {@link PrintWriter}, which is set by 
+	 * {@link #set(GhidraState, ScriptControls)}.
+	 * <p>
+	 * Additionally, the always {@link #decorate(String) decorated} message is written to Ghidra's 
+	 * log.
 	 *
 	 * @param message the message to print
-	 * @see #printf(String, Object...)
 	 */
 	public void println(String message) {
-		String decoratedMessage = getScriptName() + "> " + message;
+		String decoratedMessage = decorate(message);
 
-		// note: use a Message object to facilitate script message log filtering
 		Msg.info(GhidraScript.class, new ScriptMessage(decoratedMessage));
 
-		if (isRunningHeadless()) {
-			return;
-		}
-
-		PluginTool tool = state.getTool();
-		if (tool == null) {
-			return;
-		}
-
-		ConsoleService console = tool.getService(ConsoleService.class);
-		if (console == null) {
-			return;
-		}
-
-		try {
-			console.addMessage(getScriptName(), message);
-		}
-		catch (Exception e) {
-			Msg.error(this, "Script Message: " + message, e);
+		if (writer != null) {
+			writer.println(decorateOutput ? decoratedMessage : message);
 		}
 	}
 
 	/**
-	 * A convenience method to print a formatted String using Java's <code>printf</code>
-	 * feature, which is similar to that of the C programming language.
-	 * For a full description on Java's
-	 * <code>printf</code> usage, see {@link java.util.Formatter}.
+	 * Prints the {@link #decorateOutput optionally} {@link #decorate(String) decorated} message
+	 * followed by a line feed to this script's {@code stdout} {@link PrintWriter}, which is set by 
+	 * {@link #set(GhidraState, ScriptControls)}.
 	 * <p>
-	 * For examples, see the included <code>FormatExampleScript</code>.
+	 * Additionally, the always {@link #decorate(String) decorated} message is written to Ghidra's 
+	 * log.
+	 *
+	 * @param message the message to print
+	 * @param color the color for the text
+	 */
+	public void println(String message, Color color) {
+
+		String decoratedMessage = decorate(message);
+
+		Msg.info(GhidraScript.class, new ScriptMessage(decoratedMessage));
+
+		if (writer instanceof DecoratingPrintWriter scriptWriter) {
+			scriptWriter.println(decorateOutput ? decoratedMessage : message, color);
+			return;
+		}
+
+		if (writer != null) {
+			writer.println(decorateOutput ? decoratedMessage : message);
+		}
+	}
+
+	/**
+	 * Prints the undecorated message with no newline to this script's {@code stdout} 
+	 * {@link PrintWriter}, which is set by {@link #set(GhidraState, ScriptControls)}.
 	 * <p>
-	 * <b><u>Note:</u> This method will not:</b>
-	 * <ul>
-	 * 	<li><b>print out the name of the script, as does {@link #println(String)}</b></li>
-	 *  <li><b>print a newline</b></li>
-	 * </ul>
-	 * If you would like the name of the script to precede you message, then you must add that
-	 * yourself.  The {@link #println(String)} does this via the following code:
-	 * <pre>
-	 *     String messageWithSource = getScriptName() + "&gt; " + message;
-	 * </pre>
+	 * Additionally, the undecorated message is written to Ghidra's log.
+	 *
+	 * @param message the message to print
+	 * @param color the color for the text
+	 */
+	public void print(String message, Color color) {
+
+		String decoratedMessage = decorate(message);
+
+		Msg.info(GhidraScript.class, new ScriptMessage(decoratedMessage));
+
+		if (writer instanceof DecoratingPrintWriter scriptWriter) {
+			scriptWriter.print(decorateOutput ? decoratedMessage : message, color);
+			return;
+		}
+
+		if (writer != null) {
+			writer.print(decorateOutput ? decoratedMessage : message);
+		}
+	}
+
+	/**
+	 * Prints the undecorated {@link java.util.Formatter formatted message} to this script's 
+	 * {@code stdout} {@link PrintWriter}, which is set by 
+	 * {@link #set(GhidraState, ScriptControls)}.
+	 * <p>
+	 * Additionally, the undecorated formatted message is written to Ghidra's log.
 	 *
 	 * @param message the message to format
-	 * @param args formatter arguments (see above)
-	 *
-	 * @see String#format(String, Object...)
-	 * @see java.util.Formatter
-	 * @see #print(String)
-	 * @see #println(String)
+	 * @param args C-like {@code printf} formatter arguments
 	 */
 	public void printf(String message, Object... args) {
 		String formattedString = String.format(message, args);
@@ -1018,20 +1110,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * Prints the message to the console - no line feed
+	 * Prints the undecorated message with no newline to this script's {@code stdout} 
+	 * {@link PrintWriter}, which is set by {@link #set(GhidraState, ScriptControls)}.
 	 * <p>
-	 * <b><u>Note:</u> This method will not print out the name of the script,
-	 * as does {@link #println(String)}
-	 * </b>
-	 * <p>
-	 * If you would like the name of the script to precede you message, then you must add that
-	 * yourself.  The {@link #println(String)} does this via the following code:
-	 * <pre>
-	 *     String messageWithSource = getScriptName() + "&gt; " + message;
-	 * </pre>
+	 * Additionally, the undecorated message is written to Ghidra's log.
 	 *
 	 * @param message the message to print
-	 * @see #printf(String, Object...)
 	 */
 	public void print(String message) {
 		// clients using print may add their own newline, which interferes with our logging,
@@ -1045,57 +1129,41 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 		Msg.info(GhidraScript.class, new ScriptMessage(strippedMessage));
 
-		if (isRunningHeadless()) {
-			return;
-		}
-
-		PluginTool tool = state.getTool();
-		if (tool == null) {
-			return;
-		}
-
-		ConsoleService console = tool.getService(ConsoleService.class);
-		if (console == null) {
-			return;
-		}
-
-		try {
-			console.print(message);
-		}
-		catch (Exception e) {
-			Msg.error(this, "Script Message: " + message, e);
+		if (writer != null) {
+			writer.print(message);
 		}
 	}
 
 	/**
-	 * Prints the error message to the console followed by a line feed.
+	 * Prints the {@link #decorateOutput optionally} {@link #decorate(String) decorated} message
+	 * followed by a line feed to this script's {@code stderr} {@link PrintWriter}, which is set by 
+	 * {@link #set(GhidraState, ScriptControls)}.
+	 * <p>
+	 * Additionally, the always {@link #decorate(String) decorated} message is written to Ghidra's 
+	 * log as an error.
 	 *
-	 * @param message the error message to print
+	 * @param message the message to print
 	 */
 	public void printerr(String message) {
-		String msgMessage = getScriptName() + "> " + message;
-		Msg.error(GhidraScript.class, new ScriptMessage(msgMessage));
+		String decoratedMessage = decorate(message);
 
-		if (isRunningHeadless()) {
-			return;
-		}
+		Msg.error(GhidraScript.class, new ScriptMessage(decoratedMessage));
 
-		PluginTool tool = state.getTool();
-		if (tool == null) {
-			return;
+		if (errorWriter != null) {
+			errorWriter.println(decorateOutput ? decoratedMessage : message);
 		}
+	}
 
-		ConsoleService console = tool.getService(ConsoleService.class);
-		if (console == null) {
-			return;
-		}
-
-		try {
-			console.addErrorMessage(getScriptName(), message);
-		}
-		catch (Exception e) {
-			Msg.error(this, "Script Message: " + message, e);
-		}
+	/**
+	 * Decorates the given message, which is used by the {@link GhidraScript} "print" methods during
+	 * logging and {@link #decorateOutput optionally} when outputting to the 
+	 * {@link PrintWriter}s. 
+	 * 
+	 * @param message The message to decorate
+	 * @return The decorated message
+	 */
+	protected String decorate(String message) {
+		return getScriptName() + "> " + message;
 	}
 
 	/**
@@ -1312,6 +1380,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				case FILE_TYPE:
 				case FONT_TYPE:
 				case KEYSTROKE_TYPE:
+				case ACTION_TRIGGER:
 					// do nothing; don't allow user to set these options (doesn't make any sense)
 					break;
 
@@ -1508,8 +1577,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 		<li>In the headless environment this method will set the {@link #currentSelection}
 	 * 			variable to the given value and update the GhidraState's selection variable.</li>
 	 * </ol>
-	 * <p>
-	 *
+	 * 
 	 * @param addressSet the set of addresses to include in the selection.  If this value is null,
 	 * the current selection will be cleared and the variables set to null.
 	 */
@@ -1551,7 +1619,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 		<li>In the headless environment this method will set the {@link #currentHighlight}
 	 * 			variable to	the given value and update the GhidraState's highlight variable.</li>
 	 * </ol>
-	 * <p>
 	 *
 	 * @param addressSet the set of addresses to include in the highlight.  If this value is null,
 	 * the current highlight will be cleared and the variables set to null.
@@ -1785,13 +1852,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * This format object may be used to format any code unit (instruction/data) using
 	 * the same option settings.
 	 *
-	 *  @return code unit format when in GUI mode, default format in headless
+	 * @return code unit format when in GUI mode, default format in headless
 	 */
 	public CodeUnitFormat getCodeUnitFormat() {
 		PluginTool tool = state.getTool();
 		if (cuFormat == null) {
 			if (tool != null) {
-				cuFormat = new BrowserCodeUnitFormat(state.getTool());
+				cuFormat = new BrowserCodeUnitFormat(tool);
 			}
 			else {
 				cuFormat = new CodeUnitFormat(ShowBlockName.NEVER, ShowNamespace.NON_LOCAL);
@@ -1860,21 +1927,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * Parses a file from a string.
-	 *
-	 * @param s The string to parse.
-	 * @return The file that was parsed from the string.
-	 * @throws IllegalArgumentException if the parsed value is not a valid file.
-	 */
-	public File parseFile(String s) {
-		File f = new File(s);
-		if (!f.isFile()) {
-			throw new IllegalArgumentException("Invalid file: " + f);
-		}
-		return f;
-	}
-
-	/**
 	 * Attempts to locate a value from script arguments
 	 *  or a script properties file using
 	 * the given <code>keys</code> as the lookup key for the latter.  The given <code>parser</code> will
@@ -1922,7 +1974,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 			if (isHeadless && !hasDefault) { // require either a props file or a default value
 				throw new IllegalArgumentException("Error processing variable '" + propertyKey +
-					"' in headless mode -- it was not found in a .properties file.");
+					"' in headless mode -- it was not found in script arguments or a .properties file.");
 			}
 			return defaultValue; // may be null
 		}
@@ -1932,7 +1984,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 			if (isHeadless && !hasDefault) { // require either a props file or a default value
 				throw new IllegalArgumentException("Error processing variable '" + propertyKey +
-					"' in headless mode -- it was not found in a .properties file.");
+					"' in headless mode -- it was not found in script arguments or a .properties file.");
 			}
 			return defaultValue;
 		}
@@ -2019,8 +2071,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			exists).
 	 * 		</li>
 	 *		<li>In the headless environment, this method returns a File object representing	the
-	 *			.properties	String value (if it exists), or throws an Exception if there is an
-	 *			invalid or missing .properties value.
+	 *			.properties	String value, or throws an Exception if there is an invalid or missing 
+	 *			.properties value.
 	 *		</li>
 	 * </ol>
 	 *
@@ -2038,7 +2090,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			throws CancelledException {
 
 		String key = join(title, approveButtonText);
-		File existingValue = loadAskValue(this::parseFile, key);
+		File existingValue = loadAskValue(File::new, key);
 		if (isRunningHeadless()) {
 			return existingValue;
 		}
@@ -2299,7 +2351,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		DomainFolder choice = doAsk(Program.class, title, "", existingValue, lastValue -> {
 
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.CHOOSE_FOLDER);
+			DataTreeDialog dtd = new DataTreeDialog(null, title, CHOOSE_FOLDER);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
@@ -2325,6 +2377,71 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Invalid integer: " + val);
 		}
+	}
+
+	/**
+	 * Prompts for multiple values at the same time. To use this method, you must first
+	 * create a {@link GhidraValuesMap} and define the values that will be supplied by this method.
+	 * In the GUI environment, this will result in a single dialog with an entry for each value
+	 * defined in the values map. This method returns a GhidraValuesMap with the values supplied by
+	 * the user in GUI mode or command line arguments in headless mode. If the user cancels the
+	 * dialog, a cancelled exception will be thrown, and unless it is explicity caught by the
+	 * script, will terminate the script. Also, if the values map has a {@link ValuesMapValidator},
+	 * the values will be validated when the user presses the "OK" button and will only exit the
+	 * dialog if the validate check passes. Otherwise, the validator should have reported an error
+	 * message in the dialog and the dialog will remain visible.
+	 *
+	 * <p>
+	 * Regardless of environment -- if script arguments have been set, this method will use the
+	 * next arguments in the array and advance the array index until all values in the values map
+	 * have been satisfied and so the next call to an ask method will get the next argument after
+	 * those consumed by this call.
+	 *
+	 * @param title the title of the dialog if in GUI mode
+	 * @param optionalMessage an optional message that is displayed in the dialog, just above the
+	 * list of name/value pairs
+	 * @param values the GhidraValuesMap containing the values to include in the dialog.
+	 * @return the GhidraValuesMap with values set from user input in the dialog (This is the same
+	 * instance that was passed in, so you don't need to use this)
+	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
+	 */
+
+	public GhidraValuesMap askValues(String title, String optionalMessage, GhidraValuesMap values)
+			throws CancelledException {
+		values.setTaskMonitor(monitor);
+		for (AbstractValue<?> value : values.getValues()) {
+			String key = join(title, value.getName());
+			loadAskValue(value.getValue(), s -> value.setAsText(s), key);
+		}
+		if (isRunningHeadless()) {
+			ScriptStatusListener status = new ScriptStatusListener();
+			if (!values.isValid(status)) {
+				throw new IllegalArgumentException("Validation Failed!: " + status.toString());
+			}
+			return values;
+		}
+		String key = generateKey(values);
+		return doAsk(GValuesMap.class, title, key, values, v -> {
+			if (v != values) {
+				values.copyValues(v);
+			}
+			ValuesMapDialog dialog = new ValuesMapDialog(title, optionalMessage, values);
+			DockingWindowManager.showDialog(dialog);
+			if (dialog.isCancelled()) {
+				throw new CancelledException();
+			}
+			return (GhidraValuesMap) dialog.getValues();
+		});
+	}
+
+	/**
+	 * Generates a string key unique to the values defined in the given ValuesMap. Used to store
+	 * and load previously chosen values for the given values map.
+	 * @param valuesMap the ValuesMap to generate a key for
+	 * @return a string that is unique for the values defined in the given ValuesMap
+	 */
+	private String generateKey(GValuesMap valuesMap) {
+		return valuesMap.getValues().stream().map(v -> v.getName()).collect(Collectors.joining());
 	}
 
 	/**
@@ -2547,7 +2664,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			(in headless mode or when using .properties file)
 	 * @param message the message to display next to the input field (in GUI mode) or the
 	 * 			second part of the variable name (in headless mode or when using .properties file)
-	 * @param defaultValue the optional default address as a String - if null is passed or an invalid 
+	 * @param defaultValue the optional default address as a String - if null is passed or an invalid
 	 * 			address is given no default will be shown in dialog
 	 * @return the user-specified Address value
 	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
@@ -2572,8 +2689,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		Address choice = doAsk(Integer.class, title, message, existingValue, lastValue -> {
 
-			AskAddrDialog dialog =
-				new AskAddrDialog(title, message, currentProgram.getAddressFactory(), lastValue);
+			AskAddrDialog dialog = new AskAddrDialog(title, message, currentProgram, lastValue);
 			if (dialog.isCanceled()) {
 				throw new CancelledException();
 			}
@@ -2663,7 +2779,9 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Returns a Program, using the title parameter for guidance. The actual behavior of the
-	 * method depends on your environment, which can be GUI or headless.
+	 * method depends on your environment, which can be GUI or headless. If in headless mode,
+	 * the program will not be upgraded (see {@link #askProgram(String, boolean)} if you want
+	 * more control). In GUI mode, the user will be prompted to upgrade.
 	 * <br>
 	 * Regardless of environment -- if script arguments have been set, this method will use the
 	 * next argument in the array and advance the array index so the next call to an ask method
@@ -2688,29 +2806,86 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in
 	 * 			headless mode)
-	 * @return the user-selected Program with this script as the consumer or null if a program was 
-	 * not selected.  NOTE: It is very important that the program instance returned by this method 
-	 * ALWAYS be properly released when no longer needed.  The script which invoked this method must be
-	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to 
-	 * properly release the program may result in improper project disposal.  If the program was 
+	 * @return the user-selected Program with this script as the consumer if a program was
+	 * selected. Null is returned if a program is not selected. NOTE: It is very important that
+	 * the program instance returned by this method ALWAYS be properly released when no longer
+	 * needed.  The script which invoked this method must be
+	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to
+	 * properly release the program may result in improper project disposal.  If the program was
 	 * opened by the tool, the tool will be a second consumer responsible for its own release.
-	 * @throws VersionException if the Program is out-of-date from the version of GHIDRA
+	 * @throws VersionException if the Program is out-of-date from the version of Ghidra and an
+	 * upgrade was not been performed. In non-headless mode, the user will have already been
+	 * notified via a popup dialog.
 	 * @throws IOException if there is an error accessing the Program's DomainObject
-	 * @throws CancelledException if the operation is cancelled
+	 * @throws CancelledException if the program open operation is cancelled
 	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	program
 	 * 			specified in the .properties file
 	 */
 	public Program askProgram(String title)
 			throws VersionException, IOException, CancelledException {
+		return askProgram(title, false);
+	}
+
+	/**
+	 * Returns a Program, using the title parameter for guidance with the option to upgrade
+	 * if needed. The actual behavior of the method depends on your environment, which can be
+	 * GUI or headless. You can control whether or not the program is allowed to upgrade via
+	 * the {@code upgradeIfNeeded} parameter.
+	 * <br>
+	 * Regardless of environment -- if script arguments have been set, this method will use the
+	 * next argument in the array and advance the array index so the next call to an ask method
+	 * will get the next argument.  If there are no script arguments and a .properties file
+	 * sharing the same base name as the Ghidra Script exists (i.e., Script1.properties for
+	 * Script1.java), then this method will then look there for the String value to return.
+	 * The method will look in the .properties file by searching for a property name that is the
+	 * title String parameter.  If that property name exists and its value represents a valid
+	 * program, then the .properties value will be used in the following way:
+	 * <ol>
+	 * 		<li>In the GUI environment, this method displays a popup dialog that prompts the user
+	 * 			to select a program.</li>
+	 *		<li>In the headless environment, if a .properties file sharing the same base name as the
+	 *			Ghidra Script exists (i.e., Script1.properties for Script1.java), then this method
+	 *			looks there for the name of the program to return. The method will look in the
+	 *			.properties file by searching for a property name equal to the 'title' parameter. If
+	 *			that property name exists and its value represents a valid Program in the project,
+	 *			then that value	is returned. Otherwise, an Exception is thrown if there is an
+	 *			invalid or missing .properties value.</li>
+	 * </ol>
+	 *
+	 *
+	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in
+	 * 			headless mode)
+	 * @param upgradeIfNeeded if true, program will be upgraded if needed and possible. If false,
+	 * the program will only be upgraded after first prompting the user. In headless mode, it will
+	 * attempt to upgrade only if the parameter is true.
+	 * @return the user-selected Program with this script as the consumer if a program was
+	 * selected. Null is returned if a program is not selected. NOTE: It is very important that
+	 * the program instance returned by this method ALWAYS be properly released when no longer
+	 * needed.  The script which invoked this method must be
+	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to
+	 * properly release the program may result in improper project disposal.  If the program was
+	 * opened by the tool, the tool will be a second consumer responsible for its own release.
+	 * @throws VersionException if the Program is out-of-date from the version of GHIDRA and an
+	 * upgrade was not been performed. In non-headless mode, the user will have already been
+	 * notified via a popup dialog.
+	 * @throws IOException if there is an error accessing the Program's DomainObject
+	 * @throws CancelledException if the program open operation is cancelled
+	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	program
+	 * 			specified in the .properties file
+	 */
+	public Program askProgram(String title, boolean upgradeIfNeeded)
+			throws VersionException, IOException, CancelledException {
 
 		DomainFile choice = loadAskValue(this::parseDomainFile, title);
 		if (!isRunningHeadless()) {
 			choice = doAsk(Program.class, title, "", choice, lastValue -> {
-
-				DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+				// File filter employed limits access to program files within the active project
+				// only to ensure the ability to open for update is possible. 
+				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN,
+					new DefaultDomainFileFilter(Program.class, true));
 				dtd.show();
 				if (dtd.wasCancelled()) {
-					throw new CancelledException();
+					return null;
 				}
 
 				return dtd.getDomainFile();
@@ -2721,7 +2896,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			return null;
 		}
 
-		Program p = (Program) choice.getDomainObject(this, false, false, monitor);
+		Program p = doOpenProgram(choice, upgradeIfNeeded);
 
 		PluginTool tool = state.getTool();
 		if (tool == null) {
@@ -2731,6 +2906,24 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(p);
 		return p;
+	}
+
+	private Program doOpenProgram(DomainFile domainFile, boolean upgradeIfNeeded)
+			throws CancelledException, IOException, VersionException {
+
+		try {
+			return (Program) domainFile.getDomainObject(this, upgradeIfNeeded, false, monitor);
+		}
+		catch (VersionException e) {
+			if (isRunningHeadless()) {
+				throw e;
+			}
+			// in Gui mode, ask the user if they would like to upgrade
+			if (VersionExceptionHandler.isUpgradeOK(null, domainFile, "Open ", e)) {
+				return (Program) domainFile.getDomainObject(this, true, false, monitor);
+			}
+			throw e;
+		}
 	}
 
 	/**
@@ -2793,8 +2986,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		String message = "";
 		DomainFile choice = doAsk(DomainFile.class, title, message, existingValue, lastValue -> {
-
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+			// File filter employed limits access to files within the active project
+			// only to ensure the ability to open for update is possible. 
+			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN,
+				DomainFileFilter.ALL_FILES_NO_EXTERNAL_FOLDERS_FILTER);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
@@ -2854,7 +3049,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * Note that in both headless and GUI modes, you may specify "PI" or "E" and get the
 	 * corresponding floating point value to 15 decimal places.
-	 * <p>
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)
@@ -2995,13 +3189,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * only be used in headed mode.
 	 * <p>
 	 * In the GUI environment, this method displays a password popup dialog that prompts the user
-	 * for a secret, usually a password or other credential. There is no pre-population of the
-	 * input. If the user cancels the dialog, it is immediately disposed, and any input to that
-	 * dialog is cleared from memory. If the user completes the dialog, then the secret is returned
-	 * in a wrapped buffer. The buffer can be cleared by calling {@link Secret#close()}; however, it
-	 * is meant to be used in a {@code try-with-resources} block. The pattern does not guarantee
-	 * protection of the secret, but it will help you avoid some typical pitfalls:
-	 * 
+	 * for a password. There is no pre-population of the input. If the user cancels the dialog, it
+	 * is immediately disposed, and any input to that dialog is cleared from memory. If the user
+	 * completes the dialog, then the password is returned in a wrapped buffer. The buffer can be
+	 * cleared by calling {@link Password#close()}; however, it is meant to be used in a
+	 * {@code try-with-resources} block. The pattern does not guarantee protection of the password,
+	 * but it will help you avoid some typical pitfalls:
+	 *
 	 * <pre>
 	 * String user = askString("Login", "Username:");
 	 * Project project;
@@ -3009,12 +3203,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 	project = doLoginAndOpenProject(user, password.getPasswordChars());
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * The buffer will be zero-filled upon leaving the {@code try-with-resources} block. If, in the
 	 * sample, the {@code doLoginAndOpenProject} method or any part of its implementation needs to
 	 * retain the password, it must make a copy. It is then the implementation's responsibility to
 	 * protect its copy.
-	 * 
+	 *
 	 * @param title the title of the dialog
 	 * @param prompt the prompt to the left of the input field, or null to display "Password:"
 	 * @return the password
@@ -3026,7 +3220,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			throw new ImproperUseException(
 				"The askPassword() method can only be used when running headed Ghidra.");
 		}
-		PasswordDialog dialog = new PasswordDialog(title, null, null, prompt, null, null);
+		PasswordDialog dialog = new PasswordDialog(title, null, null, prompt);
 		try {
 			state.getTool().showDialog(dialog);
 			if (!dialog.okWasPressed()) {
@@ -3492,13 +3686,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	/**
 	 * Attempts to import the specified file. It attempts to detect the format and
 	 * automatically import the file. If the format is unable to be determined, then
-	 * null is returned.  For more control over the import process, {@link AutoImporter} may be
-	 * directly called.
+	 * null is returned.  For more control over the import process, {@link ProgramLoader} may be
+	 * directly used.
 	 * <p>
-	 * NOTE: The returned {@link Program} is not automatically saved into the current project. 
+	 * NOTE: The returned {@link Program} is not automatically saved into the current project.
 	 * <p>
 	 * NOTE: It is the responsibility of the script that calls this method to release the returned
-	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer 
+	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer
 	 * needed, where <code>consumer</code> is <code>this</code>.
 	 *
 	 * @param file the file to import
@@ -3506,11 +3700,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @throws Exception if any exceptions occur while importing
 	 */
 	public Program importFile(File file) throws Exception {
-		try {
-			LoadResults<Program> loadResults = AutoImporter.importByUsingBestGuess(file,
-				state.getProject(), null, this, new MessageLog(), monitor);
-			loadResults.releaseNonPrimary(this);
-			return loadResults.getPrimaryDomainObject();
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(state.getProject())
+				.monitor(monitor)
+				.load()) {
+			return loadResults.getPrimaryDomainObject(this);
 		}
 		catch (LoadException e) {
 			return null;
@@ -3518,11 +3713,11 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * Imports the specified file as raw binary.  For more control over the import process, 
-	 * {@link AutoImporter} may be directly called.
+	 * Imports the specified file as raw binary.  For more control over the import process,
+	 * {@link ProgramLoader} may be directly used.
 	 * <p>
 	 * NOTE: It is the responsibility of the script that calls this method to release the returned
-	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer 
+	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer
 	 * needed, where <code>consumer</code> is <code>this</code>.
 	 *
 	 * @param file the file to import
@@ -3533,10 +3728,15 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 */
 	public Program importFileAsBinary(File file, Language language, CompilerSpec compilerSpec)
 			throws Exception {
-		try {
-			Loaded<Program> loaded = AutoImporter.importAsBinary(file, state.getProject(), null,
-				language, compilerSpec, this, new MessageLog(), monitor);
-			return loaded.getDomainObject();
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(state.getProject())
+				.loaders(BinaryLoader.class)
+				.language(language)
+				.compiler(compilerSpec)
+				.monitor(monitor)
+				.load()) {
+			return loadResults.getPrimaryDomainObject(this);
 		}
 		catch (LoadException e) {
 			return null;
@@ -3557,7 +3757,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		pm.openProgram(program);
 		end(true);
 		GhidraState newState = new GhidraState(tool, tool.getProject(), program, null, null, null);
-		set(newState, monitor, writer);
+		set(newState);
 		start();
 	}
 
@@ -3727,7 +3927,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPlateComment(Address)
 	 */
 	public String getPlateCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.PLATE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3746,7 +3946,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPreComment(Address)
 	 */
 	public String getPreCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.PRE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.PRE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3764,7 +3964,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPostComment(Address)
 	 */
 	public String getPostCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.POST_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.POST, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3782,7 +3982,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getEOLComment(Address)
 	 */
 	public String getEOLCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.EOL, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3800,8 +4000,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getRepeatableComment(Address)
 	 */
 	public String getRepeatableCommentAsRendered(Address address) {
-		String comment =
-			currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3820,7 +4019,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			AddressArrayTableModel model = new AddressArrayTableModel(getScriptName(),
 				state.getTool(), currentProgram, addresses);
 			TableComponentProvider<Address> tableProvider =
-				table.showTableWithMarkers(title + " " + model.getName(), "GhidraScript", model,
+				table.showTableWithMarkers(title + " " + model.getName(), "Addresses", model,
 					Palette.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
 		};
@@ -3838,7 +4037,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			AddressSetTableModel model =
 				new AddressSetTableModel(title, state.getTool(), currentProgram, addresses, null);
 			TableComponentProvider<Address> tableProvider = table.showTableWithMarkers(title,
-				"GhidraScript", model, Palette.GREEN, null, "Script Results", null);
+				"Addresses", model, Palette.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
 		});
 	}
@@ -3883,6 +4082,36 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 
 		return result;
+	}
+
+	private class ScriptStatusListener implements StatusListener {
+		StringBuilder errors = new StringBuilder();
+
+		@Override
+		public void setStatusText(String text) {
+			errors.append(text);
+			errors.append("\n");
+		}
+
+		@Override
+		public void setStatusText(String text, MessageType messageType) {
+			setStatusText(text);
+		}
+
+		@Override
+		public void setStatusText(String text, MessageType type, boolean alert) {
+			setStatusText(text);
+		}
+
+		@Override
+		public void clearStatusText() {
+			// not supported
+		}
+
+		@Override
+		public final String toString() {
+			return errors.toString();
+		}
 	}
 
 }

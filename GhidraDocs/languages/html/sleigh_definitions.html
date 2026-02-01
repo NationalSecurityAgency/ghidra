@@ -34,9 +34,9 @@ the specification. All definition statements start with the keyword
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_endianess_definition"></a>4.1. Endianess Definition</h3></div></div></div>
+<a name="sleigh_endianness_definition"></a>4.1. Endianness Definition</h3></div></div></div>
 <p>
-The first definition in any SLEIGH specification must be for endianess. Either
+The first definition in any SLEIGH specification must be for endianness. Either
 </p>
 <div class="informalexample"><pre class="programlisting">
 define endian=big;            <span class="emphasis"><em>OR</em></span>
@@ -47,11 +47,11 @@ This defines how the processor interprets contiguous sequences of
 bytes as integers or other values and globally affects values across
 all address spaces. It also affects how integer fields
 within an instruction are interpreted, (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, “Defining Tokens and Fields”</a>),
-although it is possible to override this setting in the rare case that endianess is
+although it is possible to override this setting in the rare case that endianness is
 different for data versus instruction encoding.
 The specification designer generally only needs to worry about
-endianess when labeling instruction fields and when defining overlapping registers,
-otherwise the specification language hides endianess issues.
+endianness when labeling instruction fields and when defining overlapping registers,
+otherwise the specification language hides endianness issues.
 </p>
 </div>
 <div class="sect2">
@@ -66,7 +66,7 @@ define alignment=<span class="bold"><strong>integer</strong></span>;
 <p>
 This specifies the byte alignment of instructions within their address
 space. It defaults to 1 or no alignment. When disassembling an
-instruction at a particular, the disassembler checks the alignment of
+instruction at a particular address, the disassembler checks the alignment of
 the address against this value and can opt to flag an unaligned
 instruction as an error.
 </p>
@@ -86,7 +86,7 @@ and <span class="emphasis"><em>attributes</em></span> looks like zero or more of
 following lines:
 </p>
 <div class="informalexample"><pre class="programlisting">
-type=(ram_space|rom_space|register_space)
+type=(ram_space|register_space)
 size=<span class="bold"><strong>integer</strong></span>
 default
 wordsize=<span class="bold"><strong>integer</strong></span>
@@ -146,11 +146,6 @@ with <span class="bold"><strong>register_space</strong></span>.
   </li>
 </ul></div></div>
 <p>
-</p>
-<p>
-A space of type <span class="bold"><strong>rom_space</strong></span> has seen
-little use so far but is intended to be the same as
-a <span class="bold"><strong>ram_space</strong></span> that is not writable.
 </p>
 <p>
 At least one space needs to be labeled with
@@ -234,7 +229,7 @@ Many processors define registers that either consist of a single bit
 or otherwise don't use an integral number of bytes. A recurring
 example in many processors is the status register which is further
 subdivided into the overflow and result flags for the arithmetic
-instructions. These flags are typically have labels like ZF for the
+instructions. These flags typically have labels like ZF for the
 zero flag or CF for the carry flag and can be considered logical
 registers contained within the status register. SLEIGH allows
 registers to be defined like this using

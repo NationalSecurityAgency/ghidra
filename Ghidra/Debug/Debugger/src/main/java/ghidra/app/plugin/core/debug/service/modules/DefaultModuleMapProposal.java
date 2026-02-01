@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,31 @@ package ghidra.app.plugin.core.debug.service.modules;
 
 import java.util.*;
 
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.ModuleMapProposal;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.ModuleMapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
+import ghidra.util.MathUtilities;
 
 public class DefaultModuleMapProposal
 		extends AbstractMapProposal<TraceModule, Program, ModuleMapEntry>
 		implements ModuleMapProposal {
+	protected static final int BLOCK_BITS = 12;
+	protected static final int BLOCK_SIZE = 1 << BLOCK_BITS;
+	protected static final long BLOCK_MASK = -1L << BLOCK_BITS;
+
+	protected static AddressRange quantize(AddressRange range) {
+		AddressSpace space = range.getAddressSpace();
+		Address min = space.getAddress(range.getMinAddress().getOffset() & BLOCK_MASK);
+		Address max = space.getAddress(range.getMaxAddress().getOffset() | ~BLOCK_MASK);
+		return new AddressRangeImpl(min, max);
+	}
 
 	/**
 	 * A module-program entry in a proposed module map
@@ -55,7 +67,7 @@ public class DefaultModuleMapProposal
 				// TODO: Determine how to handle these.
 				return false;
 			}
-			if (block.isExternalBlock()) {
+			if (block.isArtificial()) {
 				return false;
 			}
 			return true;
@@ -70,20 +82,24 @@ public class DefaultModuleMapProposal
 		 * @param program the program image whose size to compute
 		 * @return the size
 		 */
-		public static long computeImageSize(Program program) {
-			Address imageBase = program.getImageBase();
-			long imageSize = 0;
+		public static AddressRange computeImageRange(Program program) {
+			Extrema extrema = new Extrema();
 			// TODO: How to handle Harvard architectures?
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (!includeBlock(program, block)) {
 					continue;
 				}
-				imageSize = Math.max(imageSize, block.getEnd().subtract(imageBase) + 1);
+				// includeBlock checks address space is same as image base
+				extrema.consider(block.getAddressRange());
 			}
-			return imageSize;
+			if (program.getImageBase().getOffset() != 0) {
+				extrema.consider(program.getImageBase());
+			}
+			return extrema.getRange();
 		}
 
 		protected AddressRange moduleRange;
+		protected AddressRange imageRange;
 		protected boolean memorize = false;
 
 		/**
@@ -95,13 +111,15 @@ public class DefaultModuleMapProposal
 		 * to obtain these.
 		 * 
 		 * @param module the module
+		 * @param snap the first snap
 		 * @param program the matched program
 		 * @param moduleRange a range from the module base the size of the program's image
 		 */
-		protected DefaultModuleMapEntry(TraceModule module, Program program,
+		protected DefaultModuleMapEntry(TraceModule module, long snap, Program program,
 				AddressRange moduleRange) {
-			super(module.getTrace(), module, program, program);
+			super(module.getTrace(), module, snap, program, program);
 			this.moduleRange = moduleRange;
+			this.imageRange = quantize(computeImageRange(program));
 		}
 
 		@Override
@@ -110,13 +128,22 @@ public class DefaultModuleMapProposal
 		}
 
 		@Override
-		public Lifespan getFromLifespan() {
-			return getModule().getLifespan();
+		public String getModuleName() {
+			return getModule().getName(snap);
+		}
+
+		private long getLength() {
+			return MathUtilities.unsignedMin(moduleRange.getLength(), imageRange.getLength());
 		}
 
 		@Override
 		public AddressRange getFromRange() {
-			return moduleRange;
+			try {
+				return new AddressRangeImpl(moduleRange.getMinAddress(), getLength());
+			}
+			catch (AddressOverflowException e) {
+				throw new AssertionError(e);
+			}
 		}
 
 		@Override
@@ -127,21 +154,13 @@ public class DefaultModuleMapProposal
 		@Override
 		public void setProgram(Program program) {
 			setToObject(program, program);
-			try {
-				this.moduleRange =
-					new AddressRangeImpl(getModule().getBase(), computeImageSize(program));
-			}
-			catch (AddressOverflowException e) {
-				// This is terribly unlikely
-				throw new IllegalArgumentException(
-					"Specified program is too large for module's memory space");
-			}
+			this.imageRange = quantize(computeImageRange(program));
 		}
 
 		@Override
 		public AddressRange getToRange() {
 			try {
-				return new AddressRangeImpl(getToProgram().getImageBase(), moduleRange.getLength());
+				return new AddressRangeImpl(imageRange.getMinAddress(), getLength());
 			}
 			catch (AddressOverflowException e) {
 				throw new AssertionError(e);
@@ -160,17 +179,17 @@ public class DefaultModuleMapProposal
 	}
 
 	protected final TraceModule module;
+	protected final long snap;
 
 	// indexed by region's offset from module base
 	protected final NavigableMap<Long, ModuleRegionMatcher> matchers = new TreeMap<>();
-	protected Address imageBase;
-	protected Address moduleBase;
-	protected long imageSize;
-	protected AddressRange moduleRange; // TODO: This is now in the trace schema. Use it.
+	protected AddressRange imageRange;
+	protected AddressRange moduleRange;
 
-	protected DefaultModuleMapProposal(TraceModule module, Program program) {
+	protected DefaultModuleMapProposal(TraceModule module, long snap, Program program) {
 		super(module.getTrace(), program);
 		this.module = module;
+		this.snap = snap;
 		processProgram();
 		processModule();
 	}
@@ -181,12 +200,12 @@ public class DefaultModuleMapProposal
 	}
 
 	private ModuleRegionMatcher getMatcher(long baseOffset) {
-		return matchers.computeIfAbsent(baseOffset, ModuleRegionMatcher::new);
+		return matchers.computeIfAbsent(baseOffset, b -> new ModuleRegionMatcher(snap));
 	}
 
 	private void processProgram() {
-		imageBase = program.getImageBase();
-		imageSize = DefaultModuleMapEntry.computeImageSize(program);
+		imageRange = quantize(DefaultModuleMapEntry.computeImageRange(program));
+		Address imageBase = imageRange.getMinAddress(); // not precisely, but good enough
 		// TODO: How to handle Harvard architectures?
 		for (MemoryBlock block : program.getMemory().getBlocks()) {
 			if (!DefaultModuleMapEntry.includeBlock(program, block)) {
@@ -200,17 +219,13 @@ public class DefaultModuleMapProposal
 	 * Must be called after processProgram, so that image size is known
 	 */
 	private void processModule() {
-		moduleBase = module.getBase();
-		try {
-			moduleRange = new AddressRangeImpl(moduleBase, imageSize);
-		}
-		catch (AddressOverflowException e) {
-			return; // Just score it as having no matches?
-		}
+		moduleRange = quantize(module.getRange(snap));
+		Address moduleBase = moduleRange.getMinAddress();
 		for (TraceMemoryRegion region : module.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(module.getLifespan(), moduleRange)) {
-			getMatcher(region.getMinAddress().subtract(moduleBase)).region = region;
+				.getRegionsIntersecting(Lifespan.at(snap), moduleRange)) {
+			Address min = region.getMinAddress(snap);
+			getMatcher(min.subtract(moduleBase)).region = region;
 		}
 	}
 
@@ -230,7 +245,7 @@ public class DefaultModuleMapProposal
 
 	@Override
 	public Map<TraceModule, ModuleMapEntry> computeMap() {
-		return Map.of(module, new DefaultModuleMapEntry(module, program, moduleRange));
+		return Map.of(module, new DefaultModuleMapEntry(module, snap, program, moduleRange));
 	}
 
 	@Override

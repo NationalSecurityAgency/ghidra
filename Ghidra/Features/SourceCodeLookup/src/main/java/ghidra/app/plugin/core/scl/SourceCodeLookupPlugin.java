@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package ghidra.app.plugin.core.scl;
 
-import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.Socket;
 
 import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramLocationActionContext;
@@ -45,7 +45,7 @@ import ghidra.util.Msg;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Source Code Lookup Plugin",
 	description = "Plugin to send requests to the development IDE to lookup symbols in source files.",
 	servicesRequired = { EclipseIntegrationService.class },
@@ -94,7 +94,9 @@ public class SourceCodeLookupPlugin extends ProgramPlugin {
 		// how to define the group/menu position.  For now, just put the menu in the main menu bar.
 		// lookupSourceCodeAction.setPopupMenuData(new MenuData(POPUP_PATH, null, "Label",
 		// MenuData.NO_MNEMONIC, "z"));
-		lookupSourceCodeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
+
+		// F3 is conflicting with memory search again. 
+		// lookupSourceCodeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
 		lookupSourceCodeAction.setHelpLocation(
 			new HelpLocation("SourceCodeLookupPlugin", "Source_Code_Lookup_Plugin"));
 		tool.addAction(lookupSourceCodeAction);

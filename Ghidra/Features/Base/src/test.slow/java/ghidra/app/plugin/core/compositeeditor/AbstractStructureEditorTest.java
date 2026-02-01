@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,8 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 
 	// Editor Actions
 	ApplyAction applyAction;
+	UndoChangeAction undoAction;
+	RedoChangeAction redoAction;
 	ArrayAction arrayAction;
 	ClearAction clearAction;
 	CreateInternalStructureAction createInternalStructureAction;
@@ -46,6 +48,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 	InsertUndefinedAction insertUndefinedAction;
 	HexNumbersAction hexNumbersAction;
 
+	@Override
 	@After
 	public void tearDown() throws Exception {
 		clearActions();
@@ -100,6 +103,8 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 		favorites.clear();
 		cycles.clear();
 		applyAction = null;
+		undoAction = null;
+		redoAction = null;
 		arrayAction = null;
 		clearAction = null;
 		createInternalStructureAction = null;
@@ -129,6 +134,12 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 			}
 			else if (action instanceof ApplyAction) {
 				applyAction = (ApplyAction) action;
+			}
+			else if (action instanceof UndoChangeAction) {
+				undoAction = (UndoChangeAction) action;
+			}
+			else if (action instanceof RedoChangeAction) {
+				redoAction = (RedoChangeAction) action;
 			}
 			else if (action instanceof ArrayAction) {
 				arrayAction = (ArrayAction) action;

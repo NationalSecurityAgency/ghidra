@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.bookmark;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 
@@ -28,7 +27,7 @@ import ghidra.program.model.listing.*;
  *      2) at a given address
  *      3) by the information contained in a Bookmark
  */
-public class BookmarkEditCmd implements Command {
+public class BookmarkEditCmd implements Command<Program> {
 
 	private String category;
 	private String comment;
@@ -42,8 +41,8 @@ public class BookmarkEditCmd implements Command {
 	private String presentationName;
 
 	/**
-	 * Edit a Bookmark. When editing a bookmark, all fields are used except the address
-	 * which is determined by the first address within each range of the set.
+	 * Constructor
+	 * 
 	 * @param set list of bookmark addresses.
 	 * @param type the bookmark type.
 	 * @param category the bookmark category.
@@ -54,14 +53,15 @@ public class BookmarkEditCmd implements Command {
 		this.category = category;
 		this.comment = comment;
 		this.set = set;
-		if (set == null || set.isEmpty() || type == null || type.length() == 0)
+		if (set == null || set.isEmpty() || type == null || type.length() == 0) {
 			throw new IllegalArgumentException();
+		}
 		presentationName = "Add " + type + " Bookmark(s)";
 	}
 
 	/**
-	 * Edit a Bookmark. When editing a bookmark, all fields are used except the address
-	 * which is provided by the addrs parameter.
+	 * Constructor
+	 * 
 	 * @param addr the bookmark address.
 	 * @param type the bookmark type.
 	 * @param category the bookmark category.
@@ -72,8 +72,9 @@ public class BookmarkEditCmd implements Command {
 		this.category = category;
 		this.comment = comment;
 		this.addr = addr;
-		if (addr == null || type == null || type.length() == 0)
+		if (addr == null || type == null || type.length() == 0) {
 			throw new IllegalArgumentException();
+		}
 		presentationName = "Add " + type + " Bookmark";
 	}
 
@@ -81,22 +82,23 @@ public class BookmarkEditCmd implements Command {
 		this.bookmark = bookmark;
 		this.category = category;
 		this.comment = comment;
-		if (bookmark == null)
+		if (bookmark == null) {
 			throw new IllegalArgumentException();
+		}
 		presentationName = "Edit " + bookmark.getTypeString() + " Bookmark";
 	}
 
 	/**
-	 * The name of the edit action.
+	 * {@return The name of the edit action.}
 	 */
 	public String getPresentationName() {
 		return presentationName;
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		BookmarkManager mgr = ((Program) obj).getBookmarkManager();
+		BookmarkManager mgr = program.getBookmarkManager();
 
 		if (bookmark != null) {
 			bookmark.set(category, comment);

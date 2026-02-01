@@ -53,8 +53,10 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				// Initially Direction was 0x1e240
 				setRegValue(pc, addr("1002085"), addr("1002100"), regDR0, 0x5L);
+
+				setRegValue(pc, addr("TextOverlay:1001700"), addr("TextOverlay:1001780"), regDR0,
+					0x5L);
 			}
 
 			@Override
@@ -63,6 +65,9 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				Register regDR0 = pc.getRegister(regNameDR0);
 
 				setRegValue(pc, addr("1002000"), addr("1002074"), regDR0, 0x22L);
+
+				setRegValue(pc, addr("TextOverlay:1001630"), addr("TextOverlay:1001680"), regDR0,
+					0x22L);
 			}
 		});
 
@@ -89,6 +94,34 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		for (Address a = addr("1002101"); a.compareTo(addr("1002150")) <= 0; a = a.add(0x1L)) {
 			assertUndefinedRegValue("DR0", a);
 		}
+
+		// Check Overlay
+
+		// Neither set it
+		for (Address a = addr("TextOverlay:1001629"); a
+				.compareTo(addr("TextOverlay:1001629")) <= 0; a = a.add(0x1L)) {
+			assertUndefinedRegValue("DR0", a);
+		}
+		// From MY
+		for (Address a = addr("TextOverlay:1001630"); a
+				.compareTo(addr("TextOverlay:1001680")) <= 0; a = a.add(0x1L)) {
+			assertRegValue("DR0", a, 0x22L);
+		}
+		// Neither set it
+		for (Address a = addr("TextOverlay:1001681"); a
+				.compareTo(addr("TextOverlay:10016ff")) <= 0; a = a.add(0x1L)) {
+			assertUndefinedRegValue("DR0", a);
+		}
+		// From LATEST
+		for (Address a = addr("TextOverlay:1001700"); a
+				.compareTo(addr("TextOverlay:1001780")) <= 0; a = a.add(0x1L)) {
+			assertRegValue("DR0", a, 0x5L);
+		}
+		// Neither set it
+		for (Address a = addr("TextOverlay:1001781"); a
+				.compareTo(addr("TextOverlay:100182f")) <= 0; a = a.add(0x1L)) {
+			assertUndefinedRegValue("DR0", a);
+		}
 	}
 
 	@Test
@@ -100,7 +133,6 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				// Initially Direction was 0x1e240
 				setRegValue(pc, addr("10022d4"), addr("10022d9"), regDR0, 0x66L);
 			}
 
@@ -807,6 +839,9 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 
 				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
 				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
+
+				setRegValue(pc, addr("TextOverlay:1001700"), addr("TextOverlay:1001700"), reg1,
+					0x44L);
 			}
 
 			@Override
@@ -816,11 +851,16 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 
 				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
 				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
+
+				setRegValue(pc, addr("TextOverlay:1001700"), addr("TextOverlay:1001700"), reg1,
+					0x5L);
 			}
 		});
 
 		executeMerge(ASK_USER);
 		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
+		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
@@ -832,6 +872,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		for (Address a = addr("10022ee"); a.compareTo(addr("10022fc")) <= 0; a = a.add(0x1L)) {
 			assertRegValue("DR0", a, 0x5L);
 		}
+		assertRegValue("DR0", addr("TextOverlay:1001700"), 0x5L);
 	}
 
 	@Test

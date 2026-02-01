@@ -4,18 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- *
- */
+
 package ghidra.app.plugin.core.functiongraph.graph.vertex;
 
 import java.awt.*;
@@ -23,10 +21,12 @@ import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
 import docking.GenericHeader;
@@ -37,20 +37,22 @@ import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.label.GDLabel;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Tooltips;
+import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
+import ghidra.app.plugin.core.marker.MarkerMarginProvider;
 import ghidra.app.services.HoverService;
+import ghidra.app.services.MarkerService;
 import ghidra.app.util.AddEditDialog;
 import ghidra.app.util.viewer.format.FormatManager;
-import ghidra.app.util.viewer.listingpanel.ListingHoverProvider;
-import ghidra.app.util.viewer.listingpanel.ListingModel;
+import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.plugintool.PluginTool;
@@ -105,6 +107,12 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		}
 	};
 
+	private final ChangeListener markerChangeListener = e -> {
+		if (controller != null) {
+			controller.repaint();
+		}
+	};
+
 	ListingGraphComponentPanel(final FGVertex vertex, final FGController controller,
 			PluginTool tool, Program program, AddressSetView addressSet) {
 		super(controller, vertex);
@@ -121,6 +129,21 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		listingPanel
 				.addButtonPressedListener(controller.getSharedHighlighterButtonPressedListener());
 		listingPanel.setStringSelectionListener(controller.getSharedStringSelectionListener());
+
+		MarkerService markerService = controller.getService(MarkerService.class);
+		if (markerService != null) {
+			ListingBackgroundColorModel colorModel = new MarkerServiceBackgroundColorModel(
+				markerService, listingPanel.getAddressIndexMap());
+			listingPanel.setBackgroundColorModel(colorModel);
+			markerService.addChangeListener(markerChangeListener);
+		}
+
+		// The margin providers may be installed by services other than the MarkerService
+		Set<MarginProviderSupplier> marginProviders = controller.getMarginProviderSuppliers();
+		for (MarginProviderSupplier supplier : marginProviders) {
+			MarkerMarginProvider marginProvider = supplier.createMarginProvider();
+			listingPanel.addMarginProvider(marginProvider);
+		}
 
 		fieldPanel = listingPanel.getFieldPanel();
 		fieldPanel.setCursorOn(false);
@@ -219,8 +242,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
 		tooltipTitleLabel.setBackground(Tooltips.BACKGROUND);
 		tooltipTitleLabel.setOpaque(true);
-		Font labelFont = tooltipTitleLabel.getFont();
-		tooltipTitleLabel.setFont(labelFont.deriveFont(Font.BOLD));
+		Gui.registerFont(tooltipTitleLabel, Font.BOLD);
 
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.add(tooltipTitleLabel);
@@ -309,7 +331,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 				controller.showXRefsDialog();
 			}
 		};
-		xrefsAction.setDescription("Jump to a XRef");
+		xrefsAction.setDescription("Jump to XRef");
 		Icon imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.xrefs");
 		xrefsAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		xrefsAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_XRefs"));
@@ -676,6 +698,11 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		// references and removing the data from Jung's graph
 		//
 
+		MarkerService markerService = controller.getService(MarkerService.class);
+		if (markerService != null) {
+			markerService.removeChangeListener(markerChangeListener);
+		}
+
 		removeAll();
 
 		listingPanel.setStringSelectionListener(null);
@@ -717,7 +744,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		@Override
 		protected void showPopup(JComponent comp, Field field, MouseEvent event,
 				Rectangle fieldBounds) {
-			if (!controller.arePopupsEnabled()) {
+			if (!controller.arePopupsVisible()) {
 				return;
 			}
 

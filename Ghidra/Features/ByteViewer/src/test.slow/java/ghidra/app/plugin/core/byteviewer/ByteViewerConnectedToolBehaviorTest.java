@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.junit.*;
 import docking.DefaultActionContext;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
@@ -70,6 +71,13 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 		env.connectTools(toolOne, tool2);
 
 		program = buildNotepad();
+
+		// open program in toolOne
+		env.open(program);
+
+		// open same program in second tool - cannot rely on tool connection for this
+		tool2.firePluginEvent(new OpenProgramPluginEvent("Test", program));
+
 		final ProgramManager pm = toolOne.getService(ProgramManager.class);
 		runSwing(() -> pm.openProgram(program.getDomainFile()));
 	}
@@ -166,7 +174,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 
 		ByteViewerComponent c2 = panel2.getCurrentComponent();
 		ByteField f2 = c2.getField(BigInteger.ZERO, 0);
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, f2.getForeground());
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR, f2.getForeground());
 	}
 
 	@Test
@@ -196,7 +204,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 
 		ByteViewerComponent c2 = panel2.getCurrentComponent();
 		ByteField f2 = c2.getField(BigInteger.ZERO, 0);
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, f2.getForeground());
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR, f2.getForeground());
 
 		undo(program);
 
@@ -223,8 +231,8 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 	}
 
 	private Address convertToAddr(ByteViewerPlugin plugin, ByteBlockInfo info) {
-		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddress(
-			info.getBlock(), info.getOffset());
+		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet())
+				.getAddress(info.getBlock(), info.getOffset());
 	}
 
 	private boolean byteBlockSelectionEquals(ByteBlockSelection b1, ByteBlockSelection b2) {

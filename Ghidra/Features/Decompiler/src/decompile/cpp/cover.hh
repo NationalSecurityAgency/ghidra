@@ -34,15 +34,15 @@ class Varnode;
 /// affectsTest() can do secondary testing to determine if the intersection should prevent merging.
 class PcodeOpSet {
   friend class Cover;
-  vector<PcodeOp *> opList;		// Ops in this set, sorted on block index, then SeqNum::order
-  vector<int4> blockStart;		// Index of first op in each non-empty block
-  bool is_pop;				// Has the populate() method been called
+  vector<PcodeOp *> opList;		///< Ops in this set, sorted on block index, then SeqNum::order
+  vector<int4> blockStart;		///< Index of first op in each non-empty block
+  bool is_pop;				///< Has the populate() method been called
 protected:
   void addOp(PcodeOp *op) { opList.push_back(op); }	///< Add a PcodeOp into the set
-  void finalize(void);			// Sort ops in the set into blocks
+  void finalize(void);			///< Sort ops in the set into blocks
 public:
   PcodeOpSet(void) { is_pop = false; }
-  bool isPopulated(void) const { return is_pop; }	/// Return \b true if \b this set is populated
+  bool isPopulated(void) const { return is_pop; }	///< Return \b true if \b this set is populated
   virtual ~PcodeOpSet(void) {}
 
   /// \brief Populate the PcodeOp object in \b this set

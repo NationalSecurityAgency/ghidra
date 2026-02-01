@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,8 @@ public class AddToProgramDialog extends ImporterDialog {
 	 */
 	protected AddToProgramDialog(PluginTool tool, FSRL fsrl, LoaderMap loaderMap,
 			ByteProvider byteProvider, Program addToProgram) {
-		super("Add To Program:  " + fsrl.getPath(), tool, loaderMap, byteProvider, null);
+		super("Add To Program:  " + fsrl.getPath(), tool,
+			filterSupportedLoaders(loaderMap, addToProgram), byteProvider, null);
 		this.addToProgram = addToProgram;
 		folderNameTextField.setText(getFolderName(addToProgram));
 		nameTextField.setText(addToProgram.getName());
@@ -60,6 +61,7 @@ public class AddToProgramDialog extends ImporterDialog {
 		folderButton.setEnabled(false);
 		languageButton.setEnabled(false);
 		nameTextField.setEnabled(false);
+		mirrorFsCheckBox.setVisible(false);
 		validateFormInput();
 	}
 
@@ -73,16 +75,12 @@ public class AddToProgramDialog extends ImporterDialog {
 			setStatusText("Please select a format.");
 			return false;
 		}
-		if (!loader.supportsLoadIntoProgram()) {
-			setStatusText(loader.getName() + " does not support add to program.");
-			return false;
-		}
 		optionsButton.setEnabled(true);
 
 		LoadSpec loadSpec = getSelectedLoadSpec(loader);
 
-		String result =
-			loader.validateOptions(byteProvider, loadSpec, getOptions(loadSpec), addToProgram);
+		String result = loader.validateOptions(byteProvider, loadSpec, getOptions(loadSpec, false),
+			addToProgram);
 
 		if (result != null) {
 			setStatusText(result);
@@ -92,11 +90,6 @@ public class AddToProgramDialog extends ImporterDialog {
 		setStatusText("");
 		setOkEnabled(true);
 		return true;
-	}
-
-	@Override
-	protected boolean isSupported(Loader loader) {
-		return loader.supportsLoadIntoProgram();
 	}
 
 	@Override
@@ -111,7 +104,8 @@ public class AddToProgramDialog extends ImporterDialog {
 		LoadSpec selectedLoadSpec = getSelectedLoadSpec(selectedLoader);
 
 		if (options == null) {
-			options = selectedLoader.getDefaultOptions(byteProvider, selectedLoadSpec, null, true);
+			options =
+				selectedLoader.getDefaultOptions(byteProvider, selectedLoadSpec, null, true, false);
 		}
 		TaskLauncher.launchNonModal("Import File", monitor -> {
 			ImporterUtilities.addContentToProgram(tool, addToProgram, fsrl, selectedLoadSpec,
@@ -121,11 +115,12 @@ public class AddToProgramDialog extends ImporterDialog {
 	}
 
 	@Override
-	protected List<Option> getOptions(LoadSpec loadSpec) {
-		if (options != null) {
+	protected List<Option> getOptions(LoadSpec loadSpec, boolean forceRefresh) {
+		if (options != null && !forceRefresh) {
 			return options;
 		}
-		return loadSpec.getLoader().getDefaultOptions(byteProvider, loadSpec, addToProgram, true);
+		return loadSpec.getLoader()
+				.getDefaultOptions(byteProvider, loadSpec, addToProgram, true, false);
 	}
 
 	/**
@@ -145,5 +140,24 @@ public class AddToProgramDialog extends ImporterDialog {
 			return "";
 		}
 		return parent.toString();
+	}
+
+	/**
+	 * Returns a new {@link LoaderMap} with loaders that do not support loading into the given
+	 * program filtered out
+	 * 
+	 * @param loaderMap The loaders and their corresponding load specifications
+	 * @param program The {@link Program} trying to be loaded in to
+	 * @return A new {@link LoaderMap} with loaders that do not support loading into the given
+	 *   program filtered out
+	 */
+	private static LoaderMap filterSupportedLoaders(LoaderMap loaderMap, Program program) {
+		LoaderMap newMap = new LoaderMap();
+		for (Loader loader : loaderMap.keySet()) {
+			if (loader.supportsLoadIntoProgram(program)) {
+				newMap.put(loader, loaderMap.get(loader));
+			}
+		}
+		return newMap;
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -44,81 +43,82 @@ import ghidra.util.layout.*;
 import help.HelpService;
 
 /**
- * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when 
+ * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when
  * applying version tracking markup.
  */
 public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	// help tooltips
 	private static final String DATA_MATCH_DATA_TYPE_TOOLTIP =
-		"<HTML>The apply action for the <b>data type on a data match</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for the <b>data type on a data match</b> when performing bulk apply operations</html>";
 	private static final String LABELS_TOOLTIP =
-		"<HTML>The apply action for <b>labels</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>labels</b> when performing bulk apply operations</html>";
 	private static final String FUNCTION_NAME_TOOLTIP =
-		"<HTML>The apply action for <b>function name</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>function name</b> when performing bulk apply operations</html>";
 	private static final String FUNCTION_SIGNATURE_TOOLTIP =
-		"<HTML>The apply action for the <b>function signature</b> " +
-			"when performing bulk apply operations</HTML>";
+		"<html>The apply action for the <b>function signature</b> " +
+			"when performing bulk apply operations</html>";
 	private static final String PLATE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>plate comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>plate comments</b> when performing bulk apply operations</html>";
 	private static final String PRE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>pre comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>pre comments</b> when performing bulk apply operations</html>";
 	private static final String END_OF_LINE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>end of line comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>end of line comments</b> when performing bulk apply operations</html>";
 	private static final String REPEATABLE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>repeatable comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>repeatable comments</b> when performing bulk apply operations</html>";
 	private static final String POST_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>post comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>post comments</b> when performing bulk apply operations</html>";
 	private static final String FUNCTION_RETURN_TYPE_TOOLTIP =
-		"<HTML>The apply action for <b>function return type</b> when the function signature is applied</HTML>";
+		"<html>The apply action for <b>function return type</b> when the function signature is applied</html>";
 	private static final String INLINE_TOOLTIP =
-		"<HTML>The apply action to use for the <b>function inline flag</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>function inline flag</b> " +
+			"when applying the function signature</html>";
 	private static final String NO_RETURN_TOOLTIP =
-		"<HTML>The apply action to use for the <b>function no return flag</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>function no return flag</b> " +
+			"when applying the function signature</html>";
 	private static final String CALLING_CONVENTION_TOOLTIP =
-		"<HTML>The apply action to use for the <b>function calling convention</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>function calling convention</b> " +
+			"when applying the function signature</html>";
 	private static final String CALL_FIXUP_TOOLTIP =
-		"<HTML>The apply action for <b>whether or not to apply call fixup</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action for <b>whether or not to apply call fixup</b> " +
+			"when applying the function signature</html>";
 	private static final String VAR_ARGS_TOOLTIP =
-		"<HTML>The apply action to use for the <b>var args flag</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>var args flag</b> " +
+			"when applying the function signature</html>";
 	private static final String PARAMETER_DATA_TYPES_TOOLTIP =
-		"<HTML>The apply action for <b>function parameter data types</b> when applying the function signature</HTML>";
+		"<html>The apply action for <b>function parameter data types</b> when applying the function signature</html>";
 	private static final String PARAMETER_NAMES_TOOLTIP =
-		"<HTML>The apply action for <b>function parameter names</b> when applying the function signature</HTML>";
+		"<html>The apply action for <b>function parameter names</b> when applying the function signature</html>";
 	private static final String PARAMETER_NAME_PRIORITY_TOOTIP =
-		"<HTML>Choose whether a parameter name with a User source type or Import source type is highest " +
-			"priority when determining whether to replace the name or not when using the priority.</HTML>";
+		"<html>Choose whether a parameter name with a User source type or Import source type is highest " +
+			"priority when determining whether to replace the name or not when using the priority.</html>";
 	private static final String HIGHEST_NAME_PRIORITY_TOOLTIP =
-		"<HTML>The apply action for <b>which source type is the highest priority</b> " +
-			"when applying parameter names using a priority replace</HTML>";
+		"<html>The apply action for <b>which source type is the highest priority</b> " +
+			"when applying parameter names using a priority replace</html>";
 	private static final String USER_PRIORITY_TOOLTIP =
-		"<HTML>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
-			"<blockquote>User Defined<br>Imported<br>Analysis<br>default (i.e. param_...)</blockquote></HTML>";
+		"<html>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
+			"<blockquote>User Defined<br>Imported<br>Analysis<br>default (i.e. param_...)</blockquote></html>";
 	private static final String IMPORT_PRIORITY_TOOLTIP =
-		"<HTML>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
-			"<blockquote>Imported<br>User Defined<br>Analysis<br>default (i.e. param_...)</blockquote></HTML>";
+		"<html>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
+			"<blockquote>Imported<br>User Defined<br>Analysis<br>default (i.e. param_...)</blockquote></html>";
 	private static final String PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY_TOOLTIP =
-		"<HTML>When function signature parameter names are being replaced based on source type priority, " +
-			"replace the destination name with the source name if their source types are the same.</HTML>";
+		"<html>When function signature parameter names are being replaced based on source type priority, " +
+			"replace the destination name with the source name if their source types are the same.</html>";
 	private static final String PARAMETER_COMMENTS_TOOLTIP =
-		"<HTML>The apply action for <b>parameter comments</b> when applying the function signature</HTML>";
+		"<html>The apply action for <b>parameter comments</b> when applying the function signature</html>";
 	private static final String IGNORE_EXCLUDED_TOOLTIP =
-		"<HTML>Markup items whose \"apply option\" is set to <b>Do Not Apply</b> should be" +
-			" changed to a status of <b>Ignored</b> by applying a match.</HTML>";
+		"<html>Markup items whose \"apply option\" is set to <b>Do Not Apply</b> should be" +
+			" changed to a status of <b>Ignored</b> by applying a match.</html>";
 	private static final String IGNORE_INCOMPLETE_TOOLTIP =
-		"<HTML>Markup items that are <b>incomplete</b> (for example, no destination address is specified) " +
-			"should be changed to a status of <b>Ignored</b> by applying a match.</HTML>";
+		"<html>Markup items that are <b>incomplete</b> (for example, no destination address is specified) " +
+			"should be changed to a status of <b>Ignored</b> by applying a match.</html>";
 
 	private JComponent editorComponent;
 
 	private JLabel dataMatchDataTypeLabel;
 	private JLabel functionNameLabel;
 	private JLabel functionSignatureLabel;
+	private JLabel useFunctionNamespaceLabel;
 	private JLabel returnTypeLabel;
 	private JLabel inlineLabel;
 	private JLabel noReturnLabel;
@@ -138,6 +138,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JComboBox<Enum<?>> dataMatchDataTypeComboBox;
 	private JComboBox<Enum<?>> functionNameComboBox;
 	private JComboBox<Enum<?>> functionSignatureComboBox;
+	private JCheckBox useFunctionNamespaceCheckBox;
 	private JComboBox<Enum<?>> returnTypeComboBox;
 	private JComboBox<Enum<?>> callingConventionComboBox;
 	private JComboBox<Enum<?>> inlineComboBox;
@@ -159,8 +160,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JComboBox<Enum<?>> repeatableCommentsComboBox;
 	private JCheckBox ignoreExcludedCheckBox;
 	private JCheckBox ignoreIncompleteCheckBox;
-
-	private ActionListener defaultActionListener;
 
 	private ToolOptions originalOptions;
 	private PropertyChangeListener listener;
@@ -206,7 +205,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.add(createSeparator());
 		panel.add(createIgnoreCheckBoxPanel());
 
-		// TODO More needs to be done with the layout here.
 		panel.setBorder(BorderFactory.createTitledBorder("Apply Markup Options"));
 		JScrollPane scrollPane = new JScrollPane(panel);
 
@@ -223,7 +221,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	private Component createIgnoreCheckBoxPanel() {
 		createIgnoreCheckBoxes();
-		setupIgnoreMarkupItemsListeners();
 
 		JPanel panel = new JPanel();
 		panel.add(ignoreExcludedCheckBox);
@@ -239,16 +236,10 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		ignoreExcludedCheckBox.setToolTipText(IGNORE_EXCLUDED_TOOLTIP);
 	}
 
-	private void setupIgnoreMarkupItemsListeners() {
-		ignoreExcludedCheckBox.addActionListener(defaultActionListener);
-		ignoreIncompleteCheckBox.addActionListener(defaultActionListener);
-	}
-
 	private JPanel createFunctionSignatureSubPanel() {
 
 		createFunctionSignatureDetailLabels();
 		createFunctionSignatureDetailChoices();
-		setupFunctionSignatureDetailChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -325,19 +316,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		varArgsComboBox.setToolTipText(VAR_ARGS_TOOLTIP);
 	}
 
-	private void setupFunctionSignatureDetailChoiceListeners() {
-		returnTypeComboBox.addActionListener(defaultActionListener);
-		inlineComboBox.addActionListener(defaultActionListener);
-		noReturnComboBox.addActionListener(defaultActionListener);
-		callingConventionComboBox.addActionListener(defaultActionListener);
-		callFixupComboBox.addActionListener(defaultActionListener);
-		varArgsComboBox.addActionListener(defaultActionListener);
-	}
-
 	private JPanel createParametersSubPanel() {
 		createParameterLabels();
 		createParameterChoices();
-		setupParameterChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -402,15 +383,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 			PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY_TOOLTIP);
 	}
 
-	private void setupParameterChoiceListeners() {
-		parameterDataTypesComboBox.addActionListener(defaultActionListener);
-		parameterNamesComboBox.addActionListener(defaultActionListener);
-		userHighestPriorityRB.addActionListener(defaultActionListener);
-		importHighestPriorityRB.addActionListener(defaultActionListener);
-		replaceIfSameSourceCheckBox.addActionListener(defaultActionListener);
-		parameterCommentsComboBox.addActionListener(defaultActionListener);
-	}
-
 	private JPanel createPrioritySubPanel() {
 		JPanel outerPanel = new JPanel();
 		JPanel panel = new JPanel();
@@ -436,7 +408,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 		createNonCommentMarkupLabels();
 		createNonCommentMarkupChoices();
-		setupNonCommentMarkupChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -451,6 +422,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.add(functionNameComboBox);
 		panel.add(functionSignatureLabel);
 		panel.add(functionSignatureComboBox);
+
+		panel.add(useFunctionNamespaceLabel);
+		panel.add(useFunctionNamespaceCheckBox);
 
 		outerPanel.add(panel);
 		return outerPanel;
@@ -468,6 +442,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 		functionSignatureLabel = new GDLabel("Function Signature", SwingConstants.RIGHT);
 		functionSignatureLabel.setToolTipText(FUNCTION_SIGNATURE_TOOLTIP);
+
+		useFunctionNamespaceLabel = new GDLabel("Replace Namespace", SwingConstants.RIGHT);
+		useFunctionNamespaceLabel.setToolTipText(USE_NAMESPACE_TOOLTIP);
 	}
 
 	private void createNonCommentMarkupChoices() {
@@ -485,19 +462,13 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		functionSignatureComboBox = createComboBox(VTOptionDefines.FUNCTION_SIGNATURE,
 			DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 		functionSignatureComboBox.setToolTipText(FUNCTION_SIGNATURE_TOOLTIP);
-	}
 
-	private void setupNonCommentMarkupChoiceListeners() {
-		dataMatchDataTypeComboBox.addActionListener(defaultActionListener);
-		labelsComboBox.addActionListener(defaultActionListener);
-		functionNameComboBox.addActionListener(defaultActionListener);
-		functionSignatureComboBox.addActionListener(defaultActionListener);
+		useFunctionNamespaceCheckBox = createCheckBox("");
 	}
 
 	private JPanel createCommentsSubPanel() {
 		createCommentLabels();
 		createCommentChoices();
-		setupCommentChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -562,14 +533,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		postCommentsComboBox.setToolTipText(POST_COMMENT_TOOLTIP);
 	}
 
-	private void setupCommentChoiceListeners() {
-		plateCommentsComboBox.addActionListener(defaultActionListener);
-		preCommentsComboBox.addActionListener(defaultActionListener);
-		endOfLineCommentsComboBox.addActionListener(defaultActionListener);
-		repeatableCommentsComboBox.addActionListener(defaultActionListener);
-		postCommentsComboBox.addActionListener(defaultActionListener);
-	}
-
 	private void updateOptions(ToolOptions options) {
 		updateNonCommentMarkupOptions(options);
 		updateCommentOptions(options);
@@ -594,6 +557,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		FunctionSignatureChoices functionSignatureChoice =
 			(FunctionSignatureChoices) functionSignatureComboBox.getSelectedItem();
 		options.setEnum(FUNCTION_SIGNATURE, functionSignatureChoice);
+
+		boolean useNamespaces = useFunctionNamespaceCheckBox.isSelected();
+		options.setBoolean(USE_NAMESPACE_FUNCTIONS, useNamespaces);
 	}
 
 	private void updateCommentOptions(ToolOptions options) {
@@ -703,6 +669,12 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 			options.getEnum(FUNCTION_SIGNATURE, DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 		if (functionSignatureChoice != functionSignatureComboBox.getSelectedItem()) {
 			functionSignatureComboBox.setSelectedItem(functionSignatureChoice);
+		}
+
+		boolean useNamespace =
+			options.getBoolean(USE_NAMESPACE_FUNCTIONS, DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS);
+		if (useFunctionNamespaceCheckBox.isSelected() != useNamespace) {
+			useFunctionNamespaceCheckBox.setSelected(useNamespace);
 		}
 	}
 
@@ -831,14 +803,14 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		Enum<?>[] enums = editor.getEnums();
 
 		final JComboBox<Enum<?>> applyComboBox = new GComboBox<>(enums);
-		applyComboBox.addActionListener(e -> changesMade(true));
+		applyComboBox.addItemListener(e -> changesMade(true));
 
 		return applyComboBox;
 	}
 
 	private JCheckBox createCheckBox(String optionName) {
 		JCheckBox applyCheckBox = new GCheckBox(optionName);
-		applyCheckBox.addChangeListener(e -> changesMade(true));
+		applyCheckBox.addItemListener(e -> changesMade(true));
 
 		return applyCheckBox;
 	}
@@ -852,7 +824,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	// signals that there are unapplied changes
 	private void changesMade(boolean changes) {
-		// FIXME Is this ok? complete?
 		if (listener != null) {
 			listener.propertyChange(new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED,
 				unappliedChanges, changes));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ import ghidra.app.context.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -190,7 +191,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	private File writeWrapperFile(URL fileURL) throws IOException {
 		File f;
 		if (manualWrapperFiles.size() < MAX_MANUAL_WRAPPER_FILE_COUNT) {
-			f = File.createTempFile("pdfView", ".html");
+			f = Application.createTempFile("pdfView", ".html");
 			f.deleteOnExit();
 		}
 		else {
@@ -343,8 +344,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	}
 
 	/**
-	 * Subclass should override this method if it is interested in
-	 * program location events.
+	 * Subclass should override this method if it is interested in program location events.
+	 * 
 	 * @param loc location could be null
 	 */
 	@Override
@@ -462,7 +463,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		}
 		else if (provider != connectedProvider && isDynamic) {
 			if (connectedProvider != null) {
-				connectedProvider.setNonDynamic();
+				connectedProvider.setDynamic(false);
 			}
 			disconnectedProviders.remove(provider);
 			connectedProvider = provider;

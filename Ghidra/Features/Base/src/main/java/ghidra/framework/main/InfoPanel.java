@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,20 +16,17 @@
 package ghidra.framework.main;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.View;
 
-import docking.DockingUtils;
-import docking.widgets.*;
+import docking.widgets.MultiLineLabel;
 import docking.widgets.label.*;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.util.WindowUtilities;
+import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationProperties;
 import ghidra.util.*;
@@ -44,16 +41,19 @@ class InfoPanel extends JPanel {
 
 	private final static int MARGIN = 10;
 
+	private final static String SPLASH_FILENAME = "splash.txt";
+	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
+	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
+	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
+
+	private static final String FONT_ID = "font.splash.infopanel";
+
 	private String version;
 	private String marking;
 	private String distributionInfo;
 
 	private Color bgColor; // background color for all panels
 	private int imageWidth;
-	private final static String SPLASH_FILENAME = "splash.txt";
-	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
-	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
-	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
 
 	InfoPanel() {
 		getAboutInfo();
@@ -136,7 +136,6 @@ class InfoPanel extends JPanel {
 		JPanel vPanel = new JPanel(new BorderLayout());
 		vPanel.setBackground(bgColor);
 		vPanel.add(buildVersionLabel(), BorderLayout.CENTER);
-		vPanel.add(buildJavaVersionComponent(), BorderLayout.SOUTH);
 		return vPanel;
 	}
 
@@ -170,9 +169,7 @@ class InfoPanel extends JPanel {
 
 	private Component buildVersionLabel() {
 		MultiLineLabel versionLabel = new MultiLineLabel(version, 0, 3, MultiLineLabel.CENTER);
-		Font font = versionLabel.getFont();
-		font = font.deriveFont(14f).deriveFont(Font.BOLD);
-		versionLabel.setFont(font);
+		Gui.registerFont(versionLabel, FONT_ID);
 		versionLabel.setForeground(new GColor("color.fg.infopanel.version"));
 		return versionLabel;
 	}
@@ -190,43 +187,8 @@ class InfoPanel extends JPanel {
 		return imagePanel;
 	}
 
-	private HyperlinkComponent buildJavaVersionComponent() {
-		String anchorName = "java_version";
-		final HyperlinkComponent javaVersionComponent =
-			new HyperlinkComponent("<HTML><CENTER>Java Version " + "<A HREF=\"" + anchorName +
-				"\">" + System.getProperty("java.version") + "</A></CENTER>");
-		javaVersionComponent.addHyperlinkListener(anchorName, e -> {
-			if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-				return;
-			}
-
-			showJavaHomeInfo(javaVersionComponent);
-		});
-
-		DockingUtils.setTransparent(javaVersionComponent);
-		return javaVersionComponent;
-	}
-
-	private void showJavaHomeInfo(final HyperlinkComponent javaVersionComponent) {
-		JToolTip tooltip = new JToolTip();
-		tooltip.setTipText(System.getProperty("java.home"));
-
-		Point location = MouseInfo.getPointerInfo().getLocation();
-		Window window = WindowUtilities.windowForComponent(javaVersionComponent);
-		tooltip.setLocation(location);
-
-		PopupWindow popupWindow = new PopupWindow(window, tooltip);
-
-		SwingUtilities.convertPointFromScreen(location, javaVersionComponent);
-		MouseEvent dummyEvent =
-			new MouseEvent(javaVersionComponent, (int) System.currentTimeMillis(),
-				System.currentTimeMillis(), 0, location.x, location.y, 1, false);
-		popupWindow.setCloseWindowDelay(1);
-		popupWindow.showPopup(dummyEvent);
-	}
-
 	/**
-	 * Read the version information from the the resource file.
+	 * Read the version information from the resource file.
 	 */
 	private void getAboutInfo() {
 
@@ -239,7 +201,8 @@ class InfoPanel extends JPanel {
 		// set some default values in case we don't have the resource file.
 		version = "Version " + Application.getApplicationVersion() +
 			(SystemUtilities.isInDevelopmentMode() ? " - DEVELOPMENT" : "") + buildInfo + "\n" +
-			Application.getBuildDate();
+			Application.getBuildDate() + "\n" +
+			"Java Version " + System.getProperty("java.version");
 
 		marking =
 			Application.getApplicationProperty(ApplicationProperties.RELEASE_MARKING_PROPERTY);

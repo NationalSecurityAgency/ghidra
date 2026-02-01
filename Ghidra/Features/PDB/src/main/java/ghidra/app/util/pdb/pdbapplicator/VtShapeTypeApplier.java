@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,12 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.format.pdb.DefaultCompositeMember;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.VtShapeDescriptorMsProperty;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.VtShapeMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -30,47 +28,44 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link VtShapeMsType} types.
  */
-public class VtShapeTypeApplier extends MsTypeApplier {
+public class VtShapeTypeApplier extends MsDataTypeApplier {
 
+	// Intended for: VtShapeMsType
 	/**
-	 * Constructor for vtshape type applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link VtShapeMsType} to process.
+	 * Constructor for vtshape type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
-	public VtShapeTypeApplier(DefaultPdbApplicator applicator, VtShapeMsType msType) {
-		super(applicator, msType);
-	}
-
-	@Override
-	BigInteger getSize() {
-		return BigInteger.valueOf(applicator.getDataOrganization().getPointerSize() *
-			((VtShapeMsType) msType).getCount());
+	public VtShapeTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	/**
-	 * Returns the name.
-	 * @return the name.
+	 * Returns the name
+	 * @param type the MS VtShape
+	 * @return the name
 	 */
-	String getName() {
-		return "vtshape_" + index;
+	String getName(VtShapeMsType type) {
+		return "vtshape_" + type.getRecordNumber().getNumber();
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
+
 		// Note that focused investigation as shown that both the VTShape as well as the pointer
 		// to the particular VTShapes are not specific to one class; they can be shared by
 		// totally unrelated classes; moreover, no duplicates of any VTShape or pointer to a
 		// particular VTShape were found either.  Because of this, for now, the VTShape is going
 		// into an anonymous types category.
-		dataType = createVtShape((VtShapeMsType) msType);
+		DataType dataType = createVtShape((VtShapeMsType) type);
+		applicator.putDataType(type, dataType);
+		return true;
 	}
 
 	// We are creating a structure for the vtshape.
-	private DataType createVtShape(VtShapeMsType msShape)
-			throws CancelledException {
+	private DataType createVtShape(VtShapeMsType msShape) throws CancelledException {
 		List<VtShapeDescriptorMsProperty> list = msShape.getDescriptorList();
 		StructureDataType shape = new StructureDataType(applicator.getAnonymousTypesCategory(),
-			"vtshape" + index, 0, applicator.getDataTypeManager());
+			"vtshape" + msShape.getRecordNumber().getNumber(), 0, applicator.getDataTypeManager());
 		List<DefaultPdbUniversalMember> members = new ArrayList<>();
 		int offset = 0;
 		int defaultSize = applicator.getDataTypeManager().getDataOrganization().getPointerSize();
@@ -118,9 +113,8 @@ public class VtShapeTypeApplier extends MsTypeApplier {
 				default:
 					// If any element type is not know, we will not return a full shape structure
 					// Instead, we return void type.
-					applicator.appendLogMsg(
-						"PDB Warning: No type conversion for " + msShape.toString() +
-							" as underlying type for pointer. Using void.");
+					applicator.appendLogMsg("PDB Warning: No type conversion for " +
+						msShape.toString() + " as underlying type for pointer. Using void.");
 					return VoidDataType.dataType;
 			}
 			int size = elementType.getLength();
@@ -128,15 +122,16 @@ public class VtShapeTypeApplier extends MsTypeApplier {
 				elementType = PointerDataType.dataType;
 			}
 			DefaultPdbUniversalMember member =
-				new DefaultPdbUniversalMember(applicator, "", elementType, offset);
+				new DefaultPdbUniversalMember("", elementType, offset);
 			offset += size;
 			members.add(member);
 		}
 		// offset has the total size at this point
-		if (!DefaultCompositeMember.applyDataTypeMembers(shape, false, offset, members,
+		if (!DefaultCompositeMember.applyDataTypeMembers(shape, false, false, offset, members,
 			msg -> Msg.warn(this, msg), applicator.getCancelOnlyWrappingMonitor())) {
 			CompositeTypeApplier.clearComponents(shape);
 		}
 		return shape; // not resolved
 	}
+
 }

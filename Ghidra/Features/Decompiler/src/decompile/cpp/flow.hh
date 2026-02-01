@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ private:
   void checkMultistageJumptables(void);
   void recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
-  void truncateIndirectJump(PcodeOp *op,int4 failuremode);  	///< Treat indirect jump as indirect call that never returns
+  void truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode);  ///< Treat indirect jump as CALLIND/RETURN
   static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
 public:
   FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q);	///< Constructor
@@ -148,6 +148,7 @@ public:
   void clearFlags(uint4 val) { flags &= ~val; }	///< Disable a specific option
   PcodeOp *target(const Address &addr) const;	///< Return first p-code op for instruction at given address
   PcodeOp *branchTarget(PcodeOp *op) const;	///< Find the target referred to by a given BRANCH or CBRANCH
+  void updateTarget(PcodeOp *oldOp,PcodeOp *newOp);	///< Update the branch target for an inlined p-code op
   void generateOps(void);			///< Generate raw control-flow from the function's base address
   void generateBlocks(void);			///< Generate basic blocks from the raw control-flow
   bool testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr);

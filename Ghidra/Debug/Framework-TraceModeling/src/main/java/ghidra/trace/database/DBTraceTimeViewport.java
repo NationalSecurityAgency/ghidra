@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import generic.util.MergeSortingIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
@@ -55,7 +56,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	 */
 	protected final List<Lifespan> ordered = new ArrayList<>();
 	protected final MutableLifeSet spanSet = new DefaultLifeSet();
-	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
+	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class, true);
 
 	protected long snap = 0;
 
@@ -98,39 +99,39 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		if (range == null) {
 			return false;
 		}
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				for (Lifespan rng : ordered) {
-					if (lifespan.contains(rng.lmax())) {
-						return true;
-					}
-					if (occlusion.occluded(object, range, rng)) {
-						return false;
-					}
-				}
+		/**
+		 * NB. Because occlusion.occluded can be expensive, we should only keep the lock long enough
+		 * to copy the spans.
+		 */
+		for (Lifespan rng : getOrderedSpans()) {
+			if (lifespan.contains(rng.lmax())) {
+				return true;
+			}
+			if (occlusion.occluded(object, range, rng)) {
 				return false;
 			}
 		}
+		return false;
 	}
 
 	@Override
 	public <T> AddressSet computeVisibleParts(AddressSetView set, Lifespan lifespan, T object,
 			Occlusion<T> occlusion) {
+		List<Lifespan> spans;
 		try (LockHold hold = trace.lockRead()) {
 			if (!containsAnyUpper(lifespan)) {
 				return new AddressSet();
 			}
-			AddressSet remains = new AddressSet(set);
-			synchronized (ordered) {
-				for (Lifespan rng : ordered) {
-					if (lifespan.contains(rng.lmax())) {
-						return remains;
-					}
-					occlusion.remove(object, remains, rng);
-					if (remains.isEmpty()) {
-						return remains;
-					}
-				}
+			spans = getOrderedSpans();
+		}
+		AddressSet remains = new AddressSet(set);
+		for (Lifespan rng : spans) {
+			if (lifespan.contains(rng.lmax())) {
+				return remains;
+			}
+			occlusion.remove(object, remains, rng);
+			if (remains.isEmpty()) {
+				return remains;
 			}
 		}
 		// This condition should have been detected by !containsAnyUpper
@@ -201,6 +202,9 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		while (true) {
 			TraceSnapshot fork = locateMostRecentFork(timeManager, curSnap);
 			long prevSnap = fork == null ? Long.MIN_VALUE : fork.getKey();
+			if (curSnap >= 0 && prevSnap < 0) {
+				prevSnap = 0;
+			}
 			if (!addSnapRange(prevSnap, curSnap, spanSet, ordered)) {
 				return;
 			}
@@ -224,7 +228,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 			}
 		}
 		assert !ordered.isEmpty();
-		changeListeners.fire.run();
+		changeListeners.invoke().run();
 	}
 
 	@Override
@@ -299,6 +303,20 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		}
 	}
 
+	@Override
+	public List<Lifespan> getReversedSpans() {
+		ArrayList<Lifespan> result = new ArrayList<>();
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				ListIterator<Lifespan> it = ordered.listIterator(ordered.size());
+				while (it.hasPrevious()) {
+					result.add(it.previous());
+				}
+			}
+		}
+		return result;
+	}
+
 	public List<Lifespan> getOrderedSpans(long snap) {
 		try (LockHold hold = trace.lockRead()) {
 			setSnap(snap);
@@ -308,73 +326,62 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public List<Long> getOrderedSnaps() {
+		ArrayList<Long> result = new ArrayList<>();
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				return ordered
-						.stream()
-						.map(Lifespan::lmax)
-						.collect(Collectors.toList());
+				for (Lifespan span : ordered) {
+					result.add(span.lmax());
+				}
 			}
 		}
+		return result;
 	}
 
 	@Override
 	public List<Long> getReversedSnaps() {
+		ArrayList<Long> result = new ArrayList<>();
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				List<Long> reversed =
-					ordered.stream().map(Lifespan::lmax).collect(Collectors.toList());
-				Collections.reverse(reversed);
-				return reversed;
+				ListIterator<Lifespan> it = ordered.listIterator(ordered.size());
+				while (it.hasPrevious()) {
+					result.add(it.previous().lmax());
+				}
 			}
 		}
+		return result;
 	}
 
 	@Override
 	public <T> T getTop(Function<Long, T> func) {
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				for (Lifespan rng : ordered) {
-					T t = func.apply(rng.lmax());
-					if (t != null) {
-						return t;
-					}
-				}
-				return null;
+		for (Lifespan rng : getOrderedSpans()) {
+			T t = func.apply(rng.lmax());
+			if (t != null) {
+				return t;
 			}
 		}
+		return null;
 	}
 
 	@Override
 	public <T> Iterator<T> mergedIterator(Function<Long, Iterator<T>> iterFunc,
 			Comparator<? super T> comparator) {
-		List<Iterator<T>> iters;
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				if (!isForked()) {
-					return iterFunc.apply(snap);
-				}
-				iters = ordered.stream()
-						.map(rng -> iterFunc.apply(rng.lmax()))
-						.collect(Collectors.toList());
-			}
+		if (!isForked()) {
+			return iterFunc.apply(snap);
 		}
-		return new UniqIterator<>(new MergeSortingIterator<>(iters, comparator));
+		List<Iterator<T>> iters = getOrderedSpans().stream()
+				.map(rng -> iterFunc.apply(rng.lmax()))
+				.collect(Collectors.toList());
+		return new DistinctIterator<>(new MergeSortingIterator<>(iters, comparator));
 	}
 
 	@Override
 	public AddressSetView unionedAddresses(Function<Long, AddressSetView> viewFunc) {
-		List<AddressSetView> views;
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				if (!isForked()) {
-					return viewFunc.apply(snap);
-				}
-				views = ordered.stream()
-						.map(rng -> viewFunc.apply(rng.lmax()))
-						.collect(Collectors.toList());
-			}
+		if (!isForked()) {
+			return viewFunc.apply(snap);
 		}
+		List<AddressSetView> views = getOrderedSpans().stream()
+				.map(rng -> viewFunc.apply(rng.lmax()))
+				.collect(Collectors.toList());
 		return new UnionAddressSetView(views);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.function.tags;
+
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -31,13 +34,16 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
+import ghidra.program.util.FunctionLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
 
@@ -102,6 +108,8 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	// this we would need to reload from file on each new program activation.
 	private Set<FunctionTag> tagsFromFile;
 
+	private FunctionTagPlugin plugin;
+
 	/**
 	 * Constructor
 	 *
@@ -110,16 +118,22 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	 */
 	public FunctionTagProvider(FunctionTagPlugin plugin, Program program) {
 		super(plugin.getTool(), "Function Tags", plugin.getName(), ProgramActionContext.class);
-
+		this.plugin = plugin;
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		this.program = program;
 		mainPanel = createWorkPanel();
 		addToTool();
+		createActions();
 	}
 
 	@Override
 	public void componentShown() {
 		updateView();
+	}
+
+	@Override
+	public void componentHidden() {
+		allFunctionsPanel.getTable().clearSelection();
 	}
 
 	@Override
@@ -160,16 +174,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CREATED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_DELETED) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION)) {
+		if (ev.contains(RESTORED, FUNCTION_TAG_CREATED, FUNCTION_TAG_DELETED, FUNCTION_TAG_APPLIED,
+			FUNCTION_TAG_UNAPPLIED)) {
 			updater.updateLater();
 			return;
 		}
 
-		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED)) {
+		if (ev.contains(FUNCTION_TAG_CHANGED)) {
 			repaint();
 		}
 	}
@@ -224,14 +235,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		mainPanel.setPreferredSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 
 		// CENTER PANEL
-		sourcePanel = new SourceTagsPanel(this, tool, "All Tags");
-		targetPanel = new TargetTagsPanel(this, tool, "Assigned To Function");
-		allFunctionsPanel = new AllFunctionsPanel(program, this, "Functions with Selected Tag");
+		sourcePanel = new SourceTagsPanel(this, tool);
+		targetPanel = new TargetTagsPanel(this, tool);
+		allFunctionsPanel = new AllFunctionsPanel(program, this);
 		buttonPanel = new FunctionTagButtonPanel(sourcePanel, targetPanel);
 		sourcePanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 		targetPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
-
 		// If we don't set this, then the splitter won't be able to shrink the
 		// target panels below the size required by its header, which can be large
 		// because of the amount of text displayed. Keep the minimum size setting on
@@ -405,7 +415,6 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		if (!sTags.isEmpty()) {
 			allFunctionsPanel.refresh(sTags);
 		}
-
 		Function function = getFunction(currentLocation);
 		sourcePanel.refresh(function);
 		targetPanel.refresh(function);
@@ -434,7 +443,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 				dropped.add(name);
 			}
 			else {
-				Command cmd = new CreateFunctionTagCmd(name);
+				Command<Program> cmd = new CreateFunctionTagCmd(name);
 				tool.execute(cmd, program);
 			}
 		}
@@ -478,9 +487,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	private JPanel createInputPanel() {
 
 		tagInputField = new HintTextField("tag 1, tag 2, ...");
-		tagInputField.setName("tagInputTF");
 		tagInputField.addActionListener(e -> processCreates());
-
 		inputPanel = new JPanel();
 		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
 		Border insideBorder = BorderFactory.createEmptyBorder(5, 2, 2, 2);
@@ -490,6 +497,16 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		inputPanel.add(Box.createHorizontalStrut(5));
 		inputPanel.add(tagInputField, BorderLayout.CENTER);
 
+		String inputFieldName = "Tag Input Text Field";
+		tagInputField.setName(inputFieldName);
+		tagInputField.getAccessibleContext().setAccessibleName(inputFieldName);
+
 		return inputPanel;
 	}
+
+	private void createActions() {
+		tool.addLocalAction(this,
+			new MakeProgramSelectionAction(plugin, allFunctionsPanel.getTable()));
+	}
+
 }

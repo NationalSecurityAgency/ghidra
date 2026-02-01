@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
 import ghidra.app.util.importer.MessageLog;
@@ -84,8 +85,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
+	public void load(Program prog, ImporterSettings settings)
+			throws IOException, CancelledException {
+
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (monitor.isCancelled()) {
 			return;
@@ -94,10 +98,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 		initVars();
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, settings.provider(), monitor);
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
+		NewExecutable ne =
+			new NewExecutable(settings.provider(), space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -171,13 +176,9 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	@Override
-	protected boolean isOptionalLibraryFilenameExtensions() {
-		return true;
-	}
-
-	@Override
-	protected boolean isCaseInsensitiveLibraryFilenames() {
-		return true;
+	protected Comparator<String> getLibraryNameComparator() {
+		return (s1, s2) -> String.CASE_INSENSITIVE_ORDER.compare(FilenameUtils.getBaseName(s1),
+			FilenameUtils.getBaseName(s2));
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -233,7 +234,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		buffer.append("Other Flags:       " + Conv.toHexString(ib.getOtherFlags()) + "\n");
 		buffer.append(ib.getOtherFlagsAsString());
 
-		firstCU.setComment(CodeUnit.PLATE_COMMENT, buffer.toString());
+		firstCU.setComment(CommentType.PLATE, buffer.toString());
 	}
 
 	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
@@ -256,8 +257,8 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				}
 				MemoryBlock block;
 				if (length > 0) {
-					block = MemoryBlockUtils.createInitializedBlock(program, false,
-						name, addr, fileBytes, offset, length, "", "", r, w, x, log);
+					block = MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
+						fileBytes, offset, length, "", "", r, w, x, log);
 					if (length < minalloc) {
 						// Things actually rely on the block being padded out with real 0's, so we
 						// must expand it
@@ -268,7 +269,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 						try {
 							block = program.getMemory().join(block, zeroBlock); // expand
 						}
-						catch (MemoryBlockException | LockException | NotFoundException e) {
+						catch (MemoryBlockException | LockException e) {
 							throw new IOException(e);
 						}
 					}
@@ -314,7 +315,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buff.append((segments[i].isReadOnly() ? TAB + "Read Only" + "\n" : ""));
 				buff.append((segments[i].is32bit() ? TAB + "Use 32 Bit" + "\n" : ""));
 				CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-				cu.setComment(CodeUnit.PRE_COMMENT, buff.toString());
+				cu.setComment(CommentType.PRE, buff.toString());
 			}
 
 			for (Segment segment : segments) {
@@ -350,12 +351,18 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
-					int offset = resource.getFileOffsetShifted();
-					int length = resource.getFileLengthShifted();
+					long offset = Integer.toUnsignedLong(resource.getFileOffsetShifted());
+					long length = Integer.toUnsignedLong(resource.getFileLengthShifted());
+					long extra = offset + length - fileBytes.getSize();
+					if (extra > 0) {
+						log.appendMsg(
+							"Resource at 0x%x exceeds file length by 0x%x bytes...truncating"
+									.formatted(offset, extra));
+						length -= extra;
+					}
 					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
-							addr, fileBytes, offset, length, "", "", true,
-							false, false, log);
+							addr, fileBytes, offset, length, "", "", true, false, false, log);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -386,7 +393,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buf.append("Usage:          " + Conv.toHexString(resource.getUsage()) + "\n");
 				CodeUnit cu = listing.getCodeUnitAt(addr);
 				if (cu != null) {
-					cu.setComment(CodeUnit.PRE_COMMENT, buf.toString());
+					cu.setComment(CommentType.PRE, buf.toString());
 				}
 
 				//if this resource is a string table,
@@ -445,8 +452,12 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		String comment = "";
 		String source = "";
 		// This isn't a real block, just place holder addresses, so don't create an initialized block
-		MemoryBlockUtils.createUninitializedBlock(program, false, MemoryBlock.EXTERNAL_BLOCK_NAME,
-			addr, length, comment, source, true, false, false, log);
+		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program, false,
+			MemoryBlock.EXTERNAL_BLOCK_NAME, addr, length, comment, source, true, false, false,
+			log);
+
+		// Mark block as an artificial fabrication
+		block.setArtificial(true);
 
 		for (int i = 0; i < names.length; ++i) {
 			String moduleName = names[i].getString();

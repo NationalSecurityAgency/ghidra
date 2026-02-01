@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -42,7 +43,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 		extends AbstractGhidraHeadlessIntegrationTest {
 	protected static class MyObject extends DBCachedDomainObjectAdapter {
 		protected MyObject(Object consumer) throws IOException {
-			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
+			super(new DBHandle(), OpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
 				consumer);
 		}
 
@@ -152,14 +153,12 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 	@Before
 	public void setUp() throws IOException, VersionException {
 		toy = DefaultLanguageService.getLanguageService()
-				.getLanguage(
-					new LanguageID("Toy:BE:64:default"));
+				.getLanguage(new LanguageID("Toy:BE:64:default"));
 		obj = new MyObject(this);
 		factory = new DBCachedObjectStoreFactory(obj);
 		try (Transaction tx = obj.openTransaction("CreateTable")) {
-			space = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries", factory,
-				obj.getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-				MyEntry::new);
+			space = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries", null, factory,
+				obj.getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
 		}
 	}
 
@@ -240,12 +239,10 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 		}
 
 		it = makeOcclusionIterable(tasr(0x0000, -0x0001, Long.MIN_VALUE, Long.MAX_VALUE));
-		assertEquals(list(
-			ent(0x0000, 0x0fff, 5, 10, "W"),
+		assertEquals(list(ent(0x0000, 0x0fff, 5, 10, "W"),
 			ent(0x1000, 0x1fff, Long.MIN_VALUE, Long.MIN_VALUE + 10, "S"),
 			ent(0x2000, 0x2fff, Long.MAX_VALUE - 10, Long.MAX_VALUE, "N"),
-			ent(-0x1000, -0x0001, 5, 10, "E")),
-			list(it));
+			ent(-0x1000, -0x0001, 5, 10, "E")), list(it));
 	}
 
 	@Test

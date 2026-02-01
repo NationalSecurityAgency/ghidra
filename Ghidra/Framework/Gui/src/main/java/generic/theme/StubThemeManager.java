@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,9 @@ public class StubThemeManager extends ThemeManager {
 
 	@Override
 	public void restoreThemeValues() {
-		throw new UnsupportedOperationException();
+		// The test framework will call this to reset the theme between each test run.   Some tests
+		// use this stub theme manager by default.  It is easier to allow this method to just do
+		// nothing than to throw an exception.
 	}
 
 	@Override
@@ -182,6 +184,11 @@ public class StubThemeManager extends ThemeManager {
 	}
 
 	@Override
+	public boolean isUsingAquaUI() {
+		return false;
+	}
+
+	@Override
 	public boolean isUsingNimbusUI() {
 		return false;
 	}
@@ -211,7 +218,7 @@ public class StubThemeManager extends ThemeManager {
 	}
 
 	@Override
-	protected ApplicationThemeDefaults getApplicationDefaults() {
+	protected ApplicationThemeDefaults loadApplicationDefaults() {
 		return new ApplicationThemeDefaults() {
 
 			@Override

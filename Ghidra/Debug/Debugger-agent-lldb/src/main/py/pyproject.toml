@@ -1,25 +1,28 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidralldb"
-version = "10.4"
+version = "12.0"
 authors = [
   { name="Ghidra Development Team" },
 ]
 description = "Ghidra's Plugin for lldb"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ghidratrace==10.4",
+    "ghidratrace==12.0",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/NationalSecurityAgency/ghidra"
 "Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"
+
+[tool.setuptools.package-data]
+ghidralldb = ["py.typed"]

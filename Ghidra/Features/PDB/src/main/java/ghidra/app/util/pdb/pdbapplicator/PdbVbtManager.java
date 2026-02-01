@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractPublicMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
@@ -50,7 +49,7 @@ public class PdbVbtManager extends VbtManager {
 	//  If we find some this way, then need to modify PdbVbtManager to also look
 	//  through the loader symbol for them.
 	private static Map<String, Address> findVirtualBaseTableSymbols(DefaultPdbApplicator applicator)
-			throws CancelledException {
+			throws CancelledException, PdbException {
 
 		TaskMonitor monitor = applicator.getMonitor();
 		Map<String, Address> myAddressByMangledName = new HashMap<>();
@@ -71,7 +70,7 @@ public class PdbVbtManager extends VbtManager {
 		monitor.setMessage("PDB: Searching for virtual base table symbols...");
 		monitor.initialize(offsets.size());
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);

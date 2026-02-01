@@ -101,7 +101,7 @@ public class PointerMsType extends AbstractPointerMsType {
 		long attributes = reader.parseUnsignedIntVal();
 		pointerType = PointerType.fromValue((int) (attributes & 0x001f));
 		attributes >>= 5;
-		pointerMode = PointerMode.fromValue((int) (attributes & 0x0007));
+		pointerMode = MsPointerMode.fromValue((int) (attributes & 0x0007));
 		attributes >>= 3;
 
 		isFlat = ((attributes & 0x0001) == 0x0001);

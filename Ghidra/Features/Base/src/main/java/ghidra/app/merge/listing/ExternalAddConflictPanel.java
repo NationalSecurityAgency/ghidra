@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,10 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.TitledPanel;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.fieldpanel.internal.FieldPanelScrollCoordinator;
 import docking.widgets.label.GIconLabel;
 import generic.theme.GIcon;
 import ghidra.GhidraOptions;
@@ -38,7 +39,6 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.multilisting.AddressTranslator;
 import ghidra.app.util.viewer.multilisting.MultiListingLayoutModel;
-import ghidra.app.util.viewer.util.TitledPanel;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.ToolOptions;
@@ -86,7 +86,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	private ReferenceListingHover referenceHoverService;
 	private DataTypeListingHover dataTypeHoverService;
 	private TruncatedTextListingHover truncatedTextHoverService;
-	private FunctionNameListingHover functionNameHoverService;
+	private LabelListingHover labelListingHoverService;
 	private boolean showListingPanel;
 
 	ExternalAddConflictPanel(MergeManager mergeManager, int totalConflicts, Program latestProgram,
@@ -108,7 +108,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		referenceHoverService = new ReferenceListingHover(tool, this);
 		dataTypeHoverService = new DataTypeListingHover(tool);
 		truncatedTextHoverService = new TruncatedTextListingHover(tool);
-		functionNameHoverService = new FunctionNameListingHover(tool);
+		labelListingHoverService = new LabelListingHover(tool);
 
 		initializeListingHoverService(latestPanel);
 		initializeListingHoverService(myPanel);
@@ -118,7 +118,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		listingPanel.addHoverService(referenceHoverService);
 		listingPanel.addHoverService(dataTypeHoverService);
 		listingPanel.addHoverService(truncatedTextHoverService);
-		listingPanel.addHoverService(functionNameHoverService);
+		listingPanel.addHoverService(labelListingHoverService);
 		listingPanel.setHoverMode(true);
 	}
 
@@ -214,7 +214,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		latestPanel.setProgram(latestProgram);
 		myPanel.setProgram(myProgram);
 
-		new FieldPanelCoordinator(
+		new FieldPanelScrollCoordinator(
 			new FieldPanel[] { latestPanel.getFieldPanel(), myPanel.getFieldPanel() });
 
 		buttonGroup = new ButtonGroup();

@@ -121,6 +121,7 @@ public class TableSelectionDialog<T> extends DialogComponentProvider {
 			}
 		});
 		setOkEnabled(false);
+		gFilterTable.getAccessibleContext().setAccessibleName("Table Selection");
 		return gFilterTable;
 	}
 

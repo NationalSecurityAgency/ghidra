@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,13 +68,13 @@ public class MemoryBlocksValidator extends VTPreconditionValidator {
 				sourceProgram.getMemory().getBlock(destBlocks[i].getName());
 			if (matchingABlock != null) {
 				numMatchingNames++;
-				int sourcePerm = matchingABlock.getPermissions();
-				if (sourcePerm == destBlocks[i].getPermissions()) {
+				int sourceFlags = matchingABlock.getFlags();
+				if (sourceFlags == destBlocks[i].getFlags()) {
 					numMatches++;
 				}
 				else {
 					warnings.append("Block " + destProgName + ":" + blockName +
-						" doesn't match permissions of " + sourceProgName + ":" + blockName + "\n");
+						" has different flags than " + sourceProgName + ":" + blockName + "\n");
 					status = ConditionStatus.Warning;
 				}
 			}
@@ -102,10 +101,12 @@ public class MemoryBlocksValidator extends VTPreconditionValidator {
 				}
 			}
 			if (numMatchingNames == numBlocksNeededForPerfectMatch) {
-				warnings.append("\nSUMMARY: Number and names of blocks match but not all permissions match.");
+				warnings.append(
+					"\nSUMMARY: Number and names of blocks match but not all permissions match.");
 			}
 			else {
-				warnings.append("\nSUMMARY: Number, names, and permissions of blocks do not all match");
+				warnings.append(
+					"\nSUMMARY: Number, names, and permissions of blocks do not all match");
 			}
 		}
 		return new ConditionResult(status, warnings.toString());

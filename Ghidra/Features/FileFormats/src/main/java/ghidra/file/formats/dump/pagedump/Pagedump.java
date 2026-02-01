@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,7 @@ import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.file.formats.dump.*;
 import ghidra.file.formats.dump.cmd.ModuleToPeHelper;
-import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -95,7 +93,7 @@ public class Pagedump extends DumpFile {
 
 	Map<Integer, Long> pfnToVA = new HashMap<>();
 	//Map<Integer, Long> pfnToVAL = new HashMap<>();
-	Map<Long, Integer> VA2fileOffset = new HashMap<>();
+	Map<Long, Long> VA2fileOffset = new HashMap<>();
 
 	protected long cr3;
 	private boolean createBlocks = true;
@@ -109,16 +107,13 @@ public class Pagedump extends DumpFile {
 		addins.add("ntoskrnl");
 		addins.add("ntkrnlmp");
 
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		props.setString("Executable Format", PeLoader.PE_NAME);
+		program.setExecutableFormat(PeLoader.PE_NAME);
 		initManagerList(addins);
 
-		createBlocks =
-			OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME,
-				options, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
-		String pdbLocation =
-			OptionUtils.getOption(DEBUG_DATA_PATH_OPTION_NAME, options,
-				DEBUG_DATA_PATH_OPTION_DEFAULT);
+		createBlocks = OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME, options,
+			CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
+		String pdbLocation = OptionUtils.getOption(DEBUG_DATA_PATH_OPTION_NAME, options,
+			DEBUG_DATA_PATH_OPTION_DEFAULT);
 		if (!pdbLocation.equals("")) {
 			loadKernelPDB(pdbLocation, monitor);
 		}
@@ -129,7 +124,7 @@ public class Pagedump extends DumpFile {
 		isPAE = header.getPaeEnabled() != 0;
 
 		long hdrLen = header.toDataType().getLength();
-		addInteriorAddressObject("DumpHeader", 0, 0L, hdrLen);
+		addInteriorAddressObject("DumpHeader", 0L, 0L, hdrLen);
 		data.add(new DumpData(0, header.toDataType()));
 
 		PhysicalMemoryDescriptor pmd = header.getPhysicalMemoryBlockBuffer();
@@ -152,8 +147,7 @@ public class Pagedump extends DumpFile {
 						data.add(new DumpData(hdrLen, dt));
 						data.add(new DumpData(full.getHeaderSize(), "Physical_Memory", 0));
 						offset = (int) full.getHeaderSize();
-						addInteriorAddressObject("DumpHeader", hdrLen, hdrLen,
-							offset - hdrLen);
+						addInteriorAddressObject("DumpHeader", hdrLen, hdrLen, offset - hdrLen);
 						if (createBlocks) {
 							mapPages(monitor);
 						}
@@ -164,20 +158,17 @@ public class Pagedump extends DumpFile {
 						break;
 				}
 
-				addInteriorAddressObject("Unknown", offset, offset,
-					reader.length() - offset);
+				addInteriorAddressObject("Unknown", offset, offset, reader.length() - offset);
 				break;
 
 			case DUMP_TYPE_TRIAGE:
 				triage = new TriageDump(reader, hdrLen);
 				dt = triage.toDataType();
 				data.add(new DumpData(hdrLen, dt));
-				addInteriorAddressObject("DumpHeader", hdrLen, hdrLen,
-					triage.getSizeOfDump());
+				addInteriorAddressObject("DumpHeader", hdrLen, hdrLen, triage.getSizeOfDump());
 
 				long next = hdrLen + triage.getSizeOfDump();
-				addInteriorAddressObject("Unknown", next,
-					next, reader.length() - next);
+				addInteriorAddressObject("Unknown", next, next, reader.length() - next);
 
 				buildKernelStructures();
 				break;
@@ -199,12 +190,13 @@ public class Pagedump extends DumpFile {
 		PdbReaderOptions readerOptions = new PdbReaderOptions();
 		PdbApplicatorOptions applicatorOptions = new PdbApplicatorOptions();
 		applicatorOptions.setProcessingControl(PdbApplicatorControl.DATA_TYPES_ONLY);
-		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), readerOptions, monitor)) {
+		try (AbstractPdb pdb = PdbParser.parse(pdbFile, readerOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, dtm, program.getImageBase(),
-				applicatorOptions, (MessageLog) null);
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+					program.getImageBase(), applicatorOptions, monitor, (MessageLog) null);
+			applicator.applyNoAnalysisState();
 		}
 		catch (PdbException | IOException | CancelledException e) {
 			Msg.error(this, e.getMessage());
@@ -218,16 +210,16 @@ public class Pagedump extends DumpFile {
 			long runLength = run.getPageCount() * PAGE_SIZE;
 			boolean outOfBounds = runLength + total * PAGE_SIZE > reader.length();
 			long bound = (outOfBounds) ? (reader.length() - total * PAGE_SIZE) : runLength;
-			ArrayDataType adt =
-				new ArrayDataType(StructConverter.BYTE, (int) bound, 1);
+			ArrayDataType adt = new ArrayDataType(StructConverter.BYTE, (int) bound, 1);
 			data.add(new DumpData(total * PAGE_SIZE, adt));
 
 			// NB: Not sure if or where to place these
 			//addInteriorAddressObject(DumpFileLoader.LOCAL, total * PAGE_SIZE,
 			//	run.getBasePage() * PAGE_SIZE, run.getPageCount() * PAGE_SIZE);
 			total += run.getPageCount();
-			if (outOfBounds)
+			if (outOfBounds) {
 				break;
+			}
 		}
 	}
 
@@ -313,8 +305,7 @@ public class Pagedump extends DumpFile {
 					}
 				}
 				uds.add(new ArrayDataType(udt, (int) count, udt.getLength()),
-					udt.getLength() * (int) count,
-					"UnloadedDrivers", null);
+					udt.getLength() * (int) count, "UnloadedDrivers", null);
 			}
 			data.add(new DumpData(offset, uds));
 		}
@@ -325,8 +316,9 @@ public class Pagedump extends DumpFile {
 		while (offset < end) {
 			int len = reader.readInt(offset);
 			data.add(new DumpData(offset, StructConverter.DWORD, "", false, false));
-			if (len == 0 || len == 0xFFFFFFFF)
+			if (len == 0 || len == 0xFFFFFFFF) {
 				break;
+			}
 			offset += 4;
 			DumpData dd = new DumpData(offset, new TerminatedUnicodeDataType(), "", false, false);
 			dd.setSize(len * 2 + 2);
@@ -348,8 +340,8 @@ public class Pagedump extends DumpFile {
 			DataType db = null;
 			for (int i = 0; i < triage.getDataBlocksCount(); i++) {
 				TriageDataBlock tdb = new TriageDataBlock(reader, reader.getPointerIndex());
-				addInteriorAddressObject(DumpFileLoader.MEMORY, tdb.getOffset(),
-					tdb.getAddress(), tdb.getSize());
+				addInteriorAddressObject(DumpFileLoader.MEMORY, tdb.getOffset(), tdb.getAddress(),
+					tdb.getSize());
 				VA2fileOffset.put(tdb.getAddress(), tdb.getOffset());
 				db = tdb.toDataType();
 			}
@@ -387,8 +379,7 @@ public class Pagedump extends DumpFile {
 				if (namePtr != 0) {
 					long fileOffset = virtualToRva(namePtr);
 					String name = reader.readUnicodeString(fileOffset);
-					addExteriorAddressObject(name, 0, entry.getDllBase(),
-						entry.getSizeOfImage());
+					addExteriorAddressObject(name, 0, entry.getDllBase(), entry.getSizeOfImage());
 				}
 				next = entry.getList_Flink();
 				if (entryKeys.contains(next)) {
@@ -464,10 +455,8 @@ public class Pagedump extends DumpFile {
 
 	@Override
 	public void analyze(TaskMonitor monitor) {
-		boolean analyzeEmbeddedObjects =
-			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
-				options,
-				ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
+		boolean analyzeEmbeddedObjects = OptionUtils.getBooleanOptionValue(
+			ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME, options, ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
 		if (analyzeEmbeddedObjects) {
 			ModuleToPeHelper.queryModules(program, monitor);
 		}
@@ -615,7 +604,7 @@ public class Pagedump extends DumpFile {
 	 * Get default <code>Pagedump</code> loader options. Includes
 	 * {@link #DEBUG_DATA_PATH_OPTION_NAME} plus default {@link DumpFile} options (see
 	 * {@link DumpFile#getDefaultOptions(DumpFileReader)}).
-	 * 
+	 *
 	 * @param reader dump file reader
 	 * @return default collection of Pagedump loader options
 	 */

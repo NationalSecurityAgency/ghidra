@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,7 +149,13 @@ void __cdecl _Once(_Once_t *, void (__cdecl *)(void));
 
 void __stdcall _Twice(void (__cdecl *)(void));
 
+void __vectorcall _Vect(void (__cdecl *)(void));
+
+void __rustcall _Rusty(void (__cdecl *)(void));
+
 void _Thrice(void (__cdecl *)(void));
+
+void _Iron(void (__rustcall *)(void));
 
 /**
  ** use of long as an attribute
@@ -176,7 +182,7 @@ int (__stdcall * GetSectionBlock) (
 
  #pragma region Input compatibility macros
 
-// nothing will parse after this line if the this fails
+// nothing will parse after this line if this fails
   #pragma test for, pragma, with, commas outside parens
   
   #pragma region System Family (kernel drivers) with Desktop Family for compat
@@ -1229,6 +1235,8 @@ int check_assert(void)
 
     int x;
     static_assert(sizeof(int) > sizeof(char));
+
+    _Static_assert(sizeof(char) <= 1, "message " #Name " is broken " #Up );
 }
 
 struct statcheck {

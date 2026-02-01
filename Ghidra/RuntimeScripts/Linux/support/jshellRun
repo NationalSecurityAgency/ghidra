@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+#----------------------------------------
+# Ghidra JShell launch
+#----------------------------------------
+
+# Optionally override the default Java heap memory, which is typically 1/4 of system RAM.
+# Supported values are of the regular expression form "\d+[gGmMkK]", allowing the value to be 
+# specified in gigabytes, megabytes, or kilobytes (for example: 8G, 4096m, etc).
+MAXMEM_DEFAULT=
+
+# Allow the above MAXMEM_DEFAULT to be overridden by externally set environment variables
+# - GHIDRA_MAXMEM: Desired maximum heap memory for all Ghidra instances
+# - GHIDRA_JSHELL_MAXMEM: Desired maximum heap memory only for Ghidra JShell instances
+GHIDRA_MAXMEM=${GHIDRA_MAXMEM:=${MAXMEM_DEFAULT}}
+GHIDRA_JSHELL_MAXMEM=${GHIDRA_JSHELL_MAXMEM:=${GHIDRA_MAXMEM}}
+
+# Apply Java options from externally set environment variables
+VMARG_LIST="${GHIDRA_JAVA_OPTIONS} ${GHIDRA_JSHELL_JAVA_OPTIONS} "
+
+# Resolve symbolic link if present and get the directory this script lives in.
+# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# fallback, which doesn't attempt to do anything with links.
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="${SCRIPT_FILE%/*}"
+
+# Launch Ghidra
+"${SCRIPT_DIR}"/launch.sh fg jdk Ghidra-JShell "${GHIDRA_JSHELL_MAXMEM}" "${VMARG_LIST}" ghidra.JShellRun "$@"

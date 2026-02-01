@@ -19,7 +19,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.graph.GDirectedGraph;
 import ghidra.graph.GraphFactory;
 import ghidra.program.model.address.*;
@@ -33,7 +32,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public abstract class AbstractModularizationCmd extends BackgroundCommand {
+public abstract class AbstractModularizationCmd extends BackgroundCommand<Program> {
 	protected Program program;
 	private GroupPath groupPath;
 	private String treeName;
@@ -60,9 +59,9 @@ public abstract class AbstractModularizationCmd extends BackgroundCommand {
 	protected abstract void applyModel() throws CancelledException;
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor taskMonitor) {
+	public boolean applyTo(Program p, TaskMonitor taskMonitor) {
 
-		program = (Program) obj;
+		program = p;
 		monitor = taskMonitor;
 		monitor.setIndeterminate(true);
 		ProgramModule rootModule = program.getListing().getRootModule(treeName);

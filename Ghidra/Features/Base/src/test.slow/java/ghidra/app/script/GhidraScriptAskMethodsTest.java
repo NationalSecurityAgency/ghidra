@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -130,10 +129,14 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	public void testAskProgram_SCR8486() throws Exception {
 		createScript();
 
-		Program[] container = new Program[1];
+		AtomicReference<Program> container = new AtomicReference<>();
 		runSwing(() -> {
 			try {
-				container[0] = script.askProgram("Test - Pick Program");
+				Program p = script.askProgram("Test - Pick Program");
+				container.set(p);
+				if (p != null) {
+					p.release(this);
+				}
 			}
 			catch (Exception ioe) {
 				failWithException("Caught unexepected during askProgram()", ioe);
@@ -142,11 +145,10 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 
 		DataTreeDialog dtd = waitForDialogComponent(DataTreeDialog.class);
 		JButton okButton = (JButton) getInstanceField("okButton", dtd);
-
 		runSwing(() -> okButton.doClick());
 
 		// this test will fail if we encountered an exception
-		assertNull(container[0]);
+		assertNull(container.get());
 
 		runSwing(() -> dtd.close());
 	}
@@ -709,22 +711,22 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	 */
 
 	/*
-	 * No test for 'askYesNo()" because it does not use either the the last-selected value or
+	 * No test for 'askYesNo()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProjectFolder()" because it does not use either the the last-selected value
+	 * No test for 'askProjectFolder()" because it does not use either the last-selected value
 	 * or a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProgram()" because it does not use either the the last-selected value or
+	 * No test for 'askProgram()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askDomainFile()" because it does not use either the the last-selected value or
+	 * No test for 'askDomainFile()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
@@ -757,6 +759,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			JComboBox<String> comboField =
 				(JComboBox<String>) findComponentByName(askDialog, "JComboBox");
 			setComboBoxSelection(comboField, optionalValue);
+
 			waitForSwing();
 		}
 
@@ -789,6 +792,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		if (optionalValue != null) {
 			String name = "JTextField";
 			JTextField textField = (JTextField) findComponentByName(askDialog, name);
+			textField.getAccessibleContext().setAccessibleName("Option");
 			setText(textField, optionalValue);
 			waitForSwing();
 		}
@@ -897,7 +901,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 				// test stub
 			}
 		};
-		script.set(state, TaskMonitor.DUMMY, null);
+		script.set(state, ScriptControls.NONE);
 
 		URL url = GhidraScriptTest.class.getResource("GhidraScriptAsk.properties");
 		assertNotNull("Test cannot run without properties file!", url);

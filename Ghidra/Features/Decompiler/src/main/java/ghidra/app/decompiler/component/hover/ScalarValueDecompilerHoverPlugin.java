@@ -29,7 +29,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.DECOMPILER,
+	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Scalar Value Hover",
 	description = "Pop-up display of various interpretations of the hovered-over decompiler scalar",
 	servicesProvided = { DecompilerHoverService.class }

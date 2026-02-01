@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,15 @@
  */
 package ghidra.app.plugin.core.scalartable;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.util.*;
 
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
@@ -27,14 +31,13 @@ import ghidra.app.events.ViewChangedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.HelpLocation;
-import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.task.SwingUpdateManager;
 
 /**
@@ -98,9 +101,7 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED)) {
+		if (ev.contains(RESTORED, CODE_ADDED, CODE_REMOVED)) {
 			reloadUpdateMgr.update();
 		}
 	}
@@ -147,8 +148,9 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 		};
 
 		searchAction.setHelpLocation(new HelpLocation(this.getName(), "Scalar_Search"));
-		searchAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_SEARCH, "For Scalars..." }, null, "search for"));
+		searchAction.setMenuBarData(
+			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Scalars..." }, null,
+				"search for", -1, "Scalars"));
 		searchAction.setDescription("Search program for scalars");
 		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);

@@ -1,0 +1,103 @@
+<decompilertest>
+  <!--
+     Functions manipulating longdouble data-types.
+  -->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efadb6c2408dc05aa010000488d
+3deb0f0000db7c2408e9e2100000f30f
+1efa4154488d3dd50f000055538b5c24
+20448b6424408b6c2448ff742438ff74
+2438450fbfe40fbfede8b21000000fbf
+c35a594401e05b01e85d415cc3f30f1e
+fa534889fbff7718ff7710488d3d8e0f
+0000e889100000ff7328488d3d7f0f00
+00ff7320e8771000000fbf53020fbf03
+4883c42001d00fbf533001d00fbf5332
+5b01d0c3
+</bytechunk>
+<bytechunk space="ram" offset="0x10014b" readonly="true">
+                      f30f1efa41
+548b542410488d355600000031c0bf01
+000000448b642440e89b0f0000ff7424
+28488d3d880e0000ff742428e87f0f00
+008b542440bf0100000031c0488d351f
+000000e8700f000058bf010000005a48
+8d350c0000004489e231c0415ce9560f
+000025640a00
+</bytechunk>
+<bytechunk space="ram" offset="0x1001b8" readonly="true">
+                6f1283c0caa13b40
+</bytechunk>
+<bytechunk space="ram" offset="0x1001d2" readonly="true">
+    f30f1efab8070000008d57074c8d
+051b0e00004863cf29f84863d248c1e1
+04489848c1e20441db2c1048c1e00441
+db2c008d047f81e7feff0000489848c1
+e70448c1e004dec141db3c08db6c3010
+db3c3ec3
+</bytechunk>
+<bytechunk space="ram" offset="0x101100" readonly="true">
+f30f1efadb6c2408d9c0db3fdc059e01
+0000db7f10c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1012b0" readonly="true">
+666666666666e63f
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="pass"/>
+<symbol space="ram" offset="0x10001e" name="passmany"/>
+<symbol space="ram" offset="0x10005d" name="printstruct"/>
+<symbol space="ram" offset="0x1001d2" name="arrayindex"/>
+<symbol space="ram" offset="0x101100" name="writeLongDouble"/>
+<symbol space="ram" offset="0x101108" name="printf_chk"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>map addr r0x101000 float10 ldarr[16]</com>
+  <com>map fun r0x10014b printldfirst</com>
+  <com>override flow r0x1001ad callreturn</com>
+  <com>parse line struct ldstruct { int2 c; int2 d; float10 a; float10 b; int2 e; int2 f; };</com>
+  <com>parse line struct ldfirst { float10 a; int4 b; };</com>
+  <com>parse line extern void writeLongDouble(float10 *ptrwrite,float10 valwrite);</com>
+  <com>parse line extern void printf_chk(int4 pipe,char *str,int4 val);</com>
+  <com>parse line extern void pass(float10 valpass);</com>
+  <com>parse line extern int4 passmany(int8 a,int8 b,int8 c,int8 d,int8 e,int8 f,int2 y,float10 x,int2 z,int2 w);</com>
+  <com>parse line extern int4 printstruct(ldstruct *ptrldstr);</com>
+  <com>parse line extern void printldfirst(int8 a,int8 b,int8 c,int8 d,int8 e,int8 f,int4 v1,ldfirst firstval,int4 v2);</com>
+  <com>parse line extern void arrayindex(int4 val,float10 *ptr);</com>
+  <com>lo fu pass</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu passmany</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu printstruct</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu printldfirst</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu arrayindex</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu writeLongDouble</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Long double #1" min="1" max="1">ldarr\[0\] = valpass \+ \(float10\)27\.632</stringmatch>
+<stringmatch name="Long double #2" min="1" max="1">ldarr\[1\] = valpass \+ \(float10\)27\.632</stringmatch>
+<stringmatch name="Long double #3" min="1" max="1">writeLongDouble\(ldarr,x\);</stringmatch>
+<stringmatch name="Long double #4" min="1" max="1">return \(int4\)y \+ \(int4\)z \+ \(int4\)w;</stringmatch>
+<stringmatch name="Long double #5" min="1" max="1">writeLongDouble\(ldarr,ptrldstr-&gt;a\);</stringmatch>
+<stringmatch name="Long double #6" min="1" max="1">writeLongDouble\(ldarr,ptrldstr-&gt;b\);</stringmatch>
+<stringmatch name="Long double #7" min="1" max="1">return \(int4\)ptrldstr-&gt;c \+ \(int4\)ptrldstr-&gt;d \+ \(int4\)ptrldstr-&gt;e \+ \(int4\)ptrldstr-&gt;f;</stringmatch>
+<stringmatch name="Long double #8" min="1" max="1">printf_chk\(1,\"%d\\n\",v1\);</stringmatch>
+<stringmatch name="Long double #9" min="1" max="1">printf_chk\(1,\"%d\\n\",firstval\.b\);</stringmatch>
+<stringmatch name="Long double #10" min="1" max="1">printf_chk\(1,\"%d\\n\",v2\);</stringmatch>
+<stringmatch name="Long double #11" min="1" max="1">writeLongDouble\(ldarr,firstval\.a\);</stringmatch>
+<stringmatch name="Long double #12" min="1" max="1">\*ptrwrite = valwrite;</stringmatch>
+<stringmatch name="Long double #13" min="1" max="1">ptrwrite\[1\] = valwrite \+ \(float10\)0.7;</stringmatch>
+<stringmatch name="Long double #14" min="1" max="1">ldarr\[val\] = ldarr\[7 \- val\] \+ ldarr\[val \+ 7\];</stringmatch>
+<stringmatch name="Long double #15" min="1" max="1">ptr\[val &amp; 0xfffe\] = ptr\[.*\(val \* 3\) \+ 1\];</stringmatch>
+</decompilertest>

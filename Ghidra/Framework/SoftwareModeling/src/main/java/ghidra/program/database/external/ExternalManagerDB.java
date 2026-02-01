@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,20 +18,23 @@ package ghidra.program.database.external;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.external.ExternalLocationDB.ExternalData;
+import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.symbol.*;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.LanguageTranslator;
 import ghidra.util.Lock;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -43,7 +46,6 @@ import ghidra.util.task.TaskMonitor;
 public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	private AddressMap addrMap;
-	private NamespaceManager scopeMgr;
 	private SymbolManager symbolMgr;
 	private FunctionManagerDB functionMgr;
 
@@ -64,7 +66,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version does not match the expected version
 	 */
-	public ExternalManagerDB(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public ExternalManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws CancelledException, IOException, VersionException {
 
 		this.addrMap = addrMap;
@@ -72,7 +74,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		initializeOldAdapters(handle, openMode, monitor);
 	}
 
-	private void initializeOldAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeOldAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		try {
 			// Try old adapters needed for upgrade
@@ -82,7 +84,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		catch (VersionException ve) {
 			//ignore
 		}
-		if (oldNameAdapter != null && oldExtRefAdapter != null && openMode != DBConstants.UPGRADE) {
+		if (oldNameAdapter != null && oldExtRefAdapter != null && openMode != OpenMode.UPGRADE) {
 			throw new VersionException(true);
 		}
 	}
@@ -90,15 +92,14 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
-		symbolMgr = (SymbolManager) program.getSymbolTable();
-		functionMgr = (FunctionManagerDB) program.getFunctionManager();
-		scopeMgr = program.getNamespaceManager();
+		symbolMgr = program.getSymbolTable();
+		functionMgr = program.getFunctionManager();
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode != DBConstants.UPGRADE) {
+		if (openMode != OpenMode.UPGRADE) {
 			return;
 		}
 		if (upgradeOldExtRefAdapter(monitor)) {
@@ -153,8 +154,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 				oldAddrMap.decodeAddress(rec.getLongValue(OldExtRefAdapter.FROM_ADDR_COL));
 			int opIndex = rec.getShortValue(OldExtRefAdapter.OP_INDEX_COL);
 			boolean userDefined = rec.getBooleanValue(OldExtRefAdapter.USER_DEFINED_COL);
-			String name = nameMap.get(rec.getLongValue(OldExtRefAdapter.EXT_NAME_ID_COL));
-			if (name == null) {
+			String extLibraryName = nameMap.get(rec.getLongValue(OldExtRefAdapter.EXT_NAME_ID_COL));
+			if (extLibraryName == null) {
 				continue; // should not happen
 			}
 			String label = rec.getString(OldExtRefAdapter.LABEL_COL);
@@ -163,14 +164,11 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 					: null;
 
 			try {
-				refMgr.addExternalReference(fromAddr, name, label, addr,
+				refMgr.addExternalReference(fromAddr, extLibraryName, label, addr,
 					userDefined ? SourceType.USER_DEFINED : SourceType.IMPORTED, opIndex,
 					RefType.DATA);
 			}
-			catch (DuplicateNameException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			}
-			catch (InvalidInputException e) {
+			catch (InvalidInputException | DuplicateNameException e) {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
 			monitor.setProgress(++cnt);
@@ -202,7 +200,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		SourceType locSourceType = checkExternalLabel(extLabel, extAddr, sourceType);
 		lock.acquire();
 		try {
-			Namespace libraryScope = getLibraryScope(extLibraryName);
+			Library libraryScope = getLibraryScope(extLibraryName);
 			if (libraryScope == null) {
 				libraryScope = addExternalName(extLibraryName, null, sourceType);
 			}
@@ -227,7 +225,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
-			Address extAddr, SourceType sourceType, boolean reuseExisting) throws InvalidInputException {
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType,
@@ -244,7 +243,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		SourceType locSourceType = checkExternalLabel(extLabel, extAddr, sourceType);
 		lock.acquire();
 		try {
-			Namespace libraryScope = getLibraryScope(extLibraryName);
+			Library libraryScope = getLibraryScope(extLibraryName);
 			if (libraryScope == null) {
 				libraryScope = addExternalName(extLibraryName, null,
 					sourceType != SourceType.DEFAULT ? sourceType : SourceType.ANALYSIS);
@@ -283,8 +282,9 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	private SourceType checkExternalLabel(String extLabel, Address extAddr, SourceType source)
 			throws InvalidInputException {
-		if (extLabel == null || extLabel.length() == 0) {
-			extLabel = null;
+		if (StringUtils.isBlank(extLabel) ||
+			SymbolUtilities.isReservedExternalDefaultName(extLabel, addrMap.getAddressFactory())) {
+			extLabel = null; // force use of address
 		}
 		if (extLabel == null && extAddr == null) {
 			throw new InvalidInputException("Either an external label or address is required");
@@ -312,20 +312,33 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			throw new InvalidInputException("The namespace must be an external namespace.");
 		}
 		sourceType = checkExternalLabel(extLabel, extAddr, sourceType);
-		if (extAddr != null && !extAddr.isLoadedMemoryAddress()) {
-			throw new InvalidInputException("Invalid memory address");
+		if (extAddr != null) {
+			if (!extAddr.isLoadedMemoryAddress()) {
+				throw new InvalidInputException("Invalid memory address: " + extAddr);
+			}
+			AddressSpace space = extAddr.getAddressSpace();
+			if (!space.equals(program.getAddressFactory().getAddressSpace(space.getName()))) {
+				throw new InvalidInputException(
+					"Memory address not defined for program: " + extAddr);
+			}
 		}
 		lock.acquire();
 		try {
 			if (sourceType == SourceType.DEFAULT) {
 				extLabel = null;
 			}
-			ExternalLocationDB extLoc =
-				(ExternalLocationDB) getExtLocation(extNamespace, extLabel, extAddr, reuseExisting);
+			else if (StringUtils.isBlank(extLabel) || SymbolUtilities
+					.isReservedExternalDefaultName(extLabel, addrMap.getAddressFactory())) {
+				extLabel = null; // force use of address
+			}
+			if (extAddr != null || reuseExisting) {
 
-			if (extLoc != null) {
-				// if there is already a location with the address, then we must use it
-				if (extAddr != null || reuseExisting) {
+				ExternalLocationDB extLoc = (ExternalLocationDB) getExtLocation(extNamespace,
+					extLabel, extAddr, reuseExisting);
+
+				if (extLoc != null) {
+
+					// if there is already a location with the address, then we must use it
 					if (extLabel != null && !extLabel.equals(extLoc.getLabel())) {
 						extLoc.setLabel(extLabel, sourceType);
 					}
@@ -336,20 +349,24 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 					return extLoc;
 				}
 			}
+
 			// ok can't or don't want to reuse an existing one, so make a new one.
-			SymbolDB s;
+			MemorySymbol s;
 			Address externalSpaceAddress = symbolMgr.getNextExternalSymbolAddress();
-			String extMemAddrString = (extAddr != null) ? extAddr.toString() : null;
 			if (isFunction) {
-				Function function = functionMgr.createExternalFunction(externalSpaceAddress,
-					extLabel, extNamespace, extMemAddrString, sourceType);
-				s = (SymbolDB) function.getSymbol();
+				FunctionDB function = functionMgr.createExternalFunction(externalSpaceAddress,
+					extLabel, extNamespace, null, extAddr, sourceType);
+				s = (FunctionSymbol) function.getSymbol();
 			}
 			else {
-				s = (SymbolDB) symbolMgr.createCodeSymbol(externalSpaceAddress, extLabel,
-					extNamespace, sourceType, extMemAddrString);
+				s = symbolMgr.createExternalCodeSymbol(externalSpaceAddress, extLabel, extNamespace,
+					sourceType, null, extAddr);
 			}
 			return new ExternalLocationDB(this, s);
+		}
+		catch (IOException e) {
+			program.dbError(e); // will not return
+			return null;
 		}
 		finally {
 			lock.release();
@@ -359,7 +376,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	/**
 	 * Get the external location which best matches the specified parameters.
 	 * Preference is given to extLabel over extAddr
-	 * @param libScope, the library namespace containing this external location.
+	 * @param library the library namespace containing this external location.
 	 * @param extLabel the name of the external location. Can be null.
 	 * @param extAddr the address of function in the external program.  Can be null
 	 * @return the best matching ExternalLocation or null.
@@ -368,66 +385,31 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	private ExternalLocation getExtLocation(Namespace library, String extLabel, Address extAddr,
 			boolean reuseExisting) throws InvalidInputException {
 
-		if (extLabel != null && (extLabel.length() == 0 ||
-			SymbolUtilities.isReservedExternalDefaultName(extLabel, addrMap.getAddressFactory()))) {
-			extLabel = null; // force use of address
-		}
-
+		// Name match will also consider original import name if library is either null
+		// or a Library, otherwise only a specific namespaced name match will be considered.
 		ExternalLocation match =
 			findMatchingLocationByName(library, extLabel, extAddr, reuseExisting);
 		if (match != null) {
 			return match;
 		}
 
-		// So now get all the externalLocations for a library and search them
-		List<ExternalLocation> locations = getExternalLocations(library);
-
-		if (extLabel == null) {
-			return findMatchingLocationByAddress(locations, extAddr, reuseExisting);
-		}
-
-		return findMatchingLocationByOriginalImportName(locations, extLabel, extAddr);
-	}
-
-	// Find the location whose original imported name matches the given extLabel name.
-	private ExternalLocation findMatchingLocationByOriginalImportName(
-			List<ExternalLocation> locations, String extLabel, Address extAddr) {
-
-		// this only makes sense if we have label and no address.  If we have an address,
-		// then the address must match and we would have already found it.
-		if (extLabel != null && extAddr == null) {
-			for (ExternalLocation externalLocation : locations) {
-				if (extLabel.equals(externalLocation.getOriginalImportedName())) {
-					return externalLocation;
-				}
-			}
+		if (extLabel == null) { // assume extAddr is not null (already checked)
+			return findMatchingLocationByAddress(extAddr, reuseExisting);
 		}
 
 		return null;
 	}
 
-	private List<ExternalLocation> getExternalLocations(Namespace library) {
-		List<ExternalLocation> list = new ArrayList<>();
-		SymbolIterator iter = symbolMgr.getSymbols(library);
-		for (Symbol symbol : iter) {
-			ExternalLocation extLoc = getExternalLocation(symbol);
-			if (extLoc != null) {
-				list.add(extLoc);
-			}
-		}
-		return list;
-	}
-
 	// Find an external location in the given namespace with the given name and address.  If
 	// reuseExisting is true, then also find a match as long as the name and namespace match and
 	// the address is null.
-	private ExternalLocation findMatchingLocationByName(Namespace libScope, String extLabel,
+	private ExternalLocation findMatchingLocationByName(Namespace namespace, String extLabel,
 			Address extAddr, boolean reuseExisting) {
-		if (extLabel == null) {
+		if (StringUtils.isBlank(extLabel)) {
 			return null;
 		}
 
-		List<ExternalLocation> externalLocations = getExternalLocations(libScope, extLabel);
+		Set<ExternalLocation> externalLocations = getExternalLocations(namespace, extLabel);
 		if (externalLocations.isEmpty()) {
 			return null;
 		}
@@ -451,14 +433,16 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		}
 
 		// first look for one without an address
+		ExternalLocation possibleExtLoc = null;
 		for (ExternalLocation externalLocation : externalLocations) {
 			if (externalLocation.getAddress() == null) {
 				return externalLocation;
 			}
+			possibleExtLoc = externalLocation;
 		}
 
 		// if reuse existing, then return any
-		return reuseExisting ? externalLocations.get(0) : null;
+		return reuseExisting ? possibleExtLoc : null;
 	}
 
 	// Look through all the locations for one whose address matches the given address AND whose
@@ -466,91 +450,100 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	// location with a non-null address and a null label.  So an exact match is when the address
 	// matches and the label is null.  If reuseExisting, then we are trying to find and suitable
 	// location, so as long as the address matches, we can return it.
-	private ExternalLocation findMatchingLocationByAddress(List<ExternalLocation> locations,
-			Address extAddr, boolean reuseExisting) {
-		for (ExternalLocation externalLocation : locations) {
-			if (extAddr.equals(externalLocation.getAddress())) {
-				if (reuseExisting || externalLocation.getLabel() == null) {
-					return externalLocation;
-				}
+	private ExternalLocation findMatchingLocationByAddress(Address extAddr, boolean reuseExisting) {
+		for (Symbol symbol : symbolMgr.getExternalSymbolByMemoryAddress(null, extAddr)) {
+			ExternalLocation externalLocation = getExternalLocation(symbol);
+			if (reuseExisting || externalLocation.getLabel() == null) {
+				return externalLocation;
 			}
 		}
 		return null;
 	}
 
 	@Override
-	public List<ExternalLocation> getExternalLocations(Namespace libScope, String extLabel) {
-		List<ExternalLocation> externalLocations = new ArrayList<>();
-		List<Symbol> symbols = symbolMgr.getSymbols(extLabel, libScope);
-		for (Symbol symbol : symbols) {
-			ExternalLocation externalLocation = getExternalLocation(symbol);
-			if (externalLocation != null) {
-				externalLocations.add(externalLocation);
+	public Set<ExternalLocation> getExternalLocations(Namespace namespace, String extLabel) {
+		if (namespace != null && !namespace.isExternal()) {
+			return Set.of();
+		}
+		Set<ExternalLocation> externalLocations = new HashSet<>();
+		if (namespace == null || namespace instanceof Library) {
+			// Check for matching original import name
+			SymbolIterator matchingSymbols =
+				symbolMgr.getExternalSymbolByOriginalImportName((Library) namespace, extLabel);
+			for (Symbol symbol : matchingSymbols) {
+				ExternalLocation externalLocation = getExternalLocation(symbol);
+				if (externalLocation != null) {
+					externalLocations.add(externalLocation);
+				}
 			}
 		}
-		return externalLocations;
+		if (namespace != null) {
+			List<Symbol> symbols = symbolMgr.getSymbols(extLabel, namespace);
+			for (Symbol symbol : symbols) {
+				ExternalLocation externalLocation = getExternalLocation(symbol);
+				if (externalLocation != null) {
+					externalLocations.add(externalLocation);
+				}
+			}
+		}
+		else {
+			for (Symbol symbol : symbolMgr.getExternalSymbols(extLabel)) {
+				ExternalLocation externalLocation = getExternalLocation(symbol);
+				if (externalLocation != null) {
+					externalLocations.add(externalLocation);
+				}
+			}
+		}
+		return Collections.unmodifiableSet(externalLocations);
 	}
 
 	@Override
-	public List<ExternalLocation> getExternalLocations(String libraryName, String label) {
-		Namespace libraryScope = getLibraryScope(libraryName);
-		if (libraryScope == null) {
-			return Collections.emptyList();
+	public Set<ExternalLocation> getExternalLocations(String libraryName, String label) {
+		Library library = getLibraryScope(libraryName);
+		if (library == null && !StringUtils.isBlank(libraryName)) {
+			return Set.of();
 		}
-		return getExternalLocations(libraryScope, label);
+		return getExternalLocations(library, label);
 	}
 
 	@Override
 	public ExternalLocation getUniqueExternalLocation(Namespace namespace, String label) {
-		List<ExternalLocation> externalLocations = getExternalLocations(namespace, label);
+		Set<ExternalLocation> externalLocations = getExternalLocations(namespace, label);
 		if (externalLocations.size() == 1) {
-			return externalLocations.get(0);
+			return externalLocations.iterator().next();
 		}
 		return null;
 	}
 
 	@Override
 	public ExternalLocation getUniqueExternalLocation(String libraryName, String label) {
-		Namespace libScope = getLibraryScope(libraryName);
-		if (libScope == null) {
+		Library library = getLibraryScope(libraryName);
+		if (library == null && !StringUtils.isBlank(libraryName)) {
 			return null;
 		}
-		return getUniqueExternalLocation(libScope, label);
-	}
-
-	@Override
-	public ExternalLocation getExternalLocation(String extName, String extLabel) {
-		Namespace libScope = getLibraryScope(extName);
-		return getExternalLocation(libScope, extLabel);
-	}
-
-	@Override
-	public ExternalLocation getExternalLocation(Namespace extNamespace, String extLabel) {
-		List<ExternalLocation> externalLocations = getExternalLocations(extNamespace, extLabel);
-		if (externalLocations.isEmpty()) {
-			return null;
-		}
-		return externalLocations.get(0);
+		return getUniqueExternalLocation(library, label);
 	}
 
 	/**
-	 * Get the default name for an external function or code symbol
-	 * @param sym
-	 * @return default name
+	 * {@return the default name for an external function or code symbol}
+	 * @param sym external label or function symbol
+	 * @throws IllegalArgumentException if external label or function symbol not specified or 
+	 * external symbol does not have an external program address. 
 	 */
 	public static String getDefaultExternalName(SymbolDB sym) {
-		SymbolType type = sym.getSymbolType();
-		if ((type != SymbolType.LABEL && type != SymbolType.FUNCTION) || !sym.isExternal()) {
-			throw new AssertException();
+		if (!(sym instanceof MemorySymbol) && !sym.isExternal()) {
+			throw new IllegalArgumentException("External label or function symbol required");
 		}
-		ExternalData externalData = ExternalLocationDB.getExternalData(sym);
-		Address addr = externalData.getAddress(sym.getProgram().getAddressFactory());
+
+		Address addr = ((MemorySymbol) sym).getExternalProgramAddress();
 		if (addr == null) {
-			throw new AssertException("External should not be default without memory address");
+			throw new IllegalArgumentException("Default External requires memory address");
 		}
-		if (type == SymbolType.FUNCTION) {
+
+		if (sym instanceof FunctionSymbol) {
 			return SymbolUtilities.getDefaultExternalFunctionName(addr);
 		}
+
 		long dataTypeID = sym.getDataTypeId();
 		DataType dt =
 			(dataTypeID < 0) ? null : sym.getProgram().getDataTypeManager().getDataType(dataTypeID);
@@ -562,8 +555,9 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	}
 
 	/**
-	 * Returns the external location associated with the given external address
+	 * {@return the external location associated with the given external address or null}
 	 * @param externalAddr the external address.
+	 * @throws IllegalArgumentException if address is not external
 	 */
 	public ExternalLocation getExtLocation(Address externalAddr) {
 		if (externalAddr.getAddressSpace() != AddressSpace.EXTERNAL_SPACE) {
@@ -573,7 +567,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		try {
 			Symbol[] symbols = symbolMgr.getSymbols(externalAddr);
 			if (symbols.length == 1) {
-				return new ExternalLocationDB(this, (SymbolDB) symbols[0]);
+				return new ExternalLocationDB(this, (MemorySymbol) symbols[0]);
 			}
 			if (symbols.length > 2) {
 				throw new AssertException(
@@ -604,6 +598,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	/**
 	 * Removes the external location at the given external address
 	 * @param externalAddr the address at which to remove the external location.
+	 * @return true if external location was successfully removed else false
 	 */
 	public boolean removeExternalLocation(Address externalAddr) {
 		lock.acquire();
@@ -642,15 +637,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return true;
 	}
 
-	/**
-	 * Update the external program for all references.
-	 * @param oldName old external program name
-	 * @param newName new external program name
-	 * @param source the source of this external library:
-	 * Symbol.DEFAULT, Symbol.ANALYSIS, Symbol.IMPORTED, or Symbol.USER_DEFINED
-	 * @throws DuplicateNameException
-	 * @throws InvalidInputException
-	 */
 	@Override
 	public void updateExternalLibraryName(String oldName, String newName, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
@@ -682,9 +668,9 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return (Library) s.getObject();
 	}
 
-	private Namespace getLibraryScope(String name) {
-		Symbol s = symbolMgr.getLibrarySymbol(name);
-		return s == null ? null : (Namespace) s.getObject();
+	private Library getLibraryScope(String name) {
+		LibrarySymbol s = symbolMgr.getLibrarySymbol(name);
+		return s == null ? null : s.getObject();
 	}
 
 	@Override
@@ -714,9 +700,9 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public String getExternalLibraryPath(String externalName) {
-		SymbolDB s = (SymbolDB) symbolMgr.getLibrarySymbol(externalName);
-		if (s instanceof LibrarySymbol) {
-			return s.getSymbolStringData();
+		LibrarySymbol s = symbolMgr.getLibrarySymbol(externalName);
+		if (s != null) {
+			return s.getExternalLibraryPath();
 		}
 		return null;
 	}
@@ -734,7 +720,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 		lock.acquire();
 		try {
-			SymbolDB s = (SymbolDB) symbolMgr.getLibrarySymbol(externalName);
+			LibrarySymbol s = symbolMgr.getLibrarySymbol(externalName);
 			if (s == null) {
 				try {
 					addExternalName(externalName, externalPath,
@@ -744,8 +730,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 					throw new AssertException(e);
 				}
 			}
-			else if (s instanceof LibrarySymbol) {
-				s.setSymbolStringData(externalPath);
+			else {
+				s.setExternalLibraryPath(externalPath);
 			}
 		}
 		finally {
@@ -775,8 +761,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			if (!(symbol instanceof CodeSymbol)) {
 				throw new IllegalStateException("Expected external code symbol");
 			}
-			//long dtId = symbol.getSymbolData1();
-			String extData = symbol.getSymbolStringData();
+			Address extProgAddr = extLoc.getAddress();
+			String origImpName = extLoc.getOriginalImportedName();
 			String name = symbol.getName();
 			Namespace namespace = symbol.getParentNamespace();
 			Address extAddr = symbol.getAddress();
@@ -784,7 +770,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 			((CodeSymbol) symbol).delete(true);
 
-			return functionMgr.createExternalFunction(extAddr, name, namespace, extData, source);
+			return functionMgr.createExternalFunction(extAddr, name, namespace, origImpName,
+				extProgAddr, source);
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Unexpected exception", e);
@@ -800,12 +787,12 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocationIterator getExternalLocations(Address memoryAddress) {
-		return new ExternalLocationDBIterator(symbolMgr.getExternalSymbols(), memoryAddress);
+		return new ExternalLocationDBIterator(null, memoryAddress);
 	}
 
 	@Override
 	public ExternalLocationIterator getExternalLocations(String externalName) {
-		Namespace scope = getLibraryScope(externalName);
+		Library scope = getLibraryScope(externalName);
 		if (scope != null) {
 			return new ExternalLocationDBIterator(symbolMgr.getSymbols(scope));
 		}
@@ -821,8 +808,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		ExternalLocationDBIterator() {
 		}
 
-		ExternalLocationDBIterator(SymbolIterator symIter, Address matchingAddress) {
-			this.symIter = symIter;
+		ExternalLocationDBIterator(Library library, Address matchingAddress) {
+			this.symIter = symbolMgr.getExternalSymbolByMemoryAddress(library, matchingAddress);
 			this.matchingAddress = matchingAddress;
 		}
 
@@ -872,47 +859,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			return null;
 		}
 
-	}
-
-	public void setLanguage(LanguageTranslator translator, TaskMonitor monitor)
-			throws CancelledException {
-
-		monitor.setMessage("Translate External Addresses...");
-
-		AddressFactory oldAddrFactory = translator.getOldLanguage().getAddressFactory();
-		SymbolIterator externalSymbols = symbolMgr.getExternalSymbols();
-		while (externalSymbols.hasNext()) {
-			monitor.checkCancelled();
-			SymbolDB s = (SymbolDB) externalSymbols.next();
-			ExternalData externalData = ExternalLocationDB.getExternalData(s);
-			String addrStr = externalData.getAddressString();
-			if (addrStr == null) {
-				continue;
-			}
-			// skip addresses which do not parse by old language - could be
-			// overlay (although this should generally never occur)
-			Address addr = oldAddrFactory.getAddress(addrStr);
-			if (addr == null) {
-				continue;
-			}
-			AddressSpace newAddressSpace =
-				translator.getNewAddressSpace(addr.getAddressSpace().getName());
-			if (newAddressSpace == null || !newAddressSpace.isLoadedMemorySpace()) {
-				// can't really recover from this
-				throw new AssertException("Failed to map external memory address: " + addrStr);
-			}
-			addr = newAddressSpace.getAddress(addr.getOffset());
-			String newAddrStr = addr.toString();
-			if (!newAddrStr.equals(addrStr)) {
-				ExternalLocationDB.updateSymbolData(s, externalData.getOriginalImportedName(),
-					newAddrStr); // store translated external location address
-			}
-		}
-	}
-
-	SymbolDB createSymbolForOriginalName(Address address, Namespace namespace, String oldName,
-			SourceType oldType) throws InvalidInputException {
-		return (SymbolDB) symbolMgr.createCodeSymbol(address, oldName, namespace, oldType, null);
 	}
 
 }

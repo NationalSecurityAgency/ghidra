@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -224,9 +224,9 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		});
 		eventList.setCellRenderer(new DataCellRenderer());
 		producerList.setCellRenderer(
-			GListCellRenderer.createDefaultCellTextRenderer(tool -> tool.getName()));
+			GListCellRenderer.createDefaultTextRenderer(tool -> tool.getName()));
 		consumerList.setCellRenderer(
-			GListCellRenderer.createDefaultCellTextRenderer(tool -> tool.getName()));
+			GListCellRenderer.createDefaultTextRenderer(tool -> tool.getName()));
 		producerModel = (DefaultListModel<PluginTool>) producerList.getModel();
 		consumerModel = (DefaultListModel<PluginTool>) consumerList.getModel();
 	}
@@ -388,14 +388,17 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 
 		consumerList = new JList<>(new DefaultListModel<>());
 		consumerList.setName("Consumers");
+		consumerList.getAccessibleContext().setAccessibleName("Consumers");
 		JScrollPane consumerListScrollPane = new JScrollPane(consumerList);
 
 		producerList = new JList<>(new DefaultListModel<>());
 		producerList.setName("Producers");
+		producerList.getAccessibleContext().setAccessibleName("Producers");
 		JScrollPane producerListScrollPane = new JScrollPane(producerList);
 
 		eventList = new JList<>(new DefaultListModel<>());
 		eventList.setName("Events");
+		eventList.getAccessibleContext().setAccessibleName("Events");
 		JScrollPane eventListScrollPane = new JScrollPane(eventList);
 
 		Dimension minimumSize = new Dimension(150, 150);
@@ -416,8 +419,11 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		JComponent[] row2 = null;
 
 		JLabel producerLabel = new GDLabel("Event Producer:");
+		producerLabel.getAccessibleContext().setAccessibleName("Event Producer");
 		JLabel consumerLabel = new GDLabel("Event Consumer:");
+		consumerLabel.getAccessibleContext().setAccessibleName("Event Consumer");
 		JLabel eventLabel = new GDLabel("Event Names:");
+		eventLabel.getAccessibleContext().setAccessibleName("Event Name");
 
 		JComponent[] c1 = { producerLabel, consumerLabel, eventLabel };
 		JComponent[] c2 = { producerListScrollPane, consumerListScrollPane, eventListScrollPane };
@@ -456,6 +462,7 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 			gbl.setConstraints(row2[i], gbc);
 			panel.add(row2[i]);
 		}
+		panel.getAccessibleContext().setAccessibleName("Tool Connection");
 		return (panel);
 	}
 

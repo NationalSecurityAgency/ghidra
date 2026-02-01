@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package ghidra.program.model.address;
 
-import static ghidra.util.ComparatorMath.cmax;
-import static ghidra.util.ComparatorMath.cmin;
+import static ghidra.util.MathUtilities.cmax;
+import static ghidra.util.MathUtilities.cmin;
 
 import java.util.Iterator;
 
-import ghidra.util.AbstractPeekableIterator;
+import generic.util.AbstractPeekableIterator;
 import ghidra.util.AddressIteratorAdapter;
 
 /**
@@ -98,6 +98,10 @@ public class CachedAddressSetView implements AddressSetView {
 
 	protected void ensureKnown(Address min, Address max) {
 		if (minAddress == null) {
+			return;
+		}
+		if (minAddress.compareTo(max) > 0 ||
+			maxAddress.compareTo(min) < 0) {
 			return;
 		}
 		min = cmax(min, minAddress);

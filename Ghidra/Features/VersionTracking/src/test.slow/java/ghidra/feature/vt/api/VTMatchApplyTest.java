@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,8 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.test.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskMonitor;
 
 public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -68,7 +69,6 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB destinationProgram;
 	private VTPlugin plugin;
 
-	// TODO: debug
 	private DomainObjectListenerRecorder eventRecorder = new DomainObjectListenerRecorder();
 
 	@Before
@@ -93,9 +93,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		plugin = getPlugin(tool, VTPlugin.class);
 		controller = new VTControllerImpl(plugin);
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
@@ -178,39 +177,39 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testApplyMatchEOLComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.EOL_COMMENT, VTOptionDefines.END_OF_LINE_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.EOL, VTOptionDefines.END_OF_LINE_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchPreComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.PRE_COMMENT, VTOptionDefines.PRE_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.PRE, VTOptionDefines.PRE_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchPostComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.POST_COMMENT, VTOptionDefines.POST_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.POST, VTOptionDefines.POST_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchPlateComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.PLATE_COMMENT, VTOptionDefines.PLATE_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.PLATE, VTOptionDefines.PLATE_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchRepeatableComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.REPEATABLE_COMMENT,
-			VTOptionDefines.REPEATABLE_COMMENT, CommentChoices.EXCLUDE);
+		doTestApplyCommentMatch_Ignore(CommentType.REPEATABLE, VTOptionDefines.REPEATABLE_COMMENT,
+			CommentChoices.EXCLUDE);
 	}
 
-	private void doTestApplyCommentMatch_Ignore(int codeUnitCommentType,
+	private void doTestApplyCommentMatch_Ignore(CommentType codeUnitCommentType,
 			String vtCommentOptionDefine, CommentChoices commentChoice) throws Exception {
 		String sourceComment = "Hi mom replace";
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
@@ -250,39 +249,39 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testApplyMatchEOLComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.EOL_COMMENT, VTOptionDefines.END_OF_LINE_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.EOL, VTOptionDefines.END_OF_LINE_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPreComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.PRE_COMMENT, VTOptionDefines.PRE_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.PRE, VTOptionDefines.PRE_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPostComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.POST_COMMENT, VTOptionDefines.POST_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.POST, VTOptionDefines.POST_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPlateComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.PLATE_COMMENT, VTOptionDefines.PLATE_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.PLATE, VTOptionDefines.PLATE_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchRepeatableComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.REPEATABLE_COMMENT,
-			VTOptionDefines.REPEATABLE_COMMENT, CommentChoices.APPEND_TO_EXISTING);
+		doTestApplyCommentMatch_Append(CommentType.REPEATABLE, VTOptionDefines.REPEATABLE_COMMENT,
+			CommentChoices.APPEND_TO_EXISTING);
 	}
 
-	private void doTestApplyCommentMatch_Append(int codeUnitCommentType,
+	private void doTestApplyCommentMatch_Append(CommentType codeUnitCommentType,
 			String vtCommentOptionDefine, CommentChoices commentChoice) throws Exception {
 		String sourceComment = "Hi mom replace";
 		String destinationComment = "Hi dad replace";
@@ -327,39 +326,39 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testApplyMatchEOLComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.EOL_COMMENT, VTOptionDefines.END_OF_LINE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.EOL, VTOptionDefines.END_OF_LINE_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPreComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.PRE_COMMENT, VTOptionDefines.PRE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.PRE, VTOptionDefines.PRE_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPostComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.POST_COMMENT, VTOptionDefines.POST_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.POST, VTOptionDefines.POST_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPlateComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.PLATE_COMMENT, VTOptionDefines.PLATE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.PLATE, VTOptionDefines.PLATE_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchRepeatableComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.REPEATABLE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.REPEATABLE,
 			VTOptionDefines.REPEATABLE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
 	}
 
-	private void doTestApplyCommentMatch_Overwrite(int codeUnitCommentType,
+	private void doTestApplyCommentMatch_Overwrite(CommentType codeUnitCommentType,
 			String vtCommentOptionDefine, CommentChoices commentChoice) throws Exception {
 		String sourceComment = "Hi mom replace";
 		String destinationComment = "Hi dad replace";
@@ -540,8 +539,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choices
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceDataChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -573,8 +572,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -602,8 +602,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -644,8 +645,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -666,7 +668,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destinationAddress = addr("0x0100808c", destinationProgram);
 		Listing destinationListing = destinationProgram.getListing();
 
-		// force known values for the test 
+		// force known values for the test
 		DataType sourceDataType = new DWordDataType();
 		DataType destinationDataType1 = new StringDataType();
 		setData(sourceDataType, 4, sourceAddress, sourceProgram);
@@ -674,9 +676,10 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
-		// data type choice 
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
+		// data type choice
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -687,9 +690,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(VTAssociationStatus.ACCEPTED, status);
 		checkDataMatchDataType(sourceDataType, 4, destinationAddress, destinationListing);
 
-		// 
-		// Now test the unapply 
-		// 
+		//
+		// Now test the unapply
+		//
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
 		runTask(unapplyTask);
 
@@ -706,7 +709,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destinationAddress = addr("0x0100808c", destinationProgram);
 		Listing destinationListing = destinationProgram.getListing();
 
-		// force known values for the test 
+		// force known values for the test
 		DataType sourceDataType = new DWordDataType();
 		DataType destinationDataType1 = new StringDataType();
 		setData(sourceDataType, 4, sourceAddress, sourceProgram);
@@ -715,9 +718,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
-		// data type choice 
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_ALL_DATA);
+		// data type choice
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceDataChoices.REPLACE_ALL_DATA);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -733,7 +736,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		int txID = program.startTransaction("Creating instruction");
 		boolean commit = false;
 		try {
-			// Create instruction here. 
+			// Create instruction here.
 			DisassembleCommand cmd = new DisassembleCommand(address,
 				new AddressSet(address, address.add(length)), false);
 			cmd.applyTo(program);
@@ -761,8 +764,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_ALL_DATA);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceDataChoices.REPLACE_ALL_DATA);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -830,8 +833,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("FUN_01003f9e", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -868,8 +871,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Bar", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -897,8 +900,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("FUN_01003f9e", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_ALWAYS);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -935,8 +938,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Bar", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_ALWAYS);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -1059,12 +1062,11 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		String sourceComment = "Hi mom replace";
 		String destinationComment = "Hi dad replace";
 		Address commentAddress = addr("0x01002d06", sourceProgram);
-		setComment(sourceProgram, commentAddress, CodeUnit.EOL_COMMENT, sourceComment);
-		setComment(destinationProgram, commentAddress, CodeUnit.EOL_COMMENT, destinationComment);
+		setComment(sourceProgram, commentAddress, CommentType.EOL, sourceComment);
+		setComment(destinationProgram, commentAddress, CommentType.EOL, destinationComment);
 
 		MatchInfo matchInfo = controller.getMatchInfo(match);
-		Collection<VTMarkupItem> markupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
+		Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 
 		List<VTMarkupItem> itemsToApply = new ArrayList<>();
 		for (VTMarkupItem item : markupItems) {
@@ -1085,7 +1087,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String expectedComment = destinationComment + "\n" + sourceComment;
 		Listing destinationListing = destinationProgram.getListing();
-		String comment = destinationListing.getComment(CodeUnit.EOL_COMMENT, commentAddress);
+		String comment = destinationListing.getComment(CommentType.EOL, commentAddress);
 		assertEquals("Comment was not applied", expectedComment, comment);
 
 		//
@@ -1106,7 +1108,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		expectedComment = destinationComment + "\n" + sourceComment;
 		destinationListing = destinationProgram.getListing();
-		comment = destinationListing.getComment(CodeUnit.EOL_COMMENT, commentAddress);
+		comment = destinationListing.getComment(CommentType.EOL, commentAddress);
 		assertEquals("Comment was not applied", expectedComment, comment);
 
 		//
@@ -1119,7 +1121,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("New symbol does not match the source symbol",
 			SystemUtilities.isArrayEqual(expectedSymbols, newSymbols));
 
-		comment = destinationListing.getComment(CodeUnit.EOL_COMMENT, commentAddress);
+		comment = destinationListing.getComment(CommentType.EOL, commentAddress);
 		assertEquals("Comment was not unpplied", destinationComment, comment);
 	}
 
@@ -1142,8 +1144,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		checkReturnType(dWordDataType, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -1173,10 +1175,10 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		checkReturnType(dWordDataType, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE,
-			ParameterDataTypeChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -1211,10 +1213,10 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		setupParameters(sourceFunction, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.EXCLUDE);
-		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_NAMES,
-			SourcePriorityChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.PARAMETER_NAMES, SourcePriorityChoices.EXCLUDE);
 		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_COMMENTS, CommentChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
@@ -1266,14 +1268,14 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		setupParameters(sourceFunction, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE,
-			ParameterDataTypeChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_DATA_TYPES,
-			ParameterDataTypeChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_NAMES,
-			SourcePriorityChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.PARAMETER_NAMES, SourcePriorityChoices.EXCLUDE);
 		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_COMMENTS, CommentChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
@@ -2067,7 +2069,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void setComment(Program program, Address address, int codeUnitCommentType,
+	private void setComment(Program program, Address address, CommentType codeUnitCommentType,
 			String comment) {
 		Listing listing = program.getListing();
 
@@ -2102,7 +2104,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			testTransactionID = db.startTransaction("Test Match Set Setup");
 			VTMatchSet matchSet = db.createMatchSet(
-				createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			for (AssociationPair associationPair : list) {
 				VTMatchInfo info = createRandomMatch(associationPair.getSourceAddress(),
 					associationPair.getDestinationAddress(), db);

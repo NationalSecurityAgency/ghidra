@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,47 +15,86 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.Set;
 
-import java.io.IOException;
-
+import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
+import ghidra.program.model.data.*;
 
-@StructureMapping(structureName = "runtime.arraytype")
+/**
+ * {@link GoType} structure that defines an array.
+ */
+@StructureMapping(structureName = {"runtime.arraytype", "internal/abi.ArrayType"})
 public class GoArrayType extends GoType {
 
 	@FieldMapping
+	@MarkupReference("getElement")
 	private long elem;  // pointer to element type
 
 	@FieldMapping
+	@MarkupReference("getSliceType")
 	private long slice;	// pointer to slice type
 
 	@FieldMapping
 	private long len;
 
 	public GoArrayType() {
+		// empty
 	}
 
+	/**
+	 * {@return a reference to the {@link GoType} of the elements of this array}
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
-		return programContext.getGoType(elem);
+		return programContext.getGoTypes().getType(elem);
 	}
 
+	/**
+	 * {@return a reference to the {@link GoType} that defines the slice version of this array} 
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getSliceType() throws IOException {
-		return programContext.getGoType(slice);
+		return programContext.getGoTypes().getType(slice);
 	}
 
 	@Override
 	public DataType recoverDataType() throws IOException {
-		DataType elementDt = programContext.getRecoveredType(getElement());
-		DataType self = programContext.getCachedRecoveredDataType(this);
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType elementDt = goTypes.getDataType(getElement());
+		DataType self = goTypes.getDataType(this, DataType.class, true);
 		if (self != null) {
 			return self;
 		}
-		return new ArrayDataType(elementDt, (int) len, -1);
+		return isValidLength()
+				? new ArrayDataType(elementDt, (int) len, -1)
+				: new TypedefDataType(elementDt.getCategoryPath(),
+					".invalid_arraysize_%d_%s".formatted(len, elementDt.getName()),
+					new ArrayDataType(elementDt, 1, -1), elementDt.getDataTypeManager());
+	}
+
+	private boolean isValidLength() {
+		return 0 <= len && len <= Integer.MAX_VALUE;
+	}
+	
+	@Override
+	public String getPackagePathString() {
+		String ppStr = super.getPackagePathString();
+		if ( ppStr == null || ppStr.isEmpty() ) {
+			try {
+				GoType elemType = getElement();
+				if ( elemType != null ) {
+					ppStr = elemType.getPackagePathString();
+				}
+			} catch (IOException e) {
+				// fall thru
+			}
+		}
+		return ppStr;
 	}
 
 	@Override
@@ -72,6 +111,32 @@ public class GoArrayType extends GoType {
 			sliceType.discoverGoTypes(discoveredTypes);
 		}
 		return true;
+	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		String packagePath = getPackagePathString();
+		if (packagePath != null && !packagePath.isEmpty()) {
+			return packagePath;
+		}
+		GoType elementType = getElement();
+		if (elementType != null) {
+			return elementType.getStructureNamespace();
+		}
+		return super.getStructureNamespace();
+	}
+
+	@Override
+	protected String getTypeDeclString() throws IOException {
+		// type CustomArraytype [elementcount]elementType
+		String selfName = typ.getName();
+		String elemName = getElement().getName();
+		String arrayDefStr = "[%d]%s".formatted(len, elemName);
+		String defStrWithLinks = "[%d]%s".formatted(len,
+			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
+		boolean hasName = !arrayDefStr.equals(selfName);
+
+		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
 	}
 
 }

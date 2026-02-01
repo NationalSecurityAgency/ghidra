@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,19 +33,23 @@ extern ElementId ELEM_STRINGMANAGE;	///< Marshaling element \<stringmanage>
 
 /// \brief Storage for decoding and storing strings associated with an address
 ///
-/// Looks at data in the loadimage to determine if it represents a "string".
-/// Decodes the string for presentation in the output.
-/// Stores the decoded string until its needed for presentation.
+/// Looks at data in the loadimage to determine if it represents a "string". Decodes the string for
+/// presentation in the output. Stores the decoded string until its needed for presentation.  Strings are
+/// associated with their starting address in memory.  An \e internal string (that is not in the loadimage) can
+/// be registered with the manager and will be associated with a constant.
 class StringManager {
 protected:
   /// \brief String data (a sequence of bytes) stored by StringManager
   class StringData {
   public:
-    bool isTruncated;		///< \b true if the the string is truncated
+    bool isTruncated;		///< \b true if the string is truncated
     vector<uint1> byteData;	///< UTF8 encoded string data
   };
   map<Address,StringData> stringMap;	///< Map from address to string data
   int4 maximumChars;			///< Maximum characters in a string before truncating
+  bool writeUnicode(ostream &s,const uint1 *buffer,int4 size,int4 charsize,bool bigend);	///< Translate/copy unicode to UTF8
+  void assignStringData(StringData &data,const uint1 *buf,int4 size,int4 charsize,int4 numChars,bool bigend);
+  static uint8 calcInternalHash(const Address &addr,const uint1 *buf,int4 size);
 public:
   StringManager(int4 max);		///< Constructor
   virtual ~StringManager(void);		///< Destructor
@@ -64,12 +68,14 @@ public:
   /// \return the byte array of UTF8 data
   virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc)=0;
 
+  uint8 registerInternalStringData(const Address &addr,const uint1 *buf,int4 size,Datatype *charType);
   void encode(Encoder &encoder) const;	///< Encode cached strings to a stream
   void decode(Decoder &decoder);	///< Restore string cache from a stream
 
   static bool hasCharTerminator(const uint1 *buffer,int4 size,int4 charsize);	///< Check for a unicode string terminator
   static int4 readUtf16(const uint1 *buf,bool bigend);	///< Read a UTF16 code point from a byte array
   static void writeUtf8(ostream &s,int4 codepoint);	///< Write unicode character to stream in UTF8 encoding
+  static int4 checkCharacters(const uint1 *buf,int4 size,int4 charsize,bool bigend);
   static int4 getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip);	///< Extract next \e unicode \e codepoint
 };
 
@@ -80,13 +86,11 @@ public:
 class StringManagerUnicode : public StringManager {
   Architecture *glb;		///< Underlying architecture
   uint1 *testBuffer;		///< Temporary buffer for pulling in loadimage bytes
-  int4 checkCharacters(const uint1 *buf,int4 size,int4 charsize) const;	///< Make sure buffer has valid bounded set of unicode
 public:
   StringManagerUnicode(Architecture *g,int4 max);	///< Constructor
   virtual ~StringManagerUnicode(void);
 
   virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc);
-  bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Translate/copy unicode to UTF8
 };
 
 } // End namespace ghidra

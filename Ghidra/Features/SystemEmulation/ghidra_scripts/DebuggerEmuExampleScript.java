@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,18 +28,18 @@ import java.nio.charset.Charset;
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
-import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.ProgramManager;
+import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.trace.TraceSleighUtils;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -54,7 +54,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 
-public class DebuggerEmuExampleScript extends GhidraScript {
+public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebuggerAPI {
 	private final static Charset UTF8 = Charset.forName("utf8");
 
 	@Override
@@ -63,9 +63,6 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * First, get all the services and stuff:
 		 */
 		PluginTool tool = state.getTool();
-		ProgramManager programManager = tool.getService(ProgramManager.class);
-		DebuggerTraceManagerService traceManager =
-			tool.getService(DebuggerTraceManagerService.class);
 		SleighLanguage language = (SleighLanguage) getLanguage(new LanguageID("x86:LE:64:default"));
 
 		/*
@@ -103,7 +100,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 			}
 			program.save("Init", monitor);
 			// Display the program in the UI
-			programManager.openProgram(program);
+			openProgram(program);
 		}
 		finally {
 			if (program != null) {
@@ -121,8 +118,8 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		try {
 			trace = ProgramEmulationUtils.launchEmulationTrace(program, entry, this);
 			// Display the trace in the UI
-			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
+			openTrace(trace);
+			activateTrace(trace);
 		}
 		finally {
 			if (trace != null) {
@@ -131,7 +128,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		}
 		// Get the initial thread
 		TraceThread traceThread = trace.getThreadManager().getAllThreads().iterator().next();
-		traceManager.activateThread(traceThread);
+		activateThread(traceThread);
 
 		/*
 		 * Instead of using the UI's emulator, this script will create its own with a custom
@@ -140,7 +137,8 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 */
 		TracePlatform host = trace.getPlatformManager().getHostPlatform();
 		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(tool, null, host, 0);
-		BytesDebuggerPcodeEmulator emulator = new BytesDebuggerPcodeEmulator(access) {
+		Writer writer = DebuggerEmulationIntegration.bytesDelayedWriteTrace(access);
+		PcodeEmulator emulator = new PcodeEmulator(access.getLanguage(), writer.callbacks()) {
 			@Override
 			protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 				return new DemoPcodeUseropLibrary(language, DebuggerEmuExampleScript.this);
@@ -172,9 +170,8 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 			for (int i = 0; i < 10; i++) {
 				println("Executing: " + thread.getCounter());
 				thread.stepInstruction();
-				snapshot =
-					time.createSnapshot("Stepped to " + thread.getCounter());
-				emulator.writeDown(host, snapshot.getKey(), 0);
+				snapshot = time.createSnapshot("Stepped to " + thread.getCounter());
+				writer.writeDown(snapshot.getKey());
 			}
 			printerr("We should not have completed 10 steps!");
 		}
@@ -182,7 +179,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 			println("Terminated via interrupt. Good.");
 		}
 		// Display the final snapshot in the UI
-		traceManager.activateSnap(snapshot.getKey());
+		activateSnap(snapshot.getKey());
 
 		/*
 		 * Inspect the machine. You can always do this by accessing the state directly, but for
@@ -210,7 +207,6 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * source (live target, emulated, imported, etc.) It's also built into utilities, making it
 		 * easier to use.
 		 */
-		println("RCX+4 (trace) = " +
-			TraceSleighUtils.evaluate("RCX+4", trace, snapshot.getKey(), traceThread, 0));
+		println("RCX+4 (trace) = " + evaluate("RCX+4"));
 	}
 }

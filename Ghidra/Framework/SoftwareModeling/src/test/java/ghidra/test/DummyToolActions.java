@@ -60,6 +60,11 @@ public class DummyToolActions implements DockingToolActions {
 	}
 
 	@Override
+	public Set<DockingActionIf> getGlobalActions() {
+		return null;
+	}
+
+	@Override
 	public void removeLocalAction(ComponentProvider provider, DockingActionIf action) {
 		// stub
 	}
@@ -72,5 +77,10 @@ public class DummyToolActions implements DockingToolActions {
 	@Override
 	public void registerSharedActionPlaceholder(SharedDockingActionPlaceholder placeholder) {
 		// stub
+	}
+
+	@Override
+	public Set<DockingActionIf> getLocalActions(ComponentProvider provider) {
+		return null;
 	}
 }

@@ -1,4 +1,0 @@
-DATA SEARCH IGNORE DIR: jython-2.7.3
-EXCLUDE FROM GHIDRA JAR: true
-MODULE FILE LICENSE: lib/jython-standalone-2.7.3.jar Jython License
-

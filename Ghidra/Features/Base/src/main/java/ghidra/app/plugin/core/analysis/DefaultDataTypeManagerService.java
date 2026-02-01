@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,10 @@ import javax.swing.tree.TreePath;
 
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.app.plugin.core.datamgr.archive.DefaultDataTypeArchiveService;
-import ghidra.app.plugin.core.datamgr.util.DataTypeComparator;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManagerChangeListener;
+import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.task.TaskMonitor;
 
 // FIXME!! TESTING
 public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
@@ -57,7 +56,32 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 	}
 
 	@Override
+	public void edit(Composite compposite, String fieldName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataType getDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType promptForDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String name, TaskMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -66,6 +90,11 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 		if (selectedTreeNode == null) {
 			return null;
 		}
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -83,9 +112,13 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 	public List<DataType> getSortedDataTypeList() {
 		List<DataType> dataTypes =
 			builtInDataTypesManager.getDataTypes(BuiltInSourceArchive.INSTANCE);
-		dataTypes.sort(new DataTypeComparator());
+		dataTypes.sort(DataTypeComparator.INSTANCE);
 		return dataTypes;
-//		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<CategoryPath> getSortedCategoryPathList() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -95,6 +128,11 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 
 	@Override
 	public void setDataTypeSelected(DataType dataType) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setCategorySelected(Category category) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,24 +15,44 @@
  */
 package ghidra.trace.database.memory;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.util.Set;
 
+import org.hamcrest.*;
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.util.LanguageTestWatcher;
 
 public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		extends AbstractGhidraHeadlessIntegrationTest {
+
+	public static final String XML_CTX = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Regions' schema='RegionContainer' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			    </schema>
+			</context>
+			""";
+
 	protected ToyDBTraceBuilder b;
 	protected DBTraceMemoryManager memory;
 
@@ -43,11 +63,15 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 	protected abstract LanguageID getLanguageID();
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
+
 		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Initialize");
+			XmlSchemaContext ctx = XmlSchemaContext.deserialize(XML_CTX);
+			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
+
 		memory = b.trace.getMemoryManager();
 	}
 
@@ -77,6 +101,29 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		assertEquals(Set.of(region), Set.copyOf(memory.getAllRegions()));
 	}
 
+	protected static class InvalidRegionMatcher extends BaseMatcher<TraceMemoryRegion> {
+		private final long snap;
+
+		public InvalidRegionMatcher(long snap) {
+			this.snap = snap;
+		}
+
+		@Override
+		public boolean matches(Object actual) {
+			return actual == null ||
+				actual instanceof TraceMemoryRegion region && !region.isValid(snap);
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("An invalid or null region");
+		}
+	}
+
+	protected static InvalidRegionMatcher invalidRegion(long snap) {
+		return new InvalidRegionMatcher(snap);
+	}
+
 	@Test
 	public void testGetLiveRegionByPath() throws Exception {
 		assertNull(memory.getLiveRegionByPath(0, "Regions[0x1000]"));
@@ -88,8 +135,8 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		}
 
 		assertEquals(region, memory.getLiveRegionByPath(0, "Regions[0x1000]"));
-		assertNull(memory.getLiveRegionByPath(0, "Regions[0x1001]"));
-		assertNull(memory.getLiveRegionByPath(-1, "Regions[0x1000]"));
+		assertThat(memory.getLiveRegionByPath(0, "Regions[0x1001]"), invalidRegion(0));
+		assertThat(memory.getLiveRegionByPath(-1, "Regions[0x1000]"), invalidRegion(-1));
 	}
 
 	@Test
@@ -151,8 +198,9 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
 
-		assertEquals(b.set(b.range(0x1000, 0x1fff)), memory.getRegionsAddressSet(0));
-		assertEquals(b.set(), memory.getRegionsAddressSet(-1));
+		assertEquals(b.set(b.range(0x1000, 0x1fff)),
+			new AddressSet(memory.getRegionsAddressSet(0)));
+		assertEquals(b.set(), new AddressSet(memory.getRegionsAddressSet(-1)));
 	}
 
 	@Test
@@ -164,8 +212,9 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
 
-		assertEquals(b.set(b.range(0x1000, 0x1fff)), memory.getRegionsAddressSetWith(0, r -> true));
-		assertEquals(b.set(), memory.getRegionsAddressSetWith(-1, r -> true));
-		assertEquals(b.set(), memory.getRegionsAddressSetWith(0, r -> false));
+		assertEquals(b.set(b.range(0x1000, 0x1fff)),
+			new AddressSet(memory.getRegionsAddressSetWith(0, r -> true)));
+		assertEquals(b.set(), new AddressSet(memory.getRegionsAddressSetWith(-1, r -> true)));
+		assertEquals(b.set(), new AddressSet(memory.getRegionsAddressSetWith(0, r -> false)));
 	}
 }

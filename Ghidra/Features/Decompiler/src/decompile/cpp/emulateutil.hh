@@ -49,7 +49,7 @@ protected:
   /// \brief Pull a value from the load-image given a specific address
   ///
   /// A contiguous chunk of memory is pulled from the load-image and returned as a
-  /// constant value, respecting the endianess of the address space. The default implementation
+  /// constant value, respecting the endianness of the address space. The default implementation
   /// of this method pulls the value directly from the LoadImage object.
   /// \param spc is the address space to pull the value from
   /// \param offset is the starting address offset (from within the space) to pull the value from
@@ -121,7 +121,7 @@ class EmulateSnippet : public Emulate {
   /// \brief Pull a value from the load-image given a specific address
   ///
   /// A contiguous chunk of memory is pulled from the load-image and returned as a
-  /// constant value, respecting the endianess of the address space.
+  /// constant value, respecting the endianness of the address space.
   /// \param spc is the address space to pull the value from
   /// \param offset is the starting address offset (from within the space) to pull the value from
   /// \param sz is the number of bytes to pull from memory

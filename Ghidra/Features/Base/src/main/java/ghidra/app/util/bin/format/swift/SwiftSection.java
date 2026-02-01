@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,9 @@ public enum SwiftSection {
 	BLOCK_PROTOCS("__swift5_protos", "swift5_protocols", ".sw5prt"),
 	BLOCK_ACFUNCS("__swift5_acfuncs", "swift5_accessible_functions", ".sw5acfn"),
 	BLOCK_MPENUM("__swift5_mpenum", "swift5_mpenum", ".sw5mpen"),
-	BLOCK_TYPES("__swift5_types", "swift5_types", ".sw5tymd"),
-	BLOCK_ENTRY("__swift5_entry", "swift5_entry", ".sw5entr");
+	BLOCK_TYPES("__swift5_types", "__swift5_types2", "swift5_type_metadata", ".sw5tymd"),
+	BLOCK_ENTRY("__swift5_entry", "swift5_entry", ".sw5entr"),
+	BLOCK_SWIFTAST("__swift_ast", ".swift_ast", "swiftast");
 
 	private List<String> sectionNames;
 	
@@ -50,9 +51,7 @@ public enum SwiftSection {
 	}
 	
 	/**
-	 * Gets a {@link List} of the {@link SwiftSection}'s names
-	 * 
-	 * @return A {@link List} of the {@link SwiftSection}'s names
+	 * {@return a {@link List} of the {@link SwiftSection}'s names}
 	 */
 	public List<String> getSwiftSectionNames() {
 		return sectionNames;

@@ -15,10 +15,19 @@
  */
 package ghidra.app.plugin.debug.dbtable;
 
-import db.IntField;
 import db.DBRecord;
+import db.IntField;
 
 public class IntegerColumnAdapter extends AbstractColumnAdapter {
+
+	IntegerColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
+	@Override
+	public int getColumnPreferredWidth() {
+		return 200;
+	}
 
 	@Override
 	Class<?> getValueClass() {
@@ -35,4 +44,8 @@ public class IntegerColumnAdapter extends AbstractColumnAdapter {
 		return Integer.valueOf(rec.getIntValue(col));
 	}
 
+	@Override
+	public LongRenderer getColumnRenderer() {
+		return longRenderer;
+	}
 }

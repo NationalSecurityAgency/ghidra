@@ -16,7 +16,6 @@
 package ghidra.app.cmd.equate;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Equate;
@@ -27,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command for setting an equate at a location.
  */
-public class SetEquateCmd implements Command {
+public class SetEquateCmd implements Command<Program> {
 
 	private String equateName;
 	private Address addr;
@@ -52,24 +51,19 @@ public class SetEquateCmd implements Command {
 		this.equateValue = equateValue;
 	}
 
-	/**
-	 * The name of the edit action.
-	 */
 	@Override
 	public String getName() {
 		return "Set Equate";
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		EquateTable equateTable = ((Program) obj).getEquateTable();
+	public boolean applyTo(Program program) {
+		EquateTable equateTable = program.getEquateTable();
 		equate = equateTable.getEquate(equateName);
 
-
 		if (existsWithDifferentValue(equate)) {
-			msg =
-				"Equate named " + equateName + " already exists with value of " +
-					equate.getValue() + ".";
+			msg = "Equate named " + equateName + " already exists with value of " +
+				equate.getValue() + ".";
 			return false;
 		}
 
@@ -101,9 +95,6 @@ public class SetEquateCmd implements Command {
 		return equate;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;

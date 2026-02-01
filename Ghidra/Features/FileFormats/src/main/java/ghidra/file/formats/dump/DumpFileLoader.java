@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,8 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -106,12 +107,11 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	@SuppressWarnings("hiding")
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws CancelledException, IOException {
-		this.log = log;
-		parseDumpFile(provider, program, options, loadSpec, monitor);
+		this.log = settings.log();
+		parseDumpFile(settings.provider(), program, settings.options(), settings.loadSpec(),
+			settings.monitor());
 	}
 
 	private void parseDumpFile(ByteProvider provider, Program program, List<Option> options,
@@ -178,8 +178,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 				DumpAddressObject d = daos.get(address);
 				try {
 					MemoryBlockUtils.createInitializedBlock(program, false, d.getRangeName(),
-						address, fileBytes,
-						d.getRVA(), // offset into filebytes
+						address, fileBytes, d.getRVA(), // offset into filebytes
 						d.getLength(), // size
 						d.getComment(), // comment
 						null, // source
@@ -216,7 +215,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 						try {
 							m = memory.join(m, next);
 						}
-						catch (MemoryBlockException | LockException | NotFoundException e) {
+						catch (MemoryBlockException | LockException e) {
 							break;
 						}
 						deleted.add(next.getStart());
@@ -282,9 +281,8 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 						symbolTable.createLabel(address, dd.getName(), SourceType.IMPORTED);
 					}
 					catch (InvalidInputException e) {
-						Msg.error(this,
-							"Error creating label " + dd.getName() + " at address " + address +
-								": " + e.getMessage());
+						Msg.error(this, "Error creating label " + dd.getName() + " at address " +
+							address + ": " + e.getMessage());
 					}
 					continue;
 				}
@@ -300,7 +298,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
+			DomainObject domainObject, boolean isLoadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> options = new ArrayList<>();
 		try {
 			int size = loadSpec.getLanguageCompilerSpec().getLanguage().getDefaultSpace().getSize();

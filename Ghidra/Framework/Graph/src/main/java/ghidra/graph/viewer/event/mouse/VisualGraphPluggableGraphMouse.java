@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.graph.viewer.event.mouse;
 
+import java.awt.Component;
 import java.awt.event.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -113,14 +114,15 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseListener)) {
 				continue;
 			}
-
-			trace("mouseClicked() on " + p, e);
-			((MouseListener) p).mouseClicked(e);
-			if (e.isConsumed()) {
+			trace("mouseClicked() on " + p, copy);
+			((MouseListener) p).mouseClicked(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -129,14 +131,16 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseListener)) {
 				continue;
 			}
 
-			trace("mousePressed() on " + p, e);
-			((MouseListener) p).mousePressed(e);
-			if (e.isConsumed()) {
+			trace("mousePressed() on " + p, copy);
+			((MouseListener) p).mousePressed(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -145,14 +149,16 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseListener)) {
 				continue;
 			}
 
-			trace("mouseReleased() on " + p, e);
-			((MouseListener) p).mouseReleased(e);
-			if (e.isConsumed()) {
+			trace("mouseReleased() on " + p, copy);
+			((MouseListener) p).mouseReleased(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -161,14 +167,16 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseListener)) {
 				continue;
 			}
 
-			trace("mouseEntered() on " + p, e);
-			((MouseListener) p).mouseEntered(e);
-			if (e.isConsumed()) {
+			trace("mouseEntered() on " + p, copy);
+			((MouseListener) p).mouseEntered(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -177,14 +185,16 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseExited(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseListener)) {
 				continue;
 			}
 
-			trace("mouseExited() on " + p, e);
-			((MouseListener) p).mouseExited(e);
-			if (e.isConsumed()) {
+			trace("mouseExited() on " + p, copy);
+			((MouseListener) p).mouseExited(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -193,14 +203,16 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseMotionListener)) {
 				continue;
 			}
 
-			trace("mouseDragged() on " + p, e);
-			((MouseMotionListener) p).mouseDragged(e);
-			if (e.isConsumed()) {
+			trace("mouseDragged() on " + p, copy);
+			((MouseMotionListener) p).mouseDragged(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -209,14 +221,16 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
+		MouseEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseMotionListener)) {
 				continue;
 			}
 
-			trace("mouseMoved() on " + p, e);
-			((MouseMotionListener) p).mouseMoved(e);
-			if (e.isConsumed()) {
+			trace("mouseMoved() on " + p, copy);
+			((MouseMotionListener) p).mouseMoved(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
@@ -225,17 +239,59 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
+		MouseWheelEvent copy = copy(e);
 		for (GraphMousePlugin p : mousePlugins) {
 			if (!(p instanceof MouseWheelListener)) {
 				continue;
 			}
 
-			trace("mouseWheelMoved() on " + p, e);
-			((MouseWheelListener) p).mouseWheelMoved(e);
-			if (e.isConsumed()) {
+			trace("mouseWheelMoved() on " + p, copy);
+			((MouseWheelListener) p).mouseWheelMoved(copy);
+			if (copy.isConsumed()) {
+				e.consume();
 				trace("\tconsumed");
 				return;
 			}
 		}
+	}
+
+	/**
+	 * Copies the given mouse event. We do this so that we allow our mouse plugins to process 
+	 * mouse events. This was done specifically allow us to update state when user right-clicks.
+	 * Ghidra has code that will consume mouse clicks before we get the event.
+	 * <P>
+	 * This pluggable graph mouse sub-system will stop processing when one of the plugins consumes
+	 * the mouse event. We have to create a copy to avoid an already consumed incoming event from
+	 * short-circuiting our event processing.
+	 * @param e
+	 * @return a copy if the original incoming event with the consumed flag cleared.
+	 */
+	private MouseEvent copy(MouseEvent e) {
+		Component source = e.getComponent();
+		int id = e.getID();
+		int button = e.getButton();
+		long when = e.getWhen();
+		int modifiers = e.getModifiersEx();
+		int x = e.getX();
+		int y = e.getY();
+		int clickCount = e.getClickCount();
+		boolean popupTrigger = e.isPopupTrigger();
+		return new MouseEvent(source, id, when, modifiers, x, y, clickCount, popupTrigger, button);
+	}
+
+	private MouseWheelEvent copy(MouseWheelEvent e) {
+		Component source = e.getComponent();
+		int id = e.getID();
+		long when = e.getWhen();
+		int modifiers = e.getModifiersEx();
+		int x = e.getX();
+		int y = e.getY();
+		int clickCount = e.getClickCount();
+		boolean popupTrigger = e.isPopupTrigger();
+		int scrollType = e.getScrollType();
+		int scrollAmount = e.getScrollAmount();
+		int wheelRotation = e.getWheelRotation();
+		return new MouseWheelEvent(source, id, when, modifiers, x, y, clickCount, popupTrigger,
+			scrollType, scrollAmount, wheelRotation);
 	}
 }

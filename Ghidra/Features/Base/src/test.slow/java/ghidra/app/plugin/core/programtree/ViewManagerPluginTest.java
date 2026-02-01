@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.programtree;
 
 import static org.junit.Assert.*;
 
-import java.awt.*;
-import java.awt.event.ActionListener;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
@@ -26,8 +26,8 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.DefaultActionContext;
-import docking.EditWindow;
 import docking.action.DockingActionIf;
+import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.ViewManagerService;
@@ -136,8 +136,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
 		assertEquals(DEFAULT_TREE_NAME + "(1)", vps.getViewName());
 		assertEquals(tabbedPane.getSelectedComponent(), vps.getViewComponent());
-		SwingUtilities
-				.invokeAndWait(() -> createTreeAction.actionPerformed(new DefaultActionContext()));
+		performAction(createTreeAction);
 		program.flushEvents();
 		vps = provider.getCurrentViewProvider();
 		treeNames = program.getListing().getTreeNames();
@@ -152,8 +151,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testUndoRedo() throws Exception {
 		ProgramTreePlugin treePlugin = env.getPlugin(ProgramTreePlugin.class);
 		final DockingActionIf createTreeAction = getAction(treePlugin, "Create Default Tree View");
-		SwingUtilities
-				.invokeAndWait(() -> createTreeAction.actionPerformed(new DefaultActionContext()));
+		performAction(createTreeAction);
 		program.flushEvents();
 		env.showTool();
 		ViewProviderService vps = provider.getCurrentViewProvider();
@@ -163,8 +161,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
 		assertEquals(DEFAULT_TREE_NAME + "(1)", vps.getViewName());
 		assertEquals(tabbedPane.getSelectedComponent(), vps.getViewComponent());
-		SwingUtilities
-				.invokeAndWait(() -> createTreeAction.actionPerformed(new DefaultActionContext()));
+		performAction(createTreeAction);
 		program.flushEvents();
 		vps = provider.getCurrentViewProvider();
 		treeNames = program.getListing().getTreeNames();
@@ -237,7 +234,9 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testCloseView() throws Exception {
 		// close "Program Tree"
 		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
-		SwingUtilities.invokeAndWait(() -> closeAction.actionPerformed(new DefaultActionContext()));
+		performAction(closeAction);
+
+		waitForBusyTool(tool);
 
 		String[] treeNames = program.getListing().getTreeNames();
 		assertEquals(treeNames.length - 1, tabbedPane.getTabCount());
@@ -252,13 +251,17 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDeleteView() throws Exception {
+
+		env.showTool();
+
 		// delete the "Tree Two" view
 		setCurrentViewProvider("Tree Two");
 
 		final DockingActionIf deleteAction = getAction(plugin, "Delete Tree View");
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		performAction(deleteAction);
+
+		waitForBusyTool(tool);
+
 		assertNull(program.getListing().getRootModule("Tree Two"));
 		String[] treeNames = program.getListing().getTreeNames();
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
@@ -267,6 +270,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(cb.getView()));
 
 		undo(program);
+
 		// Tree Two should come back
 		assertNotNull(program.getListing().getRootModule("Tree Two"));
 		ViewProviderService vps = provider.getCurrentViewProvider();
@@ -275,6 +279,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
 
 		redo(program);
+
 		assertNull(program.getListing().getRootModule("Tree Two"));
 		treeNames = program.getListing().getTreeNames();
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
@@ -291,32 +296,27 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setCurrentViewProvider("Main Tree");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		performAction(deleteAction);
+		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree One");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		performAction(deleteAction);
+		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree Two");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		performAction(deleteAction);
+		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree Three");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		performAction(deleteAction);
+		waitForBusyTool(tool);
 
 		// attempt to delete the last view
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		performAction(deleteAction);
+		waitForBusyTool(tool);
 
 		ViewProviderService vps = provider.getCurrentViewProvider();
 		assertEquals(DEFAULT_TREE_NAME, vps.getViewName());
@@ -332,10 +332,10 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
 
 		setCurrentViewProvider(DEFAULT_TREE_NAME);
-		SwingUtilities.invokeAndWait(() -> closeAction.actionPerformed(new DefaultActionContext()));
+		performAction(closeAction);
 
 		setCurrentViewProvider("Main Tree");
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			closeAction.actionPerformed(new DefaultActionContext());
 			provider.setCurrentViewProvider("Tree One");
 			closeAction.actionPerformed(new DefaultActionContext());
@@ -353,47 +353,35 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
 	}
 
-	// NOTE: this test has been commented out because it fails consistently due to timing errors.
-	// However, this test will almost always run successfully after the first time it is run.  So,
-	// this test can be uncommented and run to test the functionality of view renaming when 
-	// changes are made.
-	public void dontTestRenameView() throws Exception {
+	@Test
+	public void testRenameView() throws Exception {
 		env.showTool();
-
-		final DockingActionIf renameAction = getAction(plugin, "Rename Tree View");
-
 		waitForTasks();
-		waitForSwing();
 
 		setCurrentViewProvider(DEFAULT_TREE_NAME);
-		SwingUtilities
-				.invokeAndWait(() -> renameAction.actionPerformed(new DefaultActionContext()));
 
-		EditWindow editWindow = findEditWindow(tool.getToolFrame());
-		assertNotNull(editWindow);
+		DockingActionIf renameAction = getAction(plugin, "Rename Tree View");
+		performAction(renameAction, false);
 
-		final JTextField textField = (JTextField) getInstanceField("textField", editWindow);
-		SwingUtilities.invokeAndWait(() -> {
-			textField.setText("My Tree");
-			ActionListener[] listeners = textField.getActionListeners();
-			listeners[0].actionPerformed(null);
-		});
+		InputDialog dialog = waitForDialogComponent(InputDialog.class);
+		dialog.setValue("My Tree");
+		pressButtonByText(dialog, "OK");
+		waitForProgram(program);
 
-		program.flushEvents();
-
-		ViewProviderService vps = provider.getCurrentViewProvider();
+		ViewProviderService vps = runSwing(() -> provider.getCurrentViewProvider());
 		assertEquals("My Tree", vps.getViewName());
 		assertNull(program.getListing().getRootModule(DEFAULT_TREE_NAME));
 		assertTrue(provider.getCurrentView().hasSameAddresses(cb.getView()));
 		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
 
 		undo(program);
-		vps = provider.getCurrentViewProvider();
+		vps = runSwing(() -> provider.getCurrentViewProvider());
 		assertEquals(DEFAULT_TREE_NAME, vps.getViewName());
 		assertNotNull(program.getListing().getRootModule(DEFAULT_TREE_NAME));
 
 		redo(program);
-		vps = provider.getCurrentViewProvider();
+		provider.getCurrentViewProvider();
+		vps = runSwing(() -> provider.getCurrentViewProvider());
 		assertEquals("My Tree", vps.getViewName());
 		assertNull(program.getListing().getRootModule(DEFAULT_TREE_NAME));
 	}
@@ -403,25 +391,19 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		env.showTool();
 
-		final DockingActionIf renameAction = getAction(plugin, "Rename Tree View");
-
 		waitForTasks();
 		waitForSwing();
 
 		setCurrentViewProvider(DEFAULT_TREE_NAME);
-		SwingUtilities
-				.invokeAndWait(() -> renameAction.actionPerformed(new DefaultActionContext()));
 
-		EditWindow editWindow = findEditWindow(tool.getToolFrame());
-		assertNotNull(editWindow);
-		final JTextField textField = (JTextField) getInstanceField("textField", editWindow);
-		SwingUtilities.invokeAndWait(() -> {
-			textField.requestFocus();
-			textField.setText("Main Tree");
-			ActionListener[] listeners = textField.getActionListeners();
-			listeners[0].actionPerformed(null);
-		});
-		program.flushEvents();
+		DockingActionIf renameAction = getAction(plugin, "Rename Tree View");
+		performAction(renameAction, false);
+
+		InputDialog dialog = waitForDialogComponent(InputDialog.class);
+		dialog.setValue("Main Tree");
+		pressButtonByText(dialog, "OK");
+		waitForProgram(program);
+
 		ViewProviderService vps = provider.getCurrentViewProvider();
 		assertEquals(DEFAULT_TREE_NAME, vps.getViewName());
 		assertTrue(provider.getCurrentView().hasSameAddresses(cb.getView()));
@@ -443,6 +425,32 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
 	}
 
+	@Test
+	public void testCloseSaveRestoreState() throws Exception {
+		//
+		// Test that we can close one of the program's trees and have the close correctly persist
+		// when saved and restored. This happens when a user closes a tree, then changes between
+		// program tabs.
+		//
+		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
+		setCurrentViewProvider(DEFAULT_TREE_NAME);
+		performAction(closeAction);
+
+		setCurrentViewProvider("Main Tree");
+		AddressSetView set = provider.getCurrentView();
+
+		env.saveRestoreToolState();
+
+		String[] treeNames = program.getListing().getTreeNames();
+		assertEquals(treeNames.length - 1, tabbedPane.getTabCount());
+
+		ViewProviderService vps = provider.getCurrentViewProvider();
+		assertEquals("Main Tree", vps.getViewName());
+		assertTrue(set.hasSameAddresses(provider.getCurrentView()));
+		assertTrue(set.hasSameAddresses(cb.getView()));
+		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
+	}
+
 	@SuppressWarnings("unused")
 	private JTextField findTextField(Container container) {
 		Component[] c = container.getComponents();
@@ -455,16 +463,6 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 				if (tf != null) {
 					return tf;
 				}
-			}
-		}
-		return null;
-	}
-
-	private EditWindow findEditWindow(Window window) {
-		Window[] w = window.getOwnedWindows();
-		for (Window element : w) {
-			if (element instanceof EditWindow) {
-				return (EditWindow) element;
 			}
 		}
 		return null;

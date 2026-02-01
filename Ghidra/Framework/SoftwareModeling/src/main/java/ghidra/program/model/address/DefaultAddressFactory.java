@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,9 +147,6 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressFactory#getAddress(java.lang.String)
-	 */
 	@Override
 	public Address getAddress(String addrString) {
 		try {
@@ -198,9 +195,6 @@ public class DefaultAddressFactory implements AddressFactory {
 					if (addr == null) {
 						continue;
 					}
-					if (space.isOverlaySpace() && addr.getAddressSpace() != space) {
-						continue;
-					}
 					if (space.isNonLoadedMemorySpace()) {
 						otherList.add(addr);
 					}
@@ -221,7 +215,6 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 
 		Address[] addrs = new Address[loadedMemoryList.size()];
-
 		return loadedMemoryList.toArray(addrs);
 	}
 
@@ -412,27 +405,28 @@ public class DefaultAddressFactory implements AddressFactory {
 	}
 
 	/**
-	 * Rename overlay with newName.
-	 * @param oldOverlaySpaceName the existing overlay address space name
-	 * @param newName the new name of the overlay address space.  
-	 * @return new name applied to existing overlay space
-	 * @throws DuplicateNameException if space with newName already exists
-	 * @throws IllegalArgumentException if specified oldOverlaySpaceName was not found as
-	 * an existing overlay space
+	 * Update address factory map <b>following</b> the rename of an overlay address space instance.  
+	 * The caller is reponsible for the actual renaming of the existing overlay space instance and 
+	 * must ensure the newName is not already assigned to another space.
+	 * @param oldOverlaySpaceName previous name of existing overlay space
+	 * @param newName new name for existing overlay space
+	 * @return overlay space instance which was renamed
 	 */
-	protected String renameOverlaySpace(String oldOverlaySpaceName, String newName)
-			throws DuplicateNameException {
-		if (getAddressSpace(newName) != null) {
-			throw new DuplicateNameException("AddressSpace named " + newName + " already exists!");
+	protected OverlayAddressSpace overlaySpaceRenamed(String oldOverlaySpaceName, String newName) {
+		if (spaceNameTable.get(newName) != null) {
+			throw new AssertionError("Address space named " + newName + " already exists!");
 		}
-		AddressSpace space = getAddressSpace(oldOverlaySpaceName);
-		if (space != null && space.isOverlaySpace()) {
-			((OverlayAddressSpace) space).setName(newName);
+		AddressSpace space = spaceNameTable.get(oldOverlaySpaceName);
+		if (space instanceof OverlayAddressSpace os) {
+			if (!newName.equals(os.getName())) {
+				throw new AssertionError(
+					"Overlay space " + oldOverlaySpaceName + " was not renamed");
+			}
 			spaceNameTable.remove(oldOverlaySpaceName);
-			spaceNameTable.put(space.getName(), space);
-			return newName;
+			spaceNameTable.put(newName, os);
+			return os;
 		}
-		throw new IllegalArgumentException("No such overlay space: " + oldOverlaySpaceName);
+		throw new AssertionError("Overlay space not found: " + oldOverlaySpaceName);
 	}
 
 	/**
@@ -441,10 +435,9 @@ public class DefaultAddressFactory implements AddressFactory {
 	 * @param spaceName the name of the space to remove.
 	 */
 	protected void removeAddressSpace(String spaceName) {
-		AddressSpace deletedSpace = spaceNameTable.get(spaceName);
+		AddressSpace deletedSpace = spaceNameTable.remove(spaceName);
 		if (deletedSpace != null) {
 			spaces.remove(deletedSpace);
-			spaceNameTable.remove(deletedSpace.getName());
 			spaceLookup.remove(deletedSpace.getSpaceID());
 			if (deletedSpace.getType() == AddressSpace.TYPE_RAM ||
 				deletedSpace.getType() == AddressSpace.TYPE_CODE) {

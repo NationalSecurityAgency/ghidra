@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <code>LocalManagedBufferFile</code> implements a BufferFile as block-oriented
@@ -157,7 +156,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	 * <code>preSaveThread</code> corresponds to the PreSaveTask which creates the 
 	 * preSaveFile when this buffer file is updateable.
 	 */
-	//private Thread preSaveThread;
 	private PreSaveTask preSaveTask;
 
 	/**
@@ -228,8 +226,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 		setFreeIndexes(versionFileHandler.getFreeIndexList());
 		String[] names = versionFileHandler.getOldParameterNames();
 		clearParameters();
-		for (int i = 0; i < names.length; i++) {
-			setParameter(names[i], versionFileHandler.getOldParameter(names[i]));
+		for (String name : names) {
+			setParameter(name, versionFileHandler.getOldParameter(name));
 		}
 	}
 

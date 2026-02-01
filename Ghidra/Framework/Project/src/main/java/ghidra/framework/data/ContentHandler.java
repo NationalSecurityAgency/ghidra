@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,11 @@ package ghidra.framework.data;
 
 import java.io.IOException;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 
 import ghidra.framework.model.*;
-import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.FolderItem;
+import ghidra.framework.store.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public interface ContentHandler<T extends DomainObjectAdapter> extends ExtensionPoint {
 
-	public static final String UNKNOWN_CONTENT = "Unknown-File";
+	public static final String UNKNOWN_CONTENT = UnknownFolderItem.UNKNOWN_CONTENT_TYPE;
 	public static final String MISSING_CONTENT = "Missing-File";
 
 	/**
@@ -83,9 +83,8 @@ public interface ContentHandler<T extends DomainObjectAdapter> extends Extension
 	 * @throws VersionException if unable to handle file content due to version 
 	 * difference which could not be handled.
 	 */
-	T getImmutableObject(FolderItem item, Object consumer, int version,
-			int minChangeVersion, TaskMonitor monitor)
-			throws IOException, CancelledException, VersionException;
+	T getImmutableObject(FolderItem item, Object consumer, int version, int minChangeVersion,
+			TaskMonitor monitor) throws IOException, CancelledException, VersionException;
 
 	/**
 	 * Open a folder item for read-only use.  While changes are permitted on the
@@ -104,9 +103,8 @@ public interface ContentHandler<T extends DomainObjectAdapter> extends Extension
 	 * @throws VersionException if unable to handle file content due to version 
 	 * difference which could not be handled.
 	 */
-	T getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
-			Object consumer, TaskMonitor monitor)
-			throws IOException, VersionException, CancelledException;
+	T getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade, Object consumer,
+			TaskMonitor monitor) throws IOException, VersionException, CancelledException;
 
 	/**
 	 * Open a folder item for update.  Changes made to the returned object may be
@@ -127,8 +125,8 @@ public interface ContentHandler<T extends DomainObjectAdapter> extends Extension
 	 * @throws VersionException if unable to handle file content due to version 
 	 * difference which could not be handled.
 	 */
-	T getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
-			boolean okToUpgrade, boolean okToRecover, Object consumer, TaskMonitor monitor)
+	T getDomainObject(FolderItem item, FileSystem userfs, long checkoutId, boolean okToUpgrade,
+			boolean okToRecover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException;
 
 	/**
@@ -202,6 +200,49 @@ public interface ContentHandler<T extends DomainObjectAdapter> extends Extension
 	 */
 	default LinkHandler<?> getLinkHandler() {
 		return null;
+	}
+
+	/**
+	 * Determine if this content handler supports the use of 
+	 * {@link #resetDBSourceFile(FolderItem, DomainObjectAdapterDB)} .
+	 * <p>
+	 * A versioned {@link DomainObjectAdapterDB domain object} open for update may have its 
+	 * underlying database reset to the latest buffer file version:
+	 * <ol>
+	 * <li>The {@link #resetDBSourceFile(FolderItem, DomainObjectAdapterDB)} method is
+	 * invoked (synchronized on filesystem) to reset the underlying database source file and
+	 * and any corresponding change sets held by the specified domain object to the latest 
+	 * version,</li>
+	 * <li>afterwhich the caller must {@link DomainObjectAdapter#invalidate() invalidate} the domain 
+	 * object instance which will clear all caches and generate a {@link DomainObjectEvent#RESTORED} 
+	 * event.</li>
+	 *  </ol>
+	 * @return true if this content handler supports DB source file replacement, else false
+	 */
+	public default boolean canResetDBSourceFile() {
+		return false;
+	}
+
+	/**
+	 * Reset the database for the specified domain object to its latest buffer file version.
+	 * It is very important that the specified folder item matches the item which was used to 
+	 * originally open the specified domain object. This method should be invoked with a 
+	 * filesystem lock.
+	 * <p>
+	 * Following the invocation of this method, the specified domain object should be 
+	 * {@link DomainObjectAdapter#invalidate() invalidated} without a filesystem lock.
+	 * 
+	 * @param item local versioned database folder item currently checked-out. An error will be
+	 * thrown if not an instanceof LocalDatabaseItem.  This should always be the case for an item
+	 * which has just processed a versioning action with a retained checkout (e.g., checkin,
+	 * merge, add-to-version-control).
+	 * @param domainObj domain object which is currently open for update
+	 * @throws IOException if an IO error occurs
+	 * @throws IllegalArgumentException if invalid or unsupported arguments are provided
+	 */
+	public default void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 }

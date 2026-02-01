@@ -42,7 +42,7 @@ typedef struct PACKED_STRUCTURE TestInfo
 {
 	char id[8];			/* id constains a "Magic Number" which will allow us to find this in a binary */
 	u4 ptrSz;			/* how many bytes in a pointer? */
-	u4 byteOrder;			/* value 0x01020304 used to detect endianess */
+	u4 byteOrder;			/* value 0x01020304 used to detect endianness */
 	void *onPass;			/* address of breakOnPass function, (where it goes on test pass) */
 	void *onError;		/* address of breakOnError function, (where it goes on test failure) */
 	void *onDone;		/* address of breakOnDone function, (where it goes when all test done) */

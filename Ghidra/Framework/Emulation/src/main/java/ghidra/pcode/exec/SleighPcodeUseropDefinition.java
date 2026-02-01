@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package ghidra.pcode.exec;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -86,6 +88,8 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 
 		/**
 		 * @see #params(Collection)
+		 * @param additionalParams the additional parameter names
+		 * @return this builder
 		 */
 		public Builder params(String... additionalParams) {
 			return this.params(Arrays.asList(additionalParams));
@@ -95,6 +99,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		 * Add Sleigh source to the body
 		 * 
 		 * @param additionalBody the additional source
+		 * @return this builder
 		 */
 		public Builder body(CharSequence additionalBody) {
 			body.append(additionalBody);
@@ -166,7 +171,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 
 	@Override
 	public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-			Varnode outArg, List<Varnode> inArgs) {
+			PcodeOp op, Varnode outArg, List<Varnode> inArgs) {
 		PcodeProgram program = programFor(outArg, inArgs, library);
 		executor.execute(program, library);
 	}
@@ -187,5 +192,48 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 	 */
 	public String getBody() {
 		return body;
+	}
+
+	@Override
+	public boolean isFunctional() {
+		return false;
+	}
+
+	@Override
+	public boolean hasSideEffects() {
+		return true;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote We could scan the p-code ops for any that write to the contextreg; however, at the
+	 *           moment, that is highly unconventional and perhaps even considered an error. If that
+	 *           becomes more common, or even recommended, then we can detect it and behave
+	 *           accordingly during interpretation (whether for execution or translation).
+	 */
+	@Override
+	public boolean modifiesContext() {
+		return false;
+	}
+
+	@Override
+	public boolean canInlinePcode() {
+		return true;
+	}
+
+	@Override
+	public Class<?> getOutputType() {
+		return void.class;
+	}
+
+	@Override
+	public Method getJavaMethod() {
+		return null;
+	}
+
+	@Override
+	public PcodeUseropLibrary<T> getDefiningLibrary() {
+		return null;
 	}
 }

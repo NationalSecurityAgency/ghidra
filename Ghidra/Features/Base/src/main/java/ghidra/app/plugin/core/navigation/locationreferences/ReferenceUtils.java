@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.app.services.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -173,7 +174,7 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be a
+	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
 	 * {@link Composite} to search for a field.
 	 * @param program The program from within which to find references.
 	 * @param monitor A task monitor to be updated as data is searched; if this is null, then a
@@ -181,9 +182,8 @@ public final class ReferenceUtils {
 	 * @throws CancelledException if the monitor is cancelled.
 	 * @deprecated use {@link #findDataTypeFieldReferences(Accumulator, FieldMatcher, Program,
 	 * boolean, TaskMonitor)}.
-	 * @Deprecated(since = "10.2")
 	 */
-	@Deprecated
+	@Deprecated(since = "10.2")
 	public static void findDataTypeReferences(Accumulator<LocationReference> accumulator,
 			DataType dataType, String fieldName, Program program, TaskMonitor monitor)
 			throws CancelledException {
@@ -199,7 +199,7 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be a
+	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
 	 * {@link Composite} to search for a field.
 	 * @param program The program from within which to find references.
 	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service will be used to
@@ -344,7 +344,7 @@ public final class ReferenceUtils {
 
 		Consumer<DataTypeReference> callback = ref -> {
 
-			LocationReferenceContext context = ref.getContext();
+			SearchLocationContext context = ref.getContext();
 			LocationReference locationReference = new LocationReference(ref.getAddress(), context);
 			accumulator.add(locationReference);
 		};
@@ -1098,6 +1098,9 @@ public final class ReferenceUtils {
 		Enum enumm = (Enum) dt;
 		List<String> names = getEnumNames(data, enumm);
 		for (String name : names) {
+			if (!enumm.contains(name)) {
+				continue;
+			}
 			long value = enumm.getValue(name);
 			if (matcher.matches(name, (int) value)) {
 				return true;
@@ -1393,7 +1396,7 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		Address[] thunkAddrs = func.getFunctionThunkAddresses();
+		Address[] thunkAddrs = func.getFunctionThunkAddresses(false);
 		if (thunkAddrs == null) {
 			return;
 		}

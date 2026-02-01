@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,71 +15,56 @@
  */
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
-import docking.options.OptionsService;
-import ghidra.app.decompiler.DecompInterface;
-import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.decompiler.DecompileResults;
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
+
+import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.FunctionPrototype;
-import ghidra.program.model.pcode.HighFunction;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.util.exception.CancelledException;
+import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.util.Msg;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerScriptUtils {
 
 	private Program program;
-	private PluginTool tool;
+	private ServiceProvider serviceProvider;
 	private TaskMonitor monitor;
 
 	private DecompInterface decompInterface;
 
-	DecompilerScriptUtils(Program program, PluginTool tool, TaskMonitor monitor) {
+	DecompilerScriptUtils(Program program, ServiceProvider serviceProvider, TaskMonitor monitor) {
 		this.program = program;
 		this.monitor = monitor;
-		this.tool = tool;
+		this.serviceProvider = serviceProvider;
 
 		decompInterface = setupDecompilerInterface();
 	}
 
 	/**
 	 * Method to setup the decompiler interface for the given program
-	 * @return the interface to the decompiler
+	 * @return the interface to the decompiler or null if failed to open program
 	 */
 	public DecompInterface setupDecompilerInterface() {
 
 		decompInterface = new DecompInterface();
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-
-		if (tool == null) {
-			options.grabFromProgram(program);
-		}
-		else {
-			OptionsService service = tool.getService(OptionsService.class);
-			if (service != null) {
-				ToolOptions opt = service.getOptions("Decompiler");
-				options.grabFromToolAndProgram(null, opt, program);
-			}
-			else {
-				options.grabFromProgram(program);
-			}
-		}
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(serviceProvider, program);
 
 		decompInterface.setOptions(options);
+
 		decompInterface.toggleCCode(true);
 		decompInterface.toggleSyntaxTree(true);
 		decompInterface.setSimplificationStyle("decompile");
 
 		if (!decompInterface.openProgram(program)) {
+			decompInterface.dispose();
 			return null;
 		}
 		return decompInterface;
@@ -89,7 +74,6 @@ public class DecompilerScriptUtils {
 	public DecompInterface getDecompilerInterface() {
 		return decompInterface;
 	}
-
 
 	/**
 	 * Method to decompile the given function and return the function's HighFunction
@@ -126,6 +110,32 @@ public class DecompilerScriptUtils {
 		return decompRes.getHighFunction().getFunctionPrototype().getReturnType();
 	}
 
+	public void commitFunction(Function function) {
+		DecompileResults decompRes = decompInterface.decompileFunction(function,
+			decompInterface.getOptions().getDefaultTimeout(), monitor);
+
+		if (decompRes == null || decompRes.getHighFunction() == null ||
+			decompRes.getHighFunction().getFunctionPrototype() == null) {
+			Msg.debug(this, "Couldn't commit params - null high function " +
+				function.getEntryPoint().toString());
+			return;
+		}
+
+		try {
+			HighFunctionDBUtil.commitParamsToDatabase(decompRes.getHighFunction(), true,
+				ReturnCommitOption.COMMIT, SourceType.ANALYSIS);
+		}
+		catch (DuplicateNameException e) {
+			Msg.debug(this,
+				"Couldn't commit params for " + function.getEntryPoint().toString() + " " + e);
+			return;
+		}
+		catch (InvalidInputException e) {
+			Msg.debug(this,
+				"Couldn't commit params for " + function.getEntryPoint().toString() + " " + e);
+			return;
+		}
+	}
 
 	/**
 	 * Method to retrieve the function signature string from the decompiler function prototype. NOTE:
@@ -152,7 +162,6 @@ public class DecompilerScriptUtils {
 			decompRes.getHighFunction().getFunctionPrototype() == null) {
 			return null;
 		}
-
 
 		HighFunction highFunction = decompRes.getHighFunction();
 
@@ -217,42 +226,34 @@ public class DecompilerScriptUtils {
 		decompInterface.dispose();
 	}
 
+	/**
+	 * Best-effort extraction of an address candidate from decompiler p-code.
+	 * Returns {@code null} if the candidate is invalid or not mapped in program memory.
+	 * @param storedValue the Varnode containing possible address
+	 * @return the Address assigned to the Varnode, or null if invalid or not in program memory
+	 */
 	public Address getAssignedAddressFromPcode(Varnode storedValue) {
 
-		long addressOffset;
 		if (storedValue.isConstant()) {
-			addressOffset = storedValue.getOffset();
-			Address possibleAddress = toAddr(addressOffset);
-			if (possibleAddress == null || !program.getMemory().contains(possibleAddress)) {
-				return null;
-			}
-			return possibleAddress;
+			return toAddr(storedValue.getOffset());
 		}
 
-		PcodeOp valuePcodeOp = storedValue.getDef();
-
-		if (valuePcodeOp == null) {
+		PcodeOp op = storedValue.getDef();
+		if (op == null) {
 			return null;
 		}
 
-		if (valuePcodeOp.getOpcode() == PcodeOp.CAST || valuePcodeOp.getOpcode() == PcodeOp.COPY) {
-
-			Varnode constantVarnode = valuePcodeOp.getInput(0);
-			return getAssignedAddressFromPcode(constantVarnode);
-
+		int opcode = op.getOpcode();
+		if (opcode == PcodeOp.CAST || opcode == PcodeOp.COPY) {
+			return getAssignedAddressFromPcode(op.getInput(0));
 		}
-		else if (valuePcodeOp.getOpcode() != PcodeOp.PTRSUB) {
+
+		if (opcode != PcodeOp.PTRSUB) {
 			return null;
 		}
 
-		// don't need to check isConst bc always is
-		Varnode constantVarnode = valuePcodeOp.getInput(1);
-		addressOffset = constantVarnode.getOffset();
-		Address possibleAddress = toAddr(addressOffset);
-		if (possibleAddress == null || !program.getMemory().contains(possibleAddress)) {
-			return null;
-		}
-		return possibleAddress;
+		// PTRSUB input(1) is always a constant offset (but may not represent a valid program address)
+		return toAddr(op.getInput(1).getOffset());
 	}
 
 	/**
@@ -285,12 +286,26 @@ public class DecompilerScriptUtils {
 	}
 
 	/**
-	 * Returns a new address with the specified offset in the default address space.
-	 * @param offset the offset for the new address
-	 * @return a new address with the specified offset in the default address space
+	 * Attempts to convert the given offset to an {@link Address} in the default address space.
+	 * <p>
+	 * Decompiler pcode may surface non-pointer constants that heuristics attempt to interpret
+	 * as addresses; this method performs a best-effort conversion and safely ignores
+	 * invalid or unmapped candidates.
+	 * <p>
+	 *
+	 * @param offset the offset to convert
+	 * @return the address for the given offset, or {@code null} if the offset cannot be represented
+	 *         as a valid address in the program's memory
 	 */
 	public final Address toAddr(long offset) {
-		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		try {
+			Address addr = space.getAddress(offset);
+			return program.getMemory().contains(addr) ? addr : null;
+		}
+		catch (AddressOutOfBoundsException e) {
+			return null;
+		}
 	}
 
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,9 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.sleighbase.*;
-import ghidra.pcodeCPort.slghpatexpress.*;
+import ghidra.pcodeCPort.slghpatexpress.ConstantValue;
+import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
-
 
 // Behaves like constant 0 pattern
 public abstract class PatternlessSymbol extends SpecificSymbol {
@@ -31,36 +25,26 @@ public abstract class PatternlessSymbol extends SpecificSymbol {
 	private ConstantValue patexp;
 
 	@Override
-    public PatternExpression getPatternExpression() {
+	public PatternExpression getPatternExpression() {
 		return patexp;
 	}
 
-	@Override
-    public void saveXml( PrintStream s ) {
-	}
-
-	@Override
-    public void restoreXml( Element el, SleighBase trans ) {
-	}
-
-	// The void constructor must explicitly build
-	// the ConstantValue because it is not stored
-	// or restored via xml
+	// The constructor must explicitly build the ConstantValue. It is not explicitly
+	// decoded (or encoded)
 	public PatternlessSymbol(Location location) {
-	    super(location);
-		patexp = new ConstantValue( location, 0 );
+		super(location);
+		patexp = new ConstantValue(location, 0);
 		patexp.layClaim();
 	}
 
-	public PatternlessSymbol( Location location, String nm ) {
-		super( location, nm );
-		patexp = new ConstantValue( location, 0 );
+	public PatternlessSymbol(Location location, String nm) {
+		super(location, nm);
+		patexp = new ConstantValue(location, 0);
 		patexp.layClaim();
 	}
 
 	@Override
-    public void dispose() {
-		PatternExpression.release( patexp );
+	public void dispose() {
+		PatternExpression.release(patexp);
 	}
-
 }

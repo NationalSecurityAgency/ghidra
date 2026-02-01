@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.exception.CancelledException;
  */
 public class PdbOldDebugInfo extends PdbDebugInfo {
 
-	private static final int OLD_DBI_HEADER_LENGTH = 22;
+	private static final int OLD_DBI_HEADER_LENGTH = 24;
 
 	//==============================================================================================
 	// API
@@ -49,6 +49,7 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 		streamNumberGlobalStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
 		streamNumberPublicStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
 		streamNumberSymbolRecords = reader.parseUnsignedShortVal();
+		reader.skip(2); // padding between previous unsigned short and next-to-read int
 		lengthModuleInformationSubstream = reader.parseInt();
 		lengthSectionContributionSubstream = reader.parseInt();
 		lengthSectionMap = reader.parseInt();
@@ -70,13 +71,13 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void deserializeAdditionalSubstreams()
+	protected void initializeAdditionalComponentsForSubstreams()
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms.
-		symbolRecords.deserialize();
-		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber());
-		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber());
+		symbolRecords.initialize();
+		globalSymbolInformation.initialize();
+		publicSymbolInformation.initialize();
 		//TODO: SectionContributions has information about code sections and refers to
 		// debug streams for each.
 	}

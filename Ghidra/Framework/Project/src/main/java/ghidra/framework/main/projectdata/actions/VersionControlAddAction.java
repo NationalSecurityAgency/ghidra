@@ -136,14 +136,13 @@ public class VersionControlAddAction extends VersionControlAction {
 
 		@Override
 		public void run(TaskMonitor monitor) {
-			checkFilesInUse();
 			try {
 				for (DomainFile df : list) {
 					String name = df.getName();
 					monitor.setMessage("Adding " + name + " to Version Control");
 
 					if (actionID != VersionControlDialog.APPLY_TO_ALL) {
-						showDialog(true, name, df.isLinkFile());
+						showDialog(true, df);
 					}
 					if (actionID == VersionControlDialog.CANCEL) {
 						return;

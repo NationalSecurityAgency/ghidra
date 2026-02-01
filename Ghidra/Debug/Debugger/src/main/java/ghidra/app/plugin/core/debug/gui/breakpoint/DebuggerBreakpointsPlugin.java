@@ -20,7 +20,7 @@ import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.DebuggerLogicalBreakpointService;
-import ghidra.app.services.DebuggerModelService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
@@ -32,6 +32,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	status = PluginStatus.RELEASED,
 	servicesRequired = {
 		DebuggerLogicalBreakpointService.class,
+		DebuggerTraceManagerService.class,
 	},
 	eventsConsumed = {
 		TraceOpenedPluginEvent.class,

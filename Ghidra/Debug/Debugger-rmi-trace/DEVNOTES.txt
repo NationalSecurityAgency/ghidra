@@ -117,8 +117,6 @@ That said, for unit testing, I've had to incorporate package installation as a @
 There's probably a better way, and that way may also help with out-of-the-box support.
 Something like setting PYTHON_PATH before invoking the debugger?
 There's still the issue of installing protobuf, though.
-And the version we use is not the latest, which may put users who already have protobuf in dependency hell.
-We use version 3.20, while the latest is 4.something.
 According to protobuf docs, major versions are not guaranteed backward compatible.
 To upgrade, we'd also have to upgrade the Java side.
 
@@ -134,7 +132,7 @@ I instead just use a fixed 32-bit int now.
 
 # How-To?
 
-For now, I'd say just the the gdb implementation as a template / guide.
+For now, I'd say just take the gdb implementation as a template / guide.
 Just beware, the whole thing is a bit unstable, so the code may change, but still, I don't expect it to change so drastically that integration work would be scrapped.
 
 If you're writing Python, create a Python package following the template for gdb's.
@@ -212,11 +210,11 @@ import sys
 print(sys.version)
 ```
 
-Suppose they get `3.8.10`.
-They'd then take the major and minor numbers to invoke `python3.8` directly:
+Suppose they get `3.9.19`.
+They'd then take the major and minor numbers to invoke `python3.9` directly:
 
 ```bash
-python3.8 -m pip install ...
+python3.9 -m pip install ...
 ```
 
 A fancy way to just have gdb print the python command for you is:
@@ -278,3 +276,37 @@ I wouldn't expect the user to manage multiple transaction objects.
 The recommendation is that the CLI can have at most one active transaction.
 For the user to open a second transaction may be considered an error.
 Take care as you're coding (and likely re-using command logic) that you don't accidentally take or otherwise conflict with the CLI's transaction manager when processing an event.
+
+
+# Regarding launcher shell scripts:
+
+Need to document all the @metadata stuff
+In particular, "Image" is a special parameter that will get the program executable by default.
+
+
+# Regarding the schema and method signatures
+
+An interface like Togglable requires that a TOGGLE action takes the given schema as a parameter
+(e.g., a BreakpointLocation)
+
+
+# Regarding registers
+
+The register container has to exist, even if its left empty in favor of the register space.
+
+1. The space is named after the container
+2. The UI uses the container as an anchor in its searches
+
+To allow register writes, each writable register must exist as an object it the register container.
+
+1. I might like to relax this....
+2. The UI it to validate the register is editable, even though the RemoteMethod may accept
+   frame/thread,name,val.
+
+
+# Regarding reading and writing memory
+
+The process parameter, if accepted, is technically redundant.
+Because all address spaces among all targets must be unique, the address space encodes the process (or other target object).
+If taken, the back end must validate that the address space belongs to the given process.
+Otherwise, the back end must figure out the applicable target based on the space name.

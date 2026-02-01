@@ -19,16 +19,15 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.symbol.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * An Expression representing the value of a Constructor operand
  */
 public class OperandValue extends PatternValue {
@@ -75,25 +74,16 @@ public class OperandValue extends PatternValue {
 		return ct;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#minValue()
-	 */
 	@Override
 	public long minValue() {
 		throw new SleighException("Operand used in pattern expression");
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#maxValue()
-	 */
 	@Override
 	public long maxValue() {
 		throw new SleighException("Operand used in pattern expression");
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternExpression#getValue(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
 	public long getValue(ParserWalker walker) throws MemoryAccessException {
 		OperandSymbol sym = ct.getOperand(index);
@@ -114,18 +104,15 @@ public class OperandValue extends PatternValue {
 		return res;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("operand_exp");
-		index = SpecXmlUtils.decodeInt(el.getAttribute("index"));
-		int tabid = SpecXmlUtils.decodeInt(el.getAttribute("table"));
-		int ctid = SpecXmlUtils.decodeInt(el.getAttribute("ct"));
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_OPERAND_EXP);
+		index = (int) decoder.readSignedInteger(ATTRIB_INDEX);
+		int tabid = (int) decoder.readUnsignedInteger(ATTRIB_TABLE);
+		int ctid = (int) decoder.readUnsignedInteger(ATTRIB_CT);
 		SubtableSymbol sym = (SubtableSymbol) lang.getSymbolTable().findSymbol(tabid);
 		ct = sym.getConstructor(ctid);
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	@Override

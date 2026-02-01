@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +18,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.gccexcepttable;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.RegionDescriptor;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.task.TaskMonitor;
@@ -38,10 +37,10 @@ import ghidra.util.task.TaskMonitor;
  *   The LSDA is comprised of:
  *   <ul>
  *   <li>A header that describes the bounds of exception handling support and encoding
- *     modes for values found later in the LSDA table
+ *     modes for values found later in the LSDA table</li>
  *   <li>A call site table that describes each location a 'throws' occurs and where
- *     a corresponding catch block resides, and the actions to take.
- *   <li>An action table, that describes what the runtime needs to do during unwind
+ *     a corresponding catch block resides, and the actions to take.</li>
+ *   <li>An action table, that describes what the runtime needs to do during unwind</li>
  *   </ul>
  * <p>  
  * The structures modeled here are described in detail in the C++ ABI.
@@ -79,8 +78,7 @@ public class LSDATable {
 	 * @param region the region of the program associated with this table
 	 * @throws MemoryAccessException if memory couldn't be accessed for the LSDA table
 	 */
-	public void create(Address tableAddr, RegionDescriptor region)
-			throws MemoryAccessException {
+	public void create(Address tableAddr, RegionDescriptor region) throws MemoryAccessException {
 
 		region.setLSDATable(this);
 
@@ -126,7 +124,8 @@ public class LSDATable {
 			}
 		}
 
-		SetCommentCmd commentCmd = new SetCommentCmd(baseAdress, CodeUnit.PLATE_COMMENT, "Language-Specific Data Area");
+		SetCommentCmd commentCmd =
+			new SetCommentCmd(baseAdress, CommentType.PLATE, "Language-Specific Data Area");
 		commentCmd.applyTo(program);
 
 	}

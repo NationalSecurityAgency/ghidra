@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,16 +22,21 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.DefaultRowFilterTransformer;
 import docking.widgets.table.RowFilterTransformer;
+import ghidra.app.plugin.core.symtable.AbstractSymbolTableModel.OriginalNameColumn;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.*;
 
 class SymbolPanel extends JPanel {
@@ -40,9 +45,9 @@ class SymbolPanel extends JPanel {
 
 	private static final String FILTER_SETTINGS_ELEMENT_NAME = "FILTER_SETTINGS";
 
-	private SymbolProvider symProvider;
-	private SymbolTableModel tableModel;
-	private GhidraTable symTable;
+	private SymbolProvider symbolProvider;
+	private SymbolTableModel symbolModel;
+	private GhidraTable gTable;
 	private TableModelListener listener;
 	private FilterDialog filterDialog;
 	private GhidraThreadedTablePanel<SymbolRowObject> threadedTablePanel;
@@ -50,35 +55,33 @@ class SymbolPanel extends JPanel {
 
 	SymbolPanel(SymbolProvider provider, SymbolTableModel model, SymbolRenderer renderer,
 			PluginTool tool) {
-
 		super(new BorderLayout());
 
-		this.symProvider = provider;
-		this.tableModel = model;
+		this.symbolProvider = provider;
+		this.symbolModel = model;
+		this.threadedTablePanel = new GhidraThreadedTablePanel<>(model);
+		this.listener = e -> symbolProvider.updateTitle();
 
-		threadedTablePanel = new GhidraThreadedTablePanel<>(model);
-
-		this.listener = e -> symProvider.updateTitle();
-
-		symTable = threadedTablePanel.getTable();
-		symTable.setAutoLookupColumn(SymbolTableModel.LABEL_COL);
-		symTable.setName("SymbolTable");//used by JUnit...
-		symTable.setRowSelectionAllowed(true);
-		symTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		symTable.getModel().addTableModelListener(listener);
-		symTable.getSelectionModel().addListSelectionListener(e -> {
+		gTable = threadedTablePanel.getTable();
+		gTable.setAutoLookupColumn(AbstractSymbolTableModel.LABEL_COL);
+		gTable.setRowSelectionAllowed(true);
+		gTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		gTable.getModel().addTableModelListener(listener);
+		gTable.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
 				handleTableSelection();
-				tool.contextChanged(symProvider);
+				tool.contextChanged(symbolProvider);
 			}
 		});
 
-		symTable.installNavigation(tool);
+		gTable.setAccessibleNamePrefix("Symbol");
 
-		for (int i = 0; i < symTable.getColumnCount(); i++) {
-			TableColumn column = symTable.getColumnModel().getColumn(i);
+		gTable.installNavigation(tool);
+
+		for (int i = 0; i < gTable.getColumnCount(); i++) {
+			TableColumn column = gTable.getColumnModel().getColumn(i);
 			column.setCellRenderer(renderer);
-			if (column.getModelIndex() == SymbolTableModel.LABEL_COL) {
+			if (column.getModelIndex() == AbstractSymbolTableModel.LABEL_COL) {
 				column.setCellEditor(new SymbolEditor());
 			}
 		}
@@ -87,10 +90,13 @@ class SymbolPanel extends JPanel {
 		add(createFilterFieldPanel(), BorderLayout.SOUTH);
 
 		filterDialog = new FilterDialog(tool);
+
+		// enable dragging symbols out of the symbol table
+		new SymbolTableDragProvider(gTable, model);
 	}
 
 	private JPanel createFilterFieldPanel() {
-		tableFilterPanel = new GhidraTableFilterPanel<>(symTable, tableModel);
+		tableFilterPanel = new GhidraTableFilterPanel<>(gTable, symbolModel);
 		tableFilterPanel.setToolTipText("Filters the contents of the table on symbol " +
 			"names that start with the given pattern");
 
@@ -102,8 +108,8 @@ class SymbolPanel extends JPanel {
 			"<html><b>Selected</b> causes filter to only consider the symbol's name.");
 		nameColumnOnlyCheckbox.setFocusable(false);
 		nameColumnOnlyCheckbox.setSelected(FILTER_NAME_ONLY_DEFAULT);
-		tableFilterPanel.setFilterRowTransformer(
-			updateRowDataTransformer(FILTER_NAME_ONLY_DEFAULT));
+		tableFilterPanel
+				.setFilterRowTransformer(updateRowDataTransformer(FILTER_NAME_ONLY_DEFAULT));
 		nameColumnOnlyCheckbox.addItemListener(e -> {
 			boolean nameOnly = nameColumnOnlyCheckbox.isSelected();
 			tableFilterPanel.setFilterRowTransformer(updateRowDataTransformer(nameOnly));
@@ -111,24 +117,39 @@ class SymbolPanel extends JPanel {
 
 		tableFilterPanel.add(nameColumnOnlyCheckbox);
 
+		tableFilterPanel.setAccessibleNamePrefix("Symbol");
 		return tableFilterPanel;
 	}
 
-	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
-		if (nameOnly) {
-			return new NameOnlyRowTransformer();
+	void locationChanged(ProgramLocation location) {
+
+		Program program = location.getProgram();
+		SymbolTable symbolTable = program.getSymbolTable();
+		Address address = location.getAddress();
+		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
+		if (primarySymbol == null) {
+			return;
 		}
 
-		return new DefaultRowFilterTransformer<>(tableModel, symTable.getColumnModel());
+		SymbolRowObject rowObject = new SymbolRowObject(primarySymbol);
+		int index = symbolModel.getRowIndex(rowObject);
+		if (index >= 0) {
+			gTable.selectRow(index);
+			gTable.scrollToSelectedRow();
+		}
 	}
 
-	ProgramSelection getProgramSelection() {
-		return symTable.getProgramSelection();
+	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
+		TableColumnModel columnModel = gTable.getColumnModel();
+		if (nameOnly) {
+			return new NameOnlyRowTransformer(symbolModel, columnModel);
+		}
+		return new DefaultRowFilterTransformer<>(symbolModel, columnModel);
 	}
 
 	void dispose() {
-		symTable.getModel().removeTableModelListener(listener);
-		symTable.dispose();
+		gTable.getModel().removeTableModelListener(listener);
+		gTable.dispose();
 		threadedTablePanel.dispose();
 		tableFilterPanel.dispose();
 		filterDialog.dispose();
@@ -138,24 +159,24 @@ class SymbolPanel extends JPanel {
 		if (filterDialog == null) {
 			return;
 		}
-		if (symTable.isEditing()) {
-			symTable.editingCanceled(null);
+		if (gTable.isEditing()) {
+			gTable.editingCanceled(null);
 		}
-		symProvider.setCurrentSymbol(null);
-		symTable.clearSelection();
+		symbolProvider.setCurrentSymbol(null);
+		gTable.clearSelection();
 
-		filterDialog.adjustFilter(symProvider, tableModel);
+		filterDialog.adjustFilter(symbolProvider, symbolModel);
 	}
 
 	SymbolFilter getFilter() {
-		return tableModel.getFilter();
+		return symbolModel.getFilter();
 	}
 
 	void readConfigState(SaveState saveState) {
 		Element filterElement = saveState.getXmlElement(FILTER_SETTINGS_ELEMENT_NAME);
 		if (filterElement != null) {
 			filterDialog.restoreFilter(filterElement);
-			tableModel.setFilter(filterDialog.getFilter());
+			symbolModel.setFilter(filterDialog.getFilter());
 		}
 	}
 
@@ -165,26 +186,26 @@ class SymbolPanel extends JPanel {
 	}
 
 	private void handleTableSelection() {
-		int selectedRowCount = symTable.getSelectedRowCount();
+		int selectedRowCount = gTable.getSelectedRowCount();
 
 		if (selectedRowCount == 1) {
-			int selectedRow = symTable.getSelectedRow();
-			Symbol symbol = symProvider.getSymbolForRow(selectedRow);
-			symProvider.setCurrentSymbol(symbol); // null allowed
+			int selectedRow = gTable.getSelectedRow();
+			Symbol symbol = symbolProvider.getSymbolForRow(selectedRow);
+			symbolProvider.setCurrentSymbol(symbol); // null allowed
 		}
 		else {
-			symProvider.setCurrentSymbol(null);
+			symbolProvider.setCurrentSymbol(null);
 		}
 	}
 
 	int getActualSymbolCount() {
-		return symTable.getRowCount();
+		return gTable.getRowCount();
 	}
 
 	List<Symbol> getSelectedSymbols() {
 		List<Symbol> list = new ArrayList<>();
-		int[] rows = symTable.getSelectedRows();
-		for (SymbolRowObject rowObject : tableModel.getRowObjects(rows)) {
+		int[] rows = gTable.getSelectedRows();
+		for (SymbolRowObject rowObject : symbolModel.getRowObjects(rows)) {
 			Symbol s = rowObject.getSymbol();
 			if (s != null) {
 				list.add(s);
@@ -194,15 +215,23 @@ class SymbolPanel extends JPanel {
 	}
 
 	GhidraTable getTable() {
-		return symTable;
+		return gTable;
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	private static class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
+	private static class NameOnlyRowTransformer
+			extends DefaultRowFilterTransformer<SymbolRowObject> {
+
 		private List<String> list = new ArrayList<>();
+		private SymbolTableModel symbolTableModel;
+
+		NameOnlyRowTransformer(SymbolTableModel symbolTableModel, TableColumnModel columnModel) {
+			super(symbolTableModel, columnModel);
+			this.symbolTableModel = symbolTableModel;
+		}
 
 		@Override
 		public List<String> transform(SymbolRowObject rowObject) {
@@ -211,8 +240,20 @@ class SymbolPanel extends JPanel {
 				// The toString() returns the name for the symbol, which may be cached.  Calling
 				// toString() will also avoid locking for cached values.
 				list.add(rowObject.toString());
+
+				// Add the 'Original Imported Name' value as well, which may feel intuitive to the
+				// user when filtering on the name.
+				addOriginalName(rowObject);
 			}
 			return list;
+		}
+
+		private void addOriginalName(SymbolRowObject rowObject) {
+			int index = symbolTableModel.getColumnIndex(OriginalNameColumn.class);
+			String originalName = getStringValue(rowObject, index);
+			if (originalName != null) {
+				list.add(originalName);
+			}
 		}
 
 		@Override

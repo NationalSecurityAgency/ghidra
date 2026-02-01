@@ -103,14 +103,14 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 		// fix scroll bar grabber disappearing.  See
 		// https://bugs.openjdk.java.net/browse/JDK-8134828. This fix looks like it should not cause
 		// harm even if the bug is fixed on the jdk side.
-		UIDefaults defaults = UIManager.getDefaults();
-		defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+		UIDefaults uiDefaults = UIManager.getDefaults();
+		uiDefaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
 
 		// (see NimbusDefaults for key values that can be changed here)
 	}
 
 	@Override
-	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+	protected UiDefaultsMapper createUiDefaultsMapper(UIDefaults defaults) {
 		return new NimbusUiDefaultsMapper(defaults);
 	}
 }

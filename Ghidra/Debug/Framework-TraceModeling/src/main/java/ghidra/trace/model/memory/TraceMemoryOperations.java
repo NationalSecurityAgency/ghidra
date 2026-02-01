@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.trace.model.memory;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
@@ -29,7 +28,6 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -63,133 +61,43 @@ import ghidra.util.task.TaskMonitor;
  */
 public interface TraceMemoryOperations {
 	/**
+	 * Check if the return value of {@link #getStates(long, AddressRange)} or similar represents a
+	 * single entry of the given state.
+	 * 
+	 * <p>
+	 * This method returns false if there is not exactly one entry of the given state whose range
+	 * covers the given range. As a special case, an empty collection will cause this method to
+	 * return true iff state is {@link TraceMemoryState#UNKNOWN}.
+	 * 
+	 * @param range the range to check, usually that passed to
+	 *            {@link #getStates(long, AddressRange)}.
+	 * @param stateEntries the collection returned by {@link #getStates(long, AddressRange)}.
+	 * @param state the expected state
+	 * @return true if the state matches
+	 */
+	static boolean isStateEntirely(AddressRange range,
+			Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> stateEntries,
+			TraceMemoryState state) {
+		if (stateEntries.isEmpty()) {
+			return state == TraceMemoryState.UNKNOWN;
+		}
+		if (stateEntries.size() != 1) {
+			return false;
+		}
+		Entry<TraceAddressSnapRange, TraceMemoryState> ent = stateEntries.iterator().next();
+		if (ent.getValue() != state) {
+			return false;
+		}
+		AddressRange entRange = ent.getKey().getRange();
+		return entRange.contains(range.getMinAddress()) && entRange.contains(range.getMaxAddress());
+	}
+
+	/**
 	 * Get the trace to which the memory manager belongs
 	 * 
 	 * @return the trace
 	 */
 	Trace getTrace();
-
-	/**
-	 * Add a new region with the given properties
-	 * 
-	 * <p>
-	 * Regions model the memory mappings of a debugging target. As such, they are never allowed to
-	 * overlap. Additionally, to ensure {@link #getLiveRegionByPath(long, String)} returns a unique
-	 * region, duplicate paths cannot exist in the same snap.
-	 * 
-	 * <p>
-	 * Regions have a "full name" (path) as well as a short name. The path is immutable and can be
-	 * used to reliably retrieve the same region later. The short name should be something suitable
-	 * for display on the screen. Short names are mutable and can be -- but probbaly shouldn't be --
-	 * duplicated.
-	 * 
-	 * @param path the "full name" of the region
-	 * @param lifespan the lifespan of the region
-	 * @param range the address range of the region
-	 * @param flags the flags, e.g., permissions, of the region
-	 * @return the newly-added region
-	 * @throws TraceOverlappedRegionException if the specified region would overlap an existing one
-	 * @throws DuplicateNameException if the specified region has a name which duplicates another at
-	 *             any intersecting snap
-	 */
-	TraceMemoryRegion addRegion(String path, Lifespan lifespan, AddressRange range,
-			Collection<TraceMemoryFlag> flags)
-			throws TraceOverlappedRegionException, DuplicateNameException;
-
-	/**
-	 * @see #addRegion(String, Lifespan, AddressRange, Collection)
-	 */
-	default TraceMemoryRegion addRegion(String path, Lifespan lifespan,
-			AddressRange range, TraceMemoryFlag... flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, lifespan, range, Arrays.asList(flags));
-	}
-
-	/**
-	 * Add a region created at the given snap, with no specified destruction snap
-	 * 
-	 * @see #addRegion(String, Lifespan, AddressRange, Collection)
-	 */
-	default TraceMemoryRegion createRegion(String path, long snap, AddressRange range,
-			Collection<TraceMemoryFlag> flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, Lifespan.nowOn(snap), range, flags);
-	}
-
-	/**
-	 * @see #createRegion(String, long, AddressRange, Collection)
-	 */
-	default TraceMemoryRegion createRegion(String path, long snap, AddressRange range,
-			TraceMemoryFlag... flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, Lifespan.nowOn(snap), range, flags);
-	}
-
-	/**
-	 * Get all the regions in this space or manager
-	 * 
-	 * @return the collection of all regions
-	 */
-	Collection<? extends TraceMemoryRegion> getAllRegions();
-
-	/**
-	 * Get the region with the given path at the given snap
-	 * 
-	 * @param snap the snap which must be within the region's lifespan
-	 * @param path the "full name" of the region
-	 * @return the region, or {@code null} if no region matches
-	 */
-	TraceMemoryRegion getLiveRegionByPath(long snap, String path);
-
-	/**
-	 * Get the region at the given address and snap
-	 * 
-	 * @param snap the snap which must be within the region's lifespan
-	 * @param address the address which must be within the region's range
-	 * @return the region, or {@code null} if no region matches
-	 */
-	TraceMemoryRegion getRegionContaining(long snap, Address address);
-
-	/**
-	 * Collect regions intersecting the given lifespan and range
-	 * 
-	 * @param lifespan the lifespan
-	 * @param range the range
-	 * @return the collection of matching regions
-	 */
-	Collection<? extends TraceMemoryRegion> getRegionsIntersecting(Lifespan lifespan,
-			AddressRange range);
-
-	/**
-	 * Collect regions at the given snap
-	 * 
-	 * @param snap the snap which must be within the regions' lifespans
-	 * @return the collection of matching regions
-	 */
-	Collection<? extends TraceMemoryRegion> getRegionsAtSnap(long snap);
-
-	/**
-	 * Get the addresses contained by regions at the given snap
-	 * 
-	 * <p>
-	 * The implementation may provide a view that updates with changes.
-	 * 
-	 * @param snap the snap which must be within the regions' lifespans
-	 * @return the union of ranges of matching regions
-	 */
-	AddressSetView getRegionsAddressSet(long snap);
-
-	/**
-	 * Get the addresses contained by regions at the given snap satisfying the given predicate
-	 * 
-	 * <p>
-	 * The implementation may provide a view that updates with changes.
-	 * 
-	 * @param snap the snap which must be within the region's lifespans
-	 * @param predicate a predicate on regions to search for
-	 * @return the address set
-	 */
-	AddressSetView getRegionsAddressSetWith(long snap, Predicate<TraceMemoryRegion> predicate);
 
 	/**
 	 * Set the state of memory over a given time and address range
@@ -261,12 +169,24 @@ public interface TraceMemoryOperations {
 	 * Get the entry recording the most recent state at the given snap and address, following
 	 * schedule forks
 	 * 
-	 * @param snap the time
-	 * @param address the location
-	 * @return the state
+	 * @param snap the latest time to consider
+	 * @param address the address
+	 * @return the most-recent entry
 	 */
 	Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			Address address);
+
+	/**
+	 * Get the entry recording the most recent state since the given snap within the given range
+	 * that satisfies a given predicate, following schedule forks
+	 * 
+	 * @param snap the latest time to consider
+	 * @param range the range of addresses
+	 * @param predicate a predicate on the state
+	 * @return the most-recent entry
+	 */
+	Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
+			AddressRange range, Predicate<TraceMemoryState> predicate);
 
 	/**
 	 * Get at least the subset of addresses having state satisfying the given predicate
@@ -297,7 +217,7 @@ public interface TraceMemoryOperations {
 	 * {@code state -> state != null && state != TraceMemoryState.UNKNOWN} and subtract the result
 	 * from {@code set}.
 	 * 
-	 * @param snap the time
+	 * @param span the range of time
 	 * @param set the set to examine
 	 * @param predicate a predicate on state to search for
 	 * @return the address set

@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.equate;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
@@ -30,7 +29,7 @@ import ghidra.util.exception.*;
  * will restore everything back to where it was when this object was created.  The
  * redo method will repeat the rename operation.
  */
-class RenameEquatesCmd implements Command {
+class RenameEquatesCmd implements Command<Program> {
 
 	private String newEquateName;
 	private String oldEquateName;
@@ -39,8 +38,7 @@ class RenameEquatesCmd implements Command {
 
 	/**
 	 * Constructor
-	 * @param program the current program
-	 * @param equate the equate to be renamed.
+	 * @param oldEquateName the name of equate to be renamed.
 	 * @param newEquateName the new name for the equate
 	 */
 	RenameEquatesCmd(String oldEquateName, String newEquateName) {
@@ -48,20 +46,14 @@ class RenameEquatesCmd implements Command {
 		this.newEquateName = newEquateName;
 	}
 
-	/**
-	 * The name of the edit action.
-	 */
 	@Override
 	public String getName() {
 		return "Rename Equates";
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		EquateTable etable = ((Program) obj).getEquateTable();
+	public boolean applyTo(Program program) {
+		EquateTable etable = program.getEquateTable();
 
 		// See if there's an entry in the table for the old equate name.  There should be,
 		// otherwise there's a problem.
@@ -70,7 +62,7 @@ class RenameEquatesCmd implements Command {
 			msg = "Equate not found: " + oldEquateName;
 			return false;
 		}
-		
+
 		// Now get the entry in the Equate table for the new equate name.  If there's
 		// already an entry with this name, just use that...otherwise, create a new one.
 		Equate toEquate = etable.getEquate(newEquateName);
@@ -96,9 +88,6 @@ class RenameEquatesCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;

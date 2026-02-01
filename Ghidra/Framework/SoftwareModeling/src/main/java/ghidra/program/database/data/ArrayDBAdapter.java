@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -45,21 +46,20 @@ abstract class ArrayDBAdapter {
 	 * @throws IOException if there is a problem accessing the database.
 	 * @throws CancelledException task cancelled
 	 */
-	static ArrayDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
-			TaskMonitor monitor)
-			throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
+	static ArrayDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+		if (openMode == OpenMode.CREATE) {
 			return new ArrayDBAdapterV1(handle, tablePrefix, true);
 		}
 		try {
 			return new ArrayDBAdapterV1(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			ArrayDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
@@ -71,8 +71,8 @@ abstract class ArrayDBAdapter {
 	}
 
 	private static ArrayDBAdapter upgrade(DBHandle handle, ArrayDBAdapter oldAdapter,
-			String tablePrefix,
-			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
@@ -115,5 +115,11 @@ abstract class ArrayDBAdapter {
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
+
+	/**
+	 * Get the number of array datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 
 }

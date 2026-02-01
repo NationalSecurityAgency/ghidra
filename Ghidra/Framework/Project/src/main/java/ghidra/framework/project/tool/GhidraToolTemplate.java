@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.util.image.ToolIconURL;
 import ghidra.framework.model.Project;
@@ -95,19 +95,11 @@ public class GhidraToolTemplate implements ToolTemplate {
 		return iconURL;
 	}
 
-	/**
-	 * Returns a hash code value for the object. This method is
-	 * supported for the benefit of hashtables such as those provided by
-	 * <code>java.util.Hashtable</code>.
-	 */
 	@Override
 	public int hashCode() {
 		return getName().hashCode();
 	}
 
-	/**
-	 * Indicates whether some other object is "equal to" this one.
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
@@ -129,13 +121,6 @@ public class GhidraToolTemplate implements ToolTemplate {
 		return getName().equals(otherTemplate.getName());
 	}
 
-	/**
-	 * Returns a string representation of the object. In general, the
-	 * <code>toString</code> method returns a string that
-	 * "textually represents" this object. The result should
-	 * be a concise but informative representation that is easy for a
-	 * person to read.
-	 */
 	@Override
 	public String toString() {
 		return getName() + " - " + path;
@@ -154,7 +139,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 			catch (ClassNotFoundException e) {
 				Msg.warn(this, "Tool supported content class not found: " + className);
 			}
-			catch (Exception exc) {//TODO
+			catch (Exception exc) {
 				Msg.error(this, "Unexpected Exception: " + exc.getMessage(), exc);
 			}
 		}

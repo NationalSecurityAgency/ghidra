@@ -157,12 +157,6 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
-class OptionStructAlign : public ArchOption {
-public:
-  OptionStructAlign(void) { name = "structalign"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
-};
-
 class OptionWarning : public ArchOption {
 public:
   OptionWarning(void) { name = "warning"; }	///< Constructor
@@ -238,6 +232,12 @@ public:
 class OptionIntegerFormat : public ArchOption {
 public:
   OptionIntegerFormat(void) { name = "integerformat"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionBraceFormat : public ArchOption {
+public:
+  OptionBraceFormat(void) { name = "braceformat"; }	///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 

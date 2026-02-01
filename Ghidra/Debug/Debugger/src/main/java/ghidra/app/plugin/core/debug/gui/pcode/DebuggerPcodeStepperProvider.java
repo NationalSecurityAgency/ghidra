@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,18 +26,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import db.Transaction;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import generic.theme.GColor;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.pcode.UniqueRow.RefType;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -45,9 +44,11 @@ import ghidra.app.util.pcode.AbstractAppender;
 import ghidra.app.util.pcode.AbstractPcodeFormatter;
 import ghidra.async.SwingExecutorService;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.AddressSpace;
@@ -58,7 +59,13 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -265,8 +272,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			setFont(fixedWidthFont);
+		protected Font getDefaultFont() {
+			return fixedWidthFont;
 		}
 
 		@Override
@@ -504,6 +511,25 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	class ForRadixTraceListener extends TraceDomainObjectListener {
+		{
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+		}
+
+		void valueCreated(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				updateSubTitle();
+			}
+		}
+
+		void valueDeleted(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				updateSubTitle();
+			}
+		}
+	}
+
 	protected static String createColoredStyle(String cls, Color color) {
 		if (color == null) {
 			return "";
@@ -523,6 +549,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 		return true;
 	}
+
+	private final TraceDomainObjectListener forRadixTraceListener = new ForRadixTraceListener();
 
 	private final DebuggerPcodeStepperPlugin plugin;
 
@@ -613,7 +641,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTable.setTableHeader(null);
 		pcodeTable.setBackground(COLOR_BACKGROUND);
 		pcodeTable.setSelectionBackground(COLOR_BACKGROUND_CURSOR);
-		pcodeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		pcodeTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		pcodeTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;
@@ -692,18 +720,37 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
+	protected void removeTraceListener() {
+		if (current.getTrace() != null) {
+			current.getTrace().removeListener(forRadixTraceListener);
+		}
+	}
+
+	protected void addTraceListener() {
+		if (current.getTrace() != null) {
+			current.getTrace().addListener(forRadixTraceListener);
+		}
+	}
+
+	protected void updateSubTitle() {
+		TimeRadix radix = current.getTrace() == null ? TimeRadix.DEFAULT
+				: current.getTrace().getTimeManager().getTimeRadix();
+		setSubTitle(current.getTime().toString(radix));
+	}
+
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;
 			return;
 		}
+
 		previous = current;
+		removeTraceListener();
 		current = coordinates;
+		addTraceListener();
 
 		doLoadPcodeFrame();
-
-		setSubTitle(current.getTime().toString());
-
+		updateSubTitle();
 		contextChanged();
 	}
 
@@ -806,7 +853,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			populateSingleton(EnumPcodeRow.DECODE);
 			return;
 		}
-		DebuggerPcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
+		PcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
 		if (emu != null) {
 			clear();
 			doLoadPcodeFrameFromEmulator(emu);
@@ -821,7 +868,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}, SwingExecutorService.LATER);
 	}
 
-	protected <T> void doLoadPcodeFrameFromEmulator(DebuggerPcodeMachine<T> emu) {
+	protected <T> void doLoadPcodeFrameFromEmulator(PcodeMachine<T> emu) {
 		PcodeThread<T> thread = emu.getThread(current.getThread().getPath(), false);
 		if (thread == null) {
 			/**

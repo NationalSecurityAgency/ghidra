@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -133,7 +134,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				String name = cycleGroupAction.getName();
 				checkEnablement(action,
 					name.equals("Cycle: byte,word,dword,qword") ||
-						name.equals("Cycle: float,double") ||
+						name.equals("Cycle: float,double,longdouble") ||
 						name.equals("Cycle: char,string,unicode") || name.equals("char") ||
 						name.equals("string"));
 			}
@@ -158,7 +159,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -173,7 +175,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				String name = cycleGroupAction.getName();
 				checkEnablement(action,
 					name.equals("Cycle: byte,word,dword,qword") ||
-						name.equals("Cycle: float,double") ||
+						name.equals("Cycle: float,double,longdouble") ||
 						name.equals("Cycle: char,string,unicode") || name.equals("char") ||
 						name.equals("string"));
 			}
@@ -199,7 +201,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -218,7 +221,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				String name = cycleGroupAction.getName();
 				checkEnablement(action,
 					name.equals("Cycle: byte,word,dword,qword") ||
-						name.equals("Cycle: float,double") ||
+						name.equals("Cycle: float,double,longdouble") ||
 						name.equals("Cycle: char,string,unicode") || name.equals("char") ||
 						name.equals("string"));
 			}
@@ -253,8 +256,9 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 			throws ArrayIndexOutOfBoundsException, InvalidDataTypeException {
 		init(complexStructure, pgmBbCat);
 
-		((Structure) structureModel.viewComposite).insertBitField(2, 1, 4, CharDataType.dataType, 2,
-			"bf1", null);
+		structureModel.viewDTM.withTransaction("Add Bitfield",
+			() -> structureModel.viewComposite.insertBitField(2, 1, 4,
+				CharDataType.dataType, 2, "bf1", null));
 
 		setSelection(new int[] { 2 });
 		assertEquals("char:2", getDataType(2).getDisplayName());
@@ -294,8 +298,9 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 			throws ArrayIndexOutOfBoundsException, InvalidDataTypeException {
 		init(complexStructure, pgmBbCat);
 
-		((Structure) structureModel.viewComposite).insertBitField(2, 1, 4, CharDataType.dataType, 2,
-			"bf1", null);
+		structureModel.viewDTM.withTransaction("Add Bitfield",
+			() -> structureModel.viewComposite.insertBitField(2, 1, 4,
+				CharDataType.dataType, 2, "bf1", null));
 
 		setSelection(new int[] { 2 });
 		assertEquals("char:2", getDataType(2).getDisplayName());
@@ -339,7 +344,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		setSelection(new int[] { 19 });
 		assertEquals("simpleStructureTypedef", getDataType(19).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+		assertTrue(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.clear;
 
+import static ghidra.app.plugin.core.clear.ClearOptions.ClearType.*;
+
 import java.util.Iterator;
 import java.util.Set;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -28,14 +29,16 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
-public class ClearCmd extends BackgroundCommand {
+public class ClearCmd extends BackgroundCommand<Program> {
 	private static final int EVENT_LIMIT = 1000;
 
 	private AddressSetView view;
 	private ClearOptions options;
 	private boolean sendIndividualEvents = false;
+
+	private TaskMonitor monitor;
+	private Program program;
 
 	/**
 	 * A convenience constructor to clear a single code unit.
@@ -73,25 +76,34 @@ public class ClearCmd extends BackgroundCommand {
 		this.view = view;
 		this.options = options;
 		this.sendIndividualEvents = sendIndividualEvents;
+
+		if (this.options == null) {
+			this.options = new ClearOptions(false);
+			this.options.setShouldClear(INSTRUCTIONS, true);
+			this.options.setShouldClear(DATA, true);
+		}
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-
-		boolean wasEabled = obj.isSendingEvents();
+	public boolean applyTo(Program p, TaskMonitor taskMonitor) {
+		this.monitor = taskMonitor;
+		this.program = p;
+		boolean wasEnabled = program.isSendingEvents();
 		try {
-			obj.setEventsEnabled(sendIndividualEvents);
-			return doApplyTo(obj, monitor);
+			program.setEventsEnabled(sendIndividualEvents);
+			return doApplyTo();
 		}
 		finally {
-			obj.setEventsEnabled(wasEabled);
+			program.setEventsEnabled(wasEnabled);
+			program = null;
+			monitor = null;
 		}
 	}
 
-	private boolean doApplyTo(DomainObject obj, TaskMonitor monitor) {
+	private boolean doApplyTo() {
 
 		try {
-			doApplyWithCancel(obj, monitor);
+			doApplyWithCancel();
 			monitor.setMessage("Clear completed");
 			return true;
 		}
@@ -100,51 +112,51 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private boolean doApplyWithCancel(DomainObject obj, TaskMonitor monitor)
+	private boolean doApplyWithCancel()
 			throws CancelledException {
 
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
 
-		Program program = (Program) obj;
-		if (options == null) {
-			clearCode(program, view, monitor);
+		if (options.shouldClear(EQUATES)) {
+			clearEquates(view);
+		}
+		if (options.shouldClear(INSTRUCTIONS) || options.shouldClear(DATA)) {
+			clearInstructionsAndOrData(view);
+		}
+		if (options.shouldClear(COMMENTS)) {
+			clearComments(view);
+		}
+		if (options.shouldClear(FUNCTIONS)) {
+			clearFunctions(view);
+		}
+		if (options.shouldClear(SYMBOLS)) {
+			clearSymbols(view);
+		}
+		if (options.shouldClear(PROPERTIES)) {
+			clearProperties(view);
+		}
+		if (options.shouldClear(REGISTERS)) {
+			clearRegisters(view);
+		}
+		if (options.shouldClear(BOOKMARKS)) {
+			clearBookmarks(view);
+		}
+
+		// if clearing instructions and data, no need to handle references separately
+		if (options.shouldClear(INSTRUCTIONS) && options.shouldClear(DATA)) {
 			return true;
 		}
 
-		if (options.clearEquates()) {
-			clearEquates(program, view, monitor);
-		}
-		if (options.clearCode()) {
-			clearCode(program, view, monitor);
-		}
-		if (options.clearComments()) {
-			clearComments(program, view, monitor);
-		}
-		if (options.clearFunctions()) {
-			clearFunctions(program, view, monitor);
-		}
-		if (options.clearSymbols()) {
-			clearSymbols(program, view, monitor);
-		}
-		if (options.clearProperties()) {
-			clearProperties(program, view, monitor);
-		}
-		if (options.clearRegisters()) {
-			clearRegisters(program, view, monitor);
-		}
 		Set<SourceType> referenceSourceTypesToClear = options.getReferenceSourceTypesToClear();
-		if (!options.clearCode() && !referenceSourceTypesToClear.isEmpty()) {
-			clearReferences(program, view, referenceSourceTypesToClear, monitor);
-		}
-		if (options.clearBookmarks()) {
-			clearBookmarks(program, view, monitor);
+		if (!referenceSourceTypesToClear.isEmpty()) {
+			clearReferences(view, referenceSourceTypesToClear);
 		}
 		return true;
 	}
 
-	private void clearSymbols(Program program, AddressSetView clearView, TaskMonitor monitor)
+	private void clearSymbols(AddressSetView clearView)
 			throws CancelledException {
 
 		if (clearView.isEmpty()) {
@@ -190,7 +202,7 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void clearComments(Program program, AddressSetView clearView, TaskMonitor monitor)
+	private void clearComments(AddressSetView clearView)
 			throws CancelledException {
 
 		monitor.initialize(clearView.getNumAddresses());
@@ -209,7 +221,7 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void clearProperties(Program program, AddressSetView clearView, TaskMonitor monitor)
+	private void clearProperties(AddressSetView clearView)
 			throws CancelledException {
 
 		monitor.initialize(clearView.getNumAddresses());
@@ -226,7 +238,7 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void clearFunctions(Program program, AddressSetView clearView, TaskMonitor monitor)
+	private void clearFunctions(AddressSetView clearView)
 			throws CancelledException {
 
 		FunctionManager manager = program.getFunctionManager();
@@ -245,7 +257,7 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void clearRegisters(Program program, AddressSetView clearView, TaskMonitor monitor)
+	private void clearRegisters(AddressSetView clearView)
 			throws CancelledException {
 
 		monitor.initialize(clearView.getNumAddresses());
@@ -254,16 +266,16 @@ public class ClearCmd extends BackgroundCommand {
 		AddressRangeIterator iter = clearView.getAddressRanges();
 		while (iter.hasNext()) {
 			AddressRange range = iter.next();
-			removeRegisters(pc, range, monitor);
+			removeRegisters(pc, range);
 		}
 	}
 
-	private void clearEquates(Program p, AddressSetView clearView, TaskMonitor monitor)
+	private void clearEquates(AddressSetView clearView)
 			throws CancelledException {
 		monitor.initialize(100);
 		monitor.setMessage("Starting to clear equates...");
 
-		EquateTable eqtbl = p.getEquateTable();
+		EquateTable eqtbl = program.getEquateTable();
 		Iterator<Equate> iter = eqtbl.getEquates();
 		while (iter.hasNext()) {
 
@@ -283,33 +295,76 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void clearCode(Program program, AddressSetView clearView, TaskMonitor monitor)
+	private void clearInstructionsAndOrData(AddressSetView clearView)
 			throws CancelledException {
 
-		Listing listing = program.getListing();
+		boolean clearInstructions = options.shouldClear(INSTRUCTIONS);
+		boolean clearData = options.shouldClear(DATA);
 
 		monitor.initialize(clearView.getNumAddresses());
-		monitor.setMessage("Starting to clear code...");
+		monitor.setMessage(getMessage(clearInstructions, clearData));
 
-		AddressRangeIterator it = clearView.getAddressRanges();
-		while (it.hasNext()) {
-
-			AddressRange currentRange = it.next();
-			Address start = currentRange.getMinAddress();
-			Address end = currentRange.getMaxAddress();
-			clearAddresses(monitor, listing, start, end);
+		for (AddressRange range : clearView.getAddressRanges()) {
+			clearCode(range, clearInstructions, clearData);
 		}
 	}
 
-	private void clearAddresses(TaskMonitor monitor, Listing listing, Address start, Address end)
+	private void clearCode(AddressRange range, boolean clearInstructions, boolean clearData)
 			throws CancelledException {
 
-		boolean clearContext = options != null && options.clearRegisters();
-		AddressRangeChunker chunker = new AddressRangeChunker(start, end, 10000);
-		for (AddressRange range : chunker) {
+		if (clearData && clearInstructions) {
+			clearCodeUnits(range);
+			return;
+		}
 
-			Address min = range.getMinAddress();
-			Address max = range.getMaxAddress();
+		AddressSet set = clearInstructions ? getInstructionRanges(range) : getDataRanges(range);
+
+		for (AddressRange r : set.getAddressRanges()) {
+			clearCodeUnits(r);
+		}
+
+		// also increment monitor for skipped address
+		monitor.incrementProgress(range.getLength() - set.getNumAddresses());
+	}
+
+	private AddressSet getInstructionRanges(AddressRange range) {
+		AddressSet addresses = new AddressSet();
+		Listing listing = program.getListing();
+		Address end = range.getMaxAddress();
+
+		for (Instruction inst : listing.getInstructions(range.getMinAddress(), true)) {
+			if (inst.getMinAddress().compareTo(end) > 0) {
+				break;
+			}
+			addresses.add(inst.getMinAddress(), inst.getMaxAddress());
+		}
+		return addresses;
+	}
+
+	private AddressSet getDataRanges(AddressRange range) {
+		AddressSet addresses = new AddressSet();
+		Listing listing = program.getListing();
+		Address end = range.getMaxAddress();
+
+		for (Data data : listing.getDefinedData(range.getMinAddress(), true)) {
+			if (data.getMinAddress().compareTo(end) > 0) {
+				break;
+			}
+			addresses.add(data.getMinAddress(), data.getMaxAddress());
+		}
+		return addresses;
+	}
+
+	private void clearCodeUnits(AddressRange range) throws CancelledException {
+
+		Listing listing = program.getListing();
+
+		boolean clearContext = options.shouldClear(REGISTERS);
+		AddressRangeChunker chunker = new AddressRangeChunker(range, 10000);
+		for (AddressRange chunk : chunker) {
+
+			Address min = chunk.getMinAddress();
+			Address max = chunk.getMaxAddress();
 
 			monitor.setMessage("Clearing code at " + min);
 
@@ -323,8 +378,8 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void clearReferences(Program program, AddressSetView clearView,
-			Set<SourceType> sourceTypesToClear, TaskMonitor monitor) throws CancelledException {
+	private void clearReferences(AddressSetView clearView, Set<SourceType> sourceTypesToClear)
+			throws CancelledException {
 
 		if (clearView.isEmpty()) {
 			return;
@@ -333,13 +388,12 @@ public class ClearCmd extends BackgroundCommand {
 		monitor.initialize(clearView.getNumAddresses());
 		monitor.setMessage("Clearing references...");
 
-		ReferenceManager refMgr = program.getReferenceManager();
-		AddressIterator it = refMgr.getReferenceSourceIterator(clearView, true);
-		removeRefs(refMgr, it, sourceTypesToClear, monitor);
+		ReferenceManager referenceManager = program.getReferenceManager();
+		AddressIterator it = referenceManager.getReferenceSourceIterator(clearView, true);
+		removeRefs(it, sourceTypesToClear);
 	}
 
-	private void clearBookmarks(Program program, AddressSetView clearView, TaskMonitor monitor)
-			throws CancelledException {
+	private void clearBookmarks(AddressSetView clearView) throws CancelledException {
 
 		if (clearView.isEmpty()) {
 			return;
@@ -351,7 +405,7 @@ public class ClearCmd extends BackgroundCommand {
 		bookmarkMgr.removeBookmarks(clearView, monitor);
 	}
 
-	private void removeRegisters(ProgramContext pc, AddressRange range, TaskMonitor monitor)
+	private void removeRegisters(ProgramContext pc, AddressRange range)
 			throws CancelledException {
 		for (Register reg : pc.getRegistersWithValues()) {
 			monitor.checkCancelled();
@@ -368,24 +422,36 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private void removeRefs(ReferenceManager refMgr, AddressIterator iter,
-			Set<SourceType> sourceTypesToClear, TaskMonitor monitor) throws CancelledException {
+	private void removeRefs(AddressIterator iter, Set<SourceType> sourceTypesToClear)
+			throws CancelledException {
+
+		ReferenceManager referenceManager = program.getReferenceManager();
 		while (iter.hasNext()) {
 
 			monitor.checkCancelled();
 
 			Address addr = iter.next();
-			Reference[] refs = refMgr.getReferencesFrom(addr);
+			Reference[] refs = referenceManager.getReferencesFrom(addr);
 			for (Reference ref : refs) {
 				if (monitor.isCancelled()) {
 					break;
 				}
 				SourceType source = ref.getSource();
 				if (sourceTypesToClear.contains(source)) {
-					refMgr.delete(ref);
+					referenceManager.delete(ref);
 				}
 			}
 			monitor.incrementProgress(1);
 		}
+	}
+
+	private String getMessage(boolean clearInstructions, boolean clearData) {
+		if (!clearData) {
+			return "Clearing Instructions...";
+		}
+		if (!clearInstructions) {
+			return "Clearing Data...";
+		}
+		return "Clearing Instructions and Data...";
 	}
 }

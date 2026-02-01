@@ -18,8 +18,8 @@ package ghidra.app.decompiler.component;
 import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldHighlightFactory;
+import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.ClangToken;
 
 public class ClangTextField extends WrappingVerticalLayoutTextField {
@@ -122,5 +122,13 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 
 	public int getLineNumber() {
 		return lineNumber;
+	}
+
+	public ClangToken getFirstToken() {
+		return tokenList.get(0);
+	}
+
+	public ClangToken getLastToken() {
+		return tokenList.get(tokenList.size() - 1);
 	}
 }

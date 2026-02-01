@@ -28,20 +28,23 @@
 //     directory once the extension has been installed/unpacked by Ghidra.  The binutils referenced 
 //     by the script below may be downloaded from the following URL:
 //
-//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.36.tar.bz2
+//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.41.tar.bz2
 //
 
-ext.binutils = "binutils-2.36"
+ext.binutils = "binutils-2.41"
 ext.binutilsDistro = "${binutils}.tar.bz2"
 
 // Find the GPL dir
 def gplDir = null;
 if (file("../utils.gradle").exists()) { 
 	gplDir = file("..").getCanonicalPath()
+	ext.ghidraInstallDir = file("../..").getCanonicalPath()
+	ext.binutilsLocation = file("${ghidraInstallDir}/../ghidra.bin/GPL/${name}").getCanonicalPath()
 }
 else {
 	// Module lives disconnected from the GPL directory, which it will need to build.
 	// Find a Ghidra installation directory and use its GPL directory.
+	ext.binutilsLocation = projectDir
 	if (file("../../Extensions").exists() && file("../../../GPL/utils.gradle").exists()) {
 		// Module is installed within a Ghidra installation (i.e, ghidra/Ghidra/Extensions)
 		gplDir = file("../../../GPL").getCanonicalPath()

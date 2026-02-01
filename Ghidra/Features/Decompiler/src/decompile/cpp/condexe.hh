@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,48 +21,6 @@
 #include "funcdata.hh"
 
 namespace ghidra {
-
-/// \brief A helper class for describing the similarity of the boolean condition between 2 CBRANCH operations
-///
-/// This class determines if two CBRANCHs share the same condition.  It also determines if the conditions
-/// are complements of each other, and/or they are shared along only one path.
-///
-/// The expression computing the root boolean value for one CBRANCH is marked out
-/// by setupInitOp(). For the other CBRANCH, findMatch() tries to find common Varnode
-/// in its boolean expression and then maps a critical path from the Varnode to the final boolean.
-/// Assuming the common Varnode exists, the method finalJudgement() decides if the two boolean values
-/// are the same, uncorrelated, or complements of one another.
-class ConditionMarker {
-  PcodeOp *initop;		///< The root CBRANCH operation to compare against
-  Varnode *basevn;		///< The boolean Varnode on which the root CBRANCH keys
-  Varnode *boolvn;		///< If \b basevn is defined by BOOL_NEGATE, this is the unnegated Varnode
-  Varnode *bool2vn;		///< If the first param to \b binaryop is defined by BOOL_NEGATE, this is the unnegated Varnode
-  Varnode *bool3vn;		///< If the second param to \b binaryop is defined by BOOL_NEGATE, this is the unnegated Varnode
-  PcodeOp *binaryop;		///< The binary operator producing the root boolean (if non-null)
-
-  bool matchflip;		///< True if the compared CBRANCH keys on the opposite boolean value of the root
-  int4 state;			///< Depth of critical path
-  PcodeOp *opstate[2];		///< p-code operations along the critical path
-  bool flipstate[2];		///< Boolean negation along the critical path
-  int4 slotstate[2];		///< Input Varnode to follow to stay on critical path
-  bool multion;			///< True if MULTIEQUAL used in condition
-  bool binon;			///< True if a binary operator is used in condition
-  int4 multislot;		///< Input slot of MULTIEQUAL on critical path, -1 if no MULTIEQUAL
-
-  void setupInitOp(PcodeOp *op);	///< Map out the root boolean expression
-  Varnode *findMatch(PcodeOp *op);	///< Find a matching Varnode in the root expression producing the given CBRANCH boolean
-  bool sameOpComplement(PcodeOp *bin1op, PcodeOp *bin2op);
-  bool andOrComplement(PcodeOp *bin1op, PcodeOp *bin2op);
-  bool finalJudgement(Varnode *vn);
-public:
-  ConditionMarker(void);				///< Constructor
-  ~ConditionMarker(void);				///< Destructor
-  bool verifyCondition(PcodeOp *op, PcodeOp *iop);	///< Perform the correlation test on two CBRANCH operations
-  int4 getMultiSlot(void) const { return multislot; }	///< Get the MULTIEQUAL slot in the critical path
-  bool getFlip(void) const { return matchflip; }	///< Return \b true is the expressions are anti-correlated
-  static bool varnodeSame(Varnode *a,Varnode *b);
-  static bool varnodeComplement(Varnode *a,Varnode *b);
-};
 
 /// \brief A class for simplifying a series of conditionally executed statements.
 ///
@@ -142,9 +100,8 @@ class ConditionalExecution {
   int4 posta_outslot;		///< The \b out edge from iblock to posta
   BlockBasic *posta_block;	///< First block in posta path
   BlockBasic *postb_block;	///< First block in postb path
-  bool directsplit;		///< True if this the \e direct \e split variation
   map<int4,Varnode *> replacement;	///< Map from block to replacement Varnode for (current) Varnode
-  vector<PcodeOp *> returnop;	///< RETURN ops that have flow coming out of the iblock
+  vector<Varnode *> pullback;	///< Outputs of ops that have been pulled back from \b iblock for (current) Varnode
   vector<bool> heritageyes;	///< Boolean array indexed by address space indicating whether the space is heritaged
 
   void buildHeritageArray(void);
@@ -152,14 +109,16 @@ class ConditionalExecution {
   bool findInitPre(void);			///< Find \b initblock, based on \b iblock
   bool verifySameCondition(void);		///< Verify that \b initblock and \b iblock branch on the same condition
   bool testOpRead(Varnode *vn,PcodeOp *op);	///< Can we move the (non MULTIEQUAL) defining p-code of the given Varnode
-  bool testMultiRead(Varnode *vn,PcodeOp *op);	///< Can we mave the MULTIEQUAL defining p-code of the given Varnode
+  bool testMultiRead(Varnode *vn,PcodeOp *op);	///< Can we move the MULTIEQUAL defining p-code of the given Varnode
   bool testRemovability(PcodeOp *op);		///< Test if the given PcodeOp can be removed from \b iblock
-  void predefineDirectMulti(PcodeOp *op);
-  void adjustDirectMulti(void);			///< Update inputs to any MULTIEQUAL in the direct block
+  Varnode *findPullback(int4 inbranch);		///< Find previously constructed pull-back op
+  Varnode *pullbackOp(PcodeOp *op,int4 inbranch);	///< Pull-back PcodeOp out of the iblock
   Varnode *getNewMulti(PcodeOp *op,BlockBasic *bl);
+  Varnode *resolveRead(PcodeOp *op,BlockBasic *bl);	///< Resolve a read op coming through an arbitrary block
+  Varnode *resolveIblockRead(PcodeOp *op,int4 inbranch);	///< Resolve a read op coming through the \b iblock
+  Varnode *getMultiequalRead(PcodeOp *op,PcodeOp *readop,int4 slot);
   Varnode *getReplacementRead(PcodeOp *op,BlockBasic *bl);
   void doReplacement(PcodeOp *op);		///< Replace the data-flow for the given PcodeOp in \b iblock
-  void fixReturnOp(void);
   bool verify(void);				///< Verify that we have a removable \b iblock
 public:
   ConditionalExecution(Funcdata *f);		///< Constructor

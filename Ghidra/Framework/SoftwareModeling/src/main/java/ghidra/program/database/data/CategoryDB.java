@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Lock;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -218,18 +217,6 @@ class CategoryDB extends DatabaseObject implements Category {
 		return map;
 	}
 
-	private String getBaseName(String dataTypeName) {
-		int indexOf = dataTypeName.indexOf(DataType.CONFLICT_SUFFIX);
-		if (indexOf <= 0) {
-			return dataTypeName;
-		}
-		return dataTypeName.substring(0, indexOf);
-	}
-
-	private boolean isConflictName(String dataTypeName) {
-		return dataTypeName.contains(DataType.CONFLICT_SUFFIX);
-	}
-
 	/**
 	 * @see ghidra.program.model.data.Category#getCategories()
 	 */
@@ -320,9 +307,6 @@ class CategoryDB extends DatabaseObject implements Category {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Category#removeCategory(java.lang.String, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public boolean removeCategory(String categoryName, TaskMonitor monitor) {
 		mgr.lock.acquire();
@@ -332,6 +316,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			if (c == null) {
 				return false;
 			}
+
 			Category[] cats = c.getCategories();
 			for (Category cat : cats) {
 				if (monitor.isCancelled()) {
@@ -339,13 +324,16 @@ class CategoryDB extends DatabaseObject implements Category {
 				}
 				c.removeCategory(cat.getName(), monitor);
 			}
+
 			DataType[] dts = c.getDataTypes();
-			for (DataType dt : dts) {
-				if (monitor.isCancelled()) {
-					return false;
-				}
-				mgr.remove(dt, monitor);
+			List<DataType> dtList = Arrays.asList(dts);
+			try {
+				mgr.remove(dtList, monitor);
 			}
+			catch (CancelledException e) {
+				return false;
+			}
+
 			try {
 				mgr.getCategoryDBAdapter().removeCategory(c.getKey());
 				subcategoryMap.remove(categoryName);
@@ -549,7 +537,7 @@ class CategoryDB extends DatabaseObject implements Category {
 				}
 				else { // both dataTypes remain
 					movedDataType.setNameAndCategory(path,
-						mgr.getUnusedConflictName(path, movedDataType.getName()));
+						mgr.getUnusedConflictName(path, movedDataType));
 				}
 			}
 			else {
@@ -577,7 +565,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			throw new IllegalArgumentException(
 				"can't remove dataType from category that its not a member of!");
 		}
-		return mgr.remove(type, monitor);
+		return mgr.remove(type);
 	}
 
 	/**
@@ -621,14 +609,14 @@ class CategoryDB extends DatabaseObject implements Category {
 	void dataTypeAdded(DataType dataType) {
 		String dtName = dataType.getName();
 		dataTypeMap.put(dtName, dataType);
-		if (isConflictName(dtName)) {
+		if (DataTypeUtilities.isConflictDataType(dataType)) {
 			conflictMap.addDataType(dataType);
 		}
 	}
 
 	void dataTypeRemoved(String dataTypeName) {
 		dataTypeMap.remove(dataTypeName);
-		if (isConflictName(dataTypeName)) {
+		if (DataTypeUtilities.isConflictDataTypeName(dataTypeName)) {
 			conflictMap.removeDataTypeName(dataTypeName);
 		}
 	}
@@ -639,8 +627,9 @@ class CategoryDB extends DatabaseObject implements Category {
 
 	@Override
 	public List<DataType> getDataTypesByBaseName(String dataTypeName) {
+
 		List<DataType> list = new ArrayList<>();
-		String baseName = getBaseName(dataTypeName);
+		String baseName = DataTypeUtilities.getNameWithoutConflict(dataTypeName);
 
 		DataType baseType = dataTypeMap.get(baseName);
 		if (baseType != null) {
@@ -681,8 +670,8 @@ class CategoryDB extends DatabaseObject implements Category {
 			Collection<DataType> values = dataTypeMap.values();
 			for (DataType dataType : values) {
 				String dataTypeName = dataType.getName();
-				if (isConflictName(dataTypeName)) {
-					String baseName = getBaseName(dataTypeName);
+				if (DataTypeUtilities.isConflictDataType(dataType)) {
+					String baseName = DataTypeUtilities.getNameWithoutConflict(dataType);
 					Map<String, DataType> innerMap =
 						map.computeIfAbsent(baseName, b -> new HashMap<>());
 					innerMap.put(dataTypeName, dataType);
@@ -705,7 +694,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			}
 
 			String dataTypeName = dataType.getName();
-			String baseName = getBaseName(dataTypeName);
+			String baseName = DataTypeUtilities.getNameWithoutConflict(dataType);
 			Map<String, DataType> innerMap = map.computeIfAbsent(baseName, b -> new HashMap<>());
 			innerMap.put(dataTypeName, dataType);
 		}
@@ -721,7 +710,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			if (map == null) {
 				return;
 			}
-			String baseName = getBaseName(dataTypeName);
+			String baseName = DataTypeUtilities.getNameWithoutConflict(dataTypeName);
 			Map<String, DataType> innerMap = map.get(baseName);
 			if (innerMap == null) {
 				return;

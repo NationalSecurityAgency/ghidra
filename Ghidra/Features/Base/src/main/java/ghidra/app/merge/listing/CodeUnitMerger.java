@@ -858,7 +858,13 @@ class CodeUnitMerger extends AbstractListingMerger {
 	private void performMergeInstruction(Instruction instruction, boolean copyBytes)
 			throws CodeUnitInsertionException, MemoryAccessException {
 		Address minAddress = instruction.getMinAddress();
-		Address maxAddress = instruction.getMaxAddress();
+		Address maxAddress;
+		if (instruction.isLengthOverridden()) {
+			maxAddress = minAddress.add(instruction.getParsedLength() - 1);
+		}
+		else {
+			maxAddress = instruction.getMaxAddress();
+		}
 		Program fromPgm = instruction.getProgram();
 		// Code unit should already be cleared where this instruction needs to go.
 		Listing resultListing = resultPgm.getListing();
@@ -868,9 +874,12 @@ class CodeUnitMerger extends AbstractListingMerger {
 			ProgramMemoryUtil.copyBytesInRanges(resultPgm, fromPgm, minAddress, maxAddress);
 		}
 
+		// avoid forcing length of new instruction if old instruction length was not overriden
+		int lengthOverride = instruction.isLengthOverridden() ? instruction.getLength() : 0;
+
 		Instruction inst = resultListing.createInstruction(minAddress, instruction.getPrototype(),
 			new DumbMemBufferImpl(resultPgm.getMemory(), minAddress),
-			new ProgramProcessorContext(resultPgm.getProgramContext(), minAddress));
+			new ProgramProcessorContext(resultPgm.getProgramContext(), minAddress), lengthOverride);
 
 		// Set the fallthrough override if necessary.
 		if (instruction.isFallThroughOverridden()) {

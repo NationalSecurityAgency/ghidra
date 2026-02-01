@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
 
 import org.antlr.runtime.*;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.jdom.JDOMException;
 
+import generic.jar.ResourceFile;
 import generic.stl.*;
 import ghidra.pcode.utils.MessageFormattingUtils;
+import ghidra.pcode.utils.SlaFormat;
 import ghidra.pcodeCPort.address.Address;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.error.LowlevelError;
@@ -36,8 +37,9 @@ import ghidra.pcodeCPort.slghpatexpress.*;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.utils.Utils;
-import ghidra.pcodeCPort.xml.DocumentStorage;
 import ghidra.program.model.lang.SpaceNames;
+import ghidra.program.model.pcode.PackedEncode;
+import ghidra.program.model.pcode.XmlEncode;
 import ghidra.sleigh.grammar.*;
 import ghidra.util.Msg;
 import utilities.util.FileResolutionResult;
@@ -50,6 +52,9 @@ import utilities.util.FileUtilities;
 public class SleighCompile extends SleighBase {
 
 	static boolean yydebug = false;
+
+	private static int UNIQUE_CROSSBUILD_POSITION = 8;	// Starting bit with a unique address for crossbuild collision region
+	private static int UNIQUE_CROSSBUILD_NUMBITS = 8;	// Number of bits within a unique address for crossbuild collision region
 
 	private static boolean isLocationIsh(Object o) {
 		if (o instanceof Location) {
@@ -163,6 +168,11 @@ public class SleighCompile extends SleighBase {
 		}
 
 		@Override
+		public ConstructTpl enterSection(Location where) {
+			return SleighCompile.this.enterSection(where);
+		}
+
+		@Override
 		public SectionVector standaloneSection(ConstructTpl c) {
 			return SleighCompile.this.standaloneSection(c);
 		}
@@ -255,6 +265,7 @@ public class SleighCompile extends SleighBase {
 	private boolean warnalllocalcollisions;	// True if local export collisions generate individual warnings
 	private boolean warnallnops;		// True if pcode NOPs generate individual warnings
 	private boolean failinsensitivedups;	// True if case insensitive register duplicates cause error
+	private boolean debugoutput;		// True if output .sla is written in XML debug format
 	private VectorSTL<String> noplist = new VectorSTL<>();
 
 	private Deque<WithBlock> withstack = new LinkedList<>();
@@ -325,6 +336,12 @@ public class SleighCompile extends SleighBase {
 		res.push_back(op);
 		sym.incrementRefCount();	// Keep track of the references to the section symbol
 		return res;
+	}
+
+	protected ConstructTpl enterSection(Location where) {
+		entry("enterSection", where);
+		pcode.resetLabelCount();
+		return new ConstructTpl(where);
 	}
 
 	protected SectionVector standaloneSection(ConstructTpl main) {
@@ -528,13 +545,6 @@ public class SleighCompile extends SleighBase {
 			reportWarning(null, "Use -t switch to list each individually");
 		}
 		checker.testLargeTemporary();
-		if ((!largetemporarywarning) && checker.getNumLargeTemporaries() > 0) {
-			reportWarning(null,
-				checker.getNumLargeTemporaries() +
-					" constructors contain temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE +
-					" bytes.");
-			reportWarning(null, "Use -o switch to list each individually.");
-		}
 	}
 
 	private static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
@@ -702,6 +712,7 @@ public class SleighCompile extends SleighBase {
 		largetemporarywarning = false;
 		warnallnops = false;
 		failinsensitivedups = true;
+		debugoutput = false;
 		root = null;
 		pcode.resetLabelCount();
 	}
@@ -769,17 +780,6 @@ public class SleighCompile extends SleighBase {
 		pcode.setEnforceLocalKey(val);
 	}
 
-	/**
-	 * Sets whether or not to print out warning info about
-	 * {@link Constructor}s which reference varnodes in the
-	 * unique space larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
-	 * @param val whether to print info about contructors using large varnodes
-	 */
-	public void setLargeTemporaryWarning(boolean val) {
-		entry("setLargeTemporaryWarning", val);
-		largetemporarywarning = val;
-	}
-
 	public void setLenientConflict(boolean val) {
 		entry("setLenientConflict", val);
 		lenientconflicterrors = val;
@@ -798,6 +798,11 @@ public class SleighCompile extends SleighBase {
 	public void setInsensitiveDuplicateError(boolean val) {
 		entry("setInsensitiveDuplicateError", val);
 		failinsensitivedups = val;
+	}
+
+	public void setDebugOutput(boolean val) {
+		entry("setDebugOutput", val);
+		debugoutput = val;
 	}
 
 	// Do all post processing on the parsed data structures
@@ -1008,7 +1013,7 @@ public class SleighCompile extends SleighBase {
 	public void setEndian(int end) {
 		entry("setEndian", end);
 		target_endian = end;
-		predefinedSymbols(); // Set up symbols now that we know endianess
+		predefinedSymbols(); // Set up symbols now that we know endianness
 	}
 
 	public void setAlignment(int val) {
@@ -1580,64 +1585,74 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
-	private static void shiftUniqueVn(VarnodeTpl vn, int sa) {
-		entry("shiftUniqueVn", vn, sa);
+	/**
+	 * Insert a region of zero bits into an address offset
+	 * @param addr is the address offset
+	 * @return the modified offset
+	 */
+	private static long insertCrossBuildRegion(long addr) {
+		long upperbits = (addr >> UNIQUE_CROSSBUILD_POSITION) << (UNIQUE_CROSSBUILD_POSITION +
+			UNIQUE_CROSSBUILD_NUMBITS);
+		long lowerbits =
+			(addr << (64 - UNIQUE_CROSSBUILD_POSITION)) >>> (64 - UNIQUE_CROSSBUILD_POSITION);
+		return upperbits | lowerbits;
+	}
+
+	private static void shiftUniqueVn(VarnodeTpl vn) {
+		entry("shiftUniqueVn", vn);
 		// If the varnode is in the unique space, shift its offset up by -sa- bits
 		if (vn.getSpace().isUniqueSpace() &&
 			(vn.getOffset().getType() == ConstTpl.const_type.real)) {
-			long val = vn.getOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(vn.getOffset().getReal());
+
 			vn.setOffset(val);
 		}
 	}
 
-	private static void shiftUniqueOp(OpTpl op, int sa) {
-		entry("shiftUniqueOp", op, sa);
+	private static void shiftUniqueOp(OpTpl op) {
+		entry("shiftUniqueOp", op);
 		// Shift the offset up by -sa- bits for any varnode used by this -op- in the unique space
 		VarnodeTpl outvn = op.getOut();
 		if (outvn != null) {
-			shiftUniqueVn(outvn, sa);
+			shiftUniqueVn(outvn);
 		}
 		for (int i = 0; i < op.numInput(); ++i) {
-			shiftUniqueVn(op.getIn(i), sa);
+			shiftUniqueVn(op.getIn(i));
 		}
 	}
 
-	private static void shiftUniqueHandle(HandleTpl hand, int sa) {
-		entry("shiftUniqueHandle", hand, sa);
+	private static void shiftUniqueHandle(HandleTpl hand) {
+		entry("shiftUniqueHandle", hand);
 		// Shift the offset up by -sa- bits, for either the dynamic or static varnode aspects that are in the unique space
 		if (hand.getSpace().isUniqueSpace() &&
 			(hand.getPtrSpace().getType() == ConstTpl.const_type.real) &&
 			(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
-			long val = hand.getPtrOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(hand.getPtrOffset().getReal());
 			hand.setPtrOffset(val);
 		}
 		else if (hand.getPtrSpace().isUniqueSpace() &&
 			(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
-			long val = hand.getPtrOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(hand.getPtrOffset().getReal());
 			hand.setPtrOffset(val);
 		}
 
 		if (hand.getTempSpace().isUniqueSpace() &&
 			(hand.getTempOffset().getType() == ConstTpl.const_type.real)) {
-			long val = hand.getTempOffset().getReal();
-			val <<= sa;
+			long val = insertCrossBuildRegion(hand.getTempOffset().getReal());
 			hand.setTempOffset(val);
 		}
 	}
 
-	private static void shiftUniqueConstruct(ConstructTpl tpl, int sa) {
-		entry("shiftUniqueConstruct", tpl, sa);
+	private static void shiftUniqueConstruct(ConstructTpl tpl) {
+		entry("shiftUniqueConstruct", tpl);
 		// Shift the offset up by -sa- bits, for any varnode in the unique space associated with this template
 		HandleTpl result = tpl.getResult();
 		if (result != null) {
-			shiftUniqueHandle(result, sa);
+			shiftUniqueHandle(result);
 		}
 		VectorSTL<OpTpl> vec = tpl.getOpvec();
 		for (int i = 0; i < vec.size(); ++i) {
-			shiftUniqueOp(vec.get(i), sa);
+			shiftUniqueOp(vec.get(i));
 		}
 	}
 
@@ -1650,7 +1665,6 @@ public class SleighCompile extends SleighBase {
 		}
 
 		unique_allocatemask = 0xff;	// Provide 8 bits of free space
-		int sa = 8;
 		int secsize = sections.size(); // This is the upper bound for section numbers
 		SubtableSymbol sym = root; // Start with the instruction table
 		int i = -1;
@@ -1660,12 +1674,12 @@ public class SleighCompile extends SleighBase {
 				Constructor ct = sym.getConstructor(j);
 				ConstructTpl tpl = ct.getTempl();
 				if (tpl != null) {
-					shiftUniqueConstruct(tpl, sa);
+					shiftUniqueConstruct(tpl);
 				}
 				for (int k = 0; k < secsize; ++k) {
 					ConstructTpl namedtpl = ct.getNamedTempl(k);
 					if (namedtpl != null) {
-						shiftUniqueConstruct(namedtpl, sa);
+						shiftUniqueConstruct(namedtpl);
 					}
 				}
 			}
@@ -1676,7 +1690,8 @@ public class SleighCompile extends SleighBase {
 			sym = tables.get(i);
 		}
 		long ubase = getUniqueBase(); // We have to adjust the unique base
-		ubase <<= sa;
+		ubase += 1 << UNIQUE_CROSSBUILD_POSITION;
+		ubase <<= UNIQUE_CROSSBUILD_NUMBITS;
 		setUniqueBase(ubase);
 	}
 
@@ -1759,12 +1774,6 @@ public class SleighCompile extends SleighBase {
 		macrotable.push_back(rtl);
 	}
 
-	// Virtual functions (not used by the compiler)
-	@Override
-	public void initialize(DocumentStorage store) {
-		// do nothing
-	}
-
 	@Override
 	public int instructionLength(Address baseaddr) {
 		return 0;
@@ -1778,7 +1787,7 @@ public class SleighCompile extends SleighBase {
 	public void setAllOptions(Map<String, String> preprocs, boolean unnecessaryPcodeWarning,
 			boolean lenientConflict, boolean allCollisionWarning, boolean allNopWarning,
 			boolean deadTempWarning, boolean unusedFieldWarning, boolean enforceLocalKeyWord,
-			boolean largeTemporaryWarning, boolean caseSensitiveRegisterNames) {
+			boolean caseSensitiveRegisterNames, boolean debugOutput) {
 		Set<Entry<String, String>> entrySet = preprocs.entrySet();
 		for (Entry<String, String> entry : entrySet) {
 			setPreprocValue(entry.getKey(), entry.getValue());
@@ -1790,8 +1799,8 @@ public class SleighCompile extends SleighBase {
 		setDeadTempWarning(deadTempWarning);
 		setUnusedFieldWarning(unusedFieldWarning);
 		setEnforceLocalKeyWord(enforceLocalKeyWord);
-		setLargeTemporaryWarning(largeTemporaryWarning);
 		setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
+		setDebugOutput(debugOutput);
 	}
 
 	public int run_compilation(String filein, String fileout)
@@ -1837,9 +1846,21 @@ public class SleighCompile extends SleighBase {
 			}
 			if ((parseres == 0) && (numErrors() == 0)) {
 				// If no errors
-				PrintStream s = new PrintStream(new FileOutputStream(new File(fileout)));
-				saveXml(s); // Dump output xml
-				s.close();
+				ResourceFile resourceFile = new ResourceFile(fileout);
+				if (debugoutput) {
+					// If the debug output format was requested, use XML encoder
+					XmlEncode encoder = new XmlEncode();
+					encode(encoder);
+					OutputStream stream = resourceFile.getOutputStream();
+					encoder.writeTo(stream);
+					stream.close();
+				}
+				else {
+					// Use the standard .sla format encoder
+					PackedEncode encoder = SlaFormat.buildEncoder(resourceFile);
+					encode(encoder);		// Dump compiler output
+					encoder.getOutputStream().close();
+				}
 			}
 			else {
 				Msg.error(SleighCompile.class, "No output produced");
@@ -1867,11 +1888,10 @@ public class SleighCompile extends SleighBase {
 	 * compiler without using the launcher.  The full SoftwareModeling classpath 
 	 * must be established including any dependencies.
 	 * @param args compiler command line arguments
-	 * @throws JDOMException for XML errors
 	 * @throws IOException for file access errors
 	 * @throws RecognitionException for parsing errors
 	 */
-	public static void main(String[] args) throws JDOMException, IOException, RecognitionException {
+	public static void main(String[] args) throws IOException, RecognitionException {
 		System.exit(SleighCompileLauncher.runMain(args));
 	}
 }

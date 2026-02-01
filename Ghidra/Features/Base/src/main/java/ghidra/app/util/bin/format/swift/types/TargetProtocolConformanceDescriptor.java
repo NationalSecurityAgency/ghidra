@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,23 +16,33 @@
 package ghidra.app.util.bin.format.swift.types;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.*;
-import ghidra.program.model.data.*;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
+import ghidra.app.util.bin.format.swift.SwiftUtils;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift TargetProtocolConformanceDescriptor structure
+ * Represents a Swift {@code TargetProtocolConformanceDescriptor} structure
  * 
- * @see <a href="https://github.com/apple/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public final class TargetProtocolConformanceDescriptor implements SwiftStructure {
+public final class TargetProtocolConformanceDescriptor extends SwiftTypeMetadataStructure {
 	
-	private int protocolDescriptor;
-	private int nominalTypeDescriptor;
-	private int protocolWitnessTable;
-	private int conformanceFlags;
+	private int protocol;
+	private int typeRef;
+	private int witnessTablePattern;
+	private ConformanceFlags flags;
+
+	// Trailing objects
+	private TargetRelativeContextPointer retroactiveContext;
+	private TargetResilientWitnessHeader resilientWitnessHeader;
+	private List<TargetResilientWitness> resilientWitnesses = new ArrayList<>();
+	private TargetGenericWitnessTable genericWitnessTable;
 
 	/**
 	 * Creates a new {@link TargetProtocolConformanceDescriptor}
@@ -41,46 +51,99 @@ public final class TargetProtocolConformanceDescriptor implements SwiftStructure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public TargetProtocolConformanceDescriptor(BinaryReader reader) throws IOException {
-		protocolDescriptor = reader.readNextInt();
-		nominalTypeDescriptor = reader.readNextInt();
-		protocolWitnessTable = reader.readNextInt();
-		conformanceFlags = reader.readNextInt();
+		super(reader.getPointerIndex());
+		protocol = reader.readNextInt();
+		typeRef = reader.readNextInt();
+		witnessTablePattern = reader.readNextInt();
+		flags = new ConformanceFlags(reader);
+		
+		if (flags.isRetroactive()) {
+			retroactiveContext = new TargetRelativeContextPointer(reader);
+		}
+
+		if (flags.hasResilientWitnesses()) {
+			resilientWitnessHeader = new TargetResilientWitnessHeader(reader);
+			for (int i = 0; i < resilientWitnessHeader.getNumWitnesses(); i++) {
+				resilientWitnesses.add(new TargetResilientWitness(reader));
+			}
+		}
+
+		if (flags.hasGenericWitnessTable()) {
+			genericWitnessTable = new TargetGenericWitnessTable(reader);
+		}
 	}
 
 	/**
-	 * Gets the protocol being conformed to
-	 * 
-	 * @return The protocol being conformed to
+	 * {@return the protocol being conformed to}
 	 */
-	public int getProtocolDescriptor() {
-		return protocolDescriptor;
+	public int getProtocol() {
+		return protocol;
 	}
 
 	/**
-	 * Gets some description of the type that conforms to the protocol
-	 * 
-	 * @return Some description of the type that conforms to the protocol
+	 * {@return some description of the type that conforms to the protocol}
 	 */
-	public int getNominalTypeDescriptor() {
-		return nominalTypeDescriptor;
+	public int getTypeRef() {
+		return typeRef;
 	}
 
 	/**
-	 * Gets the witness table pattern, which may also serve as the witness table
-	 * 
-	 * @return The witness table pattern, which may also serve as the witness table
+	 * {@return the witness table pattern, which may also serve as the witness table}
 	 */
-	public int getProtocolWitnessTable() {
-		return protocolWitnessTable;
+	public int getWitnessTablePattern() {
+		return witnessTablePattern;
 	}
 
 	/**
-	 * Gets various flags, including the kind of conformance
-	 * 
-	 * @return Various flags, including the kind of conformance
+	 * {@return various flags, including the kind of conformance}
 	 */
-	public int getConformanceFlags() {
-		return conformanceFlags;
+	public ConformanceFlags getConformanceFlags() {
+		return flags;
+	}
+	
+	/**
+	 * {@return the {@link TargetRelativeContextPointer retroactive context}, or {@code null} if it 
+	 * doesn't exist}
+	 */
+	public TargetRelativeContextPointer getRetroactiveContext() {
+		return retroactiveContext;
+	}
+
+	/**
+	 * {@return the {@link TargetResilientWitnessHeader}, or {@code null} if it doesn't exist}
+	 */
+	public TargetResilientWitnessHeader getResilientWitnessHeader() {
+		return resilientWitnessHeader;
+	}
+
+	/**
+	 * {@return the {@link List} of resilient witnesses}
+	 */
+	public List<TargetResilientWitness> getResilientWitnesses() {
+		return resilientWitnesses;
+	}
+
+	/**
+	 * {@return the {@link TargetGenericWitnessTable}, or {@code null} if it doesn't exist}
+	 */
+	public TargetGenericWitnessTable getGenericWitnessTable() {
+		return genericWitnessTable;
+	}
+
+	@Override
+	public List<SwiftTypeMetadataStructure> getTrailingObjects() {
+		List<SwiftTypeMetadataStructure> ret = new ArrayList<>();
+		if (retroactiveContext != null) {
+			ret.add(retroactiveContext);
+		}
+		if (resilientWitnessHeader != null) {
+			ret.add(resilientWitnessHeader);
+			ret.addAll(resilientWitnesses);
+		}
+		if (genericWitnessTable != null) {
+			ret.add(genericWitnessTable);
+		}
+		return ret;
 	}
 
 	@Override
@@ -95,14 +158,13 @@ public final class TargetProtocolConformanceDescriptor implements SwiftStructure
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
-		struct.add(DWORD, "ProtocolDescriptor", "The protocol being conformed to");
-		struct.add(SwiftUtils.PTR_RELATIVE, "NominalTypeDescriptor",
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
+		struct.add(SwiftUtils.PTR_RELATIVE_MASKED, "Protocol", "The protocol being conformed to");
+		struct.add(SwiftUtils.PTR_RELATIVE, "TypeRef",
 			"Some description of the type that conforms to the protocol");
-		struct.add(DWORD, "ProtocolWitnessTable",
+		struct.add(DWORD, "WitnessTablePattern",
 			"The witness table pattern, which may also serve as the witness table");
-		struct.add(DWORD, "ConformanceFlags", "Various flags, including the kind of conformance");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
+		struct.add(flags.toDataType(), "Flags", "Various flags, including the kind of conformance");
 		return struct;
 	}
 

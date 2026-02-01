@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -49,7 +50,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -115,30 +115,36 @@ import ghidra.util.task.TaskMonitor;
  * Here is the type hierarchy presented with notes regarding structural interface implementations:
  * <ul>
  * <li>{@link AbstractBaseDBTraceCodeUnitsView} structurally implements
- * {@link TraceBaseCodeUnitsView}</li>
+ * {@link TraceBaseCodeUnitsView}
  * <ul>
- * <li>{@link AbstractComposedDBTraceCodeUnitsView}</li>
+ * <li>{@link AbstractComposedDBTraceCodeUnitsView}
  * <ul>
  * <li>{@link DBTraceCodeUnitsView} nominally implements {@link TraceCodeUnitsView}</li>
  * <li>{@link DBTraceDataView} nominally implements {@link TraceDataView}</li>
  * <li>{@link DBTraceDefinedUnitsView} nominally implements {@link TraceDefinedUnitsView}</li>
  * </ul>
- * <li>{@link AbstractSingleDBTraceCodeUnitsView}</li>
+ * </li>
+ * <li>{@link AbstractSingleDBTraceCodeUnitsView}
  * <ul>
  * <li>{@link AbstractBaseDBTraceDefinedUnitsView} structurally implements
- * {@link TraceBaseDefinedUnitsView}</li>
+ * {@link TraceBaseDefinedUnitsView}
  * <ul>
  * <li>{@link DBTraceDefinedDataView} nominally implements {@link TraceDefinedDataView}</li>
  * <li>{@link DBTraceInstructionsView} nominally implements {@link TraceInstructionsView}</li>
  * </ul>
+ * </li>
  * <li>{@link DBTraceUndefinedDataView} nominally implements {@link TraceUndefinedDataView}</li>
  * </ul>
+ * </li>
+ * </ul>
+ * </li>
  * </ul>
  * 
  * <p>
  * The view composition is not hierarchical, as each may represent a different combination, and one
  * type may appear in several compositions. The single-type views are named first, then the composed
  * views:
+ * 
  * <ul>
  * <li>Instructions - single-type view</li>
  * <li>Defined Data - single-type view</li>
@@ -323,7 +329,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
 		new WeakValueHashMap<>();
 
-	public DBTraceCodeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceCodeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTracePlatformManager platformManager,
 			DBTraceDataTypeManager dataTypeManager, DBTraceOverlaySpaceAdapter overlayAdapter,
@@ -398,13 +404,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	@Override
 	protected DBTraceCodeSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceCodeSpace(this, dbh, space, ent, null);
-	}
-
-	@Override
-	protected DBTraceCodeSpace createRegisterSpace(AddressSpace space, TraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceCodeSpace(this, dbh, space, ent, thread);
+		return new DBTraceCodeSpace(this, dbh, space, ent);
 	}
 
 	@Override
@@ -423,18 +423,12 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	}
 
 	@Override
-	public TraceCodeSpace getCodeSpace(TraceAddressSpace space, boolean createIfAbsent) {
-		return get(space, createIfAbsent);
-	}
-
-	@Override
 	public DBTraceCodeSpace getCodeSpace(AddressSpace space, boolean createIfAbsent) {
 		return getForSpace(space, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceCodeSpace getCodeRegisterSpace(TraceThread thread,
-			boolean createIfAbsent) {
+	public DBTraceCodeSpace getCodeRegisterSpace(TraceThread thread, boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
@@ -445,41 +439,30 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	}
 
 	@Override
-	public DBTraceCodeSpace getCodeRegisterSpace(TraceStackFrame frame,
-			boolean createIfAbsent) {
+	public DBTraceCodeSpace getCodeRegisterSpace(TraceStackFrame frame, boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}
 
 	@Internal
-	public void replaceDataTypes(long oldID, long newID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		TODO();
 	}
 
 	@Internal
-	public void clearData(LinkedList<Long> deletedDataTypeIds, TaskMonitor monitor) {
+	public void clearData(Set<Long> deletedDataTypeIds, TaskMonitor monitor) {
 		TODO();
 	}
 
 	@Internal
 	public void clearPlatform(Lifespan span, AddressRange range, DBTraceGuestPlatform guest,
 			TaskMonitor monitor) throws CancelledException {
-		delegateDeleteV(range.getAddressSpace(),
-			m -> m.clearPlatform(span, range, guest, monitor));
+		delegateDeleteV(range.getAddressSpace(), m -> m.clearPlatform(span, range, guest, monitor));
 	}
 
 	@Internal
 	public void deletePlatform(DBTraceGuestPlatform guest, TaskMonitor monitor)
 			throws CancelledException {
-		// TODO: Use sub-monitors when available
-		for (DBTraceCodeSpace codeSpace : memSpaces.values()) {
-			codeSpace.clearPlatform(Lifespan.ALL, codeSpace.all, guest, monitor);
-		}
-		for (DBTraceCodeSpace codeSpace : regSpaces.values()) {
-			// TODO: I don't know any way to get guest instructions into register space
-			// The mapping manager does (should) not allow guest register addresses
-			// TODO: Test this if I ever get guest data units
-			// TODO: I think explicit per-thread/frame register spaces will be going away, anyway
-			// They'll just be path-named overlays on register space?
+		for (DBTraceCodeSpace codeSpace : spaces.values()) {
 			codeSpace.clearPlatform(Lifespan.ALL, codeSpace.all, guest, monitor);
 		}
 	}
@@ -623,7 +606,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 			return result;
 		}
 		Collection<AbstractDBTraceCodeUnit<?>> changes = new ArrayList<>();
-		for (DBTraceCodeSpace space : memSpaces.values()) {
+		for (DBTraceCodeSpace space : spaces.values()) {
 			changes.addAll(
 				space.dataMapSpace.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
 						.values());
@@ -644,7 +627,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 			return result;
 		}
 		Collection<AbstractDBTraceCodeUnit<?>> changes = new ArrayList<>();
-		for (DBTraceCodeSpace space : memSpaces.values()) {
+		for (DBTraceCodeSpace space : spaces.values()) {
 			changes.addAll(
 				space.dataMapSpace.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.space))
 						.values());

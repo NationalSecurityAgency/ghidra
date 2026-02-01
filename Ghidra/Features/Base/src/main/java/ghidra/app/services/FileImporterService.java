@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,16 +30,17 @@ public interface FileImporterService {
 
 	/**
 	 * Imports the given file into the specified Ghidra project folder.
-	 * @param folder the Ghidra project folder to store the imported file.
-	 * If null, the active project's root folder will be assumed.
+	 * @param folder the folder to use as the destination for the import.  If the value is null, 
+	 * then the last used folder is preferred, with the root folder being used by default. 
 	 * @param file the file to import.
 	 */
 	public void importFile(DomainFolder folder, File file);
 
 	/**
 	 * Imports the given files into the specified Ghidra project folder.
-	 * @param folder the Ghidra project folder to store the imported files.
-	 * If null, the active project's root folder will be assumed.
+	 * @param folder the Ghidra project folder to store the imported files.  The folder to use as
+	 * the destination for the import.  If the value is null, then the last used folder is 
+	 * preferred, with the root folder being used by default. 
 	 * @param files the files to import.
 	 */
 	public void importFiles(DomainFolder folder, List<File> files);

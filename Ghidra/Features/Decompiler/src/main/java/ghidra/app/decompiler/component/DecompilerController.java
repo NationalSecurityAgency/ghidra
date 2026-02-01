@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,13 @@ import com.google.common.cache.CacheBuilder;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.UndefinedFunction;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import utility.function.Callback;
 
@@ -38,6 +40,8 @@ import utility.function.Callback;
  */
 
 public class DecompilerController {
+
+	private ServiceProvider serviceProvider;
 	private DecompilerPanel decompilerPanel;
 	private DecompilerManager decompilerMgr;
 	private final DecompilerCallbackHandler callbackHandler;
@@ -46,8 +50,10 @@ public class DecompilerController {
 	private Cache<Function, DecompileResults> decompilerCache;
 	private int cacheSize;
 
-	public DecompilerController(DecompilerCallbackHandler handler, DecompileOptions options,
+	public DecompilerController(ServiceProvider serviceProvider, DecompilerCallbackHandler handler,
+			DecompileOptions options,
 			DecompilerClipboardProvider clipboard) {
+		this.serviceProvider = serviceProvider;
 		this.cacheSize = options.getCacheSize();
 		this.callbackHandler = handler;
 		decompilerCache = buildCache();
@@ -56,6 +62,10 @@ public class DecompilerController {
 			new DecompilerPanel(this, options, clipboard, decompilerMgr.getTaskMonitorComponent());
 
 		decompilerPanel.setHoverMode(true);
+	}
+
+	public ServiceProvider getServiceProvider() {
+		return serviceProvider;
 	}
 
 	public DecompilerPanel getDecompilerPanel() {
@@ -98,7 +108,8 @@ public class DecompilerController {
 	 * @param viewerPosition the viewer position
 	 */
 	public void display(Program program, ProgramLocation location, ViewerPosition viewerPosition) {
-		if (!decompilerMgr.isBusy() && decompilerPanel.containsLocation(location)) {
+
+		if (isAlreadyDecompiled(location)) {
 			decompilerPanel.setLocation(location, viewerPosition);
 			return;
 		}
@@ -108,6 +119,35 @@ public class DecompilerController {
 			return;
 		}
 		decompilerMgr.decompile(program, location, viewerPosition, null, false);
+	}
+
+	private boolean isAlreadyDecompiled(ProgramLocation location) {
+		if (decompilerMgr.isBusy()) {
+			return false;
+		}
+
+		if (!decompilerPanel.containsLocation(location)) {
+			return false;
+		}
+
+		Function currentFunction = currentDecompileData.getFunction();
+		if (currentFunction instanceof UndefinedFunction) {
+			//
+			// There is an oddness with some Undefined functions where their body overlaps a normal
+			// function body.  If the current function is Undefined, check to see if the location is
+			// also in a defined function.  If so, the return false so the new location will get 
+			// decompiled.
+			// 
+			Program program = location.getProgram();
+			FunctionManager manager = program.getFunctionManager();
+			Address address = location.getAddress();
+			Function function = manager.getFunctionContaining(address);
+			if (!currentFunction.equals(function)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private boolean loadFromCache(Program program, ProgramLocation location,

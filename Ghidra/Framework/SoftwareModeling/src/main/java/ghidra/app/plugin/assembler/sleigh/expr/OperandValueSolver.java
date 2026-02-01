@@ -41,7 +41,7 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 	 * Obtains the "defining expression"
 	 * 
 	 * <p>
-	 * This is either the symbols assigned defining expression, or the expression associated with
+	 * This is either the symbol's assigned defining expression, or the expression associated with
 	 * its defining symbol.
 	 * 
 	 * @return the defining expression, or null if neither is available
@@ -60,25 +60,31 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 	}
 
 	@Override
-	public AssemblyResolution solve(OperandValue ov, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
-			throws NeedsBackfillException {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			OperandValue ov, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) throws NeedsBackfillException {
 		Constructor cons = ov.getConstructor();
 		OperandSymbol sym = cons.getOperand(ov.getIndex());
 		PatternExpression patexp = getDefiningExpression(sym);
 		if (patexp == null) {
 			if (goal.equals(MaskedLong.ZERO)) {
-				return AssemblyResolution.nop(description, null, null);
+				return factory.nop(description);
 			}
-			return AssemblyResolution.error("Operand " + sym.getName() +
-				" is undefined and does not agree with child requirements", description);
+			return factory.newErrorBuilder()
+					.error("Operand " + sym.getName() +
+						" is undefined and does not agree with child requirements")
+					.description(description)
+					.build();
 		}
-		AssemblyResolution result = solver.solve(patexp, goal, vals, cur, hints, description);
+		AssemblyResolution result =
+			solver.solve(factory, patexp, goal, vals, cur, hints, description);
 		if (result.isError()) {
 			AssemblyResolvedError err = (AssemblyResolvedError) result;
-			return AssemblyResolution.error(err.getError(),
-				"Solution to " + sym.getName() + " := " + goal + " = " + patexp,
-				List.of(result), null);
+			return factory.newErrorBuilder()
+					.error(err.getError())
+					.description("Solution to " + sym.getName() + " := " + goal + " = " + patexp)
+					.children(List.of(result))
+					.build();
 		}
 		// TODO: Shifting here seems like a hack to me.
 		// I assume this only comes at the top of an expression

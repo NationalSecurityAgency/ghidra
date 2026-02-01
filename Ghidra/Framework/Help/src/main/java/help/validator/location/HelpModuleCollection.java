@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,15 +27,13 @@ import javax.help.Map.ID;
 import javax.help.TOCView;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import help.*;
 import help.CustomTOCView.CustomTreeItemDecorator;
-import help.HelpBuildUtils;
-import help.TOCItemProvider;
 import help.validator.model.*;
 
 /**
  * A class that is meant to hold a single help <b>input</b> directory and 0 or more
  * <b>external, pre-built</b> help sources (i.e., jar file or directory).
- * <p>
  * <pre>
  * 						Note
  * 						Note
@@ -110,13 +108,26 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 		if (inputHelp == null && externalHelpSets.size() == 0) {
 			throw new IllegalArgumentException(
-				"Required TOC file does not exist.  " + "You must create a TOC_Source.xml file, " +
+				"Required TOC file does not exist.  You must create a TOC_Source.xml file, " +
 					"even if it is an empty template, or provide a pre-built TOC.  " +
 					"Help directories: " + locations.toString());
 		}
 	}
 
+	public void addGeneratedHelpLocation(File file) {
+		HelpModuleLocation location = new GeneratedDirectoryHelpModuleLocation(file);
+		helpLocations.add(location);
+		HelpSet helpSet = location.getHelpSet();
+		if (helpSet != null) {
+			externalHelpSets.add(helpSet);
+		}
+	}
+
 	public GhidraTOCFile getSourceTOCFile() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return null;
+		}
 		return inputHelp.getSourceTOCFile();
 	}
 
@@ -140,17 +151,17 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 		externalHelpSets = new ArrayList<>();
 		for (HelpModuleLocation location : helpLocations) {
-			if (location.isHelpInputSource()) {
-				continue; // help sets only exist in pre-built help 
-			}
+			doAddHelpSet(location);
+		}
+	}
 
-			HelpSet helpSet = location.getHelpSet();
-			externalHelpSets.add(helpSet);
+	private void doAddHelpSet(HelpModuleLocation location) {
+		if (location.isHelpInputSource()) {
+			return; // help sets only exist in pre-built help 
 		}
 
-		if (externalHelpSets.isEmpty()) {
-			return;
-		}
+		HelpSet helpSet = location.getHelpSet();
+		externalHelpSets.add(helpSet);
 	}
 
 	public boolean containsHelpFiles() {
@@ -210,7 +221,8 @@ public class HelpModuleCollection implements TOCItemProvider {
 	public Collection<AnchorDefinition> getAllAnchorDefinitions() {
 		List<AnchorDefinition> result = new ArrayList<>();
 		for (HelpModuleLocation location : helpLocations) {
-			result.addAll(location.getAllAnchorDefinitions());
+			Collection<AnchorDefinition> anchors = location.getAllAnchorDefinitions();
+			result.addAll(anchors);
 		}
 		return result;
 	}
@@ -230,7 +242,6 @@ public class HelpModuleCollection implements TOCItemProvider {
 		if (helpPath == null) {
 			return null;
 		}
-
 		Map<PathKey, HelpFile> map = getPathHelpFileMap();
 		return map.get(new PathKey(helpPath));
 	}
@@ -251,6 +262,11 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 	@Override
 	public Map<String, TOCItemDefinition> getTocDefinitionsByID() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return Map.of();
+		}
+
 		Map<String, TOCItemDefinition> map = new HashMap<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		map.putAll(TOC.getTOCDefinitionByIDMapping());
@@ -260,7 +276,6 @@ public class HelpModuleCollection implements TOCItemProvider {
 	@Override
 	public Map<String, TOCItemExternal> getExternalTocItemsById() {
 		Map<String, TOCItemExternal> map = new HashMap<>();
-
 		if (externalHelpSets.isEmpty()) {
 			return map;
 		}
@@ -318,6 +333,11 @@ public class HelpModuleCollection implements TOCItemProvider {
 	 * @return the items
 	 */
 	public Collection<TOCItem> getInputTOCItems() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return List.of();
+		}
+
 		Collection<TOCItem> items = new ArrayList<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		items.addAll(TOC.getAllTOCItems());
@@ -325,6 +345,11 @@ public class HelpModuleCollection implements TOCItemProvider {
 	}
 
 	public Collection<HREF> getTOC_HREFs() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return List.of();
+		}
+
 		Collection<HREF> definitions = new ArrayList<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		definitions.addAll(getTOC_HREFs(TOC));
@@ -354,47 +379,4 @@ public class HelpModuleCollection implements TOCItemProvider {
 		return helpLocations.toString();
 	}
 
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	/** A class that wraps a Path and allows map lookup for paths from different file systems */
-	private class PathKey {
-		private String path;
-
-		PathKey(Path p) {
-			if (p == null) {
-				throw new IllegalArgumentException("Path cannot be null");
-			}
-			this.path = p.toString().replace('\\', '/');
-		}
-
-		@Override
-		public int hashCode() {
-			return path.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-
-			PathKey other = (PathKey) obj;
-
-			boolean result = path.equals(other.path);
-			return result;
-		}
-
-		@Override
-		public String toString() {
-			return path.toString();
-		}
-	}
 }

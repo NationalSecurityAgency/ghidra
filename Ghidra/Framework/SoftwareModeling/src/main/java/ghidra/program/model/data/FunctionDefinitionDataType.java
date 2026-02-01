@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,7 +141,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	}
 
 	@Override
-	public void setArguments(ParameterDefinition[] args) {
+	public void setArguments(ParameterDefinition... args) {
 		params = new ParameterDefinition[args.length];
 		for (int i = 0; i < args.length; i++) {
 			DataType dt = args[i].getDataType();
@@ -178,8 +178,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	@Override
 	public void setCallingConvention(String conventionName) throws InvalidInputException {
 
-		if (conventionName == null ||
-			CompilerSpec.CALLING_CONVENTION_unknown.equals(conventionName)) {
+		if (CompilerSpec.isUnknownCallingConvention(conventionName)) {
 			this.callingConventionName = CompilerSpec.CALLING_CONVENTION_unknown;
 			return;
 		}
@@ -189,17 +188,10 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		}
 
 		if (GenericCallingConvention
-				.getGenericCallingConvention(conventionName) != GenericCallingConvention.unknown) {
-			ProgramArchitecture arch = dataMgr != null ? dataMgr.getProgramArchitecture() : null;
-			if (arch != null) {
-				CompilerSpec compilerSpec = arch.getCompilerSpec();
-				PrototypeModel callingConvention =
-					compilerSpec.getCallingConvention(conventionName);
-				if (callingConvention == null) {
-					throw new InvalidInputException(
-						"Invalid calling convention name: " + conventionName);
-				}
-			}
+				.getGenericCallingConvention(conventionName) == GenericCallingConvention.unknown &&
+			(dataMgr == null ||
+				!dataMgr.getKnownCallingConventionNames().contains(conventionName))) {
+			throw new InvalidInputException("Unknown calling convention name: " + conventionName);
 		}
 
 		this.callingConventionName = conventionName;
@@ -365,8 +357,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		if ((signature.getName().equals(this.name)) && (compareComment(signature)) &&
 			(DataTypeUtilities.isSameOrEquivalentDataType(signature.getReturnType(),
 				this.returnType)) &&
-			(hasVarArgs == signature.hasVarArgs()) &&
-			(hasNoReturn == signature.hasNoReturn()) &&
+			(hasVarArgs == signature.hasVarArgs()) && (hasNoReturn == signature.hasNoReturn()) &&
 			callingConventionName.equals(signature.getCallingConventionName())) {
 			ParameterDefinition[] args = signature.getArguments();
 			if (args.length == this.params.length) {

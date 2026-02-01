@@ -3265,7 +3265,6 @@ PACIXSP_BTITARGETS: is ShowBTI=0 { }
 
 define pcodeop SIMD_PIECE;
 
-define pcodeop NEON_addv;
 define pcodeop NEON_aesd;
 define pcodeop NEON_aese;
 define pcodeop NEON_aesimc;
@@ -3274,20 +3273,7 @@ define pcodeop NEON_bfdot;
 define pcodeop NEON_bfmlalb;
 define pcodeop NEON_bfmlalt;
 define pcodeop NEON_bfmmla;
-define pcodeop NEON_bif;
-define pcodeop NEON_bit;
-define pcodeop NEON_bsl;
 define pcodeop NEON_cls;
-define pcodeop NEON_clz;
-define pcodeop NEON_cmeq;
-define pcodeop NEON_cmge;
-define pcodeop NEON_cmgt;
-define pcodeop NEON_cmhi;
-define pcodeop NEON_cmhs;
-define pcodeop NEON_cmle;
-define pcodeop NEON_cmlt;
-define pcodeop NEON_cmtst;
-define pcodeop NEON_cnt;
 define pcodeop NEON_ext;
 define pcodeop NEON_facge;
 define pcodeop NEON_facgt;
@@ -3300,7 +3286,6 @@ define pcodeop NEON_fcmle;
 define pcodeop NEON_fcmlt;
 define pcodeop NEON_fcvtzs;
 define pcodeop NEON_fcvtzu;
-define pcodeop NEON_fmadd;
 define pcodeop NEON_fmax;
 define pcodeop NEON_fmaxnm;
 define pcodeop NEON_fmaxnmp;
@@ -3314,7 +3299,6 @@ define pcodeop NEON_fminnmv;
 define pcodeop NEON_fminp;
 define pcodeop NEON_fminv;
 define pcodeop NEON_fmov;
-define pcodeop NEON_fmsub;
 define pcodeop NEON_fmulx;
 define pcodeop NEON_fnmadd;
 define pcodeop NEON_fnmsub;
@@ -3862,12 +3846,20 @@ macro fcomp(a, b)
 	OV = 0;
 }
 
+# this sets NG, ZR, CY, and OV to the values the processor
+# uses to indicate an unordered comparison.  If at least 
+# one of the inputs is NaN, it skips to the next instruction.
+# A use of this macro should be followed by a use of the
+# fcomp macro, which will set the flags according to an 
+# ordered comparison.  Basically, set the flags to the "unordered"
+# values, check for unordered, and if not set the flags again with
+# fcomp.
 macro ftestNAN(a, b)
 {
 	NG = 0;
 	ZR = 0;
-	CY = 0;
-	OV = 0;
+	CY = 1;
+	OV = 1;
 	tst:1 = nan(a) || nan(b);
 	if (tst) goto inst_next;
 }

@@ -21,7 +21,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import db.DBConstants;
 import db.DBHandle;
 import generic.test.AbstractGTest;
 import ghidra.GhidraApplicationLayout;
@@ -29,6 +28,7 @@ import ghidra.GhidraTestApplicationLayout;
 import ghidra.base.project.GhidraProject;
 import ghidra.framework.Application;
 import ghidra.framework.GhidraApplicationConfiguration;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
 import ghidra.framework.store.db.PackedDatabase;
@@ -139,7 +139,7 @@ public class IsfServer extends Thread {
 		DBHandle dbh = db.openForUpdate(dummy);
 		ProgramDB p = null;
 		try {
-			p = new ProgramDB(dbh, DBConstants.UPDATE, dummy, this);
+			p = new ProgramDB(dbh, OpenMode.UPDATE, dummy, this);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable()) {
@@ -151,7 +151,7 @@ public class IsfServer extends Thread {
 		}
 
 		dbh = db.openForUpdate(dummy);
-		p = new ProgramDB(dbh, DBConstants.UPGRADE, dummy, this);
+		p = new ProgramDB(dbh, OpenMode.UPGRADE, dummy, this);
 
 		if (!p.isChanged()) {
 			throw new RuntimeException(p + " uses an older version and was not upgraded.");
@@ -161,8 +161,8 @@ public class IsfServer extends Thread {
 	}
 
 	public static void main(String[] args) throws FileNotFoundException, IOException {
-		GhidraApplicationLayout layout = new GhidraTestApplicationLayout(
-			new File(AbstractGTest.getTestDirectoryPath()));
+		GhidraApplicationLayout layout =
+			new GhidraTestApplicationLayout(new File(AbstractGTest.getTestDirectoryPath()));
 		GhidraApplicationConfiguration config = new GhidraApplicationConfiguration();
 		config.setShowSplashScreen(false);
 		Application.initializeApplication(layout, config);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 	 * last scratch snapshot. Otherwise, this is the same as {@link #nowOn(long)}.
 	 * 
 	 * @param snap
-	 * @return
+	 * @return the lifespan
 	 */
 	static Lifespan nowOnMaybeScratch(long snap) {
 		if (isScratch(snap)) {
@@ -281,7 +281,7 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 
 		@Override
 		public String toString() {
-			return doToString();
+			return toString(DOMAIN::toString);
 		}
 
 		@Override
@@ -322,11 +322,14 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 
 	/**
 	 * A non-empty lifespan of snapshot keys
+	 * 
+	 * @param lmin the minimum snap
+	 * @param lmax the maximum snap
 	 */
 	public record Impl(long lmin, long lmax) implements Lifespan {
 		@Override
 		public String toString() {
-			return doToString();
+			return toString(DOMAIN::toString);
 		}
 
 		@Override
@@ -395,6 +398,12 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 	 * An interval tree implementing {@link MutableLifeSet}
 	 */
 	public class DefaultLifeSet extends DefaultSpanSet<Long, Lifespan> implements MutableLifeSet {
+		public static DefaultLifeSet copyOf(LifeSet set) {
+			DefaultLifeSet copy = new DefaultLifeSet();
+			copy.addAll(set);
+			return copy;
+		}
+
 		public DefaultLifeSet() {
 			super(Lifespan.DOMAIN);
 		}

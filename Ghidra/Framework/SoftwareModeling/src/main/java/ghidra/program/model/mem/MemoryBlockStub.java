@@ -46,7 +46,7 @@ public class MemoryBlockStub implements MemoryBlock {
 	}
 
 	@Override
-	public int getPermissions() {
+	public int getFlags() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -147,6 +147,16 @@ public class MemoryBlockStub implements MemoryBlock {
 
 	@Override
 	public void setVolatile(boolean v) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isArtificial() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setArtificial(boolean a) {
 		throw new UnsupportedOperationException();
 	}
 

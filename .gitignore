@@ -54,7 +54,6 @@ Release
 *.aps
 *.vcproj.*
 *.vcxproj.*
-# dump files
 *.mdmp
 .vs/
 .editorconfig/
@@ -77,17 +76,15 @@ Release
 */*/*/*/test-bin
 
 # Ignore Intellij metadata
-**/*.iml
-**/.idea
 *.iml
-.idea
-
-# Ignore gradle wrapper files
-gradle/wrapper
-gradlew
-gradlew.*
+.idea/
 
 # Ignore logs and core dumps
 *.log
 core.*
 !core.png
+!core.py
+
+# python files
+*.egg-info
+__pycache__

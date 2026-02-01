@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.exception.RollbackException;
 public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 	private Program notepad;
 	private Program x08;
-	private Command command;
+	private Command<Program> command;
 
 	public AddMemoryBlockCmdTest() {
 		super();
@@ -73,7 +73,7 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 		assertEquals(block.getName(), f.getName());
 	}
 
-	private boolean applyCmd(Program p, Command c) {
+	private boolean applyCmd(Program p, Command<Program> c) {
 		int txId = p.startTransaction(c.getName());
 		boolean commit = true;
 		try {
@@ -136,12 +136,13 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 		assertNotNull(block);
 		assertEquals(100, block.getSize());
 		AddressSpace space = x08.getAddressFactory().getAddressSpace(".testBit");
-		assertNotNull(space);
+		assertTrue(space instanceof OverlayAddressSpace);
+		OverlayAddressSpace ospace = (OverlayAddressSpace) space;
 		assertTrue(space.isOverlaySpace());
 		assertEquals(space.getAddress(0x3000), block.getStart());
 		assertEquals(space.getAddress(0x3063), block.getEnd());
-		assertEquals(block.getStart(), space.getMinAddress());
-		assertEquals(block.getEnd(), space.getMaxAddress());
+		assertEquals(block.getStart(), ospace.getOverlayAddressSet().getMinAddress());
+		assertEquals(block.getEnd(), ospace.getOverlayAddressSet().getMaxAddress());
 		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 		AddressRange mappedRange = info.getMappedRange().get();
 		assertEquals(13, mappedRange.getLength());
@@ -198,12 +199,13 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 		assertNotNull(block);
 		assertEquals(100, block.getSize());
 		AddressSpace space = x08.getAddressFactory().getAddressSpace(".testByte");
-		assertNotNull(space);
+		assertTrue(space instanceof OverlayAddressSpace);
+		OverlayAddressSpace ospace = (OverlayAddressSpace) space;
 		assertTrue(space.isOverlaySpace());
 		assertEquals(space.getAddress(0x3000), block.getStart());
 		assertEquals(space.getAddress(0x3063), block.getEnd());
-		assertEquals(block.getStart(), space.getMinAddress());
-		assertEquals(block.getEnd(), space.getMaxAddress());
+		assertEquals(block.getStart(), ospace.getOverlayAddressSet().getMinAddress());
+		assertEquals(block.getEnd(), ospace.getOverlayAddressSet().getMaxAddress());
 		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 		AddressRange mappedRange = info.getMappedRange().get();
 		assertEquals(100, mappedRange.getLength());
@@ -226,12 +228,13 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 		assertNotNull(block);
 		assertEquals(100, block.getSize());
 		AddressSpace space = x08.getAddressFactory().getAddressSpace(".testByte");
-		assertNotNull(space);
+		assertTrue(space instanceof OverlayAddressSpace);
+		OverlayAddressSpace ospace = (OverlayAddressSpace) space;
 		assertTrue(space.isOverlaySpace());
 		assertEquals(space.getAddress(0x3000), block.getStart());
 		assertEquals(space.getAddress(0x3063), block.getEnd());
-		assertEquals(block.getStart(), space.getMinAddress());
-		assertEquals(block.getEnd(), space.getMaxAddress());
+		assertEquals(block.getStart(), ospace.getOverlayAddressSet().getMinAddress());
+		assertEquals(block.getEnd(), ospace.getOverlayAddressSet().getMaxAddress());
 		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 		AddressRange mappedRange = info.getMappedRange().get();
 		assertEquals(198, mappedRange.getLength());

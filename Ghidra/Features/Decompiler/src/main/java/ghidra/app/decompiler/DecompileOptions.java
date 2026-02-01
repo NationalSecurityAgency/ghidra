@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import generic.theme.GColor;
 import generic.theme.Gui;
-import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.template.TemplateSimplifier;
@@ -210,16 +209,64 @@ public class DecompileOptions {
 	private final static boolean CONVENTION_OPTIONDEFAULT = true;	// Must match PrintC::resetDefaultsPrintC
 	private boolean conventionPrint;
 
-	private final static String NOCAST_OPTIONSTRING = "Display.Disable printing of type casts";
+	public final static String NOCAST_OPTIONSTRING = "Display.Disable printing of type casts";
 	private final static String NOCAST_OPTIONDESCRIPTION =
 		"If set, any C style type cast recovered by the decompiler will not be displayed. " +
 			"The resulting C syntax may not parse correctly.";
 	private final static boolean NOCAST_OPTIONDEFAULT = false;		// Must match PrintC::resetDefaultsPrintC
 	private boolean noCastPrint;
 
+	public enum BraceStyle {
+
+		Same("same", "Same line"), Next("next", "Next line"), Skip("skip", "Skip one line");
+
+		private String label;
+		private String optionString;
+
+		private BraceStyle(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	private final static String BRACEFUNCTION_OPTIONSTRING =
+		"Display.Brace format for function blocks";
+	private final static String BRACEFUNCTION_OPTIONDESCRIPTION =
+		"Where the opening brace is displayed, after a function declaration";
+	private final static BraceStyle BRACEFUNCTION_OPTIONDEFAULT = BraceStyle.Skip;
+	private BraceStyle braceFunction;
+
+	private final static String BRACEIFELSE_OPTIONSTRING =
+		"Display.Brace format for if/else blocks";
+	private final static String BRACEIFELSE_OPTIONDESCRIPTION =
+		"Where the opening brace is displayed, for an if/else code block";
+	private final static BraceStyle BRACEIFELSE_OPTIONDEFAULT = BraceStyle.Same;
+	private BraceStyle braceIfElse;
+
+	private final static String BRACELOOP_OPTIONSTRING = "Display.Brace format for loop blocks";
+	private final static String BRACELOOP_OPTIONDESCRIPTION =
+		"Where the opening brace is displayed, for the body of a loop";
+	private final static BraceStyle BRACELOOP_OPTIONDEFAULT = BraceStyle.Same;
+	private BraceStyle braceLoop;
+
+	private final static String BRACESWITCH_OPTIONSTRING = "Display.Brace format for switch blocks";
+	private final static String BRACESWITCH_OPTIONDESCRIPTION =
+		"Where the opening brace is displayed, for the body of a switch statement";
+	private final static BraceStyle BRACESWITCH_OPTIONDEFAULT = BraceStyle.Same;
+	private BraceStyle braceSwitch;
+
 	private final static String MAXWIDTH_OPTIONSTRING = "Display.Maximum characters in a code line";
 	private final static String MAXWIDTH_OPTIONDESCRIPTION =
-		"Maximum number of characters allowed per line before before line breaks are forced.";
+		"Maximum number of characters allowed per line before line breaks are forced.";
 	private final static int MAXWIDTH_OPTIONDEFAULT = 100;	// Must match EmitPrettyPrint::resetDefaultsPrettyPrint
 	private int maxwidth;
 
@@ -369,10 +416,7 @@ public class DecompileOptions {
 
 	private final static String HIGHLIGHT_KEYWORD_MSG = "Display.Color for Keywords";
 	private final static GColor HIGHLIGHT_KEYWORD_COLOR = new GColor("color.fg.decompiler.keyword");
-
-	private final static String HIGHLIGHT_FUNCTION_MSG = "Display.Color for Function names";
-	private final static GColor HIGHLIGHT_FUNCTION_COLOR = new GColor("color.fg.decompiler.function.name");
-
+	
 	private final static String HIGHLIGHT_COMMENT_MSG = "Display.Color for Comments";
 	private final static GColor HIGHLIGHT_COMMENT_COLOR = new GColor( "color.fg.decompiler.comment");
 
@@ -399,6 +443,10 @@ public class DecompileOptions {
 
 	private static final String SEARCH_HIGHLIGHT_MSG = "Display.Color for Highlighting Find Matches";
 	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.find");
+	private static final GColor SEARCH_HIGHLIGHT_ACTIVE_COLOR = new GColor("color.bg.decompiler.highlights.find.active");
+	
+	private static final String HIGHLIGHT_MIDDLE_MOUSE_MSG = "Display.Color for Middle Mouse";
+	private static final GColor HIGHLIGHT_MIDDLE_MOUSE_COLOR = new GColor("color.bg.decompiler.highlights.middle.mouse");
 	//@formatter:on
 
 	private static final String BACKGROUND_COLOR_MSG = "Display.Background Color";
@@ -422,6 +470,7 @@ public class DecompileOptions {
 	private final static String MAX_INSTRUCTIONS = "Max Instructions per Function";
 	private final static String MAX_JUMPTABLE_ENTRIES = "Max Entries per Jumptable";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
+
 	private boolean displayLineNumbers;
 	private int decompileTimeoutSeconds;
 	private int payloadLimitMBytes;
@@ -452,6 +501,10 @@ public class DecompileOptions {
 		aliasBlock = ALIASBLOCK_OPTIONDEFAULT;
 		conventionPrint = CONVENTION_OPTIONDEFAULT;
 		noCastPrint = NOCAST_OPTIONDEFAULT;
+		braceFunction = BRACEFUNCTION_OPTIONDEFAULT;
+		braceIfElse = BRACEIFELSE_OPTIONDEFAULT;
+		braceLoop = BRACELOOP_OPTIONDEFAULT;
+		braceSwitch = BRACESWITCH_OPTIONDEFAULT;
 		maxwidth = MAXWIDTH_OPTIONDEFAULT;
 		indentwidth = INDENTWIDTH_OPTIONDEFAULT;
 		commentindent = COMMENTINDENT_OPTIONDEFAULT;
@@ -486,7 +539,7 @@ public class DecompileOptions {
 
 		grabFromProgram(program);
 
-		// assuming if one is not registered, then none area
+		// assuming if one is not registered, then none are
 		if (!opt.isRegistered(PREDICATE_OPTIONSTRING)) {
 			return;
 		}
@@ -512,6 +565,10 @@ public class DecompileOptions {
 		aliasBlock = opt.getEnum(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT);
 		conventionPrint = opt.getBoolean(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT);
 		noCastPrint = opt.getBoolean(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT);
+		braceFunction = opt.getEnum(BRACEFUNCTION_OPTIONSTRING, BRACEFUNCTION_OPTIONDEFAULT);
+		braceIfElse = opt.getEnum(BRACEIFELSE_OPTIONSTRING, BRACEIFELSE_OPTIONDEFAULT);
+		braceLoop = opt.getEnum(BRACELOOP_OPTIONSTRING, BRACELOOP_OPTIONDEFAULT);
+		braceSwitch = opt.getEnum(BRACESWITCH_OPTIONSTRING, BRACESWITCH_OPTIONDEFAULT);
 		maxwidth = opt.getInt(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT);
 		indentwidth = opt.getInt(INDENTWIDTH_OPTIONSTRING, INDENTWIDTH_OPTIONDEFAULT);
 		commentindent = opt.getInt(COMMENTINDENT_OPTIONSTRING, COMMENTINDENT_OPTIONDEFAULT);
@@ -642,6 +699,18 @@ public class DecompileOptions {
 		opt.registerOption(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayDisableCasts"),
 			NOCAST_OPTIONDESCRIPTION);
+		opt.registerOption(BRACEFUNCTION_OPTIONSTRING, BRACEFUNCTION_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBraceFormatting"),
+			BRACEFUNCTION_OPTIONDESCRIPTION);
+		opt.registerOption(BRACEIFELSE_OPTIONSTRING, BRACEIFELSE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBraceFormatting"),
+			BRACEIFELSE_OPTIONDESCRIPTION);
+		opt.registerOption(BRACELOOP_OPTIONSTRING, BRACELOOP_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBraceFormatting"),
+			BRACELOOP_OPTIONDESCRIPTION);
+		opt.registerOption(BRACESWITCH_OPTIONSTRING, BRACESWITCH_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBraceFormatting"),
+			BRACESWITCH_OPTIONDESCRIPTION);
 		opt.registerOption(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayMaxChar"), MAXWIDTH_OPTIONDESCRIPTION);
 		opt.registerOption(INDENTWIDTH_OPTIONSTRING, INDENTWIDTH_OPTIONDEFAULT,
@@ -683,9 +752,6 @@ public class DecompileOptions {
 		opt.registerThemeColorBinding(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting types.");
-		opt.registerThemeColorBinding(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_COLOR.getId(),
-			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
-			"Color used for highlighting function names.");
 		opt.registerThemeColorBinding(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting comments.");
@@ -729,14 +795,20 @@ public class DecompileOptions {
 			"The maximum size of the decompiler result payload in MBYtes (Suggested value: 50).");
 		opt.registerOption(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxInstruction"),
-			"The maximum number of instructions decompiled in a single function");
+			"The maximum number of instructions decompiled in a single function.");
 		opt.registerOption(MAX_JUMPTABLE_ENTRIES, SUGGESTED_MAX_JUMPTABLE_ENTRIES,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxJumptable"),
-			"The maximum number of entries that can be recovered from a single jumptable");
+			"The maximum number of entries that can be recovered from a single jumptable.");
 		opt.registerThemeColorBinding(HIGHLIGHT_CURRENT_VARIABLE_MSG,
 			HIGHLIGHT_CURRENT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
-			"Current variable highlight");
+			"Current variable highlight.");
+
+		opt.registerThemeColorBinding(HIGHLIGHT_MIDDLE_MOUSE_MSG,
+			HIGHLIGHT_MIDDLE_MOUSE_COLOR.getId(),
+			new HelpLocation(HelpTopics.DECOMPILER, "MiddleMouseColor"),
+			"The middle-mouse highlight color.");
+
 		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralCacheSize"), CACHE_RESULTS_DESCRIPTION);
 		grabFromToolAndProgram(fieldOptions, opt, program);
@@ -826,6 +898,19 @@ public class DecompileOptions {
 		if (noCastPrint != NOCAST_OPTIONDEFAULT) {
 			appendOption(encoder, ELEM_NOCASTPRINTING, noCastPrint ? "on" : "off", "", "");
 		}
+		if (braceFunction != BRACEFUNCTION_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_BRACEFORMAT, "function", braceFunction.getOptionString(),
+				"");
+		}
+		if (braceIfElse != BRACEIFELSE_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_BRACEFORMAT, "ifelse", braceIfElse.getOptionString(), "");
+		}
+		if (braceLoop != BRACELOOP_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_BRACEFORMAT, "loop", braceLoop.getOptionString(), "");
+		}
+		if (braceSwitch != BRACESWITCH_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_BRACEFORMAT, "switch", braceSwitch.getOptionString(), "");
+		}
 		if (maxwidth != MAXWIDTH_OPTIONDEFAULT) {
 			appendOption(encoder, ELEM_MAXLINEWIDTH, Integer.toString(maxwidth), "", "");
 		}
@@ -885,7 +970,67 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the maximum number of characters the decompiler displays in a single line of output
+	 * {@return the brace formatting style for function bodies.}
+	 */
+	public BraceStyle getFunctionBraceFormat() {
+		return braceFunction;
+	}
+
+	/**
+	 * Set how braces are formatted around a function body
+	 * @param style is the formatting style
+	 */
+	public void setFunctionBraceFormat(BraceStyle style) {
+		this.braceFunction = style;
+	}
+
+	/**
+	 * {@return the brace formatting style for if/else code blocks.}
+	 */
+	public BraceStyle getIfElseBraceFormat() {
+		return braceIfElse;
+	}
+
+	/**
+	 * Set how braces are formatted around an if/else code block
+	 * @param style is the formatting style
+	 */
+	public void setIfElseBraceFormat(BraceStyle style) {
+		this.braceIfElse = style;
+	}
+
+	/**
+	 * {@return the brace formatting style for loop bodies.}
+	 */
+	public BraceStyle getLoopBraceFormat() {
+		return braceLoop;
+	}
+
+	/**
+	 * Set how braces are formatted a loop body
+	 * @param style is the formatting style
+	 */
+	public void setLoopBraceFormat(BraceStyle style) {
+		this.braceLoop = style;
+	}
+
+	/**
+	 * {@return the brace formatting style for switch blocks.}
+	 */
+	public BraceStyle getSwitchBraceFormat() {
+		return braceSwitch;
+	}
+
+	/**
+	 * Set how braces are formatted around a switch block
+	 * @param style is the formatting style
+	 */
+	public void setSwitchBraceFormat(BraceStyle style) {
+		this.braceSwitch = style;
+	}
+
+	/**
+	 * {@return the maximum number of characters the decompiler displays in a single line of output.}
 	 */
 	public int getMaxWidth() {
 		return maxwidth;
@@ -900,91 +1045,84 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return color associated with keyword tokens
+	 * {@return color associated with keyword tokens.}
 	 */
 	public Color getKeywordColor() {
 		return HIGHLIGHT_KEYWORD_COLOR;
 	}
 
 	/**
-	 * @return color associated with data-type tokens
+	 * {@return color associated with data-type tokens.}
 	 */
 	public Color getTypeColor() {
 		return HIGHLIGHT_TYPE_COLOR;
 	}
 
 	/**
-	 * @return color associated with a function name token
-	 */
-	public Color getFunctionColor() {
-		return HIGHLIGHT_FUNCTION_COLOR;
-	}
-
-	/**
-	 * @return color used to display comments
+	 * {@return color used to display comments.}
 	 */
 	public Color getCommentColor() {
 		return HIGHLIGHT_COMMENT_COLOR;
 	}
 
 	/**
-	 * @return color associated with constant tokens
+	 * {@return color associated with constant tokens.}
 	 */
 	public Color getConstantColor() {
 		return HIGHLIGHT_CONST_COLOR;
 	}
 
 	/**
-	 * @return color associated with (local) variable tokens
+	 * {@return color associated with (local) variable tokens.}
 	 */
 	public Color getVariableColor() {
 		return HIGHLIGHT_VARIABLE_COLOR;
 	}
 
 	/**
-	 * @return color associated with parameter tokens
+	 * {@return color associated with parameter tokens.}
 	 */
 	public Color getParameterColor() {
 		return HIGHLIGHT_PARAMETER_COLOR;
 	}
 
 	/**
-	 * @return color associated with global variable tokens
+	 * {@return color associated with global variable tokens.}
 	 */
 	public Color getGlobalColor() {
 		return HIGHLIGHT_GLOBAL_COLOR;
 	}
 
 	/**
-	 * @return color associated with volatile variables or other special tokens
+	 * {@return color associated with volatile variables or other special tokens.}
 	 */
 	public Color getSpecialColor() {
 		return HIGHLIGHT_SPECIAL_COLOR;
 	}
 
 	/**
-	 * @return color for generic syntax or other unspecified tokens
+	 * {@return color for generic syntax or other unspecified tokens.}
 	 */
 	public Color getDefaultColor() {
 		return HIGHLIGHT_DEFAULT_COLOR;
 	}
 
 	/**
-	 * @return color used on tokens that need to warn of an error or other unusual conditions
+	 * {@return color used on tokens that need to warn of an error or other unusual conditions.}
 	 */
 	public Color getErrorColor() {
 		return ERROR_COLOR;
 	}
 
 	/**
-	 * @return the background color for the decompiler window
+	 * {@return the background color for the decompiler window.}
 	 */
 	public Color getBackgroundColor() {
 		return BACKGROUND_COLOR;
 	}
 
 	/**
-	 * @return the color used display the current highlighted variable
+	 * {@return the color used display the current highlighted variable.}
 	 */
 	public Color getCurrentVariableHighlightColor() {
 		return HIGHLIGHT_CURRENT_VARIABLE_COLOR;
@@ -994,25 +1132,32 @@ public class DecompileOptions {
 	 * @return color used to highlight token(s) selected with a middle button clock
 	 */
 	public Color getMiddleMouseHighlightColor() {
-		return GhidraOptions.DEFAULT_HIGHLIGHT_COLOR;
+		return HIGHLIGHT_MIDDLE_MOUSE_COLOR;
 	}
 
 	/**
-	 * @return color used to highlight search results
+	 * @return color used to highlight the active search result
+	 */
+	public Color getActiveSearchHighlightColor() {
+		return SEARCH_HIGHLIGHT_ACTIVE_COLOR;
+	}
+
+	/**
+	 * {@return color used to highlight search results.}
 	 */
 	public Color getSearchHighlightColor() {
 		return SEARCH_HIGHLIGHT_COLOR;
 	}
 
 	/**
-	 * @return the mouse button that should be used to toggle the primary token highlight
+	 * {@return the mouse button that should be used to toggle the primary token highlight.}
 	 */
 	public int getMiddleMouseHighlightButton() {
 		return middleMouseHighlightButton;
 	}
 
 	/**
-	 * @return true if Pre comments are included as part of decompiler output
+	 * {@return true if Pre comments are included as part of decompiler output.}
 	 */
 	public boolean isPRECommentIncluded() {
 		return commentPREInclude;
@@ -1027,7 +1172,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if Plate comments are included as part of decompiler output
+	 * {@return true if Plate comments are included as part of decompiler output.}
 	 */
 	public boolean isPLATECommentIncluded() {
 		return commentPLATEInclude;
@@ -1042,7 +1187,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if Post comments are included as part of decompiler output
+	 * {@return true if Post comments are included as part of decompiler output.}
 	 */
 	public boolean isPOSTCommentIncluded() {
 		return commentPOSTInclude;
@@ -1057,7 +1202,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if End-of-line comments are included as part of decompiler output
+	 * {@return true if End-of-line comments are included as part of decompiler output.}
 	 */
 	public boolean isEOLCommentIncluded() {
 		return commentEOLInclude;
@@ -1072,7 +1217,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if WARNING comments are included as part of decompiler output
+	 * {@return true if WARNING comments are included as part of decompiler output.}
 	 */
 	public boolean isWARNCommentIncluded() {
 		return commentWARNInclude;
@@ -1088,7 +1233,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if function header comments are included as part of decompiler output
+	 * {@return true if function header comments are included as part of decompiler output.}
 	 */
 	public boolean isHeadCommentIncluded() {
 		return commentHeadInclude;
@@ -1103,7 +1248,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if the decompiler currently eliminates unreachable code
+	 * {@return true if the decompiler currently eliminates unreachable code.}
 	 */
 	public boolean isEliminateUnreachable() {
 		return eliminateUnreachable;
@@ -1115,6 +1260,21 @@ public class DecompileOptions {
 	 */
 	public void setEliminateUnreachable(boolean eliminateUnreachable) {
 		this.eliminateUnreachable = eliminateUnreachable;
+	}
+
+	/**
+	 * {@return true if the decompiler currently respects read-only flags.}
+	 */
+	public boolean isRespectReadOnly() {
+		return readOnly;
+	}
+
+	/**
+	 * Set whether the decompiler should respect read-only flags as part of its analysis.
+	 * @param readOnly is true if read-only flags are respected
+	 */
+	public void setRespectReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
 	}
 
 	/**
@@ -1136,14 +1296,14 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if line numbers should be displayed with decompiler output.
+	 * {@return true if line numbers should be displayed with decompiler output.}
 	 */
 	public boolean isDisplayLineNumbers() {
 		return displayLineNumbers;
 	}
 
 	/**
-	 * @return the source programming language that decompiler output is rendered in
+	 * {@return the source programming language that decompiler output is rendered in.}
 	 */
 	public DecompilerLanguage getDisplayLanguage() {
 		return displayLanguage;
@@ -1171,7 +1331,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return true if calling convention names are displayed as part of function signatures
+	 * {@return true if calling convention names are displayed as part of function signatures.}
 	 */
 	public boolean isConventionPrint() {
 		return conventionPrint;
@@ -1210,7 +1370,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the font that should be used to render decompiler output
+	 * {@return the font that should be used to render decompiler output.}
 	 */
 	public Font getDefaultFont() {
 		return Gui.getFont(DEFAULT_FONT_ID);
@@ -1293,7 +1453,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return the style in which comments are printed in decompiler output
+	 * {@return the style in which comments are printed in decompiler output.}
 	 */
 	public CommentStyleEnum getCommentStyle() {
 		return commentStyle;
@@ -1314,6 +1474,279 @@ public class DecompileOptions {
 	 */
 	public int getCacheSize() {
 		return cachedResultsSize;
+	}
+
+	/**
+	 * {@return true if predicate simplification is enabled.}
+	 * @see #PREDICATE_OPTIONDESCRIPTION
+	 */
+	public boolean isPredicate() {
+		return predicate;
+	}
+
+	/**
+	 * Set whether the decompiler should simplify predication (combine conditional execution
+	 * into if/else constructs).
+	 * @param predicate true to enable predication simplification
+	 * @see #PREDICATE_OPTIONDESCRIPTION
+	 */
+	public void setPredicate(boolean predicate) {
+		this.predicate = predicate;
+	}
+
+	/**
+	 * {@return true if instructions with no p-code implementation are treated as NOP.}
+	 * @see #IGNOREUNIMPL_OPTIONDESCRIPTION
+	 */
+	public boolean isIgnoreUnimplemented() {
+		return ignoreunimpl;
+	}
+
+	/**
+	 * Set whether instructions without p-code implementations should be treated as NOP.
+	 * @param ignore true to ignore unimplemented instructions
+	 * @see #IGNOREUNIMPL_OPTIONDESCRIPTION
+	 */
+	public void setIgnoreUnimplemented(boolean ignore) {
+		this.ignoreunimpl = ignore;
+	}
+
+	/**
+	 * {@return true if constants that look like addresses are inferred as pointers.}
+	 * @see #INFERCONSTPTR_OPTIONDESCRIPTION
+	 */
+	public boolean isInferConstantPointers() {
+		return inferconstptr;
+	}
+
+	/**
+	 * Set whether constants that can be interpreted as addresses should be treated as pointers.
+	 * @param infer true to infer constant pointers
+	 * @see #INFERCONSTPTR_OPTIONDESCRIPTION
+	 */
+	public void setInferConstantPointers(boolean infer) {
+		this.inferconstptr = infer;
+	}
+
+	/**
+	 * {@return true if the decompiler attempts to recover for-loops.}
+	 * @see #ANALYZEFORLOOPS_OPTIONDESCRIPTION
+	 */
+	public boolean isAnalyzeForLoops() {
+		return analyzeForLoops;
+	}
+
+	/**
+	 * Set whether the decompiler should try to recover for-loop constructs.
+	 * @param analyze true to enable for-loop recovery
+	 * @see #ANALYZEFORLOOPS_OPTIONDESCRIPTION 
+	 */
+	public void setAnalyzeForLoops(boolean analyze) {
+		this.analyzeForLoops = analyze;
+	}
+
+	/**
+	 * {@return true if combined structure field copies are split.}
+	 * @see #SPLITSTRUCTURES_OPTIONDESCRIPTION
+	 */
+	public boolean isSplitStructures() {
+		return splitStructures;
+	}
+
+	/**
+	 * Set whether copies to/from structures that touch multiple fields should be split.
+	 * @param split true to split combined structure field copies
+	 * @see #SPLITSTRUCTURES_OPTIONDESCRIPTION
+	 */
+	public void setSplitStructures(boolean split) {
+		this.splitStructures = split;
+	}
+
+	/**
+	 * {@return true if combined array element copies are split.}
+	 * @see #SPLITARRAYS_OPTIONDESCRIPTION
+	 */
+	public boolean isSplitArrays() {
+		return splitArrays;
+	}
+
+	/**
+	 * Set whether copies to/from arrays that touch multiple elements should be split.
+	 * @param split true to split combined array element copies
+	 * @see #SPLITARRAYS_OPTIONDESCRIPTION
+	 */
+	public void setSplitArrays(boolean split) {
+		this.splitArrays = split;
+	}
+
+	/**
+	 * {@return true if pointer copies to combined elements are split.}
+	 * @see #SPLITPOINTERS_OPTIONDESCRIPTION
+	 */
+	public boolean isSplitPointers() {
+		return splitPointers;
+	}
+
+	/**
+	 * Set whether pointer copies that access multiple elements/fields should be split.
+	 * @param split true to split pointer copies
+	 * @see #SPLITPOINTERS_OPTIONDESCRIPTION
+	 */
+	public void setSplitPointers(boolean split) {
+		this.splitPointers = split;
+	}
+
+	/**
+	 * {@return the current policy for ignoring NaN operations.}
+	 * @see #NANIGNORE_OPTIONDESCRIPTION
+	 */
+	public NanIgnoreEnum getNanIgnore() {
+		return nanIgnore;
+	}
+
+	/**
+	 * Set the policy for ignoring NaN operations in decompiler output.
+	 * @param nanIgnore the NanIgnoreEnum value to set
+	 * @see #NANIGNORE_OPTIONDESCRIPTION
+	 */
+	public void setNanIgnore(NanIgnoreEnum nanIgnore) {
+		this.nanIgnore = nanIgnore;
+	}
+
+	/**
+	 * {@return true if null pointers are printed as the token 'NULL'.}
+	 * @see #NULLTOKEN_OPTIONDESCRIPTION
+	 */
+	public boolean isNullToken() {
+		return nullToken;
+	}
+
+	/**
+	 * Set whether null pointers should be displayed using the 'NULL' token.
+	 * @param nullToken true to print 'NULL' for null pointers
+	 * @see #NULLTOKEN_OPTIONDESCRIPTION
+	 */
+	public void setNullToken(boolean nullToken) {
+		this.nullToken = nullToken;
+	}
+
+	/**
+	 * {@return true if inplace assignment tokens (e.g., +=, *=, etc.) are used.}
+	 * @see #INPLACEOP_OPTIONDESCRIPTION
+	 */
+	public boolean isInplaceTokens() {
+		return inplaceTokens;
+	}
+
+	/**
+	 * Set whether inplace assignment tokens (e.g., +=, *=, etc.) are used.
+	 * @param inplace true to enable inplace tokens
+	 * @see #INPLACEOP_OPTIONDESCRIPTION
+	 */
+	public void setInplaceTokens(boolean inplace) {
+		this.inplaceTokens = inplace;
+	}
+
+	/**
+	 * {@return the current alias blocking policy.}
+	 * @see #ALIASBLOCK_OPTIONDESCRIPTION
+	 */
+	public AliasBlockEnum getAliasBlock() {
+		return aliasBlock;
+	}
+
+	/**
+	 * Set which data-types block pointer aliasing across stack boundaries.
+	 * @param aliasBlock the AliasBlockEnum value to set
+	 * @see #ALIASBLOCK_OPTIONDESCRIPTION
+	 */
+	public void setAliasBlock(AliasBlockEnum aliasBlock) {
+		this.aliasBlock = aliasBlock;
+	}
+
+	/**
+	 * {@return number of characters per indent level.}
+	 */
+	public int getIndentWidth() {
+		return indentwidth;
+	}
+
+	/**
+	 * Set the number of characters to indent per level.
+	 * @param indentwidth number of characters per indent level
+	 */
+	public void setIndentWidth(int indentwidth) {
+		this.indentwidth = indentwidth;
+	}
+
+	/**
+	 * {@return comment line indent level (number of characters).}
+	 */
+	public int getCommentIndent() {
+		return commentindent;
+	}
+
+	/**
+	 * Set the number of characters each comment line is indented.
+	 * @param commentindent number of characters to indent comment lines
+	 */
+	public void setCommentIndent(int commentindent) {
+		this.commentindent = commentindent;
+	}
+
+	/**
+	 * {@return strategy for displaying namespaces.}
+	 */
+	public NamespaceStrategy getNamespaceStrategy() {
+		return namespaceStrategy;
+	}
+
+	/**
+	 * Set how/if namespace tokens should be displayed.
+	 * @param namespaceStrategy the NamespaceStrategy to use
+	 */
+	public void setNamespaceStrategy(NamespaceStrategy namespaceStrategy) {
+		this.namespaceStrategy = namespaceStrategy;
+	}
+
+	/**
+	 * {@return how integers are formatted in output.}
+	 */
+	public IntegerFormatEnum getIntegerFormat() {
+		return integerFormat;
+	}
+
+	/**
+	 * Set how integers should be displayed (hex, dec, best fit).
+	 * @param integerFormat the IntegerFormatEnum to use
+	 */
+	public void setIntegerFormat(IntegerFormatEnum integerFormat) {
+		this.integerFormat = integerFormat;
+	}
+
+	/**
+	 * Set whether line numbers should be displayed with decompiler output.
+	 * @param displayLineNumbers true to show line numbers
+	 */
+	public void setDisplayLineNumbers(boolean displayLineNumbers) {
+		this.displayLineNumbers = displayLineNumbers;
+	}
+
+	/**
+	 * Set which mouse button toggles the primary token highlight.
+	 * @param button MouseEvent button id (MouseEvent.BUTTON1 etc.)
+	 */
+	public void setMiddleMouseHighlightButton(int button) {
+		this.middleMouseHighlightButton = button;
+	}
+
+	/**
+	 * Set the maximum number of decompiled function results that should be cached
+	 * by the controller of the decompiler process.
+	 * @param cachedResultsSize number of functions to cache
+	 */
+	public void setCacheSize(int cachedResultsSize) {
+		this.cachedResultsSize = cachedResultsSize;
 	}
 
 }

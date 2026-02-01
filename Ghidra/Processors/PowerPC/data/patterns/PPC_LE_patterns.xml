@@ -1,0 +1,90 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x2000804e </data> <!-- BLR -->
+      <data>......00 0x.. 0x..  010010.. </data> <!-- B xxxxx -->
+    </prepatterns>
+    <postpatterns>
+      <data>.....000 11...... 00100001 10010100 </data>             <!-- STWU r1,xx(r1) -->
+      <data>10100110 00000010 ...01000 011111.. </data>             <!-- MFSPR rx,lr  -->
+      <data>0x780b2c7c   ........ ........ 0x21 0x38   0x00008191 </data> <!--  or r12,r1,r1; stw r12,0x0(r1) -->
+      <codeboundary />              <!-- it is at least code -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data> ......00 0x.. 0x.. 010010.. </data> <!-- B xxxxx -->
+    </prepatterns>
+    <postpatterns>
+     <data>.....000 11...... 00100001 10010100             10100110 00000010 ...01000 011111.. </data> <!-- STWU r1,xx(r1); MFSPR rx,lr -->
+     <data>10100110 00000010 ...01000 011111..             .....000 11...... 00100001 10010100 </data> <!-- MFSPR rx,lr; STWU r1,xx(r1); -->
+     <data>.....000 11...... 00100001 10010100  0x........ 10100110 00000010 ...01000 011111.. </data> <!-- STWU r1,xx(r1); xxx_instr; MFSPR rx,lr -->
+     <data>10100110 00000010 ...01000 011111..  0x........ .....000 11...... 00100001 10010100 </data> <!-- MFSPR rx,lr;    xxx_instr; STWU r1,xx(r1) -->
+     <data>.....000 11...... 00100001 10010100  0x........ 0x........ 10100110 00000010 ...01000 011111.. </data> <!-- STWU r1,xx(r1); xxx_instr; xxx_instr; MFSPR rx,lr -->
+     <data>10100110 00000010 ...01000 011111..  0x........ 0x........ .....000 11...... 00100001 10010100  </data> <!-- MFSPR rx,lr;    xxx_instr; xxx_instr;  STWU r1,xx(r1) -->
+     <data>0x780b2c7c  ........ ........  0x21 0x38   0x00008191 </data> <!--  or r12,r1,r1; stw r12,0x0(r1) -->
+     <codeboundary />              <!-- it is at least code -->
+     <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  
+  <pattern> 
+      <data>.....000 11...... 00100001 10010100      10100110 00000010 ...01000 011111.. </data> <!-- STWU r1,xx(r1); MFSPR rx,lr -->
+      <codeboundary />
+      <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
+  </pattern>
+
+  <pattern> 
+      <data>10100110 00000010 ...01000 011111..             .....000 11...... 00100001 10010100 </data> <!-- MFSPR rx,lr; STWU r1,xx(r1) -->
+      <codeboundary />
+      <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
+  </pattern>
+  
+  <pattern> 
+      <data>0x21 0x00 0x80 0x4e</data> <!-- blrl -->
+      <possiblefuncstart validcode="function" label="__get_pc_thunk_lr" /> <!-- must be a function here -->
+  </pattern>
+
+  <pattern> <!-- .plt entry thunk -->
+      <data>
+	    0x280041f8                           <!-- std     r2,0x28(r1) -->
+	    0xff 0xff ...00010 001111..          <!-- subis  rX,r2,0x1 -->
+	    ........ ........ ........ 0xe9      <!-- ld      rX,#(x) -->
+	    0xa6 0x03 0x.9 0x7d                  <!-- mtctr   rX -->
+	    ........ ........ 010..... 0xe8      <!-- ld      r2,#(x) -->
+	    0x00002228                           <!-- cmpldi  r2,0 -->
+	    0x20 0x04 1..00010 0x4c              <!-- bnectr+ -->
+	    ......00 ........ ........ 010010..  <!-- b X@plt -->  
+      </data>
+      <funcstart after="defined" thunk="true"/> <!-- must be something define before this -->
+  </pattern>
+
+  <pattern> <!-- .plt entry thunk -->
+      <data>  
+	    0x280041f8                           <!-- std     r2,0x28(r1) -->
+	    ........ ........ ........ 0xe9      <!-- ld      rX,#(x) -->
+	    0xa6 0x03 0x.9 0x7d                  <!-- mtctr   rX -->
+	    ........ ........ 010..... 0xe8      <!-- ld      r2,#(x) -->
+	    0x00002228                           <!-- cmpldi  r2,0 -->
+	    0x20 0x04 1..00010 0x4c              <!-- bnectr+ -->
+	    ......00 ........ ........ 010010..  <!-- b X@plt -->  
+      </data>
+      <funcstart after="defined" thunk="true"/> <!-- must be something define before this -->
+  </pattern>
+  
+  <pattern> <!-- .plt entry thunk -->
+      <data>  
+  		0xa6 0x02 ...01000 011111..             <!-- mfspr rxx, LR -->
+        0x05 0x00 1....... 0x42                 <!-- bl +0x4 -->
+        0xa6 0x02 ...01000 011111..             <!-- mfspr rxx,LR -->
+        0x.. 0x.. ........ 001111..             <!-- addis rxx, rxx, 0xxx -->
+        0x.. 0x.. ........ 001110..             <!-- addi rxx, rxx, 0xxx -->
+        0xa6 0x03 ...01000 011111..             <!-- mtspr LR, rxx -->
+        0xa6 0x03 ...01001 011111..             <!-- mtspr CTR, rxx -->
+        0x20 0x04 10000... 0x4e                 <!--bctr -->
+      </data>
+      <funcstart thunk="true"/>
+  </pattern>
+  
+</patternlist>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@ package ghidra.pcode.exec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
@@ -30,6 +31,7 @@ import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Register;
@@ -57,7 +59,8 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	}
 
 	protected PcodeExecutor<byte[]> createBytesExecutor(SleighLanguage language) throws Exception {
-		PcodeExecutorState<byte[]> state = new BytesPcodeExecutorState(language);
+		PcodeExecutorState<byte[]> state =
+			new BytesPcodeExecutorState(language, PcodeStateCallbacks.NONE);
 		PcodeArithmetic<byte[]> arithmetic = BytesPcodeArithmetic.forLanguage(language);
 		return new PcodeExecutor<>(language, arithmetic, state, Reason.EXECUTE_READ);
 	}
@@ -119,6 +122,26 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 
 		executeSleigh(library, "__testop(1234:4);");
 		assertBytes(1234, 4, library.input);
+	}
+
+	@Test
+	public void testIntInputIntOutput() throws Exception {
+		var library = new TestUseropLibrary() {
+			int input;
+
+			@PcodeUserop
+			private int __testop(int input) {
+				this.input = input;
+				return 5678;
+			}
+		};
+
+		PcodeExecutor<byte[]> executor = createBytesExecutor();
+		Register r0 = executor.getLanguage().getRegister("r0");
+
+		executeSleigh(executor, library, "r0 = __testop(1234:4);");
+		assertEquals(1234, library.input);
+		assertBytes(5678, 8, executor.getState().getVar(r0, Reason.INSPECT));
 	}
 
 	@Test
@@ -255,6 +278,22 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testStaticMethod() throws Exception {
+		var library = new TestUseropLibrary() {
+			@PcodeUserop
+			private static int __testop(int a, int b) {
+				return (int) Math.pow(a, b);
+			}
+		};
+
+		PcodeExecutor<byte[]> executor = createBytesExecutor();
+		Register r0 = executor.getLanguage().getRegister("r0");
+		executeSleigh(executor, library, "r0 = __testop(4:4, 5:4);");
+		assertEquals(1024, executor.getArithmetic()
+				.toLong(executor.getState().getVar(r0, Reason.INSPECT), Purpose.INSPECT));
+	}
+
+	@Test
 	public void testKitchenSink() throws Exception {
 		var library = new TestUseropLibrary() {
 			PcodeExecutor<byte[]> executor;
@@ -331,7 +370,7 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	public void testErrReturnType() throws Exception {
 		new TestUseropLibrary() {
 			@PcodeUserop
-			private int __testop() {
+			private char __testop() {
 				return 0;
 			}
 		};
@@ -341,7 +380,7 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	public void testErrInputType() throws Exception {
 		new TestUseropLibrary() {
 			@PcodeUserop
-			private void __testop(int in0) {
+			private void __testop(char in0) {
 			}
 		};
 	}

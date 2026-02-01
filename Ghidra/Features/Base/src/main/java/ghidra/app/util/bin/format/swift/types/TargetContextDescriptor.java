@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,18 +18,25 @@ package ghidra.app.util.bin.format.swift.types;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.*;
-import ghidra.program.model.data.*;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
+import ghidra.app.util.bin.format.swift.SwiftUtils;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift TargetContextDescriptor structure
+ * Represents a Swift {@code TargetContextDescriptor} structure
  * 
- * @see <a href="https://github.com/apple/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public class TargetContextDescriptor implements SwiftStructure {
+public class TargetContextDescriptor extends SwiftTypeMetadataStructure {
 
-	private int flags;
+	/**
+	 * The size (in bytes) of a {@link TargetContextDescriptor} structure
+	 */
+	public static final int SIZE = 8;
+
+	protected ContextDescriptorFlags flags;
 	private int parent;
 
 	/**
@@ -39,23 +46,20 @@ public class TargetContextDescriptor implements SwiftStructure {
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public TargetContextDescriptor(BinaryReader reader) throws IOException {
-		flags = reader.readNextInt();
+		super(reader.getPointerIndex());
+		flags = new ContextDescriptorFlags(reader);
 		parent = reader.readNextInt();
 	}
 
 	/**
-	 * Gets the flags
-	 * 
-	 * @return The flags
+	 * {@return the flags}
 	 */
-	public int getFlags() {
+	public ContextDescriptorFlags getFlags() {
 		return flags;
 	}
 
 	/**
-	 * Gets the parent's relative offset
-	 * 
-	 * @return The parent's relative offset
+	 * {@return the parent's relative offset}
 	 */
 	public int getParent() {
 		return parent;
@@ -72,9 +76,7 @@ public class TargetContextDescriptor implements SwiftStructure {
 	}
 
 	/**
-	 * Gets this class's structure name (will not be affected by subclass's name)
-	 * 
-	 * @return This class's structure name
+	 * {@return this class's structure name (will not be affected by subclass's name)}
 	 */
 	private final String getMyStructureName() {
 		return TargetContextDescriptor.class.getSimpleName();
@@ -82,12 +84,11 @@ public class TargetContextDescriptor implements SwiftStructure {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getMyStructureName(), 0);
-		struct.add(DWORD, "Flags",
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getMyStructureName(), 0);
+		struct.add(flags.toDataType(), "Flags",
 			"Flags describing the context, including its kind and format version");
-		struct.add(SwiftUtils.PTR_RELATIVE, "Parent",
+		struct.add(SwiftUtils.PTR_RELATIVE_MASKED, "Parent",
 			"The parent context, or null if this is a top-level context");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

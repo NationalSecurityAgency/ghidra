@@ -15,68 +15,79 @@
 
     <P>Often, it's a good idea to troubleshoot by using the target platform's recommended debugger
     without connecting it to Ghidra. If it doesn't work there, it's not likely to work in Ghidra,
-    since it relies on that debugger. For Linux, use gdb; for Windows, use WinDbg; for macOS, use
-    LLDB.</P>
+    since it relies on that debugger. For Linux, use gdb; for macOS, use LLDB; for Windows, use
+    WinDbg.</P>
+
+    <H2>Terminal</H2>
+
+    <P>The first place to look when you're having trouble is the debugger's terminal. If you do not
+    see one, check the <B>Window &rarr; Terminals</B> menu. If there is not one there, then there
+    is no back-end debugger running &mdash; unless, perhaps, you are trying to use a Recorder-based
+    target. See <A href="#plugin_conf">Plugin Configuration</A> if you suspect this is the
+    case.</P>
+
+    <P>If you already have the correct set of TraceRmi-based plugins enabled, but there is still no
+    terminal after attempting to launch, then the launcher is sorely mis-configured, or your system
+    or installation is broken. Use <B>Debugger &rarr; Configure and Launch ...</B> in the menus to
+    examine and modify your configuration and try again. This menu is also avaible in the drop-down
+    next to the <B>Launch</B> <IMG alt="" src="icon.debugger"> button.</P>
+
+    <P>If you do have a terminal, then examine it, starting at the very top, for errors and
+    warnings.</P>
 
     <H2>Error Console</H2>
 
-    <P>The first place to look when you're having trouble is the Debug Console. Second, if you're
-    running from Eclipse, you can check its "Console" window. Often, Ghidra's Debug Console will
-    offer actions to help you resolve a well-known issue or configuration problem. It also
-    duplicates the error log when those messages are emitted from a debugger-related component.
-    These typically offer clues to exactly what has gone wrong.</P>
+    <P>The next place to look is the <A href=
+    "help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html">Debug Console</A>. Launchers and
+    plugins for the Debugger often direct their diagnostic messages to this console, and sometimes
+    offer remedies.</P>
 
-    <H2>Settings and Toggles</H2>
+    <H2>Application Log</H2>
 
-    <P>This list is not exhaustive, but here are some options to examine if you're having trouble.
-    In the FrontEnd tool, under <SPAN class="menu">Edit &rarr; Tool Options</SPAN>, select
-    "Debugger.Workflow."</P>
+    <P>The next place to look is Ghidra's application log. From the main project window (not the
+    Debugger tool window), select <B>Help &rarr; Show Log</B> in the menus. This is Ghidra's full
+    application log, so you may need to sift through it for debugger-related entries. Usually
+    searching for "debugger", "launch", "tracermi", or the name of your platform's debugger, etc.,
+    will help. If you're running from Eclipse, you can check its "Console" window.</P>
 
-    <UL>
-      <LI>"Map modules..." and "Map sections..." control how the debugger attempts to map static
-      and dynamic memory.</LI>
+    <H2><A name="plugin_conf"></A>Plugin Configuration</H2>
 
-      <LI>"Disassemble..." triggers automatic disassembly in the dynamic view.</LI>
+    <P>It is possible you have an old Debugger tool still configured for Recorder-based targets.
+    Recorder-based targets are being replaced by TraceRmi-based targets. Try re-importing the
+    default Debugger tool.</P>
 
-      <LI>"Show debugger interpreter..." automatically provides access to the command line.</LI>
-    </UL>
-
-    <P>In the Dynamic Listing:</P>
-
-    <UL>
-      <LI>"Sync to Static Listing" controls the tracking of the Static listing.</LI>
-    </UL>
-
-    <P>In the Objects provider:</P>
+    <P>Alternatively, use <B>File &rarr; Configure</B> then click the plug <IMG alt="" src=
+    "icon.extension.configure"> icon near the top right to check your tool configuration. The
+    following should be enabled:</P>
 
     <UL>
-      <LI>"Record Automatically" causes a trace to be started when a Process object comes into
-      view. If the process object is not exposed automatically, you may have to expand the tree to
-      trigger the trace. If auto-record is toggled off, you'll need to hit "Record (R)" with the
-      process selected to start a trace.</LI>
+      <LI>TraceRmiPlugin</LI>
 
-      <LI>"Subscribe to..." causes a particular object to be tracked by the trace. Processes,
-      threads, registers, memory, stack, and so forth are tracked automatically, but you may wish
-      to add other objects ad hoc.</LI>
+      <LI>TraceRmiLauncherServicePlugin</LI>
+
+      <LI>TraceRmiConnectionManagerPlugin</LI>
+
+      <LI>DebuggerModelPlugin</LI>
     </UL>
 
-    <P>In the Threads provider:</P>
+    <P>The following should be disabled:</P>
 
     <UL>
-      <LI>The "Track the tool to the latest snap" toggle determines whether the caret (and all
-      resulting information) should track the current thread position as it updates.</LI>
+      <LI>DebuggerModelServicePlugin</LI>
 
-      <LI>The "Synchronize trace activation..." toggle attempts to maintain synchronization between
-      the Object provider (i.e. the active target information) and the trace.</LI>
+      <LI>DebuggerModelServiceProxyPlugin</LI>
+
+      <LI>DebuggerInterpretersPlugin</LI>
+
+      <LI>DebuggerObjectsPlugin</LI>
+
+      <LI>DebuggerTargetsPlugin</LI>
     </UL>
 
-    <P>In the Debugger menu:</P>
+    <P>It is possible to leave both sets of plugins enabled, but this is by all means <EM>NOT</EM>
+    recommended.</P>
 
-    <UL>
-      <LI>The "Save Traces By Default" toggle causes traces to be saved into the Ghidra project
-      database at the end of a session. (Open sessions will be re-opened with the tool in the
-      Threads window, reflected in the thin tabs at its top.)</LI>
-    </UL>
+    <H2>Tutorial</H2>
 
     <P>Additional troubleshooting recommendations are given in the Debugger course materials.</P>
   </BODY>

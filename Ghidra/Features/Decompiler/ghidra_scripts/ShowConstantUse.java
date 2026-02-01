@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,11 @@
 
 import java.util.*;
 
-import docking.options.OptionsService;
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.script.*;
 import ghidra.app.tablechooser.*;
-import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
@@ -254,8 +252,7 @@ public class ShowConstantUse extends GhidraScript {
 				ConstUseLocation entry = (ConstUseLocation) rowObject;
 				Function func = entry.getProgram()
 						.getFunctionManager()
-						.getFunctionContaining(
-							entry.getAddress());
+						.getFunctionContaining(entry.getAddress());
 				if (func == null) {
 					return "";
 				}
@@ -332,8 +329,8 @@ public class ShowConstantUse extends GhidraScript {
 					ResourceFile scriptSource = GhidraScriptUtil.findScriptByName(name);
 					if (scriptSource != null) {
 						GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
-						GhidraScript script = provider.getScriptInstance(scriptSource, writer);
-						script.execute(scriptState, monitor, writer);
+						GhidraScript script = provider.getScriptInstance(scriptSource, errorWriter);
+						script.execute(scriptState, getControls());
 						return;
 					}
 				}
@@ -762,9 +759,7 @@ public class ShowConstantUse extends GhidraScript {
 		if (defUseList == null || defUseList.size() <= 0) {
 			return value;
 		}
-		Iterator<PcodeOp> iterator = defUseList.iterator();
-		while (iterator.hasNext()) {
-			PcodeOp pcodeOp = iterator.next();
+		for (PcodeOp pcodeOp : defUseList) {
 			int opcode = pcodeOp.getOpcode();
 			switch (opcode) {
 				case PcodeOp.INT_AND:
@@ -970,8 +965,7 @@ public class ShowConstantUse extends GhidraScript {
 	}
 
 	private void followThroughGlobal(HashMap<Address, Long> constUse, ArrayList<PcodeOp> defUseList,
-			HighVariable hvar,
-			ArrayList<FunctionParamUse> funcList,
+			HighVariable hvar, ArrayList<FunctionParamUse> funcList,
 			HashSet<SequenceNumber> doneSet) {
 		Address loc = hvar.getRepresentative().getAddress();
 		PcodeOp def = hvar.getRepresentative().getDef();
@@ -1013,6 +1007,7 @@ public class ShowConstantUse extends GhidraScript {
 	private Address lastDecompiledFuncAddr = null;
 
 	private DecompInterface setUpDecompiler(Program program) {
+
 		DecompInterface decompInterface = new DecompInterface();
 
 		// call it to get results
@@ -1021,13 +1016,8 @@ public class ShowConstantUse extends GhidraScript {
 			return null;
 		}
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		OptionsService service = state.getTool().getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
-		}
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(state.getTool(), program);
+
 		decompInterface.setOptions(options);
 
 		decompInterface.toggleCCode(true);

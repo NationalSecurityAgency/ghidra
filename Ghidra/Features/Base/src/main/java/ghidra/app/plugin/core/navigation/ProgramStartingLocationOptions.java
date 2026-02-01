@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,9 +60,9 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 			"a newly discovered starting symbol, provided the user hasn't manually moved.";
 
 	private static final String DEFAULT_STARTING_SYMBOLS =
-		"main, WinMain, libc_start_main, WinMainStartup, main.main, start, entry";
+		"main.main, main, wmain, WinMain, wWinMain, DriverEntry, libc_start_main, WinMainStartup, start, entry";
 
-	public static enum StartLocationType {
+	public enum StartLocationType {
 		LOWEST_ADDRESS("Lowest Address"),
 		LOWEST_CODE_BLOCK("Lowest Code Block Address"),
 		SYMBOL_NAME("Preferred Symbol Name"),
@@ -70,7 +70,7 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 
 		private String label;
 
-		private StartLocationType(String label) {
+		StartLocationType(String label) {
 			this.label = label;
 		}
 

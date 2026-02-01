@@ -20,8 +20,8 @@ import java.util.*;
 import com.google.gson.*;
 
 import db.Transaction;
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.LogicalBreakpoint.ProgramMode;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.ProgramMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
@@ -353,8 +353,7 @@ public class ProgramBreakpoint {
 	 * @return true if this changed the breakpoint state
 	 */
 	public boolean add(Bookmark bookmark) {
-		if (LogicalBreakpointInternal.BREAKPOINT_ENABLED_BOOKMARK_TYPE
-				.equals(bookmark.getTypeString())) {
+		if (LogicalBreakpoint.ENABLED_BOOKMARK_TYPE.equals(bookmark.getTypeString())) {
 			if (eBookmark == bookmark) {
 				return false;
 			}
@@ -362,8 +361,7 @@ public class ProgramBreakpoint {
 			syncProperties(bookmark);
 			return true;
 		}
-		if (LogicalBreakpointInternal.BREAKPOINT_DISABLED_BOOKMARK_TYPE
-				.equals(bookmark.getTypeString())) {
+		if (LogicalBreakpoint.DISABLED_BOOKMARK_TYPE.equals(bookmark.getTypeString())) {
 			if (dBookmark == bookmark) {
 				return false;
 			}
@@ -452,11 +450,11 @@ public class ProgramBreakpoint {
 	 */
 	public void toggleWithComment(boolean enabled, String comment) {
 		String addType =
-			enabled ? LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE
-					: LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE;
+			enabled ? LogicalBreakpoint.ENABLED_BOOKMARK_TYPE
+					: LogicalBreakpoint.DISABLED_BOOKMARK_TYPE;
 		String delType =
-			enabled ? LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE
-					: LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE;
+			enabled ? LogicalBreakpoint.DISABLED_BOOKMARK_TYPE
+					: LogicalBreakpoint.ENABLED_BOOKMARK_TYPE;
 		try (Transaction tx = program.openTransaction("Toggle breakpoint")) {
 			BookmarkManager manager = program.getBookmarkManager();
 			String catStr = computeCategory();

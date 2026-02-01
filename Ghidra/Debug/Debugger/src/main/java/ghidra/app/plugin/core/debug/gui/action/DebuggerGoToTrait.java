@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,11 @@ import java.util.concurrent.CompletableFuture;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.GoToAction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.action.GoToInput;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
@@ -36,8 +37,7 @@ public abstract class DebuggerGoToTrait {
 	/**
 	 * @see DebuggerGoToTrait#goTo(String, String)
 	 */
-	public record GoToResult(Address address, Boolean success) {
-	}
+	public record GoToResult(Address address, Boolean success) {}
 
 	protected DockingAction action;
 
@@ -73,7 +73,7 @@ public abstract class DebuggerGoToTrait {
 	private void activatedGoTo(ActionContext context) {
 		DebuggerGoToDialog goToDialog = new DebuggerGoToDialog(this);
 		TracePlatform platform = current.getPlatform();
-		goToDialog.show((SleighLanguage) platform.getLanguage(), getDefaultInput());
+		goToDialog.show(platform.getAddressFactory(), getDefaultInput());
 	}
 
 	/**

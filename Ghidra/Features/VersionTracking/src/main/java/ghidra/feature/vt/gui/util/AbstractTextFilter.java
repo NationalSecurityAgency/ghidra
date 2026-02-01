@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,11 @@ import javax.swing.text.DefaultFormatterFactory;
 
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.GTable;
+import docking.widgets.textfield.GFormattedTextField;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.filters.*;
+import ghidra.feature.vt.gui.filters.Filter;
+import ghidra.feature.vt.gui.filters.StatusLabel;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
@@ -44,7 +46,7 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 	private static final Integer HOVER_COMPONENT_LAYER = 2;
 
 	private JComponent component;
-	private FilterFormattedTextField textField;
+	private GFormattedTextField textField;
 	private String defaultValue = "";
 	protected VTController controller;
 	protected final GTable table;
@@ -62,7 +64,7 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 		panel.setBorder(BorderFactory.createCompoundBorder(outsideBorder, paddingBorder));
 
 		DefaultFormatterFactory factory = new DefaultFormatterFactory(new DefaultFormatter());
-		textField = new FilterFormattedTextField(factory, defaultValue);
+		textField = new GFormattedTextField(factory, defaultValue);
 		textField.setName(filterName + " Field"); // for debugging 	
 		textField.setColumns(20);
 		textField.setMinimumSize(textField.getPreferredSize());
@@ -71,12 +73,16 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 		textField.disableFocusEventProcessing();
 
 		JLabel label = new GDLabel(filterName + ": ");
+		label.setLabelFor(textField);
 		panel.add(label, BorderLayout.WEST);
 		panel.add(textField, BorderLayout.CENTER);
 
 		StatusLabel nameFieldStatusLabel = new StatusLabel(textField, defaultValue);
-		textField.addFilterStatusListener(nameFieldStatusLabel);
-		textField.addFilterStatusListener(status -> fireStatusChanged(status));
+		textField.addTextEntryStatusListener(nameFieldStatusLabel);
+		textField.addTextEntryStatusListener(s -> {
+			FilterEditingStatus status = FilterEditingStatus.getFilterStatus(s);
+			fireStatusChanged(status);
+		});
 
 		final JLayeredPane layeredPane = new JLayeredPane();
 		layeredPane.add(panel, BASE_COMPONENT_LAYER);
@@ -125,13 +131,8 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 	}
 
 	@Override
-	public void clearFilter() {
-		textField.setText(defaultValue);
-	}
-
-	@Override
 	public FilterEditingStatus getFilterStatus() {
-		return textField.getFilterStatus();
+		return FilterEditingStatus.getFilterStatus(textField);
 	}
 
 	protected String getTextFieldText() {

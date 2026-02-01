@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.framework.main;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -35,6 +36,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
 public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
@@ -44,15 +46,6 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	private DataTreeDialog dialog;
 	private List<String> names =
 		List.of("notepad", "XNotepad", "tNotepadA", "tNotepadB", "tNotepadC", "tNotepadD");
-	private GTree gtree;
-
-	/**
-	 * Constructor for DataTreeDialogTest.
-	 * @param arg0
-	 */
-	public DataTreeDialogTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -84,6 +77,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
+		closeAllWindows();
 		env.dispose();
 	}
 
@@ -93,10 +87,8 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		showFiltered("tN");
 
 		JTree tree = getJTree();
-		List<String> expectedFilteredNames = names.stream()
-				.filter(s -> s.startsWith("tN"))
-				.sorted()
-				.collect(Collectors.toList());
+		List<String> expectedFilteredNames =
+			names.stream().filter(s -> s.startsWith("tN")).sorted().collect(Collectors.toList());
 
 		TreeModel model = tree.getModel();
 		GTreeNode root = (GTreeNode) model.getRoot();
@@ -110,7 +102,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonDisabled_Type_SAVE() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.SAVE);
+		show(SAVE);
 		assertOK(false);
 
 		// select a file--enabled; name field populated
@@ -141,7 +133,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonDisabled_Type_CREATE() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.CREATE);
+		show(CREATE);
 		assertOK(false);
 
 		// select a file--enabled; name field populated
@@ -171,8 +163,15 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testOKButtonAlwaysEnabled_Type_CHOOSE_FOLDER() {
-		// no initial selection--button disabled
-		show(DataTreeDialog.CHOOSE_FOLDER);
+		// 
+		// This tests that when choosing a folder, the root is selected by default so that users can
+		// simply press OK to pick a folder quickly. 
+		//
+		// **Also, the tree remembers folder selections and files selections, with the file's parent
+		// being the selected folder.  It appears that you cannot get rid of the dialog's notion of
+		// the current folder.  This tests that.
+		//
+		show(CHOOSE_FOLDER);
 		assertOK(true);
 
 		// select a file--enabled; name field populated
@@ -199,7 +198,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonDisabled_Type_OPEN() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.OPEN);
+		show(OPEN);
 		assertOK(false);
 
 		// select a file--enabled; name field populated
@@ -224,7 +223,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonEnabledWithInitialSelection_Type_OPEN() {
 		//  initial selection--button enabled
-		show(DataTreeDialog.OPEN, "x07");
+		show(OPEN, "x07");
 		assertOK(true);
 
 		// select a file--enabled; name field populated
@@ -250,64 +249,66 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSelectFiles() throws Exception {
 		List<DomainFile> createdFiles = createBlankProgramsInProject(
 			List.of("/dir1/dir2/file1", "/dir1/dir2a/dir3a/file2", "/file3"));
-		show(DataTreeDialog.OPEN);
+		show(OPEN);
 
-		Set<DomainFile> selectedProjectElements = new HashSet<>();
 		ProjectDataTreePanel projectDataTreePanel = getProjectDataTreePanel();
-		projectDataTreePanel.addTreeSelectionListener(
-			e -> {
-				for (TreePath treePath : e.getPaths()) {
-					Object leafNode = treePath.getLastPathComponent();
-					if (leafNode instanceof DomainFileNode) {
-						selectedProjectElements.add(((DomainFileNode) leafNode).getDomainFile());
-					}
-//					else if (leafNode instanceof DomainFolderNode) {
-//						selectedProjectElements
-//								.add(((DomainFolderNode) leafNode).getDomainFolder());
-//					}
-				}
-			});
 
-		projectDataTreePanel.selectDomainFiles(Set.of(createdFiles.get(0), createdFiles.get(1)));
-		waitForSwing();
+		DomainFile file1 = createdFiles.get(0);
+		DomainFile file2 = createdFiles.get(1);
+		projectDataTreePanel.selectDomainFiles(Set.of(file1, file2));
+		waitForTree(getGTree());
 
-		assertEquals(selectedProjectElements.size(), 2);
-		assertTrue(selectedProjectElements.contains(createdFiles.get(0)));
-		assertTrue(selectedProjectElements.contains(createdFiles.get(1)));
+		Set<DomainFile> selectedData = getSelectedFiles();
+		assertEquals(selectedData.size(), 2);
+		assertTrue(selectedData.contains(file1));
+		assertTrue(selectedData.contains(file2));
 	}
 
 	@Test
 	public void testSelectFolder() throws Exception {
 		List<DomainFile> createdFiles = createBlankProgramsInProject(
 			List.of("/dir1/dir2/file1", "/dir1/dir2a/dir3a/file2", "/file3"));
-		show(DataTreeDialog.OPEN);
+		show(OPEN);
 
-		Set<DomainFolder> selectedProjectElements = new HashSet<>();
 		ProjectDataTreePanel projectDataTreePanel = getProjectDataTreePanel();
-		projectDataTreePanel.addTreeSelectionListener(
-			e -> {
-				for (TreePath treePath : e.getPaths()) {
-					Object leafNode = treePath.getLastPathComponent();
-//					if (leafNode instanceof DomainFileNode) {
-//						selectedProjectElements.add(((DomainFileNode) leafNode).getDomainFile());
-//					}
-					if (leafNode instanceof DomainFolderNode) {
-						selectedProjectElements
-								.add(((DomainFolderNode) leafNode).getDomainFolder());
-					}
-				}
-			});
 
-		projectDataTreePanel.selectDomainFolder(createdFiles.get(0).getParent());
+		DomainFile file1 = createdFiles.get(0);
+		DomainFolder dir2 = file1.getParent();
+		projectDataTreePanel.selectDomainFolder(dir2);
 		waitForTree(getGTree());
-		waitForSwing();
 
-		assertEquals(selectedProjectElements.size(), 1);
-		assertTrue(selectedProjectElements.contains(createdFiles.get(0).getParent()));
+		Set<DomainFolder> selectedData = getSelectedFolders();
+		assertEquals(selectedData.size(), 1);
+		assertTrue("'dir2' not selected", selectedData.contains(dir2));
 	}
+
 //==================================================================================================
 // Private
 //==================================================================================================
+
+	private Set<DomainFolder> getSelectedFolders() {
+		Set<DomainFolder> set = new HashSet<>();
+		TreePath[] paths = getGTree().getSelectionPaths();
+		for (TreePath path : paths) {
+			Object leafNode = path.getLastPathComponent();
+			if (leafNode instanceof DomainFolderNode folderNode) {
+				set.add(folderNode.getDomainFolder());
+			}
+		}
+		return set;
+	}
+
+	private Set<DomainFile> getSelectedFiles() {
+		Set<DomainFile> set = new HashSet<>();
+		TreePath[] paths = getGTree().getSelectionPaths();
+		for (TreePath path : paths) {
+			Object leafNode = path.getLastPathComponent();
+			if (leafNode instanceof DomainFileNode fileNode) {
+				set.add(fileNode.getDomainFile());
+			}
+		}
+		return set;
+	}
 
 	private void deselectFolder() {
 		clearSelection();
@@ -398,20 +399,18 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTree(gTree);
 	}
 
-	private void show(final int type) {
-		SwingUtilities.invokeLater(() -> {
+	private void show(DataTreeDialogType type) {
+		Swing.runLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog", type);
-
 			dialog.showComponent();
 		});
 		waitForSwing();
 		assertNotNull(dialog);
 	}
 
-	private void show(final int type, final String name) {
-		SwingUtilities.invokeLater(() -> {
+	private void show(DataTreeDialogType type, final String name) {
+		Swing.runLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog", type);
-
 			dialog.setNameText(name);
 			dialog.showComponent();
 		});
@@ -422,9 +421,9 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showFiltered(final String startsWith) {
-		SwingUtilities.invokeLater(() -> {
-			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog",
-				DataTreeDialog.OPEN, f -> f.getName().startsWith(startsWith));
+		Swing.runLater(() -> {
+			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog", OPEN,
+				f -> f.getName().startsWith(startsWith));
 			dialog.showComponent();
 		});
 		waitForSwing();

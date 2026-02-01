@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.ChangeListener;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
@@ -69,6 +69,7 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 		addCancelButton();
 
 		setDefaultButton(applyButton);
+		setUseSharedLocation(true);
 	}
 
 	@Override
@@ -158,7 +159,6 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 
 		bottomPanelLayout = new CardLayout();
 		bottomPanel = new JPanel(bottomPanelLayout);
-		bottomPanel.setFocusCycleRoot(true);
 		bottomPanel.setPreferredSize(new Dimension(PREFERRED_PANEL_WIDTH, PREFERRED_PANEL_HEIGHT));
 		bottomPanel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
@@ -234,7 +234,6 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 			activeRefPanel = extRefPanel;
 		}
 		bottomPanelLayout.show(bottomPanel, activeRefPanel.getName());
-		activeRefPanel.requestFocus();
 	}
 
 	public void initDialog(CodeUnit cu, int opIndex, int subIndex, Reference ref) {
@@ -251,7 +250,6 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 		}
 
 		initializing = false;
-		activeRefPanel.requestFocus();
 	}
 
 	private void configureAddReference(int opIndex, int subIndex) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeDisplayOptions;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 
@@ -30,8 +31,10 @@ import ghidra.program.model.symbol.Reference;
 public interface Data extends CodeUnit, Settings {
 
 	/**
-	 * Returns the value of the data item.  The value may be an address, a scalar,
-	 * register or null if no value.
+	 * Returns the value of this data as determined by the corresponding {@link DataType}.
+	 * The value may be an {@link Address}, {@link Scalar}, a datatype-defined object or null 
+	 * if no value.
+	 * 
 	 * @return the value
 	 */
 	public Object getValue();
@@ -42,9 +45,14 @@ public interface Data extends CodeUnit, Settings {
 	 * <p>NOTE: This determination is made based upon data type and settings only and does not
 	 * examine memory bytes which are used to construct the data value object.
 	 *
-	 * @return value class or null if a consistent class is not utilized.
+	 * @return value class or null if a consistent value class is not utilized.
 	 */
 	public Class<?> getValueClass();
+
+	@Override
+	default boolean isImmutableSettings() {
+		return true; // NOTE: We could check to see if any editable Settings are defined
+	}
 
 	/**
 	 * Returns true if this data corresponds to string data.  This is determined
@@ -54,14 +62,26 @@ public interface Data extends CodeUnit, Settings {
 	public boolean hasStringValue();
 
 	/**
-	 * @return true if data is constant.
-	 * If true, isConstant will always be false
+	 * Determine if this data has explicitly been marked as constant.
+	 * NOTE: This is based upon explicit {@link Data} and {@link DataType} mutability settings
+	 * and does not reflect independent memory block or processor specification settings.
+	 * @return true if data is constant, else false.
 	 */
 	public boolean isConstant();
 
 	/**
-	 * @return true if data is volatile.
-	 * If true, isVolatile will always be false
+	 * Determine if this data has explicitly been marked as writable.
+	 * NOTE: This is based upon explicit {@link Data} and {@link DataType} mutability settings
+	 * and does not reflect independent memory block or processor specification settings.
+	 * @return true if data is writable, else false.
+	 */
+	public boolean isWritable();
+
+	/**
+	 * Determine if this data has explicitly been marked as volatile.
+	 * NOTE: This is based upon explicit {@link Data} and {@link DataType} mutability settings
+	 * and does not reflect independent memory block or processor specification settings.
+	 * @return true if data is volatile, else false.
 	 */
 	public boolean isVolatile();
 
@@ -126,7 +146,7 @@ public interface Data extends CodeUnit, Settings {
 	public String getComponentPathName();
 
 	/**
-	 * Returns true if this is a pointer, implies getValue() will will return an Object that is an
+	 * Returns true if this is a pointer, which implies getValue() will return an Object that is an
 	 * Address.
 	 * @return true if a pointer
 	 */
@@ -285,4 +305,5 @@ public interface Data extends CodeUnit, Settings {
 	 * @return the prefix
 	 */
 	public String getDefaultLabelPrefix(DataTypeDisplayOptions options);
+
 }

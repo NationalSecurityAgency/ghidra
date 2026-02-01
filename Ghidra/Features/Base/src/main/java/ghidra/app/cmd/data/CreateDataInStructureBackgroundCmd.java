@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
@@ -28,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  * Background command to create data across a selection inside of a structure.
  *  
  */
-public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
+public class CreateDataInStructureBackgroundCmd extends BackgroundCommand<Program> {
 
 	// TODO: Not sure any of this will work for a packed structure which does not support
 	// offset-based component manipulation (see GP-3740)
@@ -81,9 +80,8 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
 	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
-		Program program = (Program) obj;
 		Data data = program.getListing().getDefinedDataContaining(addr);
 		Data startData = data.getComponent(startPath);
 		if (startData == null) {

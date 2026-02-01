@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,11 @@
  */
 package ghidra.util.constraint;
 
+import java.util.Objects;
+
 import generic.constraint.ConstraintData;
 import ghidra.program.model.listing.Program;
+import ghidra.util.xml.XmlAttributeException;
 
 public class CompilerConstraint extends ProgramConstraint {
 
@@ -26,15 +28,41 @@ public class CompilerConstraint extends ProgramConstraint {
 	}
 
 	private String compilerid;
+	private String compilerName;
 
 	@Override
 	public boolean isSatisfied(Program program) {
-		return compilerid.equals(program.getCompilerSpec().getCompilerSpecID().getIdAsString());
+		if (compilerid == null && compilerName == null) {
+			return false;
+		}
+
+		boolean satisfied = true;
+
+		if (compilerid != null) {
+			satisfied &=
+				compilerid.equals(program.getCompilerSpec().getCompilerSpecID().getIdAsString());
+		}
+
+		if (compilerName != null) {
+			satisfied &= compilerName.contains(program.getCompiler());
+		}
+
+		return satisfied;
 	}
 
 	@Override
 	public void loadConstraintData(ConstraintData data) {
-		compilerid = data.getString("id");
+		if (data.hasValue("id")) {
+			compilerid = data.getString("id");
+		}
+
+		if (data.hasValue("name")) {
+			compilerName = data.getString("name");
+		}
+
+		if (compilerid == null && compilerName == null) {
+			throw new XmlAttributeException("Missing both id and name attributes");
+		}
 	}
 
 	@Override
@@ -42,12 +70,32 @@ public class CompilerConstraint extends ProgramConstraint {
 		if (!(obj instanceof CompilerConstraint)) {
 			return false;
 		}
-		return ((CompilerConstraint) obj).compilerid.equals(compilerid);
+
+		CompilerConstraint constraint = (CompilerConstraint) obj;
+
+		if (compilerid != constraint.compilerid) {
+			if (compilerid == null || !compilerid.equals(constraint.compilerid)) {
+				return false;
+			}
+		}
+
+		if (compilerName != constraint.compilerName) {
+			if (compilerName == null || !compilerName.equals(constraint.compilerName)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(compilerid, compilerName);
 	}
 
 	@Override
 	public String getDescription() {
-		return "compiler = " + compilerid;
+		return "compiler = " + compilerid + " compilerName = " + compilerName;
 	}
 
 }

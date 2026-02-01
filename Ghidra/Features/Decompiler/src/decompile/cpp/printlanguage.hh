@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,6 +167,7 @@ public:
     optoken,			///< Emit atom as operator
     typetoken,			///< Emit atom as operator
     fieldtoken,			///< Emit atom as structure field
+    casetoken,			///< Emit atom as a \e case label
     blanktoken			///< For anonymous types
   };
 
@@ -215,6 +216,7 @@ public:
       const Varnode *vn;	///< A Varnode associated with the token
       const Funcdata *fd;	///< A function associated with the token
       const Datatype *ct;	///< A type associated with the token
+      uintb intValue;		///< An integer value associated with the token
     } ptr_second;		///< Other meta-data associated with the token
     int4 offset;        	///< The offset (within the parent structure) for a \e field token
 
@@ -241,6 +243,19 @@ public:
     /// \brief Construct a token for a function name
     Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Funcdata *f)
       : name(nm) { type=t; highlight = hl; op = o; ptr_second.fd = f; }
+
+    /// \brief Construct a token with an associated PcodeOp, Varnode, and constant value
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Varnode *v,uintb intValue)
+      : name(nm) {
+      type=t;
+      highlight = hl;
+      if (t==casetoken)
+	ptr_second.intValue = intValue;
+      else
+	ptr_second.vn = v;
+      op = o;
+    }
+
   };
 private:
   string name;				///< The name of the high-level language
@@ -308,9 +323,10 @@ protected:
   /// The value is ultimately emitted based on its data-type and other associated mark-up
   /// \param val is the value of the constant
   /// \param ct is the data-type of the constant
+  /// \param tag is the type of token associated with the constant
   /// \param vn is the Varnode holding the constant (optional)
   /// \param op is the PcodeOp using the constant (optional)
-  virtual void pushConstant(uintb val,const Datatype *ct,
+  virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
 			    const Varnode *vn,const PcodeOp *op)=0;
 
   /// \brief Push a constant marked up by and EquateSymbol onto the RPN stack
@@ -349,14 +365,20 @@ protected:
   /// \brief Push a variable that represents only part of a symbol onto the RPN stack
   ///
   /// Generally \e member syntax specifying a field within a structure gets emitted.
+  /// Nested structures may result in multiple fields being emitted to get to the final size.
+  /// If the final size requires truncating a data-type that is not a structure, this method
+  /// can optionally emit a final cast to represent the truncation, otherwise an artificial
+  /// field representing the truncation is emitted. Any \e union encountered is resolved using
+  /// the given PcodeOp and slot.
   /// \param sym is the root Symbol
   /// \param off is the byte offset, within the Symbol, of the partial variable
   /// \param sz is the number of bytes in the partial variable
   /// \param vn is the Varnode holding the partial value
   /// \param op is a PcodeOp associate with the Varnode
-  /// \param inslot is the input slot of \b vn with \b op, or -1 if \b op writes \b vn
+  /// \param slot is the slot to use (relative to \b op) for any data-type requiring resolution
+  /// \param allowCast is \b true if a final truncation should be printed as a cast
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,int4 inslot)=0;
+				 const Varnode *vn,const PcodeOp *op,int4 slot,bool allowCast)=0;
 
   /// \brief Push an identifier for a variable that mismatches with its Symbol
   ///
@@ -438,7 +460,8 @@ public:
   uint4 getHeaderComment(void) const { return head_comment_type; }	///< Get the type of comments suitable for a function header
   void setHeaderComment(uint4 val) { head_comment_type = val; }		///< Set the type of comments suitable for a function header
   bool emitsMarkup(void) const { return emit->emitsMarkup(); }		///< Does the low-level emitter, emit markup
-  void setMarkup(bool val);						///< Set whether the low-level emitter, emits markup
+  void setMarkup(bool val) { emit->setMarkup(val); }			///< Turn on/off mark-up in emitted output
+  void setPackedOutput(bool val);					///< Turn on/off packed output
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
 
   virtual void initializeFromArchitecture(void)=0;		///< Initialize architecture specific aspects of printer

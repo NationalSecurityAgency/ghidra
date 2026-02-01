@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -94,7 +93,7 @@ public class GhidraFolder implements DomainFolder {
 
 	/**
 	 * Create folder hierarchy in local filesystem if it does not already exist
-	 * @param folderName
+	 * @param folderName name of new folder
 	 * @return folder data
 	 * @throws IOException error while creating folder
 	 */
@@ -326,6 +325,19 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	@Override
+	public DomainFile createLinkFile(ProjectData sourceProjectData, String pathname,
+			boolean makeRelative, String linkFilename, LinkHandler<?> lh) throws IOException {
+		return createFolderData().createLinkFile(sourceProjectData, pathname, makeRelative,
+			linkFilename, lh);
+	}
+
+	@Override
+	public DomainFile createLinkFile(String ghidraUrl, String linkFilename, LinkHandler<?> lh)
+			throws IOException {
+		return createFolderData().createLinkFile(ghidraUrl, linkFilename, lh);
+	}
+
+	@Override
 	public GhidraFolder createFolder(String folderName) throws InvalidNameException, IOException {
 		return createFolderData().createFolder(folderName).getDomainFolder();
 	}
@@ -340,43 +352,64 @@ public class GhidraFolder implements DomainFolder {
 		}
 	}
 
+	static GhidraFolder getDestinationFolder(DomainFolder newParent) throws IOException {
+
+		while (newParent instanceof LinkedDomainFolder linkedFolder) {
+
+			if (!linkedFolder.isInWritableProject()) {
+				throw new IOException("Destination folder is not within writable project");
+			}
+
+			// Find real folder - we may have multiple levels of linking
+			// This should only be done within the same writable project
+			newParent = linkedFolder.getRealFolder();
+
+		}
+
+		if (!newParent.isInWritableProject() || !(newParent instanceof GhidraFolder ghidraFolder)) {
+			throw new IOException("Destination folder is not within writable project");
+		}
+
+		return ghidraFolder;
+	}
+
 	@Override
 	public GhidraFolder moveTo(DomainFolder newParent) throws IOException {
 		if (parent == null) {
 			throw new UnsupportedOperationException("root folder may not be moved");
 		}
-		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
-			throw new UnsupportedOperationException("newParent does not support moveTo");
+
+		if (getProjectData() != newParent.getProjectData() || !isInWritableProject()) {
+			throw new IOException("Move only supported within the same writable project");
 		}
-		GhidraFolderData folderData = getFolderData();
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
-		return folderData.moveTo(newGhidraParent.getFolderData());
+
+		GhidraFolder newGhidraParent = getDestinationFolder(newParent);
+
+		return getFolderData().moveTo(newGhidraParent.getFolderData());
 	}
 
 	@Override
 	public GhidraFolder copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		GhidraFolderData folderData = getFolderData();
-		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
-			throw new UnsupportedOperationException("newParent does not support copyTo");
-		}
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
-		return folderData.copyTo(newGhidraParent.getFolderData(),
+
+		GhidraFolder newGhidraParent = getDestinationFolder(newParent);
+
+		return getFolderData().copyTo(newGhidraParent.getFolderData(),
 			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		GhidraFolderData folderData = getFolderData();
-		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
-			throw new UnsupportedOperationException("newParent does not support copyToAsLink");
-		}
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
-		return folderData.copyToAsLink(newGhidraParent.getFolderData());
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+
+		GhidraFolder newGhidraParent = getDestinationFolder(newParent);
+
+		return getFolderData().copyToAsLink(newGhidraParent.getFolderData(), relative);
 	}
 
 	/**
-	 * used for testing
+	 * ** Used for testing **
+	 * Check for existance of private folder
+	 * @return true if private folder exists else false
 	 */
 	boolean privateExists() {
 		try {
@@ -388,7 +421,9 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	/**
-	 * used for testing
+	 * ** Used for testing **
+	 * Check for existance of versioned/shared folder
+	 * @return true if versioned/shared folder exists else false
 	 */
 	boolean sharedExists() {
 		try {
@@ -406,14 +441,54 @@ public class GhidraFolder implements DomainFolder {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof GhidraFolder)) {
+		if (obj == null) {
 			return false;
 		}
-		GhidraFolder other = (GhidraFolder) obj;
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof GhidraFolder other)) {
+			return false;
+		}
 		if (projectData != other.projectData) {
 			return false;
 		}
 		return getPathname().equals(other.getPathname());
+	}
+
+	@Override
+	public boolean isSameOrAncestor(DomainFolder folder) {
+
+		if (!getProjectLocator().equals(folder.getProjectLocator()) &&
+			!SystemUtilities.isEqual(projectData.getSharedProjectURL(),
+				folder.getProjectData().getSharedProjectURL())) {
+			// Containing project/repository appears to be unrelated
+			return false;
+		}
+
+		String pathname = getPathname();
+
+		DomainFolder f = folder;
+		while (f != null) {
+			if (f == this || pathname.equals(f.getPathname())) {
+				return true;
+			}
+			f = f.getParent();
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isSame(DomainFolder folder) {
+
+		if (!getProjectLocator().equals(folder.getProjectLocator()) &&
+			!SystemUtilities.isEqual(projectData.getSharedProjectURL(),
+				folder.getProjectData().getSharedProjectURL())) {
+			// Containing project/repository appears to be unrelated
+			return false;
+		}
+
+		return getPathname().equals(folder.getPathname());
 	}
 
 	@Override

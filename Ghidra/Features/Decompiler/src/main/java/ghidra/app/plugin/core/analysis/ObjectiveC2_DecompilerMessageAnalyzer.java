@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.parallel.*;
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.macho.SectionNames;
-import ghidra.app.util.bin.format.objc2.ObjectiveC2_Constants;
-import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
+import ghidra.app.util.bin.format.objc.objc1.Objc1Constants;
+import ghidra.app.util.bin.format.objc.objc2.Objc2Constants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -86,7 +86,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return ObjectiveC2_Constants.isObjectiveC2(program);
+		return Objc2Constants.isObjectiveC2(program);
 	}
 
 	/* ************************************************************************** */
@@ -194,7 +194,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 		if (instruction == null) {
 			return;
 		}
-		if (instruction.getComment(CodeUnit.EOL_COMMENT) != null) {
+		if (instruction.getComment(CommentType.EOL) != null) {
 			return;
 		}
 
@@ -217,7 +217,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 			builder.append(split[i]);
 		}
 		builder.delete(builder.length() - 2, builder.length() - 1);
-		instruction.setComment(CodeUnit.EOL_COMMENT, builder.toString());
+		instruction.setComment(CommentType.EOL, builder.toString());
 	}
 
 	private boolean isObjcCall(Program program, Varnode input, TaskMonitor monitor) {
@@ -581,7 +581,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 			Reference reference = references.next();
 			Address fromAddress = reference.getFromAddress();
 			MemoryBlock block = program.getMemory().getBlock(fromAddress);
-			if (!block.getName().equals(ObjectiveC2_Constants.OBJC2_CONST)) {
+			if (!block.getName().equals(Objc2Constants.OBJC2_CONST)) {
 				continue;
 			}
 			Data ivarList = listing.getDataContaining(fromAddress);
@@ -797,12 +797,12 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 		String name = symbol.getName();
-		return name.startsWith(ObjectiveC1_Constants.OBJC_MSG_SEND) ||
-			name.equals(ObjectiveC1_Constants.READ_UNIX2003);
+		return name.startsWith(Objc1Constants.OBJC_MSG_SEND) ||
+			name.equals(Objc1Constants.READ_UNIX2003);
 	}
 
 	private boolean isMessageRefsBlock(MemoryBlock block) {
-		return block.getName().equals(ObjectiveC2_Constants.OBJC2_MESSAGE_REFS);
+		return block.getName().equals(Objc2Constants.OBJC2_MESSAGE_REFS);
 	}
 
 	private boolean isClassNameBlock(MemoryBlock block) {
@@ -861,7 +861,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 
 	private boolean isObjcConstBlock(MemoryBlock block) {
 		if (block != null) {
-			if (block.getName().equals(ObjectiveC2_Constants.OBJC2_CONST)) {
+			if (block.getName().equals(Objc2Constants.OBJC2_CONST)) {
 				return true;
 			}
 		}
