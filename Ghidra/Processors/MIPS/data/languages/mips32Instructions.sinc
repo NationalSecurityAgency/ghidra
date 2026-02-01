@@ -92,10 +92,9 @@
     if delayflag goto Rel16; 
 }
 
-# 0000 00cc cccc cccc cccc cccc cc00 1101
-:break breakcode                is $(AMODE) & prime=0 & fct=0xD & breakcode {
-    tmp:4=breakcode; 
-    trap(tmp); 
+# 0000 00hh hhhh hhhh llll llll ll00 1101
+:break breakcodehi, breakcodelo is $(AMODE) & prime=0 & fct=0xD & breakcodehi & breakcodelo {
+    trap(breakcodehi:2, breakcodelo:2);
 }
 
 # 1011 11bb bbbo oooo iiii iiii iiii iiii
