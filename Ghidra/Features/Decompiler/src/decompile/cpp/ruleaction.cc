@@ -10806,6 +10806,9 @@ int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
   data.opSetInput(op, prevEqOut, 0);
   data.opRemoveInput(op, 1);
 
+  return 1;
+}
+
 /// \class RuleFloatSign
 /// \brief Convert floating-point \e sign bit manipulation into FLOAT_ABS or FLOAT_NEG
 ///
