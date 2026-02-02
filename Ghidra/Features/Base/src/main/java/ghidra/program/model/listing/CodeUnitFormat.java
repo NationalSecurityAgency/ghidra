@@ -1426,18 +1426,27 @@ public class CodeUnitFormat {
 		Symbol offcutSymbol = program.getSymbolTable().getPrimarySymbol(offcutAddress);
 		Address dataAddress = data.getMinAddress();
 		int diff = (int) offcutAddress.subtract(dataAddress);
-		if (!offcutSymbol.isDynamic()) {
-			return getDefaultOffcutString(offcutSymbol, data, diff, false);
-		}
 
-		DataType dt = data.getBaseDataType();
-		String prefix = getPrefixForStringData(data, dataAddress, diff, dt);
-		if (prefix != null) {
+		boolean isDynamicStringOffsetLabel = offcutSymbol.isDynamic() && data.hasStringValue();
+		if (isDynamicStringOffsetLabel && !options.showOffcutInfo) {
+			return trimOffset(offcutSymbol.getName());
+		}
+		if (isDynamicStringOffsetLabel && options.displayOptions.useAbbreviatedForm()) {
 			String addressString = SymbolUtilities.getAddressString(dataAddress);
+			String prefix = getPrefixForStringData(data, dataAddress, diff, data.getBaseDataType());
 			return addOffcutInformation(prefix, addressString, diff, options.showOffcutInfo);
 		}
+		boolean simplify = !isDynamicStringOffsetLabel;
+		boolean decorate = false;		// never decorate in operand field
+		return getDefaultOffcutString(offcutSymbol, data, diff, decorate, simplify);
+	}
 
-		return getDefaultOffcutString(offcutSymbol, data, diff, false);
+	private String trimOffset(String name) {
+		int lastIndex = name.lastIndexOf("_");
+		if (lastIndex > 0) {
+			return name.substring(0, lastIndex);
+		}
+		return name;
 	}
 
 	/**
@@ -1457,20 +1466,20 @@ public class CodeUnitFormat {
 		Symbol offsym = program.getSymbolTable().getPrimarySymbol(offcutAddress);
 		Address instructionAddress = instruction.getMinAddress();
 		long diff = offcutAddress.subtract(instructionAddress);
-		if (!offsym.isDynamic()) {
-			return getDefaultOffcutString(offsym, instruction, diff, false);
-		}
-
-		Symbol containingSymbol = program.getSymbolTable().getPrimarySymbol(instructionAddress);
-		if (containingSymbol != null) {
-			String displayName = containingSymbol.getName();
-			if (markupAddress != null) {
-				displayName = addNamespace(program, containingSymbol.getParentNamespace(),
-					displayName, markupAddress);
+		boolean decorate = false;		// we never decorate in the operand field
+		boolean simplify = true;		// we always simplify names of instruction labels
+		if (offsym.isDynamic()) {
+			Symbol containingSymbol = program.getSymbolTable().getPrimarySymbol(instructionAddress);
+			if (containingSymbol != null) {
+				String displayName = containingSymbol.getName();
+				if (markupAddress != null) {
+					displayName = addNamespace(program, containingSymbol.getParentNamespace(),
+						displayName, markupAddress);
+				}
+				return simplifyTemplate(displayName) + PLUS + SymbolUtilities.getDiffString(diff);
 			}
-			return simplifyTemplate(displayName) + PLUS + diff;
 		}
-		return getDefaultOffcutString(offsym, instruction, diff, false);
+		return getDefaultOffcutString(offsym, instruction, diff, decorate, simplify);
 	}
 
 	protected String addOffcutInformation(String prefix, String addressString, int diff,
@@ -1478,8 +1487,7 @@ public class CodeUnitFormat {
 		if (!decorate) {
 			return prefix;
 		}
-
-		return prefix + UNDERSCORE + addressString + PLUS + diff;
+		return prefix + UNDERSCORE + addressString + PLUS + SymbolUtilities.getDiffString(diff);
 	}
 
 	protected String getPrefixForStringData(Data data, Address dataAddress, int diff, DataType dt) {
@@ -1491,16 +1499,24 @@ public class CodeUnitFormat {
 	}
 
 	protected String getDefaultOffcutString(Symbol symbol, CodeUnit cu, long diff,
-			boolean decorate) {
-		String name = options.simplifyTemplate(symbol.getName());
+			boolean decorate, boolean simplify) {
+		String name = symbol.getName();
+		if (simplify) {
+			name = options.simplifyTemplate(name);
+		}
 		if (decorate) {
-			return name + ' ' + '(' + cu.getMinAddress() + PLUS + diff + ')';
+			String cuLocation = cu.getMinAddress().toString();
+			Symbol primarySymbol = cu.getPrimarySymbol();
+			if (primarySymbol != null && !primarySymbol.isDynamic()) {
+				cuLocation = primarySymbol.getName();
+			}
+			return name + ' ' + '(' + cuLocation + PLUS + SymbolUtilities.getDiffString(diff) + ')';
 		}
 		return name;
 	}
 
 	/**
-	 * Returns ShowBlockName setting
+	 * {@return ShowBlockName setting}
 	 */
 	public ShowBlockName getShowBlockName() {
 		return options.showBlockName;
