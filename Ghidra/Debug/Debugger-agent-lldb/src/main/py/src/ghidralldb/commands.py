@@ -1838,6 +1838,8 @@ def put_threads() -> None:
                        f'[{proc.GetProcessID()}.{t.GetThreadID()}:{tidstr}]')
         tobj.set_value('_display', compute_thread_display(t))
         tobj.insert()
+        stackobj = trace.create_object(tpath+".Stack")
+        stackobj.insert()
     trace.proxy_object_path(
         THREADS_PATTERN.format(procnum=proc.GetProcessID())).retain_values(keys)
 

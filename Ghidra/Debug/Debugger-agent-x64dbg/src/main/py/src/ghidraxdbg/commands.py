@@ -1154,6 +1154,8 @@ def put_threads(running: bool = False) -> None:
             base, offset_base = mapper.map(pid, thread_data.lpThreadLocalBase)
             tobj.set_value('TLB', offset_base)
         tobj.insert()
+        stackobj = trace.create_object(tpath+".Stack")
+        stackobj.insert()
     trace.proxy_object_path(THREADS_PATTERN.format(
         procnum=pid)).retain_values(keys)
 

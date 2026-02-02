@@ -431,6 +431,8 @@ def activate_thread(thread: Thread) -> None:
 def activate_frame(frame: StackFrame) -> None:
     """Select the frame."""
     f = find_frame_by_obj(frame)
+    t = f.GetThread()
+    t.process.SetSelectedThread(t)
     f.thread.SetSelectedFrame(f.GetFrameID())
 
 
