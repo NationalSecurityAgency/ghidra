@@ -16,6 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Messages;
@@ -125,4 +126,31 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 		return "{@symbol " + displayText.trim() + "}";
 	}
 
+	@Override
+	public String[] modify(String[] text, Program program) {
+		if (text.length <= 1) {
+			return null;
+		}
+
+		if (program == null) { // this can happen during merge operations
+			return null;
+		}
+
+		Address address = program.getAddressFactory().getAddress(text[1]);
+		if (address != null) {
+			return null; // nothing to do
+		}
+
+		String originalValue = text[1];
+		List<Symbol> symbols = CommentUtils.getSymbols(originalValue, program);
+		if (symbols.size() != 1) {
+			// no unique symbol, so leave it as string name
+			return null;
+		}
+
+		Address symbolAddress = symbols.get(0).getAddress();
+		text[1] = symbolAddress.toString();
+
+		return text;
+	}
 }
