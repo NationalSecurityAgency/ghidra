@@ -43,12 +43,12 @@ int DLLEXPORT wrapputs(volatile char* output) {
 	OutputDebugString(output);
 }
 #else
+int wrapputs(volatile char* output) {
+	puts(output);
+}
+
 int main(int argc, char** output) {
 	wrapputs(overwrite);
 	return overwrite[0];
-}
-
-int wrapputs(volatile char* output) {
-	puts(output);
 }
 #endif
