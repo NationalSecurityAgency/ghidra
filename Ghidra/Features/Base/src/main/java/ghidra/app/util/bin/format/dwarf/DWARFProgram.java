@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -62,7 +62,7 @@ public class DWARFProgram implements Closeable {
 	public static final String DWARF_BOOKMARK_CAT = "DWARF";
 	private static final int NAME_HASH_REPLACEMENT_SIZE = 8 + 2 + 2;
 	private static final String ELLIPSES_STR = "...";
-	protected static final EnumSet<DWARFAttribute> REF_ATTRS =
+	protected static final EnumSet<DWARFAttributeId> REF_ATTRS =
 		EnumSet.of(DW_AT_abstract_origin, DW_AT_specification);
 
 	/**
@@ -139,7 +139,7 @@ public class DWARFProgram implements Closeable {
 	private FixedSizeHashMap<Long, DWARFName> dniCache =
 		new FixedSizeHashMap<>(100, maxDNICacheSize);
 
-	private Map<DWARFAttribute.AttrDef, DWARFAttribute.AttrDef> attributeSpecIntern =
+	private Map<DWARFAttributeId.AttrDef, DWARFAttributeId.AttrDef> attributeSpecIntern =
 		new HashMap<>();
 
 	private DWARFRegisterMappings dwarfRegisterMappings;
@@ -447,12 +447,12 @@ public class DWARFProgram implements Closeable {
 				}
 
 				DIEAggregate diea = DIEAggregate.createSingle(die);
-				for (DWARFAttribute attr : REF_ATTRS) {
-					DWARFNumericAttribute attrval =
-						diea.getAttribute(attr, DWARFNumericAttribute.class);
-					if (attrval != null) {
-						long refdOffset = getLocalDIEOffset(attrval.getAttributeForm(),
-							attrval.getUnsignedValue(), cu);
+				for (DWARFAttributeId attrId : REF_ATTRS) {
+					DWARFAttribute refAttr = diea.findAttribute(attrId);
+					if (refAttr != null &&
+						refAttr.getValue() instanceof DWARFNumericAttribute refVal) {
+						long refdOffset = getLocalDIEOffset(refAttr.getAttributeForm(),
+							refVal.getUnsignedValue(), cu);
 						aggrTargets.add(refdOffset);
 					}
 				}
@@ -1148,12 +1148,12 @@ public class DWARFProgram implements Closeable {
 	 * @return {@link DWARFRangeList}, or null if attribute is not present
 	 * @throws IOException if error reading range list
 	 */
-	public DWARFRangeList getRangeList(DIEAggregate diea, DWARFAttribute attribute)
+	public DWARFRangeList getRangeList(DIEAggregate diea, DWARFAttributeId attribute)
 			throws IOException {
 
-		DWARFNumericAttribute rngListAttr =
-			diea.getAttribute(attribute, DWARFNumericAttribute.class);
-		if (rngListAttr == null) {
+		DWARFAttribute rngListAttr = diea.findAttribute(attribute);
+		if (rngListAttr == null ||
+			!(rngListAttr.getValue() instanceof DWARFNumericAttribute rngListVal)) {
 			return null;
 		}
 
@@ -1161,7 +1161,7 @@ public class DWARFProgram implements Closeable {
 
 		switch (rngListAttr.getAttributeForm()) {
 			case DW_FORM_rnglistx: { // assumes v5
-				int index = rngListAttr.getUnsignedIntExact();
+				int index = rngListVal.getUnsignedIntExact();
 				long rnglistOffset = rangeListTable.getOffset(index, cu);
 				debugRngLists.setPointerIndex(rnglistOffset);
 				return DWARFRangeList.readV5(debugRngLists, cu);
@@ -1170,7 +1170,7 @@ public class DWARFProgram implements Closeable {
 			case DW_FORM_data2:
 			case DW_FORM_data4:
 			case DW_FORM_data8: {
-				long rnglistOffset = rngListAttr.getValue();
+				long rnglistOffset = rngListVal.getValue();
 				short dwarfVersion = cu.getDWARFVersion();
 				if (dwarfVersion < 5) {
 					debugRanges.setPointerIndex(rnglistOffset);
@@ -1256,49 +1256,45 @@ public class DWARFProgram implements Closeable {
 	 * Returns the {@link DWARFLocationList} pointed to by the specified attribute value.
 	 * 
 	 * @param diea {@link DIEAggregate}
-	 * @param attribute attribute id that points to the location list
+	 * @param attrId attribute id that points to the location list
 	 * @return {@link DWARFLocationList}, never null
 	 * @throws IOException if specified attribute is not the correct type, or if other error reading
 	 * data 
 	 */
-	public DWARFLocationList getLocationList(DIEAggregate diea, DWARFAttribute attribute)
+	public DWARFLocationList getLocationList(DIEAggregate diea, DWARFAttributeId attrId)
 			throws IOException {
-		DWARFAttributeValue attrib = diea.getAttribute(attribute);
+		DWARFAttribute attrib = diea.findAttribute(attrId);
 		if (attrib == null) {
 			return DWARFLocationList.EMPTY;
 		}
-		if (attrib instanceof DWARFNumericAttribute dnum) {
-			return readLocationList(dnum, diea.getCompilationUnit());
-		}
-		else if (attrib instanceof DWARFBlobAttribute dblob) {
-			return DWARFLocationList.withWildcardRange(dblob.getBytes());
-		}
-		else {
-			throw new IOException("Unsupported form %s.".formatted(attrib));
-		}
-
+		return switch (attrib.getValue()) {
+			case DWARFNumericAttribute dnum -> readLocationList(attrib, dnum);
+			case DWARFBlobAttribute dblob -> DWARFLocationList.withWildcardRange(dblob.getBytes());
+			default -> throw new IOException("Unsupported form %s.".formatted(attrib));
+		};
 	}
 
-	private DWARFLocationList readLocationList(DWARFNumericAttribute loclistAttr,
-			DWARFCompilationUnit cu) throws IOException {
+	private DWARFLocationList readLocationList(DWARFAttribute attr, DWARFNumericAttribute val)
+			throws IOException {
 		try {
-			switch (loclistAttr.getAttributeForm()) {
+			DWARFCompilationUnit cu = attr.getCU();
+			switch (attr.getAttributeForm()) {
 				case DW_FORM_sec_offset:
 				case DW_FORM_data2:
 				case DW_FORM_data4:
 				case DW_FORM_data8:
 					int dwarfVer = cu.getDWARFVersion();
 					if (dwarfVer < 5) {
-						debugLocation.setPointerIndex(loclistAttr.getUnsignedValue());
+						debugLocation.setPointerIndex(val.getUnsignedValue());
 						return DWARFLocationList.readV4(debugLocation, cu);
 					}
 					else if (dwarfVer == 5) {
-						debugLocLists.setPointerIndex(loclistAttr.getUnsignedValue());
+						debugLocLists.setPointerIndex(val.getUnsignedValue());
 						return DWARFLocationList.readV5(debugLocLists, cu);
 					}
 					break;
 				case DW_FORM_loclistx:
-					int index = loclistAttr.getUnsignedIntExact();
+					int index = val.getUnsignedIntExact();
 					long locOffset = locationListTable.getOffset(index, cu);
 					debugLocLists.setPointerIndex(locOffset);
 					return DWARFLocationList.readV5(debugLocLists, cu);
@@ -1308,11 +1304,9 @@ public class DWARFProgram implements Closeable {
 		}
 		catch (IOException | IllegalArgumentException e) {
 			throw new IOException(
-				"Failed to read location list specified by %s".formatted(loclistAttr.toString()),
-				e);
+				"Failed to read location list specified by %s".formatted(attr.toString()), e);
 		}
-		throw new IOException(
-			"Unsupported loclist form %s".formatted(loclistAttr.getAttributeForm()));
+		throw new IOException("Unsupported loclist form %s".formatted(attr.getAttributeForm()));
 	}
 
 	/**
@@ -1323,8 +1317,8 @@ public class DWARFProgram implements Closeable {
 	 * @return {@link DWARFLine}, never null, see {@link DWARFLine#empty()}
 	 * @throws IOException if error reading line data
 	 */
-	public DWARFLine getLine(DIEAggregate diea, DWARFAttribute attribute) throws IOException {
-		DWARFNumericAttribute attrib = diea.getAttribute(attribute, DWARFNumericAttribute.class);
+	public DWARFLine getLine(DIEAggregate diea, DWARFAttributeId attribute) throws IOException {
+		DWARFNumericAttribute attrib = diea.findValue(attribute, DWARFNumericAttribute.class);
 		if (attrib == null || debugLineBR == null) {
 			return DWARFLine.empty();
 		}
@@ -1402,8 +1396,8 @@ public class DWARFProgram implements Closeable {
 		return program.getAddressFactory().getStackSpace();
 	}
 
-	public DWARFAttribute.AttrDef internAttributeSpec(DWARFAttribute.AttrDef das) {
-		DWARFAttribute.AttrDef inDAS = attributeSpecIntern.get(das);
+	public DWARFAttributeId.AttrDef internAttributeSpec(DWARFAttributeId.AttrDef das) {
+		DWARFAttributeId.AttrDef inDAS = attributeSpecIntern.get(das);
 		if (inDAS == null) {
 			inDAS = das;
 			attributeSpecIntern.put(inDAS, inDAS);

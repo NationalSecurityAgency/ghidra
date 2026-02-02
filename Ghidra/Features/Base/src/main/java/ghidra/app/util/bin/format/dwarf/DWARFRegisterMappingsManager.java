@@ -17,7 +17,8 @@ package ghidra.app.util.bin.format.dwarf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,14 +176,12 @@ public class DWARFRegisterMappingsManager {
 	 * Reads and populates map of dwarf reg numbers to ghidra register objects, and returns
 	 * the index of the dwarf stack pointer register.
 	 */
-	@SuppressWarnings("unchecked")
 	private static int readMappingsElem(Element regMappingsElem, Language lang,
 			Map<Integer, Register> dwarfRegisterMap) throws IOException {
 
 		int stackPointerIndex = -1;
 
-		for (Element regMappingElem : (List<Element>) regMappingsElem.getChildren(
-			"register_mapping")) {
+		for (Element regMappingElem : regMappingsElem.getChildren("register_mapping")) {
 
 			int dwarfRegNum =
 				XmlUtilities.parseBoundedIntAttr(regMappingElem, "dwarf", 0, Integer.MAX_VALUE);

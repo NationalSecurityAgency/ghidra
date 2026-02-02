@@ -20,17 +20,17 @@ import static ghidra.app.util.bin.format.dwarf.attribs.DWARFForm.*;
 import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf.attribs.*;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.AttrDef;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 
 /**
  * Helper class to create mock DebugInfoEntry instances for use during junit tests.
  */
 public class DIECreator {
-	record AttrInfo(DWARFAttribute attribute, AttrDef spec, DWARFAttributeValue value) {}
+	record AttrInfo(DWARFAttributeId attribute, AttrDef spec, DWARFAttributeValue value) {}
 
 	private MockDWARFProgram dwarfProg;
 	private DWARFTag tag;
-	private Map<DWARFAttribute, AttrInfo> attributes = new HashMap<>();
+	private Map<DWARFAttributeId, AttrInfo> attributes = new HashMap<>();
 	private DebugInfoEntry parent;
 
 	public DIECreator(MockDWARFProgram dwarfProg, DWARFTag tag) {
@@ -43,45 +43,45 @@ public class DIECreator {
 			new AttrInfo(attrSpec.getAttributeId(), attrSpec, attrVal));
 	}
 
-	public DIECreator addString(DWARFAttribute attribute, String value) {
+	public DIECreator addString(DWARFAttributeId attribute, String value) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_string, 0);
-		add(attrSpec, new DWARFStringAttribute(value, attrSpec));
+		add(attrSpec, new DWARFStringAttribute(value));
 		return this;
 	}
 
-	public DIECreator addUInt(DWARFAttribute attribute, long value) {
+	public DIECreator addUInt(DWARFAttributeId attribute, long value) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_udata, 0);
-		add(attrSpec, new DWARFNumericAttribute(value, attrSpec));
+		add(attrSpec, new DWARFNumericAttribute(value));
 		return this;
 	}
 
-	public DIECreator addInt(DWARFAttribute attribute, long value) {
+	public DIECreator addInt(DWARFAttributeId attribute, long value) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_sdata, 0);
-		add(attrSpec, new DWARFNumericAttribute(value, attrSpec));
+		add(attrSpec, new DWARFNumericAttribute(value));
 		return this;
 	}
 
-	public DIECreator addRef(DWARFAttribute attribute, DebugInfoEntry die) {
+	public DIECreator addRef(DWARFAttributeId attribute, DebugInfoEntry die) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_ref8, 0);
 		add(attrSpec, new DWARFNumericAttribute(
-			die.getOffset() - dwarfProg.getCurrentCompUnit().getStartOffset(), attrSpec));
+			die.getOffset() - dwarfProg.getCurrentCompUnit().getStartOffset()));
 		return this;
 	}
 
-	public DIECreator addRef(DWARFAttribute attribute, long offset) {
+	public DIECreator addRef(DWARFAttributeId attribute, long offset) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_ref8, 0);
 		add(attrSpec, new DWARFNumericAttribute(
-			offset - dwarfProg.getCurrentCompUnit().getStartOffset(), attrSpec));
+			offset - dwarfProg.getCurrentCompUnit().getStartOffset()));
 		return this;
 	}
 
-	public DIECreator addBoolean(DWARFAttribute attribute, boolean value) {
+	public DIECreator addBoolean(DWARFAttributeId attribute, boolean value) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_flag, 0);
-		add(attrSpec, new DWARFBooleanAttribute(value, attrSpec));
+		add(attrSpec, new DWARFBooleanAttribute(value));
 		return this;
 	}
 
-	public DIECreator addBlock(DWARFAttribute attribute, int... intBytes) {
+	public DIECreator addBlock(DWARFAttributeId attribute, int... intBytes) {
 		byte[] bytes = new byte[intBytes.length];
 		for (int i = 0; i < bytes.length; i++) {
 			bytes[i] = (byte) intBytes[i];
@@ -90,9 +90,9 @@ public class DIECreator {
 		return this;
 	}
 
-	public DIECreator addBlockBytes(DWARFAttribute attribute, byte[] blockBytes) {
+	public DIECreator addBlockBytes(DWARFAttributeId attribute, byte[] blockBytes) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_block1, 0);
-		add(attrSpec, new DWARFBlobAttribute(blockBytes, attrSpec));
+		add(attrSpec, new DWARFBlobAttribute(blockBytes));
 		return this;
 	}
 

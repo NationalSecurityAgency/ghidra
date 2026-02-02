@@ -146,6 +146,7 @@ public class ExternalDebugFilesConfigDialog extends DialogComponentProvider {
 
 	/**
 	 * Screen shot only
+	 * @param edfs {@link ExternalDebugFilesService}
 	 */
 	public void setService(ExternalDebugFilesService edfs) {
 		setProviders(edfs.getProviders());

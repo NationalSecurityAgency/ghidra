@@ -25,7 +25,7 @@ import ghidra.program.model.scalar.Scalar;
 /**
  * DWARF numeric attribute.
  */
-public class DWARFNumericAttribute extends DWARFAttributeValue {
+public class DWARFNumericAttribute implements DWARFAttributeValue {
 
 	private final Scalar value;
 	private final boolean ambiguous;
@@ -34,10 +34,9 @@ public class DWARFNumericAttribute extends DWARFAttributeValue {
 	 * Creates a new numeric value, using 64 bits and marked as signed
 	 * 
 	 * @param value long 64 bit value
-	 * @param def attribute id and form of this value
 	 */
-	public DWARFNumericAttribute(long value, DWARFAttributeDef<?> def) {
-		this(64, value, true, false, def);
+	public DWARFNumericAttribute(long value) {
+		this(64, value, true, false);
 	}
 
 	/**
@@ -46,11 +45,9 @@ public class DWARFNumericAttribute extends DWARFAttributeValue {
 	 * @param bitLength number of bits, valid values are 1..64, or 0 if value is also 0
 	 * @param value value of the scalar, any bits that are set above bitLength will be ignored
 	 * @param signed true for a signed value, false for an unsigned value.
-	 * @param def attribute id and form of this value
 	 */
-	public DWARFNumericAttribute(int bitLength, long value, boolean signed,
-			DWARFAttributeDef<?> def) {
-		this(bitLength, value, signed, false, def);
+	public DWARFNumericAttribute(int bitLength, long value, boolean signed) {
+		this(bitLength, value, signed, false);
 	}
 
 	/**
@@ -61,11 +58,8 @@ public class DWARFNumericAttribute extends DWARFAttributeValue {
 	 * @param signed true for a signed value, false for an unsigned value.
 	 * @param ambiguous true for value with ambiguous signedness ({@code signed} parameter should
 	 * not be trusted), false for value where the {@code signed} parameter is known to be correct
-	 * @param def attribute id and form of this value
 	 */
-	public DWARFNumericAttribute(int bitLength, long value, boolean signed, boolean ambiguous,
-			DWARFAttributeDef<?> def) {
-		super(def);
+	public DWARFNumericAttribute(int bitLength, long value, boolean signed, boolean ambiguous) {
 		this.value = new Scalar(bitLength, value, signed);
 		this.ambiguous = ambiguous;
 	}
@@ -95,12 +89,6 @@ public class DWARFNumericAttribute extends DWARFAttributeValue {
 		return value.getValue();
 	}
 
-	@Override
-	public String getValueString(DWARFCompilationUnit cu) {
-		long v = getValue();
-		return "%d [0x%x]".formatted(v, v);
-	}
-
 	public long getUnsignedValue() {
 		return value.getUnsignedValue();
 	}
@@ -118,37 +106,39 @@ public class DWARFNumericAttribute extends DWARFAttributeValue {
 	public String toElementLocationString(String elementType, String sectionName, int index,
 			long offset, int ver) {
 		String indexStr = index >= 0 ? " (idx %d)".formatted(index) : "";
-		return "%s : %s, %s v%d %s:%x%s".formatted(getAttributeName(), getAttributeForm(),
-			elementType, ver, sectionName, offset, indexStr);
+		return "%s v%d %s:%x%s".formatted(elementType, ver, sectionName, offset, indexStr);
 	}
 
 	@Override
-	public String toString(DWARFCompilationUnit cu) {
+	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
+
 		short ver = cu.getDWARFVersion();
-		if (getAttributeForm().isClass(DWARFAttributeClass.address)) {
-			return "%s : %s, addr v%d 0x%x".formatted(getAttributeName(), getAttributeForm(), ver,
-				getUnsignedValue());
+		DWARFForm form = def.getAttributeForm();
+		if (form.isClass(DWARFAttributeClass.address)) {
+			return "addr v%d 0x%x".formatted(ver, getUnsignedValue());
 		}
-		else if (getAttributeForm().isClass(DWARFAttributeClass.rnglist)) {
+		else if (form.isClass(DWARFAttributeClass.rnglist)) {
 			String sectionName =
 				ver < 5 ? DWARFSectionNames.DEBUG_RANGES : DWARFSectionNames.DEBUG_RNGLISTS;
-			return toElementLocationString("rnglist", sectionName, -1, getUnsignedValue(),
-				cu.getDWARFVersion()) + " offset: " + getUnsignedValue();
+			return toElementLocationString("rnglist", sectionName, -1, getUnsignedValue(), ver) +
+				" offset: " + getUnsignedValue();
 		}
-		else if (getAttributeForm().isClass(DWARFAttributeClass.loclist)) {
+		else if (form.isClass(DWARFAttributeClass.loclist)) {
 			String sectionName =
 				ver < 5 ? DWARFSectionNames.DEBUG_LOC : DWARFSectionNames.DEBUG_LOCLISTS;
-			return toElementLocationString("loclist", sectionName, -1, getUnsignedValue(),
-				cu.getDWARFVersion());
+			return toElementLocationString("loclist", sectionName, -1, getUnsignedValue(), ver);
 		}
-		return toString();
+
+		String orStr =
+			ambiguous && isHighbitSet() ? " or " + value.getValue(!value.isSigned()) : "";
+		return "%d%s [%s]".formatted(getValue(), orStr, value.toString(16, true, false, "", ""));
 	}
 
 	@Override
 	public String toString() {
 		String orStr =
 			ambiguous && isHighbitSet() ? " or " + value.getValue(!value.isSigned()) : "";
-		return "%s : %s = %d%s [%s]".formatted(getAttributeName(), getAttributeForm(), getValue(),
-			orStr, value.toString(16, true, false, "", ""));
+		return "%d%s [%s]".formatted(getValue(), orStr, value.toString(16, true, false, "", ""));
 	}
+
 }
