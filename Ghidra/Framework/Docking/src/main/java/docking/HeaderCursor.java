@@ -19,7 +19,10 @@ import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.awt.image.BufferedImage;
 
+import javax.swing.Icon;
+
 import generic.theme.*;
+import resources.ResourceManager;
 
 /**
  * The cursor values used when drag-n-dropping dockable components
@@ -38,6 +41,7 @@ public class HeaderCursor {
 	static Cursor TOP;
 	static Cursor BOTTOM;
 	static Cursor STACK;
+	static Cursor PUSH;
 	static Cursor NEW_WINDOW;
 	static Cursor NO_DROP = DragSource.DefaultMoveNoDrop;
 
@@ -64,6 +68,8 @@ public class HeaderCursor {
 
 		image = drawStack();
 		STACK = tk.createCustomCursor(image, new Point(8, 8), "STACK");
+
+		PUSH = createMoveCursor();
 
 		image = drawNewWindow();
 		NEW_WINDOW = tk.createCustomCursor(image, new Point(0, 0), "NEW_WINDOW");
@@ -159,6 +165,13 @@ public class HeaderCursor {
 		}
 
 		return image;
+	}
+
+	// copy and paste from GTabPanel.java
+	private static Cursor createMoveCursor() {
+		Icon icon = ResourceManager.loadIcon("move.png");
+		Image image = ResourceManager.getImageIcon(icon).getImage();
+		return Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(8, 8), "nope");
 	}
 
 	private static Image drawNewWindow() {

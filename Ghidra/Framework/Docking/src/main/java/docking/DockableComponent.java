@@ -24,6 +24,7 @@ import javax.swing.*;
 import org.apache.commons.lang3.ArrayUtils;
 
 import docking.action.DockingActionIf;
+import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.util.*;
 import help.HelpService;
 
@@ -89,6 +90,11 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			if (placeholder.isHeaderShowing()) {
 				add(header, BorderLayout.NORTH);
 			}
+
+			// This is to register headers as drag-N-drop targets.
+			// So that a DockableComponent could be dropped over a
+			// header, in place of a placeholder's window surface.
+			installDragDropTarget(header);
 
 			providerComp = initializeComponentPlaceholder(placeholder);
 
@@ -244,16 +250,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		return placeholder.getFullTitle();
 	}
 
-	/**
-	 * Translates the given point so that it is relative to the given component
-	 */
-	private void translate(Point p, Component c) {
-		Point cLoc = c.getLocationOnScreen();
-		Point myLoc = getLocationOnScreen();
-		p.x = p.x + cLoc.x - myLoc.x;
-		p.y = p.y + cLoc.y - myLoc.y;
-	}
-
 	private class DockableComponentDropTarget extends DropTarget {
 
 		DockableComponentDropTarget(Component comp) {
@@ -263,63 +259,65 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		@Override
 		public synchronized void drop(DropTargetDropEvent dtde) {
 			clearAutoscroll();
-			if (dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
-				Point p = dtde.getLocation();
-				translate(p, ((DropTarget) dtde.getSource()).getComponent());
-				setDropCode(p);
+
+			if (!dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
+				dtde.rejectDrop();
+				return;
+			}
+
+			Component dropTarget = ((DropTarget) dtde.getSource()).getComponent();
+			setDropCode(dtde.getLocation(), dropTarget);
+
+			if (DROP_CODE_SET) {
 				TARGET_INFO = placeholder;
 				dtde.acceptDrop(dtde.getDropAction());
 				dtde.dropComplete(true);
+				return;
 			}
-			else {
-				dtde.rejectDrop();
-			}
+
+			dtde.rejectDrop();
 		}
 
 		@Override
 		public synchronized void dragEnter(DropTargetDragEvent dtde) {
 			super.dragEnter(dtde);
 
-			// On Mac, sometimes this component is not showing,
-			// which causes exception in the translate method.
-			if (!isShowing()) {
+			if (!dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
 				dtde.rejectDrag();
 				return;
 			}
 
-			if (dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
-				Point p = dtde.getLocation();
-				translate(p, ((DropTarget) dtde.getSource()).getComponent());
-				setDropCode(p);
+			Component dropTarget = ((DropTarget) dtde.getSource()).getComponent();
+			setDropCode(dtde.getLocation(), dropTarget);
+
+			if (DROP_CODE_SET) {
 				DRAGGED_OVER_INFO = placeholder;
 				dtde.acceptDrag(dtde.getDropAction());
+				return;
 			}
-			else {
-				dtde.rejectDrag();
-			}
+
+			dtde.rejectDrag();
 		}
 
 		@Override
 		public synchronized void dragOver(DropTargetDragEvent dtde) {
 			super.dragOver(dtde);
 
-			// On Mac, sometimes this component is not showing,
-			// which causes exception in the translate method.
-			if (!isShowing()) {
+			if (!dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
 				dtde.rejectDrag();
 				return;
 			}
 
-			if (dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
-				Point p = dtde.getLocation();
-				translate(p, ((DropTarget) dtde.getSource()).getComponent());
-				setDropCode(p);
+			Component dropTarget = ((DropTarget) dtde.getSource()).getComponent();
+			setDropCode(dtde.getLocation(), dropTarget);
+
+			if (DROP_CODE_SET) {
 				DRAGGED_OVER_INFO = placeholder;
 				dtde.acceptDrag(dtde.getDropAction());
+				return;
 			}
-			else {
-				dtde.rejectDrag();
-			}
+
+			dtde.rejectDrag();
 		}
 
 		@Override
@@ -400,11 +398,42 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	}
 
 	/**
+	 * Translates the given point so that it is relative to the given component
+	 */
+	private void translate(Point p, Component c) {
+		Point cLoc = c.getLocationOnScreen();
+		Point myLoc = getLocationOnScreen();
+		p.x = p.x + cLoc.x - myLoc.x;
+		p.y = p.y + cLoc.y - myLoc.y;
+	}
+
+	/**
 	 * Sets the drop code base on the cursor location.
 	 * @param p the cursor location.
+	 * @param c the drop target.
 	 */
-	private void setDropCode(Point p) {
+	private void setDropCode(Point p, Component c) {
 		DROP_CODE_SET = true;
+
+		// When the DockableComponent isn't dragged over itself, either accept
+		// a tab or header as drag-N-drop target in place of the placeholder's
+		// window surface.  Also, consider tabs of components not showing as a
+		// valid target, so that components can be inserted between others.  A
+		// header, instead, requires a showing component as a valid target.
+		if (SOURCE_INFO != placeholder &&
+				(c instanceof DockingTabRenderer ||
+				(c instanceof DockableHeader && isShowing()))) {
+			DROP_CODE = DropCode.PUSH;
+			return;
+		}
+
+		// On Mac, sometimes this component is not showing,
+		// which causes exception in the translate method.
+		if (!isShowing()) {
+			DROP_CODE_SET = false;
+			return;
+		}
+		translate(p, c);
 
 		if (placeholder == null) {
 			DROP_CODE = DropCode.ROOT;

@@ -35,5 +35,10 @@ public enum WindowPosition {
 	 * Signals that windows should be stacked with other windows within  
 	 * the same group.
 	 */
-	STACK
+	STACK,
+
+	/**
+	 * Signals that windows should be pushed in between other item.
+	 */
+	PUSH
 }

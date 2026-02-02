@@ -16,6 +16,9 @@
 package docking.widgets.tabbedpane;
 
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragSource;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -36,6 +39,8 @@ public class DockingTabRenderer extends JPanel {
 	private JLabel titleLabel;
 	private JLabel iconLabel;
 	private JButton closeButton;
+
+	private DragSource dragSource;
 
 	private HierarchyListener hierarchyListener;
 	private TabContainerForwardingMouseListener forwardingListener;
@@ -128,6 +133,11 @@ public class DockingTabRenderer extends JPanel {
 
 	public void installPopupMenu(JPopupMenu popupMenu) {
 		this.popupMenu = popupMenu;
+	}
+
+	public void installDragSource(DragGestureListener dgl) {
+		dragSource = new DragSource();
+		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_MOVE, dgl);
 	}
 
 	public void setIcon(Icon icon) {

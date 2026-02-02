@@ -22,7 +22,7 @@ import java.awt.Cursor;
  * convenience methods for translating this drop code into a cursor and window position.
  */
 enum DropCode {
-	INVALID, STACK, LEFT, RIGHT, TOP, BOTTOM, ROOT, WINDOW;
+	INVALID, STACK, PUSH, LEFT, RIGHT, TOP, BOTTOM, ROOT, WINDOW;
 
 	public Cursor getCursor() {
 		Cursor c = HeaderCursor.NO_DROP;
@@ -41,6 +41,9 @@ enum DropCode {
 				break;
 			case STACK:
 				c = HeaderCursor.STACK;
+				break;
+			case PUSH:
+				c = HeaderCursor.PUSH;
 				break;
 			case ROOT:
 				c = HeaderCursor.STACK;
@@ -65,6 +68,8 @@ enum DropCode {
 				return WindowPosition.RIGHT;
 			case STACK:
 				return WindowPosition.STACK;
+			case PUSH:
+				return WindowPosition.PUSH;
 			case TOP:
 				return WindowPosition.TOP;
 			default:

@@ -1197,11 +1197,21 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		ComponentNode sourceNode = source.getNode();
 		if (destination != null) {
 			ComponentNode destinationNode = destination.getNode();
-			sourceNode.remove(source);
 			if (windowPosition == WindowPosition.STACK) {
+				sourceNode.remove(source);
 				destinationNode.add(source);
 			}
+			else if (windowPosition == WindowPosition.PUSH) {
+				// Don't remove the source placeholder from its own node
+				// outside of push(), since that will change the indexes
+				// of components, preventing push() to properly shift an
+				// item position when both source and destination are in
+				// the same node.  push() itself will handle the removal
+				// of the source placeholder from its own node.
+				destinationNode.push(source, destination);
+			}
 			else {
+				sourceNode.remove(source);
 				destinationNode.split(source, windowPosition);
 			}
 		}
