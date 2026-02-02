@@ -39,7 +39,7 @@ public class DockingTabRenderer extends JPanel {
 
 	private HierarchyListener hierarchyListener;
 	private TabContainerForwardingMouseListener forwardingListener;
-	private MouseListener renameListener;
+	private JPopupMenu popupMenu;
 
 	public DockingTabRenderer(final JTabbedPane tabbedPane, String fullTitle, String tabText,
 			ActionListener closeListener) {
@@ -126,8 +126,8 @@ public class DockingTabRenderer extends JPanel {
 		return title;
 	}
 
-	public void installRenameAction(MouseListener listener) {
-		this.renameListener = listener;
+	public void installPopupMenu(JPopupMenu popupMenu) {
+		this.popupMenu = popupMenu;
 	}
 
 	public void setIcon(Icon icon) {
@@ -222,7 +222,7 @@ public class DockingTabRenderer extends JPanel {
 		}
 
 		private boolean consumePopup(MouseEvent e) {
-			if (renameListener == null) {
+			if (popupMenu == null) {
 				return false;
 			}
 
@@ -230,7 +230,7 @@ public class DockingTabRenderer extends JPanel {
 				return false;
 			}
 
-			renameListener.mouseClicked(e);
+			popupMenu.show(e.getComponent(), e.getX(), e.getY());
 
 			return true;
 		}
