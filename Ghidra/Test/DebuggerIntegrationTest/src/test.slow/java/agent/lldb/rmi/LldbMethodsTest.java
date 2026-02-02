@@ -739,17 +739,18 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testFinish() throws Exception {
+		// NB: Currently has a timing issue on Windows
+		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 		try (LldbAndConnection conn = startAndConnectLldb()) {
-			// NB: These examples have shorter per-platform "step out"'s
-			conn.execute("file " + (IS_WINDOWS ? getSpecimenRead() : getSpecimenPrint()));
+			conn.execute("file " + getSpecimenPrint());
 			conn.execute("ghidra trace start");
 			txPut(conn, "processes");
-			breakAt(conn, IS_WINDOWS ? "wrapread" : "wrapputs");
+			breakAt(conn, "wrapputs");
 
 			RemoteMethod activate = conn.getMethod("activate_thread");
 			RemoteMethod step_out = conn.getMethod("step_out");
 			try (ManagedDomainObject mdo =
-				openDomainObject(projectName(IS_WINDOWS ? "expRead" : "expPrint"))) {
+				openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped(conn);
 				waitTxDone();

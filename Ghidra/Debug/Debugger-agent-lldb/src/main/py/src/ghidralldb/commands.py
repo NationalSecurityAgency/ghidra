@@ -639,6 +639,11 @@ def quantize_pages(start: int, end: int) -> Tuple[int, int]:
     return (start // PAGE_SIZE * PAGE_SIZE, (end+PAGE_SIZE-1) // PAGE_SIZE*PAGE_SIZE)
 
 
+def check_count(actual: int, requested: int):
+    if actual != requested: 
+        print(f"Incomplete read: {actual} bytes")
+    
+
 def put_bytes(start: int, end: int, result: lldb.SBCommandReturnObject,
               pages: bool) -> None:
     trace = STATE.require_trace()
@@ -661,7 +666,7 @@ def put_bytes(start: int, end: int, result: lldb.SBCommandReturnObject,
             if count.done():
                 result.PutCString(f"Wrote {count.result()} bytes")
             else:
-                count.add_done_callback(lambda c: print(f"Wrong {c} bytes"))
+                count.add_done_callback(lambda c: check_count(c.result(), len(buf)))
                 result.PutCString(
                     f"Wrong {len(buf)} bytes, perhaps in the future")
         else:
@@ -674,11 +679,15 @@ def eval_address(address: str) -> int:
     try:
         return util.parse_and_eval(address)
     except BaseException as e:
-        raise RuntimeError(f"Cannot convert '{address}' to address: {e}")
+        if "can't evaluate expressions when the process is running" not in str(e):
+            raise RuntimeError(f"Cannot convert '{address}' to address: {e}")
+        return None
 
 
 def eval_range(address: str, length: str) -> Tuple[int, int]:
     start = eval_address(address)
+    if start is None:
+        return None, None
     try:
         end = start + util.parse_and_eval(length)
     except BaseException as e:
@@ -689,7 +698,8 @@ def eval_range(address: str, length: str) -> Tuple[int, int]:
 def putmem(address: str, length: str, result: lldb.SBCommandReturnObject,
            pages: bool = True) -> None:
     start, end = eval_range(address, length)
-    put_bytes(start, end, result, pages)
+    if start is not None:
+        put_bytes(start, end, result, pages)
 
 
 @convert_errors
@@ -773,6 +783,8 @@ def putmem_state(address: str, length: str, state: str,
     trace = STATE.require_trace()
     trace.validate_state(state)
     start, end = eval_range(address, length)
+    if start is None:
+        return
     if pages:
         start, end = quantize_pages(start, end)
     proc = util.get_process()
@@ -841,6 +853,8 @@ def ghidra_trace_delmem(debugger: lldb.SBDebugger, command: str,
 
     STATE.require_tx()
     start, end = eval_range(address, length)
+    if start is None:
+        return
     proc = util.get_process()
     base, addr = trace.extra.require_mm().map(proc, start)
     # Do not create the space. We're deleting stuff.
@@ -1349,6 +1363,8 @@ def ghidra_trace_get_values_rng(debugger: lldb.SBDebugger, command: str,
 
     trace = STATE.require_trace()
     start, end = eval_range(address, length)
+    if start is None:
+        return
     proc = util.get_process()
     base, addr = trace.extra.require_mm().map(proc, start)
     # Do not create the space. We're querying. No tx.
@@ -1416,6 +1432,8 @@ def ghidra_trace_disassemble(debugger: lldb.SBDebugger, command: str,
 
     trace, tx = STATE.require_tx()
     start = eval_address(address)
+    if start is None:
+        return
     proc = util.get_process()
     base, addr = trace.extra.require_mm().map(proc, start)
     if base != addr.space:
