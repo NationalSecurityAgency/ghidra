@@ -323,10 +323,11 @@ class ComponentNode extends Node {
 			tabRenderer.installPopupMenu(createTabPopupMenu(activeComponents, placeholder));
 
 			tabbedPane.setTabComponentAt(i, tabRenderer);
+
 			Icon icon = placeholder.getIcon();
-			if (icon != null) {
-				tabRenderer.setIcon(icon);
-			}
+			tabbedPane.setTitleAt(i, tabText);
+			tabbedPane.setIconAt(i, icon);
+			tabRenderer.setIcon(icon);
 
 			if (placeholder == top) {
 				activeIndex = i;
@@ -575,11 +576,14 @@ class ComponentNode extends Node {
 		}
 
 		DockingTabRenderer renderer = (DockingTabRenderer) pane.getTabComponentAt(index);
-		renderer.setIcon(placeholder.getIcon());
+		Icon icon = placeholder.getIcon();
+		renderer.setIcon(icon);
+		pane.setIconAt(index, icon);
 
 		String tabText = placeholder.getTabText();
 		String fullTitle = placeholder.getTitle();
 		renderer.setTitle(tabText, fullTitle);
+		pane.setTitleAt(index, tabText);
 	}
 
 	public void iconChanged(ComponentPlaceholder placeholder) {

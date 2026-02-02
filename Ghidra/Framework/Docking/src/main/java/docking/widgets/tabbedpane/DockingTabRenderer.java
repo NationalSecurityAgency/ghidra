@@ -146,9 +146,17 @@ public class DockingTabRenderer extends JPanel {
 			// don't include both when the tab text is a subset of the title
 			titleLabel.setToolTipText(fullTitle);
 		}
-		else {
-			// both are different, include both			
-			titleLabel.setToolTipText("<html><b>" + tabText + "</b> - [" + fullTitle + "]");
+		else { // both are different, include both	
+
+			// Guilty Knowledge: we know that some providers use '[]' for the title and tab text
+			// of disconnected providers.  
+			//
+			// We would like to use the '[]' characters to separate the tab text from the title.  
+			// Strip off the client brackets and use ours for the title part of the tooltip.
+			String rawTabText = tabText.replaceAll("\\[", "").replaceAll("\\]", "");
+			String rawTitle = fullTitle.replaceAll("\\[", "").replaceAll("\\]", "");
+			String html = "<html><b>%s</b> - [%s]".formatted(rawTabText, rawTitle);
+			titleLabel.setToolTipText(html);
 		}
 	}
 
