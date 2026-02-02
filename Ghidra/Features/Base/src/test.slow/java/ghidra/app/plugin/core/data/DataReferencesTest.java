@@ -434,7 +434,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// this is check all labels at the given
 		FieldElement fieldElement = tf.getFieldElement(0, 0);
-		assertEquals("ADVAPI32.dll_RegCloseKey (01001002+22)", fieldElement.getText());
+		assertEquals("ADVAPI32.dll_RegCloseKey (01001002+0x16)", fieldElement.getText());
 	}
 
 	@Test
