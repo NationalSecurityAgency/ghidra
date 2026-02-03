@@ -31,7 +31,7 @@
 ::@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 ::@env OPT_TARGET_DIR:str="" "Dir" "Initial directory"
-::@env OPT_X64DBG_EXE:file="C:\\Software\\release\\x64\\x64dbg.exe" "Path to x64dbg.exe" "Path to x64dbg.exe (or equivalent)."
+::@env OPT_X64DBG_EXE:file="x64dbg.exe" "Path to x64dbg.exe" "Path to x64dbg.exe (or equivalent)."
 
 @echo off
 
