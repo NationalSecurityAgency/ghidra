@@ -64,11 +64,9 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 	private final EmulatorStateListener emuListener = new EmulatorStateListener() {
 		@Override
 		public void stopped(CachedEmulator emu) {
-			if (!(emu.emulator() instanceof SymZ3PcodeEmulator z3emu)) {
-				setFactoryToZ3();
-				return;
+			if (emu.emulator() instanceof SymZ3PcodeEmulator z3emu) {
+				populateSummaryFromEmulator(z3emu);
 			}
-			populateSummaryFromEmulator(z3emu);
 		}
 	};
 
@@ -130,6 +128,7 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 		submainPanel.setRightComponent(summaryPanel);
 		submainPanel.setLeftComponent(codePanel);
 		mainPanel.add(submainPanel);
+		setFactoryToZ3();
 	}
 
 	public void updateSummary() {
@@ -147,24 +146,17 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 
 		TraceSchedule time = current.getTime();
 		PcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
-		if (!(emu instanceof SymZ3PcodeEmulator z3Emu)) {
-			/** LATER: It'd be nice if the summary were written down somewhere */
-			setFactoryToZ3();
-			return;
+		if (emu instanceof SymZ3PcodeEmulator z3Emu) {
+			populateSummaryFromEmulator(z3Emu);
 		}
 
-		populateSummaryFromEmulator(z3Emu);
 	}
 
 	private void setFactoryToZ3() {
-		if (!this.isVisible()) {
-			return;
-		}
 		Msg.info(this, "Resetting emulator to Z3 (summary open)");
 		for (EmulatorFactory factory : emulationService.getEmulatorFactories()) {
 			if (factory instanceof SymZ3EmulatorFactory z3factory) {
 				emulationService.setEmulatorFactory(z3factory);
-				emulationService.invalidateCache();
 				return;
 			}
 		}
