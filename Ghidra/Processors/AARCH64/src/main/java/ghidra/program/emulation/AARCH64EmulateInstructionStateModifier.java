@@ -57,7 +57,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 		// INT_SEXT:
 //			registerPcodeOpBehavior("SIMD_INT_SEXT", new SIMD_INT_SEXT());
 		// INT_ABS (no equivalent SLEIGH primitive):
-			registerPcodeOpBehavior("MP_INT_ABS", new MP_INT_ABS());
+//			registerPcodeOpBehavior("MP_INT_ABS", new MP_INT_ABS());
 //			registerPcodeOpBehavior("SIMD_INT_ABS", new SIMD_INT_ABS());
 		// INT_ADD:
 			// registerPcodeOpBehavior("SIMD_INT_ADD", new SIMD_INT_ADD());
@@ -175,7 +175,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 		long sign = (fbits >>> 31) & 0x1;
 		long exp = (fbits >>> 23) & 0xff - 127 + 15;
 		long mant = (fbits & 0x7fffff) >>> 13;
-		return (long) (sign << 15 | exp << 10 | mant);
+		return sign << 15 | exp << 10 | mant;
 	}
 
 	// Convert a byte array to a long
@@ -1264,7 +1264,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 				float fx = Float.intBitsToFloat((int) x);
 				float fy = Float.intBitsToFloat((int) y);
 				float fz = fx + fy;
-				return (long) Float.floatToIntBits(fz);
+				return Float.floatToIntBits(fz);
 			} else if (esize == 8) {
 				double fx = Double.longBitsToDouble(x);
 				double fy = Double.longBitsToDouble(y);
@@ -1287,10 +1287,10 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 					return floatToShortBits(fz);
 				}
 				if (oesize == 4) {
-					return (long) Float.floatToIntBits(fz);
+					return Float.floatToIntBits(fz);
 				}
 				if (oesize == 8) {
-					return Double.doubleToLongBits((double) fz);
+					return Double.doubleToLongBits(fz);
 				}
 			} else if (iesize == 4) {
 				float fx = Float.intBitsToFloat((int) x);
@@ -1300,10 +1300,10 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 					return floatToShortBits(fz);
 				}
 				if (oesize == 4) {
-					return (long) Float.floatToIntBits(fz);
+					return Float.floatToIntBits(fz);
 				}
 				if (oesize == 8) {
-					return Double.doubleToLongBits((double) fz);
+					return Double.doubleToLongBits(fz);
 				}
 			} else if (iesize == 8) {
 				double fx = Double.longBitsToDouble(x);
@@ -1313,7 +1313,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 					return floatToShortBits((float) fz);
 				}
 				if (oesize == 4) {
-					return (long) Float.floatToIntBits((float) fz);
+					return Float.floatToIntBits((float) fz);
 				}
 				if (oesize == 8) {
 					return Double.doubleToLongBits(fz);
@@ -1335,7 +1335,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 				float fx = Float.intBitsToFloat((int) x);
 				float fy = Float.intBitsToFloat((int) y);
 				float fz = fx / fy;
-				return (long) Float.floatToIntBits(fz);
+				return Float.floatToIntBits(fz);
 			} else if (esize == 8) {
 				double fx = Double.longBitsToDouble(x);
 				double fy = Double.longBitsToDouble(y);
@@ -1358,7 +1358,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 				float fx = Float.intBitsToFloat((int) x);
 				float fy = Float.intBitsToFloat((int) y);
 				float fz = fx * fy;
-				return (long) Float.floatToIntBits(fz);
+				return Float.floatToIntBits(fz);
 			} else if (esize == 8) {
 				double fx = Double.longBitsToDouble(x);
 				double fy = Double.longBitsToDouble(y);
@@ -1381,7 +1381,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 				float fx = Float.intBitsToFloat((int) x);
 				float fy = Float.intBitsToFloat((int) y);
 				float fz = fx - fy;
-				return (long) Float.floatToIntBits(fz);
+				return Float.floatToIntBits(fz);
 			} else if (esize == 8) {
 				double fx = Double.longBitsToDouble(x);
 				double fy = Double.longBitsToDouble(y);
@@ -1402,7 +1402,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			} else if (esize == 4) {
 				float fx = Float.intBitsToFloat((int) x);
 				float fz = - fx;
-				return (long) Float.floatToIntBits(fz);
+				return Float.floatToIntBits(fz);
 			} else if (esize == 8) {
 				double fx = Double.longBitsToDouble(x);
 				double fz = - fx;
@@ -1422,7 +1422,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			} else if (esize == 4) {
 				float fx = Float.intBitsToFloat((int) x);
 				float fz = (fx < 0.0F) ? (0.0F - fx) : fx;
-				return (long) Float.floatToIntBits(fz);
+				return Float.floatToIntBits(fz);
 			} else if (esize == 8) {
 				double fx = Double.longBitsToDouble(x);
 				double fz = (fx < 0.0D) ? (0.0F - fx) : fx;
@@ -1438,12 +1438,12 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			if (s_size == d_size) return x;
 			if (s_size == 2) {
 				float fx = shortBitsToFloat(x);
-				if (d_size == 4) return (long) Float.floatToIntBits(fx);
-				else if (d_size == 8) return Double.doubleToLongBits((double) fx);
+				if (d_size == 4) return Float.floatToIntBits(fx);
+				else if (d_size == 8) return Double.doubleToLongBits(fx);
 			} else if (s_size == 4) {
 				float fx = Float.intBitsToFloat((int) x);
 				if (d_size == 2) return floatToShortBits(fx);
-				else if (d_size == 8) return Double.doubleToLongBits((double) fx);
+				else if (d_size == 8) return Double.doubleToLongBits(fx);
 			} else if (s_size == 8) {
 				double fx = Double.longBitsToDouble(x);
 				if (d_size == 2) return floatToShortBits((float) fx);
@@ -1459,16 +1459,16 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			if (s_size == d_size) return x;
 			if (s_size == 2) {
 				float fx = shortBitsToFloat(x);
-				if (d_size == 4) return (long) ((int) fx);
+				if (d_size == 4) return ((int) fx);
 				else if (d_size == 8) return (long) fx;
 			} else if (s_size == 4) {
 				float fx = Float.intBitsToFloat((int) x);
-				if (d_size == 2) return (long) ((short) fx);
+				if (d_size == 2) return ((short) fx);
 				else if (d_size == 8) return (long) fx;
 			} else if (s_size == 8) {
 				double fx = Double.longBitsToDouble(x);
-				if (d_size == 2) return (long) ((short) fx);
-				else if (d_size == 4) return (long) ((int) fx);
+				if (d_size == 2) return ((short) fx);
+				else if (d_size == 4) return ((int) fx);
 			}
 			return x;
 		}
@@ -1604,7 +1604,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 	// Implement the TBL/TBX instructions
 	//
-	// Vd = a64_TBL(Vinit, Vn1, [Vn2, Vn3, Vn3,] Vm)
+	// Vd = a64_TBL(Vinit, Vn1, [Vn2, Vn3, Vn4,] Vm)
 	//
 	// Vd: destination varnode (8 or 16 bytes)
 	// Vinit: varnode to update (e.g. 0 or Vd)
@@ -1654,7 +1654,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			byte[] table = new byte[64];
 			for (int i = 0; i < regs; i++) {
-				byte[] vn = memoryState.getBigInteger(inputs[2 + i], false).toByteArray();
+				byte[] vn = memoryState.getBigInteger(inputs[1 + i], false).toByteArray();
 				for (int j = 0; j < vn.length && i * 16 + j < 64; j++) {
 					table[i*16 + j] = vn[vn.length - j - 1];
 				}
@@ -1676,7 +1676,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			// size, it's just a simple lookup now
 
 			for (int i = 0; i < elements; i++) {
-				int index = (int) (indices[i] & 0xff);
+				int index = indices[i] & 0xff;
 				if (index < 16 * regs) {
 					result[i] = table[index];
 				}

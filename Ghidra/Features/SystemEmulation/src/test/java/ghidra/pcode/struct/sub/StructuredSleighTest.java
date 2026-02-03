@@ -107,7 +107,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 				__op_output = (my_var * 0x2:4);
 				""", myUserop.getBody());
 		// Verify the source compiles
-		myUserop.programFor(new Varnode(r0.getAddress(), r0.getNumBytes()), List.of(),
+		myUserop.programFor(List.of(new Varnode(r0.getAddress(), r0.getNumBytes())),
 			PcodeUseropLibrary.NIL);
 	}
 
@@ -246,7 +246,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 			}
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
-		PcodeProgram program = myUserop.programFor(null, List.of(), PcodeUseropLibrary.nil());
+		PcodeProgram program = myUserop.programFor(List.of(), PcodeUseropLibrary.nil());
 		assertTrue(program.getCode().isEmpty());
 	}
 }

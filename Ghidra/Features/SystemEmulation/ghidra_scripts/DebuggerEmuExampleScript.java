@@ -141,7 +141,8 @@ public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebugg
 		PcodeEmulator emulator = new PcodeEmulator(access.getLanguage(), writer.callbacks()) {
 			@Override
 			protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
-				return new DemoPcodeUseropLibrary(language, DebuggerEmuExampleScript.this);
+				return super.createUseropLibrary().compose(
+					new DemoPcodeUseropLibrary(language, DebuggerEmuExampleScript.this));
 			}
 		};
 		// Conventionally, emulator threads are named after their trace thread's path.
