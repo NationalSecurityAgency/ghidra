@@ -31,6 +31,9 @@ import ghidra.util.Msg;
  * A package utility class to allow for tests to selectively enable debug output.  This class is
  * used instead of generic logging with the intent that this class will be removed when the bug(s)
  * are fixed.
+ * <p>
+ * Until {@link #enable()} is called, no data is recorded.  Once enabled, all messages are buffered
+ * until a call to {@link #disable(boolean)} is made.
  */
 class DtrfDbg {
 
@@ -41,18 +44,24 @@ class DtrfDbg {
 
 	private static Map<Function, List<String>> linesByFunction = new ConcurrentHashMap<>();
 
-	DtrfDbg() {
+	private static volatile boolean isEnabled = false;
+
+	private DtrfDbg() {
 		// static class
 	}
 
 	static void enable() {
 		debugBytes = new ByteArrayOutputStream();
 		debugWriter = new PrintWriter(debugBytes);
+		linesByFunction = new ConcurrentHashMap<>();
+		isEnabled = true;
 	}
 
 	private static void close() {
+		isEnabled = false;
 		debugWriter.close();
 		debugWriter = new NullPrintWriter();
+		linesByFunction.clear();
 	}
 
 	static void disable(boolean write) {
@@ -91,11 +100,31 @@ class DtrfDbg {
 		clientFilters.addAll(Arrays.asList(filters));
 	}
 
+	/**
+	 * Stores a message to later be printed. 
+	 * 
+	 * @param f the function
+	 * @param s the message
+	 */
 	static void println(Function f, String s) {
-		linesByFunction.computeIfAbsent(f, ff -> new ArrayList<>()).add(s);
+		if (isEnabled) {
+			linesByFunction.computeIfAbsent(f, ff -> new ArrayList<>()).add(s);
+		}
 	}
 
+	/**
+	 * Stores a message to later be printed, filtering messages based on the 'client' parameter.
+	 * 
+	 * @param f the function
+	 * @param client the client
+	 * @param s the message
+	 * @see #setClientToStringFilters(String...)
+	 */
 	static void println(Function f, Object client, String s) {
+		if (!isEnabled) {
+			return;
+		}
+
 		if (!passesFilter(client)) {
 			return;
 		}
