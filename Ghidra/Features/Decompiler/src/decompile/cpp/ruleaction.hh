@@ -1512,6 +1512,17 @@ public:
   static int4 testCompareEquivalence(PcodeOp *lessop,PcodeOp *lessequalop);
 };
 
+class RuleExtLzcount : public Rule {
+public:
+  RuleExtLzcount(const string &g) : Rule( g, 0, "extlzcount") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleExtLzcount(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RulePopcountBoolXor : public Rule {
 public:
   RulePopcountBoolXor(const string &g) : Rule( g, 0, "popcountboolxor") {}	///< Constructor
