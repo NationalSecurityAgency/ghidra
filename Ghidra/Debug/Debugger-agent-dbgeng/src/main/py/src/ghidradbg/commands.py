@@ -1068,6 +1068,10 @@ def put_single_breakpoint(bp, ibobj, nproc: int, ikeys: List[str]) -> None:
         tid = "%04x" % tid
     except exception.E_NOINTERFACE_Error:
         tid = "****"
+    try:
+        handler = util.BPT_HANDLERS[bp.GetId()]
+    except Exception:
+        handler = ""
 
     if bp.GetType()[0] == DbgEng.DEBUG_BREAKPOINT_DATA:
         width, prot = bp.GetDataParameters()
@@ -1103,6 +1107,8 @@ def put_single_breakpoint(bp, ibobj, nproc: int, ikeys: List[str]) -> None:
     brkobj.set_value('Flags', bp.GetFlags())
     if tid != None:
         brkobj.set_value('Match TID', tid)
+    if handler != None:
+        brkobj.set_value('Handler', handler)
     brkobj.set_value('Command', bp.GetCommand())
     brkobj.insert()
 
@@ -1531,6 +1537,11 @@ def put_single_exception(obj: TraceObject, objpath: str,
     exc_cmd2 = util.GetExceptionFilterSecondCommand(
         offset + index, p.SecondCommandSize)
     exc_code = hex(p.ExceptionCode)
+    try:
+        util.EXC_CODES[index] = exc_code
+        handler = util.EXC_HANDLERS[exc_code]
+    except Exception:
+        handler = ""
     obj.set_value('Code', exc_code)
     trace = STATE.require_trace()
     contobj = trace.create_object(objpath+".Cont")
@@ -1545,6 +1556,8 @@ def put_single_exception(obj: TraceObject, objpath: str,
         obj.set_value('Cmd', exc_cmd)
     if exc_cmd2 is not None:
         obj.set_value('Cmd2', exc_cmd2)
+    if handler is not None:
+        obj.set_value('Handler', handler)
     obj.set_value('_display', "{} {} [{}]".format(index, exc_name, exc_code))
     obj.insert()
 
