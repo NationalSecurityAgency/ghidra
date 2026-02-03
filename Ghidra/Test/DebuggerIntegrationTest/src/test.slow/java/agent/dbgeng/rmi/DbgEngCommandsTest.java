@@ -989,11 +989,9 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			Address bp1 = rangeMain.getMinAddress();
 
 			assertBreakLoc(procBreakLocVals.get(0), "[0]", bp1, 1,
-				Set.of(TraceBreakpointKind.SW_EXECUTE),
-				"ntdll!LdrInit");
+				Set.of(TraceBreakpointKind.SW_EXECUTE), "ntdll!Ldr");
 			assertBreakLoc(procBreakLocVals.get(1), "[1]", bp1.add(4), 1,
-				Set.of(TraceBreakpointKind.HW_EXECUTE),
-				"ntdll!LdrInit");
+				Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!Ldr");
 		}
 	}
 

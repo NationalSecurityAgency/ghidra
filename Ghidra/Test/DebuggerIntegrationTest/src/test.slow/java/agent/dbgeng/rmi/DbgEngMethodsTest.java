@@ -15,8 +15,7 @@
  */
 package agent.dbgeng.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -143,11 +142,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				Address main = rangeMain.getMinAddress();
 
 				assertBreakLoc(procBreakLocVals.get(0), "[0]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"ntdll!LdrInit");
+					Set.of(TraceBreakpointKind.SW_EXECUTE), "ntdll!Ldr");
 				assertBreakLoc(procBreakLocVals.get(1), "[1]", main.add(4), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"ntdll!LdrInit");
+					Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!Ldr");
 			}
 		}
 	}
