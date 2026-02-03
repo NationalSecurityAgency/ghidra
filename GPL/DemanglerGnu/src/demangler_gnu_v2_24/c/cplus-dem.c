@@ -463,6 +463,7 @@ static int snarf_numeric_literal (const char **, string *);
 #define TYPE_QUAL_CONST    0x1
 #define TYPE_QUAL_VOLATILE 0x2
 #define TYPE_QUAL_RESTRICT 0x4
+#define TYPE_QUAL_STATIC   0x8
 
 static int code_for_qualifier (int);
 
@@ -573,6 +574,9 @@ code_for_qualifier (int c)
     case 'C':
       return TYPE_QUAL_CONST;
 
+	case 'S':
+		return TYPE_QUAL_STATIC;		
+
     case 'V':
       return TYPE_QUAL_VOLATILE;
 
@@ -601,22 +605,34 @@ qualifier_string (int type_quals)
     case TYPE_QUAL_CONST:
       return "const";
 
+	case TYPE_QUAL_STATIC:
+		return "static";
+
     case TYPE_QUAL_VOLATILE:
       return "volatile";
 
     case TYPE_QUAL_RESTRICT:
       return "__restrict";
 
+	case TYPE_QUAL_CONST | TYPE_QUAL_STATIC:
+		return "const static";
+
     case TYPE_QUAL_CONST | TYPE_QUAL_VOLATILE:
       return "const volatile";
 
     case TYPE_QUAL_CONST | TYPE_QUAL_RESTRICT:
       return "const __restrict";
+      
+	case TYPE_QUAL_STATIC | TYPE_QUAL_VOLATILE:
+		return "static volatile";
 
     case TYPE_QUAL_VOLATILE | TYPE_QUAL_RESTRICT:
       return "volatile __restrict";
 
-    case TYPE_QUAL_CONST | TYPE_QUAL_VOLATILE | TYPE_QUAL_RESTRICT:
+    case TYPE_QUAL_CONST | TYPE_QUAL_STATIC | TYPE_QUAL_VOLATILE:
+      return "static const volatile";
+
+	case TYPE_QUAL_CONST | TYPE_QUAL_VOLATILE | TYPE_QUAL_RESTRICT:
       return "const volatile __restrict";
 
     default:
@@ -819,32 +835,32 @@ cplus_demangle_name_to_style (const char *name)
   return unknown_demangling;
 }
 
-
 /* Scans to see if mangled is a set of optional qualifiers and a function. */
+
 static int /* bool */
 isQualifiersAndFunc(const char *mangled)
 {
-
 	int i = 0;
 	while (1)
 	{
-
 		switch (mangled[i++])
 		{
-		case 'C':
-		case 'V':
-		case 'u':
-			/*qualifier*/
-			break;
-		case 'F':
-			/* function */
-			return 1;
-		default:
-			/* anything else is not a qualifier or function */
-			return 0;
+			case 'C':
+			case 'S':
+			case 'V':
+			case 'u':
+				/* qualifier */
+				break;
+			case 'F':
+				/* function */
+				return 1;
+			default:
+				/* anything else is not a qualifier or function */
+				return 0;
 		}
-	}
+	}		
 }
+
 
 /* char *cplus_demangle (const char *mangled, int options)
 

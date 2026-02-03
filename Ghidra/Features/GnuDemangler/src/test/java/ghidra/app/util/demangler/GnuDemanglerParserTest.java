@@ -199,6 +199,46 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testLegacy_DemangedFunctionCharacter_Qualifiers() throws Exception {
+
+		// This is only supported in the older v24 demangler.  The 'F' character was not being 
+		// correctly demangled along with some qualifier characters.  The native demangler was 
+		// updated to fix this.
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+
+		//@formatter:off
+		assertLegacyDemangled("foo__03FooCF", 
+							  "Foo::foo(void) const",
+							  "undefined Foo::foo(void)");
+		
+		assertLegacyDemangled("foo__03FooSF", 
+							  "Foo::foo(void) static",
+							  "undefined Foo::foo(void)");
+		
+		assertLegacyDemangled("foo__03FooSFUcT1", 
+							  "Foo::foo(unsigned char, unsigned char) static",
+							  "undefined Foo::foo(unsigned char,unsigned char)");
+		
+		assertLegacyDemangled("foo__03FooSCFUcT1", 
+							  "Foo::foo(unsigned char, unsigned char) static const",
+							  "undefined Foo::foo(unsigned char,unsigned char)");
+		
+		//@formatter:on
+	}
+
+	private void assertLegacyDemangled(String mangled, String demangledExpected,
+			String signatureExpected) throws Exception {
+
+		String demangledActual = process.demangle(mangled);
+		assertEquals(demangledExpected, demangledActual);
+
+		DemangledObject object = parser.parse(mangled, demangledExpected);
+		assertType(object, DemangledFunction.class);
+		assertEquals(signatureExpected, object.getSignature());
+	}
+
+	@Test
 	public void testTemplates_TemplatedType() throws Exception {
 		String mangled =
 			"_ZNKSt8_Rb_treeI8LocationS0_St9_IdentityIS0_ESt4lessIS0_ESaIS0_EE4findERKS0_";
