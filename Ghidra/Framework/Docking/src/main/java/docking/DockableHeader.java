@@ -50,7 +50,7 @@ import help.HelpService;
  * source functionality.
  */
 public class DockableHeader extends GenericHeader
-		implements DragGestureListener, DragSourceListener {
+		implements DragGestureListener, DragSourceListener, DragSourceMotionListener {
 
 	private DockableComponent dockComp;
 
@@ -84,6 +84,8 @@ public class DockableHeader extends GenericHeader
 
 		dragSource.createDefaultDragGestureRecognizer(titlePanel.getDragComponent(),
 			DnDConstants.ACTION_MOVE, DockableHeader.this);
+
+		dragSource.addDragSourceMotionListener(DockableHeader.this);
 
 		resetComponents();
 	}
@@ -273,6 +275,8 @@ public class DockableHeader extends GenericHeader
 		DockableComponent.DROP_CODE_SET = true;
 		DockableComponent.SOURCE_INFO = dockComp.getComponentWindowingPlaceholder();
 
+		TransientWindow.showTransientWindow(getTitle());
+
 		dragCursorManager.dragStarted();
 
 		dragSource.startDrag(event, DragSource.DefaultMoveNoDrop,
@@ -283,6 +287,8 @@ public class DockableHeader extends GenericHeader
 	public void dragDropEnd(DragSourceDropEvent event) {
 		dragCursorManager.restoreCursorOnPreviousDraggedOverComponent();
 		dragCursorManager.dragEnded();
+
+		TransientWindow.hideTransientWindow();
 
 		ComponentPlaceholder info = dockComp.getComponentWindowingPlaceholder();
 		DockingWindowManager winMgr = info.getNode().winMgr;
@@ -339,6 +345,11 @@ public class DockableHeader extends GenericHeader
 	@Override
 	public void dropActionChanged(DragSourceDragEvent event) {
 		// don't care
+	}
+
+	@Override
+	public void dragMouseMoved(DragSourceDragEvent event) {
+		TransientWindow.positionTransientWindow();
 	}
 
 	private DragCursorManager createDragCursorManager() {

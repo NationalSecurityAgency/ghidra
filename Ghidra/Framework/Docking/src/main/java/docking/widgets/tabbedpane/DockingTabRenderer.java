@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -138,6 +139,7 @@ public class DockingTabRenderer extends JPanel {
 	public void installDragSource(DragGestureListener dgl) {
 		dragSource = new DragSource();
 		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_MOVE, dgl);
+		dragSource.addDragSourceMotionListener((DragSourceMotionListener) dgl);
 	}
 
 	public void setIcon(Icon icon) {
