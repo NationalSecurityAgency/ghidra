@@ -134,7 +134,9 @@ def initTestJVM(Task task, String rootDirName) {
 	
 	// Whether or failure should occur if tests sources are present, but no tests are discovered
 	// during test execution. New for Gradle 9 (behavior is equivalent to false on Gradle 8).
-	task.failOnNoDiscoveredTests = false
+	if (task.hasProperty('failOnNoDiscoveredTests')) { // remove check when we require Gradle 9
+		task.failOnNoDiscoveredTests = false
+	}
 	
 	// If false, then tests are re-run every time, even if no code has changed.
 	task.outputs.upToDateWhen {false}
