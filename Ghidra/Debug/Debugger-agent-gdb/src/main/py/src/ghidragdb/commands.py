@@ -1392,6 +1392,8 @@ def put_threads() -> None:
         tobj.set_value('_short_display', f'[{inf.num}.{t.num}:{tidstr}]')
         tobj.set_value('_display', compute_thread_display(t))
         tobj.insert()
+        stackobj = trace.create_object(tpath+".Stack")
+        stackobj.insert()
     trace.proxy_object_path(
         THREADS_PATTERN.format(infnum=inf.num)).retain_values(keys)
 

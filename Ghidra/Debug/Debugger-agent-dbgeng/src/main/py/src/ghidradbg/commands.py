@@ -1341,6 +1341,8 @@ def put_threads(running: bool = False) -> None:
             tobj.set_value('TEB', hex(int(t[1])))
             tobj.set_value('Name', t[2])
         tobj.insert()
+        stackobj = trace.create_object(tpath+".Stack")
+        stackobj.insert()
     trace.proxy_object_path(THREADS_PATTERN.format(
         procnum=nproc)).retain_values(keys)
 
