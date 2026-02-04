@@ -93,7 +93,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		// The targets above use different sleep methods:
 		//   Linux spawns clock_nanosleep
 		//   Windows spawns ZwDelayExecution and multiple ZwWaitForWork threads
-		return IS_WINDOWS ? 3 : 1;
+		return IS_WINDOWS ? 2 : 1;
 	}
 
 	static String getSpecimenPrint() {
