@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 
@@ -131,7 +130,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// expecting: u_artika and u_rtika
 		// the rest is the text of the real label below the offcut label
-		assertEquals("u_artika_01003002 u_rtika_01003004 u_Kartika", tf.getText());
+		assertEquals("u_Kartika+2 u_Kartika+4 u_Kartika", tf.getText());
 	}
 
 	@Test
@@ -151,7 +150,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// expecting: u_artika__+1
 		// the rest is the text of the real label below the offcut label
-		assertEquals("u_artika_01003002 u_Kartika", tf.getText());
+		assertEquals("u_Kartika+2 u_Kartika", tf.getText());
 	}
 
 	@Test
@@ -190,6 +189,22 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// the rest is the text of the real label below the offcut label
 		assertEquals("Bob (01002000+2)", tf.getText());
+	}
+
+	@Test
+	public void testOffcutLabelNonDynamicWithLabelAtMinAddress() {
+		createLabel("1002000", "Joe");
+		String offcutAddress = "1002002";
+		String name = "Bob";
+		createLabel(offcutAddress, name);
+
+		String minAddress = "1002000";
+		Address address = addr(minAddress);
+		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+
+		// the rest is the text of the real label below the offcut label
+		assertEquals("Bob (Joe+2) Joe", tf.getText());
 	}
 
 	@Test
@@ -235,7 +250,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("u__0100310c", tf.getText());
+		assertEquals("u__01003100+0xc", tf.getText());
 	}
 
 	@Test
@@ -251,7 +266,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("s_bcdef_01003201 s_abcdef_01003200", tf.getText());
+		assertEquals("s_bcdef_01003200+1 s_abcdef_01003200", tf.getText());
 	}
 
 	@Test
@@ -311,7 +326,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("s_ijklmnopqrstuvwxyz_132c_0026", tf.getText());
+		assertEquals("s_ijklmnopqrstuvwxyz_132c_0004+0x22", tf.getText());
 	}
 
 	@Test
@@ -331,7 +346,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("s__132c_0038", tf.getText());
+		assertEquals("s__132c_0004+0x34", tf.getText());
 	}
 
 	@Test

@@ -30,7 +30,7 @@ import java.util.*;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.*;
 
 import docking.DockingUtils;

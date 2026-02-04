@@ -62,7 +62,7 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = 300;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
 	/** Some snapshot likely to exceed the latest */
@@ -72,27 +72,28 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 
 	public static final String NOTEPAD = "C:\\\\Windows\\\\notepad.exe";
 	public static final String NETSTAT = "C:\\\\Windows\\\\System32\\\\netstat.exe";
-	public static final String INSTRUMENT_STATE = """
-			import sys
-			from ghidraxdbg import commands
-			from x64dbg_automate.events import *
-			print("Instrumenting")
-			def on_state_changed(*args):
-			    print("State changed")
-			    sys.stdout.flush()
-			    proc = util.selected_process()
-			    trace = commands.STATE.trace
-			    with commands.STATE.client.batch():
-			        with trace.open_tx("State changed proc {}".format(proc)):
-			            commands.put_state(proc)
-			    return
+	public static final String INSTRUMENT_STATE =
+		"""
+				import sys
+				from ghidraxdbg import commands
+				from x64dbg_automate.events import *
+				print("Instrumenting")
+				def on_state_changed(*args):
+				    print("State changed")
+				    sys.stdout.flush()
+				    proc = util.selected_process()
+				    trace = commands.STATE.trace
+				    with commands.STATE.client.batch():
+				        with trace.open_tx("State changed proc {}".format(proc)):
+				            commands.put_state(proc)
+				    return
 
-			def install_hooks():
-			    print("Installing")
-			    util.dbg.client.watch_debug_event(EventType.EVENT_DEBUG, lambda x: on_state_changed(x))
+				def install_hooks():
+				    print("Installing")
+				    util.dbg.client.watch_debug_event(EventType.EVENT_DEBUG, lambda x: on_state_changed(x))
 
-			install_hooks()
-			""";
+				install_hooks()
+				""";
 
 	protected TraceRmiService traceRmi;
 	private Path pythonPath;
@@ -130,7 +131,9 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 	}
 
 	protected void setX64dbgPath(ProcessBuilder pb) throws IOException {
-		pb.environment().put("OPT_X64DBG_EXE", "C:\\Software\\snapshot_2025-08-19_19-40\\release\\x64\\x64dbg.exe");
+		pb.environment()
+				.put("OPT_X64DBG_EXE",
+					"C:\\Software\\snapshot_2025-08-19_19-40\\release\\x64\\x64dbg.exe");
 	}
 
 	@BeforeClass
@@ -150,7 +153,6 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			pythonPath = Paths.get(DummyProc.which("python"));
 		}
 
-		pythonPath = new File("/C:/Python313/python.exe").toPath();
 		assertTrue(pythonPath.toFile().exists());
 		outFile = Files.createTempFile("pydbgout", null);
 		errFile = Files.createTempFile("pydbgerr", null);
@@ -328,7 +330,8 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			RemoteMethod execute = getMethod("execute");
 			try {
 				execute.invoke(Map.of("cmd", cmd));
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				Msg.warn(this, e.getMessage());
 			}
 		}
@@ -470,14 +473,16 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 		}
 	}
 
-	protected void assertBreakLoc(TraceObjectValue locVal, Address addr, int len, String type) throws Exception {
+	protected void assertBreakLoc(TraceObjectValue locVal, Address addr, int len, String type)
+			throws Exception {
 		TraceObject loc = locVal.getChild();
 		TraceObject spec = loc;
 		assertEquals(new AddressRangeImpl(addr, len), loc.getValue(0, "_range").getValue());
 		assertEquals(type, spec.getValue(0, "Type").getValue());
 	}
 
-	protected void assertWatchLoc(TraceObjectValue locVal, Address addr, int len, String type) throws Exception {
+	protected void assertWatchLoc(TraceObjectValue locVal, Address addr, int len, String type)
+			throws Exception {
 		TraceObject loc = locVal.getChild();
 		assertEquals(new AddressRangeImpl(addr, len), loc.getValue(0, "_range").getValue());
 		assertEquals(type, loc.getValue(0, "TypeEx").getValue());

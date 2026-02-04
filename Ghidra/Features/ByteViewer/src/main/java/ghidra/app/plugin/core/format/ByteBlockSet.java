@@ -25,6 +25,14 @@ import ghidra.program.model.address.AddressSet;
  * Interface to define methods for getting byte blocks and translating events.
  */
 public interface ByteBlockSet {
+	
+	/**
+	 * {@return true if this instance represents a valid source of data, false if this 
+	 * instance does not represent a valid source of data}
+	 */
+	default public boolean isValid() {
+		return true;
+	}
 
 	/**
 	 * Get the blocks in this set.

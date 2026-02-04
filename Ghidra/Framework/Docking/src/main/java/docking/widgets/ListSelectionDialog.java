@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractGTableModel;
@@ -110,6 +111,10 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 			return field.getSelectedValue();
 		}
 		return null;
+	}
+
+	public void setSearchMode(SearchMode mode) {
+		field.setSearchMode(mode);
 	}
 
 	protected JComponent buildWorkPanel(String label, DropDownTextFieldDataModel<T> model) {

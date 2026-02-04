@@ -292,7 +292,14 @@ public class DebugInfoEntry {
 		for (int i = 0; i < attributes.length; i++) {
 			buffer.append("\t\t");
 			DWARFAttributeValue attribVal = getAttributeValueUnchecked(i);
-			buffer.append(attribVal != null ? attribVal.toString(compilationUnit) : "-missing-");
+			if (attribVal != null) {
+				buffer.append(attribVal.toString(compilationUnit));
+			}
+			else {
+				AttrDef attrDef = abbreviation.getAttributeAt(i);
+				buffer.append("%s : %s = <missing>".formatted(attrDef.getAttributeName(),
+					attrDef.getAttributeForm()));
+			}
 			buffer.append("\n");
 		}
 

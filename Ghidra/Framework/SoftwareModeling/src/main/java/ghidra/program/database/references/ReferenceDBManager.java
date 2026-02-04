@@ -851,7 +851,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	@Override
 	public Reference[] getFlowReferencesFrom(Address addr) {
 		Reference[] refs = getReferencesFrom(addr);
-		ArrayList<Reference> list = new ArrayList<>(refs.length);
+		List<Reference> list = new ArrayList<>(refs.length);
 		for (Reference ref : refs) {
 			if (ref.getReferenceType().isFlow()) {
 				list.add(ref);
@@ -932,7 +932,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			if (fromRefs == null) {
 				return NO_REFS;
 			}
-			ArrayList<Reference> list = new ArrayList<>(10);
+			List<Reference> list = new ArrayList<>(10);
 			ReferenceIterator it = fromRefs.getRefs();
 			while (it.hasNext()) {
 				Reference ref = it.next();
@@ -1216,7 +1216,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		Address refAddr = symbol.getAddress();
 
 		ReferenceIterator iter = getReferencesTo(refAddr);
-		ArrayList<Reference> list = new ArrayList<>();
+		List<Reference> list = new ArrayList<>();
 		while (iter.hasNext()) {
 			Reference ref = iter.next();
 			if (symID == ref.getSymbolID()) {
@@ -2028,15 +2028,13 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		synchronized void clearCache() {
 			cachedFunction = null;
 			references = null;
+			variablesByAddress = null;
 		}
 
 		synchronized SortedMap<Address, List<Reference>> getFunctionDataReferences() {
-
-			if (references != null) {
-				return references;
+			if (references == null) {
+				references = getSortedVariableReferences(cachedFunction);
 			}
-
-			references = getSortedVariableReferences(cachedFunction);
 			return references;
 		}
 
@@ -2050,11 +2048,10 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 				LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
 
 			for (Symbol s : symbolMgr.getSymbols(cachedFunction.getID())) {
-				if (!s.getAddress().equals(address)) {
-					continue;
+				Object object = s.getObject();
+				if (object instanceof Variable v) {
+					map.get(address).add(v);
 				}
-				Variable v = (Variable) s.getObject();
-				map.get(address).add(v);
 			}
 
 			variablesByAddress = map;
@@ -2068,8 +2065,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			ReferenceIterator refIter = new FromRefIterator(function.getBody());
 			while (refIter.hasNext()) {
 				Reference ref = refIter.next();
-				RefType referenceType = ref.getReferenceType();
-				if (referenceType.isFlow() && !referenceType.isIndirect()) {
+				RefType type = ref.getReferenceType();
+				if (type.isFlow() && !type.isIndirect()) {
 					continue;
 				}
 

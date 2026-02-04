@@ -17,7 +17,7 @@ package ghidra.app.util.viewer.format;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.RowLayout;

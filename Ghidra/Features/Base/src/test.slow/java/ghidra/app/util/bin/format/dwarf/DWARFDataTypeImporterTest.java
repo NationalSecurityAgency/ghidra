@@ -36,15 +36,11 @@ import ghidra.util.exception.CancelledException;
  */
 public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
-	/**
-	 * Base type defs without a name should resolve directly to the Ghidra basetype instance.
-	 *
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
-	 */
 	@Test
 	public void testAnonBaseType() throws CancelledException, IOException, DWARFException {
+
+		// Base type defs without a name should resolve directly to the Ghidra basetype instance.
+
 		DebugInfoEntry baseDIE = addBaseType(null, 4, DWARFEncoding.DW_ATE_signed);
 
 		importAllDataTypes();
@@ -69,17 +65,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals("mytypedef", tdDT.getName());
 	}
 
-	/**
-	 * Base type defs with a non-standard name should resolve to a typedef that points
-	 * to the Ghidra basetype instance.
-	 *
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
-	 */
 	@Test
 	public void testNonStandardBaseTypeName()
 			throws CancelledException, IOException, DWARFException {
+
+		// Base type defs with a non-standard name should resolve to a typedef that points
+		// to the Ghidra basetype instance.
+
 		DebugInfoEntry baseDIE = addBaseType("blah", 4, DWARFEncoding.DW_ATE_signed);
 
 		importAllDataTypes();
@@ -194,16 +186,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals(100, structdt.getLength());
 	}
 
-	/**
-	 * Test structure definition when a struct is fwd decl'd in one CU and fully
-	 * defined in a second CU.
-	 * 
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
-	 */
 	@Test
 	public void testStructDanglingDecl() throws CancelledException, IOException, DWARFException {
+
+		// Test structure definition when a struct is fwd decl'd in one CU and fully
+		// defined in a second CU.
 
 		// CU1
 		newDeclStruct("mystruct").create();
@@ -342,14 +329,10 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertNull(structdt2);
 	}
 
-	/**
-	 * Test structure definition when incompatible structure defs are present in two CUs.
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
-	 */
 	@Test
 	public void testStructConflictDup() throws CancelledException, IOException, DWARFException {
+
+		// Test structure definition when incompatible structure defs are present in two CUs.
 
 		// CU1
 		DebugInfoEntry intDIE1 = addInt();
@@ -569,7 +552,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals("f1", structdt.getDefinedComponents()[1].getFieldName());
 	}
 
-	/**
+	/*
 	 * Tests when two structs in the same namespace have the same name and one includes the
 	 * other.  (gcc linking options can cause types from different namespaces to be
 	 * forced into the root namespace)
@@ -579,9 +562,6 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * If this test starts failing it means this behavior in Ghidra's DTM has changed and
 	 * the DWARF logic needs to be examined in light of those changes.
 	 *
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
 	 */
 	@Test
 	public void testStructMemberWithSameNameAsStruct()
@@ -603,16 +583,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals("mystruct.conflict", dt1b.getName());
 	}
 
-	/**
+	/*
 	 * Tests when two structs have the same absolute type name and one includes the other,
 	 * and they are the same size.
 	 * <p>
 	 * This (incorrectly) triggers an error checking case that prevents structs from
 	 * including themselves as members.
-	 *
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
 	 */
 	@Test
 	@SuppressWarnings("unused")
@@ -1143,15 +1119,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertTrue(flexDTC.getDataType() instanceof Array);
 	}
 
-	//----------------------------------------------------------------------------------------------
-	/**
-	 * Test skipping const, volatile data types.
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
-	 */
 	@Test
 	public void testConstElide() throws CancelledException, IOException, DWARFException {
+
+		// Test skipping const, volatile data types.
+
 		DebugInfoEntry intDIE = addInt();
 
 		DebugInfoEntry constDIE =
@@ -1189,21 +1161,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals(f1dtc.getDataType(), f4dtc.getDataType());
 	}
 
-	// not implemented yet
-	public void testNamespace() {
-
-	}
-
-	// not implemented yet
-	public void testNamespaceAnonType() {
-		// anon struct
-	}
-
-	/*
-	 * Test array defintions that use upper_bound attribute
-	 */
 	@Test
 	public void testArray() throws CancelledException, IOException, DWARFException {
+
+		// Test array definitions that use upper_bound attribute
+
 		DebugInfoEntry intDIE = addInt();
 		DebugInfoEntry arrayDIE = newArray(intDIE, false, 10);
 
@@ -1214,11 +1176,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals(11, arr.getNumElements());
 	}
 
-	/*
-	 * Tests array definitions that use count attribute instead of upper_bounds
-	 */
 	@Test
 	public void testArrayWithCountAttr() throws CancelledException, IOException, DWARFException {
+
+		// Tests array definitions that use count attribute instead of upper_bounds
+
 		DebugInfoEntry intDIE = addInt();
 		DebugInfoEntry arrayDIE = newArrayUsingCount(intDIE, 10);
 
@@ -1257,28 +1219,6 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		Array arr = (Array) dwarfDTM.getDataType(arrayDIE.getOffset(), null);
 		assertEquals(0, arr.getNumElements());
 		assertTrue(arr.isZeroLength());
-	}
-
-	// not implemented yet
-	public void testSubr() {
-		// func ptrs
-		// unamed, with typedefs pointing to
-	}
-
-	// not implemented yet
-	public void testDeclParentVsHeadParent() {
-		// test that type's name is derived from its decl die location
-		// instead of its spec location.
-	}
-
-	// not implemented yet
-	public void testMangledLinkageNames() {
-		// test _Zblahblh
-	}
-
-	// not implemented yet
-	public void testMangledLinkageInfoFromChildren() {
-		// grub in children's info for their linkage and use it for us (their parent)
 	}
 
 	private static String longName(String prefix, String sufix, int len) {
@@ -1339,22 +1279,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertTrue(s3DNI.getName().length() < nameLenCutoff);
 	}
 
-	// not implemented yet
-	public void testConflictingNamespace() {
-		// test a conflict between namespace and class symbols and other symbols
-		// when a DNI is trying to traverse to the final namespace
-	}
-
-	/**
-	 * Tests that endless loops (impossible without manual editing or intentional creation of bad
-	 * data) does not cause endless loop when processing.
-	 *
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
-	 */
 	@Test
 	public void testHostilePtrLoop() throws CancelledException, IOException, DWARFException {
+
+		// Tests that endless loops (impossible without manual editing or intentional creation of
+		// bad data) does not cause endless loop when processing.
 
 		addCompUnit();
 
@@ -1375,7 +1304,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals(dwarfDTM.getVoidType(), ((Pointer) ptrDT).getDataType());
 	}
 
-	/**
+	/*
 	 * Tests that struct definitions (ref'd via a pointer) overwrite a previous
 	 * empty decl only DIE.
 	 * <pre>
@@ -1392,10 +1321,6 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * The fix isn't to change the resolve logic or equiv logic, but to ensure that the
 	 * direct struct datatype DIE is also submitted to the DTM to be resolved, instead of
 	 * relying on the result that came out of the DTM when resolving the ptr DIE.
-	 *
-	 * @throws DWARFException
-	 * @throws IOException
-	 * @throws CancelledException
 	 */
 	@Test
 	public void testStructDeclViaPtr() throws CancelledException, IOException, DWARFException {
@@ -1579,15 +1504,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals("abc1", enum2DT.getNames()[0]);
 	}
 
-	/**
+	/*
 	 * Test multiple anon enum with multiple typesdefs pointing to each anon enums.
 	 * <p>
 	 * Multiple inbound typedefs should disable the isCopyRenameAnonTypes feature for that
 	 * enum.
-	 *
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
 	 */
 	@Test
 	public void testMultiAnonEnumWithTypedef2()

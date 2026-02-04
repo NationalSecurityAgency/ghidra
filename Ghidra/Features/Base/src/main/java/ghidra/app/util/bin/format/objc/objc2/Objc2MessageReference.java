@@ -66,7 +66,7 @@ public class Objc2MessageReference extends ObjcTypeMetadataStructure {
 	public void applyTo(Namespace namespace, TaskMonitor monitor) throws Exception {
 		Address address = ObjcUtils.toAddress(program, base);
 		DataType dt = toDataType();
-		Data messageRefData = program.getListing().createData(address, dt);
+		Data messageRefData = ObjcUtils.createData(program, dt, address);
 		Data selData = messageRefData.getComponent(1);
 		Object selAddress = selData.getValue();
 		Data selStringData = program.getListing().getDataAt((Address) selAddress);

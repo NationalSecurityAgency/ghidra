@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -316,7 +316,7 @@ void SleighBuilder::buildEmpty(Constructor *ct,int4 secnum)
 void SleighBuilder::setUniqueOffset(const Address &addr)
 
 {
-  uniqueoffset = (addr.getOffset() & uniquemask)<<4;
+  uniqueoffset = (addr.getOffset() & uniquemask)<<8;
 }
 
 /// \brief Constructor
@@ -337,7 +337,7 @@ SleighBuilder::SleighBuilder(ParserWalker *w,DisassemblyCache *dcache,PcodeCache
   const_space = cspc;
   uniq_space = uspc;
   uniquemask = umask;
-  uniqueoffset = (walker->getAddr().getOffset() & uniquemask)<<4;
+  uniqueoffset = (walker->getAddr().getOffset() & uniquemask)<<8;
 }
 
 void SleighBuilder::appendBuild(OpTpl *bld,int4 secnum)

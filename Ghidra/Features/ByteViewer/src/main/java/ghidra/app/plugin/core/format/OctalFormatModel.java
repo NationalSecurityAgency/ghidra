@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.format;
 
-import ghidra.util.HelpLocation;
-
 import java.math.BigInteger;
+
+import ghidra.util.HelpLocation;
 
 /**
  * Converts byte values to Octal representation.
  */
-public class OctalFormatModel implements UniversalDataFormatModel {
+public class OctalFormatModel implements UniversalDataFormatModel, MutableDataFormatModel {
 
 	private int symbolSize;
 	private static final String GOOD_CHARS = "01234567";
@@ -90,32 +90,18 @@ public class OctalFormatModel implements UniversalDataFormatModel {
 			throws ByteBlockAccessException {
 
 		byte b = block.getByte(index);
-		int i = b;
-		i &= 0xff; // 0377
+		int i = Byte.toUnsignedInt(b);
 
-		String str = Integer.toOctalString(i);
+		String str = Integer.toOctalString(i); // "377" is max
 
-		if (str.length() > symbolSize) {
-			str = str.substring(str.length() - symbolSize);
-		}
-
-		return pad(str);
-
-	}
-
-	/**
-	 * Returns true to allow values to be changed.
-	 */
-	@Override
-	public boolean isEditable() {
-		return (true);
+		return DataFormatModel.pad(str, symbolSize);
 	}
 
 	/**
 	 * Overwrite a value in a ByteBlock.
 	 * @param block block to change
 	 * @param index byte index into the block
-	 * @param pos The position within the unit where c will be the
+	 * @param charPosition The position within the unit where c will be the
 	 * new character.
 	 * @param c new character to put at pos param
 	 * @return true if the replacement is legal, false if the
@@ -165,26 +151,6 @@ public class OctalFormatModel implements UniversalDataFormatModel {
 	}
 
 	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	@Override
-	public int getGroupSize() {
-		return 1;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException 
-	 */
-	@Override
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
-
-	/**
 	 * Get the number of characters separating units.
 	 */
 	@Override
@@ -192,38 +158,8 @@ public class OctalFormatModel implements UniversalDataFormatModel {
 		return 1;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	@Override
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// *** private methods ***
-	/////////////////////////////////////////////////////////////////
-	private String pad(String value) {
-		StringBuffer sb = new StringBuffer();
-		int len = symbolSize - value.length();
-
-		for (int i = 0; i < len; i++) {
-			sb.append("0");
-		}
-		sb.append(value);
-		return (sb.toString());
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
-	 */
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Octal");
-	}
-
-	@Override
-	public void dispose() {
-		// nothing to do
 	}
 }

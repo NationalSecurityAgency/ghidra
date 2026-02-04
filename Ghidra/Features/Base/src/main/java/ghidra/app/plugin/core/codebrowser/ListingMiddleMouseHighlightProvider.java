@@ -207,13 +207,17 @@ public class ListingMiddleMouseHighlightProvider
 
 		currentHighlightString = highlightString;
 
+		repaint();
+	}
+
+	protected void repaint() {
 		repaintComponent.repaint();
 	}
 
 	private void clearHighlight() {
 		currentHighlightString = null;
 		currentHighlightPattern = null;
-		repaintComponent.repaint();
+		repaint();
 	}
 
 	private Pattern createRegisterPattern(Register register, String... highlightStrings) {

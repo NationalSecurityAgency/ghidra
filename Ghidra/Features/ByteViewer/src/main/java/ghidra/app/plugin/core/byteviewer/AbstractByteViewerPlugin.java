@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.byteviewer;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.app.events.AbstractLocationPluginEvent;
 import ghidra.app.events.AbstractSelectionPluginEvent;

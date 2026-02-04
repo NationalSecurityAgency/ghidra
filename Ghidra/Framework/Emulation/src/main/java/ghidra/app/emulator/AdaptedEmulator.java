@@ -48,12 +48,14 @@ import ghidra.util.task.TaskMonitor;
  * ported to use the new {@link PcodeEmulator} directly. New use cases based on p-code emulation
  * should use the {@link PcodeEmulator} directly. Older use cases still being actively maintained
  * should begin work porting to {@link PcodeEmulator}. Old use cases without active maintenance may
- * try this wrapper, but may have to remain using {@link DefaultEmulator}. At a minimum, to update
- * such old use cases, {@code new Emulator(...)} must be replaced by
+ * try this wrapper, but they will no longer compile once this adaptor is removed. At a minimum, to
+ * update such old use cases, {@code new Emulator(...)} must be replaced by
  * {@code new DefaultEmulator(...)}.
  */
 @Transitional
+@Deprecated(since = "12.1", forRemoval = true)
 public class AdaptedEmulator implements Emulator {
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedPcodeEmulator extends PcodeEmulator {
 		private final MemoryLoadImage loadImage;
 		private final MemoryFaultHandler faultHandler;
@@ -91,6 +93,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	@Transitional
 	public class AdaptedPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> {
 		@PcodeUserop
@@ -106,6 +109,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedPcodeThread extends BytesPcodeThread {
 		Address lastExecuteAddress;
 
@@ -145,6 +149,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedStateCallbacks implements PcodeStateCallbacks {
 		private final MemoryLoadImage loadImage;
 
@@ -184,6 +189,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
 		public AdaptedBytesPcodeExecutorState(Language language, MemoryFaultHandler faultHandler,
 				MemoryLoadImage loadImage) {
@@ -228,6 +234,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	static class AdaptedBytesPcodeExecutorStatePiece
 			extends AbstractBytesPcodeExecutorStatePiece<AdaptedBytesPcodeExecutorStateSpace> {
 		private final MemoryFaultHandler faultHandler;
@@ -244,6 +251,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	static class AdaptedBytesPcodeExecutorStateSpace extends BytesPcodeExecutorStateSpace {
 		private final MemoryFaultHandler faultHandler;
 
@@ -270,6 +278,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	@Deprecated(since = "12.1", forRemoval = true)
 	class AdaptedBreakTableCallback extends BreakTableCallBack {
 		public AdaptedBreakTableCallback() {
 			super((SleighLanguage) language);
@@ -299,6 +308,7 @@ public class AdaptedEmulator implements Emulator {
 	 * track what filters are installed. The {@link AdaptedBytesPcodeExecutorState} will invoke the
 	 * filter chain and then perform the read or write itself.
 	 */
+	@Deprecated(since = "12.1", forRemoval = true)
 	static class AdaptedFilteredMemoryState extends FilteredMemoryState {
 		private MemoryAccessFilter headFilter;
 

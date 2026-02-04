@@ -35,7 +35,7 @@ class DecimalSearchFormat extends SearchFormat {
 	}
 
 	@Override
-	public ByteMatcher parse(String input, SearchSettings settings) {
+	public UserInputByteMatcher parse(String input, SearchSettings settings) {
 		input = input.trim();
 		if (input.isBlank()) {
 			return new InvalidByteMatcher("");

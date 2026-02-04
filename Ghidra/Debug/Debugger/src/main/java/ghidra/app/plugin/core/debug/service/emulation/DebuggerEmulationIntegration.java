@@ -132,7 +132,7 @@ public enum DebuggerEmulationIntegration {
 		@Override
 		public AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<byte[], byte[]> piece, AddressSetView set) {
-			AddressSetView unknown = acc.intersectUnknown(set);
+			AddressSetView unknown = set.subtract(acc.intersectViewKnown(set, false));
 			if (unknown.isEmpty()) {
 				return super.readUninitialized(acc, thread, piece, set);
 			}
@@ -148,7 +148,7 @@ public enum DebuggerEmulationIntegration {
 			}
 			if (acc instanceof PcodeDebuggerMemoryAccess memAcc) {
 				if (memAcc.isLive() && waitTimeout(memAcc.readFromTargetMemory(unknown))) {
-					unknown = memAcc.intersectUnknown(set);
+					unknown = set.subtract(memAcc.intersectViewKnown(set, false));
 					if (unknown.isEmpty()) {
 						return super.readUninitialized(acc, thread, piece, set);
 					}

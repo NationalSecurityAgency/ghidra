@@ -29,7 +29,6 @@ import docking.action.*;
 import docking.options.OptionsService;
 import docking.widgets.fieldpanel.FieldPanel;
 import edu.uci.ics.jung.graph.Graph;
-import generic.stl.Pair;
 import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.*;
@@ -426,41 +425,47 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private void updateTitle() {
-		Pair<String, String> result = getTitleFromGraphData("Function Graph");
-		String title = result.first;
-		String subTitle = result.second;
+		GraphTitle graphTitle = getTitleFromGraphData("Function Graph");
+		String title = graphTitle.title;
+		String subTitle = graphTitle.subTitle;
+		String tabText = "Function Graph";
 
 		if (!isConnected()) {
 			title = "[" + title + "]";
+			tabText = "[" + graphTitle.functionName + "]";
 		}
 
 		setTitle(title);
 		setSubTitle(subTitle);
+		setTabText(tabText);
 	}
 
-	private Pair<String, String> getTitleFromGraphData(String title) {
+	private GraphTitle getTitleFromGraphData(String title) {
 
 		FGData graphData = controller.getFunctionGraphData();
-		Pair<String, String> result = new Pair<>(title, "");
 		if (graphData == null) {
-			return result;
+			return new GraphTitle(title, "", "");
 		}
 
 		Function function = graphData.getFunction();
 		if (function == null) {
-			return result;
+			return new GraphTitle(title, "", "");
 		}
 
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
 		Graph<FGVertex, FGEdge> graph = functionGraph;
-		String first = "Function Graph";
 
+		String functionName = function.getName();
 		String programName =
 			(currentProgram != null) ? currentProgram.getDomainFile().getName() : "";
-		String second = function.getName() + " - " + graph.getVertexCount() + " vertices  (" +
+		String subTitle = functionName + " - " + graph.getVertexCount() + " vertices  (" +
 			programName + ")";
 
-		return new Pair<>(first, second);
+		return new GraphTitle(title, subTitle, functionName);
+	}
+
+	private record GraphTitle(String title, String subTitle, String functionName) {
+
 	}
 
 	void doSetProgram(Program newProgram) {

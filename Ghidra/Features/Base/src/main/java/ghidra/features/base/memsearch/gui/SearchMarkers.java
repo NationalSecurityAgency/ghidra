@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import generic.theme.GIcon;
 import ghidra.app.services.*;
 import ghidra.app.util.SearchConstants;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -68,7 +69,7 @@ public class SearchMarkers {
 		service.setMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet, program);
 	}
 
-	void loadMarkers(String title, List<MemoryMatch> matches) {
+	void loadMarkers(String title, List<MemoryMatch<SearchData>> matches) {
 		if (service == null) {
 			return;
 		}
@@ -92,7 +93,7 @@ public class SearchMarkers {
 		}
 
 		markerSet.clearAll();
-		for (MemoryMatch match : matches) {
+		for (MemoryMatch<SearchData> match : matches) {
 			markerSet.add(match.getAddress());
 		}
 		service.setMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet, program);

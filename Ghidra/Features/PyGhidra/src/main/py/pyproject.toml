@@ -13,7 +13,6 @@ authors = [
 ]
 maintainers = [
     { name = "Ghidra Development Team" },
-	{ name = "DC3", email = "dc3.tsd@us.af.mil" },
 ]
 keywords = [
     "ghidra",
@@ -28,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "Jpype1==1.5.2",

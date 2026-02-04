@@ -18,9 +18,19 @@
 @echo off
 setlocal
 
-:: Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
-:: the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
-::set MAXMEM=2G
+:: Optionally override the default Java heap memory, which is typically 1/4 of system RAM.
+:: Supported values are of the regular expression form "\d+[gGmMkK]", allowing the value to be 
+:: specified in gigabytes, megabytes, or kilobytes (for example: 8G, 4096m, etc).
+set MAXMEM_DEFAULT=
+
+:: Allow the above MAXMEM_DEFAULT to be overridden by externally set environment variables
+:: - GHIDRA_MAXMEM: Desired maximum heap memory for all Ghidra instances
+:: - GHIDRA_BSIM_MAXMEM: Desired maximum heap memory only for Ghidra BSim instances
+if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
+if not defined GHIDRA_BSIM_MAXMEM set "GHIDRA_BSIM_MAXMEM=%GHIDRA_MAXMEM%"
+
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%GHIDRA_JAVA_OPTIONS% %GHIDRA_BSIM_JAVA_OPTIONS%
 
 :: launch mode  (fg, bg, debug, debug-suspend)
 set LAUNCH_MODE=fg
@@ -35,4 +45,4 @@ set LAUNCH_MODE=fg
 set "LAUNCH_DIR=%~dp0"
 set "LAUNCH_DIR=%LAUNCH_DIR:~0,-1%"
 
-call "%LAUNCH_DIR%\launch.bat" %LAUNCH_MODE% jdk BSim "%MAXMEM%" "" ghidra.features.bsim.query.ingest.BSimLaunchable %*
+call "%LAUNCH_DIR%\launch.bat" %LAUNCH_MODE% jdk BSim "%GHIDRA_BSIM_MAXMEM%" "%VMARG_LIST%" ghidra.features.bsim.query.ingest.BSimLaunchable %*

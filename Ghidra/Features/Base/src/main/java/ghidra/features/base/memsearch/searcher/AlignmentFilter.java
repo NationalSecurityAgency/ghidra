@@ -17,11 +17,13 @@ package ghidra.features.base.memsearch.searcher;
 
 import java.util.function.Predicate;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
+
 /**
  * Search filter that can test a search result and determine if that result is at an address
  * whose offset matches the given alignment (i.e. its offset is a multiple of the alignment value)
  */
-public class AlignmentFilter implements Predicate<MemoryMatch> {
+public class AlignmentFilter implements Predicate<MemoryMatch<SearchData>> {
 
 	private int alignment;
 
@@ -30,7 +32,7 @@ public class AlignmentFilter implements Predicate<MemoryMatch> {
 	}
 
 	@Override
-	public boolean test(MemoryMatch match) {
+	public boolean test(MemoryMatch<SearchData> match) {
 		return match.getAddress().getOffset() % alignment == 0;
 	}
 }

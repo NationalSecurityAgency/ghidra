@@ -262,7 +262,8 @@ public class JitCompiler {
 			oum.dumpResult();
 		}
 
-		JitCodeGenerator gen = new JitCodeGenerator(lookup, context, cfm, dfm, vsm, tm, am, oum);
+		JitCodeGenerator<?> gen =
+			new JitCodeGenerator<>(lookup, context, cfm, dfm, vsm, tm, am, oum);
 		return gen.load();
 	}
 

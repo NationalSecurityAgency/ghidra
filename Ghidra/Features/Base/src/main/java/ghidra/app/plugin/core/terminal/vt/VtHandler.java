@@ -956,6 +956,12 @@ public interface VtHandler {
 					handleBackwardTab(n);
 					return;
 				}
+				case 'b': { // Repeat last character
+					OfInt bits = parseCsiInts(csiParam);
+					int n = bits.hasNext() ? bits.nextInt() : 1;
+					handleRepeatChar(n);
+					return;
+				}
 				case 'c': { // Send Device Attributes
 					Msg.trace(this, "TODO: Send Device Attributes");
 					return;
@@ -1330,6 +1336,15 @@ public interface VtHandler {
 	 * @param n
 	 */
 	void handleBackwardTab(int n);
+
+	/**
+	 * Handle the repeat char sequence: repeat the last character n more times.
+	 * <p>
+	 * If the terminal is not in wrap mode, truncate anything beyond the last column.
+	 * 
+	 * @param n
+	 */
+	void handleRepeatChar(int n);
 
 	/**
 	 * Handle the line feed control code (0x0a), usually just move the cursor down one.
@@ -1753,7 +1768,7 @@ public interface VtHandler {
 	 * 
 	 * @param n the number of lines to scroll
 	 * @param intoScrollBack specifies whether the top line may flow into the scroll-back buffer
-	 * @see #handleScrollViewportDown(int)
+	 * @see #handleScrollViewportDown(int, boolean)
 	 */
 	default void handleScrollLinesUp(int n, boolean intoScrollBack) {
 		handleScrollViewportDown(n, intoScrollBack);

@@ -29,6 +29,7 @@
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 
 . ../support/lldbsetuputils.sh
 

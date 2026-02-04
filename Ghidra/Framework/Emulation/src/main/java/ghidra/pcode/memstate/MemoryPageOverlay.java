@@ -27,6 +27,7 @@ import ghidra.program.model.address.AddressSpace;
  * of this page implementation.  The underlying memory bank can be a null pointer
  * in which case, this memory bank behaves as if it were initially filled with zeros.
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public class MemoryPageOverlay extends MemoryPageBank {
 	
 	protected MemoryBank underlie;		// underlying memory object

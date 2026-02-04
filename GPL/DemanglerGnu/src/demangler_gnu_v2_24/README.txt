@@ -37,6 +37,13 @@ method from cxxfilt.c and placed it, along with supporting methods, into cplus-d
 allows us to perform a simple build of the stand alone demangler, with less source files 
 required.
 
+Update January 2026
+
+Fixed a bug seen in older mangled symbols that use an 'F' character for functions.  We added a 
+function to handle this case,  isQualifiersAndFunc().  This function called from inside the 
+demangle_signature() function.
+
+
 cp-demangle.c *
 
 This file contains a small, two-line change to send a newline character ('\n') along with 

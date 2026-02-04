@@ -192,7 +192,7 @@ public interface DataTypeComponent {
 			if (dataType instanceof Array) {
 				return true;
 			}
-			// assumes undefined types will ultimately have a non-zero length
+			// assumes not-yet-defined types will ultimately have a non-zero length
 			return !dataType.isNotYetDefined();
 		}
 		return false;

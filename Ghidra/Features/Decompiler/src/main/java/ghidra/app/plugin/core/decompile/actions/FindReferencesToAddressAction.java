@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesSe
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
 /**
@@ -40,21 +39,16 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 	}
 
 	@Override
-	protected ProgramLocation getLocation(NavigatableActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return null;
-		}
-		return context.getLocation();
+	protected boolean isMyNavigatable(NavigatableActionContext context) {
+		return context instanceof DecompilerActionContext;
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
+		if (!(context instanceof DecompilerActionContext dac)) {
 			return false;
 		}
-
-		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		updateMenuName(decompilerContext.getAddress());
+		updateMenuName(dac.getAddress());
 		return super.isEnabledForContext(context);
 	}
 

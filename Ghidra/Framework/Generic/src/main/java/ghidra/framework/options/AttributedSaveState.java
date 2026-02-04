@@ -18,8 +18,8 @@ package ghidra.framework.options;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdom.Attribute;
-import org.jdom.Element;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
 
 /**
  * A version of {@link SaveState} that allows clients to add attributes to properties in this save

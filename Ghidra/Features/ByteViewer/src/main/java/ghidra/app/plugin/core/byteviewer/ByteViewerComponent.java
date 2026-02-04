@@ -15,24 +15,32 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import java.awt.Color;
-import java.awt.FontMetrics;
+import java.awt.*;
 import java.awt.event.*;
 import java.math.BigInteger;
+import java.util.List;
 
-import javax.swing.SwingUtilities;
+import javax.swing.JComponent;
+import javax.swing.JToolTip;
 
-import docking.DockingUtils;
+import docking.*;
+import docking.action.DockingActionIf;
+import docking.actions.PopupActionProvider;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
-import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.format.*;
+import ghidra.app.plugin.core.hover.AbstractHoverProvider;
+import ghidra.app.services.HoverService;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import help.Help;
 import help.HelpService;
 
@@ -40,65 +48,63 @@ import help.HelpService;
  * FieldViewer to show data formatted according to the DataFormatModel that is passed in to the
  * constructor. The source of the data is an array of ByteBlocks that is managed by an IndexMap.
  */
-public class ByteViewerComponent extends FieldPanel implements FieldMouseListener,
-		FieldLocationListener, FieldSelectionListener, FieldInputListener {
+public class ByteViewerComponent extends FieldPanel
+		implements FieldMouseListener, FieldLocationListener, FieldSelectionListener,
+		FieldInputListener, PopupActionProvider, ByteViewerComponentNamer {
 
 	private ByteViewerPanel panel;
 	private DataFormatModel model;
 	private int bytesPerLine;
 	private FieldFactory[] fieldFactories;
 	private FontMetrics fm;
+	private int charWidth;
 	private IndexMap indexMap;
 	private ProgramByteBlockSet blockSet;
 
-	private boolean consumeKeyStrokes;
-	private boolean editMode; // true if this component is in edit mode;
-	// cursor is different color.
-	private Color editColor;
-	private Color currentCursorColor;
-	private Color currentCursorLineColor;
 	private ByteViewerLayoutModel layoutModel;
 	private boolean doingRefresh;
 	private boolean doingEdit;
 	private boolean updatingIndexMap;
-	private Runnable updateColorRunner;
 	private boolean indexUpdate = true;
 	private FieldLocation lastFieldLoc;
 
 	private ByteViewerHighlighter highlightProvider = new ByteViewerHighlighter();
-	private int highlightButton = MouseEvent.BUTTON2;
 
 	private FieldSelectionListener liveSelectionListener = (selection, trigger) -> {
 		ByteBlockSelection sel = processFieldSelection(selection);
-		panel.updateLiveSelection(ByteViewerComponent.this, sel);
+		panel.updateLiveSelection(this, sel);
 	};
+	private ByteViewerHoverProvider byteViewerHoverProvider;
 
 	/**
 	 * Constructor
 	 *
-	 * @param vpanel the byte viewer panel that this component lives in
+	 * @param panel the byte viewer panel that this component lives in
 	 * @param layoutModel the layout model for this component
 	 * @param model data format model that knows how the data should be displayed
 	 * @param bytesPerLine number of bytes displayed in a row
-	 * @param fm the font metrics used for drawing
 	 */
-	protected ByteViewerComponent(ByteViewerPanel vpanel, ByteViewerLayoutModel layoutModel,
-			DataFormatModel model, int bytesPerLine, FontMetrics fm) {
+	protected ByteViewerComponent(ByteViewerPanel panel, ByteViewerLayoutModel layoutModel,
+			DataFormatModel model, int bytesPerLine) {
 		super(layoutModel, "Byte Viewer");
 		setFieldDescriptionProvider((l, f) -> getFieldDescription(l, f));
 
-		this.panel = vpanel;
+		this.panel = panel;
 		this.model = model;
 		this.bytesPerLine = bytesPerLine;
-		this.fm = fm;
 		this.layoutModel = layoutModel;
 
 		setName(model.getName());
 		getAccessibleContext().setAccessibleName("Byte Viewer " + model.getName());
 		initialize();
+	}
 
-		// specialized line coloring
-		setBackgroundColorModel(new ByteViewerBackgroundColorModel());
+	private boolean isEditMode() {
+		return panel.getEditMode();
+	}
+
+	private boolean isActiveComponent() {
+		return panel.getCurrentComponent() == this;
 	}
 
 	private String getFieldDescription(FieldLocation fieldLoc, Field field) {
@@ -125,6 +131,19 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	@Override
+	public String getByteViewerComponentName() {
+		return model.getDescriptiveName();
+	}
+
+	@Override
+	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+		if (model instanceof PopupActionProvider popupProvider) {
+			return popupProvider.getPopupActions(tool, context);
+		}
+		return null;
+	}
+
+	@Override
 	public void buttonPressed(FieldLocation fieldLocation, Field field, MouseEvent mouseEvent) {
 		if (fieldLocation == null || field == null) {
 			return;
@@ -134,7 +153,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			return;
 		}
 
-		if (mouseEvent.getButton() == highlightButton) {
+		if (mouseEvent.getButton() == panel.getHighlightButton()) {
 			String text = field.getText();
 			if (text.equals(highlightProvider.getText())) {
 				highlightProvider.setText(null);
@@ -149,11 +168,12 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			mouseEvent.getButton() == MouseEvent.BUTTON1) {
 			fieldLocationChanged(fieldLocation, field, true, false);
 		}
+		else if (!isActiveComponent()) {
+			// there was a click but the view wasn't the active view
+			fieldLocationChanged(fieldLocation, field, false, true);
+		}
 	}
 
-	/**
-	 * Called from the parent FieldPanel whenever the cursor position changes.
-	 */
 	@Override
 	public void fieldLocationChanged(FieldLocation loc, Field field, EventTrigger trigger) {
 		fieldLocationChanged(loc, field, false, trigger == EventTrigger.GUI_ACTION);
@@ -162,22 +182,30 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	private void fieldLocationChanged(FieldLocation loc, Field field, boolean isAltDown,
 			boolean setCurrentView) {
 		// tell the panel that the location has changed
-		// translate location
 		if (doingRefresh || doingEdit || loc == null || indexMap == null || field == null ||
 			updatingIndexMap) {
 			return;
 		}
-		if (!(field instanceof ByteField) || (!isAltDown && loc.equals(lastFieldLoc))) {
-			return;
+		if (indexMap.isBlockSeparatorIndex(loc.getIndex())) {
+			// special handling for non-byte mapped lines to insure other columns remain in sync
+			panel.setCurrentNonMappedIndex(loc.getIndex(), this);
+		}
+		if (lastFieldLoc == null || !loc.getIndex().equals(lastFieldLoc.getIndex())) {
+			// needed because the index column doesn't have a cursor that causes it to always
+			// be repainted and have the ability to repaint the current line background
+			panel.updateIndexColumnCurrentLine();
 		}
 		if (setCurrentView) {
 			//Set this component as the current view in the panel
-			panel.setCurrentView(ByteViewerComponent.this);
+			panel.setCurrentView(this);
 		}
-		// do the color update later because the field panel
-		// listener is called after this one, and sets the
+		if (!(field instanceof ByteField) || (!isAltDown && loc.equals(lastFieldLoc))) {
+			return;
+		}
+
+		// Update later because the field panel listener is called after this one, and sets the
 		// colors incorrectly
-		SwingUtilities.invokeLater(updateColorRunner);
+		Swing.runLater(() -> updateColors());
 
 		lastFieldLoc = loc;
 
@@ -227,7 +255,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			Field field) {
 
 		panel.setStatusMessage("");
-		if (!consumeKeyStrokes) {
+		if (!isEditMode()) {
 			return;
 		}
 
@@ -243,7 +271,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			return;
 		}
 
-		if (!model.isEditable()) {
+		if (!(model instanceof MutableDataFormatModel mutableModel)) {
 			panel.setStatusMessage(model.getName() + " view is not editable");
 			ev.consume(); // we are in edit mode-don't let the event go through
 			return;
@@ -293,7 +321,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		}
 		try {
 			byte[] oldValue = getByteValue(block, offset);
-			boolean success = model.replaceValue(block, offset, col, c);
+			boolean success = mutableModel.replaceValue(block, offset, col, c);
 			if (success) {
 				byte[] newValue = getByteValue(block, offset);
 				blockSet.notifyByteEditing(block, offset, oldValue, newValue);
@@ -308,15 +336,12 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 				getToolkit().beep();
 			}
 		}
-		catch (ByteBlockAccessException exc) {
+		catch (ByteBlockAccessException | NumberFormatException exc) {
 			panel.setStatusMessage("Editing not allowed: " + exc.getMessage());
 			getToolkit().beep();
 
 		}
-		catch (AddressOutOfBoundsException e) {
-			getToolkit().beep();
-		}
-		catch (IndexOutOfBoundsException e) {
+		catch (AddressOutOfBoundsException | IndexOutOfBoundsException e) {
 			getToolkit().beep();
 		}
 		catch (Throwable t) {
@@ -328,6 +353,23 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			doingEdit = false;
 			blockSet.endTransaction(transactionID, true);
 		}
+	}
+
+	@Override
+	public void setFont(Font font) {
+		super.setFont(font);
+		fm = getFontMetrics(getFont());
+		if (model != null && layoutModel != null) {
+			invalidateModelFields();
+		}
+	}
+
+	void invalidateModelFields() {
+		charWidth = model instanceof CursorWidthDataFormatModel cwdfm
+				? cwdfm.getCursorWidth(fm)
+				: fm.charWidth('W');
+		createFields(); // redo the fields...
+		layoutModel.setIndexMap(indexMap);
 	}
 
 	private byte[] getByteValue(ByteBlock block, BigInteger offset) {
@@ -352,72 +394,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		addFieldMouseListener(this);
 	}
 
-	void setFontMetrics(FontMetrics fm) {
-		this.fm = fm;
-		createFields();
-		layoutModel.setIndexMap(indexMap);
-	}
-
-	/**
-	 * Set the color used to denote changes in the byte block.
-	 * @param c the color for unsaved changed byte values
-	 */
-	void setEditColor(Color c) {
-		editColor = c;
-		for (FieldFactory fieldFactorie : fieldFactories) {
-			fieldFactorie.setEditColor(c);
-		}
-		layoutModel.layoutChanged();
-		updateColor();
-	}
-
-	void setHighlightButton(int highlightButton) {
-		this.highlightButton = highlightButton;
-	}
-
-	void setMouseButtonHighlightColor(Color color) {
-		highlightProvider.setHighlightColor(color);
-	}
-
-	/**
-	 * Set the color for the component that has focus.
-	 *
-	 * @param c the color to set
-	 */
-	void setCurrentCursorColor(Color c) {
-		currentCursorColor = c;
-		updateColor();
-	}
-
-	/**
-	 * Set the background color for the line containing the cursor.
-	 *
-	 * @param c the color to set
-	 */
-	void setCurrentCursorLineColor(Color c) {
-		currentCursorLineColor = c;
-	}
-
-	/**
-	 * Set the color for showing gaps in indexes.
-	 *
-	 * @param c the color to set
-	 */
-	void setSeparatorColor(Color c) {
-		for (FieldFactory fieldFactorie : fieldFactories) {
-			fieldFactorie.setSeparatorColor(c);
-		}
-		layoutModel.layoutChanged();
-	}
-
-	/**
-	 * Get the color of unsaved byte changes
-	 * @return the color of unsaved byte changes
-	 */
-	Color getEditColor() {
-		return editColor;
-	}
-
 	void setIndexMap(IndexMap map) {
 		updatingIndexMap = true;
 		indexMap = map;
@@ -427,13 +403,9 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			createFields();
 		}
 
-		ByteBlockSet byteBlockSet = indexMap.getByteBlockSet();
-		if (byteBlockSet instanceof ProgramByteBlockSet) {
-			blockSet = (ProgramByteBlockSet) indexMap.getByteBlockSet();
-		}
-		else {
-			blockSet = null;
-		}
+		blockSet = indexMap.getByteBlockSet() instanceof ProgramByteBlockSet pbbs ? pbbs : null;
+		byteViewerHoverProvider
+				.setProgram(blockSet != null && blockSet.isValid() ? blockSet.program : null);
 		if (indexUpdate) {
 			layoutModel.setIndexMap(indexMap);
 		}
@@ -446,18 +418,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	protected ProgramByteBlockSet getBlockSet() {
 		return blockSet;
-	}
-
-	/**
-	 * Set the new group size
-	 *
-	 * @param groupSize the group size
-	 * @throws UnsupportedOperationException if model for this view does not support groups
-	 */
-	void setGroupSize(int groupSize) {
-		model.setGroupSize(groupSize);
-		createFields(); // redo the fields...
-		layoutModel.setIndexMap(indexMap);
 	}
 
 	void setViewerSelection(ByteBlockSelection selection) {
@@ -536,7 +496,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			int fieldNum = location.getFieldNum();
 			int row = location.getRow();
 			setCursorPosition(fieldIndex, fieldNum, row, column, EventTrigger.INTERNAL_ONLY);
-			if (panel.getCurrentComponent() == this) {
+			if (isActiveComponent()) {
 				goTo(fieldIndex, fieldNum, row, column, false, EventTrigger.INTERNAL_ONLY);
 			}
 
@@ -629,7 +589,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 * Convert the cursor location to a byte block and an offset.
 	 * @return the cursor location to a byte block and an offset.
 	 */
-	ByteBlockInfo getViewerCursorLocation() {
+	public ByteBlockInfo getViewerCursorLocation() {
 		FieldLocation loc = getCursorLocation();
 		if (loc == null) {
 			ViewerPosition vp = getViewerPosition();
@@ -666,33 +626,16 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return model;
 	}
 
-	/**
-	 * Set the edit mode according to the given param if the model for this view supports editing.
-	 *
-	 * @param editMode true means to enable editing, and change the cursor color.
-	 */
-	void setEditMode(boolean editMode) {
-		consumeKeyStrokes = editMode;
-		if (!model.isEditable()) {
-			return;
-		}
-		this.editMode = editMode;
-		updateColor();
+	private Color getActiveColor() {
+		return isEditMode()
+				? ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_EDIT
+				: ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT;
 	}
 
-	private void updateColor() {
-		if (panel.getCurrentComponent() == this) {
-			if (editMode) {
-				setFocusedCursorColor(editColor);
-			}
-			else {
-				setFocusedCursorColor(currentCursorColor);
-			}
-		}
-	}
-
-	boolean getEditMode() {
-		return editMode;
+	void updateColors() {
+		setFocusedCursorColor(isActiveComponent()
+				? getActiveColor()
+				: ByteViewerComponentProvider.CURSOR_COLOR_UNFOCUSED_NON_EDIT);
 	}
 
 	/**
@@ -724,28 +667,25 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		model.dispose();
 //    	scrollPane.getViewport().removeChangeListener(this);
 		layoutModel.dispose();
+		fieldFactories = null;
 	}
-
-	////////////////////////////////////////////////////////////////////////
 
 	/**
 	 * Set up colors and mouse listener.
 	 */
 	private void initialize() {
+		setFont(ByteViewerComponentProvider.DEFAULT_FONT);
+
 		createFields();
 
 		setCursorOn(true);
-		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
-		currentCursorColor = ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR;
-		setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
-		setFocusedCursorColor(currentCursorColor);
-
-		updateColorRunner = () -> updateColor();
+		setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_COLOR_UNFOCUSED_NON_EDIT);
+		setFocusedCursorColor(ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT);
 
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				if (e.getButton() == MouseEvent.BUTTON3) {
+				if (e.getButton() == MouseEvent.BUTTON3 && !isActiveComponent()) {
 					// hack to make sure that a right-clicked component becomes the active
 					// component
 					panel.setCurrentView(ByteViewerComponent.this);
@@ -753,7 +693,25 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			}
 		});
 
+		setBackgroundColor(ByteViewerComponentProvider.BG_COLOR);
+
+		// specialized line coloring
+		setBackgroundColorModel(new ByteViewerBGColorModel(panel));
+
+		Gui.registerFont(this, ByteViewerComponentProvider.DEFAULT_FONT_ID);
+
+		invalidateModelFields();
+
 		enableHelp();
+
+		byteViewerHoverProvider =
+			new ByteViewerHoverProvider("ByteViewer" + model.getName() + "Hover");
+		setHoverProvider(byteViewerHoverProvider);
+	}
+
+	@Override
+	public boolean isDragging() { // open access 
+		return super.isDragging();
 	}
 
 	/**
@@ -771,15 +729,13 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 */
 	private void createFields() {
 
-		int fieldCount = bytesPerLine / model.getUnitByteSize();
+		int fieldCount = Math.max(bytesPerLine / model.getUnitByteSize(), 1);
 		fieldFactories = new FieldFactory[fieldCount];
-		int charWidth = fm.charWidth('W');
 		int fieldOffset = 0;
 		for (int i = 0; i < fieldCount; i++) {
-			fieldFactories[i] =
-				new FieldFactory(model, bytesPerLine, fieldOffset, fm, highlightProvider);
+			fieldFactories[i] = new FieldFactory(model, bytesPerLine, fieldOffset, charWidth, fm,
+				highlightProvider);
 			fieldOffset += model.getUnitByteSize();
-			fieldFactories[i].setEditColor(editColor);
 			fieldFactories[i].setIndexMap(indexMap);
 		}
 		layoutModel.setFactorys(fieldFactories, model, charWidth);
@@ -806,7 +762,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		// if the selection ends on a separator line, go back to the end of the previous line
 		if (indexMap.isBlockSeparatorIndex(lineIndex)) {
 			lineIndex = lineIndex.subtract(BigInteger.ONE);
-			fieldNum = fieldFactories.length - 1; // set to end of line factory
+			fieldNum = fieldFactories.length; // set to end of line factory
 		}
 
 		// if the selection is before the characters in this field, the selection doesn't include
@@ -928,55 +884,81 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return result;
 	}
 
-	private class ByteViewerBackgroundColorModel implements BackgroundColorModel {
+	/**
+	 * Provides hover / tooltip popup for ByteViewer data models that implement
+	 * {@link TooltipDataFormatModel}.
+	 * <p>
+	 * Typically HoverProviders rely on HoverServices (individually installed via plugins) that
+	 * produce customized data for different components.  This class just hardwires everything
+	 * together. 
+	 */
+	private class ByteViewerHoverProvider extends AbstractHoverProvider implements HoverService {
 
-		private Color defaultBackgroundColor = new GColor("color.bg.byteviewer");
-
-		@Override
-		public Color getBackgroundColor(BigInteger index) {
-			if (indexIsInCurrentLine(index)) {
-				return currentCursorLineColor;
-			}
-
-			return defaultBackgroundColor;
-		}
-
-		private boolean indexIsInCurrentLine(BigInteger layoutIndex) {
-			Field currentField = getCurrentField();
-			if (!(currentField instanceof ByteField)) {
-				// empty field
-				return false;
-			}
-
-			ByteField currentByteField = (ByteField) currentField;
-			BigInteger currentIndex = currentByteField.getIndex();
-			Layout layout = layoutModel.getLayout(layoutIndex);
-			int n = layout.getNumFields();
-			for (int i = 0; i < n; i++) {
-				Field field = layout.getField(i);
-				if (!(field instanceof ByteField)) {
-					continue;
-				}
-
-				ByteField byteField = (ByteField) field;
-				BigInteger fieldLayoutIndex = byteField.getIndex();
-				if (fieldLayoutIndex.equals(currentIndex)) {
-					return true;
-				}
-			}
-
-			return false;
+		public ByteViewerHoverProvider(String windowName) {
+			super(windowName);
+			addHoverService(this);
 		}
 
 		@Override
-		public Color getDefaultBackgroundColor() {
-			return defaultBackgroundColor;
+		protected ProgramLocation getHoverLocation(FieldLocation fieldLocation, Field field,
+				Rectangle fieldBounds, MouseEvent event) {
+			return model instanceof TooltipDataFormatModel && field instanceof ByteField
+					? new ProgramLocation()
+					: null;
 		}
 
 		@Override
-		public void setDefaultBackgroundColor(Color c) {
-			defaultBackgroundColor = c;
+		public int getPriority() {
+			return 0;
 		}
 
+		@Override
+		public boolean hoverModeSelected() {
+			return true;
+		}
+
+		@Override
+		public JComponent getHoverComponent(Program unusedProgram, ProgramLocation unusedProgLoc,
+				FieldLocation fieldLocation, Field field) {
+
+			if (!(field instanceof ByteField bf) ||
+				!(model instanceof TooltipDataFormatModel ttdfm)) {
+				return null;
+			}
+			BigInteger index = fieldLocation.getIndex();
+			ByteBlockInfo info = indexMap.getBlockInfo(index, bf.getFieldOffset());
+
+			if (info == null) {
+				return null;
+			}
+
+			String ttStr =
+				ttdfm.getTooltip(info.getBlock(), info.getOffset(), ByteViewerComponent.this);
+			if (ttStr != null && !ttStr.isBlank()) {
+				JToolTip tt = new JToolTip();
+				tt.setTipText(ttStr);
+				return tt;
+			}
+			return null;
+		}
+
+		@Override
+		public void componentHidden() {
+			// nothing
+		}
+
+		@Override
+		public void componentShown() {
+			// nothing
+		}
+
+		@Override
+		public void scroll(int amount) {
+			// WARNING: unusual situation.  This method signature is the same between both
+			// AbstractHoverProvider and the HoverService interface.
+			// AbstractHoverProvider calls the scroll() on the service, but when
+			// both calls end up at the same method, you will get a stack overflow.
+			// We implement a do-nothing here that prevents that.
+		}
 	}
 }

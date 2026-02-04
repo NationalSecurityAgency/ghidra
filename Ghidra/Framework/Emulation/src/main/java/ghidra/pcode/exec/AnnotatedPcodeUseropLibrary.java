@@ -263,7 +263,13 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			this.method = method;
 			this.library = library;
 			try {
-				this.handle = lookup.unreflect(method).bindTo(library);
+				MethodHandle unbound = lookup.unreflect(method);
+				if (Modifier.isStatic(method.getModifiers())) {
+					this.handle = unbound;
+				}
+				else {
+					this.handle = lookup.unreflect(method).bindTo(library);
+				}
 			}
 			catch (IllegalAccessException e) {
 				throw new IllegalArgumentException(

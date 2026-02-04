@@ -90,6 +90,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 				tabbedPane.insertTab(name, null, viewComponent, null, insertIndex);
 				tabbedPane.setTabComponentAt(insertIndex, new DockingTabRenderer(tabbedPane, name,
 					name, e -> closeView(getViewProviderForComponent(viewComponent), true)));
+				tabbedPane.setTitleAt(insertIndex, name);
 			}
 			finally {
 				tabbedPane.addChangeListener(this);
@@ -252,6 +253,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 			if (c == vps.getViewComponent()) {
 				DockingTabRenderer renderer = (DockingTabRenderer) tabbedPane.getTabComponentAt(i);
 				renderer.setTitle(viewName, viewName);
+				tabbedPane.setTitleAt(i, viewName);
 				break;
 			}
 		}
@@ -465,6 +467,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 				DockingTabRenderer renderer =
 					(DockingTabRenderer) tabbedPane.getTabComponentAt(selectedIndex);
 				renderer.setTitle(newName, newName);
+				tabbedPane.setTitleAt(selectedIndex, newName);
 				map.remove(oldName);
 				map.put(newName, vps);
 			}

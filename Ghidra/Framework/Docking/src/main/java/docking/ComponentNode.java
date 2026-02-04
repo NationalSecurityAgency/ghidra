@@ -21,7 +21,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
@@ -35,7 +35,10 @@ import help.HelpService;
  * is active, then this node will create a tabbedPane object to contain the active components.
  */
 class ComponentNode extends Node {
-
+	private static final HelpLocation RENAME_HELP =
+		new HelpLocation("DockingWindows", "Renaming_Windows");
+	private static final HelpLocation CLOSE_HELP =
+		new HelpLocation("DockingWindows", "Closing_Tabs");
 	private ComponentPlaceholder top;
 	private int lastActiveTabIndex;
 	private List<ComponentPlaceholder> windowPlaceholders;
@@ -267,7 +270,7 @@ class ComponentNode extends Node {
 			comp = top.getComponent();
 			comp.setBorder(BorderFactory.createRaisedBevelBorder());
 
-			installRenameMenu(top, null);
+			installRenameMenu(top);
 		}
 		else if (count > 1) {
 			JTabbedPane tabbedPane =
@@ -302,6 +305,8 @@ class ComponentNode extends Node {
 
 		for (int i = 0; i < count; i++) {
 			ComponentPlaceholder placeholder = activeComponents.get(i);
+			installRenameMenu(placeholder);
+
 			DockableComponent c = placeholder.getComponent();
 			c.setBorder(BorderFactory.createEmptyBorder());
 
@@ -314,14 +319,15 @@ class ComponentNode extends Node {
 
 			DockingTabRenderer tabRenderer =
 				createTabRenderer(tabbedPane, placeholder, fullTitle, tabText, component);
-
 			c.installDragDropTarget(tabbedPane);
+			tabRenderer.installPopupMenu(createTabPopupMenu(activeComponents, placeholder));
 
 			tabbedPane.setTabComponentAt(i, tabRenderer);
+
 			Icon icon = placeholder.getIcon();
-			if (icon != null) {
-				tabRenderer.setIcon(icon);
-			}
+			tabbedPane.setTitleAt(i, tabText);
+			tabbedPane.setIconAt(i, icon);
+			tabRenderer.setIcon(icon);
 
 			if (placeholder == top) {
 				activeIndex = i;
@@ -372,30 +378,64 @@ class ComponentNode extends Node {
 		DockingTabRenderer tabRenderer =
 			new DockingTabRenderer(pane, title, tabText, e -> closeTab(component));
 
-		installRenameMenu(placeholder, tabRenderer);
-
 		return tabRenderer;
 	}
 
-	private void installRenameMenu(ComponentPlaceholder placeholder,
-			DockingTabRenderer tabRenderer) {
+	private JPopupMenu createTabPopupMenu(List<ComponentPlaceholder> activeProviders,
+			ComponentPlaceholder placeholder) {
+		JPopupMenu menu = new JPopupMenu();
+
+		// add rename action if applicable
+		ComponentProvider provider = placeholder.getProvider();
+		if (provider.isTransient() && !provider.isSnapshot()) {
+			ActionListener renameAction = new RenameProviderAction(placeholder);
+			JMenuItem rename = createMenuItem("Rename", renameAction, RENAME_HELP);
+			menu.add(rename);
+		}
+
+		// add close others action always (we know there is more than one or we wouldn't be here)
+		List<ComponentPlaceholder> closeList = new ArrayList<>(activeProviders);
+		closeList.remove(placeholder);
+		menu.add(createMenuItem("Close Others", new CloseProvidersAction(closeList), CLOSE_HELP));
+
+		// add close to the left if the current provider is not first
+		int index = activeProviders.indexOf(placeholder);
+		if (index > 0) {
+			closeList = new ArrayList<>(activeProviders.subList(0, index));
+			menu.add(createMenuItem("Close Tabs to the Left", new CloseProvidersAction(closeList),
+				CLOSE_HELP));
+		}
+
+		// add close to the right if the current provider is not last
+		if (index < activeProviders.size() - 1) {
+			closeList = new ArrayList<>(activeProviders.subList(index + 1, activeProviders.size()));
+			menu.add(createMenuItem("Close Tabs to the Right", new CloseProvidersAction(closeList),
+				CLOSE_HELP));
+		}
+
+		return menu;
+	}
+
+	private static JMenuItem createMenuItem(String name, ActionListener actionListener,
+			HelpLocation help) {
+		JMenuItem menuItem = new JMenuItem(name);
+		menuItem.addActionListener(actionListener);
+		HelpService helpService = DockingWindowManager.getHelpService();
+		helpService.registerHelp(menuItem, help);
+		return menuItem;
+	}
+
+	private void installRenameMenu(ComponentPlaceholder placeholder) {
 
 		final ComponentProvider provider = placeholder.getProvider();
 		if (!provider.isTransient() || provider.isSnapshot()) {
 			return; // don't muck with the title of 'real' providers--only transients, like search
 		}
 
-		MouseAdapter listener = new RenameMouseListener(placeholder);
-
 		// for use on the header
 		DockableComponent dockableComponent = placeholder.getComponent();
 		DockableHeader header = dockableComponent.getHeader();
-		header.installRenameAction(listener);
-
-		// for use on the tab
-		if (tabRenderer != null) {
-			tabRenderer.installRenameAction(listener);
-		}
+		header.installRenameAction(new RenameMouseListener(placeholder));
 	}
 
 	@Override
@@ -536,11 +576,14 @@ class ComponentNode extends Node {
 		}
 
 		DockingTabRenderer renderer = (DockingTabRenderer) pane.getTabComponentAt(index);
-		renderer.setIcon(placeholder.getIcon());
+		Icon icon = placeholder.getIcon();
+		renderer.setIcon(icon);
+		pane.setIconAt(index, icon);
 
 		String tabText = placeholder.getTabText();
 		String fullTitle = placeholder.getTitle();
 		renderer.setTitle(tabText, fullTitle);
+		pane.setTitleAt(index, tabText);
 	}
 
 	public void iconChanged(ComponentPlaceholder placeholder) {
@@ -601,15 +644,12 @@ class ComponentNode extends Node {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
 	private static class RenameMouseListener extends MouseAdapter {
 
-		private static final HelpLocation RENAME_HELP =
-			new HelpLocation("DockingWindows", "Renaming_Windows");
-		private ComponentPlaceholder placeholder;
+		private ActionListener renameAction;
 
 		RenameMouseListener(ComponentPlaceholder placeholder) {
-			this.placeholder = placeholder;
+			renameAction = new RenameProviderAction(placeholder);
 		}
 
 		@Override
@@ -617,36 +657,57 @@ class ComponentNode extends Node {
 			// Note: we don't really care about the type of mouse event; we just want the location.
 			//      (the event may not actually be a clicked event, depending on the platform)
 
-			JMenuItem menuItem = new JMenuItem("Rename");
-			menuItem.addActionListener(new RenameActionListener());
-			HelpService helpService = DockingWindowManager.getHelpService();
-			helpService.registerHelp(menuItem, RENAME_HELP);
-
+			JMenuItem rename = createMenuItem("Rename", renameAction, RENAME_HELP);
 			JPopupMenu menu = new JPopupMenu();
-			menu.add(menuItem);
+			menu.add(rename);
 			menu.show(e.getComponent(), e.getX(), e.getY());
 		}
 
-		private class RenameActionListener implements ActionListener {
-			@Override
-			public void actionPerformed(ActionEvent event) {
-				ComponentProvider provider = placeholder.getProvider();
-				JComponent component = provider.getComponent();
-				String currentTabText = provider.getTabText();
-				String newName = OptionDialog.showInputSingleLineDialog(component, "Rename Tab",
-					"New name:", currentTabText);
-				if (newName == null || newName.isEmpty()) {
-					return; // cancelled
-				}
+	}
 
-				// If the user changes the name, then we want to replace all of the parts of the 
-				// title with that name.  We do not supply a custom subtitle, as that doesn't make 
-				// sense in this case, but we clear it so the user's title is the only thing 
-				// visible.  This means that providers can still update the subtitle later.
-				provider.setCustomTitle(newName);   // title on window
-				provider.setSubTitle("");           // part after the title
-				provider.setCustomTabText(newName); // text on the tab
+	private static class RenameProviderAction implements ActionListener {
+
+		private ComponentPlaceholder placeholder;
+
+		RenameProviderAction(ComponentPlaceholder placeHolder) {
+			this.placeholder = placeHolder;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent event) {
+			ComponentProvider provider = placeholder.getProvider();
+			JComponent component = provider.getComponent();
+			String currentTabText = provider.getTabText();
+			String newName = OptionDialog.showInputSingleLineDialog(component, "Rename Tab",
+				"New name:", currentTabText);
+			if (newName == null || newName.isEmpty()) {
+				return; // cancelled
+			}
+
+			// If the user changes the name, then we want to replace all of the parts of the 
+			// title with that name.  We do not supply a custom subtitle, as that doesn't make 
+			// sense in this case, but we clear it so the user's title is the only thing 
+			// visible.  This means that providers can still update the subtitle later.
+			provider.setCustomTitle(newName);   // title on window
+			provider.setSubTitle("");           // part after the title
+			provider.setCustomTabText(newName); // text on the tab
+		}
+	}
+
+	private static class CloseProvidersAction implements ActionListener {
+
+		private List<ComponentPlaceholder> placeholdersToClose;
+
+		public CloseProvidersAction(List<ComponentPlaceholder> placeholdersToClose) {
+			this.placeholdersToClose = placeholdersToClose;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			for (ComponentPlaceholder placeholder : placeholdersToClose) {
+				placeholder.getProvider().closeComponent();
 			}
 		}
+
 	}
 }

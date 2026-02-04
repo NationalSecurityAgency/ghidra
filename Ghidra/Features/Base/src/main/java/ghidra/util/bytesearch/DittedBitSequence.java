@@ -34,7 +34,7 @@ import ghidra.xml.XmlPullParser;
  *  where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
  */
 
-public class DittedBitSequence {
+public class DittedBitSequence implements BytePattern {
 
 	//Given a byte 0-255 (NOT a signed byte), retrieves its popcount.
 	public static int[] popcount = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, //0-15
@@ -214,6 +214,7 @@ public class DittedBitSequence {
 	 * 
 	 * @return true if the byte matches the sequence mask/value
 	 */
+	@Override
 	public boolean isMatch(int pos, int val) {
 		if (pos >= bits.length) {
 			return false;
@@ -244,6 +245,7 @@ public class DittedBitSequence {
 	 * 
 	 * @return size in bytes
 	 */
+	@Override
 	public int getSize() {
 		return bits.length;
 	}
@@ -479,5 +481,10 @@ public class DittedBitSequence {
 			popcnt += popcount[0xff & dits[i]];
 		}
 		return popcnt;
+	}
+
+	@Override
+	public int getPreSequenceLength() {
+		return 0;
 	}
 }

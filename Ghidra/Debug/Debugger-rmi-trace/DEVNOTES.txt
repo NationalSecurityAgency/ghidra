@@ -117,8 +117,6 @@ That said, for unit testing, I've had to incorporate package installation as a @
 There's probably a better way, and that way may also help with out-of-the-box support.
 Something like setting PYTHON_PATH before invoking the debugger?
 There's still the issue of installing protobuf, though.
-And the version we use is not the latest, which may put users who already have protobuf in dependency hell.
-We use version 3.20, while the latest is 4.something.
 According to protobuf docs, major versions are not guaranteed backward compatible.
 To upgrade, we'd also have to upgrade the Java side.
 

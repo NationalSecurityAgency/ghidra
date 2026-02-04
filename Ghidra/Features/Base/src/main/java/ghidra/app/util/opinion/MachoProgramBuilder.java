@@ -732,7 +732,7 @@ public class MachoProgramBuilder {
 			return;
 		}
 		try {
-			Address addr = AbstractProgramLoader.addExternalBlock(program,
+			Address addr = MemoryBlockUtils.addExternalBlock(program,
 				undefinedSymbols.size() * machoHeader.getAddressSize(), log);
 			monitor.initialize(undefinedSymbols.size(), "Processing undefined symbols...");
 			for (NList symbol : undefinedSymbols) {
@@ -780,7 +780,7 @@ public class MachoProgramBuilder {
 		if (absoluteSymbols.size() == 0) {
 			return;
 		}
-		Address start = MachoProgramUtils.getNextAvailableAddress(program);
+		Address start = MemoryBlockUtils.getNextAvailableAddress(program);
 		try {
 			memory.createUninitializedBlock("ABSOLUTE", start,
 				absoluteSymbols.size() * machoHeader.getAddressSize(), false);

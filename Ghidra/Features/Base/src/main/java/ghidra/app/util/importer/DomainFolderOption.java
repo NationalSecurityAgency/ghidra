@@ -23,6 +23,7 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.widgets.button.BrowseButton;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import ghidra.app.util.Option;
 import ghidra.app.util.opinion.Loader;
 import ghidra.framework.main.AppInfo;
@@ -53,8 +54,9 @@ public class DomainFolderOption extends Option {
 		String lastFolderPath =
 			state != null ? state.getString(getName(), defaultValue) : defaultValue;
 		setValue(lastFolderPath);
-		JTextField textField = new JTextField(lastFolderPath);
+		JTextField textField = new ElidingFilePathTextField(lastFolderPath);
 		textField.setEditable(false);
+		textField.setColumns(10);
 		JButton button = new BrowseButton();
 		button.addActionListener(e -> {
 			DataTreeDialog dataTreeDialog =

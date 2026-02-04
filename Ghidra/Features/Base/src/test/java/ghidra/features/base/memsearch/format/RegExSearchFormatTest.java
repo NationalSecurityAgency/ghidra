@@ -19,10 +19,10 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class RegExSearchFormatTest extends AbstractSearchFormatTest {
-	private ByteMatcher byteMatcher;
+	private UserInputByteMatcher byteMatcher;
 
 	public RegExSearchFormatTest() {
 		super(SearchFormat.REG_EX);

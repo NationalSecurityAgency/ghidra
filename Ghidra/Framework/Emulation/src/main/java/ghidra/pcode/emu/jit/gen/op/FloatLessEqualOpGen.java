@@ -15,31 +15,40 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Lbl.LblEm;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitFloatLessEqualOp;
 
 /**
  * The generator for a {@link JitFloatLessEqualOp float_lessequal}.
  * 
  * <p>
- * This uses the float comparison operator generator and simply emits {@link #FCMPG} or
- * {@link #DCMPG} depending on the type and then {@link #IFLE}.
+ * This uses the float comparison operator generator and simply emits {@link Op#fcmpg(Emitter)
+ * fcmpg} or {@link Op#dcmpg(Emitter) dcmpg} depending on the type and then {@link Op#ifle(Emitter)
+ * ifle}.
  */
-public enum FloatLessEqualOpGen implements CompareFloatOpGen<JitFloatLessEqualOp> {
+public enum FloatLessEqualOpGen implements FloatCompareBinOpGen<JitFloatLessEqualOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public int fcmpOpcode() {
-		return FCMPG;
+	public <N2 extends Next, N1 extends Ent<N2, TFloat>, N0 extends Ent<N1, TFloat>> //
+			Emitter<Ent<N2, TInt>> opForFloatCmp(Emitter<N0> em) {
+		return Op.fcmpg(em);
 	}
 
 	@Override
-	public int dcmpOpcode() {
-		return DCMPG;
+	public <N2 extends Next, N1 extends Ent<N2, TDouble>, N0 extends Ent<N1, TDouble>> //
+			Emitter<Ent<N2, TInt>> opForDoubleCmp(Emitter<N0> em) {
+		return Op.dcmpg(em);
 	}
 
 	@Override
-	public int condOpcode() {
-		return IFLE;
+	public <N1 extends Next, N0 extends Ent<N1, TInt>> LblEm<N1, N1> opForCondJump(Emitter<N0> em) {
+		return Op.ifle(em);
 	}
 }

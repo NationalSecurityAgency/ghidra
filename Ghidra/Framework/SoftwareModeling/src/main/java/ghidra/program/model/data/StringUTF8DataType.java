@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A fixed-length UTF-8 string {@link DataType}.
  */
@@ -32,7 +34,7 @@ public class StringUTF8DataType extends AbstractStringDataType {
 			"STR", // default label prefix
 			"s", // default abbrev label prefix
 			"String (Fixed Length UTF-8 Unicode)", // description
-			CharsetInfo.UTF8, // charset
+			CharsetInfoManager.UTF8, // charset
 			CharDataType.dataType, // replacement data type
 			StringLayoutEnum.FIXED_LEN, // StringLayoutEnum
 			dtm// data type manager

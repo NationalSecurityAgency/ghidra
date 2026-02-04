@@ -25,10 +25,10 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.xml.sax.*;
 
 import generic.jar.ResourceFile;
@@ -163,7 +163,7 @@ public class XmlUtilities {
 	public static byte[] xmlToByteArray(Element root) {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		Document doc = new Document(root);
-		XMLOutputter xmlOut = new GenericXMLOutputter();
+		XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 		try {
 			xmlOut.output(doc, os);
 			os.close();
@@ -182,7 +182,7 @@ public class XmlUtilities {
 	 * @return String translation of the given element
 	 */
 	public static String toString(Element root) {
-		XMLOutputter outputter = new GenericXMLOutputter();
+		XMLOutputter outputter = GenericXMLOutputter.getInstance();
 		return outputter.outputString(root);
 	}
 

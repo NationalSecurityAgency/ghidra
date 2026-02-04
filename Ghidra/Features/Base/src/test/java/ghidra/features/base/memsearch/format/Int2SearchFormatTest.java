@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class Int2SearchFormatTest extends AbstractSearchFormatTest {
 	public Int2SearchFormatTest() {
@@ -49,7 +49,7 @@ public class Int2SearchFormatTest extends AbstractSearchFormatTest {
 		assertBytes(0x80, 0);
 
 		value -= 1;
-		ByteMatcher byteMatcher = format.parse(Long.toString(value), settings);
+		UserInputByteMatcher byteMatcher = format.parse(Long.toString(value), settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [-32768, 32767]",
 			byteMatcher.getDescription());
@@ -62,7 +62,7 @@ public class Int2SearchFormatTest extends AbstractSearchFormatTest {
 		assertBytes(0x7f, 0xff);
 
 		value += 1;
-		ByteMatcher byteMatcher = format.parse(Long.toString(value), settings);
+		UserInputByteMatcher byteMatcher = format.parse(Long.toString(value), settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [-32768, 32767]",
 			byteMatcher.getDescription());
@@ -70,7 +70,7 @@ public class Int2SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testNegativeSignOnly() {
-		ByteMatcher byteMatcher = format.parse("-", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete negative number", byteMatcher.getDescription());
@@ -78,7 +78,7 @@ public class Int2SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testBadChars() {
-		ByteMatcher byteMatcher = format.parse("12z", settings);
+		UserInputByteMatcher byteMatcher = format.parse("12z", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Number parse error: For input string: \"12z\"", byteMatcher.getDescription());

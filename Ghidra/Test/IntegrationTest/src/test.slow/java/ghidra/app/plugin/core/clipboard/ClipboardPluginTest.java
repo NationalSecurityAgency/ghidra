@@ -985,7 +985,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testCopyTextSelection_ByteViewer_SingleLayout() throws Exception {
 
 		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		setByteViewerViewSelected(dialog, "Ascii", true);
+		setByteViewerViewSelected(dialog, "Chars", true);
 		setByteViewerViewSelected(dialog, "Octal", true);
 		pressButtonByText(dialog.getComponent(), "OK");
 
@@ -1027,7 +1027,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Test copying from the Hex view
 		//
-		bc = findByteViewerComponent(panel, "Ascii");
+		bc = findByteViewerComponent(panel, "Chars");
 		assertTrue(bc.isVisible());
 
 		bounds = bc.getBounds();
@@ -1074,7 +1074,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCopyTextSelection_ByteViewer_MultipleLayout() throws Exception {
 		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		setByteViewerViewSelected(dialog, "Ascii", true);
+		setByteViewerViewSelected(dialog, "Chars", true);
 		setByteViewerViewSelected(dialog, "Octal", true);
 		pressButtonByText(dialog.getComponent(), "OK");
 
@@ -1117,7 +1117,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Test copying from the Hex view
 		//
-		bc = findByteViewerComponent(panel, "Ascii");
+		bc = findByteViewerComponent(panel, "Chars");
 		assertTrue(bc.isVisible());
 
 		bounds = bc.getBounds();

@@ -30,7 +30,8 @@ import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.query.TableService;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.SearchData;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.options.SaveState;
@@ -68,7 +69,7 @@ public class MemorySearchPlugin extends Plugin implements MemorySearchService {
 	private static final String SHOW_OPTIONS_PANEL = "Show Options Panel";
 	private static final String SHOW_SCAN_PANEL = "Show Scan Panel";
 
-	private ByteMatcher lastByteMatcher;
+	private UserInputByteMatcher lastByteMatcher;
 	private MemorySearchOptions options;
 	private SearchHistory searchHistory = new SearchHistory(MAX_HISTORY);
 	private Address lastSearchAddress;
@@ -133,7 +134,7 @@ public class MemorySearchPlugin extends Plugin implements MemorySearchService {
 		TaskLauncher.launch(task);
 	}
 
-	void updateByteMatcher(ByteMatcher matcher) {
+	void updateByteMatcher(UserInputByteMatcher matcher) {
 		lastByteMatcher = matcher;
 		searchHistory.addSearch(matcher);
 	}
@@ -207,8 +208,9 @@ public class MemorySearchPlugin extends Plugin implements MemorySearchService {
 				return;
 			}
 
-			MemorySearcher searcher = new MemorySearcher(source, lastByteMatcher, addresses, 1);
-			MemoryMatch match = searcher.findOnce(start, forward, monitor);
+			MemorySearcher<SearchData> searcher =
+				new MemorySearcher<>(source, lastByteMatcher, addresses, 1);
+			MemoryMatch<SearchData> match = searcher.findOnce(start, forward, monitor);
 			Swing.runLater(() -> navigateToMatch(match));
 		}
 
@@ -227,7 +229,7 @@ public class MemorySearchPlugin extends Plugin implements MemorySearchService {
 			return forward ? start.next() : start.previous();
 		}
 
-		private void navigateToMatch(MemoryMatch match) {
+		private void navigateToMatch(MemoryMatch<SearchData> match) {
 			if (match != null) {
 				lastSearchAddress = match.getAddress();
 				Program program = navigatable.getProgram();

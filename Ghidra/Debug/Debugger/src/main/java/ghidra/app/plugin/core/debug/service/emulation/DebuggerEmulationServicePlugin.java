@@ -101,8 +101,10 @@ import ghidra.util.task.TaskMonitor;
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
 	protected static final int MAX_CACHE_SIZE = 5;
 
-	private static final AutoConfigState.ClassHandler<DebuggerEmulationServicePlugin> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerEmulationServicePlugin.class, MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerEmulationServicePlugin> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(DebuggerEmulationServicePlugin.class,
+				MethodHandles.lookup());
 
 	public interface EmulateProgramAction {
 		String NAME = "Emulate Program in new Trace";
@@ -299,7 +301,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@AutoConfigStateField
-	private String defaultEmulator;
+	private String defaultEmulator = DefaultEmulatorFactory.TITLE;
 	protected EmulatorFactory emulatorFactory =
 		new DefaultEmulatorFactory();
 
@@ -696,9 +698,16 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		TracePlatform platform = key.platform;
 		TraceSchedule time = key.time;
 
-		Map.Entry<CacheKey, CachedEmulator> ancestor = findNearestPrefix(key);
-		if (ancestor != null) {
-			CacheKey prevKey = ancestor.getKey();
+		TraceSnapshot tracePrefix = trace.getTimeManager().findSnapshotWithNearestPrefix(time);
+		if (tracePrefix != null && tracePrefix.isSnapOnly(true)) {
+			tracePrefix = null;
+		}
+		Map.Entry<CacheKey, CachedEmulator> cachePrefix = findNearestPrefix(key);
+		if (cachePrefix != null && (tracePrefix == null ||
+			cachePrefix.getKey().time.compareTo(tracePrefix.getSchedule()) >= 0)) {
+			CacheKey prevKey = cachePrefix.getKey();
+
+			Msg.debug(this, "Using cached emulator at %s".formatted(prevKey.time));
 
 			synchronized (cache) {
 				cache.remove(prevKey);
@@ -707,7 +716,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 			// TODO: Handle errors, and add to proper place in cache?
 			// TODO: Finish partially-executed instructions?
-			try (BusyEmu be = new BusyEmu(ancestor.getValue())) {
+			try (BusyEmu be = new BusyEmu(cachePrefix.getValue())) {
 				PcodeMachine<?> emu = be.ce.emulator();
 
 				emu.clearAllInjects();
@@ -722,18 +731,28 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				return be.dup();
 			}
 		}
+
 		Target target = targetService == null ? null : targetService.getTarget(trace);
-		DefaultPcodeDebuggerAccess from =
-			new DefaultPcodeDebuggerAccess(tool, target, platform, time.getSnap());
+		DefaultPcodeDebuggerAccess from = new DefaultPcodeDebuggerAccess(tool, target, platform,
+			tracePrefix != null ? tracePrefix.getKey() : time.getSnap(), time.getSnap());
 		Writer writer = DebuggerEmulationIntegration.bytesDelayedWriteTrace(from);
 
 		PcodeMachine<?> emu = emulatorFactory.create(from, writer);
 		try (BusyEmu be = new BusyEmu(new CachedEmulator(key.trace, emu, writer))) {
 			installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
-			monitor.initialize(time.totalTickCount());
+			monitor.initialize(time.totalTickCount() -
+				(tracePrefix != null ? tracePrefix.getSchedule().totalTickCount() : 0));
 			createRegisterSpaces(trace, time, monitor);
 			monitor.setMessage("Emulating");
-			time.execute(trace, emu, monitor);
+			if (tracePrefix != null) {
+				Msg.debug(this, "Using new emulator from scratch snapshot %s"
+						.formatted(tracePrefix.getScheduleString()));
+				time.finish(trace, tracePrefix.getSchedule(), emu, monitor);
+			}
+			else {
+				Msg.debug(this, "Using new emulator from snap %d".formatted(time.getSnap()));
+				time.execute(trace, emu, monitor);
+			}
 			return be.dup();
 		}
 	}
@@ -762,6 +781,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				ce.writer().writeDown(into);
 				TraceThread lastThread = key.time.getLastThread(key.trace);
 				destSnap.setEventThread(lastThread);
+				destSnap.setVersion(key.trace.getEmulatorCacheVersion());
 			}
 			catch (Throwable e) {
 				Msg.showError(this, null, "Emulate",

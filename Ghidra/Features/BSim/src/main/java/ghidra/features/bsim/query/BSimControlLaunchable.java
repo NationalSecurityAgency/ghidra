@@ -608,7 +608,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private Connection createLocalConnection() throws SQLException, IOException {
 		Properties properties = new Properties();
 		properties.setProperty("sslmode", "require");
-		properties.setProperty("sslfactory", "ghidra.net.ApplicationSSLSocketFactory");
+		properties.setProperty("sslfactory", "ghidra.net.DefaultSSLSocketFactory");
 		properties.setProperty("user", connectingUserName);
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("jdbc:postgresql://localhost");
@@ -687,6 +687,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 */
 	private int runCommand(File directory, List<String> command, String envvar, String value)
 			throws IOException, InterruptedException {
+		System.out.println("Command: " + command);
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
 		processBuilder.directory(directory);		// Set the working directory
 		if (envvar != null) {

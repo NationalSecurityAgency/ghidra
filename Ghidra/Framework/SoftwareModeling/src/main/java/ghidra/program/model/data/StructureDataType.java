@@ -523,14 +523,20 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			structLength = offset;
 		}
 
+		// Any component insert at an offset should be placed after any zero-length components 
+		// at the same offset but before any non-zero-length component.
+
 		int index = Collections.binarySearch(components, Integer.valueOf(offset),
 			OffsetComparator.INSTANCE);
 
 		int additionalShift = 0;
 		if (index >= 0) {
 			index = backupToFirstComponentContainingOffset(index, offset);
-			DataTypeComponent dtc = components.get(index);
-			additionalShift = offset - dtc.getOffset();
+			index = afterNonZeroComponentsAtOffset(index, offset);
+			if (index < components.size()) {
+				DataTypeComponentImpl dtc = components.get(index);
+				additionalShift = offset - dtc.getOffset();
+			}
 		}
 		else {
 			index = -index - 1;
@@ -899,6 +905,26 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	/**
+	 * Find insertion index such that the index falls after all zero-length components at the
+	 * specified offset and before any bitfields at that offset.
+	 *
+	 * @param index any defined component index which contains offset.
+	 * @param offset offset within structure.
+	 * @return index of first non-zero-length defined checking in the forward direction.
+	 */
+	private int afterNonZeroComponentsAtOffset(int index, int offset) {
+		int maxIndex = components.size();
+		while (index < maxIndex) {
+			DataTypeComponentImpl dtc = components.get(index);
+			if (dtc.getOffset() != offset || dtc.getLength() != 0) {
+				break;
+			}
+			++index;
+		}
+		return index;
+	}
+
+	/**
 	 * Identify defined-component index of the first non-zero-length component which contains the specified offset.
 	 * If only zero-length components exist, the last zero-length component which contains the offset will be returned. 
 	 * @param index any defined component index which contains offset
@@ -1237,7 +1263,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 
 		repack(false);
-		notifySizeChanged();
+		notifySizeChanged(); // simplified assumption to force parents to update
 	}
 
 	private void doReplaceWithPacked(Structure struct) {

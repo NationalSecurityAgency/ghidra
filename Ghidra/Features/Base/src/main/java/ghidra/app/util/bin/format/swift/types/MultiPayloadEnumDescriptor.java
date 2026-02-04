@@ -24,7 +24,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift MultiPayloadEnumDescriptor structure
+ * Represents a Swift {@code MultiPayloadEnumDescriptor} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
@@ -32,11 +32,16 @@ public final class MultiPayloadEnumDescriptor extends SwiftTypeMetadataStructure
 
 	/**
 	 * The size (in bytes) of a {@link MultiPayloadEnumDescriptor} structure.  This size does not
-	 * take into account the size of the <code>contents</code> array.
+	 * take into account the size of the {@code contents} array.
 	 * 
 	 * @see #getContentsSize()
 	 */
 	public static final int SIZE = 4;
+
+	/**
+	 * How many bytes it requires to peek at size of the {@code contents} array
+	 */
+	public static final int PEEK_SIZE = 8;
 
 	private String typeName;
 	private int[] contents;
@@ -56,30 +61,43 @@ public final class MultiPayloadEnumDescriptor extends SwiftTypeMetadataStructure
 	}
 
 	/**
-	 * Gets the type name
-	 * 
-	 * @return The type name
+	 * {@return the type name}
 	 */
 	public String getTypeName() {
 		return typeName;
 	}
 
 	/**
-	 * Gets the contents
-	 * 
-	 * @return The contents
+	 * {@return the contents}
 	 */
 	public int[] getContents() {
 		return contents;
 	}
 
 	/**
-	 * Gets the size of the contents in bytes
-	 * 
-	 * @return The size of the contents in bytes
+	 * {@return the size of the contents in bytes}
 	 */
 	public long getContentsSize() {
 		return contents.length * Integer.BYTES;
+	}
+
+	/**
+	 * {@return the size of the contents in bytes, without reading the contents}
+	 * <p>
+	 * This method will leave the {@link BinaryReader}'s position unaffected.
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the structure
+	 * @throws IOException if there was an IO-related problem creating the structure
+	 */
+	public static int peekContentsSize(BinaryReader reader) throws IOException {
+		long origIndex = reader.getPointerIndex();
+		try {
+			reader.readNext(SwiftUtils::relativeString);
+			return (reader.readNextInt() >> 16) & 0xffff;
+		}
+		finally {
+			reader.setPointerIndex(origIndex);
+		}
 	}
 
 	@Override

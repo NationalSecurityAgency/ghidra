@@ -21,7 +21,7 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class UInt8SearchFormatTest extends AbstractSearchFormatTest {
 	public UInt8SearchFormatTest() {
@@ -52,7 +52,7 @@ public class UInt8SearchFormatTest extends AbstractSearchFormatTest {
 		matcher = parse("0");
 		assertBytes(0, 0, 0, 0, 0, 0, 0, 0);
 
-		ByteMatcher byteMatcher = format.parse("-1", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-1", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [0, 18446744073709551615]",
 			byteMatcher.getDescription());
@@ -65,7 +65,7 @@ public class UInt8SearchFormatTest extends AbstractSearchFormatTest {
 		assertBytes(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff);
 
 		BigInteger bigValue = value.add(BigInteger.ONE);
-		ByteMatcher byteMatcher = format.parse(bigValue.toString(), settings);
+		UserInputByteMatcher byteMatcher = format.parse(bigValue.toString(), settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [0, 18446744073709551615]",
 			byteMatcher.getDescription());
@@ -74,7 +74,7 @@ public class UInt8SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testNegativeSignOnly() {
-		ByteMatcher byteMatcher = format.parse("-", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Negative numbers not allowed for unsigned values",
@@ -83,7 +83,7 @@ public class UInt8SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testBadChars() {
-		ByteMatcher byteMatcher = format.parse("12z", settings);
+		UserInputByteMatcher byteMatcher = format.parse("12z", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Number parse error: For input string: \"12z\"", byteMatcher.getDescription());

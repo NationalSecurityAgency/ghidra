@@ -42,6 +42,7 @@ import ghidra.util.task.TaskMonitor;
  * 	<li>NoteGnuBuildId</li>
  * 	<li>NoteGnuProperty</li>
  * 	<li>GnuDebugLink (not a note)</li>
+ * 	<li>GnuDebugAltLink (not a note)</li>
  *  <li>ElfComment (not a note)</li>
  * </ul>
  * <p>
@@ -55,6 +56,7 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 	private static final Map<String, ReaderFunc<ElfInfoItem>> STANDARD_READERS = Map.of(
 	//@formatter:off		
 		GnuDebugLink.SECTION_NAME, GnuDebugLink::read,
+		GnuDebugAltLink.SECTION_NAME, GnuDebugAltLink::read,
 		NoteAbiTag.SECTION_NAME, (br, prg) -> NoteAbiTag.read(ElfNote.read(br), prg),
 		NoteGnuBuildId.SECTION_NAME, (br, prg) -> NoteGnuBuildId.read(ElfNote.read(br), prg),
 		NoteGnuProperty.SECTION_NAME, (br, prg) -> NoteGnuProperty.read(ElfNote.read(br), prg),

@@ -61,6 +61,9 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		this.fieldName = InternalDataTypeComponent.cleanupFieldName(fieldName);
 		setDataType(dataType);
 		setComment(comment);
+		if (isZeroBitFieldComponent()) {
+			this.length = 0; // previously stored as 1, force to 0
+		}
 	}
 
 	/**

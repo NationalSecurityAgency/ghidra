@@ -63,13 +63,15 @@ public class DIECreator {
 
 	public DIECreator addRef(DWARFAttribute attribute, DebugInfoEntry die) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_ref8, 0);
-		add(attrSpec, new DWARFNumericAttribute(die.getOffset(), attrSpec));
+		add(attrSpec, new DWARFNumericAttribute(
+			die.getOffset() - dwarfProg.getCurrentCompUnit().getStartOffset(), attrSpec));
 		return this;
 	}
 
 	public DIECreator addRef(DWARFAttribute attribute, long offset) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_ref8, 0);
-		add(attrSpec, new DWARFNumericAttribute(offset, attrSpec));
+		add(attrSpec, new DWARFNumericAttribute(
+			offset - dwarfProg.getCurrentCompUnit().getStartOffset(), attrSpec));
 		return this;
 	}
 

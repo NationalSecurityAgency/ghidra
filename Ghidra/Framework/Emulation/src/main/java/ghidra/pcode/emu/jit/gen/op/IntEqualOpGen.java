@@ -15,16 +15,23 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
+import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TLong;
 import ghidra.pcode.emu.jit.op.JitIntEqualOp;
 
 /**
  * The generator for a {@link JitIntEqualOp int_equal}.
  * 
  * <p>
- * This uses the integer comparison operator generator and simply emits {@link #IF_ICMPEQ} or
- * {@link #IFEQ} depending on the type.
+ * To avoid jumps, this delegates to {@link Integer#compare(int, int)}, which is signed, and then
+ * inverts the result.
  */
-public enum IntEqualOpGen implements CompareIntBinOpGen<JitIntEqualOp> {
+public enum IntEqualOpGen implements IntCompareBinOpGen<JitIntEqualOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -34,12 +41,18 @@ public enum IntEqualOpGen implements CompareIntBinOpGen<JitIntEqualOp> {
 	}
 
 	@Override
-	public int icmpOpcode() {
-		return IF_ICMPEQ;
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return em
+				.emit(IntNotEqualOpGen.GEN::opForInt, type)
+				.emit(IntCompareBinOpGen::not);
 	}
 
 	@Override
-	public int ifOpcode() {
-		return IFEQ;
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TInt>> opForLong(Emitter<N0> em, LongJitType type) {
+		return em
+				.emit(IntNotEqualOpGen.GEN::opForLong, type)
+				.emit(IntCompareBinOpGen::not);
 	}
 }

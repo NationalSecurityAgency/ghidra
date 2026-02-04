@@ -225,7 +225,7 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	/**
 	 * Gets the current address the field evaluates to or null if the text does not evaluate to 
 	 * a valid, unique address.
-	 * @return the current address the field evalutes to or null if the text does not evalute to 
+	 * @return the current address the field evaluates to or null if the text does not evaluate to 
 	 * a valid unique address.
 	 */
 	public Address getAddress() {

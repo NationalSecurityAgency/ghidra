@@ -531,7 +531,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * Attempts to detect a more specific compiler from the Mach-O
 	 * 
 	 * @param machHeader The {@link MachHeader}
-	 * @return The detected compiler name, or {@code null} if one could be detected
+	 * @return The detected compiler name, or {@code null} if one couldn't be detected
 	 * @throws IOException if an IO-related error occurred
 	 */
 	private String detectCompilerName(MachHeader machHeader) throws IOException {
@@ -639,8 +639,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 						.map(lib.getSymbolTable()::getPrimarySymbol)
 						.filter(Objects::nonNull)
 						.toList();
-				Address addr = AbstractProgramLoader.addExternalBlock(program,
-					reexportedSymbols.size() * 8, log);
+				Address addr =
+					MemoryBlockUtils.addExternalBlock(program, reexportedSymbols.size() * 8, log);
 				monitor.initialize(reexportedSymbols.size(), "Reexporting symbols...");
 				for (Symbol symbol : reexportedSymbols) {
 					monitor.increment();

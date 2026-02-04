@@ -15,11 +15,16 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitType;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.var.JitInputVar;
 
 /**
@@ -28,13 +33,34 @@ import ghidra.pcode.emu.jit.var.JitInputVar;
  * <p>
  * This prohibits generation of code to write the variable.
  */
-public enum InputVarGen implements LocalVarGen<JitInputVar> {
-	/** Singleton */
-	GEN;
+public interface InputVarGen extends LocalVarGen<JitInputVar> {
 
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitInputVar v, JitType type, Ext ext,
-			MethodVisitor rv) {
+	default <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N1 extends Next, N0 extends Ent<N1, T>> Emitter<N1> genWriteFromStack(Emitter<N0> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitInputVar v, JT type,
+				Ext ext, Scope scope) {
+		throw new AssertionError();
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genWriteFromOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitInputVar v,
+			Opnd<MpIntJitType> opnd, Ext ext, Scope scope) {
+		throw new AssertionError();
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N1 extends Next, N0 extends Ent<N1, TRef<int[]>>>
+			Emitter<N1> genWriteFromArray(Emitter<N0> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitInputVar v, MpIntJitType type, Ext ext,
+					Scope scope) {
+		throw new AssertionError();
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadToBool(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitInputVar v) {
 		throw new AssertionError();
 	}
 }

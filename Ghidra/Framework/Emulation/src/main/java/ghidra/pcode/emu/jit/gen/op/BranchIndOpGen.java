@@ -15,17 +15,21 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.JitPassage.RIndBranch;
 import ghidra.pcode.emu.jit.JitPcodeThread;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
+import ghidra.pcode.emu.jit.gen.GenConsts;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.op.BranchOpGen.BranchGen;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
+import ghidra.pcode.emu.jit.gen.op.BranchOpGen.UBranchGen;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Dead;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitBranchIndOp;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
@@ -52,48 +56,49 @@ public enum BranchIndOpGen implements OpGen<JitBranchIndOp> {
 	 * @param block the block containing the op
 	 * @param rv the run method visitor
 	 */
-	static void generateExitCode(JitCodeGenerator gen, JitBranchIndOp op, RegisterValue ctx,
-			JitBlock block, MethodVisitor rv) {
-		gen.generatePassageExit(block, () -> {
-			// [...]
-			JitType targetType = gen.generateValReadCode(op.target(), op.targetType(), Ext.ZERO);
-			// [...,target:?]
-			TypeConversions.generateToLong(targetType, LongJitType.I8, Ext.ZERO, rv);
-			// [...,target:LONG]
-		}, ctx, rv);
-
-		rv.visitInsn(ACONST_NULL);
-		rv.visitInsn(ARETURN);
+	static <THIS extends JitCompiledPassage> Emitter<Dead> genExit(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitBranchIndOp op, RegisterValue ctx, JitBlock block) {
+		PcGen tgtGen = PcGen.loadTarget(localThis, gen, op.target());
+		return em
+				.emit(gen::genExit, localThis, block, tgtGen, ctx)
+				.emit(Op::aconst_null, GenConsts.T_ENTRY_POINT)
+				.emit(Op::areturn, retReq);
 	}
 
 	/**
 	 * A branch code generator for indirect branches
 	 */
-	static class IndBranchGen extends BranchGen<RIndBranch, JitBranchIndOp> {
+	static class IndBranchGen extends UBranchGen<RIndBranch, JitBranchIndOp> {
 		/** Singleton */
 		static final IndBranchGen IND = new IndBranchGen();
 
 		@Override
-		Address exit(JitCodeGenerator gen, RIndBranch branch) {
+		Address exit(JitCodeGenerator<?> gen, RIndBranch branch) {
 			return null;
 		}
 
 		@Override
-		void generateCodeWithoutCtxmod(JitCodeGenerator gen, JitBranchIndOp op, RIndBranch branch,
-				JitBlock block, MethodVisitor rv) {
-			generateExitCode(gen, op, branch.flowCtx(), block, rv);
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithoutCtxmod(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
+				JitCodeGenerator<THIS> gen, JitBranchIndOp op, RIndBranch branch, JitBlock block) {
+			return genExit(em, localThis, retReq, gen, op, branch.flowCtx(), block);
 		}
 
 		@Override
-		void generateCodeWithCtxmod(JitCodeGenerator gen, JitBranchIndOp op, Address exit,
-				JitBlock block, MethodVisitor rv) {
-			generateExitCode(gen, op, null, block, rv);
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithCtxmod(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitBranchIndOp op,
+				Address exit, JitBlock block) {
+			return genExit(em, localThis, retReq, gen, op, null, block);
 		}
 	}
 
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitBranchIndOp op, JitBlock block,
-			MethodVisitor rv) {
-		IndBranchGen.IND.generateCode(gen, op, op.branch(), block, rv);
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitBranchIndOp op, JitBlock block, Scope scope) {
+		return new DeadOpResult(IndBranchGen.IND.genRun(
+			em, localThis, localCtxmod, retReq, gen, op, op.branch(), block));
 	}
 }

@@ -15,15 +15,18 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static ghidra.pcode.emu.jit.gen.GenConsts.TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE;
-import static org.objectweb.asm.Opcodes.*;
+import static ghidra.pcode.emu.jit.gen.GenConsts.T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.InitFixedLocal;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.address.AddressSpace;
 
 /**
@@ -36,7 +39,8 @@ import ghidra.program.model.address.AddressSpace;
  * 
  * @param space the address space of the state space to pre-fetch
  */
-public record FieldForSpaceIndirect(AddressSpace space) implements InstanceFieldReq {
+public record FieldForSpaceIndirect(AddressSpace space)
+		implements InstanceFieldReq<TRef<JitBytesPcodeExecutorStateSpace>> {
 	@Override
 	public String name() {
 		return "spaceInd_" + space.getName();
@@ -60,27 +64,21 @@ public record FieldForSpaceIndirect(AddressSpace space) implements InstanceField
 	 * </pre>
 	 */
 	@Override
-	public void generateInitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor iv) {
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, name(),
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, null, null);
-
-		// [...]
-		InitFixedLocal.THIS.generateLoadCode(iv);
-		// [...,this]
-		gen.generateLoadJitStateSpace(space, iv);
-		// [...,this,jitspace]
-		iv.visitFieldInsn(PUTFIELD, gen.nameThis, name(),
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
-		// [...]
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv) {
+		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, name());
+		return em
+				.emit(Op::aload, localThis)
+				.emit(gen::genLoadJitStateSpace, localThis, space)
+				.emit(Op::putfield, gen.typeThis, name(), T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
 	}
 
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		// [...]
-		RunFixedLocal.THIS.generateLoadCode(rv);
-		// [...,this]
-		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(),
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
-		// [...,jitspace]
+	public <THIS extends JitCompiledPassage, N extends Next>
+			Emitter<Ent<N, TRef<JitBytesPcodeExecutorStateSpace>>>
+			genLoad(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::getfield, gen.typeThis, name(), T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
 	}
 }

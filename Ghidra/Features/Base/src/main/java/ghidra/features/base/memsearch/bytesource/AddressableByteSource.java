@@ -18,6 +18,8 @@ package ghidra.features.base.memsearch.bytesource;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * Interface for reading bytes from a program. This provides a level of indirection for reading the
@@ -55,5 +57,24 @@ public interface AddressableByteSource {
 	 * previous requested byte values to look for changes.
 	 */
 	public void invalidate();
+
+	/**
+	 * Convert byte source address to the canonical (static) location
+	 * @param address address to be converted
+	 * @return canonical location
+	 */
+	public ProgramLocation getCanonicalLocation(Address address);
+
+	/**
+	 * Rebase a canonical location in the current byte source
+	 * @param location location to be rebased
+	 * @return address for new byte source
+	 */
+	public Address rebaseFromCanonical(ProgramLocation location);
+
+	static ProgramLocation generateProgramLocation(Program pgm, Address address) {
+		// A simpler constructor would be nice, but they all use getCodeUnitAddress
+		return new ProgramLocation(pgm, address, address, new int[0], address, 0, 0, 0);
+	}
 
 }

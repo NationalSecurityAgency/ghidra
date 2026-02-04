@@ -17,6 +17,7 @@ package ghidra.pcode.memstate;
 
 import ghidra.program.model.address.AddressSpace;
 
+@Deprecated(since = "12.1", forRemoval = true)
 public abstract class MemoryBank {
 
 	private final int pagesize; // Number of bytes in an aligned page access

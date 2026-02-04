@@ -231,7 +231,7 @@ def on_session_status_changed(*args) -> None:
         with trace.client.batch():
             with trace.open_tx("New Session {}".format(util.selected_process())):
                 commands.put_processes()
-                return DbgEng.DEBUG_STATUS_GO
+                return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 @log_errors
@@ -245,7 +245,7 @@ def on_symbol_state_changed(*args) -> None:
         return
     if args[0] == 1 or args[0] == 2:
         PROC_STATE[proc].modules = True
-    return DbgEng.DEBUG_STATUS_GO
+    return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 @log_errors
@@ -309,9 +309,9 @@ def on_threads_changed(*args) -> None:
     # print("ON_THREADS_CHANGED")
     proc = util.selected_process()
     if proc not in PROC_STATE:
-        return DbgEng.DEBUG_STATUS_GO
+        return DbgEng.DEBUG_STATUS_NO_CHANGE
     PROC_STATE[proc].threads = True
-    return DbgEng.DEBUG_STATUS_GO
+    return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 def on_thread_selected(*args) -> None:
@@ -382,6 +382,7 @@ def on_cont(*args) -> None:
 
 
 def on_stop(*args) -> None:
+    # print("ON STOP")
     proc = util.selected_process()
     if proc not in PROC_STATE:
         return
@@ -446,9 +447,9 @@ def on_modules_changed(*args) -> None:
     # print("ON_MODULES_CHANGED")
     proc = util.selected_process()
     if proc not in PROC_STATE:
-        return DbgEng.DEBUG_STATUS_GO
+        return DbgEng.DEBUG_STATUS_NO_CHANGE
     PROC_STATE[proc].modules = True
-    return DbgEng.DEBUG_STATUS_GO
+    return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 def on_breakpoint_created(bp) -> None:
@@ -505,12 +506,28 @@ def on_breakpoint_deleted(bpid) -> None:
 @log_errors
 def on_breakpoint_hit(*args) -> None:
     # print("ON_BREAKPOINT_HIT: args={}".format(args))
-    return DbgEng.DEBUG_STATUS_BREAK
+    id = util.get_breakpoint_id(args[0])
+    if id in util.BPT_HANDLERS:
+        try:
+            handler = util.BPT_HANDLERS[id]
+            func = globals()[handler]
+            func(*args)
+        except Exception as e:
+            print(f"Error in breakpoint handler: {e}")
+    return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 @log_errors
 def on_exception(*args) -> None:
     # print("ON_EXCEPTION: args={}".format(args))
+    id = str(hex(args[0][0].ExceptionCode))
+    if id in util.EXC_HANDLERS:
+        try:
+            handler = util.EXC_HANDLERS[id]
+            func = globals()[handler]
+            func(*args)
+        except Exception as e:
+            print(f"Error in exception handler: {e}")
     return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 

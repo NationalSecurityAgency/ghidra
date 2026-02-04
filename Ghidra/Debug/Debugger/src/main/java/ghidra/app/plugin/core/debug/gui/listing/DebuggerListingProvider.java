@@ -31,10 +31,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ToggleActionBuilder;
@@ -93,8 +92,9 @@ import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerListingProvider extends CodeViewerProvider {
 
-	private static final AutoConfigState.ClassHandler<DebuggerListingProvider> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerListingProvider> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
@@ -172,15 +172,15 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 
 		@Override
-		protected void specChanged(LocationTrackingSpec spec) {
+		protected void specChanged(LocationTrackingSpec lts) {
 			if (isMainListing()) {
-				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), spec));
+				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), lts));
 			}
 			updateTitle();
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
-			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(spec);
+			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(lts);
 		}
 
 		@Override
@@ -347,6 +347,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	private long countAddressesInIndex;
 
+	private TabContextListener contextListener;
+
 	public DebuggerListingProvider(DebuggerListingPlugin plugin, FormatManager formatManager,
 			boolean isConnected) {
 		super(plugin, formatManager, isConnected);
@@ -378,6 +380,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		if (isConnected) {
 			traceTabs = new DebuggerTraceTabPanel(plugin);
+			contextListener = new TabContextListener();
+			DockingWindowManager dwm = tool.getWindowManager();
+			dwm.addContextListener(contextListener);
 		}
 		else {
 			traceTabs = null;
@@ -441,6 +446,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	 */
 	public boolean isMainListing() {
 		return isMainListing;
+	}
+
+	@Override
+	public boolean isPrimary() {
+		return isMainListing();
 	}
 
 	@Override
@@ -1043,4 +1053,44 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		return new DebuggerByteSource(tool, current.getView(), current.getTarget(), readsMemTrait);
 	}
+
+	private class TabContextListener implements DockingContextListener {
+
+		@Override
+		public void contextChanged(ActionContext localContext) {
+
+			DockingWindowManager dwm = tool.getWindowManager();
+			DebuggerProgramLocationActionContext defaultContext =
+				(DebuggerProgramLocationActionContext) dwm
+						.getDefaultActionContext(DebuggerProgramLocationActionContext.class);
+			Trace myTrace = null;
+			if (defaultContext != null) {
+				TraceProgramView tpv = defaultContext.getProgram();
+				myTrace = tpv.getTrace();
+			}
+
+			if (!(localContext instanceof DebuggerProgramLocationActionContext dlac)) {
+
+				// Future: We would like to make the debugger be the default context in this case, 
+				// but we need a way to have the static and dynamic views to decide who is in charge.
+				// For now, assume it should always be the static non-debugger listing view, which
+				// means making the trace tabs inactive.
+				traceTabs.setActive(false);
+				return;
+			}
+
+			TraceProgramView localTraceProgramView = dlac.getProgram();
+			Trace localTrace = localTraceProgramView.getTrace();
+			if (myTrace != localTrace || !dlac.isActiveProgram()) {
+				// A different trace is in the local context; deactivate out tabs.
+				traceTabs.setActive(false);
+				return;
+			}
+
+			// Signal that the trace from our default context is the active trace.
+			traceTabs.setActive(true);
+		}
+
+	}
+
 }

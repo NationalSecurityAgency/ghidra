@@ -66,10 +66,16 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	private long deferreturn;
 
 	@FieldMapping
+	@MarkupReference("getPcfileRefAddress")
 	private long pcfile;	// offset in moduledata.pctab where file info starts
 
 	@FieldMapping
+	@MarkupReference("getPclnRefAddress")
 	private long pcln;		// offset in moduledata.pctab where line num info starts
+
+	@FieldMapping
+	@MarkupReference("getPcspRefAddress")
+	private long pcsp;		// offset in moduledata.pctab, -1.15=int32, 1.16+=uint32
 
 	@FieldMapping
 	private int npcdata; // number of elements in varlen pcdata array
@@ -90,6 +96,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	//--------------------------------------------------------------------------------------
 
 	private Address funcAddress;	// set when entryoff or entry are set
+	private boolean funcAddressOverride;
 
 	/**
 	 * Sets the function's entry point via a relative offset value
@@ -116,6 +123,11 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	public void setEntry(long entry) {
 		this.entry = entry;
 		this.funcAddress = context.getDataTypeMapper().getCodeAddress(entry);
+	}
+
+	public void setFuncAddressOverride(Address addr) {
+		funcAddress = addr;
+		funcAddressOverride = true;
 	}
 
 	/**
@@ -173,6 +185,30 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 		// hacky, since both pcdata and funcdata are sequential int32[] arrays, just reuse logic
 		// for first one to index into second one
 		return getPcDataStart(npcdata + tableIndex);
+	}
+
+	public Address getPcfileRefAddress() {
+		GoModuledata moduledata = getModuledata();
+		GoSlice pctab = moduledata.getPctab();
+		return pctab != null
+				? programContext.getDataAddress(pctab.getElementOffset(1, pcfile))
+				: null;
+	}
+
+	public Address getPclnRefAddress() {
+		GoModuledata moduledata = getModuledata();
+		GoSlice pctab = moduledata.getPctab();
+		return pctab != null
+				? programContext.getDataAddress(pctab.getElementOffset(1, pcln))
+				: null;
+	}
+
+	public Address getPcspRefAddress() {
+		GoModuledata moduledata = getModuledata();
+		GoSlice pctab = moduledata.getPctab();
+		return pctab != null
+				? programContext.getDataAddress(pctab.getElementOffset(1, pcsp))
+				: null;
 	}
 
 	/**
@@ -304,7 +340,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	 * @return String description 
 	 */
 	public String getDescription() {
-		return getName() + "@" + getFuncAddress();
+		return getName() + "@" + getFuncAddress() + (funcAddressOverride ? " (overridden)" : "");
 	}
 
 	/**
@@ -470,6 +506,21 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 			session.labelAddress(deferreturnAddr, funcName.asString() + "_deferreturn",
 				funcName.packagePath());
 		}
+
+		try {
+			GoPcValueEvaluator pceval = new GoPcValueEvaluator(this, pcfile);
+			pceval.markup(session);
+
+			pceval = new GoPcValueEvaluator(this, pcln);
+			pceval.markup(session);
+
+			pceval = new GoPcValueEvaluator(this, pcsp);
+			pceval.markup(session);
+		}
+		catch (IOException e) {
+			// ignore
+		}
+
 	}
 
 	//-------------------------------------------------------------------------------------------

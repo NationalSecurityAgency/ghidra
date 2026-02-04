@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +29,13 @@ import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import generic.theme.GIcon;
 import ghidra.app.context.FunctionSupplierContext;
+import ghidra.app.context.ProgramLocationSupplierContext;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
@@ -258,24 +261,18 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		return functionModel;
 	}
 
-	/**
-	 * @see docking.ComponentProvider#getWindowSubMenuName()
-	 */
 	@Override
 	public String getWindowSubMenuName() {
 		return null;
 	}
 
-	/**
-	 * @see docking.ComponentProvider#isTransient()
-	 */
 	@Override
 	public boolean isTransient() {
 		return false;
 	}
 
 	private class FunctionWindowActionContext extends DefaultActionContext
-			implements FunctionSupplierContext {
+			implements FunctionSupplierContext, ProgramLocationSupplierContext {
 
 		FunctionWindowActionContext() {
 			super(FunctionWindowProvider.this, functionTable);
@@ -299,6 +296,19 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 				functions.add(rowFunction);
 			}
 			return functions;
+		}
+
+		@Override
+		public ProgramLocation getLocation() {
+			int row = functionTable.getSelectedRow();
+			if (row < 0) {
+				return null;
+			}
+
+			FunctionRowObject rowObject = functionModel.getRowObject(row);
+			Function f = rowObject.getFunction();
+			Symbol s = f.getSymbol();
+			return s.getProgramLocation();
 		}
 	}
 }

@@ -21,13 +21,14 @@ import java.util.regex.Pattern;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.features.base.memsearch.bytesequence.ExtendedByteSequence;
 import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.util.bytesearch.ExtendedByteSequence;
+import ghidra.util.bytesearch.Match;
 
 /**
  * {@link ByteMatcher} where the user search input has been parsed as a regular expression.
  */
-public class RegExByteMatcher extends ByteMatcher {
+public class RegExByteMatcher extends UserInputByteMatcher {
 
 	private final Pattern pattern;
 
@@ -43,7 +44,7 @@ public class RegExByteMatcher extends ByteMatcher {
 	}
 
 	@Override
-	public Iterable<ByteMatch> match(ExtendedByteSequence byteSequence) {
+	public Iterable<Match<SearchData>> match(ExtendedByteSequence byteSequence) {
 		return new PatternMatchIterator(byteSequence);
 	}
 
@@ -68,19 +69,24 @@ public class RegExByteMatcher extends ByteMatcher {
 	private class ByteCharSequence implements CharSequence {
 
 		private ExtendedByteSequence byteSequence;
+		private int preLength;
 
 		ByteCharSequence(ExtendedByteSequence byteSequence) {
 			this.byteSequence = byteSequence;
+			preLength = byteSequence.getPreLength();
 		}
 
 		@Override
 		public int length() {
-			return byteSequence.getExtendedLength();
+			return byteSequence.getExtendedLength() + preLength;
 		}
 
 		@Override
 		public char charAt(int index) {
-			byte b = byteSequence.getByte(index);
+			// Our charSequence starts at the beginning of any pre-bytes.
+			// The iterator using this sequence will have to make the opposite translation when
+			// interpreting offsets into this sequence as reported by the pattern matcher.
+			byte b = byteSequence.getByte(index - preLength);
 			return (char) (b & 0xff);
 		}
 
@@ -93,12 +99,13 @@ public class RegExByteMatcher extends ByteMatcher {
 
 	/**
 	 * Adapter class for converting java {@link Pattern} matching into an iterator of
-	 * {@link ByteMatch}s.
+	 * {@link Match}s.
 	 */
-	private class PatternMatchIterator implements Iterable<ByteMatch>, Iterator<ByteMatch> {
+	private class PatternMatchIterator
+			implements Iterable<Match<SearchData>>, Iterator<Match<SearchData>> {
 
 		private Matcher matcher;
-		private ByteMatch nextMatch;
+		private Match<SearchData> nextMatch;
 		private ExtendedByteSequence byteSequence;
 
 		public PatternMatchIterator(ExtendedByteSequence byteSequence) {
@@ -113,31 +120,38 @@ public class RegExByteMatcher extends ByteMatcher {
 		}
 
 		@Override
-		public ByteMatch next() {
+		public Match<SearchData> next() {
 			if (nextMatch == null) {
 				return null;
 			}
-			ByteMatch returnValue = nextMatch;
+			Match<SearchData> returnValue = nextMatch;
 			nextMatch = findNextMatch();
 			return returnValue;
 
 		}
 
 		@Override
-		public Iterator<ByteMatch> iterator() {
+		public Iterator<Match<SearchData>> iterator() {
 			return this;
 		}
 
-		private ByteMatch findNextMatch() {
-			if (!matcher.find()) {
-				return null;
+		private Match<SearchData> findNextMatch() {
+			int preLength = byteSequence.getPreLength();
+
+			// loop until we find a match that starts past the pre-bytes.
+			// we are scanning the pre-bytes in case the regEx has any look-behind, but we
+			// really only want matches that start in the main range.
+			while (matcher.find()) {
+				int start = matcher.start() - preLength;
+				int end = matcher.end() - preLength;
+				if (start >= 0) {
+					if (start >= byteSequence.getLength()) {
+						return null;	// we are past the end of the main byte sequence, so done
+					}
+					return new Match<>(searchData, start, end - start);
+				}
 			}
-			int start = matcher.start();
-			int end = matcher.end();
-			if (start >= byteSequence.getLength()) {
-				return null;
-			}
-			return new ByteMatch(start, end - start, RegExByteMatcher.this);
+			return null; // no matches so we are done with this buffer
 		}
 	}
 

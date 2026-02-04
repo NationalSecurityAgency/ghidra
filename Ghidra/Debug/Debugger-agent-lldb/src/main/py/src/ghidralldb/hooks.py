@@ -287,35 +287,22 @@ class EventThread(threading.Thread):
         rc = cli.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for cli failed")
-            # return
         rc = target.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for target failed")
-            # return
         rc = proc.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for process failed")
-            # return
 
         # Not sure what effect this logic has
-        rc = cli.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if not rc:
-            print("add initial events for cli failed")
-            # return
-        rc = target.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if not rc:
-            print("add initial events for target failed")
-            # return
-        rc = proc.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if not rc:
-            print("add initial events for process failed")
-            # return
+        #cli.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
+        #target.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
+        #proc.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
 
         rc = listener.StartListeningForEventClass(
             util.get_debugger(), lldb.SBThread.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
             print("add listener for threads failed")
-            # return
         # THIS WILL NOT WORK: listener = util.get_debugger().GetListener()
 
         while True:

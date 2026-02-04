@@ -21,6 +21,7 @@ import java.util.function.Predicate;
 
 import docking.DefaultActionContext;
 import ghidra.app.context.DataLocationListContext;
+import ghidra.app.context.ProgramLocationSupplierContext;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
@@ -28,7 +29,8 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.GhidraTable;
 
-public class DefinedStringsContext extends DefaultActionContext implements DataLocationListContext {
+public class DefinedStringsContext extends DefaultActionContext implements DataLocationListContext,
+		ProgramLocationSupplierContext {
 
 	private final DefinedStringsProvider viewStringsProvider;
 	private final GhidraTable table;
@@ -50,6 +52,15 @@ public class DefinedStringsContext extends DefaultActionContext implements DataL
 	@Override
 	public Program getProgram() {
 		return viewStringsProvider.getProgram();
+	}
+
+	@Override
+	public ProgramLocation getLocation() {
+		int row = table.getSelectedRow();
+		if (row < 0) {
+			return null;
+		}
+		return tableModel.getRowObject(row);
 	}
 
 	@Override

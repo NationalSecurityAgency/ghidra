@@ -130,8 +130,6 @@ public abstract class LocalFileSystem implements FileSystem {
 				return new MangledLocalFileSystem(rootPath, isVersioned, readOnly,
 					enableAsyncronousDispatching);
 			case 0:
-				Msg.warn(LocalFileSystem.class,
-					"Using deprecated Indexed filesystem (V0): " + rootPath);
 				return IndexedLocalFileSystem.getFileSystem(rootPath, isVersioned, readOnly,
 					enableAsyncronousDispatching);
 			case 1:

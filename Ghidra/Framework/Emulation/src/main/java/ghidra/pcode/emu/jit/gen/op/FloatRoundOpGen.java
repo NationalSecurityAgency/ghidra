@@ -15,16 +15,16 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_$DOUBLE_UNOP;
-import static ghidra.pcode.emu.jit.gen.GenConsts.NAME_MATH;
+import static ghidra.pcode.emu.jit.gen.GenConsts.T_MATH;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitType.*;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.TDouble;
+import ghidra.pcode.emu.jit.gen.util.Types.TFloat;
 import ghidra.pcode.emu.jit.op.JitFloatRoundOp;
 
 /**
@@ -37,30 +37,31 @@ import ghidra.pcode.emu.jit.op.JitFloatRoundOp;
  * {@code round(x) = floor(x + 0.5)}. This uses the unary operator generator and emits the bytecode
  * to implement that definition, applying type conversions as needed.
  */
-public enum FloatRoundOpGen implements FloatUnOpGen<JitFloatRoundOp> {
+public enum FloatRoundOpGen implements FloatOpUnOpGen<JitFloatRoundOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitFloatRoundOp op, JitBlock block,
-			JitType uType, MethodVisitor rv) {
-		switch (uType) {
-			// Math.round also converts to int/long
-			case FloatJitType t -> {
-				rv.visitLdcInsn(0.5f);
-				rv.visitInsn(FADD);
-				rv.visitInsn(F2D);
-				rv.visitMethodInsn(INVOKESTATIC, NAME_MATH, "floor", MDESC_$DOUBLE_UNOP, false);
-				rv.visitInsn(D2F);
-			}
-			case DoubleJitType t -> {
-				rv.visitLdcInsn(0.5d);
-				rv.visitInsn(DADD);
-				rv.visitMethodInsn(INVOKESTATIC, NAME_MATH, "floor", MDESC_$DOUBLE_UNOP, false);
-			}
-			case MpFloatJitType t -> TODO("MpFloat");
-			default -> throw new AssertionError();
-		}
-		return uType;
+	public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TFloat>>
+			opForFloat(Emitter<N0> em) {
+		return em
+				.emit(Op::ldc__f, 0.5f)
+				.emit(Op::fadd)
+				.emit(Op::f2d)
+				.emit(Op::invokestatic, T_MATH, "floor", MDESC_$DOUBLE_UNOP, false)
+				.step(Inv::takeArg)
+				.step(Inv::ret)
+				.emit(Op::d2f);
+	}
+
+	@Override
+	public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TDouble>>
+			opForDouble(Emitter<N0> em) {
+		return em
+				.emit(Op::ldc__d, 0.5)
+				.emit(Op::dadd)
+				.emit(Op::invokestatic, T_MATH, "floor", MDESC_$DOUBLE_UNOP, false)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
 	}
 }

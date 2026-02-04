@@ -22,14 +22,15 @@ import java.util.stream.Stream;
 import db.Transaction;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerReadsMemoryTrait;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
-import ghidra.features.base.memsearch.bytesource.SearchRegion;
+import ghidra.features.base.memsearch.bytesource.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 
@@ -49,6 +50,7 @@ public class DebuggerByteSource implements AddressableByteSource {
 	private final TraceProgramView view;
 	private final Target target;
 	private final DebuggerReadsMemoryTrait readsMem;
+	private final DebuggerStaticMappingService mappingService;
 
 	public DebuggerByteSource(PluginTool tool, TraceProgramView view, Target target,
 			DebuggerReadsMemoryTrait readsMem) {
@@ -56,6 +58,7 @@ public class DebuggerByteSource implements AddressableByteSource {
 		this.view = view;
 		this.target = target;
 		this.readsMem = readsMem;
+		this.mappingService = tool.getService(DebuggerStaticMappingService.class);
 	}
 
 	@Override
@@ -109,4 +112,17 @@ public class DebuggerByteSource implements AddressableByteSource {
 			}
 		}
 	}
+	
+	@Override
+	public ProgramLocation getCanonicalLocation(Address address) {
+		ProgramLocation loc =  AddressableByteSource.generateProgramLocation(view, address);
+		return mappingService.getStaticLocationFromDynamic(loc);
+	}
+
+	@Override
+	public Address rebaseFromCanonical(ProgramLocation location) {
+		ProgramLocation newloc = mappingService.getDynamicLocationFromStatic(view, location);
+		return newloc == null ? null : newloc.getAddress();
+	}
+
 }

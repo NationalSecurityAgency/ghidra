@@ -20,9 +20,9 @@ import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.XMLOutputter;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
@@ -235,7 +235,7 @@ public class OldLanguageFactory {
 
 		Document doc = new Document(root);
 		FileOutputStream out = new FileOutputStream(file);
-		XMLOutputter xml = new GenericXMLOutputter();
+		XMLOutputter xml = GenericXMLOutputter.getInstance();
 		xml.output(doc, out);
 		out.close();
 	}

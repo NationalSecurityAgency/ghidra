@@ -15,23 +15,26 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitIntSRemOp;
 
 /**
  * The generator for a {@link JitIntSRemOp int_srem}.
  * 
  * <p>
- * This uses the binary operator generator and simply emits {@link #IREM} or {@link #LREM} depending
- * on the type.
+ * This uses the binary operator generator and simply emits {@link Op#irem(Emitter) irem} or
+ * {@link Op#lrem(Emitter) lrem} depending on the type.
+ * <p>
+ * For multi-precision remainder, this emits code to invoke
+ * {@link JitCompiledPassage#mpIntSignedDivide(int[], int[], int[])}, but selects what remains in
+ * the left operand as the result.
  */
-public enum IntSRemOpGen implements IntBinOpGen<JitIntSRemOp> {
+public enum IntSRemOpGen implements IntOpBinOpGen<JitIntSRemOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -40,30 +43,23 @@ public enum IntSRemOpGen implements IntBinOpGen<JitIntSRemOp> {
 		return true;
 	}
 
-	private void generateMpIntSRem(JitCodeGenerator gen, MpIntJitType type, MethodVisitor mv) {
-		BinOpGen.generateMpDelegationToStaticMethod(gen, type, "mpIntSignedDivide", mv, 1,
-			TakeOut.LEFT);
+	@Override
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return Op.irem(em);
 	}
 
 	@Override
-	public JitType afterLeft(JitCodeGenerator gen, JitIntSRemOp op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		return TypeConversions.forceUniform(gen, lType, rType, ext(), rv);
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+		return Op.lrem(em);
 	}
 
 	@Override
-	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntSRemOp op, JitBlock block,
-			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniform(gen, rType, lType, rExt(), rv);
-		switch (rType) {
-			case IntJitType t -> rv.visitInsn(IREM);
-			case LongJitType t -> rv.visitInsn(LREM);
-			case MpIntJitType t when t.size() == lType.size() -> generateMpIntSRem(gen, t, rv);
-			// FIXME: forceUniform shouldn't have to enforce the same size....
-			case MpIntJitType t -> throw new AssertionError("forceUniform didn't work?");
-			default -> throw new AssertionError();
-		}
-		// TODO: For MpInt case, we should use the outvar's size to cull operations.
-		return rType;
+	public <THIS extends JitCompiledPassage> Emitter<Bot> genRunMpInt(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitIntSRemOp op,
+			MpIntJitType type, Scope scope) {
+		return genMpDelegationToStaticMethod(em, gen, localThis, type, "mpIntSignedDivide", op, 1,
+			TakeOut.LEFT, scope);
 	}
 }
