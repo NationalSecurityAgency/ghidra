@@ -997,13 +997,13 @@ addrmode2: [rn],-addr2shift is I25=1 & P24=0 & U23=0 & W21=1 & rn & addr2shift	{
 addrmode3: [reloff]		is P24=1 & U23=1 & c2122=2 & c1619=15 & immedH & immedL
   [ reloff=inst_start+8+((immedH<<4) | immedL);]
 {
-  export *:4 reloff;
+  export *[const]:4 reloff;
 }
 
 addrmode3: [reloff]		is P24=1 & U23=0 & c2122=2 & c1619=15 & immedH & immedL
   [ reloff=inst_start+8-((immedH<<4) | immedL);]
 {
-  export *:4 reloff;
+  export *[const]:4 reloff;
 }
 
 addrmode3: [rn,"#"^off8]		is P24=1 & U23=1 & c2122=2 & rn & immedH & immedL
