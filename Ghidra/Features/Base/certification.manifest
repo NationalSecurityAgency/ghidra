@@ -379,10 +379,14 @@ src/main/help/help/topics/DockingWindows/Docking_Windows.htm||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/Tool.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/Window_Menu.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/hover.stack.png||GHIDRA||||END|
+src/main/help/help/topics/DockingWindows/images/header.stack.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/invalid.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/leftArrow.png||GHIDRA||||END|
+src/main/help/help/topics/DockingWindows/images/push.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/resize.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/rightArrow.png||GHIDRA||||END|
+src/main/help/help/topics/DockingWindows/images/shift.left.png||GHIDRA||||END|
+src/main/help/help/topics/DockingWindows/images/shift.right.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/upArrow.png||GHIDRA||||END|
 src/main/help/help/topics/EclipseIntegration/EclipseIntegration.htm||GHIDRA||||END|
 src/main/help/help/topics/EquatePlugin/Equates.htm||GHIDRA||||END|
