@@ -16,7 +16,7 @@
 package agent.x64dbg.rmi;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.io.*;
 import java.net.*;
@@ -44,8 +44,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.*;
@@ -133,7 +131,7 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 	protected void setX64dbgPath(ProcessBuilder pb) throws IOException {
 		pb.environment()
 				.put("OPT_X64DBG_EXE",
-					"C:\\Software\\snapshot_2025-08-19_19-40\\release\\x64\\x64dbg.exe");
+					"x64dbg.exe");
 	}
 
 	@BeforeClass
