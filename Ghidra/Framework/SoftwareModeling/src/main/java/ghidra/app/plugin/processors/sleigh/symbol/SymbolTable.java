@@ -174,6 +174,9 @@ public class SymbolTable {
 		else if (el == ELEM_START_SYM_HEAD.id()) {
 			sym = new StartSymbol();
 		}
+		else if (el == ELEM_OFFSET_SYM_HEAD.id()) {
+			sym = new OffsetSymbol();
+		}
 		else if (el == ELEM_END_SYM_HEAD.id()) {
 			sym = new EndSymbol();
 		}
