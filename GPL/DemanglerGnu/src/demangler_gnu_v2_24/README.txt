@@ -41,7 +41,9 @@ Update January 2026
 
 Fixed a bug seen in older mangled symbols that use an 'F' character for functions.  We added a 
 function to handle this case,  isQualifiersAndFunc().  This function called from inside the 
-demangle_signature() function.
+demangle_signature() function.  The output also makes use of the added TYPE_QUAL_STATIC define.
+
+
 
 
 cp-demangle.c *
