@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.framework;
+
+import java.awt.GraphicsEnvironment;
 
 import docking.DockingErrorDisplay;
 import docking.DockingWindowManager;
@@ -36,6 +38,16 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 	private static final String USER_AGREEMENT_PROPERTY_NAME = "USER_AGREEMENT";
 	private boolean showSplashScreen = true;
+
+	public GhidraApplicationConfiguration() {
+		if (GraphicsEnvironment.isHeadless()) {
+			System.err.println(
+				"ERROR: Unable to launch Ghidra GUI application in headless environment.");
+			System.err.println(
+				"If launching from a remote SSH shell, you must have an X11 compatible client with X11 forwarding enabled.");
+			System.exit(1);
+		}
+	}
 
 	@Override
 	public boolean isHeadless() {
