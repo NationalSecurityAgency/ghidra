@@ -181,7 +181,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public boolean accept(URL url) {
-		if (!GhidraURL.isLocalProjectURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
+		if (!GhidraURL.isLocalURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
 			return false;
 		}
 		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, true, plugin)));

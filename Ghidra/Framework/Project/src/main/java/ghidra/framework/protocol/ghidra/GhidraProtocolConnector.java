@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.framework.protocol.ghidra;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,6 +33,7 @@ import ghidra.framework.store.FileSystem;
 public abstract class GhidraProtocolConnector {
 
 	protected final URL url;
+	protected final URI uri;
 
 	protected String repositoryName; // only valid for server repository
 	protected final String itemPath; // trailing "/" signifies explicit folder path 
@@ -53,6 +53,12 @@ public abstract class GhidraProtocolConnector {
 	 */
 	protected GhidraProtocolConnector(URL url) throws MalformedURLException {
 		this.url = url;
+		try {
+			this.uri = url.toURI();
+		}
+		catch (URISyntaxException e) {
+			throw new MalformedURLException(e.getMessage());
+		}
 		checkProtocol();
 		checkUserInfo();
 		checkHostInfo();
@@ -63,7 +69,7 @@ public abstract class GhidraProtocolConnector {
 	/**
 	 * Get the URL associated with the repository/project root folder.
 	 * This will be used as a key to its corresponding transient project data.
-	 * @return root folder URL
+	 * @return root folder URL or null if connection is a server-only URL
 	 */
 	protected abstract URL getRepositoryRootGhidraURL();
 
@@ -107,7 +113,7 @@ public abstract class GhidraProtocolConnector {
 	 */
 	private String parseRepositoryName() throws MalformedURLException {
 
-		String path = url.getPath();
+		String path = uri.getPath();
 
 		// Divide path into pieces
 		if (StringUtils.isBlank(path) || path.length() < 2 || path.charAt(0) != '/') {
@@ -182,7 +188,7 @@ public abstract class GhidraProtocolConnector {
 	 */
 	protected String parseItemPath() throws MalformedURLException {
 
-		String path = url.getPath();
+		String path = uri.getPath();
 
 		if (repositoryName == null) {
 			if (!StringUtils.isEmpty(path) && !"/".equals(path)) {

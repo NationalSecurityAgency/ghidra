@@ -16,7 +16,6 @@
 package ghidra.framework.data;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.Icon;
@@ -167,20 +166,11 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	public URL getSharedProjectURL() {
 		URL projectURL = getLinkedRootFolder().getProjectURL();
 		if (GhidraURL.isServerRepositoryURL(projectURL)) {
-			String urlStr = projectURL.toExternalForm();
-			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
-				urlStr = urlStr.substring(0, urlStr.length() - 1);
-			}
 			String path = getLinkedPathname();
 			if (!path.endsWith(FileSystem.SEPARATOR)) {
 				path += FileSystem.SEPARATOR;
 			}
-			try {
-				return new URL(urlStr + path);
-			}
-			catch (MalformedURLException e) {
-				// ignore
-			}
+			return GhidraURL.resolve(projectURL, path, null);
 		}
 		return null;
 	}

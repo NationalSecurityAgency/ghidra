@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,10 +37,8 @@ public class Handler extends URLStreamHandler {
 	/**
 	 * Register the "ghidra" URL protocol Handler.
 	 * Alternatively, the protocol handler can be explicitly used when instantiating 
-	 * a ghidra URL:
-	 * <pre>
-	 *   URL url = new URL(null, "ghidra://myGhidraServer/Test", new ghidra.framework.protocol.ghidra.Handler());
-	 * </pre>
+	 * a ghidra URL (see {@link GhidraURL} utility).
+	 * <p>
 	 * It is also important that a <code>ClientAuthenticator</code> also be registered.
 	 * @see ClientUtil#setClientAuthenticator(ghidra.framework.client.ClientAuthenticator)
 	 */
@@ -59,7 +57,7 @@ public class Handler extends URLStreamHandler {
 
 		System.setProperty(PROTOCOL_HANDLER_PKGS_PROPERTY, pkgs);
 	}
-	
+
 	/**
 	 * Determine if the specified url is supported and that any required 
 	 * protocol extensions are recognized.
@@ -70,6 +68,7 @@ public class Handler extends URLStreamHandler {
 		if (!GhidraURL.PROTOCOL.equals(url.getProtocol())) {
 			return false;
 		}
+
 		if (url.getAuthority() != null) {
 			// assume standard ghidra URL (ghidra://...)
 			return true;
@@ -81,18 +80,33 @@ public class Handler extends URLStreamHandler {
 			return false;
 		}
 	}
-	
-	private static GhidraProtocolHandler getProtocolExtensionHandler(URL url) throws MalformedURLException, NotFoundException {
-		String path = url.getPath();
-		int index = path.indexOf("://");
-		if (index <= 0) {
-			throw new MalformedURLException("invalid ghidra URL: " + url);
+
+	private static String getExtensionProtocol(URL url) throws MalformedURLException {
+		try {
+			URI uri = url.toURI();
+			if (uri.isOpaque()) {
+				String extUrl = uri.getSchemeSpecificPart();
+				URI extUri = URI.create(extUrl);
+				String protocol = extUri.getScheme();
+				if (protocol != null) {
+					return protocol;
+				}
+			}
 		}
-		String extensionName = path.substring(0, index);
+		catch (URISyntaxException e) {
+			// ignore
+		}
+		throw new MalformedURLException("Invalid Ghidra URL");
+	}
+
+	private static GhidraProtocolHandler getProtocolExtensionHandler(URL url)
+			throws MalformedURLException, NotFoundException {
+
+		String extensionName = getExtensionProtocol(url);
 		GhidraProtocolHandler protocolHandler = findGhidraProtocolHandler(extensionName);
 		if (protocolHandler == null) {
-			throw new NotFoundException("ghidra protocol extension handler (" + extensionName +
-				") not found");
+			throw new NotFoundException(
+				"ghidra protocol extension handler (" + extensionName + ") not found");
 		}
 		return protocolHandler;
 	}
@@ -106,18 +120,19 @@ public class Handler extends URLStreamHandler {
 
 		// Need to check for protocol extension if URL is of form ghidra:<extension-url>
 		// Example:  ghidra:http://host/repo/folder/filename
-		if (url.getAuthority() == null && !url.getPath().startsWith("/")) {
+		String authority = url.getAuthority();
+		String path = url.getPath(); // encoded
+		if (authority == null && !path.startsWith("/")) {
 			// check for protocol handler which provides access to a full repository
 			// while specifying a specific folder/file within the repository.  
 			// The repository root is inferred from the URL path.
 			try {
 				GhidraProtocolHandler protocolHandler = getProtocolExtensionHandler(url);
-				// strip ghidra protocol specifier from URL
-				url = new URL(url.toExternalForm().substring(GhidraURL.PROTOCOL.length() + 1));
-				return new GhidraURLConnection(url, protocolHandler);
+				URI extURI = URI.create(path);
+				return new GhidraURLConnection(extURI.toURL(), protocolHandler);
 			}
 			catch (NotFoundException e) {
-				throw new IOException("unsupported ghidra URL", e);
+				throw new IOException("Unsupported ghidra URL", e);
 			}
 		}
 

@@ -40,6 +40,7 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
 
@@ -103,11 +104,13 @@ public class DefaultProject implements Project {
 	 * @param resetOwner if true, set the owner to the current user
 	 * @throws FileNotFoundException project directory not found
 	 * @throws IOException if I/O error occurs.
+	 * @throws NotFoundException if project does not exist
 	 * @throws NotOwnerException if userName is not the owner of the project.
 	 * @throws LockException if unable to establish project lock
 	 */
 	protected DefaultProject(DefaultProjectManager projectManager, ProjectLocator projectLocator,
-			boolean resetOwner) throws IOException, NotOwnerException, LockException {
+			boolean resetOwner)
+			throws IOException, NotFoundException, NotOwnerException, LockException {
 
 		this.projectManager = projectManager;
 		this.projectLocator = projectLocator;
@@ -485,7 +488,7 @@ public class DefaultProject implements Project {
 			while (it.hasNext()) {
 				Element elem = (Element) it.next();
 				String urlStr = elem.getAttributeValue("URL");
-				URL url = new URL(urlStr);
+				URL url = GhidraURL.toURL(urlStr);
 				try {
 					addProjectView(url, true);
 				}

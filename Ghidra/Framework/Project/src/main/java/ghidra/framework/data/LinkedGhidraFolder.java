@@ -65,7 +65,7 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 		super(folderLinkFile.getName());
 
 		if (!GhidraURL.isServerRepositoryURL(linkedFolderUrl) &&
-			!GhidraURL.isLocalProjectURL(linkedFolderUrl)) {
+			!GhidraURL.isLocalURL(linkedFolderUrl)) {
 			throw new IllegalArgumentException("Invalid Ghidra URL: " + linkedFolderUrl);
 		}
 

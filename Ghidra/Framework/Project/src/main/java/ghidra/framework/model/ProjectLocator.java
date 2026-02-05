@@ -16,13 +16,16 @@
 package ghidra.framework.model;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.Application;
+import ghidra.framework.OperatingSystem;
 import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.util.NamingUtilities;
+import ghidra.util.exception.NotFoundException;
 
 /**
  * Lightweight descriptor of a local Project storage location.
@@ -36,20 +39,15 @@ public class ProjectLocator {
 
 	private final String name;
 	private final String location;
+	private final boolean isWindowsOnlyLocation; // drive letter or UNC path specified 
 
 	private URL url;
-
-	/**
-	 * Set of characters specifically disallowed in project name or path.
-	 * These characters may interfere with path and URL parsing.
-	 */
-	public static Set<Character> DISALLOWED_CHARS = Set.of(':', ';', '&', '?', '#');
 
 	/**
 	 * Construct a project locator object.
 	 * @param path absolute path to parent directory (may or may not exist).  The user's temp directory
 	 * will be used if this value is null or blank.  The use of "\" characters will always be replaced 
-	 * with "/".
+	 * with "/".  A path starting with either "//" or "\\" will be treated as a Windows UNC path.
 	 * WARNING: Use of a relative paths should be avoided (e.g., on a windows platform
 	 * an absolute path should start with a drive letter specification such as C:\path).
 	 * A path such as "/path" on windows will utilize the current default drive and will
@@ -58,15 +56,15 @@ public class ProjectLocator {
 	 * @param name name of the project (may only contain alphanumeric characters or   
 	 * @throws IllegalArgumentException if an absolute path is not specified or invalid project name
 	 */
-	public ProjectLocator(String path, String name) {
+	public ProjectLocator(String path, String name) throws IllegalArgumentException {
 		this(path, name, null);
 	}
 
-	protected ProjectLocator(String path, String name, URL url) {
+	protected ProjectLocator(String path, String name, URL url) throws IllegalArgumentException {
 		if (name.contains("/") || name.contains("\\")) {
 			throw new IllegalArgumentException("name contains path separator character: " + name);
 		}
-		checkInvalidChar("name", name, 0);
+		NamingUtilities.checkProjectName(name);
 		if (name.endsWith(PROJECT_FILE_SUFFIX)) {
 			name = name.substring(0, name.length() - PROJECT_FILE_SUFFIX.length());
 		}
@@ -74,76 +72,9 @@ public class ProjectLocator {
 		if (StringUtils.isBlank(path)) {
 			path = Application.getUserTempDirectory().getAbsolutePath();
 		}
-		this.location = checkAbsolutePath(path);
+		location = GhidraURL.checkLocalAbsolutePath(path, true);
+		isWindowsOnlyLocation = GhidraURL.isWindowsOnlyPath(location);
 		this.url = url != null ? url : GhidraURL.makeURL(location, name);
-	}
-
-	/**
-	 * Check for characters explicitly disallowed in path or project name.
-	 * @param type type of string to include in exception
-	 * @param str string to check
-	 * @param startIndex index at which to start checking
-	 * @throws IllegalArgumentException if str contains invalid character
-	 */
-	private static void checkInvalidChar(String type, String str, int startIndex) {
-		for (int i = startIndex; i < str.length(); i++) {
-			char c = str.charAt(i);
-			if (DISALLOWED_CHARS.contains(c)) {
-				throw new IllegalArgumentException(
-					type + " contains invalid character: '" + c + "'");
-			}
-		}
-	}
-
-	/**
-	 * Ensure that absolute path is specified and normalize its format.
-	 * An absolute path may start with a windows drive letter (e.g., c:/a/b, /c:/a/b)
-	 * or without (e.g., /a/b).  Although for Windows the lack of a drive letter is
-	 * not absolute, for consistency with Linux we permit this form which on
-	 * Windows will use the default drive for the process. The resulting path
-	 * may be transormed to always end with a "/" and if started with a drive letter
-	 * (e.g., "c:/") it will have a "/" prepended (e.g., "/c:/", both forms
-	 * are treated the same by the {@link File} class under Windows).
-	 * @param path path to be checked and possibly modified.
-	 * @return path to be used
-	 * @throws IllegalArgumentException if an invalid path is specified
-	 */
-	private static String checkAbsolutePath(String path) {
-		int scanIndex = 0;
-		path = path.replace('\\', '/');
-		int len = path.length();
-		if (!path.startsWith("/")) {
-			// Allow paths to start with windows drive letter (e.g., c:/a/b)
-			if (len >= 3 && hasAbsoluteDriveLetter(path, 0)) {
-				path = "/" + path;
-			}
-			else {
-				throw new IllegalArgumentException("absolute path required");
-			}
-			scanIndex = 3;
-		}
-		else if (len >= 3 && hasDriveLetter(path, 1)) {
-			if (len < 4 || path.charAt(3) != '/') {
-				// path such as "/c:" not permitted
-				throw new IllegalArgumentException("absolute path required");
-			}
-			scanIndex = 4;
-		}
-		checkInvalidChar("path", path, scanIndex);
-		if (!path.endsWith("/")) {
-			path += "/";
-		}
-		return path;
-	}
-
-	private static boolean hasDriveLetter(String path, int index) {
-		return Character.isLetter(path.charAt(index++)) && path.charAt(index) == ':';
-	}
-
-	private static boolean hasAbsoluteDriveLetter(String path, int index) {
-		int pathIndex = index + 2;
-		return path.length() > pathIndex && hasDriveLetter(path, index) &&
-			path.charAt(pathIndex) == '/';
 	}
 
 	/**
@@ -155,8 +86,9 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * {@return the URL associated with this local project.  If using a temporary transient
-	 * project location this URL should not be used.}
+	 * {@return the URL associated with this local project.}
+	 * If using a temporary transient project location this URL will refer to the 
+	 * remote server repository.
 	 */
 	public URL getURL() {
 		return url;
@@ -170,9 +102,18 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * Get the location of the project which will contain marker file
-	 * ({@link #getMarkerFile()}) and project directory ({@link #getProjectDir()}). 
+	 * Get the absolute path of the directory which contains the project marker file
+	 * ({@link #getMarkerFile()}) and project directory ({@link #getProjectDir()})
+	 * (i.e., parent directory). 
 	 * <p>
+	 * Directory path will always use '/' as a path separator and may have one of the following 
+	 * forms:
+	 * <ul>
+	 * <li>Standard path:  /a/b/</li>
+	 * <li>Windows path: /C:/a/b</li>
+	 * <li>Windows UNC path: //server/share/a/b</li>
+	 * </ul>
+	 * <p>	
 	 * Note: directory may or may not exist.
 	 * @return project location directory
 	 */
@@ -181,24 +122,45 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * {@return the project directory}
+	 * {@return true if this project location is only valid on a Windows platform.}
 	 */
-	public File getProjectDir() {
-		return new File(location, name + PROJECT_DIR_SUFFIX);
+	public boolean isWindowsOnlyLocation() {
+		return isWindowsOnlyLocation;
+	}
+
+	private File getParentDir() {
+		return new File(location);
 	}
 
 	/**
-	 * {@return the file that indicates a Ghidra project.}
+	 * Get the project storage directory associated with this project locator.
+	 * <p>
+	 * NOTE: {@link #exists()} or {@link #checkProjectExistence()} method should be used prior to the 
+	 * returned file.
+	 * 
+	 * @return the project directory
+	 */
+	public File getProjectDir() {
+		return new File(getParentDir(), name + PROJECT_DIR_SUFFIX);
+	}
+
+	/**
+	 * Get the project marker file associated with this project locator.
+	 * <p>
+	 * NOTE: {@link #exists()} or {@link #checkProjectExistence()} method should be used prior to the 
+	 * returned file.
+	 * 
+	 * @return the marker file that indicates a Ghidra project.
 	 */
 	public File getMarkerFile() {
-		return new File(location, name + PROJECT_FILE_SUFFIX);
+		return new File(getParentDir(), name + PROJECT_FILE_SUFFIX);
 	}
 
 	/**
 	 * {@return project lock file to prevent multiple accesses to the same project at once.}
 	 */
 	public File getProjectLockFile() {
-		return new File(location, name + LOCK_FILE_SUFFIX);
+		return new File(getParentDir(), name + LOCK_FILE_SUFFIX);
 	}
 
 	/**
@@ -249,10 +211,72 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * {@return true if project storage exists}
+	 * Determine if the project exists.
+	 * <p>
+	 * IMPORTANT: This method or {@link #checkProjectExistence()} method should always be used prior to 
+	 * using File object returned by {@link #getParentDir()}, {@link #getMarkerFile()} or 
+	 * {@link #getProjectLockFile()} since OS-specific checks are performed which may not
+	 * be considered when using the returned File objects.
+	 * 
+	 * @return true if project storage exists.
 	 */
 	public boolean exists() {
+		if (isWindowsOnlyLocation &&
+			OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
+			// Do not try to evaluate a Windows-only path on other platforms
+			return false;
+		}
 		return getMarkerFile().isFile() && getProjectDir().isDirectory();
 	}
 
+	/**
+	 * Verify that this project exists with its required marker file and data storage directory.
+	 * <p>
+	 * IMPORTANT: This method or {@link #exists()} method should always be used prior to 
+	 * using File object returned by {@link #getParentDir()}, {@link #getMarkerFile()} or 
+	 * {@link #getProjectLockFile()} since OS-specific checks are performed which may not
+	 * be considered when using the returned File objects.
+	 * 
+	 * @throws NotFoundException if project does not exist
+	 */
+	public void checkProjectExistence() throws NotFoundException {
+		if (isWindowsOnlyLocation &&
+			OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
+			throw new NotFoundException(
+				"The project location is only valid on Windows: " + location);
+		}
+
+		File markerFile = getMarkerFile();
+		if (!markerFile.isFile()) {
+			throw new NotFoundException("Project marker file not found: " + markerFile);
+		}
+
+		File projectDir = getProjectDir();
+		if (!projectDir.isDirectory()) {
+			throw new NotFoundException("Project directory not found: " + projectDir);
+		}
+	}
+
+	/**
+	 * Verify that the specified project location directory exists in preparation for creating
+	 * a new project.
+	 * <p>
+	 * IMPORTANT: This method or {@link #exists()} method should always be used prior to 
+	 * using File object returned by {@link #getParentDir()}, {@link #getMarkerFile()} or 
+	 * {@link #getProjectLockFile()} since OS-specific checks are performed which may not
+	 * be considered when using the returned File objects.
+	 * 
+	 * @throws IOException if project location does not exist
+	 */
+	public void checkLocationExistence() throws IOException {
+		if (isWindowsOnlyLocation &&
+			OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
+			throw new IOException("The project location is only valid on Windows: " + location);
+		}
+
+		File dir = getParentDir();
+		if (!dir.isDirectory()) {
+			throw new IOException("Project location not found: " + dir);
+		}
+	}
 }

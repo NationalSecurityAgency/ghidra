@@ -15,10 +15,8 @@
  */
 package ghidra.features.bsim.query.ingest;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -221,19 +219,19 @@ public class BSimLaunchable implements GhidraLaunchable {
 		return new BulkSignatures(serverInfo, connectingUserName);
 	}
 
-	private void setupGhidraURL(String ghidraURLString) throws MalformedURLException {
+	private void setupGhidraURL(String ghidraURLString) throws IllegalArgumentException {
 
 		if (ghidraURLString == null) {
 			return;
 		}
 
 		if (!GhidraURL.isGhidraURL(ghidraURLString)) {
-			throw new MalformedURLException("URL is not ghidra protocol: " + ghidraURLString);
+			throw new IllegalArgumentException("URL is not ghidra protocol: " + ghidraURLString);
 		}
-		ghidraURL = new URL(ghidraURLString);
+		ghidraURL = GhidraURL.toURL(ghidraURLString);
 		if (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
-			!GhidraURL.isLocalProjectURL(ghidraURL)) {
-			throw new MalformedURLException("Invalid repository URL: " + ghidraURLString);
+			!GhidraURL.isLocalURL(ghidraURL)) {
+			throw new IllegalArgumentException("Invalid repository URL: " + ghidraURLString);
 		}
 	}
 
@@ -258,8 +256,18 @@ public class BSimLaunchable implements GhidraLaunchable {
 					throw new IllegalArgumentException(
 						"Unable to infer ghidra URL from BSim file DB URL");
 				}
-				ghidraURLString = "ghidra://" + bsimURL.getHost() + bsimURL.getPath();
-				setupGhidraURL(ghidraURLString);
+
+				// Derive Ghidra URL from BSim DB host and dbName
+				String path = bsimURL.getPath();
+				try {
+					path = URLDecoder.decode(path, "UTF-8");
+				}
+				catch (UnsupportedEncodingException e) {
+					throw new MalformedURLException(e.getMessage());
+				}
+				String dbName = path.substring(path.lastIndexOf('/') + 1);
+
+				ghidraURL = GhidraURL.makeURL(bsimURL.getHost(), -1, dbName);
 			}
 		}
 		else if (ghidraURLString != null) {
@@ -476,7 +484,8 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
-	private void processSigAndUpdateOptions(String urlstring) throws MalformedURLException {
+	private void processSigAndUpdateOptions(String urlstring)
+			throws IllegalArgumentException, MalformedURLException {
 		String bsimURLOption = optionValueMap.get(BSIM_URL_OPTION);
 		String configOption = optionValueMap.get(CONFIG_OPTION);
 		if (configOption != null) {
