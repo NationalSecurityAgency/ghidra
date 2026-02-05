@@ -15,25 +15,25 @@
  */
 package ghidra.app.util.bin.format.dwarf.attribs;
 
-/**
- * Categories that a DWARF attribute id may belong to.
- */
-public enum DWARFAttributeClass {
+import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 
-	address,
-	addrptr,
-	block,
-	constant,
-	exprloc,
-	flag,
-	lineptr,
-	loclist,
-	loclistsptr,
-	macptr,
-	reference,
-	rnglist,
-	rnglistsptr,
-	string,
-	stroffsetsptr
+/**
+ * Placeholder for an attribute value that failed to be deserialized.
+ */
+public class DWARFMissingAttributeValue implements DWARFAttributeValue {
+
+	public DWARFMissingAttributeValue() {
+		// nothing
+	}
+
+	@Override
+	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
+		return "<missing>";
+	}
+
+	@Override
+	public String toString() {
+		return "<missing>";
+	}
 
 }

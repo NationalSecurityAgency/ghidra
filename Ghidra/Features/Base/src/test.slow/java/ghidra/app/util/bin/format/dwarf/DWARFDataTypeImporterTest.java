@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.attribs.*;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.AttrDef;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 import ghidra.program.model.data.LEB128;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -78,11 +78,11 @@ public class DWARFAbbreviation {
 		return result;
 	}
 
-	private static void warnIfMismatchedForms(DWARFAttribute.AttrDef attrSpec) {
+	private static void warnIfMismatchedForms(DWARFAttributeId.AttrDef attrSpec) {
 		DWARFForm form = attrSpec.getAttributeForm();
-		DWARFAttribute attribute = attrSpec.getAttributeId();
-		if (attribute != null && !form.getFormClasses().isEmpty() &&
-			!attribute.getAttributeClass().isEmpty()) {
+		DWARFAttributeId attrId = attrSpec.getAttributeId();
+		if (attrId != null && !form.getFormClasses().isEmpty() &&
+			!attrId.getAttributeClass().isEmpty()) {
 			EnumSet<DWARFAttributeClass> tmp =
 				EnumSet.copyOf(attrSpec.getAttributeForm().getFormClasses());
 			tmp.retainAll(attrSpec.getAttributeId().getAttributeClass());
@@ -192,7 +192,7 @@ public class DWARFAbbreviation {
 	 * @param attributeId attribute key
 	 * @return attribute specification
 	 */
-	public AttrDef findAttribute(DWARFAttribute attributeId) {
+	public AttrDef findAttribute(DWARFAttributeId attributeId) {
 		for (AttrDef spec : this.attributes) {
 			if (spec.getAttributeId() == attributeId) {
 				return spec;

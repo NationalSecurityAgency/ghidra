@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.junit.Assert;
 
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.util.datastruct.IntArrayList;
@@ -74,7 +74,7 @@ public class MockDWARFProgram extends DWARFProgram {
 		compUnitDieIndex.put(dieOffsets.length - 1, currentCompUnit);
 
 		DebugInfoEntry compUnitRootDIE = new DIECreator(this, DWARFTag.DW_TAG_compile_unit)
-				.addInt(DWARFAttribute.DW_AT_language, cuLang)
+				.addInt(DWARFAttributeId.DW_AT_language, cuLang)
 				.createRootDIE();
 		try {
 			currentCompUnit.init(compUnitRootDIE);
@@ -129,7 +129,7 @@ public class MockDWARFProgram extends DWARFProgram {
 		LongArrayList aggrTargets = new LongArrayList();
 		for (DebugInfoEntry die : dies) {
 			DIEAggregate diea = DIEAggregate.createSingle(die);
-			for (DWARFAttribute attr : REF_ATTRS) {
+			for (DWARFAttributeId attr : REF_ATTRS) {
 				long refdOffset = diea.getUnsignedLong(attr, -1);
 				if (refdOffset != -1) {
 					aggrTargets.add(refdOffset);

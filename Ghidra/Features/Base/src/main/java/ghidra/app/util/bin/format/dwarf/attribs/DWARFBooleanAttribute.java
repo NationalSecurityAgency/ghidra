@@ -20,11 +20,10 @@ import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 /**
  * DWARF boolean attribute.
  */
-public class DWARFBooleanAttribute extends DWARFAttributeValue {
+public class DWARFBooleanAttribute implements DWARFAttributeValue {
 	private final boolean value;
 
-	public DWARFBooleanAttribute(boolean value, DWARFAttributeDef<?> def) {
-		super(def);
+	public DWARFBooleanAttribute(boolean value) {
 		this.value = value;
 	}
 
@@ -33,12 +32,13 @@ public class DWARFBooleanAttribute extends DWARFAttributeValue {
 	}
 
 	@Override
-	public String getValueString(DWARFCompilationUnit cu) {
+	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
 		return "%b".formatted(value);
 	}
 
 	@Override
 	public String toString() {
-		return "%s : %s = %s".formatted(getAttributeName(), getAttributeForm(), getValue());
+		return "%b".formatted(value);
 	}
+
 }
