@@ -419,12 +419,36 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		// a tab or header as drag-N-drop target in place of the placeholder's
 		// window surface.  Also, consider tabs of components not showing as a
 		// valid target, so that components can be inserted between others.  A
-		// header, instead, requires a showing component as a valid target.
-		if (SOURCE_INFO != placeholder &&
-				(c instanceof DockingTabRenderer ||
-				(c instanceof DockableHeader && isShowing()))) {
-			DROP_CODE = DropCode.PUSH;
-			return;
+		// header, instead, is a valid target if the component is showing, and
+		// it's considered a shortcut to place the component at the beginning,
+		// as first tab, while stacking is to add a tab at the end.
+		if (SOURCE_INFO != placeholder) {
+			if (c instanceof DockingTabRenderer) {
+				if (SOURCE_INFO.getNode() != placeholder.getNode()	) {
+					// push the component between others into another window space
+					DROP_CODE = DropCode.PUSH;
+				}
+				else {
+					// FIXME: assume that there is a tabbed pane
+					JTabbedPane tabbedPane = (JTabbedPane) getParent();
+					int target_index = tabbedPane.indexOfTabComponent(c);
+					int source_index = tabbedPane.indexOfComponent(SOURCE_INFO.getComponent());
+					if (target_index < source_index) {
+						// shift the component to the left in the same window space
+						DROP_CODE = DropCode.SHIFT_LEFT;
+					}
+					else {
+						// shift the component to the right in the same window space
+						DROP_CODE = DropCode.SHIFT_RIGHT;
+					}
+				}
+				return;
+			}
+			if (c instanceof DockableHeader && isShowing()) {
+				// place the component at the beginning of the target stack
+				DROP_CODE = DropCode.PREPEND;
+				return;
+			}
 		}
 
 		// On Mac, sometimes this component is not showing,

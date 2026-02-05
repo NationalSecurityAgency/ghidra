@@ -33,12 +33,47 @@ public enum WindowPosition {
 
 	/** 
 	 * Signals that windows should be stacked with other windows within  
-	 * the same group.
+	 * the same group, appending them at the end of the stack.
 	 */
 	STACK,
 
 	/**
-	 * Signals that windows should be pushed in between other item.
+	 * Signals that windows should be stacked with other windows within
+	 * the same group, prepending them at the beginning of the stack.
+	 *
+	 * NOTE: This should not be used for setDefaultWindowPosition() and
+	 * setIntraGroupPosition(), it's just an action code.  Use STACK to
+	 * mark the real window position, instead.
 	 */
-	PUSH
+	PREPEND,
+
+	/**
+	 * Signals that windows should be pushed between other windows, for
+	 * taking a selected window position in the stack.
+	 *
+	 * NOTE: This should not be used for setDefaultWindowPosition() and
+	 * setIntraGroupPosition(), it's just an action code.  Use STACK to
+	 * mark the real window position, instead.
+	 */
+	PUSH,
+
+	/**
+	 * Signals that windows are shifting position within the same group
+	 * of stacked windows, moving over windows preceding them.
+	 *
+	 * NOTE: This should not be used for setDefaultWindowPosition() and
+	 * setIntraGroupPosition(), it's just an action code.  Use STACK to
+	 * mark the real window position, instead.
+	 */
+	SHIFT_LEFT,
+
+	/**
+	 * Signals that windows are shifting position within the same group
+	 * of stacked windows, moving over windows following them.
+	 *
+	 * NOTE: This should not be used for setDefaultWindowPosition() and
+	 * setIntraGroupPosition(), it's just an action code.  Use STACK to
+	 * mark the real window position, instead.
+	 */
+	SHIFT_RIGHT
 }

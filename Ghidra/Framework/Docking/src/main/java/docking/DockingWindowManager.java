@@ -1201,7 +1201,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				sourceNode.remove(source);
 				destinationNode.add(source);
 			}
-			else if (windowPosition == WindowPosition.PUSH) {
+			else if (windowPosition == WindowPosition.PUSH ||
+					windowPosition == WindowPosition.SHIFT_LEFT ||
+					windowPosition == WindowPosition.SHIFT_RIGHT) {
 				// Don't remove the source placeholder from its own node
 				// outside of push(), since that will change the indexes
 				// of components, preventing push() to properly shift an
@@ -1209,6 +1211,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				// the same node.  push() itself will handle the removal
 				// of the source placeholder from its own node.
 				destinationNode.push(source, destination);
+			}
+			else if (windowPosition == WindowPosition.PREPEND) {
+				// Effectively, move the source placeholder at the start
+				// of the destination node.
+				destinationNode.push(source, null);
 			}
 			else {
 				sourceNode.remove(source);

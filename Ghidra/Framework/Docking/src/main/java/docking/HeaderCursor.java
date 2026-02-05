@@ -19,10 +19,7 @@ import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.awt.image.BufferedImage;
 
-import javax.swing.Icon;
-
 import generic.theme.*;
-import resources.ResourceManager;
 
 /**
  * The cursor values used when drag-n-dropping dockable components
@@ -41,7 +38,10 @@ public class HeaderCursor {
 	static Cursor TOP;
 	static Cursor BOTTOM;
 	static Cursor STACK;
+	static Cursor PREPEND;
 	static Cursor PUSH;
+	static Cursor SHIFT_LEFT;
+	static Cursor SHIFT_RIGHT;
 	static Cursor NEW_WINDOW;
 	static Cursor NO_DROP = DragSource.DefaultMoveNoDrop;
 
@@ -69,7 +69,17 @@ public class HeaderCursor {
 		image = drawStack();
 		STACK = tk.createCustomCursor(image, new Point(8, 8), "STACK");
 
-		PUSH = createMoveCursor();
+		image = drawPrepend();
+		PREPEND = tk.createCustomCursor(image, new Point(8, 8), "PREPEND");
+
+		image = drawPush();
+		PUSH = tk.createCustomCursor(image, new Point(6, 6), "PUSH");
+
+		image = drawShiftLeft();
+		SHIFT_LEFT = tk.createCustomCursor(image, new Point(6, 6), "SHIFT_LEFT");
+
+		image = drawShiftRight();
+		SHIFT_RIGHT = tk.createCustomCursor(image, new Point(6, 6), "SHIFT_RIGHT");
 
 		image = drawNewWindow();
 		NEW_WINDOW = tk.createCustomCursor(image, new Point(0, 0), "NEW_WINDOW");
@@ -152,6 +162,14 @@ public class HeaderCursor {
 	private static Image drawStack() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		// highlight the target position in the stack
+		int headerColor = new GColor("color.bg.header.active").getRGB();
+		int offset = 6;
+		for (int x = 1; x < 10; x++) {
+			for (int y = 1; y < 10; y++) {
+				image.setRGB(x + offset, y, headerColor);
+			}
+		}
 		int v = CURSOR_COLOR.getRGB();
 		for (int i = 0; i < 3; i++) {
 			int x = i * 3;
@@ -167,11 +185,114 @@ public class HeaderCursor {
 		return image;
 	}
 
-	// copy and paste from GTabPanel.java
-	private static Cursor createMoveCursor() {
-		Icon icon = ResourceManager.loadIcon("move.png");
-		Image image = ResourceManager.getImageIcon(icon).getImage();
-		return Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(8, 8), "nope");
+	private static Image drawPrepend() {
+
+		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		int v = CURSOR_COLOR.getRGB();
+		for (int i = 0; i < 3; i++) {
+			int x = i * 3;
+			int y = 6 - i * 3;
+			for (int j = 0; j < 10; j++) {
+				image.setRGB(x, y + j, v);
+				image.setRGB(x + 10, y + j, v);
+				image.setRGB(x + j, y, v);
+				image.setRGB(x + j, y + 10, v);
+			}
+		}
+		// highlight the target position in the stack
+		int headerColor = new GColor("color.bg.header.active").getRGB();
+		int offset = 6;
+		for (int x = 1; x < 10; x++) {
+			for (int y = 1; y < 10; y++) {
+				image.setRGB(x, y + offset, headerColor);
+			}
+		}
+
+		return image;
+	}
+
+	private static Image drawPush() {
+
+		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		// draw adjacent overlapping boxes
+		int v = CURSOR_COLOR.getRGB();
+		for (int i = 0; i < 2; i++) {
+			int x = i * 3;
+			int y = i%2 != 0 ? 3 : 0;
+			for (int j = 0; j < 10; j++) {
+				image.setRGB(x, y + j, v);
+				image.setRGB(x + 10, y + j, v);
+				image.setRGB(x + j, y, v);
+				image.setRGB(x + j, y + 10, v);
+			}
+		}
+		// highlight the target position in the stack
+		int headerColor = new GColor("color.bg.header.active").getRGB();
+		int x_offset = 0;
+		int y_offset = 0;
+		for (int x = 1; x < 10; x++) {
+			for (int y = 1; y < 10; y++) {
+				image.setRGB(x + x_offset, y + y_offset, headerColor);
+			}
+		}
+
+		return image;
+	}
+
+	private static Image drawShiftLeft() {
+
+		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		// highlight the target position in the stack
+		int headerColor = new GColor("color.bg.header.active").getRGB();
+		int x_offset = 0;
+		int y_offset = 3;
+		for (int x = 1; x < 10; x++) {
+			for (int y = 1; y < 10; y++) {
+				image.setRGB(x + x_offset, y + y_offset, headerColor);
+			}
+		}
+		// draw adjacent overlapping boxes
+		int v = CURSOR_COLOR.getRGB();
+		for (int i = 0; i < 2; i++) {
+			int x = i * 3;
+			int y = i%2 == 0 ? 3 : 0;
+			for (int j = 0; j < 10; j++) {
+				image.setRGB(x, y + j, v);
+				image.setRGB(x + 10, y + j, v);
+				image.setRGB(x + j, y, v);
+				image.setRGB(x + j, y + 10, v);
+			}
+		}
+
+		return image;
+	}
+
+	private static Image drawShiftRight() {
+
+		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		// highlight the target position in the stack
+		int headerColor = new GColor("color.bg.header.active").getRGB();
+		int x_offset = 3;
+		int y_offset = 3;
+		for (int x = 1; x < 10; x++) {
+			for (int y = 1; y < 10; y++) {
+				image.setRGB(x + x_offset, y + y_offset, headerColor); // horizontal line
+			}
+		}
+		// draw adjacent overlapping boxes
+		int v = CURSOR_COLOR.getRGB();
+		for (int i = 0; i < 2; i++) {
+			int x = i * 3;                      // concatenate moving by x offset
+			int y = i%2 != 0 ? 3 : 0;           // alternate y higher and lower
+			for (int j = 0; j < 10; j++) {
+				image.setRGB(x, y + j, v);      // left vertical line
+				image.setRGB(x + 10, y + j, v); // right vertical line
+				image.setRGB(x + j, y, v);      // top horizontal line
+				image.setRGB(x + j, y + 10, v); // bottom horizontal line
+			}
+		}
+
+		return image;
 	}
 
 	private static Image drawNewWindow() {
