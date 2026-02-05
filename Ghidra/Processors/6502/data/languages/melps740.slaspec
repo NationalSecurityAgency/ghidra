@@ -1,0 +1,245 @@
+@define MITSUBISHI_MELPS740
+@include "6502.slaspec"
+
+
+################################################################
+# Tokens
+################################################################
+
+define token bitopbyte (8)
+    bitop           = (0,7)
+
+    action          = (4,4)
+    bitindex        = (5,7) dec
+    optype          = (0,3)
+;
+
+define token testopbyte (8)
+    top             = (0, 7)
+    taaa            = (5, 7)
+    td              = (4, 4)
+    tbb             = (2, 3)
+    tcc             = (0, 1)
+;
+
+
+################################################################
+# Pseudo Instructions
+################################################################
+
+define pcodeop __cpu_fst;
+define pcodeop __cpu_wit_or_slw;
+define pcodeop __cpu_stop;
+
+
+################################################################
+# Instructions
+################################################################
+
+# NOTE:
+#  T Flag: Notes 1, 2, 3.
+#    Affects ADC, AND, CMP, EOR, LDA, ORA
+#    M(X) zpaddr is accessed instead of ACC
+#
+#  Notes 5,6,7,8:
+#   5. Only M50740A, 50740ASP, M50741, M50752, M50757, M50758
+#        FST, SLW
+#
+#   6. NOT  "     "  "      "  "    "  "    "  "    "  "    "
+#        WIT
+#
+#   7. NOT  M50752, M50757, M50758
+#        STP
+#
+#   8. Special types only e.g. M37450
+#        MUL, DIV
+#
+
+# BBC i, A, rel  => Branch if Bit Clear
+:BBC "#"bitindex, A, REL        is (action=1 & optype=0x3) & A & bitindex ; REL {
+    local jump = (A & (1 << bitindex)) == 0;
+    if (jump) goto REL;
+}
+
+# BBC i, zz, rel  => Branch if Bit Clear
+:BBC "#"bitindex, imm8, REL     is (action=1 & optype=0x7) & bitindex ; imm8 ; REL {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local jump = (value & (1 << bitindex)) == 0;
+    if (jump) goto REL;
+}
+
+# BBS i, A, rel  => Branch if Bit Set
+:BBS "#"bitindex, A, REL        is (action=0 & optype=0x3) & A & bitindex ; REL {
+    local jump = (A & (1 << bitindex)) != 0;
+    if (jump) goto REL;
+}
+
+# BBS i, zz, rel  => Branch if Bit Set
+:BBS "#"bitindex, imm8, REL     is (action=0 & optype=0x7) & bitindex ; imm8 ; REL {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local jump = (value & (1 << bitindex)) != 0;
+    if (jump) goto REL;
+}
+
+# BRA rel  => Unconditional branch
+:BRA  REL                       is op=0x80; REL
+{
+    goto REL;
+}
+
+# CLB i, A  => Clear bits in accumulator
+:CLB "#"bitindex, A             is (action=1 & optype=0xb) & A & bitindex
+{
+    local result = A & ~(1 << bitindex);
+    A = result;
+}
+
+# CLB i, $zz  => Clear bits in zeropage memory
+:CLB "#"bitindex, imm8          is (action=1 & optype=0xf) & bitindex ; imm8
+{
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    value = value & ~(1 << bitindex);
+    *:1 ptr = value;
+}
+
+# CLT => Clear T status bit
+:CLT                            is (op=0x12)
+{
+    T = 0;
+}
+
+# COM $zz  => Complement value in memory location (1's complement, bitwise invert, XOR 0xFF)
+:COM imm8                       is (op=0x44); imm8
+{
+    local ptr:2 = imm8;
+    local tmp:1 = *:1 ptr;
+    tmp = tmp ^ 0xFF;
+    *:1 ptr = tmp;
+    resultFlags(tmp);
+}
+
+# DEC A  => Decrement A. As per 65C02 but with different opcode.
+:DEC A                          is (op=0x1A) & A
+{
+    local tmp = A - 1;
+    A = tmp;
+    resultFlags(tmp);
+}
+
+
+# TODO: DIV $zz,X   => Divide -- note 8, special only eg M37450
+
+
+# FST  => Connect XOUTf with internal oscillator
+:FST                            is (op=0xE2)
+{
+    # FST - not implemented
+    __cpu_fst();
+}
+
+# INC A:  Increment A. As per 65C02 but with different opcode.
+:INC A                          is (op=0x3A) & A
+{
+    local tmp = A + 1;
+    A = tmp;
+    resultFlags(A);
+}
+
+
+# TESTME: JMP ($zz)  => Jump to indirect zeropage address
+:JMP (imm8)                     is (op=0xB2) ; imm8
+{
+    local ptr:2 = imm8;
+    local addr:2 = *:2 ptr;
+    goto [addr];
+}
+
+# TESTME: JSR ($zz)  => Jump subroutine at indirect zeropage address
+:JSR (imm8)                     is (op=0x02) ; imm8
+{
+    local ptr:2 = imm8;
+    local addr:2 = *:2 ptr;
+    *:2 (SP-1) = inst_next;
+    SP=SP-2;
+    call [addr];
+}
+
+# TESTME: JSR \$hhii  => Jump subroutine at special page offset ii
+
+specOff: "\\"^reloc             is imm8 [ reloc = 0xff00 + imm8; ] { export *:2 reloc; }
+
+:JSR specOff                    is op=0x22; specOff
+{
+    local addr:2 = specOff;
+    *:2 (SP-1) = inst_next;
+    SP=SP-2;
+    call [addr];
+}
+
+# LDM #$imm, $zpmemaddr   => Load immediate to memory
+:LDM "#"imm8, ADDR8             is (op=0x3C) ; imm8 ; ADDR8
+{
+    ADDR8 = imm8;
+}
+
+
+# TODO: MUL $zz,X		note 8, special only eg M37450
+
+
+# RRF $xx  => Swap nibbles in memory location
+:RRF imm8                       is (op=0x82) ; imm8
+{
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local tmp = ((value & 0xF0) >> 4) | ((value & 0x0F) << 4);
+    *:1 ptr = tmp;
+}
+
+# SEB i, A  => Set bit in accumulator
+:SEB "#"bitindex, A             is (action=0 & optype=0xb) & A & bitindex
+{
+    local result = A | (1 << bitindex);
+    A = result;
+}
+
+# SEB i, $zz  => Set bit in zeropage memory
+:SEB "#"bitindex, imm8          is (action=0 & optype=0xf) & bitindex ; imm8
+{
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    value = value | (1 << bitindex);
+    *:1 ptr = value;
+}
+
+# SET  => set T status bit
+:SET                            is (op=0x32)
+{
+    T = 1;
+}
+
+# STP  => Stop?
+:STP                            is (op=0x42)
+{
+    # Stop - not implemented
+    __cpu_stop();
+}
+
+# TST $ZZ  => Compare memory location with zero
+:TST imm8                       is (op=0x64) ; imm8
+{
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local tmp = 0 - value;
+    resultFlags(tmp);
+}
+
+# WIT or SLW  => Wait for interrupt? or Disconnect XOUTf from internal oscillator
+:WIT_SLW                        is (op=0xC2)
+{
+    # WIT or SLW - not implemented
+    __cpu_wit_or_slw();
+}
+
