@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.base.project.GhidraProject;
 import ghidra.framework.Application;
-import ghidra.framework.GhidraApplicationConfiguration;
+import ghidra.framework.HeadlessGhidraApplicationConfiguration;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
@@ -163,8 +163,8 @@ public class IsfServer extends Thread {
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		GhidraApplicationLayout layout =
 			new GhidraTestApplicationLayout(new File(AbstractGTest.getTestDirectoryPath()));
-		GhidraApplicationConfiguration config = new GhidraApplicationConfiguration();
-		config.setShowSplashScreen(false);
+		HeadlessGhidraApplicationConfiguration config =
+			new HeadlessGhidraApplicationConfiguration();
 		Application.initializeApplication(layout, config);
 
 		IsfServer server = new IsfServer(null, 54321);
