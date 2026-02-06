@@ -415,40 +415,32 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	private void setDropCode(Point p, Component c) {
 		DROP_CODE_SET = true;
 
-		// When the DockableComponent isn't dragged over itself, either accept
-		// a tab or header as drag-N-drop target in place of the placeholder's
-		// window surface.  Also, consider tabs of components not showing as a
-		// valid target, so that components can be inserted between others.  A
-		// header, instead, is a valid target if the component is showing, and
-		// it's considered a shortcut to place the component at the beginning,
-		// as first tab, while stacking is to add a tab at the end.
-		if (SOURCE_INFO != placeholder) {
-			if (c instanceof DockingTabRenderer) {
-				if (SOURCE_INFO.getNode() != placeholder.getNode()	) {
-					// push the component between others into another window space
-					DROP_CODE = DropCode.PUSH;
+		// Tabs of components that aren't currently showing, are valid targets
+		// to drop a component on another which isn't showing its own content.
+		if (c instanceof DockingTabRenderer) {
+			if (SOURCE_INFO == placeholder) {
+				// the cursor is over the same tab, just ignore this action
+				DROP_CODE = DropCode.INVALID;
+			}
+			else if (SOURCE_INFO.getNode() != placeholder.getNode()	) {
+				// push the component between others, in another window space
+				DROP_CODE = DropCode.PUSH;
+			}
+			else {
+				// FIXME: assume that there is a tabbed pane
+				JTabbedPane tabbedPane = (JTabbedPane) getParent();
+				int target_index = tabbedPane.indexOfTabComponent(c);
+				int source_index = tabbedPane.indexOfComponent(SOURCE_INFO.getComponent());
+				if (target_index < source_index) {
+					// shift the component to the left, in the same window space
+					DROP_CODE = DropCode.SHIFT_LEFT;
 				}
 				else {
-					// FIXME: assume that there is a tabbed pane
-					JTabbedPane tabbedPane = (JTabbedPane) getParent();
-					int target_index = tabbedPane.indexOfTabComponent(c);
-					int source_index = tabbedPane.indexOfComponent(SOURCE_INFO.getComponent());
-					if (target_index < source_index) {
-						// shift the component to the left in the same window space
-						DROP_CODE = DropCode.SHIFT_LEFT;
-					}
-					else {
-						// shift the component to the right in the same window space
-						DROP_CODE = DropCode.SHIFT_RIGHT;
-					}
+					// shift the component to the right, in the same window space
+					DROP_CODE = DropCode.SHIFT_RIGHT;
 				}
-				return;
 			}
-			if (c instanceof DockableHeader && isShowing()) {
-				// place the component at the beginning of the target stack
-				DROP_CODE = DropCode.PREPEND;
-				return;
-			}
+			return;
 		}
 
 		// On Mac, sometimes this component is not showing,
@@ -481,14 +473,25 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		else if (p.x > getWidth() - DROP_EDGE_OFFSET) {
 			DROP_CODE = DropCode.RIGHT;
 		}
-		else if (p.y < DROP_EDGE_OFFSET) {
+		// Leave some space to drop over a header.  The TOP drop zone should be
+		// just below the title bar (header).
+		else if (p.y > DROP_EDGE_OFFSET && p.y < DROP_EDGE_OFFSET * 2) {
 			DROP_CODE = DropCode.TOP;
 		}
 		else if (p.y > getHeight() - DROP_EDGE_OFFSET) {
 			DROP_CODE = DropCode.BOTTOM;
 		}
+		// Dragging a component over a header, is a shortcut to prepend it as a
+		// fist tab in the windows space that the mouse cursor is over.
+		else if (c instanceof DockableHeader) {
+			// place the component at the beginning of the target stack
+			DROP_CODE = DropCode.PREPEND;
+		}
+		// Dragging a component over its own content space, in the same window,
+		// is a shortcut to append it as a last tab.
 		else if (SOURCE_INFO == placeholder) {
-			DROP_CODE = DropCode.INVALID;
+			// place the component at the end of the target stack
+			DROP_CODE = DropCode.STACK;
 		}
 		else {
 			DROP_CODE = DropCode.STACK;
