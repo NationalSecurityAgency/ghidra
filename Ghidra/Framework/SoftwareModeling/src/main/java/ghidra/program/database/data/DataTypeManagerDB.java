@@ -1884,23 +1884,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
-			boolean updateCategoryPath) throws DataTypeDependencyException {
-		// Note: we should probably disallow replacementDt to be an instanceof
-		// Dynamic or FactoryDataType
+			boolean updateCategoryPath)
+			throws DataTypeDependencyException, IllegalArgumentException {
 		lock.acquire();
 		try {
-			// Don't support replacement with Factory or Dynamic datatype
-			if (replacementDt instanceof Dynamic || replacementDt instanceof FactoryDataType) {
-				throw new IllegalArgumentException(
-					"Datatype replacment with dynamic or factory type not permitted.");
-			}
 			if (!contains(existingDt)) {
 				throw new IllegalArgumentException(
 					"Datatype to replace is not contained in this datatype manager.");
 			}
-			if (existingDt instanceof BadDataType) {
-				throw new IllegalArgumentException("BAD Datatype can be deleted but not replaced.");
-			}
+
+			DataTypeUtilities.checkValidReplacement(existingDt, replacementDt);
+
 			boolean fixupName = false;
 			if (!contains(replacementDt)) {
 				replacementDt = replacementDt.clone(this);
@@ -2000,12 +1994,21 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			dataTypeReplacementMap.put(replacedId, replacementId);
 		}
 
-		// perform any neccessary external use replacements
+		// perform any necessary external use replacements
 		replaceDataTypesUsed(dataTypeReplacementMap);
 
 		// perform actual database updates (e.g., record updates, change notifications, etc.)
 		for (Pair<DataType, DataType> dataTypeReplacement : dataTypeReplacements) {
-			replaceDataType(dataTypeReplacement.first, dataTypeReplacement.second);
+
+			DataType replacedDt = dataTypeReplacement.first;
+			DataType replacementDt = dataTypeReplacement.second;
+
+			long replacedId = getID(replacedDt);
+
+			deleteDataType(replacedId, false); // notify as replacement next
+
+			// Provide replacement notification
+			dataTypeReplaced(replacedId, replacedDt.getDataTypePath(), replacementDt);
 		}
 	}
 
@@ -2014,26 +2017,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param dataTypeReplacementMap map of datatype replacements (oldID maps to replacementID).
 	 */
 	abstract protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap);
-
-	private void replaceDataType(DataType replacedDt, DataType replacementDt) {
-
-		DataTypePath replacedDtPath = replacedDt.getDataTypePath();
-		long replacedId = getID(replacedDt);
-
-		UniversalID id = replacedDt.getUniversalID();
-		idsToDataTypeMap.removeDataType(replacedDt.getSourceArchive(), id);
-
-		try {
-			parentChildAdapter.removeAllRecordsForParent(replacedId);
-		}
-		catch (IOException e) {
-			dbError(e);
-		}
-		deleteDataTypeRecord(replacedId);
-		dtCache.delete(replacedId);
-
-		dataTypeReplaced(replacedId, replacedDtPath, replacementDt);
-	}
 
 	private void replaceUsesInOtherDataTypes(DataType existingDt, DataType newDt) {
 		if (existingDt instanceof DataTypeDB) {
@@ -2353,8 +2336,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 
 		if (dataType instanceof BadDataType) {
-			// Cannot really replace BAD datatype which is generally not directly referenced
-			deleteDataType(BAD_DATATYPE_ID);
+			// Cannot really replace BAD datatype use as a place holder - just its managed instance 
+			deleteDataType(BAD_DATATYPE_ID, true);
 			return true;
 		}
 
@@ -2363,7 +2346,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return false;
 		}
 
-		idsToDelete.add(id);
+		// Queue datatype for removal
+		addDataTypeToDelete(dataType, id);
+
 		removeQueuedDataTypes();
 		return true;
 	}
@@ -2380,7 +2365,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				continue;
 			}
 
-			idsToDelete.add(id);
+			// Queue datatype for removal
+			addDataTypeToDelete(dt, id);
 		}
 
 		removeQueuedDataTypes();
@@ -2408,7 +2394,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					"' has been retained for use by defined bitfields");
 				continue;
 			}
-			deleteDataType(id);
+			deleteDataType(id, true);
 		}
 		blockedRemovalsByID = null;
 	}
@@ -2562,7 +2548,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Queue a datatype to deleted in response to another datatype being deleted.
 	 * @param id datatype ID to be removed
 	 */
-	protected void addDataTypeToDelete(long id) {
+	protected void addDataTypeToDelete(DataType dt, long id) {
+		if (dt instanceof DataTypeDB dbDt) {
+			dbDt.deleteStarted();
+		}
 		idsToDelete.add(Long.valueOf(id));
 	}
 
@@ -2577,6 +2566,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		Objects.requireNonNull(replacementDataType);
 		if (oldDataType == replacementDataType) {
 			throw new AssertionError("Invalid datatype replacement pair");
+		}
+		if (oldDataType instanceof DataTypeDB dbDt) {
+			dbDt.deleteStarted();
 		}
 		typesToReplace.add(new Pair<>(oldDataType, replacementDataType));
 	}
@@ -2606,7 +2598,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	}
 
-	private void deleteDataType(long dataTypeID) {
+	private void deleteDataType(long dataTypeID, boolean notify) {
 
 		DataType dataType = getDataType(dataTypeID);
 		if (dataType == null) {
@@ -2618,6 +2610,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 
 		deleteDataTypeRecord(dataTypeID);
+
 		try {
 			parentChildAdapter.removeAllRecordsForParent(dataTypeID);
 		}
@@ -2626,10 +2619,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		dtCache.delete(dataTypeID);
 		favoritesList.remove(dataType);
-		// DT Should delete data type update the sync time or last change time?
-//		updateLastSyncTime((new Date()).getTime()); // Update my Last Sync Time in the Archive ID table.
-		DataTypePath deletedDtPath = dataType.getDataTypePath();
-		dataTypeDeleted(dataTypeID, deletedDtPath);
+
+		// NOTE: There is no need to update archive sync time for removal.  It is only the
+		// possible updates to other datatypes that would need to trigger such a modification time.
+
+		if (notify) {
+			dataTypeDeleted(dataTypeID, dataType.getDataTypePath());
+		}
 	}
 
 	private void deleteDataTypeRecord(long dataTypeID) {

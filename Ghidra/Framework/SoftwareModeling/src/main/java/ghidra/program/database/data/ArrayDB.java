@@ -265,15 +265,17 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+		if (deleting) {
+			return;
+		}
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		lock.acquire();
 		try {
-			checkIsValid();
-			if (newDt == this || newDt.getLength() < 0) {
-				newDt = DataType.DEFAULT;
-			}
-
+			checkDeleted();
 			if (oldDt == getDataType()) {
-
+				if (newDt == this) {
+					newDt = DataType.DEFAULT;
+				}
 				int oldElementLength = getElementLength();
 				int newElementLength =
 					elementLength = newDt.getLength() < 0 ? oldElementLength : -1;
@@ -345,9 +347,13 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
-			if (checkIsValid() && dt == getDataType() && dt.getLength() > 0) {
+			checkDeleted();
+			if (dt == getDataType() && dt.getLength() > 0) {
 				elementLength = -1;
 				notifySizeChanged(true);
 			}
@@ -359,9 +365,13 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public void dataTypeAlignmentChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
-			if (checkIsValid() && dt == getDataType()) {
+			checkDeleted();
+			if (dt == getDataType()) {
 				notifyAlignmentChanged(true);
 			}
 		}
@@ -392,18 +402,33 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
-		if (getDataType() == dt) {
-			elementLength = -1;
-			dataMgr.addDataTypeToDelete(key);
+		if (deleting) {
+			return;
+		}
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (dt == getDataType()) {
+				elementLength = -1;
+				dataMgr.addDataTypeToDelete(this, key);
+				deleting = true;
+			}
+		}
+		finally {
+			lock.release();
 		}
 	}
 
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
-			String myOldName = getOldName();
-			if (checkIsValid() && dt == getDataType()) {
+			checkDeleted();
+			if (dt == getDataType()) {
+				String myOldName = getOldName();
 				refreshName();
 				if (!getName().equals(myOldName)) {
 					notifyNameChanged(myOldName);

@@ -278,10 +278,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (newDt == this || newDt.getLength() < 0) {
-			newDt = DataType.DEFAULT;
-		}
 		if (dataType == oldDt) {
+			DataTypeUtilities.checkValidReplacement(oldDt, newDt);
+			if (newDt == this) {
+				newDt = DataType.DEFAULT;
+			}
 			String oldName = getName();
 			int oldLength = getLength();
 			int oldAlignment = getAlignment();

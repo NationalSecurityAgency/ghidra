@@ -197,7 +197,8 @@ public interface DataTypeManager {
 
 	/**
 	 * Replace an existing dataType with another.  All instances and references will be updated to
-	 * use the replacement dataType.
+	 * use the replacement dataType.  Both datatypes must be fixed-length datatypes.  Replacement
+	 * of types such as FactoryDataType, Dynamic, BitFieldDataType, etc. are not allowed.
 	 * @param existingDt the dataType to be replaced.
 	 * @param replacementDt the dataType to use as the replacement.
 	 * @param updateCategoryPath if true, the replacementDt will have its categoryPath changed
@@ -205,9 +206,11 @@ public interface DataTypeManager {
 	 * @return the resolved replacement dataType.
 	 * @throws DataTypeDependencyException if the replacement datatype depends on
 	 * the existing dataType;
+	 * @throws IllegalArgumentException if an invalid replacement datatype is specified.
 	 */
 	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
-			boolean updateCategoryPath) throws DataTypeDependencyException;
+			boolean updateCategoryPath)
+			throws DataTypeDependencyException, IllegalArgumentException;
 
 	/**
 	 * Retrieve the data type with the fully qualified path. So you can get the data named

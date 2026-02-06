@@ -412,6 +412,9 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -538,6 +541,10 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+		if (deleting) {
+			return;
+		}
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		lock.acquire();
 		try {
 			checkDeleted();
