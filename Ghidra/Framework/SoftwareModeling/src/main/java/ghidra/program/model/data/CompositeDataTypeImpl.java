@@ -176,26 +176,6 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * This method throws an exception if the indicated data type is an ancestor of
-	 * this data type (i.e., the specified data type has a component or
-	 * sub-component containing this data type).
-	 * 
-	 * @param dataType the data type
-	 * @throws IllegalArgumentException if the data type is an ancestor of this data
-	 *                                  type.
-	 */
-	protected void checkAncestry(DataType dataType) throws IllegalArgumentException {
-		if (this.equals(dataType)) {
-			throw new IllegalArgumentException(
-				"Data type " + getDisplayName() + " can't contain itself.");
-		}
-		else if (DataTypeUtilities.isSecondPartOfFirst(dataType, this)) {
-			throw new IllegalArgumentException("Data type " + dataType.getDisplayName() + " has " +
-				getDisplayName() + " within it.");
-		}
-	}
-
-	/**
 	 * This method throws an exception if the indicated data type is not a valid
 	 * data type for a component of this composite data type.  If the DEFAULT 
 	 * datatype is specified when unsupported an Undefined1 will be returned 

@@ -732,11 +732,6 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		// not applicable
-	}
-
-	@Override
 	protected void doSetCategoryPathRecord(long categoryID) throws IOException {
 		record.setLongValue(EnumDBAdapter.ENUM_CAT_COL, categoryID);
 		adapter.updateRecord(record, false);
@@ -750,6 +745,11 @@ class EnumDB extends DataTypeDB implements Enum {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
+		// not applicable
+	}
+
+	@Override
+	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 		// not applicable
 	}
 
