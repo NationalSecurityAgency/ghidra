@@ -1215,8 +1215,6 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 {
     # FIXME: review this instruction
 
-	local loadm:2;
-	local loadn:2;
     local tempm:4;
     local tempn:4;
     local dest;
@@ -1224,13 +1222,13 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     local ans;
     local templ:4;
     
-    loadn = * rn_08_11;
+    tempn = sext(*:2 rn_08_11);
     rn_08_11 = rn_08_11 + 2;    
-    loadm = * rm_04_07;
+    tempm = sext(*:2 rm_04_07);
     rm_04_07 = rm_04_07 + 2;
     
     templ = macl;
-    tempm = sext(loadn) * sext(loadm);
+    tempm = tempn * tempm;
     
     dest = (macl s< 0);
     
