@@ -81,15 +81,18 @@ public interface Namespace {
 	public boolean isExternal();
 
 	/**
-	 * Get the name of the symbol for this scope
-	 * @return the name of the symbol for this scope
+	 * Get the simple namespace name (without parent path).
+	 * See {@link #getName(boolean)} for the namespace-qualified variant.
+	 * @return the simple namespace name
 	 */
 	public String getName();
 
 	/**
-	 * Returns the fully qualified name
-	 * @param includeNamespacePath true to include the namespace in the returned name
-	 * @return the fully qualified name
+	 * Returns the namespace name, optionally prepended with the full parent namespace path.
+	 * @param includeNamespacePath true to include the namespace path
+	 * (using {@link #DELIMITER} as separator) in the returned name
+	 * @return the simple name if {@code includeNamespacePath} is false, or the full
+	 * namespace-qualified name (e.g., {@code "ClassA::InnerClass"}) if true
 	 */
 	public String getName(boolean includeNamespacePath);
 
