@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ interface EmulateStepBackAction extends ControlAction {
 	String DESCRIPTION = "Step the integrated emulator a single instruction backward";
 	Icon ICON = DebuggerResources.ICON_STEP_BACK;
 	String HELP_ANCHOR = "emu_step_back";
-	int SUB_GROUP = 4;
+	int SUB_GROUP = 2;
 	KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0);
 
 	static ActionBuilder builder(Plugin owner) {
