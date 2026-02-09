@@ -1,29 +1,29 @@
 # Ghidra 12.0.2 Change History (January 2026)
 
 ### New Features
-* _Emulator_. Fixed emulator's evaluation of `inst_next2` (GP-6134, Issue #8646)
+* _Emulator_. Fixed the Emulator's evaluation of `inst_next2`. (GP-6134, Issue #8646)
 
 ### Improvements
 * _Basic Infrastructure_. Upgraded `commons-lang3` , `log4j`, and `postgresql` jars. (GP-6243)
-* _Debugger_. Several Address and Value columns are now displayed in fixed-width font: Register Value, Stack PC, Snapshot PC, Watch Value (GP-6025)
+* _Debugger_. Several Address and Value columns are now displayed in fixed-width font: Register Value, Stack PC, Snapshot PC, and Watch Value. (GP-6025)
 * _Debugger:Breakpoints_. Added __Expression__ column to __Breakpoints__ locations table. (GP-6026)
 * _Documentation_. Updated Debugger tutorial to reflect the addition of the Comment column to the Watches panel, and the moving of the schedule display to trace tabs instead of the Threads panel title bar. (GP-6032)
 * _Extensions_. Fixed a potential zip path traversal vulnerability when unzipping Ghidra Extension archives. (GP-6354)
 * _Multi-User_. Upgraded yajsw to 13.18. (GP-6364)
 
 ### Bugs
-* _Data Types_. Corrected Union update notification issue which impacted proper archive sync indicators and related operations. (GP-6359, Issue #8884)
-* _Debugger_. Fixed missing "Dynamic Listing" entry in Window menu, when the Dynamic Listing is closed. (GP-6086, Issue #8604)
-* _Debugger:Emulator_. Fixed a silent infinite read loop during some situations in an emulator forked from a live target. (GP-6340)
+* _Data Types_. Corrected a Union update notification issue which impacted proper archive sync indicators and related operations. (GP-6359, Issue #8884)
+* _Debugger_. Fixed missing __Dynamic Listing__ entry in Window menu, when the Dynamic Listing is closed. (GP-6086, Issue #8604)
+* _Debugger:Emulator_. Fixed a silent infinite-read loop during some situations in an emulator forked from a live target. (GP-6340)
 * _Demangler_. Fixed Gnu Demangler failure to parse a global guard variable. (GP-6371, Issue #8900)
 * _GUI_. Updated the Symbol Tree's filter to fix an issue that sometimes caused it to not get painted. (GP-6366, Issue #2448)
-* _Processors_. Corrected AARCH64 `ldapr` instruction semantics to properly read memory (GP-6358, Issue #6593)
+* _Processors_. Corrected AARCH64 `ldapr` instruction semantics to properly read memory. (GP-6358, Issue #6593)
 * _Processors_. Corrected PowerPC VLE `se_blrl` instruction semantics. (GP-6379, Issue #6207)
 * _Processors_. Corrected issue with ARM `ldrexd` instruction when the operands are the same register. (GP-6381, Issue #6590)
 
 ### Notable API Changes
 * _Debugger:Emulator_. (GP-6340) Removed `PcodeTraceDataAccess.intersectUnknown` in favor of `intersectViewKnown` with sutract.
-* _Emulator_. (GP-6134) Added `InstructionPrototype.hasNext2Dependency()`
+* _Emulator_. (GP-6134) Added `InstructionPrototype.hasNext2Dependency()`.
 
 # Ghidra 12.0.1 Change History (January 2026)
 
