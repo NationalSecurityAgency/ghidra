@@ -37,7 +37,7 @@ public class DWARFMacroImport extends DWARFMacroInfoEntry {
 	public DWARFMacroHeader getImportedMacroHeader() throws IOException {
 		long offset = getOffset();
 		DWARFCompilationUnit cu = macroHeader.getCompilationUnit();
-		return cu.getProgram().getMacroHeader(offset, cu);
+		return cu.getDIEContainer().getMacroHeader(offset, cu);
 	}
 
 }

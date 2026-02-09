@@ -18,11 +18,11 @@ package ghidra.app.util.bin.format.dwarf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionNames;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId;
 
 /**
  * Header found at the start of a set of DWARFLocationList entries, which are stored sequentially
- * in the {@link DWARFSectionNames#DEBUG_LOCLISTS .debug_loclists} section.
+ * in the {@link DWARFSectionId#DEBUG_LOCLISTS .debug_loclists} section.
  */
 public class DWARFLocationListHeader extends DWARFIndirectTableHeader {
 

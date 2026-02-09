@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf.attribs;
 
+import static ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId.*;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
-import ghidra.app.util.bin.format.dwarf.DWARFProgram;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionNames;
 
 /**
  *  DWARF numeric attribute value that is an index into a lookup table
@@ -36,20 +36,19 @@ public class DWARFIndirectAttribute extends DWARFNumericAttribute {
 
 	@Override
 	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
-		DWARFProgram dprog = cu.getProgram();
 		DWARFForm form = def.getAttributeForm();
 		try {
 			int index = getIndex();
-			long offset = dprog.getOffsetOfIndexedElement(form, index, cu);
+			long offset = cu.getDIEContainer().getOffsetOfIndexedElement(form, index, cu);
 			if (form.isClass(DWARFAttributeClass.address)) {
 				return "addr v%d 0x%x (idx %d)".formatted(cu.getDWARFVersion(), offset, index);
 			}
 			else if (form.isClass(DWARFAttributeClass.rnglist)) {
-				return toElementLocationString("rnglist", DWARFSectionNames.DEBUG_RNGLISTS, index,
+				return toElementLocationString("rnglist", DEBUG_RNGLISTS.getSectionName(), index,
 					offset, cu.getDWARFVersion());
 			}
 			else if (form.isClass(DWARFAttributeClass.loclist)) {
-				return toElementLocationString("loclist", DWARFSectionNames.DEBUG_LOCLISTS, index,
+				return toElementLocationString("loclist", DEBUG_LOCLISTS.getSectionName(), index,
 					offset, cu.getDWARFVersion());
 			}
 			else if (form.isClass(DWARFAttributeClass.string)) {

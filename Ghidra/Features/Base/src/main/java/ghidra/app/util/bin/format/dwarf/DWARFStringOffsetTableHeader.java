@@ -20,11 +20,11 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFForm;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionNames;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId;
 
 /**
  * Table of offsets that point into the string table.  These tables are stored sequentially in the
- * {@link DWARFSectionNames#DEBUG_STROFFSETS .debug_str_offsets} section.
+ * {@link DWARFSectionId#DEBUG_STROFFSETS .debug_str_offsets} section.
  * <p>
  * Elements in the table are referred to by index via {@link DWARFForm#DW_FORM_strx} and friends.
  * <p>

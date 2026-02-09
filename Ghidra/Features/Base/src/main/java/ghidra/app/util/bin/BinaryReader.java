@@ -201,9 +201,8 @@ public class BinaryReader {
 	 * Returns the length of the underlying file.
 	 * 
 	 * @return returns the length of the underlying file
-	 * @exception IOException if an I/O error occurs
 	 */
-	public long length() throws IOException {
+	public long length() {
 		return provider.length();
 	}
 
