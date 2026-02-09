@@ -84,4 +84,12 @@ public class PcodeBranch extends ControlFlowStructure {
 		}
 	}
 
+	public Statement getBranch() {
+		return branch;
+	}
+
+	public Statement getFallThrough() {
+		return fallThrough;
+	}
+
 }

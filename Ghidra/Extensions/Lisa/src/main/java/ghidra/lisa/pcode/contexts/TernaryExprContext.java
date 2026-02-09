@@ -15,18 +15,35 @@
  */
 package ghidra.lisa.pcode.contexts;
 
+import ghidra.lisa.pcode.locations.PcodeLocation;
 import ghidra.program.model.pcode.PcodeOp;
+import it.unive.lisa.program.cfg.CodeLocation;
 
-public class ConditionContext extends PcodeContext {
+public class TernaryExprContext {
 
-	public ConditionContext(PcodeOp op) {
-		super(op);
-		assert (op.getOpcode() == PcodeOp.CBRANCH);
+	public PcodeOp op;
+	public VarnodeContext left;
+	public VarnodeContext middle;
+	public VarnodeContext right;
+
+	public TernaryExprContext(PcodeContext ctx) {
+		this.op = ctx.op;
+		left = new VarnodeContext(op.getInput(0));
+		middle = new VarnodeContext(op.getInput(1));
+		right = new VarnodeContext(op.getInput(2));
 	}
 
-	public VarnodeContext expression() {
-		assert (op.getInputs().length <= 2);
-		return new VarnodeContext(op.getInput(1));
+	public int opcode() {
+		return op.getOpcode();
+	}
+
+
+	public CodeLocation location() {
+		return new PcodeLocation(op);
+	}
+
+	public String mnemonic() {
+		return op.getMnemonic();
 	}
 
 }

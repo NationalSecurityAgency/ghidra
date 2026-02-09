@@ -3,7 +3,6 @@
  */
 package ghidra.lisa.pcode.analyses;
 
-import java.math.BigDecimal;
 import java.util.Iterator;
 
 import it.unive.lisa.util.numeric.*;
@@ -185,8 +184,7 @@ public class LongInterval implements Iterable<Long>, Comparable<LongInterval> {
 	 * @return {@code true} if that condition holds
 	 */
 	public boolean is(long n) {
-		BigDecimal number = low.getNumber();
-		return isSingleton() && number != null && number.equals(new BigDecimal(n));
+		return isSingleton() && low.is((int) n);
 	}
 
 	private static LongInterval cacheAndRound(
@@ -233,6 +231,35 @@ public class LongInterval implements Iterable<Long>, Comparable<LongInterval> {
 		}
 
 		return cacheAndRound(new LongInterval(low.subtract(other.high), high.subtract(other.low)));
+	}
+
+	// NB: This is NOT really a set-theoretic complement because the domain doesn't support sets of
+	//   intervals.  Rather it handles two cases - (1) intervals unbounded at one end, and (2) intervals
+	//   representing booleans.  Caveat emptor.
+	public LongInterval complement() {
+		if (this.equals(ONE)) {
+			return ZERO;
+		}
+		if (this.equals(ZERO)) {
+			return ONE;
+		}
+		if (high.equals(INFINITY.getHigh())) {
+			return cacheAndRound(new LongInterval(INFINITY.getLow(), low.subtract(MathNumber.ONE)));
+		}
+		if (low.equals(INFINITY.getLow())) {
+			return cacheAndRound(new LongInterval(high.add(MathNumber.ONE), INFINITY.getHigh()));
+		}
+		return INFINITY;
+	}
+
+	public LongInterval flip() {
+		if (high.equals(INFINITY.getHigh())) {
+			return cacheAndRound(new LongInterval(INFINITY.getLow(), low));
+		}
+		if (low.equals(INFINITY.getLow())) {
+			return cacheAndRound(new LongInterval(high, INFINITY.getHigh()));
+		}
+		return INFINITY;
 	}
 
 	private static MathNumber min(

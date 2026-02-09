@@ -24,8 +24,11 @@ public class MemLocContext extends VarnodeContext {
 
 	public MemLocContext(StatementContext ctx) {
 		super(ctx.getOp().getInput(1));
-		AddressFactory addressFactory = ctx.inst.getProgram().getAddressFactory();
-		space = addressFactory.getAddressSpace((int) ctx.getOp().getInput(0).getOffset());
+		AddressFactory addressFactory = ctx.getAddressFactory();
+		space = addressFactory.getAddressSpace((int)ctx.getOp().getInput(0).getOffset());
+		if (space == null) {
+			space = addressFactory.getDefaultAddressSpace();
+		}
 	}
 
 	@Override
