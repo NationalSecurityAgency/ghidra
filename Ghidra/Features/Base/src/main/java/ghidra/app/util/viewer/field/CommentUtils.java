@@ -61,21 +61,15 @@ public class CommentUtils {
 		// this function will take any given Symbol annotations and change the text, replacing
 		// the symbol name with the address of the symbol
 		Function<Annotation, Annotation> symbolFixer = annotation -> {
-
 			String[] annotationParts = annotation.getAnnotationParts();
 			AnnotatedStringHandler handler = getAnnotationHandler(annotationParts);
-			if (!(handler instanceof SymbolAnnotatedStringHandler)) {
+
+			String[] updatedParts = handler.modify(annotationParts, program);
+			if (updatedParts == null) {
 				return annotation; // nothing to change
 			}
 
-			String rawText = annotation.getAnnotationText();
-			String updatedText =
-				convertAnnotationSymbolToAddress(annotationParts, rawText, program);
-			if (updatedText == null) {
-				return annotation; // nothing to change
-			}
-
-			return new Annotation(updatedText, program);
+			return new Annotation(updatedParts);
 		};
 
 		StringBuilder buffy = new StringBuilder();
@@ -224,7 +218,7 @@ public class CommentUtils {
 			}
 
 			String annotationText = word.getWord();
-			Annotation annotation = new Annotation(annotationText, program);
+			Annotation annotation = new Annotation(annotationText);
 			annotation = fixerUpper.apply(annotation);
 			results.add(new AnnotationCommentPart(annotationText, annotation));
 
@@ -320,32 +314,6 @@ public class CommentUtils {
 		}
 
 		return -1;
-	}
-
-	private static String convertAnnotationSymbolToAddress(String[] annotationParts, String rawText,
-			Program program) {
-		if (annotationParts.length <= 1) {
-			return null;
-		}
-
-		if (program == null) { // this can happen during merge operations
-			return null;
-		}
-
-		Address address = program.getAddressFactory().getAddress(annotationParts[1]);
-		if (address != null) {
-			return null; // nothing to do
-		}
-
-		String originalValue = annotationParts[1];
-		List<Symbol> symbols = getSymbols(originalValue, program);
-		if (symbols.size() != 1) {
-			// no unique symbol, so leave it as string name
-			return null;
-		}
-
-		Address symbolAddress = symbols.get(0).getAddress();
-		return rawText.replaceFirst(Pattern.quote(originalValue), symbolAddress.toString());
 	}
 
 	/**

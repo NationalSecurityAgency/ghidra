@@ -115,7 +115,7 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	 * @return the example of how this is used.
 	 */
 	String getPrototypeString();
-	
+
 	/**
 	 * Returns an example string of how the annotation is used
 	 * @param displayText The text that may be wrapped, cannot be null
@@ -123,6 +123,16 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	 */
 	default String getPrototypeString(String displayText) {
 		return getPrototypeString();
+	}
+
+	/**
+	 * Returns an array with modifications by the annotation; null otherwise.
+	 * @param  text An array of strings to modify.
+	 * @param  program The program with which the returned string is associated.
+	 * @return The modified array; null otherwise.
+	 */
+	default String[] modify(String[] test, Program program) {
+		return null;
 	}
 
 }
