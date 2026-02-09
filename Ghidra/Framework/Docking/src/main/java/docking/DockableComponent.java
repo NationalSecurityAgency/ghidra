@@ -43,6 +43,21 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	public static ComponentPlaceholder SOURCE_INFO;
 	public static boolean DROP_CODE_SET;
 
+	// FIXME: This is a WORKAROUND to guess if a drag-N-drop operation was
+	// interrupted, by either a key press (ESC) or by another mouse button
+	// clicked.  The caveat is its limit.  A voluntary interruption, while
+	// the cursor is over a drop zone, would generate an uncommon dragExit
+	// triggered by DropTargetEvent alone.  The catch is to confirm that a
+	// DragSourceEvent did not trigger any dragExit counterpart, as it has
+	// to happen when the cursor is moved outside of any drop zone.
+	//
+	// The motive of this workaround is that while a drag-N-drop operation
+	// is in progress, its implementation might silence listening to other
+	// events, except pressing the modifiers ALT, CTRL, and SHIFT, so that
+	// pressing ESC isn't registered, and has to be determined indirectly,
+	// to gracefully cancel the action in progress.
+	public static boolean triggeredDragExit = false;
+
 	private DockableHeader header;
 	private MouseListener popupListener;
 	private ComponentPlaceholder placeholder;
@@ -282,6 +297,8 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		public synchronized void dragEnter(DropTargetDragEvent dtde) {
 			super.dragEnter(dtde);
 
+			triggeredDragExit = false;
+
 			if (!dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
 				dtde.rejectDrag();
 				return;
@@ -303,6 +320,8 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		public synchronized void dragOver(DropTargetDragEvent dtde) {
 			super.dragOver(dtde);
 
+			triggeredDragExit = false;
+
 			if (!dtde.isDataFlavorSupported(ComponentTransferable.localComponentProviderFlavor)) {
 				dtde.rejectDrag();
 				return;
@@ -323,7 +342,11 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		@Override
 		public synchronized void dragExit(DropTargetEvent dte) {
 			super.dragExit(dte);
-			DROP_CODE = DropCode.WINDOW;
+			triggeredDragExit = true;
+			// FIXME: This is a WORKAROUND to allow the interruption of a drag-N-drop
+			// operation while outside of a drop zone.  The drop should be considered
+			// invalid, unless the CTRL key modifier is kept pressed.
+			DROP_CODE = header.isCtrlModifierDown() ? DropCode.WINDOW : DropCode.INVALID;
 			DROP_CODE_SET = true;
 			DRAGGED_OVER_INFO = null;
 		}
@@ -415,6 +438,24 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	private void setDropCode(Point p, Component c) {
 		DROP_CODE_SET = true;
 
+		// Pressing the CTRL key modifier takes precedence.  It is an override
+		// to enable moving a dragged component in a new window.  This mode is
+		// togglable and disabled by default as a prevention to an involuntary
+		// action when a drag-N-drop operation is interrupted, by either a key
+		// press (ESC), or by another mouse button clicked.
+		if (header.isCtrlModifierDown()) {
+			DROP_CODE = DropCode.WINDOW;
+			return;
+		}
+
+		// Pressing the SHIFT key modifier, temporarily invalidates the action
+		// expected by a drag-N-drop operation in progress.  Releasing the key
+		// should resume the normal processing.
+		if (header.isShiftModifierDown()) {
+			DROP_CODE = DropCode.INVALID;
+			return;
+		}
+
 		// Tabs of components that aren't currently showing, are valid targets
 		// to drop a component on another which isn't showing its own content.
 		if (c instanceof DockingTabRenderer) {
@@ -460,7 +501,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			return;
 		}
 		if (SOURCE_INFO.getNode().winMgr != placeholder.getNode().winMgr) {
-			DROP_CODE = DropCode.WINDOW;
+			DROP_CODE = DropCode.INVALID;
 			return;
 		}
 		if (SOURCE_INFO == placeholder && !placeholder.isStacked()) {

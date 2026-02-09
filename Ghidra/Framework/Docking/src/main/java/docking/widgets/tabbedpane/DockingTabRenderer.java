@@ -21,6 +21,7 @@ import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.*;
+import java.awt.geom.Area;
 
 import javax.swing.*;
 
@@ -138,7 +139,7 @@ public class DockingTabRenderer extends JPanel {
 
 	public void installDragSource(DragGestureListener dgl) {
 		dragSource = new DragSource();
-		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_MOVE, dgl);
+		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_LINK, dgl);
 		dragSource.addDragSourceMotionListener((DragSourceMotionListener) dgl);
 	}
 
@@ -250,7 +251,13 @@ public class DockingTabRenderer extends JPanel {
 				return false;
 			}
 
-			popupMenu.show(e.getComponent(), e.getX(), e.getY());
+			// Verify that the cursor was over the component at the moment of the
+			// event.  Suppress cases in which the right mouse button was clicked
+			// outside of the region of the component.  This could happen while a
+			// tab drag-N-drop operation is in progress, misplacing the popup.
+			if (new Area(getVisibleRect()).contains(e.getX(), e.getY())) {
+				popupMenu.show(e.getComponent(), e.getX(), e.getY());
+			}
 
 			return true;
 		}

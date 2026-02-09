@@ -60,6 +60,16 @@ public class DockableHeader extends GenericHeader
 
 	private Animator focusAnimator;
 
+	// drag-N-drop key modifiers flags
+	private static boolean ALT_DOWN = false;
+	private static boolean CTRL_DOWN = false;
+	private static boolean SHIFT_DOWN = false;
+
+	// FIXME: This is a WORKAROUND to guess if a drag-N-drop operation was
+	// interrupted, by either a key press (ESC) or by another mouse button
+	// clicked.  It will work only while over a drop zone.
+	private static boolean confirmedDragExit = false;
+
 	/**
 	 * Constructs a new DockableHeader for the given dockableComponent.
 	 * 
@@ -82,8 +92,22 @@ public class DockableHeader extends GenericHeader
 		toolBarMgr.dispose(); // reset the default manager before we create our own
 		toolBarMgr = new DockableToolBarManager(dockableComp, this);
 
+		// A drag-N-drop operation can be directed with key modifiers.
+		//
+		// ACTION_MOVE: pressing CTRL triggers dragExit while over a drop zone,
+		// but not pressing SHIFT (CTRL means "copy").
+		//
+		// ACTION_COPY: pressing SHIFT triggers dragExit while over a drop zone,
+		// but not pressing CTRL (SHIFT means "move").
+		//
+		// ACTION_LINK: either CTRL or SHIFT trigger dragExit while over a drop
+		// zone, but not pressing them together.  This helps to detect a toggle
+		// switch kept pressed, while over a drop zone.
+		//
+		// With any of the above, pressing ALT shouldn't trigger dragExit while
+		// over a drop zone.
 		dragSource.createDefaultDragGestureRecognizer(titlePanel.getDragComponent(),
-			DnDConstants.ACTION_MOVE, DockableHeader.this);
+			DnDConstants.ACTION_LINK, DockableHeader.this);
 
 		dragSource.addDragSourceMotionListener(DockableHeader.this);
 
@@ -271,7 +295,16 @@ public class DockableHeader extends GenericHeader
 			(modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
 			return;
 		}
-		DockableComponent.DROP_CODE = DropCode.WINDOW;
+
+		confirmedDragExit = false;
+		DockableComponent.triggeredDragExit = false;
+
+		ALT_DOWN = SHIFT_DOWN = CTRL_DOWN = false;
+
+		// NOTE: This is a remainder to assume an invalid drop action,
+		// to prevent unexpected effects when voluntarily interrupting
+		// a drag-N-drop operation while outside of a drop zone.
+		DockableComponent.DROP_CODE = DropCode.INVALID;
 		DockableComponent.DROP_CODE_SET = true;
 		DockableComponent.SOURCE_INFO = dockComp.getComponentWindowingPlaceholder();
 
@@ -289,6 +322,14 @@ public class DockableHeader extends GenericHeader
 		dragCursorManager.dragEnded();
 
 		TransientWindow.hideTransientWindow();
+
+		// NOTE: This guesses a drag-N-drop voluntary interruption, by
+		// either a key press (ESC) or by another mouse button clicked
+		// while over a drop zone.  Only dragExit from DropTargetEvent
+		// should had been triggered in this context.
+		if (DockableComponent.triggeredDragExit != confirmedDragExit) {
+			return;
+		}
 
 		ComponentPlaceholder info = dockComp.getComponentWindowingPlaceholder();
 		DockingWindowManager winMgr = info.getNode().winMgr;
@@ -314,16 +355,19 @@ public class DockableHeader extends GenericHeader
 	@Override
 	public void dragEnter(DragSourceDragEvent event) {
 		setCursor(event);
+		confirmedDragExit = false;
 	}
 
 	@Override
 	public void dragExit(DragSourceEvent event) {
 		setCursor(event);
+		confirmedDragExit = true;
 	}
 
 	@Override
 	public void dragOver(DragSourceDragEvent event) {
 		setCursor(event);
+		confirmedDragExit = false;
 	}
 
 	/**
@@ -342,9 +386,56 @@ public class DockableHeader extends GenericHeader
 		dragCursorManager.setCursor(event, c);
 	}
 
+	// drag-n-drop ALT key modifier flag
+	public boolean isAltModifierDown() {
+		return ALT_DOWN;
+	}
+
+	// drag-n-drop CTRL key modifier flag
+	public boolean isCtrlModifierDown() {
+		return CTRL_DOWN;
+	}
+
+	// drag-n-drop SHIFT key modifier flag
+	public boolean isShiftModifierDown() {
+		return SHIFT_DOWN;
+	}
+
+	/**
+	 * This is executed after a modifier is pressed or released.
+	 */
 	@Override
 	public void dropActionChanged(DragSourceDragEvent event) {
-		// don't care
+
+		// Before determining the current state, reset all
+		// key modifiers, and the default drop action too.
+		ALT_DOWN = SHIFT_DOWN = CTRL_DOWN = false;
+		DockableComponent.DROP_CODE = DropCode.INVALID;
+
+		// Check if any key modifier is being pressed.
+		int modifiers = event.getGestureModifiersEx();
+
+		if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0) {
+			ALT_DOWN = true;
+		}
+		if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
+			SHIFT_DOWN = true;
+			// Temporarily mark the drag-N-drop as invalid,
+			// as an alternative to a sudden interruption.
+			DockableComponent.DROP_CODE = DropCode.INVALID;
+		}
+		if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
+			CTRL_DOWN = true;
+			// Temporarily mark the dragged component as to
+			// be moved in a new window.  Releasing the key
+			// press should revert to the default state.
+			DockableComponent.DROP_CODE = DropCode.WINDOW;
+		}
+
+		// Force a mouse cursor update, needed while outside of
+		// any drop zone, since no dragExit, Enter, Over should
+		// take place.
+		setCursor(event);
 	}
 
 	@Override
