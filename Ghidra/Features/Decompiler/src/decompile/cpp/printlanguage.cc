@@ -223,7 +223,8 @@ void PrintLanguage::pushVnExplicit(const Varnode *vn,const PcodeOp *op)
     return;
   }
   if (vn->isConstant()) {
-    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vartoken,vn,op);
+    Datatype *ct = vn->getHighTypeReadFacing(op);
+    pushConstant(vn->getOffset(),ct,vartoken,vn,op,ct->getDisplayFormat());
     return;
   }
   pushSymbolDetail(vn,op,true);

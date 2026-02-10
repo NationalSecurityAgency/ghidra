@@ -470,7 +470,7 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
     if (jt->getOpAddress() == addr)
       throw LowlevelError("Trying to install over existing jumptable");
   }
-  JumpTable *newjt = new JumpTable(glb,addr);
+  JumpTable *newjt = new JumpTable(addr);
   jumpvec.push_back(newjt);
   return newjt;
 }
@@ -645,10 +645,10 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
   jt = linkJumpTable(op);		// Search for pre-existing jumptable
   if (jt != (JumpTable *)0) {
     if (!jt->isOverride()) {
-      if (!jt->isPartial())
+      if (!jt->isPartial() && jt->numEntries() != 0)
 	return jt;		// Previously calculated jumptable (NOT an override and NOT incomplete)
     }
-    mode = stageJumpTable(partial,jt,op,flow); // Recover based on override information
+    mode = stageJumpTable(partial,jt,op,flow); // Recover empty jumptable or based on override information
     if (mode != JumpTable::success)
       return (JumpTable *)0;
     jt->setIndirectOp(op);	// Relink table back to original op
@@ -660,7 +660,7 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
   mode = earlyJumpTableFail(op);
   if (mode != JumpTable::success)
     return (JumpTable *)0;
-  JumpTable trialjt(glb);
+  JumpTable trialjt;
   mode = stageJumpTable(partial,&trialjt,op,flow);
   if (mode != JumpTable::success)
     return (JumpTable *)0;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,19 +41,18 @@ public class ConvertFloatAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
-		return getText(value, size, isSigned, program);
+	public String getMenuDisplay(Scalar scalar, Program program) {
+		return getText(scalar, program);
 	}
 
 	@Override
-	public String getEquateName(long value, int size, boolean isSigned, Program program) {
-		return getText(value, size, isSigned, program);
+	public String getEquateName(Scalar scalar, Program program) {
+		return getText(scalar, program);
 	}
 
-	private String getText(long value, int size, boolean isSigned, Program program) {
+	private String getText(Scalar scalar, Program program) {
 		DataOrganization organization = program.getDataTypeManager().getDataOrganization();
 		int floatSize = organization.getFloatSize();
-		Scalar scalar = new Scalar(size * 8, value);
 		BigDecimal bd = value(floatSize, scalar);
 		if (bd != null) {
 			return bd.toString();

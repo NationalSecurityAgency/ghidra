@@ -557,7 +557,6 @@ private:
     bool operator<(const IndexPair &op2) const;	///< Compare by position then by index
     static bool compareByPosition(const IndexPair &op1,const IndexPair &op2);	///< Compare just by position
   };
-  Architecture *glb;		///< Architecture under which this jump-table operates
   JumpModel *jmodel;		///< Current model of how the jump table is implemented in code
   JumpModel *origmodel;		///< Initial jump table model, which may be incomplete
   vector<Address> addresstable; ///< Raw addresses in the jump-table
@@ -572,6 +571,7 @@ private:
   uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
   uint4 maxleftright;		///< Maximum shifts to normalize
   uint4 maxext;			///< Maximum extensions to normalize
+  uint4 displayFormat;		///< Display format for integer \e case values
   bool partialTable;		///< Set to \b true if \b this table is incomplete and needs additional recovery steps
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
   bool defaultIsFolded;		///< The \e default block is the target of a folded CBRANCH (and cannot have a label)
@@ -584,7 +584,7 @@ private:
   int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function
 public:
-  JumpTable(Architecture *g,Address ad=Address());	///< Constructor
+  JumpTable(Address ad=Address());			///< Constructor
   JumpTable(const JumpTable *op2);			///< Copy constructor
   ~JumpTable(void);					///< Destructor
   bool isRecovered(void) const { return !addresstable.empty(); }	///< Return \b true if a model has been recovered
@@ -600,6 +600,8 @@ public:
   void setIndirectOp(PcodeOp *ind) { opaddress = ind->getAddr(); indirect = ind; }	///< Set the BRANCHIND PcodeOp
   void setNormMax(uint4 maddsub,uint4 mleftright,uint4 mext) {
     maxaddsub = maddsub; maxleftright = mleftright; maxext = mext; }	///< Set the switch variable normalization model restrictions
+  uint4 getDisplayFormat(void) const { return displayFormat; }		///< Get the display format for integer cases
+  void setDisplayFormat(uint4 format) { displayFormat = format; }	///< Set the display format to use for integer case values
   void setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
