@@ -25,10 +25,10 @@ import it.unive.lisa.program.cfg.CodeLocation;
 
 public class InstructionContext {
 
-	private Function function;
-	private Instruction inst;
-	private List<StatementContext> ops;
-	private InstLocation loc;
+	protected Function function;
+	protected Instruction inst;
+	protected List<StatementContext> ops;
+	protected InstLocation loc;
 
 	public InstructionContext(Function function, Instruction inst) {
 		this.function = function;
@@ -41,6 +41,10 @@ public class InstructionContext {
 		loc = new InstLocation(function, inst.getAddress());
 	}
 
+	public InstructionContext() {
+		// For HighInstructionContext
+	}
+
 	public Collection<StatementContext> getPcodeOps() {
 		return ops;
 	}
@@ -49,11 +53,10 @@ public class InstructionContext {
 		return ops.get(i);
 	}
 
-	public Instruction getInstruction() {
-		return inst;
-	}
-
 	public InstructionContext next() {
+		if (inst == null) {
+			return null;
+		}
 		Listing listing = inst.getProgram().getListing();
 		Address nextAddress = inst.getAddress().add(inst.getLength());
 		Instruction next = listing.getInstructionAt(nextAddress);

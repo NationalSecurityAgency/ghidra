@@ -15,40 +15,23 @@
  */
 package ghidra.lisa.pcode.expressions;
 
-import ghidra.lisa.pcode.contexts.BinaryExprContext;
-import ghidra.lisa.pcode.statements.PcodeBinaryOperator;
-import ghidra.program.model.pcode.PcodeOp;
+import ghidra.lisa.pcode.contexts.VarargsExprContext;
 import it.unive.lisa.analysis.*;
+import it.unive.lisa.analysis.lattices.ExpressionSet;
 import it.unive.lisa.interprocedural.InterproceduralAnalysis;
 import it.unive.lisa.program.cfg.CFG;
 import it.unive.lisa.program.cfg.statement.Expression;
 import it.unive.lisa.program.cfg.statement.Statement;
 import it.unive.lisa.symbolic.SymbolicExpression;
 import it.unive.lisa.symbolic.value.BinaryExpression;
-import it.unive.lisa.symbolic.value.operator.binary.*;
+import it.unive.lisa.symbolic.value.operator.binary.LogicalOr;
 
-public class PcodeBinaryExpression extends it.unive.lisa.program.cfg.statement.BinaryExpression {
+public class PcodeVarargsExpression extends it.unive.lisa.program.cfg.statement.NaryExpression {
 
-	private BinaryOperator operator;
-
-	public PcodeBinaryExpression(
-			CFG cfg,
-			BinaryExprContext ctx,
-			Expression left,
-			Expression right) {
-		super(cfg, ctx.location(), ctx.mnemonic(),
-			cfg.getDescriptor().getUnit().getProgram().getTypes().getIntegerType(), left, right);
-
-		this.operator = switch (ctx.op.getOpcode()) {
-			case PcodeOp.BOOL_AND -> LogicalAnd.INSTANCE;
-			case PcodeOp.BOOL_OR -> LogicalOr.INSTANCE;
-			case PcodeOp.INT_EQUAL, PcodeOp.FLOAT_EQUAL -> ComparisonEq.INSTANCE;
-			case PcodeOp.INT_NOTEQUAL, PcodeOp.FLOAT_NOTEQUAL -> ComparisonNe.INSTANCE;
-			case PcodeOp.INT_LESSEQUAL, PcodeOp.INT_SLESSEQUAL, PcodeOp.FLOAT_LESSEQUAL -> ComparisonLe.INSTANCE;
-			// NB: Some chance we're going to get burned by including SBORROW here
-			case PcodeOp.INT_LESS, PcodeOp.INT_SLESS, PcodeOp.INT_SBORROW, PcodeOp.FLOAT_LESS -> ComparisonLt.INSTANCE;
-			default -> new PcodeBinaryOperator(ctx.op);
-		};
+	public PcodeVarargsExpression(CFG cfg, 
+			VarargsExprContext ctx, 
+			Expression[] exps) {
+		super(cfg, ctx.location(), ctx.mnemonic(), cfg.getDescriptor().getUnit().getProgram().getTypes().getIntegerType(), exps);
 	}
 
 	@Override
@@ -57,7 +40,6 @@ public class PcodeBinaryExpression extends it.unive.lisa.program.cfg.statement.B
 		return 0; // no extra fields to compare
 	}
 
-	@Override
 	public <A extends AbstractState<A>> AnalysisState<A> fwdBinarySemantics(
 			InterproceduralAnalysis<A> interprocedural,
 			AnalysisState<A> state,
@@ -71,12 +53,29 @@ public class PcodeBinaryExpression extends it.unive.lisa.program.cfg.statement.B
 				getStaticType(),
 				left,
 				right,
-				getOperator(),
+				LogicalOr.INSTANCE,
 				getLocation()),
 			this);
 	}
 
-	public BinaryOperator getOperator() {
-		return operator;
+	@Override
+	public <A extends AbstractState<A>> AnalysisState<A> forwardSemanticsAux(
+			InterproceduralAnalysis<A> interprocedural,
+			AnalysisState<A> state,
+			ExpressionSet[] params,
+			StatementStore<A> expressions)
+			throws SemanticException {
+		AnalysisState<A> result = state.bottom();
+		for (SymbolicExpression expBase : params[0]) {
+			for (int i = 1; i < params.length; i++) {
+				for (SymbolicExpression exp : params[i]) {
+					//result = result.lub(state.smallStepSemantics(exp, this));
+					result = result.lub(
+						fwdBinarySemantics(interprocedural, state, expBase, exp, expressions));
+				}
+			}
+		}
+		return result;
 	}
+	
 }

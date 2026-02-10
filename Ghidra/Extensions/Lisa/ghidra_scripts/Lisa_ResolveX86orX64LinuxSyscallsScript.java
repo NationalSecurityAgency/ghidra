@@ -297,7 +297,7 @@ public class Lisa_ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		initLisa();
 		Set<CFG> cfgs = new HashSet<>();
 		for (Function func : funcsToCalls.keySet()) {
-			CFG cfg = frontend.visitFunction(func, func.getEntryPoint());
+			CFG cfg = frontend.visitFunction(func, func.getEntryPoint(), false);
 			cfgs.add(cfg);
 		}
 		it.unive.lisa.program.Program p = frontend.getProgram();
@@ -390,7 +390,7 @@ public class Lisa_ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 	}
 
 	private void initLisa() {
-		frontend = new PcodeFrontend();
+		frontend = new PcodeFrontend(state.getTool());
 
 		DefaultConfiguration conf = new DefaultConfiguration();
 		conf.serializeResults = true;

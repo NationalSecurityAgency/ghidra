@@ -45,12 +45,12 @@ public class PcodePentagon implements ValueDomain<PcodePentagon>, BaseLattice<Pc
 	/**
 	 * The interval environment.
 	 */
-	private final ValueEnvironment<PcodeInterval> intervals;
+	protected ValueEnvironment<PcodeInterval> intervals;
 
 	/**
 	 * The upper bounds environment.
 	 */
-	private final ValueEnvironment<PcodeUpperBounds> upperBounds;
+	protected ValueEnvironment<PcodeUpperBounds> upperBounds;
 
 	/**
 	 * Builds the PcodePentagons.

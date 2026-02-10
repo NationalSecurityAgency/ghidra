@@ -15,18 +15,18 @@
  */
 package ghidra.lisa.pcode.contexts;
 
-import ghidra.program.model.pcode.PcodeOp;
+import java.util.ArrayList;
 
-public class ConditionContext extends PcodeContext {
+public class HighInstructionContext extends InstructionContext {
 
-	public ConditionContext(PcodeOp op) {
-		super(op);
-		assert (op.getOpcode() == PcodeOp.CBRANCH);
+	public HighInstructionContext(HighStatementContext ctx) {
+		ops = new ArrayList<>();
+		ops.add(ctx);
 	}
 
-	public VarnodeContext expression() {
-		assert (op.getInputs().length <= 2);
-		return new VarnodeContext(op.getInput(1));
+	@Override
+	public HighInstructionContext next() {
+		return null;  // UNUSED
 	}
 
 }
