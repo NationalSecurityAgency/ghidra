@@ -35,6 +35,7 @@ public class SearchLocationContext {
 	public static final SearchLocationContext EMPTY_CONTEXT = new SearchLocationContext();
 
 	private final List<Part> parts;
+	private int lineNumber = -1;
 
 	/**
 	 * A factory method to create a context instance with the given text.  The context created this
@@ -81,12 +82,18 @@ public class SearchLocationContext {
 		this.parts = parts;
 	}
 
+	SearchLocationContext(List<Part> parts, int lineNumber) {
+		this.parts = parts;
+		this.lineNumber = lineNumber;
+	}
+
 	/**
 	 * The full plain text of this context.
 	 * @return the text
 	 */
 	public String getPlainText() {
-		StringBuilder buffy = new StringBuilder();
+		String lnText = getLineNumberText(false);
+		StringBuilder buffy = new StringBuilder(lnText);
 		for (Part part : parts) {
 			buffy.append(part.getText());
 		}
@@ -98,11 +105,22 @@ public class SearchLocationContext {
 	 * @return the text
 	 */
 	public String getDebugText() {
-		StringBuilder buffy = new StringBuilder();
+		String lnText = getLineNumberText(false);
+		StringBuilder buffy = new StringBuilder(lnText);
 		for (Part part : parts) {
 			buffy.append(part.getDebugText());
 		}
 		return buffy.toString();
+	}
+
+	private String getLineNumberText(boolean isHtml) {
+		if (lineNumber < 0) {
+			return "";
+		}
+
+		// use a non-breaking space for html so lines do not get wrapped
+		String space = isHtml ? HTMLUtilities.HTML_SPACE : " ";
+		return lineNumber + ":" + space;
 	}
 
 	/**
@@ -111,7 +129,8 @@ public class SearchLocationContext {
 	 * @return the text
 	 */
 	public String getBoldMatchingText() {
-		StringBuilder buffy = new StringBuilder();
+		String lnText = getLineNumberText(true);
+		StringBuilder buffy = new StringBuilder(lnText);
 		for (Part part : parts) {
 			buffy.append(part.getHtmlText());
 		}
@@ -132,6 +151,14 @@ public class SearchLocationContext {
 			}
 		}
 		return matches;
+	}
+
+	/**
+	 * Returns the line number or -1 if the value has not been set.
+	 * @return the line number
+	 */
+	public int getLineNumber() {
+		return lineNumber;
 	}
 
 	@Override
@@ -158,7 +185,7 @@ public class SearchLocationContext {
 		abstract String getDebugText();
 
 		static String fixBreakingSpaces(String s) {
-			String updated = s.replaceAll("\\s", "&nbsp;");
+			String updated = s.replaceAll("\\s", HTMLUtilities.HTML_SPACE);
 			return updated;
 		}
 

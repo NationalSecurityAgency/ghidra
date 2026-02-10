@@ -29,6 +29,7 @@ import generic.json.Json;
 public class SearchLocationContextBuilder {
 
 	private List<Part> parts = new ArrayList<>();
+	private int lineNumber = -1;
 
 	/**
 	 * Appends the given text to this builder.
@@ -59,6 +60,17 @@ public class SearchLocationContextBuilder {
 	}
 
 	/**
+	 * Sets an optional line number for clients that use numbered lines.  The line number will be 
+	 * prepended to the text form of the context.
+	 * @param line the line number
+	 * @return this builder
+	 */
+	public SearchLocationContextBuilder lineNumber(int line) {
+		this.lineNumber = line;
+		return this;
+	}
+
+	/**
 	 * Adds a newline character to the previously added text. 
 	 * @return this builder
 	 */
@@ -77,7 +89,7 @@ public class SearchLocationContextBuilder {
 	 * @return the context
 	 */
 	public SearchLocationContext build() {
-		return new SearchLocationContext(parts);
+		return new SearchLocationContext(parts, lineNumber);
 	}
 
 	/**
