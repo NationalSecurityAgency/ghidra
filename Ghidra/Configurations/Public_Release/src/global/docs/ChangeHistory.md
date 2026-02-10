@@ -1,3 +1,28 @@
+# Ghidra 12.0.3 Change History (February 2026)
+
+### New Features
+* _Listing_. In order to mitigate possible security risks, auto comments will not longer render annotations in such a way as to make them valid annotation links.  Normal comments will continue to work as usual. (GP-6414)
+
+### Improvements
+* _Demangler_. The __Demangler GNU__ analyzer now has a timeout option. (GP-6408)
+* _GUI_. Corrected Ghidra GUI to fail-fast in headless environment and avoid stack traces. (GP-6399)
+* _Listing_. The `@execute` annotation is no longer supported. (GP-6413)
+
+### Bugs
+* _Data Types_. Corrected multi-user merge issues related to non-packed structures which could negatively affect merge results. (GP-6320, Issue #8776)
+* _Debugger_. Fixed a `NullPointerException` that could occur upon closing the Debugger. (GP-6376)
+* _Debugger:Breakpoints_. Fixed an issue where restarting a target (e.g., the `run` command from GDB's CLI) caused duplicate breakpoint entries and GUI glitches. (GP-6027)
+* _Decompiler_. Fixed _"PTRSUB off of non structured pointer type"_ exceptions caused by `void *` data-type. (GP-6388, Issue #8887)
+* _Decompiler_. Fixed source of _"Forced merge caused intersection"_ exceptions when decompiling optimized string copies. (GP-6393, Issue #8651)
+* _Multi-User_. Revised Ghidra Server self-signed certificate generation to include all associated FQDNs and IP addresses as subject alternative names.  This will address the forced hostname check imposed with the release of JDK 21.0.10.  To benefit from this change the Ghidra Server will need to be upgraded to this release.  A client-side workaround is to set the following JVM property within `support/launch.properties` by adding the line: `VMARGS=-Djdk.rmi.ssl.client.enableEndpointIdentification=false`. (GP-6426, Issue #8940)
+* _Processors_. Fixed bug in AARCH64 `sha1h` instruction to shift instead of rotate bits. (GP-4501, Issue #6398)
+* _Processors_. Fixed 80251 disassembly errors for instructions referencing the SPX register. (GP-5905, Issue #8395)
+* _Processors_. Fixed disassembly of MIPS16e2 `lui` instruction to only parse on extended words. (GP-6419)
+* _Search_. Fixed a memory leak in the `Find References...` action. (GP-6395, Issue #8921)
+
+### Notable API Changes
+* _Data Types_. (GP-6320) Structure offset-based insert methods `Structure.insertAtOffset` will now skip forward over existing zero-length components at the insert offset before performing insert of new component.
+
 # Ghidra 12.0.2 Change History (January 2026)
 
 ### New Features
