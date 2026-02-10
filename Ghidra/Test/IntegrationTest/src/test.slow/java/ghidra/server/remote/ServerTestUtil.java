@@ -20,7 +20,7 @@ import java.net.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.KeyStore.PrivateKeyEntry;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -955,7 +955,25 @@ public class ServerTestUtil {
 			TEST_PKI_SERVER_PASSPHRASE + "): " + serverKeystorePath);
 
 		PKIUtils.createKeyEntry("test-sig", TEST_PKI_SERVER_DN, 2, caEntry, serverKeystoreFile,
-			"PKCS12", null, TEST_PKI_SERVER_PASSPHRASE.toCharArray());
+			"PKCS12", getLocalHostnames(), TEST_PKI_SERVER_PASSPHRASE.toCharArray());
+	}
+
+	private static Collection<String> getLocalHostnames() throws SocketException {
+
+		// Collect alternate hostnames for inclusion in certificate
+		Set<String> altNames = new TreeSet<>();
+		Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+		while (nets.hasMoreElements()) {
+			NetworkInterface netint = nets.nextElement();
+			Enumeration<InetAddress> addrs = netint.getInetAddresses();
+			while (addrs.hasMoreElements()) {
+				InetAddress addr = addrs.nextElement();
+				altNames.add(addr.getHostAddress());
+				altNames.add(addr.getHostName());
+				altNames.add(addr.getCanonicalHostName());
+			}
+		}
+		return altNames;
 	}
 
 	/**
