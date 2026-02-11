@@ -95,7 +95,7 @@ public abstract class DecompilerReference {
 	protected SearchLocationContext getContext(DecompilerVariable var) {
 
 		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
-		builder.append(line.getLineNumber() + ": ");
+		builder.lineNumber(line.getLineNumber());
 		List<ClangToken> tokens = line.getAllTokens();
 		for (ClangToken token : tokens) {
 			if (token.equals(var.variable)) {
