@@ -1,6 +1,7 @@
 <img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="400">
 
 # Ghidra Software Reverse Engineering Framework
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/NationalSecurityAgency/ghidra)
 Ghidra is a software reverse engineering (SRE) framework created and maintained by the 
 [National Security Agency][nsa] Research Directorate. This framework includes a suite of 
 full-featured, high-end software analysis tools that enable users to analyze compiled code on a 
