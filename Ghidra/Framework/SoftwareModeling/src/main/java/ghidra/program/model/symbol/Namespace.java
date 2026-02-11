@@ -81,9 +81,9 @@ public interface Namespace {
 	public boolean isExternal();
 
 	/**
-	 * Get the simple namespace name (without parent path).
+	 * {@return the simple namespace name (without parent path)}
+	 * <p>
 	 * See {@link #getName(boolean)} for the namespace-qualified variant.
-	 * @return the simple namespace name
 	 */
 	public String getName();
 
