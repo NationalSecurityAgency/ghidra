@@ -188,6 +188,21 @@ public class GThreadPool {
 	public Executor getExecutor() {
 		return executor;
 	}
+	
+
+	/**
+	 * Returns the {@link ExecutorService} used by this thread pool.
+	 *
+	 * <P>Note: normal usage of this thread pool contraindicates accessing the executor service of
+	 * this pool.  For managing your own jobs, you should use the method on this class directly.
+	 * The intent of this method is to provide access to the executor service so that it may be
+	 * passed to other asynchronous APIs.
+	 *
+	 * @return the executor service
+	 */
+	public ExecutorService getExecutorService() {
+		return executor;
+	}
 
 //==================================================================================================
 // Inner Classes

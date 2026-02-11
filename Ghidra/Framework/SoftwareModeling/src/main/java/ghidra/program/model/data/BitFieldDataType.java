@@ -184,6 +184,11 @@ public class BitFieldDataType extends AbstractDataType {
 	 * Get the packing storage size in bytes associated with this bit-field which may be
 	 * larger than the base type associated with the fields original definition.
 	 * Returned value is the same as {@link #getLength()}.
+	 * <p>
+	 * NOTE: Bitfields with a bit-size of zero will report a storage size of 1, although 
+	 * {@link #isZeroLength()} will return true.  This is consistent with other datatypes which 
+	 * support a zero-length {@link DataTypeComponent} such as a zero-element Array.
+	 * 
 	 * @return packing storage size in bytes
 	 */
 	public int getStorageSize() {
@@ -331,6 +336,9 @@ public class BitFieldDataType extends AbstractDataType {
 		}
 	}
 
+	/**
+	 * @see #getStorageSize()
+	 */
 	@Override
 	public int getLength() {
 		return storageSize;

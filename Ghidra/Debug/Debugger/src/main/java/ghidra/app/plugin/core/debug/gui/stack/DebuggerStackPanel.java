@@ -73,6 +73,9 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceStac
 				@Override
 				public Address getValue() {
 					TraceObjectValue entry = row.getAttributeEntry(attributeName);
+					if (entry == null) {
+						return null;
+					}
 					return entry.getValue() instanceof Address addr ? addr : null;
 				}
 

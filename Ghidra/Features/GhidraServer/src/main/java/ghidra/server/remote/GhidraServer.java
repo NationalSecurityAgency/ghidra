@@ -25,8 +25,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.*;
 import java.security.cert.CertificateException;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
@@ -752,11 +751,49 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// Ensure that remote access hostname is properly set for RMI registration
 			String hostname = initRemoteAccessHostname();
 
-			if (DefaultKeyManagerFactory.getPreferredKeyStore() == null) {
+			log.info("Ghidra Server " + Application.getApplicationVersion());
+			log.info("   Server remote access address: " + hostname);
+			if (bindAddress == null) {
+				log.info("   Server listening on all interfaces");
+			}
+			else {
+				log.info("   Server listening on interface: " + bindAddress.getHostAddress());
+			}
+
+			String preferredKeyStore = DefaultKeyManagerFactory.getPreferredKeyStore();
+			if (preferredKeyStore == null) {
+
 				// keystore has not been identified - use self-signed certificate
+				log.info("   Generating self-signed certificate...");
+				log.info("   Subject Alternative Names:");
+				log.info("      " + hostname);
+
 				DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
 				DefaultKeyManagerFactory.addSubjectAlternativeName(hostname);
+
+				// Collect alternate hostnames for inclusion in certificate
+				Set<String> altNames = new TreeSet<>();
+				Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+				while (nets.hasMoreElements()) {
+					NetworkInterface netint = nets.nextElement();
+					Enumeration<InetAddress> addrs = netint.getInetAddresses();
+					while (addrs.hasMoreElements()) {
+						InetAddress addr = addrs.nextElement();
+						altNames.add(addr.getHostAddress());
+						altNames.add(addr.getHostName());
+						altNames.add(addr.getCanonicalHostName());
+					}
+				}
+				altNames.remove(hostname);
+				for (String name : altNames) {
+					log.info("      " + name);
+					DefaultKeyManagerFactory.addSubjectAlternativeName(name);
+				}
 			}
+			else {
+				log.info("   Using server certificate keystore: " + preferredKeyStore);
+			}
+
 			if (!DefaultKeyManagerFactory.initialize()) {
 				log.fatal("Failed to initialize PKI/SSL keystore");
 				System.exit(0);
@@ -769,14 +806,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// localhost.getCanonicalHostName() + ":" + classSvrPort + "/";
 			// System.setProperty(RMI_CODEBASE_PROPERTY, codeBaseProp);
 
-			log.info("Ghidra Server " + Application.getApplicationVersion());
-			log.info("   Server remote access address: " + hostname);
-			if (bindAddress == null) {
-				log.info("   Server listening on all interfaces");
-			}
-			else {
-				log.info("   Server listening on interface: " + bindAddress.getHostAddress());
-			}
+
 			log.info("   RMI Registry port: " + ServerPortFactory.getRMIRegistryPort());
 			log.info("   RMI SSL port: " + ServerPortFactory.getRMISSLPort());
 			log.info("   Block Stream port: " + ServerPortFactory.getStreamPort());

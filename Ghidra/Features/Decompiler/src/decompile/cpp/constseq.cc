@@ -767,7 +767,7 @@ PcodeOp *HeapSequence::buildStringCopy(void)
 /// the initial input and final output are gathered.
 /// \param indirects will hold the INDIRECT ops attached to sequence STOREs
 /// \param pairs will hold Varnode pairs where the first in the pair is the input and the second is the output
-void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varnode *> &pairs)
+void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<IndirectPair> &pairs)
 
 {
   for(int4 i=0;i<moveOps.size();++i) {
@@ -798,26 +798,83 @@ void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varno
 	if (!defOp->isMark()) break;
 	invn = defOp->getIn(0);
       }
-      pairs.push_back(invn);
-      pairs.push_back(outvn);
-      data.opUnsetOutput(op);
+      pairs.emplace_back(invn,outvn);
     }
   }
   for(int4 i=0;i<indirects.size();++i)
     indirects[i]->clearMark();
 }
 
+bool HeapSequence::IndirectPair::compareOutput(const IndirectPair *a,const IndirectPair *b)
+
+{
+  Varnode *vn1 = a->outVn;
+  Varnode *vn2 = b->outVn;
+  if (vn1->getSpace() != vn2->getSpace())
+    return vn1->getSpace()->getIndex() < vn2->getSpace()->getIndex();
+  if (vn1->getOffset() != vn2->getOffset())
+    return vn1->getOffset() < vn2->getOffset();
+  if (vn1->getSize() != vn2->getSize())
+    return vn1->getSize() < vn2->getSize();
+  return false;
+}
+
+/// Its possible that INDIRECTs collected from different \e effect ops may share
+/// the same output storage.  Find any output Varnodes that share storage and
+/// replace all their reads with a single representative Varnode.
+/// \param pairs is the list of INDIRECT pairs
+/// \return \b true if the deduplication succeeded
+bool HeapSequence::deduplicatePairs(vector<IndirectPair> &pairs)
+
+{
+  if (pairs.empty()) return true;
+  vector<IndirectPair *> copy(pairs.size(),(IndirectPair *)0);
+  for(int4 i=0;i<pairs.size();++i)
+    copy[i] = &pairs[i];
+  sort(copy.begin(),copy.end(),IndirectPair::compareOutput);
+
+  IndirectPair *head = copy[0];
+  int4 dupCount = 0;
+  for(int4 i=1;i<copy.size();++i) {
+    Varnode *vn = copy[i]->outVn;
+    int4 overlap = head->outVn->characterizeOverlap(*vn);
+    if (overlap == 1)
+      return false;		// Partial overlap
+    if (overlap == 2) {
+      if (copy[i]->inVn != head->inVn) {
+	return false;		// Same storage coming from different sources
+      }
+      copy[i]->markDuplicate();
+      dupCount += 1;		// Found a duplicate,  keep the same head for next iteration
+    }
+    else			// No overlap, move to next headVn
+      head = copy[i];
+  }
+  if (dupCount > 0) {
+    head = copy[0];
+    for(int4 i=1;i<copy.size();++i) {
+      if (copy[i]->isDuplicate()) {
+	data.totalReplace(copy[i]->outVn, head->outVn);
+      }
+      else
+	head = copy[i];
+    }
+  }
+  return true;
+}
 /// If the STORE pointer no longer has any other uses, remove the PTRADD producing it, recursively,
 /// up to the base pointer.  INDIRECT ops surrounding any STORE that is removed are replaced with
 /// INDIRECTs around the user-op replacing the STOREs.
+/// \param indirects are the list of INDIRECTs cause by the STOREs
+/// \param indirectPairs are the flow pairs across the STOREs that need to be preserved
 /// \param replaceOp is the user-op replacement for the STOREs
-void HeapSequence::removeStoreOps(PcodeOp *replaceOp)
+void HeapSequence::removeStoreOps(vector<PcodeOp *> &indirects,vector<IndirectPair> &indirectPairs,PcodeOp *replaceOp)
 
 {
-  vector<PcodeOp *> indirects;
-  vector<Varnode *> indirectPairs;
   vector<PcodeOp *> scratch;
-  gatherIndirectPairs(indirects, indirectPairs);
+  for(int4 i=0;i<indirectPairs.size();++i) {		// Unhook Varnodes we don't want destroyed
+    data.opUnsetOutput(indirectPairs[i].outVn->getDef());
+  }
   for(int4 i=0;i<moveOps.size();++i) {
     PcodeOp *op = moveOps[i].op;
     data.opDestroyRecursive(op, scratch);
@@ -825,13 +882,12 @@ void HeapSequence::removeStoreOps(PcodeOp *replaceOp)
   for(int4 i=0;i<indirects.size();++i) {
     data.opDestroy(indirects[i]);
   }
-  for(int4 i=0;i<indirectPairs.size();i+=2) {
-    Varnode *invn = indirectPairs[i];
-    Varnode *outvn = indirectPairs[i+1];
+  for(int4 i=0;i<indirectPairs.size();++i) {
+    if (indirectPairs[i].isDuplicate()) continue;
     PcodeOp *newInd = data.newOp(2,replaceOp->getAddr());
     data.opSetOpcode(newInd, CPUI_INDIRECT);
-    data.opSetOutput(newInd,outvn);
-    data.opSetInput(newInd,invn,0);
+    data.opSetOutput(newInd,indirectPairs[i].outVn);
+    data.opSetInput(newInd,indirectPairs[i].inVn,0);
     data.opSetInput(newInd,data.newVarnodeIop(replaceOp),1);
     data.opInsertBefore(newInd, replaceOp);
   }
@@ -871,10 +927,15 @@ HeapSequence::HeapSequence(Funcdata &fdata,Datatype *ct,PcodeOp *root)
 bool HeapSequence::transform(void)
 
 {
+  vector<PcodeOp *> indirects;
+  vector<IndirectPair> indirectPairs;
+  gatherIndirectPairs(indirects, indirectPairs);
+  if (!deduplicatePairs(indirectPairs))
+    return false;
   PcodeOp *memCpyOp = buildStringCopy();
   if (memCpyOp == (PcodeOp *)0)
     return false;
-  removeStoreOps(memCpyOp);
+  removeStoreOps(indirects,indirectPairs,memCpyOp);
   return true;
 }
 

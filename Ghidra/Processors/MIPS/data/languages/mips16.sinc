@@ -517,7 +517,8 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
     <done>
 }
 
-:jal Abs26_m16						is ISA_MODE=1 & RELP=1 & ext_isjal=1 & ext_tgt_x=0 & Abs26_m16 [ ext_delay=0b10; globalset(inst_next, ext_delay);] {
+:jal Abs26_m16						is ISA_MODE=1 & RELP=1 & ext_isjal=1 & ext_tgt_x=0 & Abs26_m16
+[ ext_delay=0b10; globalset(inst_next, ext_delay); ] {
     ra = inst_next | 0x1; 
     delayslot( 1 ); 
     call Abs26_m16;
@@ -525,7 +526,7 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
 }
 
 :jalr m16_rx						is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b11101 & m16_rr_nd=0 & m16_rr_l=1 & m16_rr_ra=0 & m16_rr_f=0b00000 & m16_rx
-[ ext_delay=0b01; globalset(inst_next, ext_delay); globalset(inst_start, ext_delay); ] { 
+[ ext_delay=0b01; globalset(inst_next, ext_delay); ] { 
 	JXWritePC(m16_rx); 
     ra = inst_next | 0x1; 
     delayslot( 1 ); 
@@ -539,7 +540,7 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
 }
 
 :jalx Abs26_m16						is ISA_MODE=1 & RELP=1 & ext_isjal=1 & ext_tgt_x=1 & Abs26_m16 
-[ ext_delay=0b10; ISA_MODE = 0; globalset(Abs26_m16, ISA_MODE); globalset(inst_next, ext_delay); globalset(inst_start, ext_delay); ] {
+[ ext_delay=0b10; ISA_MODE = 0; globalset(Abs26_m16, ISA_MODE); globalset(inst_next, ext_delay); ] {
     ra = inst_next | 0x1; 
     delayslot( 1 );
     ISAModeSwitch = 0; 
@@ -547,14 +548,14 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
 }
 
 :jr ra								is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b11101 & m16_rr_nd=0 & m16_rr_l=0 & m16_rr_ra=1 & ra & m16_rr_f=0b00000 & m16_rx=0
-[ ext_delay=0b01; globalset(inst_next, ext_delay); globalset(inst_start, ext_delay); ] { 
+[ ext_delay=0b01; globalset(inst_next, ext_delay); ] { 
 	JXWritePC(ra); 
     delayslot( 1 ); 
     return [pc];
 }
 
 :jr m16_rx							is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b11101 & m16_rr_nd=0 & m16_rr_l=0 & m16_rr_ra=0 & m16_rr_f=0b00000 & m16_rx
-[ ext_delay=0b01; globalset(inst_next, ext_delay); globalset(inst_start, ext_delay); ] { 
+[ ext_delay=0b01; globalset(inst_next, ext_delay); ] { 
 	JXWritePC(m16_rx); 
     delayslot( 1 ); 
     goto [pc];
@@ -883,7 +884,7 @@ E2_REGOFF: imm is ext_imm_2124 & m16_i_imm [ imm = m16_i_imm | (ext_imm_2124 << 
     lockload(tmp);
 }
 
-:lui m16_rx, EXT_LIU8				is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b01101 & m16_rx & m16_ri_z=1 & EXT_LIU8 {
+:lui m16_rx, EXT_LIU8				is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & m16_op=0b01101 & m16_rx & m16_ri_z=1 & EXT_LIU8 {
 	m16_rx = zext(EXT_LIU8) << 16;
 }
 

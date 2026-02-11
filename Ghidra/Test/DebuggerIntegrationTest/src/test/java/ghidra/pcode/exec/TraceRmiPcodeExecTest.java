@@ -114,12 +114,6 @@ public class TraceRmiPcodeExecTest extends AbstractGhidraHeadedDebuggerIntegrati
 			return null;
 		});
 
-		/**
-		 * TODO: This second handle should not be necessary. The KNOWN ought to carry into the
-		 * scratch snapshot.
-		 */
-		handleReadRegsInvocation(objRegs, () -> null);
-
 		byte[] result = waitOn(futResult);
 		assertEquals(new BigInteger("11"),
 			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));

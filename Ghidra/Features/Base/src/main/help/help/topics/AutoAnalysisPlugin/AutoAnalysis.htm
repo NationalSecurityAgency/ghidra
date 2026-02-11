@@ -452,6 +452,13 @@
 		
 		<BLOCKQUOTE>
 		<P>
+			<U><B>Timeout (seconds)</B></U> -
+				The maximum amount of seconds to allow the native GNU Demangler process to 
+				attempt to demangle a mangled string before failing. Some inputs to the
+				native GNU Demangler program have been shown to not terminate and consume excessive
+				resources. This timeout protects against these inputs.
+		</P>
+		<P>
 			<U><B>Use Deprecated Demangler</B></U> -
 				By default, GCC symbols will be demangled using the most up-to-date demangler
 				that Ghidra contains (<B>version 2.41</B> as of this writing).   Turning this 
