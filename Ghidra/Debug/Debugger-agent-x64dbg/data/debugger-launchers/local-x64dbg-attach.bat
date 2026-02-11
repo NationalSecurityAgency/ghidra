@@ -27,7 +27,7 @@
 ::@depends Debugger-rmi-trace
 ::@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 ::@env OPT_TARGET_PID:int=0 "Process id" "The target process id"
-::@env OPT_X64DBG_EXE:file="C:\\Software\\release\\x64\\x64dbg.exe" "Path to x64dbg.exe" "Path to x64dbg.exe (or equivalent)."
+::@env OPT_X64DBG_EXE:file="x64dbg.exe" "Path to x64dbg.exe" "Path to x64dbg.exe (or equivalent)."
 
 @echo off
 

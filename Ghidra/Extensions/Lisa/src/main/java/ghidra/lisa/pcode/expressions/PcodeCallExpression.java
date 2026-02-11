@@ -20,10 +20,8 @@ import java.util.Set;
 
 import ghidra.lisa.pcode.contexts.CallContext;
 import ghidra.lisa.pcode.locations.PcodeLocation;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.pcode.Varnode;
 import it.unive.lisa.analysis.*;
 import it.unive.lisa.analysis.nonrelational.value.ValueEnvironment;
@@ -77,8 +75,6 @@ public class PcodeCallExpression extends UnresolvedCall {
 		if (unaffected.isEmpty()) {
 			return entryState;
 		}
-		ProgramContext programContext = function.getProgram().getProgramContext();
-		Address entryPoint = function.getEntryPoint();
 		if (entryState.getState() instanceof SimpleAbstractState sas) {
 			ValueDomain<?> vDomain = sas.getValueState();
 			if (vDomain instanceof ValueEnvironment vEnv) {
@@ -102,25 +98,6 @@ public class PcodeCallExpression extends UnresolvedCall {
 						}
 					}
 				}
-//				for (Register r : programContext.getRegisters()) {
-//					RegisterValue rv = programContext.getRegisterValue(r, entryPoint);
-//					if (rv != null && rv.hasAnyValue()) {
-//						Variable v = new Variable(Untyped.INSTANCE,
-//							r.getAddress().toString(), new InstLocation(entryPoint));
-//						if (vEnv.lattice instanceof PcodeNonRelationalValueDomain pcodeDomain) {
-//							PcodeNonRelationalValueDomain<?> value = pcodeDomain.getValue(rv);
-//							if (value != null) {
-//								vEnv.function.put(v, value);
-//							}
-//						}
-//						if (vEnv.lattice instanceof PcodeDataflowConstantPropagation pcodeDomain) {
-//							PcodeDataflowConstantPropagation value = pcodeDomain.getValue(v, rv);
-//							if (value != null) {
-//								vEnv.function.put(v, value);
-//							}
-//						}
-//					}
-//				}
 			}
 		}
 		return entryState;

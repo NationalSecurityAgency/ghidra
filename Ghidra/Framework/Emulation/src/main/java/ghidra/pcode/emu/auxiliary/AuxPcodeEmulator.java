@@ -62,7 +62,8 @@ public abstract class AuxPcodeEmulator<U> extends AbstractPcodeMachine<Pair<byte
 
 	@Override
 	protected PcodeUseropLibrary<Pair<byte[], U>> createUseropLibrary() {
-		return getPartsFactory().createSharedUseropLibrary(this);
+		return super.createUseropLibrary()
+				.compose(getPartsFactory().createSharedUseropLibrary(this));
 	}
 
 	@Override

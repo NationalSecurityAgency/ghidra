@@ -30,7 +30,7 @@ import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
 
 /**
- * Database implementation for a structure or union.
+ * {@link CompositeDB} provides an abstract database implementation for a structure or union.
  */
 abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
@@ -313,33 +313,13 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 	}
 
-	/**
-	 * This method throws an exception if the indicated data type is an ancestor of
-	 * this data type. In other words, the specified data type has a component or
-	 * sub-component containing this data type.
-	 * 
-	 * @param dataType the data type
-	 * @throws DataTypeDependencyException if the data type is an ancestor of this
-	 *                                     data type.
-	 */
-	protected void checkAncestry(DataType dataType) throws DataTypeDependencyException {
-		if (this.equals(dataType)) {
-			throw new DataTypeDependencyException(
-				"Data type " + getDisplayName() + " can't contain itself.");
-		}
-		else if (DataTypeUtilities.isSecondPartOfFirst(dataType, this)) {
-			throw new DataTypeDependencyException("Data type " + dataType.getDisplayName() +
-				" has " + getDisplayName() + " within it.");
-		}
-	}
-
 	protected DataType doCheckedResolve(DataType dt) throws DataTypeDependencyException {
 		if (dt instanceof Pointer) {
 			pointerPostResolveRequired = true;
 			return resolve(((Pointer) dt).newPointer(DataType.DEFAULT));
 		}
 		dt = resolve(dt);
-		checkAncestry(dt);
+		DataTypeUtilities.checkAncestry(this, dt);
 		return dt;
 	}
 

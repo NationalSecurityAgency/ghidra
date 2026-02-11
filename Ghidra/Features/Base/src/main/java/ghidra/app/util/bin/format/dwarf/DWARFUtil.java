@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -59,9 +59,9 @@ public class DWARFUtil {
 	 * <p>
 	 * Can be thought of as an enum numeric value to do a name lookup.
 	 * 
-	 * @param clazz
-	 * @param value
-	 * @return
+	 * @param clazz 'enum' class that contains the "public static final" values
+	 * @param value value to lookup
+	 * @return string name of value 'enum'
 	 */
 	public static String toString(Class<?> clazz, long value) {
 		Field field = getStaticFinalFieldWithValue(clazz, value);
@@ -107,8 +107,8 @@ public class DWARFUtil {
 	 * For example, "_ZN19class1_inline_funcs3fooEv" -&gt;
 	 * [19 chars]'class1_inline_funcs', [3 chars]'foo'
 	 * 
-	 * @param s
-	 * @return
+	 * @param s mangled string
+	 * @return list of elements extracted from mangled string
 	 */
 	public static List<String> parseMangledNestings(String s) {
 		List<String> results = new ArrayList<>();
@@ -140,7 +140,7 @@ public class DWARFUtil {
 	/**
 	 * Try to find gnu mangled name nesting info in a DIE's children's linkage strings.
 	 * 
-	 * @param die
+	 * @param die {@link DebugInfoEntry} record
 	 * @return a list of string of nesting names, ending with what should be the DIE parameter's
 	 * name.
 	 */
@@ -393,7 +393,7 @@ public class DWARFUtil {
 		}
 
 		DIEAggregate funcDIEA = paramDIEA.getParent();
-		DWARFAttributeValue dwATObjectPointer = funcDIEA.getAttribute(DW_AT_object_pointer);
+		DWARFAttributeValue dwATObjectPointer = funcDIEA.findValue(DW_AT_object_pointer);
 		if (dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
 			paramDIEA.hasOffset(dnum.getUnsignedValue())) {
 			return true;

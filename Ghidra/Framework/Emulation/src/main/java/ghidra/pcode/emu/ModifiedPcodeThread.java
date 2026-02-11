@@ -254,7 +254,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 
 	@Override
 	protected PcodeUseropLibrary<T> createUseropLibrary() {
-		return super.createUseropLibrary().compose(new ModifierUseropLibrary());
+		return new ModifierUseropLibrary().compose(super.createUseropLibrary(), true);
 	}
 
 	@Override

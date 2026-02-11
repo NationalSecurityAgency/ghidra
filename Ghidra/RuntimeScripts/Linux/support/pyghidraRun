@@ -11,8 +11,11 @@
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-# Add optional JVM args inside the quotes
-VMARG_LIST=""
+# Since JPype doesn't seem to pick up JDK_JAVA_OPTIONS automatically, include it ourselves
+VMARG_LIST="${JDK_JAVA_OPTIONS}"
+
+# Apply Java options from externally set environment variables
+VMARG_LIST="${VMARG_LIST} ${GHIDRA_JAVA_OPTIONS} ${PYGHIDRA_JAVA_OPTIONS}"
 
 # Make sure Python3 is installed
 if ! [ -x "$(command -v python3)" ] ; then

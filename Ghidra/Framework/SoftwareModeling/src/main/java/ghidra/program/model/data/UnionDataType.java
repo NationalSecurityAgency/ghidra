@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import ghidra.docking.settings.Settings;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.UniversalID;
 
@@ -129,13 +130,18 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	public DataTypeComponent add(DataType dataType, int length, String componentName,
 			String comment) throws IllegalArgumentException {
 
-		int oldAlignment = getAlignment();
+		try {
+			int oldAlignment = getAlignment();
 
-		DataTypeComponent dtc = doAdd(dataType, length, componentName, comment);
-		if (!repack(true) && isPackingEnabled() && oldAlignment != getAlignment()) {
-			notifyAlignmentChanged();
+			DataTypeComponent dtc = doAdd(dataType, length, componentName, comment);
+			if (!repack(true) && isPackingEnabled() && oldAlignment != getAlignment()) {
+				notifyAlignmentChanged();
+			}
+			return dtc;
 		}
-		return dtc;
+		catch (DataTypeDependencyException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
+		}
 	}
 
 	private int getBitFieldAllocation(BitFieldDataType bitfieldDt) {
@@ -158,14 +164,14 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	}
 
 	DataTypeComponentImpl doAdd(DataType dataType, int length, String componentName, String comment)
-			throws IllegalArgumentException {
+			throws DataTypeDependencyException {
 
 		dataType = validateDataType(dataType);
 
 		dataType = adjustBitField(dataType);
 
 		dataType = dataType.clone(dataMgr);
-		checkAncestry(dataType);
+		DataTypeUtilities.checkAncestry(this, dataType);
 
 		length = getPreferredComponentLength(dataType, length);
 
@@ -180,27 +186,32 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length,
 			String componentName, String comment) throws IllegalArgumentException {
-		dataType = validateDataType(dataType);
+		try {
+			dataType = validateDataType(dataType);
 
-		int oldAlignment = getAlignment();
+			int oldAlignment = getAlignment();
 
-		dataType = adjustBitField(dataType);
+			dataType = adjustBitField(dataType);
 
-		dataType = dataType.clone(dataMgr);
-		checkAncestry(dataType);
+			dataType = dataType.clone(dataMgr);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
-		length = getPreferredComponentLength(dataType, length);
+			length = getPreferredComponentLength(dataType, length);
 
-		DataTypeComponentImpl dtc =
-			new DataTypeComponentImpl(dataType, this, length, ordinal, 0, componentName, comment);
-		dataType.addParent(this);
-		shiftOrdinals(ordinal, 1);
-		components.add(ordinal, dtc);
+			DataTypeComponentImpl dtc = new DataTypeComponentImpl(dataType, this, length, ordinal,
+				0, componentName, comment);
+			dataType.addParent(this);
+			shiftOrdinals(ordinal, 1);
+			components.add(ordinal, dtc);
 
-		if (!repack(true) && isPackingEnabled() && oldAlignment != getAlignment()) {
-			notifyAlignmentChanged();
+			if (!repack(true) && isPackingEnabled() && oldAlignment != getAlignment()) {
+				notifyAlignmentChanged();
+			}
+			return dtc;
 		}
-		return dtc;
+		catch (DataTypeDependencyException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -502,11 +513,12 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) throws IllegalArgumentException {
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		DataType replacementDt = newDt;
 		try {
 			replacementDt = validateDataType(replacementDt); // blocks DEFAULT use
 			replacementDt = replacementDt.clone(dataMgr);
-			checkAncestry(replacementDt);
+			DataTypeUtilities.checkAncestry(this, replacementDt);
 		}
 		catch (Exception e) {
 			replacementDt = Undefined1DataType.dataType;
@@ -562,38 +574,31 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 	@Override
 	public void replaceWith(DataType dataType) throws IllegalArgumentException {
-		if (!(dataType instanceof UnionInternal)) {
+		if (!(dataType instanceof UnionInternal union)) {
 			throw new IllegalArgumentException();
 		}
+		try {
+			for (DataTypeComponent dtc : components) {
+				dtc.getDataType().removeParent(this);
+			}
+			components.clear();
+			unionAlignment = -1;
 
-		UnionInternal union = (UnionInternal) dataType;
+			this.packing = union.getStoredPackingValue();
+			this.minimumAlignment = union.getStoredMinimumAlignment();
 
-		for (DataTypeComponent dtc : components) {
-			dtc.getDataType().removeParent(this);
+			DataTypeComponent[] compArray = union.getComponents();
+			for (DataTypeComponent dtc : compArray) {
+				DataType dt = dtc.getDataType();
+				doAdd(dt, dtc.getLength(), dtc.getFieldName(), dtc.getComment());
+			}
+
+			repack(false);
+			notifySizeChanged(); // simplified assumption to force parents to update
 		}
-		components.clear();
-		unionAlignment = -1;
-
-		this.packing = union.getStoredPackingValue();
-		this.minimumAlignment = union.getStoredMinimumAlignment();
-
-		DataTypeComponent[] compArray = union.getComponents();
-		for (DataTypeComponent dtc : compArray) {
-			DataType dt = dtc.getDataType();
-			doAdd(dt, dtc.getLength(), dtc.getFieldName(), dtc.getComment());
+		catch (DataTypeDependencyException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
 		}
-
-		repack(false);
-		notifySizeChanged(); // simplified assumption to force parents to update
-	}
-
-	@Override
-	public boolean dependsOn(DataType dt) {
-		if (getNumComponents() == 1) {
-			DataTypeComponent dtc = getComponent(0);
-			return dtc.getDataType().dependsOn(dt);
-		}
-		return false;
 	}
 
 	@Override

@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
-import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -422,6 +421,25 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		}
 	}
 
+	// NB: This is basically the minimum working example required to cause timeout
+	// errors in LldbAndConnection's close method. The error results (I think) from
+	// the connections being torn down before 'quit' executes.  We can throw an error
+	// for this, but why really?
+	//@Test
+	//@Repeated(100)
+	public void testTimeout() throws Exception {
+		try (LldbAndTrace conn = startAndSyncLldb()) {
+			String obj = getSpecimenPrint();
+			conn.execute("file " + obj);
+			conn.execute("process launch --stop-at-entry");
+			conn.execute("ghidra trace sync-enable");
+			conn.execute("ghidra trace sync-synth-stopped");
+			txPut(conn, "processes");
+			conn.success();
+		}
+	}
+	
+	
 	private void start(LldbAndTrace conn, String obj) {
 		conn.execute("file " + obj);
 		conn.execute("ghidra trace sync-enable");

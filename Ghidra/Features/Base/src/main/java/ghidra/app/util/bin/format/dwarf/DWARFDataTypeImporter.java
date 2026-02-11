@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -51,8 +51,8 @@ public class DWARFDataTypeImporter {
 	private DWARFDataType voidDDT;
 
 	/**
-	 * Tracks which {@link DIEAggregate DIEAs} have been visited by {@link #getDataTypeWorker(DIEAggregate, DataType)}
-	 * during the current {@link #getDataType(DIEAggregate, DWARFDataType)} session.
+	 * Tracks which {@link DIEAggregate DIEAs} have already been visited by
+	 * {@link #getDataType(DIEAggregate, DWARFDataType)} during the current session.
 	 * <p>
 	 * Some recursive calls are permitted to handle loops in the data types, but are limited
 	 * to 2 recursions.
@@ -398,9 +398,9 @@ public class DWARFDataTypeImporter {
 	/**
 	 * Simple passthru, returns whatever type this "const" modifier applies to.
 	 * 
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
+	 * @param diea {@link DIEAggregate}
+	 * @throws IOException if error
+	 * @throws DWARFExpressionException if error with dwarf expression
 	 */
 	private DWARFDataType makeDataTypeForConst(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -421,8 +421,8 @@ public class DWARFDataTypeImporter {
 	 * This method takes liberties with the normal{@literal DWARF->Ghidra Impl DataType->Ghidra DB DataType}
 	 * workflow to be able to merge values into previous db enum datatypes.
 	 *
-	 * @param diea
-	 * @return
+	 * @param diea {@link DIEAggregate}
+	 * @return {@link DWARFDataType} with enum data type
 	 */
 	private DWARFDataType makeDataTypeForEnum(DIEAggregate diea) {
 
@@ -471,7 +471,7 @@ public class DWARFDataTypeImporter {
 			String valueName = childDIEA.getName();
 
 			DWARFNumericAttribute enumValAttr = childDIEA
-					.getAttribute(DW_AT_const_value, DWARFNumericAttribute.class);
+					.findValue(DW_AT_const_value, DWARFNumericAttribute.class);
 			if (enumValAttr != null) {
 				long enumVal = enumValAttr.getValueWithSignednessHint(defaultSignedness);
 
@@ -521,11 +521,10 @@ public class DWARFDataTypeImporter {
 	}
 
 	/**
-	 * Returns true if there are no values in destEnum that conflict with srcEnum.
+	 * {@return true if there are no values in destEnum that conflict with srcEnum }
 	 *
-	 * @param srcEnum
-	 * @param destEnum
-	 * @return
+	 * @param srcEnum {@link Enum} 
+	 * @param destEnum {@link Enum} 
 	 */
 	private boolean isCompatEnumValues(Enum srcEnum, Enum destEnum) {
 		for (String srcKey : srcEnum.getNames()) {
@@ -547,16 +546,16 @@ public class DWARFDataTypeImporter {
 	/**
 	 * Creates an empty stub structure/union for the DIEA.
 	 * <p>
-	 * Use {@link #finishStruct(DIEAggregate, DataType)} (which calls
-	 * {@link #populateStubStruct(StructureDataType, DIEAggregate)} and
-	 * {@link #populateStubEnum(Enum, DIEAggregate)}) to fill in the fields of the structure.
+	 * Use {@link #finishStruct(DIEAggregate, DWARFDataType)} (which calls
+	 * {@link #populateStubStruct(DWARFDataType, DIEAggregate)} and
+	 * {@link #populateStubEnum(Enum, DIEAggregate, boolean)}) to fill in the fields of the structure.
 	 * <p>
 	 * This is done in two steps to enable ending recursive loops by publishing the empty
 	 * struct in the {@link #dieOffsetToDataTypeMap} map, where it will be found and returned by
-	 * {@link #getDataTypeWorker(DIEAggregate, DataType)}, instead of calling back
-	 * into this method.
-	 * @param diea
-	 * @return
+	 * any recursive calls back into {@link #getDataType(DIEAggregate, DWARFDataType)}.
+	 * 
+	 * @param diea {@link DIEAggregate}
+	 * @return {@link DWARFDataType} with empty composite that needs to be populated
 	 */
 	private DWARFDataType makeDataTypeForStruct(DIEAggregate diea) {
 

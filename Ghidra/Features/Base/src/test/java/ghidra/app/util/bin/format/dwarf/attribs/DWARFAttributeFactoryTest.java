@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf.attribs;
 
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFForm.*;
 import static org.junit.Assert.*;
 
@@ -26,7 +26,7 @@ import org.junit.Test;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf.DWARFTestBase;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.AttrDef;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 
@@ -40,7 +40,7 @@ public class DWARFAttributeFactoryTest extends DWARFTestBase {
 		return createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY64_BE, this);
 	}
 
-	private DWARFAttributeValue read(BinaryReader br, DWARFAttribute attr, DWARFForm form)
+	private DWARFAttributeValue read(BinaryReader br, DWARFAttributeId attr, DWARFForm form)
 			throws IOException {
 		ensureCompUnit();
 		AttrDef spec = new AttrDef(attr, attr.getId(), form, 0);

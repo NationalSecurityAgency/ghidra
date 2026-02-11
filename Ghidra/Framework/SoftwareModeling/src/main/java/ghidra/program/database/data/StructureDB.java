@@ -193,7 +193,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (validatePackAndNotify) {
 				dataType = validateDataType(dataType);
 				dataType = resolve(dataType);
-				checkAncestry(dataType);
+				DataTypeUtilities.checkAncestry(this, dataType);
 			}
 
 			DataTypeComponentDB dtc = null;
@@ -335,7 +335,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			int idx;
 			if (isPackingEnabled()) {
@@ -1008,6 +1008,26 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	/**
+	 * Find insertion index such that the index falls after all zero-length components at the
+	 * specified offset and before any bitfields at that offset.
+	 *
+	 * @param index any defined component index which contains offset.
+	 * @param offset offset within structure.
+	 * @return index of first non-zero-length defined checking in the forward direction.
+	 */
+	private int afterNonZeroComponentsAtOffset(int index, int offset) {
+		int maxIndex = components.size();
+		while (index < maxIndex) {
+			DataTypeComponentDB dtc = components.get(index);
+			if (dtc.getOffset() != offset || dtc.getLength() != 0) {
+				break;
+			}
+			++index;
+		}
+		return index;
+	}
+
+	/**
 	 * Identify defined-component index of the first non-zero-length component which contains the
 	 * specified offset. If only zero-length components exist, the last zero-length component which
 	 * contains the offset will be returned.
@@ -1315,12 +1335,15 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			if ((offset > structLength) && !isPackingEnabled()) {
 				numComponents += offset - structLength;
 				structLength = offset;
 			}
+
+			// Any component insert at an offset should be placed after any zero-length components 
+			// at the same offset but before any non-zero-length component.
 
 			int index = Collections.binarySearch(components, Integer.valueOf(offset),
 				OffsetComparator.INSTANCE);
@@ -1328,8 +1351,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int additionalShift = 0;
 			if (index >= 0) {
 				index = backupToFirstComponentContainingOffset(index, offset);
-				DataTypeComponentDB dtc = components.get(index);
-				additionalShift = offset - dtc.getOffset();
+				index = afterNonZeroComponentsAtOffset(index, offset);
+				if (index < components.size()) {
+					DataTypeComponentDB dtc = components.get(index);
+					additionalShift = offset - dtc.getOffset();
+				}
 			}
 			else {
 				index = -index - 1;
@@ -1441,7 +1467,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			length = getPreferredComponentLength(dataType, length);
 
@@ -1553,7 +1579,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 			dataType = validateDataType(dataType);
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			LinkedList<DataTypeComponentDB> replacedComponents = new LinkedList<>();
 
@@ -1752,17 +1778,17 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	private void doReplaceWithPacked(Structure struct, DataType[] resolvedDts) {
 		// assumes components is clear and that alignment characteristics have been set
-		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
-		for (int i = 0; i < otherComponents.length; i++) {
-			DataTypeComponent dtc = otherComponents[i];
-			DataType dt = dtc.getDataType();
-			int length = (dt instanceof Dynamic) ? dtc.getLength() : -1;
-			try {
+		try {
+			DataTypeComponent[] otherComponents = struct.getDefinedComponents();
+			for (int i = 0; i < otherComponents.length; i++) {
+				DataTypeComponent dtc = otherComponents[i];
+				DataType dt = dtc.getDataType();
+				int length = (dt instanceof Dynamic) ? dtc.getLength() : -1;
 				doAdd(resolvedDts[i], length, dtc.getFieldName(), dtc.getComment(), false);
 			}
-			catch (DataTypeDependencyException e) {
-				throw new AssertException(e); // ancestry check already performed by caller
-			}
+		}
+		catch (DataTypeDependencyException e) {
+			throw new AssertException(e); // ancestry check already performed by caller
 		}
 	}
 
@@ -1836,6 +1862,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -1904,6 +1933,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		if (dt instanceof BitFieldDataType) {
 			return; // unsupported
 		}
@@ -2026,10 +2058,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeAlignmentChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
+			checkDeleted();
 			if (isPackingEnabled()) {
-				checkDeleted();
 				repack(true, true);
 			}
 		}
@@ -2353,9 +2388,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (oldDt == this) {
+		if (deleting) {
 			return;
 		}
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -2363,7 +2399,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			try {
 				replacementDt = validateDataType(replacementDt); // blocks DEFAULT use for packed
 				replacementDt = resolve(replacementDt);
-				checkAncestry(replacementDt);
+				DataTypeUtilities.checkAncestry(this, replacementDt);
 			}
 			catch (Exception e) {
 				// Handle bad replacement with use of undefined component

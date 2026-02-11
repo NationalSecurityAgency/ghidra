@@ -26,6 +26,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Basic implementation for a pointer dataType
@@ -759,11 +760,21 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		if (referencedDataType == oldDt) {
+			if (newDt == this) {
+				newDt = DataType.DEFAULT;
+			}
 			referencedDataType.removeParent(this);
 			referencedDataType = newDt;
 			referencedDataType.addParent(this);
 			displayName = null;
+
+			if (!newDt.getCategoryPath().equals(oldDt.getCategoryPath())) {
+				// move this pointer to same category as newDt
+				super.setCategoryPath(newDt.getCategoryPath());
+			}
+
 			String oldName = name;
 			name = constructUniqueName(referencedDataType, length);
 			notifyNameChanged(oldName);

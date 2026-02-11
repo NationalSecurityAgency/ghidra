@@ -382,6 +382,7 @@ def on_cont(*args) -> None:
 
 
 def on_stop(*args) -> None:
+    # print("ON STOP")
     proc = util.selected_process()
     if proc not in PROC_STATE:
         return
@@ -505,12 +506,28 @@ def on_breakpoint_deleted(bpid) -> None:
 @log_errors
 def on_breakpoint_hit(*args) -> None:
     # print("ON_BREAKPOINT_HIT: args={}".format(args))
+    id = util.get_breakpoint_id(args[0])
+    if id in util.BPT_HANDLERS:
+        try:
+            handler = util.BPT_HANDLERS[id]
+            func = globals()[handler]
+            func(*args)
+        except Exception as e:
+            print(f"Error in breakpoint handler: {e}")
     return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 @log_errors
 def on_exception(*args) -> None:
     # print("ON_EXCEPTION: args={}".format(args))
+    id = str(hex(args[0][0].ExceptionCode))
+    if id in util.EXC_HANDLERS:
+        try:
+            handler = util.EXC_HANDLERS[id]
+            func = globals()[handler]
+            func(*args)
+        except Exception as e:
+            print(f"Error in exception handler: {e}")
     return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 

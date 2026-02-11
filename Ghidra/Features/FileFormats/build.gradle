@@ -82,15 +82,17 @@ String getSevenZipJarPath() {
 }
 
 task extractSevenZipNativeLibs(type: Copy) {
-    String jarPath = getSevenZipJarPath();
-    from zipTree(jarPath)
-    include  "Linux-amd64/*.so"
-    include  "Windows-amd64/*.dll"
-    include  "Mac-x86_64/*.dylib"
-    exclude "META-INF"
-    exclude "Linux-i386"
-    exclude "Windows-x86"
-    into ("build/data/sevenzipnativelibs")    
+	gradle.taskGraph.whenReady {
+	    String jarPath = getSevenZipJarPath();
+	    from zipTree(jarPath)
+	    include  "Linux-amd64/*.so"
+	    include  "Windows-amd64/*.dll"
+	    include  "Mac-x86_64/*.dylib"
+	    exclude "META-INF"
+	    exclude "Linux-i386"
+	    exclude "Windows-x86"
+	    into ("build/data/sevenzipnativelibs") 
+    }   
 }
 
 rootProject.prepDev.dependsOn extractSevenZipNativeLibs

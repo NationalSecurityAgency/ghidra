@@ -359,13 +359,17 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (newDt == this) {
-			newDt = DataType.DEFAULT;
+		if (deleting) {
+			return;
 		}
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		lock.acquire();
 		try {
-			if (checkIsValid() && getDataType() == oldDt) {
-
+			checkDeleted();
+			if (oldDt == getDataType()) {
+				if (newDt == this) {
+					newDt = DataType.DEFAULT;
+				}
 				// check for existing pointer to newDt
 				PointerDataType newPtr = new PointerDataType(newDt,
 					hasLanguageDependantLength() ? -1 : getLength(), dataMgr);
@@ -377,6 +381,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 					return;
 				}
 
+				// If newDt pointer not found above revise this pointer which may include category change
 				if (!newDt.getCategoryPath().equals(oldDt.getCategoryPath())) {
 					// move this pointer to same category as newDt
 					try {
@@ -412,8 +417,19 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
-		if (getDataType() == dt) {
-			dataMgr.addDataTypeToDelete(key);
+		if (deleting) {
+			return;
+		}
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (dt == getDataType()) {
+				dataMgr.addDataTypeToDelete(this, key);
+				deleting = true;
+			}
+		}
+		finally {
+			lock.release();
 		}
 	}
 
@@ -441,10 +457,14 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
-			String myOldName = getOldName();
-			if (checkIsValid() && dt == getDataType()) {
+			checkDeleted();
+			if (dt == getDataType()) {
+				String myOldName = getOldName();
 				refreshName();
 				if (!getName().equals(myOldName)) {
 					notifyNameChanged(myOldName);

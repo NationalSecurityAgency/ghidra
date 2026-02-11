@@ -20,7 +20,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.attribs.*;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.AttrDef;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 import ghidra.program.model.data.LEB128;
 
 /**
@@ -185,15 +185,19 @@ public class DebugInfoEntry {
 	 * 
 	 * @param attribIndex index (0..count)
 	 * @return {@link DWARFAttributeValue}
-	 * @throws IOException if error reading the value
 	 */
-	public DWARFAttributeValue getAttributeValue(int attribIndex) throws IOException {
+	public DWARFAttributeValue getAttributeValue(int attribIndex) {
 		if (attributes[attribIndex] == null) {
 			BinaryReader reader = getProgram().getReaderForCompUnit(compilationUnit)
 					.clone(offset + attrOffsets[attribIndex]);
 			DWARFFormContext context = new DWARFFormContext(reader, compilationUnit,
 				abbreviation.getAttributeAt(attribIndex));
-			attributes[attribIndex] = context.def().getAttributeForm().readValue(context);
+			try {
+				attributes[attribIndex] = context.def().getAttributeForm().readValue(context);
+			}
+			catch (IOException e) {
+				return new DWARFMissingAttributeValue();
+			}
 		}
 		return attributes[attribIndex];
 	}
@@ -202,34 +206,41 @@ public class DebugInfoEntry {
 		attributes[index] = attrVal;
 	}
 
-	private DWARFAttributeValue getAttributeValueUnchecked(int attribIndex) {
-		try {
-			return getAttributeValue(attribIndex);
-		}
-		catch (IOException e) {
-			return null;
-		}
-	}
-
 	/**
 	 * Searches the list of attributes for a specific attribute, by id.
 	 * 
-	 * @param attributeId {@link DWARFAttribute}
-	 * @return {@link DWARFAttributeValue}, or null if not found
+	 * @param attrId {@link DWARFAttributeId}
+	 * @return {@link DWARFAttribute}, or null if not found
 	 */
-	public DWARFAttributeValue findAttribute(DWARFAttribute attributeId) {
+	public DWARFAttribute findAttribute(DWARFAttributeId attrId) {
 		AttrDef[] attrDefs = abbreviation.getAttributes();
 		for (int i = 0; i < attrDefs.length; i++) {
 			AttrDef attrDef = attrDefs[i];
-			if (attrDef.getAttributeId() == attributeId) {
-				return getAttributeValueUnchecked(i);
+			if (attrDef.getAttributeId() == attrId) {
+				return new DWARFAttribute(this, attrDef, getAttributeValue(i));
 			}
 		}
 		return null;
 	}
 
 	/**
-	 * Get the abbreviation of this DIE.
+	 * {@return the specified DWARFAttribute, by index}
+	 * @param index 0..count
+	 */
+	public DWARFAttribute getAttribute(int index) {
+		return new DWARFAttribute(this, getAttributeDef(index), getAttributeValue(index));
+	}
+
+	/**
+	 * {@return the DWARFAttributeDef of the specified attribute, by index}
+	 * @param index 0..count
+	 */
+	public AttrDef getAttributeDef(int index) {
+		return abbreviation.getAttributeAt(index);
+	}
+
+	/**
+	 * Get the abbreviation (schema) of this DIE.
 	 * @return the abbreviation of this DIE
 	 */
 	public DWARFAbbreviation getAbbreviation() {
@@ -290,17 +301,8 @@ public class DebugInfoEntry {
 		}
 
 		for (int i = 0; i < attributes.length; i++) {
-			buffer.append("\t\t");
-			DWARFAttributeValue attribVal = getAttributeValueUnchecked(i);
-			if (attribVal != null) {
-				buffer.append(attribVal.toString(compilationUnit));
-			}
-			else {
-				AttrDef attrDef = abbreviation.getAttributeAt(i);
-				buffer.append("%s : %s = <missing>".formatted(attrDef.getAttributeName(),
-					attrDef.getAttributeForm()));
-			}
-			buffer.append("\n");
+			DWARFAttribute tmp = getAttribute(i);
+			buffer.append("\t\t").append(tmp.toString()).append("\n");
 		}
 
 		return buffer.toString();

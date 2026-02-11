@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -277,35 +277,25 @@ public class DIEAggregate {
 		return getProgram().getParentDepth(getHeadFragment().getIndex());
 	}
 
-	private FoundAttribute findAttribute(DWARFAttribute attribute) {
-		for (DebugInfoEntry die : fragments) {
-			DWARFAttributeValue attrVal = die.findAttribute(attribute);
-			if (attrVal != null) {
-				return new FoundAttribute(attrVal, die);
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * Return an attribute that is present in this {@link DIEAggregate}, or in any of its
 	 * direct children (of a specific type)
 	 *  
 	 * @param <T> attribute value type
-	 * @param attribute the attribute to find
+	 * @param attrId the attribute to find
 	 * @param childTag the type of children to search
 	 * @param clazz type of the attribute to return
 	 * @return attribute value, or null if not found
 	 */
-	public <T extends DWARFAttributeValue> T findAttributeInChildren(DWARFAttribute attribute,
+	public <T extends DWARFAttributeValue> T findAttributeInChildren(DWARFAttributeId attrId,
 			DWARFTag childTag, Class<T> clazz) {
-		T attributeValue = getAttribute(attribute, clazz);
+		T attributeValue = findValue(attrId, clazz);
 		if (attributeValue != null) {
 			return attributeValue;
 		}
 		for (DebugInfoEntry childDIE : getChildren(childTag)) {
 			DIEAggregate childDIEA = getProgram().getAggregate(childDIE);
-			attributeValue = childDIEA.getAttribute(attribute, clazz);
+			attributeValue = childDIEA.findValue(attrId, clazz);
 			if (attributeValue != null) {
 				return attributeValue;
 			}
@@ -314,48 +304,64 @@ public class DIEAggregate {
 	}
 
 	/**
-	 * Finds a {@link DWARFAttributeValue attribute} with a matching {@link DWARFAttribute} id.
+	 * {@return the matching attribute, by id, or null if not found}
+	 * @param attrId {@link DWARFAttributeId} DW_AT_xyz
+	 */
+	public DWARFAttribute findAttribute(DWARFAttributeId attrId) {
+		for (DebugInfoEntry die : fragments) {
+			DWARFAttribute attr = die.findAttribute(attrId);
+			if (attr != null) {
+				return attr;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Finds a {@link DWARFAttributeValue attribute value} with a matching 
+	 * {@link DWARFAttributeId} id.
 	 * <p>
 	 * Returns null if the attribute does not exist or is wrong java class type.
 	 * <p>
 	 * Attributes are searched for in each fragment in this aggregate, starting with the
 	 * 'head' fragment, progressing toward the 'decl' fragment.
 	 *
-	 * @param attribute See {@link DWARFAttribute}
-	 * @param clazz must be derived from {@link DWARFAttributeValue}
-	 * @return DWARFAttributeValue or subclass as specified by the clazz, or null if not found
+	 * @param attrId See {@link DWARFAttributeId}
+	 * @param valueClass must be derived from {@link DWARFAttributeValue}
+	 * @return DWARFAttributeValue or subclass as specified by the valueClass, or null if not found
 	 */
-	public <T extends DWARFAttributeValue> T getAttribute(DWARFAttribute attribute,
-			Class<T> clazz) {
-		FoundAttribute attrInfo = findAttribute(attribute);
-		return attrInfo != null ? attrInfo.getValue(clazz) : null;
+	public <T extends DWARFAttributeValue> T findValue(DWARFAttributeId attrId,
+			Class<T> valueClass) {
+		DWARFAttribute attr = findAttribute(attrId);
+		return attr != null ? attr.getValue(valueClass) : null;
 	}
 
 	/**
-	 * Finds a {@link DWARFAttributeValue attribute} with a matching {@link DWARFAttribute} id.
+	 * Finds a {@link DWARFAttributeValue attribute value} with a matching
+	 * {@link DWARFAttributeId} id.
 	 * <p>
 	 * Returns null if the attribute does not exist.
 	 * <p>
 	 * Attributes are searched for in each fragment in this aggregate, starting with the
 	 * 'head' fragment, progressing toward the 'decl' fragment.
 	 *
-	 * @param attribute See {@link DWARFAttribute}
+	 * @param attrId See {@link DWARFAttributeId}
 	 * @return DWARFAttributeValue, or null if not found
 	 */
-	public DWARFAttributeValue getAttribute(DWARFAttribute attribute) {
-		return getAttribute(attribute, DWARFAttributeValue.class);
+	public DWARFAttributeValue findValue(DWARFAttributeId attrId) {
+		return findValue(attrId, DWARFAttributeValue.class);
 	}
 
 	/**
 	 * Returns the value of the requested attribute, or -defaultValue- if the
 	 * attribute is missing.
 	 *
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return long value, or the defaultValue if attribute not present
 	 */
-	public long getLong(DWARFAttribute attribute, long defaultValue) {
-		DWARFNumericAttribute attr = getAttribute(attribute, DWARFNumericAttribute.class);
+	public long getLong(DWARFAttributeId attrId, long defaultValue) {
+		DWARFNumericAttribute attr = findValue(attrId, DWARFNumericAttribute.class);
 		return (attr != null) ? attr.getValue() : defaultValue;
 	}
 
@@ -363,12 +369,12 @@ public class DIEAggregate {
 	 * Returns the boolean value of the requested attribute, or -defaultValue- if
 	 * the attribute is missing or not the correct type.
 	 * 
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return boolean value, or the defaultValue if attribute is not present
 	 */
-	public boolean getBool(DWARFAttribute attribute, boolean defaultValue) {
-		DWARFBooleanAttribute val = getAttribute(attribute, DWARFBooleanAttribute.class);
+	public boolean getBool(DWARFAttributeId attrId, boolean defaultValue) {
+		DWARFBooleanAttribute val = findValue(attrId, DWARFBooleanAttribute.class);
 		return (val != null) ? val.getValue() : defaultValue;
 	}
 
@@ -376,20 +382,19 @@ public class DIEAggregate {
 	 * Returns the string value of the requested attribute, or -defaultValue- if
 	 * the attribute is missing or not the correct type.
 	 * 
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return String value, or the defaultValue if attribute is not present
 	 */
-	public String getString(DWARFAttribute attribute, String defaultValue) {
-		FoundAttribute attrInfo = findAttribute(attribute);
-		if (attrInfo == null || !(attrInfo.attr instanceof DWARFStringAttribute strAttr)) {
-			return defaultValue;
-		}
-		return strAttr.getValue(attrInfo.die.getCompilationUnit());
+	public String getString(DWARFAttributeId attrId, String defaultValue) {
+		DWARFAttribute attr = findAttribute(attrId);
+		return attr != null && attr.getValue() instanceof DWARFStringAttribute sval
+				? sval.getValue(attr.getDIE().getCompilationUnit())
+				: defaultValue;
 	}
 
 	/**
-	 * Returns the string value of the {@link DWARFAttribute#DW_AT_name dw_at_name} attribute,
+	 * Returns the string value of the {@link DWARFAttributeId#DW_AT_name DW_AT_name} attribute,
 	 * or null if it is missing.
 	 * 
 	 * @return name of this DIE aggregate, or null if missing
@@ -407,28 +412,29 @@ public class DIEAggregate {
 	 * <p>
 	 * The -defaultValue- parameter can accept a negative value.
 	 * 
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return unsigned long value, or the defaultValue if attribute is not present
 	 */
-	public long getUnsignedLong(DWARFAttribute attribute, long defaultValue) {
-		DWARFNumericAttribute attr = getAttribute(attribute, DWARFNumericAttribute.class);
+	public long getUnsignedLong(DWARFAttributeId attrId, long defaultValue) {
+		DWARFNumericAttribute attr = findValue(attrId, DWARFNumericAttribute.class);
 		return (attr != null) ? attr.getUnsignedValue() : defaultValue;
 	}
 
-	private DebugInfoEntry getRefDIE(DWARFAttribute attribute) {
-		FoundAttribute foundAttr = findAttribute(attribute);
-		if (foundAttr == null || !(foundAttr.attr instanceof DWARFNumericAttribute val)) {
+	private DebugInfoEntry getRefDIE(DWARFAttributeId attrId) {
+		DWARFAttribute foundAttr = findAttribute(attrId);
+		if (foundAttr == null || !(foundAttr.getValue() instanceof DWARFNumericAttribute val)) {
 			return null;
 		}
 
 		try {
-			return getProgram().getDIE(val.getAttributeForm(), val.getUnsignedValue(),
-				foundAttr.die.getCompilationUnit());
+			return getProgram().getDIE(foundAttr.getAttributeForm(), val.getUnsignedValue(),
+				foundAttr.getDIE().getCompilationUnit());
 		}
 		catch (IOException e) {
 			Msg.warn(this, "Invalid reference from DIE 0x%x to 0x%x (%s)".formatted(
-				foundAttr.die.getOffset(), val.getUnsignedValue(), val.getAttributeForm()));
+				foundAttr.getDIE().getOffset(), val.getUnsignedValue(),
+				foundAttr.getAttributeForm()));
 			Msg.debug(this, this.toString());
 		}
 		return null;
@@ -438,11 +444,11 @@ public class DIEAggregate {
 	 * Returns the {@link DIEAggregate diea} instance pointed to by the requested attribute,
 	 * or null if the attribute does not exist.
 	 * 
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @return {@link DIEAggregate}, or the null if attribute is not present
 	 */
-	public DIEAggregate getRef(DWARFAttribute attribute) {
-		DebugInfoEntry die = getRefDIE(attribute);
+	public DIEAggregate getRef(DWARFAttributeId attrId) {
+		DebugInfoEntry die = getRefDIE(attrId);
 		return getProgram().getAggregate(die);
 	}
 
@@ -465,7 +471,7 @@ public class DIEAggregate {
 	 * @return name of file this item was declared in, or null if info not available
 	 */
 	public String getSourceFile() {
-		FoundAttribute attrInfo = findAttribute(DW_AT_decl_file);
+		DWARFAttribute attrInfo = findAttribute(DW_AT_decl_file);
 		if (attrInfo == null) {
 			return null;
 		}
@@ -475,7 +481,7 @@ public class DIEAggregate {
 		}
 		try {
 			int fileNum = attr.getUnsignedIntExact();
-			DWARFLine line = attrInfo.die.getCompilationUnit().getLine();
+			DWARFLine line = attrInfo.getDIE().getCompilationUnit().getLine();
 			DWARFFile file = line.getFile(fileNum);
 			return file.getName();
 		}
@@ -497,11 +503,11 @@ public class DIEAggregate {
 	/**
 	 * Returns true if the specified attribute is present.
 	 * 
-	 * @param attribute attribute id
+	 * @param attrId attribute id
 	 * @return boolean true if value is present
 	 */
-	public boolean hasAttribute(DWARFAttribute attribute) {
-		return findAttribute(attribute) != null;
+	public boolean hasAttribute(DWARFAttributeId attrId) {
+		return findAttribute(attrId) != null;
 	}
 
 	/**
@@ -512,12 +518,12 @@ public class DIEAggregate {
 	 * abstract portion
 	 */
 	public DIEAggregate getAbstractInstance() {
-		FoundAttribute aoAttr = findAttribute(DW_AT_abstract_origin);
+		DWARFAttribute aoAttr = findAttribute(DW_AT_abstract_origin);
 		if (aoAttr == null) {
 			return null;
 		}
 		for (int aoIndex = 0; aoIndex < fragments.length; aoIndex++) {
-			if (fragments[aoIndex] == aoAttr.die) {
+			if (fragments[aoIndex] == aoAttr.getDIE()) {
 				DebugInfoEntry[] partialFrags = new DebugInfoEntry[fragments.length - aoIndex - 1];
 				System.arraycopy(fragments, aoIndex + 1, partialFrags, 0, partialFrags.length);
 				return new DIEAggregate(partialFrags);
@@ -530,15 +536,15 @@ public class DIEAggregate {
 	 * Returns the signed integer value of the requested attribute after resolving
 	 * any DWARF expression opcodes.
 	 * 
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return int value, or the defaultValue if attribute is not present
 	 * @throws IOException if error reading value or invalid value type
 	 * @throws DWARFExpressionException if error evaluating a DWARF expression
 	 */
-	public int parseInt(DWARFAttribute attribute, int defaultValue)
+	public int parseInt(DWARFAttributeId attrId, int defaultValue)
 			throws IOException, DWARFExpressionException {
-		DWARFAttributeValue attr = getAttribute(attribute);
+		DWARFAttributeValue attr = findValue(attrId);
 		if (attr == null) {
 			return defaultValue;
 		}
@@ -560,32 +566,29 @@ public class DIEAggregate {
 	 * Returns the unsigned integer value of the requested attribute after resolving
 	 * any DWARF expression opcodes.
 	 * 
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return unsigned long value, or the defaultValue if attribute is not present
 	 * @throws IOException if error reading value or invalid value type
 	 * @throws DWARFExpressionException if error evaluating a DWARF expression
 	 */
-	public long parseUnsignedLong(DWARFAttribute attribute, long defaultValue)
+	public long parseUnsignedLong(DWARFAttributeId attrId, long defaultValue)
 			throws IOException, DWARFExpressionException {
-		FoundAttribute attrInfo = findAttribute(attribute);
-		if (attrInfo == null) {
+		DWARFAttribute attr = findAttribute(attrId);
+		if (attr == null) {
 			return defaultValue;
 		}
 
-		DWARFAttributeValue attr = attrInfo.attr;
-		if (attr instanceof DWARFNumericAttribute dnum) {
-			return dnum.getUnsignedValue();
-		}
-		else if (attr instanceof DWARFBlobAttribute dblob) {
-			DWARFExpressionEvaluator evaluator =
-				new DWARFExpressionEvaluator(attrInfo.die().getCompilationUnit());
-			evaluator.evaluate(dblob.getBytes(), 0);
-			return evaluator.popLong();
-		}
-		else {
-			throw new IOException("Not integer attribute: %s".formatted(attr));
-		}
+		return switch (attr.getValue()) {
+			case DWARFNumericAttribute dnum -> dnum.getUnsignedValue();
+			case DWARFBlobAttribute dblob -> {
+				DWARFExpressionEvaluator evaluator =
+					new DWARFExpressionEvaluator(attr.getDIE().getCompilationUnit());
+				evaluator.evaluate(dblob.getBytes(), 0);
+				yield evaluator.popLong();
+			}
+			default -> throw new IOException("Not integer attribute: %s".formatted(attr));
+		};
 	}
 
 	private int assertValidInt(long l) throws DWARFException {
@@ -606,61 +609,61 @@ public class DIEAggregate {
 	 * Returns the unsigned integer value of the requested attribute after resolving
 	 * any DWARF expression opcodes.
 	 *
-	 * @param attribute {@link DWARFAttribute} id
+	 * @param attrId {@link DWARFAttributeId} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return unsigned int value, or the defaultValue if attribute is not present
 	 * @throws IOException if error reading value or invalid value type
 	 * @throws DWARFExpressionException if error evaluating a DWARF expression
 	 */
-	public int parseDataMemberOffset(DWARFAttribute attribute, int defaultValue)
+	public int parseDataMemberOffset(DWARFAttributeId attrId, int defaultValue)
 			throws DWARFExpressionException, IOException {
 
-		DWARFAttributeValue attr = getAttribute(attribute);
+		DWARFAttribute attr = findAttribute(attrId);
 		if (attr == null) {
 			return defaultValue;
 		}
 
-		if (attr instanceof DWARFNumericAttribute dnum) {
-			return dnum.getUnsignedIntExact();
-		}
-		else if (attr instanceof DWARFBlobAttribute dblob) {
-			DWARFExpressionEvaluator evaluator = new DWARFExpressionEvaluator(getCompilationUnit());
+		return switch (attr.getValue()) {
+			case DWARFNumericAttribute dnum -> dnum.getUnsignedIntExact();
+			case DWARFBlobAttribute dblob -> {
+				DWARFExpressionEvaluator evaluator =
+					new DWARFExpressionEvaluator(getCompilationUnit());
 
-			// DW_AT_data_member_location expects the address of the containing object
-			// to be on the stack before evaluation starts.  We don't have that so we
-			// fake it with zero.
-			evaluator.evaluate(dblob.getBytes(), 0);
-			return assertValidUInt(evaluator.popLong());
-		}
-		else {
-			throw new DWARFException("DWARF attribute form not valid for data member offset: %s"
-					.formatted(attr.getAttributeForm()));
-		}
+				// DW_AT_data_member_location expects the address of the containing object
+				// to be on the stack before evaluation starts.  We don't have that so we
+				// fake it with zero.
+				evaluator.evaluate(dblob.getBytes(), 0);
+				yield assertValidUInt(evaluator.popLong());
+			}
+			default -> throw new DWARFException(
+				"DWARF attribute form not valid for data member offset: %s"
+						.formatted(attr.getAttributeForm()));
+		};
 	}
 
 	/**
 	 * Parses a location attribute value, which can be a single expression that is valid for any
 	 * PC, or a list of expressions that are tied to specific ranges.
 	 *  
-	 * @param attribute typically {@link DWARFAttribute#DW_AT_location}
+	 * @param attrId typically {@link DWARFAttributeId#DW_AT_location}
 	 * @return a {@link DWARFLocationList}, never null, possibly empty
 	 * @throws IOException if error reading data
 	 */
-	public DWARFLocationList getLocationList(DWARFAttribute attribute) throws IOException {
-		return getProgram().getLocationList(this, attribute);
+	public DWARFLocationList getLocationList(DWARFAttributeId attrId) throws IOException {
+		return getProgram().getLocationList(this, attrId);
 	}
 
 	/**
 	 * Parses a location attribute value, and returns the {@link DWARFLocation} instance that
 	 * covers the specified pc.
 	 *  
-	 * @param attribute typically {@link DWARFAttribute#DW_AT_location}
+	 * @param attrId typically {@link DWARFAttributeId#DW_AT_location}
 	 * @param pc program counter
 	 * @return a {@link DWARFLocationList}, never null, possibly empty
 	 * @throws IOException if error reading data
 	 */
-	public DWARFLocation getLocation(DWARFAttribute attribute, long pc) throws IOException {
-		DWARFLocationList locList = getLocationList(attribute);
+	public DWARFLocation getLocation(DWARFAttributeId attrId, long pc) throws IOException {
+		DWARFLocationList locList = getLocationList(attrId);
 		return locList.getLocationContaining(pc);
 	}
 
@@ -700,12 +703,12 @@ public class DIEAggregate {
 	/**
 	 * Parses a range list.
 	 * 
-	 * @param attribute attribute eg {@link DWARFAttribute#DW_AT_ranges}
+	 * @param attrId attribute eg {@link DWARFAttributeId#DW_AT_ranges}
 	 * @return list of ranges, or null if attribute is not present
 	 * @throws IOException if an I/O error occurs
 	 */
-	public DWARFRangeList getRangeList(DWARFAttribute attribute) throws IOException {
-		return getProgram().getRangeList(this, attribute);
+	public DWARFRangeList getRangeList(DWARFAttributeId attrId) throws IOException {
+		return getProgram().getRangeList(this, attrId);
 	}
 
 	/**
@@ -715,23 +718,23 @@ public class DIEAggregate {
 	 * not present
 	 */
 	public DWARFRange getPCRange() {
-		DWARFNumericAttribute lowPc = getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
-		if (lowPc != null) {
+		DWARFAttribute lowPc = findAttribute(DW_AT_low_pc);
+		if (lowPc != null && lowPc.getValue() instanceof DWARFNumericAttribute lowPcAttrVal) {
 			try {
 				// TODO: previous code excluded lowPc values that were == 0 as invalid.
-				long rawLowPc = lowPc.getUnsignedValue();
+				long rawLowPc = lowPcAttrVal.getUnsignedValue();
 				long lowPcOffset = getProgram().getAddress(lowPc.getAttributeForm(), rawLowPc,
 					getCompilationUnit());
 				long highPcOffset = lowPcOffset;
 
-				DWARFNumericAttribute highPc =
-					getAttribute(DW_AT_high_pc, DWARFNumericAttribute.class);
-				if (highPc != null) {
+				DWARFAttribute highPc = findAttribute(DW_AT_high_pc);
+				if (highPc != null &&
+					highPc.getValue() instanceof DWARFNumericAttribute highPcAttrVal) {
 					if (highPc.getAttributeForm() == DWARFForm.DW_FORM_addr) {
-						highPcOffset = highPc.getUnsignedValue();
+						highPcOffset = highPcAttrVal.getUnsignedValue();
 					}
 					else {
-						highPcOffset = highPc.getUnsignedValue();
+						highPcOffset = highPcAttrVal.getUnsignedValue();
 						highPcOffset = lowPcOffset + highPcOffset;
 					}
 				}
@@ -795,23 +798,6 @@ public class DIEAggregate {
 			}
 		}
 		return -1;
-	}
-
-	/**
-	 * A simple class used by findAttribute() to return the found attribute, along with
-	 * the DIE it was found in, and the DWARFForm type of the raw attribute.
-	 * 
-	 * @param attr attribute value 
-	 * @param die  DIE the value was found in
-	 */
-	record FoundAttribute(DWARFAttributeValue attr, DebugInfoEntry die) {
-		<T extends DWARFAttributeValue> T getValue(Class<T> clazz) {
-			if (attr != null && clazz.isAssignableFrom(attr.getClass())) {
-				return clazz.cast(attr);
-			}
-			return null;
-		}
-
 	}
 
 	@Override

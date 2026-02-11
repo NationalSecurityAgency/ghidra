@@ -25,7 +25,7 @@ import ghidra.app.util.bin.format.dwarf.attribs.*;
 /**
  * Represents an identifier of a value in a DWARFLine/DWARFFile object.
  * <p>
- * Similar to the {@link DWARFAttribute} enum, both are identifiers of an attribute value 
+ * Similar to the {@link DWARFAttributeId} enum, both are identifiers of an attribute value 
  * that is serialized by a DWARFForm.
  * <p>
  * Users of this enum should be tolerant of unknown values.

@@ -8,6 +8,7 @@ import java.util.*;
 import ghidra.lisa.pcode.locations.InstLocation;
 import ghidra.lisa.pcode.locations.PcodeLocation;
 import ghidra.pcode.exec.BytesPcodeArithmetic;
+import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFormatException;
@@ -134,13 +135,16 @@ public class PcodeDataflowConstantPropagation implements
 		PcodeOp op = ploc.op;
 
 		if (e instanceof UnaryExpression unary) {
-			Long i = eval(unary.getExpression(), pp, domain);
-
-			if (i == null) {
-				return i;
+			OpBehavior opBehavior = OpBehaviorFactory.getOpBehavior(op.getOpcode());
+			if (opBehavior instanceof SpecialOpBehavior) {
+				// TODO
+				return null;
+			}
+			Long exp = eval(unary.getExpression(), pp, domain);
+			if (exp == null) {
+				return exp;
 			}
 
-			Long exp = eval(unary.getExpression(), pp, domain);
 			byte[] bytes = arithmetic.unaryOp(op.getOpcode(), op.getOutput().getSize(),
 				op.getInput(0).getSize(), getValue(exp, op.getInput(0).getSize()));
 			return Utils.bytesToLong(bytes, op.getOutput().getSize(), isBigEndian);

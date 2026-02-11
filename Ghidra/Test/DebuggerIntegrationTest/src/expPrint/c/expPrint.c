@@ -21,7 +21,6 @@
 #define DLLEXPORT __declspec(dllexport)
 #else
 #define DLLEXPORT
-#define OutputDebugString(out) puts(out)
 #endif
 
 DLLEXPORT volatile char overwrite[] = "Hello, World!";
@@ -36,19 +35,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 int DLLEXPORT main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 	wrapputs(overwrite);
-	return overwrite[0];
+	return overwrite[0]; 
 }
 
 int DLLEXPORT wrapputs(volatile char* output) {
 	OutputDebugString(output);
 }
 #else
+int wrapputs(volatile char* output) {
+	puts(output);
+}
+
 int main(int argc, char** output) {
 	wrapputs(overwrite);
 	return overwrite[0];
-}
-
-int wrapputs(volatile char* output) {
-	puts(output);
 }
 #endif

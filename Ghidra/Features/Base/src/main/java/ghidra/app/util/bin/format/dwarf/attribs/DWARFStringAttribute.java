@@ -20,11 +20,10 @@ import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 /**
  * DWARF string attribute.
  */
-public class DWARFStringAttribute extends DWARFAttributeValue {
+public class DWARFStringAttribute implements DWARFAttributeValue {
 	protected String value;
 
-	public DWARFStringAttribute(String value, DWARFAttributeDef<?> def) {
-		super(def);
+	public DWARFStringAttribute(String value) {
 		this.value = value;
 	}
 
@@ -33,12 +32,13 @@ public class DWARFStringAttribute extends DWARFAttributeValue {
 	}
 
 	@Override
-	public String getValueString(DWARFCompilationUnit cu) {
-		return getValue(cu);
+	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
+		return "\"%s\"".formatted(getValue(cu));
 	}
 
 	@Override
 	public String toString() {
-		return "%s : %s = \"%s\"".formatted(getAttributeName(), getAttributeForm(), value);
+		return value;
 	}
+
 }

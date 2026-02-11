@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public class DWARFSectionProviderFactory {
 	 * The resulting {@link DWARFSectionProvider} is {@link Closeable} and it is the caller's
 	 * responsibility to ensure that the object is closed when done. 
 	 * 
-	 * @param program
+	 * @param program {@link Program}
 	 * @param monitor {@link TaskMonitor}
 	 * @return {@link DWARFSectionProvider} that should be closed by the caller or NULL if no
 	 * section provider types match the specified program.

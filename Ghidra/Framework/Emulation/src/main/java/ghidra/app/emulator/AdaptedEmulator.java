@@ -89,7 +89,7 @@ public class AdaptedEmulator implements Emulator {
 
 		@Override
 		protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
-			return new AdaptedPcodeUseropLibrary();
+			return new AdaptedPcodeUseropLibrary().compose(super.createUseropLibrary());
 		}
 	}
 

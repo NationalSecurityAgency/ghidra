@@ -44,8 +44,9 @@ public class PcodeBinaryExpression extends it.unive.lisa.program.cfg.statement.B
 			case PcodeOp.BOOL_OR -> LogicalOr.INSTANCE;
 			case PcodeOp.INT_EQUAL, PcodeOp.FLOAT_EQUAL -> ComparisonEq.INSTANCE;
 			case PcodeOp.INT_NOTEQUAL, PcodeOp.FLOAT_NOTEQUAL -> ComparisonNe.INSTANCE;
-			case PcodeOp.INT_LESSEQUAL, PcodeOp.FLOAT_LESSEQUAL -> ComparisonLe.INSTANCE;
-			case PcodeOp.INT_LESS, PcodeOp.FLOAT_LESS -> ComparisonLt.INSTANCE;
+			case PcodeOp.INT_LESSEQUAL, PcodeOp.INT_SLESSEQUAL, PcodeOp.FLOAT_LESSEQUAL -> ComparisonLe.INSTANCE;
+			// NB: Some chance we're going to get burned by including SBORROW here
+			case PcodeOp.INT_LESS, PcodeOp.INT_SLESS, PcodeOp.INT_SBORROW, PcodeOp.FLOAT_LESS -> ComparisonLt.INSTANCE;
 			default -> new PcodeBinaryOperator(ctx.op);
 		};
 	}
@@ -70,8 +71,12 @@ public class PcodeBinaryExpression extends it.unive.lisa.program.cfg.statement.B
 				getStaticType(),
 				left,
 				right,
-				operator,
+				getOperator(),
 				getLocation()),
 			this);
+	}
+
+	public BinaryOperator getOperator() {
+		return operator;
 	}
 }

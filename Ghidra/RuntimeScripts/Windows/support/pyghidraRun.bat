@@ -22,8 +22,11 @@ setlocal enabledelayedexpansion
 set DOUBLE_CLICKED=n
 for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLICKED=y
 
-:: Add optional JVM args inside the quotes
-set VMARG_LIST=-Dsun.java2d.dpiaware=true
+:: Since JPype doesn't seem to pick up JDK_JAVA_OPTIONS automatically, include it ourselves
+set VMARG_LIST=%JDK_JAVA_OPTIONS%
+
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%VMARG_LIST% %GHIDRA_JAVA_OPTIONS% %PYGHIDRA_JAVA_OPTIONS% -Dsun.java2d.dpiaware=true
 
 :: Make sure Python3 is installed
 set PYTHON=py
