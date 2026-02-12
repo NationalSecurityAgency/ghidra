@@ -386,18 +386,30 @@ public class DockableHeader extends GenericHeader
 		dragCursorManager.setCursor(event, c);
 	}
 
-	// drag-n-drop ALT key modifier flag
-	public boolean isAltModifierDown() {
+	/**
+	 * drag-n-drop ALT key modifier flag.
+	 *
+	 * @return TRUE is the key modifier is pressed, otherwise FALSE
+	 */
+	public static boolean isAltModifierDown() {
 		return ALT_DOWN;
 	}
 
-	// drag-n-drop CTRL key modifier flag
-	public boolean isCtrlModifierDown() {
+	/**
+	 * drag-n-drop CTRL key modifier flag.
+	 *
+	 * @return TRUE is the key modifier is pressed, otherwise FALSE
+	 */
+	public static boolean isCtrlModifierDown() {
 		return CTRL_DOWN;
 	}
 
-	// drag-n-drop SHIFT key modifier flag
-	public boolean isShiftModifierDown() {
+	/**
+	 * drag-n-drop SHIFT key modifier flag.
+	 *
+	 * @return TRUE is the key modifier is pressed, otherwise FALSE
+	 */
+	public static boolean isShiftModifierDown() {
 		return SHIFT_DOWN;
 	}
 

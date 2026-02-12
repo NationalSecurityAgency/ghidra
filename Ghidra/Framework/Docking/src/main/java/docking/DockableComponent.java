@@ -346,7 +346,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			// FIXME: This is a WORKAROUND to allow the interruption of a drag-N-drop
 			// operation while outside of a drop zone.  The drop should be considered
 			// invalid, unless the CTRL key modifier is kept pressed.
-			DROP_CODE = header.isCtrlModifierDown() ? DropCode.WINDOW : DropCode.INVALID;
+			DROP_CODE = DockableHeader.isCtrlModifierDown() ? DropCode.WINDOW : DropCode.INVALID;
 			DROP_CODE_SET = true;
 			DRAGGED_OVER_INFO = null;
 		}
@@ -443,7 +443,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		// togglable and disabled by default as a prevention to an involuntary
 		// action when a drag-N-drop operation is interrupted, by either a key
 		// press (ESC), or by another mouse button clicked.
-		if (header.isCtrlModifierDown()) {
+		if (DockableHeader.isCtrlModifierDown()) {
 			DROP_CODE = DropCode.WINDOW;
 			return;
 		}
@@ -451,7 +451,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		// Pressing the SHIFT key modifier, temporarily invalidates the action
 		// expected by a drag-N-drop operation in progress.  Releasing the key
 		// should resume the normal processing.
-		if (header.isShiftModifierDown()) {
+		if (DockableHeader.isShiftModifierDown()) {
 			DROP_CODE = DropCode.INVALID;
 			return;
 		}
