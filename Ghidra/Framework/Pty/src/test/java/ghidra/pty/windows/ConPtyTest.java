@@ -108,11 +108,29 @@ public class ConPtyTest extends AbstractPtyTest {
 				"echo This line is cleary much, much, much, much, much, much, much, much, much " +
 					" longer than 80 characters");
 			writer.flush();
-			String line;
-			do {
-				line = reader.readLine();
-			}
-			while (!"test".equals(line));
+			
+			// set up reading cmd output on a thread since "readLine" is blocking
+			Thread t = new Thread(() -> {
+				String line;
+				try {
+					do {
+						line = reader.readLine();
+					}
+					while (!"test".equals(line));	
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			});
+			
+			t.setDaemon(true);
+			t.start();
+			
+			writer.println("exit 3");
+			writer.flush();
+
+			assertEquals(3, gdb.waitExited());
+			assertFalse("Content read successfully from the cmd", t.isAlive());
 		}
 	}
 
