@@ -68,6 +68,8 @@ class ProcessState(object):
             commands.put_threads()
             self.threads = False
         thread = util.selected_thread()
+        if not thread.GetProcess().is_alive:
+            return
         if thread is not None:
             if first or thread.GetThreadID() not in self.visited:
                 commands.put_frames()
@@ -294,11 +296,14 @@ class EventThread(threading.Thread):
         if not rc:
             print("add listener for process failed")
 
-        # Not sure what effect this logic has
-        #cli.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        #target.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        #proc.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-
+        rc = listener.StartListeningForEventClass(
+            util.get_debugger(), lldb.SBTarget.GetBroadcasterClassName(), ALL_EVENTS)
+        if not rc:
+            print("add listener for targets failed")
+        rc = listener.StartListeningForEventClass(
+            util.get_debugger(), lldb.SBProcess.GetBroadcasterClassName(), ALL_EVENTS)
+        if not rc:
+            print("add listener for processes failed")
         rc = listener.StartListeningForEventClass(
             util.get_debugger(), lldb.SBThread.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
@@ -324,8 +329,6 @@ class EventThread(threading.Thread):
                             print(e)
                     event_recvd = True
             proc = util.get_process()
-            if proc is not None and not proc.is_alive:
-                break
         return
 
 
@@ -493,8 +496,8 @@ def on_stop(event: lldb.SBEvent) -> bool:
     proc = lldb.SBProcess.GetProcessFromEvent(
         event) if event is not None else util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        print("not in state")
-        return False
+        enable_current_process()
+        commands.put_processes()
     trace = commands.STATE.trace
     if trace is None:
         print("no trace")
