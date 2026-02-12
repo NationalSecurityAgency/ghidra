@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import org.jdesktop.animation.timing.Animator;
@@ -391,6 +392,7 @@ public class DockableHeader extends GenericHeader
 		else {
 			setStackSection(DockableComponent.SOURCE_INFO);
 		}
+		highlightStackSection();
 	}
 
 	@Override
@@ -404,6 +406,7 @@ public class DockableHeader extends GenericHeader
 		else {
 			setStackSection(DockableComponent.SOURCE_INFO);
 		}
+		highlightStackSection();
 	}
 
 	/**
@@ -451,10 +454,37 @@ public class DockableHeader extends GenericHeader
 
 	/**
 	 * Resets the current state of the stack section which was dragged
-	 * around.
+	 * around, removing the highlights from tabs.
 	 */
 	private static void resetStackSection() {
 		DockableComponent.SOURCE_SECTION_INFO = null;
+		highlightStackSection();
+	}
+
+	/**
+	 * Repaints each tab to apply/remove highlights depending upon the
+	 * current state of the stack section dragged around.
+	 */
+	private static void highlightStackSection() {
+
+		// Get the source component.
+		DockableComponent comp = DockableComponent.SOURCE_INFO.getComponent();
+
+		// Loop over each tab of the tabbed pane associated
+		// with the source component to process highlights.
+		if (comp.getParent() instanceof JTabbedPane) {
+			JTabbedPane tabbedPane = (JTabbedPane) comp.getParent();
+			synchronized(tabbedPane.getTreeLock()) {
+				for (Component c : tabbedPane.getComponents()) {
+					if (c instanceof DockableComponent) {
+						int tabIndex = tabbedPane.indexOfComponent(c);
+						if (tabIndex != -1) {
+							tabbedPane.getTabComponentAt(tabIndex).repaint();
+						}
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -539,10 +569,12 @@ public class DockableHeader extends GenericHeader
 		ALT_DOWN = SHIFT_DOWN = CTRL_DOWN = false;
 		DockableComponent.DROP_CODE = DropCode.INVALID;
 
-		// Clear the stack section dragged around when
-		// outside of any drop zone.
+		// Clear the stack section dragged around, and
+		// reset all tabs highlights, while outside of
+		// any drop zone.
 		if (confirmedDragExit) {
 			setStackSection(DockableComponent.SOURCE_INFO);
+			highlightStackSection();
 		}
 
 		// Check if any key modifier is being pressed.
@@ -557,6 +589,10 @@ public class DockableHeader extends GenericHeader
 			// placeholder is part of, as to be moved.
 			setStackSection(DockableComponent.SOURCE_INFO,
 				DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+
+			// Highlight all tabs part of the stack section
+			// and turn off the unselected.
+			highlightStackSection();
 		}
 		// NOTE: While the ALT key is pressed, SHIFT should
 		// indicate a right-to-left stack selection, from a
