@@ -5565,6 +5565,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleTransformCpool("analysis") );
 	actprop->addRule( new RulePropagateCopy("analysis") );
 	actprop->addRule( new RuleZextEliminate("analysis") );
+	actprop->addRule( new RuleExtLzcount("analysis") );
 	actprop->addRule( new RuleSlessToLess("analysis") );
 	actprop->addRule( new RuleZextSless("analysis") );
 	actprop->addRule( new RuleBitUndistribute("analysis") );
