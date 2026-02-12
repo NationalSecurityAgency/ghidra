@@ -1171,6 +1171,116 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
+	 * Moves a stack section of placeholders in a new window, that will
+	 * be anchored at the given point.
+	 *
+	 * @param stackSection the stack section of placeholders to be moved
+	 * @param selected the placeholder that will be focused in the stack
+	 * @param p the location at which a new stack window will be created
+	 */
+	void moveStackSection(List<ComponentPlaceholder> stackSection, ComponentPlaceholder selected,
+			Point p) {
+
+		// Work over a copy of the stack section argument.
+		List<ComponentPlaceholder> stack = new ArrayList<>(stackSection);
+
+		// Get the first placeholder of the stack section.
+		ComponentPlaceholder source = stack.getFirst();
+		ComponentNode sourceNode = source.getNode();
+
+		// Move the first placeholder got in a new window.
+		stack.removeFirst();
+		sourceNode.remove(source);
+		root.addToNewWindow(source, p);
+		ComponentNode destinationNode = source.getNode();
+
+		// Add the rest of placeholders to the new window.
+		for (ComponentPlaceholder placeholder : stack) {
+			sourceNode.remove(placeholder);
+			destinationNode.add(placeholder);
+		}
+
+		// Force the focus over the selected placeholder.
+		setNextFocusPlaceholder(selected);
+		scheduleUpdate();
+	}
+
+	/**
+	 * Moves a stack section of placeholders to a new docked location,
+	 * in the space specified by the given destination.
+	 *
+	 * @param stackSection the stack section of placeholders to be moved
+	 * @param selected the placeholder that will be focused in the stack
+	 * @param destination the placeholder indicating the docked location
+	 * @param windowPosition a code specifying the docking relationships
+	 */
+	void moveStackSection(List<ComponentPlaceholder> stackSection, ComponentPlaceholder selected,
+			ComponentPlaceholder destination, WindowPosition windowPosition) {
+		List<ComponentPlaceholder> stack = new ArrayList<>(stackSection);
+		ComponentPlaceholder source = stack.getFirst();
+		ComponentNode sourceNode = source.getNode();
+		if (destination != null) {
+			ComponentNode destinationNode = destination.getNode();
+			if (windowPosition == WindowPosition.STACK) {
+				for (ComponentPlaceholder placeholder : stack) {
+					sourceNode.remove(placeholder);
+					destinationNode.add(placeholder);
+				}
+			}
+			else if (windowPosition == WindowPosition.PUSH ||
+					windowPosition == WindowPosition.SHIFT_LEFT) {
+				for (ComponentPlaceholder placeholder : stack) {
+					// Don't remove the source placeholder from its own node
+					// outside of push(), since that will change the indexes
+					// of components, preventing push() to properly shift an
+					// item position when both source and destination are in
+					// the same node.  push() itself will handle the removal
+					// of the source placeholder from its own node.
+					destinationNode.push(placeholder, destination);
+				}
+			}
+			else if (windowPosition == WindowPosition.SHIFT_RIGHT) {
+				for (ComponentPlaceholder placeholder : stack.reversed()) {
+					// Reversing the remaining placeholders order before the
+					// push, is to respect the original stack positioning in
+					// the context of the docking relationships specified.
+					destinationNode.push(placeholder, destination);
+				}
+			}
+			else if (windowPosition == WindowPosition.PREPEND) {
+				for (ComponentPlaceholder placeholder : stack.reversed()) {
+					// Effectively, move the source placeholder at the start
+					// of the destination node.
+					destinationNode.push(placeholder, null);
+				}
+			}
+			else {
+				stack.removeFirst();
+				sourceNode.remove(source);
+				destinationNode.split(source, windowPosition);
+				ComponentNode newNode = source.getNode();
+				for (ComponentPlaceholder placeholder : stack) {
+					sourceNode.remove(placeholder);
+					newNode.add(placeholder);
+				}
+			}
+		}
+		else {
+			stack.removeFirst();
+			sourceNode.remove(source);
+			root.add(source, WindowPosition.RIGHT);
+			ComponentNode newNode = source.getNode();
+			for (ComponentPlaceholder placeholder : stack) {
+				sourceNode.remove(placeholder);
+				newNode.add(placeholder);
+			}
+		}
+
+		setNextFocusPlaceholder(selected);
+		scheduleUpdate();
+	}
+
+	/**
 	 * Moves the component associated with the given source placeholder object from its current
 	 * docked location to its own window that will be anchored at the given point.
 	 *

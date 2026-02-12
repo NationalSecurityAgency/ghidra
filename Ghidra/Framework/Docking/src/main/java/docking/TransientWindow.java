@@ -29,12 +29,15 @@ import javax.swing.JWindow;
  *
  * Once activated, a tool tip will follow the mouse cursor across all the screen.
  *
- * The usage is pretty basic:
+ * To automatically update its location at a specific polling rate:
  *
  * TransientWindow.activateTransientWindow("Title", pollingRate);
  * TransientWindow.deactivateTransientWindow();
  *
- * To change parameters, deactivate the transient window, then create a new one.
+ * To change parameters:
+ *
+ * TransientWindow.updateTransientWindow("Title");
+ * TransientWindow.updateTransientWindow(pollingRate);
  *
  * To manually control the tool tip:
  *
@@ -44,6 +47,7 @@ import javax.swing.JWindow;
  */
 public class TransientWindow {
 
+	private static JToolTip transientTip;
 	private static JWindow transientWindow;
 
 	private static int defaultPollingRate = 20;
@@ -53,7 +57,7 @@ public class TransientWindow {
 			return;
 		}
 
-		JToolTip transientTip = new JToolTip();
+		transientTip = new JToolTip();
 		transientTip.setBorder(BorderFactory.createLineBorder(Color.YELLOW));
 		transientTip.setTipText(title);
 		transientTip.setVisible(true);
@@ -88,6 +92,18 @@ public class TransientWindow {
 		transientWindow.setLocation(p.x + 16, p.y + 16);
 	}
 
+	public synchronized static void updateTransientWindow(String title) {
+		if (transientWindow == null || transientTip == null) {
+			return;
+		}
+		transientTip.setTipText(title);
+		transientWindow.pack();
+	}
+
+	public synchronized static void updateTransientWindow(int pollingRate) {
+		defaultPollingRate = pollingRate;
+	}
+
 	public static void showTransientWindow(String title) {
 		createTransientWindow(title);
 		positionTransientWindow();
@@ -100,6 +116,7 @@ public class TransientWindow {
 		}
 		transientWindow.setVisible(false);
 		transientWindow = null;
+		transientTip = null;
 	}
 
 	public static synchronized void activateTransientWindow(String title, int pollingRate) {

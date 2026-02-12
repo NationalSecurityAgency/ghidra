@@ -670,6 +670,22 @@ class ComponentNode extends Node {
 		return null;
 	}
 
+	/*
+	 * Returns the list of placeholders in this node.
+	 */
+	List<ComponentPlaceholder> getPlaceholders() {
+		return new ArrayList<>(windowPlaceholders);
+	}
+
+	/*
+	 * Returns the list of active placeholders in this node.
+	 */
+	List<ComponentPlaceholder> getActivePlaceholders() {
+		List<ComponentPlaceholder> activeComponents = new ArrayList<>();
+		populateActiveComponents(activeComponents);
+		return activeComponents;
+	}
+
 	@Override
 	WindowNode getTopLevelNode() {
 		if (parent != null) {

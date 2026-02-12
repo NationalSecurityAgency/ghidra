@@ -18,6 +18,7 @@ package docking;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -41,6 +42,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	public static ComponentPlaceholder TARGET_INFO;
 	public static ComponentPlaceholder DRAGGED_OVER_INFO;
 	public static ComponentPlaceholder SOURCE_INFO;
+	public static List<ComponentPlaceholder> SOURCE_SECTION_INFO;
 	public static boolean DROP_CODE_SET;
 
 	// FIXME: This is a WORKAROUND to guess if a drag-N-drop operation was
@@ -449,9 +451,9 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		}
 
 		// Pressing the SHIFT key modifier, temporarily invalidates the action
-		// expected by a drag-N-drop operation in progress.  Releasing the key
-		// should resume the normal processing.
-		if (DockableHeader.isShiftModifierDown()) {
+		// expected by a drag-N-drop operation in progress, unless the ALT key
+		// is pressed.  Releasing the key should resume the normal processing.
+		if (DockableHeader.isShiftModifierDown() && !DockableHeader.isAltModifierDown()) {
 			DROP_CODE = DropCode.INVALID;
 			return;
 		}

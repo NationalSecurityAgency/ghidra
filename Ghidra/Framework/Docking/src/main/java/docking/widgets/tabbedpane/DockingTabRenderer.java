@@ -139,7 +139,7 @@ public class DockingTabRenderer extends JPanel {
 
 	public void installDragSource(DragGestureListener dgl) {
 		dragSource = new DragSource();
-		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_LINK, dgl);
+		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_MOVE, dgl);
 		dragSource.addDragSourceMotionListener((DragSourceMotionListener) dgl);
 	}
 

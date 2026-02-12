@@ -69,6 +69,8 @@ enum DropCode {
 
 	public WindowPosition getWindowPosition() {
 		switch (this) {
+			case WINDOW:
+				return WindowPosition.WINDOW;
 			case BOTTOM:
 				return WindowPosition.BOTTOM;
 			case LEFT:
