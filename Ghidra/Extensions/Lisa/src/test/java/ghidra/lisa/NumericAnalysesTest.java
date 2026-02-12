@@ -49,7 +49,7 @@ public class NumericAnalysesTest extends AbstractLisaTest {
 		lisaOptions.setValueDomain(ValueDomainOption.VALUE_POWERSET);
 		lisaOptions.setDescendingPhaseOption(DescendingPhaseOption.GLB);
 		runTest();
-		equalsAssert(valueOf("0040000b:0:register:00000000"), "[-Inf, +Inf]");   //SUB AX, 0x5
+		equalsAssert(valueOf("0040000b:0:register:00000000"), "[4, 4]");  		 //SUB AX, 0x5
 		equalsAssert(valueOf("0040000f:0:register:00000000"), "[-Inf, +Inf]");   //MOV RDX, RAX
 		equalsAssert(valueOf("00400012:0:register:00000010"), "[-Inf, +Inf]");   //RET
 	}
@@ -104,8 +104,8 @@ public class NumericAnalysesTest extends AbstractLisaTest {
 		runTest();
 		equalsAssert(valueOf("0040000e:37:register:00000000"), null);
 		equalsAssert(valueOf("00400010:13:register:00000000"), "[-Inf, +Inf]");
-		equalsAssert(valueOf("00400018:47:register:00000000"), "[0, +Inf]");  // [3, +Inf] optimized out
-		equalsAssert(valueOf("00400012:46:register:00000000"), "[-Inf, 2]");
+		equalsAssert(valueOf("00400018:41:register:00000000"), "[0, +Inf]");  // [3, +Inf] optimized out
+		equalsAssert(valueOf("00400012:18:register:00000000"), "[-Inf, 2]");
 	}
 
 	@Category(AbstractLisaTest.class)
