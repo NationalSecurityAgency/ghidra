@@ -30,7 +30,7 @@ public class MiscAnalysesTest extends AbstractLisaTest {
 		lisaOptions.setInterproceduralOption(InterproceduralOption.CONTEXT);
 		runTest();
 		equalsAssert(valueOf("0040000b:0:register:00000000"), "=");    //SUB AX, 0x5
-		equalsAssert(valueOf("0040000b:3:register:00000000"), "≠");    //SUB AX, 0x5
+		equalsAssert(valueOf("0040000b:3:register:00000000"), "#TOP#");    //SUB AX, 0x5
 		equalsAssert(valueOf("0040000f:0:register:00000000"), "=");    //MOV RDX, RAX
 		equalsAssert(valueOf("0040000f:0:register:00000010"), null);   //MOV RDX, RAX
 		equalsAssert(valueOf("00400012:0:register:00000010"), "=");    //RET
