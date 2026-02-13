@@ -15,17 +15,14 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.*;
-
-import javax.swing.*;
-import javax.swing.text.View;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextRenderer;
 import docking.widgets.table.GTableCellRenderingData;
-import generic.theme.GThemeDefaults.Colors;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -33,7 +30,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.layout.AbstractLayoutManager;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.AddressPreviewTableModel;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
@@ -237,8 +233,14 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 
 		private class ContextCellRenderer extends AbstractGhidraColumnRenderer<LocationReference> {
 
-			private JPanel htmlContainer = new JPanel(new HtmlTruncatingLayout());
-			private JLabel ellipsisLabel = new JLabel("...");
+			private SearchLocationContextRenderer contextRenderer =
+				new SearchLocationContextRenderer() {
+					@Override
+					protected SearchLocationContext getContext(GTableCellRenderingData d) {
+						LocationReference lr = (LocationReference) d.getRowObject();
+						return lr.getContext();
+					}
+				};
 
 			ContextCellRenderer() {
 				setHTMLRenderingEnabled(true);
@@ -247,9 +249,6 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-				// initialize
-				super.getTableCellRendererComponent(data);
-
 				LocationReference rowObject = (LocationReference) data.getRowObject();
 				Callback offcutCallback = () -> {
 					boolean isSelected = data.isSelected();
@@ -257,29 +256,13 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 				};
 				String refTypeString = getRefTypeString(rowObject, offcutCallback);
 				if (refTypeString != null) {
+					super.getTableCellRendererComponent(data);
 					setText(refTypeString);
 					return this;
 				}
 
-				/*
-				 	At this point we have html context.  Build a renderer that is a panel with 2
-				 	children: the html label (this renderer object) and an ellipsis label that will
-				 	be visible as needed. 
-				 */
 				SearchLocationContext context = rowObject.getContext();
-				String html = context.getBoldMatchingText();
-				setText(html);
-
-				ellipsisLabel.setOpaque(true);
-				ellipsisLabel.setForeground(Colors.FOREGROUND);
-				ellipsisLabel.setBackground(getBackground());
-
-				htmlContainer.setBackground(getBackground());
-				htmlContainer.removeAll();
-				htmlContainer.add(this);
-				htmlContainer.add(ellipsisLabel);
-
-				return htmlContainer;
+				return contextRenderer.renderHtmlContext(data, context);
 			}
 
 			@Override
@@ -292,67 +275,6 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 				SearchLocationContext context = rowObject.getContext();
 				return context.getPlainText();
 			}
-		}
-
-		/**
-		 * A layout manager that positions 2 labels: a leading label with html and a trailing label
-		 * with an ellipsis, which may not be visible.  JLabels rendering html will not show an
-		 * ellipsis when clipped.   We use these 2 labels here to show when the leading html label's
-		 * text is clipped.
-		 */
-		private class HtmlTruncatingLayout extends AbstractLayoutManager {
-
-			@Override
-			public Dimension preferredLayoutSize(Container parent) {
-
-				Dimension d = new Dimension();
-				int n = parent.getComponentCount();
-				for (int i = 0; i < n; i++) {
-					Component c = parent.getComponent(i);
-					Dimension cd = c.getPreferredSize();
-					d.width += cd.width;
-					d.height = Math.max(d.height, cd.height);
-				}
-
-				Insets insets = parent.getInsets();
-				d.width += insets.left + insets.right;
-				d.height += insets.top + insets.bottom;
-				return d;
-			}
-
-			@Override
-			public void layoutContainer(Container parent) {
-				// Assumption: the leading component is an html view; the trailing component is a
-				// label with an ellipsis
-
-				JComponent c1 = (JComponent) parent.getComponent(0);
-				Dimension d = parent.getSize();
-				Insets insets = parent.getInsets();
-				int width = d.width - insets.left - insets.right;
-
-				View v = (View) c1.getClientProperty("html");
-				Insets i = c1.getInsets();
-				int availableWidth = width - (i.left + i.right);
-				int htmlw = (int) v.getPreferredSpan(View.X_AXIS);
-
-				JLabel c2 = (JLabel) parent.getComponent(1);
-				Dimension c2d = c2.getPreferredSize();
-				boolean isClipped = htmlw > availableWidth && width != 0;
-				if (isClipped) {
-					availableWidth -= c2d.width; // save room for ellipsis
-					int c2x = availableWidth;
-					int c2y = insets.top;
-					c2.setBounds(c2x, c2y, c2d.width, c2d.height);
-				}
-
-				c2.setVisible(isClipped);
-
-				int c1x = insets.left;
-				int c1y = insets.top;
-				int cyh = d.height - (i.top + i.bottom);
-				c1.setBounds(c1x, c1y, availableWidth, cyh);
-			}
-
 		}
 
 	}

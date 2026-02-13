@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextRenderer;
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -30,7 +31,6 @@ import ghidra.program.model.listing.*;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraProgramTableModel;
-import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 import ghidra.util.table.field.FunctionNameTableColumn;
@@ -164,37 +164,27 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 	}
 
 	private class ContextCellRenderer
-			extends AbstractGhidraColumnRenderer<SearchLocationContext> {
+			extends SearchLocationContextRenderer {
 
-		{
-			// the context uses html
-			setHTMLRenderingEnabled(true);
+		@Override
+		protected SearchLocationContext getContext(GTableCellRenderingData d) {
+			TextMatch m = (TextMatch) d.getRowObject();
+			return m.getContext();
 		}
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-			// initialize
-			super.getTableCellRendererComponent(data);
-
 			TextMatch match = (TextMatch) data.getRowObject();
 			SearchLocationContext context = match.getContext();
-			String text;
 			if (match.isMultiLine()) {
 				// multi-line matches create visual noise when showing colors, as of much of the 
 				// entire line matches
-				text = context.getPlainText();
+				return renderPlainContext(data, context);
 			}
-			else {
-				text = context.getBoldMatchingText();
-			}
-			setText(text);
-			return this;
+
+			return renderHtmlContext(data, context);
 		}
 
-		@Override
-		public String getFilterString(SearchLocationContext context, Settings settings) {
-			return context.getPlainText();
-		}
 	}
 }

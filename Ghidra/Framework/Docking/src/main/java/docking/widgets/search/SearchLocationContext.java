@@ -26,7 +26,7 @@ import ghidra.util.HTMLUtilities;
  *
  * @see SearchLocationContextBuilder
  */
-public class SearchLocationContext {
+public class SearchLocationContext implements Comparable<SearchLocationContext> {
 
 	private static final String EMBOLDEN_START =
 		"<span style=\"background-color: #a3e4d7; color: black;\"><b><font size=4>";
@@ -88,11 +88,27 @@ public class SearchLocationContext {
 	}
 
 	/**
-	 * The full plain text of this context.
+	 * The full plain text of this context. Any non-negative line number will be prepended to the 
+	 * text.
 	 * @return the text
 	 */
 	public String getPlainText() {
-		String lnText = getLineNumberText(false);
+		return getPlainText(true);
+	}
+
+	/**
+	 * Returns the plain text of this context, without html markup. 
+	 * 
+	 * @param includeLineNumber if true, any non-negative line number will be prepended to the text. 
+	 * @return the text
+	 */
+	public String getPlainText(boolean includeLineNumber) {
+
+		String lnText = "";
+		if (includeLineNumber) {
+			lnText = getLineNumberText(false);
+		}
+
 		StringBuilder buffy = new StringBuilder(lnText);
 		for (Part part : parts) {
 			buffy.append(part.getText());
@@ -124,12 +140,33 @@ public class SearchLocationContext {
 	}
 
 	/**
-	 * Returns HTML text for this context.  Any matching items embedded in the returned string will
-	 * be bold.
+	 * Returns HTML text for this context.  Any matching items embedded in the returned string will 
+	 * be bold.  Any non-negative line number will be prepended to the text.
 	 * @return the text
 	 */
 	public String getBoldMatchingText() {
 		String lnText = getLineNumberText(true);
+		StringBuilder buffy = new StringBuilder(lnText);
+		for (Part part : parts) {
+			buffy.append(part.getHtmlText());
+		}
+		return HTMLUtilities.HTML + buffy.toString();
+	}
+
+	/**
+	 * Returns HTML text for this context.  Any matching items embedded in the returned string will 
+	 * be bold.
+	 * 
+	 * @param includeLineNumber if true, any non-negative line number will be prepended to the text.
+	 * @return the text
+	 */
+	public String getBoldMatchingText(boolean includeLineNumber) {
+
+		String lnText = "";
+		if (includeLineNumber) {
+			lnText = getLineNumberText(false);
+		}
+
 		StringBuilder buffy = new StringBuilder(lnText);
 		for (Part part : parts) {
 			buffy.append(part.getHtmlText());
@@ -166,10 +203,55 @@ public class SearchLocationContext {
 		return getPlainText();
 	}
 
+	@Override
+	public int compareTo(SearchLocationContext other) {
+
+		// Use line numbers when both clients have them, as string integer comparisons do not 
+		// naturally sort by integer value.
+		int l1 = getLineNumber();
+		int l2 = other.getLineNumber();
+		int result = Integer.compare(l1, l2);
+		if (result != 0) {
+			return result;
+		}
+
+		// Note: the debug text will call out the portion of the line that matches.  For 
+		// multiple matches on the same line, we will have multiple rows.   In that case, 
+		// we need the match markup to help sort those lines.
+		String t1 = getDebugText();
+		String t2 = other.getDebugText();
+		return t1.compareTo(t2);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(lineNumber, parts);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		SearchLocationContext other = (SearchLocationContext) obj;
+		return lineNumber == other.lineNumber && Objects.equals(parts, other.parts);
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
 	/**
 	 * A class that represents one or more characters within the full text of this context class
 	 */
 	static abstract class Part {
+
 		protected String text;
 
 		Part(String text) {
@@ -187,6 +269,26 @@ public class SearchLocationContext {
 		static String fixBreakingSpaces(String s) {
 			String updated = s.replaceAll("\\s", HTMLUtilities.HTML_SPACE);
 			return updated;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(text);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			Part other = (Part) obj;
+			return Objects.equals(text, other.text);
 		}
 
 		@Override
