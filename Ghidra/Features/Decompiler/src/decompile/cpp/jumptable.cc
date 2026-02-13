@@ -505,10 +505,14 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
   return output;
 }
 
-/// If the Varnode has a restricted range due to masking via INT_AND, the maximum value of this range is returned.
-/// Otherwise, 0 is returned, indicating that the Varnode can take all possible values.
+/// If the Varnode has a restricted range due to masking via INT_AND or by
+/// INT_REM with a constant, or the non-zero mask imposes a maximum value, or
+/// the Varnode is the result of a MULTIEQUAL of varnodes that all have a maximum,
+/// the largest value of this range plus one is returned.
+/// Otherwise, 0 is returned, indicating that the Varnode can take all possible
+/// values.
 /// \param vn is the given Varnode
-/// \return the maximum value or 0
+/// \return one more than the largest value the varnode can take or 0
 uintb JumpBasic::getMaxValue(Varnode *vn)
 
 {
@@ -523,24 +527,28 @@ uintb JumpBasic::getMaxValue(Varnode *vn)
       maxValue = (maxValue + 1) & calc_mask(vn->getSize());
     }
   }
-  else if (op->code() == CPUI_MULTIEQUAL) {	// Its possible the AND is duplicated across multiple blocks
+  else if (op->code() == CPUI_INT_REM) {	// The largest value INT_REM(v, N) can take is N-1. As such, return N.
+    Varnode *constvn = op->getIn(1);
+    if (constvn->isConstant())
+      maxValue = constvn->getOffset();
+  }
+  else if (op->code() == CPUI_MULTIEQUAL) {	// It's possible the AND is duplicated across multiple blocks
     int4 i;
     for(i=0;i<op->numInput();++i) {
       Varnode *subvn = op->getIn(i);
-      if (!subvn->isWritten()) break;
-      PcodeOp *andOp = subvn->getDef();
-      if (andOp->code() != CPUI_INT_AND) break;
-      Varnode *constvn = andOp->getIn(1);
-      if (!constvn->isConstant()) break;
-      if (maxValue < constvn->getOffset())
-	maxValue = constvn->getOffset();
+      uintb submax = getMaxValue(subvn);
+      if (submax == 0) {	// One of the inputs cannot be constrained -> the output cannot be constrained either
+	maxValue = 0;
+	break;
+      }
+      if (maxValue < submax)
+	maxValue = submax;
     }
-    if (i == op->numInput()) {
-      maxValue = coveringmask( maxValue );
-      maxValue = (maxValue + 1) & calc_mask(vn->getSize());
-    }
-    else
-      maxValue = 0;
+  }
+  if (maxValue == 0) {
+    // Try to see if the non-zero-mask can help out. Note that if the nzm has
+    // all bits set, the computed value of 'maxValue' will still be 0.
+    maxValue = (vn->getNZMask() + 1) & calc_mask(vn->getSize());
   }
   return maxValue;
 }
