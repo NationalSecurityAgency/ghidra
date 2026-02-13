@@ -1,0 +1,10 @@
+version
+script import os, ghidralldb
+script if not 'ghidralldb' in locals(): os._exit(253)
+settings set target.default-arch $OPT_ARCH
+target create '$OPT_TARGET_IMG'
+$OPT_TARGET_ARGS
+ghidra trace connect 'localhost:$OPT_REMOTE_PORT'
+ghidra trace start
+ghidra trace sync-enable
+$OPT_START_CMD
