@@ -30,6 +30,7 @@ import ghidra.program.model.pcode.Varnode;
 public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T> {
 	/** The name of the output symbol */
 	String OUT_SYMBOL_NAME = "__op_output";
+	List<Varnode> EMPTY_ARGS = Collections.unmodifiableList(Arrays.asList(new Varnode[] { null }));
 
 	/**
 	 * A factory for building {@link SleighPcodeUseropDefinition}s.
