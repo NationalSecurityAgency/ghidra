@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
@@ -45,6 +45,9 @@ import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.UnsignedIntegerDataType;
+import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
@@ -82,6 +85,9 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createLabel("1001014", "bob");
 		builder.createLabel("1001018", "mySym{0}"); // symbol with braces
 		builder.createLabel("1001022", "mySym\\{0\\}"); // symbol with braces escaped
+
+		Function test_func = builder.createEmptyFunction("test_func", "1002000", 0x10, VoidDataType.dataType);
+		builder.createLocalVariable(test_func, "test_var", UnsignedIntegerDataType.dataType, 10);
 
 		return builder.getProgram();
 	}
@@ -731,6 +737,34 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(spyServiceProvider.programOpened(pathname));
 
 		// Navigation performed by ProgramManager not tested due to use of spyServiceProvider
+	}
+
+	@Test
+	public void testLocalAnnotation_Basic() {
+		String rawComment = "{@local test_func test_var}";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("test_var", display);
+	}
+
+	@Test
+	public void testLocalAnnotation_BasicModify() {
+		String rawComment = "{@local test_func test_var}";
+		String display = CommentUtils.fixupAnnotations(rawComment, program);
+		assertEquals("{@local 01002000 \" AUTO\" a016221}", display);
+	}
+
+	@Test
+	public void testLocalAnnotation_UserMarked() {
+		String rawComment = "{@local test_func \" USER\" a016221}";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("test_var", display);
+	}
+
+	@Test
+	public void testLocalAnnotation_UserMarkedModify() {
+		String rawComment = "{@local test_func \" USER\" a016221}";
+		String display = CommentUtils.fixupAnnotations(rawComment, program);
+		assertEquals("{@local 01002000 \" AUTO\" a016221}", display);
 	}
 
 	@Test
