@@ -670,14 +670,14 @@ class ComponentNode extends Node {
 		return null;
 	}
 
-	/*
+	/**
 	 * Returns the list of placeholders in this node.
 	 */
 	List<ComponentPlaceholder> getPlaceholders() {
 		return new ArrayList<>(windowPlaceholders);
 	}
 
-	/*
+	/**
 	 * Returns the list of active placeholders in this node.
 	 */
 	List<ComponentPlaceholder> getActivePlaceholders() {

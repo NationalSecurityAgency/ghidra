@@ -426,7 +426,7 @@ public class DockableHeader extends GenericHeader
 	}
 
 	/**
-	 * drag-n-drop ALT key modifier flag.
+	 * drag-N-drop ALT key modifier flag.
 	 *
 	 * @return TRUE is the key modifier is pressed, otherwise FALSE
 	 */
@@ -435,7 +435,7 @@ public class DockableHeader extends GenericHeader
 	}
 
 	/**
-	 * drag-n-drop CTRL key modifier flag.
+	 * drag-N-drop CTRL key modifier flag.
 	 *
 	 * @return TRUE is the key modifier is pressed, otherwise FALSE
 	 */
@@ -444,7 +444,7 @@ public class DockableHeader extends GenericHeader
 	}
 
 	/**
-	 * drag-n-drop SHIFT key modifier flag.
+	 * drag-N-drop SHIFT key modifier flag.
 	 *
 	 * @return TRUE is the key modifier is pressed, otherwise FALSE
 	 */
@@ -512,13 +512,16 @@ public class DockableHeader extends GenericHeader
 
 		// The hovered placeholder has index -1, if
 		// in another window space than the source.
+		// Otherwise, it could also be the index of
+		// the currently focused placeholder, while
+		// hovering the header or content space.
 		int overIndex = placeholders.indexOf(destination);
 
 		if (selectLeftSide) {
 			// If the hovered placeholder is on the
 			// same window space of the source, and
-			// and it's before it, the selection is
-			// started after it.
+			// it's before it, the selection starts
+			// after it.
 			overIndex = overIndex < infoIndex ? overIndex + 1 : 0;
 
 			// Section of placeholders found on the
@@ -528,8 +531,8 @@ public class DockableHeader extends GenericHeader
 		else {
 			// If the hovered placeholder is on the
 			// same window space of the source, and
-			// and it is after it, the selection is
-			// ended before it.
+			// it is after it, the selection should
+			// end before it.
 			overIndex = overIndex > infoIndex ? overIndex : placeholders.size();
 
 			// Section of placeholders found on the
