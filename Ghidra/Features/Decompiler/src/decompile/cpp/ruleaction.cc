@@ -10711,6 +10711,124 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
+/// \class RuleSimplifyConstantLUT
+///
+/// \brief
+///
+/// '(c >> V) & 1' -> 'V == x0 || V == x1 || ...'
+/// 'sub((c >> V), #0) & 1' is also supported
+///
+/// where the xs represents bit indices that are set in the constant 'c'.
+///
+/// If most bits in 'c' are set, 'c' and the output term are negated:
+///
+/// '(c >> V) & 1' -> '!(V == x0 || V == x1 || ...)'
+///
+void RuleSimplifyConstantLUT::getOpList(vector<uint4> &oplist) const
+{
+  oplist.push_back(CPUI_INT_AND);
+}
+
+
+int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
+
+{
+  Varnode* one = op->getIn(0);
+  Varnode* shift = op->getIn(1);
+  if (!one->constantMatch(1)) {
+    shift = one;
+    one = op->getIn(1);
+    if (!one->constantMatch(1)) return 0;
+  }
+
+  PcodeOp* shiftOp = shift->getDef();
+  if (shiftOp == (PcodeOp*) 0) return 0;
+  if (shiftOp->code() != CPUI_INT_RIGHT) {
+    // Don't choke on an intermediate SUBPIECE(x, 0)
+    if (shiftOp->code() != CPUI_SUBPIECE) return 0;
+    if (!shiftOp->getIn(1)->constantMatch(0)) return 0;
+
+    shift = shiftOp->getIn(0);
+    shiftOp = shift->getDef();
+    if (shiftOp == (PcodeOp*) 0) return 0;
+    if (shiftOp->code() != CPUI_INT_RIGHT) return 0;
+  }
+
+  // The left operand of the shift should be a constant != 0, the right operand
+  // should be not be a constant
+  Varnode* cons = shiftOp->getIn(0);
+  Varnode* var = shiftOp->getIn(1);
+  if ((!cons->isConstant()) || cons->constantMatch(0)) return 0;
+  if (var->isConstant()) return 0;
+
+  uintb constValue = cons->getOffset();
+  uint4 constSize = cons->getSize();
+  uint4 numBitsSet = popcount(constValue);
+
+  bool negateCondition = 2 * numBitsSet > 8 * constSize;
+  if (negateCondition) {
+    constValue = ~constValue;
+    numBitsSet = constSize * 8 - numBitsSet;
+  }
+
+  uint4 bitIdx = 0;
+  Varnode* prevEqOut = NULL;
+  Varnode* tempVar = NULL;
+  PcodeOp* prevEqOutOp = NULL;
+  PcodeOp* tempOp = NULL;
+
+  for (uint4 i = 0; i < numBitsSet; i++) {
+    // Find the next smallest bit set
+    while (bitIdx < constSize * 8) {
+      if (!(constValue & 1)) {
+	constValue >>= 1;
+	bitIdx++;
+	continue;
+      }
+
+      // Add INT_EQUAL(var, bitIdx)
+      tempOp = data.newOp(2, shiftOp->getAddr());
+      data.opSetOpcode(tempOp, CPUI_INT_EQUAL);
+      data.opSetInput(tempOp, var, 0);
+      data.opSetInput(tempOp, data.newConstant(var->getSize(), bitIdx), 1);
+      tempVar = data.newUniqueOut(1, tempOp);
+      data.opInsertAfter(tempOp, shiftOp);
+
+      // Link it to the previous INT_EQUAL with a BOOL_OR
+      if (i != 0) {
+	tempOp = data.newOp(2, shiftOp->getAddr());
+	data.opSetOpcode(tempOp, CPUI_BOOL_OR);
+	data.opSetInput(tempOp, prevEqOut, 0);
+	data.opSetInput(tempOp, tempVar, 1);
+	tempVar = data.newUniqueOut(1, tempOp);
+	data.opInsertAfter(tempOp, shiftOp);
+      }
+
+      prevEqOutOp = tempOp;
+      prevEqOut = tempVar;
+      constValue >>= 1;
+      bitIdx++;
+      break;
+    }
+  }
+
+  // negate the condition if more than half of the bits are set
+  if (negateCondition) {
+    tempOp = data.newOp(1, shiftOp->getAddr());
+    data.opSetOpcode(tempOp, CPUI_BOOL_NEGATE);
+    data.opSetInput(tempOp, prevEqOut, 0);
+    prevEqOut = data.newUniqueOut(1, tempOp);
+    data.opInsertAfter(tempOp, prevEqOutOp);
+  }
+
+  // replace the INT_AND by a INT_ZEXT, making sure the output is the right size
+  data.opSetOpcode(op, CPUI_INT_ZEXT);
+  data.opSetInput(op, prevEqOut, 0);
+  data.opRemoveInput(op, 1);
+
+  return 1;
+}
+
 /// \class RuleFloatSign
 /// \brief Convert floating-point \e sign bit manipulation into FLOAT_ABS or FLOAT_NEG
 ///
