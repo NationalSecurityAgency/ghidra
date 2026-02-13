@@ -50,9 +50,10 @@ public class CommentUtils {
 	 * 
 	 * @param rawCommentText the text to be updated
 	 * @param program the program associated with the comment
+	 * @param loc location of comment in program
 	 * @return the updated string
 	 */
-	public static String fixupAnnotations(String rawCommentText, Program program) {
+	public static String fixupAnnotations(String rawCommentText, Program program, Address loc) {
 
 		if (rawCommentText == null) {
 			return null;
@@ -66,7 +67,7 @@ public class CommentUtils {
 			String[] annotationParts = annotation.getAnnotationParts();
 			AnnotatedStringHandler handler = getAnnotationHandler(annotationParts);
 
-			String[] updatedParts = handler.modify(annotationParts, program);
+			String[] updatedParts = handler.modify(annotationParts, program, loc);
 			if (updatedParts == null) {
 				return annotation; // nothing to change
 			}

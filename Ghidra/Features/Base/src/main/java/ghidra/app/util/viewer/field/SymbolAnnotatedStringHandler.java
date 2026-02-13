@@ -126,7 +126,7 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 	}
 
 	@Override
-	public String[] modify(String[] text, Program program) {
+	public String[] modify(String[] text, Program program, Address loc) {
 		if (text.length <= 1) {
 			return null;
 		}

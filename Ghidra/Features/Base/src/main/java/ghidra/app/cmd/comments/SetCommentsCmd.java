@@ -83,29 +83,30 @@ public class SetCommentsCmd implements Command<Program> {
 		CodeUnit cu = getCodeUnit(program);
 
 		if (cu != null) {
+			Address loc = cu.getAddress();
 			if (commentChanged(cu.getComment(CommentType.PRE), preComment)) {
-				String updatedPreComment = CommentUtils.fixupAnnotations(preComment, program);
+				String updatedPreComment = CommentUtils.fixupAnnotations(preComment, program, loc);
 				updatedPreComment = CommentUtils.sanitize(updatedPreComment);
 				cu.setComment(CommentType.PRE, updatedPreComment);
 			}
 			if (commentChanged(cu.getComment(CommentType.POST), postComment)) {
-				String updatedPostComment = CommentUtils.fixupAnnotations(postComment, program);
+				String updatedPostComment = CommentUtils.fixupAnnotations(postComment, program, loc);
 				updatedPostComment = CommentUtils.sanitize(updatedPostComment);
 				cu.setComment(CommentType.POST, updatedPostComment);
 			}
 			if (commentChanged(cu.getComment(CommentType.EOL), eolComment)) {
-				String updatedEOLComment = CommentUtils.fixupAnnotations(eolComment, program);
+				String updatedEOLComment = CommentUtils.fixupAnnotations(eolComment, program, loc);
 				updatedEOLComment = CommentUtils.sanitize(updatedEOLComment);
 				cu.setComment(CommentType.EOL, updatedEOLComment);
 			}
 			if (commentChanged(cu.getComment(CommentType.PLATE), plateComment)) {
-				String updatedPlateComment = CommentUtils.fixupAnnotations(plateComment, program);
+				String updatedPlateComment = CommentUtils.fixupAnnotations(plateComment, program, loc);
 				updatedPlateComment = CommentUtils.sanitize(updatedPlateComment);
 				cu.setComment(CommentType.PLATE, updatedPlateComment);
 			}
 			if (commentChanged(cu.getComment(CommentType.REPEATABLE), repeatableComment)) {
 				String updatedRepeatableComment =
-					CommentUtils.fixupAnnotations(repeatableComment, program);
+					CommentUtils.fixupAnnotations(repeatableComment, program, loc);
 				updatedRepeatableComment = CommentUtils.sanitize(updatedRepeatableComment);
 				cu.setComment(CommentType.REPEATABLE, updatedRepeatableComment);
 			}

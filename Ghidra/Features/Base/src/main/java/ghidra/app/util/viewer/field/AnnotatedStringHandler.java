@@ -22,6 +22,7 @@ import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.FieldElement;
 import ghidra.app.nav.Navigatable;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
@@ -124,6 +125,11 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	default String getPrototypeString(String displayText) {
 		return getPrototypeString();
 	}
+	
+	@Deprecated(forRemoval = true)
+	default String[] modify(String[] text, Program program) {
+		return modify(text, program, Address.NO_ADDRESS);
+	}
 
 	/**
 	 * Returns an array with modifications by the annotation; null otherwise.  This method will be 
@@ -132,9 +138,10 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	 * 
 	 * @param text the array of annotation parts to modify
 	 * @param program the program
+	 * @param loc location of the annotation in the program
 	 * @return the modified array; null otherwise
 	 */
-	default String[] modify(String[] text, Program program) {
+	default String[] modify(String[] text, Program program, Address loc) {
 		return null;
 	}
 

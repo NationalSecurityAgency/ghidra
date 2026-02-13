@@ -104,11 +104,6 @@
              Notes:
              
              <ul style="margin-left: 10px;">
-	             <li>
-		              If you provide a symbol name and not an address, then you will need to
-		            fully-qualify the symbol name if it is not in the global namespace (e.g.,
-		            FunctionFoo::param1 to link to a specific function parameter).
-	            </li>
 	            <li>
 		            If you specify a symbol name instead of an address, then the text of the comment
 		            will be changed to use the address of that symbol.
@@ -280,6 +275,58 @@
                 <LI>{@program "WinHelloCPP.exe" "Click here to open WinHelloCPP"}</LI>
                 <LI>{@program "subfolder/WinHelloCPP.exe"}</LI>
                  <LI>{@program "subfolder1/subfolder2/WinHelloCPP.exe"}<BR>
+                </LI>
+              </UL>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" width="5%">Variable<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Displays the text of the given variable or parameter
+              for a given function as a hyperlink.<BR>
+            <BR>
+            <BR>
+             Notes:
+
+            <ul style="margin-left: 10px;">
+              <li>
+                  This annotation will modify itself into the @var_hash format with a function
+                  address to survive renaming of the variable and the function.
+              </li>
+            </ul>
+
+            </TD>
+
+
+            <TD valign="top" width="12%">
+              <OL style="margin-left: 15px;">
+                <LI>variable/parameter name (@var) or hash identifier (@var_hash)</LI>
+                <LI>[function name or address]<BR>
+                </LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL style="margin-left: 10px;">
+                <LI>@variable</LI>
+
+                <LI>@var</LI>
+
+                <LI>@var_hash</LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="25%">
+              <UL style="margin-left: 10px;">
+                <LI>{@variable "i"}</LI>
+
+                <LI>{@var "argv" "main"}</LI>
+
+                <LI>{@var_hash 02a2a2a "main"}</LI>
+
+                <LI>{@var_hash 0101010 "1000002a"}<BR>
                 </LI>
               </UL>
             </TD>
