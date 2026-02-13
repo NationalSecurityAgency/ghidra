@@ -6220,6 +6220,8 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
     }
     if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
       return checkMultTerm(vn, def, treeCoeff);
+    if (def->code() == CPUI_INT_ZEXT) // Recurse
+      return checkTerm(def->getIn(0), treeCoeff);
   }
   else if (vn->isFree()) {
     valid = false;
