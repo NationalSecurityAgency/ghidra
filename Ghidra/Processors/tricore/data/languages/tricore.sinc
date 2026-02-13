@@ -18,7 +18,7 @@ define register offset=0xFF80 size=8 [ p0    p2    p4    p6    p8    p10     p12
 define register offset=0xFF80 size=4 [ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 ];
 
 # Program Counter
-define register offset=0xFE08 size=4 [ PC ];
+#define register offset=0xFE08 size=4 [ PC ];
 
 # Program Status Word Register
 define register offset=0xFE04 size=4 [ PSW ];
@@ -69,10 +69,10 @@ define register offset=0xFE00 size=4 [ PCXI ];
 # ;
 
 # Interrupt Stack Pointer Register
-define register offset=0xFE28 size=4 [ ISP ];
+#define register offset=0xFE28 size=4 [ ISP ];
 
 # System Control Register
-define register offset=0xFE14 size=4 [ SYSCON ];
+# define register offset=0xFE14 size=4 [ SYSCON ];
 # define context SYSCON
 #   FCDSF=(0,0)
 #   PROTEN=(1,1)
@@ -84,7 +84,7 @@ define register offset=0xFE14 size=4 [ SYSCON ];
 # ;
 
 # CPU Identification Register
-define register offset=0xFE18 size=4 [ CPU_ID ];
+# define register offset=0xFE18 size=4 [ CPU_ID ];
 # define context CPU_ID
 #   MOD_REV=(0,7)
 #   MOD_32B=(8,15)
@@ -92,14 +92,14 @@ define register offset=0xFE18 size=4 [ CPU_ID ];
 # ;
 
 # Core Identification Register
-define register offset=0xFE1C size=4 [ CORE_ID ];
+#define register offset=0xFE1C size=4 [ CORE_ID ];
 
 
 # Compatibility Mode Register
-define register offset=0x9400 size=4 [ COMPAT ];
+#define register offset=0x9400 size=4 [ COMPAT ];
 
 # SIST Mode Access Control Register
-define register offset=0x900C size=4 [ SMACON ];
+#define register offset=0x900C size=4 [ SMACON ];
 
 # Free CSA List Head Pointer Register
 define register offset=0xFE38 size=4 [ FCX ];
@@ -128,69 +128,69 @@ define register offset=0xFE2E size=1 [ PIPN ];
 @define ICR_CCPN "ICR[0,8]"
 
 # Base Interrupt Vector Table Pointer
-define register offset=0xFE20 size=4 [ BIV ];
+# define register offset=0xFE20 size=4 [ BIV ];
 # define context BIV
 #   VSS=(0,0)
 # ;
 
 # Base Trap Vector Table Pointer
-define register offset=0xFE24 size=4 [ BTV ];
+# define register offset=0xFE24 size=4 [ BTV ];
 
 # Program Synchronous Error Trap Register
-define register offset=0x9200 size=4 [ PSTR ];
+# define register offset=0x9200 size=4 [ PSTR ];
 
 # Data Synchronous Error Trap Register
-define register offset=0x9010 size=4 [ DSTR ];
+# define register offset=0x9010 size=4 [ DSTR ];
 
 # Data Asynchronous Error Trap Register
-define register offset=0x9018 size=4 [ DATR ];
+# define register offset=0x9018 size=4 [ DATR ];
 
 # Data Error Address Register
-define register offset=0x901C size=4 [ DEADD ];
+# define register offset=0x901C size=4 [ DEADD ];
 
 # Program Integrity Error Trap Register
-define register offset=0x9214 size=4 [ PIETR ];
+# define register offset=0x9214 size=4 [ PIETR ];
 
 # Program Integrity Error Address Register
-define register offset=0x9210 size=4 [ PIEAR ];
+# define register offset=0x9210 size=4 [ PIEAR ];
 
 # Data Integrity Error Trap Register
-define register offset=0x9024 size=4 [ DIETR ];
+# define register offset=0x9024 size=4 [ DIETR ];
 
 # Data Integrity Error Address Register
-define register offset=0x9020 size=4 [ DIEAR ];
+# define register offset=0x9020 size=4 [ DIEAR ];
 
 # Programmable Memory Access Register
-define register offset=0x8100 size=4 [ PMA0 PMA1 PMA2 ];
+# define register offset=0x8100 size=4 [ PMA0 PMA1 PMA2 ];
 
 # Program Memory Configuration Registers
-define register offset=0x9204 size=4 [ PCON1 PCON2 PCON0 ];
+# define register offset=0x9204 size=4 [ PCON1 PCON2 PCON0 ];
 
 # Data Memory Configuration Registers
-define register offset=0x9040 size=4 [ DCON0 ];
-define register offset=0x9008 size=4 [ DCON1 ];
-define register offset=0x9000 size=4 [ DCON2 ];
+# define register offset=0x9040 size=4 [ DCON0 ];
+# define register offset=0x9008 size=4 [ DCON1 ];
+# define register offset=0x9000 size=4 [ DCON2 ];
 
 # Data Protection Range Register Lower & Upper Bound
-define register offset=0xC000 size=4 [ DPR0_L DPR0_U DPR1_L DPR1_U DPR2_L DPR2_U DPR3_L DPR3_U DPR4_L DPR4_U DPR5_L DPR5_U DPR6_L DPR6_U DPR7_L DPR7_U DPR8_L DPR8_U DPR9_L DPR9_U DPR10_L DPR10_U DPR11_L DPR11_U DPR12_L DPR12_U DPR13_L DPR13_U DPR14_L DPR14_U DPR15_L DPR15_U ];
+# define register offset=0xC000 size=4 [ DPR0_L DPR0_U DPR1_L DPR1_U DPR2_L DPR2_U DPR3_L DPR3_U DPR4_L DPR4_U DPR5_L DPR5_U DPR6_L DPR6_U DPR7_L DPR7_U DPR8_L DPR8_U DPR9_L DPR9_U DPR10_L DPR10_U DPR11_L DPR11_U DPR12_L DPR12_U DPR13_L DPR13_U DPR14_L DPR14_U DPR15_L DPR15_U ];
 
 # Code Protection Range Register Lower & Upper Bound
-define register offset=0xD000 size=4 [ CPR0_L CPR0_U CPR1_L CPR1_U CPR2_L CPR2_U CPR3_L CPR3_U CPR4_L CPR4_U CPR5_L CPR5_U CPR6_L CPR6_U CPR7_L CPR7_U CPR8_L CPR8_U CPR9_L CPR9_U CPR10_L CPR10_U CPR11_L CPR11_U CPR12_L CPR12_U CPR13_L CPR13_U CPR14_L CPR14_U CPR15_L CPR15_U ];
+# define register offset=0xD000 size=4 [ CPR0_L CPR0_U CPR1_L CPR1_U CPR2_L CPR2_U CPR3_L CPR3_U CPR4_L CPR4_U CPR5_L CPR5_U CPR6_L CPR6_U CPR7_L CPR7_U CPR8_L CPR8_U CPR9_L CPR9_U CPR10_L CPR10_U CPR11_L CPR11_U CPR12_L CPR12_U CPR13_L CPR13_U CPR14_L CPR14_U CPR15_L CPR15_U ];
 
 # Data Protection Read Enable Set Configuration Register
-define register offset=0xE010 size=4 [ DPRE_0 DPRE_1 DPRE_2 DPRE_3 ];
+# define register offset=0xE010 size=4 [ DPRE_0 DPRE_1 DPRE_2 DPRE_3 ];
 
 # Data Protection Write Enable Set Configuration Register
-define register offset=0xE020 size=4 [ DPWE_0 DPWE_1 DPWE_2 DPWE_3 ];
+# define register offset=0xE020 size=4 [ DPWE_0 DPWE_1 DPWE_2 DPWE_3 ];
 
 # Code Protection Execute Enable Set Configuration Register
-define register offset=0xE000 size=4 [ CPXE_0 CPXE_1 CPXE_2 CPXE_3 ];
+# define register offset=0xE000 size=4 [ CPXE_0 CPXE_1 CPXE_2 CPXE_3 ];
 
 # Temporal Protect System (TPS) Timer Register
-define register offset=0xE404 size=4 [ TPS_TIMER0 TPS_TIMER1 TPS_TIMER2 ];
+# define register offset=0xE404 size=4 [ TPS_TIMER0 TPS_TIMER1 TPS_TIMER2 ];
 
 # TPS Control Register
-define register offset=0xE400 size=4 [ TPS_CON ];
+#define register offset=0xE400 size=4 [ TPS_CON ];
 # define context TPS_CON
 #   TEXP0=(0,0)
 #   TEXP1=(1,1)
@@ -199,7 +199,7 @@ define register offset=0xE400 size=4 [ TPS_CON ];
 # ;
 
 # FPU Trap Control Register
-define register offset=0xA000 size=4 [ FPU_TRAP_CON ];
+#define register offset=0xA000 size=4 [ FPU_TRAP_CON ];
 # define context FPU_TRAP_CON
 #   TST=(0,0)
 #   TCL=(1,1)
@@ -217,10 +217,10 @@ define register offset=0xA000 size=4 [ FPU_TRAP_CON ];
 # ;
 
 # FPU Trapping Instruction Program Counter
-define register offset=0xA004 size=4 [ FPU_TRAP_PC ];
+# define register offset=0xA004 size=4 [ FPU_TRAP_PC ];
 
 # FPU Trapping Instruction Opcode Register
-define register offset=0xA008 size=4 [ FPU_TRAP_OPC ];
+# define register offset=0xA008 size=4 [ FPU_TRAP_OPC ];
 # define context FPU_TRAP_OPC
 #   OPC=(0,7)
 #   FMT=(8,8)
@@ -228,7 +228,7 @@ define register offset=0xA008 size=4 [ FPU_TRAP_OPC ];
 # ;
 
 # FPU Trapping Instruction Operand SRC1 Register
-define register offset=0xA010 size=4 [ FPU_TRAP_SRC1 FPU_TRAP_SRC2 FPU_TRAP_SRC3 ];
+# define register offset=0xA010 size=4 [ FPU_TRAP_SRC1 FPU_TRAP_SRC2 FPU_TRAP_SRC3 ];
 
 
 
@@ -253,7 +253,7 @@ define register offset=0xFD00 size=4 [ DBGSR ];
 @define DBGSR_DE "DBGSR[0,1]"
 
 # External Event Register
-define register offset=0xFD08 size=4 [ EXEVT ];
+# define register offset=0xFD08 size=4 [ EXEVT ];
 # define context EXEVT
 #   EVTA=(0,2)
 #   BBM=(3,3)
@@ -263,7 +263,7 @@ define register offset=0xFD08 size=4 [ EXEVT ];
 # ;
 
 # Core Register Access Event Register
-define register offset=0xFD0C size=4 [ CREVT ];
+# define register offset=0xFD0C size=4 [ CREVT ];
 # define context CREVT
 #   CREVT_EVTA=(0,2)
 #   CREVT_BBM=(3,3)
@@ -273,7 +273,7 @@ define register offset=0xFD0C size=4 [ CREVT ];
 # ;
 
 # Software Debug Event Register
-define register offset=0xFD10 size=4 [ SWEVT ];
+# define register offset=0xFD10 size=4 [ SWEVT ];
 # define context SWEVT
 #   SWEVT_EVTA=(0,2)
 #   SWEVT_BBM=(3,3)
@@ -283,7 +283,7 @@ define register offset=0xFD10 size=4 [ SWEVT ];
 # ;
 
 # Trigger Accumulator Register
-define register offset=0xFD30 size=4 [ TRIG_ACC ];
+# define register offset=0xFD30 size=4 [ TRIG_ACC ];
 # define context TRIC_ACC
 #   T0=(0,0)
 #   T1=(1,1)
@@ -296,22 +296,22 @@ define register offset=0xFD30 size=4 [ TRIG_ACC ];
 # ;
 
 # Debug Monitor Start Address Register
-define register offset=0xFD40 size=4 [ DMS ];
+# define register offset=0xFD40 size=4 [ DMS ];
 
 # Debug Context Save Area Pointer Register
-define register offset=0xFD44 size=4 [ DCX ];
+# define register offset=0xFD44 size=4 [ DCX ];
 
 # Debug Trap Control Register
-define register offset=0xFD48 size=4 [ DBGTCR ];
+# define register offset=0xFD48 size=4 [ DBGTCR ];
 
 # Application Space Identifier Register
-define register offset=0x8004 size=4 [ TASK_ASI ];
+# define register offset=0x8004 size=4 [ TASK_ASI ];
 
 # Software Breakpoint Service Request Control
 #define register offset=0xFFB0 size=4 [ SBSRC3 SBSRC2 SBSRC1 SBSRC0 ];
 
 # Trigger Event Configuration / Address Register
-define register offset=0xF000 size=4 [ TR0EVT TR0ADR TR1EVT TR1ADR TR2EVT TRA2DR TR3EVT TR3ADR TR4EVT TR4ADR TR5EVT TR5ADR TR6EVT TR6ADR TR7EVT TR7ADR ];
+# define register offset=0xF000 size=4 [ TR0EVT TR0ADR TR1EVT TR1ADR TR2EVT TRA2DR TR3EVT TR3ADR TR4EVT TR4ADR TR5EVT TR5ADR TR6EVT TR6ADR TR7EVT TR7ADR ];
 # define context TRxEVT
 #   EVTA=(0,2)
 #   BBM=(3,3)
@@ -328,7 +328,7 @@ define register offset=0xF000 size=4 [ TR0EVT TR0ADR TR1EVT TR1ADR TR2EVT TRA2DR
 
 
 # Counter Control Register
-define register offset=0xFC00 size=4 [ CCTRL ];
+# define register offset=0xFC00 size=4 [ CCTRL ];
 # define context CCTRL
 #   CM=(0,0)
 #   CE=(1,1)
@@ -338,13 +338,13 @@ define register offset=0xFC00 size=4 [ CCTRL ];
 # ;
 
 # CPU Clock Cycle Count Register
-define register offset=0xFC04 size=4 [ CCNT ];
+# define register offset=0xFC04 size=4 [ CCNT ];
 
 # Instruction Count Register
-define register offset=0xFC08 size=4 [ ICNT ];
+# define register offset=0xFC08 size=4 [ ICNT ];
 
 # Mult-Count Register
-define register offset=0xFC0C size=4 [ M1CNT M2CNT M3CNT ];
+# define register offset=0xFC0C size=4 [ M1CNT M2CNT M3CNT ];
 
 
 
@@ -5049,15 +5049,16 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # MFCR D[c], const16 (RLC)
 :mfcr Rd2831,const1227Z is PCPMode=0 & ( op0007=0x4d & op0811=0x0 ; Rd2831 ) & const1227Z
 {
-	Rd2831 = *[register]:4 const1227Z;
+	Rd2831 = *[ram]:4 const1227Z;
+	#Rd2831 = mfcr(const1227Z);
 }
 
-@if defined(TRICORE_V2)
-:mffr Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x1d1
-{
-	Rd2831 = *[register]:4 Rd0811;
-}
-@endif
+# @if defined(TRICORE_V2)
+# :mffr Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x1d1
+# {
+# 	Rd2831 = *[register]:4 Rd0811;
+# }
+# @endif
 
 # MIN D[c], D[a], D[b] (RR)
 :min Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x180
@@ -6371,15 +6372,16 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # MTCR const16, D[a] (RLC)
 :mtcr const1227Z,Rd0811 is PCPMode=0 & ( Rd0811 & op0007=0xcd ; op2831=0x0 ) & const1227Z
 {
-	*[register]:4 const1227Z = Rd0811;
+	*[ram]:4 const1227Z = Rd0811;
+	#mtcr(const1227Z, Rd0811);
 }
 
-@if defined(TRICORE_V2)
-:mtfr Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; op1631=0x1c1
-{
-	*[register]:4 Rd1215 = Rd0811;
-}
-@endif
+# @if defined(TRICORE_V2)
+# :mtfr Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; op1631=0x1c1
+# {
+# 	*[register]:4 Rd1215 = Rd0811;
+# }
+# @endif
 
 # MUL D[a], D[b] (SRR)
 :mul Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe2
@@ -6661,7 +6663,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
-# # MULR.H D[c], D[a], D[b] LL, n (RR1)
+# MULR.H D[c], D[a], D[b] LL, n (RR1)
 :mulr.h Rd2831,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Rd2831 & const1617Z & op1827=0xe
 {
 	local sc1 = (Rd0811[16,16] == 0x8000) && (Rd1215[0,16] == 0x8000) && (const1617Z == 1);
