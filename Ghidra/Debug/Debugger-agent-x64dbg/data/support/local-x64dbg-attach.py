@@ -17,13 +17,32 @@
 import os
 import sys
 
+cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
+target = os.getenv('OPT_TARGET_PID')
+
+
+def parse_parameters():
+    argc = len(sys.argv)
+    global cxn, target, args, initdir
+    if argc == 1:
+        return True
+    if argc >= 3:
+        cxn = sys.argv[1]
+        target = sys.argv[2]
+        return True
+    print("Error: expected (cxn, target, initdir, ...)")
+    return False
+
 
 def append_paths():
     sys.path.append(
         f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
-    from gmodutils import ghidra_module_pypath
-    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
-    sys.path.append(ghidra_module_pypath())
+    try:
+        from gmodutils import ghidra_module_pypath
+        sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+        sys.path.append(ghidra_module_pypath())
+    except Exception as e:
+        pass
 
 
 def main():
@@ -37,15 +56,15 @@ def main():
     global repl
     repl = cmd.repl
 
-    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-    cmd.ghidra_trace_attach(os.getenv('OPT_TARGET_PID'), start_trace=False)
+    cmd.ghidra_trace_connect(cxn)
+    cmd.ghidra_trace_attach(target, start_trace=False)
 
     try:
         dbg.wait()
     except KeyboardInterrupt as ki:
         dbg.interrupt()
 
-    cmd.ghidra_trace_start(os.getenv('OPT_TARGET_PID'))
+    cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()
 
     cmd.ghidra_trace_txstart()

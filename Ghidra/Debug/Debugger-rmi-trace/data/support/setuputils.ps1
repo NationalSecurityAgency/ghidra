@@ -78,9 +78,23 @@ function Compute-Ssh-Args {
 	if ("$Env:OPT_EXTRA_SSH_ARGS" -ne "") {
 		$sshargs+=("$Env:OPT_EXTRA_SSH_ARGS")
 	}
-	$sshargs+=("$Env:OPT_HOST", "TERM='$Env:TERM' $cmdline")
+	$sshargs+=("$Env:OPT_HOST")
+	if ("$Env:OPT_OS_WINDOWS" -ne "") {
+		$sshargs+=("TERM='$Env:TERM'")
+	}
+	$sshargs+=($cmdline)
 
 	return $sshargs
+}
+
+function Compute-Scp-Args {
+	$tmpfile = $args[0]
+	
+	$scpargs = @($Env:OPT_SSH_PATH -replace "ssh", "scp")
+	$scpargs += ($tmpfile)
+	$scpargs+=("$Env:OPT_HOST`:~/")
+
+	return $scpargs
 }
 
 function Check-Result-And-Prompt-Mitigation {

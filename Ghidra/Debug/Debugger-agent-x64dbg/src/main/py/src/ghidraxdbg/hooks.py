@@ -161,6 +161,7 @@ def log_errors(func: C) -> C:
 def on_state_changed(*args) -> None:
     # print("ON_STATE_CHANGED")
     ev_type = args[0].event_type
+    ev_data = args[0].event_data
     # print(ev_type)
     proc = util.selected_process()
     trace = commands.STATE.require_trace()
@@ -168,8 +169,11 @@ def on_state_changed(*args) -> None:
         with trace.open_tx("State changed proc {}".format(proc)):
             commands.put_state(proc)
     if proc not in PROC_STATE:
+        if ev_type == EventType.EVENT_CREATE_PROCESS:
+            enable_current_process()
+            on_new_process(ev_data)
         if ev_type == EventType.EVENT_EXIT_PROCESS:
-            on_process_deleted(args)
+            on_process_deleted(ev_data)
         return
     PROC_STATE[proc].waiting = False
     try:
@@ -183,7 +187,7 @@ def on_state_changed(*args) -> None:
 
 @log_errors
 def on_breakpoint_hit(*args) -> None:
-    # print("ON_THREADS_CHANGED")
+    # print("ON_BREAKPOINT_HIT")
     proc = util.selected_process()
     if proc not in PROC_STATE:
         return
@@ -218,10 +222,10 @@ def on_process_selected() -> None:
 
 
 @log_errors
-def on_process_deleted(*args) -> None:
+def on_process_deleted(ev_data) -> None:
     # print("PROCESS_DELETED: args={}".format(args))
     proc = util.selected_process()
-    on_exited(args)
+    on_exited(ev_data)
     if proc in PROC_STATE:
         del PROC_STATE[proc]
     trace = commands.STATE.trace
@@ -341,7 +345,7 @@ def on_stop(*args) -> None:
             commands.activate()
 
 
-def on_exited(*args) -> None:
+def on_exited(exit_process_data) -> None:
     # print("ON EXITED")
     trace = commands.STATE.trace
     if trace is None:
@@ -350,7 +354,7 @@ def on_exited(*args) -> None:
     state.visited.clear()
     with trace.client.batch():
         with trace.open_tx("Exited"):
-            exit_code = args[0][0].event_data.dwExitCode
+            exit_code = exit_process_data.dwExitCode
             state.record_exited(exit_code)
             commands.activate()
 
