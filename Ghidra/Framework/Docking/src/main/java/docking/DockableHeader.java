@@ -540,11 +540,11 @@ public class DockableHeader extends GenericHeader
 			DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(infoIndex, overIndex);
 		}
 
-		// Put each selected placeholder title on a
-		// separate line while joining in the text.
+		// Join each selected placeholder title, to
+		// represent the stack section being moved.
 		String infoText = DockableComponent.SOURCE_SECTION_INFO.stream()
 				.map(p -> p.getTitle())
-				.collect(Collectors.joining("\n"));
+				.collect(Collectors.joining(" | "));
 
 		// Update the transient tool tip text.
 		TransientWindow.updateTransientWindow(infoText);
