@@ -1,0 +1,17 @@
+<patternlist>
+	<!-- NOTE: These are matching on raw bytes, not on 32bit LE instructions, so the bytes are endian-swapped here -->
+	<pattern>
+	 	
+		
+		<!-- CALL XXX -->
+		<!-- allocframe(Rx,imm):raw -->
+
+		<!-- Unswapped: 0101101........................0    10100000100.......000...........-->
+		<data>.......0................0101101...........000...100.....10100000</data>
+
+		<align mark="0" bits="1"/>
+		<codeboundary/>
+		<possiblefuncstart/>
+	</pattern>
+
+</patternlist>

@@ -1,0 +1,356 @@
+# XTYPE/FP
+# XTYPE/FP: fp add
+with slot: iclass=0b1110  {
+    :D5_pair "=dfadd(" S5_pair "," T5_pair ")" is imm_21_27=0b1000000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = S5_pairi f+ T5_pairi;
+    }
+    :D5 "=sfadd(" S5 "," T5 ")" is imm_21_27=0b1011000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = S5i f+ T5i;
+    }
+}
+
+# XTYPE/FP: fp class
+define pcodeop sfclass;
+define pcodeop dfclass;
+with slot: iclass=0b1000  {
+    :D2 "=sfclass(" S5 "," imm_8_12u ")" is imm_21_27=0b0101111 & S5 & S5i & imm_13=0 & imm_8_12u & imm_1_7=0 & D2 {
+        D2 = sfclass(S5i, imm_8_12u:1);
+    }
+}
+with slot: iclass=0b1101  {
+    :D2 "=dfclass(" S5_pair "," imm_5_9u ")" is imm_21_27=0b1100100 & S5_pair & S5_pairi & imm_13=0 & imm_10_12=0 & imm_5_9u & imm_3_4=0b10 & imm_2=0 & D2 {
+        D2 = dfclass(S5_pairi, imm_5_9u:1);
+    }
+}
+
+# XTYPE/FP: fp cmp
+define pcodeop dfcmp_uo;
+define pcodeop sfcmp_uo;
+with slot: iclass=0b1100  {
+    :D2_pred_new "=sfcmp.ge(" S5 "," T5 ")" is imm_21_27=0b0111111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & imm_2_4=0 & D2_pred_new {
+        if( S5i f>= T5i) goto <good>;
+        D2_pred_new = 0;
+        goto <end>;
+        <good>
+        D2_pred_new = PTRUE;
+        <end>
+    }
+    :D2_pred_new "=sfcmp.uo(" S5 "," T5 ")" is imm_21_27=0b0010111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & imm_2_4=0 & D2_pred_new {
+        D2_pred_new = sfcmp_uo(S5i, T5i);
+    }
+    :D2_pred_new "=sfcmp.eq(" S5 "," T5 ")" is imm_21_27=0b0111111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b011 & imm_2_4=0 & D2_pred_new {
+        if( S5i f== T5i) goto <good>;
+        D2_pred_new = 0;
+        goto <end>;
+        <good>
+        D2_pred_new = PTRUE;
+        <end>
+    }
+    :D2_pred_new "=sfcmp.gt(" S5 "," T5 ")" is imm_21_27=0b0111111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b100 & imm_2_4=0 & D2_pred_new {
+        if( S5i f> T5i) goto <good>;
+        D2_pred_new = 0;
+        goto <end>;
+        <good>
+        D2_pred_new = PTRUE;
+        <end>
+    }
+}
+with slot: iclass=0b1101  {
+    :D2_pred_new "=dfcmp.eq(" S5_pair "," T5_pair ")" is imm_21_27=0b0010111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b000 & imm_2_4=0 & D2_pred_new {
+        if( S5_pairi f== T5_pairi) goto <good>;
+        D2_pred_new = 0;
+        goto <end>;
+        <good>
+        D2_pred_new = PTRUE;
+        <end>
+    }
+    :D2_pred_new "=dfcmp.gt(" S5_pair "," T5_pair ")" is imm_21_27=0b0010111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b001 & imm_2_4=0 & D2_pred_new {
+        if( S5_pairi f> T5_pairi) goto <good>;
+        D2_pred_new = 0;
+        goto <end>;
+        <good>
+        D2_pred_new = PTRUE;
+        <end>
+    }
+    :D2_pred_new "=dfcmp.ge(" S5_pair "," T5_pair ")" is imm_21_27=0b0010111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & imm_2_4=0 & D2_pred_new {
+        if( S5_pairi f>= T5_pairi) goto <good>;
+        D2_pred_new = 0;
+        goto <end>;
+        <good>
+        D2_pred_new = PTRUE;
+        <end>
+    }
+    :D2_pred_new "=dfcmp.uo(" S5_pair "," T5_pair ")" is imm_21_27=0b0010111 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & imm_2_4=0 & D2_pred_new {
+        D2_pred_new = dfcmp_uo(S5_pairi, T5_pairi);
+    }
+}
+
+# XTYPE/FP: fp conv to other
+define pcodeop convert_sf2df;
+with slot: iclass=0b1000  {
+    :D5_pair"=convert_sf2df("S5")" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_8_13=0 & imm_5_7=0b000 & D5_pair {
+        D5_pair = convert_sf2df(S5i);
+    }
+    :D5"=convert_sf2df("S5_pair")" is imm_21_27=0b1000000 & S5_pair & S5_pairi & imm_8_13=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_sf2df(S5_pairi);
+    }
+}
+
+# XTYPE/FP: conv int to fp
+define pcodeop convert_ud2df;
+define pcodeop convert_d2df;
+define pcodeop convert_uw2df;
+define pcodeop convert_w2df;
+define pcodeop convert_ud2sf;
+define pcodeop convert_d2sf;
+define pcodeop convert_uw2sf;
+define pcodeop convert_w2sf;
+
+with slot: iclass=0b1000  {
+    :D5_pair "=convert_ud2df(" S5_pair ")" is imm_21_27=0b0000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0  & imm_5_7=0b010 & D5_pair {
+        D5_pair = convert_ud2df(S5_pairi);
+    }
+    :D5_pair "=convert_d2df(" S5_pair ")" is imm_21_27=0b0000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0  & imm_5_7=0b011 & D5_pair {
+        D5_pair = convert_d2df(S5_pairi);
+    }
+    :D5_pair "=convert_uw2df(" S5 ")" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_13=0 & imm_8_12=0  & imm_5_7=0b001 & D5_pair {
+        D5_pair = convert_uw2df(S5i);
+    }
+    :D5_pair "=convert_w2df(" S5 ")" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_13=0 & imm_8_12=0  & imm_5_7=0b010 & D5_pair {
+        D5_pair = convert_w2df(S5i);
+    }
+    :D5 "=convert_ud2sf(" S5 ")" is imm_21_27=0b1000001 & S5 & S5i & imm_13=0 & imm_8_12=0  & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_ud2sf(S5i);
+    }
+    :D5 "=convert_d2sf(" S5 ")" is imm_21_27=0b1000010 & S5 & S5i & imm_13=0 & imm_8_12=0  & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_d2sf(S5i);
+    }
+    :D5 "=convert_uw2sf(" S5 ")" is imm_21_27=0b1011001 & S5 & S5i & imm_13=0 & imm_8_12=0  & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = convert_uw2sf(S5i);
+    }
+    :D5 "=convert_w2sf(" S5 ")" is imm_21_27=0b1011010 & S5 & S5i & imm_13=0 & imm_8_12=0  & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = convert_w2sf(S5i);
+    }
+}
+
+# XTYPE/FP: conv fp val to int
+# TODO: round behaviour
+define pcodeop convert_df2d;
+define pcodeop convert_df2ud;
+define pcodeop convert_df2d_chop;
+define pcodeop convert_df2ud_chop;
+
+define pcodeop convert_sf2ud;
+define pcodeop convert_sf2d;
+define pcodeop convert_sf2ud_chop;
+define pcodeop convert_sf2d_chop;
+
+define pcodeop convert_sf2uw;
+define pcodeop convert_sf2w;
+define pcodeop convert_sf2uw_chop;
+define pcodeop convert_sf2w_chop;
+
+define pcodeop convert_df2uw;
+define pcodeop convert_df2w;
+define pcodeop convert_df2uw_chop;
+define pcodeop convert_df2w_chop;
+
+
+with slot: iclass=0b1000  {
+    :D5_pair "=convert_df2d(" S5_pair ")" is imm_21_27=0b0000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b000 & D5_pair {
+        D5_pair = convert_df2d(S5_pairi);
+    }
+    :D5_pair "=convert_df2ud(" S5_pair ")" is imm_21_27=0b0000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5_pair {
+        D5_pair = convert_df2ud_chop(S5_pairi);
+    }
+    :D5_pair "=convert_df2d(" S5_pair "):chop" is imm_21_27=0b0000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b110 & D5_pair {
+        D5_pair = convert_df2d_chop(S5_pairi);
+    }
+    :D5_pair "=convert_df2ud(" S5_pair "):chop" is imm_21_27=0b0000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b111 & D5_pair {
+        D5_pair = convert_df2ud_chop(S5_pairi);
+    }
+
+    :D5_pair "=convert_sf2ud(" S5 ")" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b011 & D5_pair {
+        D5_pair = convert_sf2ud(S5i);
+    }
+    :D5_pair "=convert_sf2d(" S5 ")" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b100 & D5_pair {
+        D5_pair = convert_sf2d(S5i);
+    }
+    :D5_pair "=convert_sf2ud(" S5 "):chop" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b101 & D5_pair {
+        D5_pair = convert_sf2ud_chop(S5i);
+    }
+    :D5_pair "=convert_sf2d(" S5 "):chop" is imm_23_27=0b01001 & imm_21_22=0 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b110 & D5_pair {
+       D5_pair = convert_sf2d_chop(S5i);
+    }
+
+    :D5 "=convert_df2uw(" S5_pair ")" is imm_21_27=0b1000011 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_df2uw(S5_pairi);
+    }
+    :D5 "=convert_df2w(" S5_pair ")" is imm_21_27=0b1000100 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_df2w(S5_pairi);
+    }
+    :D5 "=convert_df2uw(" S5_pair "):chop" is imm_21_27=0b1000101 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_df2uw_chop(S5_pairi);
+    }
+    :D5 "=convert_df2w(" S5_pair "):chop" is imm_21_27=0b1000111 & S5_pair & S5_pairi & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_df2w_chop(S5_pairi);
+    }
+
+    :D5 "=convert_sf2uw(" S5 ")" is imm_21_27=0b1011011 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = convert_sf2uw(S5i);
+    }
+    :D5 "=convert_sf2uw(" S5 "):chop" is imm_21_27=0b1011011 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_sf2uw_chop(S5i);
+    }
+    :D5 "=convert_sf2w(" S5 ")" is imm_21_27=0b1011100 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = convert_sf2w(S5i);
+    }
+    :D5 "=convert_sf2w(" S5 "):chop" is imm_21_27=0b1011100 & S5 & S5i & imm_13=0 & imm_8_12=0 & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = convert_sf2w_chop(S5i);
+    }
+}
+
+# XTYPE/FP: xtype fp extreme value
+define pcodeop sffixupr;
+define pcodeop sffixupn;
+define pcodeop sffixupd;
+
+with slot: iclass=0b1000  {
+    :D5 "=sffixupr(" S5 ")" is imm_21_27=0b1011101 & S5 & S5i & imm_8_13=0 & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+       D5 = sffixupr(S5i);
+    }
+}
+with slot: iclass=0b1110  {
+    :D5 "=sffixupn(" S5 "," T5 ")" is imm_21_27=0b1011110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = sffixupn(S5i, T5i);
+    }
+    :D5 "=sffixupd(" S5 "," T5 ")" is imm_21_27=0b1011110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+       D5 = sffixupd(S5i, T5i);
+    }
+}
+
+# XTYPE/FP: xtype fp fma
+define pcodeop dfmpylh;
+define pcodeop dfmpyhh;
+with slot: iclass=0b1110  {
+    :D5_pair "+=dfmpylh(" S5_pair "," T5_pair ")" is imm_21_27=0b1010000 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = dfmpylh(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=dfmpyhh(" S5_pair "," T5_pair ")" is imm_21_27=0b1010100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = dfmpyhh(S5_pairi, T5_pairi);
+    }
+    :D5 "+=sfmpy(" S5 "," T5 ")" is imm_21_27=0b1111000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b100 & D5 & D5i & OUTPUT_D5 {
+        local tmp:4 = S5i f* T5i;
+        D5 = D5i f+ tmp;
+    }
+    :D5 "-=sfmpy(" S5 "," T5 ")" is imm_21_27=0b1111000 & S5 & S5i & imm_13=0 & T5 & T5i &  imm_5_7=0b101 & D5 & D5i & OUTPUT_D5 {
+        local tmp:4 = S5i f* T5i;
+        D5 = D5i f- tmp;
+    }
+}
+
+# XTYPE/FP: xtype fp fma scale
+define pcodeop sfmpy_scale;
+with slot: iclass=0b1110  {
+    :D5 "+=sfmpy(" S5 "," T5 "," U2_5_6 "):scale" is imm_21_27=0b1111011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=1 & U2_5_6 & D5 & D5i & OUTPUT_D5 {
+        D5 = D5i f+ sfmpy_scale(S5i, T5i, U2_5_6);
+    }
+}
+
+# XTYPE/FP: xtype fp repic
+define pcodeop sfinvsqrta;
+with slot: iclass=0b1000  {
+    :D5 "," U2_5_6 "=sfinvsqrta(" S5 ")" is imm_21_27=0b1011111 & S5 & S5i & imm_8_13=0 & imm_7=0 & U2_5_6 & D5 & OUTPUT_D5 {
+        local tmp:8 = sfinvsqrta(S5i);
+        D5 = tmp:4;
+        U2_5_6 = tmp(1);
+    }
+}
+
+# XTYPE/FP: xtype fp fma lib
+with slot: iclass=0b1110  {
+    :D5 "+=sfmpy(" S5 "," T5 "):lib" is imm_21_27=0b1111000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b110 & D5 & D5i & OUTPUT_D5 {
+        local tmp:4 = S5i f* T5i;
+        D5 = D5i f+ tmp;
+    }
+    :D5 "-=sfmpy(" S5 "," T5 "):lib" is imm_21_27=0b1111000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b111 & D5 & D5i & OUTPUT_D5 {
+        local tmp:4 = S5i f* T5i;
+        D5 = D5i f- tmp;
+    }
+}
+# XTYPE/FP: xtype fp mk const
+with slot: iclass=0b1101  {
+    :D5 "=sfmake(" u10 "):pos" is imm_22_27=0b011000 & imm_21u & imm_16_20 & imm_5_13u & D5 & OUTPUT_D5 [ u10 = imm_5_13u | (imm_21u << 9); ] {
+        local tmp:4 = u10; # upcast size for pos sign
+        D5 = int2float(tmp);
+    }
+    :D5 "=sfmake(" u10 "):neg" is imm_22_27=0b011001 & imm_21u & imm_16_20 & imm_5_13u & D5 & OUTPUT_D5 [ u10 = imm_5_13u | (imm_21u << 9); ] {
+        local tmp:4 = u10; # upcast size for pos sign
+        D5 = -int2float(tmp);
+    }
+    :D5_pair "=dfmake(" u10 "):pos" is imm_22_27=0b100100 & imm_21u & imm_16_20 & imm_5_13u & D5_pair [ u10 = imm_5_13u | (imm_21u << 9); ] {
+        local tmp:8 = u10; # upcast size for pos sign
+        D5_pair = int2float(tmp);
+    }
+    :D5_pair "=dfmake(" u10 "):neg"is imm_22_27=0b100101 & imm_21u & imm_16_20 & imm_5_13u & D5_pair [ u10 = imm_5_13u | (imm_21u << 9); ] {
+        local tmp:8 = u10; # upcast size for pos sign
+        D5_pair = -int2float(tmp);
+    }
+}
+
+# XTYPE/FP: fp max
+define pcodeop fmax;
+with slot: iclass=0b1110  {
+    :D5_pair "=sfmax(" S5_pair "," T5_pair ")" is imm_21_27=0b1000001 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = fmax(S5_pairi, T5_pairi);
+    }
+    :D5 "=sfmax(" S5 "," T5 ")" is imm_21_27=0b1011100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = fmax(S5i, T5i);
+    }
+}
+
+# XTYPE/FP: fp min
+define pcodeop fmin;
+with slot: iclass=0b1110  {
+    :D5_pair "=dfmin(" S5_pair "," T5_pair ")" is imm_21_27=0b1000110 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = fmin(S5_pairi, T5_pairi);
+    }
+    :D5 "=sfmin(" S5 "," T5 ")" is imm_21_27=0b1011100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = fmin(S5i, T5i);
+    }
+}
+
+# XTYPE/FP: fp mul
+define pcodeop dfmpyfix;
+define pcodeop dfmpyil;
+with slot: iclass=0b1110  {
+    :D5_pair "=dfmpyfix(" S5_pair "," T5_pair ")" is imm_21_27=0b1000010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = dfmpyfix(S5_pairi, T5_pairi);
+    }
+    :D5_pair "=dfmpyil(" S5_pair "," T5_pair ")" is imm_21_27=0b1000101 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = dfmpyil(S5_pairi, T5_pairi);
+    }
+    :D5 "=sfmpy(" S5 "," T5 ")" is imm_21_27=0b1011010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b000 & D5 & OUTPUT_D5 {
+        D5 = S5i f* T5i;
+    }
+}
+
+# XTYPE/FP: fp recip aprox
+define pcodeop sfrecipa;
+with slot: iclass=0b1110  {
+    :D5 "," U2_5_6 "=sfrecipa(" S5 "," T5 ")" is imm_21_27=0b1011111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=1 & U2_5_6 & D5 {
+        local tmp:8 = sfrecipa(S5i, T5i);
+        D5 = tmp:4;
+        U2_5_6 = tmp(1);
+    }
+}
+
+# XTYPE/FP: fp sub
+with slot: iclass=0b1110  {
+    :D5_pair "=dfsub(" S5_pair "," T5_pair ")" is imm_21_27=0b1000100 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & D5_pair {
+        D5_pair = S5_pairi f- T5_pairi;
+    }
+    :D5 "=sfsub(" S5 "," T5 ")" is imm_21_27=0b1011000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0b001 & D5 & OUTPUT_D5 {
+        D5 = S5i f- T5i;
+    }
+}

@@ -1,0 +1,7 @@
+<opinions>
+
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+    		<constraint primary="164"   processor="Hexagon QDSP6"  size="32" variant="default" />
+    </constraint>
+
+</opinions>
