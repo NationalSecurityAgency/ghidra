@@ -2881,9 +2881,10 @@ void Database::clearResolve(Scope *scope)
     res = resolvemap.find(rng.getFirstAddr());
     while(res.first != res.second) {
       if ((*res.first).scope == scope) {
-	resolvemap.erase(res.first);
-	break;
+        resolvemap.erase(res.first);
+        break;
       }
+      res.first++;
     }
   }
 }
