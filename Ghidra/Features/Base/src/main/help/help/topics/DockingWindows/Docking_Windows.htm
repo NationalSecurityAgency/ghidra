@@ -105,11 +105,14 @@
 	      <P>Components can be rearranged by dragging them in various ways. &nbsp;To drag a component,
 	      press and hold the left mouse button on the title bar (header) or tab of the component to be
 	      moved, then begin moving the mouse to drag it around. &nbsp;Press ALT to include in the drag
-	      all the components at the right of the first one selected or ALT+SHIFT for all components at
-	      the left. &nbsp;The dragged components tabs will be highlighted and a transient window popup
-	      lists their names. &nbsp;The mouse cursor changes to indicate what would happen if the mouse
+	      all the components at the right of the first tab drew out or ALT+SHIFT for all components at
+	      the left. &nbsp;Pressing ALT after dragging by a title bar would select all components found
+	      in the same window space, and ALT+SHIFT would invert the sorting of the selection. &nbsp;The
+	      selected tabs will be highlighted, while a transient window popup listing their names traces
+	      the mouse motions. &nbsp;The mouse cursor changes to indicate what would happen if the mouse
 	      button is released at that location. &nbsp;While in the same window space, ALT and ALT+SHIFT
-	      drive a dynamic multiple selection, which is cut at the tab where the mouse cursor is over.<BR>
+	      set the direction of the selection, respectively, from left to right, or from right to left,
+	      dynamically cutting this selection at the tab where the mouse cursor is over.<BR>
 	      &nbsp;&nbsp;&nbsp;<BR>
 	      &nbsp;&nbsp;&nbsp; <IMG src="images/invalid.png" alt=""> &nbsp; Invalid Location - releasing
 	      here will cancel the drag operation. &nbsp;This is the same as holding SHIFT, to temporarily
@@ -156,11 +159,13 @@
 	      bar if not part of stacked components. &nbsp;To cancel a drag operation, hit ESC, click a
 	      different button, or hold just SHIFT and then release the left mouse button. &nbsp;CTRL+ALT
 	      and CTRL+ALT+SHIFT can move a group of selected components in a new window. &nbsp;To dock a
-	      group of components, hold just ALT or ALT+SHIFT. &nbsp;Hold ALT to extend a selection from a
-	      component first selected to all at its right, or ALT+SHIFT to those on its left. &nbsp;While
-	      in the same window space, this kind of multiple selection is cut at the tab hovered by the
-	      mouse cursor, so that a group of components can shift after that tab, if at the right side
-	      of that group, or before that tab, if at the left side of that group.</P>
+	      group of components, hold just ALT or ALT+SHIFT. &nbsp;Hold ALT to extend a selection from
+	      the first dragged tab to all at its right, or ALT+SHIFT to those on its left. &nbsp;If the
+	      drag operation was started by pulling a header, ALT would select all tabs, and ALT+SHIFT is
+	      to invert the sorting order of the group dragged around, unless hovering a tab in the same
+	      window space. &nbsp;While in the same window space, this kind of multiple selection is cut
+	      at the tab hovered by the mouse cursor, so that a group of components can shift after that
+	      tab, if at the right side of that group, or before that tab, if at the left side.</P>
 	</BLOCKQUOTE>
 
       <H3>Resizing components</H3>

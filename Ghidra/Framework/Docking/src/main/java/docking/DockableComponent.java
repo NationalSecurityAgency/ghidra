@@ -469,6 +469,22 @@ public class DockableComponent extends JPanel implements ContainerListener {
 				// push the component between others, in another window space
 				DROP_CODE = DropCode.PUSH;
 			}
+			// After a drag had been started by pulling a header, and while in
+			// the same window space, holding ALT would select all components,
+			// either from the beginning or from the end of the stack.
+			else if (DockableHeader.isDraggingByHeader() && DockableHeader.isAltModifierDown()) {
+				// Holding SHIFT is to start the selection going from the last
+				// to the first placeholder.  A group would be shifted left.
+				if (DockableHeader.isShiftModifierDown()) {
+					DROP_CODE = DropCode.SHIFT_LEFT;
+				}
+				// The selection starts with the first placeholder and goes to
+				// the last.  A group would be shifted right.
+				else {
+					DROP_CODE = DropCode.SHIFT_RIGHT;
+				}
+				return;
+			}
 			else {
 				// FIXME: assume that there is a tabbed pane
 				JTabbedPane tabbedPane = (JTabbedPane) getParent();

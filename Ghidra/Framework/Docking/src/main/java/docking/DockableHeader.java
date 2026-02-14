@@ -71,6 +71,9 @@ public class DockableHeader extends GenericHeader
 	// clicked.  It will work only while over a drop zone.
 	private static boolean confirmedDragExit = false;
 
+	// This is to tell when a drag-N-drop was started by pulling a header.
+	private static boolean draggingByHeader = false;
+
 	/**
 	 * Constructs a new DockableHeader for the given dockableComponent.
 	 * 
@@ -302,6 +305,11 @@ public class DockableHeader extends GenericHeader
 
 		ALT_DOWN = SHIFT_DOWN = CTRL_DOWN = false;
 
+		// NOTE: When the drag-N-drop operation was started by pulling
+		// a header, pressing ALT should mark the whole stack as group
+		// of selected placeholders to be moved.
+		draggingByHeader = this.isAncestorOf(event.getComponent());
+
 		// NOTE: This is a remainder to assume an invalid drop action,
 		// to prevent unexpected effects when voluntarily interrupting
 		// a drag-N-drop operation while outside of a drop zone.
@@ -386,8 +394,14 @@ public class DockableHeader extends GenericHeader
 		setCursor(event);
 		confirmedDragExit = true;
 		if (ALT_DOWN) {
-			setStackSection(DockableComponent.SOURCE_INFO,
-				DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			if (isDraggingByHeader()) {
+				setStackSection(DockableComponent.SOURCE_INFO.getNode(),
+						DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			else {
+				setStackSection(DockableComponent.SOURCE_INFO,
+					DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
 		}
 		else {
 			setStackSection(DockableComponent.SOURCE_INFO);
@@ -400,8 +414,14 @@ public class DockableHeader extends GenericHeader
 		setCursor(event);
 		confirmedDragExit = false;
 		if (ALT_DOWN) {
-			setStackSection(DockableComponent.SOURCE_INFO,
-				DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			if (isDraggingByHeader()) {
+				setStackSection(DockableComponent.SOURCE_INFO.getNode(),
+						DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			else {
+				setStackSection(DockableComponent.SOURCE_INFO,
+					 DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
 		}
 		else {
 			setStackSection(DockableComponent.SOURCE_INFO);
@@ -450,6 +470,15 @@ public class DockableHeader extends GenericHeader
 	 */
 	public static boolean isShiftModifierDown() {
 		return SHIFT_DOWN;
+	}
+
+	/**
+	 * Returns if the drag-N-drop was started by pulling a header.
+	 *
+	 * @return TRUE if the drag-n-drop was started by pulling a header
+	 */
+	public static boolean isDraggingByHeader() {
+		return draggingByHeader;
 	}
 
 	/**
@@ -552,6 +581,82 @@ public class DockableHeader extends GenericHeader
 
 	/**
 	 * Updates the information about a multiple component selection as
+	 * a whole stack is dragged around.
+	 *
+	 * While in the same window space, the selection should either end
+	 * before the destination placeholder, if selecting from the first
+	 * placeholder to the last on the right, or after it, if selecting
+	 * from the last placeholder to the first on the left.
+	 *
+	 * @param sourceNode the source node, as a stack of placeholders
+	 * @param destination the placeholder with the mouse cursor over
+	 * @param invertDirection invert sorting, or selection direction
+	 */
+	private static void setStackSection(ComponentNode sourceNode,
+			ComponentPlaceholder destination, boolean invertDirection) {
+
+		// Collect the active placeholders found in
+		// the source node.
+		List<ComponentPlaceholder> placeholders = sourceNode.getActivePlaceholders();
+
+		// Pre-process the stack's selection range.
+		int infoIndex = (int) placeholders.stream()
+			.takeWhile(p -> !p.getComponent().isVisible()).count();
+
+		// The hovered placeholder has index -1, if
+		// in another window space than the source.
+		// Otherwise, it could also be the index of
+		// the currently focused placeholder, while
+		// hovering the header or content space.
+		int overIndex = placeholders.indexOf(destination);
+
+		// The hovered placeholder is in the source
+		// window space, and it's not the currently
+		// focused placeholder.
+		if (overIndex != -1 && overIndex != infoIndex) {
+
+			if (invertDirection) {
+				// Section of placeholders from the
+				// end to the placeholder after the
+				// hovered placeholder, or just the
+				// last placeholder.
+				int end = placeholders.size();
+				overIndex = (end - overIndex) > 1 ? overIndex : overIndex - 1;
+				DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(overIndex + 1, end);
+			}
+			else {
+				// Section of placeholders from the
+				// start, to the placeholder before
+				// the hovered placeholder, or just
+				// the first placeholder.
+				overIndex = overIndex > 0 ? overIndex : overIndex + 1;
+				DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(0, overIndex);
+			}
+		}
+		// The hovered placeholder has focus, or it
+		// is from another window space.
+		else if (invertDirection) {
+			// Include all the source placeholders,
+			// inverting the stack section sorting.
+			DockableComponent.SOURCE_SECTION_INFO = placeholders.reversed();
+		}
+		else {
+			// Include all the source placeholders.
+			DockableComponent.SOURCE_SECTION_INFO = placeholders;
+		}
+
+		// Join each selected placeholder title, to
+		// represent the stack section being moved.
+		String infoText = DockableComponent.SOURCE_SECTION_INFO.stream()
+				.map(p -> p.getTitle())
+				.collect(Collectors.joining(" | "));
+
+		// Update the transient tool tip text.
+		TransientWindow.updateTransientWindow(infoText);
+	}
+
+	/**
+	 * Updates the information about a multiple component selection as
 	 * a single placeholder, part of a stack, is dragged around.
 	 *
 	 * @param source the placeholder dragged around, part of a stack
@@ -590,9 +695,14 @@ public class DockableHeader extends GenericHeader
 		if (ALT_DOWN && confirmedDragExit) {
 			// Temporarily mark a stack section, of which a
 			// placeholder is part of, as to be moved.
-			setStackSection(DockableComponent.SOURCE_INFO,
-				DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
-
+			if (draggingByHeader) {
+				setStackSection(DockableComponent.SOURCE_INFO.getNode(),
+						DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			else {
+				setStackSection(DockableComponent.SOURCE_INFO,
+					DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
 			// Highlight all tabs part of the stack section
 			// and turn off the unselected.
 			highlightStackSection();
