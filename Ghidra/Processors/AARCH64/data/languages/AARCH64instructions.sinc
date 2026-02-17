@@ -1310,6 +1310,7 @@ define token instrAARCH64 (32) endian = little
 	b_2223 = (22,23)
 	b_2224 = (22,24)
 	b_2225 = (22,25)
+	b_2228 = (22,28)
 	b_2229 = (22,29)
 	b_2231 = (22,31)
 	b_2323 = (23,23)
@@ -1459,6 +1460,8 @@ define token instrAARCH64 (32) endian = little
 	ftype = (22,23)
 	u = (29,29)
 	v = (26,26)
+
+    cssc_imm8 = (10,17)
 
 	# SVE tokens
 

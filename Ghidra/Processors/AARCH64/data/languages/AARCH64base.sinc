@@ -8367,3 +8367,232 @@ is b_1231=0b11010101000000000100 & b_0007=0b00111111
 }
 
 
+# C.6.2.1 ABS page C6-1788
+
+:abs Rd_GPR64, Rn_GPR64
+is sf=1 & op=1 & S=0 & b_2128=0b11010110 & b_1620=0b00000 & b_1015=0b001000 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp s>= 0) goto <skip>;
+                tmp = -tmp;
+        <skip> 
+        Rd_GPR64 = tmp;
+}
+
+:abs Rd_GPR32, Rn_GPR32
+is sf=0 & op=1 & S=0 & b_2128=0b11010110 & b_1620=0b00000 & b_1015=0b001000 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp s>= 0) goto <skip>;
+                tmp = -tmp;
+        <skip> 
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.100 CNT page C6-1958
+
+define pcodeop cssc_cnt;
+
+:cnt Rd_GPR64, Rn_GPR64
+is sf=1 & op=1 & S=0 & b_2128=0b11010110 & b_1620=0b00000 & b_1015=0b000111 & Rn_GPR64 & Rd_GPR64
+{
+        Rd_GPR64 = cssc_cnt(Rn_GPR64);
+}
+
+:cnt Rd_GPR32, Rn_GPR32
+is sf=0 & op=1 & S=0 & b_2128=0b11010110 & b_1620=0b00000 & b_1015=0b000111 & Rn_GPR32 & Rd_GPR32
+{
+        Rd_GPR32 = cssc_cnt(Rn_GPR32);
+}
+
+# C.6.2.144 CNZ page C6-2150
+
+define pcodeop cssc_cnz;
+
+:cnz Rd_GPR64, Rn_GPR64
+is sf=1 & op=1 & S=0 & b_2128=0b11010110 & b_1620=0b00000 & b_1015=0b000110 & Rn_GPR64 & Rd_GPR64
+{
+        Rd_GPR64 = cssc_cnz(Rn_GPR64);
+}
+
+:cnz Rd_GPR32, Rn_GPR32
+is sf=0 & op=1 & S=0 & b_2128=0b11010110 & b_1620=0b00000 & b_1015=0b000110 & Rn_GPR32 & Rd_GPR32
+{
+        Rd_GPR32 = cssc_cnz(Rn_GPR32);
+}
+
+# C.6.2.370 SMAX page C6-2603
+
+:smax Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR64 & b_1015=0b011000 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp s> Rm_GPR64) goto <skip>;
+                tmp = Rm_GPR64;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:smax Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR32 & b_1015=0b011000 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp s> Rm_GPR32) goto <skip>;
+                tmp = Rm_GPR32;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.373 SMIN page C6-2608
+
+:smin Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR64 & b_1015=0b011010 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp s<= Rm_GPR64) goto <skip>;
+                tmp = Rm_GPR64;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:smin Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR32 & b_1015=0b011010 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp s<= Rm_GPR32) goto <skip>;
+                tmp = Rm_GPR32;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.492 UMAX page C6-2852
+
+:umax Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR64 & b_1015=0b011001 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp > Rm_GPR64) goto <skip>;
+                tmp = Rm_GPR64;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:umax Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR32 & b_1015=0b011001 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp > Rm_GPR32) goto <skip>;
+                tmp = Rm_GPR32;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.494 UMIN page C6-2856
+
+:umin Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR64 & b_1015=0b011011 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp <= Rm_GPR64) goto <skip>;
+                tmp = Rm_GPR64;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:umin Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & op=0 & S=0 & b_2128=0b11010110 & Rm_GPR32 & b_1015=0b011011 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp <= Rm_GPR32) goto <skip>;
+                tmp = Rm_GPR32;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.369 SMAX page C6-2601
+
+:smax Rd_GPR64, Rn_GPR64, "#"^cssc_imm8
+is sf=1 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0000 & cssc_imm8 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp s> cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:smax Rd_GPR32, Rn_GPR32, "#"^cssc_imm8
+is sf=0 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0000 & cssc_imm8 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp s> cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.372 SMIN page C6-2606
+
+:smin Rd_GPR64, Rn_GPR64, "#"^cssc_imm8
+is sf=1 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0010 & cssc_imm8 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp s<= cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:smin Rd_GPR32, Rn_GPR32, "#"^cssc_imm8
+is sf=0 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0010 & cssc_imm8 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp s<= cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.491 UMAX page C6-2850
+
+:umax Rd_GPR64, Rn_GPR64, "#"^cssc_imm8
+is sf=1 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0001 & cssc_imm8 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp > cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:umax Rd_GPR32, Rn_GPR32, "#"^cssc_imm8
+is sf=0 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0001 & cssc_imm8 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp > cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR32 = tmp;
+}
+
+# C.6.2.493 UMIN page C6-2854
+
+:umin Rd_GPR64, Rn_GPR64, "#"^cssc_imm8
+is sf=1 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0011 & cssc_imm8 & Rn_GPR64 & Rd_GPR64
+{
+        local tmp:8 = Rn_GPR64;
+        if (tmp <= cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR64 = tmp;
+}
+
+:umin Rd_GPR32, Rn_GPR32, "#"^cssc_imm8
+is sf=0 & op=0 & S=0 & b_2228=0b1000111 & b_1821=0b0011 & cssc_imm8 & Rn_GPR32 & Rd_GPR32
+{
+        local tmp:4 = Rn_GPR32;
+        if (tmp <= cssc_imm8) goto <skip>;
+                tmp = cssc_imm8;
+        <skip>
+        Rd_GPR32 = tmp;
+}
