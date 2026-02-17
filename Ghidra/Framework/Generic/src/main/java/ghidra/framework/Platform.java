@@ -81,6 +81,16 @@ public enum Platform {
 	FREEBSD_ARM_64(OperatingSystem.FREE_BSD, Architecture.ARM_64, "freebsd_arm_64", ".so", ""),
 
 	/**
+	 * Identifies a OpenBSD x86 64-bit OS.
+	 */
+	OPENBSD_X86_64(OperatingSystem.OPEN_BSD, Architecture.X86_64, "openbsd_x86_64", ".so", ""),
+
+	/**
+	 * Identifies a OpenBSD ARM 64-bit OS.
+	 */
+	OPENBSD_ARM_64(OperatingSystem.OPEN_BSD, Architecture.ARM_64, "openbsd_arm_64", ".so", ""),
+
+	/**
 	 * Identifies an unsupported OS.
 	 */
 	UNSUPPORTED(OperatingSystem.UNSUPPORTED, Architecture.UNKNOWN, null, null, ""),
@@ -233,6 +243,11 @@ public enum Platform {
 			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e");
 			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64");
 			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64h");
+		}
+		else if (operatingSystem == OperatingSystem.OPEN_BSD) {
+			paths.add("/usr/lib");
+			paths.add("/usr/X11R6/lib");
+			paths.add("/usr/local/lib");
 		}
 		else if (CURRENT_PLATFORM == WIN_X86_64) {
 			String windir = System.getenv("SystemRoot");

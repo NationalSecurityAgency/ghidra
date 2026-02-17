@@ -135,6 +135,7 @@ default_compiler_map: Dict[Optional[str], str] = {
     'freebsd': 'gcc',
     'linux': 'gcc',
     'netbsd': 'gcc',
+    'openbsd': 'gcc',
     'ps4': 'gcc',
     'ios': 'gcc',
     'macosx': 'gcc',

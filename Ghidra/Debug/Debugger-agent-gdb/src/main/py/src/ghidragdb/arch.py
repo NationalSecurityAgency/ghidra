@@ -103,6 +103,7 @@ data64_compiler_map: Dict[Optional[str], str] = {
 
 x86_compiler_map: Dict[Optional[str], str] = {
     'GNU/Linux': 'gcc',
+    'OpenBSD': 'gcc',
     'Windows': 'windows',
     # This may seem wrong, but Ghidra cspecs really describe the ABI
     'Cygwin': 'windows',
@@ -110,6 +111,7 @@ x86_compiler_map: Dict[Optional[str], str] = {
 
 riscv_compiler_map: Dict[Optional[str], str] = {
     'GNU/Linux': 'gcc',
+    'OpenBSD': 'gcc',
     'Cygwin': 'gcc',
 }
 
