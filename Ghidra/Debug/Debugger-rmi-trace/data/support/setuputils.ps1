@@ -75,14 +75,14 @@ function Compute-Ssh-Args {
 	if ($forward) {
 		$sshargs+=("-R$Env:OPT_REMOTE_PORT`:$Env:GHIDRA_TRACE_RMI_ADDR")
 	}
-	if ("$Env:OPT_EXTRA_SSH_ARGS" -ne "") {
+	if ("$Env:OPT_EXTRA_SSH_ARGS") {
 		$sshargs+=("$Env:OPT_EXTRA_SSH_ARGS")
 	}
 	$sshargs+=("$Env:OPT_HOST")
-	if ("$Env:OPT_OS_WINDOWS" -ne "") {
+	if ("$Env:OPT_OS_WINDOWS" -ne $true) {
 		$sshargs+=("TERM='$Env:TERM'")
 	}
-	$sshargs+=($cmdline)
+	$sshargs+=("$cmdline")
 
 	return $sshargs
 }
