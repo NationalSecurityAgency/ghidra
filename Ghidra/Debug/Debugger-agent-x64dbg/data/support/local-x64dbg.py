@@ -18,16 +18,51 @@ import os
 import sys
 
 
+cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
+target = os.getenv('OPT_TARGET_IMG')
+args = os.getenv('OPT_TARGET_ARGS')
+initdir = os.getenv('OPT_TARGET_DIR')
+
+
+def parse_parameters():
+    global cxn, target, args, initdir
+    os.environ['OPT_OS_WINDOWS'] = "true"
+    argc = len(sys.argv)
+    if argc == 1:
+        return True
+    if argc >= 3:
+        cxn = sys.argv[1]
+        target = sys.argv[2]
+        if argc > 4:
+            initdir = sys.argv[3]
+        else:
+            initdir = "."
+        if argc > 4:
+            args = sys.argv[4]
+        else:
+            args = ""
+        return True
+    print("Error: expected (cxn, target, initdir, ...)")
+    return False
+
+
 def append_paths():
     sys.path.append(
         f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
-    from gmodutils import ghidra_module_pypath
-    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
-    sys.path.append(ghidra_module_pypath())
+    try:
+        from gmodutils import ghidra_module_pypath
+        sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+        sys.path.append(ghidra_module_pypath())
+    except Exception as e:
+        pass
 
 
 def main():
+    global cxn, target, args, initdir
     append_paths()
+    if parse_parameters() is False:
+        return
+    
     # Delay these imports until sys.path is patched
     from ghidraxdbg import commands as cmd
     from ghidraxdbg.hooks import on_state_changed
@@ -37,10 +72,7 @@ def main():
     global repl
     repl = cmd.repl
 
-    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-    args = os.getenv('OPT_TARGET_ARGS')
-    initdir = os.getenv('OPT_TARGET_DIR')
-    target = os.getenv('OPT_TARGET_IMG')
+    cmd.ghidra_trace_connect(cxn)
 
     cmd.ghidra_trace_create(target, args=args, initdir=initdir, start_trace=False)
 
