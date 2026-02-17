@@ -101,7 +101,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 				extDFSI.importSymbols(log);
 			}
 
-			try (DWARFProgram prog = new DWARFProgram(program, importOptions, monitor, dsp)) {
+			try (DWARFProgram prog = new DWARFProgram(program, importOptions, dsp)) {
 				if (prog.getRegisterMappings() == null && importOptions.isImportFuncs()) {
 					log.appendMsg("No DWARF to Ghidra register mappings found for this program's " +
 						"language [%s], function information may be incorrect / incomplete."

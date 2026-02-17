@@ -102,7 +102,7 @@ public class DWARFLocationList {
 	public static DWARFLocationList readV5(BinaryReader reader, DWARFCompilationUnit cu)
 			throws IOException {
 		long baseAddr = cu.getPCRange().getFrom();
-		DWARFProgram dprog = cu.getProgram();
+		DIEContainer dieContainer = cu.getDIEContainer();
 
 		List<DWARFLocation> list = new ArrayList<>();
 		while (reader.hasNext()) {
@@ -113,15 +113,15 @@ public class DWARFLocationList {
 			switch (lleId) {
 				case DW_LLE_base_addressx: {
 					int addrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-					baseAddr = dprog.getAddress(DW_FORM_addrx, addrIndex, cu);
+					baseAddr = dieContainer.getAddress(DW_FORM_addrx, addrIndex, cu);
 					break;
 				}
 				case DW_LLE_startx_endx: {
 					int startAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					int endAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
-					long start = dprog.getAddress(DW_FORM_addrx, startAddrIndex, cu);
-					long end = dprog.getAddress(DW_FORM_addrx, endAddrIndex, cu);
+					long start = dieContainer.getAddress(DW_FORM_addrx, startAddrIndex, cu);
+					long end = dieContainer.getAddress(DW_FORM_addrx, endAddrIndex, cu);
 					list.add(new DWARFLocation(start, end, expr));
 					break;
 				}
@@ -129,7 +129,7 @@ public class DWARFLocationList {
 					int startAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					int len = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
-					long start = dprog.getAddress(DW_FORM_addrx, startAddrIndex, cu);
+					long start = dieContainer.getAddress(DW_FORM_addrx, startAddrIndex, cu);
 					list.add(new DWARFLocation(start, start + len, expr));
 					break;
 				}

@@ -23,8 +23,7 @@ import ghidra.app.util.bin.*;
 public class MockStringTable extends StringTable {
 
 	public MockStringTable(BinaryReader reader) {
-		super(new BinaryReader(new ByteArrayProvider(new byte[4 * 1024]), true /* LE */),
-			StandardCharsets.UTF_8);
+		super(reader, StandardCharsets.UTF_8);
 	}
 
 	public void add(int index, String s) throws IOException {

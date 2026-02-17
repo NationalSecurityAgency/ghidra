@@ -145,9 +145,8 @@ public class DWARFUtil {
 	 * name.
 	 */
 	public static List<String> findLinkageNameInChildren(DebugInfoEntry die) {
-		DWARFProgram prog = die.getProgram();
 		for (DebugInfoEntry childDIE : die.getChildren(DWARFTag.DW_TAG_subprogram)) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = die.getContainer().getAggregate(childDIE);
 			String linkage = childDIEA.getString(DW_AT_linkage_name, null);
 			if (linkage == null) {
 				linkage = childDIEA.getString(DW_AT_MIPS_linkage_name, null);
@@ -202,7 +201,7 @@ public class DWARFUtil {
 		DWARFProgram prog = diea.getProgram();
 		int typeDefCount = 0;
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childDIE);
 			if (diea == childDIEA || diea.getOffset() == childDIEA.getOffset()) {
 				return "anon_%s_%d".formatted(childDIEA.getTag().getContainerTypeName(),
 					typeDefCount);
@@ -230,10 +229,9 @@ public class DWARFUtil {
 			return null;
 		}
 
-		DWARFProgram prog = diea.getProgram();
 		List<String> users = new ArrayList<>();
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childDIE);
 
 			String childName = childDIEA.getName();
 			DIEAggregate type = childDIEA.getTypeRef();
@@ -273,7 +271,7 @@ public class DWARFUtil {
 				childEntry.getTag() == DWARFTag.DW_TAG_inheritance)) {
 				continue;
 			}
-			DIEAggregate childDIEA = diea.getProgram().getAggregate(childEntry);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childEntry);
 			if (childDIEA.hasAttribute(DW_AT_external)) {
 				continue;
 			}

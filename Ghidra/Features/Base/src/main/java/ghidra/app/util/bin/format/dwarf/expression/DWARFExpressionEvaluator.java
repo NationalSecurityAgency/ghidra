@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.dwarf.expression;
 
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFForm.*;
 import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCode.*;
 
 import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf.*;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFForm;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -658,8 +658,8 @@ public class DWARFExpressionEvaluator {
 					throw new DWARFExpressionUnsupportedOpException(instr);
 				case DW_OP_addrx:
 					try {
-						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
-							instr.getOperandValue(0), cu);
+						long addr = cu.getDIEContainer()
+								.getAddress(DW_FORM_addrx, instr.getOperandValue(0), cu);
 						push(addr);
 						break;
 					}
@@ -669,8 +669,8 @@ public class DWARFExpressionEvaluator {
 					}
 				case DW_OP_constx: // same as addrx, but different relocation-able specifications
 					try {
-						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
-							instr.getOperandValue(0), cu);
+						long addr = cu.getDIEContainer()
+								.getAddress(DW_FORM_addrx, instr.getOperandValue(0), cu);
 						push(addr);
 						break;
 					}

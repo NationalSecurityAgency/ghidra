@@ -29,12 +29,14 @@ public class DIECreator {
 	record AttrInfo(DWARFAttributeId attribute, AttrDef spec, DWARFAttributeValue value) {}
 
 	private MockDWARFProgram dwarfProg;
+	private MockDIEContainer dieContainer;
 	private DWARFTag tag;
 	private Map<DWARFAttributeId, AttrInfo> attributes = new HashMap<>();
 	private DebugInfoEntry parent;
 
-	public DIECreator(MockDWARFProgram dwarfProg, DWARFTag tag) {
-		this.dwarfProg = dwarfProg;
+	public DIECreator(MockDWARFProgram dprog, DWARFTag tag) {
+		this.dieContainer = dprog.getDIEContainer();
+		this.dwarfProg = dprog;
 		this.tag = tag;
 	}
 
@@ -64,14 +66,14 @@ public class DIECreator {
 	public DIECreator addRef(DWARFAttributeId attribute, DebugInfoEntry die) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_ref8, 0);
 		add(attrSpec, new DWARFNumericAttribute(
-			die.getOffset() - dwarfProg.getCurrentCompUnit().getStartOffset()));
+			die.getOffset() - dieContainer.getCurrentCompUnit().getStartOffset()));
 		return this;
 	}
 
 	public DIECreator addRef(DWARFAttributeId attribute, long offset) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_ref8, 0);
 		add(attrSpec, new DWARFNumericAttribute(
-			offset - dwarfProg.getCurrentCompUnit().getStartOffset()));
+			offset - dieContainer.getCurrentCompUnit().getStartOffset()));
 		return this;
 	}
 
@@ -112,9 +114,9 @@ public class DIECreator {
 	}
 
 	public DebugInfoEntry createRootDIE() {
-		MockDWARFCompilationUnit cu = dwarfProg.getCurrentCompUnit();
+		MockDWARFCompilationUnit cu = dieContainer.getCurrentCompUnit();
 		DWARFAbbreviation abbr = cu.createAbbreviation(makeAttrSpecArray(), tag);
-		DebugInfoEntry die = dwarfProg.addDIE(abbr, null);
+		DebugInfoEntry die = dieContainer.addDIE(abbr, null);
 
 		int attrNum = 0;
 		for (AttrInfo attrInfo : attributes.values()) {
@@ -125,13 +127,13 @@ public class DIECreator {
 	}
 
 	public DebugInfoEntry create() {
-		MockDWARFCompilationUnit cu = dwarfProg.getCurrentCompUnit();
+		MockDWARFCompilationUnit cu = dieContainer.getCurrentCompUnit();
 		if (cu == null) {
-			cu = dwarfProg.addCompUnit();
+			cu = dieContainer.addCompUnit();
 		}
 		DWARFAbbreviation abbr = cu.createAbbreviation(makeAttrSpecArray(), tag);
 		DebugInfoEntry die =
-			dwarfProg.addDIE(abbr, parent != null ? parent : cu.getCompileUnitDIE());
+			dieContainer.addDIE(abbr, parent != null ? parent : cu.getCompileUnitDIE());
 
 		int attrNum = 0;
 		for (AttrInfo attrInfo : attributes.values()) {

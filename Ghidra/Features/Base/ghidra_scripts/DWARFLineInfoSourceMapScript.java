@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.external.*;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
@@ -65,7 +64,7 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 		}
 
 		DWARFImportOptions importOptions = new DWARFImportOptions();
-		try (DWARFProgram dprog = new DWARFProgram(currentProgram, importOptions, monitor, dsp)) {
+		try (DWARFProgram dprog = new DWARFProgram(currentProgram, importOptions, dsp)) {
 			dprog.init(monitor);
 			addSourceLineInfo(dprog);
 		}
@@ -73,8 +72,7 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 
 	private void addSourceLineInfo(DWARFProgram dprog)
 			throws CancelledException, IOException, LockException, AddressOverflowException {
-		BinaryReader reader = dprog.getDebugLineBR();
-		if (reader == null) {
+		if (!dprog.getDIEContainer().hasLineInfo()) {
 			popup("Unable to get reader for debug line info");
 			return;
 		}
@@ -127,7 +125,7 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 					continue;
 				}
 			}
-			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu, reader));
+			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu));
 		}
 
 		monitor.setIndeterminate(true);

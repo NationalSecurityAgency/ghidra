@@ -278,7 +278,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// test that cached types are handled correctly.
 		DebugInfoEntry int2DIE = addInt();
 		DebugInfoEntry structB_cu2 = newStruct("structB", 20).create();
-		long structA_cu2_offset = dwarfProg.getRelativeDIEOffset(2);
+		long structA_cu2_offset = dieContainer.getRelativeDIEOffset(2);
 		newMember(structB_cu2, "structAfield", structA_cu2_offset, 0).create();
 		newMember(structB_cu2, "guardfield", int2DIE, 16).create();
 
@@ -1289,7 +1289,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		// hack to make a forward reference to a DIE that hasn't been created yet.
 		// This creates a hostile loop in the data type references.
-		long fwdDIE = dwarfProg.getRelativeDIEOffset(1);
+		long fwdDIE = dieContainer.getRelativeDIEOffset(1);
 		DebugInfoEntry constDIE =
 			new DIECreator(dwarfProg, DWARFTag.DW_TAG_const_type).addRef(DW_AT_type, fwdDIE)
 					.create();

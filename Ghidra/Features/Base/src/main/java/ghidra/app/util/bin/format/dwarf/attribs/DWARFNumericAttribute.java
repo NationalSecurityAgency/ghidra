@@ -15,11 +15,12 @@
  */
 package ghidra.app.util.bin.format.dwarf.attribs;
 
+import static ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId.*;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.InvalidDataException;
 import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionNames;
 import ghidra.program.model.scalar.Scalar;
 
 /**
@@ -118,14 +119,12 @@ public class DWARFNumericAttribute implements DWARFAttributeValue {
 			return "addr v%d 0x%x".formatted(ver, getUnsignedValue());
 		}
 		else if (form.isClass(DWARFAttributeClass.rnglist)) {
-			String sectionName =
-				ver < 5 ? DWARFSectionNames.DEBUG_RANGES : DWARFSectionNames.DEBUG_RNGLISTS;
+			String sectionName = (ver < 5 ? DEBUG_RANGES : DEBUG_RNGLISTS).getSectionName();
 			return toElementLocationString("rnglist", sectionName, -1, getUnsignedValue(), ver) +
 				" offset: " + getUnsignedValue();
 		}
 		else if (form.isClass(DWARFAttributeClass.loclist)) {
-			String sectionName =
-				ver < 5 ? DWARFSectionNames.DEBUG_LOC : DWARFSectionNames.DEBUG_LOCLISTS;
+			String sectionName = (ver < 5 ? DEBUG_LOC : DEBUG_LOCLISTS).getSectionName();
 			return toElementLocationString("loclist", sectionName, -1, getUnsignedValue(), ver);
 		}
 

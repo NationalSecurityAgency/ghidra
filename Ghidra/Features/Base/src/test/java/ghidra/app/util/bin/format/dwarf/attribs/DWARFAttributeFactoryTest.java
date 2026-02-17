@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf.attribs;
 
+import static ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFForm.*;
 import static org.junit.Assert.*;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import org.junit.Test;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf.DWARFTestBase;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 import ghidra.program.database.ProgramBuilder;
@@ -115,7 +115,7 @@ public class DWARFAttributeFactoryTest extends DWARFTestBase {
 			/* guard byte for test */ 0xff);
 		// @formatter:on
 
-		setCompUnit(dwarfProg.addCompUnit(DWARFSourceLanguage.DW_LANG_C, 8 /* dwarf64 */));
+		setCompUnit(dieContainer.addCompUnit(DW_LANG_C, 8 /* dwarf64 */));
 
 		DWARFAttributeValue result1 = read(br, DW_AT_name, DW_FORM_strp);
 		assertTrue("Should be string", result1 instanceof DWARFStringAttribute);

@@ -63,7 +63,7 @@ public class DIECreatorTest extends DWARFTestBase {
 
 		buildMockDIEIndexes();
 
-		DIEAggregate struct_via_ao = dwarfProg.getAggregate(aoStruct);
+		DIEAggregate struct_via_ao = dwarfProg.getDIEContainer().getAggregate(aoStruct);
 
 		assertEquals("MyStruct aggregate should have 3 fragments", 3,
 			struct_via_ao.getOffsets().length);
@@ -73,7 +73,7 @@ public class DIECreatorTest extends DWARFTestBase {
 			struct_via_ao.getString(DW_AT_description, null));
 	}
 
-	/**
+	/*
 	 * Tests the creation of DIEAggregates when there is a many-to-one layout of
 	 * abstractorigin -> spec -> decl links.
 	 * <pre>
@@ -83,9 +83,6 @@ public class DIECreatorTest extends DWARFTestBase {
 	 *                                                 \
 	 *                                                   mystruct ao2
 	 * </pre>
-	 * @throws DWARFException
-	 * @throws IOException
-	 * @throws CancelledException
 	 */
 	@Test
 	public void testDIEAggregateMulti() throws DWARFException, CancelledException, IOException {
@@ -126,8 +123,8 @@ public class DIECreatorTest extends DWARFTestBase {
 
 		buildMockDIEIndexes();
 
-		DIEAggregate ao1 = dwarfProg.getAggregate(ao1Struct);
-		DIEAggregate ao2 = dwarfProg.getAggregate(ao2Struct);
+		DIEAggregate ao1 = dwarfProg.getDIEContainer().getAggregate(ao1Struct);
+		DIEAggregate ao2 = dwarfProg.getDIEContainer().getAggregate(ao2Struct);
 
 		assertEquals("Should have 3 fragments", 3, ao1.getOffsets().length);
 		assertEquals("Should have 3 fragments", 3, ao2.getOffsets().length);

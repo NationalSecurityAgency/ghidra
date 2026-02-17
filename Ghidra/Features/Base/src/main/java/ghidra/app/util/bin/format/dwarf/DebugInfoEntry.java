@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.dwarf;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.attribs.*;
@@ -126,7 +127,7 @@ public class DebugInfoEntry {
 	 * @return list of child DIE's
 	 */
 	public List<DebugInfoEntry> getChildren() {
-		return getProgram().getChildrenOf(dieIndex);
+		return getContainer().getChildrenOf(dieIndex);
 	}
 
 	/**
@@ -152,7 +153,7 @@ public class DebugInfoEntry {
 	 * @return the parent DIE, or null if this DIE is the root of the compilation unit
 	 */
 	public DebugInfoEntry getParent() {
-		return getProgram().getParentOf(dieIndex);
+		return getContainer().getParentOf(dieIndex);
 	}
 
 	/**
@@ -188,7 +189,7 @@ public class DebugInfoEntry {
 	 */
 	public DWARFAttributeValue getAttributeValue(int attribIndex) {
 		if (attributes[attribIndex] == null) {
-			BinaryReader reader = getProgram().getReaderForCompUnit(compilationUnit)
+			BinaryReader reader = getContainer().getReaderForCompUnit(compilationUnit)
 					.clone(offset + attrOffsets[attribIndex]);
 			DWARFFormContext context = new DWARFFormContext(reader, compilationUnit,
 				abbreviation.getAttributeAt(attribIndex));
@@ -259,12 +260,20 @@ public class DebugInfoEntry {
 		return compilationUnit;
 	}
 
+	public DIEContainer getContainer() {
+		return compilationUnit.getDIEContainer();
+	}
+
 	public DWARFProgram getProgram() {
 		return getCompilationUnit().getProgram();
 	}
 
 	public int getDepth() {
-		return getProgram().getParentDepth(dieIndex);
+		return getContainer().getParentDepth(dieIndex);
+	}
+
+	public int getPositionInParent(Predicate<DWARFTag> dwTagFilter) {
+		return getContainer().getPositionInParent(this, dwTagFilter);
 	}
 
 	@Override
@@ -291,7 +300,7 @@ public class DebugInfoEntry {
 		DWARFTag tag = getTag();
 		int tagNum = tag != null ? tag.getId() : 0;
 		int abbrNum = abbreviation != null ? abbreviation.getAbbreviationCode() : 0;
-		int childCount = getProgram().getChildCount(dieIndex);
+		int childCount = getContainer().getChildCount(dieIndex);
 
 		buffer.append("<%d><%x>: %s [abbrev %d, tag %d, index %d, children %d]\n".formatted(
 			getDepth(), offset, tag, abbrNum, tagNum, dieIndex, childCount));
