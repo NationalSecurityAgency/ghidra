@@ -28,6 +28,7 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
+import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.framework.OperatingSystem;
@@ -1173,6 +1174,8 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 		conn.execute("file " + obj);
 		conn.execute("ghidra trace start");
 		conn.execute("process launch --stop-at-entry");
+		conn.execute("ghidra trace sync-enable");
+		conn.execute("ghidra trace sync-synth-stopped");
 	}
 
 	private void txPut(LldbAndConnection conn, String obj) {

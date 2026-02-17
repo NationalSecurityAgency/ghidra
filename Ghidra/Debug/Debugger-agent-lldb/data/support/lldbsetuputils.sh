@@ -82,6 +82,8 @@ add-lldb-extra-cmds() {
 }
 
 add-lldb-tail-args() {
+	args+=(-o "ghidra trace sync-enable")
+	args+=(-o "ghidra trace sync-synth-stopped")
 	true
 }
 
