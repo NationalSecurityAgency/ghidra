@@ -16,7 +16,6 @@
 package ghidra.app.util.viewer.field;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Messages;

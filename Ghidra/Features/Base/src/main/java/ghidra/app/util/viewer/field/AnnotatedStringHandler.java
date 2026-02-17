@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,12 +126,15 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	}
 
 	/**
-	 * Returns an array with modifications by the annotation; null otherwise.
-	 * @param  text An array of strings to modify.
-	 * @param  program The program with which the returned string is associated.
-	 * @return The modified array; null otherwise.
+	 * Returns an array with modifications by the annotation; null otherwise.  This method will be 
+	 * called by the framework when comments are created, before they are applied.  This allows the
+	 * handler to perform fixups on the input text before it is saved to the database.
+	 * 
+	 * @param text the array of annotation parts to modify
+	 * @param program the program
+	 * @return the modified array; null otherwise
 	 */
-	default String[] modify(String[] test, Program program) {
+	default String[] modify(String[] text, Program program) {
 		return null;
 	}
 
