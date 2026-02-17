@@ -20,6 +20,7 @@ public enum OperatingSystem {
 	LINUX("Linux"),
 	MAC_OS_X("Mac OS X"),
 	FREE_BSD("FreeBSD"),
+	OPEN_BSD("OpenBSD"),
 	UNSUPPORTED("Unsupported Operating System");
 
 	/**
