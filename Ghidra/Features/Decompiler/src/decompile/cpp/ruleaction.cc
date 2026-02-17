@@ -10965,7 +10965,8 @@ int4 RuleExpandLoad::applyOp(PcodeOp *op,Funcdata &data)
   if (elType->getSize() < outSize + offset) return 0;
 
   type_metatype meta = elType->getMetatype();
-  if (meta == TYPE_UNKNOWN) return 0;
+  if (meta == TYPE_UNKNOWN || meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_UNION
+      || meta == TYPE_PARTIALSTRUCT || meta == TYPE_PARTIALUNION) return 0;
   bool addForm = checkAndComparison(outVn);
   AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
   int4 lsbCut = 0;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,11 +37,12 @@ public:
     badtoken = 0x100,
     endoffile = 0x101,
     dotdotdot = 0x102,
+    scoperes = 0x103,
 
-    integer = 0x103,
-    charconstant = 0x104,
-    identifier = 0x105,
-    stringval = 0x106,
+    integer = 0x104,
+    charconstant = 0x105,
+    identifier = 0x106,
+    stringval = 0x107,
   };
 private:
   uint4 type;
@@ -85,6 +86,8 @@ class GrammarLexer {
     dot1,
     dot2,
     dot3,
+    scoperes1,
+    scoperes2,
     punctuation,
     endofline_comment,
     c_comment,
@@ -169,12 +172,15 @@ class TypeDeclarator {
   string ident;			// variable identifier associated with type
   string model;			// name of model associated with function pointer
   uint4 flags;			// Specifiers qualifiers
+  int4 numBits;			// Number of bits associated with declaration (0=unspecified)
 public:
-  TypeDeclarator(void) { basetype=(Datatype *)0; flags=0; }
-  TypeDeclarator(const string &nm) { ident=nm; basetype=(Datatype *)0; flags=0; }
+  TypeDeclarator(void) { basetype=(Datatype *)0; flags=0; numBits=0; }
+  TypeDeclarator(const string &nm) { ident=nm; basetype=(Datatype *)0; flags=0; numBits=0; }
   ~TypeDeclarator(void);
   Datatype *getBaseType(void) const { return basetype; }
   int4 numModifiers(void) const { return mods.size(); }
+  int4 getNumBits(void) const { return numBits; }
+  void setNumBits(int4 val) { numBits = val; }
   const string &getIdentifier(void) const { return ident; }
   ProtoModel *getModel(Architecture *glb) const;
   bool getPrototype(PrototypePieces &pieces,Architecture *glb) const;

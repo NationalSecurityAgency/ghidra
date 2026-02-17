@@ -395,6 +395,9 @@ void PrintLanguage::emitAtom(const Atom &atom)
   case fieldtoken:
     emit->tagField(atom.name,atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
     break;
+  case bitfieldtoken:
+    emit->tagBitField(atom.name,atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
+    break;
   case casetoken:
     emit->tagCaseLabel(atom.name, atom.highlight, atom.op, atom.ptr_second.intValue);
     break;

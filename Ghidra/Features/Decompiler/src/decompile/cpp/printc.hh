@@ -177,6 +177,7 @@ protected:
   virtual bool doEmitWideCharPrefix(void) const;
   
   bool checkArrayDeref(const Varnode *vn) const;	///< Determine whether a LOAD/STORE expression requires pointer '*' syntax
+  bool checkBitFieldMember(const Varnode *vn,const TypeBitField *field) const;	///< Determine whether a ZPULL/SPULL/INSERT should use '->' or '.' notation
   bool checkAddressOfCast(const PcodeOp *op) const;	///< Check if CAST can be printed as an '&'
   void emitStructDefinition(const TypeStruct *ct);	///< Emit the definition of a \e structure data-type
   void emitEnumDefinition(const TypeEnum *ct);		///< Emit the definition of an \e enumeration data-type
@@ -225,6 +226,9 @@ protected:
   virtual string genericTypeName(const Datatype *ct);
 
   virtual void emitExpression(const PcodeOp *op);
+  virtual void emitConstructor(const PcodeOp *op);
+  virtual void emitBitFieldStore(const PcodeOp *op);
+  virtual void emitBitFieldExpression(const PcodeOp *op);
   virtual void emitVarDecl(const Symbol *sym);
   virtual void emitVarDeclStatement(const Symbol *sym);
   virtual bool emitScopeVarDecls(const Scope *symScope,int4 cat);
@@ -338,7 +342,8 @@ public:
   virtual void opCpoolRefOp(const PcodeOp *op);
   virtual void opNewOp(const PcodeOp *op);
   virtual void opInsertOp(const PcodeOp *op);
-  virtual void opExtractOp(const PcodeOp *op);
+  virtual void opZpullOp(const PcodeOp *op);
+  virtual void opSpullOp(const PcodeOp *op);
   virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
   virtual void opLzcountOp(const PcodeOp *op) { opFunc(op); }
 };

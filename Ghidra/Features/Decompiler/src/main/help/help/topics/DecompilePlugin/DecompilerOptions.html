@@ -4,7 +4,7 @@
 <title>Decompiler Options</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler">
@@ -206,7 +206,9 @@
 	  by the control-flow structure:
 	  </p>
 <div class="informalexample">
-	    <code class="code">if (false) { ... }</code>
+	    <pre class="programlisting">
+	      if (false) { ... }
+	    </pre>
 	  </div>
 <p>
 	</p>
@@ -286,7 +288,9 @@
 	  that contains an initializer statement, condition, and iterating statement.
 	  </p>
 <div class="informalexample">
-	    <code class="code">for (iVar2 = 10; iVar2 &lt; len; iVar2 = iVar2 + 1) { ...</code>
+	    <pre class="programlisting">
+	      for (iVar2 = 10; iVar2 &lt; len; iVar2 = iVar2 + 1) { ...
+	    </pre>
 	  </div>
 <p>
 	</p>
@@ -315,6 +319,26 @@
 	  <span class="emphasis"><em>Memory Manager</em></span>, and individual data elements can be marked
 	  as <span class="emphasis"><em>constant</em></span> via the <span class="bold"><strong>Mutability</strong></span> setting
 	  (see <a class="xref" href="DecompilerAnnotations.html#AnnoteMutability" title="Data Mutability">Data Mutability</a>). 
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisBitfields"></a><span class="term"><span class="bold"><strong>Simplify bitfield access</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify expressions where bitfields,
+	  as defined in structure data-types, are either being written to or read from.  
+	  Any sequence of logical operations that access an individual bitfield are collapsed into a
+	  normal field access, displaying the bitfield's name.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      uVar1 = my1._3_1 &lt;&lt; 2 &amp; 3;  // Isolating a 2-bit field 'mode' within variable 'my1'
+	        ...
+              uVar1 = my1.mode;   // The same assignment after simplification
+	    </pre>
+          </div>
+<p>
 	</p>
       </dd>
 <dt>
@@ -534,16 +558,14 @@
 	  (see <a class="xref" href="DecompilerWindow.html#ActionFind" title="Find...">Find...</a>).
 	</p>
       </dd>
-	  
-  <dt>
-  <a name="MiddleMouseColor"></a><span class="term"><span class="bold"><strong>Color for Highlighting Middle-mouse Matches</strong></span></span>
-  </dt>
-  <dd>
-  	<p>
-  	  Assign the background color used to highlight characters when highlighting using the middle-mouse button.
-  	</p>
-   </dd>	  
-	  
+<dt>
+<a name="MiddleMouseColor"></a><span class="term"><span class="bold"><strong>Color for Highlighting Middle-mouse Matches</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  Assign the background color used to highlight characters when highlighting using the middle-mouse button.
+	</p>
+      </dd>
 <dt>
 <a name="DisplayCommentIndent"></a><span class="term"><span class="bold"><strong>Comment line indent level</strong></span></span>
 </dt>

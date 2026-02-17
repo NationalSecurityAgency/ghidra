@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "expression.hh"
+#include "database.hh"
 
 namespace ghidra {
 
@@ -392,6 +393,198 @@ void AddExpression::gatherTwoTermsRoot(Varnode *root)
   gather(root,(uintb)1,1);
 }
 
+/// Find the structure immediately containing the byte range described by the given data-type.
+/// Then, given the least significant bit of the bitfield, find the structure immediately containing the bitfield,
+/// which may be a different structure.
+/// \param dt is the data-type describing the byte range
+/// \param initByteOff is the initial offset of the byte range within the data-type (may be -1)
+/// \param leastBitOff is the least significant bit of the bitfield within the byte range
+/// \param isBigEndian is \b true if the data-type is stored in big endian memory
+void BitFieldExpression::getStructures(Datatype *dt,int4 initByteOff,int4 leastBitOff,bool isBigEndian)
+
+{
+  TypeStruct *encompassStruct;
+  theStruct = (TypeStruct *)0;
+  byteRangeOffset = (initByteOff < 0) ? 0 : initByteOff;
+  if (dt->getMetatype() == TYPE_PARTIALSTRUCT) {
+    TypePartialStruct *partial = (TypePartialStruct *)dt;
+    Datatype *structTmp = partial->getParent();
+    if (structTmp->getMetatype() != TYPE_STRUCT) return;
+    byteRangeOffset += partial->getOffset();
+    encompassStruct = (TypeStruct *)structTmp;
+  }
+  else if (dt->getMetatype() == TYPE_STRUCT) {
+    encompassStruct = (TypeStruct *)dt;
+  }
+  else
+    return;
+  int8 offset = byteRangeOffset;
+  leastBitOff /= 8;
+  if (isBigEndian)
+    offset += (dt->getSize() - leastBitOff - 1);
+  else
+    offset += leastBitOff;
+  theStruct = encompassStruct;
+  offsetToBitStruct = 0;
+  for(;;) {
+    int8 newoff;
+    Datatype *tmpDt = theStruct->getSubType(offset, &newoff);
+    if (tmpDt == (Datatype *)0) break;
+    if (tmpDt->getMetatype() != TYPE_STRUCT) break;
+    theStruct = (TypeStruct *)tmpDt;
+    offsetToBitStruct += (offset-newoff);
+    offset = newoff;
+  }
+}
+
+const Varnode *BitFieldExpression::recoverStructurePointer(const Varnode *vn,int4 offset)
+
+{
+  if (offset == 0 && theStruct->getSize() == vn->getSize())
+    return vn;
+  else if (vn->isWritten()) {
+    const PcodeOp *ptrSub = vn->getDef();
+    if (ptrSub->code() == CPUI_PTRSUB) {
+      if ((int4)ptrSub->getIn(1)->getOffset() == offset) {
+	return ptrSub->getIn(0);
+      }
+    }
+  }
+
+  if (offset != 0)
+    return (const Varnode *)0;
+  return vn;
+}
+
+/// \param pull is the given ZPULL or SPULL
+/// \return the corresponding bitfield description or null
+const TypeBitField *BitFieldExpression::getPullField(const PcodeOp *pull)
+
+{
+  BitFieldExpression expr;
+  const Varnode *inVn = pull->getIn(0);
+  int4 leastBitOff = (int4)pull->getIn(1)->getOffset();
+  int4 bitSize = (int4)pull->getIn(2)->getOffset();
+  bool isBig = inVn->getSpace()->isBigEndian();
+  Datatype *dt = inVn->getTypeReadFacing(pull);
+  expr.getStructures(dt, 0, leastBitOff, isBig);
+  if (expr.theStruct == (TypeStruct *)0)
+    return (const TypeBitField *)0;
+  BitRange range(expr.byteRangeOffset-expr.offsetToBitStruct,inVn->getSize(),leastBitOff,bitSize,isBig);
+  return expr.theStruct->findMatchingBitField(range);
+}
+
+InsertExpression::InsertExpression(const PcodeOp *insert)
+
+{
+  insertOp = insert;
+  bitfield = (const TypeBitField *)0;
+  const Varnode *value = insertOp->getOut();
+  symbol = value->getHigh()->getSymbol();
+  if (symbol == (const Symbol *)0) return;
+  AddrSpace *spc = value->getSpace();
+  int4 leastBitOff = (int4)insertOp->getIn(2)->getOffset();
+  int4 bitSize = (int4)insertOp->getIn(3)->getOffset();
+  getStructures(symbol->getType(),value->getHigh()->getSymbolOffset(),leastBitOff,spc->isBigEndian());
+  if (theStruct == (TypeStruct *)0) return;
+  BitRange range(byteRangeOffset - offsetToBitStruct,value->getSize(),leastBitOff,bitSize,spc->isBigEndian());
+  bitfield = theStruct->findMatchingBitField(range);
+}
+
+/// \param insert is the CPUI_INSERT op
+/// \return a mask with a 1 wherever bits are inserted by the op
+uintb InsertExpression::getRangeMask(const PcodeOp *insert)
+
+{
+  int4 leastBitOff = (int4)insert->getIn(2)->getOffset();
+  int4 bitSize = (int4)insert->getIn(3)->getOffset();
+  uintb res = 0;
+  res = ~res;
+  if (bitSize < 8 * sizeof(uintb))
+    res = ~(res << bitSize);
+  res <<= leastBitOff;
+  return res;
+}
+
+/// \param insert is the CPUI_INSERT op
+/// \return mask with of the least significant bits
+uintb InsertExpression::getLSBMask(const PcodeOp *insert)
+
+{
+  int4 bitSize = (int4)insert->getIn(3)->getOffset();
+  uintb res = 0;
+  res = ~res;
+  if (bitSize < 8 * sizeof(uintb))
+    res = ~(res << bitSize);
+  return res;
+}
+
+InsertStoreExpression::InsertStoreExpression(const PcodeOp *store)
+
+{
+  bitfield = (const TypeBitField *)0;
+  structPtr = (Varnode *)0;
+  theStruct = (TypeStruct *)0;
+  loadOp = (PcodeOp *)0;
+  const Varnode *value = store->getIn(2);
+  if (!value->isWritten()) return;
+  insertOp = value->getDef();
+  if (insertOp->code() != CPUI_INSERT) return;
+  const Varnode *dest = insertOp->getIn(0);	// dest can either be a constant or LOAD
+  if (dest->isWritten()) {
+    loadOp = dest->getDef();
+    if (loadOp->code() != CPUI_LOAD) return;
+  }
+  else if (!dest->isConstant())
+    return;
+  AddrSpace *spc = store->getIn(0)->getSpaceFromConst();
+  int4 leastBitOff = (int4)insertOp->getIn(2)->getOffset();
+  int4 bitSize = (int4)insertOp->getIn(3)->getOffset();
+  getStructures(value->getTypeDefFacing(),0,leastBitOff,spc->isBigEndian());
+  if (theStruct == (TypeStruct *)0) return;
+  structPtr = recoverStructurePointer(store->getIn(1), byteRangeOffset);
+  if (structPtr == (const Varnode *)0) return;
+  BitRange range(byteRangeOffset - offsetToBitStruct,value->getSize(),leastBitOff,bitSize,spc->isBigEndian());
+  bitfield = theStruct->findMatchingBitField(range);
+}
+
+PullExpression::PullExpression(const PcodeOp *pull)
+
+{
+  pullOp = pull;
+  bitfield = (const TypeBitField *)0;
+  theStruct = (TypeStruct *)0;
+  loadOp = (const PcodeOp *)0;
+  structPtr = (const Varnode *)0;
+  const Varnode *inVn = pullOp->getIn(0);
+  AddrSpace *spc;
+  Datatype *dt;
+  int4 offset;
+  if (inVn->isWritten() && inVn->getDef()->code() == CPUI_LOAD) {
+    loadOp = inVn->getDef();
+    spc = loadOp->getIn(0)->getSpaceFromConst();
+    dt = inVn->getTypeReadFacing(pullOp);
+    offset = 0;
+  }
+  else {
+    symbol = inVn->getHigh()->getSymbol();
+    if (symbol == (const Symbol *)0) return;
+    spc = inVn->getSpace();
+    dt = symbol->getType();
+    offset = inVn->getHigh()->getSymbolOffset();
+  }
+  int4 leastBitOff = (int4)pullOp->getIn(1)->getOffset();
+  int4 bitSize = (int4)pullOp->getIn(2)->getOffset();
+  getStructures(dt,offset,leastBitOff,spc->isBigEndian());
+  if (theStruct == (TypeStruct *)0) return;
+  if (loadOp != (const PcodeOp *)0) {
+    structPtr = recoverStructurePointer(loadOp->getIn(1), byteRangeOffset);
+    if (structPtr == (const Varnode *)0) return;
+  }
+  BitRange range(byteRangeOffset-offsetToBitStruct,inVn->getSize(),leastBitOff,bitSize,spc->isBigEndian());
+  bitfield = theStruct->findMatchingBitField(range);
+}
+
 /// \brief Perform basic comparison of two given Varnodes
 ///
 /// Return
@@ -557,6 +750,55 @@ bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth)
     if (functionalDifference(op1->getIn(i),op2->getIn(i),depth))
       return true;
   return false;
+}
+
+/// \brief Back-track as far as possible from a pointer Varnode thru PTRSUB, INT_ADD, and COPY collecting offsets
+///
+/// The pointer that is reached by back-tracking is returned, and any accumulated offset is passed back.
+/// \param vn is the pointer Varnode
+/// \param offset passes back the accumulated offset
+/// \return the reached Varnode pointer
+Varnode *rootPointer(Varnode *vn,uintb &offset)
+
+{
+  offset = 0;
+  for(;;) {
+    if (!vn->isWritten()) break;
+    PcodeOp *op = vn->getDef();
+    OpCode opc = op->code();
+    if (opc == CPUI_PTRSUB) {
+      offset += op->getIn(1)->getOffset();
+      vn = op->getIn(0);
+    }
+    else if (opc == CPUI_INT_ADD) {
+      Varnode *cvn = op->getIn(1);
+      if (!cvn->isConstant()) break;
+      offset += cvn->getOffset();
+      vn = op->getIn(0);
+    }
+    else if (opc == CPUI_COPY) {
+      vn = op->getIn(0);
+    }
+    else
+      break;
+  }
+  return vn;
+}
+
+/// \brief Determine if two pointer Varnodes always hold the same value
+///
+/// \param vn1 is the first pointer to compare
+/// \param vn2 is the second pointer to compare
+bool pointerEquality(Varnode *vn1,Varnode *vn2)
+
+{
+  uintb off1,off2;
+
+  if (vn1 == vn2) return true;
+  vn1 = rootPointer(vn1,off1);
+  vn2 = rootPointer(vn2,off2);
+  if (off1 != off2) return false;
+  return (vn1 == vn2);
 }
 
 } // End namespace ghidra
