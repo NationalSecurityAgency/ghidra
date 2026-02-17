@@ -86,7 +86,9 @@ function Add-Lldb-Extra-Cmds {
 
 function Add-Lldb-Tail-Args {
 	param([ref]$ArgList)
-	# NOP
+
+	$ArgList.Value+=("-o", "`"ghidra trace sync-enable`"")
+	$ArgList.Value+=("-o", "`"ghidra trace sync-synth-stopped`"")
 }
 
 function Compute-Lldb-Usermode-Args {

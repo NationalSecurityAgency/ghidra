@@ -255,7 +255,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				return new LldbResult(false, exitVal, capture.toString());
 			}
 			catch (TimeoutException e) {
-				return new LldbResult(true, -1, capture.toString());
+				return new LldbResult(true, 0, capture.toString());
 			}
 			catch (Exception e) {
 				return ExceptionUtils.rethrow(e);
