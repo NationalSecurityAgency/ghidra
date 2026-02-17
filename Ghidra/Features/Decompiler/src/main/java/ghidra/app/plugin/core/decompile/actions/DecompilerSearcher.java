@@ -244,14 +244,14 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			FieldLocation fieldLocation =
 				new FieldLocation(i, lineInfo.fieldNumber(), lineInfo.row(), lineInfo.column());
 			int lineNumber = lineInfo.lineNumber();
-			SearchLocationContext context = createContext(fullLine, match);
+			SearchLocationContext context = createContext(fullLine, lineNumber, match);
 			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
 				searchString, true, field.getText(), lineNumber, context);
 		}
 		return null;
 	}
 
-	private SearchLocationContext createContext(String line, SearchMatch match) {
+	private SearchLocationContext createContext(String line, int lineNumber, SearchMatch match) {
 		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
 		int start = match.start;
 		int end = match.end;
@@ -261,6 +261,7 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			builder.append(line.substring(end));
 		}
 
+		builder.lineNumber(lineNumber);
 		return builder.build();
 	}
 

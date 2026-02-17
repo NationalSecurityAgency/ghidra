@@ -246,15 +246,16 @@ public class DecompilerTextFinder {
 			TextLine firstLine = lineMatches.get(0);
 			int lineNumber = firstLine.getLineNumber();
 			AddressSet addresses = getAddresses(function, firstLine.getCLine());
-			SearchLocationContext context = createMatchContext(lineMatches);
+			SearchLocationContext context = createMatchContext(lineMatches, lineNumber);
 			TextMatch match =
 				new TextMatch(function, addresses, lineNumber, searchText, context, true);
 			callback.accept(match);
 		}
 
-		private SearchLocationContext createMatchContext(List<TextLine> matches) {
+		private SearchLocationContext createMatchContext(List<TextLine> matches, int lineNumber) {
 
 			SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
+			builder.lineNumber(lineNumber);
 			for (TextLine line : matches) {
 				if (!builder.isEmpty()) {
 					builder.newline();
@@ -280,6 +281,7 @@ public class DecompilerTextFinder {
 			}
 
 			SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
+			builder.lineNumber(line.getLineNumber());
 
 			int start = matcher.start();
 			int end = matcher.end();

@@ -270,6 +270,7 @@ public class TextComponentSearcher implements FindDialogSearcher {
 
 		private SearchLocationContext createContext(Line line, int start, int end) {
 			SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
+			builder.lineNumber(line.lineNumber);
 			String text = line.text();
 			int offset = line.offset(); // document offset
 			int rstart = start - offset; // line-relative start
