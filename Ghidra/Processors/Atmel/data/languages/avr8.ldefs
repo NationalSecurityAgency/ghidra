@@ -18,6 +18,38 @@
     <external_name tool="gnu" name="avr:31"/>
     <external_name tool="IDA-PRO" name="avr"/>
   </language>
+
+  <language processor="AVR8"
+            endian="little"
+            size="16"
+            variant="atmega168p"
+            version="1.3"
+            slafile="avr8.sla"
+            processorspec="avr8mega168p.pspec"
+            manualindexfile="../manuals/AVR8.idx"
+            id="avr8:LE:16:atmega168p">
+    <description>AVR8 with 16-bit word addressable code space</description>
+    <compiler name="gcc"        spec="avr8gcc.cspec"        id="gcc"/>
+    <compiler name="iarV1"      spec="avr8iarV1.cspec"      id="iarV1"/>
+    <compiler name="imgCraftV8" spec="avr8imgCraftV8.cspec" id="imgCraftV8"/>
+    <external_name tool="gnu" name="avr:31"/>
+    <external_name tool="IDA-PRO" name="avr"/>
+  </language>
+
+  <language processor="AVR8"
+            endian="little"
+            size="16"
+            variant="atmega8"
+            version="1.3"
+            slafile="avr8mega8.sla"
+            processorspec="avr8mega8.pspec"
+            manualindexfile="../manuals/AVR8.idx"
+            id="avr8:LE:16:atmega8">
+    <description>AVR8 with 16-bit word addressable code space - adjusted for ATMega8</description>
+    <compiler name="gcc"        spec="avr8gcc.cspec"        id="gcc"/>
+    <external_name tool="gnu" name="avr:31"/>
+    <external_name tool="IDA-PRO" name="avr"/>
+  </language>
   
   <language processor="AVR8"
             deprecated="true"
