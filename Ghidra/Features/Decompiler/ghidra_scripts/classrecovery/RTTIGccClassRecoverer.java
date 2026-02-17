@@ -25,8 +25,7 @@ import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.PseudoDisassembler;
-import ghidra.app.util.demangler.DemangledObject;
-import ghidra.app.util.demangler.DemanglerUtil;
+import ghidra.app.util.demangler.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
@@ -2859,7 +2858,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 		mangledLabel = "_ZTS" + mangledLabel;
 
-		if (!isTypeinfoNameString(mangledLabel)) {
+		if (!isTypeinfoNameString(mangledLabel, typeinfoNameAddress)) {
 			return null;
 		}
 
@@ -3029,15 +3028,27 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return true;
 	}
 
-	private boolean isTypeinfoNameString(String string) {
+	private boolean isTypeinfoNameString(String string, Address address) {
 
-		DemangledObject demangledObject = DemanglerUtil.demangle(string);
-		if (demangledObject == null) {
+		List<DemangledObject> demangledObjects = DemanglerUtil.demangle(program, string, address);
+		if (demangledObjects == null || demangledObjects.isEmpty()) {
 			return false;
 		}
 
-		if (demangledObject.getName().equals("typeinfo-name")) {
-			return true;
+		for (DemangledObject demangledObject : demangledObjects) {
+
+			DemanglerOptions options = demangledObject.getMangledContext().getOptions();
+
+			// Currently no good way to do this since this is in Decompiler package and GnuDemangler
+			// is in its own package. Once no longer a script but an analyzer in Base, update to 
+			// do !(options instanceof GnuDemanglerOptions)
+			if (!options.toString().contains("gnu")) {
+				continue;
+			}
+
+			if (demangledObject.getName().equals("typeinfo-name")) {
+				return true;
+			}
 		}
 		return false;
 	}
