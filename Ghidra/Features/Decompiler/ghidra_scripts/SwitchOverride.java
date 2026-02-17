@@ -140,7 +140,7 @@ public class SwitchOverride extends GhidraScript {
 		}
 
 		// Allocate an override jumptable
-		JumpTable jumpTab = new JumpTable(branchind, destlist, true);
+		JumpTable jumpTab = new JumpTable(branchind, destlist, true, 0);
 		jumpTab.writeOverride(function);
 
 		// fixup the body now that there are jump references

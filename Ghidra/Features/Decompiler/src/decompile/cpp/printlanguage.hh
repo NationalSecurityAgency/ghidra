@@ -324,10 +324,11 @@ protected:
   /// \param val is the value of the constant
   /// \param ct is the data-type of the constant
   /// \param tag is the type of token associated with the constant
-  /// \param vn is the Varnode holding the constant (optional)
-  /// \param op is the PcodeOp using the constant (optional)
+  /// \param vn is the Varnode holding the constant (may be null)
+  /// \param op is the PcodeOp using the constant (may be null)
+  /// \param displayFormat is the default display format to use (may be 0)
   virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
-			    const Varnode *vn,const PcodeOp *op)=0;
+			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat)=0;
 
   /// \brief Push a constant marked up by and EquateSymbol onto the RPN stack
   ///
@@ -335,8 +336,8 @@ protected:
   /// \param val is the value of the constant
   /// \param sz is the number of bytes to use for the encoding
   /// \param sym is the EquateSymbol that marks up the constant
-  /// \param vn is the Varnode holding the constant (optional)
-  /// \param op is the PcodeOp using the constant (optional)
+  /// \param vn is the Varnode holding the constant (may be null)
+  /// \param op is the PcodeOp using the constant (may be null)
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode *vn,const PcodeOp *op)=0;
 
   /// \brief Push an address which is not in the normal data-flow.

@@ -1059,7 +1059,7 @@ void FlowInfo::xrefInlinedBranch(PcodeOp *op)
     setupCallindSpecs(op,(FuncCallSpecs *)0);
   else if (op->code() == CPUI_BRANCHIND) {
     JumpTable *jt = data.linkJumpTable(op);
-    if (jt == (JumpTable *)0)
+    if (jt == (JumpTable *)0 || jt->numEntries() == 0)
       tablelist.push_back(op); // Didn't recover a jumptable
   }
 }

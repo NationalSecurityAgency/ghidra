@@ -27,6 +27,7 @@ import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 
 public class DecompilerEquateTest extends AbstractDecompilerTest {
@@ -41,7 +42,7 @@ public class DecompilerEquateTest extends AbstractDecompilerTest {
 		}
 
 		@Override
-		public String getEquateName(long value, int size, boolean isSigned, Program program) {
+		public String getEquateName(Scalar scalar, Program program) {
 			if (program == null) {
 				return null;
 			}

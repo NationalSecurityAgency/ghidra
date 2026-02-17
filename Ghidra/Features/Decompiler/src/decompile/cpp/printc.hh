@@ -203,7 +203,7 @@ protected:
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
   virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
-			    const Varnode *vn,const PcodeOp *op);
+			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
 			  const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
@@ -216,8 +216,7 @@ protected:
 				  const Varnode *vn,const PcodeOp *op);
   virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
   virtual void push_integer(uintb val,int4 sz,bool sign,tagtype tag,
-			    const Varnode *vn,
-			    const PcodeOp *op);
+			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat);
   virtual void push_float(uintb val,int4 sz,tagtype tag,const Varnode *vn,
 			  const PcodeOp *op);
   virtual void printUnicode(ostream &s,int4 onechar) const;
