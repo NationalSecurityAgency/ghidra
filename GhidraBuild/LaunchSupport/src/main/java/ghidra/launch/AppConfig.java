@@ -453,6 +453,7 @@ public class AppConfig {
 					new File(localAppDataDirPath, appName + "/" + userSettingsDirName);
 				break;
 			case LINUX:
+			case OPEN_BSD:
 				userSettingsDir =
 					new File(userHomeDir, ".config/" + appName + "/" + userSettingsDirName);
 				break;
