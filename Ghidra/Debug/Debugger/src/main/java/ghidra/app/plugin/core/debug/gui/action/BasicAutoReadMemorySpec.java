@@ -52,7 +52,8 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 	/**
 	 * Automatically read all visible memory
 	 */
-	VISIBLE("1_READ_VISIBLE", AutoReadMemoryAction.NAME_VISIBLE, AutoReadMemoryAction.ICON_VISIBLE) {
+	VISIBLE("1_READ_VISIBLE", AutoReadMemoryAction.NAME_VISIBLE,
+			AutoReadMemoryAction.ICON_VISIBLE) {
 		@Override
 		public CompletableFuture<Boolean> readMemory(PluginTool tool,
 				DebuggerCoordinates coordinates,
@@ -77,7 +78,8 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 	 * Automatically read all visible memory, unless it is read-only, in which case, only read it if
 	 * it has not already been read.
 	 */
-	VIS_RO_ONCE("2_READ_VIS_RO_ONCE", AutoReadMemoryAction.NAME_VIS_RO_ONCE, AutoReadMemoryAction.ICON_VIS_RO_ONCE) {
+	VIS_RO_ONCE("2_READ_VIS_RO_ONCE", AutoReadMemoryAction.NAME_VIS_RO_ONCE,
+			AutoReadMemoryAction.ICON_VIS_RO_ONCE) {
 		@Override
 		public CompletableFuture<Boolean> readMemory(PluginTool tool,
 				DebuggerCoordinates coordinates,
@@ -136,8 +138,15 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			// Not terribly efficient, but this is one range most of the time
 			for (AddressRange range : set) {
 				AddressSpace space = range.getAddressSpace();
-				Address min = space.getAddress(range.getMinAddress().getOffset() & blockMask);
-				Address max = space.getAddress(range.getMaxAddress().getOffset() | ~blockMask);
+				long minOffset = range.getMinAddress().getOffset() & blockMask;
+				minOffset = Math.max(minOffset, space.getMinAddress().getOffset());
+				long maxOffset = range.getMaxAddress().getOffset() | ~blockMask;
+				maxOffset = Math.min(maxOffset, space.getMaxAddress().getOffset());
+				if (minOffset > maxOffset) {
+					continue;
+				}
+				Address min = space.getAddress(minOffset);
+				Address max = space.getAddress(maxOffset);
 				result.add(new AddressRangeImpl(min, max));
 			}
 			return result;
