@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,7 +127,7 @@ public class MenuData {
 		StringBuilder buildy = new StringBuilder();
 		for (int i = 0; i < menuPath.length; i++) {
 			if (i != (menuPath.length - 1)) {
-				buildy.append(processMenuItemName(menuPath[i]));
+				buildy.append(stripMnemonicAmp(menuPath[i]));
 				buildy.append("->");
 			}
 			else {
@@ -272,7 +272,7 @@ public class MenuData {
 	 * of the characters of the name as the new mnemonic of this item 
 	 */
 	public void setMenuItemName(String newMenuItemName) {
-		String processedMenuItemName = processMenuItemName(newMenuItemName);
+		String processedMenuItemName = stripMnemonicAmp(newMenuItemName);
 		if (processedMenuItemName.equals(menuPath[menuPath.length - 1])) {
 			return;
 		}
@@ -298,22 +298,23 @@ public class MenuData {
 		firePropertyChanged(oldData);
 	}
 
-	private static int getMnemonic(String[] menuPath) {
+	public static int getMnemonic(String[] menuPath) {
 		if (menuPath == null || menuPath.length == 0) {
 			return NO_MNEMONIC;
 		}
 		return getMnemonic(menuPath[menuPath.length - 1]);
 	}
 
-	private static int getMnemonic(String string) {
-		int indexOf;
-		int fromIndex = 0;
-		do {
-			indexOf = string.indexOf('&', fromIndex);
-			fromIndex = indexOf + 2;
-		} while (indexOf >= 0 && indexOf < string.length() - 1 && string.charAt(indexOf + 1) == '&');
-		if (indexOf >= 0 && indexOf < string.length() - 1) {
-			return string.charAt(indexOf + 1);
+	/**
+	 * Parses the mnemonic key from the menu items text.
+	 * @param menuName the menu item text
+	 * @return the mnemonic key for encoded in the actions menu text. Returns 0 if there is none.
+	 */
+	public static int getMnemonic(String menuName) {
+		String cleaned = menuName.replaceAll("&&", "");
+		int firstIndex = cleaned.indexOf('&');
+		if (firstIndex >= 0 && firstIndex < cleaned.length() - 1) {
+			return cleaned.charAt(firstIndex + 1);
 		}
 		return NO_MNEMONIC;
 	}
@@ -321,27 +322,36 @@ public class MenuData {
 	private static String[] processMenuPath(String[] menuPath) {
 		String[] copy = Arrays.copyOf(menuPath, menuPath.length);
 		if (copy != null && copy.length > 0) {
-			copy[copy.length - 1] = processMenuItemName(copy[copy.length - 1]);
+			copy[copy.length - 1] = stripMnemonicAmp(copy[copy.length - 1]);
 		}
 		return copy;
 	}
 
-	private static String processMenuItemName(String string) {
-		int firstAmp = string.indexOf('&');
-		if (firstAmp < 0) {
-			return string;
+	/**
+	 * Removes any single '&' characters used to set the mnemonic from the menu item name.  The
+	 * '&' character can be included in the name by escaping with another '&' character.
+	 * @param menuItemName the name that may include mnemonic information
+	 * @return the menu item name with single '&' characters removed.
+	 */
+	public static String stripMnemonicAmp(String menuItemName) {
+		if (menuItemName.indexOf('&') < 0) {
+			return menuItemName;
 		}
-		StringBuilder builder = new StringBuilder(string.substring(0, firstAmp));
-		for (int i = firstAmp; i < string.length(); i++) {
-			char ch = string.charAt(i);
-			if (ch == '&') {
-				if (i < string.length() - 1 && string.charAt(i+1) == '&') {
-					builder.append('&');
-					i++;
-				}
-			} else {
-				builder.append(ch);
+
+		StringBuilder builder = new StringBuilder();
+		boolean previousWasAmpersand = false;
+		for (int i = 0; i < menuItemName.length(); i++) {
+			char c = menuItemName.charAt(i);
+			if (c != '&') {
+				builder.append(c);
+				previousWasAmpersand = false;
+				continue;
 			}
+			if (previousWasAmpersand) {
+				// add in escaped ampersand (double ampersands are replace with one ampersand)
+				builder.append('&');
+			}
+			previousWasAmpersand = !previousWasAmpersand;
 		}
 		return builder.toString();
 	}
