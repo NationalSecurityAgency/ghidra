@@ -21,6 +21,7 @@ import java.util.regex.*;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPathParser;
 import ghidra.docking.settings.Settings;
+import ghidra.program.database.data.merge.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
@@ -1103,5 +1104,48 @@ public class DataTypeUtilities {
 	 */
 	public static boolean equalsIgnoreConflict(String name1, String name2) {
 		return getNameWithoutConflict(name1).equals(getNameWithoutConflict(name2));
+	}
+
+	/**
+	 * Convenience method for getting the appropriate datatype merger or throwing an exception
+	 * if the two datatypes are not eligible to be merged.
+	 * @param dt1 the first datatype to be merged
+	 * @param dt2 the second datatype to be merged
+	 * @return A merger to be used to merge the two data types.
+	 * @throws DataTypeMergeException if the two datatypes are not the same type or their type
+	 * is not supported for merging
+	 */
+	public static DataTypeMerger<?> getMerger(DataType dt1, DataType dt2)
+			throws DataTypeMergeException {
+
+		if (dt1 instanceof Structure struct1) {
+			if (dt2 instanceof Structure struct2) {
+				return new StructureMerger(struct1, struct2);
+			}
+			error("structure", dt1, dt2);
+		}
+
+		if (dt1 instanceof Union union1) {
+			if (dt2 instanceof Union union2) {
+				return new UnionMerger(union1, union2);
+			}
+			error("union", dt1, dt2);
+		}
+
+		if (dt1 instanceof Enum enum1) {
+			if (dt2 instanceof Enum enum2) {
+				return new EnumMerger(enum1, enum2);
+			}
+			error("enum", dt1, dt2);
+		}
+
+		throw new DataTypeMergeException("Merge target must be one of structure, union, or enum.");
+	}
+
+	private static void error(String typeName, DataType mergeToDt, DataType selectedDt)
+			throws DataTypeMergeException {
+		String msg = "Can't merge non-%s '%s' datatype into structure '%s' ".formatted(typeName,
+			selectedDt.getName(), mergeToDt.getName());
+		throw new DataTypeMergeException(msg);
 	}
 }

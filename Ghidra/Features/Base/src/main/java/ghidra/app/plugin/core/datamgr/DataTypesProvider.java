@@ -162,6 +162,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new CopyAction(plugin));
 		addLocalAction(new PasteAction(plugin));
 		addLocalAction(new ReplaceDataTypeAction(plugin));
+		addLocalAction(new MergeDataTypeAction(plugin));
 		addLocalAction(new DeleteAction(plugin));
 		addLocalAction(new DeleteArchiveAction(plugin));
 		addLocalAction(new RenameAction(plugin));
