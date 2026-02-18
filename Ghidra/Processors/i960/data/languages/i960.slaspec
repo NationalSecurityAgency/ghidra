@@ -1,0 +1,4 @@
+
+define endian=little;
+
+@include "i960.sinc"

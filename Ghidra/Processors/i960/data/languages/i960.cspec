@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+    <absolute_max_alignment value="0" />
+    <machine_alignment value="8" />
+    <default_alignment value="1" />
+    <default_pointer_alignment value="4" />
+    <pointer_size value="4" />
+    <short_size value="2" />
+    <integer_size value="4" />
+    <long_size value="4" />
+    <long_long_size value="8" />
+    <float_size value="4" />
+    <double_size value="8" />
+    <size_alignment_map>
+      <entry size="1" alignment="1" />
+      <entry size="2" alignment="2" />
+      <entry size="4" alignment="4" />
+      <entry size="8" alignment="4" />
+    </size_alignment_map>
+  </data_organization>
+  <global>
+    <range space="ram"/>
+    <!-- <register name="g0" /> -->
+    <!-- <register name="g1" /> -->
+    <!-- <register name="g2" /> -->
+    <!-- <register name="g3" /> -->
+    <!-- <register name="g4" /> -->
+    <!-- <register name="g5" /> -->
+    <!-- <register name="g6" /> -->
+    <!-- <register name="g7" /> -->
+    <!-- <register name="g8" /> -->
+    <!-- <register name="g9" /> -->
+    <!-- <register name="g10" /> -->
+    <!-- <register name="g11" /> -->
+    <!-- Up to 12 parameters can be passed by value -->
+    <register name="g12" />
+    <register name="g13" />
+    <register name="g14" />
+    <register name="fp" />
+    <register name="pc" />
+    <register name="ac" />
+    <register name="tc" />
+  </global>
+  <returnaddress>
+    <register name="rip"/>
+  </returnaddress>
+  <!-- <stackpointer register="sp" space="ram" growth="positive"/> -->
+  <stackpointer register="sp" space="ram" growth="positive"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="64">
+      <input>
+        <pentry minsize="1" maxsize="4">
+          <register name="g0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="g11"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="g0"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="g1" piece2="g0" />
+        </pentry>
+	<!-- TODO  g2 and g3 -->
+      </output>
+      <unaffected>
+        <register name="fp"/>
+        <register name="pfp"/>
+        <register name="sp"/>
+        <register name="rip"/>
+        <register name="r3"/>
+        <register name="r4"/>
+        <register name="r5"/>
+        <register name="r6"/>
+        <register name="r7"/>
+        <register name="r8"/>
+        <register name="r9"/>
+        <register name="r10"/>
+        <register name="r11"/>
+        <register name="r12"/>
+        <register name="r13"/>
+        <register name="r14"/>
+        <register name="r15"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>
