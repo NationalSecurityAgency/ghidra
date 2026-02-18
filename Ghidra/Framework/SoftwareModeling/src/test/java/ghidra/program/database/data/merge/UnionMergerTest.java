@@ -156,7 +156,7 @@ public class UnionMergerTest extends AbstractGenericTest {
 
 		Union result = merger.merge();
 		assertUnionEquals(expected, result);
-		assertEquals("Merging \"undefined4\" and \"int to \"int\" for member \"joe\".",
+		assertEquals("Merging 'undefined4' and 'int' to 'int' for member 'joe'.",
 			merger.getWarnings().get(0));
 	}
 
@@ -178,7 +178,7 @@ public class UnionMergerTest extends AbstractGenericTest {
 
 		Union result = merger.merge();
 		assertUnionEquals(expected, result);
-		assertEquals("Merging \"int\" and \"undefined4 to \"int\" for member \"joe\".",
+		assertEquals("Merging 'int' and 'undefined4' to 'int' for member 'joe'.",
 			merger.getWarnings().get(0));
 	}
 
@@ -200,7 +200,7 @@ public class UnionMergerTest extends AbstractGenericTest {
 
 		Union result = merger.merge();
 		assertUnionEquals(expected, result);
-		assertEquals("Merging \"int\" and \"word * to \"word *\" for member \"joe\".",
+		assertEquals("Merging 'int' and 'word *' to 'word *' for member 'joe'.",
 			merger.getWarnings().get(0));
 	}
 
