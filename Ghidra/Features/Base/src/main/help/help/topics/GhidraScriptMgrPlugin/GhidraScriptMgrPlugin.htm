@@ -135,12 +135,24 @@
       <H3><A name="Script_Quick_Launch"></A>Script Quick Launch</H3>
 
       <BLOCKQUOTE>
-        <P align="left">This key binding action will show a dialog to allow you to quickly select a
-        script to be run. You may type any part of the name of the desired script in the dialog's
-        text field. An asterisc may be used as a globbing character.</P>
+        <P align="left">This key binding action shows a dialog to quickly find and run scripts.
+        The dialog organizes scripts into two sections:</P>
 
-        <P>You may either use the mouse to choose the desired script from the popup list or press
-        the Enter key to selected the highlighted list element.</P>
+        <UL>
+          <LI>
+            <B>Recent Scripts</B> - Shows up to 10 of the most recently executed scripts in
+            most-recently-used (MRU) order. This section only appears if you have run scripts 
+            before.
+          </LI>
+          <LI><B>All Scripts</B> - Shows all available scripts in alphabetical order.</LI>
+        </UL>
+
+        <P>Type any part of a script name in the filter field to narrow down the list. The filter
+        supports wildcard matching using * (any characters) and ? (single character). Use the 
+        up/down arrow keys or mouse to select a script, then press Enter or click OK to run it.</P>
+
+        <P>The detail pane on the right displays information about the currently selected script,
+        including its description, author, category, and assigned keybinding (if any).</P>
 
         <P align="center"><IMG alt="" src="images/ScriptQuickLaunchDialog.png">
         </P>
