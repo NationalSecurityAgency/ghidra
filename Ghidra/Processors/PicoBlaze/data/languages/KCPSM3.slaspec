@@ -1,0 +1,374 @@
+# Specification for the PicoBlaze KCPSM3 processor
+
+# Known differences from actual KCPSM3:
+# - PC should be a 10-bit value with wraparound, Ghidra cannot handle non byte-aligned space sizes
+
+@include "picoblaze_common.sinc"
+
+
+define token opcode(24)
+	op0_17 = (0, 17)
+
+	op6_7 = (6,7)
+	op3_7 = (3,7)
+	op0_9 = (0,9)
+	op0_7 = (0,7)
+	op0_5 = (0,5)
+	op0_3 = (0,3)
+	op0_2 = (0,2)
+	op12_17 = (12, 17)
+	op10_11 = (10, 11)
+	op12 = (12, 12)
+	op13_17 = (13, 17)
+	
+	reg8_11 = (8, 11)
+	reg4_7 = (4, 7)
+;
+
+attach variables [ reg8_11 reg4_7 ] [
+	s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 sA sB sC sD sE sF
+];
+
+
+macro push(v) {
+    *[stack_buffer]:2 SP = v;
+    SP = (SP + 1) % 32;
+}
+
+
+# JUMP
+
+jtgt: tgt is op0_9 [ tgt = op0_9 * 3; ] {
+    local addr:3 = tgt;
+    export addr;
+}
+
+# Conditional
+with jcond: op12=1 {
+    :"Z"  is op10_11=0b00 {
+        local v:1 = Z != 0;
+        export v;
+    }
+    :"NZ"  is op10_11=0b01 {
+        local v:1 = Z == 0;
+        export v;
+    }
+    :"C"  is op10_11=0b10 {
+        local v:1 = C != 0;
+        export v;
+    }
+    :"NC" is op10_11=0b11 {
+        local v:1 = C == 0;
+        export v;
+    }
+}
+
+:"JUMP " jcond, jtgt is op13_17=0b11010 & jcond & jtgt {
+    if(jcond == 0) goto <end>;
+    goto [jtgt];
+    <end>
+}
+# Unconditional
+:"JUMP " jtgt is op13_17=0b11010 & op12=0 & jtgt {
+    goto [jtgt];
+}
+
+# CALL
+
+:"CALL " jcond, jtgt is op13_17=0b11000 & jcond & jtgt {
+    if(jcond == 0) goto <end>;
+    local tmp:2 = inst_start;
+    push(tmp);
+    call [jtgt];
+    <end>
+}
+# Unconditional
+:"CALL " jtgt is op13_17=0b11000 & op12=0 & jtgt {
+    local tmp:2 = inst_start;
+    push(tmp);
+    call [jtgt];
+}
+
+# RETURN
+
+:"RETURN " jcond  is op13_17=0b10101 & jcond & op0_9=0 {
+    if(jcond == 0) goto <end>;
+        SP = (SP - 1) % 32;
+        local tmp:2 = *[stack_buffer]:2 SP;
+        tmp = tmp + 3;
+        return [tmp];
+    <end>
+}
+# Unconditional
+:"RETURN" is op13_17=0b10101 & op12=0 & op0_9=0 {
+    SP = (SP - 1) % 32;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    tmp = tmp + 3;
+    return [tmp];
+}
+
+# RETURNI
+
+:"RETURNI_ENABLE "  is op0_17=0b111000000000000001 {
+    SP = (SP - 1) % 32;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    enable_interrupt();
+    return [tmp];
+}
+
+:"RETURNI_DISABLE "  is op0_17=0b111000000000000000 {
+    SP = (SP - 1) % 32;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    disable_interrupt();
+    return [tmp];
+}
+
+# ENABLE/DISABLE INTERRUPT
+
+
+:ENABLE_INTERRUPT is op0_17=0b111100000000000001 {
+    enable_interrupt();
+}
+
+:DISABLE_INTERRUPT is op0_17=0b111100000000000000 {
+    disable_interrupt();
+}
+
+macro update_flags(v) {
+    C = 0;
+    Z = (v == 0);
+}
+
+# LOAD
+
+:LOAD reg8_11,op0_7 is op12_17=0b000000 & reg8_11 & op0_7 {
+	reg8_11 = op0_7;
+}
+
+:LOAD reg8_11,reg4_7 is op12_17=0b000001 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	reg8_11 = reg4_7;
+}
+
+# AND
+
+:AND reg8_11,op0_7 is op12_17=0b001010 & reg8_11 & op0_7 {
+	reg8_11 = reg8_11 & op0_7;
+    update_flags(reg8_11);
+}
+
+:AND reg8_11,reg4_7 is op12_17=0b001011 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	reg8_11 = reg8_11 & reg4_7;
+    update_flags(reg8_11);
+}
+
+# OR
+
+:OR reg8_11,op0_7 is op12_17=0b001100 & reg8_11 & op0_7 {
+	reg8_11 = reg8_11 | op0_7;
+    update_flags(reg8_11);
+}
+
+:OR reg8_11,reg4_7 is op12_17=0b001101 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	reg8_11 = reg8_11 | reg4_7;
+    update_flags(reg8_11);
+}
+
+# XOR
+
+:XOR reg8_11,op0_7 is op12_17=0b001110 & reg8_11 & op0_7 {
+	reg8_11 = reg8_11 ^ op0_7;
+    update_flags(reg8_11);
+}
+
+:XOR reg8_11,reg4_7 is op12_17=0b001111 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	reg8_11 = reg8_11 ^ reg4_7;
+    update_flags(reg8_11);
+}
+
+# TEST
+define pcodeop odd_parity;
+
+:TEST reg8_11,op0_7 is op12_17=0b010010 & reg8_11 & op0_7 {
+	local tmp:1 = reg8_11 & op0_7;
+    Z = tmp == 0;
+    C = odd_parity(tmp);
+}
+
+:TEST reg8_11,reg4_7 is op12_17=0b010010 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	local tmp:1 = reg8_11 & reg4_7;
+    Z = tmp == 0;
+    C = odd_parity(tmp);
+}
+
+# ADD
+
+:ADD reg8_11,op0_7 is op12_17=0b011000 & reg8_11 & op0_7 {
+	reg8_11 = reg8_11 + op0_7;
+    C = carry(reg8_11, op0_7);
+    Z = (reg8_11 == 0);
+}
+
+:ADD reg8_11,reg4_7 is op12_17=0b011001 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	reg8_11 = reg8_11 + reg4_7;
+    C = carry(reg8_11, reg4_7);
+    Z = (reg8_11 == 0);
+}
+
+# ADDCY
+
+:ADDCY reg8_11,op0_7 is op12_17=0b011010 & reg8_11 & op0_7 {
+    local tmp:1 = reg8_11 + op0_7;
+	reg8_11 = reg8_11 + op0_7 + C;
+    C = carry(reg8_11, op0_7) || carry(tmp, C);
+    Z = (reg8_11 == 0);
+}
+
+:ADDCY reg8_11,reg4_7 is op12_17=0b011010 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    local tmp:1 = reg8_11 + reg4_7;
+	reg8_11 = reg8_11 + reg4_7 + C;
+    C = carry(reg8_11, reg4_7) || carry(tmp, C);
+    Z = (reg8_11 == 0);
+}
+
+# SUB
+
+:SUB reg8_11,op0_7 is op12_17=0b011100 & reg8_11 & op0_7 {
+	reg8_11 = reg8_11 - op0_7;
+    C = reg8_11 < op0_7;
+    Z = reg8_11 == 0;
+}
+
+:SUB reg8_11,reg4_7 is op12_17=0b011100 & reg8_11 & reg4_7 & op0_3=0b0000 {
+	reg8_11 = reg8_11 - reg4_7;
+    C = reg8_11 < reg4_7;
+    Z = reg8_11 == 0;
+}
+
+# SUBCY
+
+:SUBCY reg8_11,op0_7 is op12_17=0b011110 & reg8_11 & op0_7 {
+    local tmp:1 = reg8_11 - op0_7;
+	reg8_11 = reg8_11 - op0_7 - C;
+    C = reg8_11 < op0_7 || tmp < C;
+    Z = (reg8_11 == 0);
+}
+
+:SUBCY reg8_11,reg4_7 is op12_17=0b011111 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    local tmp:1 = reg8_11 - reg4_7;
+	reg8_11 = reg8_11 - reg4_7 - C;
+    C = reg8_11 < reg4_7 || tmp < C;
+    Z = (reg8_11 == 0);
+}
+
+# COMPARE
+
+:COMPARE reg8_11,op0_7 is op12_17=0b010100 & reg8_11 & op0_7 {
+    Z = (reg8_11 == op0_7);
+    C = (reg8_11 < op0_7);
+}
+
+:COMPARE reg8_11,reg4_7 is op12_17=0b010101 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    Z = (reg8_11 == reg4_7);
+    C = (reg8_11 < reg4_7);
+}
+
+# SR0 / SR1 / SRX / SRA / RR
+
+:SR0 reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00001 & op0_2=0b110 {
+    C = reg8_11 & 1;
+    reg8_11 = reg8_11 >> 1;
+    Z = reg8_11 == 0;
+}
+:SR1 reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00001 & op0_2=0b111 {
+    Z = 0;
+    C = reg8_11 & 1;
+    reg8_11 = (0b10000000 | ( reg8_11 >> 1));
+}
+:SRX reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00001 & op0_2=0b010 {
+    C = reg8_11 & 1;
+    reg8_11 = (( reg8_11 & 0b10000000) | ( reg8_11 >> 1));
+    Z = reg8_11 == 0;
+}
+:SRA reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00001 & op0_2=0b000 {
+    local tmp:1 = reg8_11 & 1;
+    reg8_11 = (( C << 7) | ( reg8_11 >> 1));
+    C = tmp;
+    Z = reg8_11 == 0;
+}
+:RR reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00001 & op0_2=0b100 {
+    C = reg8_11 & 1;
+    reg8_11 = (( C << 7) | ( reg8_11 >> 1));
+    Z = reg8_11 == 0;
+}
+
+# SL0 / SL1 / SLX / SLA / RL
+:SL0 reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00000 & op0_2=0b110 {
+    C = reg8_11 >> 7;
+    reg8_11 = reg8_11 << 1;
+    Z = reg8_11 == 0;
+}
+:SL1 reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00000 & op0_2=0b111 {
+    Z = 0;
+    C = reg8_11 >> 7;
+    reg8_11 = (1 | ( reg8_11 << 1));
+}
+:SLX reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00000 & op0_2=0b010 {
+    C = reg8_11 >> 7;
+    reg8_11 = (( reg8_11 & 1) | ( reg8_11 << 1));
+    Z = reg8_11 == 0;
+}
+:SLA reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00000 & op0_2=0b000 {
+    local tmp:1 = reg8_11 >> 7;
+    reg8_11 = ( C | ( reg8_11 << 1));
+    C = tmp;
+    Z = reg8_11 == 0;
+}
+:RL reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00000 & op0_2=0b100 {
+    C = reg8_11 >> 7;
+    reg8_11 = (( C ) | ( reg8_11 << 1));
+    Z = reg8_11 == 0;
+}
+
+# OUTPUT
+
+define pcodeop output;
+
+:OUTPUT reg8_11,op0_7 is op12_17=0b101100 & reg8_11 & op0_7 {
+    output(reg8_11, op0_7:1);
+}
+
+:OUTPUT reg8_11,reg4_7 is op12_17=0b101101 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    output(reg8_11, reg4_7);
+}
+
+# INPUT
+
+define pcodeop input;
+
+:INPUT reg8_11,op0_7 is op12_17=0b000100 & reg8_11 & op0_7 {
+    reg8_11 = input(op0_7:1);
+}
+
+:INPUT reg8_11,reg4_7 is op12_17=0b000101 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    reg8_11 = input(reg4_7);	
+}
+
+# STORE
+
+:STORE reg8_11,op0_5 is op12_17=0b101110 & reg8_11 & op6_7=0 & op0_5 {
+    *[scratchpad]:1 op0_5:1 = reg8_11;
+}
+
+:STORE reg8_11,reg4_7 is op12_17=0b101111 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    *[scratchpad]:1 reg4_7 = reg8_11;
+}
+
+# FETCH
+
+:FETCH reg8_11,op0_5 is op12_17=0b000110 & reg8_11 & op6_7=0 & op0_5 {
+    reg8_11 = *[scratchpad]:1 op0_5:1;
+}
+
+:FETCH reg8_11,reg4_7 is op12_17=0b000111 & reg8_11 & reg4_7 & op0_3=0b0000 {
+    reg8_11 = *[scratchpad]:1 reg4_7;
+}
