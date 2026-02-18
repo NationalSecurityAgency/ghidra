@@ -643,14 +643,16 @@
 }
 @endif
 
-:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 
+:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 & check_EAX_dest & check_EDX_dest
 {
     build lockx;
     local dest = m64;
     ZF = ((zext(EDX) << 32) | zext(EAX)) == dest;
     if (ZF == 1) goto <equal>;
     EDX = dest(4);
+    build check_EDX_dest;
     EAX = dest:4;
+    build check_EAX_dest;
     goto <done>;
 <equal>
     m64 = (zext(ECX) << 32) | zext(EBX);
@@ -1245,7 +1247,7 @@
    UNLOCK();
 }
 
-:XCHG^xacq_xrel_prefx^alwaysLock  m32,Reg32   is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=1 & byte=0x87; m32 & Reg32 ...        
+:XCHG^xacq_xrel_prefx^alwaysLock  m32,Reg32   is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=1 & byte=0x87; m32 & Reg32 ... & check_Reg32_dest ...
 { 
   build xacq_xrel_prefx;
   build alwaysLock;
