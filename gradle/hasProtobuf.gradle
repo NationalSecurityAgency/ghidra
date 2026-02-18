@@ -53,6 +53,9 @@ dependencies {
 			protocArtifact "com.google.protobuf:protoc:${version}:osx-aarch_64@exe"
 		}
 	}
+	if (isCurrentOpenBSD()) {
+		protocArtifact files('/usr/local/bin/protoc')
+	}
 }
 
 /*protobuf {
