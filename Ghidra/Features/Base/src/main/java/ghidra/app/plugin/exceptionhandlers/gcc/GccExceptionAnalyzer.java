@@ -175,18 +175,15 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 			List<RegionDescriptor> regions = ehframeSection.analyze(fdeTableCount);
 
 			AddressSet ehProtected = new AddressSet();
-
+			monitor.initialize(getCallSiteRecordCount(regions), "Marking up Call Site records");
 			for (RegionDescriptor region : regions) {
-
-				monitor.checkCancelled();
 				ehProtected.add(region.getRange());
 
 				LSDACallSiteTable callSiteTable = region.getCallSiteTable();
 				if (callSiteTable != null) {
-
 					// Process this table's call site records.
 					for (LSDACallSiteRecord cs : callSiteTable.getCallSiteRecords()) {
-						monitor.checkCancelled();
+						monitor.increment();
 						processCallSiteRecord(program, ehProtected, region, cs);
 					}
 				}
@@ -197,6 +194,17 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 			log.appendMsg("Error analyzing GCC exception tables");
 			log.appendException(e);
 		}
+	}
+
+	private int getCallSiteRecordCount(List<RegionDescriptor> regions) {
+		int total = 0;
+		for (RegionDescriptor region : regions) {
+			LSDACallSiteTable callSiteTable = region.getCallSiteTable();
+			if (callSiteTable != null) {
+				total += callSiteTable.getCallSiteRecords().size();
+			}
+		}
+		return total;
 	}
 
 	private void processCallSiteRecord(Program program, AddressSet ehProtected,
