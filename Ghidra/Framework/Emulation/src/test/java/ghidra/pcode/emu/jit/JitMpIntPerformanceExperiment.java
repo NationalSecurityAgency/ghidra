@@ -38,7 +38,7 @@ import ghidra.program.util.DefaultLanguageService;
 
 @Ignore("For developer workstation")
 public class JitMpIntPerformanceExperiment {
-	public static final int N = 100_000_000;
+	public static final int N = 1_000_000;
 	public static final BigInteger MASK_16_BYTES =
 		BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE);
 	private static SleighLanguage toy;
@@ -265,7 +265,7 @@ public class JitMpIntPerformanceExperiment {
 			thread.run();
 		}
 		catch (DecodePcodeExecutionException e) {
-			if (e.getProgramCounter().getOffset() != 0xdeadbeef) {
+			if (e.getProgramCounter().getOffset() != 0xdeadbeefL) {
 				throw e;
 			}
 		}
@@ -308,7 +308,7 @@ public class JitMpIntPerformanceExperiment {
 			thread.run();
 		}
 		catch (DecodePcodeExecutionException e) {
-			if (e.getProgramCounter().getOffset() != 0xdeadbeef) {
+			if (e.getProgramCounter().getOffset() != 0xdeadbeefL) {
 				throw e;
 			}
 		}
