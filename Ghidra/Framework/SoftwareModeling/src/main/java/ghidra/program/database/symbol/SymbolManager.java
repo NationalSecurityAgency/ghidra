@@ -1507,6 +1507,52 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	@Override
+	public int anonymizeLabelHistory(String anonymousName) throws IOException {
+		lock.acquire();
+		try {
+			if (historyAdapter == null) {
+				return 0;
+			}
+			historyAdapter.anonymizeAllRecords(anonymousName);
+			return historyAdapter.getRecordCount();
+		}
+		catch (IOException e) {
+			program.dbError(e);
+			throw e;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public int anonymizeLabelHistory(String anonymousName, Address addr) throws IOException {
+		lock.acquire();
+		try {
+			if (historyAdapter == null) {
+				return 0;
+			}
+			long addrKey = addrMap.getKey(addr, false);
+			historyAdapter.anonymizeRecordsByAddress(anonymousName, addrKey);
+			// Count records for this address
+			int count = 0;
+			RecordIterator it = historyAdapter.getRecordsByAddress(addrKey);
+			while (it.hasNext()) {
+				it.next();
+				count++;
+			}
+			return count;
+		}
+		catch (IOException e) {
+			program.dbError(e);
+			throw e;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
 	public void invalidateCache(boolean all) {
 		variableStorageMgr.invalidateCache(all);
 		lock.acquire();

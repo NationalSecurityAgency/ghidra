@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.symbol;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.database.symbol.*;
@@ -658,6 +659,25 @@ public interface SymbolTable {
 	 * @return true if a label history exists for specified address, otherwise false
 	 */
 	public boolean hasLabelHistory(Address addr);
+
+	/**
+	 * Anonymize all label history records by replacing usernames with a given identifier.
+	 *
+	 * @param anonymousName the replacement name (e.g., "anonymous" or "user")
+	 * @return the number of records updated
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	public int anonymizeLabelHistory(String anonymousName) throws IOException;
+
+	/**
+	 * Anonymize label history records for a specific address by replacing usernames with a given identifier.
+	 *
+	 * @param anonymousName the replacement name
+	 * @param addr the address to anonymize
+	 * @return the number of records updated
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	public int anonymizeLabelHistory(String anonymousName, Address addr) throws IOException;
 
 	/**
 	 * Get the deepest namespace containing the given address

@@ -192,4 +192,29 @@ class LabelHistoryAdapterV0 extends LabelHistoryAdapter {
 			filter);
 	}
 
+	/**
+	 * @see ghidra.program.database.symbol.LabelHistoryAdapter#anonymizeAllRecords(java.lang.String)
+	 */
+	@Override
+	void anonymizeAllRecords(String anonymousName) throws IOException {
+		RecordIterator iter = getAllRecords();
+		while (iter.hasNext()) {
+			DBRecord rec = iter.next();
+			rec.setString(HISTORY_USER_COL, anonymousName);
+			table.putRecord(rec);
+		}
+	}
+
+	/**
+	 * @see ghidra.program.database.symbol.LabelHistoryAdapter#anonymizeRecordsByAddress(java.lang.String, long)
+	 */
+	@Override
+	void anonymizeRecordsByAddress(String anonymousName, long addr) throws IOException {
+		RecordIterator iter = getRecordsByAddress(addr);
+		while (iter.hasNext()) {
+			DBRecord rec = iter.next();
+			rec.setString(HISTORY_USER_COL, anonymousName);
+			table.putRecord(rec);
+		}
+	}
 }
