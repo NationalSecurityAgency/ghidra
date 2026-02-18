@@ -192,6 +192,7 @@ class ActionConstantPtr : public Action {
   static bool checkCopy(PcodeOp *op,Funcdata &data);
   static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
 				Address &rampoint,uintb &fullEncoding,Funcdata &data);
+  static int8 getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLevel);
 public:
   ActionConstantPtr(const string &g) : Action(0,"constantptr",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { localcount = 0; }
