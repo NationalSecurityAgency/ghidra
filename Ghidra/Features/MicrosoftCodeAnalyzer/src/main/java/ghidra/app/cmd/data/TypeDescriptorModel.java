@@ -28,11 +28,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -473,6 +471,10 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		return hasComplexType() ? demangledDataType.getOriginalDemangled() : null;
 	}
 
+	public String getOriginalTypename() {
+		return originalTypeName;
+	}
+
 	/**
 	 * Gets just the name of the type descriptor.
 	 * @return the name of the thing referred to by this descriptor, or null if it couldn't
@@ -583,6 +585,23 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		Program program = getProgram();
 		namespace = DemangledObject.createNamespace(program, demangledDataType,
 			program.getGlobalNamespace(), false);
+
+		// if for some reason the mangled name can't be demangled, use the mangled name
+		if (namespace.isGlobal()) {
+			try {
+				namespace = program.getSymbolTable()
+						.getOrCreateNameSpace(program.getGlobalNamespace(), originalTypeName,
+							SourceType.IMPORTED);
+			}
+			catch (DuplicateNameException e) {
+				// ok if it is duplicate as it was likely created in another rtti handling method 
+			}
+			catch (InvalidInputException e) {
+				Msg.error(TypeDescriptorModel.class,
+					"Failed to create namespace: " + e.getMessage());
+				namespace = null;
+			}
+		}
 		return namespace;
 	}
 

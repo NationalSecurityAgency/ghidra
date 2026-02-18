@@ -321,7 +321,11 @@ public class RttiUtil {
 	public static String getDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
 		String descriptorTypeNamespace = rtti0Model.getDescriptorTypeNamespace(); // Can be null.
 		if (descriptorTypeNamespace == null) {
-			descriptorTypeNamespace = ""; // Couldn't get namespace so leave it off.
+
+			descriptorTypeNamespace = rtti0Model.getOriginalTypename();
+
+			Msg.warn(RttiUtil.class, rtti0Model.getAddress().toString() +
+				": Could not demangle TypeDescriptor namespace so using the mangled string as the namespace.");
 		}
 		return descriptorTypeNamespace;
 	}
