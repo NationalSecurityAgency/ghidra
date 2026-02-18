@@ -1,0 +1,323 @@
+Product Requirements Document (PRD)
+Ghidra Fork: Enhanced MIPS Decompiler Control Flow Analysis
+Executive Summary
+Enhance Ghidra's core decompiler to properly handle common MIPS compiler optimization patterns including jump tables, inline switch handlers, and indirect function calls. These fixes will be implemented directly in the Ghidra codebase to provide native support for these patterns during initial analysis.
+Problem Statement
+Current Ghidra Limitations
+
+Jump Table Blindness: The decompiler fails to recognize jr $reg as switch statement implementations
+Inline Code Misclassification: Case handlers embedded after jump instructions are treated as data
+Orphaned Functions: Indirect calls through function pointers create disconnected call graphs
+Incomplete Analysis: ~30% of control flow is missed in typical embedded/kernel code
+
+Root Cause
+Ghidra's MIPS analyzer lacks pattern recognition for common compiler optimizations, particularly GCC's -O2/-O3 switch table generation and function pointer tables in driver architectures.
+Solution Architecture
+Modify Ghidra's core MIPS analysis pipeline to detect and properly handle these patterns during initial program analysis, eliminating the need for manual fixes or post-processing.
+Functional Requirements
+FR1: Core Analyzer Enhancements
+FR1.1 - Switch Table Detection in MipsAnalyzer.java
+javapublic class MipsAnalyzer extends AbstractAnalyzer {
+    // Add new analysis phase
+    private void analyzeSwitchTables(Program program) {
+        // Detect jr $reg patterns
+        // Backtrack to find table base calculation
+        // Identify bounds checking
+        // Create switch statement structure
+    }
+}
+FR1.2 - Pattern Recognition Library
+
+Create MipsSwitchTableAnalyzer.java for pattern matching
+Support GCC, LLVM, and Green Hills compiler patterns
+Handle both PIC and non-PIC code generation
+
+FR1.3 - Inline Handler Detection
+
+Recognize valid MIPS instructions in "data" regions following jumps
+Auto-disassemble case handlers
+Maintain fall-through relationships
+
+FR2: Decompiler Integration
+FR2.1 - Modify DecompInterface.java
+java// Add switch table hints to decompiler
+public class DecompInterface {
+    public void registerSwitchTable(Address jumpAddr, 
+                                   List<Address> targets,
+                                   int defaultCase) {
+        // Inform decompiler about switch structure
+    }
+}
+FR2.2 - PCode Generation Updates
+
+Modify PcodeInjectLibraryMips.java to generate proper switch PCode
+Create BRANCHIND operations with multiple targets
+Preserve switch variable information
+
+FR2.3 - Control Flow Graph Enhancements
+
+Update BasicBlockModel.java to handle multi-target indirect jumps
+Ensure graph completeness for switch statements
+
+FR3: Indirect Call Resolution
+FR3.1 - Function Pointer Table Detection
+javapublic class MipsFunctionPointerAnalyzer {
+    // Detect operation structures
+    // Find vtables
+    // Correlate with string references
+    // Create function signatures from context
+}
+FR3.2 - Call Site Linking
+
+Enhance MipsConstantAnalyzer.java to track function pointer propagation
+Create references at jalr sites when pointer source is known
+Support callback registration patterns
+
+FR4: Data Flow Improvements
+FR4.1 - Enhanced Constant Propagation
+
+Track register values across basic blocks for table base addresses
+Support MIPS hi/lo register pair tracking
+Handle PIC register ($gp) relative addressing
+
+FR4.2 - Memory Reference Analysis
+
+Improve MipsAddressPcodeFlowAnalyzer.java for indirect references
+Track pointer loads from memory
+Support multi-level indirection
+
+Non-Functional Requirements
+NFR1: Performance
+
+No more than 10% increase in analysis time
+Memory usage within existing bounds
+Incremental analysis capability
+
+NFR2: Compatibility
+
+Maintain backward compatibility with existing Ghidra scripts
+Support MIPS32/MIPS64, big/little endian
+Handle all MIPS ISA revisions (R1-R6)
+
+NFR3: Quality
+
+Zero false positives (never misidentify data as code)
+95%+ detection rate for standard compiler patterns
+Comprehensive unit test coverage
+
+Implementation Details
+Modified Files Structure
+ghidra/
+├── Ghidra/Processors/MIPS/
+│   ├── src/main/java/ghidra/app/plugin/core/analysis/
+│   │   ├── MipsAnalyzer.java                    [MODIFY]
+│   │   ├── MipsConstantAnalyzer.java           [MODIFY]
+│   │   ├── MipsSwitchTableAnalyzer.java        [NEW]
+│   │   ├── MipsFunctionPointerAnalyzer.java    [NEW]
+│   │   └── MipsInlineCodeAnalyzer.java         [NEW]
+│   ├── src/main/java/ghidra/program/emulation/
+│   │   └── MipsEmulateInstructionStateModifier.java [MODIFY]
+│   └── data/languages/
+│       ├── mips.cspec                          [MODIFY]
+│       └── mips.pspec                          [MODIFY]
+├── Ghidra/Features/Decompiler/
+│   ├── src/decompile/cpp/
+│   │   ├── flow.cc                             [MODIFY]
+│   │   ├── jumptable.cc                        [MODIFY]
+│   │   └── mips_switch.cc                      [NEW]
+│   └── src/main/java/ghidra/app/decompiler/
+│       └── DecompInterface.java                [MODIFY]
+└── Ghidra/Framework/SoftwareModeling/
+    └── src/main/java/ghidra/program/model/block/
+        └── BasicBlockModel.java                [MODIFY]
+Core Algorithm Pseudocode
+java// Main detection algorithm in MipsSwitchTableAnalyzer
+public SwitchTable detectSwitchTable(Instruction jumpInst) {
+    if (!isJumpRegister(jumpInst)) return null;
+    
+    // 1. Backtrack to find table load
+    Instruction loadInst = findTableLoad(jumpInst);
+    if (loadInst == null) return null;
+    
+    // 2. Find table base calculation
+    Address tableBase = findTableBase(loadInst);
+    
+    // 3. Find bounds check to determine table size
+    int tableSize = findTableBounds(jumpInst);
+    
+    // 4. Extract jump targets
+    List<Address> targets = new ArrayList<>();
+    for (int i = 0; i < tableSize; i++) {
+        Address target = getTableEntry(tableBase, i);
+        if (isValidCodeAddress(target)) {
+            targets.add(target);
+            
+            // 5. Check for inline handlers
+            if (!isDisassembled(target)) {
+                disassembleInlineHandler(target);
+            }
+        }
+    }
+    
+    // 6. Create switch table structure
+    return new SwitchTable(jumpInst.getAddress(), targets);
+}
+Testing Strategy
+Unit Tests
+
+Test each pattern detection algorithm
+Verify PCode generation for switch statements
+Validate control flow graph construction
+
+Integration Tests
+
+Test against real binaries from:
+
+Linux kernel modules
+Embedded firmware
+Game console executables
+Router/IoT firmware
+
+
+
+Test Binaries
+test/binaries/
+├── gcc_o0_switch.elf      # Unoptimized
+├── gcc_o3_switch.elf      # Optimized
+├── llvm_switch.elf        # LLVM compiled
+├── pic_switch.elf         # Position independent
+├── inline_handlers.elf    # Inline case handlers
+├── vtable_example.elf     # Virtual function tables
+└── callback_struct.elf    # Function pointer structs
+Success Metrics
+Quantitative
+
+Detection Rate: >95% of switch tables correctly identified
+False Positive Rate: <0.1%
+Performance Impact: <10% increase in analysis time
+Code Coverage: >90% test coverage on new code
+
+Qualitative
+
+Decompiler output shows proper switch statements
+Call graphs are complete for indirect calls
+No manual intervention required for standard patterns
+
+Implementation Phases
+Phase 1: Foundation (Weeks 1-2)
+
+Set up development environment
+Create test binary corpus
+Implement basic jump table detection
+
+Phase 2: Core Patterns (Weeks 3-4)
+
+Implement GCC pattern recognition
+Add inline handler detection
+Integrate with decompiler
+
+Phase 3: Advanced Patterns (Weeks 5-6)
+
+Add LLVM pattern support
+Implement function pointer analysis
+Handle PIC code patterns
+
+Phase 4: Testing & Refinement (Weeks 7-8)
+
+Comprehensive testing
+Performance optimization
+Documentation
+
+Phase 5: Upstream Preparation (Week 9)
+
+Code cleanup to Ghidra standards
+Create pull request
+Write submission documentation
+
+Risk Mitigation
+RiskMitigationBreaking existing analysisFeature flag for new analysisPerformance regressionOptimize critical paths, add cachingUpstream rejectionMaintain fork, engage early with maintainersComplex edge casesStart with common patterns, iterate
+Upstream Contribution Strategy
+
+Early Engagement
+
+Open issue describing problem
+Share approach for feedback
+Get buy-in from maintainers
+
+
+Code Quality
+
+Follow Ghidra coding standards
+Comprehensive JavaDoc
+Include test cases
+
+
+Pull Request Structure
+
+Separate PRs for each major feature
+Clear commit messages
+Before/after decompilation examples
+
+
+
+Configuration Options
+Add to MipsAnalyzer.java:
+javapublic class MipsAnalyzer extends AbstractAnalyzer {
+    private static final String OPTION_DETECT_SWITCH_TABLES = 
+        "Detect Switch Tables";
+    private static final String OPTION_INLINE_HANDLERS = 
+        "Detect Inline Case Handlers";
+    private static final String OPTION_INDIRECT_CALLS = 
+        "Resolve Indirect Function Calls";
+    
+    // Default: all enabled
+    private boolean detectSwitchTables = true;
+    private boolean detectInlineHandlers = true;
+    private boolean resolveIndirectCalls = true;
+}
+Example: Before and After
+Before (Current Ghidra)
+c// Decompiler output - broken
+undefined4 FUN_00066638(void) {
+    // ... setup code ...
+    uVar2 = *(undefined4 *)((int)register0x00000000 + -0x2e68);
+    
+    // Decompiler gives up here
+    (**(code **)(uVar1 + iVar3 * 4))();
+    
+    // Missing: rest of function
+}
+After (Enhanced Fork)
+cint32_t ispcore_irq_fs_work(void) {
+    ispcore_sd *sd = ispcore_sd;
+    isp_device *dev = sd->device;
+    
+    if (dev == NULL) return 0;
+    
+    for (int i = 0; i < 7; i++) {
+        if (dev->work_items[i].pending == 0) continue;
+        
+        uint32_t ioctl_cmd;
+        switch(i) {
+            case 0: ioctl_cmd = 0x20016; break;
+            case 1: ioctl_cmd = 0x20008; break;
+            case 2: ioctl_cmd = 0x20009; break;
+            case 3: ioctl_cmd = 0x20005; break;
+            case 4: ioctl_cmd = 0x20006; break;
+            case 5: continue;
+            case 6: ioctl_cmd = 0x20007; break;
+        }
+        
+        if (dev->ctrl->flag == 1) {
+            ispcore_sensor_ops_ioctl(sd, ioctl_cmd, 
+                                    &dev->work_items[i].data);
+        }
+        dev->work_items[i].pending = 0;
+    }
+    return 0;
+}
+Deliverables
+
+Code Changes: Fork with all modifications
+Test Suite: Comprehensive tests with sample binaries
+Documentation: Developer guide for pattern additions

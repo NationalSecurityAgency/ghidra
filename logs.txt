@@ -1,0 +1,322 @@
+> Task :MIPS:compileJava FAILED
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:498: error: illegal start of expression
+                private boolean containsIndirectTailJump(Program program, Function func) {
+                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:482: error: 'try' without 'catch', 'finally' or resource declarations
+                                try {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:521: error: illegal start of type
+                                                        if (other != null && ("v0".equals(other.getName()) || "v1".equals(other.getName()))) return other;
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:521: error: <identifier> expected
+                                                        if (other != null && ("v0".equals(other.getName()) || "v1".equals(other.getName()))) return other;
+                                                                 ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:521: error: invalid method declaration; return type required
+                                                        if (other != null && ("v0".equals(other.getName()) || "v1".equals(other.getName()))) return other;
+                                                                                   ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:521: error: <identifier> expected
+                                                        if (other != null && ("v0".equals(other.getName()) || "v1".equals(other.getName()))) return other;
+                                                                                                       ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:522: error: class, interface, enum, or record expected
+                                                } else if ("addiu".equals(m)) {
+                                                  ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:524: error: class, interface, enum, or record expected
+                                                }
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:528: error: class, interface, enum, or record expected
+                        }
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:530: error: class, interface, enum, or record expected
+                }
+                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:538: error: unnamed classes are a preview feature and are disabled by default.
+                        String target = effTargetReg.getName();
+                        ^
+  (use --enable-preview to enable unnamed classes)
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:545: error: class, interface, enum, or record expected
+                        while (cur != null && scanned < maxBack) {
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:548: error: class, interface, enum, or record expected
+                                if (m.startsWith("_")) m = m.substring(1);
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:549: error: class, interface, enum, or record expected
+                                if ("lw".equals(m) || "lbu".equals(m) || "lhu".equals(m) || "lwu".equals(m) || "lb".equals(m) || "lh".equals(m)) {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:554: error: class, interface, enum, or record expected
+                                                if (cur.getNumOperands() >= 2) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:558: error: class, interface, enum, or record expected
+                                                        if (o >= 0 && c > o) {
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:560: error: class, interface, enum, or record expected
+                                                        }
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:565: error: class, interface, enum, or record expected
+                                                        }
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:570: error: class, interface, enum, or record expected
+                        }
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:572: error: class, interface, enum, or record expected
+                }
+                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:587: error: class, interface, enum, or record expected
+                                if (callReg == null) return null;
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:594: error: class, interface, enum, or record expected
+                                while (cur != null && scanned < MAX_SCAN) {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:596: error: class, interface, enum, or record expected
+                                        if (scope != null && curFunc != scope) break;
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:597: error: class, interface, enum, or record expected
+                                        scanned++;
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:599: error: class, interface, enum, or record expected
+                                        if (m.startsWith("_")) m = m.substring(1);
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:601: error: class, interface, enum, or record expected
+                                        if ("lw".equals(m)) {
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:603: error: class, interface, enum, or record expected
+                                                if (rd != null && callRegName.equals(rd.getName())) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:607: error: class, interface, enum, or record expected
+                                                        for (Reference ref : refs) {
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:609: error: class, interface, enum, or record expected
+                                                                if (to != null && to.isMemoryAddress()) {
+                                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:617: error: class, interface, enum, or record expected
+                                                                                if (f != null) return f;
+                                                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:618: error: class, interface, enum, or record expected
+                                                                        } catch (ghidra.program.model.mem.MemoryAccessException e) {
+                                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:631: error: class, interface, enum, or record expected
+                                                if (rd != null && rs != null && callRegName.equals(rd.getName()) && callRegName.equals(rs.getName())) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:633: error: class, interface, enum, or record expected
+                                                        for (Object o : objs) {
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:636: error: class, interface, enum, or record expected
+                                                                        lowSeen = true;
+                                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:637: error: class, interface, enum, or record expected
+                                                                        break;
+                                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:638: error: class, interface, enum, or record expected
+                                                                }
+                                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:644: error: class, interface, enum, or record expected
+                                                if (rd != null && callRegName.equals(rd.getName())) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:646: error: class, interface, enum, or record expected
+                                                        for (Object o : objs) {
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:654: error: class, interface, enum, or record expected
+                                                                        if (f != null) return f;
+                                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:655: error: class, interface, enum, or record expected
+                                                                }
+                                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:660: error: class, interface, enum, or record expected
+                                }
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:665: error: class, interface, enum, or record expected
+                }
+                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:670: error: class, interface, enum, or record expected
+                while (cur != null) {
+                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:672: error: class, interface, enum, or record expected
+                        if (scope != null && curFunc != scope) {
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:676: error: class, interface, enum, or record expected
+                        }
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:679: error: class, interface, enum, or record expected
+                        }
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:681: error: class, interface, enum, or record expected
+                }
+                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:683: error: class, interface, enum, or record expected
+        }
+        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:693: error: class, interface, enum, or record expected
+                        if (cur.length >= min) return;
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:695: error: class, interface, enum, or record expected
+                        try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:695: error: class, interface, enum, or record expected
+                        try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                                                                                                         ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:698: error: class, interface, enum, or record expected
+                                if (def != null) func.setCallingConvention(def.getName()); else func.setCallingConvention(null);
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:698: error: class, interface, enum, or record expected
+                                if (def != null) func.setCallingConvention(def.getName()); else func.setCallingConvention(null);
+                                                                                           ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:699: error: class, interface, enum, or record expected
+                        } catch (Exception ignore) {}
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:701: error: class, interface, enum, or record expected
+                        for (int i = 0; i < min; i++) {
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:701: error: class, interface, enum, or record expected
+                        for (int i = 0; i < min; i++) {
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:701: error: class, interface, enum, or record expected
+                        for (int i = 0; i < min; i++) {
+                                                 ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:704: error: class, interface, enum, or record expected
+                                } else {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:706: error: class, interface, enum, or record expected
+                                }
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:710: error: class, interface, enum, or record expected
+                        try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:710: error: class, interface, enum, or record expected
+                        try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                                                                                                         ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:724: error: class, interface, enum, or record expected
+                                funcDef.setReturnType(VoidDataType.dataType);
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:726: error: class, interface, enum, or record expected
+                                for (int i = 0; i < args.length; i++) {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:726: error: class, interface, enum, or record expected
+                                for (int i = 0; i < args.length; i++) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:726: error: class, interface, enum, or record expected
+                                for (int i = 0; i < args.length; i++) {
+                                                                 ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:728: error: class, interface, enum, or record expected
+                                }
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:733: error: class, interface, enum, or record expected
+                                try {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:735: error: class, interface, enum, or record expected
+                                        for (int i = 0; i < nops; i++) {
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:735: error: class, interface, enum, or record expected
+                                        for (int i = 0; i < nops; i++) {
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:735: error: class, interface, enum, or record expected
+                                        for (int i = 0; i < nops; i++) {
+                                                                  ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:737: error: class, interface, enum, or record expected
+                                                try { r = jalrInstr.getRegister(i); } catch (Exception ignore) {}
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:737: error: class, interface, enum, or record expected
+                                                try { r = jalrInstr.getRegister(i); } catch (Exception ignore) {}
+                                                                                    ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:740: error: class, interface, enum, or record expected
+                                                        if (!"ra".equals(nm) && !"zero".equals(nm)) {
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:742: error: class, interface, enum, or record expected
+                                                        }
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:751: error: class, interface, enum, or record expected
+                                while (cur != null && steps++ < 64) {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:753: error: class, interface, enum, or record expected
+                                        try { dst = cur.getRegister(0); } catch (Exception ignore) {}
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:753: error: class, interface, enum, or record expected
+                                        try { dst = cur.getRegister(0); } catch (Exception ignore) {}
+                                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:754: error: class, interface, enum, or record expected
+                                        if (dst == null || !flowRegs.containsKey(dst.getName())) { cur = cur.getPrevious(); continue; }
+                                                                                                                            ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:754: error: class, interface, enum, or record expected
+                                        if (dst == null || !flowRegs.containsKey(dst.getName())) { cur = cur.getPrevious(); continue; }
+                                                                                                                                      ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:757: error: class, interface, enum, or record expected
+                                        try { s1 = cur.getRegister(1); } catch (Exception ignore) {}
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:757: error: class, interface, enum, or record expected
+                                        try { s1 = cur.getRegister(1); } catch (Exception ignore) {}
+                                                                       ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:758: error: class, interface, enum, or record expected
+                                        try { s2 = cur.getRegister(2); } catch (Exception ignore) {}
+                                                                       ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:765: error: class, interface, enum, or record expected
+                                        if (isMoveLike) {
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:767: error: class, interface, enum, or record expected
+                                                if (src != null && !flowRegs.containsKey(src.getName())) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:769: error: class, interface, enum, or record expected
+                                                }
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:773: error: class, interface, enum, or record expected
+                                                break; // found the load producing the function pointer
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:774: error: class, interface, enum, or record expected
+                                        }
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:778: error: class, interface, enum, or record expected
+                                                break;
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:779: error: class, interface, enum, or record expected
+                                        }
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:781: error: class, interface, enum, or record expected
+                                }
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:793: error: class, interface, enum, or record expected
+                                try {
+                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:797: error: class, interface, enum, or record expected
+                                        if (op1 != null) {
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:799: error: class, interface, enum, or record expected
+                                                if (o >= 0 && c > o) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:802: error: class, interface, enum, or record expected
+                                                        try { off2 = Integer.decode(offTxt); } catch (Exception ignore) { try { off2 = Integer.parseInt(offTxt); } catch (Exception ignore2) {} }
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:802: error: class, interface, enum, or record expected
+                                                        try { off2 = Integer.decode(offTxt); } catch (Exception ignore) { try { off2 = Integer.parseInt(offTxt); } catch (Exception ignore2) {} }
+                                                                                             ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:802: error: class, interface, enum, or record expected
+                                                        try { off2 = Integer.decode(offTxt); } catch (Exception ignore) { try { off2 = Integer.parseInt(offTxt); } catch (Exception ignore2) {} }
+                                                                                                                                                                 ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:806: error: class, interface, enum, or record expected
+                                        if (base2 != null) {
+                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:809: error: class, interface, enum, or record expected
+                                                while (s != null && back++ < 32) {
+                                                ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:811: error: class, interface, enum, or record expected
+                                                        try { dst = s.getRegister(0); } catch (Exception ignore) {}
+                                                        ^
+/home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:811: error: class, interface, enum, or record expected
+                                                        try { dst = s.getRegister(0); } catch (Exception ignore) {}
+                                                                                      ^
+100 errors
+
+[Incubating] Problems report is available at: file:///home/matteius/ghidra/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':MIPS:compileJava'.
+> Compilation failed; see the compiler output below.
+  /home/matteius/ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/app/plugin/core/analysis/MipsFunctionSignatureAnalyzer.java:498: error: illegal start of expression
+                private boolean containsIndirectTailJump(Program program, Function func) {
+                ^
+  100 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (powered by Develocity).
+
+BUILD FAILED in 12s
+383 actionable tasks: 104 executed, 279 up-to-date
