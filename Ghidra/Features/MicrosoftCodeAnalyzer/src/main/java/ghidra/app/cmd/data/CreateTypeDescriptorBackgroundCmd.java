@@ -22,10 +22,10 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 
 /**
  * This command will create a TypeDescriptor data type. Since unsized arrays are not properly
@@ -133,8 +133,10 @@ public class CreateTypeDescriptorBackgroundCmd
 
 		Program program = model.getProgram();
 		String demangledName = model.getDemangledTypeDescriptor();
+
+		// if cannot demangle then use the mangled name
 		if (demangledName == null) {
-			return false;
+			demangledName = model.getOriginalTypename();
 		}
 		String prefix = demangledName + " ";
 
@@ -147,9 +149,25 @@ public class CreateTypeDescriptorBackgroundCmd
 		// Label
 		Namespace classNamespace = model.getDescriptorAsNamespace();
 
-		if (classNamespace == null) {
-			Msg.error(RttiUtil.class, "Cannot get namespace from model " + model.getAddress());
-			return false;
+		// if cannot demangle then use the mangled name as the namespace
+		if (classNamespace == null || classNamespace.isGlobal()) {
+			Msg.error(RttiUtil.class, "Cannot get demangled namespace from model " +
+				model.getAddress() + " so will use the mangled name for the namespace");
+			try {
+				classNamespace = program.getSymbolTable()
+						.getOrCreateNameSpace(program.getGlobalNamespace(), demangledName,
+							SourceType.IMPORTED);
+			}
+			catch (DuplicateNameException e) {
+				// ok if it is duplicate as it was likely created in another rtti handling method
+			}
+			catch (InvalidInputException e) {
+				Msg.error(TypeDescriptorModel.class,
+					"Failed to create mangled namespace: " + e.getMessage());
+				classNamespace = null;
+				return false;
+			}
+
 		}
 
 		// If PDB had been run, then the namespace here might already have been promoted to
