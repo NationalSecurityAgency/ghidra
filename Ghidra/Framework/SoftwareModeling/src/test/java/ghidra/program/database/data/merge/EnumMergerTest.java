@@ -141,7 +141,7 @@ public class EnumMergerTest extends AbstractGenericTest {
 		}
 		catch (DataTypeMergeException e) {
 			assertEquals(
-				"Enum conflict due to one enum having negative values and the other large unsigned values",
+				"Enum conflict: one enum has negative values: one has large unsigned values",
 				e.getMessage());
 		}
 	}
