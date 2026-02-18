@@ -58,6 +58,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	public final static String COMMAND_ADDUSER = "adduser";
 	public final static String COMMAND_DROPUSER = "dropuser";
 	public final static String COMMAND_CHANGEAUTH = "changeauth";
+	public final static String COMMAND_LISTDATABASES = "listdatabases";
 
 	// Options that require a value argument
 	public static final String CAFILE_OPTION = "--cafile";
@@ -100,6 +101,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private static final Set<String> DROPUSER_OPTIONS = Set.of();
 	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
 		AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
+	private static final Set<String> LISTDATABASES_OPTIONS = Set.of();
 
 	//@formatter:on
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
@@ -112,6 +114,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		ALLOWED_OPTION_MAP.put(COMMAND_ADDUSER, ADDUSER_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_DROPUSER, DROPUSER_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_CHANGEAUTH, CHANGEAUTH_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_LISTDATABASES, LISTDATABASES_OPTIONS);
 	}
 
 	private final static String POSTGRES = "postgresql";
@@ -137,6 +140,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private File dataDirectory;			// Directory containing postgres datafiles
 	private File postgresRoot;			// Directory containing postgres software
 	private File postgresControl;		// "pg_ctl" utility within postgres software
+	private File postgresSql;			// "psql" utility within postgres software
 	private File certAuthorityFile;		// Certificate authority file provided by the user
 	private String certParameter;		// Path to certificate provided by user
 	private String distinguishedName;	// Certificate distinguished name provided by the user
@@ -168,6 +172,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		dataDirectory = null;
 		postgresRoot = null;
 		postgresControl = null;
+		postgresSql = null;
 		certAuthorityFile = null;
 		certParameter = null;
 		distinguishedName = null;
@@ -219,6 +224,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				scanUsername(params, slot++);
 				break;
 			case COMMAND_CHANGEAUTH:
+				scanDataDirectory(params, slot++);
+				break;
+			case COMMAND_LISTDATABASES:
 				scanDataDirectory(params, slot++);
 				break;
 			case COMMAND_CHANGE_PRIVILEGE:
@@ -442,7 +450,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			command.add("-p");
 			command.add(Integer.toString(port));
 		}
-		int ret = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		int ret = runCommand(null, command, loadLibraryVar, loadLibraryValue, false);
 		return (ret == 0);
 	}
 
@@ -677,15 +685,17 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	/**
 	 * Invoke an external executable/command, display the output and error streams on the console,
 	 * and return the exit value of the command.  
-	 * @param directory	 is the working directory for the command
-	 * @param command    is the command-line (including arguments)
-	 * @param envvar     if non-null, is an environment variable to set for the command
-	 * @param value      is the corresponding environment variable value
+	 * @param directory	    is the working directory for the command
+	 * @param command       is the command-line (including arguments)
+	 * @param envvar        if non-null, is an environment variable to set for the command
+	 * @param value         is the corresponding environment variable value
+	 * @param stdoutEnabled if true, stdout is displayed on console
 	 * @return the exit status of the command (0=no error)
 	 * @throws IOException if the process cannot be started
 	 * @throws InterruptedException if there is a problem waiting for the process to finish
 	 */
-	private int runCommand(File directory, List<String> command, String envvar, String value)
+	private int runCommand(File directory, List<String> command, String envvar, String value,
+			boolean stdoutEnabled)
 			throws IOException, InterruptedException {
 		System.out.println("Command: " + command);
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -696,7 +706,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		}
 		Process process = processBuilder.start();
 
-		new IOThread(process.getInputStream(), true).start();
+		new IOThread(process.getInputStream(), !stdoutEnabled).start();
 		IOThread errThread = new IOThread(process.getErrorStream(), false);
 		errThread.start();
 		errThread.join(); // Ensure all stderr output is processed to avoid mixed-up console output
@@ -781,6 +791,10 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			postgresControl = new File(postgresRoot, "bin/pg_ctl");
 			if (!postgresControl.isFile()) {
 				throw new IOException("PostgreSQL pg_ctl command not found: " + postgresControl);
+			}
+			postgresSql = new File(postgresRoot, "bin/psql");
+			if (!postgresSql.isFile()) {
+				throw new IOException("PostgreSQL psql command not found: " + postgresSql);
 			}
 			setupPostgresSharedLibrary();
 		}
@@ -903,7 +917,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		}
 		command.add("-D");
 		command.add(dataDirectory.getAbsolutePath());
-		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue, false);
 		if (res != 0) {
 			throw new IOException("Error initializing postgres database");
 		}
@@ -1019,7 +1033,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		command.add(dataDirectory.getAbsolutePath());
 		command.add("-l");
 		command.add(logFile.getAbsolutePath());
-		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue, false);
 		if (res != 0) {
 			throw new IOException("Could not start postgres server process");
 		}
@@ -1059,7 +1073,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			command.add("-m");
 			command.add("fast");		// Does not wait for clients to disconnect, all active transactions rolled back
 		}
-		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue, false);
 		if (res != 0) {
 			throw new IOException("Error shutting down postgres server process");
 		}
@@ -1078,7 +1092,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		command.add("status");
 		command.add("-D");
 		command.add(dataDirectory.getAbsolutePath());
-		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue, false);
 		if (res == 0) {
 			System.out.println("Server running");
 		}
@@ -1087,6 +1101,37 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		}
 		else {
 			throw new IOException("Error getting postgres server status");
+		}
+	}
+
+	/**
+	 * Retrieve the list of the databases on a PostgreSQL server.
+	 * @throws IOException if database list can not be retrieved
+	 * @throws InterruptedException if the list databases command is interrupted
+	 */
+	private void listDatabasesCommand()
+			throws IOException, InterruptedException, GeneralSecurityException {
+		discoverPostgresInstall();
+
+		if (localAuthentication == AUTHENTICATION_PKI && certParameter == null) {
+			throw new GeneralSecurityException(
+				"Path to certificate necessary to list databases (--cert /path/to/cert)");
+		}
+
+		List<String> command = new ArrayList<String>();
+		command.add(postgresSql.getAbsolutePath());
+		command.add("-l");
+		command.add("-U");
+		command.add(connectingUserName);
+		command.add("-h");
+		command.add("localhost");
+		if ((port != -1) && (port != 5432)) {	// Non-default port
+			command.add("-p");
+			command.add(Integer.toString(port));
+		}
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue, true);
+		if (res != 0) {
+			throw new IOException("Could not list databases");
 		}
 	}
 
@@ -1103,7 +1148,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		command.add("-D");
 		command.add(dataDirectory.getAbsolutePath());
 		command.add("-s");
-		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue, false);
 		if (res != 0) {
 			throw new IOException("Error creating new user");
 		}
@@ -1440,6 +1485,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				case COMMAND_CHANGEAUTH:
 					changeAuthCommand();
 					break;
+				case COMMAND_LISTDATABASES:
+					listDatabasesCommand();
+					break;
 				case COMMAND_RESET_PASSWORD:
 					passwordCommand();
 					break;
@@ -1464,12 +1512,13 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		//@formatter:off
 		System.err.println("\n" + 
 			"USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n\n" +
-			"                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
-			"                stop       </datadir-path> [--force]\n" +
-			"                status     </datadir-path>\n" +
-			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
-			"                dropuser   </datadir-path> <username>\n" +
-			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
+			"                start         </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
+			"                stop          </datadir-path> [--force]\n" +
+			"                status        </datadir-path>\n" +
+			"                adduser       </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
+			"                dropuser      </datadir-path> <username>\n" +
+			"                changeauth    </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
+			"                listdatabases </datadir-path>\n" +
 			"                resetpassword   <username>\n" +
 			"                changeprivilege <username> admin|user\n" + 
 			"\n" + 
