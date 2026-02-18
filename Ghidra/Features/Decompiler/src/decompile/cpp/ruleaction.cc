@@ -7232,24 +7232,64 @@ int4 RuleAddUnsigned::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class Rule2Comp2Sub
-/// \brief Cleanup: Convert INT_ADD back to INT_SUB: `V + -W  ==> V - W`
+/// \brief Cleanup: Convert INT_ADD back to INT_SUB: `V + -W  ==> V - W` (also for constant W's)
 void Rule2Comp2Sub::getOpList(vector<uint4> &oplist) const
 
 {
-  oplist.push_back(CPUI_INT_2COMP);
+  oplist.push_back(CPUI_INT_ADD);
 }
 
 int4 Rule2Comp2Sub::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *addop = op->getOut()->loneDescend();
-  if (addop == (PcodeOp *)0) return 0;
-  if (addop->code() != CPUI_INT_ADD) return 0;
-  if (addop->getIn(0) == op->getOut())
-    data.opSetInput(addop,addop->getIn(1),0);
-  data.opSetInput(addop,op->getIn(0),1);
-  data.opSetOpcode(addop,CPUI_INT_SUB);
-  data.opDestroy(op);		// Completely remove 2COMP
+  Varnode *v = op->getIn(0);
+  Varnode *w = op->getIn(1);
+
+  // V | W | action
+  // + | + | nop
+  // - | + | INT_ADD(V, W) -> INT_SUB(W, -V)
+  // + | - | INT_ADD(V, W) -> INT_SUB(V, -W)
+  // - | - | nop
+
+  // a varnode is deemed to be negative if one of:
+  // - it's a constant with the highest bit set
+  // - it's defined by a INT_2COMP pcode op
+  bool v_is_neg = v->isConstant() ? ((v->getOffset() & (((uintb)1) << ((v->getSize() * 8) - 1))) != 0) : (v->isWritten() && v->getDef()->code() == CPUI_INT_2COMP);
+  bool w_is_neg = w->isConstant() ? ((w->getOffset() & (((uintb)1) << ((w->getSize() * 8) - 1))) != 0) : (w->isWritten() && w->getDef()->code() == CPUI_INT_2COMP);
+
+  if (v_is_neg == w_is_neg) return 0;
+
+  Varnode *var_to_negate = v_is_neg ? v : w;
+  Varnode *positive;
+
+  if (var_to_negate->isConstant()) {
+    // Case 1: It's a constant, with the highest bit set
+    int4 var_size = var_to_negate->getSize();
+    positive = data.newConstant(var_size, (-var_to_negate->getOffset()) & calc_mask(var_size));
+  } else {
+    // Case 2: It's an INT_2COMP
+    // just wire the input of the INT_2COMP directly into the INT_SUB-to-be
+    positive = var_to_negate->getDef()->getIn(0);
+
+    // Since the result of the INT_2COMP might not be used elsewhere, check if
+    // we can remove it
+    bool multiple_use = var_to_negate->loneDescend() == (PcodeOp*)0;
+    if (!multiple_use) {
+      data.opDestroy(var_to_negate->getDef());
+    }
+  }
+
+  // The negated value is always the second input
+  // unlink the old W and insert the new W
+  data.opSetInput(op, positive, 1);
+
+  if (var_to_negate == v) {
+    // we also need to flip operands, so set w to the first input
+    data.opSetInput(op, w, 0);
+  }
+
+  // change the INT_ADD into an INT_SUB
+  data.opSetOpcode(op, CPUI_INT_SUB);
   return 1;
 }
 
