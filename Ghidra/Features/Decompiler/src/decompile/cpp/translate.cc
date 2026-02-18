@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "translate.hh"
+#include <memory>
 
 namespace ghidra {
 
@@ -258,20 +259,20 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
 
 {
   uint4 elemId = decoder.peekElement();
-  AddrSpace *res;
+  std::unique_ptr<AddrSpace> res;
   if (elemId == ELEM_SPACE_BASE)
-    res = new SpacebaseSpace(this,trans);
+    res = std::unique_ptr<SpacebaseSpace>(new SpacebaseSpace(this,trans));
   else if (elemId == ELEM_SPACE_UNIQUE)
-    res = new UniqueSpace(this,trans);
+    res = std::unique_ptr<UniqueSpace>(new UniqueSpace(this,trans));
   else if (elemId == ELEM_SPACE_OTHER)
-    res = new OtherSpace(this,trans);
+    res = std::unique_ptr<OtherSpace>(new OtherSpace(this,trans));
   else if (elemId == ELEM_SPACE_OVERLAY)
-    res = new OverlaySpace(this,trans);
+    res = std::unique_ptr<OverlaySpace>(new OverlaySpace(this,trans));
   else
-    res = new AddrSpace(this,trans,IPTR_PROCESSOR);
+    res = std::unique_ptr<AddrSpace>(new AddrSpace(this,trans,IPTR_PROCESSOR));
 
   res->decode(decoder);
-  return res;
+  return res.release();
 }
 
 /// This routine initializes (almost) all the address spaces used

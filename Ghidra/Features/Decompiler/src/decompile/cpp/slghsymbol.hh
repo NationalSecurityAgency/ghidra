@@ -326,7 +326,7 @@ private:
   void setVariableLength(void) { flags |= variable_len; }
   bool isVariableLength(void) const { return ((flags&variable_len)!=0); }
 public:
-  OperandSymbol(void) {}	// For use with decode
+  OperandSymbol(void) : localexp(nullptr), defexp(nullptr) {}	// For use with decode
   OperandSymbol(const string &nm,int4 index,Constructor *ct);
   uint4 getRelativeOffset(void) const { return reloffset; }
   int4 getOffsetBase(void) const { return offsetbase; }
@@ -448,8 +448,8 @@ class ContextOp : public ContextChange {
   int4 shift;			// Number of bits to shift value into place
 public:
   ContextOp(int4 startbit,int4 endbit,PatternExpression *pe);
-  ContextOp(void) {}		// For use with decode
-  virtual ~ContextOp(void) { PatternExpression::release(patexp); }
+  ContextOp(void) : patexp(nullptr) {}		// For use with decode
+  virtual ~ContextOp(void) { if (patexp) PatternExpression::release(patexp); }
   virtual void validate(void) const;
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder,SleighBase *trans);

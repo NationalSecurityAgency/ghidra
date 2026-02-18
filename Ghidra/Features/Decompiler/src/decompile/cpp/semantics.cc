@@ -15,6 +15,7 @@
  */
 #include "semantics.hh"
 #include "translate.hh"
+#include <memory>
 
 namespace ghidra {
 
@@ -720,9 +721,9 @@ void OpTpl::decode(Decoder &decoder)
     output->decode(decoder);
   }
   while(decoder.peekElement() != 0) {
-    VarnodeTpl *vn = new VarnodeTpl();
+    std::unique_ptr<VarnodeTpl> vn(new VarnodeTpl());
     vn->decode(decoder);
-    input.push_back(vn);
+    input.push_back(vn.release());
   }
   decoder.closeElement(el);
 }
@@ -914,9 +915,9 @@ int4 ConstructTpl::decode(Decoder &decoder)
     result->decode(decoder);
   }
   while(decoder.peekElement() != 0) {
-    OpTpl *op = new OpTpl();
+    std::unique_ptr<OpTpl> op(new OpTpl());
     op->decode(decoder);
-    vec.push_back(op);
+    vec.push_back(op.release());
   }
   decoder.closeElement(el);
   return sectionid;

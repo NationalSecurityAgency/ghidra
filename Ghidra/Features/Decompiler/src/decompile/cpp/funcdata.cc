@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "funcdata.hh"
+#include <memory>
 
 namespace ghidra {
 
@@ -615,9 +616,9 @@ void Funcdata::decodeJumpTable(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLELIST);
   while(decoder.peekElement() != 0) {
-    JumpTable *jt = new JumpTable(glb);
+    std::unique_ptr<JumpTable> jt = std::unique_ptr<JumpTable>(new JumpTable(glb));
     jt->decode(decoder);
-    jumpvec.push_back(jt);
+    jumpvec.push_back(jt.release());
   }
   decoder.closeElement(elemId);
 }

@@ -142,7 +142,7 @@ class OpTpl {
   OpCode opc;
   vector<VarnodeTpl *> input;
 public:
-  OpTpl(void) {}
+  OpTpl(void) : output(nullptr) {}
   OpTpl(OpCode oc) { opc = oc; output = (VarnodeTpl *)0; }
   ~OpTpl(void);
   VarnodeTpl *getOut(void) const { return output; }

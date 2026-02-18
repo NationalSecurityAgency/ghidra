@@ -16,6 +16,7 @@
 #include "slghsymbol.hh"
 #include "sleighbase.hh"
 #include <cmath>
+#include <memory>
 
 namespace ghidra {
 
@@ -49,10 +50,12 @@ SymbolTable::~SymbolTable(void)
 {
   vector<SymbolScope *>::iterator iter;
   for(iter=table.begin();iter!=table.end();++iter)
-    delete *iter;
+    if (*iter)
+      delete *iter;
   vector<SleighSymbol *>::iterator siter;
   for(siter=symbollist.begin();siter!=symbollist.end();++siter)
-    delete *siter;
+    if (*siter)
+      delete *siter;
 }
 
 void SymbolTable::addScope(void)
@@ -175,8 +178,20 @@ void SymbolTable::decode(Decoder &decoder,SleighBase *trans)
   for(int4 i=0;i<table.size();++i) { // Decode the scopes
     int4 subel = decoder.openElement(sla::ELEM_SCOPE);
     uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
+    if (id >= table.size()) {
+      throw SleighError("Bad symbol scope id: exceeds symbol scope table size");
+    }
+
     uintm parent = decoder.readUnsignedInteger(sla::ATTRIB_PARENT);
+    if (parent >= table.size()) {
+      throw SleighError("Bad symbol scope parent id: exceeds symbol scope table size");
+    }
+
     SymbolScope *parscope = (parent==id) ? (SymbolScope *)0 : table[parent];
+    if (table[id]) {
+      throw SleighError("Bad symbol scope parent id: not unique");
+    }
+
     table[id] = new SymbolScope( parscope, id );
     decoder.closeElement(subel);
   }
@@ -202,39 +217,58 @@ void SymbolTable::decodeSymbolHeader(Decoder &decoder)
 
 {				// Put the shell of a symbol in the symbol table
 				// in order to allow recursion
-  SleighSymbol *sym;
+  std::unique_ptr<SleighSymbol> sym;
   uint4 el = decoder.peekElement();
   if (el == sla::ELEM_USEROP_HEAD)
-    sym = new UserOpSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new UserOpSymbol());
   else if (el == sla::ELEM_EPSILON_SYM_HEAD)
-    sym = new EpsilonSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new EpsilonSymbol());
   else if (el == sla::ELEM_VALUE_SYM_HEAD)
-    sym = new ValueSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new ValueSymbol());
   else if (el == sla::ELEM_VALUEMAP_SYM_HEAD)
-    sym = new ValueMapSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new ValueMapSymbol());
   else if (el == sla::ELEM_NAME_SYM_HEAD)
-    sym = new NameSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new NameSymbol());
   else if (el == sla::ELEM_VARNODE_SYM_HEAD)
-    sym = new VarnodeSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new VarnodeSymbol());
   else if (el == sla::ELEM_CONTEXT_SYM_HEAD)
-    sym = new ContextSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new ContextSymbol());
   else if (el == sla::ELEM_VARLIST_SYM_HEAD)
-    sym = new VarnodeListSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new VarnodeListSymbol());
   else if (el == sla::ELEM_OPERAND_SYM_HEAD)
-    sym = new OperandSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new OperandSymbol());
   else if (el == sla::ELEM_START_SYM_HEAD)
-    sym = new StartSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new StartSymbol());
   else if (el == sla::ELEM_END_SYM_HEAD)
-    sym = new EndSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new EndSymbol());
   else if (el == sla::ELEM_NEXT2_SYM_HEAD)
-    sym = new Next2Symbol();
+    sym = std::unique_ptr<SleighSymbol>(new Next2Symbol());
   else if (el == sla::ELEM_SUBTABLE_SYM_HEAD)
-    sym = new SubtableSymbol();
+    sym = std::unique_ptr<SleighSymbol>(new SubtableSymbol());
   else
     throw SleighError("Bad symbol xml");
+
   sym->decodeHeader(decoder);	// Restore basic elements of symbol
-  symbollist[sym->id] = sym;	// Put the basic symbol in the table
-  table[sym->scopeid]->addSymbol(sym); // to allow recursion
+
+  if (sym->id >= symbollist.size()) {
+    throw SleighError("Bad symbol id: exceeds symbollist size");
+  }
+
+  if (symbollist[sym->id] != (SleighSymbol *)0) {
+    throw SleighError("Bad symbol id: not unique");
+  }
+
+  if (sym->scopeid >= table.size()) {
+    throw SleighError("Bad symbol scope id: too large");
+  }
+
+  if (table[sym->scopeid] == (SymbolScope *)0) {
+    throw SleighError("Bad symbol scope id: undefined");
+  }
+
+  SleighSymbol *res = sym.release();
+  symbollist[res->id] = res;	// Put the basic symbol in the table
+  table[res->scopeid]->addSymbol(res); // to allow recursion
 }
 
 void SymbolTable::purge(void)
@@ -500,6 +534,9 @@ void ValueSymbol::encodeHeader(Encoder &encoder) const
 void ValueSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   decoder.closeElement(sla::ELEM_VALUE_SYM.getId());
@@ -581,6 +618,9 @@ void ValueMapSymbol::encodeHeader(Encoder &encoder) const
 void ValueMapSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   while(decoder.peekElement() != 0) {
@@ -660,6 +700,9 @@ void NameSymbol::encodeHeader(Encoder &encoder) const
 void NameSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   while(decoder.peekElement() != 0) {
@@ -794,6 +837,10 @@ void ContextSymbol::decode(Decoder &decoder,SleighBase *trans)
   if (lowMissing || highMissing) {
     throw DecoderError("Missing high/low attributes");
   }
+
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   decoder.closeElement(sla::ELEM_CONTEXT_SYM.getId());
@@ -898,6 +945,9 @@ void VarnodeListSymbol::encodeHeader(Encoder &encoder) const
 void VarnodeListSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   while(decoder.peekElement() != 0) {
@@ -945,7 +995,9 @@ void OperandSymbol::defineOperand(TripleSymbol *tri)
 OperandSymbol::~OperandSymbol(void)
 
 {
-  PatternExpression::release(localexp);
+  if (localexp != (PatternExpression *)0)
+    PatternExpression::release(localexp);
+
   if (defexp != (PatternExpression *)0)
     PatternExpression::release(defexp);
 }
@@ -1040,6 +1092,9 @@ void OperandSymbol::encodeHeader(Encoder &encoder) const
 void OperandSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (defexp || localexp)
+    throw DecoderError("Already decoded symbol");
+
   defexp = (PatternExpression *)0;
   triple = (TripleSymbol *)0;
   flags = 0;
@@ -1066,6 +1121,7 @@ void OperandSymbol::decode(Decoder &decoder,SleighBase *trans)
   localexp = (OperandValue *)PatternExpression::decodeExpression(decoder,trans);
   localexp->layClaim();
   if (decoder.peekElement() != 0) {
+
     defexp = PatternExpression::decodeExpression(decoder,trans);
     defexp->layClaim();
   }
@@ -1630,29 +1686,29 @@ void Constructor::decode(Decoder &decoder,SleighBase *trans)
       decoder.closeElement(subel);
     }
     else if (subel == sla::ELEM_CONTEXT_OP) {
-      ContextOp *c_op = new ContextOp();
+      std::unique_ptr<ContextOp> c_op = std::unique_ptr<ContextOp>(new ContextOp());
       c_op->decode(decoder,trans);
-      context.push_back(c_op);
+      context.push_back(c_op.release());
     }
     else if (subel == sla::ELEM_COMMIT) {
-      ContextCommit *c_op = new ContextCommit();
+      std::unique_ptr<ContextCommit> c_op = std::unique_ptr<ContextCommit>(new ContextCommit());
       c_op->decode(decoder,trans);
-      context.push_back(c_op);
+      context.push_back(c_op.release());
     }
     else {
-      ConstructTpl *cur = new ConstructTpl();
+      std::unique_ptr<ConstructTpl> cur = std::unique_ptr<ConstructTpl>(new ConstructTpl());
       int4 sectionid = cur->decode(decoder);
       if (sectionid < 0) {
-	if (templ != (ConstructTpl *)0)
-	  throw LowlevelError("Duplicate main section");
-	templ = cur;
+        if (templ != (ConstructTpl *)0)
+          throw LowlevelError("Duplicate main section");
+        templ = cur.release();
       }
       else {
-	while(namedtempl.size() <= sectionid)
-	  namedtempl.push_back((ConstructTpl *)0);
-	if (namedtempl[sectionid] != (ConstructTpl *)0)
-	  throw LowlevelError("Duplicate named section");
-	namedtempl[sectionid] = cur;
+        while(namedtempl.size() <= sectionid)
+          namedtempl.push_back((ConstructTpl *)0);
+        if (namedtempl[sectionid] != (ConstructTpl *)0)
+          throw LowlevelError("Duplicate named section");
+        namedtempl[sectionid] = cur.release();
       }
     }
     subel = decoder.peekElement();
@@ -2334,15 +2390,18 @@ void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub
     if (subel == sla::ELEM_PAIR) {
       decoder.openElement();
       uintm id = decoder.readSignedInteger(sla::ATTRIB_ID);
+      if (id >= sub->getNumConstructors()) {
+        throw DecoderError("Invalid constructor id");
+      }
       Constructor *ct = sub->getConstructor(id);
       DisjointPattern *pat = DisjointPattern::decodeDisjoint(decoder);
       list.push_back(pair<DisjointPattern *,Constructor *>(pat,ct));
       decoder.closeElement(subel);
     }
     else if (subel == sla::ELEM_DECISION) {
-      DecisionNode *subnode = new DecisionNode();
+      std::unique_ptr<DecisionNode> subnode = std::unique_ptr<DecisionNode>(new DecisionNode());
       subnode->decode(decoder,this,sub);
-      children.push_back(subnode);
+      children.push_back(subnode.release());
     }
     subel = decoder.peekElement();
   }
