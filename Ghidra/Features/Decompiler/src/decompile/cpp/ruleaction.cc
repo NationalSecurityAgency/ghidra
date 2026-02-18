@@ -17,6 +17,7 @@
 #include "coreaction.hh"
 #include "rangeutil.hh"
 #include "multiprecision.hh"
+#include "type.hh"
 
 namespace ghidra {
 
@@ -7325,6 +7326,68 @@ int4 RuleSubRight::applyOp(PcodeOp *op,Funcdata &data)
   // Change SUBPIECE into a least sig SUBPIECE
   data.opSetInput(op,newout,0);
   data.opSetInput(op,data.newConstant(4,0),1);
+  return 1;
+}
+
+/// \class RuleImpliedBool
+/// \brief Cleanup: Convert boolean comparisons with INT_EQUAL and INT_NOTEQUAL.
+///  `V == true  ==> V`
+///  `V != true  ==> !V`
+///  `V == false  ==> !V`
+///  `V != false  ==> V`
+void RuleImpliedBool::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_EQUAL);
+  oplist.push_back(CPUI_INT_NOTEQUAL);
+}
+
+int4 RuleImpliedBool::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *var = op->getIn(0);
+  Varnode *value = op->getIn(1);
+
+  if (var->isConstant()) {
+    Varnode *tmp = var;
+    var = value;
+    value = tmp;
+  }
+
+  // Exactly one of the inputs needs to be a constant
+  if (!value->isConstant()) return 0;
+  if (var->isConstant()) return 0;
+
+  // The variable needs to have a boolean type
+  // Sadly, there is no direct boolean type, so this is a bit hacky
+  Datatype *ct = var->getType();
+  if (!(var->getNZMask() == 0xFF && ct->getSize() == 1 && ct->getDisplayName() == "bool")) return 0;
+
+  bool should_flip = (op->code() == CPUI_INT_EQUAL) != (value->constantMatch(1));
+
+  if (should_flip) {
+    // Let's make the CPUI_INT_EQUAL a CPUI_BOOL_NEGATE
+    data.opSetOpcode(op, CPUI_BOOL_NEGATE);
+    data.opRemoveInput(op, 1);
+    data.opSetInput(op, var, 0);
+  } else {
+    // The CPUI_INT_EQUAL becomes a NOP, so just connect the output directly
+    Varnode *out = op->getOut();
+
+    // TODO: Add support if the output of the equality is used in multiple
+    // places. This seems to be pretty uncommon though...
+    PcodeOp *res = out->loneDescend();
+    if (res == ((PcodeOp *)0)) return 0;
+
+    int4 slot_id = res->getSlot(out);
+    data.opUnsetInput(res, slot_id);
+    data.opSetInput(res, var, slot_id);
+
+    // We bypassed the INT_EQUAL, so it's time to remove it
+    data.opDestroy(op);
+    // data.opUnsetOutput(op);
+  }
+
   return 1;
 }
 
