@@ -36,6 +36,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
+import ghidra.util.MathUtilities;
 import ghidra.util.task.TaskMonitor;
 
 public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
@@ -139,9 +140,9 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			for (AddressRange range : set) {
 				AddressSpace space = range.getAddressSpace();
 				long minOffset = range.getMinAddress().getOffset() & blockMask;
-				minOffset = Math.max(minOffset, space.getMinAddress().getOffset());
+				minOffset = MathUtilities.unsignedMax(minOffset, space.getMinAddress().getOffset());
 				long maxOffset = range.getMaxAddress().getOffset() | ~blockMask;
-				maxOffset = Math.min(maxOffset, space.getMaxAddress().getOffset());
+				maxOffset = MathUtilities.unsignedMin(maxOffset, space.getMaxAddress().getOffset());
 				if (minOffset > maxOffset) {
 					continue;
 				}
