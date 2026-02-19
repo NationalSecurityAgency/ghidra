@@ -26,7 +26,6 @@ initdir = os.getenv('OPT_TARGET_DIR')
 
 def parse_parameters():
     global cxn, target, args, initdir
-    os.environ['OPT_OS_WINDOWS'] = "true"
     argc = len(sys.argv)
     if argc == 1:
         return True

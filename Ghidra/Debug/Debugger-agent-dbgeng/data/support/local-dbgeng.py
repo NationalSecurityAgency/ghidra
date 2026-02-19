@@ -24,7 +24,6 @@ args = os.getenv('OPT_TARGET_ARGS')
 
 def parse_parameters():
     global cxn, target, args
-    os.environ['OPT_OS_WINDOWS'] = "true"
     argc = len(sys.argv)
     if argc == 1:
         return True

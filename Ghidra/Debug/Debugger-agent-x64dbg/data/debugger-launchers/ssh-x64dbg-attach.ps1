@@ -57,6 +57,7 @@ function Compute-Python-Args {
 	return $arglist
 }
 
+$Env:OPT_OS_WINDOWS = $true
 $tmpfile = "local-x64dbg-attach.py"
 $arglist = Compute-Python-Args -TempFile $tmpfile
 
