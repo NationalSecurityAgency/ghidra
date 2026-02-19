@@ -19,7 +19,7 @@
 namespace ghidra {
 
 // Operator tokens for expressions
-//                        token #in prec assoc   optype       space bump
+//                        token #in prec assoc   optype       space bump negate
 OpToken PrintC::hidden = { "", "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };
 OpToken PrintC::scope = { "::", "", 2, 70, true, OpToken::binary, 0, 0, (OpToken *)0 };
 OpToken PrintC::object_member = { ".", "", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0  };
@@ -54,7 +54,7 @@ OpToken PrintC::boolean_and = { "&&", "", 2, 22, false, OpToken::binary, 1, 0, (
 OpToken PrintC::boolean_xor = { "^^", "", 2, 20, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::boolean_or = { "||", "", 2, 18, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::assignment = { "=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::comma = { ",", "", 2, 2, true, OpToken::binary, 0, 0, (OpToken *)0 };
+OpToken PrintC::comma = { ",", "", 2, 2, true, OpToken::binary_trailspace, 1, 0, (OpToken *)0 };
 OpToken PrintC::new_op = { "", "", 2, 62, false, OpToken::space, 1, 0, (OpToken *)0 };
 
 // Inplace assignment operators
@@ -2295,8 +2295,10 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
   else {
     bool printComma = false;
     for(int4 i=0;i<sz;++i) {
-      if (printComma)
+      if (printComma) {
 	emit->print(COMMA);
+	emit->spaces(1);
+      }
       ProtoParameter *param = proto->getParam(i);
       if (isSet(hide_thisparam) && param->isThisPointer())
 	continue;
@@ -2314,8 +2316,10 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
     }
   }
   if (proto->isDotdotdot()) {
-    if (sz != 0)
+    if (sz != 0) {
       emit->print(COMMA);
+emit->spaces(1);
+    }
     emit->print(DOTDOTDOT);
   }
 }
