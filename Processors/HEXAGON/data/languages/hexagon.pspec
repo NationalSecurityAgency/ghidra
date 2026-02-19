@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="pc"/>
+  <properties>
+      <property key="enableNoReturnAnalysis" value="false" />
+      <property key="assemblyRating:QDSP6:LE:32:default" value="POOR"/>
+  </properties>
+  
+  <volatile outputop="cWrite" inputop="cRead">
+      <range space="register" first="0x400" last="0x500"/> <!-- System registers -->
+      <range space="register" first="0x90" last="0xa0"/> <!-- Special registers from S30 up to PC, ignore loop counters-->
+      <range space="register" first="0xd0" last="0x100"/> <!-- Special registers from CS0 onward-->  
+  </volatile>
+  
+</processor_spec>

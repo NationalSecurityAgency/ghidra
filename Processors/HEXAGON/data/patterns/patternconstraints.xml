@@ -1,0 +1,5 @@
+<patternconstraints>
+    <language id="QDSP6:LE:32:*">
+        <patternfile>hexagon_patterns.xml</patternfile>
+    </language>
+</patternconstraints>
