@@ -523,7 +523,11 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public boolean allowAccess(VarnodeContext context, Address addr) {
-				return false;
+				// Allow access to data memory for switch table reads.
+				// MSVC stores switch tables in writable data sections that may be
+				// far from the lhzx instruction, causing VarnodeContext to gate the read.
+				return program.getMemory().contains(addr) &&
+					!program.getMemory().getBlock(addr).isExecute();
 			}
 		}
 
@@ -536,6 +540,9 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 		SimpleBlockModel model = new SimpleBlockModel(program);
 		while (iter.hasNext() && !monitor.isCancelled()) {
 			Address loc = iter.next();
+
+			// Clear targets from the previous switch location
+			targetList.clear();
 
 			// first see if something else has already done this!
 			int referenceCountFrom = program.getReferenceManager().getReferenceCountFrom(loc);
@@ -552,22 +559,35 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			}
 
 			AddressSet branchSet = new AddressSet(bl);
-			CodeBlockReferenceIterator bliter;
+			// Walk predecessor blocks up to 2 levels deep. MSVC switch patterns
+			// (cmplwi/bgt guard + lis/addi/lhzx/lis/addi/add/mtctr/bctr) often
+			// span 2-3 basic blocks, and the original 1-level walk misses the
+			// comparison and table address setup instructions.
 			try {
-				bliter = bl.getSources(monitor);
-				boolean oneSource = (bl.getNumSources(monitor) == 1);
-				while (bliter.hasNext()) {
-					CodeBlockReference sbl = bliter.next();
-					if (sbl.getFlowType().isCall()) {
-						continue;
-					}
-					if ((sbl.getFlowType().isFallthrough() || oneSource) ||
-						!sbl.getFlowType().isConditional()) {
-						bl = sbl.getSourceBlock();
-						if (bl != null) {
-							branchSet.add(bl);
+				ArrayList<CodeBlock> currentLevel = new ArrayList<>();
+				currentLevel.add(bl);
+				for (int depth = 0; depth < 2; depth++) {
+					ArrayList<CodeBlock> nextLevel = new ArrayList<>();
+					for (CodeBlock curBlock : currentLevel) {
+						CodeBlockReferenceIterator bliter = curBlock.getSources(monitor);
+						boolean oneSource = (curBlock.getNumSources(monitor) == 1);
+						while (bliter.hasNext()) {
+							CodeBlockReference sbl = bliter.next();
+							if (sbl.getFlowType().isCall()) {
+								continue;
+							}
+							if ((sbl.getFlowType().isFallthrough() || oneSource) ||
+								!sbl.getFlowType().isConditional()) {
+								CodeBlock srcBlock = sbl.getSourceBlock();
+								if (srcBlock != null &&
+									!branchSet.contains(srcBlock.getFirstStartAddress())) {
+									branchSet.add(srcBlock);
+									nextLevel.add(srcBlock);
+								}
+							}
 						}
 					}
+					currentLevel = nextLevel;
 				}
 			}
 			catch (CancelledException e) {
