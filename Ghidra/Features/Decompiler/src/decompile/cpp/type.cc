@@ -1268,9 +1268,17 @@ bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
     if (subType == (Datatype *)0 || newoff != 0)
       return false;
     extra = AddrSpace::addressToByteInt(extra,wordsize);
-    if (extra < 0 || extra >= subType->getSize()) {
-      if (!testForArraySlack(subType, extra))
+    if (subType->getMetatype() == TYPE_CODE) {
+      // When the pointer targets inside a function, consider PTRSUB to be suitable when
+      // the extra is non-negative, as subType->getSize() cannot be used (it is always 1).
+      if (extra < 0)
 	return false;
+    }
+    else {
+      if (extra < 0 || extra >= subType->getSize()) {
+	if (!testForArraySlack(subType, extra))
+	  return false;
+      }
     }
   }
   else if (meta == TYPE_ARRAY) {
