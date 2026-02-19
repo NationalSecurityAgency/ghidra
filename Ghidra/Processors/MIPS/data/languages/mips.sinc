@@ -523,6 +523,8 @@ define token instr(32)
     acfhi       = (21,22)
     shift20     = (20,25)
     breakcode   = (6,25)
+    breakcodelo = (6,15)
+    breakcodehi = (16,25)
     off26       = (0,25) signed			# 26 bit signed offset, e.g. balc, bc
     ind26       = (0,25)				# 26 bit unsigned index, e.g. jal
     copfill     = (6,24)
