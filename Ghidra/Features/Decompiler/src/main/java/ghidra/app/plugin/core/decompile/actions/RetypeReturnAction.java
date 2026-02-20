@@ -63,6 +63,9 @@ public class RetypeReturnAction extends AbstractDecompilerAction {
 		}
 
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
+		if (tokenAtCursor == null) {
+			return false;
+		}
 		return (tokenAtCursor.Parent() instanceof ClangReturnType);
 	}
 
