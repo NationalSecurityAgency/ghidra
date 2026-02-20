@@ -634,7 +634,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
-	public synchronized Collection<Trace> getOpenTraces() {
+	public Collection<Trace> getOpenTraces() {
 		synchronized (listenersByTrace) {
 			return Set.copyOf(tracesView);
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,31 +55,36 @@ abstract class AbstractTransactionManager {
 
 		checkLockingTask();
 
+		boolean doPrepare = false;
 		synchronized (this) {
 			if (getCurrentTransactionInfo() != null && !transactionTerminated) {
 				return false;
 			}
 			if (lockCount == 0) {
-				for (DomainObjectAdapterDB domainObj : getDomainObjects()) {
-					if (domainObj.isChanged()) {
-						domainObj.prepareToSave();
-					}
-				}
+				doPrepare = true;
 			}
 			lockReason = reason;
 			++lockCount;
-			return true;
 		}
+		if (doPrepare) {
+			for (DomainObjectAdapterDB domainObj : getDomainObjects()) {
+				if (domainObj.isChanged()) {
+					domainObj.prepareToSave();
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
-	 * Attempt to obtain a modification lock on the domain object when generating a
-	 * background snapshot.
+	 * Attempt to obtain a modification lock on the domain object when generating a background
+	 * snapshot.
+	 * 
 	 * @param domainObj domain object corresponding to snapshot
 	 * @param hasProgress true if monitor has progress indicator
 	 * @param title title to be used for monitor
 	 * @return monitor object if lock obtained successfully, else null which indicates that a
-	 * modification is in process.
+	 *         modification is in process.
 	 */
 	final synchronized LockingTaskMonitor lockForSnapshot(DomainObjectAdapterDB domainObj,
 			boolean hasProgress, String title) {
@@ -106,9 +111,10 @@ abstract class AbstractTransactionManager {
 
 	/**
 	 * Force transaction lock and terminate current transaction.
+	 * 
 	 * @param rollback true if rollback of non-commited changes should occurs, false if commit
-	 * should be done.  NOTE: it can be potentially detrimental to commit an incomplete transaction
-	 * and should be avoided.
+	 *            should be done. NOTE: it can be potentially detrimental to commit an incomplete
+	 *            transaction and should be avoided.
 	 * @param reason very short reason for requesting lock
 	 */
 	final void forceLock(boolean rollback, String reason) {
@@ -131,9 +137,10 @@ abstract class AbstractTransactionManager {
 
 	/**
 	 * Terminate current transaction.
+	 * 
 	 * @param rollback true if rollback of non-commited changes should occurs, false if commit
-	 * should be done.  NOTE: it can be potentially detrimental to commit an incomplete transaction
-	 * and should be avoided.
+	 *            should be done. NOTE: it can be potentially detrimental to commit an incomplete
+	 *            transaction and should be avoided.
 	 * @param notify true for listeners to be notified else false
 	 */
 	abstract void terminateTransaction(boolean rollback, boolean notify);
@@ -159,8 +166,7 @@ abstract class AbstractTransactionManager {
 	}
 
 	/**
-	 * Block on active locking task.
-	 * Do not invoke this method from within a synchronized block.
+	 * Block on active locking task. Do not invoke this method from within a synchronized block.
 	 */
 	final void checkLockingTask() {
 		synchronized (this) {
@@ -173,6 +179,7 @@ abstract class AbstractTransactionManager {
 
 	/**
 	 * Throw lock exception if currently locked
+	 * 
 	 * @throws DomainObjectLockedException if currently locked
 	 */
 	final void verifyNoLock() throws DomainObjectLockedException {
@@ -194,7 +201,7 @@ abstract class AbstractTransactionManager {
 		}
 	}
 
-	final int startTransaction(DomainObjectAdapterDB object, String description,
+	final int startTransactionChecked(DomainObjectAdapterDB object, String description,
 			AbortedTransactionListener listener, boolean notify)
 			throws TerminatedTransactionException {
 
@@ -222,47 +229,53 @@ abstract class AbstractTransactionManager {
 			boolean commit, boolean notify) throws IllegalStateException;
 
 	/**
-	 * Returns the undo stack depth.
-	 * (The number of items on the undo stack)
-	 * This method is for JUnits.
+	 * Returns the undo stack depth. (The number of items on the undo stack) This method is for
+	 * JUnits.
+	 * 
 	 * @return the undo stack depth
 	 */
 	abstract int getUndoStackDepth();
 
 	/**
 	 * Returns true if there is at least one redo transaction to be redone.
+	 * 
 	 * @return true if there is at least one redo transaction to be redone
 	 */
 	abstract boolean canRedo();
 
 	/**
 	 * Returns true if there is at least one undo transaction to be undone.
+	 * 
 	 * @return true if there is at least one undo transaction to be undone
 	 */
 	abstract boolean canUndo();
 
 	/**
 	 * Returns the name of the next undo transaction (The most recent change).
+	 * 
 	 * @return the name of the next undo transaction (The most recent change)
 	 */
 	abstract String getRedoName();
 
 	/**
 	 * Returns the name of the next redo transaction (The most recent undo).
+	 * 
 	 * @return the name of the next redo transaction (The most recent undo)
 	 */
 	abstract String getUndoName();
 
 	/**
-	 * Returns the names of all undoable transactions in reverse chronological order. In other
-	 * words the transaction at the top of the list must be undone first.
+	 * Returns the names of all undoable transactions in reverse chronological order. In other words
+	 * the transaction at the top of the list must be undone first.
+	 * 
 	 * @return the names of all undoable transactions in reverse chronological order
 	 */
 	abstract List<String> getAllUndoNames();
 
 	/**
-	 * Returns the names of all redoable transactions in chronological order. In other words
-	 * the transaction at the top of the list must be redone first.
+	 * Returns the names of all redoable transactions in chronological order. In other words the
+	 * transaction at the top of the list must be redone first.
+	 * 
 	 * @return the names of all redoable transactions in chronological order
 	 */
 	abstract List<String> getAllRedoNames();
@@ -321,7 +334,7 @@ abstract class AbstractTransactionManager {
 	abstract void doClose(DomainObjectAdapterDB object);
 
 	/**
-	 * Set instance as immutable by disabling use of transactions.  Attempts to start a transaction
+	 * Set instance as immutable by disabling use of transactions. Attempts to start a transaction
 	 * will result in a {@link TerminatedTransactionException}.
 	 */
 	public void setImmutable() {
