@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="RESET" address="FFFE" entry="true" type="code_ptr"/>
+    <symbol name="TRAP" address="FFFC" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>
