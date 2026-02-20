@@ -67,8 +67,8 @@ def main():
     cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()
 
-    cmd.ghidra_trace_txstart()
-    cmd.ghidra_trace_put_all()
+    with cmd.open_tracked_tx("PutAll"):
+        cmd.ghidra_trace_put_all()
 
     cmd.repl()
 

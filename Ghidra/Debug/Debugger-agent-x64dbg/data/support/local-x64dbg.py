@@ -84,11 +84,11 @@ def main():
     cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()   
 
-    cmd.ghidra_trace_txstart()
-    if target is None or target == "":
-        cmd.ghidra_trace_put_available()
-    else:
-        cmd.ghidra_trace_put_all()
+    with cmd.open_tracked_tx("PutAll"):
+        if target is None or target == "":
+            cmd.ghidra_trace_put_available()
+        else:
+            cmd.ghidra_trace_put_all()
 
     cmd.repl()
 
