@@ -1569,6 +1569,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// it needs offset values and most are either large negatives (FFFFF....) or small offsets
 		// both of which are not valid addresses in a normal PE binary
 		Address referencedAddress = extendedFlatAPI.getPointer(address);
+
+		// if null then not an address so possibly valid
+		if (referencedAddress == null) {
+			return false;
+		}
+		// if is program memory location then invalid
 		if (program.getMemory().contains(referencedAddress)) {
 			return true;
 		}
