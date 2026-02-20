@@ -45,6 +45,10 @@ public class RemoveEquateAction extends AbstractDecompilerAction {
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
+		if (tokenAtCursor == null) {
+			return false;
+		}
+
 		if (tokenAtCursor instanceof ClangCaseToken) {
 			// Check for a conversion applied to case labels on a specific jumptable/switch
 			PcodeOp switchOp = ((ClangCaseToken) tokenAtCursor).getSwitchOp();

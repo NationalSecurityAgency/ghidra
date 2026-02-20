@@ -75,8 +75,9 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		public boolean isMatch(long value) {
 			value = value & mask;
 			for (long match : values) {
-				if (match == value)
+				if (match == value) {
 					return true;
+				}
 			}
 			return false;
 		}
@@ -130,7 +131,13 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		if (convDisplay == null) {
 			return false;
 		}
-		if (convDisplay.equals(context.getTokenAtCursor().getText())) {
+
+		ClangToken token = context.getTokenAtCursor();
+		if (token == null) {
+			return false;
+		}
+
+		if (convDisplay.equals(token.getText())) {
 			return false;
 		}
 		String menuString = getStandardLengthString(getMenuPrefix()) + convDisplay;
