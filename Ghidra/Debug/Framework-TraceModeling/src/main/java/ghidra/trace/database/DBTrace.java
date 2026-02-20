@@ -15,7 +15,6 @@
  */
 package ghidra.trace.database;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -876,16 +875,10 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@Override
-	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
-		objectManager.flushWbCaches();
-		super.save(comment, monitor);
-	}
-
-	@Override
-	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		objectManager.flushWbCaches();
-		super.saveToPackedFile(outputFile, monitor);
+	protected void prepareToSave() {
+		try (Transaction tx = openForcedTransaction("flush for save")) {
+			objectManager.flushWbCaches();
+		}
 	}
 
 	public boolean isClosing() {
@@ -895,9 +888,9 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@Override
 	protected void close() {
 		closing = true;
-		objectManager.flushWbCaches();
-		super.close();
+		// NOTE: Any unsaved changes in the write-back cache are unrecoverable
 		objectManager.waitWbWorkers();
+		super.close();
 	}
 
 	@Override
