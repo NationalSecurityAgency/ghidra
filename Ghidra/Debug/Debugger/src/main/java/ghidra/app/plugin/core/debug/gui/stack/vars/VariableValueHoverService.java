@@ -339,9 +339,14 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public VariableValueTable fillRegisterNoFrame(Register register) {
-			TraceData data = eval.getRegisterUnit(register);
+			// Getting a register by name from the default view, is to fix its offset when
+			// the register is of a program which uses a different platform than the host.
+			// This should be easier than mapping Guest to Host addresses, and vice-versa.
+			String registerName = register.getName();
+			Register registerFromView = current.getTrace().getProgramView().getRegister(registerName);
+			TraceData data = eval.getRegisterUnit(registerFromView);
 			if (data != null) {
-				table.add(new NameRow(register.getName()));
+				table.add(new NameRow(registerName));
 				table.add(new TypeRow(data.getDataType()));
 				IntegerRow intRow = IntegerRow.fromCodeUnit(data, current.getSnap());
 				table.add(intRow);
@@ -349,8 +354,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				return table;
 			}
 			// Just display the raw register value
-			table.add(new NameRow(register.getName()));
-			WatchValue raw = eval.getRawRegisterValue(register);
+			table.add(new NameRow(registerName));
+			WatchValue raw = eval.getRawRegisterValue(registerFromView);
 			table.add(new IntegerRow(raw));
 			return table;
 		}
