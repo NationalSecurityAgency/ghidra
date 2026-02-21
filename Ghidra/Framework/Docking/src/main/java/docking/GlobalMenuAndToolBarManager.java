@@ -216,7 +216,10 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 			// has not yet completed
 			DialogComponentProvider provider = dialog.getDialogComponent();
 			if (provider != null) {
-				return provider.getActionContext(null);
+				ActionContext context = provider.getActionContext(null);
+				if (context != null) {
+					return context;
+				}
 			}
 		}
 
@@ -225,7 +228,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 
 	private ActionContext getComponentProviderContext(WindowNode windowNode) {
 		if (windowNode == null) {
-			return null;
+			return new DefaultActionContext();
 		}
 
 		ActionContext context = null;
