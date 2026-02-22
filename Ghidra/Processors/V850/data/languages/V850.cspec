@@ -44,7 +44,7 @@
         </pentry>
 
          <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r10" piece2="r11"/>
+          <addr space="join" piece1="r11" piece2="r10"/>
         </pentry>
       </output>
       
