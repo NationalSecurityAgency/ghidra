@@ -23,8 +23,10 @@ macro set_CY_neg(var1, var2)
 
 macro set_CY_neg2(var1, var2, var3)
 {
-	local var23 = var2 + var3;
-	$(CY) = (var1 < var23);
+	local borrow1:1 = (var1 < var2);
+	local partial = var1 - var2;
+	local borrow2:1 = (partial < var3);
+	$(CY) = borrow1 || borrow2;
 }
 
 
@@ -121,15 +123,25 @@ macro set_OV0_S_Z(var)
 ##### General-Macros #####
 
 # if condition is != 0
-macro either_or(res, cond, true, false)	
+macro either_or(res, cond, true, false)
 {
-	res = (true * zext(cond != 0)) + (false * zext(cond == 0));
+	if (cond != 0) goto <true_case>;
+	res = false;
+	goto <done>;
+	<true_case>
+	res = true;
+	<done>
 }
 
 # if condition is == 1
 macro either_or1(res, cond, true, false)
 {
-	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
+	if (cond == 1) goto <true_case>;
+	res = false;
+	goto <done>;
+	<true_case>
+	res = true;
+	<done>
 }
 
 macro shift_right_logic(res, var, shift_)
@@ -182,7 +194,7 @@ macro pop(reg)
 macro SearchRight(res, var, char)
 {
 	local var_:4 = var;
-	res = 0;
+	res = 1;
 
 	<loop>
 	if ((var_ & 0x1) == char)
@@ -191,9 +203,9 @@ macro SearchRight(res, var, char)
 	var_ = var_ >> 1;
 	res = res + 1;
 
-	if (res < 32)
+	if (res <= 32)
 		goto <loop>;
-	
+
 	res = 0;
 
 	<end>
@@ -202,16 +214,16 @@ macro SearchRight(res, var, char)
 macro SearchLeft(res, var, char)
 {
 	local var_:4 = var;
-	res = 0;
+	res = 1;
 
 	<loop>
-	if ((var_ >> 31) == char) 
+	if ((var_ >> 31) == char)
 		goto <end>;
 
 	var_ = var_ << 1;
 	res = res + 1;
 
-	if (res < 32) 
+	if (res <= 32)
 		goto <loop>;
 
 	res = 0;
