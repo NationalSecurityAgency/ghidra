@@ -470,29 +470,30 @@ public class TableColumnModelState implements SortListener {
 		if (preferenceKey != null) {
 			return preferenceKey;
 		}
-		TableModel tableModel = table.getModel();
 
-		int columnCount = getDefaultColumnCount();
-		StringBuffer buffer = new StringBuffer();
+		TableModel model = table.getModel();
+		int n = model.getColumnCount();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append(getTableModelName());
 		buffer.append(":");
-		for (int i = 0; i < columnCount; i++) {
-			String columnName = tableModel.getColumnName(i);
-			buffer.append(columnName).append(":");
+		for (int i = 0; i < n; i++) {
+			if (isDefaultColumn(i)) {
+				String columnName = model.getColumnName(i);
+				buffer.append(columnName).append(":");
+			}
 		}
 		return buffer.toString();
 	}
 
-	private int getDefaultColumnCount() {
-
+	private boolean isDefaultColumn(int col) {
 		TableModel tableModel = table.getUnwrappedTableModel();
 		if (tableModel instanceof VariableColumnTableModel) {
 			VariableColumnTableModel variableTableModel = (VariableColumnTableModel) tableModel;
 			// VariableColumnTableModels have default columns and 'found' columns.  We only want to
 			// create a key based upon the default columns
-			return variableTableModel.getDefaultColumnCount();
+			return variableTableModel.isDefaultColumn(col);
 		}
-		return tableModel.getColumnCount();
+		return true;
 	}
 
 	private void setDefaultColumnsVisible() {
