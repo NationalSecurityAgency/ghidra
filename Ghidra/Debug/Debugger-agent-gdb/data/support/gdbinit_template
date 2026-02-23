@@ -1,8 +1,16 @@
+python
+def try_import():
+	try:
+		import ghidragdb
+	except Exception as e:
+		gdb.execute("exit(253)")
+end
+
+
 set pagination off
 set confirm off
 show version
-python import ghidragdb
-python if not 'ghidragdb' in locals(): exit(253)
+python try_import()
 set architecture $OPT_ARCH
 set endian $OPT_ENDIAN
 file '$OPT_TARGET_IMG'

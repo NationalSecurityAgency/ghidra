@@ -17,11 +17,6 @@
 
 function Compute-Dbg-PipInstall-Args {
 	$argvpart = $args -join ", "
-	$arglist = @("$Env:OPT_PYTHON_EXE -c `"")
-	$arglist+=("import os, sys, runpy")
-	$arglist+=("sys.argv=['pip', 'install', '--force-reinstall', $argvpart]")
-	$arglist+=("os.environ['PIP_BREAK_SYSTEM_PACKAGE']='1'")
-	$arglist+=("runpy.run_module('pip', run_name='__main__')")
-
+	$arglist = @("$Env:OPT_PYTHON_EXE -c `"import os, sys, runpy; sys.argv=['pip', 'install', '--force-reinstall', $argvpart]; os.environ['PIP_BREAK_SYSTEM_PACKAGE']='1'; runpy.run_module('pip', run_name='__main__')`"")
 	return $arglist
 }

@@ -17,6 +17,7 @@
 import os
 import sys
 
+
 cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
 target = os.getenv('OPT_TARGET_IMG')
 args = os.getenv('OPT_TARGET_ARGS')
@@ -55,6 +56,11 @@ def main():
         return
     
     # Delay these imports until sys.path is patched
+    try:
+        import ghidradbg
+    except:
+        print(e)
+        exit(253)
     from ghidradbg import commands as cmd
     from pybag.dbgeng import core as DbgEng
     from ghidradbg.hooks import on_state_changed
@@ -92,5 +98,7 @@ if __name__ == '__main__':
     try:
         main()
     except SystemExit as x:
+        if x.code == 253:
+            exit(253)
         if x.code != 0:
             print(f"Exited with code {x.code}")
