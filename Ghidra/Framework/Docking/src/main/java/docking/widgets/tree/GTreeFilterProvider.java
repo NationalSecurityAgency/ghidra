@@ -127,6 +127,28 @@ public interface GTreeFilterProvider {
 	}
 
 	/**
+	 * Hides this filter if showing.
+	 */
+	public default void close() {
+		JComponent c = getFilterComponent();
+		if (c.isShowing()) {
+			c.setVisible(false);
+		}
+	}
+
+	/**
+	 * Returns true if the filter is showing.
+	 * @return true if the filter is showing.
+	 * @see #activate()
+	 * @see #toggleVisibility()
+	 * @see #close()
+	 */
+	public default boolean isShowing() {
+		JComponent c = getFilterComponent();
+		return c.isShowing();
+	}
+
+	/**
 	 * A method for subclasses to do any optional cleanup
 	 */
 	public default void dispose() {

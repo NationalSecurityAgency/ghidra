@@ -24,6 +24,7 @@ import java.awt.event.KeyListener;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
+import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.menu.keys.MenuKeyProcessor;
 import ghidra.util.bean.GGlassPane;
@@ -36,6 +37,24 @@ import ghidra.util.exception.AssertException;
  * <p>
  * {@link #install()} must be called in order to install this <code>Singleton</code> into Java's
  * key event processing system.
+ * <P>
+ * Keybindings are processed here to manage how {@link DockingAction}s will get executed.  The basic 
+ * action processing flow is:
+ * <OL>
+ *  <LI>System actions (e.g., F1 for help)</LI>
+ *  <LI>Java text components</LI>
+ *  <LI>Java widget key listeners</LI>
+ *  <LI>Java action map bindings</LI>
+ *  <LI>{@link ComponentBasedDockingAction}s</LI>
+ *  <LI>{@link ComponentProvider} local actions</LI>
+ *  <LI>Tool global actions</LI>
+ * </OL>
+ * When a key event is processed, if that event has a binding at one of these levels, then that 
+ * binding will be processed, either by our framework or the default Java processing framework.  
+ * Our framework allows for multiple actions to share a key bindings.  When that happens, the 
+ * {@link MultipleKeyAction} class is responsible for determining the correct priority for the 
+ * action to be processed.  If there is more than one action that maps to a binding, then the user
+ * will be shown a dialog to choose which action to execute.
  */
 public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 
