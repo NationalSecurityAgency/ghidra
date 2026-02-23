@@ -19,6 +19,7 @@ import bisect
 from dataclasses import dataclass
 import re
 from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
+import platform
 
 import gdb
 
@@ -467,7 +468,7 @@ class RegisterDesc:
 
 def get_register_descs(arch: gdb.Architecture, group: str = 'all') -> List[
         Union[RegisterDesc, gdb.RegisterDescriptor]]:
-    if hasattr(arch, "registers"):
+    if hasattr(arch, "registers") and platform.system() != "OpenBSD":
         try:
             return list(arch.registers(group))
         except ValueError:  # No such group, or version too old
@@ -481,7 +482,7 @@ def get_register_descs(arch: gdb.Architecture, group: str = 'all') -> List[
             regset = gdb.execute(
                 f"info registers", to_string=True).strip().split('\n')
         for line in regset:
-            if not line.startswith(" "):
+            if not line.startswith(" ") and "<unavailable>" not in line:
                 tokens = line.strip().split()
                 descs.append(RegisterDesc(tokens[0]))
         return descs
