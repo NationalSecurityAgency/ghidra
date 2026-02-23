@@ -29,13 +29,13 @@ import it.unive.lisa.util.numeric.MathNumber;
  */
 public class PcodeNonRedundantPowersetOfInterval
 		extends
-		NonRedundantPowersetOfBaseNonRelationalValueDomain<PcodeNonRedundantPowersetOfInterval, Interval> {
+		NonRedundantPowersetOfBaseNonRelationalValueDomain<PcodeNonRedundantPowersetOfInterval, PcodeInterval> {
 
 	/**
 	 * Constructs an empty non redundant set of intervals.
 	 */
 	public PcodeNonRedundantPowersetOfInterval() {
-		super(new TreeSet<>(), Interval.BOTTOM);
+		super(new TreeSet<>(), PcodeInterval.BOTTOM);
 	}
 
 	/**
@@ -44,8 +44,8 @@ public class PcodeNonRedundantPowersetOfInterval
 	 * @param elements the set of intervals
 	 */
 	public PcodeNonRedundantPowersetOfInterval(
-			SortedSet<Interval> elements) {
-		super(elements, Interval.BOTTOM);
+			SortedSet<PcodeInterval> elements) {
+		super(elements, PcodeInterval.BOTTOM);
 	}
 
 	/**
@@ -62,19 +62,19 @@ public class PcodeNonRedundantPowersetOfInterval
 	 * </p>
 	 * s'<sub>1</sub> can be chosen randomly but in this case is chosen to be
 	 * the closest interval to s<sub>2</sub> (closest based on
-	 * {@link #middlePoint(Interval) middle point}).
+	 * {@link #middlePoint(PcodeInterval) middle point}).
 	 */
 	@Override
 	protected PcodeNonRedundantPowersetOfInterval EgliMilnerConnector(
 			PcodeNonRedundantPowersetOfInterval other)
 			throws SemanticException {
-		SortedSet<Interval> newElementsSet = new TreeSet<>();
-		SortedSet<Interval> notCoverSet = new TreeSet<>();
+		SortedSet<PcodeInterval> newElementsSet = new TreeSet<>();
+		SortedSet<PcodeInterval> notCoverSet = new TreeSet<>();
 
 		// first side of the union
-		for (Interval s2 : other.elementsSet) {
+		for (PcodeInterval s2 : other.elementsSet) {
 			boolean existsLower = false;
-			for (Interval s1 : elementsSet) {
+			for (PcodeInterval s1 : elementsSet) {
 				if (s1.lessOrEqual(s2)) {
 					existsLower = true;
 					break;
@@ -89,12 +89,12 @@ public class PcodeNonRedundantPowersetOfInterval
 		}
 
 		// second side of the union
-		for (Interval s2 : notCoverSet) {
+		for (PcodeInterval s2 : notCoverSet) {
 			MathNumber middlePoint = middlePoint(s2);
 			MathNumber closestValue = middlePoint;
 			MathNumber closestDiff = closestValue.subtract(middlePoint).abs();
-			Interval closest = Interval.TOP;
-			for (Interval s1 : elementsSet) {
+			PcodeInterval closest = PcodeInterval.TOP;
+			for (PcodeInterval s1 : elementsSet) {
 				if (closestValue.compareTo(middlePoint) == 0) {
 					closest = s1;
 					closestValue = middlePoint(s1);
@@ -127,7 +127,7 @@ public class PcodeNonRedundantPowersetOfInterval
 	 * @return the middle point of the interval
 	 */
 	protected MathNumber middlePoint(
-			Interval interval) {
+			PcodeInterval interval) {
 		if (interval.interval.isFinite()) {
 			return interval.interval.getLow()
 					.add(interval.interval.getHigh())
@@ -175,18 +175,19 @@ public class PcodeNonRedundantPowersetOfInterval
 			return environment.bottom();
 		}
 
-		SortedSet<Interval> newSet = new TreeSet<>();
+		SortedSet<PcodeInterval> newSet = new TreeSet<>();
 
-		for (Interval startingInterval : starting.elementsSet)
-			for (Interval interval : eval.elementsSet) {
+		for (PcodeInterval startingInterval : starting.elementsSet)
+			for (PcodeInterval interval : eval.elementsSet) {
 				boolean lowIsMinusInfinity = interval.interval.lowIsMinusInfinity();
-				Interval lowInf =
-					new Interval(interval.interval.getLow(), MathNumber.PLUS_INFINITY);
-				Interval lowp1Inf = new Interval(interval.interval.getLow().add(MathNumber.ONE),
+				PcodeInterval lowInf =
+					new PcodeInterval(interval.interval.getLow(), MathNumber.PLUS_INFINITY);
+				PcodeInterval lowp1Inf =
+					new PcodeInterval(interval.interval.getLow().add(MathNumber.ONE),
 					MathNumber.PLUS_INFINITY);
-				Interval infHigh =
-					new Interval(MathNumber.MINUS_INFINITY, interval.interval.getHigh());
-				Interval infHighm1 = new Interval(MathNumber.MINUS_INFINITY,
+				PcodeInterval infHigh =
+					new PcodeInterval(MathNumber.MINUS_INFINITY, interval.interval.getHigh());
+				PcodeInterval infHighm1 = new PcodeInterval(MathNumber.MINUS_INFINITY,
 					interval.interval.getHigh().subtract(MathNumber.ONE));
 
 				if (!(operator instanceof PcodeBinaryOperator)) {
@@ -234,7 +235,7 @@ public class PcodeNonRedundantPowersetOfInterval
 
 	@Override
 	protected PcodeNonRedundantPowersetOfInterval mk(
-			SortedSet<Interval> elements) {
+			SortedSet<PcodeInterval> elements) {
 		return new PcodeNonRedundantPowersetOfInterval(elements);
 	}
 

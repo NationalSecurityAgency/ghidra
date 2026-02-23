@@ -18,30 +18,9 @@ package ghidra.app.util.bin.format.dwarf.attribs;
 import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 
 /**
- * Base class for all DWARF attribute value implementations.
+ * Common methods for all DWARF attribute value implementations.
  */
-public abstract class DWARFAttributeValue {
+public interface DWARFAttributeValue {
 
-	protected final DWARFAttributeDef<?> def;
-
-	public DWARFAttributeValue(DWARFAttributeDef<?> def) {
-		this.def = def;
-	}
-
-	public DWARFForm getAttributeForm() {
-		return def.getAttributeForm();
-	}
-	
-	public String getAttributeName() {
-		return def.getAttributeName();
-	}
-
-	public String getValueString(DWARFCompilationUnit cu) {
-		return toString();
-	}
-
-	public String toString(DWARFCompilationUnit compilationUnit) {
-		return toString();
-	}
-
+	String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def);
 }

@@ -1331,17 +1331,30 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			return;
 		}
 
-		DataType dataType = viewDTM.getDataType(path);
-		if (dataType == null) {
-			return;
-		}
-
 		if (!path.equals(originalDataTypePath)) {
+
+			DataType dataType = viewDTM.getDataType(path);
+			if (dataType == null) {
+				return;
+			}
+
 			if (!viewDTM.isViewDataTypeFromOriginalDTM(dataType)) {
 				return;
 			}
+
+			// Preserve pointers to edited composite
+			DataType basePtrDt = dataType;
+			if (basePtrDt instanceof Pointer ptr) {
+				basePtrDt = ptr.getDataType();
+			}
+			if (basePtrDt == viewComposite) {
+				// ignore removal of pointers to edited composite so that they persist if
+				// reloadFromView is used.
+				return;
+			}
+
 			if (hasSubDt(viewComposite, path)) {
-				String msg = "Removed sub-component data type \"" + path;
+				String msg = "Removed sub-component data type \"" + path + "\"";
 				setStatus(msg, true);
 			}
 			viewDTM.withTransaction("Removed Dependency", () -> {

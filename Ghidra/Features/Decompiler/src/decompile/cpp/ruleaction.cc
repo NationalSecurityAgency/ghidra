@@ -1829,7 +1829,8 @@ int4 RuleDoubleSub::applyOp(PcodeOp *op,Funcdata &data)
 /// The shifts can combine or cancel. Combined shifts may zero out result.
 ///
 ///    - `(V << c) << d  =>  V << (c+d)`
-///    - `(V << c) >> c` =>  V & 0xff`
+///    - `(V << c) >> c  =>  V & 0xff`
+///    - `(V << c) >> d  =>  (V & 0xffff) << (c - d)`
 void RuleDoubleShift::getOpList(vector<uint4> &oplist) const
 
 {
@@ -1841,22 +1842,19 @@ void RuleDoubleShift::getOpList(vector<uint4> &oplist) const
 int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  Varnode *secvn,*newvn;
-  PcodeOp *secop;
-  OpCode opc1,opc2;
-  int4 sa1,sa2,size;
+  int4 sa1,sa2;
   uintb mask;
 
   if (!op->getIn(1)->isConstant()) return 0;
-  secvn = op->getIn(0);
+  Varnode *secvn = op->getIn(0);
   if (!secvn->isWritten()) return 0;
-  secop = secvn->getDef();
-  opc2 = secop->code();
+  PcodeOp *secop = secvn->getDef();
+  OpCode opc2 = secop->code();
   if ((opc2!=CPUI_INT_LEFT)&&(opc2!=CPUI_INT_RIGHT)&&(opc2!=CPUI_INT_MULT))
     return 0;
   if (!secop->getIn(1)->isConstant()) return 0;
-  opc1 = op->code();
-  size = secvn->getSize();
+  OpCode opc1 = op->code();
+  int4 size = secvn->getSize();
   if (!secop->getIn(0)->isHeritageKnown()) return 0;
 
   if (opc1 == CPUI_INT_MULT) {
@@ -1875,37 +1873,59 @@ int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
   }
   else
     sa2 = secop->getIn(1)->getOffset();
-  if (opc1 == opc2) {
+  if (opc1 == opc2) {				// Shifts in the same direction
     if (sa1 + sa2 < 8*size) {
-      newvn = data.newConstant(4,sa1+sa2);
+      Varnode *newvn = data.newConstant(4,sa1+sa2);
       data.opSetOpcode(op,opc1);
       data.opSetInput(op,secop->getIn(0),0);
       data.opSetInput(op,newvn,1);
     }
     else {
-      newvn = data.newConstant(size,0);
+      Varnode *newvn = data.newConstant(size,0);
       data.opSetOpcode(op,CPUI_COPY);
       data.opSetInput(op,newvn,0);
       data.opRemoveInput(op,1);
     }
   }
-  else if (sa1 == sa2 && size <= sizeof(uintb)) {	// FIXME:  precision
+  else {					// Shifts in opposite directions
+    if (size > sizeof(uintb)) return 0;	// FIXME:  precision
     mask = calc_mask(size);
+    int4 diffsa;			// Bits (to the left) after cancellation
     if (opc1 == CPUI_INT_LEFT) {
-      // The INT_LEFT is highly likely to be a multiply, so don't collapse to an INT_AND if there
-      // are other uses of the intermediate value.
+      // The INT_LEFT is highly likely to be a multiply
       if (secvn->loneDescend() == (PcodeOp *)0) return 0;
-      mask = (mask<<sa1) & mask;
+      mask = (mask<<sa2) & mask;	// Most significant bits remain after initial INT_RIGHT
+      diffsa = sa1 - sa2;
+      if (diffsa != 0)	// Don't collapse unless shift amounts are identical
+	return 0;
     }
-    else
-      mask = (mask>>sa1) & mask;
-    newvn = data.newConstant(size,mask);
-    data.opSetOpcode(op,CPUI_INT_AND);
-    data.opSetInput(op,secop->getIn(0),0);
-    data.opSetInput(op,newvn,1);
+    else {
+      mask = (mask >> sa2) & mask;	// Least significant bits remain after initial INT_LEFT
+      diffsa = sa2 - sa1;
+    }
+    if (diffsa == 0) {			// Opposite shifts exactly cancel
+      Varnode *newvn = data.newConstant(size, mask);
+      data.opSetOpcode(op, CPUI_INT_AND);
+      data.opSetInput(op,secop->getIn(0),0);
+      data.opSetInput(op,newvn,1);
+    }
+    else {				// Shifts only partly cancel
+      PcodeOp *newAnd = data.newOp(2,op->getAddr());
+      data.opSetOpcode(newAnd, CPUI_INT_AND);
+      data.opSetInput(newAnd,secop->getIn(0),0);
+      data.opSetInput(newAnd,data.newConstant(size, mask),1);
+      Varnode *newOut = data.newUniqueOut(size,newAnd);
+      data.opInsertBefore(newAnd,op);
+      OpCode finalopc = CPUI_INT_LEFT;
+      if (diffsa < 0) {
+	finalopc = CPUI_INT_RIGHT;
+	diffsa = -diffsa;
+      }
+      data.opSetOpcode(op, finalopc);
+      data.opSetInput(op,newOut,0);
+      data.opSetInput(op,data.newConstant(4, diffsa),1);
+    }
   }
-  else
-    return 0;
   return 1;
 }
 
@@ -10945,7 +10965,8 @@ int4 RuleExpandLoad::applyOp(PcodeOp *op,Funcdata &data)
   if (elType->getSize() < outSize + offset) return 0;
 
   type_metatype meta = elType->getMetatype();
-  if (meta == TYPE_UNKNOWN) return 0;
+  if (meta == TYPE_UNKNOWN || meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_UNION
+      || meta == TYPE_PARTIALSTRUCT || meta == TYPE_PARTIALUNION) return 0;
   bool addForm = checkAndComparison(outVn);
   AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
   int4 lsbCut = 0;

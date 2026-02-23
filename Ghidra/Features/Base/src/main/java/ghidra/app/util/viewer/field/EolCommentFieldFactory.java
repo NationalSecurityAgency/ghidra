@@ -17,8 +17,8 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
@@ -26,6 +26,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
+import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.*;
@@ -33,8 +34,10 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.StringUtilities;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.exception.AssertException;
+import utility.function.Dummy;
 
 /**
  * Generates End of line comment Fields.
@@ -236,6 +239,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		if (!enabled || !(obj instanceof CodeUnit)) {
 			return null;
 		}
+
 		CodeUnit cu = (CodeUnit) obj;
 		Program program = cu.getProgram();
 
@@ -244,14 +248,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 		// comments if open.  If this was allowed, then the comment would appear
 		// on the outside data container and on the 1st internal member
 		//
-		if (cu instanceof Data) {
-			Data data = (Data) cu;
-			if (data.getNumComponents() > 0) {
-				boolean isOpen = proxy.getListingLayoutModel().isOpen((Data) proxy.getObject());
-				if (isOpen) {
-					return null; // avoid double showing
-				}
-			}
+		if (isOpenData(cu, proxy)) {
+			return null;
 		}
 
 		EolComments comments = new EolComments(cu, codeUnitFormatOptions.followReferencedPointers(),
@@ -261,25 +259,59 @@ public class EolCommentFieldFactory extends FieldFactory {
 		List<FieldElement> elementList = new ArrayList<>();
 		AttributedString prefix = createPrefix(CommentStyle.EOL);
 		List<String> eols = comments.getEOLComments();
-		List<FieldElement> eolElements = convertToFieldElements(program, eols, prefix, 0);
+		List<FieldElement> eolElements = convertToFieldElements(program, eols, prefix, 0, true);
 		elementList.addAll(eolElements);
+
+		/*
+		 	 This section describes the various EOL comment types that may appear.  The user can 
+		 	 toggle which types are enabled.  The comments are displayed in the order listed below.
+		 	 
+		 	 EOL Types:
+		 	 
+		 	 	- EOL			- user end of line comment
+		 	 	
+		 	 	- Repeatable 	- user repeatable source comment *at the code unit* 
+		 	 	- Ref Repeatable- for every reference *from a code unit*, show the target: 
+		 	 					  	- address repeatable, 
+		 	 					  	- function repeatable, 
+		 	 					  	- code unit repeatable  
+		 	 					  	
+		 	 	- Auto			- fabricated reference preview: 
+		 	 						- function, 
+		 	 						- indirect data pointer, 
+		 	 						- direct data access preview
+		 	 					*depending on the options, this typically do not appear when 
+		 	 					 repeatable comments exist
+		 	 					 
+		 	 	- Offcut 		- comments at addresses inside of a code unit
+		 */
 
 		if (comments.isShowingRepeatables()) {
 			prefix = createPrefix(CommentStyle.REPEATABLE);
 			int row = getNextRow(elementList);
 			List<String> repeatables = comments.getRepeatableComments();
-			List<FieldElement> elements = convertToFieldElements(program, repeatables, prefix, row);
+			List<FieldElement> elements =
+				convertToFieldElements(program, repeatables, prefix, row, true);
 			elementList.addAll(elements);
 		}
 
 		if (comments.isShowingRefRepeatables()) {
-			prefix = createPrefix(CommentStyle.REF_REPEATABLE);
+
+			AttributedString refPrefix = createPrefix(CommentStyle.REF_REPEATABLE);
 			List<RefRepeatComment> refRepeatables = comments.getReferencedRepeatableComments();
 			for (RefRepeatComment comment : refRepeatables) {
+
 				int row = getNextRow(elementList);
 				String[] lines = comment.getCommentLines();
+				Address refAddress = comment.getAddress();
+				List<String> linesList = Arrays.asList(lines);
+
+				Consumer<List<FieldElement>> decorator = elements -> {
+					prependRefAddress(program, refPrefix, refAddress, elements);
+				};
+
 				List<FieldElement> elements =
-					convertToRefFieldElements(lines, program, prefix, comment.getAddress(), row);
+					convertToFieldElements(program, linesList, decorator, prefix, row, true);
 				elementList.addAll(elements);
 			}
 		}
@@ -288,7 +320,11 @@ public class EolCommentFieldFactory extends FieldFactory {
 			prefix = createPrefix(CommentStyle.AUTO);
 			int row = getNextRow(elementList);
 			List<String> autos = comments.getAutomaticComment();
-			List<FieldElement> elements = convertToFieldElements(program, autos, prefix, row);
+
+			// Note: we pass 'false' for allowing annotations so that the user will see the raw data
+			// and not an interpreted annotation.
+			List<FieldElement> elements =
+				convertToFieldElements(program, autos, prefix, row, false);
 			elementList.addAll(elements);
 		}
 
@@ -296,7 +332,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 			prefix = createPrefix(CommentStyle.OFFCUT);
 			int row = getNextRow(elementList);
 			List<String> offcuts = comments.getOffcutEolComments();
-			List<FieldElement> elements = convertToFieldElements(program, offcuts, prefix, row);
+			List<FieldElement> elements =
+				convertToFieldElements(program, offcuts, prefix, row, true);
 			elementList.addAll(elements);
 		}
 
@@ -305,6 +342,18 @@ public class EolCommentFieldFactory extends FieldFactory {
 		}
 		return ListingTextField.createMultilineTextField(this, proxy, elementList, x, width,
 			maxDisplayLines, hlProvider);
+	}
+
+	private boolean isOpenData(CodeUnit cu, ProxyObj<?> proxy) {
+		if (cu instanceof Data data) {
+			if (data.getNumComponents() > 0) {
+				ListingModel listingModel = proxy.getListingLayoutModel();
+				if (listingModel.isOpen(data)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private AttributedString createPrefix(CommentStyle commentStyle) {
@@ -349,7 +398,15 @@ public class EolCommentFieldFactory extends FieldFactory {
 	}
 
 	private List<FieldElement> convertToFieldElements(Program program, List<String> comments,
-			AttributedString prefix, int row) {
+			AttributedString prefix, int row, boolean allowAnnotations) {
+
+		Consumer<List<FieldElement>> decorator = Dummy.consumer(); // no decorations by default 
+		return convertToFieldElements(program, comments, decorator, prefix, row, allowAnnotations);
+	}
+
+	private List<FieldElement> convertToFieldElements(Program program, List<String> comments,
+			Consumer<List<FieldElement>> decorator, AttributedString prefix, int row,
+			boolean allowAnnotations) {
 
 		List<FieldElement> fieldElements = new ArrayList<>();
 		if (comments.isEmpty()) {
@@ -357,10 +414,14 @@ public class EolCommentFieldFactory extends FieldFactory {
 		}
 
 		for (int commentRow = 0; commentRow < comments.size(); commentRow++) {
-			int offsetRow = row + commentRow;
-			fieldElements.add(CommentUtils.parseTextForAnnotations(comments.get(commentRow),
-				program, prefix, offsetRow));
+			int encodedRow = row + commentRow;
+			String commentText = comments.get(commentRow);
+			FieldElement element =
+				createCommentField(commentText, prefix, program, encodedRow, allowAnnotations);
+			fieldElements.add(element);
 		}
+
+		decorator.accept(fieldElements);
 
 		if (isWordWrap) {
 			int lineWidth = showSemicolon ? width - prefix.getStringWidth() : width;
@@ -381,57 +442,43 @@ public class EolCommentFieldFactory extends FieldFactory {
 		return fieldElements;
 	}
 
-	private List<FieldElement> convertToRefFieldElements(String[] comments, Program program,
-			AttributedString currentPrefixString, Address refAddress, int nextRow) {
+	private FieldElement createCommentField(String commentText, AttributedString prototype,
+			Program program, int row, boolean allowAnnotations) {
 
-		int numCommentLines = comments.length;
-		List<FieldElement> fieldElements = new ArrayList<>();
-		if (numCommentLines == 0) {
-			return fieldElements;
-		}
-		for (int rowIndex = 0; rowIndex < numCommentLines; rowIndex++) {
-			int encodedRow = nextRow + rowIndex;
-			fieldElements.add(CommentUtils.parseTextForAnnotations(comments[rowIndex], program,
-				currentPrefixString, encodedRow));
-		}
-		if (prependRefAddress) {
-			FieldElement commentElement = fieldElements.get(0);
-			// Address
-			String refAddrComment = "{@address " + refAddress.toString() + "}";
-			RowColLocation startRowCol = commentElement.getDataLocationForCharacterIndex(0);
-			int encodedRow = startRowCol.row();
-			int encodedCol = startRowCol.col();
-			Annotation annotation = new Annotation(refAddrComment, program);
-			FieldElement addressElement =
-				new AnnotatedTextFieldElement(annotation, currentPrefixString, program, encodedRow,
-					encodedCol);
-
-			// Space character
-			AttributedString spaceStr = new AttributedString(" ", currentPrefixString.getColor(0),
-				currentPrefixString.getFontMetrics(0), false, null);
-			FieldElement spacerElement = new TextFieldElement(spaceStr, encodedRow, encodedCol);
-			fieldElements.add(new CompositeFieldElement(
-				new FieldElement[] { addressElement, spacerElement, commentElement }));
+		if (allowAnnotations) {
+			return CommentUtils.parseTextForAnnotations(commentText, program, prototype, row);
 		}
 
-		if (isWordWrap) {
-			int lineWidth = showSemicolon ? width - currentPrefixString.getStringWidth() : width;
-			fieldElements = FieldUtils.wrap(fieldElements, lineWidth);
+		String text = StringUtilities.convertTabsToSpaces(commentText);
+		AttributedString as = new AttributedString(text, prototype.getColor(0),
+			prototype.getFontMetrics(0), false, null);
+		return new TextFieldElement(as, row, 0);
+	}
+
+	private void prependRefAddress(Program program, AttributedString prefix, Address refAddress,
+			List<FieldElement> fieldElements) {
+
+		if (!prependRefAddress) {
+			return;
 		}
 
-		if (showSemicolon) {
-			for (int i = 0; i < fieldElements.size(); i++) {
-				RowColLocation startRowCol =
-					fieldElements.get(i).getDataLocationForCharacterIndex(0);
-				int encodedRow = startRowCol.row();
-				int encodedCol = startRowCol.col();
-				FieldElement prefixFieldElement =
-					new TextFieldElement(currentPrefixString, encodedRow, encodedCol);
-				fieldElements.set(i, new CompositeFieldElement(
-					new FieldElement[] { prefixFieldElement, fieldElements.get(i) }));
-			}
-		}
-		return fieldElements;
+		FieldElement commentElement = fieldElements.get(0);
+
+		// Address
+		String refAddrComment = "{@address " + refAddress.toString() + "}";
+		RowColLocation startRowCol = commentElement.getDataLocationForCharacterIndex(0);
+		int encodedRow = startRowCol.row();
+		int encodedCol = startRowCol.col();
+		Annotation annotation = new Annotation(refAddrComment);
+		FieldElement addressElement =
+			new AnnotatedTextFieldElement(annotation, prefix, program, encodedRow, encodedCol);
+
+		// Space character
+		AttributedString spaceStr = new AttributedString(" ", prefix.getColor(0),
+			prefix.getFontMetrics(0), false, null);
+		FieldElement spacerElement = new TextFieldElement(spaceStr, encodedRow, encodedCol);
+		fieldElements.set(0, new CompositeFieldElement(
+			new FieldElement[] { addressElement, spacerElement, commentElement }));
 	}
 
 	/**

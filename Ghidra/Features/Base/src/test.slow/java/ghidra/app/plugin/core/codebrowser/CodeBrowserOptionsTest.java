@@ -692,16 +692,16 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		options.setBoolean(WORD_WRAP, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
-		assertEquals(12, getNumberOfLines(btf));
+		assertEquals(11, getNumberOfLines(btf));
 		assertTrue("; ".equals(btf.getFieldElement(5, 0).getText()));
 
 		options.setBoolean(SHOW_SEMICOLON, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
-		assertEquals(12, getNumberOfLines(btf));
-		assertFalse("; ".equals(btf.getFieldElement(1, 0).getText()));
-		assertEquals("01003fa1", btf.getFieldElement(11, 4).getText());
-		assertEquals("Mem ref line1.", btf.getFieldElement(11, 11).getText());
+		assertEquals(11, getNumberOfLines(btf));
+		assertTrue("".equals(btf.getFieldElement(1, 0).getText())); // blank line - leading ';' not present
+		assertEquals("01003fa1", btf.getFieldElement(9, 4).getText());
+		assertEquals("Mem ref line1.", btf.getFieldElement(9, 11).getText());
 
 		options.setBoolean(SHOW_REF_ADDR, false);
 		cb.updateNow();

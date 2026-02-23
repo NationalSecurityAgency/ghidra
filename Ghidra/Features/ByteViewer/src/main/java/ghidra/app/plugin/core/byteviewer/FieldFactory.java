@@ -119,11 +119,15 @@ class FieldFactory {
 				// The following line is the same as the catch (ByteBlockAccessException) handler.
 				return getByteField(readErrorStr, index);
 			}
+
 			String str = model.getDataRepresentation(block, offset);
 			ByteField bf = new ByteField(str, fm, startX, width, charWidth, false, fieldOffset,
 				index, highlightFactory);
 			if (blockSet.isChanged(block, offset, unitByteSize)) {
 				bf.setForeground(ByteViewerComponentProvider.EDITED_TEXT_COLOR);
+			}
+			else if (crossesBlockBoundary(block, offset)) {
+				bf.setForeground(ByteViewerComponentProvider.BOUNDARY_CROSSING_COLOR);
 			}
 			return bf;
 		}
@@ -137,6 +141,15 @@ class FieldFactory {
 		catch (IndexOutOfBoundsException e) {
 			return getByteField(noValueStr, index);
 		}
+	}
+
+	private boolean crossesBlockBoundary(ByteBlock block, BigInteger offset) {
+		int unitSize = model.getUnitByteSize();
+		if (unitSize == 1) {
+			return false;
+		}
+		BigInteger lastOffset = offset.add(BigInteger.valueOf(unitSize));
+		return lastOffset.compareTo(block.getLength()) > 0;
 	}
 
 	public int getWidth() {

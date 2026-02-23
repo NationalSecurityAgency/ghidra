@@ -16,7 +16,6 @@
 package docking.widgets;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -30,14 +29,12 @@ import javax.swing.table.TableModel;
 import docking.ComponentProvider;
 import docking.Tool;
 import docking.action.DockingAction;
-import docking.widgets.search.SearchLocationContext;
-import docking.widgets.search.SearchResults;
+import docking.widgets.search.*;
 import docking.widgets.table.*;
 import docking.widgets.table.actions.DeleteTableRowAction;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
-import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class FindDialogResultsProvider extends ComponentProvider
@@ -290,13 +287,17 @@ public class FindDialogResultsProvider extends ComponentProvider
 		private class ContextColumn extends
 				AbstractDynamicTableColumnStub<SearchLocation, SearchLocationContext> {
 
-			private GColumnRenderer<SearchLocationContext> renderer = new ContextCellRenderer();
+			private SearchLocationContextRenderer renderer = new SearchLocationContextRenderer() {
+				@Override
+				protected SearchLocationContext getContext(GTableCellRenderingData d) {
+					SearchLocation s = (SearchLocation) d.getRowObject();
+					return s.getContext();
+				}
+			};
 
 			@Override
 			public SearchLocationContext getValue(SearchLocation rowObject,
-					Settings settings,
-					ServiceProvider sp) throws IllegalArgumentException {
-
+					Settings settings, ServiceProvider sp) throws IllegalArgumentException {
 				SearchLocationContext context = rowObject.getContext();
 				return context;
 			}
@@ -309,33 +310,6 @@ public class FindDialogResultsProvider extends ComponentProvider
 			@Override
 			public GColumnRenderer<SearchLocationContext> getColumnRenderer() {
 				return renderer;
-			}
-
-			private class ContextCellRenderer
-					extends AbstractGColumnRenderer<SearchLocationContext> {
-
-				{
-					// the context uses html
-					setHTMLRenderingEnabled(true);
-				}
-
-				@Override
-				public Component getTableCellRendererComponent(GTableCellRenderingData cellData) {
-
-					// initialize
-					super.getTableCellRendererComponent(cellData);
-
-					SearchLocation match = (SearchLocation) cellData.getRowObject();
-					SearchLocationContext context = match.getContext();
-					String text = context.getBoldMatchingText();
-					setText(text);
-					return this;
-				}
-
-				@Override
-				public String getFilterString(SearchLocationContext context, Settings settings) {
-					return context.getPlainText();
-				}
 			}
 		}
 	}

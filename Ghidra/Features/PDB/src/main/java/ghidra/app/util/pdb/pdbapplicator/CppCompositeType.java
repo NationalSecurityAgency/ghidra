@@ -59,7 +59,7 @@ public class CppCompositeType {
 
 	private String sourceHierarchy;
 
-	private Map<String, String> vxtPtrSummary;
+	private Map<Long, String> vxtPtrSummary;
 	private String summarizedClassVxtPtrInfo;
 
 	// Order matters for both base classes and members for class layout.  Members get offsets,
@@ -612,7 +612,7 @@ public class CppCompositeType {
 	 * Return developer VxtPtr summary for this class
 	 * @return the summary
 	 */
-	Map<String, String> getVxtPtrSummary() {
+	Map<Long, String> getVxtPtrSummary() {
 		return vxtPtrSummary;
 	}
 
@@ -711,7 +711,7 @@ public class CppCompositeType {
 	private static class CppStructType extends CppCompositeType {
 		private CppStructType(CategoryPath baseCategoryPath, SymbolPath symbolPath,
 				Composite composite, String mangledName) {
-			super(composite.getCategoryPath(), symbolPath, composite, mangledName);
+			super(baseCategoryPath, symbolPath, composite, mangledName);
 			setStruct();
 		}
 	}
@@ -931,7 +931,7 @@ public class CppCompositeType {
 		BaseOrderingState() throws PdbException {
 			TreeMap<Long, List<VirtualBaseTableEntry>> orderedBases = new TreeMap<>();
 			if (mainVbt != null) {
-				for (int index = 1; index <= mainVbt.getNumEntries(); index++) {
+				for (int index = 1; index <= mainVbt.getNumVirtualBaseEntries(); index++) {
 					VirtualBaseTableEntry e = (VirtualBaseTableEntry) mainVbt.getEntry(index);
 					Long offset = mainVbt.getBaseOffset(index);
 					List<VirtualBaseTableEntry> list = orderedBases.get(offset);
@@ -1104,22 +1104,20 @@ public class CppCompositeType {
 		}
 
 		StringBuilder builder = new StringBuilder();
-		Map<String, String> results = new TreeMap<>();
+		Map<Long, String> results = new TreeMap<>();
 		for (VxtPtrInfo info : finalVftPtrInfoByOffset.values()) {
 			List<ClassID> altParentage =
 				finalizeVxtPtrParentage(vftChildToParentRoot, vftParentToChildRoot, info);
-			String name = ClassUtils.getSpecialVxTableName(info.finalOffset());
 			String result = dumpVxtPtrResult("vft", info, altParentage.reversed());
 			builder.append(result + "\n");
-			results.put(name, result);
+			results.put(info.finalOffset(), result);
 		}
 		for (VxtPtrInfo info : finalVbtPtrInfoByOffset.values()) {
 			List<ClassID> altParentage =
 				finalizeVxtPtrParentage(vbtChildToParentRoot, vbtParentToChildRoot, info);
-			String name = ClassUtils.getSpecialVxTableName(info.finalOffset());
 			String result = dumpVxtPtrResult("vbt", info, altParentage.reversed());
 			builder.append(result + "\n");
-			results.put(name, result);
+			results.put(info.finalOffset(), result);
 		}
 		if (!builder.isEmpty()) {
 			builder.insert(0, String.format("Class: %s\n", getSymbolPath().toString()));
@@ -2037,12 +2035,21 @@ public class CppCompositeType {
 	}
 
 	private void updateMainVbt() {
+		// Update self (non-virtual) base
+		if (mainVbt.getTotalNumEntries() == 0) {
+			// error: silent for now... not sure how we want to deal with this
+			return;
+		}
+		VBTableEntry selfEntry = mainVbt.getEntry(0);
+		selfEntry.setClassId(myId);
+
 		int numEntries = virtualLayoutBaseClasses.size();
-		Integer existingEntries = mainVbt.getNumEntries();
+		Integer existingEntries = mainVbt.getNumVirtualBaseEntries();
 		if (numEntries < existingEntries) {
 			// error: silent for now... not sure how we want to deal with this
 			return;
 		}
+		// Add entries for additional virtual bases
 		for (VirtualLayoutBaseClass virtualLayoutBaseClass : virtualLayoutBaseClasses) {
 			int tableOffset = virtualLayoutBaseClass.getOffetFromVbt();
 			// Value in base class is more of an index

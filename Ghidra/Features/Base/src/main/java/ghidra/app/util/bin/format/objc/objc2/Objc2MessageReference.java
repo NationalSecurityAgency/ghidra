@@ -70,9 +70,11 @@ public class Objc2MessageReference extends ObjcTypeMetadataStructure {
 		Data selData = messageRefData.getComponent(1);
 		Object selAddress = selData.getValue();
 		Data selStringData = program.getListing().getDataAt((Address) selAddress);
-		Object selString = selStringData.getValue();
-		ObjcUtils.createSymbol(program, null, selString + "_" + Objc2MessageReference.NAME,
-			address);
+		if (selStringData != null) {
+			Object selString = selStringData.getValue();
+			ObjcUtils.createSymbol(program, null, selString + "_" + Objc2MessageReference.NAME,
+				address);
+		}
 	}
 
 	@Override

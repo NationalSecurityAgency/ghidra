@@ -160,4 +160,7 @@ public interface Enum extends DataType {
 	 */
 	public int getMinimumPossibleLength();
 
+	@Override
+	public Enum clone(DataTypeManager dtm);
+
 }

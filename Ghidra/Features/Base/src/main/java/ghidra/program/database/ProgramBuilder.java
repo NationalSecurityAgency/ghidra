@@ -879,6 +879,18 @@ public class ProgramBuilder {
 		}
 	}
 
+	/**
+	 * Creates a non-null-terminated ascii string at the given address 
+	 * @param address the address
+	 * @param string the string 
+	 * @return the new data
+	 * @throws Exception if there is an exception
+	 */
+	public Data createString(String address, String string) throws Exception {
+		return createString(address, string, StandardCharsets.US_ASCII, false,
+			StringDataType.dataType);
+	}
+
 	public Data createString(String address, String string, Charset charset, boolean nullTerminate,
 			DataType dataType) throws Exception {
 		if (nullTerminate) {

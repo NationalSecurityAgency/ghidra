@@ -444,6 +444,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		conn.execute("file " + obj);
 		conn.execute("ghidra trace sync-enable");
 		conn.execute("process launch --stop-at-entry");
+		conn.execute("ghidra trace sync-enable");
+		conn.execute("ghidra trace sync-synth-stopped");
 		txPut(conn, "processes");
 	}
 

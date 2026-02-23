@@ -57,7 +57,7 @@ public class DWARFMacroHeader {
 		long debug_line_offset = -1;
 		if ((flags & DEBUG_LINE_OFFSET_FLAG_MASK) != 0) {
 			debug_line_offset = reader.readNextUnsignedValue(intSize);
-			line = cu.getProgram().getLine(debug_line_offset, cu, false);
+			line = cu.getDIEContainer().getLine(debug_line_offset, cu, false);
 		}
 		Map<Integer, List<DWARFForm>> opcodeMap = DWARFMacroOpcode.defaultOpcodeOperandMap;
 		if ((flags & OPCODE_OPERANDS_TABLE_FLAG_MASK) != 0) {
@@ -135,7 +135,7 @@ public class DWARFMacroHeader {
 	}
 
 	public List<DWARFMacroInfoEntry> getEntries() throws IOException {
-		return cu.getProgram().getMacroEntries(this);
+		return cu.getDIEContainer().getMacroEntries(this);
 	}
 
 	public DWARFCompilationUnit getCompilationUnit() {

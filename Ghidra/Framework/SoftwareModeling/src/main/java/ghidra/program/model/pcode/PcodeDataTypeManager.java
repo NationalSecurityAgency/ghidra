@@ -476,8 +476,6 @@ public class PcodeDataTypeManager {
 	private void encodeStructure(Encoder encoder, Structure type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		// if size is 0, insert an Undefined4 component
-		//
 		int sz = type.getLength();
 		if (sz == 0) {
 			type = new StructureDataType(type.getCategoryPath(), type.getName(), 1);
@@ -488,20 +486,33 @@ public class PcodeDataTypeManager {
 		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
 		DataTypeComponent[] comps = type.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
-			if (comp.isBitFieldComponent() || comp.getLength() == 0) {
-				// TODO: bitfields, zero-length components and zero-element arrays are not yet supported by decompiler
+			if (comp.getLength() == 0) {
 				continue;
 			}
-			encoder.openElement(ELEM_FIELD);
 			String field_name = comp.getFieldName();
 			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
-			encoder.writeString(ATTRIB_NAME, field_name);
-			encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
-			DataType fieldtype = comp.getDataType();
-			encodeTypeRef(encoder, fieldtype, comp.getLength());
-			encoder.closeElement(ELEM_FIELD);
+			if (comp.isBitFieldComponent()) {
+				BitFieldDataType bitfield = (BitFieldDataType) comp.getDataType();
+				encoder.openElement(ELEM_BITFIELD);
+				encoder.writeString(ATTRIB_NAME, field_name);
+				encoder.writeSignedInteger(ATTRIB_ID, comp.getOrdinal());
+				encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
+				encoder.writeSignedInteger(ATTRIB_FIRST, bitfield.getBitOffset());
+				encoder.writeSignedInteger(ATTRIB_SIZE, bitfield.getBitSize());
+				DataType inttype = bitfield.getBaseDataType();
+				encodeTypeRef(encoder, inttype, inttype.getLength());
+				encoder.closeElement(ELEM_BITFIELD);
+			}
+			else {
+				encoder.openElement(ELEM_FIELD);
+				encoder.writeString(ATTRIB_NAME, field_name);
+				encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
+				DataType fieldtype = comp.getDataType();
+				encodeTypeRef(encoder, fieldtype, comp.getLength());
+				encoder.closeElement(ELEM_FIELD);
+			}
 		}
 		encoder.closeElement(ELEM_TYPE);
 	}

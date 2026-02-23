@@ -39,7 +39,7 @@
     plug-in enabled, but if it is disabled for some reason, it can be enabled from within
     a Code Browser by selecting the
     <informalexample>
-      <emphasis role="bold">File -> Configure</emphasis>
+      <emphasis role="bold">File -> Configure...</emphasis>
     </informalexample>
     menu option, then clicking on the <emphasis>Configure</emphasis> link under the
     <emphasis role="bold">Ghidra Core</emphasis> section and checking the box next to
@@ -2059,6 +2059,34 @@
 	  <link linkend="AnalysisSplitStruct">Splitting Structure Accesses</link>.
 	</para>
       </sect4>
+      <sect4 id="TypeBitField">
+	<title>Bitfields</title>
+	<para>
+	  Bitfields are fully supported.  Bitfields are a special type of integer field, defined within a structure data-type,
+	  that does not respect byte boundaries.  A bitfield can be as small as a single bit, and multiple bitfields can be packed
+	  into a single byte or word of the structure. The Decompiler does not infer bitfields, but propagates them into
+	  the function from structures that explicitly define them.
+	</para>
+	<para>
+	  The Decompiler will attempt to display reads and writes to individual bitfields
+	  using the field's name and a standard structure access operator, like '.' or '->'.  This hides the
+	  longer sequence of byte-based operations that the underlying code is using to isolate the individual bitfield
+	  from its neighbors.
+	  <informalexample>
+	    <programlisting>
+	      iVar1 = ptr->bit1;        //  iVar1 = ((*ptr) &gt;&gt; 3) &amp; 7
+	      struct1.bit1 = i;         //  struct1._0_1 = ((i &amp; 7) &lt;&lt; 3) | (struct1._0_1 &amp; 0xc7)
+	    </programlisting>
+	  </informalexample>
+	</para>
+	<para>
+	  If a code sequence sets multiple bitfields simultaneously, the Decompiler will display the sequence
+	  using multiple assignment statements, one for each bitfield affected.  If bitfields are read simultaneously, the
+	  Decompiler will display each bitfield as a separate element of the expression. If a code sequence does not seem to respect
+	  the boundaries of individual bitfields, the Decompiler will revert to using auto-generated, byte-based,
+	  field tokens to represent the sequence.
+	</para>
+      </sect4>
       <sect4 id="TypeEnum">
 	<title>Enumeration</title>
 	<para>
@@ -2589,6 +2617,7 @@
       <informalexample>
 	<itemizedlist mark='none'>
 	  <listitem><emphasis>DEFAULT</emphasis> - for basic or no information</listitem>
+	  <listitem><emphasis>AI</emphasis> - for information that is produced with AI assistance</listitem>
 	  <listitem><emphasis>ANALYSIS</emphasis> - for information derived by an Analyzer</listitem>
 	  <listitem><emphasis>IMPORTED</emphasis> - for information imported from an external source</listitem>
 	  <listitem><emphasis>USER_DEFINED</emphasis> - for information set by the user</listitem>
@@ -3054,7 +3083,9 @@
 	  this to <emphasis>off</emphasis> lets the user see the dead code, which is typically demarcated
 	  by the control-flow structure:
 	  <informalexample>
-	    <code>if (false) { ... }</code>
+	    <programlisting>
+	      if (false) { ... }
+	    </programlisting>
 	  </informalexample>
 	</para>
       </listitem>
@@ -3127,7 +3158,9 @@
 	  rendered using a standard <emphasis role="bold">for</emphasis> loop header
 	  that contains an initializer statement, condition, and iterating statement.
 	  <informalexample>
-	    <code>for (iVar2 = 10; iVar2 &lt; len; iVar2 = iVar2 + 1) { ...</code>
+	    <programlisting>
+	      for (iVar2 = 10; iVar2 &lt; len; iVar2 = iVar2 + 1) { ...
+	    </programlisting>
 	  </informalexample>
 	</para>
 	<para>
@@ -3155,6 +3188,24 @@
 	  <emphasis>Memory Manager</emphasis>, and individual data elements can be marked
 	  as <emphasis>constant</emphasis> via the <emphasis role="bold">Mutability</emphasis> setting
 	  (see <xref linkend="AnnoteMutability"/>). 
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry id="AnalysisBitfields">
+      <term><emphasis role="bold">Simplify bitfield access</emphasis></term>
+      <listitem>
+	<para>
+	  When this option is active, the Decompiler attempts to identify expressions where bitfields,
+	  as defined in structure data-types, are either being written to or read from.  
+	  Any sequence of logical operations that access an individual bitfield are collapsed into a
+	  normal field access, displaying the bitfield's name.
+          <informalexample>
+	    <programlisting>
+	      uVar1 = my1._3_1 &lt;&lt; 2 &amp; 3;  // Isolating a 2-bit field 'mode' within variable 'my1'
+	        ...
+              uVar1 = my1.mode;   // The same assignment after simplification
+	    </programlisting>
+          </informalexample>
 	</para>
       </listitem>
     </varlistentry>
@@ -4962,7 +5013,7 @@
 <sect2 id="ActionEditOverride">
   <title>Edit Signature Override</title>
   <para>
-    Edit the existing overriding function prototype to the called function under the cursor.
+    Edit the overriding function prototype applied previously to the called function under the cursor.
   </para>
   <para>
 	This action can only be triggered at call sites with an existing signature override. As with the Override 

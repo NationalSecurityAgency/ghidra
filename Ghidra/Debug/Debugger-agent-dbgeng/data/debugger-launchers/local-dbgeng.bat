@@ -13,7 +13,7 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 :: ##
-::@title dbgeng
+::@title dbgeng (.bat)
 ::@image-opt env:OPT_TARGET_IMG
 ::@desc <html><body width="300px">
 ::@desc   <h3>Launch with <tt>dbgeng</tt> (in a Python interpreter)</h3>

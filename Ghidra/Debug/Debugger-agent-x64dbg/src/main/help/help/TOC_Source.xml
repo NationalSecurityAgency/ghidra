@@ -11,6 +11,9 @@
 			<tocdef id="x64dbg_attach" text="Attach"
 				target="help/topics/x64dbg/x64dbg.html#attach" />
 
+			<tocdef id="x64dbg_ssh" text="Remote via SSH"
+				target="help/topics/x64dbg/x64dbg.html#ssh" />
+
 		</tocdef>
 	</tocref>
 </tocroot>

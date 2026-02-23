@@ -15,10 +15,17 @@
  */
 package ghidra.lisa.pcode.contexts;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.lisa.pcode.PcodeFrontend;
 import ghidra.lisa.pcode.locations.InstLocation;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceManager;
 import it.unive.lisa.program.CodeUnit;
 import it.unive.lisa.program.Program;
 import it.unive.lisa.program.SyntheticLocation;
@@ -26,18 +33,11 @@ import it.unive.lisa.program.cfg.CodeLocation;
 
 public class UnitContext {
 
-	private PcodeFrontend frontend;
-	private Function function;
-	private CodeUnit unit;
-	private Address start;
-
-	public UnitContext(PcodeFrontend frontend, Program program, Function f) {
-		this.frontend = frontend;
-		this.function = f;
-		unit = new CodeUnit(SyntheticLocation.INSTANCE, program, f.getName());
-		start = function.getEntryPoint();
-	}
-
+	protected PcodeFrontend frontend;
+	protected Function function;
+	protected CodeUnit unit;
+	protected Address start;
+	
 	public UnitContext(PcodeFrontend frontend, Program program, Function f, Address entry) {
 		this.frontend = frontend;
 		this.function = f;
@@ -80,6 +80,56 @@ public class UnitContext {
 			inst = getListing().getInstructionAfter(start);
 		}
 		return inst == null ? null : new InstructionContext(function, inst);
+	}
+
+	public List<StatementContext> branch(StatementContext ctx, Listing listing) {
+		List<StatementContext> list = new ArrayList<>();	
+		if (ctx.opcode == PcodeOp.BRANCH || ctx.opcode == PcodeOp.CBRANCH) {
+			Varnode vn = ctx.op.getInput(0);
+			if (vn.getAddress().isConstantAddress()) {
+				int order = ctx.op.getSeqnum().getTime();
+				order += vn.getOffset();
+				list.add(new StatementContext(ctx.inst.getPcode()[order]));
+			}
+			else {
+				Instruction next = listing.getInstructionAt(vn.getAddress().getNewAddress(vn.getOffset()));
+				if (next == null || next.getPcode().length == 0) {
+					return list;
+				}
+				list.add(new StatementContext(next, next.getPcode()[0]));
+			}
+		}
+		if (ctx.opcode == PcodeOp.BRANCHIND) {
+			ReferenceManager referenceManager = function().getProgram().getReferenceManager();
+			Reference[] refs = referenceManager.getReferencesFrom(ctx.inst.getAddress());
+			for (Reference ref : refs) {
+				Address fromAddress = ref.getToAddress();
+				Instruction next = listing.getInstructionAt(fromAddress);
+				if (next == null || next.getPcode().length == 0) {
+					return list;
+				}
+				list.add(new StatementContext(next, next.getPcode()[0]));
+			}
+		}
+		return list;
+	}
+
+	public StatementContext next(StatementContext ctx, Listing listing) {
+		PcodeOp[] pcode = ctx.inst.getPcode();
+		if (ctx.op != null) {
+			int order = ctx.op.getSeqnum().getTime();
+			if (order+1 < pcode.length) {
+				return new StatementContext(ctx.inst, ctx.inst.getPcode()[order+1]);
+			}
+		}
+		Instruction next = listing.getInstructionAt(ctx.inst.getAddress().add(ctx.inst.getLength()));
+		while (next != null && next.getPcode().length == 0) {
+			next = listing.getInstructionAt(next.getAddress().add(next.getLength()));
+		}
+		if (next == null) {
+			return null;
+		}
+		return new StatementContext(next, next.getPcode()[0]);
 	}
 
 	public boolean contains(Address target) {

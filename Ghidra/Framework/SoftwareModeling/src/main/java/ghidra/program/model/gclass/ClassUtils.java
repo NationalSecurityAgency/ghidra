@@ -27,14 +27,34 @@ public class ClassUtils {
 	//  a separate one for a generic virtual table (not "base" or "function") for gcc/Itanium
 	//  standard
 	/**
+	 * Standard field name for a class virtual table
+	 */
+	public static final String VTABLE = "vtable";
+
+	/**
+	 * Standard field name for a class virtual base table
+	 */
+	public static final String VBTABLE = "vbtable";
+
+	/**
+	 * Standard field name for a class virtual function table
+	 */
+	public static final String VFTABLE = "vftable";
+
+	/**
+	 * Standard field name for a virtual table pointer found within a class
+	 */
+	public static final String VTPTR = "vtptr";
+
+	/**
 	 * Standard field name for a virtual base table pointer found within a class
 	 */
-	public static final String VBPTR = "{vbptr}";
+	public static final String VBPTR = "vbptr";
 
 	/**
 	 * Standard field name for a virtual function table pointer found within a class
 	 */
-	public static final String VFPTR = "{vfptr}";
+	public static final String VFPTR = "vfptr";
 
 	/**
 	 * Type used for {@link #VBPTR} and {@link #VFPTR} fields in a class
@@ -42,9 +62,11 @@ public class ClassUtils {
 	public static final PointerDataType VXPTR_TYPE = new PointerDataType();
 
 	/**
-	 * The standard prefix used for the special symbol.  Private for now.
+	 * The standard prefix/suffix used for vxtable offset tag in its description.  Private for now.
 	 */
-	private static final String VTABLE_PREFIX = "VTABLE_";
+	private static final String VXTABLE_DESCRIPTION_PREFIX = "{{vtoffset 0x";
+	private static final String VXTABLE_DESCRIPTION_SUFFIX = "}}";
+	private static final int VXTABLE_DESCRIPTION_PREFIX_LEN = VXTABLE_DESCRIPTION_PREFIX.length();
 
 	/**
 	 * private constructor -- no instances
@@ -54,7 +76,7 @@ public class ClassUtils {
 	}
 
 	/**
-	 * Returns the category for class internals
+	 * Returns the category path for class internals
 	 * @param composite the class composite
 	 * @return the category path
 	 */
@@ -64,17 +86,44 @@ public class ClassUtils {
 	}
 
 	/**
-	 * Returns the category for class internals for the ClassID
+	 * Returns the category path for items belonging to this class, such as vxtables
+	 * @param composite the class composite
+	 * @return the category path
+	 */
+	public static CategoryPath getClassPath(Composite composite) {
+		DataTypePath dtp = composite.getDataTypePath();
+		return new CategoryPath(dtp.getCategoryPath(), dtp.getDataTypeName());
+	}
+
+	/**
+	 * Returns the category path for class for the ClassID
+	 * @param id the class ID
+	 * @return the category path
+	 */
+	public static CategoryPath getClassPath(ClassID id) {
+		return recurseGetCategoryPath(id.getCategoryPath(), id.getSymbolPath());
+	}
+
+	/**
+	 * Returns the category path for class internals for the Class CategoryPath
+	 * @param category the class category path
+	 * @return the category path
+	 */
+	public static CategoryPath getClassInternalsPath(CategoryPath category) {
+		return category.extend("!internal");
+	}
+
+	/**
+	 * Returns the category path for class internals for the ClassID
 	 * @param id the class ID
 	 * @return the category path
 	 */
 	public static CategoryPath getClassInternalsPath(ClassID id) {
-		CategoryPath cp = recurseGetCategoryPath(id.getCategoryPath(), id.getSymbolPath());
-		return cp.extend("!internal");
+		return getClassInternalsPath(getClassPath(id));
 	}
 
 	/**
-	 * Returns the category for class internals
+	 * Returns the category path for class internals
 	 * @param path the category path of the class composite
 	 * @param className the name of the class
 	 * @return the category path
@@ -100,7 +149,7 @@ public class ClassUtils {
 	 */
 	public static Composite getSelfBaseType(Composite composite) {
 		DataTypeManager dtm = composite.getDataTypeManager();
-		DataTypePath dtp = ClassUtils.getBaseClassDataTypePath(composite);
+		DataTypePath dtp = getBaseClassDataTypePath(composite);
 		DataType dt = dtm.getDataType(dtp);
 		if (dt instanceof Composite base) {
 			return base;
@@ -118,14 +167,32 @@ public class ClassUtils {
 	}
 
 	/**
-	 * Provides the standard special name for a virtual table (e.g., vbtable, vftable) that is
-	 * keyed off of by the Decompiler during flattening and replacing of types within a class
-	 * structure.  More details to come
-	 * @param ptrOffsetInClass the offset of the special field within the class
-	 * @return the special name
+	 * Returns the "self-base" composite for the specified class ID
+	 * @param dtm the data type manager
+	 * @param id the class id
+	 * @return the self-base composite
 	 */
-	public static String getSpecialVxTableName(long ptrOffsetInClass) {
-		return String.format("%s%08x", VTABLE_PREFIX, ptrOffsetInClass);
+	public static Composite getSelfBaseType(DataTypeManager dtm, ClassID id) {
+		CategoryPath mainCp = getClassPath(id);
+		CategoryPath baseCp = getClassInternalsPath(mainCp);
+		String name = id.getSymbolPath().getName();
+		DataTypePath dtp = new DataTypePath(baseCp, name);
+		DataType dt = dtm.getDataType(dtp);
+		if (dt instanceof Composite composite) {
+			return composite;
+		}
+		if (dt != null) {
+			return null;
+		}
+		// If we make change to put class A::B into Category /A/B instead of just in /B,
+		//  we will need to change from getParent() to something else here; or make a
+		//  change elsewhere
+		dtp = new DataTypePath(mainCp.getParent(), name);
+		dt = dtm.getDataType(dtp);
+		if (dt instanceof Composite composite) {
+			return composite;
+		}
+		return null;
 	}
 
 	/**
@@ -134,49 +201,89 @@ public class ClassUtils {
 	 * @return {@code true} if is a vxtable label format
 	 */
 	public static boolean isVTable(DataType type) {
-		if (!(type instanceof Structure)) {
+		if (!(type instanceof Structure struct)) {
 			return false;
 		}
-		String name = type.getName();
-		return validateVtableNameOffset(name) != null;
+		String description = struct.getDescription();
+		if (validateVtableDescriptionOffsetTag(description) == null) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
-	 * Validates a Vtable name and returns the encoded offset value
-	 * @param name the name
+	 * Provides the __TEMPORARY__ standard special Description string for a virtual table (e.g.,
+	 * vtable, vbtable, vftable) that is keyed off of by the Decompiler during flattening and
+	 * replacement of types within a class structure.  This is __TEMPORARY__ in that we hope
+	 * to use some special attribute in the future.  More details to come
+	 * @param ptrOffsetInClass the offset of the special field within the class
+	 * @return the special name
+	 */
+	public static String createVxTableDescriptionOffsetTag(long ptrOffsetInClass) {
+		return String.format("%s%08x%s", VXTABLE_DESCRIPTION_PREFIX, ptrOffsetInClass,
+			VXTABLE_DESCRIPTION_SUFFIX);
+	}
+
+	/**
+	 * Validates a Vtable description and returns the encoded offset value
+	 * @param description the description string
 	 * @return the offset or {@code null} if invalid name
 	 */
-	private static Integer validateVtableNameOffset(String name) {
-		if (name == null) {
+	public static Long validateVtableDescriptionOffsetTag(String description) {
+		if (description == null) {
 			return null;
 		}
-		if (!name.startsWith(VTABLE_PREFIX)) {
+		int start = description.indexOf(VXTABLE_DESCRIPTION_PREFIX);
+		if (start == -1) {
 			return null;
 		}
-		if (name.length() < VTABLE_PREFIX.length() + 8) {
+		start += VXTABLE_DESCRIPTION_PREFIX_LEN;
+		int end =
+			description.indexOf(VXTABLE_DESCRIPTION_SUFFIX, start);
+		if (end == -1) {
 			return null;
 		}
-		String sub = name.substring(VTABLE_PREFIX.length(), VTABLE_PREFIX.length() + 8);
+		String sub = description.substring(start, end);
 		try {
-			return Integer.parseInt(sub, 16);
+			return Long.parseLong(sub, 16);
 		}
 		catch (NumberFormatException e) {
 			return null;
 		}
 	}
 
-	public static DataType getVftDefaultEntry(DataTypeManager dtm) {
+	/**
+	 * Returns a default data type for a VFT
+	 * @param dtm the data type manager
+	 * @return the pointer data type
+	 */
+	public static PointerDataType getVftDefaultEntry(DataTypeManager dtm) {
 		return new PointerDataType(dtm);
 	}
 
+	/**
+	 * Returns a default data type for a VBT
+	 * @param dtm the data type manager
+	 * @return the data type
+	 */
 	public static DataType getVbtDefaultEntry(DataTypeManager dtm) {
 		return new IntegerDataType(dtm);
 	}
 
+	/**
+	 * Returns the size of the default pointer data type for a VFT entry
+	 * @param dtm the data type manager
+	 * @return the size
+	 */
 	public static int getVftEntrySize(DataTypeManager dtm) {
 		return dtm.getDataOrganization().getPointerSize();
 	}
 
+	/**
+	 * Returns the size of the default data type for a VBT entry
+	 * @param dtm the data type manager
+	 * @return the size
+	 */
 	public static int getVbtEntrySize(DataTypeManager dtm) {
 		return dtm.getDataOrganization().getIntegerSize();
 	}

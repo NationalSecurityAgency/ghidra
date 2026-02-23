@@ -225,7 +225,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public Enum clone(DataTypeManager dtm) {
 		if (getDataTypeManager() == dtm) {
 			return this;
 		}
@@ -545,4 +545,22 @@ public class EnumDataType extends GenericDataType implements Enum {
 	public void pack() {
 		setLength(getMinimumPossibleLength());
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(getPathName() + "\n");
+		buf.append("\tDescription: " + getDescription());
+		buf.append("\nValues: \n");
+		for (String name : getNames()) {
+			buf.append("\t" + name + ": " + getValue(name));
+			String comment = getComment(name);
+			if (comment != null) {
+				buf.append(" " + comment);
+			}
+			buf.append("\n");
+		}
+		return buf.toString();
+	}
+
 }

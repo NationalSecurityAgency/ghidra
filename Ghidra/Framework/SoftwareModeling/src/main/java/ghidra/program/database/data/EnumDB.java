@@ -29,8 +29,8 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
@@ -423,7 +423,7 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public Enum clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}
@@ -732,11 +732,6 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		// not applicable
-	}
-
-	@Override
 	protected void doSetCategoryPathRecord(long categoryID) throws IOException {
 		record.setLongValue(EnumDBAdapter.ENUM_CAT_COL, categoryID);
 		adapter.updateRecord(record, false);
@@ -750,6 +745,11 @@ class EnumDB extends DataTypeDB implements Enum {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
+		// not applicable
+	}
+
+	@Override
+	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 		// not applicable
 	}
 
@@ -933,4 +933,22 @@ class EnumDB extends DataTypeDB implements Enum {
 			lock.release();
 		}
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(getPathName() + "\n");
+		buf.append("\tDescription: " + getDescription());
+		buf.append("\nValues: \n");
+		for (String name : getNames()) {
+			buf.append("\t" + name + ": " + getValue(name));
+			String comment = getComment(name);
+			if (comment != null) {
+				buf.append(" comment");
+			}
+			buf.append("\n");
+		}
+		return buf.toString();
+	}
+
 }

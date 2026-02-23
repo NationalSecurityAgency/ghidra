@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import org.apache.commons.io.FileUtils;
 
 import ghidra.framework.Application;
 import ghidra.util.Msg;
+import utilities.util.FileUtilities;
 
 /**
  * Reads Themes from a file or {@link Reader}
@@ -138,6 +139,9 @@ class ThemeReader extends AbstractThemeReader {
 		String relativePath = path.substring(indexOf, path.length());
 		File dir = Application.getUserSettingsDirectory();
 		File iconFile = new File(dir, relativePath);
+		if (!FileUtilities.isPathContainedWithin(dir, iconFile)) {
+			throw new IOException("Zip entry escapes target directory: " + relativePath);
+		}
 		FileUtils.copyInputStreamToFile(is, iconFile);
 	}
 

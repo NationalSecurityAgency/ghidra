@@ -21,11 +21,11 @@ public class ConditionContext extends PcodeContext {
 
 	public ConditionContext(PcodeOp op) {
 		super(op);
+		assert (op.getOpcode() == PcodeOp.CBRANCH);
 	}
 
 	public VarnodeContext expression() {
-		// opcode should be CBRANCH
-		assert (op.getInputs().length < 2);
+		assert (op.getInputs().length <= 2);
 		return new VarnodeContext(op.getInput(1));
 	}
 

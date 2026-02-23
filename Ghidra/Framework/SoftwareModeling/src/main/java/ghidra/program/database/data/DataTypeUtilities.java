@@ -21,6 +21,7 @@ import java.util.regex.*;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPathParser;
 import ghidra.docking.settings.Settings;
+import ghidra.program.database.data.merge.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
@@ -188,6 +189,107 @@ public class DataTypeUtilities {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * This method throws an exception if the indicated component data type is an ancestor of
+	 * the specified dataType (i.e., the specified component data type has a component or
+	 * sub-component containing the specified dataType).
+	 * 
+	 * @param dataType the data type
+	 * @param componentDataType component data type
+	 * @throws DataTypeDependencyException if ancestry check fails
+	 */
+	public static void checkAncestry(DataType dataType, DataType componentDataType)
+			throws DataTypeDependencyException {
+		if (DataTypeUtilities.isSecondPartOfFirst(componentDataType, dataType)) {
+			throw new DataTypeDependencyException(
+				"Data type " + componentDataType.getDisplayName() + " has " +
+					dataType.getDisplayName() + " within it.");
+		}
+	}
+
+	/**
+	 * Check if the specified replacement data type pair is invalid.
+	 * @param replacedDt existing data type being replaced
+	 * @param replacementDt replacement data type
+	 * @throws IllegalArgumentException if an invalid replaced/replacement data type pair is specified.
+	 */
+	public static void checkValidReplacement(DataType replacedDt, DataType replacementDt)
+			throws IllegalArgumentException {
+
+		DataTypeUtilities.checkValidReplacementDataType(replacedDt);
+		DataTypeUtilities.checkValidReplacementDataType(replacementDt);
+
+		checkForInvalidFunctionDefinitionReplacement(replacedDt, replacementDt);
+	}
+
+	/**
+	 * Validate the replacement data type.  Certain data types are not permitted
+	 * to participate in a replacement including a {@link FactoryDataType}, {@link Dynamic} or
+	 * {@link BitFieldDataType}.
+	 * @param dataType data type to be checked
+	 * @throws IllegalArgumentException if an invalid datatype is specified.
+	 */
+	private static void checkValidReplacementDataType(DataType dataType) {
+		if (dataType instanceof DataTypeDB) {
+			return;
+		}
+		if (dataType instanceof VoidDataType) {
+			throw new IllegalArgumentException("Replacement data type may not be 'void' data type");
+		}
+		if (dataType instanceof DefaultDataType) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be 'default' undefined data type");
+		}
+		if (dataType instanceof BitFieldDataType) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be a bitfield: " + dataType.getName());
+		}
+		if (dataType instanceof FactoryDataType) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be a Factory data type: " + dataType.getName());
+		}
+		if (dataType instanceof Dynamic) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be a Dynamic data type: " + dataType.getName());
+		}
+	}
+
+	/**
+	 * Determine if the replacement data type pair represents an invalid function definition 
+	 * replacement.
+	 * @param replacedDt replaced data type to be replaced
+	 * @param replacementDt new replacement data type
+	 * @throws IllegalArgumentException if an invalid replaced/replacement data type pair is specified.
+	 */
+	private static void checkForInvalidFunctionDefinitionReplacement(DataType replacedDt,
+			DataType replacementDt) throws IllegalArgumentException {
+
+		DataType replacedBaseDt = replacedDt;
+		if (replacedDt instanceof TypeDef replacedTypedef) {
+			replacedBaseDt = replacedTypedef.getBaseDataType();
+		}
+
+		DataType replacementBaseDt = replacementDt;
+		if (replacementDt instanceof TypeDef replacementTypedef) {
+			replacementBaseDt = replacementTypedef.getBaseDataType();
+		}
+
+		// Impose similarity constraints
+		if (replacedBaseDt instanceof FunctionDefinition) {
+			if (!(replacementBaseDt instanceof FunctionDefinition)) {
+				throw new IllegalArgumentException(
+					"Existing function definition \"" + replacedDt.getName() +
+						"\" may not be replaced with \"" + replacementDt.getName() + "\"");
+			}
+		}
+		else if (replacementBaseDt instanceof FunctionDefinition) {
+			throw new IllegalArgumentException("Existing data type \"" + replacedDt.getName() +
+				"\" may not be replaced with function definition \"" + replacementDt.getName() +
+				"\"");
+		}
+
 	}
 
 	/**
@@ -1002,5 +1104,48 @@ public class DataTypeUtilities {
 	 */
 	public static boolean equalsIgnoreConflict(String name1, String name2) {
 		return getNameWithoutConflict(name1).equals(getNameWithoutConflict(name2));
+	}
+
+	/**
+	 * Convenience method for getting the appropriate datatype merger or throwing an exception
+	 * if the two datatypes are not eligible to be merged.
+	 * @param dt1 the first datatype to be merged
+	 * @param dt2 the second datatype to be merged
+	 * @return A merger to be used to merge the two data types.
+	 * @throws DataTypeMergeException if the two datatypes are not the same type or their type
+	 * is not supported for merging
+	 */
+	public static DataTypeMerger<?> getMerger(DataType dt1, DataType dt2)
+			throws DataTypeMergeException {
+
+		if (dt1 instanceof Structure struct1) {
+			if (dt2 instanceof Structure struct2) {
+				return new StructureMerger(struct1, struct2);
+			}
+			error("structure", dt1, dt2);
+		}
+
+		if (dt1 instanceof Union union1) {
+			if (dt2 instanceof Union union2) {
+				return new UnionMerger(union1, union2);
+			}
+			error("union", dt1, dt2);
+		}
+
+		if (dt1 instanceof Enum enum1) {
+			if (dt2 instanceof Enum enum2) {
+				return new EnumMerger(enum1, enum2);
+			}
+			error("enum", dt1, dt2);
+		}
+
+		throw new DataTypeMergeException("Merge target must be one of structure, union, or enum.");
+	}
+
+	private static void error(String typeName, DataType mergeToDt, DataType selectedDt)
+			throws DataTypeMergeException {
+		String msg = "Can't merge non-%s '%s' datatype into structure '%s' ".formatted(typeName,
+			selectedDt.getName(), mergeToDt.getName());
+		throw new DataTypeMergeException(msg);
 	}
 }

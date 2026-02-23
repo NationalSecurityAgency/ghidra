@@ -113,7 +113,7 @@ public class DecompilerSearchResults extends SearchResults {
 		// getNextLocation() will find the next matching location, starting at the given field
 		// location.  The next location may or may not actually contain the given field location.
 		DecompilerSearchLocation nextLocation = getNextLocation(fieldLocation, searchForward);
-		if (nextLocation.contains(fieldLocation)) {
+		if (nextLocation != null && nextLocation.contains(fieldLocation)) {
 			return nextLocation;
 		}
 		return null;

@@ -22,7 +22,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import ghidra.lisa.pcode.WorkItem.PredType;
 import ghidra.lisa.pcode.contexts.*;
 import ghidra.lisa.pcode.expressions.*;
+import ghidra.lisa.pcode.locations.PcodeLocation;
 import ghidra.lisa.pcode.statements.PcodeNop;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.SequenceNumber;
@@ -64,7 +66,7 @@ public class PcodeCodeMemberVisitor {
 
 	private UnitContext currentUnit;
 
-	private Map<String, PcodeBranch> flows;
+	private Map<Address, PcodeBranch> flows;
 
 	private int varCount = 0;
 
@@ -181,7 +183,8 @@ public class PcodeCodeMemberVisitor {
 			}
 			PredType type = item.getType();
 			if (!type.equals(PredType.SEQ)) {
-				String loc = pred.getLocation().getCodeLocation();
+				PcodeLocation location = (PcodeLocation) pred.getLocation();
+				Address loc = location.getAddress();
 				PcodeBranch flow = flows.get(loc);
 				if (flow == null) {
 					flow = new PcodeBranch(cfg.getNodeList(), pred);
@@ -194,10 +197,12 @@ public class PcodeCodeMemberVisitor {
 		else {
 			entrypoints.add(st);
 		}
+
 		if (st instanceof Ret || st instanceof Return) {
 			return;
 		}
-		List<StatementContext> branches = ctx.branch(this.listing, this.currentUnit);
+
+		List<StatementContext> branches = currentUnit.branch(ctx, this.listing);
 		for (StatementContext branch : branches) {
 			WorkItem n = new WorkItem(st, branch);
 			if (ctx.isConditional()) {
@@ -205,7 +210,7 @@ public class PcodeCodeMemberVisitor {
 			}
 			workItems.add(n);
 		}
-		StatementContext next = ctx.next(this.listing);
+		StatementContext next = currentUnit.next(ctx, this.listing);
 		if (next != null) {
 			WorkItem n = new WorkItem(st, next);
 			if (ctx.isBranch()) {
@@ -273,6 +278,8 @@ public class PcodeCodeMemberVisitor {
 		PcodeContext right = ctx.expression();
 
 		int opcode = ctx.opcode();
+
+		// Special case logic first
 		switch (opcode) {
 			case PcodeOp.COPY -> {
 				Expression target = visitVariable(loc, left, true);
@@ -302,12 +309,20 @@ public class PcodeCodeMemberVisitor {
 				Expression expression = visitVarnode(loc, left, false);
 				return new Assignment(cfg, loc, target, expression);
 			}
+			case PcodeOp.MULTIEQUAL -> {
+				Expression target = visitVariable(loc, left, true);
+				//Expression expression = visitVariable(loc, left, true);
+				Expression expression = visitVarargsExpr(new VarargsExprContext(right));
+				return new Assignment(cfg, loc, target, expression);
+			}
 		}
 
 		if (right == null) {
 			throw new UnsupportedOperationException("Type of expression not supported: " + ctx);
 		}
 
+		// Everything else...
+		// NB: left is the output of the assignment, right the complete expression
 		return switch (right.getNumInputs()) {
 			case 1 -> {
 				Expression target = visitVariable(loc, left, true);
@@ -317,6 +332,12 @@ public class PcodeCodeMemberVisitor {
 			case 2 -> {
 				Expression target = visitVariable(loc, left, true);
 				Expression expression = visitBinaryExpr(new BinaryExprContext(right));
+				yield new Assignment(cfg, loc, target, expression);
+			}
+			// NB: This may be unnecssary with the move of LOAD and STORE to the special-case section
+			case 3 -> {
+				Expression target = visitVariable(loc, left, true);
+				Expression expression = visitTernaryExpr(new TernaryExprContext(right));
 				yield new Assignment(cfg, loc, target, expression);
 			}
 			default -> throw new UnsupportedOperationException(
@@ -343,8 +364,25 @@ public class PcodeCodeMemberVisitor {
 		return new PcodeBinaryExpression(cfg, ctx, lexp, rexp);
 	}
 
-	public Expression visitVarnode(CodeLocation loc, VarnodeContext ctx, Type type,
-			boolean define) {
+
+	public Expression visitTernaryExpr(TernaryExprContext ctx) {
+		CodeLocation loc = ctx.location();
+		Expression lexp = visitVariable(loc, ctx.left, false);
+		Expression mexp = visitVariable(loc, ctx.middle, false);
+		Expression rexp = visitVarnode(loc, ctx.right, false);
+		return new PcodeTernaryExpression(cfg, ctx, lexp, mexp, rexp);
+	}
+
+	public Expression visitVarargsExpr(VarargsExprContext ctx) {
+		CodeLocation loc = ctx.location();
+		Expression[] exps = new Expression[ctx.varargs.length];
+		for (int i = 0; i < ctx.varargs.length; i++) {
+			exps[i] = visitVariable(loc, ctx.varargs[i], false);
+		}
+		return new PcodeVarargsExpression(cfg, ctx, exps);
+	}
+
+	public Expression visitVarnode(CodeLocation loc, VarnodeContext ctx, Type type, boolean define) {
 		if (ctx.isConstant()) {
 			return visitConstant(loc, ctx);
 		}
@@ -384,7 +422,7 @@ public class PcodeCodeMemberVisitor {
 		return ref;
 	}
 
-	public Map<String, PcodeBranch> getFlows() {
+	public Map<Address, PcodeBranch> getFlows() {
 		return flows;
 	}
 

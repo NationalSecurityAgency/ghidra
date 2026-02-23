@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,16 +43,15 @@ public class SetEquateAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
+	public String getMenuDisplay(Scalar scalar, Program program) {
 		return null;		// Menu isn't tailored for this action
 	}
 
 	@Override
-	public String getEquateName(long value, int size, boolean isSigned, Program program) {
+	public String getEquateName(Scalar scalar, Program program) {
 		if (program == null) {
 			return null;
 		}
-		Scalar scalar = new Scalar(size * 8, value, isSigned);
 		SetEquateDialog dialog = new SetEquateDialog(plugin.getTool(), program, scalar);
 		dialog.disableHasSelection();
 		int res = dialog.showSetDialog();
@@ -66,7 +65,7 @@ public class SetEquateAction extends ConvertConstantAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		ConvertConstantTask task = establishTask(context, false);
-		return (task != null);
+		Scalar scalar = ConvertConstantEquateTask.getConvertibleConstant(context, convertType);
+		return (scalar != null);
 	}
 }

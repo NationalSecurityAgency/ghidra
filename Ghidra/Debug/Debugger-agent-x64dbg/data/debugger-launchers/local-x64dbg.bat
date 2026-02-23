@@ -13,7 +13,7 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 :: ##
-::@title x64dbg
+::@title x64dbg (.bat)
 ::@image-opt env:OPT_TARGET_IMG
 ::@desc <html><body width="300px">
 ::@desc   <h3>Launch with <tt>x64dbg</tt> (in a Python interpreter)</h3>
@@ -31,7 +31,7 @@
 ::@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 ::@env OPT_TARGET_DIR:str="" "Dir" "Initial directory"
-::@env OPT_X64DBG_EXE:file="C:\\Software\\release\\x64\\x64dbg.exe" "Path to x64dbg.exe" "Path to x64dbg.exe (or equivalent)."
+::@env OPT_X64DBG_EXE:file="x64dbg.exe" "Path to x64dbg.exe" "Path to x64dbg.exe (or equivalent)."
 
 @echo off
 

@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFEncoding.*;
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -56,8 +56,8 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected int transactionID;
 	protected TaskMonitor monitor = TaskMonitor.DUMMY;
 
-	protected DWARFImportOptions importOptions;
 	protected MockDWARFProgram dwarfProg;
+	protected MockDIEContainer dieContainer;
 	protected MockDWARFCompilationUnit cu;
 	protected DWARFDataTypeManager dwarfDTM;
 	protected MockStringTable stringTable;
@@ -80,11 +80,11 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		DataTypeManagerService dtms = mgr.getDataTypeManagerService();
 		builtInDTM = dtms.getBuiltInDataTypesManager();
 
-		importOptions = new DWARFImportOptions();
-		dwarfProg = new MockDWARFProgram(program, importOptions, TaskMonitor.DUMMY,
-			new NullSectionProvider());
-		stringTable = new MockStringTable(br());
-		dwarfProg.setStringTable(stringTable);
+		dwarfProg =
+			new MockDWARFProgram(program, new DWARFImportOptions(), new NullSectionProvider());
+		dwarfProg.init(monitor);
+		dieContainer = dwarfProg.getDIEContainer();
+		stringTable = dieContainer.getStringTable();
 
 		dwarfDTM = dwarfProg.getDwarfDTM();
 		dwarfRootCP = dwarfProg.getRootDNI().asCategoryPath();
@@ -115,8 +115,8 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected void buildMockDIEIndexes() throws CancelledException, DWARFException {
-		dwarfProg.buildMockDIEIndexes();
-		//dwarfProg.dumpDIEs(System.out);
+		dieContainer.buildMockDIEIndexes();
+		//dieContainer.dumpDIEs(System.out);
 	}
 
 	protected void importAllDataTypes() throws CancelledException, IOException, DWARFException {
@@ -133,7 +133,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected DIEAggregate getAggregate(DebugInfoEntry die) {
-		return dwarfProg.getAggregate(die);
+		return dieContainer.getAggregate(die);
 	}
 
 	protected void ensureCompUnit() {
@@ -147,12 +147,12 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected MockDWARFCompilationUnit addCompUnit64() {
-		setCompUnit(dwarfProg.addCompUnit(DWARFSourceLanguage.DW_LANG_C, 8 /* dwarf64 */));
+		setCompUnit(dieContainer.addCompUnit(DWARFSourceLanguage.DW_LANG_C, 8 /* dwarf64 */));
 		return cu;
 	}
 
 	protected MockDWARFCompilationUnit addCompUnit(int cuLang) {
-		setCompUnit(dwarfProg.addCompUnit(cuLang));
+		setCompUnit(dieContainer.addCompUnit(cuLang));
 		return cu;
 	}
 
@@ -280,7 +280,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected DebugInfoEntry addFwdPtr(int fwdRecordOffset) {
 		ensureCompUnit();
-		long absOffset = dwarfProg
+		long absOffset = dieContainer
 				.getRelativeDIEOffset(fwdRecordOffset + /* the ptr die we are about to add */ 1);
 		return new DIECreator(dwarfProg, DW_TAG_pointer_type).addRef(DW_AT_type, absOffset)
 				.create();

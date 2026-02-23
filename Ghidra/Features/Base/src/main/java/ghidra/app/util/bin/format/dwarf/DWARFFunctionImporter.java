@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -331,7 +331,7 @@ public class DWARFFunctionImporter {
 		// offsetFromFuncStart will be -1 if the containing block didn't have location info
 
 		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 
 			switch (childDIEA.getTag()) {
 				case DW_TAG_variable: {

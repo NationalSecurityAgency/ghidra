@@ -6,10 +6,12 @@ package ghidra.lisa.pcode.analyses;
 import java.math.BigInteger;
 import java.util.Objects;
 
+import generic.stl.Pair;
 import ghidra.lisa.pcode.locations.PcodeLocation;
 import ghidra.lisa.pcode.statements.PcodeBinaryOperator;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 import it.unive.lisa.analysis.*;
 import it.unive.lisa.analysis.lattices.Satisfiability;
@@ -19,6 +21,7 @@ import it.unive.lisa.program.cfg.ProgramPoint;
 import it.unive.lisa.symbolic.value.*;
 import it.unive.lisa.symbolic.value.operator.binary.*;
 import it.unive.lisa.symbolic.value.operator.unary.UnaryOperator;
+import it.unive.lisa.type.Untyped;
 import it.unive.lisa.util.numeric.IntInterval;
 import it.unive.lisa.util.numeric.MathNumber;
 import it.unive.lisa.util.representation.StringRepresentation;
@@ -48,6 +51,11 @@ public class PcodeInterval
 	public static final PcodeInterval ZERO = new PcodeInterval(LongInterval.ZERO);
 
 	/**
+	 * The abstract true ({@code [1, 1]}) element.
+	 */
+	public static final PcodeInterval ONE = new PcodeInterval(LongInterval.ONE);
+
+	/**
 	 * The abstract top ({@code [-Inf, +Inf]}) element.
 	 */
 	public static final PcodeInterval TOP = new PcodeInterval(LongInterval.INFINITY);
@@ -62,10 +70,16 @@ public class PcodeInterval
 	 */
 	public final LongInterval interval;
 
+	public PcodeOp target;
+	public MathNumber bound;
+	public LongInterval intEq;
+	public LongInterval intNeq;
+	public boolean rightIsExpr;
+
 	/**
 	 * Builds the interval.
 	 * 
-	 * @param interval the underlying {@link IntInterval}
+	 * @param interval the underlying {@link LongInterval}
 	 */
 	public PcodeInterval(
 			LongInterval interval) {
@@ -81,18 +95,6 @@ public class PcodeInterval
 	public PcodeInterval(
 			MathNumber low,
 			MathNumber high) {
-		this(new LongInterval(low, high));
-	}
-
-	/**
-	 * Builds the interval.
-	 * 
-	 * @param low  the lower bound
-	 * @param high the higher bound
-	 */
-	public PcodeInterval(
-			long low,
-			long high) {
 		this(new LongInterval(low, high));
 	}
 
@@ -138,6 +140,40 @@ public class PcodeInterval
 	}
 
 	@Override
+	public PcodeInterval evalIdentifier(
+			Identifier id,
+			ValueEnvironment<PcodeInterval> environment,
+			ProgramPoint pp,
+			SemanticOracle oracle)
+			throws SemanticException {
+		if (id.getCodeLocation() instanceof PcodeLocation ploc) {
+			Varnode vn = id2vn(id);
+			if (vn != null && vn.isConstant()) {
+				return evalNonNullConstant(new Constant(Untyped.INSTANCE, vn.getOffset(), ploc), pp,
+					oracle);
+			}
+		}
+		return environment.getState(id);
+	}
+
+	private Varnode id2vn(Identifier id) {
+		String name = id.getName();
+		PcodeLocation loc = (PcodeLocation) id.getCodeLocation();
+		Varnode output = loc.op.getOutput();
+		if (output != null) {
+			if (name.equals(output.getAddress().toString())) {
+				return output;
+			}
+		}
+		for (Varnode vn : loc.op.getInputs()) {
+			if (name.equals(vn.getAddress().toString())) {
+				return vn;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public PcodeInterval evalNonNullConstant(
 			Constant constant,
 			ProgramPoint pp,
@@ -174,14 +210,18 @@ public class PcodeInterval
 		PcodeLocation ploc = (PcodeLocation) pp.getLocation();
 		PcodeOp op = ploc.op;
 		int opcode = op.getOpcode();
+		PcodeInterval result = arg;
 		if (opcode == PcodeOp.INT_NEGATE || opcode == PcodeOp.INT_2COMP ||
 			opcode == PcodeOp.FLOAT_NEG) {
-			if (arg.isTop()) {
-				return top();
-			}
-			return new PcodeInterval(arg.interval.mul(LongInterval.MINUS_ONE));
+			result = arg.isTop() ? top()
+					: new PcodeInterval(arg.interval.mul(LongInterval.MINUS_ONE));
 		}
-		return top();
+		if (opcode == PcodeOp.BOOL_NEGATE) {
+			result = arg.isTop() ? top()
+					: new PcodeInterval(arg.interval.complement());
+			result.target = ploc.op;
+		}
+		return result;
 	}
 
 	/**
@@ -205,8 +245,52 @@ public class PcodeInterval
 			PcodeInterval right,
 			ProgramPoint pp,
 			SemanticOracle oracle) {
-		PcodeLocation ploc = (PcodeLocation) pp.getLocation();
-		PcodeOp op = ploc.op;
+		if (!(pp.getLocation() instanceof PcodeLocation ploc)) {
+			return top();
+		}
+		Pair<PcodeInterval, PcodeInterval> pair = new Pair<>(left, right);
+
+		if (operator instanceof PcodeBinaryOperator) {
+			return evalPcodeBinaryExpression(pair, ploc.op);
+		}
+
+		try {
+			LongInterval interval1 = pair.first.interval;
+			LongInterval interval2 = pair.second.interval;
+			boolean exprOnRight = interval2.isFinite();
+			if (exprOnRight && interval1.isFinite()) {
+				exprOnRight = interval2.getLow().equals(interval2.getHigh());
+			}
+			PcodeInterval result = evalBooleanBinaryExpression(pair, operator);
+
+			result.target = ploc.op;
+			if (!(operator instanceof LogicalOperation)) {
+				Pair<PcodeInterval, PcodeInterval> basePair =
+					new Pair<>(exprOnRight ? top() : left, exprOnRight ? right : top());
+				PcodeInterval init = exprOnRight ? left : right;
+				PcodeInterval bounds = exprOnRight ? right : left;
+				PcodeInterval baseResult = evalBooleanBinaryExpression(basePair, operator);
+				PcodeInterval eq = baseResult.narrowing(init);
+				PcodeInterval neq = baseResult.complement().narrowing(init);
+				result.bound = bounds.interval.isFinite() ? bounds.interval.getLow() : null;
+				result.rightIsExpr = exprOnRight;
+				result.intEq = eq.interval;
+				result.intNeq = neq.interval;
+			}
+			return result;
+		}
+		catch (SemanticException e) {
+			Msg.error(this, e.getMessage());
+		}
+
+		return top();
+	}
+
+	protected PcodeInterval evalPcodeBinaryExpression(Pair<PcodeInterval, PcodeInterval> pair,
+			PcodeOp op) {
+
+		PcodeInterval left = pair.first;
+		PcodeInterval right = pair.second;
 		int opcode = op.getOpcode();
 		if (!(opcode == PcodeOp.INT_DIV) && !(opcode == PcodeOp.FLOAT_DIV) &&
 			(left.isTop() || right.isTop())) {
@@ -268,8 +352,8 @@ public class PcodeInterval
 				}
 
 				if (left.interval.getHigh().compareTo(MathNumber.ZERO) < 0) {
-					yield new PcodeInterval(
-						M.multiply(MathNumber.MINUS_ONE).add(MathNumber.ONE), MathNumber.ZERO);
+					yield new PcodeInterval(M.multiply(MathNumber.MINUS_ONE).add(MathNumber.ONE),
+						MathNumber.ZERO);
 				}
 				if (left.interval.getLow().compareTo(MathNumber.ZERO) > 0) {
 					yield new PcodeInterval(MathNumber.ZERO, M.subtract(MathNumber.ONE));
@@ -281,14 +365,79 @@ public class PcodeInterval
 		};
 	}
 
+	protected PcodeInterval evalBooleanBinaryExpression(Pair<PcodeInterval, PcodeInterval> pair,
+			BinaryOperator operator) throws SemanticException {
+		boolean exprOnRight = pair.second.interval.isFinite();
+
+		PcodeInterval starting = exprOnRight ? pair.first : pair.second;
+		PcodeInterval eval = exprOnRight ? pair.second : pair.first;
+		LongInterval lval = eval.interval;
+
+		boolean lowIsMinusInfinity = lval.lowIsMinusInfinity();
+		PcodeInterval low_inf = new PcodeInterval(lval.getLow(), MathNumber.PLUS_INFINITY);
+		PcodeInterval lowp1_inf =
+			new PcodeInterval(lval.getLow().add(MathNumber.ONE), MathNumber.PLUS_INFINITY);
+		PcodeInterval inf_high = new PcodeInterval(MathNumber.MINUS_INFINITY, lval.getHigh());
+		PcodeInterval inf_highm1 =
+			new PcodeInterval(MathNumber.MINUS_INFINITY, lval.getHigh().subtract(MathNumber.ONE));
+
+		PcodeInterval update = switch (operator) {
+			case ComparisonEq op -> new PcodeInterval(lval);
+			case ComparisonNe op -> new PcodeInterval(lval.complement());
+			case ComparisonLe op -> {
+				if (exprOnRight) {
+					yield starting.glb(inf_high);
+				}
+				yield lowIsMinusInfinity ? null : starting.glb(low_inf);
+			}
+			case ComparisonLt op -> {
+				if (exprOnRight) {
+					yield lowIsMinusInfinity ? eval : starting.glb(inf_highm1);
+				}
+				yield lowIsMinusInfinity ? null : starting.glb(lowp1_inf);
+			}
+			case ComparisonGe op -> {
+				if (exprOnRight) {
+					yield lowIsMinusInfinity ? null : starting.glb(low_inf);
+				}
+				yield starting.glb(inf_high);
+			}
+			case ComparisonGt op -> {
+				if (exprOnRight) {
+					yield lowIsMinusInfinity ? null : starting.glb(lowp1_inf);
+				}
+				yield lowIsMinusInfinity ? eval : starting.glb(inf_highm1);
+			}
+			case LogicalOr op -> {
+				MathNumber min = starting.interval.getLow().min(eval.interval.getLow());
+				MathNumber max = starting.interval.getHigh().max(eval.interval.getHigh());
+				yield new PcodeInterval(min, max);
+			}
+			case LogicalAnd op -> {
+				MathNumber min = starting.interval.getLow().max(eval.interval.getLow());
+				MathNumber max = starting.interval.getHigh().min(eval.interval.getHigh());
+				yield new PcodeInterval(min, max);
+			}
+			default -> throw new AssertionError();
+		};
+
+		if (update == null || update.isBottom()) {
+			return new PcodeInterval(LongInterval.ZERO);
+		}
+		return update;
+	}
+
 	@Override
 	public PcodeInterval lubAux(
 			PcodeInterval other)
 			throws SemanticException {
 		MathNumber newLow = interval.getLow().min(other.interval.getLow());
 		MathNumber newHigh = interval.getHigh().max(other.interval.getHigh());
-		return newLow.isMinusInfinity() && newHigh.isPlusInfinity() ? top()
+		PcodeInterval res = newLow.isMinusInfinity() && newHigh.isPlusInfinity() ? top()
 				: new PcodeInterval(newLow, newHigh);
+		res.target = this.target;
+		res.bound = this.bound;
+		return res;
 	}
 
 	@Override
@@ -351,78 +500,6 @@ public class PcodeInterval
 			PcodeInterval right,
 			ProgramPoint pp,
 			SemanticOracle oracle) {
-		if (left.isTop() || right.isTop()) {
-			return Satisfiability.UNKNOWN;
-		}
-
-		if (!(operator instanceof PcodeBinaryOperator)) {
-			if (operator instanceof ComparisonEq) {
-				PcodeInterval glb = null;
-				try {
-					glb = left.glb(right);
-				}
-				catch (SemanticException e) {
-					return Satisfiability.UNKNOWN;
-				}
-
-				if (glb.isBottom()) {
-					return Satisfiability.NOT_SATISFIED;
-				}
-				else if (left.interval.isSingleton() && left.equals(right)) {
-					return Satisfiability.SATISFIED;
-				}
-				return Satisfiability.UNKNOWN;
-			}
-			else if (operator instanceof ComparisonLe) {
-				PcodeInterval glb = null;
-				try {
-					glb = left.glb(right);
-				}
-				catch (SemanticException e) {
-					return Satisfiability.UNKNOWN;
-				}
-
-				if (glb.isBottom()) {
-					return Satisfiability.fromBoolean(
-						left.interval.getHigh().compareTo(right.interval.getLow()) <= 0);
-				}
-				// we might have a singleton as glb if the two intervals share a
-				// bound
-				if (glb.interval.isSingleton() &&
-					left.interval.getHigh().compareTo(right.interval.getLow()) == 0) {
-					return Satisfiability.SATISFIED;
-				}
-				return Satisfiability.UNKNOWN;
-			}
-			else if (operator instanceof ComparisonLt) {
-				PcodeInterval glb = null;
-				try {
-					glb = left.glb(right);
-				}
-				catch (SemanticException e) {
-					return Satisfiability.UNKNOWN;
-				}
-
-				if (glb.isBottom()) {
-					return Satisfiability.fromBoolean(
-						left.interval.getHigh().compareTo(right.interval.getLow()) < 0);
-				}
-				return Satisfiability.UNKNOWN;
-			}
-			else if (operator instanceof ComparisonNe) {
-				PcodeInterval glb = null;
-				try {
-					glb = left.glb(right);
-				}
-				catch (SemanticException e) {
-					return Satisfiability.UNKNOWN;
-				}
-				if (glb.isBottom()) {
-					return Satisfiability.SATISFIED;
-				}
-				return Satisfiability.UNKNOWN;
-			}
-		}
 		return Satisfiability.UNKNOWN;
 	}
 
@@ -457,62 +534,52 @@ public class PcodeInterval
 			ProgramPoint dest,
 			SemanticOracle oracle)
 			throws SemanticException {
-		Identifier id;
-		PcodeInterval eval;
-		boolean rightIsExpr;
-		if (left instanceof Identifier) {
+
+		if (operator instanceof PcodeBinaryOperator) {
+			return environment;
+		}
+
+		Identifier id = null;
+		PcodeInterval eval = null;
+		PcodeInterval val = null;
+		boolean complement = false;
+		if (left instanceof Identifier leftId) {
+			id = leftId;
 			eval = eval(right, environment, src, oracle);
-			id = (Identifier) left;
-			rightIsExpr = true;
-		}
-		else if (right instanceof Identifier) {
-			eval = eval(left, environment, src, oracle);
-			id = (Identifier) right;
-			rightIsExpr = false;
-		}
-		else
-			return environment;
-
-		PcodeInterval starting = environment.getState(id);
-		if (eval.isBottom() || starting.isBottom()) {
-			return environment.bottom();
-		}
-
-		boolean lowIsMinusInfinity = eval.interval.lowIsMinusInfinity();
-		PcodeInterval low_inf = new PcodeInterval(eval.interval.getLow(), MathNumber.PLUS_INFINITY);
-		PcodeInterval lowp1_inf =
-			new PcodeInterval(eval.interval.getLow().add(MathNumber.ONE), MathNumber.PLUS_INFINITY);
-		PcodeInterval inf_high =
-			new PcodeInterval(MathNumber.MINUS_INFINITY, eval.interval.getHigh());
-		PcodeInterval inf_highm1 = new PcodeInterval(MathNumber.MINUS_INFINITY,
-			eval.interval.getHigh().subtract(MathNumber.ONE));
-
-		PcodeInterval update = null;
-		if (!(operator instanceof PcodeBinaryOperator)) {
-			if (operator instanceof ComparisonEq) {
-				update = eval;
+			val = environment.getState(leftId);
+			if (val.isBottom()) {
+				return environment.bottom();
 			}
-			else if (operator instanceof ComparisonLe) {
-				update = rightIsExpr ? starting.glb(inf_high)
-						: lowIsMinusInfinity ? null : starting.glb(low_inf);
-			}
-			else if (operator instanceof ComparisonLt) {
-				if (rightIsExpr) {
-					update = lowIsMinusInfinity ? eval : starting.glb(inf_highm1);
-				}
-				else {
-					update = lowIsMinusInfinity ? null : starting.glb(lowp1_inf);
-				}
+			if (operator instanceof ComparisonNe) {
+				eval = new PcodeInterval(eval.interval.complement());
+				complement = true;
 			}
 		}
-
-		if (update == null) {
+		if (id == null) {
 			return environment;
 		}
-		else if (update.isBottom()) {
-			return environment.bottom();
+
+		environment = updateImpliedConditions(environment, src, dest, val, complement);
+
+		return environment.putState(id, eval);
+	}
+
+	protected ValueEnvironment<PcodeInterval> updateImpliedConditions(
+			ValueEnvironment<PcodeInterval> environment,
+			ProgramPoint src, ProgramPoint dest, PcodeInterval val, boolean complement) {
+		if (val.target != null && val.bound != null) {
+			Varnode tgt = val.rightIsExpr ? val.target.getInput(0) : val.target.getInput(1);
+			Identifier vnId =
+				new Variable(Untyped.INSTANCE, tgt.getAddress().toString(), dest.getLocation());
+			PcodeInterval res = new PcodeInterval(complement ? val.intNeq : val.intEq);
+			return environment.putState(vnId, res);
 		}
-		return environment.putState(id, update);
+		return environment;
+	}
+
+	protected PcodeInterval complement() {
+		PcodeInterval comp = new PcodeInterval(this.interval.complement());
+		return comp;
 	}
 
 	@Override
@@ -538,9 +605,10 @@ public class PcodeInterval
 		if (rv != null) {
 			BigInteger val = rv.getUnsignedValue();
 			if (val != null) {
-				return new PcodeInterval(val.longValue(), val.longValue());
+				return new PcodeInterval(new LongInterval(val.longValue(), val.longValue()));
 			}
 		}
 		return top();
 	}
+
 }

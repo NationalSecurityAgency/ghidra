@@ -41,12 +41,24 @@ public class MemoryByteBlock implements ByteBlock {
 	 * @param memory memory from a program
 	 * @param block block from memory
 	 */
-	protected MemoryByteBlock(Program program, Memory memory, MemoryBlock block) {
+	protected MemoryByteBlock(Program program, MemoryBlock block) {
 		this.program = program;
-		this.memory = memory;
+		this.memory = program.getMemory();
 		this.block = block;
 		this.start = block.getStart();
 		this.bigEndian = memory.isBigEndian();
+	}
+
+	public Address getStart() {
+		return start;
+	}
+
+	public Address getEnd() {
+		return block.getEnd();
+	}
+
+	public boolean contains(Address address) {
+		return block.contains(address);
 	}
 
 	/**
@@ -377,4 +389,5 @@ public class MemoryByteBlock implements ByteBlock {
 		}
 		return true;
 	}
+
 }

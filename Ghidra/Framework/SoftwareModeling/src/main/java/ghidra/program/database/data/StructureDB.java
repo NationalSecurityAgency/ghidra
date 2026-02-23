@@ -193,7 +193,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (validatePackAndNotify) {
 				dataType = validateDataType(dataType);
 				dataType = resolve(dataType);
-				checkAncestry(dataType);
+				DataTypeUtilities.checkAncestry(this, dataType);
 			}
 
 			DataTypeComponentDB dtc = null;
@@ -335,7 +335,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			int idx;
 			if (isPackingEnabled()) {
@@ -1335,7 +1335,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			if ((offset > structLength) && !isPackingEnabled()) {
 				numComponents += offset - structLength;
@@ -1467,7 +1467,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			length = getPreferredComponentLength(dataType, length);
 
@@ -1579,7 +1579,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 			dataType = validateDataType(dataType);
 			dataType = resolve(dataType);
-			checkAncestry(dataType);
+			DataTypeUtilities.checkAncestry(this, dataType);
 
 			LinkedList<DataTypeComponentDB> replacedComponents = new LinkedList<>();
 
@@ -1778,17 +1778,17 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	private void doReplaceWithPacked(Structure struct, DataType[] resolvedDts) {
 		// assumes components is clear and that alignment characteristics have been set
-		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
-		for (int i = 0; i < otherComponents.length; i++) {
-			DataTypeComponent dtc = otherComponents[i];
-			DataType dt = dtc.getDataType();
-			int length = (dt instanceof Dynamic) ? dtc.getLength() : -1;
-			try {
+		try {
+			DataTypeComponent[] otherComponents = struct.getDefinedComponents();
+			for (int i = 0; i < otherComponents.length; i++) {
+				DataTypeComponent dtc = otherComponents[i];
+				DataType dt = dtc.getDataType();
+				int length = (dt instanceof Dynamic) ? dtc.getLength() : -1;
 				doAdd(resolvedDts[i], length, dtc.getFieldName(), dtc.getComment(), false);
 			}
-			catch (DataTypeDependencyException e) {
-				throw new AssertException(e); // ancestry check already performed by caller
-			}
+		}
+		catch (DataTypeDependencyException e) {
+			throw new AssertException(e); // ancestry check already performed by caller
 		}
 	}
 
@@ -1862,6 +1862,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -1930,6 +1933,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		if (dt instanceof BitFieldDataType) {
 			return; // unsupported
 		}
@@ -2052,10 +2058,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeAlignmentChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
+			checkDeleted();
 			if (isPackingEnabled()) {
-				checkDeleted();
 				repack(true, true);
 			}
 		}
@@ -2379,9 +2388,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (oldDt == this) {
+		if (deleting) {
 			return;
 		}
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -2389,7 +2399,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			try {
 				replacementDt = validateDataType(replacementDt); // blocks DEFAULT use for packed
 				replacementDt = resolve(replacementDt);
-				checkAncestry(replacementDt);
+				DataTypeUtilities.checkAncestry(this, replacementDt);
 			}
 			catch (Exception e) {
 				// Handle bad replacement with use of undefined component

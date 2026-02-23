@@ -62,11 +62,10 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	}
 
 	/**
-	 * Returns true if src can overwrite the target composite based on size
+	 * {@return true if src can overwrite the target composite based on size}
 	 * 
-	 * @param src
-	 * @param target
-	 * @return
+	 * @param src {@link Composite} data type
+	 * @param target {@link Composite} data type
 	 */
 	private boolean isSizeCompatible(Composite src, Composite target) {
 		return target.isNotYetDefined() || (src.getLength() == target.getLength());

@@ -47,6 +47,9 @@ public class CachedBytePage {
 	record CacheKey(DebuggerCoordinates coordinates, Address start) {
 		int computeOffset(DebuggerCoordinates coordinates, Address address) {
 			if (coordsEqualForMemory(this.coordinates, coordinates)) {
+				if (start.getAddressSpace() != address.getAddressSpace()) {
+					return -1;
+				}
 				long offset = address.subtract(start);
 				if (0 <= offset && offset < PAGE_SIZE) {
 					return (int) offset;

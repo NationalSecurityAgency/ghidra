@@ -17,17 +17,43 @@
 import os
 import sys
 
+cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
+target = os.getenv('OPT_TARGET_IMG')
+args = os.getenv('OPT_TARGET_ARGS')
 
+
+def parse_parameters():
+    global cxn, target, args
+    argc = len(sys.argv)
+    if argc == 1:
+        return True
+    if argc >= 4:
+        cxn = sys.argv[1]
+        os.environ['OPT_USE_DBGMODEL'] = sys.argv[2]
+        target = sys.argv[3]
+        if argc > 4:
+            args = sys.argv[4]
+        return True
+    print("Error: expected (cxn, use_dbgmodel, target, ...)")
+    return False
+    
 def append_paths():
     sys.path.append(
         f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
-    from gmodutils import ghidra_module_pypath
-    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
-    sys.path.append(ghidra_module_pypath())
+    try:
+        from gmodutils import ghidra_module_pypath
+        sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+        sys.path.append(ghidra_module_pypath())
+    except Exception as e:
+        pass
 
 
 def main():
+    global cxn, target, args
     append_paths()
+    if parse_parameters() is False:
+        return
+    
     # Delay these imports until sys.path is patched
     from ghidradbg import commands as cmd
     from pybag.dbgeng import core as DbgEng
@@ -38,17 +64,15 @@ def main():
     global repl
     repl = cmd.repl
 
-    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-    args = os.getenv('OPT_TARGET_ARGS')
-    if args:
-        args = ' ' + args
-    target = os.getenv('OPT_TARGET_IMG')
+    cmd.ghidra_trace_connect(cxn)
     if target is None or target == "":
         print("dbgeng requires a target image - please try again.")
         cmd.ghidra_trace_disconnect()
         return
 
-    cmd.ghidra_trace_create(target + args, start_trace=False)
+    if args:
+        target = target + ' ' + args
+    cmd.ghidra_trace_create(target, start_trace=False)
 
     # TODO: HACK
     try:

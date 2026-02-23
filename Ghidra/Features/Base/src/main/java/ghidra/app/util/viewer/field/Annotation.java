@@ -15,30 +15,51 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.program.model.listing.Program;
 
 public class Annotation {
 
-	public static final String ESCAPABLE_CHARS = "{}\"\\";
+	private static final char BS = '\\';
+	private static final String SEP = "\\s";
+	private static final String ESCAPABLE_CHARS = "{}\"\\";
 
-	private String annotationText;
-	private String[] annotationParts;
+	private final String[] annotationParts;
+	private final String annotationText;
 
 	/**
 	 * Constructor
-	 * <b>Note</b>: This constructor assumes that the string starts with "{<pre>@</pre>" and ends with '}'
+	 * <br>
+	 * <b>Note</b>: This constructor assumes that the string starts with 
+	 * "{<pre>@</pre>" and ends with '}'
 	 * 
-	 * @param annotationText The complete annotation text.
-	 * text this Annotation can create
-	 * @param program the program
+	 * @param annotationText the complete annotation text.
 	 */
-	public Annotation(String annotationText, Program program) {
-
-		this.annotationText = annotationText;
+	public Annotation(String annotationText) {
 		this.annotationParts = parseAnnotationText(annotationText);
+		this.annotationText = annotationText;
+	}
+
+	/**
+	 * Constructor.  Used for creating a new Annotation from a previously parsed annotation String.
+	 *
+	 * @param annotationParts The annotation parts.
+	 */
+	public Annotation(String[] annotationParts) {
+		this.annotationParts = annotationParts;
+		this.annotationText = buildAnnotationText(annotationParts);
+	}
+
+	/**
+	 * Deprecated.  Use {@link #Annotation(String)}.
+	 * @param annotationText the complete annotation text
+	 * @param program ignored
+	 */
+	@Deprecated
+	public Annotation(String annotationText, Program program) {
+		this(annotationText);
 	}
 
 	public String[] getAnnotationParts() {
@@ -54,136 +75,113 @@ public class Annotation {
 		return annotationText;
 	}
 
-	private String[] parseAnnotationText(String text) {
-
+	private static String[] parseAnnotationText(String text) {
 		String trimmed = text.substring(2, text.length() - 1); // remove "{@" and '}' 
-		List<String> tokens = new ArrayList<>();
-		List<TextPart> parts = parseText(trimmed);
-		for (TextPart part : parts) {
-			part.grabTokens(tokens);
-		}
-
-		return tokens.toArray(new String[tokens.size()]);
+		return parseText(trimmed);
 	}
 
-	private List<TextPart> parseText(String text) {
-
-		List<TextPart> textParts = new ArrayList<>();
-		boolean escaped = false;
-		boolean inQuote = false;
-		int partStart = 0;
-		int n = text.length();
-		for (int i = 0; i < n; i++) {
-
-			boolean wasEscaped = escaped;
-			escaped = false;
-			char prev = '\0';
-			if (i != 0 && !wasEscaped) {
-				prev = text.charAt(i - 1);
-			}
-
-			char c = text.charAt(i);
-			if (prev == '\\') {
-				if (Annotation.ESCAPABLE_CHARS.indexOf(c) != -1) {
-					escaped = true;
-					continue;
-				}
-			}
-
-			if (c == '"') {
-				if (inQuote) {
-					// end quote
-					String s = text.substring(partStart, i + 1); // keep the quote
-					textParts.add(new QuotedTextPart(s));
-					partStart = i + 1;
-				}
-				else {
-					// end previous word; start quote
-					if (i != 0) {
-						String s = text.substring(partStart, i);
-						textParts.add(new TextPart(s));
-						partStart = i;
-					}
-				}
-				inQuote = !inQuote;
-			}
-		}
-
-		if (partStart < n) { // grab trailing text
-			String s = text.substring(partStart, n);
-			textParts.add(new TextPart(s));
-		}
-
-		return textParts;
+	private static String buildAnnotationText(String[] text) {
+		return Arrays.stream(text)
+				.map(Annotation::maybeQuote)
+				.collect(Collectors.joining(" ", "{@", "}"));
 	}
 
-	// remove any backslashes that escape special annotation characters, like '{' and '}'
-	private static String removeEscapeChars(String text) {
-		boolean escaped = false;
+	private static String[] parseText(String text) {
+		List<String> parts = new ArrayList<>();
+		boolean escape = false;
+		boolean quote = false;
 		StringBuilder buffy = new StringBuilder();
-		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			boolean wasEscaped = escaped;
-			escaped = false;
-			if (c != '\\') {
+
+		for (char c : text.toCharArray()) {
+			if (escape) {
+				escape = false;
+				buffy.append(BS);
 				buffy.append(c);
 				continue;
 			}
 
-			char next = '\0';
-			if (i != text.length() - 1 && !wasEscaped) {
-				next = text.charAt(i + 1);
-			}
-
-			if (ESCAPABLE_CHARS.indexOf(next) != -1) {
-				escaped = true;
+			if (c == BS) {
+				escape = true;
 				continue;
 			}
+
+			if (c == '"') {
+				String s = buffy.toString();
+				if (quote) {
+					// end quote; keep the text as a single part
+					parts.add(s);
+				}
+				else {
+					// new quote start; split previous unquoted text into parts
+					parts.addAll(Arrays.asList(s.split(SEP)));
+				}
+				buffy.setLength(0);
+				quote = !quote;
+			}
+			else {
+				buffy.append(c);
+			}
+		}
+
+		String s = buffy.toString();
+		parts.addAll(Arrays.asList(s.split(SEP)));
+
+		return parts.stream()
+				.filter(t -> t.length() > 0)
+				.map(t -> removeEscapeChars(t))
+				.toArray(String[]::new);
+	}
+
+	// remove any backslashes that escape special annotation characters, like '{' and '}'
+	private static String removeEscapeChars(String text) {
+		boolean escape = false;
+		StringBuilder buffy = new StringBuilder();
+		for (char c : text.toCharArray()) {
+			if (escape) {
+				escape = false;
+				if (ESCAPABLE_CHARS.indexOf(c) == -1) {
+					buffy.append(BS); // restore non-escaping backslash
+				}
+				buffy.append(c);
+				continue;
+			}
+
+			if (c == BS) {
+				escape = true;
+				continue;
+			}
+
 			buffy.append(c);
 		}
 
 		return buffy.toString();
 	}
 
-	/**
-	 * A simple class to hold text and extract tokens 
-	 */
-	private class TextPart {
-
-		protected String text;
-
-		TextPart(String text) {
-			this.text = text;
+	private static String maybeQuote(String text) {
+		if (needsQuotes(text)) {
+			return '"' + escapeAnnotationChars(text) + '"';
 		}
+		return text;
+	}
 
-		public void grabTokens(List<String> tokens) {
-			String escaped = removeEscapeChars(text);
-			String[] strings = escaped.split("\\s");
-			for (String string : strings) {
-				// 0 length strings can happen when 'content' begins with a space
-				if (string.length() > 0) {
-					tokens.add(string);
-				}
+	private static boolean needsQuotes(String text) {
+		for (char c : text.toCharArray()) {
+			if (ESCAPABLE_CHARS.indexOf(c) != -1 || Character.isWhitespace(c)) {
+				return true;
 			}
 		}
-
-		@Override
-		public String toString() {
-			return text;
-		}
+		return false;
 	}
 
-	private class QuotedTextPart extends TextPart {
-		QuotedTextPart(String text) {
-			super(text);
+	private static String escapeAnnotationChars(String text) {
+		StringBuilder buffy = new StringBuilder();
+		for (char c : text.toCharArray()) {
+			if (ESCAPABLE_CHARS.indexOf(c) != -1) {
+				buffy.append(BS);
+			}
+			buffy.append(c);
 		}
 
-		@Override
-		public void grabTokens(List<String> tokens) {
-			String unquoted = text.substring(1, text.length() - 1);
-			String escaped = removeEscapeChars(unquoted);
-			tokens.add(escaped); // all quoted text is a 'token'
-		}
+		return buffy.toString();
 	}
-
 }

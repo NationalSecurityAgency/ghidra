@@ -183,9 +183,13 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
-			if (checkIsValid() && dt == getDataType()) {
+			checkDeleted();
+			if (dt == getDataType()) {
 				notifySizeChanged(true);
 			}
 		}
@@ -196,9 +200,13 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeAlignmentChanged(DataType dt) {
+		if (deleting) {
+			return;
+		}
 		lock.acquire();
 		try {
-			if (checkIsValid() && dt == getDataType()) {
+			checkDeleted();
+			if (dt == getDataType()) {
 				notifyAlignmentChanged(true);
 			}
 		}
@@ -314,12 +322,17 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (newDt == this || (newDt instanceof Dynamic) || (newDt instanceof FactoryDataType)) {
-			newDt = DataType.DEFAULT;
+		if (deleting) {
+			return;
 		}
 		lock.acquire();
 		try {
-			if (checkIsValid() && getDataType() == oldDt) {
+			checkDeleted();
+			if (oldDt == getDataType()) {
+				DataTypeUtilities.checkValidReplacement(oldDt, newDt);
+				if (newDt == this) {
+					newDt = DataType.DEFAULT;
+				}
 				settingsDef = null;
 				defaultSettings = null;
 				oldDt.removeParent(this);
@@ -351,15 +364,36 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
-		if (getDataType() == dt) {
-			dataMgr.addDataTypeToDelete(key);
+		if (deleting) {
+			return;
+		}
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (dt == getDataType()) {
+				dataMgr.addDataTypeToDelete(this, key);
+				deleting = true;
+			}
+		}
+		finally {
+			lock.release();
 		}
 	}
 
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
-		if (getDataType() == dt) {
-			updateAutoName(true);
+		if (deleting) {
+			return;
+		}
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (dt == getDataType()) {
+				updateAutoName(true);
+			}
+		}
+		finally {
+			lock.release();
 		}
 	}
 

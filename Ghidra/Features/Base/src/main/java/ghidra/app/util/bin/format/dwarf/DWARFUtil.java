@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -59,9 +59,9 @@ public class DWARFUtil {
 	 * <p>
 	 * Can be thought of as an enum numeric value to do a name lookup.
 	 * 
-	 * @param clazz
-	 * @param value
-	 * @return
+	 * @param clazz 'enum' class that contains the "public static final" values
+	 * @param value value to lookup
+	 * @return string name of value 'enum'
 	 */
 	public static String toString(Class<?> clazz, long value) {
 		Field field = getStaticFinalFieldWithValue(clazz, value);
@@ -107,8 +107,8 @@ public class DWARFUtil {
 	 * For example, "_ZN19class1_inline_funcs3fooEv" -&gt;
 	 * [19 chars]'class1_inline_funcs', [3 chars]'foo'
 	 * 
-	 * @param s
-	 * @return
+	 * @param s mangled string
+	 * @return list of elements extracted from mangled string
 	 */
 	public static List<String> parseMangledNestings(String s) {
 		List<String> results = new ArrayList<>();
@@ -140,14 +140,13 @@ public class DWARFUtil {
 	/**
 	 * Try to find gnu mangled name nesting info in a DIE's children's linkage strings.
 	 * 
-	 * @param die
+	 * @param die {@link DebugInfoEntry} record
 	 * @return a list of string of nesting names, ending with what should be the DIE parameter's
 	 * name.
 	 */
 	public static List<String> findLinkageNameInChildren(DebugInfoEntry die) {
-		DWARFProgram prog = die.getProgram();
 		for (DebugInfoEntry childDIE : die.getChildren(DWARFTag.DW_TAG_subprogram)) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = die.getContainer().getAggregate(childDIE);
 			String linkage = childDIEA.getString(DW_AT_linkage_name, null);
 			if (linkage == null) {
 				linkage = childDIEA.getString(DW_AT_MIPS_linkage_name, null);
@@ -202,7 +201,7 @@ public class DWARFUtil {
 		DWARFProgram prog = diea.getProgram();
 		int typeDefCount = 0;
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childDIE);
 			if (diea == childDIEA || diea.getOffset() == childDIEA.getOffset()) {
 				return "anon_%s_%d".formatted(childDIEA.getTag().getContainerTypeName(),
 					typeDefCount);
@@ -230,10 +229,9 @@ public class DWARFUtil {
 			return null;
 		}
 
-		DWARFProgram prog = diea.getProgram();
 		List<String> users = new ArrayList<>();
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childDIE);
 
 			String childName = childDIEA.getName();
 			DIEAggregate type = childDIEA.getTypeRef();
@@ -273,7 +271,7 @@ public class DWARFUtil {
 				childEntry.getTag() == DWARFTag.DW_TAG_inheritance)) {
 				continue;
 			}
-			DIEAggregate childDIEA = diea.getProgram().getAggregate(childEntry);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childEntry);
 			if (childDIEA.hasAttribute(DW_AT_external)) {
 				continue;
 			}
@@ -393,7 +391,7 @@ public class DWARFUtil {
 		}
 
 		DIEAggregate funcDIEA = paramDIEA.getParent();
-		DWARFAttributeValue dwATObjectPointer = funcDIEA.getAttribute(DW_AT_object_pointer);
+		DWARFAttributeValue dwATObjectPointer = funcDIEA.findValue(DW_AT_object_pointer);
 		if (dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
 			paramDIEA.hasOffset(dnum.getUnsignedValue())) {
 			return true;
