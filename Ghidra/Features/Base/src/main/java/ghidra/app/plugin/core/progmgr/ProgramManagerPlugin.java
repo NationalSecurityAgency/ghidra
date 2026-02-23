@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.progmgr;
 
 import java.beans.PropertyEditor;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,6 +43,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
@@ -187,11 +187,10 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 	@Override
 	public Program openProgram(URL ghidraURL, int state) {
-		String location = ghidraURL.getRef();
 		Program program = openProgram(new ProgramLocator(ghidraURL), state);
-
+		String location = GhidraURL.getDecodedReference(ghidraURL);
 		if (program != null && location != null && state == OPEN_CURRENT) {
-			gotoProgramRef(program, ghidraURL.getRef());
+			gotoProgramRef(program, location);
 			programMgr.saveLocation();
 		}
 		return program;
@@ -904,9 +903,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 			return null;
 		}
 		try {
-			return new URL(url);
+			return new URI(url).toURL();
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			return null;
 		}
 	}

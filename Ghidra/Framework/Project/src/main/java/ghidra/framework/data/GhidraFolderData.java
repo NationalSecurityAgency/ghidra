@@ -1505,16 +1505,19 @@ class GhidraFolderData {
 	DomainFile createLinkFile(String ghidraUrl, String linkFilename, LinkHandler<?> lh)
 			throws IOException {
 
-		URL url = new URL(ghidraUrl);
-		if (!GhidraURL.isLocalGhidraURL(ghidraUrl) && !GhidraURL.isServerRepositoryURL(url)) {
+		URL url = GhidraURL.toURL(ghidraUrl);
+		if (!GhidraURL.isLocalURL(ghidraUrl) && !GhidraURL.isServerRepositoryURL(url)) {
 			throw new IllegalArgumentException("Invalid Ghidra URL specified");
+		}
+		if (url.getRef() != null) {
+			throw new IllegalArgumentException("URL must not include #reference");
 		}
 
 		// Force use of unique link-file name
 		String newName = getUniqueName(linkFilename);
 
 		try {
-			lh.createLink(ghidraUrl, fileSystem, getPathname(), newName);
+			lh.createLink(url.toExternalForm(), fileSystem, getPathname(), newName);
 		}
 		catch (InvalidNameException e) {
 			throw new IOException(e); // unexpected
@@ -1566,6 +1569,9 @@ class GhidraFolderData {
 		Path linkParentPath = Paths.get(linkParentPathname);
 		Path relativePath = linkParentPath.relativize(referencedPath);
 		String path = relativePath.toString();
+
+		// When running on Windows path separator may get switched on us.  Be sure to switch back.
+		path = path.replace('\\', '/');
 
 		// Re-apply preserved finalRefElement to relative path
 		if (finalRefElement != null) {

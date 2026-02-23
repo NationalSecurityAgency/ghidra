@@ -149,7 +149,7 @@ public class GhidraURLConnection extends URLConnection {
 	public void setReadOnly(boolean state) {
 		if (connected)
 			throw new IllegalStateException("Already connected");
-		if (GhidraURL.isLocalProjectURL(url) && !state) {
+		if (GhidraURL.isLocalURL(url) && !state) {
 			// local project write-access not supported due to inadequate cleanup/disposal strategy
 			throw new UnsupportedOperationException("write access to local projects not supported");
 		}

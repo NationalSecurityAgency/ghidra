@@ -16,8 +16,6 @@
 package ghidra.framework.main;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 import docking.action.MenuData;
@@ -73,10 +71,10 @@ public class ProjectDataFollowLinkAction extends FrontendProjectTreeAction {
 		if (GhidraURL.isGhidraURL(linkPath)) {
 			// Follow URL using a project view
 			try {
-				plugin.showInViewedProject(new URL(linkPath), isFolderLink);
+				plugin.showInViewedProject(GhidraURL.toURL(linkPath), isFolderLink);
 				return;
 			}
-			catch (MalformedURLException e) {
+			catch (IllegalArgumentException e) {
 				Msg.error(this, "Invalid link URL: " + e.getMessage());
 				return;
 			}

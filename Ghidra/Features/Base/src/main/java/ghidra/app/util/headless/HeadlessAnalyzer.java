@@ -267,7 +267,7 @@ public class HeadlessAnalyzer {
 			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
 		}
 
-		if (GhidraURL.isLocalProjectURL(ghidraURL)) {
+		if (GhidraURL.isLocalURL(ghidraURL)) {
 			Msg.error(this,
 				"Ghidra URL command form does not supported local project URLs (ghidra:/path...)");
 			return;
@@ -1808,10 +1808,7 @@ public class HeadlessAnalyzer {
 		try {
 			tempProject = new HeadlessProject(getProjectManager(), locator);
 		}
-		catch (NotOwnerException e) {
-			throw new IOException(e);
-		}
-		catch (LockException e) {
+		catch (NotFoundException | NotOwnerException | LockException e) {
 			throw new IOException(e);
 		}
 
@@ -1852,7 +1849,7 @@ public class HeadlessAnalyzer {
 	private static class HeadlessProject extends DefaultProject {
 
 		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectLocator projectLocator)
-				throws NotOwnerException, LockException, IOException {
+				throws NotFoundException, NotOwnerException, LockException, IOException {
 			super(projectManager, projectLocator, false);
 			AppInfo.setActiveProject(this);
 		}

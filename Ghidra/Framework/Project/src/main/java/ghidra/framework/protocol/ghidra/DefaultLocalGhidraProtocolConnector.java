@@ -27,6 +27,7 @@ import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.store.LockException;
 import ghidra.util.NotOwnerException;
 import ghidra.util.ReadOnlyException;
+import ghidra.util.exception.NotFoundException;
 
 /**
  * <code>DefaultLocalGhidraProtocolConnector</code> provides support for the
@@ -133,6 +134,9 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 
 		try {
 			return new DefaultProjectData(localStorageLocator, !readOnlyAccess, false);
+		}
+		catch (NotFoundException e) {
+			statusCode = StatusCode.NOT_FOUND;
 		}
 		catch (NotOwnerException | ReadOnlyException e) {
 			statusCode = StatusCode.UNAUTHORIZED;

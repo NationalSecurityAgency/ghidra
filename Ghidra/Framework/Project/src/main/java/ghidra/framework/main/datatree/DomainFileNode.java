@@ -16,7 +16,6 @@
 package ghidra.framework.main.datatree;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -324,8 +323,8 @@ public class DomainFileNode extends DataTreeNode {
 
 		if (GhidraURL.isGhidraURL(linkPath)) {
 			try {
-				URL url = new URL(linkPath);
-				if (GhidraURL.isLocalGhidraURL(linkPath)) {
+				URL url = GhidraURL.toURL(linkPath);
+				if (GhidraURL.isLocalURL(linkPath)) {
 					ProjectLocator loc = GhidraURL.getProjectStorageLocator(url);
 					if (loc != null) {
 						String projectPath = GhidraURL.getProjectPathname(url);
@@ -341,7 +340,7 @@ public class DomainFileNode extends DataTreeNode {
 					}
 				}
 			}
-			catch (MalformedURLException e) {
+			catch (IllegalArgumentException e) {
 				// ignore - use original linkPath
 			}
 		}

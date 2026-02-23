@@ -53,7 +53,7 @@ public abstract class IterateRepository {
 	public void process(URL ghidraURL, TaskMonitor monitor) throws Exception, CancelledException {
 
 		if (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
-			!GhidraURL.isLocalProjectURL(ghidraURL)) {
+			!GhidraURL.isLocalURL(ghidraURL)) {
 			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
 		}
 

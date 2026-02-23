@@ -110,9 +110,14 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 	 */
 	public static URL getMinimalURL(URL url) {
 		try {
-			return new URL(url, "/");
+			URI uri = url.toURI();
+			if (uri.isOpaque()) {
+				// Can't easily simplify - GhidraURL could help but is not visible 
+				return url;
+			}
+			return uri.resolve("/").toURL();
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			// ignore
 		}
 		return null;

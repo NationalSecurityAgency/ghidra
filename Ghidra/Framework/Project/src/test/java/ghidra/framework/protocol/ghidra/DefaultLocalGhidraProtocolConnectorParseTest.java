@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.framework.protocol.ghidra;
 import static org.junit.Assert.*;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 
 import org.junit.Test;
 
@@ -34,38 +34,44 @@ public class DefaultLocalGhidraProtocolConnectorParseTest extends AbstractGeneri
 	public void testParseURL() throws Exception {
 
 		DefaultLocalGhidraProtocolConnector pp =
-			new DefaultLocalGhidraProtocolConnector(new URL("ghidra:/C:/x/y/proj"));
+			new DefaultLocalGhidraProtocolConnector(
+				new URI(GhidraURL.PROTOCOL, "/C:/x/y/proj", null).toURL());
 		assertEquals("proj", pp.getRepositoryName());
 		assertEquals("/", pp.getFolderPath());
 		assertNull(pp.getFolderItemName());
 		assertEquals("/", getInstanceField("itemPath", pp));
 
-		pp = new DefaultLocalGhidraProtocolConnector(new URL("ghidra:/x/y/proj"));
+		pp = new DefaultLocalGhidraProtocolConnector(
+			new URI(GhidraURL.PROTOCOL, "/x/y/proj", null).toURL());
 		assertEquals("proj", pp.getRepositoryName());
 		assertEquals("/", pp.getFolderPath());
 		assertNull(pp.getFolderItemName());
 		assertEquals("/", getInstanceField("itemPath", pp));
 
-		pp = new DefaultLocalGhidraProtocolConnector(new URL("ghidra:/x/y/proj?/"));
+		pp = new DefaultLocalGhidraProtocolConnector(
+			new URI(GhidraURL.PROTOCOL, "/x/y/proj?/", null).toURL());
 		assertEquals("proj", pp.getRepositoryName());
 		assertEquals("/", pp.getFolderPath());
 		assertNull(pp.getFolderItemName());
 		assertEquals("/", getInstanceField("itemPath", pp));
 
-		pp = new DefaultLocalGhidraProtocolConnector(new URL("ghidra:/x/y/proj?/a"));
+		pp = new DefaultLocalGhidraProtocolConnector(
+			new URI(GhidraURL.PROTOCOL, "/x/y/proj?/a", null).toURL());
 		assertEquals("proj", pp.getRepositoryName());
 		assertEquals("/", pp.getFolderPath());
 		assertEquals("a", pp.getFolderItemName());
 		assertEquals("/a", getInstanceField("itemPath", pp));
 
-		pp = new DefaultLocalGhidraProtocolConnector(new URL("ghidra:/x/y/proj?/a/b#ref"));
+		pp = new DefaultLocalGhidraProtocolConnector(
+			new URI(GhidraURL.PROTOCOL, "/x/y/proj?/a/b", "ref").toURL());
 		assertEquals("proj", pp.getRepositoryName());
 		assertEquals("/a", pp.getFolderPath());
 		assertEquals("b", pp.getFolderItemName());
 		assertEquals("/a/b", getInstanceField("itemPath", pp));
 
 		try {
-			pp = new DefaultLocalGhidraProtocolConnector(new URL("ghidra:/x/y/proj?//"));
+			pp = new DefaultLocalGhidraProtocolConnector(
+				new URI(GhidraURL.PROTOCOL, "/x/y/proj?//", null).toURL());
 			fail();
 		}
 		catch (MalformedURLException e) {

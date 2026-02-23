@@ -18,8 +18,8 @@ package ghidra.framework.main.datatree;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -64,12 +64,12 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 
 		return toFiles(transferData, s -> {
 			try {
-				return new File(new URL(s.replaceAll(" ", "%20")).toURI()); // fixup spaces
+				return new File(new URI(s));
 			}
-			catch (MalformedURLException e) {
+			catch (URISyntaxException e) {
 				// this could be the case that this handler is attempting to process an arbitrary
 				// String that is not actually a URL
-				Msg.trace(this, "Not a URL: '" + s + "'", e);
+				Msg.trace(this, "Not a valid URL: '" + s + "'", e);
 				return null;
 			}
 			catch (Exception e) {
