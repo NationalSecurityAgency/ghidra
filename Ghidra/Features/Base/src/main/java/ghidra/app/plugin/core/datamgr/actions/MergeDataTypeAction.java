@@ -58,12 +58,6 @@ public class MergeDataTypeAction extends DockingAction {
 	}
 
 	@Override
-	public boolean isAddToPopup(ActionContext context) {
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		return node instanceof DataTypeNode;
-	}
-
-	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
 		if (node == null) {
@@ -75,6 +69,10 @@ public class MergeDataTypeAction extends DockingAction {
 		}
 
 		DataType dataType = dtNode.getDataType();
+		if (!DataTypeUtilities.supportsMerge(dataType)) {
+			return false;
+		}
+		
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 
 		// for now, only allow merging on program datatypes.
