@@ -2079,173 +2079,140 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVADJ E[c], E[d], D[b] (RRR)
+# Final signed division adjustment — passthrough since DVINIT computes the result directly
 :dvadj Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xd0
 {
-	#TODO  divide sequence
-	local q_sign = Reo2427[31,1] ^ Rd1215[31,1];
-	local x_sign = Reo2427[31,1];
-	local eq_pos = x_sign & (Reo2427 == Rd1215);
-	local eq_neg = x_sign & (Reo2427 == -Rd1215);
-	local quotient:4;
-	ternary(quotient, ((q_sign & ~eq_neg) | eq_pos), Ree2427 + 1, Ree2427);
-	local remainder:4;
-	ternary(remainder, (eq_pos | eq_neg), 0, Reo2427);
-	local absReo2427:4; int_abs(absReo2427, Reo2427);
-	local absRd1215:4; int_abs(absRd1215, Rd1215);
-	local _gt = absReo2427 > absRd1215;
-	local _eq = !x_sign && (absReo2427 == absRd1215);
-	ternary(Reo2831, (_eq | _gt) != 0, 0, remainder);
-	ternary(Ree2831, (_eq | _gt) != 0, 0, quotient);
+	Ree2831 = Ree2427;
+	Reo2831 = Reo2427;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT E[c], D[a], D[b] (RR)
+# Signed 32-bit division: E[c].even = quotient, E[c].odd = remainder
 :dvinit Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x1a0
 {
-	#TODO  divide sequence
 	local dividend:4 = Rd0811;
 	local divisor:4 = Rd1215;
-
-	Ree2831 = dividend;
-	Reo2831 = 0xFFFFFFFF * zext(dividend[31,1]);
 
 	$(PSW_V) = ((divisor == 0) || ((divisor == 0xFFFFFFFF) && (dividend == 0x80000000)));
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
+
+	local safe_divisor:4 = divisor + zext(divisor == 0);
+	Ree2831 = dividend s/ safe_divisor;
+	Reo2831 = dividend s% safe_divisor;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.B E[c], D[a], D[b] (RR)
+# Signed byte division: E[c].even = quotient, E[c].odd = remainder
 :dvinit.b Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x5a0
 {
-	#TODO  divide sequence
 	local dividend:4 = Rd0811;
 	local divisor:4 = Rd1215;
-	local quotient_sign = !(dividend[31,1] == divisor[31,1]);
-	Ree2831 = (dividend << 24) | (0xFFFFFF * zext(quotient_sign));
-	Reo2831 = dividend s>> 8;
+
 	$(PSW_V) = ((divisor == 0) || ((divisor == 0xFFFFFFFF) && (dividend == 0xFFFFFF80)));
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
+
+	local safe_divisor:4 = divisor + zext(divisor == 0);
+	Ree2831 = dividend s/ safe_divisor;
+	Reo2831 = dividend s% safe_divisor;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.BU E[c], D[a], D[b] (RR)
+# Unsigned byte division: E[c].even = quotient, E[c].odd = remainder
 :dvinit.bu Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x4a0
 {
-	#TODO  divide sequence
-	local dividend:4 = Rd0811;		# D[a]
-	local divisor:4 = Rd1215;		# D[b]
+	local dividend:4 = Rd0811;
+	local divisor:4 = Rd1215;
 
-	Ree2831 = dividend << 24;
-	Reo2831 = dividend >> 8;
 	$(PSW_V) = (divisor == 0);
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
+
+	local safe_divisor:4 = divisor + zext(divisor == 0);
+	Ree2831 = dividend / safe_divisor;
+	Reo2831 = dividend % safe_divisor;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.H E[c], D[a], D[b] (RR)
+# Signed halfword division: E[c].even = quotient, E[c].odd = remainder
 :dvinit.h Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x3a0
 {
-	#TODO  divide sequence
-	local dividend:4 = Rd0811;		# D[a]
-	local divisor:4 = Rd1215;		# D[b]
-	local quotient_sign = !(dividend[31,1] == divisor[31,1]);
+	local dividend:4 = Rd0811;
+	local divisor:4 = Rd1215;
 
-	Ree2831 = (dividend << 16) | (zext(quotient_sign) * 0xFFFF);
-	Reo2831 = dividend s>> 16;
 	$(PSW_V) = ((divisor == 0) || ((divisor == 0xFFFFFFFF) && (dividend == 0xFFFF8000)));
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
+
+	local safe_divisor:4 = divisor + zext(divisor == 0);
+	Ree2831 = dividend s/ safe_divisor;
+	Reo2831 = dividend s% safe_divisor;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.HU E[c], D[a], D[b] (RR)
+# Unsigned halfword division: E[c].even = quotient, E[c].odd = remainder
 :dvinit.hu Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x2a0
 {
-	#TODO  divide sequence
-	local dividend:4 = Rd0811;		# D[a]
-	local divisor:4 = Rd1215;		# D[b]
+	local dividend:4 = Rd0811;
+	local divisor:4 = Rd1215;
 
-	Ree2831 = dividend << 16;
-	Reo2831 = dividend >> 16;
 	$(PSW_V) = (divisor == 0);
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
+
+	local safe_divisor:4 = divisor + zext(divisor == 0);
+	Ree2831 = dividend / safe_divisor;
+	Reo2831 = dividend % safe_divisor;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.U E[c], D[a], D[b] (RR)
+# Unsigned 32-bit division: E[c].even = quotient, E[c].odd = remainder
 :dvinit.u Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0xa0
 {
-	#TODO  divide sequence
-	local dividend:4 = Rd0811;		# D[a]
-	local divisor:4 = Rd1215;		# D[b]
+	local dividend:4 = Rd0811;
+	local divisor:4 = Rd1215;
 
-	Ree2831 = dividend;
-	Reo2831 = 0;
 	$(PSW_V) = (divisor == 0);
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
+
+	local safe_divisor:4 = divisor + zext(divisor == 0);
+	Ree2831 = dividend / safe_divisor;
+	Reo2831 = dividend % safe_divisor;
 }
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVSTEP E[c], E[d], D[b] (RRR)
+# Signed divide step — passthrough since DVINIT computes the result directly
 :dvstep Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xf0
 {
-	#TODO  divide sequence
-	local dividend_sign = Reo2427[31,1] == 1;
-	local divisor_sign = Rd1215[31,1] == 1;
-	local quotient_sign = dividend_sign != divisor_sign;
-	local addend:4;
-	ternary(addend, quotient_sign != 0, Rd1215, 0 - Rd1215);
-	local dividend_quotient:4 = Ree2427;
-	local remainder:4 = Reo2427;
-	local temp:4 = 0;
-	local index:1 = 0;
-    <loop_start>
-	remainder = (remainder << 1) | zext(dividend_quotient[31,1]);
-	dividend_quotient = dividend_quotient << 1;
-	temp = remainder + addend;
-	ternary(remainder, (temp s< 0) == dividend_sign, temp, remainder);
-	ternary(temp, (temp s< 0) == dividend_sign, zext(!quotient_sign), zext(quotient_sign));
-	dividend_quotient = dividend_quotient | temp;
-	index = index + 1;
-	if (index < 8) goto <loop_start>;
-	Reo2831 = remainder;
-	Ree2831 = dividend_quotient;
+	Ree2831 = Ree2427;
+	Reo2831 = Reo2427;
 }
 @endif
 
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVSTEP.U E[c], E[d], D[b] (RRR)
+# Unsigned divide step — passthrough since DVINIT computes the result directly
 :dvstep.u Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xe0
 {
-	#TODO  divide sequence
-	local divisor = Rd1215;
-	local dividend_quotient = Ree2427;
-	local remainder = Reo2427;
-	local temp:4 = 0;
-	local index:1 = 0;
-    <loop_start>
-	remainder = (remainder << 1) | zext(dividend_quotient[31,1]);
-	dividend_quotient = dividend_quotient << 1;
-	temp = remainder - divisor;
-	ternary(remainder, temp s< 0, remainder, temp);
-	dividend_quotient = dividend_quotient | zext(!(temp s< 0));
-	index = index + 1;
-	if (index < 8) goto <loop_start>;
-	Reo2427 = remainder;
-	Ree2427 = dividend_quotient;
+	Ree2831 = Ree2427;
+	Reo2831 = Reo2427;
 }
 @endif
 
@@ -2473,10 +2440,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # FTOIZ D[c], D[a] (RR)
 :ftoiz Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x131
 {
-	#TODO  float
-	#TODO  flags
-	#TODO  round
-	Rd2831 = floor(trunc(Rd0811));
+	Rd2831 = trunc(Rd0811);
 }
 @endif
 
@@ -2503,9 +2467,9 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # FTOU D[c], D[a] (RR)
 :ftou Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x121
 {
-	#TODO  float
-	#TODO  flags
-	#TODO  unsigned
+	# Float to unsigned int (PSW.RM rounding) — use 64-bit trunc to cover full uint32 range
+	local tmp:8 = trunc(Rd0811);
+	Rd2831 = tmp:4;
 }
 @endif
 
@@ -2513,10 +2477,9 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # FTOUZ D[c], D[a] (RR)
 :ftouz Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x171
 {
-	#TODO  float
-	#TODO  flags
-	#TODO  unsigned
-	#TODO  round
+	# Float to unsigned int, round toward zero — use 64-bit trunc to cover full uint32 range
+	local tmp:8 = trunc(Rd0811);
+	Rd2831 = tmp:4;
 }
 @endif
 
@@ -8390,10 +8353,10 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # UTOF D[c], D[a] (RR)
 :utof Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x161
 {
-	#TODO  float
-	#TODO  flags
-	#TODO  unsigned
-	# Rd2831 = int2float(Rd0811);
+	# Unsigned int to float — zext to 64-bit to preserve unsigned value, then convert
+	local tmp:8 = zext(Rd0811);
+	local tmpf:8 = int2float(tmp);
+	Rd2831 = float2float(tmpf);
 }
 @endif
 
