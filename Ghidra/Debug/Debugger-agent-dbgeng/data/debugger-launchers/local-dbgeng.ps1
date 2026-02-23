@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title dbgeng (.ps1)
+#@title dbgeng
 #@image-opt env:OPT_TARGET_IMG
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>dbgeng</tt></h3>
@@ -26,7 +26,6 @@
 #@icon icon.debugger
 #@help dbgeng#local
 #@depends Debugger-rmi-trace
-#@arg :file "Image" "The target binary executable image"
 #@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."

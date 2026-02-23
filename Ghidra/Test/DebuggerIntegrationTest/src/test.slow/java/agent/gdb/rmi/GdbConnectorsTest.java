@@ -16,7 +16,7 @@
 package agent.gdb.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -53,7 +53,11 @@ public class GdbConnectorsTest extends AbstractRmiConnectorsTest {
 		// Make sure system doesn't cause path failures to pass
 		unpip("ghidragdb", "ghidratrace");
 		// Ensure a compatible version of protobuf
-		pip("protobuf==6.31.0");
+		pip("protobuf>=6.31.0");
+	}
+
+	private String sshLauncherTitle() {
+		return isWindows() ? "gdb via ssh (cmd shell)" : "gdb via ssh";
 	}
 
 	@Test
@@ -102,7 +106,7 @@ public class GdbConnectorsTest extends AbstractRmiConnectorsTest {
 		}
 		programManager.openProgram(program);
 		try (LaunchResult result = doLaunch("gdb + qemu-system", Map.ofEntries(
-			Map.entry("arg:1", dummy),
+			Map.entry(isWindows() ? "env:OPT_TARGET_IMG" : "arg:1", dummy),
 			Map.entry("env:OPT_GDB_PATH", new PathIsFile(Path.of("gdb"))),
 			Map.entry("env:GHIDRA_LANG_EXTTOOL_qemu_system", findQemu("qemu-system-aarch64")),
 			Map.entry("env:OPT_EXTRA_QEMU_ARGS", "-machine virt")))) {
@@ -127,8 +131,8 @@ public class GdbConnectorsTest extends AbstractRmiConnectorsTest {
 	@Test
 	public void testGdbViaSsh() throws Exception {
 		pip("ghidragdb==%s".formatted(Application.getApplicationVersion()));
-		try (LaunchResult result = doLaunch("gdb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImage().path().toFile().getAbsolutePath()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
@@ -136,15 +140,15 @@ public class GdbConnectorsTest extends AbstractRmiConnectorsTest {
 
 	@Test
 	public void testGdbViaSshSetupGhidraGdb() throws Exception {
-		try (LaunchResult result = doLaunch("gdb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			assertTrue(result.exception() instanceof EarlyTerminationException);
 			assertThat(result.sessions().get("Shell").content(),
 				Matchers.containsString("Would you like to install"));
 		}
-		try (LaunchResult result = doLaunch("gdb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
@@ -152,18 +156,20 @@ public class GdbConnectorsTest extends AbstractRmiConnectorsTest {
 
 	@Test
 	public void testGdbViaSshSetupProtobuf() throws Exception {
+		// NB: If you fail on the next line, delete everything (ghidragdb,
+		//   ghidratrace, google, protobuf) from site-packages
 		pip("ghidragdb==%s".formatted(Application.getApplicationVersion()));
 		// Overwrite with an incompatible version we don't include
 		pipOob("protobuf==3.19.0");
-		try (LaunchResult result = doLaunch("gdb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			assertTrue(result.exception() instanceof EarlyTerminationException);
 			assertThat(result.sessions().get("Shell").content(),
 				Matchers.containsString("Would you like to install"));
 		}
-		try (LaunchResult result = doLaunch("gdb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}

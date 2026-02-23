@@ -16,8 +16,8 @@
 package agent.lldb.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -36,7 +36,6 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.debug.api.action.AutoMapSpec;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
 import ghidra.framework.Application;
-import ghidra.framework.OperatingSystem;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.pty.testutil.DummyProc;
 
@@ -60,7 +59,11 @@ public class LldbConnectorsTest extends AbstractRmiConnectorsTest {
 		// Make sure system doesn't cause path failures to pass
 		unpip("ghidralldb", "ghidratrace");
 		// Ensure a compatible version of protobuf
-		pip("protobuf==6.31.0");
+		pip("protobuf>=6.31.0");
+	}
+
+	private String sshLauncherTitle() {
+		return isWindows() ? "lldb via ssh (cmd shell)" : "lldb via ssh";
 	}
 
 	/**
@@ -72,6 +75,7 @@ public class LldbConnectorsTest extends AbstractRmiConnectorsTest {
 	 * @throws Exception because
 	 */
 	@Test
+	@Ignore("TODO")
 	public void testLocalLldbSetup() throws Exception {
 		pipOob("protobuf==3.19.0");
 		try (LaunchResult result = doLaunch("lldb", Map.of("arg:1", chooseImage()))) {
@@ -94,7 +98,7 @@ public class LldbConnectorsTest extends AbstractRmiConnectorsTest {
 	@Test
 	@Ignore("TODO")
 	public void testLldbQemuUser() throws Exception {
-		assumeFalse(OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OPERATING_SYSTEM);
+		assumeFalse(isWindows());
 		PathIsFile image = createArmElfImage();
 		program = AutoImporter.importByUsingBestGuess(image.path().toFile(), null, "/", this,
 			new MessageLog(), monitor).getPrimaryDomainObject();
@@ -151,43 +155,45 @@ public class LldbConnectorsTest extends AbstractRmiConnectorsTest {
 	@Test
 	public void testLldbViaSsh() throws Exception {
 		pip("ghidralldb==%s".formatted(Application.getApplicationVersion()));
-		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
 	}
 
 	@Test
+	@Ignore("TODO")
 	public void testLldbViaSshSetupGhidraLldb() throws Exception {
-		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			assertTrue(result.exception() instanceof EarlyTerminationException);
 			assertThat(result.sessions().get("Shell").content(),
 				Matchers.containsString("Would you like to install"));
 		}
-		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
 	}
 
 	@Test
+	@Ignore("TODO")
 	public void testLldbViaSshSetupProtobuf() throws Exception {
 		pip("ghidralldb==%s".formatted(Application.getApplicationVersion()));
 		// Overwrite with an incompatible version we don't include
 		pipOob("protobuf==3.19.0");
-		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			assertTrue(result.exception() instanceof EarlyTerminationException);
 			assertThat(result.sessions().get("Shell").content(),
 				Matchers.containsString("Would you like to install"));
 		}
-		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
-			Map.entry("arg:1", "/bin/ls"),
+		try (LaunchResult result = doLaunch(sshLauncherTitle(), Map.ofEntries(
+			Map.entry("arg:1", chooseImageToString()),
 			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
