@@ -617,6 +617,11 @@ public class DWARFProgram implements Closeable {
 				.getAddress(offset + programBaseAddressFixup, true);
 	}
 
+	public boolean isZeroDataAddress(Address addr) {
+		Address realZero = getDataAddress(0);
+		return realZero.equals(addr);
+	}
+
 	public boolean stackGrowsNegative() {
 		return stackGrowsNegative;
 	}
