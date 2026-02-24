@@ -127,6 +127,9 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 
 		BookmarkManager manager = program.getBookmarkManager();
 		Bookmark bookmark = manager.getBookmark(rowObject.getKey());
+		if (bookmark == null) {
+			return null;
+		}
 		Address address = bookmark.getAddress();
 		return new ProgramLocation(program, address);
 	}
