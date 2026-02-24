@@ -84,7 +84,7 @@ public class SymZ3PieceHandler
 	@Override
 	public int abstractReadUninit(PcodeTraceDataAccess acc, PcodeThread<?> thread,
 			PcodeExecutorStatePiece<SymValueZ3, SymValueZ3> piece, AddressSpace space,
-			SymValueZ3 offset, int length) {
+			SymValueZ3 offset, int length, Reason reason) {
 		String string = acc.getPropertyAccess(NAME, String.class).get(Address.NO_ADDRESS);
 		if (string == null) {
 			return 0;

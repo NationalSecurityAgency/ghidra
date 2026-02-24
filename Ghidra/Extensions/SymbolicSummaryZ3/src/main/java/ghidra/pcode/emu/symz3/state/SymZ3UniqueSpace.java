@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 import com.microsoft.z3.*;
 
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.symz3.model.SymValueZ3;
 
@@ -86,7 +87,7 @@ public class SymZ3UniqueSpace extends SymZ3Space {
 	}
 
 	@Override
-	public SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
+	public SymValueZ3 get(SymValueZ3 offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		assert offset != null;
 		try (Context ctx = new Context()) {
 			BitVecExpr b = offset.getBitVecExpr(ctx);

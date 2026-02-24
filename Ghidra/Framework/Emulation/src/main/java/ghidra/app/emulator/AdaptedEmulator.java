@@ -159,7 +159,7 @@ public class AdaptedEmulator implements Emulator {
 
 		@Override
 		public <A, T> AddressSetView readUninitialized(PcodeExecutorStatePiece<A, T> piece,
-				AddressSetView set) {
+				AddressSetView set, Reason reason) {
 			PcodeExecutorStatePiece<A, byte[]> bytesPiece =
 				PcodeStateCallbacks.checkValueDomain(piece, byte[].class);
 			if (bytesPiece == null) {

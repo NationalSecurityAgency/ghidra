@@ -211,7 +211,7 @@ public class BytesPcodeExecutorStateSpace {
 		if (uninitialized.isEmpty()) {
 			return readBytes(offset, size, reason);
 		}
-		uninitialized = cb.readUninitialized(piece, uninitialized);
+		uninitialized = cb.readUninitialized(piece, uninitialized, reason);
 		if (uninitialized.isEmpty()) {
 			return readBytes(offset, size, reason);
 		}
