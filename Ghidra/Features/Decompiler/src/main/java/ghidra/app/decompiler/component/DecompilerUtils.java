@@ -820,6 +820,9 @@ public class DecompilerUtils {
 		for (; i < alltoks.size(); ++i) {
 
 			ClangToken tok = (ClangToken) alltoks.get(i);
+			if (tok.getCollapsedToken()) {
+				continue;
+			}
 			if (tok instanceof ClangBreak) {
 				lines.add(current);
 				brk = (ClangBreak) tok;

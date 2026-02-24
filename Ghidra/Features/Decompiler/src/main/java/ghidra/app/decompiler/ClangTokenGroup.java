@@ -151,6 +151,18 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 			else {
 				ClangToken tok = ClangToken.buildToken(elem, this, decoder, pfactory);
 				AddTokenGroup(tok);
+
+				// Add an ellipsis syntax token after open curly braces that is
+				// collapsed by default. It will be uncollapsed when the rest of
+				// the block is collapsed, indicating that tokens have been
+				// collapsed at that point.
+				if ((tok instanceof ClangSyntaxToken) && "{".equals(tok.getText())) {
+					ClangSyntaxToken ellipsis = new ClangSyntaxToken(
+						this, ClangToken.ELLIPSIS_TEXT, ClangToken.COMMENT_COLOR
+					);
+					ellipsis.setCollapsedToken(true);
+					AddTokenGroup(ellipsis);
+				}
 			}
 			decoder.closeElement(elem);
 		}
