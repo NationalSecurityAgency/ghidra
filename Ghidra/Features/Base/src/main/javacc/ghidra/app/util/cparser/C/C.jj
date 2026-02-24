@@ -2256,14 +2256,19 @@ DataType EnumSpecifier() : {
     DataType dt;
     ArrayList<EnumMember> list;
     Declaration dec = new Declaration();
+    Declaration tdec = null;
 }
 {
     <ENUM> 
     (
-        LOOKAHEAD(3)
-        [AttributeSpecList(dec)] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
+        LOOKAHEAD(5)
+        [AttributeSpecList(dec)] [ t= <IDENTIFIER> ] [ ":" tdec = TypeName() ] "{" list= EnumeratorList() "}" 
         {
             dt = allocateEnumDT(t, list);
+            if (tdec != null) {
+                // type provided
+                dt = tdec.getDataType();
+            }
         }
         |
         t= <IDENTIFIER>
