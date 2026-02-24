@@ -388,6 +388,11 @@ public class DWARFFunctionImporter {
 		Namespace namespace = globalVar.name.getParentNamespace(currentProgram);
 		String name = globalVar.name.getName();
 		Address address = globalVar.getRamAddress();
+		if (prog.isZeroDataAddress(address)) {
+			// skip, its probably an incomplete DIE with a zero-d out location / address
+			// we can't create a bookmark with a warning since we don't have a good address.
+			return;
+		}
 		DataType dataType = globalVar.type;
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();

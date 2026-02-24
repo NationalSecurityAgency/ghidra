@@ -366,6 +366,14 @@ public class DWARFFunction {
 	public boolean syncWithExistingGhidraFunction(boolean createIfMissing) {
 		try {
 			Program currentProgram = getProgram().getGhidraProgram();
+			if (!currentProgram.getMemory().getExecuteSet().contains(address)) {
+				// NOTE: if func's DIE specifies a lowpc == 0, the calculated address will be
+				// the program's imagebase.  This typically can only be valid in .o files.
+				// If this binary is not a .o, and doesn't have executable segment at '0'
+				// (or where ever the binary was imported at), then the addr = 0 is probably
+				// just bad data that the toolchain put into the dwarf info.
+				return false; // dwarf function address info is probably bogus   
+			}
 			function = currentProgram.getListing().getFunctionAt(address);
 			if (function != null) {
 				if (function.hasNoReturn() && !noReturn) {
