@@ -23,23 +23,23 @@
 // data.  This script hooks the functions "malloc", "free" and "use_string" where the later
 // simply prints the deobfuscated string passed as an argument.
 //@category Examples.Emulation
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import ghidra.app.emulator.EmulatorHelper;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.opinion.ElfLoader;
-import ghidra.pcode.emulate.EmulateExecutionState;
+import ghidra.pcode.emu.*;
+import ghidra.pcode.exec.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.NotFoundException;
 
 public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 
-	private static String PROGRAM_NAME = "deobHookExample";
+	private static final String PROGRAM_NAME = "deobHookExample";
 
 	// Heap allocation area
 	private static final int MALLOC_REGION_SIZE = 0x1000;
@@ -47,7 +47,10 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 	// Address used as final return location
 	private static final long CONTROLLED_RETURN_OFFSET = 0;
 
-	private EmulatorHelper emuHelper;
+	private PcodeEmulator emu;
+	private PcodeThread<byte[]> emuThread;
+	private PcodeArithmetic<byte[]> arithmetic;
+
 	private SimpleMallocMgr mallocMgr;
 
 	// Important breakpoint locations for hooking behavior not contained with binary (e.g., dynamic library)
@@ -57,6 +60,7 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 	private Address useStringEntry;
 
 	// Function locations
+	private Function mainFunction;
 	private Address mainFunctionEntry; // start of emulation
 	private Address controlledReturnAddr; // end of emulation
 
@@ -69,18 +73,19 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 			!"x86:LE:64:default".equals(currentProgram.getLanguageID().toString()) ||
 			!ElfLoader.ELF_NAME.equals(format)) {
 
-			printerr(
-				"This emulation example script is specifically intended to be executed against the\n" +
-					PROGRAM_NAME +
-					" program whose source is contained within the GhidraClass exercise files\n" +
-					"(see docs/GhidraClass/ExerciseFiles/Emulation/" + PROGRAM_NAME + ".c).\n" +
-					"This program should be compiled using gcc for x86 64-bit, imported into your project, \n" +
-					"analyzed and open as the active program before running ths script.");
+			printerr("""
+					This emulation example script is specifically intended to be executed against
+					the	%s program whose source is contained within the GhidraClass exercise files
+					(see docs/GhidraClass/ExerciseFiles/Emulation/%s.c). This program should be
+					compiled using gcc for x86 64-bit, imported into your project, analyzed and
+					open as the active program before running ths script."""
+					.formatted(PROGRAM_NAME, PROGRAM_NAME));
 			return;
 		}
 
 		// Identify function be emulated
 		mainFunctionEntry = getSymbolAddress("main");
+		mainFunction = currentProgram.getFunctionManager().getFunctionAt(mainFunctionEntry);
 		useStringEntry = getSymbolAddress("use_string");
 
 		// Identify important symbol addresses
@@ -88,59 +93,71 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 		freeEntry = getExternalThunkAddress("free");
 		strlenEntry = getExternalThunkAddress("strlen");
 
-		// Establish emulation helper
-		emuHelper = new EmulatorHelper(currentProgram);
-		try {
-			// Initialize stack pointer (not used by this example)
-			long stackOffset =
-				(mainFunctionEntry.getAddressSpace().getMaxAddress().getOffset() >>> 1) - 0x7fff;
-			emuHelper.writeRegister(emuHelper.getStackPointerRegister(), stackOffset);
-
-			// Establish simple malloc memory manager with memory region spaced relative to stack pointer 
-			mallocMgr = new SimpleMallocMgr(getAddress(stackOffset - 0x10000), MALLOC_REGION_SIZE);
-
-			// Setup hook breakpoints
-			emuHelper.setBreakpoint(mallocEntry);
-			emuHelper.setBreakpoint(freeEntry);
-			emuHelper.setBreakpoint(strlenEntry);
-			emuHelper.setBreakpoint(useStringEntry);
-
-			// Set controlled return location so we can identify return from emulated function
-			controlledReturnAddr = getAddress(CONTROLLED_RETURN_OFFSET);
-			emuHelper.writeStackValue(0, 8, CONTROLLED_RETURN_OFFSET);
-			emuHelper.setBreakpoint(controlledReturnAddr);
-
-			// This example directly manipulates the PC register to facilitate hooking
-			// which must alter the PC during a breakpoint, and optional stepping which does not
-			// permit an initial address to be specified.
-			emuHelper.writeRegister(emuHelper.getPCRegister(), mainFunctionEntry.getOffset());
-			Msg.debug(this, "EMU starting at " + emuHelper.getExecutionAddress());
-
-			// Execution loop until return from function or error occurs
-			while (!monitor.isCancelled()) {
-				// Use stepping if needed for troubleshooting - although it runs much slower
-				//boolean success = emuHelper.step();
-				boolean success = emuHelper.run(monitor);
-				Address executionAddress = emuHelper.getExecutionAddress();
-				if (monitor.isCancelled()) {
-					println("Emulation cancelled");
-					return;
-				}
-				if (executionAddress.equals(controlledReturnAddr)) {
-					println("Returned from function");
-					return;
-				}
-				if (!success) {
-					String lastError = emuHelper.getLastError();
-					printerr("Emulation Error: " + lastError);
-					return;
-				}
-				processBreakpoint(executionAddress);
+		// Establish emulator
+		emu = new PcodeEmulator(currentProgram.getLanguage()) {
+			@Override
+			protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
+				return super.createUseropLibrary().compose(new DeobfUseropLibrary<byte[]>());
 			}
+		};
+		monitor.addCancelledListener(() -> {
+			emu.setSuspended(true);
+		});
+		emuThread = emu.newThread();
+		arithmetic = emuThread.getArithmetic();
+		EmulatorUtilities.loadProgram(emu, currentProgram);
+
+		// Initialize program counter, registers from context, and stack pointer
+		// Request more stack space that normal, so we can use the extra for the heap
+		EmulatorUtilities.initializeForFunction(emuThread, mainFunction,
+			EmulatorUtilities.DEFAULT_STACK_SIZE + MALLOC_REGION_SIZE);
+		Address stackBase =
+			EmulatorUtilities.inspectStackPointer(emuThread, currentProgram.getCompilerSpec());
+
+		// Establish simple malloc memory manager with memory region spaced relative to stack pointer 
+		mallocMgr = new SimpleMallocMgr(
+			stackBase.subtract(EmulatorUtilities.DEFAULT_STACK_SIZE + MALLOC_REGION_SIZE),
+			MALLOC_REGION_SIZE);
+
+		// Setup hook breakpoints
+		emu.inject(mallocEntry, """
+				RAX = __libc_malloc(RDI);
+				__x86_64_RET();
+				""");
+		emu.inject(freeEntry, """
+				__libc_free(RDI);
+				__x86_64_RET();
+				""");
+		emu.inject(strlenEntry, """
+				RAX = __libc_strlen(RDI);
+				__x86_64_RET();
+				""");
+		emu.inject(useStringEntry, """
+				__hook_useString(RDI);
+				emu_exec_decoded();
+				""");
+
+		// Set controlled return location so we can identify return from emulated function
+		controlledReturnAddr = getAddress(CONTROLLED_RETURN_OFFSET);
+		emuThread.getState()
+				.setVar(stackBase.add(8), 8, false, arithmetic.fromConst(controlledReturnAddr));
+		emu.addBreakpoint(controlledReturnAddr, "1:1");
+
+		emuThread.overrideCounter(mainFunctionEntry);
+		emuThread.overrideContext(
+			currentProgram.getProgramContext().getDisassemblyContext(mainFunctionEntry));
+		Msg.debug(this, "EMU starting at " + emuThread.getCounter());
+
+		// First call to run should break after final return
+		try {
+			emuThread.run();
 		}
-		finally {
-			// cleanup resources and release hold on currentProgram
-			emuHelper.dispose();
+		catch (InterruptPcodeExecutionException e) {
+			// Hit the breakpoint. Good.
+		}
+		catch (Throwable t) {
+			printerr("Emulation error: " + t);
+			return;
 		}
 	}
 
@@ -149,61 +166,9 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 	}
 
 	/**
-	 * Perform processing for the various hook points where breakpoints have been set.
-	 * @param addr current execute address where emulation has been suspended
-	 * @throws Exception if an error occurs
-	 */
-	private void processBreakpoint(Address addr) throws Exception {
-
-		// malloc hook
-		if (addr.equals(mallocEntry)) {
-			int size = emuHelper.readRegister("RDI").intValue();
-			Address memAddr = mallocMgr.malloc(size);
-			emuHelper.writeRegister("RAX", memAddr.getOffset());
-		}
-
-		// free hook
-		else if (addr.equals(freeEntry)) {
-			Address freeAddr = getAddress(emuHelper.readRegister("RDI").longValue());
-			mallocMgr.free(freeAddr);
-		}
-
-		// strlen hook
-		else if (addr.equals(strlenEntry)) {
-			Address ptr = getAddress(emuHelper.readRegister("RDI").longValue());
-			int len = 0;
-			while (emuHelper.readMemoryByte(ptr) != 0) {
-				++len;
-				ptr = ptr.next();
-			}
-			emuHelper.writeRegister("RAX", len);
-		}
-
-		// use_string hook - print string
-		else if (addr.equals(useStringEntry)) {
-			Address stringAddr = getAddress(emuHelper.readRegister("RDI").longValue());
-			String str = emuHelper.readNullTerminatedString(stringAddr, 32);
-			println("use_string: " + str); // output string argument to consoles
-		}
-
-		// unexpected
-		else {
-			if (emuHelper.getEmulateExecutionState() != EmulateExecutionState.BREAKPOINT) {
-				// assume we are stepping and simply return
-				return;
-			}
-			throw new NotFoundException("Unhandled breakpoint at " + addr);
-		}
-
-		// force early return
-		long returnOffset = emuHelper.readStackValue(0, 8, false).longValue();
-
-		emuHelper.writeRegister(emuHelper.getPCRegister(), returnOffset);
-	}
-
-	/**
-	 * Get the thunk function corresponding to an external function.  Such thunks
-	 * should reside within the EXTERNAL block.  (Note: this is specific to the ELF import)
+	 * Get the thunk function corresponding to an external function. Such thunks should reside
+	 * within the EXTERNAL block. (Note: this is specific to the ELF import)
+	 * 
 	 * @param symbolName external function name
 	 * @return address of thunk function which corresponds to an external function
 	 * @throws NotFoundException if thunk not found
@@ -212,7 +177,7 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 		Symbol externalSymbol = currentProgram.getSymbolTable().getExternalSymbol(symbolName);
 		if (externalSymbol != null && externalSymbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function f = (Function) externalSymbol.getObject();
-			Address[] thunkAddrs = f.getFunctionThunkAddresses();
+			Address[] thunkAddrs = f.getFunctionThunkAddresses(false);
 			if (thunkAddrs.length == 1) {
 				return thunkAddrs[0];
 			}
@@ -222,6 +187,7 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 
 	/**
 	 * Get the global namespace symbol address which corresponds to the specified name.
+	 * 
 	 * @param symbolName global symbol name
 	 * @return symbol address
 	 * @throws NotFoundException if symbol not found
@@ -235,6 +201,66 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 		throw new NotFoundException("Failed to locate label: " + symbolName);
 	}
 
+	public class DeobfUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
+		static final String SRC_X86_RET = """
+				RIP = *:8 RSP;
+				RSP = RSP + 8;
+				return [RIP];
+				""";
+		PcodeProgram progRet;
+
+		@PcodeUserop(canInline = true)
+		public void __x86_64_RET(@OpExecutor PcodeExecutor<T> executor,
+				@OpLibrary PcodeUseropLibrary<T> library) {
+			if (progRet == null) {
+				progRet = SleighProgramCompiler.compileUserop(executor.getLanguage(),
+					"__x86_64_RET", List.of(), SRC_X86_RET, PcodeUseropLibrary.nil(), List.of());
+			}
+			progRet.execute(executor, library);
+		}
+
+		@PcodeUserop(functional = true, hasSideEffects = true)
+		public long __libc_malloc(int size) throws InsufficientBytesException {
+			Address memAddr = mallocMgr.malloc(size);
+			return memAddr.getOffset();
+		}
+
+		@PcodeUserop(functional = true, hasSideEffects = true)
+		public void __libc_free(long ptr) {
+			mallocMgr.free(getAddress(ptr));
+		}
+
+		static final String SRC_STRLEN = """
+				__result = 0;
+				<loop>
+				if (*:1 (str+__result) == 0 || __result >= maxlen) goto <exit>;
+				  __result = __result + 1;
+				goto <loop>;
+				<exit>""";
+		private PcodeProgram progStrlen;
+
+		@PcodeUserop(canInline = true)
+		public void __libc_strlen(@OpExecutor PcodeExecutor<T> executor,
+				@OpLibrary PcodeUseropLibrary<T> library, @OpOutput Varnode out, Varnode start) {
+			Varnode const128 =
+				new Varnode(executor.getLanguage().getAddressFactory().getConstantAddress(128), 4);
+			// NOTE: This assumes all calls to __libc_strlen have the same output and input varnodes
+			if (progStrlen == null) {
+				progStrlen = SleighProgramCompiler.compileUserop(executor.getLanguage(),
+					"__libc_strlen", List.of("__result", "str", "maxlen"),
+					SRC_STRLEN, PcodeUseropLibrary.nil(), List.of(out, start, const128));
+			}
+			progStrlen.execute(executor, library);
+		}
+
+		@PcodeUserop
+		public void __hook_useString(@OpState PcodeExecutorState<T> state, long ptr) {
+			Address addr = state.getLanguage().getDefaultDataSpace().getAddress(ptr);
+			String str = EmulatorUtilities.decodeNullTerminatedString(state, addr);
+			println("use_string: " + str); // output string argument to consoles
+		}
+	}
+
 	/**
 	 * <code>SimpleMallocMgr</code> provides a simple malloc memory manager to be used by the
 	 * malloc/free hooked implementations.
@@ -246,8 +272,9 @@ public class EmuX86GccDeobfuscateHookExampleScript extends GhidraScript {
 
 		/**
 		 * <code>SimpleMallocMgr</code> constructor.
-		 * @param rangeStart start of the free malloc region (i.e., Heap) which has been
-		 * deemed a safe
+		 * 
+		 * @param rangeStart start of the free malloc region (i.e., Heap) which has been deemed a
+		 *            safe
 		 * @param byteSize
 		 * @throws AddressOverflowException
 		 */

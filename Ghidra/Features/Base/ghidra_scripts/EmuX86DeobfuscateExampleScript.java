@@ -25,27 +25,34 @@
 // to the function "deobfuscate" so that the various return values can be recorded with a comment
 // placed just after the call.
 //@category Examples.Emulation
-import ghidra.app.emulator.EmulatorHelper;
+import java.util.NoSuchElementException;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.opinion.ElfLoader;
-import ghidra.pcode.emulate.EmulateExecutionState;
+import ghidra.pcode.emu.*;
+import ghidra.pcode.exec.InterruptPcodeExecutionException;
+import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.NotFoundException;
 
 public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 
-	private static String PROGRAM_NAME = "deobExample";
+	private static final String PROGRAM_NAME = "deobExample";
 
-	private EmulatorHelper emuHelper;
+	private PcodeEmulator emu;
+	private PcodeThread<byte[]> emuThread;
+	private PcodeArithmetic<byte[]> arithmetic;
 
 	// Important breakpoint locations
 	private Address deobfuscateCall;
 	private Address deobfuscateReturn;
 
 	// Function locations
+	private Function mainFunction;
 	private Address mainFunctionEntry; // start of emulation address
 
 	// Address used as final return location
@@ -66,18 +73,21 @@ public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 			!"x86:LE:64:default".equals(currentProgram.getLanguageID().toString()) ||
 			!ElfLoader.ELF_NAME.equals(format)) {
 
-			printerr(
-				"This emulation example script is specifically intended to be executed against the\n" +
-					PROGRAM_NAME +
-					" program whose source is contained within the GhidraClass exercise files\n" +
-					"(see docs/GhidraClass/ExerciseFiles/Emulation/" + PROGRAM_NAME + ".c).\n" +
-					"This program should be compiled using gcc for x86 64-bit, imported into your project, \n" +
-					"analyzed and open as the active program before running ths script.");
+			printerr("""
+					This emulation example script is specifically intended to be executed against
+					the	%s program whose source is contained within the GhidraClass exercise files
+					(see docs/GhidraClass/ExerciseFiles/Emulation/%s.c). This program should be
+					compiled using gcc for x86 64-bit, imported into your project, analyzed and
+					open as the active program before running ths script."""
+					.formatted(PROGRAM_NAME, PROGRAM_NAME));
 			return;
 		}
 
 		// Identify function to be emulated
-		mainFunctionEntry = getSymbolAddress("main");
+		mainFunction = getGlobalFunctions("main").stream()
+				.findFirst()
+				.orElseThrow(() -> new NoSuchElementException("main"));
+		mainFunctionEntry = mainFunction.getEntryPoint();
 
 		// Obtain entry instruction in order to establish initial processor context
 		Instruction entryInstr = getInstructionAt(mainFunctionEntry);
@@ -100,53 +110,54 @@ public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 		// Remove prior pre-comment
 		setPreComment(deobfuscateReturn, null);
 
-		// Establish emulation helper
-		emuHelper = new EmulatorHelper(currentProgram);
-		try {
+		// Establish emulator
+		emu = new PcodeEmulator(currentProgram.getLanguage());
+		monitor.addCancelledListener(() -> {
+			emu.setSuspended(true);
+		});
+		emuThread = emu.newThread();
+		arithmetic = emuThread.getArithmetic();
+		EmulatorUtilities.loadProgram(emu, currentProgram);
 
-			// Initialize stack pointer (not used by this example)
-			long stackOffset =
-				(entryInstr.getAddress().getAddressSpace().getMaxAddress().getOffset() >>> 1) -
-					0x7fff;
-			emuHelper.writeRegister(emuHelper.getStackPointerRegister(), stackOffset);
+		// Initialize program counter, registers from context, and stack pointer
+		EmulatorUtilities.initializeForFunction(emuThread, mainFunction);
+		Address stackBase =
+			EmulatorUtilities.inspectStackPointer(emuThread, currentProgram.getCompilerSpec());
 
-			// Setup breakpoints
-			emuHelper.setBreakpoint(deobfuscateCall);
-			emuHelper.setBreakpoint(deobfuscateReturn);
+		// Setup breakpoints
+		emu.addBreakpoint(deobfuscateCall, "1:1");
+		emu.addBreakpoint(deobfuscateReturn, "1:1");
 
-			// Set controlled return location so we can identify return from emulated function
-			controlledReturnAddr = getAddress(CONTROLLED_RETURN_OFFSET);
-			emuHelper.writeStackValue(0, 8, CONTROLLED_RETURN_OFFSET);
-			emuHelper.setBreakpoint(controlledReturnAddr);
+		// Set controlled return location so we can identify return from emulated function
+		controlledReturnAddr = getAddress(CONTROLLED_RETURN_OFFSET);
+		emuThread.getState()
+				.setVar(stackBase.add(8), 8, false, arithmetic.fromConst(controlledReturnAddr));
+		emu.addBreakpoint(controlledReturnAddr, "1:1");
 
-			Msg.debug(this, "EMU starting at " + mainFunctionEntry);
+		Msg.debug(this, "EMU starting at " + emuThread.getCounter());
 
-			// Execution loop until return from function or error occurs
-			while (!monitor.isCancelled()) {
-				boolean success =
-					(emuHelper.getEmulateExecutionState() == EmulateExecutionState.BREAKPOINT)
-							? emuHelper.run(monitor)
-							: emuHelper.run(mainFunctionEntry, entryInstr, monitor);
-				Address executionAddress = emuHelper.getExecutionAddress();
-				if (monitor.isCancelled()) {
-					println("Emulation cancelled");
-					return;
-				}
-				if (executionAddress.equals(controlledReturnAddr)) {
-					println("Returned from function");
-					return;
-				}
-				if (!success) {
-					String lastError = emuHelper.getLastError();
-					printerr("Emulation Error: " + lastError);
-					return;
-				}
-				processBreakpoint(executionAddress);
+		// Execution loop until return from function or error occurs
+		while (!monitor.isCancelled()) {
+			try {
+				emuThread.run();
 			}
-		}
-		finally {
-			// cleanup resources and release hold on currentProgram
-			emuHelper.dispose();
+			catch (InterruptPcodeExecutionException e) {
+				// Hit a breakpoint. Good.
+			}
+			catch (Throwable t) {
+				printerr("Emulation Error: " + t);
+				return;
+			}
+			if (monitor.isCancelled()) {
+				println("Emulation cancelled");
+				return;
+			}
+			Address executionAddress = emuThread.getCounter();
+			if (executionAddress.equals(controlledReturnAddr)) {
+				println("Returned from function");
+				return;
+			}
+			processBreakpoint(executionAddress);
 		}
 	}
 
@@ -156,19 +167,25 @@ public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 
 	/**
 	 * Perform processing for the various breakpoints.
+	 * 
 	 * @param addr current execute address where emulation has been suspended
 	 * @throws Exception if an error occurs
 	 */
 	private void processBreakpoint(Address addr) throws Exception {
-
 		if (addr.equals(deobfuscateCall)) {
-			lastDeobfuscateArg0 = emuHelper.readRegister("RDI").longValue();
+			Register rdi = currentProgram.getRegister("RDI");
+			lastDeobfuscateArg0 =
+				emuThread.getState().inspectRegisterValue(rdi).getUnsignedValue().longValue();
 		}
-
 		else if (addr.equals(deobfuscateReturn)) {
-			long deobfuscateReturnValue = emuHelper.readRegister("RAX").longValue();
-			String str = "deobfuscate(src=0x" + Long.toHexString(lastDeobfuscateArg0) + ") -> \"" +
-				emuHelper.readNullTerminatedString(getAddress(deobfuscateReturnValue), 32) + "\"";
+			Register rax = currentProgram.getRegister("RAX");
+			long deobfuscateReturnValue =
+				emuThread.getState().inspectRegisterValue(rax).getUnsignedValue().longValue();
+			String read = EmulatorUtilities.decodeNullTerminatedString(emuThread.getState(),
+				getAddress(deobfuscateReturnValue));
+			String str = """
+					deobfuscate(src=0x%x) -> "%s"\
+					""".formatted(lastDeobfuscateArg0, read);
 			String comment = getPreComment(deobfuscateReturn);
 			if (comment == null) {
 				comment = "";
@@ -192,14 +209,4 @@ public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 		}
 		return null;
 	}
-
-	private Address getSymbolAddress(String symbolName) throws NotFoundException {
-		Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(currentProgram, symbolName,
-			err -> Msg.error(this, err));
-		if (symbol != null) {
-			return symbol.getAddress();
-		}
-		throw new NotFoundException("Failed to locate label: " + symbolName);
-	}
-
 }

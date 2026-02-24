@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,33 +20,34 @@ import java.util.*;
 
 import generic.timer.GhidraSwinglessTimer;
 import generic.timer.TimerCallback;
-import ghidra.app.emulator.*;
-import ghidra.pcode.emulate.BreakCallBack;
-import ghidra.pcode.emulate.EmulateExecutionState;
-import ghidra.pcode.error.LowlevelError;
-import ghidra.pcode.memstate.MemoryFaultHandler;
-import ghidra.pcode.pcoderaw.PcodeOpRaw;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.pcode.emu.*;
+import ghidra.pcode.emu.PcodeMachine.SwiMode;
+import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.test.processors.support.PCodeTestAbstractControlBlock.FunctionInfo;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 public class EmulatorTestRunner {
 
 	private Program program;
 	private PCodeTestGroup testGroup;
 
-	private EmulatorHelper emuHelper;
-	private Emulator emu;
+	private MyCallbacks emuCallbacks;
+	private PcodeEmulator emu;
+	private PcodeThread<byte[]> emuThread;
+	private PcodeArithmetic<byte[]> emuArithmetic;
 	private ExecutionListener executionListener;
 
 	private volatile boolean haltedOnTimer = false;
@@ -63,36 +64,78 @@ public class EmulatorTestRunner {
 		this.program = program;
 		this.testGroup = testGroup;
 		this.executionListener = executionListener;
-		emuHelper = new EmulatorHelper(program) {
+
+		this.emuCallbacks = new MyCallbacks();
+		this.emu = new PcodeEmulator(program.getLanguage(), emuCallbacks) {
+			/**
+			 * {@inheritDoc}
+			 * <p>
+			 * Overriding this method is not ideal, but the callbacks do not support carte-blanche
+			 * overriding of all state reads and writes, only hooks for uninitialized reads, but all
+			 * writes. Perhaps we should support all reads, too, but only for monitoring/logging
+			 * purposes. Modifying state behavior should probably still require, well, overriding
+			 * the state.
+			 * <p>
+			 * We use guilty knowledge of the implementation: We know which method all the calls
+			 * will get funneled through.
+			 */
 			@Override
-			protected Emulator newEmulator() {
-				return new AdaptedEmulator(this);
+			protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
+				PcodeStateCallbacks scb = emuCallbacks.wrapFor(thread);
+				return new BytesPcodeExecutorState(language, scb) {
+					@Override
+					public byte[] getVar(AddressSpace space, long offset, int size,
+							boolean quantize, Reason reason) {
+						byte[] result = super.getVar(space, offset, size, quantize, reason);
+						if (emuCallbacks.logRWEnabled && reason == Reason.EXECUTE_READ) {
+							Address addr = space.getAddress(offset);
+							executionListener.logRead(EmulatorTestRunner.this, addr, size, result);
+						}
+						return result;
+					}
+
+					@Override
+					public void setVar(AddressSpace space, long offset, int size, boolean quantize,
+							byte[] val) {
+						if (emuCallbacks.logRWEnabled) {
+							Address addr = space.getAddress(offset);
+							executionListener.logWrite(EmulatorTestRunner.this, addr, size, val);
+						}
+						super.setVar(space, offset, size, quantize, val);
+					}
+				};
 			}
 		};
-		emu = emuHelper.getEmulator();
-		emuHelper.setMemoryFaultHandler(new MyMemoryFaultHandler(executionListener));
+		loadProgram();
+		this.emuThread = emu.newThread();
+		this.emuArithmetic = emuThread.getArithmetic();
+	}
 
-		emuHelper.registerDefaultCallOtherCallback(new BreakCallBack() {
-			@Override
-			public boolean pcodeCallback(PcodeOpRaw op) throws LowlevelError {
-				int userOp = (int) op.getInput(0).getOffset();
-				String pcodeOpName = program.getLanguage().getUserDefinedOpName(userOp);
-				unimplementedSet.add(pcodeOpName);
-				String outStr = "";
-				Varnode output = op.getOutput();
-				if (output != null) {
-					outStr = ", unable to set output " + output.toString(program.getLanguage());
-				}
-				EmulatorTestRunner.this.executionListener.log(testGroup, "Unimplemented pcodeop '" +
-					pcodeOpName + "' at: " + emu.getExecuteAddress() + outStr);
-				++callOtherCount;
-				return true;
+	private void loadProgram() {
+
+		byte[] buf = new byte[4096];
+		for (MemoryBlock block : program.getMemory().getBlocks()) {
+			if (!block.isInitialized() || !block.isLoaded() || block.isArtificial() ||
+				block.isOverlay() || block.isMapped()) {
+				continue;
 			}
-		});
+			for (AddressRange rng : new AddressRangeChunker(block.getAddressRange(), buf.length)) {
+				try {
+					int len = block.getBytes(rng.getMinAddress(), buf);
+					byte[] value = len == buf.length
+							? buf
+							: Arrays.copyOf(buf, len);
+					emu.getSharedState().setVar(rng.getMinAddress(), len, false, value);
+				}
+				catch (MemoryAccessException e) {
+					Msg.error(this, "Cannot load part of program", e);
+				}
+			}
+		}
 	}
 
 	public void dispose() {
-		emuHelper.dispose();
+		emuThread = null;
 		emu = null;
 		program = null;
 		executionListener = null;
@@ -111,44 +154,33 @@ public class EmulatorTestRunner {
 		return program;
 	}
 
-	public EmulatorHelper getEmulatorHelper() {
-		return emuHelper;
+	public PcodeThread<byte[]> getEmulatorThread() {
+		return emuThread;
 	}
 
 	public void setContextRegister(RegisterValue ctxRegValue) {
-		emuHelper.setContextRegister(ctxRegValue);
+		if (ctxRegValue == null) {
+			emuThread.overrideContextWithDefault();
+		}
+		else {
+			emuThread.overrideContext(ctxRegValue);
+		}
 	}
 
 	public Address getCurrentAddress() {
-		return emuHelper.getExecutionAddress();
+		return emuThread.getCounter();
 	}
 
 	public Instruction getCurrentInstruction() {
 		// TODO: Pull instruction from emulator instead of program after 
 		// merge with SleighRefactor branch
-		return program.getListing().getInstructionAt(emu.getExecuteAddress());
-	}
-
-	private void flipBytes(byte[] bytes) {
-		for (int i = 0; i < bytes.length / 2; i++) {
-			byte b = bytes[i];
-			int otherIndex = bytes.length - i - 1;
-			bytes[i] = bytes[otherIndex];
-			bytes[otherIndex] = b;
-		}
+		return emuThread.getInstruction();
+		//return program.getListing().getInstructionAt(emuThread.getCounter());
 	}
 
 	public RegisterValue getRegisterValue(Register reg) {
-		Register baseReg = reg.getBaseRegister();
-		byte[] bytes = emuHelper.readMemory(baseReg.getAddress(), baseReg.getMinimumByteSize());
-		if (!reg.isBigEndian()) {
-			flipBytes(bytes);
-		}
-		byte[] maskValue = new byte[2 * bytes.length];
-		Arrays.fill(maskValue, (byte) 0xff);
-		System.arraycopy(bytes, 0, maskValue, bytes.length, bytes.length);
-		RegisterValue baseValue = new RegisterValue(baseReg, maskValue);
-		return baseValue.getRegisterValue(reg);
+		byte[] bytes = emuThread.getState().getVar(reg, Reason.INSPECT);
+		return emuArithmetic.toRegisterValue(reg, bytes, Purpose.INSPECT);
 	}
 
 	public String getRegisterValueString(Register reg) {
@@ -161,7 +193,7 @@ public class EmulatorTestRunner {
 		if (reg == null) {
 			throw new IllegalArgumentException("Undefined register: " + regName);
 		}
-		emuHelper.writeRegister(reg, value);
+		emuThread.getState().setVar(reg, emuArithmetic.fromConst(value, reg.getNumBytes()));
 	}
 
 	public void setRegister(String regName, BigInteger value) {
@@ -169,7 +201,7 @@ public class EmulatorTestRunner {
 		if (reg == null) {
 			throw new IllegalArgumentException("Undefined register: " + regName);
 		}
-		emuHelper.writeRegister(reg, value);
+		emuThread.getState().setVar(reg, emuArithmetic.fromConst(value, reg.getNumBytes()));
 	}
 
 	/**
@@ -249,14 +281,54 @@ public class EmulatorTestRunner {
 	}
 
 	/**
+	 * Allows the emulator to run until it's interrupted, returning true if the interrupt is caused
+	 * by a breakpoint.
+	 * 
+	 * @return true if interrupted by a breakpoint, false otherwise. This may also run indefinitely.
+	 */
+	public boolean runToBreakpoint() {
+		try {
+			emuThread.run();
+		}
+		catch (InterruptPcodeExecutionException e) {
+			return true;
+		}
+		catch (Throwable t) {
+			lastError = t.getLocalizedMessage();
+		}
+		return false;
+	}
+
+	/**
+	 * Step the emulator one instruction, returning true if it's completed without interruption.
+	 * 
+	 * @return true if completed, false if interrupted. Though unlikely, this may also run
+	 *         indefinitely.
+	 */
+	public boolean stepIgnoreBreakpoints() {
+		SwiMode restore = emu.getSoftwareInterruptMode();
+		try {
+			emu.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
+			emuThread.stepInstruction();
+			return true;
+		}
+		catch (Throwable t) {
+			lastError = t.getLocalizedMessage();
+			return false;
+		}
+		finally {
+			emu.setSoftwareInterruptMode(restore);
+		}
+	}
+
+	/**
 	 * Execute test group without instruction stepping/tracing
 	 * 
-	 * @param timeLimitMS
-	 * @param monitor
-	 * @return
-	 * @throws CancelledException
+	 * @param timeLimitMS the maximum number of milliseconds to execute before suspending and
+	 *            terminating
+	 * @return true if execution reached the "done" breakpoint
 	 */
-	public boolean execute(int timeLimitMS, TaskMonitor monitor) throws CancelledException {
+	public boolean execute(int timeLimitMS) {
 
 		testGroup.clearFailures();
 		lastError = null;
@@ -279,9 +351,9 @@ public class EmulatorTestRunner {
 		executionListener.log(testGroup, " onPass -> " + breakOnPassAddr);
 		executionListener.log(testGroup, " onError -> " + breakOnErrorAddr);
 
-		emuHelper.setBreakpoint(breakOnDoneAddr);
-		emuHelper.setBreakpoint(breakOnPassAddr);
-		emuHelper.setBreakpoint(breakOnErrorAddr);
+		emu.addBreakpoint(breakOnDoneAddr, "1:1");
+		emu.addBreakpoint(breakOnPassAddr, "1:1");
+		emu.addBreakpoint(breakOnErrorAddr, "1:1");
 
 		GhidraSwinglessTimer safetyTimer = null;
 		haltedOnTimer = false;
@@ -292,7 +364,7 @@ public class EmulatorTestRunner {
 					@Override
 					public synchronized void timerFired() {
 						haltedOnTimer = true;
-						emuHelper.getEmulator().setHalt(true);
+						emu.setSuspended(true);
 					}
 				});
 				safetyTimer.setRepeats(false);
@@ -303,20 +375,20 @@ public class EmulatorTestRunner {
 
 				boolean success;
 				if (atBreakpoint) {
-					success = emuHelper.run(monitor);
+					success = runToBreakpoint();
 				}
 				else {
-					success = emuHelper.run(alignAddress(testGroup.functionEntryPtr, alignment),
-						null, monitor);
+					Address aligned = alignAddress(testGroup.functionEntryPtr, alignment);
+					EmulatorUtilities.initializeRegisters(emuThread, program, aligned);
+					success = runToBreakpoint();
 				}
 
 				String lastFuncName = getLastFunctionName(testGroup, false);
 				String errFileName = testGroup.mainTestControlBlock.getLastErrorFile(this);
 				int errLineNum = testGroup.mainTestControlBlock.getLastErrorLine(this);
 
-				Address executeAddr = emuHelper.getExecutionAddress();
+				Address executeAddr = emuThread.getCounter();
 				if (!success) {
-					lastError = emuHelper.getLastError();
 					testGroup.severeTestFailure(lastFuncName, errFileName, errLineNum, program,
 						executionListener);
 					return false;
@@ -386,8 +458,7 @@ public class EmulatorTestRunner {
 
 		Address executeAddr = alignAddress(testGroup.functionEntryPtr, alignment);
 
-		emuHelper.writeRegister(program.getLanguage().getProgramCounter(),
-			executeAddr.getAddressableWordOffset());
+		emuThread.overrideCounter(executeAddr);
 
 		// Enable sprintf use
 		testGroup.mainTestControlBlock.setSprintfEnabled(this, true);
@@ -419,22 +490,17 @@ public class EmulatorTestRunner {
 			}
 		}
 
-		executionListener.logState(this);
-
 		int stepCount = 0;
 		Address lastAddress = null;
 		Address printfCallAddr = null;
 		boolean assertTriggered = false;
 		FunctionInfo currentFunction = null;
 
-		MyMemoryAccessFilter memoryFilter = new MyMemoryAccessFilter();
-		emu.addMemoryAccessFilter(memoryFilter);
+		emuCallbacks.logRWEnabled = true;
 		try {
 
 			while (true) {
-				if (!emuHelper.step(TaskMonitor.DUMMY)) {
-					lastError = emuHelper.getLastError();
-
+				if (!stepIgnoreBreakpoints()) {
 					String lastFuncName = getLastFunctionName(testGroup, true);
 					String errFileName = testGroup.mainTestControlBlock.getLastErrorFile(this);
 					int errLineNum = testGroup.mainTestControlBlock.getLastErrorLine(this);
@@ -445,7 +511,7 @@ public class EmulatorTestRunner {
 					return false;
 				}
 
-				executeAddr = emuHelper.getExecutionAddress();
+				executeAddr = emuThread.getCounter();
 
 				List<DumpPoint> dumpList = dumpPointMap.get(executeAddr);
 				if (dumpList != null) {
@@ -483,15 +549,15 @@ public class EmulatorTestRunner {
 				else if (executeAddr.equals(printfAddr)) {
 					// enter printf function
 					printfCallAddr = lastAddress;
-					memoryFilter.enabled = false;
+					emuCallbacks.logRWEnabled = false;
 					executionListener.log(testGroup, "printf invocation (log supressed) ...");
 				}
 				else if (printfCallAddr != null && isPrintfReturn(executeAddr, printfCallAddr)) {
 					// return from printf function 
 					printfCallAddr = null;
-					memoryFilter.enabled = true;
+					emuCallbacks.logRWEnabled = true;
 
-					String str = testGroup.controlBlock.emuReadString(emuHelper,
+					String str = testGroup.controlBlock.emuReadString(emuThread,
 						testGroup.mainTestControlBlock.getPrintfBufferAddress());
 					executionListener.log(testGroup, "  " + str);
 				}
@@ -525,10 +591,6 @@ public class EmulatorTestRunner {
 					return false;
 				}
 
-				if (memoryFilter.enabled) {
-					executionListener.logState(this);
-				}
-
 				lastAddress = executeAddr;
 			}
 		}
@@ -537,8 +599,6 @@ public class EmulatorTestRunner {
 			return false;
 		}
 		finally {
-			memoryFilter.dispose();
-
 			List<FunctionInfo> list = new ArrayList<>(subFunctionMap.values());
 			if (!list.isEmpty()) {
 				// Show list of sub-functions which were never executed
@@ -579,62 +639,84 @@ public class EmulatorTestRunner {
 		return (offset > printfCallAddr.getOffset() && offset <= maxEnd);
 	}
 
-	private class MyMemoryAccessFilter extends MemoryAccessFilter {
+	private class MyCallbacks implements PcodeEmulationCallbacks<byte[]> {
+		private static final AddressSetView EMPTY = new AddressSet();
 
-		boolean enabled = true;
+		boolean logRWEnabled = false;
 
 		@Override
-		protected void processWrite(AddressSpace spc, long off, int size, byte[] values) {
-			if (enabled) {
-				executionListener.logWrite(EmulatorTestRunner.this, spc.getAddress(off), size,
-					values);
+		public void beforeStore(PcodeThread<byte[]> thread, PcodeOp op, AddressSpace space,
+				byte[] offset, int size, byte[] value) {
+			if (!logRWEnabled) {
+				return;
 			}
+			executionListener.logWrite(EmulatorTestRunner.this,
+				emuArithmetic.toAddress(offset, space, Purpose.INSPECT), size, value);
 		}
 
 		@Override
-		protected void processRead(AddressSpace spc, long off, int size, byte[] values) {
-			if (enabled &&
-				emu.getEmulateExecutionState() != EmulateExecutionState.INSTRUCTION_DECODE) {
-				executionListener.logRead(EmulatorTestRunner.this, spc.getAddress(off), size,
-					values);
+		public void afterLoad(PcodeThread<byte[]> thread, PcodeOp op, AddressSpace space,
+				byte[] offset, int size, byte[] value) {
+			if (!logRWEnabled) {
+				return;
 			}
-		}
-	}
-
-	private class MyMemoryFaultHandler implements MemoryFaultHandler {
-
-		private ExecutionListener executionListener;
-
-		public MyMemoryFaultHandler(ExecutionListener executionListener) {
-			this.executionListener = executionListener;
+			executionListener.logRead(EmulatorTestRunner.this,
+				emuArithmetic.toAddress(offset, space, Purpose.INSPECT), size, value);
 		}
 
 		@Override
-		public boolean unknownAddress(Address address, boolean write) {
-			Address pc = emuHelper.getExecutionAddress();
-			String access = write ? "written" : "read";
-			executionListener.log(testGroup,
-				"Unknown address " + access + " at " + pc + ": " + address);
-			return false;
-		}
-
-		@Override
-		public boolean uninitializedRead(Address address, int size, byte[] buf, int bufOffset) {
-			if (emu.getEmulateExecutionState() == EmulateExecutionState.INSTRUCTION_DECODE) {
-				return false;
+		public void beforeExecuteInstruction(PcodeThread<byte[]> thread, Instruction instruction,
+				PcodeProgram program) {
+			if (!logRWEnabled) {
+				return;
 			}
-			Address pc = emuHelper.getExecutionAddress();
-			if (!address.isUniqueAddress()) {
-				Register reg = program.getRegister(address, size);
+			executionListener.logState(EmulatorTestRunner.this);
+		}
+
+		@Override
+		public boolean handleMissingUserop(PcodeThread<byte[]> thread, PcodeOp op, PcodeFrame frame,
+				String opName, PcodeUseropLibrary<byte[]> library) {
+			unimplementedSet.add(opName);
+			Varnode output = op.getOutput();
+			String outStr = output == null ? ""
+					: ", unable to set output " + output.toString(program.getLanguage());
+			executionListener.log(testGroup, """
+					Unimplemented pcodeop '%s' at: %s%s""".formatted(
+				opName, thread.getCounter(), outStr));
+			++callOtherCount;
+			return true;
+		}
+
+		@Override
+		public <A, U> AddressSetView readUninitialized(PcodeThread<byte[]> thread,
+				PcodeExecutorStatePiece<A, U> piece, AddressSetView set, Reason reason) {
+			if (reason == Reason.EXECUTE_DECODE) {
+				return set;
+			}
+			/**
+			 * HACK: Because of limitations in PcodeExecutorState, we can't know what thread is
+			 * accessing a shared state, i.e., memory. We'd need either to require a thread argument
+			 * in all the set/getVar methods (eww), or we need to use the newer JDK stuff for
+			 * passing context vars down (alternative to the now decried ThreadLocal thing). Thus,
+			 * thread may be null. emuThread is being constructed when it first tries to read
+			 * pc,ctx; so it'll be null at that moment. So, we have to try both.
+			 */
+			if (thread == null) {
+				thread = emuThread;
+			}
+			Address pc = thread.getCounter();
+			for (AddressRange rng : set) {
+				Register reg = program.getRegister(rng.getMinAddress(), (int) rng.getLength());
 				if (reg != null) {
 					executionListener.log(testGroup,
-						"Uninitialized register read at " + pc + ": " + reg);
-					return true;
+						"Uninitialized register read at %s: %s".formatted(pc, reg));
+				}
+				else {
+					executionListener.log(testGroup, "Uninitialized read at %s: %s:%d".formatted(pc,
+						rng.getMinAddress(), rng.getLength()));
 				}
 			}
-			executionListener.log(testGroup,
-				"Uninitialized read at " + pc + ": " + address.toString(true) + ":" + size);
-			return true;
+			return EMPTY;
 		}
 	}
 
@@ -643,7 +725,7 @@ public class EmulatorTestRunner {
 	}
 
 	private abstract class DumpPoint {
-		final Address breakAddr;
+		//final Address breakAddr;
 		final int dumpSize;
 		final int elementSize;
 		final DumpFormat elementFormat;
@@ -651,7 +733,7 @@ public class EmulatorTestRunner {
 
 		DumpPoint(Address breakAddr, int dumpSize, int elementSize, DumpFormat elementFormat,
 				String comment) {
-			this.breakAddr = breakAddr;
+			//this.breakAddr = breakAddr;
 			this.dumpSize = dumpSize;
 			this.elementSize = elementSize;
 			this.elementFormat = elementFormat;
@@ -704,8 +786,7 @@ public class EmulatorTestRunner {
 		Address getDumpAddress() {
 			RegisterValue regVal = getRegisterValue(dumpAddrReg);
 			return dumpAddrSpace.getAddress(regVal.getUnsignedValue().longValue())
-					.add(
-						relativeOffset);
+					.add(relativeOffset);
 		}
 
 		@Override

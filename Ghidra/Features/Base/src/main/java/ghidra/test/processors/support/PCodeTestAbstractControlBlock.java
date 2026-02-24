@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,14 @@
  */
 package ghidra.test.processors.support;
 
+import java.nio.charset.Charset;
 import java.util.*;
 
-import ghidra.app.emulator.EmulatorHelper;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.docking.settings.SettingsImpl;
+import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.disassemble.Disassembler;
@@ -36,9 +39,9 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>PCodeTestAbstractControlBlock</code> data is models the general capabilities
- * of the TestInfo data structure which is used for different puposes as handled
- * by extensions of this class.
+ * <code>PCodeTestAbstractControlBlock</code> data is models the general capabilities of the
+ * TestInfo data structure which is used for different puposes as handled by extensions of this
+ * class.
  */
 public abstract class PCodeTestAbstractControlBlock {
 
@@ -59,17 +62,18 @@ public abstract class PCodeTestAbstractControlBlock {
 	private HashMap<String, FunctionInfo> functionMap = new HashMap<>();
 
 	/**
-	 * Construct test control block instance for the specified program.  
+	 * Construct test control block instance for the specified program.
+	 * 
 	 * @param program program containing control block structure
 	 * @param infoStructAddr program address where structure resides
-	 * @param infoStruct appropriate Info structure definition which will have array 
-	 * of FunctionInfo immediately following.
+	 * @param infoStruct appropriate Info structure definition which will have array of FunctionInfo
+	 *            immediately following.
 	 */
 	PCodeTestAbstractControlBlock(Program program, Address infoStructAddr, Structure infoStruct) {
 		this.program = program;
 		this.pointerSize = program.getDataTypeManager().getDataOrganization().getPointerSize();
 		this.infoStructAddr = infoStructAddr;
-		this.infoProgramStruct = (Structure) infoStruct.clone(program.getDataTypeManager());
+		this.infoProgramStruct = infoStruct.clone(program.getDataTypeManager());
 
 		codeSpace = program.getAddressFactory().getDefaultAddressSpace();
 		dataSpace = program.getLanguage().getDefaultDataSpace();
@@ -95,10 +99,10 @@ public abstract class PCodeTestAbstractControlBlock {
 	}
 
 	/**
-	 * Force an existing reference to refer to the code space.  Pointers
-	 * created in the data space refer to the data space by default, this method
-	 * is used to change these pointers in the data space to refer to 
-	 * code.
+	 * Force an existing reference to refer to the code space. Pointers created in the data space
+	 * refer to the data space by default, this method is used to change these pointers in the data
+	 * space to refer to code.
+	 * 
 	 * @param addr location with data space which contains code reference
 	 */
 	void forceCodePointer(Address addr) {
@@ -169,8 +173,8 @@ public abstract class PCodeTestAbstractControlBlock {
 	}
 
 	/**
-	 * Check for a Data pointer at the specified address and return the referenced
-	 * address.
+	 * Check for a Data pointer at the specified address and return the referenced address.
+	 * 
 	 * @param addr address of stored pointer
 	 * @return pointer referenced address or null if no pointer found
 	 */
@@ -182,7 +186,8 @@ public abstract class PCodeTestAbstractControlBlock {
 		return (Address) data.getValue();
 	}
 
-	protected Address readCodePointer(MemBuffer buffer, int bufferOffset, boolean updateReference) throws MemoryAccessException {
+	protected Address readCodePointer(MemBuffer buffer, int bufferOffset, boolean updateReference)
+			throws MemoryAccessException {
 		Address codePtr = readPointer(buffer, bufferOffset, codeSpace, updateReference);
 
 		// treat null pointer as special case - just return it
@@ -312,8 +317,9 @@ public abstract class PCodeTestAbstractControlBlock {
 			new TerminatedStringDataType(program.getDataTypeManager());
 
 		Structure functionInfoStruct =
-			(Structure) infoProgramStruct.getDataTypeManager().getDataType(CategoryPath.ROOT,
-				"FunctionInfo");
+			(Structure) infoProgramStruct.getDataTypeManager()
+					.getDataType(CategoryPath.ROOT,
+						"FunctionInfo");
 		if (functionInfoStruct == null) {
 			throw new AssertException("FunctionInfo structure not yet resolved");
 		}
@@ -383,46 +389,62 @@ public abstract class PCodeTestAbstractControlBlock {
 
 	}
 
-	protected String emuReadString(EmulatorHelper emu, Address strPtrAddr) {
+	/**
+	 * Read an ASCII-encoded string, perhaps with wide characters, from the emulator.
+	 * <p>
+	 * This is really a hack, but suffices for these tests. The character size is taken from the
+	 * program's data organization. However, even if wide characters are used, this only reads the
+	 * least-significant byte, effectively truncating each to the ASCII-2 range [0-255].
+	 * 
+	 * @param emu the emulator
+	 * @param strPtrAddr the pointer to the string
+	 * @return the string
+	 */
+	protected String emuReadString(PcodeThread<byte[]> emu, Address strPtrAddr) {
 
 		DataOrganization dataOrganization =
-			emu.getProgram().getDataTypeManager().getDataOrganization();
+			program.getDataTypeManager().getDataOrganization();
 		int charSize = dataOrganization.getCharSize();
-		boolean isBigEndian = emu.getProgram().getMemory().isBigEndian();
+		boolean isBigEndian = emu.getLanguage().isBigEndian();
 
-		MemoryState memState = emu.getEmulator().getMemState();
-		long offset = strPtrAddr.getOffset();
+		PcodeExecutorState<byte[]> state = emu.getState();
 		if (isBigEndian) {
-			offset += (charSize - 1);
+			strPtrAddr = strPtrAddr.add(charSize - 1);
 		}
-		char[] buffer = new char[128];
+		MemBuffer memBuf = state.getConcreteBuffer(strPtrAddr, Purpose.INSPECT);
+
+		int offset = 0;
 		int index = 0;
+		byte[] buffer = new byte[128];
 		while (index < buffer.length) {
-			buffer[index] =
-				(char) (memState.getValue(strPtrAddr.getAddressSpace(), offset, 1) & 0xff);
+			try {
+				buffer[index] = memBuf.getByte(offset);
+			}
+			catch (MemoryAccessException e) {
+				throw new AssertionError(e);
+			}
 			if (buffer[index] == 0) {
 				break;
 			}
 			offset += charSize;
 			++index;
 		}
-		return new String(buffer, 0, index);
+		return new String(buffer, 0, index, Charset.forName("ASCII"));
 	}
 
-	protected long emuRead(EmulatorHelper emu, Address addr, int size) {
+	protected long emuRead(PcodeThread<byte[]> emu, Address addr, int size) {
 		if (size < 1 || size > 8) {
 			throw new IllegalArgumentException("Unsupported EMU read size: " + size);
 		}
-		MemoryState memState = emu.getEmulator().getMemState();
-		return memState.getValue(addr.getAddressSpace(), addr.getOffset(), size);
+		return emu.getArithmetic()
+				.toLong(emu.getState().inspectConcrete(addr, size), Purpose.INSPECT);
 	}
 
-	protected void emuWrite(EmulatorHelper emu, Address addr, int size, long value) {
+	protected void emuWrite(PcodeThread<byte[]> emu, Address addr, int size, long value) {
 		if (size < 1 || size > 8) {
 			throw new IllegalArgumentException("Unsupported EMU read size: " + size);
 		}
-		MemoryState memState = emu.getEmulator().getMemState();
-		memState.setValue(addr.getAddressSpace(), addr.getOffset(), size, value);
+		emu.getState().setVar(addr, size, false, emu.getArithmetic().fromConst(value, size));
 	}
 
 	protected Address getMirroredDataAddress(EmulatorTestRunner emuTestRunner, Address addr) {

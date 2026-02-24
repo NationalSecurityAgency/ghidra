@@ -230,7 +230,7 @@ public enum TraceEmulationIntegration {
 		 * @param set the uninitialized portion required
 		 * @return the addresses in {@code set} that remain uninitialized
 		 * @see PcodeEmulationCallbacks#readUninitialized(PcodeThread, PcodeExecutorStatePiece,
-		 *      AddressSetView)
+		 *      AddressSetView, Reason)
 		 */
 		AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<A, T> piece, AddressSetView set);
@@ -246,12 +246,14 @@ public enum TraceEmulationIntegration {
 		 * @param space the address space
 		 * @param offset the offset at the start of the uninitialized portion
 		 * @param length the size in bytes of the uninitialized portion
+		 * @param reason the reason for reading
 		 * @return the number of bytes just initialized, typically 0 or {@code length}
 		 * @see PcodeEmulationCallbacks#readUninitialized(PcodeThread, PcodeExecutorStatePiece,
-		 *      AddressSpace, Object, int)
+		 *      AddressSpace, Object, int, Reason)
 		 */
 		default int abstractReadUninit(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset, int length) {
+				PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset, int length,
+				Reason reason) {
 			return 0;
 		}
 
@@ -542,7 +544,8 @@ public enum TraceEmulationIntegration {
 		 */
 		@Override
 		public int abstractReadUninit(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset, int length) {
+				PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset, int length,
+				Reason reason) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -783,14 +786,16 @@ public enum TraceEmulationIntegration {
 
 		@Override
 		public <B, U> int readUninitialized(PcodeThread<Object> thread,
-				PcodeExecutorStatePiece<B, U> piece, AddressSpace space, B offset, int length) {
+				PcodeExecutorStatePiece<B, U> piece, AddressSpace space, B offset, int length,
+				Reason reason) {
 			PcodeTraceDataAccess acc = space.isRegisterSpace() ? getRegAccess(thread) : memAccess;
-			return handlerFor(piece).abstractReadUninit(acc, thread, piece, space, offset, length);
+			return handlerFor(piece).abstractReadUninit(acc, thread, piece, space, offset, length,
+				reason);
 		}
 
 		@Override
 		public <B, U> AddressSetView readUninitialized(PcodeThread<Object> thread,
-				PcodeExecutorStatePiece<B, U> piece, AddressSetView set) {
+				PcodeExecutorStatePiece<B, U> piece, AddressSetView set, Reason reason) {
 			if (set.isEmpty()) {
 				return set;
 			}

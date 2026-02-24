@@ -18,6 +18,7 @@ package ghidra.pcode.emu.taint.state;
 import java.util.*;
 import java.util.Map.Entry;
 
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
@@ -85,14 +86,15 @@ public class TaintSpace {
 	 * 
 	 * @param offset the offset
 	 * @param buf the vector to receive taint sets
+	 * @param reason the reason for reading
 	 * @param cb callbacks to receive emulation events
 	 */
-	public void getInto(long offset, TaintVec buf, PcodeStateCallbacks cb) {
+	public void getInto(long offset, TaintVec buf, Reason reason, PcodeStateCallbacks cb) {
 		for (int i = 0; i < buf.length; i++) {
 			TaintSet s = taints.get(offset + i);
 			if (s == null) {
-				if (cb.readUninitialized(piece, PcodeStateCallbacks.rngSet(space, offset + i, 1))
-						.isEmpty()) {
+				if (cb.readUninitialized(piece, PcodeStateCallbacks.rngSet(space, offset + i, 1),
+					reason).isEmpty()) {
 					s = taints.get(offset + i);
 				}
 			}
@@ -107,17 +109,18 @@ public class TaintSpace {
 	 * Retrieve the taint sets for the variable at the given offset
 	 * 
 	 * <p>
-	 * This works the same as {@link #getInto(long, TaintVec, PcodeStateCallbacks)}, but creates a
-	 * new vector of the given size, reads the taint sets, and returns the vector.
+	 * This works the same as {@link #getInto(long, TaintVec, Reason, PcodeStateCallbacks)}, but
+	 * creates a new vector of the given size, reads the taint sets, and returns the vector.
 	 * 
 	 * @param offset the offset
 	 * @param size the size of the variable
+	 * @param reason the reason for reading
 	 * @param cb callbacks to receive emulation events
 	 * @return the taint vector for that variable
 	 */
-	public TaintVec get(long offset, int size, PcodeStateCallbacks cb) {
+	public TaintVec get(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		TaintVec vec = new TaintVec(size);
-		getInto(offset, vec, cb);
+		getInto(offset, vec, reason, cb);
 		return vec;
 	}
 
@@ -153,7 +156,7 @@ public class TaintSpace {
 		}
 		PcodeOp pcodeOp = ops.get(offset);  // Needed here to generate the TaintVec
 		TaintVec vec = new TaintVec(MathUtilities.unsignedMin(1024, end - offset), pcodeOp);
-		getInto(offset, vec, PcodeStateCallbacks.NONE);
+		getInto(offset, vec, Reason.INSPECT, PcodeStateCallbacks.NONE);
 		return Map.entry(offset, vec);
 	}
 }

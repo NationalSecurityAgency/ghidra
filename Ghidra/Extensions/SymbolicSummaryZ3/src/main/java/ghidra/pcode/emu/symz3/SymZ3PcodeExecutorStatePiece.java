@@ -144,9 +144,9 @@ public class SymZ3PcodeExecutorStatePiece
 	 * the storage space.
 	 */
 	@Override
-	protected SymValueZ3 getFromSpace(SymZ3Space space, SymValueZ3 offset, int size,
+	protected SymValueZ3 getFromSpace(SymZ3Space space, SymValueZ3 offset, int size, Reason reason,
 			PcodeStateCallbacks cb) {
-		return space.get(offset, size, cb);
+		return space.get(offset, size, reason, cb);
 	}
 
 	@Override

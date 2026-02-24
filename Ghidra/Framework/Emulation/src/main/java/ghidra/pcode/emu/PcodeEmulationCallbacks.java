@@ -17,6 +17,7 @@ package ghidra.pcode.emu;
 
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
@@ -378,18 +379,19 @@ public interface PcodeEmulationCallbacks<T> {
 	 * @param space the address space of the operand
 	 * @param offset the offset of the operand
 	 * @param length the size of the operand
+	 * @param reason the reason for reading
 	 * @return the length of the operand just initialized, typically 0 or {@code length}
 	 */
-	default <A, U> int readUninitialized(PcodeThread<T> thread,
-			PcodeExecutorStatePiece<A, U> piece, AddressSpace space, A offset, int length) {
+	default <A, U> int readUninitialized(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			AddressSpace space, A offset, int length, Reason reason) {
 		return 0;
 	}
 
 	/**
 	 * Typically used from within
-	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int)}
+	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Reason)}
 	 * to forward to the callback for concrete addressing
-	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSetView)}.
+	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSetView, Reason)}.
 	 * 
 	 * @param <A> the piece's address domain
 	 * @param <U> the piece's value domain
@@ -399,13 +401,15 @@ public interface PcodeEmulationCallbacks<T> {
 	 * @param space the address space of the operand
 	 * @param offset the offset of the operand
 	 * @param length the size of the operand
+	 * @param reason the reason for reading
 	 * @return the length of the operand just initialized, typically 0 or {@code length}
 	 */
 	default <A, U> int delegateReadUninitialized(PcodeThread<T> thread,
-			PcodeExecutorStatePiece<A, U> piece, AddressSpace space, A offset, int length) {
+			PcodeExecutorStatePiece<A, U> piece, AddressSpace space, A offset, int length,
+			Reason reason) {
 		long lOffset = piece.getAddressArithmetic().toLong(offset, Purpose.LOAD);
 		AddressSet set = PcodeStateCallbacks.rngSet(space, lOffset, length);
-		AddressSetView remains = readUninitialized(thread, piece, set);
+		AddressSetView remains = readUninitialized(thread, piece, set, reason);
 		if (set == remains) {
 			return 0;
 		}
@@ -432,18 +436,19 @@ public interface PcodeEmulationCallbacks<T> {
 	 *            {@link #dataWritten(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object)}
 	 * @param piece the state piece
 	 * @param set the uninitialized portion required
+	 * @param reason the reason for reading
 	 * @return the addresses in {@code set} that remain uninitialized
 	 */
 	default <A, U> AddressSetView readUninitialized(PcodeThread<T> thread,
-			PcodeExecutorStatePiece<A, U> piece, AddressSetView set) {
+			PcodeExecutorStatePiece<A, U> piece, AddressSetView set, Reason reason) {
 		return set;
 	}
 
 	/**
 	 * Typically used from within
-	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSetView)} to forward
-	 * to the callback for abstract addressing
-	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int)}.
+	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSetView, Reason)} to
+	 * forward to the callback for abstract addressing
+	 * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Reason)}.
 	 * 
 	 * @param <A> the piece's address domain
 	 * @param <U> the piece's value domain
@@ -451,10 +456,11 @@ public interface PcodeEmulationCallbacks<T> {
 	 *            {@link #dataWritten(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object)}
 	 * @param piece the state piece
 	 * @param set the uninitialized portion required
+	 * @param reason the reason for reading
 	 * @return the addresses in {@code set} that remain uninitialized
 	 */
 	default <A, U> AddressSetView delegateReadUninitialized(PcodeThread<T> thread,
-			PcodeExecutorStatePiece<A, U> piece, AddressSetView set) {
+			PcodeExecutorStatePiece<A, U> piece, AddressSetView set, Reason reason) {
 		if (set.isEmpty()) {
 			return set;
 		}
@@ -463,7 +469,7 @@ public interface PcodeEmulationCallbacks<T> {
 		for (AddressRange range : set) {
 			int l = readUninitialized(thread, piece, range.getAddressSpace(),
 				piece.getAddressArithmetic().fromConst(range.getMinAddress()),
-				(int) range.getLength());
+				(int) range.getLength(), reason);
 			if (l == 0) {
 				continue;
 			}
@@ -497,14 +503,14 @@ public interface PcodeEmulationCallbacks<T> {
 
 		@Override
 		public <A, U> int readUninitialized(PcodeExecutorStatePiece<A, U> piece,
-				AddressSpace space, A offset, int length) {
-			return cb.readUninitialized(thread, piece, space, offset, length);
+				AddressSpace space, A offset, int length, Reason reason) {
+			return cb.readUninitialized(thread, piece, space, offset, length, reason);
 		}
 
 		@Override
 		public <A, U> AddressSetView readUninitialized(PcodeExecutorStatePiece<A, U> piece,
-				AddressSetView set) {
-			return cb.readUninitialized(thread, piece, set);
+				AddressSetView set, Reason reason) {
+			return cb.readUninitialized(thread, piece, set, reason);
 		}
 	}
 
