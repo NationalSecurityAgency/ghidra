@@ -1131,10 +1131,12 @@ define token instrAARCH64 (32) endian = little
 
 	imm6 = (10,15)
 	aa_imm7 = (15,21)
+	imm8  = (10,17)
 	imm12 = (10,21)
 	imm16 = (5,20)
 
 	simm7 = (15,21) signed
+	simm8 = (10,17) signed
 	simm9 = (12,20) signed
 	simm14 = (5,18) signed
 	simm19 = (5,23) signed
