@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,12 +68,12 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	private NavigatableContextAction searchAction;
 	private SearchStringDialog dialog;
 
-	int addressColumnIndex = 1;
-	int labelColumnIndex = 2;
-	int previewColumnIndex = 3;
-	int asciiColumnIndex = 4;
-	int stringTypeColumnIndex = 5;
-	int isWordColumnIndex = 7;
+	private int addressColumnIndex = 1;
+	private int labelColumnIndex = 2;
+	private int previewColumnIndex = 3;
+	private int asciiColumnIndex = 4;
+	private int stringTypeColumnIndex = 5;
+	private int isWordColumnIndex = 21;
 
 	@Before
 	public void setUp() throws Exception {
@@ -1234,8 +1234,9 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		int txId = program.startTransaction("Create Label");
 		boolean commit;
 		try {
-			program.getSymbolTable().createLabel(addr(0x40503c), "testLabel",
-				SourceType.USER_DEFINED);
+			program.getSymbolTable()
+					.createLabel(addr(0x40503c), "testLabel",
+						SourceType.USER_DEFINED);
 			commit = true;
 		}
 		catch (InvalidInputException exc) {
