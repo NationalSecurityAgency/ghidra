@@ -179,6 +179,43 @@ class ComponentNode extends Node {
 	}
 
 	/**
+	 * Push a component to this node, before or after the selected one.
+	 * Stack the component at the beginning, if the selected one is null.
+	 * @param placeholder the placeholder to push.
+	 * @param selected the selected component of a target window space.
+	 */
+	void push(ComponentPlaceholder placeholder, ComponentPlaceholder selected) {
+		ComponentNode sourceNode = placeholder.getNode();
+		if (selected == null) {
+			sourceNode.remove(placeholder);
+			// Stack the placeholder at the beginning, if the selected
+			// one is null.
+			windowPlaceholders.add(0, placeholder);
+		} else {
+			// Taking the selected component index before removing the
+			// placeholder from its own node, is to properly shift the
+			// position of items when both are in the same space.
+			//
+			// In the same node, shift a component after the selected,
+			// if on its right, otherwise before, if on its left.
+			//
+			// Pushing the component in a new node, will always put it
+			// before the selected one.
+			int index = windowPlaceholders.indexOf(selected);
+			sourceNode.remove(placeholder);
+			windowPlaceholders.add(index, placeholder);
+		}
+		placeholder.setNode(this);
+
+		if (placeholder.isActive()) {
+			top = placeholder;
+			invalidate();
+		}
+		WindowNode topLevelNode = getTopLevelNode();
+		topLevelNode.componentAdded(placeholder);
+	}
+
+	/**
 	 * Removes the component from this node, but not from the manager. Used when
 	 * the component is moved.  If component is active, it will remain active.
 	 * @param placeholder the object containing the component to be removed.
@@ -319,7 +356,16 @@ class ComponentNode extends Node {
 
 			DockingTabRenderer tabRenderer =
 				createTabRenderer(tabbedPane, placeholder, fullTitle, tabText, component);
-			c.installDragDropTarget(tabbedPane);
+
+			// This is to register tabs as drag-N-drop targets.
+			// c.installDragDropTarget(tabbedPane) is for group
+			// of tabs, and won't allow to track single tabs as
+			// substitutes of a DockableComponent placeholder's
+			// window surface.
+			c.installDragDropTarget(tabRenderer);
+
+			tabRenderer.installDragSource(c.getHeader());
+
 			tabRenderer.installPopupMenu(createTabPopupMenu(activeComponents, placeholder));
 
 			tabbedPane.setTabComponentAt(i, tabRenderer);
@@ -622,6 +668,22 @@ class ComponentNode extends Node {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the list of placeholders in this node.
+	 */
+	List<ComponentPlaceholder> getPlaceholders() {
+		return new ArrayList<>(windowPlaceholders);
+	}
+
+	/**
+	 * Returns the list of active placeholders in this node.
+	 */
+	List<ComponentPlaceholder> getActivePlaceholders() {
+		List<ComponentPlaceholder> activeComponents = new ArrayList<>();
+		populateActiveComponents(activeComponents);
+		return activeComponents;
 	}
 
 	@Override
