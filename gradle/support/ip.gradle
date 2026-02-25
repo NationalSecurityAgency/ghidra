@@ -154,6 +154,8 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/*.vcxproj.user"
 		exclude '**/__pycache__'
 		exclude '**/*.egg-info'
+		exclude '**/test_dbg'       // ignore decompiler test artifacts
+		exclude '**/ghidra_test_dbg'
 	}
 	tree.each { file ->
 			String ip = getIp(p.projectDir, file)
