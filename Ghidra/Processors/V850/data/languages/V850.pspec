@@ -8,6 +8,7 @@
 
   <volatile outputop="write" inputop="read">
     <range space="ram" first="0x0" last="0x20"/>
+    <range space="ram" first="0xFF400000" last="0xFFFFFFFF"/>
   </volatile>
 
 </processor_spec>

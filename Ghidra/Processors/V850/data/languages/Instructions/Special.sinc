@@ -14,6 +14,8 @@
 {
 	SearchLeft(R2731, R1115, 0);
 	$(CY) = (R1115 != 0xFFFFFFFF);		# zero bit found
+	$(OV) = 0;
+	$(S)  = 0;
 	$(Z)  = (R1115 == 0xFFFFFFFF);		# zero bit not found
 }
 
@@ -22,6 +24,8 @@
 {
 	SearchRight(R2731, R1115, 0);
 	$(CY) = (R1115 != 0xFFFFFFFF);		# zero bit found
+	$(OV) = 0;
+	$(S)  = 0;
 	$(Z)  = (R1115 == 0xFFFFFFFF);		# zero bit not found
 }
 
@@ -30,6 +34,8 @@
 {
 	SearchLeft(R2731, R1115, 1);
 	$(CY) = (R1115 != 0x0);		# one bit found
+	$(OV) = 0;
+	$(S)  = 0;
 	$(Z)  = (R1115 == 0x0);		# one bit not found
 }
 
@@ -38,6 +44,8 @@
 {
 	SearchRight(R2731, R1115, 1);
 	$(CY) = (R1115 != 0x0);		# one bit found
+	$(OV) = 0;
+	$(S)  = 0;
 	$(Z)  = (R1115 == 0x0);		# one bit not found
 }
 
@@ -80,7 +88,7 @@
 }
 :jmp [R0004] is op0515=0x03 & R0004 & op0004!=0x1F
 {
-	call [R0004];
+	goto [R0004];
 }
 
 # JMP disp32[reg1] - 00000110111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD
@@ -122,9 +130,15 @@
 # CAXI [reg1], reg2, reg3 - rrrrr111111RRRRR|wwwww00011101110
 :caxi [R0004], R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0xEE & R2731
 {
-	local tkn = *:4 (R0004 & ~(0x3));
+	local adr:4 = R0004 & ~(0x3);
+	local tkn = *:4 adr;
 	local result = R1115 - tkn;
-	*:4 R0004 = tkn * zext(result != 0) + R2731 * zext(result == 0);
+	if (result != 0) goto <not_equal>;
+	*:4 adr = R2731;
+	goto <done>;
+	<not_equal>
+	*:4 adr = tkn;
+	<done>
 	R2731 = tkn;
 	set_general_flags_neg(R1115, tkn);
 }
@@ -207,9 +221,11 @@ define pcodeop __halt;
 }
 
 # LDSR reg2, regID - rrrrr111111RRRRR|0000000000100000
+define pcodeop __load_system_register;
 :ldsr R0004, SR1115 is op0510=0x3F & SR1115 & R0004; op1631=0x20
 {
 	SR1115 = R0004;
+	__load_system_register(SR1115);
 }
 
 # NOP - 0000000000000000
@@ -262,21 +278,21 @@ define pcodeop __halt;
 :reti is op0515=0x3F; op1631=0x140
 {
 	if($(EP)!=1)
-		goto <false>;
+		goto <not_ep>;
 
 	PC = EIPC;
 	PSW = EIPSW;
 	goto <end>;
 
-	<false>
+	<not_ep>
 	if($(NP)!=1)
-		goto <false2>;
+		goto <not_np>;
 
 	PC = FEPC;
 	PSW = FEPSW;
 	goto <end>;
 
-	<false2>
+	<not_np>
 	PC = EIPC;
 	PSW = EIPSW;
 
