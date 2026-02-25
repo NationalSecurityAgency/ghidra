@@ -112,8 +112,8 @@ public:
 /// class, which can be repeatedly used by calling resetMemory() between executions.
 class EmulateSnippet : public Emulate {
   Architecture *glb;			///< The underlying Architecture for the program being emulated
-  vector<PcodeOpRaw *> opList;		///< Sequence of p-code ops to be executed
-  vector<VarnodeData *> varList;	///< Varnodes allocated for ops
+  vector<PcodeOpRaw> opList;		///< Sequence of p-code ops to be executed
+  vector<VarnodeData> varList;	///< Varnodes allocated for ops
   map<uintb,uintb> tempValues;		///< Values stored in temporary registers
   PcodeOpRaw *currentOp;		///< Current p-code op being executed
   int4 pos;				///< Index of current p-code op being executed
@@ -145,7 +145,7 @@ class EmulateSnippet : public Emulate {
   virtual void fallthruOp(void);
 public:
   EmulateSnippet(Architecture *g) { glb = g; pos = 0; currentOp = (PcodeOpRaw *)0; }	///< Constructor
-  virtual ~EmulateSnippet(void);							///< Destructor
+  virtual ~EmulateSnippet(void) = default;					///< Destructor
   virtual void setExecuteAddress(const Address &addr) { setCurrentOp(0); }
   virtual Address getExecuteAddress(void) const { return currentOp->getAddr(); }
   Architecture *getArch(void) const { return glb; }				///< Get the underlying Architecture
@@ -162,7 +162,7 @@ public:
   ///
   /// The i-th p-code op in the snippet sequence is set as the currently executing op.
   /// \param i is the index
-  void setCurrentOp(int4 i) { pos = i; currentOp = opList[i]; currentBehave = currentOp->getBehavior(); }
+  void setCurrentOp(int4 i) { pos = i; currentOp = &opList[i]; currentBehave = currentOp->getBehavior(); }
 
   /// \brief Set a temporary register value in the machine state
   ///
