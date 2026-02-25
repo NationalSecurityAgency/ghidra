@@ -254,6 +254,8 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_AFTER_STORAGE = new AttributeId("afterstorage", 157);
 	public static final AttributeId ATTRIB_FILL_ALTERNATE = new AttributeId("fillalternate", 158);
 
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 159);
+	// function parameter stacking direction
+	public static final AttributeId ATTRIB_ISRIGHTTOLEFT = new AttributeId("isrighttoleft", 159);
 
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 160);
 }

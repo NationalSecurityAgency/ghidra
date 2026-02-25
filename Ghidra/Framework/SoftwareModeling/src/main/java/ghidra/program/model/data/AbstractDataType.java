@@ -35,6 +35,8 @@ public abstract class AbstractDataType implements DataType {
 	protected String name;
 	protected CategoryPath categoryPath;
 	protected final DataTypeManager dataMgr;
+	private DataOrganization dataOrganization;
+	protected AddressModel addressModel;
 
 	protected AbstractDataType(CategoryPath path, String name, DataTypeManager dataTypeManager) {
 		if (path == null) {
@@ -101,7 +103,11 @@ public abstract class AbstractDataType implements DataType {
 
 	@Override
 	public String getName() {
-		return name;
+		if (null == addressModel) {
+			return name;
+		} else {
+			return name + " " + addressModel.toString();
+		}
 	}
 
 	@Override
@@ -274,6 +280,16 @@ public abstract class AbstractDataType implements DataType {
 			DataTypeDisplayOptions options, int offcutLength) {
 		// By default we will do nothing different for offcut values
 		return getDefaultLabelPrefix(buf, settings, len, options);
+	}
+
+	@Override
+	public AddressModel getAddressModel() {
+		return addressModel;
+	}
+
+	@Override
+	public void setAddressModel(AddressModel addressModel) {
+		this.addressModel = addressModel;
 	}
 
 	@Override

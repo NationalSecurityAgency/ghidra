@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.listing;
 
+import ghidra.program.model.data.AddressModel;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.lang.PrototypeModel;
@@ -110,4 +111,9 @@ public interface FunctionSignature {
 	 * @return true if the if the given signature is equivalent to this signature.
 	 */
 	public boolean isEquivalentSignature(FunctionSignature signature);
+	
+	/**
+	 * Returns the address model.
+	 */
+	public AddressModel getAddressModel();
 }

@@ -23,13 +23,13 @@ import ghidra.program.model.lang.protorules.AssignAction;
 /**
  * A list of resources describing possible storage locations for a function's return value,
  * and a strategy for selecting a storage location based on data-types in a function signature.
- * 
+ *
  * Similar to the parent class, when assigning storage, the first entry that matches the data-type
  * is chosen.  But if this instance fails to find a match (because the return value data-type is too
  * big) the data-type is converted to a pointer and storage is assigned based on that pointer.
  * Additionally, if configured, this instance will signal that a hidden input parameter is required
  * to fully model where the large return value is stored.
- * 
+ *
  * The resource list is checked to ensure entries are distinguishable.
  */
 public class ParamListStandardOut extends ParamListStandard {
@@ -58,7 +58,7 @@ public class ParamListStandardOut extends ParamListStandard {
 			responseCode == AssignAction.HIDDENRET_SPECIALREG ||
 			responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID) {
 			// If the storage is not assigned (because the datatype is too big) create a hidden input parameter
-			int sz = (spacebase == null) ? -1 : spacebase.getPointerSize();
+			int sz = proto.model.getPointerSize(spacebase);
 			DataType pointerType = dtManager.getPointer(proto.outtype, sz);
 			if (responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID) {
 				store.type = VoidDataType.dataType;

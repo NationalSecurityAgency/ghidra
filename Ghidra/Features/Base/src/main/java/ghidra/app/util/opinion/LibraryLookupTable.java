@@ -181,7 +181,7 @@ public class LibraryLookupTable {
 
 	/**
 	 * Get the symbol table associated with the DLL name
-	 * 
+	 *
 	 * @param dllName The DLL name (including extension)
 	 * @param size The architecture size of the DLL (e.g., 32 or 64).
 	 * @return LibrarySymbolTable associated with dllName
@@ -195,9 +195,9 @@ public class LibraryLookupTable {
 	 * Get the symbol table associated with the DLL name.  If not previously
 	 * generated for the given dllName, it will be constructed from a .exports
 	 * file found within the 'symbols' resource area.  If a .exports file
-	 * is not found a similarly named .ord file will be used if found.  The 
+	 * is not found a similarly named .ord file will be used if found.  The
 	 * .exports file is a Ghidra XML file formatted file, while the .ord file
-	 * is produced with the Visual Studio DUMPBIN /EXPORTS command.  The default 
+	 * is produced with the Visual Studio DUMPBIN /EXPORTS command.  The default
 	 * resource area is located within the directory
 	 * <pre>
 	 *   Ghidra/Features/Base/data/symbols/[win32|win64]
@@ -209,7 +209,7 @@ public class LibraryLookupTable {
 	 * }</pre>
 	 * The cacheMap is a static cache which always returns the same
 	 * instance for a given DLL name.
-	 * 
+	 *
 	 * @param dllName The DLL name (including extension)
 	 * @param size The architecture size of the DLL (e.g., 32 or 64).
 	 * @param log The message log (could be null)
