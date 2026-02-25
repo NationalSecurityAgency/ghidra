@@ -1,0 +1,2 @@
+@define MACTRAP ""
+@include "68000.sinc"
