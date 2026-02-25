@@ -166,6 +166,10 @@ ElementId ELEM_CONST_FLOWREF = ElementId("const_flowref", 85, FORMAT_SCOPE);
 ElementId ELEM_CONST_FLOWREF_SIZE = ElementId("const_flowref_size", 86, FORMAT_SCOPE);
 ElementId ELEM_CONST_FLOWDEST = ElementId("const_flowdest", 87, FORMAT_SCOPE);
 ElementId ELEM_CONST_FLOWDEST_SIZE = ElementId("const_flowdest_size", 88, FORMAT_SCOPE);
+ElementId ELEM_OFFSET_EXP = ElementId("offset_exp", 89, FORMAT_SCOPE);
+ElementId ELEM_OFFSET_SYM = ElementId("offset_sym", 90, FORMAT_SCOPE);
+ElementId ELEM_OFFSET_SYM_HEAD = ElementId("offset_sym_head", 91, FORMAT_SCOPE);
+ElementId ELEM_CONST_OFFSET = ElementId("const_offset", 92, FORMAT_SCOPE);
 
 /// The bytes of the header are read from the stream and verified against the required form and current version.
 /// If the form matches, \b true is returned.  No additional bytes are read.

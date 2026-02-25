@@ -502,6 +502,8 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
     res = new MinusExpression();
   else if (el == sla::ELEM_NOT_EXP)
     res = new NotExpression();
+  else if (el == sla::ELEM_OFFSET_EXP)
+    res = new OffsetInstructionValue();
   else
     return (PatternExpression *)0;
 
@@ -708,6 +710,20 @@ void StartInstructionValue::decode(Decoder &decoder,Translate *trans)
 
 {
   uint4 el = decoder.openElement(sla::ELEM_START_EXP);
+  decoder.closeElement(el);
+}
+
+void OffsetInstructionValue::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_OFFSET_EXP);
+  encoder.closeElement(sla::ELEM_OFFSET_EXP);
+}
+
+void OffsetInstructionValue::decode(Decoder &decoder,Translate *trans)
+
+{
+  uint4 el = decoder.openElement(sla::ELEM_OFFSET_EXP);
   decoder.closeElement(el);
 }
 
