@@ -5,6 +5,7 @@ data/build.xml||GHIDRA||||END|
 data/languages/tc172x.pspec||GHIDRA||||END|
 data/languages/tc176x.pspec||GHIDRA||||END|
 data/languages/tc29x.pspec||GHIDRA||||END|
+data/languages/tc36x.pspec||GHIDRA||||END|
 data/languages/tricore.cspec||GHIDRA||||END|
 data/languages/tricore.dwarf||GHIDRA||||END|
 data/languages/tricore.ldefs||GHIDRA||||END|
@@ -15,5 +16,6 @@ data/languages/tricore.sinc||GHIDRA||||END|
 data/languages/tricore.slaspec||GHIDRA||||END|
 data/manuals/tricore.idx||GHIDRA||||END|
 data/manuals/tricore2.idx||GHIDRA||||END|
+data/manuals/tricore3.idx||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|
 data/patterns/tricore_patterns.xml||GHIDRA||||END|
