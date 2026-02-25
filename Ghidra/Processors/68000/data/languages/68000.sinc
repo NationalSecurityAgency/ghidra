@@ -59,6 +59,10 @@ define register offset=0x746 size=10  [ FP7 ];
 @define DAT_DIR_CTL_ADDR_MODES2 "(mode2=0 | mode2=2 | mode2=5 | mode2=6 | mode=7)" # Data direct and control addressing modes
 @define CTL_ADDR_MODES2 "(mode2=2 | mode2=5 | mode2=6 | mode2=7)" # Control addressing modes
 
+@ifdef CPU32
+@define TBL_ADDR_MODES "(tbl_mode=2 | tbl_mode=4 | tbl_mode=5 | tbl_mode=6 | tbl_mode=7)" # Addressing modes for tblxx instructions
+@endif
+
 # Floating-point condition code bits within FPSR
 @define N_FP				"FPSR[27,1]"
 @define Z_FP				"FPSR[26,1]"
@@ -173,8 +177,32 @@ define token extword (16)
   reg12x   = (12,15)
   reg12xwu = (12,15)
   reg12xwl = (12,15)
-@endif  
+@endif
+@ifdef CPU32 # Data Register Interpolation
+  tbl_dr_size  = (6,7)
+  tbl_dr_round = (10,10)
+  tbl_dr_sign  = (11,11)
+  tbl_dr_reg = (0,2)
+@endif
 ;
+
+@ifdef CPU32
+# The TBLxx instructions are two 16-bit tokens optionally followed by a disp16 token.
+# The presence of the disp16 token is governed by bits in the first token.
+# Sleigh's ... operator follows the second token, but needs the bits from the first.
+# To work around that, a single 32-bit token is used in place of the standard tokens.
+define token tbl_instrA(32)
+  tbl_regan=(16,18)
+  tbl_mode=(19,21)
+  tbl_op37=(19,23)
+  tbl_op67=(22,23)
+  tbl_opbig=(24,31)
+  tbl_size=(6,7)
+  tbl_round=(10,10)
+  tbl_sign=(11,11)
+  tbl_regxdn=(12,14)
+;
+@endif
 
 define token extword2 (16)
   regda2  = (12,15)
@@ -307,12 +335,23 @@ define context contextreg
   extGUARD = (14,14)        # guard for saving off modes before starting instructions
 ;
 
+@ifdef CPU32
+attach variables [ regdn regxdn reg9dn regdr regdq regsdn regdu regdc regdu2 regdc2 tbl_regxdn tbl_dr_reg ]    [ D0 D1 D2 D3 D4 D5 D6 D7 ];
+@else
 attach variables [ regdn regxdn reg9dn regdr regdq regsdn regdu regdc regdu2 regdc2 ]    [ D0 D1 D2 D3 D4 D5 D6 D7 ];
+@endif
+
 attach variables [ fldoffreg fldwdreg f_reg fcnt fkfacreg fldynreg ]    [ D0 D1 D2 D3 D4 D5 D6 D7 ];
 attach variables [ regdnw regxdnw reg9dnw regsdnw regduw regdcw regdu2w regdc2w ] [ D0w D1w D2w D3w D4w D5w D6w D7w ];
 attach variables [ regdnb reg9dnb regsdnb regdub regdcb ]         [ D0b D1b D2b D3b D4b D5b D6b D7b ];
 attach variables [ regda regda2 ]  [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+
+@ifdef CPU32
+attach variables [ regan regxan reg9an regfan regsan aregx tbl_regan ]   [ A0 A1 A2 A3 A4 A5 A6 SP ];
+@else
 attach variables [ regan regxan reg9an regfan regsan aregx ]   [ A0 A1 A2 A3 A4 A5 A6 SP ];
+@endif
+
 attach variables [ reganw regxanw regsanw ]        [ A0w A1w A2w A3w A4w A5w A6w A7w ];
 attach variables [ reganb regsanb ]                [ A0b A1b A2b A3b A4b A5b A6b A7b ];
 
@@ -482,7 +521,7 @@ eab: "#"^d8 is mode=7 & regan=4; d8		{ export *[const]:1 d8; }
 
 # Second effective address calculation for mov
 
-# NB- Extended-precsion are 12 bytes, so we need to increment or decrement the reg by 12 not 4
+# NB- Extended-precision are 12 bytes, so we need to increment or decrement the reg by 12 not 4
 #
   # size=extend | packed (96-bit)
   # The fmovem.x insn needs the movemptr to be set here
@@ -1698,6 +1737,97 @@ skip_addr: skipAddr		is op02=3 [skipAddr = inst_next + 4;] { export *[ram]:4 ski
 :tpf.w			is opbig=0x51 & op37=0x1f & op02=2 & skip_addr	{ goto skip_addr; } # nop + 1 word
 :tpf.l			is opbig=0x51 & op37=0x1f & op02=3 & skip_addr	{ goto skip_addr; } # nop + 2 word
 @endif # COLDFIRE
+
+@ifdef CPU32
+
+#TODO: Finish TBLxx instruction implementation:
+
+tbl_eal: (tbl_regan) is tbl_mode=2 & tbl_regan			{ export *:4 tbl_regan; }
+tbl_eal: -(tbl_regan) is tbl_mode=4 & tbl_regan { tbl_regan = tbl_regan - 4; export *:4 tbl_regan; }
+tbl_eal: (d16,tbl_regan) is tbl_mode=5 & tbl_regan; d16 { local tmp:4 = tbl_regan + d16; export *:4 tmp; }
+tbl_eal: (extw) is tbl_mode=6 & tbl_regan; extw		[ regtfan = tbl_regan; pcmode = 0; ] { build extw; export *:4 extw; }
+tbl_eal: (d16,PC) is PC & tbl_mode=7 & tbl_regan=2; d16	{ tmp:4 = inst_start + 2 + d16; export *:4 tmp; }
+tbl_eal: (extw) is tbl_mode=7 & tbl_regan=3; extw		[ pcmode=1; ] { build extw; export *:4 extw; }
+tbl_eal: (d16)".w" is tbl_mode=7 & tbl_regan=0; d16		{ export *:4 d16; }
+tbl_eal: (d32)".l" is tbl_mode=7 & tbl_regan=1; d32		{ export *:4 d32; }
+tbl_eal: "#"^d32 is tbl_mode=7 & tbl_regan=4; d32		{ export *[const]:4 d32; }
+
+tbl_eaw: (tbl_regan) is tbl_mode=2 & tbl_regan			{ export *:2 tbl_regan; }
+# tbl_eaw: -(tbl_regan) is tbl_mode=4 & tbl_regan			{ tbl_regan = tbl_regan - 2; export *:2 tbl_regan; }
+# tbl_eaw: (d16,tbl_regan) is tbl_mode=5 & tbl_regan; d16		{ local tmp  = tbl_regan + d16; export *:2 tmp; }
+tbl_eaw: (extw) is tbl_mode=6 & tbl_regan; extw		[ pcmode=0; regtfan=tbl_regan; ] { build extw; export *:2 extw; }
+tbl_eaw: (d16,PC) is PC & tbl_mode=7 & tbl_regan=2; d16	{ tmp:4 = inst_start + 2 + d16; export *:2 tmp; }
+tbl_eaw: (extw) is tbl_mode=7 & tbl_regan=3; extw		[ pcmode=1; ] { build extw; export *:2 extw; }
+tbl_eaw: (d16)".w" is tbl_mode=7 & tbl_regan=0; d16		{ export *:2 d16; }
+tbl_eaw: (d32)".l" is tbl_mode=7 & tbl_regan=1; d32		{ export *:2 d32; }
+tbl_eaw: "#"^d16 is tbl_mode=7 & tbl_regan=4; d16		{ export *[const]:2 d16; }
+
+tbl_eab: (tbl_regan) is tbl_mode=2 & tbl_regan			{ export *:1 tbl_regan; }
+# tbl_eab: -(tbl_regan) is tbl_mode=4 & tbl_regan			{ tbl_regan = tbl_regan - 1; export *:1 tbl_regan; }
+# tbl_eab: (d16,tbl_regan) is tbl_mode=5 & tbl_regan; d16		{ local tmp  = tbl_regan + d16; export *:1 tmp; }
+tbl_eab: (extw) is tbl_mode=6 & tbl_regan; extw		[ pcmode=0; regtfan=tbl_regan; ] { build extw; export *:1 extw; }
+tbl_eab: (d16,PC) is PC & tbl_mode=7 & tbl_regan=2; d16	{ tmp:4 = inst_start + 2 + d16; export *:1 tmp; }
+tbl_eab: (extw) is tbl_mode=7 & tbl_regan=3; extw		[ pcmode=1; ] { build extw; export *:1 extw; }
+tbl_eab: (d16)".w" is tbl_mode=7 & tbl_regan=0; d16		{ export *:1 d16; }
+tbl_eab: (d32)".l" is tbl_mode=7 & tbl_regan=1; d32		{ export *:1 d32; }
+tbl_eab: "#"^d8 is tbl_mode=7 & tbl_regan=4; d8		{ export *[const]:1 d8; }
+
+tblsign: "u"   is tbl_sign=0 { }
+tblsign: "s"   is tbl_sign=1 { }
+
+tbldrsign: "u"   is tbl_dr_sign=0 { }
+tbldrsign: "s"   is tbl_dr_sign=1 { }
+
+define pcodeop tableLookup;
+
+# Rounded Table Lookup and Interpolate
+
+:tbl^tblsign^".b" tbl_eab,tbl_regxdn    is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=0 & tblsign & tbl_round=0 & tbl_regxdn) ... & tbl_eab
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eab); }
+
+:tbl^tblsign^".w" tbl_eaw,tbl_regxdn    is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=1 & tblsign & tbl_round=0 & tbl_regxdn) ... & tbl_eaw
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eaw); }
+
+:tbl^tblsign^".l" tbl_eal,tbl_regxdn    is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=2 & tblsign & tbl_round=0 & tbl_regxdn) ... & tbl_eal
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eal); }
+
+# Unrounded Table Lookup and Interpolate
+
+:tbl^tblsign^"n.b" tbl_eab,tbl_regxdn	is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=0 & tblsign & tbl_round=1 & tbl_regxdn) ... & tbl_eab
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eab); }
+
+:tbl^tblsign^"n.w" tbl_eaw,tbl_regxdn	is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=1 & tblsign & tbl_round=1 & tbl_regxdn) ... & tbl_eaw
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eaw); }
+
+:tbl^tblsign^"n.l" tbl_eal,tbl_regxdn	is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=2 & tblsign & tbl_round=1 & tbl_regxdn) ... & tbl_eal
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eal); }
+
+define pcodeop interpolate;
+
+# Rounded Data Register Interpolate
+
+:tbl^tbldrsign^".b" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=0 & tbldrsign & tbl_dr_round=0 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^".w" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=1 & tbldrsign & tbl_dr_round=0 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^".l" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=2 & tbldrsign & tbl_dr_round=0 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+# Unrounded Data Register Interpolate
+
+:tbl^tbldrsign^"n.b" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=0 & tbldrsign & tbl_dr_round=1 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^"n.w" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=1 & tbldrsign & tbl_dr_round=1 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^"n.l" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=2 & tbldrsign & tbl_dr_round=1 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+@endif # CPU32
+
 
 # Tables for register lists, for the movem instruction
   # Register to mememory, forward direction, via word
