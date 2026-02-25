@@ -10262,6 +10262,64 @@ int4 RuleThreeWayCompare::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleExtLzcount
+/// \brief Simplify bit extensions followed by a LZCOUNT
+/// An example form is:
+///  `lzcount(zext(V:#a):#b)  =>  lzcount(V) + (#b - #a) * 8`
+/// A sign-extension instead of ZEXT also qualifies if the top bit of V can be
+/// shown to be 0.
+void RuleExtLzcount::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_LZCOUNT);
+}
+
+int4 RuleExtLzcount::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *ext_out = op->getIn(0);
+  PcodeOp *ext_def = ext_out->getDef();
+  if (ext_def == (PcodeOp *)0) return 0;
+
+  int4 ext_code = ext_def->code();
+  Varnode *V;
+
+  if (ext_code == CPUI_INT_ZEXT) {
+    V = ext_def->getIn(0);
+  } else if (ext_code == CPUI_INT_SEXT) {
+    V = ext_def->getIn(0);
+    if ((V->getNZMask() >> ((8 * V->getSize()) - 1)) == 1) {
+      // The sign bit might be nonzero, so the extension could be with 1
+      return 0;
+    }
+  } else {
+    return 0;
+  }
+
+  // old:
+  // V -> INT_[SZ]EXT -> LZCOUNT -> ...
+
+  // new:
+  // V    INT_[SZ]EXT ,> LZCOUNT -> [INT_ADD] -> ...
+  // `---------------/    #(b-a)*8 -/
+  int4 a = V->getSize();
+  int4 b = ext_out->getSize();
+
+  Varnode *lz_out = op->getOut();
+  PcodeOp *add = data.newOp(2, op->getAddr());
+  data.opUnsetOutput(op);
+  Varnode *new_lz_out = data.newUniqueOut(lz_out->getSize(), op);
+
+  data.opSetOpcode(add, CPUI_INT_ADD);
+  data.opSetInput(add, new_lz_out, 0);
+  data.opSetInput(add, data.newConstant(lz_out->getSize(), (b - a) * 8), 1);
+  data.opSetOutput(add, lz_out);
+  data.opInsertAfter(add, op);
+
+  data.opSetInput(op, V, 0);
+  return 1;
+}
+
 /// \class RulePopcountBoolXor
 /// \brief Simplify boolean expressions that are combined through POPCOUNT
 ///
