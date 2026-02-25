@@ -5675,6 +5675,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop2->addRule( new RulePushPtr("typerecovery") );
 	actprop2->addRule( new RuleStructOffset0("typerecovery") );
 	actprop2->addRule( new RulePtrArith("typerecovery") );
+	actprop2->addRule( new RulePtrOffsetArith("typerecovery") );
 	//	actprop2->addRule( new RuleIndirectConcat("analysis") );
 	actprop2->addRule( new RuleLoadVarnode("stackvars") );
 	actprop2->addRule( new RuleStoreVarnode("stackvars") );

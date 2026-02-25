@@ -101,6 +101,7 @@ const string PrintC::KEYWORD_DEFAULT = "default";
 const string PrintC::KEYWORD_RETURN = "return";
 const string PrintC::KEYWORD_NEW = "new";
 const string PrintC::typePointerRelToken = "ADJ";
+const string PrintC::typePointerOffToken = "OFF";
 
 // Constructing this registers the capability
 PrintCCapability PrintCCapability::printCCapability;
@@ -901,10 +902,17 @@ void PrintC::opPtradd(const PcodeOp *op)
 {
   bool printval = isSet(print_load_value|print_store_value);
   uint4 m = mods & ~(print_load_value|print_store_value);
-  if (printval)			// Use array notation if we need value
-    pushOp(&subscript,op);
-  else				// just a '+'
-    pushOp(&binary_plus,op);
+  TypePointerOff *offptr = TypeOpPtradd::getPointerOffsetType(op);
+  if (offptr) {
+    pushOp(&function_call,op);
+    pushAtom(Atom(typePointerOffToken,optoken,EmitMarkup::funcname_color,op));
+    pushOp(&comma,(const PcodeOp *)0);
+  } else {
+    if (printval)                       // Use array notation if we need value
+      pushOp(&subscript,op);
+    else                                // just a '+'
+      pushOp(&binary_plus,op);
+  }
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
   pushVn(op->getIn(1),op,m);
@@ -924,7 +932,10 @@ static bool isValueFlexible(const Varnode *vn)
       opc = invn->getDef()->code();
     }
     if (opc == CPUI_PTRSUB) return true;
-    if (opc == CPUI_PTRADD) return true;
+    if (opc == CPUI_PTRADD) {
+      if (TypeOpPtradd::getPointerOffsetType(def)) return false;
+      return true;
+    }
   }
   return false;
 }

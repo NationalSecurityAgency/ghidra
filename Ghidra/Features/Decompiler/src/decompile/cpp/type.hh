@@ -78,17 +78,18 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 /// The core meta-types supported by the decompiler. These are sizeless templates
 /// for the elements making up the type algebra.  Index is important for Datatype::base2sub array.
 enum type_metatype {
-  TYPE_VOID = 17,		///< Standard "void" type, absence of type
-  TYPE_SPACEBASE = 16,		///< Placeholder for symbol/type look-up calculations
-  TYPE_UNKNOWN = 15,		///< An unknown low-level type. Treated as an unsigned integer.
-  TYPE_INT = 14,		///< Signed integer. Signed is considered less specific than unsigned in C
-  TYPE_UINT = 13,		///< Unsigned integer
-  TYPE_BOOL = 12,		///< Boolean
-  TYPE_CODE = 11,		///< Data is actual executable code
-  TYPE_FLOAT = 10,		///< Floating-point
+  TYPE_VOID = 18,		///< Standard "void" type, absence of type
+  TYPE_SPACEBASE = 17,		///< Placeholder for symbol/type look-up calculations
+  TYPE_UNKNOWN = 16,		///< An unknown low-level type. Treated as an unsigned integer.
+  TYPE_INT = 15,		///< Signed integer. Signed is considered less specific than unsigned in C
+  TYPE_UINT = 14,		///< Unsigned integer
+  TYPE_BOOL = 13,		///< Boolean
+  TYPE_CODE = 12,		///< Data is actual executable code
+  TYPE_FLOAT = 11,		///< Floating-point
 
-  TYPE_PTR = 9,			///< Pointer data-type
-  TYPE_PTRREL = 8,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
+  TYPE_PTR = 10,			///< Pointer data-type
+  TYPE_PTRREL = 9,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
+  TYPE_PTROFF = 8,
   TYPE_ARRAY = 7,		///< Array data-type, made up of a sequence of "element" datatype
   TYPE_ENUM_UINT = 6,		///< Unsigned enumeration data-type (specialization of TYPE_UINT)
   TYPE_ENUM_INT = 5,		///< Signed enumeration data-type (specialization of TYPE_INT)
@@ -102,24 +103,26 @@ enum type_metatype {
 /// Specializations of the core meta-types.  Each enumeration is associated with a specific #type_metatype.
 /// Ordering is important: The lower the number, the more \b specific the data-type, affecting propagation.
 enum sub_metatype {
-  SUB_VOID = 23,		///< Compare as a TYPE_VOID
-  SUB_SPACEBASE = 22,		///< Compare as a TYPE_SPACEBASE
-  SUB_UNKNOWN = 21,		///< Compare as a TYPE_UNKNOWN
-  SUB_PARTIALSTRUCT = 20,	///< Compare as TYPE_PARTIALSTRUCT
-  SUB_INT_CHAR = 19,		///< Signed 1-byte character, sub-type of TYPE_INT
-  SUB_UINT_CHAR = 18,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
-  SUB_INT_PLAIN = 17,		///< Compare as a plain TYPE_INT
-  SUB_UINT_PLAIN = 16,		///< Compare as a plain TYPE_UINT
-  SUB_INT_ENUM = 15,		///< Signed enum, sub-type of TYPE_INT
-  SUB_UINT_PARTIALENUM = 14,	///< Unsigned partial enum, sub-type of TYPE_UINT
-  SUB_UINT_ENUM = 13,		///< Unsigned enum, sub-type of TYPE_UINT
-  SUB_INT_UNICODE = 12,		///< Signed wide character, sub-type of TYPE_INT
-  SUB_UINT_UNICODE = 11,	///< Unsigned wide character, sub-type of TYPE_UINT
-  SUB_BOOL = 10,		///< Compare as TYPE_BOOL
-  SUB_CODE = 9,			///< Compare as TYPE_CODE
-  SUB_FLOAT = 8,		///< Compare as TYPE_FLOAT
-  SUB_PTRREL_UNK = 7,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
-  SUB_PTR = 6,			///< Compare as TYPE_PTR
+  SUB_VOID = 25,		///< Compare as a TYPE_VOID
+  SUB_SPACEBASE = 24,		///< Compare as a TYPE_SPACEBASE
+  SUB_UNKNOWN = 23,		///< Compare as a TYPE_UNKNOWN
+  SUB_PARTIALSTRUCT = 22,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_INT_CHAR = 21,		///< Signed 1-byte character, sub-type of TYPE_INT
+  SUB_UINT_CHAR = 20,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
+  SUB_INT_PLAIN = 19,		///< Compare as a plain TYPE_INT
+  SUB_UINT_PLAIN = 18,		///< Compare as a plain TYPE_UINT
+  SUB_INT_ENUM = 17,		///< Signed enum, sub-type of TYPE_INT
+  SUB_UINT_PARTIALENUM = 16,	///< Unsigned partial enum, sub-type of TYPE_UINT
+  SUB_UINT_ENUM = 15,		///< Unsigned enum, sub-type of TYPE_UINT
+  SUB_INT_UNICODE = 14,		///< Signed wide character, sub-type of TYPE_INT
+  SUB_UINT_UNICODE = 13,	///< Unsigned wide character, sub-type of TYPE_UINT
+  SUB_BOOL = 12,		///< Compare as TYPE_BOOL
+  SUB_CODE = 11,			///< Compare as TYPE_CODE
+  SUB_FLOAT = 10,		///< Compare as TYPE_FLOAT
+  SUB_PTROFF_UNK = 9,
+  SUB_PTRREL_UNK = 8,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
+  SUB_PTR = 7,			///< Compare as TYPE_PTR
+  SUB_PTROFF = 6,
   SUB_PTRREL = 5,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
   SUB_PTR_STRUCT = 4,		///< Pointer into struct, sub-type of TYPE_PTR
   SUB_ARRAY = 3,		///< Compare as TYPE_ARRAY
@@ -166,7 +169,7 @@ struct DatatypeCompare;
 /// Used for symbols, function prototypes, type propagation etc.
 class Datatype {
 protected:
-  static sub_metatype base2sub[18];
+  static sub_metatype base2sub[19];
   /// Boolean properties of datatypes
   enum {
     coretype = 1,		///< This is a basic type which will never be redefined
@@ -251,6 +254,8 @@ public:
   virtual Datatype *getSubType(int8 off,int8 *newoff) const; ///< Recover component data-type one-level down
   virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const;
+
+  virtual bool isPointerOff(void) const { return false; }
 
   /// \brief Get number of bytes at the given offset that are padding
   ///
@@ -748,6 +753,30 @@ public:
   virtual bool isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const;
   virtual Datatype *getStripped(void) const { return stripped; }	///< Get the plain form of the pointer
   static Datatype *getPtrToFromParent(Datatype *base,int4 off,TypeFactory &typegrp);
+};
+
+/// \brief Typed offset from BaseType to FieldType.
+///
+/// Adding a typed offset and a pointer of the offset's base type yields a new
+/// pointer of the offset's field type.
+class TypePointerOff : public TypePointer {
+protected:
+  friend class TypeFactory;
+  Datatype *ptrfrom;
+  TypePointer *plain;
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this pointer data-type from a stream
+  /// Internal constructor for decode
+  TypePointerOff(void) : TypePointer() { ptrfrom = (Datatype *)0; plain = (TypePointer *)0; submeta = SUB_PTROFF; }
+public:
+  /// Construct from another TypePointerOff
+  TypePointerOff(const TypePointerOff &op) : TypePointer((const TypePointer &)op) {
+    ptrfrom = op.ptrfrom; plain = op.plain; }
+
+  virtual Datatype *clone(void) const { return new TypePointerOff(*this); }
+  virtual Datatype *getStripped(void) const { return (Datatype*)0; }
+  TypePointer *getPlain(void) const { return plain; }
+  Datatype *getPtrFrom(void) const { return ptrfrom; }
+  virtual bool isPointerOff(void) const { return true; }
 };
 
 class FuncProto;		// Forward declaration
