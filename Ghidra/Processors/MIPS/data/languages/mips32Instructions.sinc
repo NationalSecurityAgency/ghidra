@@ -1385,6 +1385,39 @@ define pcodeop SYNC;
     trap();
     <done> 
 }
+# 0111 00ss ssst tttt iiii iiii ii10 1110
+:seqi RT, RSsrc, simmseq           is $(AMODE) & REL6=0 & prime=0x1C & fct=0x2E & RT & RSsrc & simmseq {
+    RT = zext(RSsrc == simmseq); 
+}
+# 0111 00ss ssst tttt iiii iiii ii10 1111
+:snei RT, RSsrc, simmseq           is $(AMODE) & REL6=0 & prime=0x1C & fct=0x2F & RT & RSsrc & simmseq {
+    RT = zext(RSsrc != simmseq); 
+}
+# 0111 00ss ssst tttt dddd d000 0010 1010
+:seq RD, RSsrc, RTsrc              is $(AMODE) & REL6=0 & prime=0x1C & zero5=0 & fct=0x2A & RD & RSsrc & RTsrc {
+    RD = zext(RSsrc == RTsrc); 
+}
+# 0111 00ss ssst tttt dddd d000 0010 1011
+:sne RD, RSsrc, RTsrc              is $(AMODE) & REL6=0 & prime=0x1C & zero5=0 & fct=0x2B & RD & RSsrc & RTsrc {
+    RD = zext(RSsrc != RTsrc); 
+}
+define pcodeop popcnt;
+# 0111 00ss sss0 0000 dddd d000 0010 1100
+:pop RD32, RS32src                 is $(AMODE) & REL6=0 & prime=0x1C & zero1620=0 & zero5=0 & fct=0x2C & RD32 & RS32src {
+    RD32 = popcnt(RS32src); 
+}
+# 0111 00ss sss0 0000 dddd d000 0010 1101
+:popd RD, RSsrc                    is $(AMODE) & REL6=0 & prime=0x1C & zero1620=0 & zero5=0 & fct=0x2D & RD & RSsrc {
+    RD = popcnt(RSsrc); 
+}
+# 0111 00ss ssst tttt dddd d000 0010 1000
+:baddu RD, RSsrc, RTsrc            is $(AMODE) & REL6=0 & prime=0x1C & zero5=0 & fct=0x28 & RD & RSsrc & RTsrc {
+    RD = (RSsrc + RTsrc) & 0xff; 
+}
+# 0111 00ss ssst tttt dddd d000 0000 0011
+:dmul RD, RSsrc, RTsrc             is $(AMODE) & REL6=0 & prime=0x1C & zero5=0 & fct=0x3 & RD & RSsrc & RTsrc {
+    RD = zext(RSsrc)*zext(RTsrc);
+}
 
 ############################
 #
