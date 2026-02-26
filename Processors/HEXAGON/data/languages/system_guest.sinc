@@ -1,0 +1,15 @@
+#SYSTEM/GUEST:GCRT
+with slot: iclass=0b0110  {
+    :GD5 "=" S5 is imm_21_27=0b0010000 & S5 & S5i & imm_5_13=0 & GD5 {
+           GD5 = S5i;
+    }
+    :GD5_pair "=" S5_pair is imm_21_27=0b0011000 & S5_pair & S5_pairi & imm_5_13=0 & GD5_pair {
+           GD5_pair = S5_pairi;
+    }
+    :S5_pair "=" GD5_pair is imm_21_27=0b1000001 & S5_pair & imm_5_13=0 & GD5_pair {
+           S5_pair = GD5_pair;
+    }
+    :S5 "=" GD5 is imm_21_27=0b1010001 & S5 & imm_5_13=0 & GD5 & OUTPUT_S5 {
+           S5 = GD5;
+    }
+}

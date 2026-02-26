@@ -1,0 +1,199 @@
+# ALU32/ALU:add
+
+ALU32_ADD_IMM:val is imm_21_27 & imm_5_13 & IS_NOT_EXT [val = ((imm_21_27 << 9) | (imm_5_13));] { export *[const]:4 val; }
+ALU32_ADD_IMM:val is IS_EXT0 & immext0 & imm_5_10u  [val = imm_5_10u | immext0; ] { export *[const]:4 val; }
+ALU32_ADD_IMM:val is IS_EXT1 & immext1 & imm_5_10u  [val = imm_5_10u | immext1; ] { export *[const]:4 val; }
+
+with slot: epsilon {
+    :D5 "= add("S5","ALU32_ADD_IMM")" is iclass=0b1011 & S5 & S5i & D5 & ALU32_ADD_IMM & OUTPUT_D5 {
+        D5 = S5i + sext(ALU32_ADD_IMM:2);
+    }
+    
+    :D5 "= add("S5","T5")" is iclass=0b1111 & D5 & imm_21_27=0b0011000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & OUTPUT_D5 {
+        D5 = S5i + T5i;
+    } 
+    :D5 "= add("S5","T5"):sat" is iclass=0b1111 & D5 & imm_21_27=0b0110010 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & OUTPUT_D5 {
+        D5 = S5i + T5i;
+        if (D5 < S5i) goto <sat>;
+        goto <end>;
+        <sat>
+        D5 = -1;
+        <end>
+    }
+}
+
+ALU32_AND_S10:val is imm_21 & imm_5_13 & IS_NOT_EXT [val = (imm_21 << 9) | imm_5_13;] { export *[const]:4 val; }
+ALU32_AND_S10:val is IS_EXT0 & immext0 & imm_5_10u  [val = imm_5_10u | immext0; ] { export *[const]:4 val; }
+ALU32_AND_S10:val is IS_EXT1 & immext1 & imm_5_10u  [val = imm_5_10u | immext1; ] { export *[const]:4 val; }
+
+# ALU32/ALU:logical
+with slot: iclass=0b0111  {
+    :D5 = "and"(S5",#"ALU32_AND_S10) is Rs=0 & MajOp = 0b110 & imm_22_23=0b00 & S5 & S5i & D5 & ALU32_AND_S10 & OUTPUT_D5 {
+        D5 = S5i & ALU32_AND_S10;
+    } 
+    :D5 = "or("S5","ALU32_AND_S10")" is Rs=0 & MajOp = 0b110 & imm_22_23=0b10 & S5 & S5i & D5 & ALU32_AND_S10 & OUTPUT_D5 {
+        D5 = S5i | ALU32_AND_S10;
+    } 
+}
+with slot: iclass=0b1111  {
+    :D5 = "and("S5","T5")" is imm_21_27=0b0001000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = S5i & T5i;
+    } 
+
+    :D5 = "or("S5","T5")" is imm_21_27=0b0001001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = S5i | T5i;
+    } 
+
+    :D5 = "xor("S5","T5")" is imm_21_27=0b0001011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = S5i ^ T5i;
+    } 
+
+    :D5 = "and("T5",~"S5")" is imm_21_27=0b0001100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = T5i & (~S5i);
+    } 
+
+    :D5 = "or("T5",~"S5")" is imm_21_27=0b0001101 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = T5i | (~S5i);
+    } 
+}
+
+# ALU32/ALU:negate
+with slot: iclass=0b0111 {
+    :D5"=neg("S5")" is imm_22_27=0b011001 & imm_21=0 & S5 & S5i & imm_5_13u=0 & D5 & IS_NOT_EXT & OUTPUT_D5 {
+        D5 = -S5i;
+    } 
+}
+
+# ALU32/ALU:nop
+with slot: iclass=0b0111  {
+    :"nop" is imm_24_27=0b1111 & imm_16_23  & imm_0_13 {}
+}
+
+
+EXT_SUB: v is imm_21 & imm_5_13u & IS_NOT_EXT [v = imm_5_13u | (imm_21 << 9); ] { export *[const]:4 v; }
+EXT_SUB: v is IS_EXT0 & immext0 & imm_5_10u [v = imm_5_10u | immext0; ]  { export *[const]:4 v; }
+EXT_SUB: v is IS_EXT1 & immext1 & imm_5_10u [v = imm_5_10u | immext1; ]  { export *[const]:4 v; }
+
+# ALU32/ALU:subtract
+with slot: iclass=0b0111  {
+    :D5"=sub("EXT_SUB","S5")" is imm_22_27=0b011001 & S5 & S5i & D5 & EXT_SUB & OUTPUT_D5 {
+        D5 = EXT_SUB - S5i;
+    }
+}
+with slot: iclass=0b1111  {
+    :D5" = sub("T5","S5")" is imm_21_27=0b0011001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = T5i - S5i;
+    } 
+
+    :D5" = sub("T5","S5"):sat" is imm_21_27=0b0110110 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = S5i - T5i;
+        if (D5 > S5i) goto <sat>;
+        goto <end>;
+        <sat>
+        D5 = 0;
+        <end>
+    } 
+}
+
+TI_S16: v is imm_16_20u & imm_5_13u & imm_22_23 & IS_NOT_EXT [v = (imm_5_13u) | (imm_16_20u << 9) | (imm_22_23 << 14); ] { export *[const]:4 v; }
+TI_S16: v is IS_EXT0 & immext0 & imm_5_10u [v = imm_5_10u | immext0; ]  { export *[const]:4 v; }
+TI_S16: v is IS_EXT1 & immext1 & imm_5_10u [v = imm_5_10u | immext1; ]  { export *[const]:4 v; }
+
+# ALU32/ALU:sext
+with slot: iclass=0b0111  {
+    :D5 "=sxtb(" S5 ")" is imm_21_27=0b0000101 & S5 & S5i & imm_13=0 & imm_5_12=0 & D5 & OUTPUT_D5 {
+        D5 = sext(S5i:1);
+    } 
+    :D5 "=sxth(" S5 ")" is imm_21_27=0b0000111 & S5 & S5i & imm_13=0 & imm_5_12=0 & D5 & OUTPUT_D5 {
+        D5 = sext(S5i:2);
+    } 
+}
+
+# ALU32/ALU:trans_imm
+ with slot: iclass=0b0111  {
+      
+    ImmU16: v is    imm_22_23u & imm_0_13u  [ v = (imm_22_23u << 14) | (imm_0_13u); ] {
+         export *[const]:4 v;
+      }
+      
+ 
+    :alu_X5^".L" = ImmU16 is Rs = 0 & MajOp = 0b001 & imm_21=1 & alu_X5 & alu_X5i & ImmU16 & OUTPUT_S5 {
+        local tmp:4 = alu_X5i & 0xFFFF0000;
+        alu_X5 = tmp | ImmU16;
+    }
+    
+    :alu_X5^".H" = ImmU16 is Rs = 0 & MajOp = 0b010 & imm_21=1 & alu_X5 & alu_X5i & ImmU16 & OUTPUT_S5 {
+        local tmp:4 = alu_X5i & 0x0000FFFF;
+        alu_X5 = tmp | (ImmU16 << 16);
+    }
+    
+    :D5 "=" TI_S16 is  Rs=1 & MajOp=0b000 & imm_21=0 & TI_S16 & D5 & OUTPUT_D5 {
+        D5 = TI_S16;
+    }  
+}
+
+
+# ALU32/ALU:trans_reg
+ with slot: iclass=0b0111  {
+    :D5"="S5 is Rs = 0 & MajOp = 0b000 & MinOp=0b011 & S5 & imm_13=0 & imm_5_12=0 & D5 & S5i & OUTPUT_D5 {
+        D5 = S5i;
+    }
+}
+
+
+# ALU32/ALU:vector add halfwords
+define pcodeop vaddh;
+define pcodeop vaddh_sat;
+define pcodeop vadduh_sat;
+with slot: iclass=0b1111  {
+    :D5 "=vaddh(" S5 "," T5 ")" is imm_21_27=0b0110000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vaddh(S5i, T5i);
+    }
+    :D5 "=vaddh(" S5 "," T5 "):sat" is imm_21_27=0b0110001 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vaddh_sat(S5i, T5i);
+    }
+    :D5 "=vadduh(" S5 "," T5 "):sat" is imm_21_27=0b0110011 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vadduh_sat(S5i, T5i);
+    }
+}
+
+# ALU32/ALU:vector average halfwords
+define pcodeop vavgh;
+define pcodeop vavgh_rnd;
+define pcodeop vnavgh;
+
+with slot: iclass=0b1111  {
+    :D5 "=vavgh(" S5 "," T5 ")" is imm_24_27=0b0111 & imm_23=0 & imm_21_22=0b00 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+       D5 = vavgh(S5i, T5i);
+    }
+    :D5 "=vavgh(" S5 "," T5 "):rnd" is imm_24_27=0b0111 & imm_23=0 & imm_21_22=0b01 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vavgh_rnd(S5i, T5i);
+    }
+    :D5 "=vnavgh(" T5 "," S5 ")" is imm_24_27=0b0111 & imm_23=0 & imm_21_22=0b11 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vnavgh(T5i, S5i);
+    }
+}
+
+# ALU32/ALU:vector subtract halfwords
+define pcodeop vsubh;
+define pcodeop vsubh_sat;
+define pcodeop vsubuh_sat;
+with slot: iclass=0b1111  {
+    :D5 "=vsubh(" T5 "," S5 ")"  is imm_21_27=0b0110100 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vsubh(T5i, S5i);
+    }
+    :D5 "=vsubh(" T5 "," S5 "):sat"  is imm_21_27=0b0110101 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vsubh_sat(T5i, S5i);
+    }
+    :D5 "=vsubuh(" T5 "," S5 "):sat"  is imm_21_27=0b0110111 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        D5 = vsubuh_sat(T5i, S5i);
+    }
+}
+
+# ALU32/ALU:zero extend
+ with slot: iclass=0b0111  {
+    :D5 "=zxth(" S5 ")" is imm_21_27=0b0000110 & S5 & S5i & imm_13=0 & imm_5_12=0 & D5 & OUTPUT_D5 {
+        D5 = zext(S5i:2);
+    }
+}
+
