@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +16,28 @@
 package ghidra.app.plugin.core.script;
 
 /**
- * A simple listener to know when users have chosen a script in the {@link ScriptSelectionDialog}
+ * Categories for organizing scripts in the Script Quick Launch dialog.
  */
-public interface ScriptEditorListener {
+public enum ScriptGroup {
+	RECENT_SCRIPTS("Recent Scripts"),
+	ALL_SCRIPTS("All Scripts");
 
-	/**
-	 * Called when the user makes a selection.
-	 */
-	public void editingStopped();
+	private String displayName;
 
-	/**
-	 * Called when the user cancels the script selection process.
-	 */
-	public void editingCancelled();
+	private ScriptGroup(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public static ScriptGroup getGroupByDisplayName(String name) {
+		for (ScriptGroup group : values()) {
+			if (group.getDisplayName().equals(name)) {
+				return group;
+			}
+		}
+		return null;
+	}
 }
