@@ -1,0 +1,19 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="r0" auto_count="26"/> <!-- r0..r25 -->
+		<register_mapping dwarf="26" ghidra="gp"/>
+		<register_mapping dwarf="27" ghidra="fp"/>
+		<register_mapping dwarf="28" ghidra="sp" stackpointer="true"/>
+		<register_mapping dwarf="29" ghidra="ilink1"/>
+		<register_mapping dwarf="30" ghidra="blink"/>
+		<register_mapping dwarf="31" ghidra="ilink2"/>
+		<register_mapping dwarf="32" ghidra="r32" auto_count="25"/> <!-- r32..r56 -->
+		<register_mapping dwarf="57" ghidra="mlo"/>
+		<register_mapping dwarf="58" ghidra="mmid"/>
+		<register_mapping dwarf="59" ghidra="mhi"/>
+		<register_mapping dwarf="60" ghidra="lp_count"/>
+		<!-- r61 is reserved and r62 is the long immediate data indicator -->
+		<register_mapping dwarf="63" ghidra="pcl"/>
+	</register_mappings>
+	<call_frame_cfa value="0"/>
+</dwarf>

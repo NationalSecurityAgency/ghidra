@@ -1,0 +1,2332 @@
+# sleigh specification file for ARCompact
+
+define endian=little;
+define alignment=2;
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=2;
+
+# Define the space for auxiliary registers as "RAM space" in order to be able to
+# access it by address (instructions lr and sr)
+define space auxregs type=ram_space size=2;
+
+# 64 32-bit registers:
+# * r0...r25 = Basecase Core Registers
+# * r26 = Global Pointer
+# * r27 = Frame Pointer
+# * r28 = Stack Pointer
+# * r29 = Interrupt Link 1
+# * r30 = Interrupt Link 2
+# * r31 = Branch Link
+# * r32...r59 = Extension Core Registers
+#   * r57 = mlo
+#   * r58 = mmid
+#   * r59 = mhi
+# * r60 = Loop Count Register
+# * r61 = Reserved Register
+# * r62 = Long Immediate Data Indicator Register fake register
+# * r63 = Program Counter Long-Word
+define register offset=0x00 size=4 [
+    r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 gp fp sp ilink1 ilink2 blink
+    r32 r33 r34 r35 r36 r37 r38 r39 r40 r41 r42 r43 r44 r45 r46 r47
+    r48 r49 r50 r51 r52 r53 r54 r55 r56 mlo mmid mhi lp_count r61reserved r62limm pcl
+];
+
+# Bits of the STATUS32 register: Zero, Negative, Carry, Overflow
+define register offset=0x120 size=1 [ Z N C V ];
+
+define register offset=0x130 size=1 [ is_in_loop ];
+define register offset=0x134 size=4 [ contextreg ];
+
+define context contextreg
+  phase = (0,0)
+  loopEnd = (1,1) noflow
+;
+
+define pcodeop asm_instruction_04;
+define pcodeop asm_instruction_05;
+define pcodeop asm_instruction_06;
+define pcodeop asm_instruction_07;
+define pcodeop asm_instruction_08;
+define pcodeop brk;
+define pcodeop ext_condition;
+define pcodeop norm;
+define pcodeop rtie;
+define pcodeop sleep;
+define pcodeop swi;
+define pcodeop sync;
+define pcodeop trap_s;
+
+macro push4(x) {
+  local mysave:4 = x;
+  sp = sp - 4;
+  *:4 sp = mysave;
+}
+macro pop4(x) {
+  x = *:4 sp;
+  sp = sp + 4;
+}
+
+# Update flags according to a value
+macro update_flags_zn(value) {
+  Z = value == 0:4;
+  N = value s< 0:4;
+}
+
+# flags before an addition
+macro update_flags_add_cv(op1, op2) {
+  C = carry(op1, op2);
+  V = scarry(op1, op2);
+}
+
+# Update flags before a subtraction
+macro update_flags_sub_zncv(op1, op2, result) {
+  Z = op1 == op2;
+  N = result s< 0:4;
+  C = op1 < op2;
+  V = sborrow(op1, op2);
+}
+
+# Conditional branch with delay slot
+macro cond_goto_with_delayslot(take_branch, target) {
+  local _take_branch:1 = take_branch;
+  delayslot(1);
+  if (_take_branch) goto target;
+}
+
+# Short opcodes (major opcode between 0x0c and 0x1f)
+define token instr16 (16)
+  s_major_opcode = (11, 15)
+  s_sub_opcode_b9b10 = (9, 10)
+  s_rb = (8, 10)
+  s_rb_ = (8, 10)
+  s_sub_opcode_b7 = (7, 7)
+  s_sub_opcode_b6b7b8 = (6, 8)
+  s_middle_u6 = (5, 10)
+  s_rc = (5, 7)
+  s_rh_low_0 = (5, 7)
+  s_rh_low_1 = (5, 7)
+  s_rh_low_2 = (5, 7)
+  s_rh_low_3 = (5, 7)
+  s_rh_low_4 = (5, 7)
+  s_rh_low_5 = (5, 7)
+  s_rh_low_6 = (5, 7)
+  s_rh_low_7 = (5, 7)
+  s_sub_opcode_b5b6b7 = (5, 7)
+  s_sub_opcode_b3b4 = (3, 4)
+  s_s11 = (0, 10) signed
+  s_s9 = (0, 8) signed
+  s_u8 = (0, 7)
+  s_s7 = (0, 6) signed
+  s_u7 = (0, 6)
+  s_s6 = (0, 5) signed
+  s_u5 = (0, 4)
+  s_u3 = (0, 2)
+  s_ra = (0, 2)
+  s_rh_high = (0, 2)
+;
+
+# Long opcodes (major opcode between 0 and 0x0b)
+define token instr32 (32)
+  l_major_opcode = (11, 15)
+  l_rb_low_0 = (8, 10)
+  l_rb_low_1 = (8, 10)
+  l_rb_low_2 = (8, 10)
+  l_rb_low_3 = (8, 10)
+  l_rb_low_4 = (8, 10)
+  l_rb_low_5 = (8, 10)
+  l_rb_low_6 = (8, 10)
+  l_rb_low_7 = (8, 10)
+  l_op_format = (6, 7)
+  l_op4_ld_addr_mode = (6, 7)
+  l_op4_ld_opcode = (3, 5)
+  l_s19_low9 = (2, 10)
+  l_s20_low10 = (1, 10)
+  l_s_low_b17b23 = (1, 7)
+  l_op4_ld_data_size = (1, 2)
+  l_sub_opcode_b17 = (1, 1)
+  l_s9_low8 = (0, 7)
+  l_sub_opcode6 = (0, 5)
+  l_sub_opcode_b16 = (0, 0)
+  l_op4_ld_sign_ext = (0, 0)
+
+  l_flag = (31, 31)
+  l_op4_ld_direct = (31, 31)
+  l_s9_highbit = (31, 31) signed
+  l_rb_high = (28, 30)
+  l_ld_direct = (27, 27)
+  l_ld_addr_mode = (25, 26)
+  l_ld_data_size = (23, 24)
+  l_s23_middle10 = (22, 31)
+  l_s24_middle10 = (22, 31)
+  l_s19_high10 = (22, 31) signed
+  l_s20_high10 = (22, 31) signed
+  l_rc_raw = (22, 27)
+  l_u6 = (22, 27)
+  l_ld_sign_ext = (22, 22)
+  l_m = (21, 21)
+  l_delay_slot_b5 = (21, 21)
+  l_st_direct = (21, 21)
+  l_cond_high_bit = (20, 20)
+  l_sub_opcode_b4 = (20, 20)
+  l_st_addr_mode = (19, 20)
+  l_st_data_size = (17, 18)
+  l_ra_raw = (16, 21)
+  l_s12_high = (16, 21) signed
+  l_cond_bits = (16, 20)
+  l_sub_opcode_b0b1b2b3 = (16, 19)
+  l_s23_high = (16, 19) signed
+  l_s24_high = (16, 19) signed
+;
+
+define token limm_low_token (16) limm_low = (0, 15);
+define token limm_high_token (16) limm_high = (0, 15);
+
+attach variables [ s_ra s_rb s_rb_ s_rc ] [ r0 r1 r2 r3 r12 r13 r14 r15 ];
+
+attach variables [ l_ra_raw l_rc_raw ] [
+    r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 gp fp sp ilink1 ilink2 blink
+    r32 r33 r34 r35 r36 r37 r38 r39 r40 r41 r42 r43 r44 r45 r46 r47
+    r48 r49 r50 r51 r52 r53 r54 r55 r56 mlo mmid mhi lp_count r61reserved r62limm pcl
+];
+
+# Use trick from https://github.com/NationalSecurityAgency/ghidra/issues/1191 to merge bits which define registers
+attach variables [ l_rb_low_0 s_rh_low_0 ] [ r0 r1 r2 r3 r4 r5 r6 r7 ];
+attach variables [ l_rb_low_1 s_rh_low_1 ] [ r8 r9 r10 r11 r12 r13 r14 r15 ];
+attach variables [ l_rb_low_2 s_rh_low_2 ] [ r16 r17 r18 r19 r20 r21 r22 r23 ];
+attach variables [ l_rb_low_3 s_rh_low_3 ] [ r24 r25 gp fp sp ilink1 ilink2 blink ];
+attach variables [ l_rb_low_4 s_rh_low_4 ] [ r32 r33 r34 r35 r36 r37 r38 r39 ];
+attach variables [ l_rb_low_5 s_rh_low_5 ] [ r40 r41 r42 r43 r44 r45 r46 r47 ];
+attach variables [ l_rb_low_6 s_rh_low_6 ] [ r48 r49 r50 r51 r52 r53 r54 r55 ];
+attach variables [ l_rb_low_7 s_rh_low_7 ] [ r56 mlo mmid mhi lp_count r61reserved r62limm pcl ];
+s_rh: s_rh_low_0 is s_rh_high=0 & s_rh_low_0 { export s_rh_low_0; }
+s_rh: s_rh_low_1 is s_rh_high=1 & s_rh_low_1 { export s_rh_low_1; }
+s_rh: s_rh_low_2 is s_rh_high=2 & s_rh_low_2 { export s_rh_low_2; }
+s_rh: s_rh_low_3 is s_rh_high=3 & s_rh_low_3 { export s_rh_low_3; }
+s_rh: s_rh_low_4 is s_rh_high=4 & s_rh_low_4 { export s_rh_low_4; }
+s_rh: s_rh_low_5 is s_rh_high=5 & s_rh_low_5 { export s_rh_low_5; }
+s_rh: s_rh_low_6 is s_rh_high=6 & s_rh_low_6 { export s_rh_low_6; }
+s_rh: s_rh_low_7 is s_rh_high=7 & s_rh_low_7 { export s_rh_low_7; }
+l_rb: l_rb_low_0 is l_rb_high=0 & l_rb_low_0 { export l_rb_low_0; }
+l_rb: l_rb_low_1 is l_rb_high=1 & l_rb_low_1 { export l_rb_low_1; }
+l_rb: l_rb_low_2 is l_rb_high=2 & l_rb_low_2 { export l_rb_low_2; }
+l_rb: l_rb_low_3 is l_rb_high=3 & l_rb_low_3 { export l_rb_low_3; }
+l_rb: l_rb_low_4 is l_rb_high=4 & l_rb_low_4 { export l_rb_low_4; }
+l_rb: l_rb_low_5 is l_rb_high=5 & l_rb_low_5 { export l_rb_low_5; }
+l_rb: l_rb_low_6 is l_rb_high=6 & l_rb_low_6 { export l_rb_low_6; }
+l_rb: l_rb_low_7 is l_rb_high=7 & l_rb_low_7 { export l_rb_low_7; }
+
+# Combine and shift immediate values
+limm: limm is limm_high ; limm_low [ limm = (limm_high << 16) + limm_low; ] { export *[const]:4 limm; }
+
+s_u5shift1: value is s_u5 [ value=s_u5 << 1; ] { export *[const]:4 value; }
+s_u5shift2: value is s_u5 [ value=s_u5 << 2; ] { export *[const]:4 value; }
+s_u8shift2: value is s_u8 [ value=s_u8 << 2; ] { export *[const]:4 value; }
+s_s9shift1: value is s_s9 [ value=s_s9 << 1; ] { export *[const]:4 value; }
+s_s9shift2: value is s_s9 [ value=s_s9 << 2; ] { export *[const]:4 value; }
+
+l_s9: value is l_s9_low8 & l_s9_highbit [ value = l_s9_low8 + (l_s9_highbit << 8); ] { export *[const]:4 value; }
+l_s9shift1: value is l_s9_low8 & l_s9_highbit [ value = (l_s9_low8 << 1) + (l_s9_highbit << 9); ] { export *[const]:4 value; }
+l_s9shift2: value is l_s9_low8 & l_s9_highbit [ value = (l_s9_low8 << 2) + (l_s9_highbit << 10); ] { export *[const]:4 value; }
+
+op1_u6_bit: value is l_u6 [ value = 1 << l_u6; ] { export *[const]:4 value; }
+
+# Replace long immediate in registers
+s_rh_limm: limm is s_rh_high=7 & s_rh_low_7=6 ; limm { export *[const]:4 limm; }
+s_rh_limm: pcl=pcl_value is s_rh_high=7 & s_rh_low_7=7 & pcl [ pcl_value = inst_start & ~3; ] { export *[const]:4 pcl_value; }
+s_rh_limm: s_rh is s_rh { export s_rh; }
+
+l_rb_limm: limm is l_rb_high=7 & l_rb_low_7=6 ; limm { export *[const]:4 limm; }
+l_rb_limm: pcl=pcl_value is l_rb_high=7 & l_rb_low_7=7 & pcl [ pcl_value = inst_start & ~3; ] { export *[const]:4 pcl_value; }
+l_rb_limm: l_rb is l_rb { export l_rb; }
+
+l_rc_limm: limm is l_rc_raw=62 ; limm { export *[const]:4 limm; }
+l_rc_limm: pcl=pcl_value is l_rc_raw=63 & pcl [ pcl_value = inst_start & ~3; ] { export *[const]:4 pcl_value; }
+l_rc_limm: l_rc_raw is l_rc_raw { export l_rc_raw; }
+
+l_ldst_mem_rb_s9: [l_rb_limm] is (l_s9_low8=0 & l_s9_highbit=0) ... & l_rb_limm { export l_rb_limm; }
+l_ldst_mem_rb_s9: [l_rb_limm, l_s9] is l_s9 ... & l_rb_limm { local tmp:4 = l_rb_limm + l_s9; export tmp; }
+
+# Compute branch target or data location for various instructions
+op1_1_target: target is l_s_low_b17b23 & l_s9_highbit [ target=(inst_start & ~3) + (l_s_low_b17b23 << 1) + (l_s9_highbit << 8); ] { export *[ram]:4 target; }
+l_target_s19shift2: target is l_s19_low9 & l_s19_high10 [ target=(inst_start & ~3) + (l_s19_low9 << 2) + (l_s19_high10 << 11); ] { export *[ram]:4 target; }
+l_target_s20shift1: target is l_s20_low10 & l_s20_high10 [ target=(inst_start & ~3) + (l_s20_low10 << 1) + (l_s20_high10 << 11); ] { export *[ram]:4 target; }
+l_target_s23shift2: target is l_s19_low9 & l_s23_middle10 & l_s23_high [ target=(inst_start & ~3) + (l_s19_low9 << 2) + (l_s23_middle10 << 11) + (l_s23_high << 21); ] { export *[ram]:4 target; }
+l_target_s24shift1: target is l_s20_low10 & l_s24_middle10 & l_s24_high [ target=(inst_start & ~3) + (l_s20_low10 << 1) + (l_s24_middle10 << 11) + (l_s24_high << 21); ] { export *[ram]:4 target; }
+s_target_s6shift1: target is s_s6 [ target=(inst_start & ~3) + (s_s6 << 1); ] { export *[ram]:4 target; }
+s_target_s7shift1: target is s_s7 [ target=(inst_start & ~3) + (s_s7 << 1); ] { export *[ram]:4 target; }
+s_target_s9shift1: target is s_s9 [ target=(inst_start & ~3) + (s_s9 << 1); ] { export *[ram]:4 target; }
+s_target_s11shift2: target is s_s11 [ target=(inst_start & ~3) + (s_s11 << 2); ] { export *[ram]:4 target; }
+s_target_u8shift2: target is s_u8 [ target=(inst_start & ~3) + (s_u8 << 2); ] { export *[ram]:4 target; }
+
+# Condition Codes, using the invert value
+l_cc_not_value: "al" is l_cond_bits=0 { local tmp:1 = 0; export tmp; }
+l_cc_not_value: "eq" is l_cond_bits=1 { local tmp:1 = !Z; export tmp; }
+l_cc_not_value: "ne" is l_cond_bits=2 { export Z; }
+l_cc_not_value: "pl" is l_cond_bits=3 { export N; }
+l_cc_not_value: "mi" is l_cond_bits=4 { local tmp:1 = !N; export tmp; }
+l_cc_not_value: "cs" is l_cond_bits=5 { local tmp:1 = !C; export tmp; }
+l_cc_not_value: "cc" is l_cond_bits=6 { export C; }
+l_cc_not_value: "vs" is l_cond_bits=7 { local tmp:1 = !V; export tmp; }
+l_cc_not_value: "vc" is l_cond_bits=8 { export V; }
+l_cc_not_value: "gt" is l_cond_bits=9 { local tmp:1 = Z || (V != N); export tmp; }
+l_cc_not_value: "ge" is l_cond_bits=10 { local tmp:1 = V != N; export tmp; } # (N && !V) || (!N && V)
+l_cc_not_value: "lt" is l_cond_bits=11 { local tmp:1 = V == N; export tmp; } # (N && V) || (!N && !V)
+l_cc_not_value: "le" is l_cond_bits=12 { local tmp:1 = !Z && (V == N); export tmp; }
+l_cc_not_value: "hi" is l_cond_bits=13 { local tmp:1 = C || Z; export tmp; }
+l_cc_not_value: "ls" is l_cond_bits=14 { local tmp:1 = !C && !Z; export tmp; }
+l_cc_not_value: "pnz" is l_cond_bits=15 { local tmp:1 = N || Z; export tmp; }
+# Condition codes 16-31 are used by specific ISA extensions
+l_cc_not_value: "e"^l_cond_bits is l_cond_high_bit=1 & l_cond_bits {
+  local tmp:1 = ext_condition(l_cond_bits:1) == 0:1;
+  export tmp;
+}
+
+l_ld_di: "" is l_ld_direct=0 { }
+l_ld_di: ".di" is l_ld_direct=1 { }
+
+l_st_di: "" is l_st_direct=0 { }
+l_st_di: ".di" is l_st_direct=1 { }
+
+# Decode l_major_opcode=0x04 parameters, which are the same as l_major_opcode=0x05, 0x06, 0x07 and 0x08 (Extension Instructions)
+op4_c_src: l_rc_limm is l_op_format=0 ... & l_rc_limm { export l_rc_limm; }
+op4_c_src: l_u6 is l_op_format=1 & l_u6 { export *[const]:4 l_u6; }
+op4_c_src: s12 is l_op_format=2 & l_u6 & l_s12_high [ s12 = (l_s12_high << 6) + l_u6; ] { export *[const]:4 s12; }
+op4_c_src: l_rc_limm is (l_op_format=3 & l_m=0) ... & l_rc_limm { export l_rc_limm; }
+op4_c_src: l_u6 is l_op_format=3 & l_m=1 & l_u6 { export *[const]:4 l_u6; }
+
+op4_b_src: l_rb_limm is l_rb_limm { export l_rb_limm; }
+op4_b_src: l_rb=pcl_value is l_rb_high=7 & l_rb_low_7=7 & l_rb [ pcl_value = inst_start & ~3; ] { export *[const]:4 pcl_value; } # Special case for pcl
+
+op4_b_dst: l_rb is l_rb { export l_rb; }
+op4_b_dst: 0x0 is l_rb_high=7 & l_rb_low_7=6 { local tmp = 0:4; export tmp; }
+
+op4_a: l_ra_raw is (l_op_format=0 | l_op_format=1) & l_ra_raw { export l_ra_raw; }
+op4_a: 0x0 is (l_op_format=0 | l_op_format=1) & l_ra_raw=62 { local tmp = 0:4; export tmp; }
+op4_a: op4_b_dst is (l_op_format=2 | l_op_format=3) & op4_b_dst { export op4_b_dst; }
+
+op4_j_limm_target: limm is limm { export *[ram]:4 limm; } # Optimize absolute jump
+
+op4_lp_loop_end: target is l_op_format=2 & l_u6 & l_s12_high [ target=(inst_start & ~3) + (l_s12_high << 7) + (l_u6 << 1); ] { export *[ram]:4 target; }
+op4_lp_loop_end: target is l_op_format=3 & l_m=1 & l_u6 [ target=(inst_start & ~3) + (l_u6 << 1); ] { export *[ram]:4 target; }
+
+op4_ld_di: "" is l_op4_ld_direct=0 { }
+op4_ld_di: ".di" is l_op4_ld_direct=1 { }
+
+op4_ld_ra: 0x0 is l_ra_raw=62 { local tmp = 0:4; export tmp; }
+op4_ld_ra: l_ra_raw is l_ra_raw { export l_ra_raw; }
+
+# Implement loop logic, for instruction "LP"
+:^instruction is phase=0 & instruction [ phase = 1; ] {
+  build instruction;
+}
+:^instruction is phase=0 & loopEnd=1 & instruction [ phase = 1; ] {
+  if (is_in_loop == 0) goto <end_loop>;
+  lp_count = lp_count - 1;
+  if (lp_count == 0) goto <end_loop>;
+  # Load LP_START
+  pcl = *[auxregs]:4 (0x08:2);
+  goto [pcl];
+<end_loop>
+  is_in_loop = 0;
+  build instruction;
+}
+
+with : phase=1 {
+
+# Branch Conditionally, 0x00, [0x0]
+:b^l_cc_not_value l_target_s20shift1 is l_major_opcode=0x00 & l_sub_opcode_b16=0 & l_delay_slot_b5=0 & l_target_s20shift1 & l_cc_not_value {
+  if (l_cc_not_value == 0:1) goto l_target_s20shift1;
+}
+:b^l_cc_not_value^".d" l_target_s20shift1 is l_major_opcode=0x00 & l_sub_opcode_b16=0 & l_delay_slot_b5=1 & l_target_s20shift1 & l_cc_not_value {
+  local do_branch:1 = l_cc_not_value == 0:1;
+  delayslot(1);
+  if (do_branch) goto l_target_s20shift1;
+}
+:b l_target_s20shift1 is l_major_opcode=0x00 & l_sub_opcode_b16=0 & l_delay_slot_b5=0 & l_target_s20shift1 & l_cond_bits=0 {
+  goto l_target_s20shift1;
+}
+:b.d l_target_s20shift1 is l_major_opcode=0x00 & l_sub_opcode_b16=0 & l_delay_slot_b5=1 & l_target_s20shift1 & l_cond_bits=0 {
+  delayslot(1);
+  goto l_target_s20shift1;
+}
+
+# Branch Unconditional Far, 0x00, [0x1]
+:b l_target_s24shift1 is l_major_opcode=0x00 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_delay_slot_b5=0 & l_target_s24shift1 {
+  goto l_target_s24shift1;
+}
+:b.d l_target_s24shift1 is l_major_opcode=0x00 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_delay_slot_b5=1 & l_target_s24shift1 {
+  delayslot(1);
+  goto l_target_s24shift1;
+}
+
+# Branch on Compare Register-Register, 0x01, [0x1, 0x0]
+:breq l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x00 & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if (l_rb_limm == l_rc_limm) goto op1_1_target;
+}
+:breq.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x00 & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot(l_rb_limm == l_rc_limm, op1_1_target);
+}
+:brne l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x01 & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if (l_rb_limm != l_rc_limm) goto op1_1_target;
+}
+:brne.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x01 & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot(l_rb_limm != l_rc_limm, op1_1_target);
+}
+:brlt l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x02 & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if (l_rb_limm s< l_rc_limm) goto op1_1_target;
+}
+:brlt.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x02 & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot(l_rb_limm s< l_rc_limm, op1_1_target);
+}
+:brge l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x03 & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if (l_rb_limm s>= l_rc_limm) goto op1_1_target;
+}
+:brge.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x03 & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot(l_rb_limm s>= l_rc_limm, op1_1_target);
+}
+:brlo l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x04 & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if (l_rb_limm < l_rc_limm) goto op1_1_target;
+}
+:brlo.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x04 & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot(l_rb_limm < l_rc_limm, op1_1_target);
+}
+:brhs l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x05 & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if (l_rb_limm >= l_rc_limm) goto op1_1_target;
+}
+:brhs.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x05 & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot(l_rb_limm >= l_rc_limm, op1_1_target);
+}
+:bbit0 l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x0e & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if ((l_rb_limm & (1:4 << (l_rc_limm[0,5]))) == 0:4) goto op1_1_target;
+}
+:bbit0.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x0e & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot((l_rb_limm & (1:4 << (l_rc_limm[0,5]))) == 0, op1_1_target);
+}
+:bbit1 l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x0f & l_delay_slot_b5=0 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  if ((l_rb_limm & (1:4 << (l_rc_limm[0,5]))) != 0:4) goto op1_1_target;
+}
+:bbit1.d l_rb_limm, l_rc_limm, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=0 & l_sub_opcode_b0b1b2b3=0x0f & l_delay_slot_b5=1 & op1_1_target) ... & l_rb_limm & l_rc_limm {
+  cond_goto_with_delayslot((l_rb_limm & (1:4 << (l_rc_limm[0,5]))) != 0, op1_1_target);
+}
+
+# Branch on Compare/Bit Test Register-Immediate, 0x01, [0x1, 0x1]
+:breq l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x00 & l_delay_slot_b5=0 & op1_1_target & l_u6) ... & l_rb_limm {
+  if (l_rb_limm == l_u6) goto op1_1_target;
+}
+:breq.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x00 & l_delay_slot_b5=1 & op1_1_target & l_u6) ... & l_rb_limm {
+  cond_goto_with_delayslot(l_rb_limm == l_u6, op1_1_target);
+}
+:brne l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x01 & l_delay_slot_b5=0 & op1_1_target & l_u6) ... & l_rb_limm {
+  if (l_rb_limm != l_u6) goto op1_1_target;
+}
+:brne.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x01 & l_delay_slot_b5=1 & op1_1_target & l_u6) ... & l_rb_limm {
+  cond_goto_with_delayslot(l_rb_limm != l_u6, op1_1_target);
+}
+:brlt l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x02 & l_delay_slot_b5=0 & op1_1_target & l_u6) ... & l_rb_limm {
+  if (l_rb_limm s< l_u6) goto op1_1_target;
+}
+:brlt.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x02 & l_delay_slot_b5=1 & op1_1_target & l_u6) ... & l_rb_limm {
+  cond_goto_with_delayslot(l_rb_limm s< l_u6, op1_1_target);
+}
+:brge l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x03 & l_delay_slot_b5=0 & op1_1_target & l_u6) ... & l_rb_limm {
+  if (l_rb_limm s>= l_u6) goto op1_1_target;
+}
+:brge.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x03 & l_delay_slot_b5=1 & op1_1_target & l_u6) ... & l_rb_limm {
+  cond_goto_with_delayslot(l_rb_limm s>= l_u6, op1_1_target);
+}
+:brlo l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x04 & l_delay_slot_b5=0 & op1_1_target & l_u6) ... & l_rb_limm {
+  if (l_rb_limm < l_u6) goto op1_1_target;
+}
+:brlo.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x04 & l_delay_slot_b5=1 & op1_1_target & l_u6) ... & l_rb_limm {
+  cond_goto_with_delayslot(l_rb_limm < l_u6, op1_1_target);
+}
+:brhs l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x05 & l_delay_slot_b5=0 & op1_1_target & l_u6) ... & l_rb_limm {
+  if (l_rb_limm >= l_u6) goto op1_1_target;
+}
+:brhs.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x05 & l_delay_slot_b5=1 & op1_1_target & l_u6) ... & l_rb_limm {
+  cond_goto_with_delayslot(l_rb_limm >= l_u6, op1_1_target);
+}
+:bbit0 l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x0e & l_delay_slot_b5=0 & op1_1_target & l_u6 & op1_u6_bit) ... & l_rb_limm {
+  if ((l_rb_limm & op1_u6_bit) == 0) goto op1_1_target;
+}
+:bbit0.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x0e & l_delay_slot_b5=1 & op1_1_target & l_u6 & op1_u6_bit) ... & l_rb_limm {
+  cond_goto_with_delayslot((l_rb_limm & op1_u6_bit) == 0, op1_1_target);
+}
+:bbit1 l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x0f & l_delay_slot_b5=0 & op1_1_target & l_u6 & op1_u6_bit) ... & l_rb_limm {
+  if ((l_rb_limm & op1_u6_bit) != 0) goto op1_1_target;
+}
+:bbit1.d l_rb_limm, l_u6, op1_1_target is (l_major_opcode=0x01 & l_sub_opcode_b16=1 & l_sub_opcode_b4=1 & l_sub_opcode_b0b1b2b3=0x0f & l_delay_slot_b5=1 & op1_1_target & l_u6 & op1_u6_bit) ... & l_rb_limm {
+  cond_goto_with_delayslot((l_rb_limm & op1_u6_bit) != 0, op1_1_target);
+}
+
+# Branch and Link Conditionally, 0x01, [0x0, 0x0]
+:bl^l_cc_not_value l_target_s19shift2 is l_major_opcode=0x01 & l_sub_opcode_b16=0 & l_sub_opcode_b17=0 & l_delay_slot_b5=0 & l_target_s19shift2 & l_cc_not_value {
+  if (l_cc_not_value) goto inst_next;
+  blink = inst_next;
+  call l_target_s19shift2;
+}
+:bl^l_cc_not_value^".d" l_target_s19shift2 is l_major_opcode=0x01 & l_sub_opcode_b16=0 & l_sub_opcode_b17=0 & l_delay_slot_b5=1 & l_target_s19shift2 & l_cc_not_value {
+  local _l_cc_not_value:1 = l_cc_not_value;
+  delayslot(1);
+  if (_l_cc_not_value) goto inst_next;
+  blink = inst_next;
+  call l_target_s19shift2;
+}
+:bl l_target_s19shift2 is l_major_opcode=0x01 & l_sub_opcode_b16=0 & l_sub_opcode_b17=0 & l_delay_slot_b5=0 & l_target_s19shift2 & l_cond_bits=0 {
+  blink = inst_next;
+  call l_target_s19shift2;
+}
+:bl.d l_target_s19shift2 is l_major_opcode=0x01 & l_sub_opcode_b16=0 & l_sub_opcode_b17=0 & l_delay_slot_b5=1 & l_target_s19shift2 & l_cond_bits=0 {
+  blink = inst_next;
+  delayslot(1);
+  call l_target_s19shift2;
+}
+
+# Branch and Link Unconditional Far, 0x01, [0x0, 0x1]
+:bl l_target_s23shift2 is l_major_opcode=0x01 & l_sub_opcode_b16=0 & l_sub_opcode_b17=1 & l_sub_opcode_b4=0 & l_delay_slot_b5=0 & l_target_s23shift2 {
+  blink = inst_next;
+  call l_target_s23shift2;
+}
+:bl.d l_target_s23shift2 is l_major_opcode=0x01 & l_sub_opcode_b16=0 & l_sub_opcode_b17=1 & l_sub_opcode_b4=0 & l_delay_slot_b5=1 & l_target_s23shift2 {
+  blink = inst_next;
+  delayslot(1);
+  call l_target_s23shift2;
+}
+
+# Load Register with Offset, 0x02
+:ld^l_ld_di l_ra_raw, l_ldst_mem_rb_s9 is (l_major_opcode=0x02 & l_ld_addr_mode=0 & l_ld_data_size=0 & l_ld_sign_ext=0 & l_ld_di & l_ra_raw) ... & l_ldst_mem_rb_s9 {
+  l_ra_raw = *[ram]:4 l_ldst_mem_rb_s9;
+}
+:ldb^l_ld_di l_ra_raw, l_ldst_mem_rb_s9 is (l_major_opcode=0x02 & l_ld_addr_mode=0 & l_ld_data_size=1 & l_ld_sign_ext=0 & l_ld_di & l_ra_raw) ... & l_ldst_mem_rb_s9 {
+  l_ra_raw = zext(*[ram]:1 l_ldst_mem_rb_s9);
+}
+:ldb.x^l_ld_di l_ra_raw, l_ldst_mem_rb_s9 is (l_major_opcode=0x02 & l_ld_addr_mode=0 & l_ld_data_size=1 & l_ld_sign_ext=1 & l_ld_di & l_ra_raw) ... & l_ldst_mem_rb_s9 {
+  l_ra_raw = sext(*[ram]:1 l_ldst_mem_rb_s9);
+}
+:ldw^l_ld_di l_ra_raw, l_ldst_mem_rb_s9 is (l_major_opcode=0x02 & l_ld_addr_mode=0 & l_ld_data_size=2 & l_ld_sign_ext=0 & l_ld_di & l_ra_raw) ... & l_ldst_mem_rb_s9 {
+  l_ra_raw = zext(*[ram]:2 l_ldst_mem_rb_s9);
+}
+:ldw.x^l_ld_di l_ra_raw, l_ldst_mem_rb_s9] is (l_major_opcode=0x02 & l_ld_addr_mode=0 & l_ld_data_size=2 & l_ld_sign_ext=1 & l_ld_di & l_ra_raw) ... & l_ldst_mem_rb_s9 {
+  l_ra_raw = sext(*[ram]:2 l_ldst_mem_rb_s9);
+}
+
+# For each instruction, add patterns with r62 (long immediate), which are invalid instructions
+:ld.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=0 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_rb = l_rb + l_s9;
+  l_ra_raw = *[ram]:4 l_rb;
+}
+:ld.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=0 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldb.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=1 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_rb = l_rb + l_s9;
+  l_ra_raw = zext(*[ram]:1 l_rb);
+}
+:ldb.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=1 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldb.x.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=1 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_rb = l_rb + l_s9;
+  l_ra_raw = sext(*[ram]:1 l_rb);
+}
+:ldb.x.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=1 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldw.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=2 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_rb = l_rb + l_s9;
+  l_ra_raw = zext(*[ram]:2 l_rb);
+}
+:ldw.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=2 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldw.x.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=2 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_rb = l_rb + l_s9;
+  l_ra_raw = sext(*[ram]:2 l_rb);
+}
+:ldw.x.a^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=1 & l_ld_data_size=2 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+
+:ld.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=0 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_ra_raw = *[ram]:4 l_rb;
+  l_rb = l_rb + l_s9;
+}
+:ld.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=0 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldb.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=1 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_ra_raw = zext(*[ram]:1 l_rb);
+  l_rb = l_rb + l_s9;
+}
+:ldb.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=1 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldb.x.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=1 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_ra_raw = zext(*[ram]:1 l_rb);
+  l_rb = l_rb + l_s9;
+}
+:ldb.x.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=1 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldw.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=2 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_ra_raw = zext(*[ram]:2 l_rb);
+  l_rb = l_rb + l_s9;
+}
+:ldw.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=2 & l_ld_sign_ext=0 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+:ldw.x.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=2 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb {
+  l_ra_raw = zext(*[ram]:2 l_rb);
+  l_rb = l_rb + l_s9;
+}
+:ldw.x.ab^l_ld_di l_ra_raw, [l_rb, l_s9] is l_major_opcode=0x02 & l_ld_addr_mode=2 & l_ld_data_size=2 & l_ld_sign_ext=1 & l_s9 & l_ld_di & l_ra_raw & l_rb_high=7 & l_rb_low_7=6 & l_rb unimpl
+
+:ld.as^l_ld_di l_ra_raw, [l_rb_limm, l_s9shift2] is (l_major_opcode=0x02 & l_ld_addr_mode=3 & l_ld_data_size=0 & l_ld_sign_ext=0 & l_s9shift2 & l_ld_di & l_ra_raw) ... & l_rb_limm {
+  local addr:4 = l_rb_limm + l_s9shift2;
+  l_ra_raw = *[ram]:4 addr;
+}
+:ldw.as^l_ld_di l_ra_raw, [l_rb_limm, l_s9shift1] is (l_major_opcode=0x02 & l_ld_addr_mode=3 & l_ld_data_size=2 & l_ld_sign_ext=0 & l_s9shift1 & l_ld_di & l_ra_raw) ... & l_rb_limm {
+  local addr:4 = l_rb_limm + l_s9shift1;
+  l_ra_raw = zext(*[ram]:2 addr);
+}
+:ldw.x.as^l_ld_di l_ra_raw, [l_rb_limm, l_s9shift1] is (l_major_opcode=0x02 & l_ld_addr_mode=3 & l_ld_data_size=2 & l_ld_sign_ext=1 & l_s9shift1 & l_ld_di & l_ra_raw) ... & l_rb_limm {
+  local addr:4 = l_rb_limm + l_s9shift1;
+  l_ra_raw = sext(*[ram]:2 addr);
+}
+
+# Store Register with Offset, 0x03
+:st^l_st_di l_rc_limm, l_ldst_mem_rb_s9 is (l_major_opcode=0x03 & l_st_addr_mode=0 & l_st_data_size=0 & l_st_di) ... & l_ldst_mem_rb_s9 & l_rc_limm {
+  *[ram]:4 l_ldst_mem_rb_s9 = l_rc_limm;
+}
+:stb^l_st_di l_rc_limm, l_ldst_mem_rb_s9 is (l_major_opcode=0x03 & l_st_addr_mode=0 & l_st_data_size=1 & l_st_di) ... & l_ldst_mem_rb_s9 & l_rc_limm {
+  *[ram]:1 l_ldst_mem_rb_s9 = l_rc_limm:1;
+}
+:stw^l_st_di l_rc_limm, l_ldst_mem_rb_s9 is (l_major_opcode=0x03 & l_st_addr_mode=0 & l_st_data_size=2 & l_st_di) ... & l_ldst_mem_rb_s9 & l_rc_limm {
+  *[ram]:2 l_ldst_mem_rb_s9 = l_rc_limm:2;
+}
+
+:st.a^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=1 & l_st_data_size=0 & l_s9 & l_st_di & l_rb) ... & l_rc_limm {
+  l_rb = l_rb + l_s9;
+  *[ram]:4 l_rb = l_rc_limm;
+}
+:st.a^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=1 & l_st_data_size=0 & l_s9 & l_st_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+:stb.a^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=1 & l_st_data_size=1 & l_s9 & l_st_di & l_rb) ... & l_rc_limm {
+  l_rb = l_rb + l_s9;
+  *[ram]:1 l_rb = l_rc_limm:1;
+}
+:stb.a^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=1 & l_st_data_size=1 & l_s9 & l_st_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+:stw.a^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=1 & l_st_data_size=2 & l_s9 & l_st_di & l_rb) ... & l_rc_limm {
+  l_rb = l_rb + l_s9;
+  *[ram]:2 l_rb = l_rc_limm:2;
+}
+:stw.a^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=1 & l_st_data_size=2 & l_s9 & l_st_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+
+:st.ab^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=2 & l_st_data_size=0 & l_s9 & l_st_di & l_rb) ... & l_rc_limm {
+  *[ram]:4 l_rb = l_rc_limm;
+  l_rb = l_rb + l_s9;
+}
+:st.ab^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=2 & l_st_data_size=0 & l_s9 & l_st_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+:stb.ab^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=2 & l_st_data_size=1 & l_s9 & l_st_di & l_rb) ... & l_rc_limm {
+  *[ram]:1 l_rb = l_rc_limm:1;
+  l_rb = l_rb + l_s9;
+}
+:stb.ab^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=2 & l_st_data_size=1 & l_s9 & l_st_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+:stw.ab^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=2 & l_st_data_size=2 & l_s9 & l_st_di & l_rb) ... & l_rc_limm {
+  *[ram]:2 l_rb = l_rc_limm:2;
+  l_rb = l_rb + l_s9;
+}
+:stw.ab^l_st_di l_rc_limm, [l_rb, l_s9] is (l_major_opcode=0x03 & l_st_addr_mode=2 & l_st_data_size=2 & l_s9 & l_st_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+
+:st.as^l_st_di l_rc_limm, [l_rb_limm, l_s9shift2] is (l_major_opcode=0x03 & l_st_addr_mode=3 & l_st_data_size=0 & l_s9shift2 & l_st_di) ... & l_rb_limm & l_rc_limm {
+  local addr:4 = l_rb_limm + l_s9shift2;
+  *[ram]:4 addr = l_rc_limm;
+}
+:stw.as^l_st_di l_rc_limm, [l_rb_limm, l_s9shift1] is (l_major_opcode=0x03 & l_st_addr_mode=3 & l_st_data_size=2 & l_s9shift1 & l_st_di) ... & l_rb_limm & l_rc_limm {
+  local addr:4 = l_rb_limm + l_s9shift1;
+  *[ram]:2 addr = l_rc_limm:2;
+}
+
+# General Operations, 0x04, [0x00 - 0x3F]
+# ALU Operations, 0x04, [0x00-0x1F]
+with : l_major_opcode=0x04 ... {
+  :add op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src + op4_c_src;
+  }
+  :add.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    # Do not use "goto inst_next", as this does not have the right semantics when the instruction appears in a delay slot.
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src + op4_c_src;
+  <next>
+  }
+  :add.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    update_flags_add_cv(op4_b_src, op4_c_src);
+    op4_a = op4_b_src + op4_c_src;
+    update_flags_zn(op4_a);
+  }
+  :add.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    update_flags_add_cv(op4_b_src, op4_c_src);
+    op4_a = op4_b_src + op4_c_src;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :adc op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src + op4_c_src + zext(C);
+  }
+  :adc.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src + op4_c_src + zext(C);
+  <next>
+  }
+  :adc.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local sign_b:1 = (op4_b_src >> 31) != 0;
+    local sign_c:1 = (op4_c_src >> 31) != 0;
+    local new_C:1 = ((C == 0) && carry(op4_b_src, op4_c_src)) || ((C == 1) && (op4_b_src >= op4_b_src + op4_c_src + 1:4));
+    op4_a = op4_b_src + op4_c_src + zext(C);
+    local sign_a:1 = (op4_a >> 31) != 0;
+    C = new_C;
+    V = (sign_b == sign_c) && (sign_a != sign_b);
+    update_flags_zn(op4_a);
+  }
+  :adc.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local sign_b:1 = (op4_b_src >> 31) != 0;
+    local sign_c:1 = (op4_c_src >> 31) != 0;
+    local new_C:1 = ((C == 0) && carry(op4_b_src, op4_c_src)) || ((C == 1) && (op4_b_src >= op4_b_src + op4_c_src + 1:4));
+    op4_a = op4_b_src + op4_c_src + zext(C);
+    local sign_a:1 = (op4_a >> 31) != 0;
+    C = new_C;
+    V = (sign_b == sign_c) && (sign_a != sign_b);
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :sub op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src - op4_c_src;
+  }
+  :sub.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src - op4_c_src;
+  <next>
+  }
+  :sub.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local result:4 = op4_b_src - op4_c_src;
+    update_flags_sub_zncv(op4_b_src, op4_c_src, result);
+    op4_a = result;
+  }
+  :sub.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local result:4 = op4_b_src - op4_c_src;
+    update_flags_sub_zncv(op4_b_src, op4_c_src, result);
+    op4_a = result;
+  <next>
+  }
+  :sbc op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src - op4_c_src - zext(C);
+  }
+  :sbc.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src - op4_c_src - zext(C);
+  <next>
+  }
+  :sbc.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local sub_b_c:4 = op4_b_src - op4_c_src;
+    local old_C:4 = zext(C);
+    C = (op4_b_src < op4_c_src) || ((old_C == 1:4) && (op4_b_src == op4_c_src));
+    V = sborrow(op4_b_src, op4_c_src) || ((old_C == 1:4) && sborrow(sub_b_c, old_C));
+    op4_a = sub_b_c - old_C;
+    update_flags_zn(op4_a);
+  }
+  :sbc.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local sub_b_c:4 = op4_b_src - op4_c_src;
+    local old_C:4 = zext(C);
+    C = (op4_b_src < op4_c_src) || ((old_C == 1:4) && (op4_b_src == op4_c_src));
+    V = sborrow(op4_b_src, op4_c_src) || ((old_C == 1:4) && sborrow(sub_b_c, old_C));
+    op4_a = sub_b_c - old_C;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :and op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x04 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src & op4_c_src;
+  }
+  :and.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x04 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src & op4_c_src;
+  <next>
+  }
+  :and.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x04 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src & op4_c_src;
+    update_flags_zn(op4_a);
+  }
+  :and.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x04 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src & op4_c_src;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :or op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x05 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src | op4_c_src;
+  }
+  :or.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x05 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src | op4_c_src;
+  <next>
+  }
+  :or.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x05 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src | op4_c_src;
+    update_flags_zn(op4_a);
+  }
+  :or.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x05 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src | op4_c_src;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :bic op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src & ~op4_c_src;
+  }
+  :bic.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src & ~op4_c_src;
+  <next>
+  }
+  :bic.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src & ~op4_c_src;
+    update_flags_zn(op4_a);
+  }
+  :bic.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src & ~op4_c_src;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :xor op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src ^ op4_c_src;
+  }
+  :xor.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src ^ op4_c_src;
+  <next>
+  }
+  :xor.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src ^ op4_c_src;
+    update_flags_zn(op4_a);
+  }
+  :xor.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src ^ op4_c_src;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :max op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x08 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local c_greatereq_b:1 = op4_c_src s>= op4_b_src;
+    op4_a = op4_b_src * zext(c_greatereq_b == 0:1) + op4_c_src * zext(c_greatereq_b);
+  }
+  :max.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x08 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local c_greatereq_b:1 = op4_c_src s>= op4_b_src;
+    op4_a = op4_b_src * zext(c_greatereq_b == 0:1) + op4_c_src * zext(c_greatereq_b);
+  <next>
+  }
+  :max.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x08 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    Z = op4_c_src == op4_b_src;
+    N = (op4_b_src - op4_c_src) s< 0:4;
+    C = op4_c_src s>= op4_b_src;
+    V = sborrow(op4_b_src, op4_c_src);
+    op4_a = op4_b_src * zext(C == 0:1) + op4_c_src * zext(C);
+  }
+  :max.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x08 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    Z = op4_c_src == op4_b_src;
+    N = (op4_b_src - op4_c_src) s< 0:4;
+    C = op4_c_src s>= op4_b_src;
+    V = sborrow(op4_b_src, op4_c_src);
+    op4_a = op4_b_src * zext(C == 0:1) + op4_c_src * zext(C);
+  <next>
+  }
+  :min op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x09 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local c_lowereq_b:1 = op4_c_src s<= op4_b_src;
+    op4_a = op4_b_src * zext(c_lowereq_b == 0:1) + op4_c_src * zext(c_lowereq_b);
+  }
+  :min.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x09 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local c_lowereq_b:1 = op4_c_src s<= op4_b_src;
+    op4_a = op4_b_src * zext(c_lowereq_b == 0:1) + op4_c_src * zext(c_lowereq_b);
+  <next>
+  }
+  :min.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x09 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    Z = op4_c_src == op4_b_src;
+    N = (op4_b_src - op4_c_src) s< 0:4;
+    C = op4_c_src s<= op4_b_src;
+    V = sborrow(op4_b_src, op4_c_src);
+    op4_a = op4_b_src * zext(C == 0:1) + op4_c_src * zext(C);
+  }
+  :min.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x09 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    Z = op4_c_src == op4_b_src;
+    N = (op4_b_src - op4_c_src) s< 0:4;
+    C = op4_c_src s<= op4_b_src;
+    V = sborrow(op4_b_src, op4_c_src);
+    op4_a = op4_b_src * zext(C == 0:1) + op4_c_src * zext(C);
+  <next>
+  }
+  :mov op4_b_dst, op4_c_src is (l_sub_opcode6=0x0a & l_flag=0 & op4_b_dst) ... & op4_c_src {
+    op4_b_dst = op4_c_src;
+  }
+  :mov.^l_cc_not_value op4_b_dst, op4_c_src is (l_sub_opcode6=0x0a & l_flag=0 & op4_b_dst & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_b_dst = op4_c_src;
+  <next>
+  }
+  :mov.f op4_b_dst, op4_c_src is (l_sub_opcode6=0x0a & l_flag=1 & op4_b_dst) ... & op4_c_src {
+    update_flags_zn(op4_c_src);
+    op4_b_dst = op4_c_src;
+  }
+  :mov.^l_cc_not_value^".f" op4_b_dst, op4_c_src is (l_sub_opcode6=0x0a & l_flag=1 & op4_b_dst & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    update_flags_zn(op4_c_src);
+    op4_b_dst = op4_c_src;
+  <next>
+  }
+  :tst op4_b_src, op4_c_src is (l_sub_opcode6=0x0b & l_flag=1) ... & op4_b_src & op4_c_src {
+    update_flags_zn(op4_b_src & op4_c_src);
+  }
+  :tst.^l_cc_not_value op4_b_src, op4_c_src is (l_sub_opcode6=0x0b & l_flag=1 & l_op_format=3 & l_cc_not_value) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    update_flags_zn(op4_b_src & op4_c_src);
+  <next>
+  }
+  :cmp op4_b_src, op4_c_src is (l_sub_opcode6=0x0c & l_flag=1) ... & op4_b_src & op4_c_src {
+    local result:4 = op4_b_src - op4_c_src;
+    update_flags_sub_zncv(op4_b_src, op4_c_src, result);
+  }
+  :cmp.^l_cc_not_value op4_b_src, op4_c_src is (l_sub_opcode6=0x0c & l_flag=1 & l_op_format=3 & l_cc_not_value) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local result:4 = op4_b_src - op4_c_src;
+    update_flags_sub_zncv(op4_b_src, op4_c_src, result);
+  <next>
+  }
+  :rcmp op4_b_src, op4_c_src is (l_sub_opcode6=0x0d & l_flag=1) ... & op4_b_src & op4_c_src {
+    local result:4 = op4_c_src - op4_b_src;
+    update_flags_sub_zncv(op4_c_src, op4_b_src, result);
+  }
+  :rcmp.^l_cc_not_value op4_b_src, op4_c_src is (l_sub_opcode6=0x0d & l_flag=1 & l_op_format=3 & l_cc_not_value) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local result:4 = op4_c_src - op4_b_src;
+    update_flags_sub_zncv(op4_c_src, op4_b_src, result);
+  <next>
+  }
+  :rsub op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0e & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_c_src - op4_b_src;
+  }
+  :rsub.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0e & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_c_src - op4_b_src;
+  <next>
+  }
+  :rsub.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0e & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local result:4 = op4_c_src - op4_b_src;
+    update_flags_sub_zncv(op4_c_src, op4_b_src, result);
+    op4_a = result;
+  }
+  :rsub.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0e & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local result:4 = op4_c_src - op4_b_src;
+    update_flags_sub_zncv(op4_c_src, op4_b_src, result);
+    op4_a = result;
+  <next>
+  }
+  :bset op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0f & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src | (1:4 << (op4_c_src[0,5]));
+  }
+  :bset.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0f & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src | (1:4 << (op4_c_src[0,5]));
+  <next>
+  }
+  :bset.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0f & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src | (1:4 << (op4_c_src[0,5]));
+    update_flags_zn(op4_a);
+  }
+  :bset.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0f & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src | (1:4 << (op4_c_src[0,5]));
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :bclr op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x10 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src & ~(1:4 << (op4_c_src[0,5]));
+  }
+  :bclr.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x10 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src & ~(1:4 << (op4_c_src[0,5]));
+  <next>
+  }
+  :bclr.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x10 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src & ~(1:4 << (op4_c_src[0,5]));
+    update_flags_zn(op4_a);
+  }
+  :bclr.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x10 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src & ~(1:4 << (op4_c_src[0,5]));
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :btst op4_b_src, op4_c_src is (l_sub_opcode6=0x11 & l_flag=1) ... & op4_b_src & op4_c_src {
+    update_flags_zn(op4_b_src & (1:4 << (op4_c_src[0,5])));
+  }
+  :btst.^l_cc_not_value op4_b_src, op4_c_src is (l_sub_opcode6=0x11 & l_flag=1 & l_op_format=3 & l_cc_not_value) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    update_flags_zn(op4_b_src & (1:4 << (op4_c_src[0,5])));
+  <next>
+  }
+  :bxor op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x12 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src ^ (1:4 << (op4_c_src[0,5]));
+  }
+  :bxor.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x12 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src ^ (1:4 << (op4_c_src[0,5]));
+  <next>
+  }
+  :bxor.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x12 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src ^ (1:4 << (op4_c_src[0,5]));
+    update_flags_zn(op4_a);
+  }
+  :bxor.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x12 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src ^ (1:4 << (op4_c_src[0,5]));
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :bmsk op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x13 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local c_src_plus_one:4 = op4_c_src + 1:4;
+    op4_a = op4_b_src & ((1:4 << (c_src_plus_one[0,5])) - 1:4);
+  }
+  :bmsk.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x13 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local c_src_plus_one:4 = op4_c_src + 1:4;
+    op4_a = op4_b_src & ((1:4 << (c_src_plus_one[0,5])) - 1:4);
+  <next>
+  }
+  :bmsk.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x13 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local c_src_plus_one:4 = op4_c_src + 1:4;
+    op4_a = op4_b_src & ((1:4 << (c_src_plus_one[0,5])) - 1:4);
+    update_flags_zn(op4_a);
+  }
+  :bmsk.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x13 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local c_src_plus_one:4 = op4_c_src + 1:4;
+    op4_a = op4_b_src & ((1:4 << (c_src_plus_one[0,5])) - 1:4);
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :add1 op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x14 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src + (op4_c_src << 1);
+    update_flags_zn(op4_a);
+  }
+  :add1.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x14 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src + (op4_c_src << 1);
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :add1^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x14 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local op2:4 = op4_c_src << 1;
+    update_flags_add_cv(op4_b_src, op2);
+    op4_a = op4_b_src + op2;
+    update_flags_zn(op4_a);
+  }
+  :add1.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x14 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local op2:4 = op4_c_src << 1;
+    update_flags_add_cv(op4_b_src, op2);
+    op4_a = op4_b_src + op2;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :add2 op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x15 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src + (op4_c_src << 2);
+  }
+  :add2.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x15 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src + (op4_c_src << 2);
+  <next>
+  }
+  :add2^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x15 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local op2:4 = op4_c_src << 2;
+    update_flags_add_cv(op4_b_src, op2);
+    op4_a = op4_b_src + op2;
+    update_flags_zn(op4_a);
+  }
+  :add2.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x15 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local op2:4 = op4_c_src << 2;
+    update_flags_add_cv(op4_b_src, op2);
+    op4_a = op4_b_src + op2;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :add3 op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x16 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src + (op4_c_src << 3);
+  }
+  :add3.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x16 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src + (op4_c_src << 3);
+  <next>
+  }
+  :add3^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x16 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local op2:4 = op4_c_src << 3;
+    update_flags_add_cv(op4_b_src, op2);
+    op4_a = op4_b_src + op2;
+    update_flags_zn(op4_a);
+  }
+  :add3.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x16 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local op2:4 = op4_c_src << 3;
+    update_flags_add_cv(op4_b_src, op2);
+    op4_a = op4_b_src + op2;
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :sub1 op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x17 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src - (op4_c_src << 1);
+  }
+  :sub1.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x17 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src - (op4_c_src << 1);
+  <next>
+  }
+  :sub1^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x17 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local op2:4 = op4_c_src << 1;
+    local result:4 = op4_b_src - op2;
+    update_flags_sub_zncv(op4_b_src, op2, result);
+    op4_a = result;
+  }
+  :sub1.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x17 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local op2:4 = op4_c_src << 1;
+    local result:4 = op4_b_src - op2;
+    update_flags_sub_zncv(op4_b_src, op2, result);
+    op4_a = result;
+  <next>
+  }
+  :sub2 op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x18 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src - (op4_c_src << 2);
+  }
+  :sub2.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x18 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src - (op4_c_src << 2);
+  <next>
+  }
+  :sub2^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x18 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local op2:4 = op4_c_src << 2;
+    local result:4 = op4_b_src - op2;
+    update_flags_sub_zncv(op4_b_src, op2, result);
+    op4_a = op4_b_src - op2;
+  }
+  :sub2.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x18 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local op2:4 = op4_c_src << 2;
+    local result:4 = op4_b_src - op2;
+    update_flags_sub_zncv(op4_b_src, op2, result);
+    op4_a = op4_b_src - op2;
+  <next>
+  }
+  :sub3 op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x19 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src - (op4_c_src << 3);
+  }
+  :sub3.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x19 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src - (op4_c_src << 3);
+  <next>
+  }
+  :sub3^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x19 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local op2:4 = op4_c_src << 3;
+    local result:4 = op4_b_src - op2;
+    update_flags_sub_zncv(op4_b_src, op2, result);
+    op4_a = op4_b_src - op2;
+  }
+  :sub3.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x19 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local op2:4 = op4_c_src << 3;
+    local result:4 = op4_b_src - op2;
+    update_flags_sub_zncv(op4_b_src, op2, result);
+    op4_a = op4_b_src - op2;
+  <next>
+  }
+  :mpy op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1a & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local val_b:8 = sext(op4_b_src);
+    local val_c:8 = sext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result:4; # extract low 32 bits
+  }
+  :mpy.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1a & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local val_b:8 = sext(op4_b_src);
+    local val_c:8 = sext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result:4; # extract low 32 bits
+  <next>
+  }
+  :mpyh op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1b & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src  {
+    local val_b:8 = sext(op4_b_src);
+    local val_c:8 = sext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result(4); # extract high 32 bits
+  }
+  :mpyh.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1b & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src  {
+    if (l_cc_not_value) goto <next>;
+    local val_b:8 = sext(op4_b_src);
+    local val_c:8 = sext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result(4); # extract high 32 bits
+  <next>
+  }
+  :mpyhu op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1c & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local val_b:8 = zext(op4_b_src);
+    local val_c:8 = zext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result(4); # extract high 32 bits
+  }
+  :mpyhu.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1c & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local val_b:8 = zext(op4_b_src);
+    local val_c:8 = zext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result(4); # extract high 32 bits
+  <next>
+  }
+  :mpyu op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1d & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local val_b:8 = zext(op4_b_src);
+    local val_c:8 = zext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result:4; # extract low 32 bits
+  }
+  :mpyu.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x1d & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local val_b:8 = zext(op4_b_src);
+    local val_c:8 = zext(op4_c_src);
+    local result:8 = val_b * val_c;
+    op4_a = result:4; # extract low 32 bits
+  <next>
+  }
+
+  # Special Format Instructions, 0x04, [0x20 - 0x3F]
+  :j op4_c_src is (l_sub_opcode6=0x20 & l_flag=0) ... & op4_c_src {
+    pcl = op4_c_src;
+    goto [pcl];
+  }
+  :j^l_cc_not_value op4_c_src is (l_sub_opcode6=0x20 & l_flag=0 & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    pcl = op4_c_src;
+    goto [pcl];
+  <next>
+  }
+  :j op4_j_limm_target is l_sub_opcode6=0x20 & l_flag=0 & l_op_format=0 & l_rc_raw=62 ; limm & op4_j_limm_target {
+    pcl = limm;
+    goto op4_j_limm_target;
+  }
+  :j^l_cc_not_value op4_j_limm_target is l_sub_opcode6=0x20 & l_flag=0 & l_op_format=3 & l_m=0 & l_rc_raw=62 & l_cc_not_value ; limm & op4_j_limm_target {
+    if (l_cc_not_value) goto <next>;
+    pcl = limm;
+    goto op4_j_limm_target;
+  <next>
+  }
+}
+with : l_major_opcode=0x04 {
+  :j blink is l_sub_opcode6=0x20 & l_flag=0 & l_op_format=0 & l_rc_raw=31 & blink {
+    pcl = blink;
+    return [pcl];
+  }
+  :j^l_cc_not_value blink is l_sub_opcode6=0x20 & l_flag=0 & l_op_format=3 & l_m=0 & l_rc_raw=31 & l_cc_not_value & blink {
+    if (l_cc_not_value) goto <next>;
+    pcl = blink;
+    return [pcl];
+  <next>
+  }
+  :j.f ilink1 is l_sub_opcode6=0x20 & l_flag=1 & l_op_format=0 & l_rc_raw=29 & ilink1 {
+    # get STATUS_L1 register at 0x0b * 4 = 0x2c
+    local new_status:4 = *[auxregs]:4 (0x2c:2);
+    Z = (new_status & (1 << 11)) != 0;
+    N = (new_status & (1 << 10)) != 0;
+    C = (new_status & (1 << 9)) != 0;
+    V = (new_status & (1 << 8)) != 0;
+    pcl = ilink1;
+    goto [pcl];
+  }
+  :j^l_cc_not_value^".f" ilink1 is l_sub_opcode6=0x20 & l_flag=1 & l_op_format=3 & l_m=0 & l_rc_raw=29 & l_cc_not_value & ilink1 {
+    if (l_cc_not_value) goto <next>;
+    # get STATUS_L1 register at 0x0b * 4 = 0x2c
+    local new_status:4 = *[auxregs]:4 (0x2c:2);
+    Z = (new_status & (1 << 11)) != 0;
+    N = (new_status & (1 << 10)) != 0;
+    C = (new_status & (1 << 9)) != 0;
+    V = (new_status & (1 << 8)) != 0;
+    pcl = ilink1;
+    goto [pcl];
+  <next>
+  }
+  :j.f ilink2 is l_sub_opcode6=0x20 & l_flag=1 & l_op_format=0 & l_rc_raw=30 & ilink2 {
+    # get STATUS_L2 register at 0x0c * 4 = 0x30
+    local new_status:4 = *[auxregs]:4 (0x30:2);
+    Z = (new_status & (1 << 11)) != 0;
+    N = (new_status & (1 << 10)) != 0;
+    C = (new_status & (1 << 9)) != 0;
+    V = (new_status & (1 << 8)) != 0;
+    pcl = ilink2;
+    goto [pcl];
+  }
+  :j^l_cc_not_value^".f" ilink2 is l_sub_opcode6=0x20 & l_flag=1 & l_op_format=3 & l_m=0 & l_rc_raw=30 & l_cc_not_value & ilink2 {
+    if (l_cc_not_value) goto <next>;
+    # get STATUS_L2 register at 0x0c * 4 = 0x30
+    local new_status:4 = *[auxregs]:4 (0x30:2);
+    Z = (new_status & (1 << 11)) != 0;
+    N = (new_status & (1 << 10)) != 0;
+    C = (new_status & (1 << 9)) != 0;
+    V = (new_status & (1 << 8)) != 0;
+    pcl = ilink2;
+    goto [pcl];
+  <next>
+  }
+}
+with : l_major_opcode=0x04 ... {
+  :j.d op4_c_src is (l_sub_opcode6=0x21 & l_flag=0) ... & op4_c_src {
+    pcl = op4_c_src;
+    delayslot(1);
+    goto [pcl];
+  }
+  :j^l_cc_not_value^".d" op4_c_src is (l_sub_opcode6=0x21 & l_flag=0 & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    local _l_cc_not_value:1 = l_cc_not_value;
+    local _op4_c_src:4 = op4_c_src;
+    delayslot(1);
+    if (_l_cc_not_value) goto <next>;
+    pcl = _op4_c_src;
+    goto [pcl];
+  <next>
+  }
+}
+with : l_major_opcode=0x04 {
+  :j.d blink is l_sub_opcode6=0x21 & l_flag=0 & l_op_format=0 & l_rc_raw=31 & blink {
+    pcl = blink;
+    delayslot(1);
+    return [pcl];
+  }
+  :j^l_cc_not_value^".d" blink is l_sub_opcode6=0x21 & l_flag=0 & l_op_format=3 & l_m=0 & l_rc_raw=31 & l_cc_not_value & blink {
+    local _l_cc_not_value:1 = l_cc_not_value;
+    local _blink:4 = blink;
+    delayslot(1);
+    if (_l_cc_not_value) goto <next>;
+    pcl = _blink;
+    return [pcl];
+  <next>
+  }
+}
+with : l_major_opcode=0x04 ... {
+  :jl op4_c_src is (l_sub_opcode6=0x22 & l_flag=0) ... & op4_c_src {
+    blink = inst_next;
+    pcl = op4_c_src;
+    call [pcl];
+  }
+  :jl^l_cc_not_value op4_c_src is (l_sub_opcode6=0x22 & l_flag=0 & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    blink = inst_next;
+    pcl = op4_c_src;
+    call [pcl];
+  <next>
+  }
+  :jl.d op4_c_src is (l_sub_opcode6=0x23 & l_flag=0) ... & op4_c_src {
+    blink = inst_next;
+    pcl = op4_c_src;
+    delayslot(1);
+    call [pcl];
+  }
+  :jl^l_cc_not_value^".d" op4_c_src is (l_sub_opcode6=0x23 & l_flag=0 & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    local _l_cc_not_value:1 = l_cc_not_value;
+    local _op4_c_src:4 = op4_c_src;
+    delayslot(1);
+    if (_l_cc_not_value) goto <next>;
+    blink = inst_next;
+    pcl = _op4_c_src;
+    call [pcl];
+  <next>
+  }
+}
+with : l_major_opcode=0x04 {
+  :lp^l_cc_not_value op4_lp_loop_end is l_sub_opcode6=0x28 & l_flag=0 & l_op_format=3 & l_m=1 & l_u6 & l_cc_not_value & op4_lp_loop_end
+    [ loopEnd = 1; globalset(op4_lp_loop_end, loopEnd); ]
+  {
+    # Loop Set Up (Conditional)
+    is_in_loop = 0;
+    if (l_cc_not_value) goto op4_lp_loop_end;
+    # Write LP_START and LP_END registers
+    *[auxregs]:4 (0x08:2) = inst_next;
+    *[auxregs]:4 (0x0c:2) = &op4_lp_loop_end;
+    is_in_loop = 1;
+  }
+  :lp op4_lp_loop_end is l_sub_opcode6=0x28 & l_flag=0 & l_op_format=2 & op4_lp_loop_end
+    [ loopEnd = 1; globalset(op4_lp_loop_end, loopEnd); ]
+  {
+    # Loop Set Up (Unconditional)
+    # Write LP_START and LP_END registers
+    *[auxregs]:4 (0x08:2) = inst_next;
+    *[auxregs]:4 (0x0c:2) = &op4_lp_loop_end;
+    is_in_loop = 1;
+  }
+}
+with : l_major_opcode=0x04 ... {
+  :flag op4_c_src is (l_sub_opcode6=0x29 & l_flag=0) ... & op4_c_src {
+    # set STATUS32 register at 0x0a * 4 = 0x28
+    *[auxregs]:4 (0x28:2) = op4_c_src;
+    Z = (op4_c_src & (1:4 << 11)) != 0;
+    N = (op4_c_src & (1:4 << 10)) != 0;
+    C = (op4_c_src & (1:4 << 9)) != 0;
+    V = (op4_c_src & (1:4 << 8)) != 0;
+  }
+  :flag.^l_cc_not_value op4_c_src is (l_sub_opcode6=0x29 & l_flag=0 & l_op_format=3 & l_cc_not_value) ... & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    # set STATUS32 register at 0x0a * 4 = 0x28
+    *[auxregs]:4 (0x28:2) = op4_c_src;
+    Z = (op4_c_src & (1:4 << 11)) != 0;
+    N = (op4_c_src & (1:4 << 10)) != 0;
+    C = (op4_c_src & (1:4 << 9)) != 0;
+    V = (op4_c_src & (1:4 << 8)) != 0;
+  <next>
+  }
+
+  :lr op4_b_dst, [op4_c_src] is (l_sub_opcode6=0x2a & l_flag=0 & (l_op_format=0 | l_op_format=1 | l_op_format=2) & op4_b_dst) ... & op4_c_src {
+    op4_b_dst = *[auxregs]:4 (op4_c_src:2 << 2:2);
+  }
+  :sr op4_b_src, [op4_c_src] is (l_sub_opcode6=0x2b & l_flag=0 & (l_op_format=0 | l_op_format=1 | l_op_format=2)) ... & op4_b_src & op4_c_src {
+    *[auxregs]:4 (op4_c_src:2 << 2:2) = op4_b_src;
+  }
+
+  # Single Operand Instructions, 0x04, [0x2F, 0x00 - 0x3F]
+  with : (l_sub_opcode6=0x2f & (l_op_format=0 | l_op_format=1)) ... {
+    :asl op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x00 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = op4_c_src + op4_c_src;
+    }
+    :asl.f op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x00 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      update_flags_add_cv(op4_c_src, op4_c_src);
+      op4_b_dst = op4_c_src + op4_c_src;
+      update_flags_zn(op4_b_dst);
+    }
+    :asr op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x01 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = op4_c_src s>> 1;
+    }
+    :asr.f op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x01 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      C = (op4_c_src & 1:4) != 0:4;
+      op4_b_dst = op4_c_src s>> 1;
+      update_flags_zn(op4_b_dst);
+    }
+    :lsr op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x02 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = op4_c_src >> 1;
+    }
+    :lsr.f op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x02 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      C = (op4_c_src & 1:4) != 0:4;
+      op4_b_dst = op4_c_src >> 1;
+      update_flags_zn(op4_b_dst);
+    }
+    :ror op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x03 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = (op4_c_src >> 1) | (op4_c_src << 31);
+    }
+    :ror.f op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x03 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      C = (op4_c_src & 1:4) != 0:4;
+      op4_b_dst = (op4_c_src >> 1) | (op4_c_src << 31);
+      update_flags_zn(op4_b_dst);
+    }
+    :rrc op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x04 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = (op4_c_src >> 1) | (zext(C) << 31);
+    }
+    :rrc.f op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x04 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      local carry:1 = (op4_c_src & 1:4) != 0:4;
+      op4_b_dst = (op4_c_src >> 1) | (zext(C) << 31);
+      C = carry;
+      update_flags_zn(op4_b_dst);
+    }
+    :sexb op4_b_dst, op4_c_src is (l_ra_raw=0x05 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = sext(op4_c_src:1);
+    }
+    :sexb.f op4_b_dst, op4_c_src is (l_ra_raw=0x05 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = sext(op4_c_src:1);
+      update_flags_zn(op4_b_dst);
+    }
+    :sexw op4_b_dst, op4_c_src is (l_ra_raw=0x06 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = sext(op4_c_src:2);
+    }
+    :sexw.f op4_b_dst, op4_c_src is (l_ra_raw=0x06 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = sext(op4_c_src:2);
+      update_flags_zn(op4_b_dst);
+    }
+    :extb op4_b_dst, op4_c_src is (l_ra_raw=0x07 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = zext(op4_c_src:1);
+    }
+    :extb.f op4_b_dst, op4_c_src is (l_ra_raw=0x07 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = zext(op4_c_src:1);
+      update_flags_zn(op4_b_dst);
+    }
+    :extw op4_b_dst, op4_c_src is (l_ra_raw=0x08 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = zext(op4_c_src:2);
+    }
+    :extw.f op4_b_dst, op4_c_src is (l_ra_raw=0x08 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = zext(op4_c_src:2);
+      update_flags_zn(op4_b_dst);
+    }
+    :abs op4_b_dst, op4_c_src is (l_ra_raw=0x09 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      local acond:1 = op4_c_src s< 0:4;
+      op4_b_dst = (op4_c_src * zext(acond == 0)) + (-op4_c_src * zext(acond != 0));
+    }
+    :abs.f op4_b_dst, op4_c_src is (l_ra_raw=0x09 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      N = op4_c_src == 0x80000000:4;
+      V = N;
+      C = op4_c_src s< 0:4;
+      op4_b_dst = (op4_c_src * zext(C == 0)) + (-op4_c_src * zext(C != 0));
+      Z = op4_b_dst == 0:4;
+    }
+    :not op4_b_dst, op4_c_src is (l_ra_raw=0x0a & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = ~op4_c_src;
+    }
+    :not.f op4_b_dst, op4_c_src is (l_ra_raw=0x0a & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = ~op4_c_src;
+      update_flags_zn(op4_b_dst);
+    }
+    :rlc op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x0b & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = (op4_c_src << 1) | zext(C);
+    }
+    :rlc.f op4_b_dst, op4_c_src, 1 is (l_ra_raw=0x0b & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      local msb:4 = op4_c_src >> 31;
+      op4_b_dst = (op4_c_src << 1) | zext(C);
+      C = msb:1;
+      update_flags_zn(op4_b_dst);
+    }
+    :ex^op4_ld_di op4_b_dst, op4_c_src is (l_ra_raw=0x0c & l_flag=0 & op4_b_dst & op4_ld_di) ... & op4_c_src {
+      local old_b:4 = op4_b_dst;
+      op4_b_dst = *[ram]:4 op4_c_src;
+      *[ram]:4 op4_c_src = old_b;
+    }
+
+    # Zero Operand Instructions, 0x04, [0x2F, 0x3F, 0x00 - 0x3F]
+    with : l_ra_raw=0x3f ... {
+      :sleep op4_c_src is (l_rb_high=0 & l_rb_low_0=1 & l_flag=0) ... & op4_c_src {
+        sleep(op4_c_src);
+      }
+      :swi op4_c_src is (l_rb_high=0 & l_rb_low_0=2 & l_flag=0) ... & op4_c_src {
+        swi(op4_c_src);
+      }
+      :sync op4_c_src is (l_rb_high=0 & l_rb_low_0=3 & l_flag=0) ... & op4_c_src {
+        sync(op4_c_src);
+      }
+      :rtie op4_c_src is (l_rb_high=0 & l_rb_low_0=4 & l_flag=0) ... & op4_c_src {
+        pcl = rtie(op4_c_src);
+        return [pcl];
+      }
+      :brk is (l_rb_high=0 & l_rb_low_0=5 & l_flag=0 & l_rc_raw=0) ... {
+        brk();
+        goto inst_start;
+      }
+    }
+  }
+
+  # Load Register-Register, 0x04, [0x30 - 0x37]
+  with : l_op4_ld_opcode=6 ... { # Do not decode generic format
+    :ld^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=0 & l_op4_ld_data_size=0 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + l_rc_limm;
+      op4_ld_ra = *[ram]:4 addr;
+    }
+    :ldb^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=0 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + l_rc_limm;
+      op4_ld_ra = zext(*[ram]:1 addr);
+    }
+    :ldb.x^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=0 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + l_rc_limm;
+      op4_ld_ra = sext(*[ram]:1 addr);
+    }
+    :ldw^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=0 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + l_rc_limm;
+      op4_ld_ra = zext(*[ram]:2 addr);
+    }
+    :ldw.x^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=0 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + l_rc_limm;
+      op4_ld_ra = sext(*[ram]:2 addr);
+    }
+
+    :ld.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=0 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      l_rb = l_rb + l_rc_limm;
+      op4_ld_ra = *[ram]:4 l_rb;
+    }
+    :ld.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=0 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldb.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      l_rb = l_rb + l_rc_limm;
+      op4_ld_ra = zext(*[ram]:1 l_rb);
+    }
+    :ldb.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldb.x.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      l_rb = l_rb + l_rc_limm;
+      op4_ld_ra = sext(*[ram]:1 l_rb);
+    }
+    :ldb.x.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldw.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      l_rb = l_rb + l_rc_limm;
+      op4_ld_ra = zext(*[ram]:2 l_rb);
+    }
+    :ldw.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldw.x.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      l_rb = l_rb + l_rc_limm;
+      op4_ld_ra = sext(*[ram]:2 l_rb);
+    }
+    :ldw.x.a^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=1 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+
+    :ld.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=0 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      op4_ld_ra = *[ram]:4 l_rb;
+      l_rb = l_rb + l_rc_limm;
+    }
+    :ld.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=0 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldb.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      op4_ld_ra = zext(*[ram]:1 l_rb);
+      l_rb = l_rb + l_rc_limm;
+    }
+    :ldb.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldb.x.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      op4_ld_ra = sext(*[ram]:1 l_rb);
+      l_rb = l_rb + l_rc_limm;
+    }
+    :ldb.x.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=1 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldw.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      op4_ld_ra = zext(*[ram]:2 l_rb);
+      l_rb = l_rb + l_rc_limm;
+    }
+    :ldw.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+    :ldw.x.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb) ... & l_rc_limm {
+      op4_ld_ra = sext(*[ram]:2 l_rb);
+      l_rb = l_rb + l_rc_limm;
+    }
+    :ldw.x.ab^op4_ld_di op4_ld_ra, [l_rb, l_rc_limm] is (l_op4_ld_addr_mode=2 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di & l_rb_high=7 & l_rb_low_7=6 & l_rb) ... & l_rc_limm unimpl
+
+    :ld.as^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=3 & l_op4_ld_data_size=0 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + (l_rc_limm << 2);
+      op4_ld_ra = *[ram]:4 addr;
+    }
+    :ldw.as^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=3 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=0 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + (l_rc_limm << 1);
+      op4_ld_ra = zext(*[ram]:2 addr);
+    }
+    :ldw.x.as^op4_ld_di op4_ld_ra, [l_rb_limm, l_rc_limm] is (l_op4_ld_addr_mode=3 & l_op4_ld_data_size=2 & l_op4_ld_sign_ext=1 & op4_ld_ra & op4_ld_di) ... & l_rb_limm & l_rc_limm {
+      local addr:4 = l_rb_limm + (l_rc_limm << 1);
+      op4_ld_ra = sext(*[ram]:2 addr);
+    }
+  }
+}
+
+# 32-bit Extension Instructions, 0x05 - 0x08
+with : l_major_opcode=0x05 ... {
+  :asl op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src << (op4_c_src[0,5]);
+  }
+  :asl.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src << (op4_c_src[0,5]);
+  <next>
+  }
+  :asl.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    C = (op4_b_src & ((0x80000000 >> (op4_c_src[0,5])) << 1)) != 0:4;
+    op4_a = op4_b_src << (op4_c_src[0,5]);
+    update_flags_zn(op4_a);
+  }
+  :asl.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x00 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    C = (op4_b_src & ((0x80000000 >> (op4_c_src[0,5])) << 1)) != 0:4;
+    op4_a = op4_b_src << (op4_c_src[0,5]);
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :lsr op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src >> (op4_c_src[0,5]);
+  }
+  :lsr.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src >> (op4_c_src[0,5]);
+  <next>
+  }
+  :lsr.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    C = (op4_b_src & ((1:4 << (op4_c_src[0,5])) >> 1)) != 0:4;
+    op4_a = op4_b_src >> (op4_c_src[0,5]);
+    update_flags_zn(op4_a);
+  }
+  :lsr.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x01 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    C = (op4_b_src & ((1:4 << (op4_c_src[0,5])) >> 1)) != 0:4;
+    op4_a = op4_b_src >> (op4_c_src[0,5]);
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :asr op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    op4_a = op4_b_src s>> (op4_c_src[0,5]);
+  }
+  :asr.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    op4_a = op4_b_src s>> (op4_c_src[0,5]);
+  <next>
+  }
+  :asr.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    C = (op4_b_src & ((1:4 << (op4_c_src[0,5])) >> 1)) != 0:4;
+    op4_a = op4_b_src s>> (op4_c_src[0,5]);
+    update_flags_zn(op4_a);
+  }
+  :asr.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x02 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    C = (op4_b_src & ((1:4 << (op4_c_src[0,5])) >> 1)) != 0:4;
+    op4_a = op4_b_src s>> (op4_c_src[0,5]);
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :ror op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local other_shift:4 = 32:4 - op4_c_src;
+    op4_a = (op4_b_src >> (op4_c_src[0,5])) | (op4_b_src << (other_shift[0,5]));
+  }
+  :ror.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local other_shift:4 = 32:4 - op4_c_src;
+    op4_a = (op4_b_src >> (op4_c_src[0,5])) | (op4_b_src << (other_shift[0,5]));
+  <next>
+  }
+  :ror.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    local shift_min1:4 = op4_c_src - 1:4;
+    C = op4_c_src != 0:4 && (op4_c_src & (1:4 << (shift_min1[0,5]))) != 0:4;
+    local other_shift:4 = 32:4 - op4_c_src;
+    op4_a = (op4_b_src >> (op4_c_src[0,5])) | (op4_b_src << (other_shift[0,5]));
+    update_flags_zn(op4_a);
+  }
+  :ror.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x03 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local shift_min1:4 = op4_c_src - 1:4;
+    C = op4_c_src != 0:4 && (op4_c_src & (1:4 << (shift_min1[0,5]))) != 0:4;
+    local other_shift:4 = 32:4 - op4_c_src;
+    op4_a = (op4_b_src >> (op4_c_src[0,5])) | (op4_b_src << (other_shift[0,5]));
+    update_flags_zn(op4_a);
+  <next>
+  }
+  :mul64 op4_b_src, op4_c_src is (l_sub_opcode6=0x04 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local val_b:8 = sext(op4_b_src);
+    local val_c:8 = sext(op4_c_src);
+    local result:8 = val_b * val_c;
+    mlo = result:4;
+    mmid = result(2);
+    mhi = result(4);
+  }
+  :mul64.^l_cc_not_value op4_b_src, op4_c_src is (l_sub_opcode6=0x04 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local val_b:8 = sext(op4_b_src);
+    local val_c:8 = sext(op4_c_src);
+    local result:8 = val_b * val_c;
+    mlo = result:4;
+    mmid = result(2);
+    mhi = result(4);
+  <next>
+  }
+  :mulu64 op4_b_src, op4_c_src is (l_sub_opcode6=0x05 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    local val_b:8 = zext(op4_b_src);
+    local val_c:8 = zext(op4_c_src);
+    local result:8 = val_b * val_c;
+    mlo = result:4;
+    mmid = result(2);
+    mhi = result(4);
+  }
+  :mulu64.^l_cc_not_value op4_b_src, op4_c_src is (l_sub_opcode6=0x05 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local val_b:8 = zext(op4_b_src);
+    local val_c:8 = zext(op4_c_src);
+    local result:8 = val_b * val_c;
+    mlo = result:4;
+    mmid = result(2);
+    mhi = result(4);
+  <next>
+  }
+  :adds op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    # Signed Add with Saturation
+    local sat:1 = scarry(op4_b_src, op4_c_src);
+    if (sat) goto <saturate>;
+    op4_a = op4_b_src + op4_c_src;
+    goto <next>; # Do not use "goto inst_next", as this does not have the right semantics in delay slot
+  <saturate>
+    if (op4_c_src s< 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+  <next>
+  }
+  :adds.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local sat:1 = scarry(op4_b_src, op4_c_src);
+    if (sat) goto <saturate>;
+    op4_a = op4_b_src + op4_c_src;
+    goto <next>; # Do not use "goto inst_next", as this does not have the right semantics in delay slot
+  <saturate>
+    if (op4_c_src s< 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+  <next>
+  }
+  :adds.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    # Signed Add with Saturation and Flag Updates
+    C = 0;
+    V = scarry(op4_b_src, op4_c_src);
+    if (V) goto <saturate>;
+    op4_a = op4_b_src + op4_c_src;
+    update_flags_zn(op4_a);
+    goto <next>;
+  <saturate>
+    if (op4_c_src s< 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    Z = 0;
+    N = 0;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+    Z = 0;
+    N = 1;
+  <next>
+  }
+  :adds.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x06 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    C = 0;
+    V = scarry(op4_b_src, op4_c_src);
+    if (V) goto <saturate>;
+    op4_a = op4_b_src + op4_c_src;
+    update_flags_zn(op4_a);
+    goto <next>;
+  <saturate>
+    if (op4_c_src s< 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    Z = 0;
+    N = 0;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+    Z = 0;
+    N = 1;
+  <next>
+  }
+  :subs op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src {
+    # Signed Subtraction with Saturation
+    local sat:1 = sborrow(op4_b_src, op4_c_src);
+    if (sat) goto <saturate>;
+    op4_a = op4_b_src - op4_c_src;
+    goto <next>;
+  <saturate>
+    if (op4_c_src s> 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+  <next>
+  }
+  :subs.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    local sat:1 = sborrow(op4_b_src, op4_c_src);
+    if (sat) goto <saturate>;
+    op4_a = op4_b_src - op4_c_src;
+    goto <next>;
+  <saturate>
+    if (op4_c_src s> 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+  <next>
+  }
+  :subs.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src {
+    # Signed Subtraction with Saturation and Flag Updates
+    Z = op4_b_src == op4_c_src;
+    C = 0;
+    V = sborrow(op4_b_src, op4_c_src);
+    if (V) goto <saturate>;
+    op4_a = op4_b_src - op4_c_src;
+    N = op4_a s< 0:4;
+    goto <next>;
+  <saturate>
+    if (op4_c_src s> 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    N = 0;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+    N = 1;
+  <next>
+  }
+  :subs.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x07 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src {
+    if (l_cc_not_value) goto <next>;
+    Z = op4_b_src == op4_c_src;
+    C = 0;
+    V = sborrow(op4_b_src, op4_c_src);
+    if (V) goto <saturate>;
+    op4_a = op4_b_src - op4_c_src;
+    N = op4_a s< 0:4;
+    goto <next>;
+  <saturate>
+    if (op4_c_src s> 0:4) goto <saturate_negative>;
+    op4_a = 0x7fffffff:4;
+    N = 0;
+    goto <next>;
+  <saturate_negative>
+    op4_a = 0x80000000:4;
+    N = 1;
+  <next>
+  }
+  :divaw op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x08 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src unimpl # Division assist
+  :divaw.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x08 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asls op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0a & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asls.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0a & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asls.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0a & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asls.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0a & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asrs op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0b & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asrs.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0b & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asrs.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0b & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :asrs.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x0b & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :addsdw op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x28 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :addsdw.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x28 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :addsdw.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x28 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :addsdw.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x28 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :subsdw op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x29 & l_flag=0 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :subsdw.^l_cc_not_value op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x29 & l_flag=0 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :subsdw.f op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x29 & l_flag=1 & op4_a) ... & op4_b_src & op4_c_src unimpl
+  :subsdw.^l_cc_not_value^".f" op4_a, op4_b_src, op4_c_src is (l_sub_opcode6=0x29 & l_flag=1 & l_op_format=3 & l_cc_not_value & op4_a) ... & op4_b_src & op4_c_src unimpl
+
+  # Extension Single Operand Instructions, 0x05, [0x2F, 0x00 - 0x3F]
+  with : (l_sub_opcode6=0x2f & (l_op_format=0 | l_op_format=1)) ... {
+    :swap op4_b_dst, op4_c_src is (l_ra_raw=0x00 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :swap.f op4_b_dst, op4_c_src is (l_ra_raw=0x00 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :norm op4_b_dst, op4_c_src is (l_ra_raw=0x01 & l_flag=0 & op4_b_dst) ... & op4_c_src {
+      op4_b_dst = norm(op4_c_src);
+    }
+    :norm.f op4_b_dst, op4_c_src is (l_ra_raw=0x01 & l_flag=1 & op4_b_dst) ... & op4_c_src {
+      update_flags_zn(op4_c_src);
+      op4_b_dst = norm(op4_c_src);
+    }
+    :sat16 op4_b_dst, op4_c_src is (l_ra_raw=0x02 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :sat16.f op4_b_dst, op4_c_src is (l_ra_raw=0x02 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :rnd16 op4_b_dst, op4_c_src is (l_ra_raw=0x03 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :rnd16.f op4_b_dst, op4_c_src is (l_ra_raw=0x03 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :abssw op4_b_dst, op4_c_src is (l_ra_raw=0x04 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :abssw.f op4_b_dst, op4_c_src is (l_ra_raw=0x04 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :abss op4_b_dst, op4_c_src is (l_ra_raw=0x05 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :abss.f op4_b_dst, op4_c_src is (l_ra_raw=0x05 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :negsw op4_b_dst, op4_c_src is (l_ra_raw=0x06 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :negsw.f op4_b_dst, op4_c_src is (l_ra_raw=0x06 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :negs op4_b_dst, op4_c_src is (l_ra_raw=0x07 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :negs.f op4_b_dst, op4_c_src is (l_ra_raw=0x07 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+    :normw op4_b_dst, op4_c_src is (l_ra_raw=0x08 & l_flag=0 & op4_b_dst) ... & op4_c_src unimpl
+    :normw.f op4_b_dst, op4_c_src is (l_ra_raw=0x08 & l_flag=1 & op4_b_dst) ... & op4_c_src unimpl
+  }
+}
+
+# Mark unknown operations as extensions
+:EXT04 l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x04 & l_flag=0 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_04(operation, op4_b_src, op4_c_src);
+}
+:EXT04.f l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x04 & l_flag=1 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_04(operation, op4_b_src, op4_c_src);
+  update_flags_zn(op4_a);
+}
+:EXT05 l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x05 & l_flag=0 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_05(operation, op4_b_src, op4_c_src);
+}
+:EXT05.f l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x05 & l_flag=1 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_05(operation, op4_b_src, op4_c_src);
+  update_flags_zn(op4_a);
+}
+:EXT06 l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x06 & l_flag=0 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_06(operation, op4_b_src, op4_c_src);
+}
+:EXT06.f l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x06 & l_flag=1 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_06(operation, op4_b_src, op4_c_src);
+  update_flags_zn(op4_a);
+}
+:EXT07 l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x07 & l_flag=0 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_07(operation, op4_b_src, op4_c_src);
+}
+:EXT07.f l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x07 & l_flag=1 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_07(operation, op4_b_src, op4_c_src);
+  update_flags_zn(op4_a);
+}
+:EXT08 l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x08 & l_flag=0 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_08(operation, op4_b_src, op4_c_src);
+}
+:EXT08.f l_sub_opcode6, op4_a, op4_b_src, op4_c_src is (l_major_opcode=0x08 & l_flag=1 & l_sub_opcode6 & op4_a) ... & op4_b_src & op4_c_src {
+  local operation:1 = l_sub_opcode6;
+  op4_a = asm_instruction_08(operation, op4_b_src, op4_c_src);
+  update_flags_zn(op4_a);
+}
+
+# Load/Add Register-Register, 0x0C, [0x00 - 0x03]
+:ld_s s_ra, [s_rb, s_rc] is s_major_opcode=0x0c & s_sub_opcode_b3b4=0 & s_rb & s_rc & s_ra {
+  local addr:4 = s_rb + s_rc;
+  s_ra = *[ram]:4 addr;
+}
+:ldb_s s_ra, [s_rb, s_rc] is s_major_opcode=0x0c & s_sub_opcode_b3b4=1 & s_rb & s_rc & s_ra {
+  local addr:4 = s_rb + s_rc;
+  s_ra = zext(*[ram]:1 addr);
+}
+:ldw_s s_ra, [s_rb, s_rc] is s_major_opcode=0x0c & s_sub_opcode_b3b4=2 & s_rb & s_rc & s_ra {
+  local addr:4 = s_rb + s_rc;
+  s_ra = zext(*[ram]:2 addr);
+}
+:add_s s_ra, s_rb, s_rc is s_major_opcode=0x0c & s_sub_opcode_b3b4=3 & s_rb & s_rc & s_ra {
+  s_ra = s_rb + s_rc;
+}
+
+# Add/Sub/Shift Register-Immediate, 0x0D, [0x00 - 0x03]
+:add_s s_rc, s_rb, s_u3 is s_major_opcode=0x0d & s_sub_opcode_b3b4=0 & s_rb & s_rc & s_u3 {
+  s_rc = s_rb + s_u3;
+}
+:sub_s s_rc, s_rb, s_u3 is s_major_opcode=0x0d & s_sub_opcode_b3b4=1 & s_rb & s_rc & s_u3 {
+  s_rc = s_rb - s_u3;
+}
+:asl_s s_rc, s_rb, s_u3 is s_major_opcode=0x0d & s_sub_opcode_b3b4=2 & s_rb & s_rc & s_u3 {
+  s_rc = s_rb << s_u3;
+}
+:asr_s s_rc, s_rb, s_u3 is s_major_opcode=0x0d & s_sub_opcode_b3b4=3 & s_rb & s_rc & s_u3 {
+  s_rc = s_rb s>> s_u3;
+}
+
+# Mov/Cmp/Add with High Register, 0x0E, [0x00 - 0x03]
+:add_s s_rb, s_rb_, s_rh_limm is (s_major_opcode=0x0e & s_sub_opcode_b3b4=0 & s_rb & s_rb_) ... & s_rh_limm {
+  s_rb = s_rb_ + s_rh_limm;
+}
+:mov_s s_rb, s_rh_limm is (s_major_opcode=0x0e & s_sub_opcode_b3b4=1 & s_rb) ... & s_rh_limm {
+  s_rb = s_rh_limm;
+}
+:cmp_s s_rb, s_rh_limm is (s_major_opcode=0x0e & s_sub_opcode_b3b4=2 & s_rb) ... & s_rh_limm {
+  local result:4 = s_rb - s_rh_limm;
+  update_flags_sub_zncv(s_rb, s_rh_limm, result);
+}
+:mov_s s_rh, s_rb is s_major_opcode=0x0e & s_sub_opcode_b3b4=3 & s_rb & s_rh {
+  s_rh = s_rb;
+}
+
+# General Register Format Instructions, 0x0F, [0x00 - 0x1F]
+:j_s s_rb is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=0 & s_rb {
+  pcl = s_rb;
+  goto [pcl];
+}
+:j_s.d s_rb is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=1 & s_rb {
+  pcl = s_rb;
+  delayslot(1);
+  goto [pcl];
+}
+:jl_s s_rb is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=2 & s_rb {
+  blink = inst_next;
+  pcl = s_rb;
+  call [pcl];
+}
+:jl_s.d s_rb is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=3 & s_rb {
+  blink = inst_next;
+  pcl = s_rb;
+  delayslot(1);
+  call [pcl];
+}
+:sub_s.ne s_rb, s_rb_ is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=6 & s_rb & s_rb_ {
+  if (Z) goto <next>;
+  s_rb = 0;
+<next>
+}
+
+:nop_s is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=7 & s_rb=0 { }
+:jeq_s blink is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=7 & s_rb=4 & blink {
+  if (!Z) goto <next>;
+  pcl = blink;
+  return [pcl];
+<next>
+}
+:jne_s blink is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=7 & s_rb=5 & blink {
+  if (Z) goto <next>;
+  pcl = blink;
+  return [pcl];
+<next>
+}
+:j_s blink is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=7 & s_rb=6 & blink {
+  pcl = blink;
+  return [pcl];
+}
+:j_s.d blink is s_major_opcode=0x0f & s_u5=0 & s_sub_opcode_b5b6b7=7 & s_rb=7 & blink {
+  pcl = blink;
+  delayslot(1);
+  return [pcl];
+}
+
+:sub_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x02 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ - s_rc;
+}
+:and_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x04 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ & s_rc;
+}
+:or_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x05 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ | s_rc;
+}
+:bic_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x06 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ & ~s_rc;
+}
+:xor_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x07 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ ^ s_rc;
+}
+:tst_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x0b & s_rb & s_rc {
+  update_flags_zn(s_rb & s_rc);
+}
+:mul64_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x0c & s_rb & s_rc {
+  local val_b:8 = sext(s_rb);
+  local val_c:8 = sext(s_rc);
+  local result:8 = val_b * val_c;
+  mlo = result:4;
+  mmid = result(2);
+  mhi = result(4);
+}
+:sexb_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x0d & s_rb & s_rc {
+  s_rb = sext(s_rc:1);
+}
+:sexw_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x0e & s_rb & s_rc {
+  s_rb = sext(s_rc:2);
+}
+:extb_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x0f & s_rb & s_rc {
+  s_rb = s_rc & 0xff;
+}
+:extw_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x10 & s_rb & s_rc {
+  s_rb = s_rc & 0xffff;
+}
+:abs_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x11 & s_rb & s_rc {
+  local acond:1 = s_rc s< 0:4;
+  s_rb = (s_rc * zext(acond == 0)) + (-s_rc * zext(acond != 0));
+}
+:not_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x12 & s_rb & s_rc {
+  s_rb = ~s_rc;
+}
+:neg_s s_rb, s_rc is s_major_opcode=0x0f & s_u5=0x13 & s_rb & s_rc {
+  s_rb = -s_rc;
+}
+:add1_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x14 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ + (s_rc << 1);
+}
+:add2_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x15 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ + (s_rc << 2);
+}
+:add3_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x16 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ + (s_rc << 3);
+}
+:asl_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x18 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ << (s_rc[0,5]);
+}
+:lsr_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x19 & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ >> (s_rc[0,5]);
+}
+:asr_s s_rb, s_rb_, s_rc is s_major_opcode=0x0f & s_u5=0x1a & s_rb & s_rb_ & s_rc {
+  s_rb = s_rb_ s>> (s_rc[0,5]);
+}
+:asl_s s_rb, s_rc, 1 is s_major_opcode=0x0f & s_u5=0x1b & s_rb & s_rc {
+  s_rb = s_rc + s_rc;
+}
+:asr_s s_rb, s_rc, 1 is s_major_opcode=0x0f & s_u5=0x1c & s_rb & s_rc {
+  s_rb = s_rc s>> 1;
+}
+:lsr_s s_rb, s_rc, 1 is s_major_opcode=0x0f & s_u5=0x1d & s_rb & s_rc {
+  s_rb = s_rc >> 1;
+}
+:trap_s s_middle_u6 is s_major_opcode=0x0f & s_u5=0x1e & s_middle_u6 {
+  trap_s(s_middle_u6:1);
+  goto inst_start;
+}
+:brk_s is s_major_opcode=0x0f & s_u5=0x1f & s_rb=7 & s_rc=7 {
+  # brk_s is encoded 0x7fff
+  brk();
+  goto inst_start;
+}
+
+# Load/Store with Offset, 0x10 - 0x16
+:ld_s s_rc, [s_rb] is s_major_opcode=0x10 & s_rb & s_rc & s_u5=0 {
+  s_rc = *:4 s_rb;
+}
+:ld_s s_rc, [s_rb, s_u5shift2] is s_major_opcode=0x10 & s_rb & s_rc & s_u5shift2 {
+  s_rc = *:4 (s_rb + s_u5shift2);
+}
+:ldb_s s_rc, [s_rb] is s_major_opcode=0x11 & s_rb & s_rc & s_u5=0 {
+  s_rc = zext(*:1 s_rb);
+}
+:ldb_s s_rc, [s_rb, s_u5] is s_major_opcode=0x11 & s_rb & s_rc & s_u5 {
+  local addr:4 = s_rb + s_u5;
+  s_rc = zext(*:1 addr);
+}
+:ldw_s s_rc, [s_rb] is s_major_opcode=0x12 & s_rb & s_rc & s_u5=0 {
+  s_rc = zext(*:2 s_rb);
+}
+:ldw_s s_rc, [s_rb, s_u5shift1] is s_major_opcode=0x12 & s_rb & s_rc & s_u5shift1 {
+  local addr:4 = s_rb + s_u5shift1;
+  s_rc = zext(*:2 addr);
+}
+:ldw_s.x s_rc, [s_rb] is s_major_opcode=0x13 & s_rb & s_rc & s_u5=0 {
+  s_rc = sext(*:2 s_rb);
+}
+:ldw_s.x s_rc, [s_rb, s_u5shift1] is s_major_opcode=0x13 & s_rb & s_rc & s_u5shift1 {
+  local addr:4 = s_rb + s_u5shift1;
+  s_rc = sext(*:2 addr);
+}
+:st_s s_rc, [s_rb] is s_major_opcode=0x14 & s_rb & s_rc & s_u5=0 {
+  *:4 s_rb = s_rc;
+}
+:st_s s_rc, [s_rb, s_u5shift2] is s_major_opcode=0x14 & s_rb & s_rc & s_u5shift2 {
+  *:4 (s_rb + s_u5shift2) = s_rc;
+}
+:stb_s s_rc, [s_rb] is s_major_opcode=0x15 & s_rb & s_rc & s_u5=0 {
+  *:1 s_rb = s_rc:1;
+}
+:stb_s s_rc, [s_rb, s_u5] is s_major_opcode=0x15 & s_rb & s_rc & s_u5 {
+  *:1 (s_rb + s_u5) = s_rc:1;
+}
+:stw_s s_rc, [s_rb] is s_major_opcode=0x16 & s_rb & s_rc & s_u5=0 {
+  *:2 s_rb = s_rc:2;
+}
+:stw_s s_rc, [s_rb, s_u5shift1] is s_major_opcode=0x16 & s_rb & s_rc & s_u5shift1 {
+  *:2 (s_rb + s_u5shift1) = s_rc:2;
+}
+
+# Shift/Subtract/Bit Immediate, 0x17, [0x00 - 0x07]
+:asl_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=0 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ << s_u5;
+}
+:lsr_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=1 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ >> s_u5;
+}
+:asr_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=2 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ s>> s_u5;
+}
+:sub_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=3 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ - s_u5;
+}
+:bset_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=4 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ | (1:4 << s_u5);
+}
+:bclr_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=5 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ & ~(1:4 << s_u5);
+}
+:bmsk_s s_rb, s_rb_, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=6 & s_rb & s_rb_ & s_u5 {
+  s_rb = s_rb_ & ((1:4 << (s_u5 + 1:4)) - 1);
+}
+:btst_s s_rb, s_u5 is s_major_opcode=0x17 & s_sub_opcode_b5b6b7=7 & s_rb & s_u5 {
+  update_flags_zn(s_rb & (1:4 << s_u5));
+}
+
+# Stack Pointer Based Instructions, 0x18, [0x00 - 0x07]
+:ld_s s_rb, [sp, s_u5shift2] is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=0 & s_rb & s_u5shift2 & sp {
+  local addr:4 = sp + s_u5shift2;
+  s_rb = *:4 addr;
+}
+:ldb_s s_rb, [sp, s_u5shift2] is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=1 & s_rb & s_u5shift2 & sp {
+  local addr:4 = sp + s_u5shift2;
+  s_rb = zext(*:1 addr);
+}
+:st_s s_rb, [sp, s_u5shift2] is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=2 & s_rb & s_u5shift2 & sp {
+  *:4 (sp + s_u5shift2) = s_rb;
+}
+:stb_s s_rb, [sp, s_u5shift2] is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=3 & s_rb & s_u5shift2 & sp {
+  *:1 (sp + s_u5shift2) = s_rb:1;
+}
+:add_s s_rb, sp, s_u5shift2 is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=4 & s_rb & s_u5shift2 & sp {
+  s_rb = sp + s_u5shift2;
+}
+:add_s sp, s_u5shift2 is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=5 & s_rb=0 & s_u5shift2 & sp {
+  sp = sp + s_u5shift2;
+}
+:sub_s sp, s_u5shift2 is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=5 & s_rb=1 & s_u5shift2 & sp {
+  sp = sp - s_u5shift2;
+}
+:pop_s s_rb is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=6 & s_u5=0x01 & s_rb {
+  pop4(s_rb);
+}
+:pop_s blink is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=6 & s_u5=0x11 & blink {
+  pop4(blink);
+}
+:push_s s_rb is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=7 & s_u5=0x01 & s_rb {
+  push4(s_rb);
+}
+:push_s blink is s_major_opcode=0x18 & s_sub_opcode_b5b6b7=7 & s_u5=0x11 & blink {
+  push4(blink);
+}
+
+# Load/Add GP-Relative, 0x19, [0x00 - 0x03]
+:ld_s r0, [gp, s_s9shift2] is s_major_opcode=0x19 & s_sub_opcode_b9b10=0 & s_s9shift2 & r0 & gp {
+  local addr:4 = gp + s_s9shift2;
+  r0 = *:4 addr;
+}
+:ldb_s r0, [gp, s_s9] is s_major_opcode=0x19 & s_sub_opcode_b9b10=1 & s_s9 & r0 & gp {
+  local addr:4 = gp + s_s9;
+  r0 = zext(*:1 addr);
+}
+:ldw_s r0, [gp, s_s9shift1] is s_major_opcode=0x19 & s_sub_opcode_b9b10=2 & s_s9shift1 & r0 & gp {
+  local addr:4 = gp + s_s9shift1;
+  r0 = zext(*:2 addr);
+}
+:add_s r0, gp, s_s9shift2 is s_major_opcode=0x19 & s_sub_opcode_b9b10=3 & s_s9shift2 & r0 & gp {
+  r0 = gp + s_s9shift2;
+}
+
+# Load PCL-Relative, 0x1A
+:ld_s s_rb, [pcl, s_u8shift2] is s_major_opcode=0x1a & s_rb & s_u8shift2 & s_target_u8shift2 & pcl {
+  s_rb = s_target_u8shift2;
+}
+
+# Move Immediate, 0x1B
+:mov_s s_rb, s_u8 is s_major_opcode=0x1b & s_rb & s_u8 {
+  s_rb = s_u8;
+}
+
+# ADD/CMP Immediate, 0x1C, [0x00 - 0x01]
+:add_s s_rb, s_u7 is s_major_opcode=0x1c & s_sub_opcode_b7=0 & s_rb & s_u7 {
+  s_rb = s_rb + s_u7;
+}
+:cmp_s s_rb, s_u7 is s_major_opcode=0x1c & s_sub_opcode_b7=1 & s_rb & s_u7 {
+  local result:4 = s_rb - s_u7;
+  update_flags_sub_zncv(s_rb, s_u7, result);
+}
+
+# Branch on Compare Register with Zero, 0x1D, [0x00 - 0x01]
+:breq_s s_rb, 0, s_target_s7shift1 is s_major_opcode=0x1d & s_sub_opcode_b7=0 & s_rb & s_target_s7shift1 {
+  if (s_rb == 0) goto s_target_s7shift1;
+}
+:brne_s s_rb, 0, s_target_s7shift1 is s_major_opcode=0x1d & s_sub_opcode_b7=1 & s_rb & s_target_s7shift1 {
+  if (s_rb != 0) goto s_target_s7shift1;
+}
+
+# Branch Conditionally, 0x1E, [0x00 - 0x03]
+:b_s s_target_s9shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=0 & s_target_s9shift1 {
+  goto s_target_s9shift1;
+}
+:beq_s s_target_s9shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=1 & s_target_s9shift1 {
+  if (Z) goto s_target_s9shift1;
+}
+:bne_s s_target_s9shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=2 & s_target_s9shift1 {
+  if (!Z) goto s_target_s9shift1;
+}
+:bgt_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=0 & s_target_s6shift1 {
+  if (!Z && (V == N)) goto s_target_s6shift1;
+}
+:bge_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=1 & s_target_s6shift1 {
+  if (V == N) goto s_target_s6shift1;
+}
+:blt_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=2 & s_target_s6shift1 {
+  if (V != N) goto s_target_s6shift1;
+}
+:ble_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=3 & s_target_s6shift1 {
+  if (Z || (V != N)) goto s_target_s6shift1;
+}
+:bhi_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=4 & s_target_s6shift1 {
+  if (!C && !Z) goto s_target_s6shift1;
+}
+:bhs_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=5 & s_target_s6shift1 {
+  if (!C) goto s_target_s6shift1;
+}
+:blo_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=6 & s_target_s6shift1 {
+  if (C) goto s_target_s6shift1;
+}
+:bls_s s_target_s6shift1 is s_major_opcode=0x1e & s_sub_opcode_b9b10=3 & s_sub_opcode_b6b7b8=7 & s_target_s6shift1 {
+  if (C || Z) goto s_target_s6shift1;
+}
+
+# Branch and Link Unconditionally, 0x1F
+:bl_s s_target_s11shift2 is s_major_opcode=0x1f & s_target_s11shift2 {
+  blink = inst_next;
+  call s_target_s11shift2;
+}
+
+} # end of "with : phase=1"
