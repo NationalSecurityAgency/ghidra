@@ -58,11 +58,11 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Function that will create a symbol based on the <code>rttiSuffix</code>, which is in the 
+	 * Function that will create a symbol based on the <code>rttiSuffix</code>, which is in the
 	 * class or namespace that is indicated by the <code>demangledType</code> string.
-	 * 
+	 *
 	 * @param program the program where the symbol is being created
-	 * @param rttiAddress Address of the RTTI datatype 
+	 * @param rttiAddress Address of the RTTI datatype
 	 * @param typeDescriptorModel the model for the type descriptor structure
 	 * @param rttiSuffix suffix name indicating which type of RTTI structure
 	 * @return true if a symbol was created, false otherwise
@@ -131,7 +131,7 @@ public class RttiUtil {
 				try {
 					Symbol symbol = symbolTable.createLabel(rttiAddress, name, classNamespace,
 						SourceType.IMPORTED);
-					// Set the symbol to be primary so that the demangler 
+					// Set the symbol to be primary so that the demangler
 					// won't demangle again
 					symbol.setPrimary();
 					if (replaceSymbolWithNoTicks(symbol)) {
@@ -174,7 +174,7 @@ public class RttiUtil {
 				symbol.setName(name, symbol.getSource());
 
 				//do this in case the mangled name is currently primary which will cause demangler
-				//to replace the ticks again once demangled since demangler only demangles primary 
+				//to replace the ticks again once demangled since demangler only demangles primary
 				symbol.setPrimary();
 				return true;
 			}
@@ -209,7 +209,7 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Determines the number of vf addresses in the vf table that begins at the specified base 
+	 * Determines the number of vf addresses in the vf table that begins at the specified base
 	 * address.
 	 * @param program the program whose memory is providing their addresses
 	 * @param vfTableBaseAddress the base address in the program for the vf table
@@ -226,7 +226,7 @@ public class RttiUtil {
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(program);
 
 		// Create pointers starting at the address until reaching a 0 pointer.
-		// Terminate the possible table at any entry containing a cross reference that 
+		// Terminate the possible table at any entry containing a cross reference that
 		// is beyond the first table entry and don't include it.
 		int tableSize = 0;
 		Address currentVfPointerAddress = vfTableBaseAddress;
@@ -280,10 +280,10 @@ public class RttiUtil {
 	 * indicate the end of a vftable
 	 * @param address the address of a possible pointer in a vftable
 	 * @return true if there are references to the given address and any of the references are
-	 * types that would indicate the given pointer should not be in the vftable preceding it. In 
+	 * types that would indicate the given pointer should not be in the vftable preceding it. In
 	 * general most references would fall into this category such as ones created by user, importer,
-	 * disassembler. Returns false if no references or if the only references are ones not 
-	 * indicative of the end of a vftable. 
+	 * disassembler. Returns false if no references or if the only references are ones not
+	 * indicative of the end of a vftable.
 	 */
 	private static boolean referenceIndicatesEndOfTable(ReferenceManager referenceManager,
 			Address address) {
@@ -304,7 +304,7 @@ public class RttiUtil {
 			// if it is analysis source type but reference is data that is not read this indicates
 			// it is not the kind of reference that should end a vftable
 			// For example something could be getting this address to figure out the address pointed
-			// to so that that address can be referenced. 
+			// to so that that address can be referenced.
 			if (ref.getReferenceType().isData() && !ref.getReferenceType().isRead()) {
 				return true;
 			}
@@ -313,13 +313,33 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Gets the namespace referred to by the type descriptor model if it can determine the 
+	 * Gets the namespace referred to by the type descriptor model if it can determine the
 	 * namespace. Otherwise it returns the empty string.
 	 * @param rtti0Model the model for the type descriptor whose namespace is to be returned.
 	 * @return the namespace or the empty string.
 	 */
 	public static String getDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
 		String descriptorTypeNamespace = rtti0Model.getDescriptorTypeNamespace(); // Can be null.
+		if (descriptorTypeNamespace == null) {
+
+			descriptorTypeNamespace = rtti0Model.getOriginalTypename();
+
+			Msg.warn(RttiUtil.class, rtti0Model.getAddress().toString() +
+				": Could not demangle TypeDescriptor namespace so using the mangled string as the namespace.");
+		}
+		return descriptorTypeNamespace;
+	}
+
+	/**
+	 * Gets the "original" namespace referred to by the type descriptor model if it can determine
+	 * the namespace. Otherwise it returns the empty string.  The "original" namespace is
+	 * the namespace without any changes to the demangler output options.  This is suitable
+	 * for applying to a plate comment
+	 * @param rtti0Model the model for the type descriptor whose namespace is to be returned.
+	 * @return the "original" namespace or the empty string.
+	 */
+	public static String getOriginalDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
+		String descriptorTypeNamespace = rtti0Model.getOriginalDescriptorTypeNamespace();
 		if (descriptorTypeNamespace == null) {
 
 			descriptorTypeNamespace = rtti0Model.getOriginalTypename();

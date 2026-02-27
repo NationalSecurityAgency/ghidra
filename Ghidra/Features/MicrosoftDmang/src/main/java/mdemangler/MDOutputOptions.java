@@ -21,9 +21,20 @@ package mdemangler;
  */
 public class MDOutputOptions {
 
-	// These defaults match standard output
-	private boolean useEncodedAnonymousNamespaceNumber = false;
-	private boolean applyUdtArgumentTypeTag = true;
+	/**
+	 * Default MDMang output option for using the encoded number when outputting an
+	 * anonymous namespace node.  This matches the MSFT standard
+	 */
+	public static final boolean DEFAULT_USE_ANON_NS = false;
+
+	/**
+	 * Default MDMang output option for applying user-defined-type (UDT) tags (e.g., "struct")
+	 * when the UDT is a template or function argument.  This matches the MSFT standard
+	 */
+	public static final boolean DEFAULT_APPLY_UDT_TAG = true;
+
+	private boolean useEncodedAnonymousNamespaceNumber = DEFAULT_USE_ANON_NS;
+	private boolean applyUdtArgumentTypeTag = DEFAULT_APPLY_UDT_TAG;
 
 	/**
 	 * Constructor
