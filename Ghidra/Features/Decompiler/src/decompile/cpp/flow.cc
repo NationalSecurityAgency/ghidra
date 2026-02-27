@@ -1113,7 +1113,9 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
     PcodeOp *op = *iter;
     if (op->code() == CPUI_RETURN) break;
     SeqNum myseq(calladdr,op->getSeqNum().getTime());
-    data.cloneOp(op,myseq);
+    PcodeOp *cloneop = data.cloneOp(op,myseq);
+    if (cloneop->isCallOrBranch())
+      xrefInlinedBranch(cloneop);
   }
   // Because we are processing only straightline code and it is all getting assigned to one
   // address, we don't touch unprocessed, addrlist, or visited
@@ -1143,8 +1145,21 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     PcodeOp *nextop = *iter;
     retaddr = nextop->getAddr();
     if (op->getAddr() == retaddr) {
-      inline_head->warning("Return address prevents inlining here",op->getAddr());
-      return false;
+      // special case if the next op is a 'RETURN' - then we can tail-call and let
+      // the return in the inlined function handle the return from this function.
+      if (nextop->code() != CPUI_RETURN) {
+	ostringstream ss;
+	ss << "call op: '";
+	op->printRaw(ss);
+	ss << "'; next op: '";
+	nextop->printRaw(ss);
+	ss << "'";
+	inline_head->warning("CALL needs to be last p-code op at address, but isn't: " + ss.str(), op->getAddr());
+	return false;
+      }
+      // set an invalid address so the return of the inlined function will not
+      // be changed to a BRANCH op
+      retaddr = Address();
     }
     // If the inlining "jumps back" this starts a new basic block
     data.opMarkStartBasic(nextop);
@@ -1152,15 +1167,19 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
   return true;
 }
 
-/// A function is in the EZ model if it is a straight-line leaf function.
-/// \return \b true if this flow contains no CALL or BRANCH ops
+/// A function is in the EZ model if it is a straight-line leaf function. Note
+/// that we need to ensure that these instructions can all form a single basic
+/// block, since we cannot split a basic block in the middle of an address. As
+/// such, branches to different addresses (i.e. non-pcode relative branches) are
+/// disallowed, but CALL(IND) and p-code relative (C)BRANCH operations are allowed.
+/// \return \b true if this flow can be inlined using the EZ model
 bool FlowInfo::checkEZModel(void) const
 
 {
   list<PcodeOp *>::const_iterator iter = obank.beginDead();
   while(iter != obank.endDead()) {
     PcodeOp *op = *iter;
-    if (op->isCallOrBranch()) return false;
+    if (op->isBranch() && !(((op->code() == CPUI_BRANCH) || (op->code() == CPUI_CBRANCH)) && op->getIn(0)->isConstant())) return false;
     ++iter;
   }
   return true;
