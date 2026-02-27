@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="pc"/>
+  <register_data>
+    <register name="p0" group="CONTROL"/>
+    <register name="p1" group="CONTROL"/>
+    <register name="p2" group="CONTROL"/>
+    <register name="p3" group="CONTROL"/>
+    <register name="p4" group="CONTROL"/>
+    <register name="p5" group="CONTROL"/>
+    <register name="p6" group="CONTROL"/>
+    <register name="p7" group="CONTROL"/>
+    <register name="p8" group="CONTROL"/>
+    <register name="p9" group="CONTROL"/>
+    <register name="p10" group="CONTROL"/>
+    <register name="p11" group="CONTROL"/>
+    <register name="p12" group="CONTROL"/>
+    <register name="p13" group="CONTROL"/>
+    <register name="p14" group="CONTROL"/>
+    <register name="p15" group="CONTROL"/>
+    <register name="p16" group="CONTROL"/>
+    <register name="p17" group="CONTROL"/>
+    <register name="p18" group="CONTROL"/>
+    <register name="p19" group="CONTROL"/>
+    <register name="p20" group="CONTROL"/>
+    <register name="p21" group="CONTROL"/>
+    <register name="p22" group="CONTROL"/>
+    <register name="p23" group="CONTROL"/>
+    <register name="p24" group="CONTROL"/>
+    <register name="p25" group="CONTROL"/>
+    <register name="p26" group="CONTROL"/>
+    <register name="p27" group="CONTROL"/>
+    <register name="p28" group="CONTROL"/>
+    <register name="p29" group="CONTROL"/>
+    <register name="p30" group="CONTROL"/>
+    <register name="p31" group="CONTROL"/>
+    <register name="sr" group="FLAGS"/>
+    <register name="Z" group="FLAGS"/>
+    <register name="N" group="FLAGS"/>
+    <register name="C" group="FLAGS"/>
+    <register name="V" group="FLAGS"/>
+  </register_data>
+</processor_spec>
