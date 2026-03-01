@@ -737,6 +737,7 @@ extern AttributeId ATTRIB_VALUE;	///< Marshaling attribute "value"
 extern AttributeId ATTRIB_WORDSIZE;	///< Marshaling attribute "wordsize"
 extern AttributeId ATTRIB_STORAGE;	///< Marshaling attribute "storage"
 extern AttributeId ATTRIB_STACKSPILL;	///< Marshaling attribute "stackspill"
+extern AttributeId ATTRIB_RENAME;	///< Marshaling attribute "rename"
 
 extern ElementId ELEM_DATA;		///< Marshaling element \<data>
 extern ElementId ELEM_INPUT;		///< Marshaling element \<input>
