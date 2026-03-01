@@ -128,6 +128,7 @@ apply from: 'gradle/root/distribution.gradle' // adds zip tasks
 apply from: 'gradle/root/usage.gradle'        // adds task documentation
 apply from: "gradle/root/svg.gradle"          // adds task to process svg files
 apply from: "gradle/root/jacoco.gradle"       // adds tasks for java code coverage
+apply from: "gradle/root/spotbugs.gradle"     // adds tasks for static code analysis
 apply from: "gradle/root/venv.gradle"         // adds tasks python virtual environments
 
 
