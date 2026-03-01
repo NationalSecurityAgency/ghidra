@@ -1119,7 +1119,8 @@ public class BulkSignatures implements AutoCloseable {
 			File file = new File(outdirectory, basename);
 			if ((!overwrite) && file.exists()) {
 				Msg.warn(this,
-					"Signature file already exists for: " + program.getDomainFile().getName());
+					"Signature file " + basename + " already exists for: " +
+						program.getDomainFile().getName());
 				return;
 			}
 			GenSignatures gensig = new GenSignatures(true);
