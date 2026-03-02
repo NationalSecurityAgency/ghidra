@@ -1,0 +1,162 @@
+ALU32_PERM_COMBIME_U6: v is imm_13u & imm_16_20u & IS_NOT_EXT [v = imm_13u | (imm_16_20u<<1); ] { export *[const]:4 v; }
+ALU32_PERM_COMBIME_U6: v is imm_13u & imm_16_20u & IS_EXT0 & immext0 & imm_5_10u [v = imm_13u | (imm_16_20u<<1) | immext0; ]  { export *[const]:4 v; }
+ALU32_PERM_COMBIME_U6: v is imm_13u & imm_16_20u & IS_EXT1 & immext1 & imm_5_10u [v = imm_13u | (imm_16_20u<<1) | immext1; ]  { export *[const]:4 v; }
+
+# ALU32/PERM:Combine words
+with slot: iclass=0b0111  {
+    :D5_pair"=combine("S5","EXT_imm_5_12")" is Rs=0 & MajOp=0b011 & imm_23=0 & imm_21_22=0b00 & S5 & S5i & imm_13=1 & D5_pair & EXT_imm_5_12 {
+#        local tmp1:4 = EXT_imm_5_12;
+#        local tmp2:8 = zext(tmp1);
+#        local tmp3:8 = zext(S5i);
+#        D5_pair = (tmp3 << 32) | tmp2;
+        
+        local tmp:4 = &D5_pair;
+        *[register]:4 tmp = EXT_imm_5_12;
+        tmp = tmp + 4;
+        *[register]:4 tmp = S5i;
+    }
+
+
+#TODO: check ext sign
+    :D5_pair"=combine("NR_EXT_imm_5_12u","S5")" is Rs=0 & MajOp=0b011 & imm_23=0 & imm_21_22=0b01 & S5 & S5i & imm_13=1 & NR_EXT_imm_5_12u & D5_pair {
+#        local tmp1:4 = NR_EXT_imm_5_12u;
+#        local tmp2:8 = zext(tmp1);
+#        local tmp3:8 = zext(S5i);
+#        D5_pair = (tmp2 << 32) | tmp3;
+        
+        local tmp:4 = &D5_pair;
+        *[register]:4 tmp = S5i;
+        tmp = tmp + 4;
+        *[register]:4 tmp = NR_EXT_imm_5_12u;
+    }
+
+    :D5_pair"=combine(#"NR_EXT_imm_5_12u",#"S8")" is Rs=1 & MajOp=0b100 & imm_23=0 & imm_16_22 & imm_13u & D5_pair & NR_EXT_imm_5_12u [S8 = imm_13u | (imm_16_22<<1);] {
+    	local tmp:4 = &D5_pair;
+    	*[register]:4 tmp = S8;
+    	tmp = tmp + 4;
+    	*[register]:4 tmp = NR_EXT_imm_5_12u;
+    }
+
+    :D5_pair"=combine(#"imm_5_12",#"ALU32_PERM_COMBIME_U6")" is Rs=1 & MajOp=0b100 & imm_23=1 & imm_21_22=0 & imm_16_20u & imm_13u & imm_5_12 & D5_pair & ALU32_PERM_COMBIME_U6 {
+#        local tmp:4 = ALU32_PERM_COMBIME_U6;
+#        local tmp1:8 = zext(tmp);
+#        local tmp2:4 = imm_5_12;
+#        local tmp3:8 = zext(tmp2);
+#        D5_pair = (tmp3<<32)|tmp1;
+        
+        local tmp:4 = &D5_pair;
+        *[register]:4 tmp = ALU32_PERM_COMBIME_U6;
+        tmp = tmp + 4;
+        *[register]:4 tmp = imm_5_12;
+    }
+}
+with slot: iclass=0b1111  {
+    :D5 "=combine(" T5".H" S5".H)" is Rs=0 & MajOp=0b011 & MinOp=0b100 & S5 & S5i & imm_13 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        local al:2 = T5i(2);
+        local bl:2 = S5i(2);
+        local al4:4 = zext(al);
+        local bl4:4 = zext(bl);
+        D5 = (al4 << 16) | bl4;
+    }
+    :D5 "=combine(" T5".H" S5".L)" is Rs=0 & MajOp=0b011 & MinOp=0b101 & S5 & S5i & imm_13 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        local al:2 = T5i(2);
+        local bl:2 = S5i:2;
+        local al4:4 = zext(al);
+        local bl4:4 = zext(bl);
+        D5 = (al4 << 16) | bl4;
+    }
+    :D5 "=combine(" T5".L" S5".H)" is Rs=0 & MajOp=0b011 & MinOp=0b110 & S5 & S5i & imm_13 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        local al:2 = T5i:2;
+        local bl:2 = S5i(2);
+        local al4:4 = zext(al);
+        local bl4:4 = zext(bl);
+        D5 = (al4 << 16) | bl4;
+    }
+    :D5 "=combine(" T5".L" S5".L)" is Rs=0 & MajOp=0b011 & MinOp=0b111 & S5 & S5i & imm_13 & T5 & T5i & imm_5_7=0 & D5 & OUTPUT_D5 {
+        local al:2 = T5i:2;
+        local bl:2 = S5i:2;
+        local al4:4 = zext(al);
+        local bl4:4 = zext(bl);
+        D5 = (al4 << 16) | bl4;
+    }
+    :D5_pair"=combine("S5","T5")" is Rs=0 & MajOp=0b101 & imm_23=0 & imm_21_22=0 & S5 & S5i & imm_13 & T5 & T5i & imm_5_7=0 & D5_pair {
+#        local tmp:8 = zext(S5i);
+#        D5_pair = (tmp<<32)|(zext(T5i));
+        
+        local tmp:4 = &D5_pair;
+        *[register]:4 tmp = T5i;
+        tmp = tmp + 4;
+        *[register]:4 tmp = S5i;
+    }
+}
+
+# ALU32/PERM:Mux
+with slot: iclass=0b0111  {
+    :D5"=mux("U2_pred_21_22","S5","NR_EXT_imm_5_12u")" is Rs=0 & MajOp=0b011 & imm_23=0 & U2_pred_21_22 & U2_pred_21_22i & S5 & S5i & imm_13=0 & NR_EXT_imm_5_12u & D5 & OUTPUT_D5 {
+        if(U2_pred_21_22i != 0) goto <good>;
+        D5 = S5i;
+    goto <end>;
+        <good>
+        D5 = NR_EXT_imm_5_12u;
+    <end>
+    }
+    :D5"=mux("U2_pred_21_22","NR_EXT_imm_5_12u","S5")" is Rs=0 & MajOp=0b011 & imm_23=1 & U2_pred_21_22 & U2_pred_21_22i & S5 & S5i & imm_13=0 & NR_EXT_imm_5_12u & D5 & OUTPUT_D5 {
+        if(U2_pred_21_22i != 0) goto <good>;
+        D5 = NR_EXT_imm_5_12u;
+    goto <end>;
+        <good>
+        D5 = S5i;
+    <end>
+    }
+    :D5"=mux("U1_23_24_pred",#"NR_EXT_imm_5_12u",#"S8")" is Rs=1 & imm_25_26=0b01 & U1_23_24_pred & U1_23_24_predi & imm_16_22 & imm_13 & NR_EXT_imm_5_12u & D5 & OUTPUT_D5 [ S8 = imm_13 | (imm_16_22 << 1);]{
+        if(U1_23_24_predi != 0) goto <good>;
+        D5 = S8;
+    goto <end>;
+        <good>
+        D5 = NR_EXT_imm_5_12u;
+    <end>
+    }
+}
+with slot: iclass=0b1111  {
+    :D5"=mux("U2_5_6","S5",#"T5")" is Rs=0 & MajOp=0b100 & imm_21_23 & S5 & S5i & imm_13=0 & T5 & T5i & imm_7=0 & U2_5_6 & U2_5_6i & D5 & OUTPUT_D5 {
+        if(U2_5_6i != 0) goto <good>;
+        D5 = T5i;
+        goto <end>;
+        <good>
+        D5 = S5i;
+        goto <end>;
+        <end>
+    }
+}
+
+# ALU32/PERM:Shift word 16
+with slot: iclass=0b0111  {
+    :D5 "=aslh(" S5 ")" is Rs=0 & MajOp=0b000 & MinOp=0b000 & S5 & S5i & imm_13=0 & imm_5_12=0 & D5 & OUTPUT_D5 {
+        D5 = S5i << 16;
+    }
+    :D5 "=asrh(" S5 ")" is Rs=0 & MajOp=0b000 & MinOp=0b001 & S5 & S5i & imm_13=0 & imm_5_12=0 & D5 & OUTPUT_D5 {
+        D5 = S5i >> 16;
+    }
+}
+
+# ALU32/PERM:Pack hi and lo hw
+with slot: iclass=0b1111  {
+    :D5_pair "=packhl(" S5 "," T5 ")" is Rs=0 & MajOp=0b101 & imm_23=1 & imm_21_22=0 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5_pair {
+        local t0:8 = zext(T5i:2);
+        local t1:8 = zext((T5i >> 16) & 0xFFFF);
+        local s0:8 = zext(S5i:2);
+        local s1:8 = zext((S5i >> 16) & 0xFFFF);
+        
+        D5_pair = t0 | (s0 << 16) | (t1 << 32) | (s1 << 48);
+    }
+}
+with slot: iclass=0b1101  {
+    :D5_pair "=packhl(" S5 "," T5 "):deprecated" is Rs=0 & MajOp=0b100 & imm_22_23=0 & imm_21=0 & S5 & S5i & imm_13=0 & T5 & T5i & imm_5_7=0 & D5_pair {
+        local t0:8 = zext(T5i:2);
+        local t1:8 = zext((T5i >> 16) & 0xFFFF);
+        local s0:8 = zext(S5i:2);
+        local s1:8 = zext((S5i >> 16) & 0xFFFF);
+        
+        D5_pair = t0 | (s0 << 16) | (t1 << 32) | (s1 << 48);
+    }
+}
