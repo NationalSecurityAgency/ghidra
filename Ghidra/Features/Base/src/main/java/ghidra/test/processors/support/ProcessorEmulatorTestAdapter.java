@@ -38,6 +38,7 @@ import ghidra.app.util.opinion.Loader;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
+import ghidra.pcode.emu.EmulatorUtilities;
 import ghidra.pcode.floatformat.FloatFormat;
 import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.program.database.ProgramDB;
@@ -1493,20 +1494,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			throws Exception {
 		Address addr = testRunner.getTestGroup().functionEntryPtr;
 		addr = PseudoDisassembler.getNormalizedDisassemblyAddress(program, addr);
-		ProgramContext programContext = program.getProgramContext();
-		for (Register reg : programContext.getRegisters()) {
-			if (reg.isProcessorContext() || reg.isProgramCounter()) {
-				continue;
-			}
-			RegisterValue value = programContext.getRegisterValue(reg, addr);
-			if (value != null && value.hasValue()) {
-				log(testRunner.getTestGroup(),
-					"Initialized register " + reg.getName() + "=0x" +
-						value.getUnsignedValue().toString(16) + " using context at " +
-						addr.toString(true));
-				testRunner.setRegister(reg.getName(), value.getUnsignedValue());
-			}
-		}
+		EmulatorUtilities.initializeRegisters(testRunner.getEmulatorThread(), program, addr);
 	}
 
 	/**

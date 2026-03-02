@@ -35,6 +35,7 @@ public class TRICORE_BE_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
 
 	@Override
 	protected void initializeState(EmulatorTestRunner testRunner, Program program) throws Exception {
+		super.initializeState(testRunner, program);
 		testRunner.setRegister("a10", 0x40000000L);  // stack, unused location		
 		testRunner.setRegister("FCX", 0x00020000L);  // free context list start, unused location
 		testRunner.setRegister("LCX", 0x00030000L);  // free context list max		
