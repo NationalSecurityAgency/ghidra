@@ -17,11 +17,38 @@ package ghidra.app.util.demangler.microsoft;
 
 import generic.json.Json;
 import ghidra.app.util.demangler.DemanglerOptions;
+import mdemangler.MDOutputOptions;
 
 /**
  * Microsoft demangler options
  */
 public class MicrosoftDemanglerOptions extends DemanglerOptions {
+
+	/**
+	 * Default Microsoft Demangler option for using the encoded number when outputting an
+	 * anonymous namespace node (this can be different from the default option of the underlying
+	 * demangler)
+	 */
+	public static final boolean DEFAULT_MSD_USE_ANON_NS = true;
+
+	/**
+	 * Default Microsoft Demangler option for applying user-defined-type (UDT) tags
+	 * (e.g., "struct") when the UDT is a template or function argument (this can be different
+	 * from the default option of the underlying demangler)
+	 */
+	public static final boolean DEFAULT_MSD_APPLY_UDT_TAG = false;
+
+	/**
+	 * MicrosoftDemanglerOptions that match the default underlying options.  These can be
+	 * different than the default MicrosoftDemanglerOptions.
+	 */
+	public static final MicrosoftDemanglerOptions DEFAULT_UNDERLYING_OUTPUT;
+	static {
+		DEFAULT_UNDERLYING_OUTPUT = new MicrosoftDemanglerOptions();
+		DEFAULT_UNDERLYING_OUTPUT
+				.setUseEncodedAnonymousNamespace(MDOutputOptions.DEFAULT_USE_ANON_NS);
+		DEFAULT_UNDERLYING_OUTPUT.setApplyUdtArgumentTypeTag(MDOutputOptions.DEFAULT_APPLY_UDT_TAG);
+	}
 
 	// Processing options
 	private boolean errorOnRemainingChars;
@@ -68,8 +95,8 @@ public class MicrosoftDemanglerOptions extends DemanglerOptions {
 	private void defaultInits() {
 		errorOnRemainingChars = true;
 		interpretation = MsCInterpretation.FUNCTION_IF_EXISTS;
-		useEncodedAnonymousNamespace = true;
-		applyUdtArgumentTypeTag = false;
+		useEncodedAnonymousNamespace = DEFAULT_MSD_USE_ANON_NS;
+		applyUdtArgumentTypeTag = DEFAULT_MSD_APPLY_UDT_TAG;
 	}
 
 	/**
