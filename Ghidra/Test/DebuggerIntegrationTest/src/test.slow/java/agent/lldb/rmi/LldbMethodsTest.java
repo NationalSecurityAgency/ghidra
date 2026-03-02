@@ -464,7 +464,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 	}
 
 	@Test
-	public void testAttachObj() throws Exception {
+	public void testAttach() throws Exception {
 		// Missing specimen for macOS
 		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 		String sleep = DummyProc.which("expTraceableSleep");
@@ -474,14 +474,12 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				txPut(conn, "available");
 				txPut(conn, "processes");
 
-				RemoteMethod attachObj = conn.getMethod("attach_obj");
+				RemoteMethod attachObj = conn.getMethod("attach");
 				try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 					tb = new ToyDBTraceBuilder((Trace) mdo.get());
-					TraceObject proc =
-						Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
 					TraceObject target =
 						Objects.requireNonNull(tb.obj("Available[%d]".formatted(dproc.pid)));
-					attachObj.invoke(Map.of("process", proc, "target", target));
+					attachObj.invoke(Map.of("target", target));
 
 					String out = conn.executeCapture("target list");
 					assertThat(out, containsString("pid=%d".formatted(dproc.pid)));
