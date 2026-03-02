@@ -379,7 +379,7 @@ public class EmulatorTestRunner {
 				}
 				else {
 					Address aligned = alignAddress(testGroup.functionEntryPtr, alignment);
-					EmulatorUtilities.initializeRegisters(emuThread, program, aligned);
+					emuThread.overrideCounter(aligned);
 					success = runToBreakpoint();
 				}
 
