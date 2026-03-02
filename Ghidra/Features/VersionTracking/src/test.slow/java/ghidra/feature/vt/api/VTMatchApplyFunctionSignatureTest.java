@@ -222,7 +222,6 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 				f2.setSignatureSource(SourceType.ANALYSIS);
 			});
 
-			p.addConsumer(this);
 			return p;
 		}
 		finally {
@@ -240,7 +239,6 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 			builder.createEmptyFunction(null, "0x10938", 0x10, DataType.DEFAULT);
 
-			p.addConsumer(this);
 			return p;
 		}
 		finally {

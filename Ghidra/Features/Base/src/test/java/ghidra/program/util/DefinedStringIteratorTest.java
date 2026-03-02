@@ -49,7 +49,7 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 	@Before
 	public void setUp() throws Exception {
 
-		builder = new ToyProgramBuilder("DefinedStringIteratorTests", false);
+		builder = new ToyProgramBuilder();
 		program = builder.getProgram();
 		dtm = program.getDataTypeManager();
 

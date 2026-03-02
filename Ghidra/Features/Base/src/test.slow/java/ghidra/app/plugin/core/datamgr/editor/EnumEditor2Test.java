@@ -47,7 +47,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 		builder.addCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		program = builder.getProgram();
 
@@ -804,7 +804,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	private JTextField getTextField(Container container, String name) {
 		Component[] c = container.getComponents();
 		for (Component element : c) {
-			if ((element instanceof JTextField) && ((JTextField) element).getName().equals(name)) {
+			if ((element instanceof JTextField) && element.getName().equals(name)) {
 				return (JTextField) element;
 			}
 			if (element instanceof Container) {
@@ -880,7 +880,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Component[] c = container.getComponents();
 		for (Component element : c) {
 			if (element instanceof JLabel) {
-				if (name.equals(((JLabel) element).getName())) {
+				if (name.equals(element.getName())) {
 					return ((JLabel) element).getText();
 				}
 			}
