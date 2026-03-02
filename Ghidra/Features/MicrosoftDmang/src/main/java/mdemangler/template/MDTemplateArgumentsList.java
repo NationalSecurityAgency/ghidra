@@ -202,19 +202,13 @@ public class MDTemplateArgumentsList extends MDParsableItem {
 		if (args.size() > 0) {
 			// boolean firstArgDone = false;
 			Iterator<Boolean> delimIter = commaDelimiter.iterator();
-			for (MDType arg : args) {
+			for (MDDataType arg : args) {
 				if (delimIter.next()) {
 					dmang.appendString(builder, ",");
 				}
 				// firstArgDone = true;
 				StringBuilder argBuilder = new StringBuilder();
-				if (arg instanceof MDComplexType ct &&
-					!dmang.getOutputOptions().applyUdtArgumentTypeTag()) {
-					ct.insertWithoutComplexTag(argBuilder);
-				}
-				else {
-					arg.insert(argBuilder);
-				}
+				arg.insertAsArg(argBuilder);
 				dmang.appendString(builder, argBuilder.toString());
 			}
 		}

@@ -119,13 +119,7 @@ public class MDArgumentsList extends MDParsableItem {
 				}
 				firstArgDone = true;
 				StringBuilder argBuilder = new StringBuilder();
-				if (arg instanceof MDComplexType ct &&
-					!dmang.getOutputOptions().applyUdtArgumentTypeTag()) {
-					ct.insertWithoutComplexTag(argBuilder);
-				}
-				else {
-					arg.insert(argBuilder);
-				}
+				arg.insertAsArg(argBuilder);
 				dmang.appendString(builder, argBuilder.toString().trim());
 				// doing toString() allows the Based5 "bug" to be cleaned per parameter.
 				// possible:  dmang.appendString(builder, arg.toString().trim());

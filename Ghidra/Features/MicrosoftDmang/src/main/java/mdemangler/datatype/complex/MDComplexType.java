@@ -65,12 +65,16 @@ public class MDComplexType extends MDDataType {
 		super.insert(builder);
 	}
 
-	public void insertWithoutComplexTag(StringBuilder builder) {
+	@Override
+	public void insertAsArg(StringBuilder builder) {
 		// TODO: look at what needs to be done to get rid of this?
 		if ((builder.length() != 0) && (builder.charAt(0) != ' ')) {
 			dmang.insertString(builder, " ");
 		}
 		qualifiedName.insert(builder);
+		if (dmang.getOutputOptions().applyUdtArgumentTypeTag()) {
+			super.insert(builder);
+		}
 	}
 
 }
