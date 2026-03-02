@@ -15,24 +15,20 @@
  */
 package ghidra.file.formats.yaffs2;
 
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
+/**
+ * Yaffs2 object type enum.  The java enum ordinal must match the yaffs enum values.
+ */
+public enum YAFFS2ObjectType {
+	Unknown,        // 0
+	File,           // 1
+	Symlink,        // 2
+	Directory,      // 3
+	Hardlink,       // 4
+	Special,        // 5
+	INVALID;        // represents value that doesn't match, including Unknown
 
-import java.io.IOException;
-
-public class YAFFS2Data implements StructConverter {
-
-	public YAFFS2Data(byte[] buffer) {
+	public static YAFFS2ObjectType parse(long i) {
+		YAFFS2ObjectType[] values = values();
+		return i > Unknown.ordinal() && i < INVALID.ordinal() ? values[(int) i] : INVALID;
 	}
-
-	// an array to hold data bytes for one record
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType("yaffs2Data", 0);
-		structure.add(new ArrayDataType(BYTE, YAFFS2Constants.DATA_BUFFER_SIZE, BYTE.getLength()),
-			"data", null);
-		return structure;
-	}
-
 }
