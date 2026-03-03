@@ -75,7 +75,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.createEntryPoint("0x1001100", "entry");

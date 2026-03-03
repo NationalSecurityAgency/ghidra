@@ -58,7 +58,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory(".text", "0x1001000", 0x10000);
 		builder.createEmptyFunction(null, "1001000", 1000, null);

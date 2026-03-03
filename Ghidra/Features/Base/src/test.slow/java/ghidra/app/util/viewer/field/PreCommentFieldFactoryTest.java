@@ -61,7 +61,7 @@ public class PreCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.createEmptyFunction(null, "1001000", 1000, null);
 		builder.createReturnInstruction("1001000");
