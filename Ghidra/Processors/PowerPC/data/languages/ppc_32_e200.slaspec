@@ -1,0 +1,20 @@
+# SLA specification file for the Power ISA Embedded e200 32-bit big endian core w/VLE
+
+@define ENDIAN "big"
+
+# FIXME: See note below
+# @define IS_ISA "1"
+
+@define REGISTER_SIZE "4"
+
+@define EATRUNC "ea"
+
+@include "ppc_common.sinc"
+@include "ppc_vle.sinc"
+
+# FIXME: Define IS_ISA above to bring in SPE_APU.sinc, but requires fixing
+@include "evx.sinc"
+@include "SPEF_SCR.sinc"
+
+# FIXME: Fix size restrictions
+# @include "SPE_EFV.sinc"
