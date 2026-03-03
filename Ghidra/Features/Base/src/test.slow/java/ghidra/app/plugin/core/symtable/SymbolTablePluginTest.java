@@ -38,6 +38,7 @@ import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.filter.*;
 import docking.widgets.table.*;
+import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
@@ -517,7 +518,12 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int startRefCount = symbol.getReferenceCount();
 		assertTrue(startRefCount > 0);
 
-		performAction(deleteAllAction, provider, true);
+		performAction(deleteAllAction, provider, false);
+
+		DialogComponentProvider dialog = waitForDialogComponent("Delete References?");
+		pressButtonByText(dialog, "Delete");
+		waitForTasks();
+
 		assertEquals(0, symbol.getReferenceCount());
 	}
 
@@ -1200,6 +1206,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		showReferencesTable();
 		ReferenceProvider referencesProvider = waitForComponentProvider(ReferenceProvider.class);
 
+		setReferenceType(referencesProvider, "References To");
+
 		// pick symbol with refs
 		selectRow("ghidra");
 
@@ -1207,7 +1215,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertReference("01004101", "00000052", true);
 
 		DockingActionIf deleteRefsAction =
-			getAction(tool, plugin.getName(), "Delete Reference");
+			getAction(tool, plugin.getName(), "Delete References");
 		assertFalse(isEnabled(deleteRefsAction, referencesProvider));
 
 		selectRef(referenceTable, "01004101", "00000052");
@@ -1221,6 +1229,17 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Helper methods
 //==================================================================================================
+
+	private void setReferenceType(ComponentProvider referencesProvider, String referenceType) {
+
+		ToggleDockingAction action = (ToggleDockingAction) getAction(plugin, referenceType);
+		performAction(action, referencesProvider, true);
+
+		Object refProvider = getInstanceField("refProvider", plugin);
+		ThreadedTableModel<?, ?> model =
+			(ThreadedTableModel<?, ?>) getInstanceField("referenceKeyModel", refProvider);
+		waitForTableModel(model);
+	}
 
 	@SuppressWarnings("unchecked")
 	private void selectRef(GTable table, String from, String to) throws Exception {
@@ -1816,5 +1835,4 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		return -1;
 	}
-
 }
