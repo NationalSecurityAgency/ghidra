@@ -1,3 +1,33 @@
+# Ghidra 12.0.4 Change History (March 2026)
+
+### Improvements
+* _Analysis_. Updated the RTTI Analyzer to better handle the case where class names cannot be demangled correctly. Previously, class members would end up in global namespace. Now, a class namespace with the mangled name will be created so that items in that class can be correctly grouped together. (GP-6431, Issue #8944)
+* _GUI_. Fixed a potential zip path traversal vulnerability when importing Ghidra theme zip files. (GP-6455)
+* _Scripting_. Improved RTTI Windows script vbtable discovery to recognize some invalid tables. (GP-6446, Issue #8944)
+
+### Bugs
+* _Analysis_. Fixed an issue with constants from one function finding their way into another function that is jumped to, and mid-constant propagation the jump is turned into a call. (GP-6442)
+* _Analysis_. Corrected analysis problem which failed to properly link thunk functions in the EXTERNAL memory block to existing External library symbols instead of creating new external functions in the unknown external library. (GP-6465)
+* _Bookmarks_. Corrected potential Bookmark exception which can occur if bookmarks were ever deleted: <I>Missing bookmark table<I>. (GP-6517)
+* _Debugger_. Fixed a deadlock when saving Traces from the __Close Project__ dialog. (GP-6392)
+* _Debugger:Memory_. Fixed a bug in the Memory viewer when looking at multiple address spaces. (GP-6449, Issue #8982)
+* _Disassembly_. Refactored `PsuedoDisassembler` to use the normal high level Disassembler instead of calling `Language.parse()`. (GP-6496)
+* _Exporter_. Enable cancellation for SARIF exports (GP-6469)
+* _Listing_. Fixed Listing display to show single string operands. (GP-6095)
+* _Processors_. Fixed the semantics of the AARCH64 `ldpsw` instruction. (GP-5590, Issue #6469, #8008)
+* _Processors_. Fixed issue with PIC-18 instructions double-incrementing/decrementing. (GP-6004, Issue #3342, #8501)
+* _Processors_. Corrected Xtensa slapsec token field naming. (GP-6080)
+* _Processors_. Corrected semantics for the CR16 `tbit` instruction. (GP-6181, Issue #8716)
+* _Processors_. Corrected mnemonic and semantics for eBPF atomic compare-and-exchange instructions. (GP-6182, Issue #8721)
+* _Processors_. Added missing definition for PowerPC Altivec `vadduws` instruction that was mistakenly commented out. (GP-6268, Issue #8821)
+* _Processors_. Added support for AARCH64 Common Short Sequence Compression (CSSC) instructions. (GP-6448, Issue #8973, #8979)
+* _Processors_. Fixed semantics of AARCH64 `ldar` instruction. (GP-6473, Issue #6467, #8014)
+* _Processors_. Corrected disassembly for MIPS instruction `sdbbp16`. (GP-6489)
+* _Processors_. Added MIPS32 `save` and `restore` instructions, and refactored coprocessor register read/write. (GP-6501)
+
+### Notable API Changes
+* _GUI_. (GP-6480) The resultsLimit and minLength parameters of the AddressRangeTableModel constructor have been removed.
+
 # Ghidra 12.0.3 Change History (February 2026)
 
 ### New Features
