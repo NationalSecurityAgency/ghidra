@@ -76,7 +76,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * </ul>
  */
 public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContext {
-	public static final GoVerRange SUPPORTED_VERSIONS = GoVerRange.parse("1.15-1.25");
+	public static final GoVerRange SUPPORTED_VERSIONS = GoVerRange.parse("1.15-1.26");
 
 	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
 	private static final List<String> SECTION_PREFIXES =

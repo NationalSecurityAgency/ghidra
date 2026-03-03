@@ -102,6 +102,7 @@ data/typeinfo/golang/go1.22.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.23.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.24.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.25.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.26.0.json||GHIDRA||||END|
 data/typeinfo/golang/golang_1.15_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.16_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
