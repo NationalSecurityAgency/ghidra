@@ -27,7 +27,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -86,7 +85,7 @@ public class ImageArm64X extends AbstractImageDynamicRelocationHeader {
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
 			IOException, MemoryAccessException {
-		ReferenceManager refMgr = program.getReferenceManager();
+//		ReferenceManager refMgr = program.getReferenceManager();
 		Address imageBase = program.getImageBase();
 		DataType dt = toDataType();
 		Address addr = imageBase.add(rva);
@@ -94,11 +93,11 @@ public class ImageArm64X extends AbstractImageDynamicRelocationHeader {
 		addr = addr.add(dt.getLength());
 		for (ImageArm64XDynamicRelocation reloc : relocs) {
 			reloc.markup(program, isBinary, monitor, log, ntHeader);
-			int pageRelativeOffset = reloc.getPageRelativeOffset();
-			if (pageRelativeOffset != 0) {
-				refMgr.addMemoryReference(addr, imageBase.add(virtualAddress + pageRelativeOffset),
-					RefType.DATA, SourceType.IMPORTED, 0);
-			}
+//			int pageRelativeOffset = reloc.getPageRelativeOffset();
+//			if (pageRelativeOffset != 0) {
+//				refMgr.addMemoryReference(addr, imageBase.add(virtualAddress + pageRelativeOffset),
+//					RefType.DATA, SourceType.IMPORTED, 0);
+//			}
 			addr = addr.add(reloc.toDataType().getLength() + reloc.getData().length);
 		}
 	}
@@ -106,7 +105,7 @@ public class ImageArm64X extends AbstractImageDynamicRelocationHeader {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType("IMAGE_ARM64X", 0);
-		struct.add(IBO32, "VirtualAddress", null);
+		struct.add(DWORD, "VirtualAddress", null);
 		struct.add(DWORD, "SizeOfBlock", null);
 		struct.setCategoryPath(new CategoryPath("/PE"));
 		return struct;

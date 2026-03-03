@@ -23,8 +23,7 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.listing.Program;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -192,9 +191,9 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
 
 	public void markup(Program program, Address addr, boolean isBinary, TaskMonitor monitor,
 			MessageLog log, NTHeader ntHeader) throws DuplicateNameException, IOException {
-		ReferenceManager refMgr = program.getReferenceManager();
-		Listing listing = program.getListing();
-		Address imageBase = program.getImageBase();
+//		ReferenceManager refMgr = program.getReferenceManager();
+//		Listing listing = program.getListing();
+//		Address imageBase = program.getImageBase();
 		DataType dt = toDataType();
 		PeUtils.createData(program, addr, dt, log);
 		addr = addr.add(dt.getLength());
@@ -206,14 +205,14 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
 			DataType typeOffsetDt = typeOffset.toDataType();
 			PeUtils.createData(program, addr, typeOffsetDt, log);
 			
-			if (typeOffset.typeOffset != 0) {
-				refMgr.addMemoryReference(addr, imageBase.add(virtualAddress + typeOffset.offset),
-					RefType.DATA, SourceType.IMPORTED, 0);
-				listing.setComment(addr, CommentType.EOL, getName(typeOffset.type));
-			}
-			else {
-				listing.setComment(addr, CommentType.EOL, "padding");
-			}
+//			if (typeOffset.typeOffset != 0) {
+//				refMgr.addMemoryReference(addr, imageBase.add(virtualAddress + typeOffset.offset),
+//					RefType.DATA, SourceType.IMPORTED, 0);
+//				listing.setComment(addr, CommentType.EOL, getName(typeOffset.type));
+//			}
+//			else {
+//				listing.setComment(addr, CommentType.EOL, "padding");
+//			}
 
 			addr = addr.add(typeOffsetDt.getLength());
         }
@@ -223,7 +222,7 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
     public DataType toDataType() throws DuplicateNameException {
         StructureDataType struct = new StructureDataType(NAME, 0);
 
-		struct.add(IBO32, "VirtualAddress", null);
+		struct.add(DWORD, "VirtualAddress", null);
         struct.add(DWORD,"SizeOfBlock",null);
 
         struct.setCategoryPath(new CategoryPath("/PE"));

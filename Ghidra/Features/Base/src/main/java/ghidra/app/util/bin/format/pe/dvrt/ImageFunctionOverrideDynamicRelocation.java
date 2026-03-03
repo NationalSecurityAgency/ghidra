@@ -114,8 +114,8 @@ public class ImageFunctionOverrideDynamicRelocation implements StructConverter, 
 		PeUtils.createData(program, addr, dt, log);
 		addr = addr.add(dt.getLength());
 		for (int i = 0; i < rvas.length; i++) {
-			PeUtils.createData(program, addr, IBO32, log);
-			addr = addr.add(IBO32.getLength());
+			PeUtils.createData(program, addr, DWORD, log);
+			addr = addr.add(DWORD.getLength());
 		}
 		for (BaseRelocation baseReloc : baseRelocs) {
 			baseReloc.markup(program, addr, isBinary, monitor, log, ntHeader);
@@ -127,7 +127,7 @@ public class ImageFunctionOverrideDynamicRelocation implements StructConverter, 
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct =
 			new StructureDataType("IMAGE_FUNCTION_OVERRIDE_DYNAMIC_RELOCATION", 0);
-		struct.add(IBO32, "OriginalRva", "RVA of original function");
+		struct.add(DWORD, "OriginalRva", "RVA of original function");
 		struct.add(DWORD, "BDDOffset", "Offset into the BDD region");
 		struct.add(DWORD, "RvaSize",
 			"Size in bytes taken by RVAs. Must be multiple of sizeof(DWORD).");
