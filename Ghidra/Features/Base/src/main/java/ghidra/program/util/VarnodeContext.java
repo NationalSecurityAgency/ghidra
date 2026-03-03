@@ -36,6 +36,7 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.util.Msg;
+import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -76,8 +77,16 @@ public class VarnodeContext implements ProcessorContext {
 	// temp values for individual instruction computation before being merged into
 	// the end flow state for an instruction
 	private HashMap<Address, Varnode> tempVals = new HashMap<>();
-	protected HashMap<Address, Varnode> tempUniqueVals = new HashMap<>();
+	protected HashMap<Address, Varnode> tempUniqueVals;
 	protected boolean keepTempUniqueValues = false;
+	
+	// During tracing of paths, unique values need to be stored if the language has crossbuilds.
+	// MaxCrossBuilds is the general number of uniques with values that should be stored in the cache.
+	// The maxUniqueBytes is the number of actual entries (bytes) in the cache to keep. This is based
+	// on the size of a pointer, which is in general the size of a register.  This is not intended
+	// to support general computation of values, and is more geared to 32/64 bit contstants and pointers.
+	private static final int MaxCrossBuilds = 200;    // maximum instructions worth of uniques
+	private int maxUniqueBytes = 0;                  // number of bytes worth of uniques to keep
 
 	// Values that must be cleared from final instruction flow state
 	protected HashSet<Varnode> clearVals = new HashSet<>();
@@ -158,7 +167,10 @@ public class VarnodeContext implements ProcessorContext {
 
 		memoryVals.push(new HashMap<Address, Varnode>());
 		regVals.push((new HashMap<Address, Varnode>()));
-		uniqueVals.push(new HashMap<Address, Varnode>());
+		
+		maxUniqueBytes = MaxCrossBuilds * program.getDefaultPointerSize();
+		tempUniqueVals = new HashMap<Address,Varnode>();
+		uniqueVals.push(new FixedSizeHashMap<Address, Varnode>(maxUniqueBytes));
 
 		setupValidSymbolicStackNames(program);
 
@@ -169,6 +181,9 @@ public class VarnodeContext implements ProcessorContext {
 		if (language instanceof SleighLanguage) {
 			// Must preserve temp values if named pcode sections exist (i.e., cross-builds are used)
 			keepTempUniqueValues = ((SleighLanguage) language).numSections() != 0;
+			if (keepTempUniqueValues) {
+				tempUniqueVals = new FixedSizeHashMap<Address, Varnode>(maxUniqueBytes);
+			}
 		}
 	}
 
@@ -419,9 +434,13 @@ public class VarnodeContext implements ProcessorContext {
 		Varnode rvnode = null;
 		if (varnode.isUnique()) {
 			rvnode = getMemoryValue(tempUniqueVals,varnode,signed);
-			if (rvnode == null && keepTempUniqueValues) {
-				rvnode = getMemoryValue(uniqueVals,0,varnode,signed);
-			}
+			// TODO: if doing full cross build tracking, need to
+			//       look back at uniqueVals stack.  For now,
+			//       since any cross builds are flushed on branches
+			//       just use tempUniqueVals
+			// if (rvnode == null && keepTempUniqueValues) {
+			//	rvnode = getMemoryValue(uniqueVals,0,varnode,signed);
+			//}
 		}
 		else {
 			rvnode = getMemoryValue(tempVals, varnode, signed);
@@ -1029,9 +1048,13 @@ public class VarnodeContext implements ProcessorContext {
 		// merge tempvals to top of regVals
 		regVals.peek().putAll(tempVals);
 
-		if (keepTempUniqueValues) {
-			uniqueVals.peek().putAll(tempUniqueVals);
-		}
+		// TODO: if doing full cross build tracking, need to
+		//       save tmpuniques into uniqueVals.  For now,
+		//       since any cross builds are flushed on branches
+		//       just use tempUniqueVals
+		//if (keepTempUniqueValues) {
+		//	uniqueVals.peek().putAll(tempUniqueVals);
+		//}
 		
 		if (clearContext) {
 			if (!keepTempUniqueValues) {
@@ -1971,18 +1994,33 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Save the current memory state
+	 * @param saveTempUniques  - if internal branching, must save the tempUniques as well
+	 * Note: currently unique values do not survive in the sleigh parser for crossbuild
+	 * lookback if any branch is taken.  In the future crossbuilds may be path based.
+	 * This will need to be re-worked and the unique value state treated as other path
+	 * tracing and stored in uniqueVals.
 	 */
-	public void pushMemState() {
+	public void pushMemState(boolean saveTempUniques) {
 		Stack<HashMap<Address, Varnode>> newRegValsTrace =
 			(Stack<HashMap<Address, Varnode>>) regVals.clone();
 		regTraces.push(newRegValsTrace);
 		regVals.push(new HashMap<Address, Varnode>());
 		
-// TODO: only save if need to
 		Stack<HashMap<Address, Varnode>> newUniqueValsTrace =
 				(Stack<HashMap<Address, Varnode>>) uniqueVals.clone();
 		uniqueTraces.push(newUniqueValsTrace);
-		uniqueVals.push(new HashMap<Address, Varnode>());
+		FixedSizeHashMap<Address, Varnode> uniqueValsState = new FixedSizeHashMap<Address, Varnode>(maxUniqueBytes);
+		// if pushing state for internal branching, must save unique state for restored path
+		// For now, only put temp unique values if internally branching.
+		// Note: saved tempUniqueVals are stored at the top of the trace stack, this is different than
+		//       than other trace stacks, as those trace stacks, the top of the stack is the current
+		//       state and the older stack entries are existing old states before a branch occurred.
+		if (saveTempUniques) {
+			newUniqueValsTrace.push((HashMap<Address, Varnode>) tempUniqueVals.clone());
+		} else {
+			newUniqueValsTrace.push(new FixedSizeHashMap<>(maxUniqueBytes));
+		}
+		uniqueVals.push(uniqueValsState);
 		
 		Stack<HashMap<Address, Varnode>> newMemValsTrace =
 			(Stack<HashMap<Address, Varnode>>) memoryVals.clone();
@@ -1999,9 +2037,14 @@ public class VarnodeContext implements ProcessorContext {
 	public void popMemState() {
 		regVals = regTraces.pop();
 		memoryVals = memTraces.pop();
-		
-// TODO: only save if need to
+
+		// restore old temp values if any was saved
+		tempUniqueVals = uniqueTraces.peek().peek();
 		uniqueVals = uniqueTraces.pop();
+		if (tempUniqueVals == null) {
+			// if no tempUnique values stored for this path
+			tempUniqueVals = new FixedSizeHashMap<>(maxUniqueBytes);
+		}
 		
 		lastSet = lastSetSaves.pop();
 
