@@ -15,6 +15,7 @@
  */
 package docking.action;
 
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -102,6 +103,9 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 		// map standard keystroke to action
 		doAddKeyBinding(provider, action, keyStroke);
+
+		// map workaround keystroke to action
+		fixupAltGraphKeyStrokeMapping(provider, action, keyStroke);
 	}
 
 	public String validateActionKeyBinding(DockingActionIf dockingAction, KeyStroke ks) {
@@ -144,6 +148,24 @@ public class KeyBindingsManager implements PropertyChangeListener {
 	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
 		doAddKeyBinding(provider, action, keyStroke, keyStroke);
+	}
+
+	private void fixupAltGraphKeyStrokeMapping(ComponentProvider provider, DockingActionIf action,
+			KeyStroke keyStroke) {
+
+		// special case
+		int modifiers = keyStroke.getModifiers();
+		if ((modifiers & InputEvent.ALT_DOWN_MASK) == InputEvent.ALT_DOWN_MASK) {
+			//
+			// Also register the 'Alt' binding with the 'Alt Graph' mask.  This fixes the but
+			// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873)
+			// that have different key codes for the left and right Alt keys.
+			//
+			modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
+			KeyStroke updateKeyStroke =
+				KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, false);
+			doAddKeyBinding(provider, action, updateKeyStroke, keyStroke);
+		}
 	}
 
 	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,

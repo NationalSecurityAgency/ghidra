@@ -191,11 +191,13 @@ define pcodeop special2;
 
 # 0100 0010 0000 0000 0000 0000 0001 1000
 :eret                           is $(AMODE) & prime=0x10 & fct=0x18 & bit25=1 & copfill=0  {
-    return[EPC];
+	JXWritePC(EPC);
+	return[EPC];
 }
 
 :eretnc							is $(AMODE) & prime=0x10 & fct=0x18 & bit25=1 & copfill=1  {
-    return[EPC];
+	JXWritePC(EPC);
+	return[EPC];
 }
 
 # 0111 11ss ssst tttt mmmm mLLL LL00 0000 
@@ -423,13 +425,13 @@ define pcodeop special2;
 
 # 0100 1000 000t tttt iiii iiii iiii iiii
 :mfc2 RT, immed                 is $(AMODE) & prime=0x12 & copop=0 & RT & immed {
-    tmp:$(REGSIZE) = getCopReg(2:1, immed:4);
+    tmp:4 = getCopReg(2:1, immed:4);
     RT = sext( tmp );
 }
 
 # 0100 1000 011t tttt iiii iiii iiii iiii
 :mfhc2 RT, immed                is $(AMODE) & prime=0x12 & copop=3 & RT & fs & immed {
-    tmp:$(REGSIZE) = getCopReg(2:1, immed:4);
+    tmp:4 = getCopReg(2:1, immed:4);
     RT = sext(tmp >> 32);
 }
 
@@ -450,16 +452,20 @@ define pcodeop special2;
 }
 
 # 0100 0000 100t tttt dddd d000 0000 0sss
-:mtc0 RTsrc, RD0, sel               is $(AMODE) & prime=0x10 & copop=4 & RTsrc & RD0 & zero6=0 & sel {
-	setCopReg(0:1, RD0, RTsrc, sel:1); 
+:mtc0 RTsrc, RD0               is $(AMODE) & prime=0x10 & copop=4 & RTsrc & RD0 & zero6=0 {
+	setCopReg(0:1, RD0, RTsrc); 
 }
+
 # 0100 1000 100t tttt iiii iiii iiii iiii
 :mtc2 RTsrc, immed              is $(AMODE) & prime=0x12 & copop=4 & RTsrc & immed {
     setCopReg(2:1, immed:4, RTsrc);
 }
 
 :mthc0 RTsrc, RD0, sel          is $(AMODE) & prime=0x10 & copop=6 & RTsrc & RD0 & zero6=0 & sel {
-	setCopReg(0:1, RD0, RTsrc, sel:1); 
+    tmp:4 = RTsrc:$(SIZETO4);
+    low:4 = RD0:4;
+    val:8 = (zext(tmp) << 32) + zext(low);
+    setCopReg(0:1, RD0, val);
 }
 
 # 0100 1000 111t tttt iiii iiii iiii iiii
@@ -1747,5 +1753,224 @@ define pcodeop SYNC;
 	signalReservedInstruction(immed:2);
 }
 
+rsRa:							is svrs_ra=0 {}
+rsRa: ra						is svrs_ra=1 & ra {
+	tsp = tsp-$(REGSIZE);
+	MemSrcCast(ra,tsp);
+}
 
+svRa: 							is svrs_ra=0 {}
+svRa: ra						is svrs_ra=1 & ra {
+	tsp = tsp-$(REGSIZE);
+	MemDestCast(tsp,ra);
+}
+
+rs_statReg:							is svrs_areg {}
+rs_statReg:	",a3"					is (svrs_areg=1 | svrs_areg=5 | svrs_areg=9 |svrs_areg=0xd) {
+ 	tsp = tsp-4;
+	MemSrcCast(a3,tsp);
+}
+rs_statReg:	",a2-a3"				is (svrs_areg=2 | svrs_areg=6 | svrs_areg=0xa) {
+ 	tsp = tsp-4;
+	MemSrcCast(a3,tsp);
+ 	tsp = tsp-4;
+	MemSrcCast(a2,tsp);
+}
+rs_statReg:	",a1-a3"				is (svrs_areg=3 | svrs_areg=7) {
+ 	tsp = tsp-4;
+	MemSrcCast(a3,tsp);
+ 	tsp = tsp-4;
+	MemSrcCast(a2,tsp);
+ 	tsp = tsp-4;
+	MemSrcCast(a1,tsp);
+}
+rs_statReg:	",a0-a3"				is svrs_areg=0xb {
+ 	tsp = tsp-4;
+	MemSrcCast(a3,tsp);
+ 	tsp = tsp-4;
+	MemSrcCast(a2,tsp);
+ 	tsp = tsp-4;
+	MemSrcCast(a1,tsp);
+ 	tsp = tsp-4;
+	MemSrcCast(a0,tsp);
+}
+
+rsStat:							is svrs_areg=0 | svrs_areg=4 | svrs_areg=8 | svrs_areg=0xc | svrs_areg=0xe {}
+rsStat: rs_statReg				is rs_statReg {
+	build rs_statReg;
+}
+
+
+sv_statReg:							is svrs_areg {}
+sv_statReg:	",a3"					is (svrs_areg=1 | svrs_areg=5 | svrs_areg=9 | svrs_areg=0xd) {
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a3);
+}
+sv_statReg:	",a2-a3"					is (svrs_areg=2 | svrs_areg=6 | svrs_areg=0xa) {
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a3);
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a2);
+}
+sv_statReg:	",a1-a3"				is (svrs_areg=3 | svrs_areg=7) {
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a3);
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a2);
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a1);
+}
+sv_statReg:	",a0-a3"				is svrs_areg=0xb { 
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a3);
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a2);
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a1);
+ 	tsp = tsp-4;
+	MemDestCast(tsp,a0);
+}
+
+svStat:							is svrs_areg=0 | svrs_areg=4 | svrs_areg=8 | svrs_areg=0xc | svrs_areg=0xe {}
+svStat: sv_statReg				is sv_statReg {
+	build sv_statReg;
+}
+
+sv_areg1:							is svrs_aregb2=0 {}
+sv_areg1:	"a0,"					is svrs_aregb2=1 {
+  ptr:$(REGSIZE) = sp;
+  MemDestCast(ptr,a0);
+}
+
+sv_areg2:	sv_areg1				is sv_areg1 { build sv_areg1; }
+sv_areg2:	"a0-a1,"				is svrs_aregb3=1 & svrs_aregb2=0 & (svrs_aregb1=0 | svrs_aregb0=0) {
+  ptr:$(REGSIZE) = sp;
+  MemDestCast(ptr,a0);
+  ptr = sp+4;
+  MemDestCast(ptr,a1);
+}
+
+sv_areg3:	sv_areg2				is sv_areg2 { build sv_areg2; }
+sv_areg3:	"a0-a2,"				is svrs_aregb3=1 & svrs_aregb2=1 & svrs_aregb1=0 {
+  ptr:$(REGSIZE) = sp;
+  MemDestCast(ptr,a0);
+  ptr = sp+4;
+  MemDestCast(ptr,a1);
+  ptr = sp+8;
+  MemDestCast(ptr,a2);
+}
+
+sv_areg4:	sv_areg3				is sv_areg3 { build sv_areg3; }
+sv_areg4:	"a0-a3,"				is svrs_areg=0xe {
+  ptr:$(REGSIZE) = sp;
+  MemDestCast(ptr,a0);
+  ptr = sp+4;
+  MemDestCast(ptr,a1);
+  ptr = sp+8;
+  MemDestCast(ptr,a2);
+  ptr = sp+12;
+  MemDestCast(ptr,a3);
+}
+
+svAregs:						is svrs_aregb3=0 | svrs_areg=0xb | svrs_areg=0xf  {}
+svAregs: sv_areg4				is sv_areg4 {
+	build sv_areg4;
+}
+
+rs_s0:			is svrs_s0		{}
+rs_s0:			is svrs_s0=1	{ tsp = tsp-$(REGSIZE); MemSrcCast(s0,tsp); }
+
+rs_s1:			is svrs_s1 		{}
+rs_s1:			is svrs_s1=1	{ tsp = tsp-$(REGSIZE); MemSrcCast(s1,tsp); }
+
+rs_s8:			is svrs_xreg=6	{}
+rs_s8:			is svrs_xreg	{ tsp = tsp-$(REGSIZE); MemSrcCast(s8,tsp); }
+
+rs_s7:			is svrs_xreg=5	{}
+rs_s7:			is rs_s8		{ build rs_s8; tsp = tsp-$(REGSIZE); MemSrcCast(s7,tsp); }
+
+rs_s6:			is svrs_xreg=4	{}
+rs_s6:			is rs_s7		{ build rs_s7; tsp = tsp-$(REGSIZE); MemSrcCast(s6,tsp); }
+
+rs_s5:			is svrs_xreg=3	{}
+rs_s5:			is rs_s6		{ build rs_s6; tsp = tsp-$(REGSIZE); MemSrcCast(s5,tsp); }
+
+rs_s4:			is svrs_xreg=2	{}
+rs_s4:			is rs_s5		{ build rs_s5; tsp = tsp-$(REGSIZE); MemSrcCast(s4,tsp); }
+
+rs_s3:			is svrs_xreg=1	{}
+rs_s3:			is rs_s4		{ build rs_s4; tsp = tsp-$(REGSIZE); MemSrcCast(s3,tsp); }
+
+rs_s2:			is svrs_xreg=0	{}
+rs_s2:			is rs_s3		{ build rs_s3; tsp = tsp-$(REGSIZE); MemSrcCast(s2,tsp); }
+
+rsXsregs:				is svrs_s0=0 & svrs_s1=0 & svrs_xreg=0 {}
+rsXsregs: ","svrs_xreg	is svrs_s0 & svrs_s1 & svrs_xreg & rs_s2 & rs_s1 & rs_s0 {
+	build rs_s2;
+	build rs_s1;
+	build rs_s0;
+}
+
+sv_s0:			is svrs_s0		{}
+sv_s0:			is svrs_s0=1	{ tsp = tsp-$(REGSIZE); MemDestCast(tsp,s0);}
+
+sv_s1:			is svrs_s1		{}
+sv_s1:			is svrs_s1=1	{ tsp = tsp-$(REGSIZE); MemDestCast(tsp,s1); }
+
+sv_s8:			is svrs_xreg=6	{}
+sv_s8:			is 	svrs_xreg	{ tsp = tsp-$(REGSIZE); MemDestCast(tsp,s8); }
+
+sv_s7:			is svrs_xreg=5	{}
+sv_s7:			is sv_s8 		{ build sv_s8; tsp = tsp-$(REGSIZE); MemDestCast(tsp,s7); }
+
+sv_s6:			is svrs_xreg=4	{}
+sv_s6:			is sv_s7		{ build sv_s7; tsp = tsp-$(REGSIZE); MemDestCast(tsp,s6); }
+
+sv_s5:			is svrs_xreg=3	{}
+sv_s5:			is sv_s6		{ build sv_s6; tsp = tsp-$(REGSIZE); MemDestCast(tsp,s5); }
+
+sv_s4:			is svrs_xreg=2	{}
+sv_s4:			is sv_s5		{ build sv_s5; tsp = tsp-$(REGSIZE); MemDestCast(tsp,s4); }
+
+sv_s3:			is svrs_xreg=1	{}
+sv_s3:			is sv_s4		{ build sv_s4; tsp = tsp-$(REGSIZE); MemDestCast(tsp,s3); }
+
+sv_s2:			is svrs_xreg=0	{}
+sv_s2:			is sv_s3		{ build sv_s3; tsp = tsp-$(REGSIZE); MemDestCast(tsp,s2); }
+
+svXsregs:						is svrs_s0=0 & svrs_s0=0 & svrs_xreg=0 {}
+svXsregs: ","svrs_xreg			is svrs_s0 & svrs_s1 & svrs_xreg & sv_s0 & sv_s1 & sv_s2 {
+	build sv_s2;
+	build sv_s1;
+	build sv_s0;
+}
+
+svFramesize: ,val						is svrs_frame_hi=0 & svrs_frame_low=0 [val = 128; ] {export *[const]:2 val;}
+svFramesize: ,val						is svrs_frame_hi & svrs_frame_low [val = ((svrs_frame_hi << 4) | svrs_frame_low) << 3;] {export *[const]:2 val;}
+
+
+:save svRa^svXsregs^svAregs^svFramesize		is $(AMODE) & REL6=1 & prime=0x1c & fct=0x1f & save=0x01 & svRa & svXsregs & svAregs & svStat & svFramesize {
+	tsp = sp;
+	build svAregs;
+	build svRa;
+	build svXsregs;
+	build svStat;
+	build svFramesize;
+	
+	tmp:2 = svFramesize;
+	sp = sp - zext(tmp);
+}
+
+:restore rsRa^rsXsregs^rsStat^svFramesize	is $(AMODE) & REL6=1 & prime=0x1c & fct=0x1f & save=0x00 & rsRa & rsXsregs & rsStat & svFramesize {
+	build svFramesize;
+
+	tmp:2 = svFramesize;
+	tsp = sp+zext(tmp);
+
+	build rsRa;
+	build rsXsregs;
+	build rsStat;
+	
+	sp = sp+zext(tmp);
+}
 @include "mipsfloat.sinc"

@@ -12,6 +12,14 @@
 
 define token m16instr (16)
   m16_op=(11,15)
+  m16_rd0_0 = (11,15)
+  m16_rd0_1 = (11,15)
+  m16_rd0_2 = (11,15)
+  m16_rd0_3 = (11,15)
+  m16_rd0_4 = (11,15)
+  m16_rd0_5 = (11,15)
+  m16_rd0_6 = (11,15)
+  m16_rd0_7 = (11,15)
   m16_i_imm=(0,4)
   m16_rx=(8,10)
   m16_rxa=(8,10)
@@ -74,6 +82,95 @@ attach variables [ ext_m16r32 m16_i8_r32 ] [
     t8    t9  k0  k1  gp  sp  s8  ra 
 ];
 
+
+attach variables [ m16_rd0_0 ] [
+    Index           Random          EntryLo0        EntryLo1 
+    Context         PageMask        Wired           HWREna  
+    BadVAddr        Count           EntryHi         Compare  
+    Status          Cause           EPC             PRId 
+    Config          LLAddr          WatchLo         WatchHi 
+    XContext        cop0_reg21      cop0_reg22      Debug
+    DEPC            PerfCnt         ErrCtl          CacheErr
+    TagLo           TagHi           ErrorEPC        DESAVE 
+];
+
+attach variables [ m16_rd0_1 ] [
+    MVPControl      VPEControl      TCStatus        cop0_reg3.1
+    ContextConfig   PageGrain       SRSConf0        cop0_reg7.1
+    cop0_reg8.1     cop0_reg9.1     cop0_reg10.1    cop0_reg11.1
+    IntCtl          cop0_reg13.1    cop0_reg14.1    EBase
+    Config1         cop0_reg17.1    WatchLo.1       WatchHi.1
+    cop0_reg20.1    cop0_reg21.1    cop0_reg22.1    TraceControl
+    cop0_reg24.1    PerfCnt.1       cop0_reg26.1    CacheErr.1
+    DataLo.1        DataHi.1        cop0_reg30.1    cop0_reg31.1
+];
+
+attach variables [ m16_rd0_2 ] [
+    MVPConf0        VPEConf0        TCBind          cop0_reg3.2
+    cop0_reg4.2     cop0_reg5.2     SRSConf1        cop0_reg7.2
+    cop0_reg8.2     cop0_reg9.2     cop0_reg10.2    cop0_reg11.2
+    SRSCtl          cop0_reg13.2    cop0_reg14.2    cop0_reg15.2
+    Config2         cop0_reg17.2    WatchLo.2       WatchHi.2
+    cop0_reg20.2    cop0_reg21.2    cop0_reg22.2    TraceControl2
+    cop0_reg24.2    PerfCnt.2       cop0_reg26.2    CacheErr.2
+    TagLo.2         TagHi.2         cop0_reg30.2    cop0_reg31.2
+];
+
+attach variables [ m16_rd0_3 ] [
+    MVPConf1        VPEConf1        TCRestart       cop0_reg3.3
+    cop0_reg4.3     cop0_reg5.3     SRSConf2        cop0_reg7.3
+    cop0_reg8.3     cop0_reg9.3     cop0_reg10.3    cop0_reg11.3
+    SRSMap          cop0_reg13.3    cop0_reg14.3    cop0_reg15.3
+    Config3         cop0_reg17.3    WatchLo.3       WatchHi.3
+    cop0_reg20.3    cop0_reg21.3    cop0_reg22.3    UserTraceData
+    cop0_reg24.3    PerfCnt.3       cop0_reg26.3    CacheErr.3
+    DataLo.3        DataHi.3        cop0_reg30.3    cop0_reg31.3
+];
+
+attach variables [ m16_rd0_4 ] [
+    cop0_reg0.4     YQMask          TCHalt          cop0_reg3.4
+    cop0_reg4.4     cop0_reg5.4     SRSConf3        cop0_reg7.4
+    cop0_reg8.4     cop0_reg9.4     cop0_reg10.4    cop0_reg11.4
+    cop0_reg12.4    cop0_reg13.4    cop0_reg14.4    cop0_reg15.4
+    cop0_reg16.4    cop0_reg17.4    WatchLo.4       WatchHi.4
+    cop0_reg20.4    cop0_reg21.4    cop0_reg22.4    TraceBPC
+    cop0_reg24.4    PerfCnt.4       cop0_reg26.4    CacheErr.4
+    TagLo.4         TagHi.4         cop0_reg30.4    cop0_reg31.4
+];
+
+attach variables [ m16_rd0_5 ] [
+    cop0_reg0.5 VPESchedule TCContext   cop0_reg3.5
+    cop0_reg4.5     cop0_reg5.5     SRSConf4        cop0_reg7.5
+    cop0_reg8.5     cop0_reg9.5     cop0_reg10.5    cop0_reg11.5
+    cop0_reg12.5    cop0_reg13.5    cop0_reg14.5    cop0_reg15.5
+    cop0_reg16.5    cop0_reg17.5    WatchLo.5       WatchHi.5
+    cop0_reg20.5    cop0_reg21.5    cop0_reg22.5    cop0_reg23.5
+    cop0_reg24.5    PerfCnt.5       cop0_reg26.5    CacheErr.5
+    DataLo.5        DataHi.5        cop0_reg30.5    cop0_reg31.5
+];
+
+attach variables [ m16_rd0_6 ] [
+    cop0_reg0.6     VPEScheFBack    TCSchedule      cop0_reg3.6
+    cop0_reg4.6     cop0_reg5.6     cop0_reg6.6     cop0_reg7.6
+    cop0_reg8.6     cop0_reg9.6     cop0_reg10.6    cop0_reg11.6
+    cop0_reg12.6    cop0_reg13.6    cop0_reg14.6    cop0_reg15.6
+    cop0_reg16.6    cop0_reg17.6    WatchLo.6       WatchHi.6
+    cop0_reg20.6    cop0_reg21.6    cop0_reg22.6    cop0_reg23.6
+    cop0_reg24.6    PerfCnt.6       cop0_reg26.6    CacheErr.6
+    TagLo.6         TagHi.6         cop0_reg30.6    cop0_reg31.6
+];
+
+attach variables [ m16_rd0_7 ] [
+    cop0_reg0.7     VPEOpt          TCScheFBack     cop0_reg3.7
+    cop0_reg4.7     cop0_reg5.7     cop0_reg6.7     cop0_reg7.7
+    cop0_reg8.7     cop0_reg9.7     cop0_reg10.7    cop0_reg11.7
+    cop0_reg12.7    cop0_reg13.7    cop0_reg14.7    cop0_reg15.7
+    cop0_reg16.7    cop0_reg17.7    WatchLo.7       WatchHi.7
+    cop0_reg20.7    cop0_reg21.7    cop0_reg22.7    cop0_reg23.7
+    cop0_reg24.7    PerfCnt.7       cop0_reg26.7    CacheErr.7
+    DataLo.7        DataHi.7        cop0_reg30.7    cop0_reg31.7
+];
+
 @ifdef MIPS64
 attach variables [ m16_rxa m16_rya m16_rza m16_mv_rza]
 				 [ s0_lo s1_lo v0_lo v1_lo a0_lo a1_lo a2_lo a3_lo ];
@@ -86,6 +183,7 @@ attach variables [ ext_m16r32a m16_i8_r32a ] [
 ];
 
 RZ: m16_rz is m16_rz		{ export m16_rz; }
+
 
 @else # !MIPS64
 attach variables [ m16_rxa m16_rya m16_rza m16_mv_rza ]
@@ -912,11 +1010,21 @@ E2_REGOFF: imm is ext_imm_2124 & m16_i_imm [ imm = m16_i_imm | (ext_imm_2124 << 
     m16_rx = sext( valOrig | valLoad );
 }
 
-:mfc0 m16_ry, m16_i_imm, ext_imm_2123		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123 & ext_imm_1620=0 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm {
-    m16_ry = getCopReg(0:1,m16_i_imm:1,ext_imm_2123:1);
+
+m16_RD0: m16_rd0_0  is m16_rd0_0 & ext_imm_2123=0  { export m16_rd0_0; }
+m16_RD0: m16_rd0_1  is m16_rd0_1 & ext_imm_2123=1  { export m16_rd0_1; }
+m16_RD0: m16_rd0_2  is m16_rd0_2 & ext_imm_2123=2  { export m16_rd0_2; }
+m16_RD0: m16_rd0_3  is m16_rd0_3 & ext_imm_2123=3  { export m16_rd0_3; }
+m16_RD0: m16_rd0_4  is m16_rd0_4 & ext_imm_2123=4  { export m16_rd0_4; }
+m16_RD0: m16_rd0_5  is m16_rd0_5 & ext_imm_2123=5  { export m16_rd0_5; }
+m16_RD0: m16_rd0_6  is m16_rd0_6 & ext_imm_2123=6  { export m16_rd0_6; }
+m16_RD0: m16_rd0_7  is m16_rd0_7 & ext_imm_2123=7  { export m16_rd0_7; }
+
+:mfc0 m16_ry, m16_RD0		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123 & ext_imm_1620=0 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_RD0 {
+    m16_ry = zext( m16_RD0:$(SIZETO4) );
 }
-:mtc0 m16_ry, m16_i_imm, ext_imm_2123		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123 & ext_imm_1620=1 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm {
-    setCopReg(0:1,m16_ry,m16_i_imm:1,ext_imm_2123:1);
+:mtc0 m16_ry, m16_RD0		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123 & ext_imm_1620=1 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_RD0 {
+    setCopReg(0:1, m16_RD0, m16_ry); 
 }
 
 :movz m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 {

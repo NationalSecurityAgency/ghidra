@@ -53,6 +53,7 @@ public class SarifClassesNamespaceWriter extends AbstractExtWriter {
 		monitor.initialize(classes.size());
 		Iterator<GhidraClass> classNamespaces = symbolTable.getClassNamespaces();
 		while (classNamespaces.hasNext()) {
+			monitor.checkCancelled();
 			GhidraClass next = classNamespaces.next();
 			walkSymbols(next);
 			monitor.increment();

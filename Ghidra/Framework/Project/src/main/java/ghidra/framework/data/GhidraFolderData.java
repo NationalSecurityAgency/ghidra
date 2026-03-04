@@ -1037,7 +1037,7 @@ class GhidraFolderData {
 			if (doa.isClosed()) {
 				throw new ClosedException();
 			}
-			if (!doa.lock(null)) {
+			if (!doa.lock("create file")) {
 				throw new IOException("Object is busy and can not be saved");
 			}
 

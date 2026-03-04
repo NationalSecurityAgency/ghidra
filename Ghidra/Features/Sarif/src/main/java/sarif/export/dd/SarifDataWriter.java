@@ -45,6 +45,7 @@ public class SarifDataWriter extends AbstractExtWriter {
 	private void genData(TaskMonitor monitor) throws CancelledException {
 		monitor.initialize(definedData.size());
 		for (Data d : definedData) {
+			monitor.checkCancelled();
 			ExtData isf = new ExtData(d);
 			SarifObject sarif = new SarifObject("DefinedData", DefinedDataSarifMgr.KEY,
 				getTree(isf), d.getMinAddress(), d.getMaxAddress());

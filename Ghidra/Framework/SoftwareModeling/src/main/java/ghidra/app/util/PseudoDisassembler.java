@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
@@ -28,6 +29,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * PseudoDisassembler.java
@@ -71,7 +73,7 @@ public class PseudoDisassembler {
 
 	private boolean respectExecuteFlag = false;
 
-	private int lastCheckValidDisassemblyCount; // number of last instructions disassembled
+	private int lastCheckValidDisassemblyCount; // number of last instructions disassembled in checkValidSubroutine
 
 	/**
 	 * Create a pseudo disassembler for the given program.
@@ -98,8 +100,11 @@ public class PseudoDisassembler {
 	}
 	
 	/**
-	 * Get the last number of disassembled instructions
-	 * or the number of initial contiguous instruction if requireContiguous is true
+	 * Get the last number of disassembled instructions,
+	 * or the number of initial contiguous instruction if requireContiguous is true,
+	 * after calls to  in checkValidSubroutine() or isValidSubroutine()
+	 * 
+	 * @return number of disassembled instructions
 	 */
 	public int getLastCheckValidInstructionCount() {
 		return lastCheckValidDisassemblyCount;
@@ -128,17 +133,15 @@ public class PseudoDisassembler {
 			UnknownInstructionException, UnknownContextException {
 
 		PseudoDisassemblerContext procContext = new PseudoDisassemblerContext(programContext);
-
-		procContext.flowStart(addr);
 		return disassemble(addr, procContext, false);
 	}
 
 	/**
 	 * Disassemble a single instruction.  The program is not affected.
-	 * @param addr
-	 * @param disassemblerContext
-	 * @param isInDelaySlot
-	 * @return
+	 * @param addr location to disassemble
+	 * @param disassemblerContext context for disassembly
+	 * @param isInDelaySlot true if instruction to be disassembled is in a delaySlot
+	 * @return disassembled instruction
 	 * @throws InsufficientBytesException
 	 * @throws UnknownInstructionException
 	 * @throws UnknownContextException
@@ -148,41 +151,18 @@ public class PseudoDisassembler {
 			throws InsufficientBytesException, UnknownInstructionException,
 			UnknownContextException {
 
-		MemBuffer memBuffer = new DumbMemBufferImpl(memory, addr);
-
-		// check that address is defined in memory
-		try {
-			memBuffer.getByte(0);
-		}
-		catch (Exception e) {
-			return null;
-		}
-
-		InstructionPrototype prototype = null;
+		addr = setTargetContextForDisassembly(disassemblerContext, addr);
+		RegisterValue entryContext = getTargetStartContext(addr, disassemblerContext);
 
 		try {
-			prototype = language.parse(memBuffer, disassemblerContext, isInDelaySlot);
+			// Only disassemble one instruction, and always re-disassemble
+			// in case context has changed.
+			Instruction instr = pseudoDisassemble(addr, entryContext, 1, true);
+			return (PseudoInstruction) instr;
 		}
 		catch (UnknownInstructionException unknownExc) {
 			return null;
 		}
-
-		if (prototype == null) {
-			return null;
-		}
-
-		PseudoInstruction instr;
-		try {
-			instr = new PseudoInstruction(program, addr, prototype, memBuffer, disassemblerContext);
-		}
-		catch (Exception e) {
-			// this is here, if a prototype matches for some number of bytes, but
-			//   the actual instruction is longer than the number of bytes needed for matching
-			//   the prototype.  And all the bytes for the instruction are not available.
-			return null;
-		}
-
-		return instr;
 	}
 
 	/**
@@ -224,34 +204,21 @@ public class PseudoDisassembler {
 			PseudoDisassemblerContext disassemblerContext) throws InsufficientBytesException,
 			UnknownInstructionException, UnknownContextException {
 
+		addr = setTargetContextForDisassembly(disassemblerContext, addr);
+		RegisterValue targetContext = getTargetStartContext(addr, disassemblerContext);
+		
+		pseudoDisassembler = Disassembler.getDisassembler(program, false, false, false,
+			TaskMonitor.DUMMY, msg -> {
+				// ignore log errors
+			});
+
 		MemBuffer memBuffer = new ByteMemBufferImpl(addr, bytes, language.isBigEndian());
-
-		// check that address is defined in memory
-		try {
-			memBuffer.getByte(0);
-		}
-		catch (Exception e) {
+		InstructionBlock instrBlock = pseudoDisassembler.pseudoDisassembleBlock(memBuffer, targetContext, 1);
+		if (instrBlock == null) {
 			return null;
 		}
 
-		InstructionPrototype prototype = null;
-		disassemblerContext.flowStart(addr);
-		prototype = language.parse(memBuffer, disassemblerContext, false);
-
-		if (prototype == null) {
-			return null;
-		}
-
-		PseudoInstruction instr;
-		try {
-			instr = new PseudoInstruction(program, addr, prototype, memBuffer, disassemblerContext);
-		}
-		catch (AddressOverflowException e) {
-			throw new InsufficientBytesException(
-				"failed to build pseudo instruction at " + addr + ": " + e.getMessage());
-		}
-
-		return instr;
+		return (PseudoInstruction) instrBlock.getInstructionAt(addr);
 	}
 
 	/**
@@ -265,9 +232,7 @@ public class PseudoDisassembler {
 	 * @return {@link PseudoData} that acts like Data
 	 */
 	public PseudoData applyDataType(Address addr, DataType dt) {
-
-		Memory memory = program.getMemory();
-
+		
 		MemBuffer memBuffer = new DumbMemBufferImpl(memory, addr);
 
 		// check that address is defined in memory
@@ -424,9 +389,10 @@ public class PseudoDisassembler {
 		AddressSet body = new AddressSet();
 		AddressSet instrStarts = new AddressSet();
 
-		entryPoint = setTargetContextForDisassembly(procContext, entryPoint);
-
 		Address target = entryPoint;
+		
+		entryPoint = setTargetContextForDisassembly(procContext, entryPoint);
+		RegisterValue entryContext = getTargetStartContext(entryPoint, procContext);
 
 		ArrayList<Address> targetList = new ArrayList<>(); // list of valid targets
 		ArrayList<Address> untriedTargetList = new ArrayList<>(); // list of valid targets
@@ -458,17 +424,15 @@ public class PseudoDisassembler {
 			return body;
 		}
 
-		procContext.flowStart(entryPoint);
-
 		try {
 			// look some number of fallthroughs to see if this
 			//   is a valid run of instructions.
 
 			for (int i = 0; target != null && i < maxInstr; i++) {
-				PseudoInstruction instr;
-				instr = disassemble(target, procContext, false);
+				Instruction instr;
+				instr = pseudoDisassemble(target, entryContext, maxInstructions, false);
 
-				boolean doContinue = processor.process(instr);
+				boolean doContinue = processor.process((PseudoInstruction)instr);
 				if (!doContinue) {
 					return body;
 				}
@@ -482,7 +446,7 @@ public class PseudoDisassembler {
 				instrStarts.addRange(instr.getMinAddress(), instr.getMinAddress());
 
 				// check whether processor wants to follow flow on this instruction
-				if (!processor.followFlows(instr)) {
+				if (!processor.followFlows((PseudoInstruction) instr)) {
 					target = getNextTarget(body, untriedTargetList);
 					continue;
 				}
@@ -530,13 +494,8 @@ public class PseudoDisassembler {
 				target = newTarget;
 			}
 		}
-		catch (InsufficientBytesException e) {
-			processor.process(null);
-		}
 		catch (UnknownInstructionException e) {
-			processor.process(null);
-		}
-		catch (UnknownContextException e) {
+			// bad instruction
 			processor.process(null);
 		}
 
@@ -662,6 +621,7 @@ public class PseudoDisassembler {
 		AddressSetView execSet = memory.getExecuteSet();
 
 		entryPoint = setTargetContextForDisassembly(procContext, entryPoint);
+		RegisterValue entryContext = getTargetStartContext(entryPoint, procContext);
 
 		Address target = entryPoint;
 
@@ -683,24 +643,12 @@ public class PseudoDisassembler {
 			return false;
 		}
 
-		RepeatInstructionByteTracker repeatInstructionByteTracker =
-			new RepeatInstructionByteTracker(MAX_REPEAT_BYTES_LIMIT, null);
-
-		procContext.flowStart(entryPoint);
 		try {
 			// look some number of fallthroughs to see if this
 			//   is a valid run of instructions.
 
 			for (int i = 0; target != null && i < maxInstructions; i++) {
-				if (target.compareTo(procContext.getAddress()) < 0) {
-					procContext.copyToFutureFlowState(target);
-					procContext.flowEnd(procContext.getAddress());
-					procContext.flowStart(target);
-				}
-				else {
-					procContext.flowToAddress(target);
-				}
-				PseudoInstruction instr = disassemble(target, procContext, false);
+				Instruction instr = pseudoDisassemble(target, entryContext, maxInstructions, false);
 				
 				if (instr == null) {
 					// if the target is in the external section, which is uninitialized, ignore it!
@@ -712,7 +660,6 @@ public class PseudoDisassembler {
 					}
 					targetList.remove(target);
 					target = getNextTarget(body, untriedTargetList);
-					repeatInstructionByteTracker.reset();
 					continue;
 				}
 				
@@ -723,7 +670,7 @@ public class PseudoDisassembler {
 				}
 				
 				// check if we are getting into bad instruction runs
-				if (repeatInstructionByteTracker.exceedsRepeatBytePattern(instr)) {
+				if (lastPseudoInstructionBlock.getInstructionConflict() != null) {
 					return false;
 				}
 
@@ -743,8 +690,7 @@ public class PseudoDisassembler {
 					catch (AddressOverflowException e) {
 						return false;
 					}
-					procContext.flowToAddress(addr);
-					PseudoInstruction dsInstr = disassemble(addr, procContext, true);
+					Instruction dsInstr = pseudoDisassemble(addr, entryContext, maxInstructions, false);
 					if (dsInstr == null) {
 						return false;
 					}
@@ -762,9 +708,8 @@ public class PseudoDisassembler {
 				// if instruction has fall thru
 				Address fallThru = null;
 				if (instr.hasFallthrough()) {
-					if (checkNonReturning(program, flowType, instr)) {
+					if (checkNonReturning(flowType, instr)) {
 						target = getNextTarget(body, untriedTargetList);
-						repeatInstructionByteTracker.reset();
 						continue;
 					}
 					newTarget = instr.getFallThrough();
@@ -793,7 +738,6 @@ public class PseudoDisassembler {
 
 					if (newTarget == null) {
 						newTarget = getNextTarget(body, untriedTargetList);
-						repeatInstructionByteTracker.reset();
 					}
 				}
 
@@ -817,7 +761,6 @@ public class PseudoDisassembler {
 							if (func != null) {
 								didCallValidSubroutine = true;
 								newTarget = getNextTarget(body, untriedTargetList);
-								repeatInstructionByteTracker.reset();
 								continue;
 							}
 							targetList.add(address);
@@ -865,16 +808,8 @@ public class PseudoDisassembler {
 				target = newTarget;
 			}
 		}
-		catch (InsufficientBytesException e) {
-			// can't parse not enough bytes
-			return false;
-		}
 		catch (UnknownInstructionException e) {
 			// bad instruction
-			return false;
-		}
-		catch (UnknownContextException e) {
-			// something wrong with context
 			return false;
 		}
 
@@ -905,8 +840,71 @@ public class PseudoDisassembler {
 
 		return false;
 	}
+	
+	
+	private InstructionBlock lastPseudoInstructionBlock;
+	private Disassembler pseudoDisassembler;
+	
+	/**
+	 * Disassemble a block of instructions
+	 * 
+	 * @param addr location to disassemble
+	 * @param entryContext context at the start of the block
+	 * @param maxInstr maximum number of instructions to disassemble
+	 * @param forceRedisassembly force re-disassembly (don't use cached block)
+	 * 
+	 * @return the instruction (PseudoInstruction)
+	 * @throws UnknownInstructionException if instruction at location not disassemblable
+	 */
 
-	private boolean checkNonReturning(Program program, FlowType flowType, PseudoInstruction instr) {
+	private Instruction pseudoDisassemble(Address addr, RegisterValue entryContext, int maxInstr, boolean forceRedisassembly) throws UnknownInstructionException {
+		Instruction instr;
+		if (!forceRedisassembly && lastPseudoInstructionBlock != null) {
+			instr = lastPseudoInstructionBlock.getInstructionAt(addr);
+			if (instr != null) {
+				return instr;
+			}
+			InstructionError error = lastPseudoInstructionBlock.getInstructionConflict();
+			if (error != null && addr.equals(error.getInstructionAddress())) {
+				throw new UnknownInstructionException(error.getConflictMessage());
+			}
+			lastPseudoInstructionBlock = null;
+		}
+
+		if (pseudoDisassembler == null) {
+			pseudoDisassembler = Disassembler.getDisassembler(program, false, false, false,
+				TaskMonitor.DUMMY, msg -> {
+					// ignore log errors
+				});
+			pseudoDisassembler.setRepeatPatternLimit(MAX_REPEAT_BYTES_LIMIT);
+		} else if (forceRedisassembly) {
+			pseudoDisassembler.resetDisassemblerContext();
+		}
+
+		lastPseudoInstructionBlock =
+			pseudoDisassembler.pseudoDisassembleBlock(addr, entryContext, maxInstr);
+		if (lastPseudoInstructionBlock != null) {
+			InstructionError error = lastPseudoInstructionBlock.getInstructionConflict();				// Look for zero-byte run first
+			if (error != null &&
+				error.getConflictMessage().startsWith("Maximum run of Zero-Byte")) {
+				throw new UnknownInstructionException(error.getConflictMessage());		// Don't return any of the zero-byte instructions
+			}
+			instr = lastPseudoInstructionBlock.getInstructionAt(addr);
+			if (instr != null) {
+				return instr;
+			}
+			if (error != null && addr.equals(error.getInstructionAddress())) {
+				throw new UnknownInstructionException(error.getConflictMessage());
+			}
+			if (program.getMemory().isExternalBlockAddress(addr)) {
+				throw new UnknownInstructionException(
+					"Unable to disassemble EXTERNAL block location: " + addr);
+			}
+		}
+		throw new UnknownInstructionException("Invalid instruction address (improperly aligned)");
+	}
+
+	private boolean checkNonReturning(FlowType flowType, Instruction instr) {
 		if (!flowType.isCall()) {
 			return false;
 		}
@@ -1058,6 +1056,25 @@ public class PseudoDisassembler {
 			return new RegisterValue(lowBitCodeMode, BigInteger.ONE);
 		}
 		return null;
+	}
+	
+	/**
+	 * Get the context register setup with the starting context for target
+	 * 
+	 * @param target address to get context register value
+	 * @param procContext disassembly context
+	 * @return context register value set with current context for target
+	 */
+	private RegisterValue getTargetStartContext(Address target,
+			PseudoDisassemblerContext procContext) {
+		procContext.flowStart(target);
+		
+		RegisterValue entryContext = null;
+		Register baseContextRegister = procContext.getBaseContextRegister();
+		if (baseContextRegister != null) {
+			entryContext = procContext.getRegisterValue(baseContextRegister);
+		}
+		return entryContext;
 	}
 
 	/**

@@ -1313,7 +1313,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	break(mic_code:2);
 }
 
-:sdbbp16 SDB16								is ISA_MODE=1 & RELP=0 & mic_op=0b100010 & SDB16 & ((mic_break=0b101100 & REL6=0) | (mic_breakr6=0b111011 & REL6=1))  {
+:sdbbp16 SDB16								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & SDB16 & ((mic_break=0b101100 & REL6=0) | (mic_breakr6=0b111011 & REL6=1))  {
 	break(SDB16);
 }
 

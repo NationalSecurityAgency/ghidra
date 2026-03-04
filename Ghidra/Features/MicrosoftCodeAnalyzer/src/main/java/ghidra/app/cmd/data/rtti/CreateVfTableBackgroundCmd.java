@@ -119,7 +119,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 				String demangledTypeDescriptor = rtti0Model.getDemangledTypeDescriptor();
 				String prefixString = ((demangledTypeDescriptor != null)
 						? (demangledTypeDescriptor + Namespace.DELIMITER)
-						: "");
+						: rtti0Model.getOriginalTypename() + Namespace.DELIMITER);
 				data.setComment(CommentType.EOL, "terminator for " + prefixString + VF_TABLE_LABEL);
 				return true;
 			}

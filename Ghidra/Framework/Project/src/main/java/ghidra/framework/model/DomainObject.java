@@ -400,7 +400,7 @@ public interface DomainObject {
 	 * </pre>
 	 * 
 	 * @param description a short description of the changes to be made.
-	 * @return transaction object
+	 * @return {@link AutoCloseable} transaction object
 	 * @throws IllegalStateException if this {@link DomainObject} has already been closed.
 	 */
 	public Transaction openTransaction(String description) throws IllegalStateException;

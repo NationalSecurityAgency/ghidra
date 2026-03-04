@@ -151,11 +151,8 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 			tool.setStatusInfo("Unable to create selected ranges table: no addresses in selection");
 			return;
 		}
-		ToolOptions options = tool.getOptions(OPTION_CATEGORY_NAME);
-		int resultsLimit = options.getInt(RANGES_LIMIT_OPTION_NAME, RANGES_LIMIT_DEFAULT);
-		long minLength = options.getLong(MIN_RANGE_SIZE_OPTION_NAME, MIN_RANGE_SIZE_DEFAULT);
-		AddressRangeTableModel model =
-			new AddressRangeTableModel(tool, program, selection, resultsLimit, minLength);
+
+		AddressRangeTableModel model = new AddressRangeTableModel(tool, program, selection);
 		Icon markerIcon = new GIcon("icon.plugin.codebrowser.cursor.marker");
 		String title = "Selected Ranges in " + program.getName();
 		TableComponentProvider<AddressRangeInfo> tableProvider =
