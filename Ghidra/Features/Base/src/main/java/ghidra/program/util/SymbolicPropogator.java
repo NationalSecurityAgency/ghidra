@@ -450,7 +450,7 @@ public class SymbolicPropogator {
 			this.destination = destination;
 			this.pcodeIndex = pcodeIndex;
 			this.continueAfterHittingFlow = continueAfterHittingFlow;
-			vContext.pushMemState();
+			vContext.pushMemState(pcodeIndex != 0);
 		}
 		
 		public boolean isContinueAfterHittingFlow() {
