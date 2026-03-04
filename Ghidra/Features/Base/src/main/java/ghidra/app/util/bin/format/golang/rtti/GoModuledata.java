@@ -412,14 +412,17 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * @return new GoModuledata instance, or null if not found
 	 * @throws IOException if error reading found structure
 	 */
-	/* package */ static GoModuledata getFirstModuledata(GoRttiMapper context)
-			throws IOException {
+	/* package */ static GoModuledata getFirstModuledata(GoRttiMapper context) throws IOException {
 		Program program = context.getProgram();
-		Symbol firstModuleDataSymbol = GoRttiMapper.getGoSymbol(program, "runtime.firstmoduledata");
-		if (firstModuleDataSymbol == null) {
-			return null;
+		MemoryBlock memblk = context.getGoSection("go.module");
+		if (memblk != null) {
+			return context.readStructure(GoModuledata.class, memblk.getStart());
 		}
-		return context.readStructure(GoModuledata.class, firstModuleDataSymbol.getAddress());
+		Symbol firstModuleDataSymbol = GoRttiMapper.getGoSymbol(program, "runtime.firstmoduledata");
+		if (firstModuleDataSymbol != null) {
+			return context.readStructure(GoModuledata.class, firstModuleDataSymbol.getAddress());
+		}
+		return null;
 	}
 
 	/**

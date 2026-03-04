@@ -42,20 +42,24 @@ public class GoMapType extends GoType {
 	@MarkupReference("getElement")
 	private long elem;	// ptr to type
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "-1.25")
 	@MarkupReference("getBucket")
 	private long bucket;	// ptr to type
+
+	@FieldMapping(presentWhen = "1.26-")
+	@MarkupReference("getGroup")
+	private long group;	// ptr to group type
 
 	@FieldMapping
 	private long hasher;	// pointer to "func(Pointer, pointer) pointer"
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "-1.25")
 	private int keysize;
 
-	@FieldMapping(fieldName = {"elemsize", "ValueSize"})
+	@FieldMapping(fieldName = { "elemsize", "ValueSize" }, presentWhen = "-1.25")
 	private int elemsize;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "-1.25")
 	private int bucketsize;
 
 	@FieldMapping
@@ -95,7 +99,18 @@ public class GoMapType extends GoType {
 	 */
 	@Markup
 	public GoType getBucket() throws IOException {
-		return programContext.getGoTypes().getType(bucket);
+		return bucket != 0 ? programContext.getGoTypes().getType(bucket) : null;
+	}
+
+	/**
+	 * Returns the GoType that defines the map's group, referenced by the group field's markup annotation
+	 * 
+	 * @return GoType that defines the map's group
+	 * @throws IOException if error reading data
+	 */
+	@Markup
+	public GoType getGroup() throws IOException {
+		return group != 0 ? programContext.getGoTypes().getType(group) : null;
 	}
 
 	@Override
