@@ -189,7 +189,7 @@ public class StructureMerger extends DataTypeMerger<Structure> {
 		DataType resultDt = workingComp.getDataType();
 		DataType dt = comp.getDataType();
 		if (!resultDt.equals(dt)) {
-			error("Packed components have conflicting datatypes at ordinal" +
+			error("Packed components have conflicting datatypes at ordinal " +
 				workingComp.getOrdinal() + ", offset " + comp.getOffset());
 		}
 	}
