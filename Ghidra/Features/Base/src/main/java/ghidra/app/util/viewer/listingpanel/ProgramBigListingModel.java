@@ -38,6 +38,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 public class ProgramBigListingModel implements ListingModel, FormatModelListener,
 		DomainObjectListener, ChangeListener, OptionsChangeListener {
@@ -454,21 +455,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		if (parent.getAddress().equals(addr)) {
 			return null;
 		}
-		Data data;
-		if (parent.getBaseDataType() instanceof Union) {
-			int index =
-				openCloseMgr.getOpenDataIndex(parent);
-			if (index < 0) {
-				return null;
-			}
-			data = parent.getComponent(index);
-		}
-		else {
-			int offset = (int) addr.subtract(parent.getMinAddress());
-			List<Data> componentsContaining = parent.getComponentsContaining(offset - 1);
-			data = componentsContaining.isEmpty() ? null
-					: componentsContaining.get(componentsContaining.size() - 1);
-		}
+		Data data = getOpenDataAtAddress(parent, addr);
 		if (data == null) {
 			return addr.previous();
 		}
@@ -487,9 +474,28 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 		int index = data.getComponentIndex();
 		if (index > 0) {
-			return parent.getComponent(index - 1).getAddress();
+			Address previous = parent.getComponent(index - 1).getAddress();
+			if (!previous.equals(addr)) {
+				return previous;
+			}
 		}
 		return null;
+	}
+	
+	private Data getOpenDataAtAddress(Data parent, Address address) {
+		if (parent.getBaseDataType() instanceof Union) {
+			int index = openCloseMgr.getOpenDataIndex(parent);
+			if (index < 0) {
+				return null;
+			}
+			return parent.getComponent(index);
+		}
+		int offset = (int) address.subtract(parent.getMinAddress());
+		List<Data> components = parent.getComponentsContaining(offset - 1);
+		if (CollectionUtils.isBlank(components)) {
+			return null;
+		}
+		return components.get(components.size() - 1);
 	}
 
 	private void addOpenData(List<Data> list, Data data, Address addr) {
