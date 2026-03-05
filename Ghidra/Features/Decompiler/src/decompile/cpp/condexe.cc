@@ -336,7 +336,7 @@ void ConditionalExecution::doReplacement(PcodeOp *op)
       if (readop->code() == CPUI_MULTIEQUAL) {
 	rvn = getMultiequalRead(op, readop, slot);
       }
-      else if (readop->code() == CPUI_RETURN) {		// Cannot replace input of RETURN directly, create COPY to hold input
+      else if (readop->code() == CPUI_RETURN && readop->numInput() > 1) {		// Cannot replace input of RETURN directly, create COPY to hold input
 	Varnode *retvn = readop->getIn(1);
 	PcodeOp *newcopyop = fd->newOp(1,readop->getAddr());
 	fd->opSetOpcode(newcopyop,CPUI_COPY);
