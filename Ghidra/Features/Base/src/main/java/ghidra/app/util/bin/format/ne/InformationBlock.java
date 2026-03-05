@@ -194,10 +194,10 @@ public class InformationBlock {
 	private short ne_swaparea;     // Minimum code swap area size
 	private short ne_expver;       // Expected windows version number
 
-	InformationBlock(BinaryReader reader, short index)
+	InformationBlock(BinaryReader reader, int index)
 			throws InvalidWindowsHeaderException, IOException {
 		long oldIndex = reader.getPointerIndex();
-		reader.setPointerIndex(Short.toUnsignedInt(index));
+		reader.setPointerIndex(index);
 
 		ne_magic = reader.readNextShort();
 
