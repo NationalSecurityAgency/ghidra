@@ -95,10 +95,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("", descField.getText());
 		assertTrue(descField.isEditable());
 
-		// category should be notepad.xml/Category1
+		// category should be TestProgram/Category1
 		JTextField catField = getTextField(panel, "Category");
 		assertNotNull(catField);
-		assertEquals("notepad/Category1", catField.getText());
+		assertEquals("TestProgram/Category1", catField.getText());
 		assertFalse(catField.isEditable());
 
 		// size should be "1"
