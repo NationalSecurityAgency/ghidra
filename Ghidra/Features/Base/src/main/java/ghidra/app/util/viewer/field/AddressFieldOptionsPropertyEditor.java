@@ -38,9 +38,11 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 	private static final String ADDRESS_DIGITS_LABEL = "Minimum Number of Address digits";
 	private static final String PADDING_LABEL = "Fully Pad With Leading Zeros";
 	private static final String JUSTIFICATION_LABEL = "Justification";
+	private static final String UPPER_CASE_LABEL = "Display in Upper Case";
 
 	private static final String[] NAMES =
-		{ SHOW_BLOCK_NAME_LABEL, ADDRESS_DIGITS_LABEL, PADDING_LABEL, JUSTIFICATION_LABEL };
+		{ SHOW_BLOCK_NAME_LABEL, ADDRESS_DIGITS_LABEL, PADDING_LABEL, JUSTIFICATION_LABEL,
+			UPPER_CASE_LABEL };
 
 	// help tooltips
 	private static final String ADDRESS_PADDING_TOOLTIP = HTMLUtilities.toWrappedHTML(
@@ -56,9 +58,11 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		"Specifies the justification for address text in the address field. The address " +
 			"text will clip on the opposite side of the justification.",
 		75);
+	private static final String UPPER_CASE_TOOLTIP = HTMLUtilities.toWrappedHTML(
+		"Displays the hex digits of addresses in upper case in the address field.", 75);
 
 	private static final String[] DESCRIPTIONS = { ADDRESS_PADDING_TOOLTIP, MIN_HEX_DIGITS_TOOLTIP,
-		SHOW_BLOCKNAME_TOOLTIP, RIGHT_JUSTIFY_TOOLTIP };
+		SHOW_BLOCKNAME_TOOLTIP, RIGHT_JUSTIFY_TOOLTIP, UPPER_CASE_TOOLTIP };
 
 	private AddressFieldOptionsWrappedOption addressFieldOptionsWrappedOption;
 
@@ -67,6 +71,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 	private IntegerTextField minDigitsField;
 	private GCheckBox showBlocknameCheckbox;
 	private GhidraComboBox<String> justificationCombobox;
+	private GCheckBox upperCaseCheckbox;
 
 	public AddressFieldOptionsPropertyEditor() {
 		editorComponent = buildEditor();
@@ -110,8 +115,16 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		justificationCombobox.setToolTipText(RIGHT_JUSTIFY_TOOLTIP);
 		panel.add(justificationCombobox);
 
+		label = new GDLabel(UPPER_CASE_LABEL, SwingConstants.RIGHT);
+		label.setToolTipText(UPPER_CASE_TOOLTIP);
+		panel.add(label);
+		upperCaseCheckbox = new GCheckBox();
+		upperCaseCheckbox.setToolTipText(UPPER_CASE_TOOLTIP);
+		panel.add(upperCaseCheckbox);
+
 		showBlocknameCheckbox.addItemListener(evt -> firePropertyChange());
 		justificationCombobox.addItemListener(evt -> firePropertyChange());
+		upperCaseCheckbox.addItemListener(evt -> firePropertyChange());
 
 		padCheckBox.addItemListener(evt -> {
 			boolean enabled = !padCheckBox.isSelected();
@@ -154,6 +167,9 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		}
 		boolean enabled = !padCheckBox.isSelected();
 		minDigitsField.setEnabled(enabled);
+		if (addressPaddingOption.displayUpperCase() != upperCaseCheckbox.isSelected()) {
+			upperCaseCheckbox.setSelected(addressPaddingOption.displayUpperCase());
+		}
 	}
 
 	private AddressFieldOptionsWrappedOption cloneAddressPadValues() {
@@ -162,6 +178,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		newOption.setMinimumHexDigits(getMinNumberOfDigits());
 		newOption.setShowBlockName(showBlocknameCheckbox.isSelected());
 		newOption.setRightJustify(justificationCombobox.getSelectedItem().equals("Right"));
+		newOption.setDisplayUpperCase(upperCaseCheckbox.isSelected());
 		return newOption;
 	}
 
