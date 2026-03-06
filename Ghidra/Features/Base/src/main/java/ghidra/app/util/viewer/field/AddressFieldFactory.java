@@ -148,7 +148,13 @@ public class AddressFieldFactory extends FieldFactory {
 		}
 		text = addr.toString(space.showSpaceName(), padZeros ? 16 : minHexDigits);
 		if (displayUpperCase) {
-			text = text.toUpperCase();
+			int colonIdx = text.lastIndexOf(':');
+			if (colonIdx >= 0) {
+				text = text.substring(0, colonIdx + 1) + text.substring(colonIdx + 1).toUpperCase();
+			}
+			else {
+				text = text.toUpperCase();
+			}
 		}
 		return text;
 	}
