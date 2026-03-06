@@ -93,8 +93,7 @@ if [[ ${INDEX} -lt 6 ]]; then
 fi
 
 # Sets SUPPORT_DIR to the directory that contains this file (launch.sh)
-SUPPORT_DIR="${0%/*}"
-
+SUPPORT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Ensure Ghidra path doesn't contain illegal characters
 if [[ "${SUPPORT_DIR}" = *"!"* ]]; then
 	echo "Ghidra path cannot contain a \"!\" character."
