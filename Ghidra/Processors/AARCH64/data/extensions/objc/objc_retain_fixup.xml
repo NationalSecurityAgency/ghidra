@@ -1,0 +1,46 @@
+<callfixup name="_objc_retain_fixup">
+    <target name="_objc_retain"/>
+    <target name="_objc_retainAutoreleasedReturnValue"/>
+    <target name="_objc_retainAutoreleaseReturnValue"/>
+    <target name="_objc_autoreleaseReturnValue"/>
+    <target name="_objc_retainAutoRelease"/>
+    <target name="_objc_autorelease"/>
+    <target name="_objc_claimAutoreleasedReturnValue"/>
+    <target name="_objc_opt_self"/>
+    <target name="_objc_unsafeClaimAutoreleasedReturnValue"/>
+    <target name="_objc_retainBlock"/>
+    <target name="_objc_retain_x0"/>
+    <target name="_objc_retain_x1"/>
+    <target name="_objc_retain_x2"/>
+    <target name="_objc_retain_x3"/>
+    <target name="_objc_retain_x4"/>
+    <target name="_objc_retain_x5"/>
+    <target name="_objc_retain_x6"/>
+    <target name="_objc_retain_x7"/>
+    <target name="_objc_retain_x8"/>
+    <target name="_objc_retain_x9"/>
+    <target name="_objc_retain_x10"/>
+    <target name="_objc_retain_x11"/>
+    <target name="_objc_retain_x12"/>
+    <target name="_objc_retain_x13"/>
+    <target name="_objc_retain_x14"/>
+    <target name="_objc_retain_x15"/>
+    <target name="_objc_retain_x16"/>
+    <target name="_objc_retain_x17"/>
+    <target name="_objc_retain_x18"/>
+    <target name="_objc_retain_x19"/>
+    <target name="_objc_retain_x20"/>
+    <target name="_objc_retain_x21"/>
+    <target name="_objc_retain_x22"/>
+    <target name="_objc_retain_x23"/>
+    <target name="_objc_retain_x24"/>
+    <target name="_objc_retain_x25"/>
+    <target name="_objc_retain_x26"/>
+    <target name="_objc_retain_x27"/>
+    <target name="_objc_retain_x28"/>
+    <pcode>
+        <body><![CDATA[
+            x0 = x0;
+        ]]></body>
+    </pcode>
+</callfixup>

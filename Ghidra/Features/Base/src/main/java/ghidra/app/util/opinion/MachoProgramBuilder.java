@@ -40,6 +40,7 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
+import ghidra.app.util.bin.format.objc.ObjcUtils;
 import ghidra.app.util.bin.format.objc.objc1.Objc1Constants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
@@ -67,6 +68,13 @@ import ghidra.util.task.TaskMonitor;
 public class MachoProgramBuilder {
 
 	public static final String HEADER_SYMBOL = "MACH_HEADER";
+
+	/**
+	 * The spacing between symbols that get created in the 
+	 * {@link MemoryBlock#EXTERNAL_BLOCK_NAME EXTERNAL block}. This will allow some room for 
+	 * the recreation of external method thunks as they are discovered during analysis.
+	 */
+	public static final int UNDEFINED_SYMBOL_SPACING = 0x100;
 
 	protected MachHeader machoHeader;
 	protected Program program;
@@ -168,7 +176,7 @@ public class MachoProgramBuilder {
 		// Perform additional actions
 		renameObjMsgSendRtpSymbol();
 		fixupProgramTree(null); // should be done last to account for new memory blocks
-		setCompiler();
+		setCompiler(provider.getName());
 	}
 
 	/**
@@ -708,37 +716,37 @@ public class MachoProgramBuilder {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (!(command instanceof SymbolTableCommand)) {
+			if (!(command instanceof SymbolTableCommand symbolTableCommand)) {
 				continue;
 			}
-			SymbolTableCommand symbolTableCommand = (SymbolTableCommand) command;
 			List<NList> symbols = symbolTableCommand.getSymbols();
-			monitor.initialize(symbols.size(), "Collectiing undefined symbols...");
+			monitor.initialize(symbols.size(), "Collecting undefined symbols...");
 			for (NList symbol : symbols) {
 				monitor.increment();
 				if (symbol.isSymbolicDebugging()) {
 					continue;
 				}
 				if (symbol.isTypeUndefined()) {
-					List<Symbol> globalSymbols = program.getSymbolTable()
-							.getLabelOrFunctionSymbols(symbol.getString(), null);
-					if (globalSymbols.isEmpty()) {//IF IT DOES NOT ALREADY EXIST...
+					String name = symbol.getString();
+					List<Symbol> globalSymbols =
+						program.getSymbolTable().getLabelOrFunctionSymbols(name, null);
+					if (globalSymbols.isEmpty()) { //IF IT DOES NOT ALREADY EXIST...
 						undefinedSymbols.add(symbol);
 					}
 				}
 			}
 		}
-		if (undefinedSymbols.size() == 0) {
+		if (undefinedSymbols.isEmpty()) {
 			return;
 		}
 		try {
-			Address addr = MemoryBlockUtils.addExternalBlock(program,
-				undefinedSymbols.size() * machoHeader.getAddressSize(), log);
+			long blockSize = undefinedSymbols.size() * UNDEFINED_SYMBOL_SPACING;
+			Address addr = MemoryBlockUtils.addExternalBlock(program, blockSize, log);
 			monitor.initialize(undefinedSymbols.size(), "Processing undefined symbols...");
 			for (NList symbol : undefinedSymbols) {
 				monitor.increment();
+				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				try {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 					if (name != null && name.length() > 0) {
 						program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
 						program.getExternalManager()
@@ -748,7 +756,7 @@ public class MachoProgramBuilder {
 				catch (Exception e) {
 					log.appendMsg("Unable to create undefined symbol: " + e.getMessage());
 				}
-				addr = addr.add(machoHeader.getAddressSize());
+				addr = addr.add(UNDEFINED_SYMBOL_SPACING);
 			}
 		}
 		catch (Exception e) {
@@ -761,10 +769,9 @@ public class MachoProgramBuilder {
 		List<LoadCommand> commands = machoHeader.getLoadCommands();
 		for (LoadCommand command : commands) {
 			monitor.checkCancelled();
-			if (!(command instanceof SymbolTableCommand)) {
+			if (!(command instanceof SymbolTableCommand symbolTableCommand)) {
 				continue;
 			}
-			SymbolTableCommand symbolTableCommand = (SymbolTableCommand) command;
 			List<NList> symbols = symbolTableCommand.getSymbols();
 			monitor.initialize(symbols.size(), "Collecting absolute symbols...");
 			for (NList symbol : symbols) {
@@ -995,8 +1002,7 @@ public class MachoProgramBuilder {
 				listing.setComment(loadCommandAddr, CommentType.PRE,
 					LoadCommandTypes.getLoadCommandName(loadCommand.getCommandType()));
 
-				if (loadCommand instanceof SegmentCommand) {
-					SegmentCommand segmentCommand = (SegmentCommand) loadCommand;
+				if (loadCommand instanceof SegmentCommand segmentCommand) {
 					listing.setComment(loadCommandAddr, CommentType.EOL,
 						segmentCommand.getSegmentName());
 
@@ -1011,51 +1017,43 @@ public class MachoProgramBuilder {
 						sectionOffset += sectionDataType.getLength();
 					}
 				}
-				else if (loadCommand instanceof DynamicLinkerCommand) {
-					DynamicLinkerCommand dynamicLinkerCommand = (DynamicLinkerCommand) loadCommand;
+				else if (loadCommand instanceof DynamicLinkerCommand dynamicLinkerCommand) {
 					LoadCommandString name = dynamicLinkerCommand.getLoadCommandString();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof DynamicLibraryCommand) {
-					DynamicLibraryCommand dynamicLibraryCommand =
-						(DynamicLibraryCommand) loadCommand;
+				else if (loadCommand instanceof DynamicLibraryCommand dynamicLibraryCommand) {
 					LoadCommandString name = dynamicLibraryCommand.getDynamicLibrary().getName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof RunPathCommand) {
-					RunPathCommand runPathCommand = (RunPathCommand) loadCommand;
+				else if (loadCommand instanceof RunPathCommand runPathCommand) {
 					LoadCommandString path = runPathCommand.getPath();
 					DataUtilities.createData(program, loadCommandAddr.add(path.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - path.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubFrameworkCommand) {
-					SubFrameworkCommand subFrameworkCommand = (SubFrameworkCommand) loadCommand;
+				else if (loadCommand instanceof SubFrameworkCommand subFrameworkCommand) {
 					LoadCommandString name = subFrameworkCommand.getUmbrellaFrameworkName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubClientCommand) {
-					SubClientCommand subClientCommand = (SubClientCommand) loadCommand;
+				else if (loadCommand instanceof SubClientCommand subClientCommand) {
 					LoadCommandString name = subClientCommand.getClientName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubLibraryCommand) {
-					SubLibraryCommand subLibraryCommand = (SubLibraryCommand) loadCommand;
+				else if (loadCommand instanceof SubLibraryCommand subLibraryCommand) {
 					LoadCommandString name = subLibraryCommand.getSubLibraryName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubUmbrellaCommand) {
-					SubUmbrellaCommand subUmbrellaCommand = (SubUmbrellaCommand) loadCommand;
+				else if (loadCommand instanceof SubUmbrellaCommand subUmbrellaCommand) {
 					LoadCommandString name = subUmbrellaCommand.getSubUmbrellaFrameworkName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
@@ -1064,15 +1062,13 @@ public class MachoProgramBuilder {
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof FileSetEntryCommand) {
-					FileSetEntryCommand fileSetEntryCommand = (FileSetEntryCommand) loadCommand;
+				else if (loadCommand instanceof FileSetEntryCommand fileSetEntryCommand) {
 					LoadCommandString name = fileSetEntryCommand.getFileSetEntryId();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof LinkerOptionCommand) {
-					LinkerOptionCommand linkerOptionCommand = (LinkerOptionCommand) loadCommand;
+				else if (loadCommand instanceof LinkerOptionCommand linkerOptionCommand) {
 					List<String> linkerOptions = linkerOptionCommand.getLinkerOptions();
 					int offset = linkerOptionCommand.toDataType().getLength();
 					for (int i = 0; i < linkerOptions.size(); i++) {
@@ -1813,27 +1809,36 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void setCompiler() throws CancelledException {
-		// Check for Rust
+	protected void setCompiler(String source) throws CancelledException {
+		if (ObjcUtils.isObjc(program)) {
+			try {
+				program.setCompiler(ObjcUtils.OBJC_COMPILER);
+				int count = ObjcUtils.addExtensions(program, monitor);
+				if (count > 0) {
+					log.appendMsg("%s: installed %d objc SpecExtensions".formatted(source, count));
+				}
+			}
+			catch (IOException e) {
+				log.appendMsg("%s: objc error - %s".formatted(source, e.getMessage()));
+			}
+			return;
+		}
+
 		try {
-			SegmentCommand segment = machoHeader.getSegment(SegmentNames.SEG_TEXT);
-			if (segment == null) {
-				return;
-			}
-			Section section = segment.getSectionByName(SectionNames.TEXT_CONST);
-			if (section == null) {
-				return;
-			}
-			if (RustUtilities.isRust(program,
+			Section section =
+				machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.TEXT_CONST);
+			if (section != null && RustUtilities.isRust(program,
 				memory.getBlock(space.getAddress(section.getAddress())), monitor)) {
 				program.setCompiler(RustConstants.RUST_COMPILER);
-				int extensionCount = RustUtilities.addExtensions(program, monitor,
+				int count = RustUtilities.addExtensions(program, monitor,
 					RustConstants.RUST_EXTENSIONS_UNIX);
-				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+				if (count > 0) {
+					log.appendMsg("%s: installed %d rust SpecExtensions".formatted(source, count));
+				}
 			}
 		}
 		catch (IOException e) {
-			log.appendMsg("Rust error: " + e.getMessage());
+			log.appendMsg("%s: Rust error - %s".formatted(source, e.getMessage()));
 		}
 	}
 
