@@ -467,3 +467,38 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 {
   CRFD[2,1] = A:4 f< B:4;
 }
+
+# =================================================================
+# SPE Floating Point Single-Precision Min/Max
+
+# efsmax rT,rA,rB      010 1011 0000
+#define pcodeop FloatingPointMaximum;
+:efsmax D,A,B is OP=4 & D & A & B & XOP_0_10=0x2B0
+{
+   local tmpA:4 = A:4;
+   local tmpB:4 = B:4;
+   local result:4 = tmpA;
+   if (tmpA f>= tmpB) goto <done>;
+   result = tmpB;
+   <done>
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( result );
+   setFPRF( result );
+   setSummaryFPSCR();
+}
+
+# efsmin rT,rA,rB      010 1011 0001
+#define pcodeop FloatingPointMinimum;
+:efsmin D,A,B is OP=4 & D & A & B & XOP_0_10=0x2B1
+{
+   local tmpA:4 = A:4;
+   local tmpB:4 = B:4;
+   local result:4 = tmpA;
+   if (tmpA f<= tmpB) goto <done>;
+   result = tmpB;
+   <done>
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( result );
+   setFPRF( result );
+   setSummaryFPSCR();
+}
