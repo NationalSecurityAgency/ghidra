@@ -43,7 +43,7 @@ import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.bytesearch.*;
-import ghidra.util.datastruct.ListAccumulator;
+import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -4287,14 +4287,13 @@ public class RecoveredClassHelper {
 
 			monitor.checkCancelled();
 
-			ListAccumulator<LocationReference> accumulator = new ListAccumulator<>();
-
 			boolean discoverTypes = true;
-			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program, discoverTypes,
-				monitor);
 
-			List<LocationReference> referenceList = accumulator.asList();
-			if (referenceList.isEmpty()) {
+			SetAccumulator<LocationReference> accumulator = new SetAccumulator<>();
+			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program,
+				discoverTypes, monitor);
+
+			if (accumulator.size() == 0) {
 				// delete empty class data type and empty parent folders
 				removeEmptyStructure(badStructure.getDataTypePath().getCategoryPath(),
 					badStructure.getName());

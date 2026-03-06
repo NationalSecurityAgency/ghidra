@@ -17,12 +17,12 @@ package docking.widgets.table.threaded;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.*;
 
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.datastruct.SynchronizedListAccumulator;
+import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
@@ -218,7 +218,9 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 	 * An accumulator that will essentially periodically update the table with the data that
 	 * is being provided to the accumulator.
 	 */
-	private class IncrementalUpdatingAccumulator extends SynchronizedListAccumulator<ROW_OBJECT> {
+	private class IncrementalUpdatingAccumulator implements Accumulator<ROW_OBJECT> {
+
+		private List<ROW_OBJECT> list = new ArrayList<>();
 		private volatile boolean isDone;
 		private Runnable runnable = () -> {
 
@@ -245,12 +247,6 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			new SwingUpdateManager((int) threadedModel.getMinDelay(),
 				(int) threadedModel.getMaxDelay(), "Incremental Table Load Update", runnable);
 
-		@Override
-		public synchronized void add(ROW_OBJECT t) {
-			super.add(t);
-			swingUpdateManager.update();
-		}
-
 		private boolean isCancelledOrDone() {
 			return isCancelled || isDone;
 		}
@@ -259,18 +255,37 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			swingUpdateManager.dispose();
 		}
 
+		void flushData() {
+			isDone = true;
+			swingUpdateManager.dispose();
+			updateManager.reloadSpecificData(asList());
+		}
+
+		@Override
+		public synchronized void add(ROW_OBJECT t) {
+			list.add(t);
+			swingUpdateManager.update();
+		}
+
 		@Override
 		public synchronized void addAll(Collection<ROW_OBJECT> collection) {
-			super.addAll(collection);
+			list.addAll(collection);
 			if (collection.size() > 0) {
 				swingUpdateManager.update();
 			}
 		}
 
-		void flushData() {
-			isDone = true;
-			swingUpdateManager.dispose();
-			updateManager.reloadSpecificData(asList());
+		private synchronized List<ROW_OBJECT> asList() {
+			return new ArrayList<>(list);
+		}
+
+		@Override
+		public synchronized int getProgress() {
+			return list.size();
+		}
+
+		private synchronized void clear() {
+			list.clear();
 		}
 	}
 }

@@ -90,7 +90,7 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 				range.getMaxAddress(), range.getLength(), isSameByte, numRefsTo, numRefsFrom);
 
 			accumulator.add(info);
-			if (accumulator.size() >= resultsLimit) {
+			if (accumulator.getProgress() >= resultsLimit) {
 				Msg.showWarn(this, null, "Results Truncated",
 					"Results are limited to " + resultsLimit + " address ranges.\n" +
 						"This limit can be changed by the tool option \"" +
@@ -99,7 +99,7 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 				break;
 			}
 		}
-		if (accumulator.isEmpty()) {
+		if (accumulator.getProgress() == 0) {
 			Msg.showWarn(this, null, "No Ranges to Display",
 				"No ranges to display - consider adjusting \"" +
 					CodeBrowserSelectionPlugin.OPTION_CATEGORY_NAME + " -> " +

@@ -35,8 +35,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.ProgramByteSource;
 import ghidra.features.base.memsearch.gui.SearchSettings;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
-import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
+import ghidra.features.base.memsearch.matcher.*;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.main.AppInfo;
@@ -54,7 +53,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
-import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -815,13 +813,14 @@ public class FlatProgramAPI {
 		}
 
 		SearchSettings settings = new SearchSettings().withAlignment(alignment);
-		ByteMatcher matcher = new RegExByteMatcher(byteString, settings);
+		ByteMatcher<SearchData> matcher = new RegExByteMatcher(byteString, settings);
 		AddressableByteSource byteSource = new ProgramByteSource(currentProgram);
 		Memory memory = currentProgram.getMemory();
 		AddressSet intersection = memory.getLoadedAndInitializedAddressSet().intersect(set);
 
-		MemorySearcher searcher = new MemorySearcher(byteSource, matcher, intersection, matchLimit);
-		Accumulator<MemoryMatch> accumulator = new ListAccumulator<>();
+		MemorySearcher<SearchData> searcher =
+			new MemorySearcher<>(byteSource, matcher, intersection, matchLimit);
+		ListAccumulator<MemoryMatch<SearchData>> accumulator = new ListAccumulator<>();
 		searcher.findAll(accumulator, monitor);
 
 		//@formatter:off
