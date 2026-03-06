@@ -46,6 +46,7 @@ public class AddressFieldFactory extends FieldFactory {
 	private boolean padZeros;
 	private int minHexDigits;
 	private boolean rightJustify;
+	private boolean displayUpperCase;
 
 	/**
 	 * Default Constructor
@@ -87,6 +88,7 @@ public class AddressFieldFactory extends FieldFactory {
 		minHexDigits = afowo.getMinimumHexDigits();
 		displayBlockName = afowo.showBlockName();
 		rightJustify = afowo.rightJustify();
+		displayUpperCase = afowo.displayUpperCase();
 
 		fieldOptions.getOptions(GROUP_TITLE).setOptionsHelpLocation(helpLoc);
 	}
@@ -100,6 +102,7 @@ public class AddressFieldFactory extends FieldFactory {
 			minHexDigits = afowo.getMinimumHexDigits();
 			displayBlockName = afowo.showBlockName();
 			rightJustify = afowo.rightJustify();
+			displayUpperCase = afowo.displayUpperCase();
 			model.update();
 		}
 	}
@@ -132,14 +135,22 @@ public class AddressFieldFactory extends FieldFactory {
 	private String getAddressString(CodeUnit cu) {
 		Address addr = cu.getMinAddress();
 		AddressSpace space = addr.getAddressSpace();
+		String text;
 		if (displayBlockName) {
-			String text = addr.toString(false, padZeros ? 16 : minHexDigits);
+			text = addr.toString(false, padZeros ? 16 : minHexDigits);
 			MemoryBlock block = cu.getProgram().getMemory().getBlock(addr);
 			if (block != null) {
+				if (displayUpperCase) {
+					text = text.toUpperCase();
+				}
 				return block.getName() + ":" + text;
 			}
 		}
-		return addr.toString(space.showSpaceName(), padZeros ? 16 : minHexDigits);
+		text = addr.toString(space.showSpaceName(), padZeros ? 16 : minHexDigits);
+		if (displayUpperCase) {
+			text = text.toUpperCase();
+		}
+		return text;
 	}
 
 	@Override
