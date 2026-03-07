@@ -291,9 +291,9 @@ class PyConsole(InteractiveConsole):
         finally:
             self._writer = self._out
 
-    def showsyntaxerror(self, filename=None):
+    def showsyntaxerror(self, filename=None, **kwargs):
         with self.redirect_writer():
-            super().showsyntaxerror(filename=filename)
+            super().showsyntaxerror(filename=filename, **kwargs)
 
     def showtraceback(self) -> None:
         with self.redirect_writer():
