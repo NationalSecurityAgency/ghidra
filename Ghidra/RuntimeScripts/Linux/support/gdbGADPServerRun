@@ -13,6 +13,6 @@
 # contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
 # fallback, which doesn't attempt to do anything with links.
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
-SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_FILE")" && pwd)"
+SCRIPT_DIR="$(dirname -- "$SCRIPT_FILE")"
 # Launch Ghidra
 "${SCRIPT_DIR}"/launch.sh fg jdk GdbAgent "${MAXMEM}" "" agent.gdb.gadp.GdbGadpServerLaunchShim $@
