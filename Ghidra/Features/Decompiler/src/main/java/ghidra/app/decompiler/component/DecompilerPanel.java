@@ -895,6 +895,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				controller.goToAddress(vn.getAddress(), newWindow);
 			}
 		}
+		else if (highVar.getSymbol() != null) {
+			VariableStorage storage = highVar.getSymbol().getStorage();
+			if (storage.isMemoryStorage()) {
+				controller.goToAddress(storage.getMinAddress(), newWindow);
+			}
+			return;		// Don't goto if symbol is on the stack or in a register
+		}
 		else if (vn.isConstant()) {
 			controller.goToScalar(vn.getOffset(), newWindow);
 		}
