@@ -41,11 +41,6 @@ public class EmptyMemoryMatchTableLoader implements MemoryMatchTableLoader {
 	}
 
 	@Override
-	public MemoryMatch<SearchData> getFirstMatch() {
-		return null;
-	}
-
-	@Override
 	public boolean hasResults() {
 		return false;
 	}

@@ -31,6 +31,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
 import ghidra.util.datastruct.Accumulator;
+import ghidra.util.datastruct.SetAccumulatorWrapper;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -343,16 +344,22 @@ public abstract class LocationDescriptor {
 	private void getReferenceAddressSet(Accumulator<LocationReference> accumulator,
 			TaskMonitor monitor, boolean reload) throws CancelledException {
 
-		if (referenceAddressList == null || reload) {
-			doGetReferences(accumulator, monitor);
-
-			// put into list so that we can later perform fast lookups of Addresses
-			referenceAddressList = new ArrayList<>(accumulator.get());
-			Collections.sort(referenceAddressList);
+		if (referenceAddressList != null && !reload) {
+			accumulator.addAll(referenceAddressList);
 			return;
 		}
 
-		accumulator.addAll(referenceAddressList);
+		// We do not want duplicates.  Use a known set accumulator here, which also allows us to get
+		// the results when the loading is finished.
+		SetAccumulatorWrapper<LocationReference> setAccumulator =
+			new SetAccumulatorWrapper<>(accumulator);
+
+		doGetReferences(setAccumulator, monitor);
+
+		// Save results so we can later perform fast lookups of Addresses using a binary search
+		referenceAddressList = new ArrayList<>(setAccumulator.asSet());
+		Collections.sort(referenceAddressList);
+
 	}
 
 	/**

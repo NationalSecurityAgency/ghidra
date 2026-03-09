@@ -16,34 +16,30 @@
 package ghidra.util.datastruct;
 
 import java.util.Collection;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * An implementation of {@link Accumulator} that allows clients to easily process items as
- * they arrive.
- * 
- * @param <T> the type of the item being accumulated
+ * An accumulator that will only pass on unique items to the wrapped accumulator.  This class uses
+ * a concurrent set, which means that the data will be copied in this accumulator while it is being 
+ * used.
+ *
+ * @param <T> the type
  */
-public class CallbackAccumulator<T> implements Accumulator<T> {
+public class SetAccumulatorWrapper<T> implements Accumulator<T> {
 
-	private AtomicInteger counter;
-	private Consumer<T> consumer;
+	private Set<T> set = ConcurrentHashMap.newKeySet();
+	private Accumulator<T> accumulator;
 
-	/**
-	 * Constructor
-	 * 
-	 * @param consumer the consumer that will get called each time an item is added
-	 */
-	public CallbackAccumulator(Consumer<T> consumer) {
-		this.consumer = Objects.requireNonNull(consumer, "Consumer callback cannot be null");
+	public SetAccumulatorWrapper(Accumulator<T> accumulator) {
+		this.accumulator = accumulator;
 	}
 
 	@Override
 	public void add(T t) {
-		consumer.accept(t);
-		counter.incrementAndGet();
+		if (set.add(t)) {
+			accumulator.add(t);
+		}
 	}
 
 	@Override
@@ -55,7 +51,15 @@ public class CallbackAccumulator<T> implements Accumulator<T> {
 
 	@Override
 	public int getProgress() {
-		return counter.intValue();
+		return set.size();
 	}
 
+	/**
+	 * Returns the internal Set used by this class.  This should only be called when the data is 
+	 * finished loading.
+	 * @return the set
+	 */
+	public Set<T> asSet() {
+		return set;
+	}
 }

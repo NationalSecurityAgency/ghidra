@@ -65,11 +65,6 @@ public class CombinedMatchTableLoader implements MemoryMatchTableLoader {
 	}
 
 	@Override
-	public MemoryMatch getFirstMatch() {
-		return firstMatch;
-	}
-
-	@Override
 	public boolean hasResults() {
 		return firstMatch != null;
 	}

@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.*;
-import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -24,14 +23,14 @@ import docking.widgets.search.SearchLocationContext;
 import ghidra.app.services.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Array;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.datastruct.*;
+import ghidra.util.datastruct.Accumulator;
+import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -74,16 +73,14 @@ public final class ReferenceUtils {
 	public static void getReferences(Accumulator<LocationReference> accumulator,
 			ProgramLocation location, TaskMonitor monitor) throws CancelledException {
 
-		Accumulator<LocationReference> asSet = asSet(accumulator);
-
 		Program program = location.getProgram();
 		Address address = location.getAddress();
 		Consumer<LocationReference> consumer = ref -> accumulator.add(ref);
 		accumulateDirectReferences(consumer, program, address);
-		accumulateThunkReferences(asSet, program, address, monitor);
+		accumulateThunkReferences(accumulator, program, address, monitor);
 
 		if (isMemoryAddress(location)) {
-			accumulateOffcutReferencesToCodeUnitAt(asSet, location, monitor);
+			accumulateOffcutReferencesToCodeUnitAt(accumulator, location, monitor);
 		}
 	}
 
@@ -291,23 +288,20 @@ public final class ReferenceUtils {
 
 		monitor.initialize(totalCount);
 
-		// Mimic a set in case the client passes in an accumulator that allows duplicates.  This
-		// seems a bit cleaner than adding checks for 'accumulator.contains(ref)' throughout
-		// the code.
-		Accumulator<LocationReference> asSet = asSet(accumulator);
-
 		if (fieldMatcher.isIgnored()) {
 			//
 			// It only makes sense to search here when we do not have a field to match
 			//
 			boolean localsOnly = discoverTypes;
 			FunctionIterator iterator = listing.getFunctions(false);
-			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
+			findDataTypeMatchesInFunctionHeaders(accumulator, iterator, dataType, localsOnly,
+				monitor);
 
 			// external functions don't get searched by type discovery
 			localsOnly = false;
 			iterator = listing.getExternalFunctions();
-			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
+			findDataTypeMatchesInFunctionHeaders(accumulator, iterator, dataType, localsOnly,
+				monitor);
 		}
 
 		Predicate<Data> dataMatcher = data -> {
@@ -316,23 +310,14 @@ public final class ReferenceUtils {
 			return matches;
 		};
 
-		findDataTypeMatchesInDefinedData(asSet, program, dataMatcher, fieldMatcher, monitor);
+		findDataTypeMatchesInDefinedData(accumulator, program, dataMatcher, fieldMatcher, monitor);
 
 		if (discoverTypes) {
-			findDataTypeMatchesOutsideOfListing(asSet, program, dataType, fieldMatcher, monitor);
+			findDataTypeMatchesOutsideOfListing(accumulator, program, dataType, fieldMatcher,
+				monitor);
 		}
 
 		monitor.checkCancelled();
-	}
-
-	private static Accumulator<LocationReference> asSet(
-			Accumulator<LocationReference> accumulator) {
-
-		if (accumulator instanceof SetAccumulator) {
-			return accumulator;
-		}
-
-		return new FilteringAccumulatorWrapper<>(accumulator, ref -> !accumulator.contains(ref));
 	}
 
 	private static void findDataTypeMatchesOutsideOfListing(
@@ -1173,9 +1158,7 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		if (!accumulator.contains(ref)) {
-			accumulator.add(ref);
-		}
+		accumulator.add(ref);
 
 		// this address will either be the data, or the field's, if it exists
 		Address dataAddress = ref.getLocationOfUse();
