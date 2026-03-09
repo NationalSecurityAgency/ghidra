@@ -575,6 +575,9 @@ __3.1.0__
   `support/launch.properties` file.
 * `ghidra_launch.py` now correctly prioritizes user-defined JVM properties higher than those defined
   in `support/launch.properties`.
+* PyGhidra now includes a 
+  [`py.typed`](https://typing.python.org/en/latest/spec/distributing.html#packaging-type-information)
+  marker file to inform type checkers that typing is supported.
 
 __3.0.2__
 * Fixed an issue that prevented [`pyghidra.analysis_properties()`](#pyghidraanalysis_properties)
