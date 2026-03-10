@@ -1,0 +1,21 @@
+# SLA specification file for IBM PowerPC e200 series core
+
+@define E200 "1"
+
+@define ENDIAN "big"
+
+@define REGISTER_SIZE "4"
+
+@define EATRUNC "ea"
+
+@define CTR_OFFSET "32"
+
+@define NoLegacyIntegerMultiplyAccumulate "1"
+
+@include "ppc_common.sinc"
+@include "ppc_vle.sinc"
+@include "quicciii.sinc"
+@include "evx.sinc"
+@include "SPEF_SCR.sinc"
+@include "SPE_FloatMulAdd.sinc"
+@include "ppc_e200_ds.sinc"
