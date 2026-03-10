@@ -57,7 +57,7 @@ public class ExternalSymbolResolverAnalyzer extends AbstractAnalyzer {
 		}
 
 		String format = program.getExecutableFormat();
-		return ElfLoader.ELF_NAME.equals(format) || MachoLoader.MACH_O_NAME.equals(format);
+		return ElfLoader.isElf(format) || MachoLoader.MACH_O_NAME.equals(format);
 	}
 
 	@Override

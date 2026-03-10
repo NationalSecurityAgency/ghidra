@@ -71,7 +71,7 @@ public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 
 		if (currentProgram == null || !currentProgram.getName().startsWith(PROGRAM_NAME) ||
 			!"x86:LE:64:default".equals(currentProgram.getLanguageID().toString()) ||
-			!ElfLoader.ELF_NAME.equals(format)) {
+			!ElfLoader.isElf(format)) {
 
 			printerr("""
 					This emulation example script is specifically intended to be executed against
