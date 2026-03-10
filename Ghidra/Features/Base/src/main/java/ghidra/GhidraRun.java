@@ -68,8 +68,13 @@ public class GhidraRun implements GhidraLaunchable {
 
 	private Logger log; // intentionally load later, after initialization
 
-	//	Supports the extended syntax: project.gpr:/path/to/binary
-	private record LaunchArguments(String projectPath, String binaryPath) {
+	/**
+	 * Supports the extended command line argument syntax: project.gpr:/path/to/domainfile
+	 * 
+	 * @param projectPath The FS path to the .gpr file (could be {@code null})
+	 * @param domainFilePath The project path to the {@link DomainFile} (could be {@code null})
+	 */
+	private record LaunchArguments(String projectPath, String domainFilePath) {
 		static LaunchArguments empty() {
 			return new LaunchArguments(null, null);
 		}
@@ -184,7 +189,7 @@ public class GhidraRun implements GhidraLaunchable {
 
 	/**
 	 * Open the specified project or the last active project if launchArgs has no project.
-	 * If a binary path is specified, opens it in the CodeBrowser tool.
+	 * If a binary path is specified, opens it in the default tool. 
 	 * Makes the project window visible.
 	 *
 	 * @param launchArgs parsed command line arguments
@@ -229,21 +234,21 @@ public class GhidraRun implements GhidraLaunchable {
 		tool.setVisible(true);
 
 		if (projectLocator != null) {
-			openProject(tool, projectLocator, reopen, launchArgs.binaryPath());
+			openProject(tool, projectLocator, reopen, launchArgs.domainFilePath());
 		}
 	}
 
 	private void openProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen,
-			String binaryPath) {
+			String domainFilePath) {
 		SplashScreen.updateSplashScreenStatus(
 			(reopen ? "Reopening" : "Opening") + " project: " + projectLocator.getName());
 
-		Runnable r = () -> doOpenProject(tool, projectLocator, reopen, binaryPath);
+		Runnable r = () -> doOpenProject(tool, projectLocator, reopen, domainFilePath);
 		TaskLauncher.launchModal("Opening Project", () -> Swing.runNow(r));
 	}
 
 	private void doOpenProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen,
-			String binaryPath) {
+			String domainFilePath) {
 		try {
 			ProjectManager pm = tool.getProjectManager();
 			Project activeProject = pm.openProject(projectLocator, true, false);
@@ -261,8 +266,8 @@ public class GhidraRun implements GhidraLaunchable {
 						"a failed connection.");
 			}
 
-			if (binaryPath != null && !binaryPath.isEmpty()) {
-				openBinaryInCodeBrowser(activeProject, binaryPath);
+			if (domainFilePath != null && !domainFilePath.isEmpty()) {
+				openDomainFileInTool(activeProject, domainFilePath);
 			}
 
 		}
@@ -290,29 +295,29 @@ public class GhidraRun implements GhidraLaunchable {
 		}
 	}
 
-	private void openBinaryInCodeBrowser(Project project, String binaryPath) {
+	private void openDomainFileInTool(Project project, String domainFilePath) {
 		// Ensure path starts with /
-		if (!binaryPath.startsWith("/")) {
-			binaryPath = "/" + binaryPath;
+		if (!domainFilePath.startsWith("/")) {
+			domainFilePath = "/" + domainFilePath;
 		}
 
 		ProjectData projectData = project.getProjectData();
-		DomainFile domainFile = projectData.getFile(binaryPath);
+		DomainFile domainFile = projectData.getFile(domainFilePath);
 
 		if (domainFile == null) {
 			Msg.showError(GhidraRun.class, null, "File Not Found",
-				"Could not find binary in project: " + binaryPath);
+				"Could not find file in project: " + domainFilePath);
 			return;
 		}
 
-		log.info("Opening binary from command line: " + binaryPath);
+		log.info("Opening file from command line: " + domainFilePath);
 
 		ToolServices toolServices = project.getToolServices();
-		PluginTool codeBrowser = toolServices.launchDefaultTool(List.of(domainFile));
+		PluginTool tool = toolServices.launchDefaultTool(List.of(domainFile));
 
-		if (codeBrowser == null) {
+		if (tool == null) {
 			Msg.showError(GhidraRun.class, null, "Tool Launch Failed",
-				"Failed to launch CodeBrowser for: " + domainFile.getName());
+				"Failed to launch tool for: " + domainFile.getName());
 		}
 	}
 
