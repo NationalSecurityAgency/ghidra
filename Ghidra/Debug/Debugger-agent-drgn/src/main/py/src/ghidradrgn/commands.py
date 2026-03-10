@@ -266,16 +266,17 @@ def ghidra_trace_create(start_trace: bool = True) -> None:
 
     global prog
     prog = Program()
+
     kind = os.getenv('OPT_TARGET_KIND')
     if kind == "kernel":
         prog.set_kernel()
+        util.selected_pid = 0
     elif kind == "coredump":
         img = os.getenv('OPT_TARGET_IMG')
         if img is None:
             return
         prog.set_core_dump(img)
-        if '/' in img:
-            img = img[img.rindex('/')+1:]
+        util.selected_pid = 0
     else:
         pid = os.getenv('OPT_TARGET_PID')
         if pid is not None:
@@ -288,18 +289,34 @@ def ghidra_trace_create(start_trace: bool = True) -> None:
     except drgn.MissingDebugInfoError as e:
         print(e)
 
-    if hasattr(drgn, 'Module') or kind == "coredump":
-        if kind == "kernel":
-            img = prog.main_module().name  # type: ignore
-            util.selected_tid = next(prog.threads()).tid
-        elif kind == "coredump":
-            util.selected_tid = prog.crashed_thread().tid
-        else:
-            img = prog.main_module().name  # type: ignore
-            util.selected_tid = prog.main_thread().tid
+    # Set display name and active thread
+    display = "noname"
+    if kind == "kernel":
+        display = "kernel"
+        if hasattr(prog, "main_module"):
+            if hasattr(prog.main_module(), "name"):
+                display = prog.main_module().name  # type: ignore
+        try:
+            threads = prog.threads()
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return
+        util.selected_tid = next(prog.threads()).tid
+    elif kind == "coredump":
+        display = img
+        if '/' in display:
+            display = display[display.rindex('/')+1:]
+        util.selected_tid = prog.crashed_thread().tid
+    else:
+        display = str(pid)
+        if hasattr(prog, "main_thread"):
+            if hasattr(prog.main_thread(), "name"):
+                display = prog.main_thread().name
+        util.selected_tid = prog.main_thread().tid
+    util.selected_level = 0
 
     if start_trace:
-        ghidra_trace_start(img)
+        ghidra_trace_start(display)
 
     PROGRAMS[util.selected_pid] = prog
 
@@ -1108,7 +1125,11 @@ def put_threads(running: bool = False) -> None:
     trace = STATE.require_trace()
     keys = []
     # Set running=True to avoid thread changes, even while stopped
-    threads = prog.threads()
+    try:
+        threads = prog.threads()
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return
     for i, t in enumerate(threads):
         nthrd = t.tid
         tpath = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
