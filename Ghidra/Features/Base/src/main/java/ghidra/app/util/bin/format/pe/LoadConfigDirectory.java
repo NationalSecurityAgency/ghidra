@@ -19,6 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.pe.chpe.ImageArm64ecMetadata;
+import ghidra.app.util.bin.format.pe.chpe.ImageChpeMetadataX86;
 import ghidra.app.util.bin.format.pe.dvrt.ImageDynamicRelocationTable;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
@@ -69,14 +71,25 @@ public class LoadConfigDirectory implements StructConverter {
 	private long guardRfFailureRoutineFunctionPointer;
 	private int dynamicValueRelocTableOffset;
 	private short dynamicValueRelocTableSection;
-	private short reserved1;
+	private short reserved2;
 	private long guardRfVerifyStackPointerFunctionPointer;
 	private int hotPatchTableOffset;
-	private int reserved2;
-	private long reserved3;
+	private int reserved3;
+	private long enclaveConfigurationPointer;
+	private long volatileMetadataPointer;
+	private long guardEhContinuationTable;
+	private long guardEhContinuationCount;
+	private long guardXfgCheckFunctionPointer;
+	private long guardXfgDispatchFunctionPointer;
+	private long guardXfgTableDispatchFunctionPointer;
+	private long castGuardOsDeterminedFailureMode;
+	private long guardMemcpyFunctionPointer;
+	private long umaFunctionPointers;
 
 	private boolean is64bit;
 	private ImageDynamicRelocationTable dvrt;
+	private ImageChpeMetadataX86 chpeMetadataX86;
+	private ImageArm64ecMetadata arm64ecMetadata;
 
 	LoadConfigDirectory(BinaryReader reader, int index, NTHeader nt) throws IOException {
 		FileHeader fh = nt.getFileHeader();
@@ -144,17 +157,59 @@ public class LoadConfigDirectory implements StructConverter {
 			guardRfFailureRoutineFunctionPointer = readPointer(reader);
 			dynamicValueRelocTableOffset = reader.readNextInt();
 			dynamicValueRelocTableSection = reader.readNextShort();
-			reserved1 = reader.readNextShort();
+			reserved2 = reader.readNextShort();
 		}
 		if (reader.getPointerIndex() - index < size) {
 			guardRfVerifyStackPointerFunctionPointer = readPointer(reader);
 			hotPatchTableOffset = reader.readNextInt();
 		}
 		if (reader.getPointerIndex() - index < size) {
-			reserved2 = reader.readNextInt();
-			reserved3 = readPointer(reader);
+			reserved3 = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() - index < size) {
+			enclaveConfigurationPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			volatileMetadataPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardEhContinuationTable = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardEhContinuationCount = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardXfgCheckFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardXfgDispatchFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardXfgTableDispatchFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			castGuardOsDeterminedFailureMode = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardMemcpyFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			umaFunctionPointers = readPointer(reader);
 		}
 		
+		// Parse the CHPE Metadata
+		if (chpeMetadataPointer != 0) {
+			FileHeader fileHeader = nt.getFileHeader();
+			BinaryReader r = reader.clone(nt.vaToPointer(chpeMetadataPointer));
+			if (fileHeader.isArm()) {
+				arm64ecMetadata = new ImageArm64ecMetadata(r, nt, chpeMetadataPointer);
+			}
+			if (fileHeader.isX86()) {
+				chpeMetadataX86 = new ImageChpeMetadataX86(r, nt, chpeMetadataPointer);
+			}
+		}
+
+		// Parse the Dynamic Value Relocation Table (DVRT)
 		if (dynamicValueRelocTableOffset != 0 && dynamicValueRelocTableSection != 0) {
 			SectionHeader section = fh.getSectionHeader(dynamicValueRelocTableSection - 1);
 			if (section != null) {
@@ -256,6 +311,13 @@ public class LoadConfigDirectory implements StructConverter {
 	}
 
 	/**
+	 * {@return the CHPE metadata pointer (could be 0 if it's not a CHPE)}
+	 */
+	public long getChpeMetadataPointer() {
+		return chpeMetadataPointer;
+	}
+
+	/**
 	 * {@return the ReturnFlowGuard failure routine address (could be 0 if ReturnFlowGuard is not 
 	 * being used)}
 	 */
@@ -285,6 +347,20 @@ public class LoadConfigDirectory implements StructConverter {
 	 */
 	public ImageDynamicRelocationTable getDynamicRelocationTable() {
 		return dvrt;
+	}
+
+	/**
+	 * {@return the ARM64EC metadata (could be {@code null} if there is none)}
+	 */
+	public ImageArm64ecMetadata getArm64ecMetadata() {
+		return arm64ecMetadata;
+	}
+
+	/**
+	 * {@return the X86 CHPE metadata (could be {@code null} if there is none)}
+	 */
+	public ImageChpeMetadataX86 getChpeMetadataX86() {
+		return chpeMetadataX86;
 	}
 
 	@Override
@@ -352,15 +428,42 @@ public class LoadConfigDirectory implements StructConverter {
 			struct.add(ptr, "GuardRFFailureRoutineFunctionPointer", null);
 			struct.add(DWORD, "DynamicValueRelocTableOffset", null);
 			struct.add(WORD, "DynamicValueRelocTableSection", null);
-			struct.add(WORD, "Reserved1", null);
+			struct.add(WORD, "Reserved2", null);
 		}
 		if (struct.getLength() < size) {
 			struct.add(ptr, "GuardRFVerifyStackPointerFunctionPointer", null);
 			struct.add(DWORD, "HotPatchTableOffset", null);
 		}
 		if (struct.getLength() < size) {
-			struct.add(DWORD, "Reserved2", null);
-			struct.add(counter, "Reserved3", null);
+			struct.add(DWORD, "Reserved3", null);
+			struct.add(ptr, "EnclaveConfigurationPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "VolatileMetadataPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardEHContinuationTable", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(counter, "GuardEHContinuationCount", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardXFGCheckFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardXFGDispatchFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardXFGTableDispatchFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "CastGuardOsDeterminedFailureMode", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardMemcpyFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "UmaFunctionPointers", null);
 		}
 
 		struct.setCategoryPath(new CategoryPath("/PE"));

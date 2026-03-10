@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import static ghidra.app.util.bin.format.pe.FileHeader.*;
-
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -53,22 +51,19 @@ public class ExceptionDataDirectory extends DataDirectory {
 		reader.setPointerIndex(ptr);
 
 		try {
-			functionEntries =
-				switch (ntHeader.getFileHeader().getMachine() & IMAGE_FILE_MACHINE_MASK) {
-					case IMAGE_FILE_MACHINE_I386:
-					case IMAGE_FILE_MACHINE_IA64:
-					case IMAGE_FILE_MACHINE_AMD64:
-						yield new ImageRuntimeFunctionEntries_X86(reader, size, ntHeader);
-					case IMAGE_FILE_MACHINE_ARM:
-					case IMAGE_FILE_MACHINE_ARM64:
-					case IMAGE_FILE_MACHINE_ARMNT:
-						yield new ImageRuntimeFunctionEntries_ARM(reader, size, ntHeader);
-					default:
-						Msg.error(this,
-							String.format("Exception Data unsupported architecture: 0x%02x",
-								ntHeader.getFileHeader().getMachine()));
-						yield null;
-				};
+			FileHeader fileHeader = ntHeader.getFileHeader();
+			boolean isChpe = isChpe(fileHeader);
+			if (fileHeader.isX86() && !isChpe) {
+				functionEntries = new ImageRuntimeFunctionEntries_X86(reader, size, ntHeader);
+			}
+			else if (fileHeader.isArm() || isChpe) {
+				functionEntries = new ImageRuntimeFunctionEntries_ARM(reader, size, ntHeader);
+			}
+			else {
+				Msg.error(this, String.format("Exception Data unsupported architecture: 0x%02x",
+					fileHeader.getMachine()));
+				functionEntries = null;
+			}
 			return true;
 		}
 		catch (IOException e) {
@@ -94,5 +89,15 @@ public class ExceptionDataDirectory extends DataDirectory {
 		if (functionEntries != null) {
 			functionEntries.markup(program, addr);
 		}
+	}
+
+	private boolean isChpe(FileHeader fileHeader) {
+		DataDirectory[] dirs = ntHeader.getOptionalHeader().getDataDirectories();
+		if (dirs.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG) {
+			LoadConfigDataDirectory dataDir =
+				(LoadConfigDataDirectory) dirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG];
+			return dataDir.getLoadConfigDirectory().getChpeMetadataPointer() != 0;
+		}
+		return false;
 	}
 }
