@@ -3115,8 +3115,8 @@ Object Constant() : {
                 BigInteger bigConst = new BigInteger(sval.substring(2), 16);           
                 obj = Long.valueOf(bigConst.longValue());
             }
-            else if (sval.startsWith("0") && sval.length() > 1) {
-                BigInteger bigConst = new BigInteger(sval.substring(1), 8);           
+            else if (sval.startsWith("0")) {
+                BigInteger bigConst = new BigInteger(sval, 8);           
                 obj = Long.valueOf(bigConst.longValue());
             }
             else {
