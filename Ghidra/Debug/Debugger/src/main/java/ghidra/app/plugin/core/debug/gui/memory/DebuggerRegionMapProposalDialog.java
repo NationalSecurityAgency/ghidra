@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellEditor;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -33,22 +32,102 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Swing;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerRegionMapProposalDialog
 		extends AbstractDebuggerMapProposalDialog<RegionMapEntry> {
 
-	static final int BUTTON_SIZE = 32;
+	private static final IconButtonTableCellRenderer REMOVE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_DELETE, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<RegionMapEntry> REMOVE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(RegionMapEntry.class, DebuggerResources.ICON_DELETE) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof RegionMapPropsalTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.removeEntry(row);
+			}
+		};
+
+	private static final IconButtonTableCellRenderer CHOOSE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_PROGRAM, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<RegionMapEntry> CHOOSE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(RegionMapEntry.class, DebuggerResources.ICON_PROGRAM) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof RegionMapPropsalTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.chooseAndSetBlock(row);
+			}
+		};
 
 	protected enum RegionMapTableColumns
 		implements EnumeratedTableColumn<RegionMapTableColumns, RegionMapEntry> {
-		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
+		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return REMOVE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return REMOVE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		REGION_NAME("Region", String.class, e -> e.getRegionName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getRegionMinAddress()),
-		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getRegionMinAddress()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CHOOSE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return CHOOSE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),
-		STATIC_BASE("Static Base", Address.class, e -> e.getBlock().getStart()),
-		SIZE("Size", Long.class, e -> e.getMappingLength());
+		STATIC_BASE("Static Base", Address.class, e -> e.getBlock().getStart()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		SIZE("Size", Long.class, e -> e.getMappingLength()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_ULONG_HEX;
+			}
+		};
 
 		private final String header;
 		private final Class<?> cls;
@@ -100,9 +179,11 @@ public class DebuggerRegionMapProposalDialog
 
 	protected static class RegionMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<RegionMapTableColumns, RegionMapEntry> {
+		protected final DebuggerRegionMapProposalDialog dialog;
 
-		public RegionMapPropsalTableModel(PluginTool tool) {
+		public RegionMapPropsalTableModel(PluginTool tool, DebuggerRegionMapProposalDialog dialog) {
 			super(tool, "Region Map", RegionMapTableColumns.class);
+			this.dialog = dialog;
 		}
 
 		@Override
@@ -120,33 +201,14 @@ public class DebuggerRegionMapProposalDialog
 
 	@Override
 	protected RegionMapPropsalTableModel createTableModel(PluginTool tool) {
-		return new RegionMapPropsalTableModel(tool);
+		return new RegionMapPropsalTableModel(tool, this);
 	}
 
 	@Override
 	protected void populateComponents() {
 		super.populateComponents();
 		setPreferredSize(600, 300);
-
-		TableColumnModel columnModel = table.getColumnModel();
-
-		TableColumn removeCol = columnModel.getColumn(RegionMapTableColumns.REMOVE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, removeCol,
-			DebuggerResources.ICON_DELETE, BUTTON_SIZE, this::removeEntry);
-
-		TableColumn dynBaseCol =
-			columnModel.getColumn(RegionMapTableColumns.DYNAMIC_BASE.ordinal());
-		dynBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn chooseCol = columnModel.getColumn(RegionMapTableColumns.CHOOSE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, chooseCol, DebuggerResources.ICON_PROGRAM,
-			BUTTON_SIZE, this::chooseAndSetBlock);
-
-		TableColumn stBaseCol = columnModel.getColumn(RegionMapTableColumns.STATIC_BASE.ordinal());
-		stBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn sizeCol = columnModel.getColumn(RegionMapTableColumns.SIZE.ordinal());
-		sizeCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
+		table.setRowHeight(BUTTON_SIZE);
 	}
 
 	private void chooseAndSetBlock(RegionMapEntry entry) {

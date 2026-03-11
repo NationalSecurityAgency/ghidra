@@ -23,16 +23,13 @@ import java.util.stream.Stream;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.GTable;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.pcode.emu.symz3.SymZ3RecordsExecution.RecInstruction;
-import ghidra.symz3.gui.Z3SummaryInstructionLogPanel.InstructionHtmlFormatter;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class Z3SummaryInformationPanel extends JPanel {
 
@@ -51,32 +48,60 @@ public class Z3SummaryInformationPanel extends JPanel {
 		}
 	}
 
-	record InformationRow(InfoKind kind, String variable, String value) {
+	record InformationRow(InfoKind kind, String variable, String value) {}
 
-	}
+	private static final MonospaceCellRenderer MONO_RENDERER = new MonospaceCellRenderer();
 
 	protected enum InformationTableColumns
 		implements EnumeratedTableColumn<InformationTableColumns, InformationRow> {
-		KIND("Kind", InfoKind.class, InformationRow::kind, true),
-		VARIABLE("Variable", String.class, InformationRow::variable, true),
-		VALUE("Value", String.class, InformationRow::value, true);
+		KIND("Kind", InfoKind.class, InformationRow::kind) {
+			@Override
+			public int getMaxWidth() {
+				return 40;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 40;
+			}
+		},
+		VARIABLE("Variable", String.class, InformationRow::variable) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return MONO_RENDERER;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		VALUE("Value", String.class, InformationRow::value) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return MONO_RENDERER;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 60;
+			}
+		};
 
 		private final String header;
 		private final Class<?> cls;
 		private final Function<InformationRow, ?> getter;
-		private final boolean visible;
 
 		<T> InformationTableColumns(String header, Class<T> cls,
-				Function<InformationRow, T> getter, boolean visible) {
+				Function<InformationRow, T> getter) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
-			this.visible = visible;
 		}
 
-		static String getInstructionHtml(RecInstruction op) {
-			InstructionHtmlFormatter formatter = new InstructionHtmlFormatter();
-			return formatter.formatInstruction(op.instruction());
+		@Override
+		public String getHeader() {
+			return header;
 		}
 
 		@Override
@@ -87,16 +112,6 @@ public class Z3SummaryInformationPanel extends JPanel {
 		@Override
 		public Object getValueOf(InformationRow row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public String getHeader() {
-			return header;
-		}
-
-		@Override
-		public boolean isVisible() {
-			return visible;
 		}
 	}
 
@@ -125,17 +140,6 @@ public class Z3SummaryInformationPanel extends JPanel {
 
 		filterPanel = new GhidraTableFilterPanel<>(table, model);
 		add(filterPanel, BorderLayout.SOUTH);
-
-		TableColumnModel columnModel = table.getColumnModel();
-		TableColumn kindCol = columnModel.getColumn(InformationTableColumns.KIND.ordinal());
-		kindCol.setMaxWidth(40);
-		kindCol.setMinWidth(40);
-		TableColumn varCol = columnModel.getColumn(InformationTableColumns.VARIABLE.ordinal());
-		varCol.setCellRenderer(new MonospaceCellRenderer());
-		varCol.setPreferredWidth(20);
-		TableColumn valCol = columnModel.getColumn(InformationTableColumns.VALUE.ordinal());
-		valCol.setCellRenderer(new MonospaceCellRenderer());
-		valCol.setPreferredWidth(60);
 	}
 
 	public void setInformation(Stream<Entry<String, String>> valuations,

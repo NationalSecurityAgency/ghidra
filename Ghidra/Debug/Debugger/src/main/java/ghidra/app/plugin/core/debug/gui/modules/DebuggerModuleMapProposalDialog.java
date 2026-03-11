@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellEditor;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -32,24 +31,105 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerModuleMapProposalDialog
 		extends AbstractDebuggerMapProposalDialog<ModuleMapEntry> {
 
-	static final int BUTTON_SIZE = 32;
+	private static final IconButtonTableCellRenderer REMOVE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_DELETE, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<ModuleMapEntry> REMOVE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(ModuleMapEntry.class, DebuggerResources.ICON_DELETE) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof ModuleMapPropsalTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.removeEntry(row);
+			}
+		};
+
+	private static final IconButtonTableCellRenderer CHOOSE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_PROGRAM, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<ModuleMapEntry> CHOOSE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(ModuleMapEntry.class, DebuggerResources.ICON_PROGRAM) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof ModuleMapPropsalTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.chooseAndSetProgram(row);
+			}
+		};
 
 	protected enum ModuleMapTableColumns
 		implements EnumeratedTableColumn<ModuleMapTableColumns, ModuleMapEntry> {
-		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
+		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return REMOVE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return REMOVE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		MODULE_NAME("Module", String.class, e -> e.getModuleName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getFromRange().getMinAddress()),
-		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getFromRange().getMinAddress()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CHOOSE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return CHOOSE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		PROGRAM_NAME("Program", String.class, e -> (e.getToProgram().getDomainFile() == null
 				? e.getToProgram().getName()
 				: e.getToProgram().getDomainFile().getName())),
-		STATIC_BASE("Static Base", Address.class, e -> e.getToRange().getMinAddress()),
-		SIZE("Size", Long.class, e -> e.getFromRange().getLength()),
-		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize, ModuleMapEntry::setMemorize);
+		STATIC_BASE("Static Base", Address.class, e -> e.getToRange().getMinAddress()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		SIZE("Size", Long.class, e -> e.getFromRange().getLength()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_ULONG_HEX;
+			}
+		},
+		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize,
+				ModuleMapEntry::setMemorize);
 
 		private final String header;
 		private final Class<?> cls;
@@ -100,9 +180,11 @@ public class DebuggerModuleMapProposalDialog
 
 	protected static class ModuleMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<ModuleMapTableColumns, ModuleMapEntry> {
+		protected final DebuggerModuleMapProposalDialog dialog;
 
-		public ModuleMapPropsalTableModel(PluginTool tool) {
+		public ModuleMapPropsalTableModel(PluginTool tool, DebuggerModuleMapProposalDialog dialog) {
 			super(tool, "Module Map", ModuleMapTableColumns.class);
+			this.dialog = dialog;
 		}
 
 		@Override
@@ -120,33 +202,14 @@ public class DebuggerModuleMapProposalDialog
 
 	@Override
 	protected ModuleMapPropsalTableModel createTableModel(PluginTool tool) {
-		return new ModuleMapPropsalTableModel(tool);
+		return new ModuleMapPropsalTableModel(tool, this);
 	}
 
 	@Override
 	protected void populateComponents() {
 		super.populateComponents();
 		setPreferredSize(600, 300);
-
-		TableColumnModel columnModel = table.getColumnModel();
-
-		TableColumn removeCol = columnModel.getColumn(ModuleMapTableColumns.REMOVE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, removeCol,
-			DebuggerResources.ICON_DELETE, BUTTON_SIZE, this::removeEntry);
-
-		TableColumn dynBaseCol =
-			columnModel.getColumn(ModuleMapTableColumns.DYNAMIC_BASE.ordinal());
-		dynBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn chooseCol = columnModel.getColumn(ModuleMapTableColumns.CHOOSE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, chooseCol,
-			DebuggerResources.ICON_PROGRAM, BUTTON_SIZE, this::chooseAndSetProgram);
-
-		TableColumn stBaseCol = columnModel.getColumn(ModuleMapTableColumns.STATIC_BASE.ordinal());
-		stBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn sizeCol = columnModel.getColumn(ModuleMapTableColumns.SIZE.ordinal());
-		sizeCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
+		table.setRowHeight(BUTTON_SIZE);
 	}
 
 	private void chooseAndSetProgram(ModuleMapEntry entry) {

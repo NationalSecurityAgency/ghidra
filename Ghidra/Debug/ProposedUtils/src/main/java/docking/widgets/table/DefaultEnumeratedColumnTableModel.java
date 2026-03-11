@@ -18,6 +18,8 @@ package docking.widgets.table;
 import java.util.*;
 import java.util.function.Predicate;
 
+import javax.swing.table.TableCellEditor;
+
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
@@ -119,7 +121,15 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		}
 
 		default public int getPreferredWidth() {
-			return -1;
+			return AbstractGTableModel.WIDTH_UNDEFINED;
+		}
+
+		default public int getMinWidth() {
+			return AbstractGTableModel.WIDTH_UNDEFINED;
+		}
+
+		default public int getMaxWidth() {
+			return AbstractGTableModel.WIDTH_UNDEFINED;
 		}
 
 		/**
@@ -131,6 +141,10 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		 * @return the renderer
 		 */
 		default public GColumnRenderer<?> getRenderer() {
+			return null;
+		}
+
+		default public TableCellEditor getEditor() {
 			return null;
 		}
 
@@ -212,8 +226,23 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		}
 
 		@Override
+		public TableCellEditor getColumnEditor() {
+			return col.getEditor();
+		}
+
+		@Override
 		public int getColumnPreferredWidth() {
 			return col.getPreferredWidth();
+		}
+
+		@Override
+		public int getColumnMaxWidth() {
+			return col.getMaxWidth();
+		}
+
+		@Override
+		public int getColumnMinWidth() {
+			return col.getMinWidth();
 		}
 
 		@Override

@@ -23,22 +23,21 @@ import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 
 import docking.widgets.DropDownSelectionTextField;
-import docking.widgets.table.CellEditorUtils;
-import docking.widgets.table.FocusableEditor;
+import docking.widgets.table.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.util.Swing;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 
-public class DataTypeTableCellEditor extends AbstractCellEditor
-		implements TableCellEditor, FocusableEditor {
-	private final PluginTool tool;
+public abstract class AbstractDataTypeTableCellEditor extends AbstractCellEditor
+		implements TableCellEditor, FocusableEditor, GTableAccess {
+
 	private DataTypeManagerService service;
-	private JTable table;
+	protected JTable table;
 
 	private JPanel editorPanel;
 	private DataTypeSelectionEditor editor;
@@ -71,26 +70,7 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 		dataTypeChooserButton.addActionListener(e -> Swing.runLater(() -> stopEdit()));
 	}
 
-	protected DataTypeTableCellEditor(PluginTool tool, DataTypeManagerService service) {
-		this.tool = tool;
-		this.service = service;
-	}
-
-	public DataTypeTableCellEditor(DataTypeManagerService service) {
-		this(null, service);
-	}
-
-	public DataTypeTableCellEditor(PluginTool tool) {
-		// NOTE: Service will be updated on request
-		this(tool, null);
-	}
-
-	private DataTypeManagerService updateService() {
-		if (tool != null) {
-			service = tool.getService(DataTypeManagerService.class);
-		}
-		return service;
-	}
+	protected abstract DataTypeManagerService getService(TableModel model);
 
 	protected AllowedDataTypes getAllowed(int row, int column) {
 		return AllowedDataTypes.ALL;
@@ -104,9 +84,13 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 	public Component getTableCellEditorComponent(JTable newTable, Object value, boolean isSelected,
 			int row, int column) {
 		this.table = newTable;
+		this.service = getService(getUnwrappedModel(newTable));
+		if (service == null) {
+			return null;
+		}
 		init(row, column);
 
-		// TODO: Use this to verify lengths if variable-length is to be permitted.
+		// LATER: Use this to verify lengths if variable-length is to be permitted.
 		/*DataTypeInstance dti = (DataTypeInstance) value;
 		if (dti != null) {
 			dt = dti.getDataType();
@@ -127,7 +111,6 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 	}
 
 	protected void init(int row, int column) {
-		updateService();
 		editor = new DataTypeSelectionEditor(getPreferredDataTypeManager(row, column), service,
 			getAllowed(row, column));
 		editor.setTabCommitsEdit(true);
@@ -144,8 +127,7 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 	}
 
 	protected void stopEdit() {
-		updateService();
-		DataType dataType = service.getDataType((String) null); // Why?
+		DataType dataType = service.promptForDataType((String) null);
 		if (dataType != null) {
 			editor.setCellEditorValue(dataType);
 			editor.stopCellEditing();
@@ -160,11 +142,11 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 		return dt;
 	}
 
-	protected boolean validateSelection(DataType dataType) {
+	protected boolean validateSelection(DataType dataType, TableModel model) {
 		return true;
 	}
 
-	protected DataType resolveSelection(DataType dataType) {
+	protected DataType resolveSelection(DataType dataType, TableModel model) {
 		return dataType;
 	}
 
@@ -187,8 +169,10 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 		catch (InvalidDataTypeException e) {
 			return false;
 		}
-		DataType dataType = resolveSelection(editor.getCellEditorValueAsDataType());
-		if (!isEmptyEditorCell() && !validateSelection(dataType)) {
+
+		TableModel model = getUnwrappedModel(table);
+		DataType dataType = resolveSelection(editor.getCellEditorValueAsDataType(), model);
+		if (!isEmptyEditorCell() && !validateSelection(dataType, model)) {
 			return false;
 		}
 		if (dataType != null) {

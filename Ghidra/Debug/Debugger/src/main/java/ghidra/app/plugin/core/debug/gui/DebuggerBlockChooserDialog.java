@@ -21,8 +21,6 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
@@ -37,6 +35,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider {
 	public static class MemoryBlockRow {
@@ -103,12 +102,29 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 
 	enum MemoryBlockTableColumns
 		implements EnumeratedTableColumn<MemoryBlockTableColumns, MemoryBlockRow> {
+		// LATER: Adjust column widths?
 		SCORE("Score", Double.class, MemoryBlockRow::getScore, SortDirection.DESCENDING),
 		PROGRAM("Program", String.class, MemoryBlockRow::getProgramName, SortDirection.ASCENDING),
 		BLOCK("Block", String.class, MemoryBlockRow::getBlockName, SortDirection.ASCENDING),
-		START("Start Address", Address.class, MemoryBlockRow::getMinAddress, SortDirection.ASCENDING),
-		END("End Address", Address.class, MemoryBlockRow::getMaxAddress, SortDirection.ASCENDING),
-		LENGTH("Length", Long.class, MemoryBlockRow::getLength, SortDirection.ASCENDING);
+		START("Start Address", Address.class, MemoryBlockRow::getMinAddress,
+				SortDirection.ASCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		END("End Address", Address.class, MemoryBlockRow::getMaxAddress, SortDirection.ASCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		LENGTH("Length", Long.class, MemoryBlockRow::getLength, SortDirection.ASCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_ULONG_HEX;
+			}
+		};
 
 		<T> MemoryBlockTableColumns(String header, Class<T> cls, Function<MemoryBlockRow, T> getter,
 				SortDirection dir) {
@@ -188,18 +204,6 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 			okButton.setEnabled(filterPanel.getSelectedItems().size() == 1);
 			// Prevent empty selection
 		});
-
-		// TODO: Adjust column widths?
-		TableColumnModel columnModel = table.getColumnModel();
-
-		TableColumn startCol = columnModel.getColumn(MemoryBlockTableColumns.START.ordinal());
-		startCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn endCol = columnModel.getColumn(MemoryBlockTableColumns.END.ordinal());
-		endCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn lenCol = columnModel.getColumn(MemoryBlockTableColumns.LENGTH.ordinal());
-		lenCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
 	}
 
 	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceSection section,
