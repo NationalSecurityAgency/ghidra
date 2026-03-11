@@ -142,8 +142,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected static final RegisterValueCellRenderer VALUE_RENDERER =
 		new RegisterValueCellRenderer();
-	protected static final HexBigIntegerTableCellEditor VALUE_EDITOR =
-		new HexBigIntegerTableCellEditor();
+	protected static final RegisterValueCellEditor VALUE_EDITOR =
+		new RegisterValueCellEditor();
 	protected static final SettingsDefinition[] VALUE_DEFS =
 		new SettingsDefinition[] { FormatSettingsDefinition.DEF_HEX, };
 	protected static final RegisterDataTypeEditor TYPE_EDITOR = new RegisterDataTypeEditor();
@@ -462,6 +462,17 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			applyStateColors(this, data, RegisterRow::isChanged);
 			setFont(fixedWidthFont);
 			return this;
+		}
+	}
+
+	static class RegisterValueCellEditor extends HexBigIntegerTableCellEditor {
+		@Override
+		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+				int row, int column) {
+			super.getTableCellEditorComponent(table, value, isSelected, row, column);
+			JComponent component = input.getComponent();
+			component.setFont(VALUE_RENDERER.getFixedWidthFont());
+			return component;
 		}
 	}
 
