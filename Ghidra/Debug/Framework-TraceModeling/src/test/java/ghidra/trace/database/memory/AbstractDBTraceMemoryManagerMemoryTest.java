@@ -16,7 +16,9 @@
 package ghidra.trace.database.memory;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,9 +30,15 @@ import db.DBHandle;
 import db.Transaction;
 import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.*;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.util.SystemUtilities;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
@@ -985,6 +993,38 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			try (Transaction tx = b.startTransaction()) {
 				memory.setState(0, b.range(0, -1), TraceMemoryState.UNKNOWN);
 			}
+		}
+	}
+
+	/**
+	 * Based on old issue: https://github.com/NationalSecurityAgency/ghidra/issues/2760 that came up
+	 * again in another context.
+	 * 
+	 * @throws Exception because
+	 */
+	@Test
+	public void testReplicateClassCastExceptionScenario() throws Exception {
+		final int TICKS = 100_000;
+
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+		TraceMemoryManager memory = b.trace.getMemoryManager();
+		TraceThreadManager threads = b.trace.getThreadManager();
+
+		try (Transaction tx = b.startTransaction()) {
+			TraceThread th = threads.addThread("Threads[0]", Lifespan.nowOn(1));
+			b.createObjectsFramesAndRegs(th, Lifespan.nowOn(0), b.host, 1);
+			TraceMemorySpace regspace = memory.getMemoryRegisterSpace(th, true);
+			Register pc = b.trace.getBaseLanguage().getProgramCounter();
+
+			long start = System.currentTimeMillis();
+			// For each tick, write PC with a dummy value
+			for (int tick = 0; tick < TICKS; tick++) {
+				RegisterValue value = new RegisterValue(pc, BigInteger.valueOf(tick));
+				regspace.setValue(tick, value); // CRASH HERE
+			}
+			long current = System.currentTimeMillis();
+			double ticksPerSecond = 1000.0 * TICKS / (current - start);
+			System.err.println("%f/s".formatted(ticksPerSecond));
 		}
 	}
 }

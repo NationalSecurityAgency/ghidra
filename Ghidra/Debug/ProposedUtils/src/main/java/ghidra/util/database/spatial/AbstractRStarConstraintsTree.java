@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,13 +39,13 @@ import ghidra.util.exception.VersionException;
  * @param <T> The type of value stored in a data entry
  * @param <Q> The type of supported queries
  */
-public abstract class AbstractRStarConstraintsTree< //
-		DS extends BoundedShape<NS>, //
-		DR extends DBTreeDataRecord<DS, NS, T>, //
-		NS extends BoundingShape<NS>, //
-		NR extends DBTreeNodeRecord<NS>, //
-		T, //
-		Q extends Query<DS, NS>> //
+public abstract class AbstractRStarConstraintsTree<
+	DS extends BoundedShape<NS>,
+	DR extends DBTreeDataRecord<DS, NS, T>,
+	NS extends BoundingShape<NS>,
+	NR extends DBTreeNodeRecord<NS>,
+	T,
+	Q extends Query<DS, NS>>
 		extends AbstractConstraintsTree<DS, DR, NS, NR, T, Q> {
 
 	protected static final int MAX_LEVELS = 64; // Outlandish! But BitSet uses at least one word
@@ -56,7 +56,7 @@ public abstract class AbstractRStarConstraintsTree< //
 
 	protected static final double REINSERT_RATE = 0.3; // Taken from paper
 
-	protected static final int CHEAT_OVERLAP_COUNT = 32; // Take from paper. TODO Tune it
+	protected static final int CHEAT_OVERLAP_COUNT = 32; // Taken from paper
 
 	protected class LeastAreaEnlargementThenLeastArea
 			implements Comparable<LeastAreaEnlargementThenLeastArea> {
@@ -131,16 +131,16 @@ public abstract class AbstractRStarConstraintsTree< //
 	/**
 	 * The ChooseSubtree algorithm as defined in Section 4.1 of the paper.
 	 * 
-	 * @param dstLevel the level of the node to choose
+	 * @param dstLevelFromTop the level of the node to choose
 	 * @param bounds the bounds of the object being inserted
 	 * @return the leaf node into which the object should be inserted
 	 */
-	protected NR doChooseSubtree(int dstLevel, NS bounds) {
+	protected NR doChooseSubtree(int dstLevelFromTop, NS bounds) {
 		// CS1
 		NR node = root;
 
 		// CS2
-		for (int i = 0; i < dstLevel; i++) {
+		for (int i = 0; i < dstLevelFromTop; i++) {
 			assert !node.getType().isLeaf();
 			if (node.getType().isLeafParent()) {
 				node = findChildByNearlyMinimumOverlapCost(node, bounds);
@@ -314,10 +314,13 @@ public abstract class AbstractRStarConstraintsTree< //
 		for (Comparator<NS> axis : getSplitAxes()) {
 			children.sort(Comparator.comparing(DBTreeRecord::getBounds, axis));
 
-			// Distributions as desribed in Section 4.2.
-			// In the paper, S is defined as "the sum of all margin-values of the different distributions"
-			// While the margin-value is defined as a sum. So just sum it all. No need to collect the groups,
-			// or even pair their values.
+			/**
+			 * Distributions as described in Section 4.2.
+			 * 
+			 * In the paper, S is defined as "the sum of all margin-values of the different
+			 * distributions." While the margin-value is defined as a sum. So just sum it all. No
+			 * need to collect the groups, or even pair their values.
+			 */
 
 			// Compute each area, incrementally, and sum them.
 			// ************X (M = 12)
@@ -407,30 +410,67 @@ public abstract class AbstractRStarConstraintsTree< //
 		return bestIndex + minChildren;
 	}
 
-	protected static class LevelInfo {
-		int dstLevel;
-		long reinsertedLevels = 0; // MAX_LEVELS = 64
+	protected static class ReInsertInfo {
+		long reinsertedLevelsFromBottom = 0; // MAX_LEVELS = 64
 
-		public LevelInfo(int dstLevel) {
-			this.dstLevel = dstLevel;
+		public boolean checkAndSet(int levelFromBottom) {
+			long dstLevelMask = 1L << levelFromBottom;
+			if ((reinsertedLevelsFromBottom & dstLevelMask) != 0) {
+				return true;
+			}
+			reinsertedLevelsFromBottom |= dstLevelMask;
+			return false;
+		}
+	}
+
+	protected static class LevelInfo {
+		final int dstLevelFromBottom;
+		final ReInsertInfo reInsertInfo;
+
+		/**
+		 * Create level information
+		 * 
+		 * @param dstLevelFromBottom the parent level of the destination, counting from the bottom.
+		 *            NOTE: The leaf elements are at level 0.
+		 */
+		public LevelInfo(int dstLevelFromBottom) {
+			assert dstLevelFromBottom >= 0;
+			this.dstLevelFromBottom = dstLevelFromBottom;
+			this.reInsertInfo = new ReInsertInfo();
+		}
+
+		LevelInfo(int dstLevelFromBottom, ReInsertInfo reInsertInfo) {
+			this.dstLevelFromBottom = dstLevelFromBottom;
+			this.reInsertInfo = reInsertInfo;
+		}
+
+		boolean makesSense(DBTreeRecord<?, ?> entry) {
+			if (dstLevelFromBottom == 0) {
+				// If the parent is level 0, i.e., a leaf, then we are a data record
+				return entry instanceof DBTreeDataRecord;
+			}
+			if (!(entry instanceof DBTreeNodeRecord node)) {
+				return false;
+			}
+			if (dstLevelFromBottom == 1) {
+				return node.getType() == NodeType.LEAF;
+			}
+			if (dstLevelFromBottom == 2) {
+				return node.getType() == NodeType.LEAF_PARENT;
+			}
+			return node.getType() == NodeType.DIRECTORY;
+		}
+
+		public int getDstLevelFromTop(int leafLevel) {
+			return leafLevel - dstLevelFromBottom;
 		}
 
 		public boolean checkAndSetReinserted() {
-			if ((reinsertedLevels >> dstLevel & 0x1) != 0) {
-				return true;
-			}
-			reinsertedLevels |= (1 << dstLevel);
-			return false;
+			return reInsertInfo.checkAndSet(dstLevelFromBottom);
 		}
 
-		public LevelInfo decLevel() {
-			dstLevel--;
-			return this;
-		}
-
-		public void incDepth() {
-			dstLevel++;
-			reinsertedLevels <<= 1;
+		public LevelInfo setLevelTowardTop1() {
+			return new LevelInfo(dstLevelFromBottom + 1, reInsertInfo);
 		}
 	}
 
@@ -441,14 +481,20 @@ public abstract class AbstractRStarConstraintsTree< //
 		entry.setParentKey(-1); // TODO: Probably unnecessary, except error recovery?
 		entry.setShape(shape);
 		entry.setRecordValue(value);
-		doInsert(entry, new LevelInfo(leafLevel));
+		doInsert(entry, new LevelInfo(0));
 		return entry;
 	}
 
-	// NOTE: entry may actually be a node
+	/**
+	 * Insert an entry (data or node) into the tree at the given level
+	 * 
+	 * @param entry the entry to insert
+	 */
 	protected void doInsert(DBTreeRecord<?, ? extends NS> entry, LevelInfo levelInfo) {
+		assert levelInfo.makesSense(entry);
+
 		// I1
-		NR node = doChooseSubtree(levelInfo.dstLevel, entry.getBounds());
+		NR node = doChooseSubtree(levelInfo.getDstLevelFromTop(leafLevel), entry.getBounds());
 
 		// I2
 		if (node.getType() == NodeType.LEAF) {
@@ -468,7 +514,7 @@ public abstract class AbstractRStarConstraintsTree< //
 		int newChildCount = node.getChildCount() + 1;
 		node.setChildCount(newChildCount);
 
-		// I4 - I'm having integrity issues unless this comes before overflow treatments		
+		// I4 - I'm having integrity issues unless this comes before overflow treatments
 		if (newChildCount == 1) {
 			assert node == root;
 			node.setShape(entry.getBounds());
@@ -485,26 +531,14 @@ public abstract class AbstractRStarConstraintsTree< //
 			split = doOverflowTreatment(node, levelInfo);
 		}
 		// NOTE: Depth should never increase more than once per insert
-		int savedLevel = levelInfo.dstLevel;
 		for (NR propa = node, parent = getParentOf(propa); split != null; //
 				propa = parent, //
 				parent = getParentOf(propa), //
-				split = doOverflowTreatment(propa, levelInfo.decLevel())) {
+				split = doOverflowTreatment(propa, levelInfo = levelInfo.setLevelTowardTop1())) {
 			if (parent == null) {
 				assert propa == root;
-				assert levelInfo.dstLevel == 0;
-				root = nodeStore.create();
-				root.setParentKey(-1);
-				cachedNodeChildren.put(root.getKey(), new ArrayList<>(maxChildren));
-				root.setShape(propa.getShape().unionBounds(split.getShape()));
-				root.setType(propa.getType().getParentType());
-				root.setChildCount(2);
-				root.setDataCount(propa.getDataCount() + split.getDataCount());
-				doSetParentKey(propa, root.getKey(), cachedNodeChildren);
-				doSetParentKey(split, root.getKey(), cachedNodeChildren);
-				leafLevel++;
-				levelInfo.dstLevel = savedLevel;
-				levelInfo.incDepth();
+				assert levelInfo.dstLevelFromBottom == leafLevel;
+				root = reRoot(propa, split);
 				return;
 			}
 			newChildCount = parent.getChildCount() + 1;
@@ -513,7 +547,31 @@ public abstract class AbstractRStarConstraintsTree< //
 				break;
 			}
 		}
-		levelInfo.dstLevel = savedLevel;
+	}
+
+	/**
+	 * Create a new node with the two given nodes.
+	 * <p>
+	 * One of the nodes, probably n1 must be the root node. The other must be the node which
+	 * resulted from splitting the root node.
+	 * 
+	 * @param n1 the current root node
+	 * @param n2 the node resulting from splitting the current root node
+	 * @return the parent node, which must become the new root node
+	 */
+	protected NR reRoot(NR n1, NR n2) {
+		NR newRoot = nodeStore.create();
+		newRoot.setParentKey(-1);
+		long newRootKey = newRoot.getKey();
+		cachedNodeChildren.put(newRootKey, new ArrayList<>(maxChildren));
+		newRoot.setShape(n1.getShape().unionBounds(n2.getShape()));
+		newRoot.setType(n1.getType().getParentType());
+		newRoot.setChildCount(2);
+		newRoot.setDataCount(n1.getDataCount() + n2.getDataCount());
+		doSetParentKey(n1, newRootKey, cachedNodeChildren);
+		doSetParentKey(n2, newRootKey, cachedNodeChildren);
+		leafLevel++;
+		return newRoot;
 	}
 
 	protected NR doOverflowTreatment(NR n, LevelInfo levelInfo) {

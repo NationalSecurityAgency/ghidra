@@ -66,6 +66,40 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager {
 	private static final int OBJECTS_CONTAINING_CACHE_SIZE = 100;
 
+	/**
+	 * Tuned On My Machine :) for 100,000 records
+	 * 
+	 * <p>
+	 * <table border=1>
+	 * <tr>
+	 * <th>MAX_CHILDREN</th>
+	 * <th>Records/s</th>
+	 * <tr>
+	 * <td>3</td>
+	 * <td>(exceeded time limit)</td>
+	 * </tr>
+	 * <tr>
+	 * <td>10</td>
+	 * <td>8,371</td>
+	 * </tr>
+	 * <tr>
+	 * <td>12</td>
+	 * <td>8,660</td>
+	 * </tr>
+	 * <tr>
+	 * <td>15</td>
+	 * <td>8,155</td>
+	 * </tr>
+	 * <tr>
+	 * <td>50</td>
+	 * <td>7,531</td>
+	 * </tr>
+	 * </table>
+	 * <p>
+	 * I'll naively set it to 12 until/unless we run into storage size constraints.
+	 */
+	private static final int MAX_CHILDREN = 12;
+
 	public static class DBTraceObjectSchemaDBFieldCodec
 			extends AbstractDBFieldCodec<SchemaContext, DBTraceObjectSchemaEntry, StringField> {
 		public DBTraceObjectSchemaDBFieldCodec(Class<DBTraceObjectSchemaEntry> objectType,
@@ -187,7 +221,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 		valueTree = new DBTraceObjectValueRStarTree(this, factory,
 			DBTraceObjectValueData.TABLE_NAME, ValueSpace.INSTANCE, DBTraceObjectValueData.class,
-			DBTraceObjectValueNode.class, false, 50);
+			DBTraceObjectValueNode.class, false, MAX_CHILDREN);
 		valueMap = valueTree.asSpatialMap();
 
 		objectsByPath = objectStore.getIndex(KeyPath.class, DBTraceObject.PATH_COLUMN);

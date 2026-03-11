@@ -30,14 +30,58 @@ import ghidra.util.database.spatial.DBTreeNodeRecord;
 import ghidra.util.database.spatial.rect.*;
 import ghidra.util.exception.VersionException;
 
-public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
-		extends Abstract2DRStarTree< //
-				Address, Long, //
-				TraceAddressSnapRange, DR, // 
-				TraceAddressSnapRange, DBTraceAddressSnapRangePropertyMapNode, //
-				T, TraceAddressSnapRangeQuery> {
+public class DBTraceAddressSnapRangePropertyMapTree<T,
+	DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
+		extends Abstract2DRStarTree<
+			Address, Long,
+			TraceAddressSnapRange, DR,
+			TraceAddressSnapRange, DBTraceAddressSnapRangePropertyMapNode,
+			T, TraceAddressSnapRangeQuery> {
 
-	protected static final int MAX_CHILDREN = 50;
+	/**
+	 * On My Machine (TM), I get the following performance when setting register values, which imply
+	 * setting state to KNOWN, which is how that involves this tree:
+	 * 
+	 * <p>
+	 * <table border=1>
+	 * <tr>
+	 * <th>{@code MAX_CHILDREN}</th>
+	 * <th>Records / second</th>
+	 * </tr>
+	 * <tr>
+	 * <td>3</td>
+	 * <td>13,179</td>
+	 * </tr>
+	 * <tr>
+	 * <td>10</td>
+	 * <td>13,104</td>
+	 * </tr>
+	 * <tr>
+	 * <td>15</td>
+	 * <td>11,261</td>
+	 * </tr>
+	 * <tr>
+	 * <td>20</td>
+	 * <td>8,035</td>
+	 * </tr>
+	 * <tr>
+	 * <td>50</td>
+	 * <td>1,085</td>
+	 * </tr>
+	 * <tr>
+	 * <td>62</td>
+	 * <td>768</td>
+	 * </tr>
+	 * </table>
+	 * <p>
+	 * These were measured after setting 100,000 records total. Note {@link #MAX_CHILDREN} must be
+	 * less than 64, because of {@link DBTraceAddressSnapRangePropertyMapNode#CHILD_COUNT_MASK}.
+	 * There's definitely a tradeoff in storage, since a lower child count will increase the value
+	 * of log_{childCount}(recordCount). Similarly, I expect a longer query time, but it's unclear
+	 * what actual impact that will have given the caches. I have yet to measure that, but for now,
+	 * I'll set this at 15 and see how things go. It was 50....
+	 */
+	protected static final int MAX_CHILDREN = 15;
 
 	@DBAnnotatedObjectInfo(version = 0)
 	public static class DBTraceAddressSnapRangePropertyMapNode
@@ -232,7 +276,8 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		@DBAnnotatedField(column = MAX_SNAP_COLUMN_NAME)
 		private long maxSnap;
 
-		protected final DBTraceAddressSnapRangePropertyMapTree<T, ? extends AbstractDBTraceAddressSnapRangePropertyMapData<T>> tree;
+		protected final DBTraceAddressSnapRangePropertyMapTree<T,
+			? extends AbstractDBTraceAddressSnapRangePropertyMapData<T>> tree;
 
 		protected AddressRange range;
 		protected Lifespan lifespan;
@@ -384,7 +429,8 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 	}
 
 	public static class TraceAddressSnapRangeQuery extends
-			AbstractRectangle2DQuery<Address, Long, TraceAddressSnapRange, TraceAddressSnapRange, TraceAddressSnapRangeQuery> {
+			AbstractRectangle2DQuery<Address, Long, TraceAddressSnapRange, TraceAddressSnapRange,
+				TraceAddressSnapRangeQuery> {
 
 		public static TraceAddressSnapRangeQuery at(Address address, long snap) {
 			return intersecting(new ImmutableTraceAddressSnapRange(address, snap), null,
@@ -615,7 +661,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 	}
 
 	protected void doInsertDataEntry(DR entry) {
-		super.doInsert(entry, new LevelInfo(leafLevel));
+		super.doInsert(entry, new LevelInfo(0));
 	}
 
 	public DBTraceAddressSnapRangePropertyMapSpace<T, DR> getMapSpace() {
