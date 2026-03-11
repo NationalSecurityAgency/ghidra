@@ -15,10 +15,10 @@
  */
 package docking.widgets.table;
 
-import static docking.DockingUtils.*;
-import static docking.action.MenuData.*;
-import static java.awt.event.InputEvent.*;
-import static javax.swing.ListSelectionModel.*;
+import static docking.DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+import static docking.action.MenuData.NO_MNEMONIC;
+import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -50,29 +50,27 @@ import ghidra.util.exception.AssertException;
 import resources.Icons;
 
 /**
- * A sub-class of <code>JTable</code> that provides navigation and auto-lookup.
- * By default, both of these features are disabled.
+ * A sub-class of <code>JTable</code> that provides navigation and auto-lookup. By default, both of
+ * these features are disabled.
  * <p>
- * Auto-lookup is only supported on one column and must be specified
- * using the <code>setAutoLookupColumn()</code> method.
+ * Auto-lookup is only supported on one column and must be specified using the
+ * <code>setAutoLookupColumn()</code> method.
  * <p>
- * Auto-lookup allows a user to begin typing the first few letters
- * of a desired row. The table will attempt to locate the first row
- * that contains the letters typed up to that point. There is an
- * 800ms timeout between typed letters, at which point the list of
- * typed letters will be flushed.
+ * Auto-lookup allows a user to begin typing the first few letters of a desired row. The table will
+ * attempt to locate the first row that contains the letters typed up to that point. There is an
+ * 800ms timeout between typed letters, at which point the list of typed letters will be flushed.
  * <p>
  * Auto-lookup is much faster if the underlying table model implements
- * <code>SortedTableModel</code>, because a binary search can used
- * to locate the desired row. A linear search is used if the model is not sorted.
+ * <code>SortedTableModel</code>, because a binary search can used to locate the desired row. A
+ * linear search is used if the model is not sorted.
  * <p>
  * Other features provided:
  * <ul>
- * 	<li>Column hiding/showing</li>
- *  <li>Multi-column sorting</li>
- *  <li>Column settings</li>
- *  <li>Column state saving (visibility, size, positioning, sort values)</li>
- *  <li>Selection management (saving/restoring selection when used with a filter panel)</li>
+ * <li>Column hiding/showing</li>
+ * <li>Multi-column sorting</li>
+ * <li>Column settings</li>
+ * <li>Column state saving (visibility, size, positioning, sort values)</li>
+ * <li>Selection management (saving/restoring selection when used with a filter panel)</li>
  * </ul>
  *
  * @see GTableFilterPanel
@@ -143,6 +141,7 @@ public class GTable extends JTable {
 
 	/**
 	 * Constructs a new GTable using the specified table model.
+	 * 
 	 * @param dm the table model
 	 */
 	public GTable(TableModel dm) {
@@ -179,8 +178,9 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Selects the given row.  This is a convenience method for
+	 * Selects the given row. This is a convenience method for
 	 * {@link #setRowSelectionInterval(int, int)}.
+	 * 
 	 * @param row The row to select
 	 */
 	public void selectRow(int row) {
@@ -188,10 +188,11 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Selects the row under the given mouse point.  This method is useful when the user
-	 * triggers a popup mouse action and you would like to have the table select that row if it
-	 * is not already selected.  This allows you to guarantee that there is always a selection
-	 * when the user triggers a popup menu.
+	 * Selects the row under the given mouse point.
+	 * <p>
+	 * This method is useful when the user triggers a popup mouse action and you would like to have
+	 * the table select that row if it is not already selected. This allows you to guarantee that
+	 * there is always a selection when the user triggers a popup menu.
 	 *
 	 * @param event The event that triggered the popup menu
 	 * @return true if the row is selected or was already selected.
@@ -217,6 +218,7 @@ public class GTable extends JTable {
 
 	/**
 	 * Allows subclasses to change the type of {@link AutoLookup} created by this table
+	 * 
 	 * @return the auto lookup
 	 */
 	protected AutoLookup createAutoLookup() {
@@ -231,8 +233,12 @@ public class GTable extends JTable {
 		initializeHeader(header);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote overridden to cleanup our SelectionManager
+	 */
 	@Override
-	// overridden to cleanup our SelectionManager
 	public void setSelectionModel(ListSelectionModel newModel) {
 		if (selectionManager != null) {
 			selectionManager.dispose();
@@ -242,8 +248,12 @@ public class GTable extends JTable {
 		super.setSelectionModel(newModel);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote overridden to install our SelectionManager
+	 */
 	@Override
-	// overridden to install our SelectionManager
 	public void setModel(TableModel dataModel) {
 		// we are going to create a new selection model, save off the old selectionMode and
 		// restore it at the end.
@@ -269,35 +279,39 @@ public class GTable extends JTable {
 		return null;
 	}
 
+	/**
+	 * @param <T> the type of the row object
+	 * @return the model
+	 * @implNoteThe The cast to {@code RowObjectTableModel<T>} is safe, since we are create a new
+	 *              {@link SelectionManager} of an arbitrary type T defined here. So, T doesn't
+	 *              really exist and therefore the cast isn't really casting to anything. The
+	 *              {@link SelectionManager} will take on the type of the given model. The T is just
+	 *              there on the {@link SelectionManager} to make its internal methods consistent.
+	 */
 	@SuppressWarnings("unchecked")
-	// The (RowObjectTableModel<T>) is safe, since we are create a new SelectionManager of
-	// an arbitrary type T defined here.  So, T doesn't really exist and therefore the cast isn't
-	// really casting to anything.  The SelectionManager will take on the type of the given model.
-	// The T is just there on the SelectionManager to make its internal methods consistent.
 	private <T> RowObjectTableModel<T> getRowObjectTableModel() {
-		TableModel model = getModel();
-		if (model instanceof RowObjectTableModel) {
-			return (RowObjectTableModel<T>) model;
+		if (getModel() instanceof RowObjectTableModel model) {
+			return model;
 		}
 
 		return null;
 	}
 
 	/**
-	 * Returns the {@link SelectionManager} in use by this GTable.  <code>null</code> is returned
-	 * if the user has installed their own {@link ListSelectionModel}.
-	 *
-	 * @return the selection manager
+	 * {@return the {@link SelectionManager} in use by this {@code GTable}, or {@code null} if the
+	 * user has installed their own {@link ListSelectionModel}}.
 	 */
 	public SelectionManager getSelectionManager() {
 		return selectionManager;
 	}
 
 	/**
-	 * A method that allows clients to signal to this GTable and its internals that the table
-	 * model has changed.  Usually, {@link #tableChanged(TableModelEvent)} is called, but clients
-	 * alter the table, but do not do so through the model.  In this case, they need a way to
-	 * signal to the table that the model has been updated.
+	 * A method that allows clients to signal to this {@code GTable} and its internals that the
+	 * table model has changed.
+	 * <p>
+	 * Usually, {@link #tableChanged(TableModelEvent)} is called, but clients alter the table, but
+	 * do not do so through the model. In this case, they need a way to signal to the table that the
+	 * model has been updated.
 	 *
 	 * @param event the event for the change
 	 */
@@ -334,6 +348,7 @@ public class GTable extends JTable {
 
 	/**
 	 * Sets the delay between keystrokes after which each keystroke is considered a new lookup
+	 * 
 	 * @param timeout the timeout
 	 * @see #setAutoLookupColumn(int)
 	 * @see AutoLookup#KEY_TYPING_TIMEOUT
@@ -348,10 +363,10 @@ public class GTable extends JTable {
 
 	/**
 	 * Sets the column in which auto-lookup will be enabled.
-	 *
-	 * <p>Note: calling this method with a valid column index will disable key binding support
-	 * of actions.  See {@link #setActionsEnabled(boolean)}.  Passing an invalid column index
-	 * will disable the auto-lookup feature.
+	 * <p>
+	 * Note: calling this method with a valid column index will disable key binding support of
+	 * actions. See {@link #setActionsEnabled(boolean)}. Passing an invalid column index will
+	 * disable the auto-lookup feature.
 	 *
 	 * @param lookupColumn the column in which auto-lookup will be enabled
 	 */
@@ -385,13 +400,13 @@ public class GTable extends JTable {
 
 	/**
 	 * Enables the keyboard actions to pass through this table and up the component hierarchy.
-	 * Specifically, passing true to this method allows unmodified keystrokes to work
-	 * in the tool when this table is focused.  Modified keystrokes, like <code>
-	 * Ctrl-C</code>, will work at all times.   Finally, if true is passed to this
-	 * method, then the {@link #setAutoLookupColumn(int) auto lookup} feature is
-	 * disabled.
-	 *
-	 * <p>The default state is for actions to be disabled.
+	 * <p>
+	 * Specifically, passing true to this method allows unmodified keystrokes to work in the tool
+	 * when this table is focused. Modified keystrokes, like {@code  Ctrl-C}, will work at all
+	 * times. Finally, if true is passed to this method, then the
+	 * {@linkplain #setAutoLookupColumn(int) auto lookup} feature is disabled. *
+	 * <p>
+	 * The default state is for actions to be disabled.
 	 *
 	 * @param b true allows keyboard actions to pass up the component hierarchy.
 	 */
@@ -402,9 +417,10 @@ public class GTable extends JTable {
 	/**
 	 * Returns true if key strokes are used to trigger actions.
 	 *
-	 * <p>This method has a relationship with {@link #setAutoLookupColumn(int)}.  If this method
-	 * returns <code>true</code>, then the auto-lookup feature is disabled.  If this method
-	 * returns <code>false</code>, then the auto-lookup may or may not be enabled.
+	 * <p>
+	 * This method has a relationship with {@link #setAutoLookupColumn(int)}. If this method returns
+	 * true, then the auto-lookup feature is disabled. If this method returns false, then the
+	 * auto-lookup may or may not be enabled.
 	 *
 	 * @return true if key strokes are used to trigger actions
 	 * @see #setActionsEnabled(boolean)
@@ -416,12 +432,12 @@ public class GTable extends JTable {
 
 	/**
 	 * Sets an accessible name on the GTable such that screen readers will properly describe them.
-	 * <P>
-	 * This prefix should be the base name that describes the type of items in the table. 
-	 * This method will then append the necessary information to property name the table.
+	 * <p>
+	 * This prefix should be the base name that describes the type of items in the table. This
+	 * method will then append the necessary information to property name the table.
 	 *
-	 * @param namePrefix the accessible name prefix to assign to the filter component. For
-	 * example if the table contains fruits, then "Fruits" would be an appropriate prefix name.
+	 * @param namePrefix the accessible name prefix to assign to the filter component. For example
+	 *            if the table contains fruits, then "Fruits" would be an appropriate prefix name.
 	 */
 	public void setAccessibleNamePrefix(String namePrefix) {
 		// set the component name as general good practice
@@ -433,8 +449,9 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Enables or disables auto-edit.  When enabled, the user can start typing to trigger an
-	 * edit of an editable table cell.
+	 * Enables or disables auto-edit.
+	 * <p>
+	 * When enabled, the user can start typing to trigger an edit of an editable table cell.
 	 *
 	 * @param allowAutoEdit true for auto-editing
 	 */
@@ -496,6 +513,7 @@ public class GTable extends JTable {
 	}
 
 	private void removeActionKeyStrokes() {
+
 		//
 		// We remove these keybindings as we have replaced Java's version with our own.  To be
 		// thorough, we should really clear all table keybindings, which would ensure that any
@@ -505,6 +523,7 @@ public class GTable extends JTable {
 		// wish to override.   For now, just clear these.  We can clear others if they become
 		// a problem.
 		//
+
 		KeyBindingUtils.clearKeyBinding(this, COPY_KEY_STROKE);
 		KeyBindingUtils.clearKeyBinding(this, COPY_COLUMN_KEY_STROKE);
 		KeyBindingUtils.clearKeyBinding(this, SELECT_ALL_KEY_STROKE);
@@ -521,7 +540,6 @@ public class GTable extends JTable {
 	}
 
 	private void initializeRowHeight() {
-
 		// Note: this method gets called indirectly from the parent constructor, so we cannot 
 		// initialize this field at declaration time or in our constructor, as this call will have
 		// happened at that point.
@@ -538,7 +556,6 @@ public class GTable extends JTable {
 	}
 
 	private void adjustRowHeight() {
-
 		if (!isInitialized) {
 			return; // must be initializing
 		}
@@ -619,8 +636,7 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Returns the underlying ConfigurableColumnTableModel if one is in-use
-	 * @return the underlying ConfigurableColumnTableModel if one is in-use
+	 * {@return the underlying ConfigurableColumnTableModel if one is in-use}
 	 */
 	public ConfigurableColumnTableModel getConfigurableColumnTableModel() {
 		TableModel model = getUnwrappedTableModel();
@@ -633,6 +649,7 @@ public class GTable extends JTable {
 	/**
 	 * Unrolls the current model by checking if the current model is inside of a wrapper table
 	 * model.
+	 * 
 	 * @return this class's table model, unwrapped as needed
 	 */
 	protected TableModel getUnwrappedTableModel() {
@@ -687,6 +704,7 @@ public class GTable extends JTable {
 
 	/**
 	 * Installs the default {@link TableCellRenderer}s for known Ghidra table cell data classes.
+	 * <p>
 	 * Subclasses can override this method to add additional types or to change the default
 	 * associations.
 	 */
@@ -773,9 +791,17 @@ public class GTable extends JTable {
 			return;
 		}
 		AbstractGTableModel<?> gTableModel = (AbstractGTableModel<?>) wrappedModel;
-		int width = gTableModel.getPreferredColumnWidth(columnIndex);
-		if (width != AbstractGTableModel.WIDTH_UNDEFINED) {
-			column.setPreferredWidth(width);
+		int preferredWidth = gTableModel.getPreferredColumnWidth(columnIndex);
+		if (preferredWidth != AbstractGTableModel.WIDTH_UNDEFINED) {
+			column.setPreferredWidth(preferredWidth);
+		}
+		int maxWidth = gTableModel.getMaxColumnWidth(columnIndex);
+		if (maxWidth != AbstractGTableModel.WIDTH_UNDEFINED) {
+			column.setMaxWidth(maxWidth);
+		}
+		int minWidth = gTableModel.getMinColumnWidth(columnIndex);
+		if (minWidth != AbstractGTableModel.WIDTH_UNDEFINED) {
+			column.setMinWidth(minWidth);
 		}
 	}
 
@@ -822,13 +848,13 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Enables and disables the rendering of HTML content in this table.  If enabled, this table
+	 * Enables and disables the rendering of HTML content in this table. If enabled, this table
 	 * will:
 	 * <ul>
-	 *     <li>Wrap tooltip text content with an &lt;html&gt; tag so that it is possible for
-	 *         the content to be formatted in a manner that is easier for the user read, and</li>
-	 *     <li>Enable any <code>default</code> {@link GTableCellRenderer} instances to render
-	 *         HTML content, which they do not do by default.</li>
+	 * <li>Wrap tooltip text content with an &lt;html&gt; tag so that it is possible for the content
+	 * to be formatted in a manner that is easier for the user read, and</li>
+	 * <li>Enable any <code>default</code> {@link GTableCellRenderer} instances to render HTML
+	 * content, which they do not do by default.</li>
 	 * </ul>
 	 * <p>
 	 * HTML rendering is disabled by default.
@@ -848,6 +874,7 @@ public class GTable extends JTable {
 
 	/**
 	 * Sets the table filter panel being used for this table.
+	 * 
 	 * @param filterPanel the filter panel
 	 */
 	public void setTableFilterPanel(GTableFilterPanel<?> filterPanel) {
@@ -855,16 +882,17 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Returns the filter panel being used by this table or null.
-	 * @return the filter panel or null
+	 * {@return the filter panel being used by this table or null}
 	 */
 	public GTableFilterPanel<?> getTableFilterPanel() {
 		return tableFilterPanel;
 	}
 
 	/**
-	 * Sets the key for saving and restoring column configuration state.  Use this if you have
-	 * multiple instances of a table and you want different column settings for each instance.
+	 * Sets the key for saving and restoring column configuration state.
+	 * <p>
+	 * Use this if you have multiple instances of a table and you want different column settings for
+	 * each instance.
 	 *
 	 * @param preferenceKey the unique string to use a key for this instance.
 	 */
@@ -879,8 +907,9 @@ public class GTable extends JTable {
 	}
 
 	/**
+	 * {@return the preference key}
+	 * 
 	 * @see #setPreferenceKey(String)
-	 * @return the preference key
 	 */
 	public String getPreferenceKey() {
 		return preferenceKey;
@@ -888,10 +917,12 @@ public class GTable extends JTable {
 
 	/**
 	 * Signals that the preferences of this table (visible columns, sort order, etc.) should be
-	 * saved.  Most clients never need to call this method, as changes are saved for free when
-	 * the user manipulates columns.  However, sometimes the client can change the state of the
-	 * columns programmatically, which is not guaranteed to get saved; for example, setting
-	 * the sort state of a sorted table model programmatically will not get saved.
+	 * saved.
+	 * <p>
+	 * Most clients never need to call this method, as changes are saved for free when the user
+	 * manipulates columns. However, sometimes the client can change the state of the columns
+	 * programmatically, which is not guaranteed to get saved; for example, setting the sort state
+	 * of a sorted table model programmatically will not get saved.
 	 */
 	public void savePreferences() {
 		if (!(columnModel instanceof GTableColumnModel)) {
@@ -903,8 +934,9 @@ public class GTable extends JTable {
 
 	/**
 	 * Allows for the disabling of the user's ability to sort an instance of
-	 * {@link AbstractSortedTableModel} by clicking the table's headers.  The default setting is
-	 * enabled.
+	 * {@link AbstractSortedTableModel} by clicking the table's headers.
+	 * <p>
+	 * The default setting is enabled.
 	 *
 	 * @param enabled true to enable; false to disable
 	 */
@@ -936,10 +968,11 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Performs custom work to locate renderers for special table model types.  This method allows
-	 * clients to bypass the {@link #getCellRenderer(int, int)}, which is sometimes overridden by
-	 * subclasses to return a hard-coded renderer.  In that case, some clients still want a way to
-	 * perform normal cell renderer lookup.
+	 * Performs custom work to locate renderers for special table model types.
+	 * <p>
+	 * This method allows clients to bypass the {@link #getCellRenderer(int, int)}, which is
+	 * sometimes overridden by subclasses to return a hard-coded renderer. In that case, some
+	 * clients still want a way to perform normal cell renderer lookup.
 	 *
 	 * @param row the row
 	 * @param col the column
@@ -947,19 +980,50 @@ public class GTable extends JTable {
 	 */
 	public final TableCellRenderer getCellRendererOverride(int row, int col) {
 		ConfigurableColumnTableModel configurableModel = getConfigurableColumnTableModel();
-		if (configurableModel != null) {
-			int modelIndex = convertColumnIndexToModel(col);
-			TableCellRenderer renderer = configurableModel.getRenderer(modelIndex);
-			if (renderer != null) {
-				return renderer;
-			}
+		if (configurableModel == null) {
+			return super.getCellRenderer(row, col);
 		}
-		return super.getCellRenderer(row, col);
+		int modelIndex = convertColumnIndexToModel(col);
+		TableCellRenderer renderer = configurableModel.getRenderer(modelIndex);
+		if (renderer == null) {
+			return super.getCellRenderer(row, col);
+		}
+		return renderer;
+	}
+
+	@Override
+	public TableCellEditor getCellEditor(int row, int column) {
+		return getCellEditorOverride(row, column);
 	}
 
 	/**
-	 * Performs custom work to locate header renderers for special table model types.  The headers
-	 * are located and installed at the time the table's model is set.
+	 * Performs custom work to locate editors for special table model types.
+	 * <p>
+	 * This method allows clients to bypass the {@link #getCellEditor(int, int)}, which is sometimes
+	 * overridden by subclasses to return a hard-coded editor. In that case, some clients still want
+	 * a way to perform normal cell editor lookup.
+	 *
+	 * @param row the row
+	 * @param col the column
+	 * @return the cell editor
+	 */
+	public final TableCellEditor getCellEditorOverride(int row, int col) {
+		ConfigurableColumnTableModel configurableModel = getConfigurableColumnTableModel();
+		if (configurableModel == null) {
+			return super.getCellEditor(row, col);
+		}
+		int modelIndex = convertColumnIndexToModel(col);
+		TableCellEditor editor = configurableModel.getEditor(modelIndex);
+		if (editor == null) {
+			return super.getCellEditor(row, col);
+		}
+		return editor;
+	}
+
+	/**
+	 * Performs custom work to locate header renderers for special table model types.
+	 * <p>
+	 * The headers are located and installed at the time the table's model is set.
 	 *
 	 * @param col the column
 	 * @return the header cell renderer
@@ -977,6 +1041,8 @@ public class GTable extends JTable {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 * <p>
 	 * If you just begin typing into an editable cell in a JTable, then the cell editor will be
 	 * displayed. However, the editor component will not have a focus. This method has been
 	 * overridden to request focus on the editor component.
@@ -1012,8 +1078,9 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Scrolls the selected row into the view center.  This call will not scroll if the selected row
-	 * is already in the view.
+	 * Scrolls the selected row into the view center.
+	 * <p>
+	 * This call will not scroll if the selected row is already in the view.
 	 */
 	public void scrollToSelectedRow() {
 		Container parent = getParent();
@@ -1136,10 +1203,12 @@ public class GTable extends JTable {
 		return item;
 	}
 
-	/*
-	 * Note: overridden to allow the Copy actions to record the text data of each cell
-	 *       *without* using HTML.  When users copy the table data, having HTML markup makes the
-	 *       data almost unreadable/unusable.
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote overridden to allow the Copy actions to record the text data of each cell
+	 *           <em>without</em> using HTML. When users copy the table data, having HTML markup
+	 *           makes the data almost unreadable/unusable.
 	 */
 	@Override
 	public Object getValueAt(int row, int column) {
@@ -1177,13 +1246,14 @@ public class GTable extends JTable {
 
 	/**
 	 * Maintain a {@link docking.widgets.table.GTableCellRenderingData} object associated with each
-	 * column that maintains some state and references to useful data. These objects are created as
-	 * needed, stored by the table for convenient re-use and to prevent per-cell creation, and
-	 * cleared when columns are removed from the table.
+	 * column that maintains some state and references to useful data.
 	 * <p>
-	 * Row and cell state is cleared before returning to the caller to ensure consistent state;
-	 * when the client is done rendering a cell, row and cell state should also be cleared to
-	 * minimize references.
+	 * These objects are created as needed, stored by the table for convenient re-use and to prevent
+	 * per-cell creation, and cleared when columns are removed from the table.
+	 * <p>
+	 * Row and cell state is cleared before returning to the caller to ensure consistent state; when
+	 * the client is done rendering a cell, row and cell state should also be cleared to minimize
+	 * references.
 	 *
 	 * @param viewColumn the columns' view index
 	 * @return Data specific to the column. Row state is cleared before returning.
@@ -1216,7 +1286,9 @@ public class GTable extends JTable {
 
 	/**
 	 * A method that subclasses can override to signal that they wish not to have this table's
-	 * built-in popup actions.   Subclasses will almost never need to override this method.
+	 * built-in popup actions.
+	 * <p>
+	 * Subclasses will almost never need to override this method.
 	 *
 	 * @return true if popup actions are supported
 	 */
@@ -1225,13 +1297,10 @@ public class GTable extends JTable {
 	}
 
 	private void copyColumns(int... copyColumns) {
-
-		//
 		// We have to change the column model's selection settings to ensure that the copy works
 		// correctly.  For example, if the model only allows single column selection, then we have
 		// to change that to allow for multiple column selection.  We will put the original state
 		// back when finished.
-		//
 		ColumnSelectionState originalState = ColumnSelectionState.copy(this);
 		ColumnSelectionState newState = ColumnSelectionState.withColumns(this, copyColumns);
 		newState.apply();
@@ -1363,7 +1432,6 @@ public class GTable extends JTable {
 	}
 
 	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
-
 		String actionMenuGroup = "zzzTableGroup";
 		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
 		tool.setMenuGroup(new String[] { "Export" }, actionMenuGroup, "2");
@@ -1377,17 +1445,13 @@ public class GTable extends JTable {
 				gTable.doCopy();
 			}
 		};
-		//@formatter:off
 		copyAction.setPopupMenuData(new MenuData(
-				new String[] { "Copy", "Copy" },
-				Icons.COPY_ICON,
-				actionMenuGroup, NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			new String[] { "Copy", "Copy" },
+			Icons.COPY_ICON,
+			actionMenuGroup, NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		copyAction.setKeyBindingData(new KeyBindingData(COPY_KEY_STROKE));
 		copyAction.setHelpLocation(new HelpLocation("Tables", "Copy"));
-		//@formatter:on
 
 		GTableAction copyCurrentColumnAction =
 			new GTableAction("Table Data Copy Current Column", owner) {
@@ -1397,19 +1461,15 @@ public class GTable extends JTable {
 					gTable.doCopyCurrentColumn(context.getMouseEvent());
 				}
 			};
-		//@formatter:off
 		copyCurrentColumnAction.setPopupMenuData(new MenuData(
-				new String[] { "Copy",
+			new String[] { "Copy",
 				"Copy Current Column" },
-				Icons.COPY_ICON,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			Icons.COPY_ICON,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		copyCurrentColumnAction.setKeyBindingData(new KeyBindingData(COPY_COLUMN_KEY_STROKE));
 		copyCurrentColumnAction.setHelpLocation(new HelpLocation("Tables", "Copy_Current_Column"));
-		//@formatter:on
 
 		GTableAction copyColumnsAction = new GTableAction("Table Data Copy by Columns", owner) {
 			@Override
@@ -1418,17 +1478,13 @@ public class GTable extends JTable {
 				gTable.doCopyColumns();
 			}
 		};
-		//@formatter:off
 		copyColumnsAction.setPopupMenuData(new MenuData(
-				new String[] { "Copy", "Copy Columns..." },
-				Icons.COPY_ICON,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			new String[] { "Copy", "Copy Columns..." },
+			Icons.COPY_ICON,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		copyColumnsAction.setHelpLocation(new HelpLocation("Tables", "Copy_Columns"));
-		//@formatter:on
 
 		GTableAction exportAction = new GTableAction("Table Data CSV Export", owner) {
 			@Override
@@ -1437,17 +1493,13 @@ public class GTable extends JTable {
 				gTable.doExport();
 			}
 		};
-		//@formatter:off
 		exportAction.setPopupMenuData(new MenuData(
-				new String[] { "Export", GTableToCSV.TITLE + "..." },
-				ICON_SPREADSHEET,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			new String[] { "Export", GTableToCSV.TITLE + "..." },
+			ICON_SPREADSHEET,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		exportAction.setHelpLocation(new HelpLocation("Tables", "ExportCSV"));
-		//@formatter:on
 
 		GTableAction exportColumnsAction =
 			new GTableAction("Table Data CSV Export (by Columns)", owner) {
@@ -1457,17 +1509,13 @@ public class GTable extends JTable {
 					gTable.doExportColumns();
 				}
 			};
-		//@formatter:off
 		exportColumnsAction.setPopupMenuData(new MenuData(
-				new String[] { "Export", "Export Columns to CSV..." },
-				ICON_SPREADSHEET,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			new String[] { "Export", "Export Columns to CSV..." },
+			ICON_SPREADSHEET,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		exportColumnsAction.setHelpLocation(new HelpLocation("Tables", "ExportCSV_Columns"));
-		//@formatter:on
 
 		GTableAction selectAllAction = new GTableAction("Table Select All", owner) {
 			@Override
@@ -1486,18 +1534,14 @@ public class GTable extends JTable {
 				return mode != ListSelectionModel.SINGLE_SELECTION;
 			}
 		};
-		//@formatter:off
 		selectAllAction.setPopupMenuData(new MenuData(
-				new String[] { "Select All" },
-				null /*icon*/,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			new String[] { "Select All" },
+			null /*icon*/,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		selectAllAction.setKeyBindingData(new KeyBindingData(SELECT_ALL_KEY_STROKE));
 		selectAllAction.setHelpLocation(new HelpLocation("Tables", "SelectAll"));
-		//@formatter:on
 
 		GTableAction activateFilterAction = new GTableAction("Table/Tree Activate Filter", owner) {
 
@@ -1519,18 +1563,14 @@ public class GTable extends JTable {
 				filterPanel.activate();
 			}
 		};
-		//@formatter:off
 		activateFilterAction.setPopupMenuData(new MenuData(
-				new String[] { "Activate Filter" },
-				null /*icon*/,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);
+			new String[] { "Activate Filter" },
+			null /*icon*/,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		activateFilterAction.setKeyBindingData(new KeyBindingData(ACTIVATE_FILTER_KEY_STROKE));
 		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Activate_Filter"));
-		//@formatter:on
 
 		GTableAction hideFilterAction = new GTableAction("Table/Tree Hide Filter", owner) {
 
@@ -1573,17 +1613,13 @@ public class GTable extends JTable {
 				return filterPanel.isShowing();
 			}
 		};
-		//@formatter:off
 		hideFilterAction.setPopupMenuData(new MenuData(
-				new String[] { "Hide Filter" },
-				null /*icon*/,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);		
+			new String[] { "Hide Filter" },
+			null /*icon*/,
+			actionMenuGroup,
+			NO_MNEMONIC,
+			Integer.toString(subGroupIndex++)));
 		hideFilterAction.setHelpLocation(new HelpLocation("Trees", "Hide_Filter"));
-		//@formatter:on
 
 		toolActions.addGlobalAction(copyAction);
 		toolActions.addGlobalAction(copyColumnsAction);

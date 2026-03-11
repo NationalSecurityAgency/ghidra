@@ -26,8 +26,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 
 import org.jdom2.Element;
 
@@ -52,7 +52,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
-import ghidra.base.widgets.table.DataTypeTableCellEditor;
+import ghidra.base.widgets.table.AbstractDataTypeTableCellEditor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.watch.WatchRow;
 import ghidra.docking.settings.*;
@@ -148,6 +148,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
+	protected static final WatchValueCellRenderer VALUE_RENDERER = new WatchValueCellRenderer();
+	protected static final WatchDataTypeEditor TYPE_EDITOR = new WatchDataTypeEditor();
+
 	protected enum WatchTableColumns
 		implements EnumeratedTableColumn<WatchTableColumns, DefaultWatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
@@ -161,14 +164,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		SYMBOL("Symbol", Symbol.class, WatchRow::getSymbol),
 		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString,
 				WatchRow::isRawValueEditable) {
-			private static final WatchValueCellRenderer RENDERER = new WatchValueCellRenderer();
 
 			@Override
 			public GColumnRenderer<?> getRenderer() {
-				return RENDERER;
+				return VALUE_RENDERER;
 			}
 		},
-		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
+		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType) {
+			@Override
+			public TableCellEditor getEditor() {
+				return TYPE_EDITOR;
+			}
+		},
 		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString,
 				WatchRow::isValueEditable),
 		ERROR("Error", String.class, WatchRow::getErrorMessage);
@@ -224,10 +231,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class WatchTableModel
+	protected class WatchTableModel
 			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, DefaultWatchRow> {
 		public WatchTableModel(PluginTool tool) {
 			super(tool, "Watches", WatchTableColumns.class);
+		}
+
+		ServiceProvider getServiceProvider() {
+			return serviceProvider;
+		}
+
+		Trace getTrace() {
+			return currentTrace;
 		}
 	}
 
@@ -286,21 +301,26 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class WatchDataTypeEditor extends DataTypeTableCellEditor {
-		public WatchDataTypeEditor() {
-			super(plugin.getTool());
+	static class WatchDataTypeEditor extends AbstractDataTypeTableCellEditor {
+		@Override
+		protected DataTypeManagerService getService(TableModel model) {
+			if (!(model instanceof WatchTableModel wModel)) {
+				return null;
+			}
+			return wModel.getServiceProvider().getService(DataTypeManagerService.class);
 		}
 
 		@Override
-		protected DataType resolveSelection(DataType dataType) {
-			if (dataType == null) {
+		protected DataType resolveSelection(DataType dataType, TableModel model) {
+			if (dataType == null || !(model instanceof WatchTableModel wModel)) {
 				return null;
 			}
-			if (currentTrace == null) {
+			Trace trace = wModel.getTrace();
+			if (trace == null) {
 				return dataType;
 			}
-			try (Transaction tx = currentTrace.openTransaction("Resolve DataType")) {
-				return currentTrace.getDataTypeManager().resolve(dataType, null);
+			try (Transaction tx = trace.openTransaction("Resolve DataType")) {
+				return trace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
 	}
@@ -465,10 +485,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 				}
 			}
 		});
-
-		TableColumnModel columnModel = watchTable.getColumnModel();
-		TableColumn typeCol = columnModel.getColumn(WatchTableColumns.TYPE.ordinal());
-		typeCol.setCellEditor(new WatchDataTypeEditor());
 	}
 
 	@Override

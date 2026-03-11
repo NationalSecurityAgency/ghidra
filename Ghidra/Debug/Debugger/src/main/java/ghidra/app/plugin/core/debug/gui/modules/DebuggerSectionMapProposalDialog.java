@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -33,23 +32,103 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Swing;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerSectionMapProposalDialog
 		extends AbstractDebuggerMapProposalDialog<SectionMapEntry> {
 
-	static final int BUTTON_SIZE = 32;
+	private static final IconButtonTableCellRenderer REMOVE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_DELETE, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<SectionMapEntry> REMOVE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(SectionMapEntry.class, DebuggerResources.ICON_DELETE) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof SectionMapPropsalTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.removeEntry(row);
+			}
+		};
+
+	private static final IconButtonTableCellRenderer CHOOSE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_PROGRAM, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<SectionMapEntry> CHOOSE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(SectionMapEntry.class, DebuggerResources.ICON_PROGRAM) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof SectionMapPropsalTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.chooseAndSetBlock(row);
+			}
+		};
 
 	protected enum SectionMapTableColumns
 		implements EnumeratedTableColumn<SectionMapTableColumns, SectionMapEntry> {
-		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
+		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return REMOVE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return REMOVE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		MODULE_NAME("Module", String.class, e -> e.getModuleName()),
 		SECTION_NAME("Section", String.class, e -> e.getSectionName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSectionStart()),
-		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSectionStart()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CHOOSE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return CHOOSE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),
-		STATIC_BASE("Static Base", Address.class, e -> e.getBlock().getStart()),
-		SIZE("Size", Long.class, e -> e.getMappingLength());
+		STATIC_BASE("Static Base", Address.class, e -> e.getBlock().getStart()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		SIZE("Size", Long.class, e -> e.getMappingLength()) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_ULONG_HEX;
+			}
+		};
 
 		private final String header;
 		private final Class<?> cls;
@@ -101,9 +180,12 @@ public class DebuggerSectionMapProposalDialog
 
 	protected static class SectionMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<SectionMapTableColumns, SectionMapEntry> {
+		protected final DebuggerSectionMapProposalDialog dialog;
 
-		public SectionMapPropsalTableModel(PluginTool tool) {
+		public SectionMapPropsalTableModel(PluginTool tool,
+				DebuggerSectionMapProposalDialog dialog) {
 			super(tool, "Section Map", SectionMapTableColumns.class);
+			this.dialog = dialog;
 		}
 
 		@Override
@@ -121,33 +203,14 @@ public class DebuggerSectionMapProposalDialog
 
 	@Override
 	protected SectionMapPropsalTableModel createTableModel(PluginTool tool) {
-		return new SectionMapPropsalTableModel(tool);
+		return new SectionMapPropsalTableModel(tool, this);
 	}
 
 	@Override
 	protected void populateComponents() {
 		super.populateComponents();
 		setPreferredSize(600, 300);
-
-		TableColumnModel columnModel = table.getColumnModel();
-
-		TableColumn removeCol = columnModel.getColumn(SectionMapTableColumns.REMOVE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, removeCol,
-			DebuggerResources.ICON_DELETE, BUTTON_SIZE, this::removeEntry);
-
-		TableColumn dynBaseCol =
-			columnModel.getColumn(SectionMapTableColumns.DYNAMIC_BASE.ordinal());
-		dynBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn chooseCol = columnModel.getColumn(SectionMapTableColumns.CHOOSE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, chooseCol, DebuggerResources.ICON_PROGRAM,
-			BUTTON_SIZE, this::chooseAndSetBlock);
-
-		TableColumn stBaseCol = columnModel.getColumn(SectionMapTableColumns.STATIC_BASE.ordinal());
-		stBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn sizeCol = columnModel.getColumn(SectionMapTableColumns.SIZE.ordinal());
-		sizeCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
+		table.setRowHeight(BUTTON_SIZE);
 	}
 
 	private void chooseAndSetBlock(SectionMapEntry entry) {

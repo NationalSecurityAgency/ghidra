@@ -26,8 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import db.Transaction;
 import docking.action.DockingAction;
@@ -38,12 +37,11 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.pcode.UniqueRow.RefType;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
-import ghidra.app.services.DebuggerEmulationService;
-import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.services.*;
 import ghidra.app.util.pcode.AbstractAppender;
 import ghidra.app.util.pcode.AbstractPcodeFormatter;
 import ghidra.async.SwingExecutorService;
-import ghidra.base.widgets.table.DataTypeTableCellEditor;
+import ghidra.base.widgets.table.AbstractDataTypeTableCellEditor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.*;
@@ -70,6 +68,7 @@ import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	private static final FontRenderContext METRIC_FRC =
@@ -102,10 +101,65 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		return u1.getAddress().compareTo(u2.getAddress());
 	};
 
+	private static final CounterBackgroundCellRenderer SEQ_COL_RENDERER =
+		new CounterBackgroundCellRenderer();
+	private static final PcodeCellRenderer CODE_COL_RENDERER = new PcodeCellRenderer();
+
+	// No filter panel on p-code
 	protected enum PcodeTableColumns implements EnumeratedTableColumn<PcodeTableColumns, PcodeRow> {
-		SEQUENCE("Sequence", Integer.class, PcodeRow::getSequence),
-		LABEL("Label", String.class, PcodeRow::getLabel),
-		CODE("Code", String.class, PcodeRow::getCode);
+		SEQUENCE("Sequence", Integer.class, PcodeRow::getSequence) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return SEQ_COL_RENDERER;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return SEQ_COL_RENDERER.measureColWidth("00");
+			}
+
+			@Override
+			public int getMinWidth() {
+				return SEQ_COL_RENDERER.measureColWidth("00");
+			}
+
+			@Override
+			public boolean isSortable() {
+				return true;
+			}
+		},
+		LABEL("Label", String.class, PcodeRow::getLabel) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CODE_COL_RENDERER;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return CODE_COL_RENDERER.measureColWidth("<00>");
+			}
+
+			@Override
+			public int getMinWidth() {
+				return CODE_COL_RENDERER.measureColWidth("<00>");
+			}
+
+			@Override
+			public boolean isSortable() {
+				return false;
+			}
+		},
+		CODE("Code", String.class, PcodeRow::getCode) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CODE_COL_RENDERER;
+			}
+
+			@Override
+			public boolean isSortable() {
+				return false;
+			}
+		};
 
 		private final String header;
 		private final Function<PcodeRow, ?> getter;
@@ -131,11 +185,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		public Object getValueOf(PcodeRow row) {
 			return getter.apply(row);
 		}
-
-		@Override
-		public boolean isSortable() {
-			return this == SEQUENCE; // HACK
-		}
 	}
 
 	protected static class PcodeTableModel
@@ -150,14 +199,73 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	private static final UniqueRefCellRenderer UNIQUE_REF_RENDERER = new UniqueRefCellRenderer();
+	private static final UniqueDataTypeEditor UNIQUE_DT_EDITOR = new UniqueDataTypeEditor();
+
 	protected enum UniqueTableColumns
 		implements EnumeratedTableColumn<UniqueTableColumns, UniqueRow> {
-		REF("Ref", RefType.class, UniqueRow::getRefType),
-		UNIQUE("Unique", String.class, UniqueRow::getName),
-		BYTES("Bytes", String.class, UniqueRow::getBytes),
-		VALUE("Value", BigInteger.class, UniqueRow::getValue),
-		TYPE("Type", DataType.class, UniqueRow::getDataType, UniqueRow::setDataType),
-		REPR("Repr", String.class, UniqueRow::getValueRepresentation);
+		REF("Ref", RefType.class, UniqueRow::getRefType) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return UNIQUE_REF_RENDERER;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return 24;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 24;
+			}
+		},
+		UNIQUE("Unique", String.class, UniqueRow::getName) {
+			@Override
+			public int getPreferredWidth() {
+				return 45;
+			}
+		},
+		BYTES("Bytes", String.class, UniqueRow::getBytes) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 65;
+			}
+		},
+		// LATER: Changed coloring?
+		VALUE("Value", BigInteger.class, UniqueRow::getValue) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_BIG_HEX;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 45;
+			}
+		},
+		TYPE("Type", DataType.class, UniqueRow::getDataType, UniqueRow::setDataType) {
+			@Override
+			public TableCellEditor getEditor() {
+				return UNIQUE_DT_EDITOR;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 45;
+			}
+		},
+		REPR("Repr", String.class, UniqueRow::getValueRepresentation) {
+			@Override
+			public int getPreferredWidth() {
+				return 45;
+			}
+		};
 
 		private final String header;
 		private final Function<UniqueRow, ?> getter;
@@ -203,7 +311,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected static class UniqueTableModel
+	protected class UniqueTableModel
 			extends DefaultEnumeratedColumnTableModel<UniqueTableColumns, UniqueRow> {
 		public UniqueTableModel(PluginTool tool) {
 			super(tool, "Unique", UniqueTableColumns.class);
@@ -213,31 +321,60 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		public List<UniqueTableColumns> defaultSortOrder() {
 			return List.of(UniqueTableColumns.UNIQUE);
 		}
+
+		ServiceProvider getServiceProvider() {
+			return serviceProvider;
+		}
+
+		Trace getTrace() {
+			return current.getTrace();
+		}
 	}
 
-	class UniqueDataTypeEditor extends DataTypeTableCellEditor {
-		public UniqueDataTypeEditor() {
-			super(plugin.getTool());
+	static class UniqueDataTypeEditor extends AbstractDataTypeTableCellEditor {
+		@Override
+		protected DataTypeManagerService getService(TableModel model) {
+			if (!(model instanceof UniqueTableModel uModel)) {
+				return null;
+			}
+			return uModel.getServiceProvider().getService(DataTypeManagerService.class);
 		}
 
 		@Override
-		protected DataType resolveSelection(DataType dataType) {
-			if (dataType == null) {
+		protected DataType resolveSelection(DataType dataType, TableModel model) {
+			if (dataType == null || !(model instanceof UniqueTableModel uModel)) {
 				return null;
 			}
-			try (Transaction tid = current.getTrace().openTransaction("Resolve DataType")) {
-				return current.getTrace().getDataTypeManager().resolve(dataType, null);
+			Trace trace = uModel.getTrace();
+			if (trace == null) {
+				return null;
+			}
+			try (Transaction tid = trace.openTransaction("Resolve DataType")) {
+				return trace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
 	}
 
-	class CounterBackgroundCellRenderer extends AbstractGColumnRenderer<String> {
+	static class CounterBackgroundCellRenderer extends AbstractGColumnRenderer<String> {
 		Color foregroundColor = getForeground();
+
+		protected int measureColWidth(String sample) {
+			Font font = getFont();
+			Insets insets = getBorder().getBorderInsets(this);
+			return (int) font.getStringBounds(sample, METRIC_FRC).getWidth() + insets.left +
+				insets.right;
+		}
+
+		protected int measureWidthHtml(String sampleHtml) {
+			String sampleText = HTMLUtilities.fromHTML(sampleHtml);
+			return measureColWidth(sampleText);
+		}
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
-			setForeground(pcodeTable.getForeground());
+			JTable table = data.getTable();
+			setForeground(table.getForeground());
 			PcodeRow row = (PcodeRow) data.getRowObject();
 			if (data.isSelected()) {
 				if (row.isNext()) {
@@ -253,7 +390,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 				setBackground(COLOR_BACKGROUND_COUNTER);
 			}
 			else {
-				setBackground(pcodeTable.getBackground());
+				setBackground(table.getBackground());
 				setOpaque(true);
 			}
 			setBorder(noFocusBorder);
@@ -266,7 +403,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	class PcodeCellRenderer extends CounterBackgroundCellRenderer {
+	static class PcodeCellRenderer extends CounterBackgroundCellRenderer {
 		{
 			setHTMLRenderingEnabled(true);
 		}
@@ -286,7 +423,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	class UniqueRefCellRenderer extends AbstractGColumnRenderer<RefType> {
+	static class UniqueRefCellRenderer extends AbstractGColumnRenderer<RefType> {
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
@@ -573,8 +710,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	final PcodeTableModel pcodeTableModel;
 	GhidraTable pcodeTable;
 	JLabel instructionLabel;
-	// No filter panel on p-code
-	PcodeCellRenderer codeColRenderer;
 
 	DockingAction actionStepBackward;
 	DockingAction actionStepForward;
@@ -598,18 +733,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 		setVisible(true);
 		contextChanged();
-	}
-
-	protected int measureColWidth(JLabel renderer, String sample) {
-		Font font = renderer.getFont();
-		Insets insets = renderer.getBorder().getBorderInsets(renderer);
-		return (int) font.getStringBounds(sample, METRIC_FRC).getWidth() + insets.left +
-			insets.right;
-	}
-
-	protected int measureWidthHtml(JLabel renderer, String sampleHtml) {
-		String sampleText = HTMLUtilities.fromHTML(sampleHtml);
-		return measureColWidth(renderer, sampleText);
 	}
 
 	protected void buildMainPanel() {
@@ -648,41 +771,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			}
 			uniqueTableModel.fireTableDataChanged();
 		});
-
-		TableColumnModel pcodeColModel = pcodeTable.getColumnModel();
-		TableColumn seqCol = pcodeColModel.getColumn(PcodeTableColumns.SEQUENCE.ordinal());
-		CounterBackgroundCellRenderer seqColRenderer = new CounterBackgroundCellRenderer();
-		seqCol.setCellRenderer(seqColRenderer);
-		int seqColWidth = measureColWidth(seqColRenderer, "00");
-		seqCol.setMinWidth(seqColWidth);
-		seqCol.setMaxWidth(seqColWidth);
-		TableColumn labelCol = pcodeColModel.getColumn(PcodeTableColumns.LABEL.ordinal());
-		codeColRenderer = new PcodeCellRenderer();
-		labelCol.setCellRenderer(codeColRenderer);
-		int labelColWidth = measureColWidth(codeColRenderer, "<00>");
-		labelCol.setMinWidth(labelColWidth);
-		labelCol.setMaxWidth(labelColWidth);
-		TableColumn codeCol = pcodeColModel.getColumn(PcodeTableColumns.CODE.ordinal());
-		codeCol.setCellRenderer(codeColRenderer);
-
-		TableColumnModel uniqueColModel = uniqueTable.getColumnModel();
-		TableColumn refCol = uniqueColModel.getColumn(UniqueTableColumns.REF.ordinal());
-		refCol.setCellRenderer(new UniqueRefCellRenderer());
-		refCol.setMinWidth(24);
-		refCol.setMaxWidth(24);
-		TableColumn uniqCol = uniqueColModel.getColumn(UniqueTableColumns.UNIQUE.ordinal());
-		uniqCol.setPreferredWidth(45);
-		TableColumn bytesCol = uniqueColModel.getColumn(UniqueTableColumns.BYTES.ordinal());
-		bytesCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		bytesCol.setPreferredWidth(65);
-		TableColumn valCol = uniqueColModel.getColumn(UniqueTableColumns.VALUE.ordinal());
-		valCol.setCellRenderer(CustomToStringCellRenderer.MONO_BIG_HEX); // TODO: Changed coloring
-		valCol.setPreferredWidth(45);
-		TableColumn typeCol = uniqueColModel.getColumn(UniqueTableColumns.TYPE.ordinal());
-		typeCol.setCellEditor(new UniqueDataTypeEditor());
-		typeCol.setPreferredWidth(45);
-		TableColumn reprCol = uniqueColModel.getColumn(UniqueTableColumns.REPR.ordinal());
-		reprCol.setPreferredWidth(45);
 	}
 
 	protected void createActions() {
@@ -766,10 +854,11 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected int computeCodeColWidth(List<PcodeRow> rows) {
 		return rows.stream()
-				.map(r -> measureWidthHtml(codeColRenderer, r.getCode()))
+				.map(r -> CODE_COL_RENDERER.measureWidthHtml(r.getCode()))
 				.reduce(0, Integer::max);
 	}
 
+	// LATER: Just hard-code a reasonable minimum?
 	protected void adjustCodeColWidth(List<PcodeRow> rows) {
 		TableColumn codeCol =
 			pcodeTable.getColumnModel().getColumn(PcodeTableColumns.CODE.ordinal());

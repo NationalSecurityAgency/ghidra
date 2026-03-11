@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 import docking.widgets.table.DefaultEnumeratedColumnProgramTableModel;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -39,6 +37,7 @@ import ghidra.program.model.symbol.Equate;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.WebColors;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class Z3SummaryInstructionLogPanel extends JPanel {
 	private static final Color COLOR_FOREGROUND_ADDRESS = new GColor("color.fg.listing.address");
@@ -51,6 +50,9 @@ public class Z3SummaryInstructionLogPanel extends JPanel {
 	private static final Color COLOR_FOREGROUND_VARIABLE =
 		new GColor("color.fg.listing.function.variable");
 
+	private static final MonospaceCellRenderer MONO_RENDERER = new MonospaceCellRenderer();
+	private static final HtmlCellRenderer HTML_RENDERER = new HtmlCellRenderer();
+
 	protected static String htmlColor(Color color, String display) {
 		return String.format("<font color=\"%s\">%s</font>", WebColors.toString(color, false),
 			HTMLUtilities.escapeHTML(display));
@@ -58,27 +60,70 @@ public class Z3SummaryInstructionLogPanel extends JPanel {
 
 	protected enum InstructionLogTableColumns
 		implements EnumeratedTableColumn<InstructionLogTableColumns, RecInstruction> {
-		INDEX("Index", Integer.class, RecInstruction::index, true),
-		THREAD("Thread", String.class, RecInstruction::getThreadName, true),
-		ADDRESS("Address", Address.class, RecInstruction::getAddress, true),
-		CODE("Instruction", String.class, InstructionLogTableColumns::getInstructionHtml, true),;
+		INDEX("Index", Integer.class, RecInstruction::index) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+		},
+		THREAD("Thread", String.class, RecInstruction::getThreadName) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+		},
+		ADDRESS("Address", Address.class, RecInstruction::getAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return MONO_RENDERER;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		CODE("Instruction", String.class, InstructionLogTableColumns::getInstructionHtml) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return HTML_RENDERER;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		};
 
 		private final String header;
 		private final Class<?> cls;
 		private final Function<RecInstruction, ?> getter;
-		private final boolean visible;
 
 		<T> InstructionLogTableColumns(String header, Class<T> cls,
-				Function<RecInstruction, T> getter, boolean visible) {
+				Function<RecInstruction, T> getter) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
-			this.visible = visible;
 		}
 
 		static String getInstructionHtml(RecInstruction op) {
 			InstructionHtmlFormatter formatter = new InstructionHtmlFormatter();
 			return formatter.formatInstruction(op.instruction());
+		}
+
+		@Override
+		public String getHeader() {
+			return header;
 		}
 
 		@Override
@@ -89,16 +134,6 @@ public class Z3SummaryInstructionLogPanel extends JPanel {
 		@Override
 		public Object getValueOf(RecInstruction row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public String getHeader() {
-			return header;
-		}
-
-		@Override
-		public boolean isVisible() {
-			return visible;
 		}
 	}
 
@@ -279,20 +314,6 @@ public class Z3SummaryInstructionLogPanel extends JPanel {
 
 		filterPanel = new GhidraTableFilterPanel<>(table, model);
 		add(filterPanel, BorderLayout.SOUTH);
-
-		TableColumnModel columnModel = table.getColumnModel();
-		TableColumn indexCol = columnModel.getColumn(InstructionLogTableColumns.INDEX.ordinal());
-		indexCol.setMaxWidth(30);
-		indexCol.setMinWidth(30);
-		TableColumn threadCol = columnModel.getColumn(InstructionLogTableColumns.THREAD.ordinal());
-		threadCol.setMaxWidth(30);
-		threadCol.setMinWidth(30);
-		TableColumn addrCol = columnModel.getColumn(InstructionLogTableColumns.ADDRESS.ordinal());
-		addrCol.setCellRenderer(new MonospaceCellRenderer());
-		addrCol.setPreferredWidth(20);
-		TableColumn codeCol = columnModel.getColumn(InstructionLogTableColumns.CODE.ordinal());
-		codeCol.setCellRenderer(new HtmlCellRenderer());
-		codeCol.setPreferredWidth(40);
 
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.addMouseListener(new MouseAdapter() {

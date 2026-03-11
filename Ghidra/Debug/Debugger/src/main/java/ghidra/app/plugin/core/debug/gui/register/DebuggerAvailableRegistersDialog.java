@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
 import docking.ReusableDialogComponentProvider;
@@ -41,35 +39,84 @@ public class DebuggerAvailableRegistersDialog extends ReusableDialogComponentPro
 
 	protected enum AvailableRegisterTableColumns
 		implements EnumeratedTableColumn<AvailableRegisterTableColumns, AvailableRegisterRow> {
-		SELECTED("", Boolean.class, AvailableRegisterRow::isSelected, AvailableRegisterRow::setSelected, true),
-		NUMBER("#", Integer.class, AvailableRegisterRow::getNumber, true),
-		NAME("Name", String.class, AvailableRegisterRow::getName, true),
-		BITS("Bits", Integer.class, AvailableRegisterRow::getBits, true),
-		KNOWN("Known", Boolean.class, AvailableRegisterRow::isKnown, true),
-		GROUP("Group", String.class, AvailableRegisterRow::getGroup, true),
-		CONTAINS("Contains", String.class, AvailableRegisterRow::getContains, true),
-		PARENT("Parent", String.class, AvailableRegisterRow::getParentName, true);
+		SELECTED("", Boolean.class, AvailableRegisterRow::isSelected,
+				AvailableRegisterRow::setSelected) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+		},
+		NUMBER("#", Integer.class, AvailableRegisterRow::getNumber) {
+			@Override
+			public int getPreferredWidth() {
+				return 1;
+			}
+		},
+		NAME("Name", String.class, AvailableRegisterRow::getName) {
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		},
+		BITS("Bits", Integer.class, AvailableRegisterRow::getBits) {
+			@Override
+			public int getPreferredWidth() {
+				return 30;
+			}
+		},
+		KNOWN("Known", Boolean.class, AvailableRegisterRow::isKnown) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		GROUP("Group", String.class, AvailableRegisterRow::getGroup) {
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		},
+		CONTAINS("Contains", String.class, AvailableRegisterRow::getContains) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		PARENT("Parent", String.class, AvailableRegisterRow::getParentName) {
+			@Override
+			public int getPreferredWidth() {
+				return 30;
+			}
+		};
 
 		private final String header;
+		private final Class<?> cls;
 		private final Function<AvailableRegisterRow, ?> getter;
 		private final BiConsumer<AvailableRegisterRow, Object> setter;
-		private final boolean sortable;
-		private final Class<?> cls;
 
 		<T> AvailableRegisterTableColumns(String header, Class<T> cls,
-				Function<AvailableRegisterRow, T> getter, boolean sortable) {
-			this(header, cls, getter, null, sortable);
+				Function<AvailableRegisterRow, T> getter) {
+			this(header, cls, getter, null);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> AvailableRegisterTableColumns(String header, Class<T> cls,
 				Function<AvailableRegisterRow, T> getter,
-				BiConsumer<AvailableRegisterRow, T> setter, boolean sortable) {
+				BiConsumer<AvailableRegisterRow, T> setter) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<AvailableRegisterRow, Object>) setter;
-			this.sortable = sortable;
+		}
+
+		@Override
+		public String getHeader() {
+			return header;
 		}
 
 		@Override
@@ -83,18 +130,8 @@ public class DebuggerAvailableRegistersDialog extends ReusableDialogComponentPro
 		}
 
 		@Override
-		public String getHeader() {
-			return header;
-		}
-
-		@Override
 		public boolean isEditable(AvailableRegisterRow row) {
 			return setter != null;
-		}
-
-		@Override
-		public boolean isSortable() {
-			return sortable;
 		}
 
 		@Override
@@ -153,27 +190,6 @@ public class DebuggerAvailableRegistersDialog extends ReusableDialogComponentPro
 		panel.add(availableFilterPanel, BorderLayout.SOUTH);
 		panel.getAccessibleContext().setAccessibleName("Available Debugger Registers");
 		addWorkPanel(panel);
-
-		TableColumnModel columnModel = availableTable.getColumnModel();
-		TableColumn numCol = columnModel.getColumn(AvailableRegisterTableColumns.NUMBER.ordinal());
-		numCol.setPreferredWidth(1);
-		TableColumn selCol =
-			columnModel.getColumn(AvailableRegisterTableColumns.SELECTED.ordinal());
-		selCol.setPreferredWidth(20);
-		TableColumn nameCol = columnModel.getColumn(AvailableRegisterTableColumns.NAME.ordinal());
-		nameCol.setPreferredWidth(40);
-		TableColumn bitsCol = columnModel.getColumn(AvailableRegisterTableColumns.BITS.ordinal());
-		bitsCol.setPreferredWidth(30);
-		TableColumn knownCol = columnModel.getColumn(AvailableRegisterTableColumns.KNOWN.ordinal());
-		knownCol.setPreferredWidth(20);
-		TableColumn groupCol = columnModel.getColumn(AvailableRegisterTableColumns.GROUP.ordinal());
-		groupCol.setPreferredWidth(40);
-		TableColumn containsCol =
-			columnModel.getColumn(AvailableRegisterTableColumns.CONTAINS.ordinal());
-		containsCol.setPreferredWidth(20);
-		TableColumn parentCol =
-			columnModel.getColumn(AvailableRegisterTableColumns.PARENT.ordinal());
-		parentCol.setPreferredWidth(30);
 
 		addOKButton();
 		addCancelButton();

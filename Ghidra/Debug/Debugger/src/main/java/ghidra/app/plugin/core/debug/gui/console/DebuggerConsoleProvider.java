@@ -63,43 +63,77 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		new Dimension(ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE);
 	static final int MIN_ROW_HEIGHT = 16;
 
+	private static final ConsoleActionsCellRenderer ACTIONS_RENDERER =
+		new ConsoleActionsCellRenderer();
+	private static final ConsoleActionsCellEditor ACTIONS_EDITOR = new ConsoleActionsCellEditor();
+
 	protected enum LogTableColumns implements EnumeratedTableColumn<LogTableColumns, LogRow<?>> {
-		ICON("Icon", Icon.class, LogRow::icon, SortDirection.ASCENDING, false),
-		MESSAGE("Message", Object.class, LogRow::message, SortDirection.ASCENDING, false) {
+		ICON("Icon", Icon.class, LogRow::icon, SortDirection.ASCENDING) {
+			@Override
+			public int getMaxWidth() {
+				return 24;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 24;
+			}
+		},
+		MESSAGE("Message", Object.class, LogRow::message, SortDirection.ASCENDING) {
 			@Override
 			public GColumnRenderer<?> getRenderer() {
 				return HtmlOrProgressCellRenderer.INSTANCE;
 			}
-		},
-		ACTIONS("Actions", ActionList.class, LogRow::actions, SortDirection.DESCENDING, true) {
-			private static final ConsoleActionsCellRenderer RENDERER =
-				new ConsoleActionsCellRenderer();
 
 			@Override
-			public GColumnRenderer<?> getRenderer() {
-				return RENDERER;
+			public int getPreferredWidth() {
+				return 150;
 			}
 		},
-		TIME("Time", Date.class, LogRow::date, SortDirection.DESCENDING, false) {
+		ACTIONS("Actions", ActionList.class, LogRow::actions, SortDirection.DESCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return ACTIONS_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return ACTIONS_EDITOR;
+			}
+
+			@Override
+			public boolean isEditable(LogRow<?> row) {
+				return true;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 50;
+			}
+		},
+		TIME("Time", Date.class, LogRow::date, SortDirection.DESCENDING) {
 			@Override
 			public GColumnRenderer<?> getRenderer() {
 				return CustomToStringCellRenderer.TIME_24HMSms;
 			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 15;
+			};
 		};
 
 		private final String header;
 		private final Function<LogRow<?>, ?> getter;
 		private final Class<?> cls;
 		private final SortDirection defaultSortDirection;
-		private final boolean editable;
 
 		<T> LogTableColumns(String header, Class<T> cls, Function<LogRow<?>, T> getter,
-				SortDirection defaultSortDirection, boolean editable) {
+				SortDirection defaultSortDirection) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.defaultSortDirection = defaultSortDirection;
-			this.editable = editable;
 		}
 
 		@Override
@@ -115,11 +149,6 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		@Override
 		public Object getValueOf(LogRow<?> row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public boolean isEditable(LogRow<?> row) {
-			return editable;
 		}
 
 		@Override
@@ -325,8 +354,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class LogTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
-			LogTableColumns, ActionContext, LogRow<?>, LogRow<?>> {
+	protected static class LogTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel<
+		LogTableColumns, ActionContext, LogRow<?>, LogRow<?>> {
 
 		public LogTableModel(PluginTool tool) {
 			super(tool, "Log", LogTableColumns.class, r -> r == null ? null : r.actionContext(),
@@ -483,21 +512,6 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		});
 
 		logTable.setRowHeight(ACTION_BUTTON_SIZE + 2);
-		TableColumnModel columnModel = logTable.getColumnModel();
-
-		TableColumn iconCol = columnModel.getColumn(LogTableColumns.ICON.ordinal());
-		iconCol.setMaxWidth(24);
-		iconCol.setMinWidth(24);
-
-		TableColumn msgCol = columnModel.getColumn(LogTableColumns.MESSAGE.ordinal());
-		msgCol.setPreferredWidth(150);
-
-		TableColumn actCol = columnModel.getColumn(LogTableColumns.ACTIONS.ordinal());
-		actCol.setPreferredWidth(50);
-		actCol.setCellEditor(new ConsoleActionsCellEditor());
-
-		TableColumn timeCol = columnModel.getColumn(LogTableColumns.TIME.ordinal());
-		timeCol.setPreferredWidth(15);
 	}
 
 	protected boolean activateSelectedRow() {
