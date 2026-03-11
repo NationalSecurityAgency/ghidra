@@ -200,18 +200,26 @@ public class SlaFormat {
 	 * @throws IOException for any errors reading from the stream
 	 */
 	public static boolean isSlaFormat(InputStream stream) throws IOException {
+		return getSlaFormat(stream) == FORMAT_VERSION;
+	}
+
+	/**
+	 * Returns the format version number of the specified binary .sla file.
+	 * 
+	 * @param stream {@link InputStream}
+	 * @return sla version number, -1 if invalid header
+	 * @throws IOException if error reading
+	 */
+	public static int getSlaFormat(InputStream stream) throws IOException {
 		byte[] header = new byte[4];
 		int readLen = stream.read(header);
 		if (readLen < 4) {
-			return false;
+			return -1;
 		}
 		if (header[0] != 's' || header[1] != 'l' || header[2] != 'a') {
-			return false;
+			return -1;
 		}
-		if (header[3] != FORMAT_VERSION) {
-			return false;
-		}
-		return true;
+		return Byte.toUnsignedInt(header[3]);
 	}
 
 	/**

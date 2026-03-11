@@ -22,10 +22,10 @@ import docking.ActionContext;
 import docking.Tool;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
-import generic.jar.ResourceFile;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
@@ -202,27 +202,17 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	protected Collection<LanguageID> getAlternativeLanguageIDs(Language language) {
 		// One of the alternatives is the language's actual default
 		LanguageDescription desc = language.getLanguageDescription();
-		if (!(desc instanceof SleighLanguageDescription)) {
+		if (!(desc instanceof SleighLanguageDescription sld)) {
 			return List.of();
 		}
-		SleighLanguageDescription sld = (SleighLanguageDescription) desc;
-		ResourceFile slaFile = sld.getSlaFile();
 
 		List<LanguageID> result = new ArrayList<>();
 		LanguageService langServ = DefaultLanguageService.getLanguageService();
 		for (LanguageDescription altDesc : langServ.getLanguageDescriptions(false)) {
-			if (!(altDesc instanceof SleighLanguageDescription)) {
-				continue;
+			if (altDesc instanceof SleighLanguageDescription altSld &&
+				sld.isSameSleighLanguageFile(altSld) && sld.getEndian() == altSld.getEndian()) {
+				result.add(altSld.getLanguageID());
 			}
-			SleighLanguageDescription altSld = (SleighLanguageDescription) altDesc;
-			if (!altSld.getSlaFile().equals(slaFile)) {
-				continue;
-			}
-			if (altSld.getEndian() != sld.getEndian()) {
-				// Memory endian, not necessarily instruction endian
-				continue;
-			}
-			result.add(altSld.getLanguageID());
 		}
 		return result;
 	}
