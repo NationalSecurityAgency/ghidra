@@ -1194,32 +1194,32 @@ void multilineStrings(void)
  ** Constants
  **/
  /* Decimal */
- int                 dec_int    = 28;
- unsigned            dec_uint   = 4000000024u;
- long                dec_long   = 2000000022l;
- unsigned long       dec_ulong  = 4000000000ul;
- long long           dec_llong  = 9000000000LL;
- unsigned long long  dec_ullong = 900000000001ull;
- __int64             dec_i64    = 9000000000002I64;
- unsigned __int64    dec_ui64   = 90000000000004ui64;
+ int                 d_int    = 123;
+ unsigned            d_uint   = 4000000123u;
+ long                d_long   = 1000000123l;
+ unsigned long       d_ulong  = 7000000001ul;
+ long long           d_llong  = 6000000002LL;
+ unsigned long long  d_ullong = 50000000003ull;
+ __int64             d_i64    = 500000000004I64;
+ unsigned __int64    d_ui64   = 5000000000005ui64;
  /* Octal */
- int                 oct_int    = 024;
- unsigned            oct_uint   = 04000000024u;
- long                oct_long   = 02000000022l;
- unsigned long       oct_ulong  = 04000000000UL;
- long long           oct_llong  = 044000000000000ll;
- unsigned long long  oct_ullong = 044400000000000001Ull;
- __int64             oct_i64    = 04444000000000000002i64;
- unsigned __int64    oct_ui64   = 04444000000000000004uI64;
+ int                 o_int    = 01234;
+ unsigned            o_uint   = 04000000012u;
+ long                o_long   = 02000000024l;
+ unsigned long       o_ulong  = 01000000001UL;
+ long long           o_llong  = 01100000000002ll;
+ unsigned long long  o_ullong = 01110000000000003Ull;
+ __int64             o_i64    = 0111100000000000004i64;
+ unsigned __int64    o_ui64   = 0222200000000000005uI64;
  /* Hexadecimal  */
- int                 hex_int    = 0x2a;
- unsigned            hex_uint   = 0XA0000024u;
- long                hex_long   = 0x20000022l;
- unsigned long       hex_ulong  = 0XA0000021uL;
- long long           hex_llong  = 0x8a000000000000ll;
- unsigned long long  hex_ullong = 0x8A40000000000010uLL;
- __int64             hex_i64    = 0x4a44000000000020I64;
- unsigned __int64    hex_ui64   = 0x8a44000000000040Ui64;
+ int                 h_int    = 0x123b;
+ unsigned            h_uint   = 0XB0000012u;
+ long                h_long   = 0x20000034l;
+ unsigned long       h_ulong  = 0XA0000056uL;
+ long long           h_llong  = 0x8b00000000000ll;
+ unsigned long long  h_ullong = 0xAC4000000000012uLL;
+ __int64             h_i64    = 0x6d2200000000023I64;
+ unsigned __int64    h_ui64   = 0x7e4400000000034Ui64;
 
 /**
  ** #line in structure/function body
