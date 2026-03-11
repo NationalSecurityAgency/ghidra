@@ -31,13 +31,13 @@ import ghidra.util.database.spatial.Query.QueryInclusion;
 import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.VersionException;
 
-public abstract class AbstractConstraintsTree< //
-		DS extends BoundedShape<NS>, //
-		DR extends DBTreeDataRecord<DS, NS, T>, //
-		NS extends BoundingShape<NS>, //
-		NR extends DBTreeNodeRecord<NS>, //
-		T, //
-		Q extends Query<DS, NS>> {
+public abstract class AbstractConstraintsTree<
+	DS extends BoundedShape<NS>,
+	DR extends DBTreeDataRecord<DS, NS, T>,
+	NS extends BoundingShape<NS>,
+	NR extends DBTreeNodeRecord<NS>,
+	T,
+	Q extends Query<DS, NS>> {
 
 	static final int MAX_CACHE_ENTRIES = 50;
 
