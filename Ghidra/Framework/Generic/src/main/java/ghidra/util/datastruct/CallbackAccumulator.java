@@ -28,7 +28,7 @@ import java.util.function.Consumer;
  */
 public class CallbackAccumulator<T> implements Accumulator<T> {
 
-	private AtomicInteger counter;
+	private AtomicInteger counter = new AtomicInteger();
 	private Consumer<T> consumer;
 
 	/**
