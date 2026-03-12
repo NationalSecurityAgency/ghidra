@@ -202,7 +202,7 @@ task cleanSleigh  {
 	group = rootProject.GHIDRA_GROUP
 	description = "Removes all the compile sleigh language files (*.sla).   [gradle/processorProject.gradle]\n"
  	doLast {
-		def deleteTree = fileTree(dir: "data/languages", include: "*.sla")
+		def deleteTree = fileTree(dir: "data/languages", include: ["*.sla", "*.sla.lock"])
 		deleteTree.each { File file ->
 			delete file
 		}

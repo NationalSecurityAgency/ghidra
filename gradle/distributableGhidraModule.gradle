@@ -40,7 +40,8 @@ rootProject.assembleDistribution {
 
 	from ("${p.projectDir}/data") {
 		into { "${zipPath}/data" }
-		exclude 'build.xml' // associated with language modules (dev use only)
+		exclude 'build.xml'   // associated with language modules (dev use only)
+		exclude '**/*.sla.lock' // associated with language modules
 	}
 	
 	from ("${BIN_REPO}/${getGhidraRelativePath(p)}/data") {
