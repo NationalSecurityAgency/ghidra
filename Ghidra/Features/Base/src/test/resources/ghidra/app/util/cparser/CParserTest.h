@@ -959,6 +959,89 @@ typedef enum _PARAM_TYPE { A, B, C } PARAM_TYPE;
 
 
 /**
+ ** C23 enum types
+ **/
+enum _C23_enum_char: char {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_short : short
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_int : int
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_long : long
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_longlong : long long
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_DWORD : DWORD {
+    A = 1,
+    B = 2,
+    C = 3
+};
+
+
+/**
+ ** Packed enums
+ **/
+enum packed_enum_style_1 {
+    A = 1,
+    B = 2,
+    C = 3
+} __attribute__((__packed__));
+enum __attribute__((__packed__)) packed_enum_style_2 {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum [[packed]] packed_enum_cpp_style_1 {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum packed_enum_cpp_style_2 {
+    A = 1,
+    B = 2,
+    C = 3
+} [[packed]];
+enum [[gnu::packed]] packed_enum_cpp_style_gnu {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum non_packed_enum {
+    D = 4,
+    E = 5,
+    F = 6
+};
+enum packed_negative_enum {
+    A = -1,
+    B = -2,
+    C = -3
+} __attribute__((__packed__));
+enum normal_negative_enum {
+    A = -1,
+    B = -2,
+    C = -3
+};
+
+/**
  ** Casting
  **/
 char * retInitedStorage(int i)
