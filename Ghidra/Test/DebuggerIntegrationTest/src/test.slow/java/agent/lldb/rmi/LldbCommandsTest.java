@@ -306,6 +306,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace tx-commit
+				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
 		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
@@ -328,6 +329,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace putmem `(void(*)())main` 10
 				ghidra trace tx-commit
+				ghidra trace save
 				script print("---Dump---")
 				x/10bx `(void(*)())main`
 				script print("---")
@@ -361,6 +363,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace putmem-state `(void(*)())main` 10 error
 				ghidra trace tx-commit
+				ghidra trace save
 				script print("---Start---")
 				print/x (void(*)())main
 				script print("---")
@@ -398,6 +401,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace putmem `(void(*)())main` 10
 				ghidra trace delmem `(void(*)())main` 5
 				ghidra trace tx-commit
+				ghidra trace save
 				script print("---Dump---")
 				x/10bx (void(*)())main
 				script print("---")
@@ -433,6 +437,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace putreg
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint(), PLAT.intReg(), PLAT.floatReg()));
@@ -492,6 +497,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace putreg
 				ghidra trace delreg
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint(), PLAT.intReg(), PLAT.floatReg()));
@@ -542,6 +548,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace create-obj Test.Objects[1]
 				script print("---")
 				ghidra trace tx-commit
+				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
@@ -567,6 +574,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace insert-obj Test.Objects[1]
 				script print("---")
 				ghidra trace tx-commit
+				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
@@ -595,6 +603,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace new-snap 1 "Next"
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -623,6 +632,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				%s
 				ghidra trace set-value Test.Objects[1] test %s %s
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint(), extra, lldbExpr, gtype));
@@ -813,6 +823,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace new-snap 10 "Snap 10"
 				ghidra trace retain-values Test.Objects[1] [1] [3]
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -842,6 +853,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace create-obj Test.Objects[1]
 				script print("---")
 				ghidra trace tx-commit
+				ghidra trace save
 				script print("---GetObject---")
 				ghidra trace get-obj Test.Objects[1]
 				script print("---")
@@ -972,6 +984,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace disassemble `(void(*)())main`
 				script print("---")
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -996,6 +1009,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Tx"
 				ghidra trace put-processes
 				ghidra trace tx-commit
+				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
@@ -1018,6 +1032,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Tx"
 				ghidra trace put-available
 				ghidra trace tx-commit
+				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
@@ -1044,6 +1059,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				breakpoint set -H --name main
 				ghidra trace put-breakpoints
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -1083,6 +1099,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				watchpoint set expression -s 1 -w read_write -- `(void(*)())main`+0x30
 				ghidra trace put-watchpoints
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -1125,6 +1142,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Tx"
 				ghidra trace put-environment
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -1151,6 +1169,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Tx"
 				ghidra trace put-regions
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -1174,6 +1193,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Tx"
 				ghidra trace put-modules
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
@@ -1198,6 +1218,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Tx"
 				ghidra trace put-threads
 				ghidra trace tx-commit
+				ghidra trace save
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
