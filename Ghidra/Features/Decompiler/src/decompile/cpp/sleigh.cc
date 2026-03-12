@@ -453,7 +453,7 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
     ParserContext *pos = new ParserContext(contextcache,translate);
-    pos->initialize(75,20,constspace);
+    pos->initialize(constspace);
     list[i] = pos;
   }
   ParserContext *pos = list[0];
@@ -587,11 +587,11 @@ void Sleigh::initialize(DocumentStorage &store)
 /// \param addr is the given address of the instruction
 /// \param state is the desired parse state.
 /// \return the parse tree object (ParseContext)
-ParserContext *Sleigh::obtainContext(const Address &addr,int4 state) const
+ParserContext *Sleigh::obtainContext(const Address &addr,ParserContext::parse_state state) const
 
 {
   ParserContext *pos = discache->getParserContext(addr);
-  int4 curstate = pos->getParserState();
+  ParserContext::parse_state curstate = pos->getParserState();
   if (curstate >= state)
     return pos;
   if (curstate == ParserContext::uninitialized) {
