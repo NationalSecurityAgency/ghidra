@@ -6,13 +6,14 @@
 * _Scripting_. Improved RTTI Windows script vbtable discovery to recognize some invalid tables. (GP-6446, Issue #8944)
 
 ### Bugs
-* _Analysis_. Fixed an issue with constants from one function finding their way into another function that is jumped to, and mid-constant propagation the jump is turned into a call. (GP-6442)
+* _Analysis_. Fixed constant analysis performance issue with processors that have named instruction sections for crossbuilds. (GP-6424)
+* _Analysis_. Fixed an issue with constants from one function finding their way into another function that is jumped to, and in the middle of constant propagation, the jump is turned into a call. (GP-6442)
 * _Analysis_. Corrected analysis problem which failed to properly link thunk functions in the EXTERNAL memory block to existing External library symbols instead of creating new external functions in the unknown external library. (GP-6465)
-* _Bookmarks_. Corrected potential Bookmark exception which can occur if bookmarks were ever deleted: <I>Missing bookmark table<I>. (GP-6517)
+* _Bookmarks_. Corrected potential _"Missing bookmark table"_ exception which could occur if bookmarks were ever deleted. (GP-6517)
 * _Debugger_. Fixed a deadlock when saving Traces from the __Close Project__ dialog. (GP-6392)
 * _Debugger:Memory_. Fixed a bug in the Memory viewer when looking at multiple address spaces. (GP-6449, Issue #8982)
-* _Disassembly_. Refactored `PsuedoDisassembler` to use the normal high level Disassembler instead of calling `Language.parse()`. (GP-6496)
-* _Exporter_. Enable cancellation for SARIF exports (GP-6469)
+* _Disassembly_. Refactored `PseudoDisassembler` to use the normal high level Disassembler instead of calling `Language.parse()`. (GP-6496)
+* _Exporter_. Enabled cancellation for SARIF exports. (GP-6469)
 * _Listing_. Fixed Listing display to show single string operands. (GP-6095)
 * _Processors_. Fixed the semantics of the AARCH64 `ldpsw` instruction. (GP-5590, Issue #6469, #8008)
 * _Processors_. Fixed issue with PIC-18 instructions double-incrementing/decrementing. (GP-6004, Issue #3342, #8501)
