@@ -13,51 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.debug.api.modules;
+package ghidra.app.plugin.core.debug.gui.tracecalltree;
 
 import java.util.Objects;
 
 import docking.DefaultActionContext;
-import ghidra.trace.model.modules.TraceModule;
+import ghidra.program.model.address.Address;
+import ghidra.trace.model.Trace;
 
-public class DebuggerMissingModuleActionContext extends DefaultActionContext {
-	private final TraceModule module;
-	private final long snap;
+public class TraceCallTreeLogContext extends DefaultActionContext {
+	private final Trace trace;
+	private final Address dynamicPC;
 	private final int hashCode;
 
-	public DebuggerMissingModuleActionContext(TraceModule module, long snap) {
-		this.module = Objects.requireNonNull(module);
-		this.hashCode = Objects.hash(getClass(), module, snap);
-		this.snap = snap;
+	public TraceCallTreeLogContext(TraceCallTreeProvider provider, Trace trace, Address dynamicPC) {
+		super(provider);
+		this.trace = trace;
+		this.dynamicPC = dynamicPC;
+		hashCode = Objects.hash(getClass(), trace, dynamicPC);
 	}
 
-	public TraceModule getModule() {
-		return module;
-	}
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof TraceCallTreeLogContext that)) {
+			return false;
+		}
 
-	public long getSnap() {
-		return snap;
+		if (!Objects.equals(this.trace, that.trace)) {
+			return false;
+		}
+
+		if (!Objects.equals(this.dynamicPC, that.dynamicPC)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override
 	public int hashCode() {
 		return hashCode;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof DebuggerMissingModuleActionContext that)) {
-			return false;
-		}
-		if (!this.module.equals(that.module)) {
-			return false;
-		}
-		if (this.snap != that.snap) {
-			return false;
-		}
-		return true;
 	}
 }
