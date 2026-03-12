@@ -3079,7 +3079,7 @@ Object Constant() : {
     (
         t = <INTEGER_LITERAL>
         {
-            String sval = t.image.toLowerCase();
+            String sval = t.image.toLowerCase(Locale.ROOT);
             if (sval.endsWith("i8")) {
                 sval = sval.substring(0,sval.length()-2);
             }
