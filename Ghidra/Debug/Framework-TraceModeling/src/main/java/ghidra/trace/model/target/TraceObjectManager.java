@@ -196,4 +196,26 @@ public interface TraceObjectManager {
 	 * database permits schema modification, but requires that the entire model be replaced.
 	 */
 	void clear();
+
+	/**
+	 * A handle to automatically re-enable the write cache
+	 */
+	interface BypassWriteCache extends AutoCloseable {
+		@Override
+		void close();
+	}
+
+	/**
+	 * Bypass the write cache, usually for an import operation.
+	 * <p>
+	 * For live sessions, we typically want to complete object writes as promptly as possible, so we
+	 * don't tie up the connection and/or the remote debugger. However, for import operations, we'd
+	 * rather just have object writes go straight to the database. The importer will want to save,
+	 * which requires flushing the cache anyway. Disabling the cache gives more honest progress
+	 * reporting and assures any crashes or diagnostics occur during the import rather than during
+	 * the flush.
+	 * 
+	 * @return a handle to automatically re-enable the write cache
+	 */
+	BypassWriteCache withoutWriteCache();
 }

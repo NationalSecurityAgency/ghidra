@@ -189,6 +189,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	protected final DBTraceObjectValueRStarTree valueTree;
 	protected final DBTraceObjectValueMap valueMap;
 	protected final DBTraceObjectValueWriteBehindCache valueWbCache;
+	protected boolean wbCacheDisabled;
 
 	protected final DBCachedObjectIndex<KeyPath, DBTraceObject> objectsByPath;
 
@@ -331,9 +332,10 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	protected DBTraceObjectValue doCreateValue(Lifespan lifespan, DBTraceObject parent, String key,
 			Object value) {
 		// Root is never in write-behind cache
-		DBTraceObjectValue entry =
-			parent == null ? doCreateValueData(lifespan, parent, key, value).getWrapper()
-					: valueWbCache.doCreateValue(lifespan, parent, key, value).getWrapper();
+		boolean skipWb = wbCacheDisabled || parent == null;
+		DBTraceObjectValue entry = skipWb
+				? doCreateValueData(lifespan, parent, key, value).getWrapper()
+				: valueWbCache.doCreateValue(lifespan, parent, key, value).getWrapper();
 		if (parent != null) {
 			parent.notifyValueCreated(entry);
 		}
@@ -866,5 +868,16 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	public void waitWbWorkers() {
 		valueWbCache.waitWorkers();
+	}
+
+	@Override
+	public BypassWriteCache withoutWriteCache() {
+		wbCacheDisabled = true;
+		return new BypassWriteCache() {
+			@Override
+			public void close() {
+				wbCacheDisabled = false;
+			}
+		};
 	}
 }
