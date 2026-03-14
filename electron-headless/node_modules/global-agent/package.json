@@ -1,0 +1,105 @@
+{
+  "author": {
+    "email": "gajus@gajus.com",
+    "name": "Gajus Kuizinas",
+    "url": "http://gajus.com"
+  },
+  "ava": {
+    "babel": {
+      "compileAsTests": [
+        "test/helpers/**/*"
+      ]
+    },
+    "files": [
+      "test/global-agent/**/*"
+    ],
+    "require": [
+      "@babel/register"
+    ]
+  },
+  "dependencies": {
+    "boolean": "^3.0.1",
+    "es6-error": "^4.1.1",
+    "matcher": "^3.0.0",
+    "roarr": "^2.15.3",
+    "semver": "^7.3.2",
+    "serialize-error": "^7.0.1"
+  },
+  "description": "Global HTTP/HTTPS proxy configurable using environment variables.",
+  "devDependencies": {
+    "@ava/babel": "^1.0.1",
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.2",
+    "@babel/node": "^7.10.1",
+    "@babel/plugin-transform-flow-strip-types": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "@babel/register": "^7.10.1",
+    "anyproxy": "^4.1.2",
+    "ava": "^3.8.2",
+    "axios": "^0.19.2",
+    "babel-plugin-istanbul": "^6.0.0",
+    "babel-plugin-transform-export-default-name": "^2.0.4",
+    "coveralls": "^3.1.0",
+    "eslint": "^7.1.0",
+    "eslint-config-canonical": "^20.0.5",
+    "flow-bin": "^0.125.1",
+    "flow-copy-source": "^2.0.9",
+    "get-port": "^5.1.1",
+    "got": "^11.1.4",
+    "husky": "^4.2.5",
+    "nyc": "^15.1.0",
+    "pem": "^1.14.4",
+    "request": "^2.88.2",
+    "semantic-release": "^17.0.8",
+    "sinon": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=10.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm run test && npm run build"
+    }
+  },
+  "keywords": [
+    "http",
+    "global",
+    "proxy",
+    "agent"
+  ],
+  "license": "BSD-3-Clause",
+  "main": "./dist/index.js",
+  "name": "global-agent",
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/bin",
+      "src/queries/*.js"
+    ],
+    "include": [
+      "src/**/*.js"
+    ],
+    "instrument": false,
+    "reporter": [
+      "html",
+      "text-summary"
+    ],
+    "require": [
+      "@babel/register"
+    ],
+    "silent": true,
+    "sourceMap": false
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gajus/global-agent"
+  },
+  "scripts": {
+    "build": "rm -fr ./dist && NODE_ENV=production babel ./src --out-dir ./dist --copy-files --source-maps && flow-copy-source src dist",
+    "create-readme": "gitdown ./.README/README.md --output-file ./README.md",
+    "dev": "NODE_ENV=development babel ./src --out-dir ./dist --copy-files --source-maps --watch",
+    "lint": "eslint ./src ./test && flow",
+    "test": "NODE_TLS_REJECT_UNAUTHORIZED=false NODE_ENV=test nyc ava --verbose --serial"
+  },
+  "version": "3.0.0"
+}

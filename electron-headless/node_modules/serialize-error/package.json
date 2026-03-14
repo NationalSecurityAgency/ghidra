@@ -1,0 +1,41 @@
+{
+	"name": "serialize-error",
+	"version": "7.0.1",
+	"description": "Serialize/deserialize an error into a plain object",
+	"license": "MIT",
+	"repository": "sindresorhus/serialize-error",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=10"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"error",
+		"serialize",
+		"stringify",
+		"object",
+		"convert",
+		"process",
+		"send",
+		"deserialize"
+	],
+	"dependencies": {
+		"type-fest": "^0.13.1"
+	},
+	"devDependencies": {
+		"ava": "^2.4.0",
+		"tsd": "^0.11.0",
+		"xo": "^0.30.0"
+	}
+}

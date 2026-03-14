@@ -1,0 +1,100 @@
+{
+  "name": "@electron/get",
+  "version": "2.0.3",
+  "description": "Utility for downloading artifacts from different versions of Electron",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "repository": "https://github.com/electron/get",
+  "author": "Samuel Attard",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.esm.json",
+    "build:docs": "typedoc --out docs",
+    "eslint": "eslint --ext .ts src test",
+    "jest": "jest --coverage",
+    "lint": "npm run prettier && npm run eslint",
+    "prettier": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "prepublishOnly": "npm run build",
+    "test": "npm run lint && npm run jest",
+    "test:nonetwork": "npm run lint && npm run jest -- --testPathIgnorePatterns network.spec"
+  },
+  "files": [
+    "dist/*",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=12"
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "env-paths": "^2.2.0",
+    "fs-extra": "^8.1.0",
+    "got": "^11.8.5",
+    "progress": "^2.0.3",
+    "semver": "^6.2.0",
+    "sumchecker": "^3.0.1"
+  },
+  "devDependencies": {
+    "@continuous-auth/semantic-release-npm": "^3.0.0",
+    "@types/debug": "^4.1.4",
+    "@types/fs-extra": "^8.0.0",
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.20.55",
+    "@types/progress": "^2.0.3",
+    "@types/semver": "^6.2.0",
+    "@typescript-eslint/eslint-plugin": "^2.34.0",
+    "@typescript-eslint/parser": "^2.34.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "< 24.0.0",
+    "husky": "^2.3.0",
+    "jest": "^24.8.0",
+    "lint-staged": "^8.1.7",
+    "prettier": "^1.17.1",
+    "ts-jest": "^24.0.0",
+    "typedoc": "^0.17.2",
+    "typescript": "^3.8.0"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:jest/recommended",
+      "plugin:import/errors",
+      "plugin:import/warnings",
+      "plugin:import/typescript",
+      "prettier",
+      "prettier/@typescript-eslint"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "keywords": [
+    "electron",
+    "download",
+    "prebuild",
+    "get",
+    "artifact",
+    "release"
+  ],
+  "optionalDependencies": {
+    "global-agent": "^3.0.0"
+  },
+  "resolutions": {
+    "eslint/inquirer": "< 7.3.0",
+    "**/@typescript-eslint/typescript-estree/semver": "^6.3.0"
+  }
+}

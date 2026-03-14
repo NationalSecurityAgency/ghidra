@@ -1,0 +1,3 @@
+[ignore]
+.*/node_modules/.*/test/.*
+<PROJECT_ROOT>/dist/.*

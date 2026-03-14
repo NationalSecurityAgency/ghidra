@@ -1,0 +1,258 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0e19;
+  --panel: rgba(20, 24, 40, 0.76);
+  --panel-border: rgba(126, 154, 255, 0.15);
+  --text: #edf2ff;
+  --muted: #9eabc7;
+  --accent: #5f85ff;
+  --accent-2: #3d67f4;
+  --danger: #bf4a6a;
+  --ok: #28b887;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, "Segoe UI", sans-serif;
+  background: radial-gradient(900px 600px at 10% -10%, #23376a, transparent 60%),
+    radial-gradient(900px 600px at 110% 0%, #291f52, transparent 60%), var(--bg);
+  color: var(--text);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 10px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-pill,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.status-pill {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(24, 30, 50, 0.8);
+  color: var(--muted);
+}
+
+.status-pill.online {
+  color: #d4fff0;
+  border-color: rgba(40, 184, 135, 0.35);
+}
+
+.status-pill.offline {
+  color: #ffd8e3;
+  border-color: rgba(191, 74, 106, 0.38);
+}
+
+.chip {
+  color: #dfe8ff;
+  background: rgba(95, 133, 255, 0.18);
+  border: 1px solid rgba(95, 133, 255, 0.28);
+}
+
+.chip.muted {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 440px) minmax(420px, 1fr);
+  gap: 14px;
+  padding: 8px 24px 24px;
+}
+
+.panel {
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.field,
+.checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.field span,
+.checkbox span,
+.panel-copy,
+.form-message,
+.project-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.checkbox {
+  flex-direction: row;
+  align-items: center;
+}
+
+.hero-panel {
+  min-height: 100%;
+}
+
+.panel-copy {
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.inline-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(160, 180, 255, 0.16);
+  background: rgba(8, 11, 22, 0.78);
+  color: var(--text);
+  padding: 10px 12px;
+  outline: none;
+}
+
+input:focus {
+  border-color: rgba(95, 133, 255, 0.8);
+  box-shadow: 0 0 0 3px rgba(95, 133, 255, 0.18);
+}
+
+button {
+  border: 1px solid rgba(160, 180, 255, 0.22);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.ghost {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+button.danger {
+  background: linear-gradient(180deg, #ca5b79, var(--danger));
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.project-card {
+  border: 1px solid rgba(160, 180, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(7, 10, 20, 0.45);
+}
+
+.project-card.empty-state {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.project-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.project-meta {
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.project-meta strong {
+  color: var(--text);
+}
+
+.form-message {
+  min-height: 20px;
+  margin: 6px 0 14px;
+}
+
+.form-message[data-tone="success"] {
+  color: #c9ffe8;
+}
+
+.form-message[data-tone="error"] {
+  color: #ffd8e3;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "name": "fs-extra",
+  "version": "8.1.0",
+  "description": "fs-extra contains methods that aren't included in the vanilla Node.js fs package. Such as mkdir -p, cp -r, and rm -rf.",
+  "engines": {
+    "node": ">=6 <7 || >=8"
+  },
+  "homepage": "https://github.com/jprichardson/node-fs-extra",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jprichardson/node-fs-extra"
+  },
+  "keywords": [
+    "fs",
+    "file",
+    "file system",
+    "copy",
+    "directory",
+    "extra",
+    "mkdirp",
+    "mkdir",
+    "mkdirs",
+    "recursive",
+    "json",
+    "read",
+    "write",
+    "extra",
+    "delete",
+    "remove",
+    "touch",
+    "create",
+    "text",
+    "output",
+    "move"
+  ],
+  "author": "JP Richardson <jprichardson@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "graceful-fs": "^4.2.0",
+    "jsonfile": "^4.0.0",
+    "universalify": "^0.1.0"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.0",
+    "istanbul": "^0.4.5",
+    "klaw": "^2.1.1",
+    "klaw-sync": "^3.0.2",
+    "minimist": "^1.1.1",
+    "mocha": "^5.0.5",
+    "proxyquire": "^2.0.1",
+    "read-dir-files": "^0.1.1",
+    "semver": "^5.3.0",
+    "standard": "^12.0.1"
+  },
+  "main": "./lib/index.js",
+  "files": [
+    "lib/",
+    "!lib/**/__tests__/"
+  ],
+  "scripts": {
+    "full-ci": "npm run lint && npm run coverage",
+    "coverage": "istanbul cover -i 'lib/**' -x '**/__tests__/**' test.js",
+    "coveralls": "coveralls < coverage/lcov.info",
+    "lint": "standard",
+    "test-find": "find ./lib/**/__tests__ -name *.test.js | xargs mocha",
+    "test": "npm run lint && npm run unit",
+    "unit": "node test.js"
+  }
+}

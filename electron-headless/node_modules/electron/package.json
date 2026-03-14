@@ -1,0 +1,27 @@
+{
+  "main": "index.js",
+  "types": "electron.d.ts",
+  "bin": {
+    "electron": "cli.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "dependencies": {
+    "@electron/get": "^2.0.0",
+    "@types/node": "^22.7.7",
+    "extract-zip": "^2.0.1"
+  },
+  "engines": {
+    "node": ">= 12.20.55"
+  },
+  "name": "electron",
+  "repository": "https://github.com/electron/electron",
+  "description": "Build cross platform desktop apps with JavaScript, HTML, and CSS",
+  "license": "MIT",
+  "author": "Electron Community",
+  "keywords": [
+    "electron"
+  ],
+  "version": "37.10.3"
+}

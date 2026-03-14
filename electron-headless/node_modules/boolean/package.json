@@ -1,0 +1,46 @@
+{
+  "name": "boolean",
+  "version": "3.2.0",
+  "description": "boolean converts lots of things to boolean.",
+  "contributors": [
+    {
+      "name": "Golo Roden",
+      "email": "golo.roden@thenativeweb.io"
+    },
+    {
+      "name": "Matthias Wagler",
+      "email": "matthias.wagler@thenativeweb.io"
+    },
+    {
+      "name": "Ryan Smith",
+      "email": "ryan.smith@ht2labs.com"
+    },
+    {
+      "name": "Thomas Schaaf",
+      "email": "schaaf@komola.de"
+    },
+    {
+      "name": "Sebastian Mares",
+      "email": "camil.sebastian@mares.email"
+    }
+  ],
+  "private": false,
+  "main": "build/lib/index.js",
+  "types": "build/lib/index.d.ts",
+  "dependencies": {},
+  "devDependencies": {
+    "assertthat": "6.4.0",
+    "roboter": "12.7.0",
+    "semantic-release-configuration": "2.0.7"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/thenativeweb/boolean.git"
+  },
+  "keywords": [
+    "boolean",
+    "parser"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,79 @@
+{
+  "name": "sumchecker",
+  "version": "3.0.1",
+  "author": "Mark Lee",
+  "license": "Apache-2.0",
+  "description": "Checksum validator",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/malept/sumchecker.git"
+  },
+  "keywords": [
+    "checksum",
+    "hash"
+  ],
+  "bugs": {
+    "url": "https://github.com/malept/sumchecker/issues"
+  },
+  "homepage": "https://github.com/malept/sumchecker#readme",
+  "engines": {
+    "node": ">= 8.0"
+  },
+  "devDependencies": {
+    "ava": "^2.2.0",
+    "codecov": "^3.3.0",
+    "eslint": "^6.1.0",
+    "eslint-config-standard": "^14.0.0",
+    "eslint-plugin-ava": "^9.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "nyc": "^14.0.0",
+    "tsd": "^0.11.0"
+  },
+  "dependencies": {
+    "debug": "^4.1.0"
+  },
+  "scripts": {
+    "ava": "ava test/index.js",
+    "codecov": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
+    "coverage": "nyc ava test/index.js",
+    "lint": "eslint .",
+    "test": "npm run lint && npm run ava && npm run tsd",
+    "tsd": "tsd"
+  },
+  "ava": {
+    "babel": false,
+    "compileEnhancements": false
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "plugin:ava/recommended",
+      "plugin:import/errors",
+      "plugin:import/warnings",
+      "plugin:node/recommended",
+      "plugin:promise/recommended",
+      "standard"
+    ],
+    "plugins": [
+      "ava"
+    ],
+    "rules": {
+      "node/no-unpublished-require": [
+        "error",
+        {
+          "allowModules": [
+            "ava"
+          ]
+        }
+      ],
+      "strict": [
+        "error"
+      ]
+    }
+  }
+}

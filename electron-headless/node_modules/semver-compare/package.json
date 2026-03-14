@@ -1,0 +1,31 @@
+{
+  "name": "semver-compare",
+  "version": "1.0.0",
+  "description": "compare two semver version strings, returning -1, 0, or 1",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "tape": "^3.0.0"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/substack/semver-compare.git"
+  },
+  "homepage": "https://github.com/substack/semver-compare",
+  "keywords": [
+    "semver",
+    "compare",
+    "cmp",
+    "comparison",
+    "sort"
+  ],
+  "author": {
+    "name": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net"
+  },
+  "license": "MIT"
+}

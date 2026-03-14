@@ -1,0 +1,13 @@
+{
+  "name": "ghidra-headless-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron Project Home for Ghidra headless backend",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^37.2.0"
+  }
+}
