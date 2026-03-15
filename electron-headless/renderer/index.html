@@ -7,25 +7,22 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="backdrop"></div>
     <header class="topbar">
-      <div>
-        <p class="eyebrow">Headless Backend</p>
-        <h1>New Project</h1>
+      <div class="topbar-left">
+        <h1>Ghidra Headless</h1>
       </div>
       <div id="health" class="status-pill"></div>
     </header>
 
     <main class="layout">
-      <section class="panel hero-panel">
-        <div class="panel-head">
-          <h2>Create Ghidra Project</h2>
-          <span class="chip">Minimal Slice</span>
+      <aside class="sidebar">
+        <div class="section-head">
+          <h2>New Project</h2>
         </div>
         <p class="panel-copy">
-          Choose a parent directory, enter a project name, and create a local Ghidra
-          project. Created projects are remembered and shown when you reopen the app.
+          Create a local Ghidra project. Created projects are remembered and shown when you reopen the app.
         </p>
+        
         <label class="field">
           <span>Projects Directory</span>
           <div class="inline-field">
@@ -37,6 +34,7 @@
             <button id="browseProjectPathBtn" type="button" class="ghost">Browse</button>
           </div>
         </label>
+        
         <label class="field">
           <span>Project Name</span>
           <input
@@ -45,18 +43,17 @@
             autocomplete="off"
           />
         </label>
-        <p id="formMessage" class="form-message" aria-live="polite"></p>
+        
         <div class="actions">
           <button id="createProjectBtn" type="button">Create Project</button>
         </div>
-      </section>
+        <p id="formMessage" class="form-message" aria-live="polite"></p>
+      </aside>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Remembered Project Locations</h2>
-          <div class="actions">
-            <button id="refreshProjectsBtn" class="ghost">Refresh</button>
-          </div>
+      <section class="main-content">
+        <div class="section-head">
+          <h2>Recent Projects</h2>
+          <button id="refreshProjectsBtn" class="ghost">Refresh</button>
         </div>
         <div id="projectsList" class="project-list"></div>
       </section>

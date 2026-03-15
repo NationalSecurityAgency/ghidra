@@ -40,20 +40,14 @@ async function refreshHealth() {
   }
 }
 
-function formatProjectLocation(project) {
-  const pathParts = project.projectPath.split(/[\\/]/);
-  pathParts.pop();
-  return pathParts.join("/") || project.projectPath;
-}
-
 function renderProjects(projects) {
   projectsListEl.innerHTML = "";
   if (!projects.length) {
     projectsListEl.innerHTML = `
-      <div class="project-card empty-state">
+      <div class="project-item empty-state">
         <div class="project-title">No remembered projects yet</div>
         <div class="project-meta">
-          Create your first project and its location will appear here the next time you open the app.
+          Create your first project to see it here.
         </div>
       </div>
     `;
@@ -61,17 +55,22 @@ function renderProjects(projects) {
   }
 
   for (const project of projects) {
-    const card = document.createElement("div");
-    card.className = "project-card";
-    card.innerHTML = `
+    const item = document.createElement("div");
+    item.className = "project-item";
+    
+    const statusClass = project.existsOnDisk ? "status-available" : "status-missing";
+    const statusText = project.existsOnDisk ? "Available" : "Missing";
+
+    item.innerHTML = `
       <div class="project-title">${project.name}</div>
-      <div class="project-meta"><strong>Directory:</strong> ${formatProjectLocation(project)}</div>
-      <div class="project-meta"><strong>Project Path:</strong> ${project.projectPath}</div>
       <div class="project-meta">
-        <strong>Status:</strong> ${project.existsOnDisk ? "available" : "missing on disk"}
+        <div class="project-meta-left">
+          <span class="project-path">${project.projectPath}</span>
+        </div>
+        <div class="${statusClass}">${statusText}</div>
       </div>
     `;
-    projectsListEl.appendChild(card);
+    projectsListEl.appendChild(item);
   }
 }
 
