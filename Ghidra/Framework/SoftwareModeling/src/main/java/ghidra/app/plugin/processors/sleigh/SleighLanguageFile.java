@@ -130,9 +130,12 @@ public class SleighLanguageFile {
 			}
 			return new SleighLanguageFile(slaRFile, slaSpecRFile, null);
 		}
-
-		File lockFile =
-			new ResourceFile(slaRFile.getParentFile(), slaRFile.getName() + ".lock").getFile(false);
+		
+		// try to create lock file.  Will fail in directories that the user doesn't have perms for
+		// and will be the same as single jar mode (no locking / compiling possible)
+		File lockFile = tryCreateLockFile(
+			new ResourceFile(slaRFile.getParentFile(), slaRFile.getName() + ".lock")
+					.getFile(false));
 
 		return new SleighLanguageFile(slaRFile, slaSpecRFile, lockFile);
 	}
@@ -226,6 +229,10 @@ public class SleighLanguageFile {
 	 */
 	public boolean canLock() {
 		return lockFile != null;
+	}
+
+	public File getLockFile() {
+		return lockFile;
 	}
 
 	/**
@@ -530,4 +537,15 @@ public class SleighLanguageFile {
 		return matches;
 	}
 
+	private static File tryCreateLockFile(File lockFile) {
+		if (lockFile == null) {
+			return null;
+		}
+		try (RandomAccessFile raf = new RandomAccessFile(lockFile, "rw")) {
+			return lockFile;
+		}
+		catch (IOException e) {
+			return null;
+		}
+	}
 }
