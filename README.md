@@ -47,7 +47,7 @@ To create the latest development build for your platform from this source reposi
 ##### Install build tools:
 * [JDK 21 64-bit][jdk]
 * [Gradle 8.5+][gradle] (or provided Gradle wrapper if Internet connection is available)
-* [Python3][python3] (version 3.9 to 3.13) with bundled pip
+* [Python3][python3] (version 3.9 to 3.14) with bundled pip
 * GCC or Clang, and make (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
