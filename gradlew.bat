@@ -85,7 +85,7 @@ if exist "%APP_HOME%\gradle-wrapper.jar" (
 )
 
 @rem Read application properties
-for /f "tokens=1,2 delims==" %%g in (%GHIDRA_HOME%Ghidra\application.properties) DO (set %%g=%%h)
+for /f "usebackq tokens=1,2 delims==" %%g in ("%GHIDRA_HOME%Ghidra\application.properties") DO (set %%g=%%h)
 
 @rem Only proceed with wrapper if we are in single-repo PUBLIC/DEV mode
 set PROCEED=1
