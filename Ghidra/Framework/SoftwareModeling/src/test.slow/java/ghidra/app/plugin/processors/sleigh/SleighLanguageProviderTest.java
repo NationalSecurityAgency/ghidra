@@ -16,9 +16,11 @@
 package ghidra.app.plugin.processors.sleigh;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +32,13 @@ import org.junit.Test;
 import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.Application;
+import ghidra.framework.OperatingSystem;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 public class SleighLanguageProviderTest extends AbstractGenericTest {
 
@@ -122,6 +126,68 @@ public class SleighLanguageProviderTest extends AbstractGenericTest {
 		});
 
 		testProc.assertExitNum(1);
+	}
+
+	@Test
+	public void testSlaLockFileInReadOnlyDirectory() throws IOException {
+		assumeFalse(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+
+		File tmpDir = createTempDirectory("sleighlockfiletest");
+		FileUtilities.writeStringToFile(new File(tmpDir, "mylang.slaspec"), "slaspec");
+		FileUtilities.writeStringToFile(new File(tmpDir, "mylang.sla"), "sla");
+
+		SleighLanguageFile slf =
+			SleighLanguageFile.fromSlaFilename(new ResourceFile(tmpDir), "mylang.sla");
+		assertTrue(slf.canLock());
+
+		if (!slf.getLockFile().delete()) {
+			fail("failed to delete lock file");
+		}
+
+		Files.setPosixFilePermissions(tmpDir.toPath(),
+			PosixFilePermissions.fromString("r-x------"));
+
+		try {
+			try (RandomAccessFile raf =
+				new RandomAccessFile(new File(tmpDir, "mylang.probe_permisssions"), "rw")) {
+				fail(
+					"Did not change actual perms on tmpDir " + tmpDir + " to test lock file logic");
+			}
+			catch (IOException e) {
+				// good
+			}
+
+			// now should fail to allow locking
+			SleighLanguageFile slf2 =
+				SleighLanguageFile.fromSlaFilename(new ResourceFile(tmpDir), "mylang.sla");
+			assertFalse(slf2.canLock());
+		}
+		finally {
+			// restore perms so its not too hard to cleanup tmp dir afterwards
+			Files.setPosixFilePermissions(tmpDir.toPath(),
+				PosixFilePermissions.fromString("rwx------"));
+		}
+	}
+
+	@Test
+	public void testSlaLockFileReadOnlyFile() throws IOException {
+		assumeFalse(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+
+		File tmpDir = createTempDirectory("sleighlockfiletest");
+		FileUtilities.writeStringToFile(new File(tmpDir, "mylang.slaspec"), "slaspec");
+		FileUtilities.writeStringToFile(new File(tmpDir, "mylang.sla"), "sla");
+
+		SleighLanguageFile slf =
+			SleighLanguageFile.fromSlaFilename(new ResourceFile(tmpDir), "mylang.sla");
+		assertTrue(slf.canLock());
+
+		Files.setPosixFilePermissions(slf.getLockFile().toPath(),
+			PosixFilePermissions.fromString("r-x------"));
+
+		// now should fail to allow locking
+		SleighLanguageFile slf2 =
+			SleighLanguageFile.fromSlaFilename(new ResourceFile(tmpDir), "mylang.sla");
+		assertFalse(slf2.canLock());
 	}
 
 	public void testSlaLanguage_FromOtherProcess() throws Throwable {
