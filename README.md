@@ -65,8 +65,10 @@ cd ghidra-master
 repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
 
 ##### Download additional build dependencies into source repository:
-**NOTE:** If an Internet connection is available and you did not install Gradle, the following 
-`gradle` commands may be replaced with `./gradlew(.bat)`.
+**NOTE:** If an Internet connection is available and you did not install Gradle, the 
+`./gradlew` (or `gradlew.bat`) command may be used in place of the `gradle` command in the following
+instructions.
+
 ```
 gradle -I gradle/support/fetchDependencies.gradle
 ```
