@@ -6,6 +6,9 @@
 
 @define REGISTER_SIZE "4"
 
+@define HREGSIZE "2"
+@define HREGBITS "16"
+
 @define EATRUNC "ea"
 
 @define CTR_OFFSET "32"
