@@ -1949,7 +1949,7 @@ svFramesize: ,val						is svrs_frame_hi=0 & svrs_frame_low=0 [val = 128; ] {expo
 svFramesize: ,val						is svrs_frame_hi & svrs_frame_low [val = ((svrs_frame_hi << 4) | svrs_frame_low) << 3;] {export *[const]:2 val;}
 
 
-:save svRa^svXsregs^svAregs^svFramesize		is $(AMODE) & REL6=1 & prime=0x1c & fct=0x1f & save=0x01 & svRa & svXsregs & svAregs & svStat & svFramesize {
+:save svRa^svXsregs^svAregs^svFramesize		is $(AMODE) & prime=0x1c & fct=0x1f & save=0x01 & svRa & svXsregs & svAregs & svStat & svFramesize {
 	tsp = sp;
 	build svAregs;
 	build svRa;
@@ -1961,7 +1961,7 @@ svFramesize: ,val						is svrs_frame_hi & svrs_frame_low [val = ((svrs_frame_hi 
 	sp = sp - zext(tmp);
 }
 
-:restore rsRa^rsXsregs^rsStat^svFramesize	is $(AMODE) & REL6=1 & prime=0x1c & fct=0x1f & save=0x00 & rsRa & rsXsregs & rsStat & svFramesize {
+:restore rsRa^rsXsregs^rsStat^svFramesize	is $(AMODE) & prime=0x1c & fct=0x1f & save=0x00 & rsRa & rsXsregs & rsStat & svFramesize {
 	build svFramesize;
 
 	tmp:2 = svFramesize;
