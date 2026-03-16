@@ -74,8 +74,11 @@ public interface Composite extends DataType {
 	public abstract DataTypeComponent[] getDefinedComponents();
 
 	/**
-	 * Adds a new datatype to the end of this composite.  This is the preferred method
-	 * to use for adding components to an aligned structure for fixed-length dataTypes.
+	 * Adds a new datatype to the end of this composite.
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
+	 * automatically to provide the proper alignment.
+	 * 
 	 * @param dataType the datatype to add.
 	 * @return the DataTypeComponent created.
 	 * @throws IllegalArgumentException if the specified data type is not
@@ -86,9 +89,11 @@ public interface Composite extends DataType {
 	public DataTypeComponent add(DataType dataType) throws IllegalArgumentException;
 
 	/**
-	 * Adds a new datatype to the end of this composite. This is the preferred method
-	 * to use for adding components to an aligned structure for dynamic dataTypes such as
-	 * strings whose length must be specified.
+	 * Adds a new datatype to the end of this composite.
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
+	 * automatically to provide the proper alignment.
+	 * 
 	 * @param dataType the datatype to add.
 	 * @param length the length to associate with the datatype.
 	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
@@ -102,8 +107,11 @@ public interface Composite extends DataType {
 	public DataTypeComponent add(DataType dataType, int length) throws IllegalArgumentException;
 
 	/**
-	 * Adds a new datatype to the end of this composite.  This is the preferred method
-	 * to use for adding components to an aligned structure for fixed-length dataTypes.
+	 * Adds a new datatype to the end of this composite.
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
+	 * automatically to provide the proper alignment.
+	 * 
 	 * @param dataType the datatype to add.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
@@ -121,6 +129,7 @@ public interface Composite extends DataType {
 	 * to be used with packed structures/unions only where the bitfield will be
 	 * appropriately packed.  The minimum storage byte size will be applied.
 	 * It will not provide useful results for composites with packing disabled.
+	 * 
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the bitfield size in bits
 	 * @param componentName the field name to associate with this component.
@@ -134,9 +143,11 @@ public interface Composite extends DataType {
 			String comment) throws InvalidDataTypeException;
 
 	/**
-	 * Adds a new datatype to the end of this composite.  This is the preferred method
-	 * to use for adding components to an aligned structure for dynamic dataTypes such as
-	 * strings whose length must be specified.
+	 * Adds a new datatype to the end of this composite.
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
+	 * automatically to provide the proper alignment.
+	 * 
 	 * @param dataType the datatype to add.
 	 * @param length the length to associate with the datatype.
 	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
@@ -153,8 +164,10 @@ public interface Composite extends DataType {
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
-	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
 	 * automatically to provide the proper alignment.
+	 * 
 	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param dataType the datatype to insert.
 	 * @return the componentDataType created.
@@ -169,8 +182,10 @@ public interface Composite extends DataType {
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
-	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
 	 * automatically to provide the proper alignment.
+	 * 
 	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
@@ -188,8 +203,10 @@ public interface Composite extends DataType {
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
-	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
+	 * <p>
+	 * Note: When packing is enabled the component's offset will get determined
 	 * automatically to provide the proper alignment.
+	 * 
 	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
