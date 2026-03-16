@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+   <language processor="XMOS XCORE"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="xmos.sla"
+            processorspec="xmos.pspec"
+            id="XCORE:LE:32:default">
+    <description>XMOS XCORE Processor</description>
+    <compiler name="default" spec="xmos.cspec" id="default"/>
+  </language> 
+
+</language_definitions>
