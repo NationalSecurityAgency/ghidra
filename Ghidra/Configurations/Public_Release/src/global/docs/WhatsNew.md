@@ -67,12 +67,28 @@ provides better results.
 ## Bitfields
 
 ## Objective-C
+The old Objective-C analyzers:
+* Objective-C 2 Class
+* Objective-C 2 Decompiler Message
+* Objective-C Message (Prototype)
 
+have been been reworked and replaced with versions that are more compatible with modern 
+Objective-C binaries:
+* Objective-C Type Metadata Analyzer
+* Objective-C Message Analyzer
+
+Where possible, calls to `_objc_msgSend()` and its variations (including `_objc_msgSend$` stubs) 
+have been overriden to reference the actual target method (if discoverable), which results in a much
+more user-friendly decompilation.
+
+Additionaly, a variety of AARCH64 call fixups have been implemented which further clean up 
+decompilation, hiding much of the noise that things like Automatic Reference Counting (ARC) can 
+generate.
 
 ## Debuginfod
 We've added support for downloading DWARF debug files from HTTP[s] debuginfod servers, as well as 
 searching the user's `$HOME/.cache/debuginfod_client` directory. You can configure these options in
-the Code Browser tool's `Edit | DWARF External Debug Config` menu.
+the Code Browser tool's **Edit | DWARF External Debug Config** menu.
 
 ## Microsoft Demangler
 We've added **Output Options** to the Microsoft Demangler to control the demangled output 
