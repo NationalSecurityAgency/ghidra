@@ -568,6 +568,42 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testInsertWithZeroArrayAtOffset3() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+
+		// Clear structure and set length to 8 with only zero-length components
+		struct.setLength(0);
+		struct.setLength(8);
+		
+		struct.insertAtOffset(2, zeroArray, -1, "z4", null);
+		struct.insertAtOffset(0, zeroArray, -1, "z1", null);
+		struct.insertAtOffset(0, zeroArray, -1, "z2", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
+
+		struct.insertAtOffset(0, zeroArray, -1, "z3", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   0   float[0]   0   z3   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
+	}
+
+	@Test
 	public void testInsertAtOffsetPastEnd() {
 		struct.insertAtOffset(100, new FloatDataType(), 4);
 		assertEquals(104, struct.getLength());
@@ -1015,6 +1051,44 @@ public class StructureDBTest extends AbstractGenericTest {
 				"}\n" + 
 				"Length: 14 Alignment: 1", struct);	
 		//@formatter:on
+	}
+
+	@Test
+	public void testInsertZeroLengthBitfieldAtOffset() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+
+		// Clear structure and set length to 8 with only zero-length components
+		struct.setLength(0);
+		struct.setLength(8);
+		struct.insertAtOffset(0, zeroArray, -1, "z1", null);
+		struct.insertAtOffset(0, zeroArray, -1, "z2", null);
+		struct.insertAtOffset(2, zeroArray, -1, "z4", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n", struct.toString());
+
+		try {
+			struct.insertBitFieldAt(0, 1, 0, CharDataType.dataType, 0, null, null);
+		}
+		catch (InvalidDataTypeException e) {
+			failWithException("Unexpected", e);
+		}
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   0   char:0(0)   0      \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n", struct.toString());
 	}
 
 	@Test
@@ -2486,6 +2560,41 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(7, comps[4].getOffset());
 		assertEquals(8, comps[4].getOrdinal());
 		assertTrue(ByteDataType.dataType.isEquivalent(comps[4].getDataType()));
+	}
+
+	@Test
+	public void testReplaceAtWithZeroLength1() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+
+		// Clear structure and set length to 8 with only zero-length components
+		struct.setLength(0);
+		struct.setLength(8);
+		struct.replaceAtOffset(0, zeroArray, -1, "z1", null);
+		struct.replaceAtOffset(0, zeroArray, -1, "z2", null);
+		struct.replaceAtOffset(2, zeroArray, -1, "z4", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
+
+		struct.replaceAtOffset(0, zeroArray, -1, "z3", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   0   float[0]   0   z3   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
 	}
 
 	@Test
