@@ -119,6 +119,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JLabel functionNameLabel;
 	private JLabel functionSignatureLabel;
 	private JLabel useFunctionNamespaceLabel;
+	private JLabel useEmptyCompositesLabel;
 	private JLabel returnTypeLabel;
 	private JLabel inlineLabel;
 	private JLabel noReturnLabel;
@@ -139,6 +140,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JComboBox<Enum<?>> functionNameComboBox;
 	private JComboBox<Enum<?>> functionSignatureComboBox;
 	private JCheckBox useFunctionNamespaceCheckBox;
+	private JCheckBox useEmptyCompositesCheckBox;
 	private JComboBox<Enum<?>> returnTypeComboBox;
 	private JComboBox<Enum<?>> callingConventionComboBox;
 	private JComboBox<Enum<?>> inlineComboBox;
@@ -426,6 +428,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.add(useFunctionNamespaceLabel);
 		panel.add(useFunctionNamespaceCheckBox);
 
+		panel.add(useEmptyCompositesLabel);
+		panel.add(useEmptyCompositesCheckBox);
+
 		outerPanel.add(panel);
 		return outerPanel;
 	}
@@ -445,6 +450,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 		useFunctionNamespaceLabel = new GDLabel("Replace Namespace", SwingConstants.RIGHT);
 		useFunctionNamespaceLabel.setToolTipText(USE_NAMESPACE_TOOLTIP);
+
+		useEmptyCompositesLabel = new GDLabel("Use Emtpy Composite Types", SwingConstants.RIGHT);
+		useEmptyCompositesLabel.setToolTipText(USE_EMPTY_COMPOSITES_TOOLTIP);
 	}
 
 	private void createNonCommentMarkupChoices() {
@@ -464,6 +472,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		functionSignatureComboBox.setToolTipText(FUNCTION_SIGNATURE_TOOLTIP);
 
 		useFunctionNamespaceCheckBox = createCheckBox("");
+		useEmptyCompositesCheckBox = createCheckBox("");
 	}
 
 	private JPanel createCommentsSubPanel() {
@@ -560,6 +569,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 		boolean useNamespaces = useFunctionNamespaceCheckBox.isSelected();
 		options.setBoolean(USE_NAMESPACE_FUNCTIONS, useNamespaces);
+
+		boolean useEmptyComposites = useEmptyCompositesCheckBox.isSelected();
+		options.setBoolean(USE_EMPTY_COMPOSITES, useEmptyComposites);
 	}
 
 	private void updateCommentOptions(ToolOptions options) {
@@ -675,6 +687,12 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 			options.getBoolean(USE_NAMESPACE_FUNCTIONS, DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS);
 		if (useFunctionNamespaceCheckBox.isSelected() != useNamespace) {
 			useFunctionNamespaceCheckBox.setSelected(useNamespace);
+		}
+
+		boolean useEmtpyStructures =
+			options.getBoolean(USE_EMPTY_COMPOSITES, DEFAULT_OPTION_FOR_USE_EMPTY_STRUCTURES);
+		if (useEmptyCompositesCheckBox.isSelected() != useEmtpyStructures) {
+			useEmptyCompositesCheckBox.setSelected(useEmtpyStructures);
 		}
 	}
 

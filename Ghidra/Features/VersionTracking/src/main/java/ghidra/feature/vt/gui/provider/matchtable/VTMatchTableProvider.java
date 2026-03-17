@@ -768,6 +768,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		vtOptions.registerOption(USE_NAMESPACE_FUNCTIONS, DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS,
 			null, USE_NAMESPACE_TOOLTIP);
+		vtOptions.registerOption(USE_EMPTY_COMPOSITES, DEFAULT_OPTION_FOR_USE_EMPTY_STRUCTURES,
+			null, USE_EMPTY_COMPOSITES_TOOLTIP);
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
 				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));

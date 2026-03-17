@@ -15,9 +15,12 @@
  */
 package ghidra.feature.vt.api.stringable;
 
+import static ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices.*;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
 import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
@@ -31,6 +34,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.DataTypeCleaner;
 import ghidra.program.util.FunctionUtility;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -77,10 +81,13 @@ public class FunctionSignatureStringable extends Stringable {
 		this.callingConventionName = function.getCallingConventionName();
 		this.callFixup = function.getCallFixup();
 
-		// The Function Signature cares about the signature source, custom storage,
-		// return type/storage, calling convention, parameter data type/storage,
-		// parameter names and source types, parameter comments, varArgs,
-		// inline flag, no return flag, and call fixup.
+		/*
+		 	The Function Signature cares about:
+		 	 	signature source, custom storage, return type/storage, calling convention, 
+		 	 	parameter:
+		 	 	 	data type/storage, names, source types, comments, 
+		 	 	varArgs, inline flag, no return flag, and call fixup.		 	
+		 */
 
 		this.signatureSource = function.getSignatureSource();
 		this.hasCustomStorage = function.hasCustomVariableStorage();
@@ -100,8 +107,9 @@ public class FunctionSignatureStringable extends Stringable {
 		String name = parameter.getName(); // default names can be significant!
 		String comment = parameter.getComment();
 		DataType dt = parameter.getDataType();
-		String paramStorage = parameter.getVariableStorage().getSerializationString();
-		return new ParameterInfo(dt, name, paramStorage, source, comment);
+		VariableStorage storage = parameter.getVariableStorage();
+		String storageString = storage.getSerializationString();
+		return new ParameterInfo(dt, name, storageString, source, comment);
 	}
 
 	public boolean hasCustomStorage() {
@@ -116,9 +124,10 @@ public class FunctionSignatureStringable extends Stringable {
 		if (signatureString != null) {
 			return signatureString;
 		}
-		StringBuffer buf = new StringBuffer();
+
+		StringBuilder buf = new StringBuilder();
 		buf.append(returnInfo.dataType.getDisplayName());
-		buf.append(" ");
+		buf.append(' ');
 
 		if (isInline) {
 			buf.append("inline ");
@@ -133,31 +142,31 @@ public class FunctionSignatureStringable extends Stringable {
 			!callingConventionName.equals(Function.DEFAULT_CALLING_CONVENTION_STRING) &&
 			!callingConventionName.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
 			buf.append(callingConventionName);
-			buf.append(" ");
+			buf.append(' ');
 		}
 
 		buf.append(originalName);
-		buf.append("(");
+		buf.append('(');
 
-		int paramCnt = parameterInfos.size();
-		boolean emptyList = true;
-		for (int i = 0; i < paramCnt; i++) {
+		int n = parameterInfos.size();
+		boolean isVoid = n == 0;
+		for (int i = 0; i < n; i++) {
 			ParameterInfo paramInfo = parameterInfos.get(i);
 			buf.append(paramInfo.dataType.getDisplayName());
-			buf.append(" ");
+			buf.append(' ');
 			buf.append(paramInfo.name);
-			emptyList = false;
-			if ((i < (paramCnt - 1)) || hasVarargs) {
+			if (i < n - 1 || hasVarargs) {
 				buf.append(", ");
 			}
 		}
+
 		if (hasVarargs) {
 			buf.append(FunctionSignature.VAR_ARGS_DISPLAY_STRING);
 		}
-		else if (emptyList && signatureSource != SourceType.DEFAULT) {
+		else if (isVoid && signatureSource != SourceType.DEFAULT) {
 			buf.append(FunctionSignature.VOID_PARAM_DISPLAY_STRING);
 		}
-		buf.append(")");
+		buf.append(')');
 
 		signatureString = buf.toString();
 		return signatureString;
@@ -168,40 +177,50 @@ public class FunctionSignatureStringable extends Stringable {
 		if (returnInfo == null) {
 			return "undefined " + SHORT_NAME + "()";
 		}
-		StringBuffer buf = new StringBuffer();
+
+		StringBuilder buf = new StringBuilder();
 		buf.append(getSignatureDisplayString());
-		if (hasCustomStorage && (program != null)) {
-			try {
-				buf.append("  CustomStorage: ");
-				VariableStorage returnVariableStorage =
-					VariableStorage.deserialize(program, returnInfo.storage);
-				buf.append(returnVariableStorage.toString() + " ");
-				buf.append("(");
-				int numParams = parameterInfos.size();
-				for (int i = 0; i < numParams; i++) {
-					String parameterStorageString = parameterInfos.get(i).storage;
-					VariableStorage variableStorage =
-						VariableStorage.deserialize(program, parameterStorageString);
-					buf.append(variableStorage.toString());
-					if ((i < (numParams - 1)) || hasVarargs) {
-						buf.append(", ");
-					}
-				}
-				if (hasVarargs) {
-					buf.append(FunctionSignature.VAR_ARGS_DISPLAY_STRING);
-				}
-				buf.append(")");
-			}
-			catch (InvalidInputException e) {
-				buf.append("Error getting variable storage.");
-				e.printStackTrace();
-			}
-		}
+
+		addCustomStorageText(buf);
+
 		if (callFixup != null) {
-			buf.append(" " + callFixup);
+			buf.append(' ').append(callFixup);
 		}
 
 		return buf.toString();
+	}
+
+	private void addCustomStorageText(StringBuilder buf) {
+		if (!hasCustomStorage || program == null) {
+			return;
+		}
+
+		buf.append("  CustomStorage: ");
+		try {
+			VariableStorage returnStorage =
+				VariableStorage.deserialize(program, returnInfo.storage);
+			buf.append(returnStorage).append(' ');
+			buf.append('(');
+			int n = parameterInfos.size();
+			for (int i = 0; i < n; i++) {
+				String storageString = parameterInfos.get(i).storage;
+				VariableStorage variableStorage =
+					VariableStorage.deserialize(program, storageString);
+				buf.append(variableStorage);
+				if (i < n - 1 || hasVarargs) {
+					buf.append(", ");
+				}
+			}
+
+			if (hasVarargs) {
+				buf.append(FunctionSignature.VAR_ARGS_DISPLAY_STRING);
+			}
+			buf.append(')');
+		}
+		catch (InvalidInputException e) {
+			buf.append("Error getting variable storage.");
+			Msg.error(this, "Error getting variable storage.", e);
+		}
 	}
 
 	@Override
@@ -212,21 +231,21 @@ public class FunctionSignatureStringable extends Stringable {
 		}
 
 		DataTypeManager dataTypeManager = desiredProgram.getDataTypeManager();
-		StringBuilder buildy = new StringBuilder();
-		buildy.append(getSavableFunctionSignatureSource()).append(DELIMITER);
-		buildy.append(getSavableIsInline()).append(DELIMITER);
-		buildy.append(getSavableHasNoReturn()).append(DELIMITER);
-		buildy.append(getSavableCallingConvention()).append(DELIMITER);
-		buildy.append(getSavableCallFixup()).append(DELIMITER);
-		buildy.append(originalName).append(DELIMITER);
-		buildy.append(getSavableHasCustomStorage()).append(DELIMITER);
-		buildy.append(getSavableReturnType(dataTypeManager)).append(DELIMITER);
-		buildy.append(getSavableReturnStorage()).append(DELIMITER);
-		buildy.append(getSavableParameterStorage()).append(DELIMITER);
-		buildy.append(getSavableVarArgs()).append(DELIMITER);
-		buildy.append(Boolean.toString(isThisCall)).append(DELIMITER);
-		buildy.append(saveParameterInfos());
-		return buildy.toString();
+		StringBuilder buf = new StringBuilder();
+		buf.append(getSavableFunctionSignatureSource()).append(DELIMITER);
+		buf.append(getSavableIsInline()).append(DELIMITER);
+		buf.append(getSavableHasNoReturn()).append(DELIMITER);
+		buf.append(getSavableCallingConvention()).append(DELIMITER);
+		buf.append(getSavableCallFixup()).append(DELIMITER);
+		buf.append(originalName).append(DELIMITER);
+		buf.append(getSavableHasCustomStorage()).append(DELIMITER);
+		buf.append(getSavableReturnType(dataTypeManager)).append(DELIMITER);
+		buf.append(getSavableReturnStorage()).append(DELIMITER);
+		buf.append(getSavableParameterStorage()).append(DELIMITER);
+		buf.append(getSavableVarArgs()).append(DELIMITER);
+		buf.append(Boolean.toString(isThisCall)).append(DELIMITER);
+		buf.append(saveParameterInfos());
+		return buf.toString();
 	}
 
 	private String getSavableReturnType(DataTypeManager dataTypeManager) {
@@ -237,11 +256,12 @@ public class FunctionSignatureStringable extends Stringable {
 			makePointer = true;
 			dt = ((Pointer) dt).getDataType();
 		}
-		String str = Long.toString(dataTypeManager.getResolvedID(dt));
+
+		String id = Long.toString(dataTypeManager.getResolvedID(dt));
 		if (makePointer) {
-			str = MAKE_POINTER_PREFIX + str;
+			id = MAKE_POINTER_PREFIX + id;
 		}
-		return str;
+		return id;
 	}
 
 	private String getSavableFunctionSignatureSource() {
@@ -276,12 +296,12 @@ public class FunctionSignatureStringable extends Stringable {
 	}
 
 	private String getSavableParameterStorage() {
-		StringBuilder storageBuilder = new StringBuilder();
-		storageBuilder.append(parameterInfos.size()).append(PARAMETER_STORAGE_DELIMITER);
-		for (ParameterInfo paramInfo : parameterInfos) {
-			storageBuilder.append(paramInfo.storage).append(PARAMETER_STORAGE_DELIMITER);
+		StringBuilder buf = new StringBuilder();
+		buf.append(parameterInfos.size()).append(PARAMETER_STORAGE_DELIMITER);
+		for (ParameterInfo info : parameterInfos) {
+			buf.append(info.storage).append(PARAMETER_STORAGE_DELIMITER);
 		}
-		return storageBuilder.toString();
+		return buf.toString();
 	}
 
 	private String getSavableVarArgs() {
@@ -292,7 +312,7 @@ public class FunctionSignatureStringable extends Stringable {
 	protected void doRestoreFromString(String string, Program desiredProgram) {
 		signatureString = null;
 		StringTokenizer tokenizer = new StringTokenizer(string, DELIMITER);
-		List<String> strings = new LinkedList<>();
+		Queue<String> strings = new LinkedList<>(); // use a queue since we remove from the front
 		while (tokenizer.hasMoreTokens()) {
 			strings.add(tokenizer.nextToken());
 		}
@@ -300,77 +320,67 @@ public class FunctionSignatureStringable extends Stringable {
 		program = desiredProgram;
 		DataTypeManager dataTypeManager = desiredProgram.getDataTypeManager();
 
-		signatureSource = SourceType.valueOf(strings.remove(0)); // Signature Source
-		isInline = Boolean.parseBoolean(strings.remove(0)); // Inline Flag
-		hasNoReturn = Boolean.parseBoolean(strings.remove(0)); // NoReturn Flag
-		callingConventionName = strings.remove(0); // Calling Convention Name
-		callFixup = strings.remove(0); // Call Fixup
+		signatureSource = SourceType.valueOf(strings.remove()); // Signature Source
+		isInline = Boolean.parseBoolean(strings.remove()); // Inline Flag
+		hasNoReturn = Boolean.parseBoolean(strings.remove()); // NoReturn Flag
+		callingConventionName = strings.remove(); // Calling Convention Name
+		callFixup = strings.remove(); // Call Fixup
 		if (callFixup.equals("none")) {
 			callFixup = null;
 		}
-		originalName = strings.remove(0); // Original Function Name
-		hasCustomStorage = Boolean.parseBoolean(strings.remove(0)); // Custom Storage Flag
-		String returnTypeID = strings.remove(0); // Return DataType ID with optional MAKE_POINTER_PREFIX
-		String returnStorage = strings.remove(0); // Return Storage
+
+		originalName = strings.remove(); // Original Function Name
+		hasCustomStorage = Boolean.parseBoolean(strings.remove()); // Custom Storage Flag
+		String returnTypeID = strings.remove(); // Return DataType ID with optional MAKE_POINTER_PREFIX
+		String returnStorage = strings.remove(); // Return Storage
 		returnInfo = new ParameterInfo(returnTypeID, dataTypeManager, Parameter.RETURN_NAME,
 			returnStorage, SourceType.DEFAULT, null);
 
-		String parameterStorageString = strings.remove(0); // Parameter Storage
-		// Now pull apart the parameter storage and put it in the list.
-		StringTokenizer parameterTokenizer =
-			new StringTokenizer(parameterStorageString, PARAMETER_STORAGE_DELIMITER);
-		// parameterStorageCount currently guarantees there is something in the parameter storage token.
-//		String parameterStorageCount = parameterTokenizer.nextToken();
-		List<String> parameterStorage = new LinkedList<>();
-		// TODO: do we need to check parameterStorageCount
-		while (parameterTokenizer.hasMoreTokens()) {
-			parameterStorage.add(parameterTokenizer.nextToken());
+		String storageString = strings.remove(); // Parameter Storage		
+		StringTokenizer storageTokenizer =
+			new StringTokenizer(storageString, PARAMETER_STORAGE_DELIMITER);
+		storageTokenizer.nextToken(); // ignore param count; not used
+		List<String> parameterStorage = new ArrayList<>();
+		while (storageTokenizer.hasMoreTokens()) {
+			parameterStorage.add(storageTokenizer.nextToken());
 		}
 
-		hasVarargs = Boolean.parseBoolean(strings.remove(0)); // VarArgs Flag
-		isThisCall = Boolean.parseBoolean(strings.remove(0)); // "This" Calling Convention Flag
+		hasVarargs = Boolean.parseBoolean(strings.remove()); // VarArgs Flag
+		isThisCall = Boolean.parseBoolean(strings.remove()); // "This" Calling Convention Flag
 
-		// Now get the parameter info
 		while (!strings.isEmpty()) {
-			String parameterInfoString = strings.remove(0);
-			// Now pull apart the parameter info.
-			StringTokenizer parameterInfoTokenizer =
-				new StringTokenizer(parameterInfoString, PARAMETER_INFO_DELIMITER);
-			String dtIDString = parameterInfoTokenizer.nextToken();
-			String name = parameterInfoTokenizer.nextToken();
-			if (name != null && name.isEmpty()) {
+			String paramInfoString = strings.remove();
+			StringTokenizer paramTokenizer =
+				new StringTokenizer(paramInfoString, PARAMETER_INFO_DELIMITER);
+			String dtId = paramTokenizer.nextToken();
+			String name = paramTokenizer.nextToken();
+			if (StringUtils.isBlank(name)) {
 				name = null;
 			}
-			String sourceAsName = parameterInfoTokenizer.nextToken();
+
+			String sourceAsName = paramTokenizer.nextToken();
 			SourceType source = SourceType.valueOf(sourceAsName);
 			String comment = null;
 			try {
-				comment = parameterInfoTokenizer.nextToken();
+				comment = paramTokenizer.nextToken();
 			}
 			catch (NoSuchElementException e) {
 				// Do nothing. There isn't a comment.
 			}
-			if (comment == null || comment.isEmpty()) {
+
+			if (StringUtils.isBlank(comment)) {
 				comment = null;
 			}
 			String decodedComment = decodeString(comment);
-
 			String storage = null;
 			int index = parameterInfos.size();
 			if (parameterStorage.size() > index) {
 				storage = parameterStorage.get(index);
 			}
 
-			parameterInfos.add(new ParameterInfo(dtIDString, dataTypeManager, name, storage, source,
+			parameterInfos.add(new ParameterInfo(dtId, dataTypeManager, name, storage, source,
 				decodedComment));
 		}
-	}
-
-	private boolean isDefaultParameterName(String name) {
-		if (name == null) {
-			return true;
-		}
-		return SymbolUtilities.isDefaultParameterName(name);
 	}
 
 	private String saveParameterInfos() {
@@ -484,50 +494,90 @@ public class FunctionSignatureStringable extends Stringable {
 		return true;
 	}
 
-	public boolean sameFunctionSignature(Function function) {
+	public boolean isSameFunctionSignature(Function function) {
 		return equals(new FunctionSignatureStringable(function));
 	}
 
 	/**
-	 *
-	 * @param toFunction the function whose signature we are setting.
+	 * Returns true if the signature is applied
+	 * 
+	 * @param destFunction the function whose signature we are setting.
 	 * @param markupOptions the options indicate what parts of the function signature to apply.
 	 * @param forceApply true indicates that the function signature should be applied even if the
 	 * function signature, return type, parameter data type or parameter name options are set
 	 * to "do not apply".
+	 * @return true if the signature is applied
 	 * @throws VersionTrackingApplyException if all desired parts of the function signature couldn't be applied.
 	 */
-	public boolean applyFunctionSignature(Function toFunction, ToolOptions markupOptions,
-			boolean forceApply) throws VersionTrackingApplyException {
+	public boolean applyFunctionSignature(Function destFunction,
+			ToolOptions markupOptions, boolean forceApply) throws VersionTrackingApplyException {
+
+		if (doesParamCountMismatchPreventApply(destFunction, markupOptions)) {
+			Msg.debug(this, "Number of parameters differs so function signature not applied at " +
+				destFunction.getEntryPoint() + ".");
+			return false;
+		}
+
+		applyInline(destFunction, isInline, markupOptions);
+		applyNoReturn(destFunction, hasNoReturn, markupOptions);
+
+		applyParameterTypes(destFunction, markupOptions, forceApply);
+
+		boolean hasSrcVarArgs = hasVarargs;
+		boolean hasDestVarArgs = destFunction.hasVarArgs();
+		if (hasSrcVarArgs != hasDestVarArgs) {
+			applyVarArgs(destFunction, hasSrcVarArgs, markupOptions);
+		}
+
+		applyCallFixup(destFunction, callFixup, markupOptions);
+
+		if (forceApply) {
+			forceParameterNames(destFunction);
+		}
+		else {
+			int paramCount = destFunction.getParameterCount();
+			applyParameterNames(destFunction, markupOptions, true, paramCount);
+		}
+
+		CommentChoices commentChoice =
+			markupOptions.getEnum(PARAMETER_COMMENTS, DEFAULT_OPTION_FOR_PARAMETER_COMMENTS);
+		replaceParameterComments(destFunction, commentChoice);
+
+		return true;
+	}
+
+	private boolean doesParamCountMismatchPreventApply(Function destFunction,
+			ToolOptions markupOptions) {
 
 		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice = markupOptions
 				.getEnum(VTOptionDefines.FUNCTION_SIGNATURE, DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 
-		int toParamCount = toFunction.getParameterCount();
-
-		if ((functionSignatureChoice == FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT) &&
-			(toParamCount != parameterInfos.size())) {
-			// Don't replace since number of parameters differs.
-			Msg.debug(this, "Number of parameters differs so function signature not applied at " +
-				toFunction.getEntryPoint() + ".");
-			return false;
+		int paramCount = destFunction.getParameterCount();
+		if (functionSignatureChoice == FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT &&
+			paramCount != parameterInfos.size()) {
+			return true;
 		}
-		CommentChoices commentChoice =
-			markupOptions.getEnum(PARAMETER_COMMENTS, DEFAULT_OPTION_FOR_PARAMETER_COMMENTS);
 
-		// Set the parameters and their storage.
+		return false;
+	}
+
+	private void applyParameterTypes(Function destFunction, ToolOptions markupOptions,
+			boolean forceApply) throws VersionTrackingApplyException {
+
+		DataTypeCleaner dtCleaner = null;
+		if (markupOptions.getBoolean(USE_EMPTY_COMPOSITES,
+			// The user would like to create empty structures when creating data types
+			DEFAULT_OPTION_FOR_USE_EMPTY_STRUCTURES)) {
+			ProgramBasedDataTypeManager destDtm = destFunction.getProgram().getDataTypeManager();
+			dtCleaner = new DataTypeCleaner(destDtm, false);
+		}
+
 		try {
 
-			applyInline(toFunction, isInline, markupOptions);
-			applyNoReturn(toFunction, hasNoReturn, markupOptions);
-
-			String conventionName = getCallingConvention(toFunction, markupOptions);
-
-			// Adjust whether or not the resulting function will use custom storage.
+			String conventionName = getCallingConvention(destFunction, markupOptions);
 			boolean useCustomStorage = false;
-
 			boolean sameLanguage =
-				FunctionUtility.isSameLanguageAndCompilerSpec(toFunction.getProgram(), program);
+				FunctionUtility.isSameLanguageAndCompilerSpec(destFunction.getProgram(), program);
 
 			// if source program has custom storage and both programs have same language then
 			// set the useCustomStorage flag to enable using custom storage in destination program
@@ -536,214 +586,200 @@ public class FunctionSignatureStringable extends Stringable {
 			}
 
 			Parameter returnParam =
-				getReturnParameter(toFunction, markupOptions, forceApply, useCustomStorage);
+				getReturnParameter(destFunction, markupOptions, forceApply, useCustomStorage,
+					dtCleaner);
 
 			List<Parameter> newParams =
-				getParameters(toFunction, markupOptions, forceApply, useCustomStorage);
+				getParameters(destFunction, markupOptions, forceApply, useCustomStorage,
+					dtCleaner);
 
-			toFunction
-					.updateFunction(conventionName, returnParam, newParams,
-						useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-						true, signatureSource);
+			FunctionUpdateType updateType = useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
+					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+			destFunction.updateFunction(conventionName, returnParam, newParams, updateType,
+				true, signatureSource);
 
-			// Test to see if destination function is now in the same namespace as the source
-			// if so copy the class structure from source to destination if the update didn't 
-			copyClassStructure(newParams, toFunction, markupOptions);
+			maybeCopyClassStructure(newParams, destFunction, markupOptions, dtCleaner);
 
 			if (forceApply) {
 				// must force signatureSource if precedence has been lowered
-				// TODO: Should any manual change in function signature force source to be USER_DEFINED instead ??
-				toFunction.setSignatureSource(signatureSource);
+				destFunction.setSignatureSource(signatureSource);
 			}
 		}
-		catch (DuplicateNameException e) {
+		catch (DuplicateNameException | InvalidInputException e) {
 			throw new VersionTrackingApplyException(e.getMessage(), e);
 		}
-		catch (InvalidInputException e) {
-			throw new VersionTrackingApplyException(e.getMessage(), e);
+		finally {
+			if (dtCleaner != null) {
+				dtCleaner.close();
+			}
 		}
-
-		boolean hasFromVarArgs = hasVarargs;
-		boolean hasToVarArgs = toFunction.hasVarArgs();
-		if (hasFromVarArgs != hasToVarArgs) {
-			applyVarArgs(toFunction, hasFromVarArgs, markupOptions);
-		}
-		applyCallFixup(toFunction, callFixup, markupOptions);
-
-		if (forceApply) {
-			forceParameterNames(toFunction);
-		}
-		else {
-			applyParameterNames(toFunction, markupOptions, true, toParamCount);
-		}
-
-		replaceParameterComments(toFunction, commentChoice);
-
-		return true;
 	}
 
-	/**
+	/*
 	 * Method to determine if a copy is needed of the source class struct to the destination program
 	 * and if so, does the copy
-	 * @param newParams the params to apply to the destination program as determined by the apply
-	 * options
-	 * @param toFunction the destination function
 	 */
-	private void copyClassStructure(List<Parameter> newParams, Function toFunction,
-			ToolOptions markupOptions) {
+	private void maybeCopyClassStructure(List<Parameter> newParams, Function destFunction,
+			ToolOptions markupOptions, DataTypeCleaner dtCleaner) {
 
-		// this is only meant to handle the case where there are auto this params
-		// existing other mechanisms handle custom storage case already
-		if (toFunction.hasCustomVariableStorage()) {
-			return;
-		}
-
-		VTMatchApplyChoices.ParameterDataTypeChoices parameterDataTypesChoice =
-			markupOptions.getEnum(VTOptionDefines.PARAMETER_DATA_TYPES,
-				DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES);
-
-		if (parameterDataTypesChoice == ParameterDataTypeChoices.EXCLUDE) {
-			return;
-		}
-
-		boolean onlyReplaceUndefineds =
-			(parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
-
-		boolean replaceAlways = (parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE);
-
-		// check to see if the resulting newParams after checking the markupOptions includes
-		// a this param and if so resolve the class data type in the destination program
-		// to make sure the class structure gets copied to the destination program
-
-		// if source function is not a thiscall then no class structure to copy
-		if (!callingConventionName.equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
-			return;
-		}
-		// if there are no new params to apply as determined by the options then nothing to copy
 		if (newParams.isEmpty()) {
 			return;
 		}
 
-		// if newParams does not have a this param to copy as determined by the apply options then
-		// no copy needed
-		if (!newParams.get(0).getName().equals("this")) {
+		VTMatchApplyChoices.ParameterDataTypeChoices applyChoice =
+			markupOptions.getEnum(VTOptionDefines.PARAMETER_DATA_TYPES,
+				DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES);
+		if (applyChoice == EXCLUDE) {
 			return;
 		}
 
-		// get the this param for source and verify it is a pointer to a structure
+		// This method is only meant to handle the case where there are auto this params.  Other 
+		// mechanisms handle custom storage case already.
+		if (destFunction.hasCustomVariableStorage()) {
+			return;
+		}
+
+		//
+		// Check to see if the newParams includes a this param and if so resolve the class data type
+		// in the destination program to make sure the class structure gets copied to the 
+		// destination program.
+		// 
+
+		// if source function is not a 'thiscall' then no class structure to copy
+		if (!callingConventionName.equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
+			return;
+		}
+
+		// if newParams does not have a this param then no copy needed
+		Parameter destParam1 = newParams.get(0);
+		String destParam1Name = destParam1.getName();
+		if (!destParam1Name.equals("this")) {
+			return;
+		}
+
+		// Verify the source this param is a pointer to a structure
 		ParameterInfo sourceParam1 = parameterInfos.get(0);
-		DataType sourceClassDataType = getPointedToDataType(sourceParam1.dataType);
-		if (sourceClassDataType == null) {
+		DataType srcClassDt = getPointedToDataType(sourceParam1.dataType);
+		if (!isStructure(srcClassDt)) {
 			return;
 		}
 
-		if (!isStructure(sourceClassDataType)) {
+		// Verify the destination this param is a pointer to a structure
+		DataType paramDt = destParam1.getDataType();
+		DataType destClassDt = getPointedToDataType(paramDt);
+		if (!isStructure(destClassDt)) {
 			return;
 		}
 
-		// get the pointed to data type for the new destination this param
-		// if it isn't a pointer to a data type then return
-		Parameter newDestinationParam1 = newParams.get(0);
-		DataType newDestinationClassDataType =
-			getPointedToDataType(newDestinationParam1.getDataType());
-		if (newDestinationClassDataType == null) {
-			return;
-		}
-
-		// if the new this param (ie what the calling method has determined what the new this
-		// param is supposed to be) is not a pointer to a structure then return because it
-		// doesn't think it should also be a class structure
-		if (!isStructure(newDestinationClassDataType)) {
-			return;
-		}
-
-		// if it gets this far then can probably assume both the new destination and source this 
-		// data types are pointers to class structures
-		// NOTE: at this time there is a use case where the calling method incorrectly assumes the
-		// newParam is the same class structure as the source one. However, that method did not
-		// check the FunctionName option to see if that option was to not replace the function
-		// name. So we need to have a check to see if the current function namespace is already 
+		// If we get this far, then assume both the new destination and source this 
+		// data types are pointers to class structures.
+		// 
+		// NOTE: we need check to see if the current function namespace is already 
 		// the same as the assumed new destination this structure name which would indicate that 
 		// the function already was in the same class and so we still need to do the resolve to make
 		// sure that the structure contents get resolved according to the parameter replace options
 		VTMatchApplyChoices.FunctionNameChoices functionNameChoice =
 			markupOptions.getEnum(VTOptionDefines.FUNCTION_NAME, DEFAULT_OPTION_FOR_FUNCTION_NAME);
-		String currentDestinationFunctionNamespaceName =
-			toFunction.getSymbol().getParentNamespace().getName();
-		String newDestinationClassName = newDestinationClassDataType.getName();
+		Symbol functionSymbol = destFunction.getSymbol();
+		String currentDestNamespace = functionSymbol.getParentNamespace().getName();
+		String newDestnClassName = destClassDt.getName();
 		if (functionNameChoice == FunctionNameChoices.EXCLUDE &&
-			!currentDestinationFunctionNamespaceName.equals(newDestinationClassName)) {
+			!currentDestNamespace.equals(newDestnClassName)) {
+
+			// This check is odd.  I suppose we are trying to handle the case where the name was not
+			// changed, but the namespace was updated.  In that case, we only need to copy the class
+			// if the function was moved into a class namespace.  If the namespace names do not 
+			// match, then that copy didn't happen.
 			return;
 		}
 
-		// now use the path to the source data type to try and get the same named structure 
-		// in the destination data type manager
-		ProgramBasedDataTypeManager destinationDataTypeManager =
-			toFunction.getProgram().getDataTypeManager();
-
-		String pathName = sourceClassDataType.getPathName();
-		DataType destinationDataTypeInDTM = destinationDataTypeManager.getDataType(pathName);
-
-		// only do the copy if the option is to replace always or if it is replace undefines and the
-		// destination structure is empty (ie undefined)
-		if (replaceAlways ||
-			destinationDataTypeInDTM == null ||
-			(destinationDataTypeInDTM.isNotYetDefined() && onlyReplaceUndefineds)) {
-
-			// since nothing above prevents the copy go ahead and copy the source class data type			
-
-			//needs to be the original dt to get the struct * not just the struct
-			destinationDataTypeManager.resolve(sourceParam1.dataType,
-				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-
-			// check to see if the resolve probably updated the function's auto this param datatype
-			// it might not have if there was a .conflict created during the resolve or if the
-			// source and destination data types were in different folders or if one program
-			// has the preferred root data type manager folder set and the other doesn't
-			// not sure there is a way to tell this info since I don't know which the decompiler will
-			// pick at this point because nothing has been applied yet
-			DataType destinationDataTypeConflict =
-				destinationDataTypeManager.getDataType(pathName + ".conflict");
-
-			if (destinationDataTypeConflict != null) {
-				Msg.debug(this, "The applied class structure " +
-					newDestinationClassDataType.getPathName() +
-					" was copied to the destination program but a .conflict was created due to there " +
-					"already being a non-empty structure with that same path and name.");
-			}
-
-			// get the original toFunction this param if there was one and get it's path
-			// if the new path is different then spit out warming too
-			if (toFunction.getParameterCount() == 0) {
-				return;
-			}
-
-			if (!toFunction.getParameter(0).getName().equals("this")) {
-				return;
-			}
-
-			DataType pointedToDataType =
-				getPointedToDataType(toFunction.getParameter(0).getDataType());
-			if (pointedToDataType == null) {
-				return;
-			}
-
-			if (!pointedToDataType.getName().equals(newDestinationClassName)) {
-				return;
-			}
-
-			if (pointedToDataType.getPathName().equals(pathName)) {
-				return; // already handled with conflict check above
-			}
-
-			Msg.debug(this,
-				"The applied class structure was copied to the same data type manager " +
-					"path as in the source program whichi is different than the path to the existing " +
-					"class structure. The decompiler will first check for one in the Preferred Class" +
-					"Root Folder (if one has been set) otherwise it will use the first one it finds.");
+		// Use the source path get the same named structure in the destination data type manager
+		ProgramBasedDataTypeManager destDtm = destFunction.getProgram().getDataTypeManager();
+		String srcClassPath = srcClassDt.getPathName();
+		DataType existingDestDt = destDtm.getDataType(srcClassPath);
+		if (!shouldCopyClassStructure(applyChoice, existingDestDt)) {
+			return;
 		}
 
+		// Use the original data type to get the struct *
+		DataType dt = sourceParam1.dataType;
+		if (dtCleaner != null) {
+			// resolve an empty composite
+			dt = dtCleaner.clean(dt);
+		}
+
+		// resolve the full data type
+		destDtm.resolve(dt,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		warnAboutClassConflicts(destFunction, destClassDt, srcClassPath);
+	}
+
+	private void warnAboutClassConflicts(Function toFunction, DataType newDestClassDt,
+			String srcClassPath) {
+
+		// Check to see if the resolve probably updated the function's auto this param datatype.
+		// It might not have if there was a .conflict created during the resolve or if the
+		// source and destination data types were in different folders or if one program
+		// has the preferred root data type manager folder set and the other doesn't.
+		// Not sure there is a way to tell this info since I don't know which the decompiler will
+		// pick at this point because nothing has been applied yet.
+		ProgramBasedDataTypeManager destDtm = toFunction.getProgram().getDataTypeManager();
+		DataType destDtConflict = destDtm.getDataType(srcClassPath + ".conflict");
+		if (destDtConflict != null) {
+			Msg.debug(this, "Copied" + newDestClassDt.getPathName() +
+				" to the destination program but a .conflict was created due to an existing " +
+				"non-empty structure with that same path and name.");
+		}
+
+		// get the original toFunction this param if there was one and get it's path
+		// if the new path is different then spit out warming too
+		if (toFunction.getParameterCount() == 0) {
+			return;
+		}
+
+		Parameter existingDestParam1 = toFunction.getParameter(0);
+		if (!existingDestParam1.getName().equals("this")) {
+			return;
+		}
+
+		DataType pointedToDt = getPointedToDataType(existingDestParam1.getDataType());
+		if (pointedToDt == null) {
+			return;
+		}
+
+		if (!pointedToDt.getName().equals(newDestClassDt.getName())) {
+			return;
+		}
+
+		String existingClassPath = pointedToDt.getPathName();
+		if (existingClassPath.equals(srcClassPath)) {
+			return; // message already printed with conflict check above
+		}
+
+		//@formatter:off
+		String message = """
+			Class structure copied to '%s' which is different than the existing class structure \
+			path '%s'. The decompiler will first check for one in the Preferred Class Root Folder \
+			(if one has been set) otherwise it will use the first one it finds.
+			""".formatted(srcClassPath, existingClassPath);
+		//@formatter:on
+		Msg.debug(this, message);
+	}
+
+	private boolean shouldCopyClassStructure(ParameterDataTypeChoices applyChoice,
+			DataType existingDestDt) {
+
+		if (applyChoice == REPLACE) {
+			return true; // always replace
+		}
+
+		if (existingDestDt == null) {
+			return true; // no class; need to copy
+		}
+
+		boolean onlyReplaceUndefineds = applyChoice == REPLACE_UNDEFINED_DATA_TYPES_ONLY;
+		return existingDestDt.isNotYetDefined() && onlyReplaceUndefineds;
 	}
 
 	private boolean isStructure(DataType dataType) {
@@ -761,15 +797,10 @@ public class FunctionSignatureStringable extends Stringable {
 	}
 
 	private DataType getPointedToDataType(DataType dataType) {
-
-		if (!(dataType instanceof PointerDataType)) {
-			return null;
+		if (dataType instanceof PointerDataType pointer) {
+			return pointer.getDataType();
 		}
-
-		PointerDataType pointerDataType = (PointerDataType) dataType;
-
-		return pointerDataType.getDataType();
-
+		return null;
 	}
 
 	private void applyInline(Function toFunction, boolean fromFunctionIsInline,
@@ -787,28 +818,31 @@ public class FunctionSignatureStringable extends Stringable {
 		}
 	}
 
-	private Parameter getReturnParameter(Function toFunction, ToolOptions markupOptions,
-			boolean forceApply, boolean useCustomStorage) throws InvalidInputException {
-		Parameter returnParam = toFunction.getReturn();
+	private Parameter getReturnParameter(Function destFunction, ToolOptions markupOptions,
+			boolean forceApply, boolean useCustomStorage, DataTypeCleaner dtCleaner)
+			throws InvalidInputException {
+
+		Parameter returnParam = destFunction.getReturn();
 		ParameterDataTypeChoices returnTypeChoice =
 			markupOptions.getEnum(FUNCTION_RETURN_TYPE, DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE);
-		boolean onlyReplaceUndefineds =
-			returnTypeChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY;
 		if (returnTypeChoice == ParameterDataTypeChoices.EXCLUDE) {
 			return returnParam; // Not replacing return type.
 		}
-		DataType toReturnType = toFunction.getReturnType();
 
+		DataType toReturnType = destFunction.getReturnType();
 		DataType fromReturnType = returnInfo.dataType;
 		boolean isFromDefault = fromReturnType == DataType.DEFAULT;
 		boolean isToDefault = toReturnType == DataType.DEFAULT;
 		boolean isToUndefined = Undefined.isUndefined(getBaseDataType(toReturnType));
 
+		boolean onlyReplaceUndefineds =
+			returnTypeChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY;
 		if (!forceApply && onlyReplaceUndefineds) {
 			if (!isToDefault && !isToUndefined) {
 				return returnParam; // can't do it because we should only replace undefined data types.
 			}
 		}
+
 		if (!forceApply && isFromDefault) {
 			return returnParam; // do nothing since default data type is lowest priority.
 		}
@@ -816,21 +850,29 @@ public class FunctionSignatureStringable extends Stringable {
 		DataType returnType = (forceApply) ? fromReturnType
 				: getHighestPriorityDataType(fromReturnType, toReturnType, onlyReplaceUndefineds);
 
-		VariableStorage returnVariableStorage = VariableStorage.UNASSIGNED_STORAGE;
+		Program destProgram = destFunction.getProgram();
+		VariableStorage storage = VariableStorage.UNASSIGNED_STORAGE;
 		if (useCustomStorage && returnInfo.storage != null) {
-			returnVariableStorage =
-				VariableStorage.deserialize(toFunction.getProgram(), returnInfo.storage);
+			storage = VariableStorage.deserialize(destProgram, returnInfo.storage);
 		}
-		return new ReturnParameterImpl(returnType, returnVariableStorage, toFunction.getProgram());
+
+		// Update the type if the user prefers empty composites
+		if (dtCleaner != null) {
+			returnType = dtCleaner.clean(returnType);
+		}
+
+		return new ReturnParameterImpl(returnType, storage, destProgram);
 	}
 
 	private void applyNoReturn(Function toFunction, boolean fromFunctionHasNoReturn,
 			ToolOptions markupOptions) {
+
 		ReplaceChoices noReturnChoice =
 			markupOptions.getEnum(NO_RETURN, DEFAULT_OPTION_FOR_NO_RETURN);
 		if (noReturnChoice == ReplaceChoices.EXCLUDE) {
 			return; // Not replacing no return flag.
 		}
+
 		boolean toFunctionHasNoReturn = toFunction.hasNoReturn();
 		if (fromFunctionHasNoReturn == toFunctionHasNoReturn) {
 			return;
@@ -842,14 +884,17 @@ public class FunctionSignatureStringable extends Stringable {
 
 	private void applyVarArgs(Function toFunction, boolean fromFunctionHasVarArgs,
 			ToolOptions markupOptions) {
+
 		ReplaceChoices varArgsChoice = markupOptions.getEnum(VAR_ARGS, DEFAULT_OPTION_FOR_VAR_ARGS);
 		if (varArgsChoice == ReplaceChoices.EXCLUDE) {
 			return; // Not replacing var args.
 		}
+
 		boolean toFunctionHasVarArgs = toFunction.hasVarArgs();
 		if (fromFunctionHasVarArgs == toFunctionHasVarArgs) {
 			return;
 		}
+
 		if (varArgsChoice == ReplaceChoices.REPLACE) {
 			toFunction.setVarArgs(fromFunctionHasVarArgs);
 		}
@@ -857,15 +902,18 @@ public class FunctionSignatureStringable extends Stringable {
 
 	private void applyCallFixup(Function toFunction, String fromFunctionCallFixup,
 			ToolOptions markupOptions) {
+
 		ReplaceChoices callFixupChoice =
 			markupOptions.getEnum(CALL_FIXUP, DEFAULT_OPTION_FOR_CALL_FIXUP);
 		if (callFixupChoice == ReplaceChoices.EXCLUDE) {
 			return; // Not replacing call fixup.
 		}
+
 		String toFunctionCallFixup = toFunction.getCallFixup();
 		if (SystemUtilities.isEqual(fromFunctionCallFixup, toFunctionCallFixup)) {
 			return;
 		}
+
 		if (callFixupChoice == ReplaceChoices.REPLACE) {
 			// Check that you have the same cspec before trying to apply call fixup.
 			if (FunctionUtility.isSameLanguageAndCompilerSpec(toFunction.getProgram(), program)) {
@@ -875,16 +923,17 @@ public class FunctionSignatureStringable extends Stringable {
 	}
 
 	private String getCallingConvention(Function toFunction, ToolOptions markupOptions) {
+
 		boolean isFromUnknownCallingConvention =
 			CompilerSpec.isUnknownCallingConvention(callingConventionName);
 		CallingConventionChoices callingConventionChoice =
 			markupOptions.getEnum(CALLING_CONVENTION, DEFAULT_OPTION_FOR_CALLING_CONVENTION);
 		String toCallingConventionName = toFunction.getCallingConventionName();
-		if (SystemUtilities.isEqual(callingConventionName, toCallingConventionName)) {
+		if (Objects.equals(callingConventionName, toCallingConventionName)) {
 			return callingConventionName;
 		}
-		Program toProgram = toFunction.getProgram();
 
+		Program toProgram = toFunction.getProgram();
 		switch (callingConventionChoice) {
 			case SAME_LANGUAGE:
 				if (FunctionUtility.isSameLanguageAndCompilerSpec(program, toProgram)) {
@@ -909,11 +958,12 @@ public class FunctionSignatureStringable extends Stringable {
 		CompilerSpec defaultCompilerSpec = language.getDefaultCompilerSpec();
 		PrototypeModel callingConvention =
 			defaultCompilerSpec.getCallingConvention(myCallingConventionName);
-		return (callingConvention != null);
+		return callingConvention != null;
 	}
 
 	private List<Parameter> getParameters(Function toFunction, ToolOptions markupOptions,
-			boolean forceApply, boolean useCustomStorage) throws InvalidInputException {
+			boolean forceApply, boolean useCustomStorage, DataTypeCleaner dtCleaner)
+			throws InvalidInputException {
 
 		// See what options the user has specified when applying parameter names.
 		VTMatchApplyChoices.ParameterDataTypeChoices parameterDataTypesChoice =
@@ -921,7 +971,7 @@ public class FunctionSignatureStringable extends Stringable {
 				DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES);
 
 		boolean onlyReplaceUndefineds =
-			(parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+			parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY;
 
 		Program toProgram = toFunction.getProgram();
 		Parameter[] toParameters = toFunction.getParameters();
@@ -951,6 +1001,12 @@ public class FunctionSignatureStringable extends Stringable {
 				dataType =
 					getHighestPriorityDataType(fromDataType, toDataType, onlyReplaceUndefineds);
 			}
+
+			// Update the type if the user prefers empty composites
+			if (dtCleaner != null) {
+				dataType = dtCleaner.clean(dataType);
+			}
+
 			VariableStorage storage = VariableStorage.UNASSIGNED_STORAGE;
 			if (useCustomStorage) {
 				if ((i < toCount) && (dataType == toDataType)) {
@@ -1008,22 +1064,23 @@ public class FunctionSignatureStringable extends Stringable {
 	}
 
 	/**
-	 *
-	 * @param toFunction the function whose parameter names we are setting.
-	 * @param markupOptions
+	 * Applies the given parameter names
+	 * 
+	 * @param destFunction the function whose parameter names we are setting.
+	 * @param markupOptions the options
 	 * @param doNotReplaceWithDefaultNames flag indicating whether or not a parameter name can be
 	 * replaced with a default name.
-	 * @param originalToParamCount original number of parameters in toFunction
-	 * @throws VersionTrackingApplyException
+	 * @param originalDestParamCount original number of parameters in toFunction
+	 * @throws VersionTrackingApplyException if there is any exception applying a name
 	 */
-	public boolean applyParameterNames(Function toFunction, ToolOptions markupOptions,
-			boolean doNotReplaceWithDefaultNames, int originalToParamCount)
+	public void applyParameterNames(Function destFunction, ToolOptions markupOptions,
+			boolean doNotReplaceWithDefaultNames, int originalDestParamCount)
 			throws VersionTrackingApplyException {
 
 		// See what options the user has specified when applying parameter names.
 		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions
 				.getEnum(VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
-		VTMatchApplyChoices.HighestSourcePriorityChoices highestPriorityChoice =
+		VTMatchApplyChoices.HighestSourcePriorityChoices priorityChoice =
 			markupOptions.getEnum(VTOptionDefines.HIGHEST_NAME_PRIORITY,
 				DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY);
 		boolean replaceSamePriorityNames =
@@ -1031,18 +1088,18 @@ public class FunctionSignatureStringable extends Stringable {
 				DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY);
 
 		int fromParameterCount = parameterInfos.size();
-		int minParameterCount = Math.min(fromParameterCount, originalToParamCount);
+		int minParameterCount = Math.min(fromParameterCount, originalDestParamCount);
 		boolean duplicateNameOccurred =
-			tryToSetNames(toFunction, doNotReplaceWithDefaultNames, parameterNamesChoice,
-				highestPriorityChoice, replaceSamePriorityNames, minParameterCount);
+			tryToSetNames(destFunction, doNotReplaceWithDefaultNames, parameterNamesChoice,
+				priorityChoice, replaceSamePriorityNames, minParameterCount);
+
 		// If a duplicate name was created, then try applying again to see if it can now be set
 		// to the desired name. A duplicate may have occurred due to changing order of parameters.
 		if (duplicateNameOccurred) {
-			tryToSetNames(toFunction, doNotReplaceWithDefaultNames, parameterNamesChoice,
-				highestPriorityChoice, replaceSamePriorityNames, minParameterCount);
+			tryToSetNames(destFunction, doNotReplaceWithDefaultNames, parameterNamesChoice,
+				priorityChoice, replaceSamePriorityNames, minParameterCount);
 		}
 
-		return true;
 	}
 
 	private boolean tryToSetNames(Function toFunction, boolean doNotReplaceWithDefaultNames,
@@ -1051,9 +1108,9 @@ public class FunctionSignatureStringable extends Stringable {
 			boolean replaceSamePriorityNames, int minParameterCount)
 			throws VersionTrackingApplyException {
 
-		boolean duplicateNameOccurred = false;
-		int paramCnt = parameterInfos.size();
-		for (int i = 0; i < paramCnt; i++) {
+		boolean duplicateName = false;
+		int n = parameterInfos.size();
+		for (int i = 0; i < n; i++) {
 			// Check the name against the options to see when we should set the name.
 			ParameterInfo parameterInfo = parameterInfos.get(i);
 			String fromName = parameterInfo.name;
@@ -1066,22 +1123,23 @@ public class FunctionSignatureStringable extends Stringable {
 			if (fromIsDefaultName && (doNotReplaceWithDefaultNames || toIsDefaultName)) {
 				continue;
 			}
-			if (SystemUtilities.isEqual(fromName, toName)) {
+			if (Objects.equals(fromName, toName)) {
 				continue;
 			}
+
 			if (i < minParameterCount) {
 				switch (parameterNamesChoice) {
 					case PRIORITY_REPLACE:
 						if (highestPriorityChoice == HighestSourcePriorityChoices.IMPORT_PRIORITY_HIGHEST) {
 							// Import, User, Analysis, Default.
-							if (!isFirstHigherPriorityWhenImportedPriority(fromSource, toSource,
+							if (!isFirstHigherPriorityForImports(fromSource, toSource,
 								replaceSamePriorityNames)) {
 								continue;
 							}
 						}
 						else {
 							// User, Import, Analysis, Default.
-							if (!isFirstHigherPriorityWhenUserPriority(fromSource, toSource,
+							if (!isFirstHigherPriorityWhenForUser(fromSource, toSource,
 								replaceSamePriorityNames)) {
 								continue;
 							}
@@ -1101,29 +1159,34 @@ public class FunctionSignatureStringable extends Stringable {
 				}
 			}
 
+			duplicateName = setName(toFunction, toParameter, fromName, fromSource);
+		}
+		return duplicateName;
+	}
+
+	private boolean setName(Function function, Parameter parameter, String name,
+			SourceType source) throws VersionTrackingApplyException {
+
+		try {
+			parameter.setName(name, source);
+			return false;
+		}
+		catch (DuplicateNameException e) {
+			Program p = function.getProgram();
+			SymbolTable st = p.getSymbolTable();
+			String uniqueName = getUniqueParameterName(st, function, name);
 			try {
-				toParameter.setName(fromName, fromSource);
+				parameter.setName(uniqueName, source);
+				return true;
 			}
-			catch (DuplicateNameException e) {
-				SymbolTable symbolTable = toFunction.getProgram().getSymbolTable();
-				String uniqueParameterName =
-					getUniqueParameterName(symbolTable, toFunction, fromName);
-				try {
-					toParameter.setName(uniqueParameterName, fromSource);
-					duplicateNameOccurred = true;
-				}
-				catch (DuplicateNameException e1) {
-					throw new VersionTrackingApplyException(e1.getMessage(), e1);
-				}
-				catch (InvalidInputException e1) {
-					throw new VersionTrackingApplyException(e1.getMessage(), e1);
-				}
-			}
-			catch (InvalidInputException e) {
-				throw new VersionTrackingApplyException(e.getMessage(), e);
+			catch (DuplicateNameException | InvalidInputException e1) {
+				// shouldn't happen
+				throw new VersionTrackingApplyException(e1.getMessage(), e1);
 			}
 		}
-		return duplicateNameOccurred;
+		catch (InvalidInputException e) {
+			throw new VersionTrackingApplyException(e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -1132,10 +1195,9 @@ public class FunctionSignatureStringable extends Stringable {
 	 * name in the function.
 	 * @param toFunction the function whose parameter names are to be changed using the names
 	 * from this stringable.
-	 * @return true if the names are replaced.
-	 * @throws VersionTrackingApplyException
+	 * @throws VersionTrackingApplyException if there is any exception applying the names
 	 */
-	private boolean forceParameterNames(Function toFunction) throws VersionTrackingApplyException {
+	private void forceParameterNames(Function toFunction) throws VersionTrackingApplyException {
 
 		boolean duplicateNameOccurred = tryToForceNames(toFunction);
 		if (duplicateNameOccurred) {
@@ -1143,14 +1205,11 @@ public class FunctionSignatureStringable extends Stringable {
 			// to the desired name. A duplicate may have occurred due to changing order of parameters.
 			tryToForceNames(toFunction);
 		}
-
-		return true;
 	}
 
 	private boolean tryToForceNames(Function toFunction) throws VersionTrackingApplyException {
-		boolean duplicateNameOccurred = false;
-		int paramCnt = parameterInfos.size();
-		for (int i = 0; i < paramCnt; i++) {
+		boolean duplicateName = false;
+		for (int i = 0; i < parameterInfos.size(); i++) {
 			ParameterInfo parameterInfo = parameterInfos.get(i);
 			String fromName = parameterInfo.name;
 			SourceType fromSource = parameterInfo.source;
@@ -1158,37 +1217,19 @@ public class FunctionSignatureStringable extends Stringable {
 			if (toParameter.isAutoParameter()) {
 				continue;
 			}
+
 			SourceType toSource = toParameter.getSource();
 			String toName = (toSource != SourceType.DEFAULT) ? toParameter.getName() : null;
-			if (SystemUtilities.isEqual(fromName, toName)) {
+			if (Objects.equals(fromName, toName)) {
 				continue;
 			}
-			try {
-				toParameter.setName(fromName, fromSource);
-			}
-			catch (DuplicateNameException e) {
-				SymbolTable symbolTable = toFunction.getProgram().getSymbolTable();
-				String uniqueParameterName =
-					getUniqueParameterName(symbolTable, toFunction, fromName);
-				try {
-					toParameter.setName(uniqueParameterName, fromSource);
-					duplicateNameOccurred = true;
-				}
-				catch (DuplicateNameException e1) {
-					throw new VersionTrackingApplyException(e1.getMessage(), e1);
-				}
-				catch (InvalidInputException e1) {
-					throw new VersionTrackingApplyException(e1.getMessage(), e1);
-				}
-			}
-			catch (InvalidInputException e) {
-				throw new VersionTrackingApplyException(e.getMessage(), e);
-			}
+
+			duplicateName = setName(toFunction, toParameter, fromName, fromSource);
 		}
-		return duplicateNameOccurred;
+		return duplicateName;
 	}
 
-	private boolean isFirstHigherPriorityWhenUserPriority(SourceType first, SourceType second,
+	private boolean isFirstHigherPriorityWhenForUser(SourceType first, SourceType second,
 			boolean replaceSamePriorityNames) {
 		if (first == SourceType.DEFAULT) {
 			return false;
@@ -1199,7 +1240,7 @@ public class FunctionSignatureStringable extends Stringable {
 		return first.isHigherPriorityThan(second);
 	}
 
-	private boolean isFirstHigherPriorityWhenImportedPriority(SourceType first, SourceType second,
+	private boolean isFirstHigherPriorityForImports(SourceType first, SourceType second,
 			boolean replaceSamePriorityNames) {
 		if (first == SourceType.DEFAULT) {
 			return false;
@@ -1232,20 +1273,23 @@ public class FunctionSignatureStringable extends Stringable {
 			String fromComment = parameterInfo.comment;
 			Parameter toParameter = toFunction.getParameter(i);
 			String toComment = toParameter.getComment();
-			if (SystemUtilities.isEqual(fromComment, toComment)) {
+			if (Objects.equals(fromComment, toComment)) {
 				continue;
 			}
+
 			if (commentChoice == CommentChoices.APPEND_TO_EXISTING) {
 				String mergedComment = StringUtilities.mergeStrings(toComment, fromComment);
-				if (mergedComment != null && mergedComment.length() == 0) {
+				if (StringUtils.isBlank(mergedComment)) {
 					mergedComment = null;
 				}
-				if (!SystemUtilities.isEqual(mergedComment, toComment)) {
+
+				if (!Objects.equals(mergedComment, toComment)) {
 					toParameter.setComment(mergedComment);
 				}
 			}
+
 			if (commentChoice == CommentChoices.OVERWRITE_EXISTING) {
-				if (fromComment != null && fromComment.length() == 0) {
+				if (StringUtils.isBlank(fromComment)) {
 					fromComment = null;
 				}
 				toParameter.setComment(fromComment);
@@ -1261,51 +1305,41 @@ public class FunctionSignatureStringable extends Stringable {
 		private final String comment;
 		private final String storage;
 
-		/**
-		 * Create parameter info object
-		 * @param dataTypeID
-		 * @param makePointer if true the specified data-type identified by dataTypeID is wrapped in a pointer
-		 * @param name
-		 * @param source
-		 * @param comment
-		 */
 		private ParameterInfo(DataType dataType, String name, String storage, SourceType source,
 				String comment) {
 			this.dataType = dataType;
 			this.name = name;
 			this.storage = storage;
 			this.source = source;
-			this.comment = comment;
-			if (comment != null && comment.trim().length() == 0) {
-				comment = null;
-			}
+			this.comment = StringUtils.isBlank(comment) ? null : comment;
 		}
 
-		private ParameterInfo(String serializedDataTypeID, DataTypeManager dtMgr, String name,
+		private ParameterInfo(String serializedDtId, DataTypeManager dtm, String name,
 				String storage, SourceType source, String comment) {
 
-			long dataTypeID = -1;
-			boolean makePtr = false;
-			if (serializedDataTypeID != null && !serializedDataTypeID.isEmpty()) {
-				if (serializedDataTypeID.startsWith(MAKE_POINTER_PREFIX)) {
-					makePtr = true;
-					serializedDataTypeID =
-						serializedDataTypeID.substring(MAKE_POINTER_PREFIX.length());
-				}
-				dataTypeID = Long.parseLong(serializedDataTypeID);
-			}
-			DataType dt = dtMgr.getDataType(dataTypeID);
-			if (makePtr) {
-				dt = new PointerDataType(dt, dtMgr);
-			}
-			this.dataType = dt;
+			this.dataType = getDt(dtm, serializedDtId);
 			this.name = name;
 			this.storage = storage;
 			this.source = source;
-			this.comment = comment;
-			if (comment != null && comment.trim().length() == 0) {
-				comment = null;
+			this.comment = StringUtils.isBlank(comment) ? null : comment;
+		}
+
+		private DataType getDt(DataTypeManager dtm, String dtIdString) {
+			long dtId = -1;
+			boolean makePtr = false;
+			if (!StringUtils.isBlank(dtIdString)) {
+				if (dtIdString.startsWith(MAKE_POINTER_PREFIX)) {
+					makePtr = true;
+					dtIdString = dtIdString.substring(MAKE_POINTER_PREFIX.length());
+				}
+				dtId = Long.parseLong(dtIdString);
 			}
+
+			DataType dt = dtm.getDataType(dtId);
+			if (makePtr) {
+				dt = new PointerDataType(dt, dtm);
+			}
+			return dt;
 		}
 
 		boolean isEquivalent(ParameterInfo other) {
@@ -1344,9 +1378,9 @@ public class FunctionSignatureStringable extends Stringable {
 		String name = baseName;
 		if (name != null) {
 			// establish unique name
-			int cnt = 0;
+			int count = 0;
 			while (symbolTable.getVariableSymbol(name, function) != null) {
-				name = baseName + (++cnt);
+				name = baseName + (++count);
 			}
 		}
 		return name;
