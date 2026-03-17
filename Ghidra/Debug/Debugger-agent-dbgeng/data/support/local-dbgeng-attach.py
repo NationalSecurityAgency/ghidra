@@ -56,7 +56,6 @@ def main():
     try:
         import ghidradbg
     except Exception as e:
-        print(e)
         exit(253)
     from ghidradbg import commands as cmd
     from pybag.dbgeng import core as DbgEng
