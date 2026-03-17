@@ -1337,6 +1337,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataType = resolve(dataType);
 			DataTypeUtilities.checkAncestry(this, dataType);
 
+			length = getPreferredComponentLength(dataType, length);
+
 			if ((offset > structLength) && !isPackingEnabled()) {
 				numComponents += offset - structLength;
 				structLength = offset;
@@ -1352,7 +1354,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (index >= 0) {
 				index = backupToFirstComponentContainingOffset(index, offset);
 				index = afterNonZeroComponentsAtOffset(index, offset);
-				if (index < components.size()) {
+				if (length != 0 && index < components.size()) {
+					// NOTE: zero-length component insert does not trigger offset shift
 					DataTypeComponentDB dtc = components.get(index);
 					additionalShift = offset - dtc.getOffset();
 				}
@@ -1364,7 +1367,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int ordinal = offset;
 			if (index > 0) {
 				DataTypeComponentDB dtc = components.get(index - 1);
-				ordinal = dtc.getOrdinal() + offset - dtc.getEndOffset();
+				ordinal = dtc.getOrdinal();
+				if (dtc.getOffset() == offset) {
+					ordinal += 1;
+				}
+				else {
+					ordinal += offset - dtc.getEndOffset(); // account for undefined components
+				}
 			}
 
 			if (dataType == DataType.DEFAULT) {
@@ -1374,8 +1383,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				notifySizeChanged(false);
 				return new DataTypeComponentDB(dataMgr, this, ordinal, offset);
 			}
-
-			length = getPreferredComponentLength(dataType, length);
 
 			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
 				length, ordinal, offset, name, comment);
