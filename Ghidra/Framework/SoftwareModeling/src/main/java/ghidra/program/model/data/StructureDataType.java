@@ -520,6 +520,8 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			dataType = dataType.clone(dataMgr);
 			DataTypeUtilities.checkAncestry(this, dataType);
 
+			length = getPreferredComponentLength(dataType, length);
+
 			if ((offset > structLength) && !isPackingEnabled()) {
 				numComponents += offset - structLength;
 				structLength = offset;
@@ -535,7 +537,8 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			if (index >= 0) {
 				index = backupToFirstComponentContainingOffset(index, offset);
 				index = afterNonZeroComponentsAtOffset(index, offset);
-				if (index < components.size()) {
+				if (length != 0 && index < components.size()) {
+					// NOTE: zero-length component insert does not trigger offset shift
 					DataTypeComponentImpl dtc = components.get(index);
 					additionalShift = offset - dtc.getOffset();
 				}
@@ -547,7 +550,13 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			int ordinal = offset;
 			if (index > 0) {
 				DataTypeComponent dtc = components.get(index - 1);
-				ordinal = dtc.getOrdinal() + offset - dtc.getEndOffset();
+				ordinal = dtc.getOrdinal();
+				if (dtc.getOffset() == offset) {
+					ordinal += 1;
+				}
+				else {
+					ordinal += offset - dtc.getEndOffset(); // account for undefined components
+				}
 			}
 
 			if (dataType == DataType.DEFAULT) {
@@ -555,8 +564,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 				shiftOffsets(index, 1 + additionalShift, 1 + additionalShift);
 				return new DataTypeComponentImpl(DataType.DEFAULT, this, 1, ordinal, offset);
 			}
-
-			length = getPreferredComponentLength(dataType, length);
 
 			DataTypeComponentImpl dtc = new DataTypeComponentImpl(dataType, this, length, ordinal,
 				offset, componentName, comment);
