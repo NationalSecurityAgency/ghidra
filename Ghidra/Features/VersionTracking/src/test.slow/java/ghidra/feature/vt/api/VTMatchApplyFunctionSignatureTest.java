@@ -126,7 +126,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	//Create Gadget structure - slightly different than usual in last field to simplify test
-	private Structure createGadgetStruct() {
+	private Structure createNonEmptyGadgetStruct() {
 
 		Structure gadgetStruct = new StructureDataType("Gadget", 0);
 		PointerDataType charPtr = new PointerDataType(new CharDataType());
@@ -184,6 +184,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			builder.createEmptyFunction("use", "Gadget", CompilerSpec.CALLING_CONVENTION_thiscall,
 				false, "0x401040", 10, DataType.DEFAULT, new ParameterImpl("person", ptr1, p));
 
+			builder.createEmptyFunction("createGadget", null,
+				CompilerSpec.CALLING_CONVENTION_stdcall, false, "0x401060", 10, DataType.DEFAULT);
+
 			p.addConsumer(this);
 			return p;
 		}
@@ -217,6 +220,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 				CompilerSpec.CALLING_CONVENTION_thiscall, "0x401040", 10, DataType.DEFAULT,
 				Undefined4DataType.dataType);
 
+			builder.createEmptyFunction((String) null, (String) null,
+				CompilerSpec.CALLING_CONVENTION_stdcall, "0x401060", 10, DataType.DEFAULT);
+
 			p.withTransaction("Set SourceType", () -> {
 				f1.setSignatureSource(SourceType.DEFAULT);
 				f2.setSignatureSource(SourceType.ANALYSIS);
@@ -234,11 +240,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		ProgramBuilder builder = new ProgramBuilder("helloProgram", ProgramBuilder._TOY, this);
 		try {
 			Program p = builder.getProgram();
-
 			builder.createMemory(".text", "0x10938", 0x10);
-
 			builder.createEmptyFunction(null, "0x10938", 0x10, DataType.DEFAULT);
-
 			return p;
 		}
 		finally {
@@ -297,12 +300,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		VtTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("int * addPerson(Person * * list, char * personName)",
@@ -310,15 +308,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
-		// Test unapply
-		task = new ClearMatchTask(controller, matches);
-		runTask(session, task);
-
 		// Verify unapply.
-		checkSignatures("int * addPerson(Person * * list, char * personName)",
+		unapplyTestMatch("int * addPerson(Person * * list, char * personName)",
 			"undefined FUN_004011a0(void * * param_1, char * param_2)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 	}
 
 	@Test
@@ -341,17 +333,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		checkClassDataType(false, false);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined use(Gadget * this, Person * person)",
@@ -363,16 +345,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		// the destination so no Gadget class data type should exist
 		checkClassDataType(false, false);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
 		// Verify unapply.
-		checkSignatures("undefined use(Gadget * this, Person * person)",
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 	}
 
 	// use case: test replace undefined for return and params when they are undefined ptrs
@@ -383,45 +358,34 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		useMatch("0x00401040", "0x00401040");
 
 		// update the source function to have a Gadget * type
+		tx(sourceProgram, () -> {
+			FunctionManager fm = sourceProgram.getFunctionManager();
+			Function function = fm.getFunctionAt(addr("0x00401040", sourceProgram));
 
-		Function srcFunction = sourceProgram.getFunctionManager()
-				.getFunctionAt(addr("0x00401040", sourceProgram));
+			ProgramBasedDataTypeManager dtm = sourceProgram.getDataTypeManager();
+			DataType existingEmptyGadget = dtm.getDataType(CategoryPath.ROOT, "Gadget");
+			assertNotNull(existingEmptyGadget);
 
-		DataType existingEmptyGadgetStruct =
-			sourceProgram.getDataTypeManager().getDataType(CategoryPath.ROOT, "Gadget");
-		assertNotNull(existingEmptyGadgetStruct);
-
-		Pointer ptr1 =
-			PointerDataType.getPointer(existingEmptyGadgetStruct,
-				sourceProgram.getDataTypeManager());
-
-		assertNotNull(ptr1);
-
-		int id = sourceProgram.startTransaction("Test");
-
-		srcFunction.setReturnType(ptr1, SourceType.USER_DEFINED);
-
-		sourceProgram.endTransaction(id, true);
+			Pointer ptr1 = PointerDataType.getPointer(existingEmptyGadget, dtm);
+			function.setReturnType(ptr1, SourceType.USER_DEFINED);
+		});
 
 		// update the destination function to have undefined4 * return type and to have param_1 
 		// also be a undefined4 *
+		tx(destinationProgram, () -> {
 
-		id = destinationProgram.startTransaction("Test");
+			FunctionManager fm = destinationProgram.getFunctionManager();
+			Function function = fm.getFunctionAt(addr("0x00401040", destinationProgram));
+			ProgramBasedDataTypeManager dtm = destinationProgram.getDataTypeManager();
+			Pointer ptr = PointerDataType.getPointer(Undefined4DataType.dataType, dtm);
+			function.setReturnType(ptr, SourceType.DEFAULT);
 
-		Function destFunction = destinationProgram.getFunctionManager()
-				.getFunctionAt(addr("0x00401040", destinationProgram));
-		ptr1 =
-			PointerDataType.getPointer(Undefined4DataType.dataType,
-				destinationProgram.getDataTypeManager());
-		destFunction.setReturnType(ptr1, SourceType.DEFAULT);
+			Parameter[] parameters = function.getParameters();
+			parameters[1].setDataType(ptr, parameters[1].getSource());
 
-		Parameter[] parameters = destFunction.getParameters();
-		parameters[1].setDataType(ptr1, parameters[1].getSource());
-
-		destFunction.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
-			SourceType.USER_DEFINED, parameters);
-
-		destinationProgram.endTransaction(id, true);
+			function.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
+				SourceType.USER_DEFINED, parameters);
+		});
 
 		// Check initial values
 		checkSignatures("Gadget * use(Gadget * this, Person * person)",
@@ -443,17 +407,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
 		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		checkClassDataType(false, false);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("Gadget * use(Gadget * this, Person * person)",
@@ -461,20 +415,192 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
-		// since no option to apply function name there will be no class namespace applied to
-		// the destination so no Gadget class data type should exist
+		// option to apply function name is on, there will be a class namespace applied to
+		// the destination so Gadget class data type should exist
 		checkClassDataType(true, false);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
 		// Verify unapply.
-		checkSignatures("Gadget * use(Gadget * this, Person * person)",
+		unapplyTestMatch("Gadget * use(Gadget * this, Person * person)",
 			"undefined4 * FUN_00401040(void * this, undefined4 * param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 
+	}
+
+	// Use case: Source has non-empty Gadget, dest has no Gadget; apply empty structs
+	@Test
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceThisParam_DestParamUndefined()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		applySourceNonEmtpyGadget();
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	// replace namespace
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		// In this test Gadget is not an empty structure in the source, but the option to use empty
+		// composites is enabled, so dest should be empty.
+		checkClassDataType(true, false);
+
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+	}
+
+	// Use case: Source has populated Gadget struct, dest has empty Gadget struct; apply empty structs 
+	@Test
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceThisParam_DestEmptyGadget()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		applySourceNonEmtpyGadget_DestEmtpyGadgetInDtm();
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		// In this test Gadget is a populated structure in the source replacing an empty
+		// one in the dest.  However, the option to use empty structures is on, so the destination
+		// Gadget should be empty.
+		checkClassDataType(true, false);
+
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+	}
+
+	@Test
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceReturnGadger_DestReturnUndefined()
+			throws Exception {
+
+		useMatch("0x00401060", "0x00401060");
+
+		Structure gadget = makeSrcGadgetNonEmpty();
+		PointerDataType ptr = new PointerDataType(gadget);
+		setReturnType(sourceFunction, ptr, SourceType.USER_DEFINED);
+
+		// Check initial values
+		checkSignatures("Gadget * createGadget(void)",
+			"undefined FUN_00401060(void)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("Gadget * createGadget(void)",
+			"Gadget * createGadget(void)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		checkGadgetReturnType(false);
+
+		unapplyTestMatch("Gadget * createGadget(void)",
+			"undefined FUN_00401060(void)");
+	}
+
+	@Test
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOptionOff_SourceReturnGadger_DestReturnUndefined()
+			throws Exception {
+
+		useMatch("0x00401060", "0x00401060");
+
+		Structure gadget = makeSrcGadgetNonEmpty();
+		PointerDataType ptr = new PointerDataType(gadget);
+		setReturnType(sourceFunction, ptr, SourceType.USER_DEFINED);
+
+		// Check initial values
+		checkSignatures("Gadget * createGadget(void)",
+			"undefined FUN_00401060(void)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, false);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("Gadget * createGadget(void)",
+			"Gadget * createGadget(void)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		checkGadgetReturnType(true);
+
+		unapplyTestMatch("Gadget * createGadget(void)",
+			"undefined FUN_00401060(void)");
 	}
 
 	// Use case: Source has empty Gadget struct, dest has no Gadget struct
@@ -508,17 +634,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		checkClassDataType(false, false);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined use(Gadget * this, Person * person)",
@@ -531,16 +647,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		// In this test Gadget is an empty structure in the source so should be empty in dest
 		checkClassDataType(true, false);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Gadget * this, Person * person)",
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 	}
 
 	// Use case: Source has populated Gadget struct, dest has empty Gadget struct
@@ -550,33 +658,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		useMatch("0x00401040", "0x00401040");
 
-		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
-		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
-
-		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
-		assertNotNull(existingEmptyGadgetStruct);
-
-		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createGadgetStruct();
-
-		int id = sourceDtm.startTransaction("Test");
-		sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
-		sourceDtm.endTransaction(id, true);
-
-		// verify it took
-		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
-		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
-
-		// add empty gadget to the destination program
-		Structure emptyGadgetStruct = createEmptyGadgetStruct();
-
-		id = destDtm.startTransaction("Test");
-		destDtm.addDataType(emptyGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
-		destDtm.endTransaction(id, true);
-
-		// verify it took
-		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
-		assertTrue(destGadget.isNotYetDefined());
+		Structure srcGadget = applySourceNonEmtpyGadget_DestEmtpyGadgetInDtm();
 
 		// Check initial values
 		checkSignatures("undefined use(Gadget * this, Person * person)",
@@ -602,15 +684,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined use(Gadget * this, Person * person)",
@@ -622,19 +696,12 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		// the destination so the Gadget class data type should exist
 		// In this test Gadget is a populated structure in the source replacing an empty
 		// one in the dest so the resulting one in dest should be same populated on from source
-		destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
-		assertTrue(destGadget.isEquivalent(gadgetStruct));
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isEquivalent(srcGadget));
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Gadget * this, Person * person)",
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 	}
 
 	// Use case: Source has populated Gadget struct, dest has same Gadget struct
@@ -652,21 +719,19 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createGadgetStruct();
-
-		int id = sourceDtm.startTransaction("Test");
-		sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
-		sourceDtm.endTransaction(id, true);
+		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
 
 		// verify it took
 		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
 		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
 
 		// add same Gadget to the destination program
-
-		id = destDtm.startTransaction("Test");
-		destDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
-		destDtm.endTransaction(id, true);
+		tx(destDtm, () -> {
+			destDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
 
 		// verify it took
 		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
@@ -696,15 +761,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined use(Gadget * this, Person * person)",
@@ -722,16 +779,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		DataType gadgetConflict = destDtm.getDataType(CategoryPath.ROOT, "Gadget.conflict");
 		assertNull(gadgetConflict);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Gadget * this, Person * person)",
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 	}
 
 	// Use case: Source has populated Gadget struct, dest has different non-empty Gadget struct
@@ -749,11 +798,10 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createGadgetStruct();
-
-		int id = sourceDtm.startTransaction("Test");
-		sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
-		sourceDtm.endTransaction(id, true);
+		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
 
 		// verify it took
 		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
@@ -761,9 +809,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		// add different Gadget to the destination program
 		Structure differentGadgetStruct = createDifferentGadgetStruct();
-		id = destDtm.startTransaction("Test");
-		destDtm.addDataType(differentGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
-		destDtm.endTransaction(id, true);
+		tx(destDtm, () -> {
+			destDtm.addDataType(differentGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
 
 		// verify it took
 		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
@@ -793,15 +841,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined use(Gadget * this, Person * person)",
@@ -820,16 +860,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		DataType gadgetConflict = destDtm.getDataType(CategoryPath.ROOT, "Gadget.conflict");
 		assertTrue(gadgetConflict.isEquivalent(gadgetStruct));
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Gadget * this, Person * person)",
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 	}
 
 	@Test
@@ -841,20 +873,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkSignatures("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 
-		tx(sourceProgram, () -> {
-			sourceFunction.setCustomVariableStorage(true);
-
-			sourceFunction.getParameter(0)
-					.setDataType(sourceFunction.getParameter(1).getDataType(),
-						SourceType.USER_DEFINED);
-		});
-
-		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
-		assertNotNull(personType);
-
-		tx(destinationProgram, () -> {
-			destinationFunction.setReturnType(personType, SourceType.USER_DEFINED);
-		});
+		setSourceFunctionThisPointerToPersonStructure();
 
 		// Check modified values
 		checkSignatures("undefined use(Person * this, Person * person)",
@@ -870,17 +889,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		checkClassDataType(false, false);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply. (return type not replaced with undefined due to lower priority)
 		checkSignatures("undefined use(Person * this, Person * person)",
@@ -894,17 +903,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		assertTrue(destinationFunction.hasCustomVariableStorage());
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Person * this, Person * person)",
+		unapplyTestMatch("undefined use(Person * this, Person * person)",
 			"Person * FUN_00401040(void * this, Person * __return_storage_ptr__, undefined4 param_1)");
-
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 		assertFalse(destinationFunction.hasCustomVariableStorage());
 	}
 
@@ -917,20 +917,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkSignatures("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 
-		tx(sourceProgram, () -> {
-			sourceFunction.setCustomVariableStorage(true);
-
-			sourceFunction.getParameter(0)
-					.setDataType(sourceFunction.getParameter(1).getDataType(),
-						SourceType.USER_DEFINED);
-		});
-
-		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
-		assertNotNull(personType);
-
-		tx(destinationProgram, () -> {
-			destinationFunction.setReturnType(personType, SourceType.USER_DEFINED);
-		});
+		setSourceFunctionThisPointerToPersonStructure();
 
 		// Check modified values
 		checkSignatures("undefined use(Person * this, Person * person)",
@@ -948,16 +935,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-		checkClassDataType(false, false);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply. (return type not replaced with undefined due to lower priority)
 		checkSignatures("undefined use(Person * this, Person * person)",
@@ -968,20 +946,11 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertTrue(destinationFunction.hasCustomVariableStorage());
 
 		// since there is option to apply function name there should be a class namespace applied to
-		// the destination so the Gadget class data type should exist
+		// the destination so the Person class data type should exist
 		checkClassDataType(true, true);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Person * this, Person * person)",
+		unapplyTestMatch("undefined use(Person * this, Person * person)",
 			"Person * FUN_00401040(void * this, Person * __return_storage_ptr__, undefined4 param_1)");
-
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
 		assertFalse(destinationFunction.hasCustomVariableStorage());
 	}
 
@@ -994,20 +963,10 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkSignatures("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 
-		tx(sourceProgram, () -> {
-			sourceFunction.setCustomVariableStorage(true);
+		setSourceFunctionThisPointerToPersonStructureWithCustomStorage();
 
-			sourceFunction.getParameter(0)
-					.setDataType(sourceFunction.getParameter(1).getDataType(),
-						SourceType.USER_DEFINED);
-		});
-
-		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
-		assertNotNull(personType);
-
-		tx(destinationProgram, () -> {
-			destinationFunction.setCustomVariableStorage(true);
-		});
+		checkSignatures("undefined use(Person * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_2)");
 
 		// Set the function signature options for this test
 		ToolOptions applyOptions = controller.getOptions();
@@ -1019,21 +978,15 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
 		assertTrue(destinationFunction.hasCustomVariableStorage());
 
+		unapplyTestMatch("undefined use(Person * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_2)");
 	}
 
 	@Test
@@ -1049,6 +1002,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			destinationFunction.setCustomVariableStorage(true);
 		});
 
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_2)");
+
 		// Set the function signature options for this test
 		ToolOptions applyOptions = controller.getOptions();
 		applyOptions.setEnum(FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
@@ -1059,21 +1015,14 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
-
 		assertFalse(destinationFunction.hasCustomVariableStorage());
 
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_2)");
 	}
 
 	@Test
@@ -1081,9 +1030,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		useMatch("0x00401040", "0x00401040");
 
 		setCallingConvention(sourceFunction, "__cdecl");
-//		removeParameter(sourceFunction, 0);
 		setCallingConvention(destinationFunction, "__stdcall");
-//		removeParameter(destinationFunction, 0);
 
 		// Check initial values
 		checkSignatures("undefined use(Person * person)",
@@ -1101,15 +1048,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkCallingConvention("__cdecl", "__cdecl");
@@ -1119,17 +1058,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(false, false);
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Person * person)",
+		unapplyTestMatch("undefined use(Person * person)",
 			"undefined FUN_00401040(undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkInline(false, false);
 		checkCallingConvention("__cdecl", "__stdcall");
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 	}
 
 	@Test
@@ -1139,9 +1070,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		setLanguage(sourceFunction, "Toy:LE:32:default", "default");
 		setCallingConvention(sourceFunction, "__stdcall");
-//		removeParameter(sourceFunction, 0);
 		setCallingConvention(destinationFunction, "__cdecl");
-//		removeParameter(destinationFunction, 0);
 
 		// Check initial values
 		checkSignatures("undefined use(Person * person)",
@@ -1160,15 +1089,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkCallingConvention("__stdcall", "__cdecl");
@@ -1178,17 +1099,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(false, false);
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Person * person)",
+		unapplyTestMatch("undefined use(Person * person)",
 			"undefined FUN_00401040(undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkInline(false, false);
 		checkCallingConvention("__stdcall", "__cdecl");
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 	}
 
 	@Test
@@ -1198,9 +1111,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		setLanguage(sourceFunction, "Toy:LE:32:default", "default");
 		setCallingConvention(sourceFunction, "__stdcall");
-//		removeParameter(sourceFunction, 0);
 		setCallingConvention(destinationFunction, "__cdecl");
-//		removeParameter(destinationFunction, 0);
 
 		// Check initial values
 		checkSignatures("undefined use(Person * person)",
@@ -1221,15 +1132,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkCallingConvention("__stdcall", "__stdcall");
@@ -1239,17 +1142,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(false, false);
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Person * person)",
+		unapplyTestMatch("undefined use(Person * person)",
 			"undefined FUN_00401040(undefined4 param_1)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkInline(false, false);
 		checkCallingConvention("__stdcall", "__cdecl");
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 	}
 
 	@Test
@@ -1267,7 +1162,6 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		useMatch("0x00401040", "0x00010938");
 
 		setCallingConvention(sourceFunction, "__cdecl");
-//		removeParameter(sourceFunction, 0);
 		setCallingConvention(destinationFunction, "__stdcall");
 
 		// Check initial values
@@ -1288,15 +1182,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
 		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
 
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
-
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkCallingConvention("__cdecl", "__stdcall");
@@ -1306,16 +1192,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(false, false);
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined use(Person * person)", "undefined FUN_00010938(void)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkInline(false, false);
+		unapplyTestMatch("undefined use(Person * person)", "undefined FUN_00010938(void)");
 		checkCallingConvention("__cdecl", "__stdcall");
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 	}
 
 	@Test
@@ -1347,12 +1225,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(true, false);
 		checkNoReturn(true, false);
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("float addPerson(Person * * list, char * personName)",
@@ -1362,15 +1235,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(true, true);
 		checkNoReturn(true, true);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("float addPerson(Person * * list, char * personName)",
+		unapplyTestMatch("float addPerson(Person * * list, char * personName)",
 			"undefined FUN_004011a0(void * * param_1, char * param_2)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 		checkInline(true, false);
 		checkNoReturn(true, false);
 	}
@@ -1414,12 +1280,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(false, true);
 		checkNoReturn(false, true);
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
@@ -1433,15 +1294,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "Last Name\nName of the person");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
+		unapplyTestMatch("undefined addPerson(Person * * param_1, char * personName)",
 			"float FUN_004011a0(void * * list, char * name)");
-		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
-		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 		checkInline(false, true);
 		checkNoReturn(false, true);
 		checkParameterComments(sourceFunction, 0, null);
@@ -1489,12 +1343,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "Last Name");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
@@ -1508,12 +1357,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, null);
 		checkParameterComments(destinationFunction, 1, "Name of the person");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
+		unapplyTestMatch("undefined addPerson(Person * * param_1, char * personName)",
 			"float FUN_004011a0(void * * list, char * name)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -1564,12 +1408,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "Last Name");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
@@ -1583,12 +1422,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "Last Name");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
+		unapplyTestMatch("undefined addPerson(Person * * param_1, char * personName)",
 			"float FUN_004011a0(void * * list, char * name)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -1639,12 +1473,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "Last Name");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
@@ -1658,12 +1487,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "Last Name");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * param_1, char * personName)",
+		unapplyTestMatch("undefined addPerson(Person * * param_1, char * personName)",
 			"float FUN_004011a0(void * * list, char * name)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -1717,12 +1541,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 1, "The person's name");
 		checkParameterComments(destinationFunction, 0, "The entire list");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * list, char * personName)",
@@ -1736,12 +1555,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list\na list");
 		checkParameterComments(destinationFunction, 1, "The person's name");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * list, char * personName)",
+		unapplyTestMatch("undefined addPerson(Person * * list, char * personName)",
 			"word FUN_004011a0(void * * list)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -1794,12 +1608,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 1, "The person's name");
 		checkParameterComments(destinationFunction, 0, "The entire list");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * list, char * personName)",
@@ -1812,12 +1621,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 1, "The person's name");
 		checkParameterComments(destinationFunction, 0, "a list");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * list, char * personName)",
+		unapplyTestMatch("undefined addPerson(Person * * list, char * personName)",
 			"word FUN_004011a0(void * * list)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -1868,12 +1672,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "The person's name");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * list)", "word FUN_004011a0(void * * list)");
@@ -1884,12 +1683,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 0, "a list");
 		checkParameterComments(destinationFunction, 0, "The entire list\na list");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * list)",
+		unapplyTestMatch("undefined addPerson(Person * * list)",
 			"word FUN_004011a0(void * * param_1, char * param_2)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -1940,12 +1734,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, "The entire list");
 		checkParameterComments(destinationFunction, 1, "The person's name");
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(Person * * list)",
@@ -1957,12 +1746,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 0, "a list");
 		checkParameterComments(destinationFunction, 0, "The entire list\na list");
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(Person * * list)",
+		unapplyTestMatch("undefined addPerson(Person * * list)",
 			"word FUN_004011a0(void * * param_1, char * param_2)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -2008,12 +1792,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 0, null);
 		checkParameterComments(sourceFunction, 1, null);
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("int * addPerson(Person * * list, char * personName, ...)",
@@ -2025,12 +1804,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(sourceFunction, 0, null);
 		checkParameterComments(sourceFunction, 1, null);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("int * addPerson(Person * * list, char * personName, ...)",
+		unapplyTestMatch("int * addPerson(Person * * list, char * personName, ...)",
 			"undefined FUN_004011a0()");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -2073,12 +1847,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkParameterComments(destinationFunction, 0, null);
 		checkParameterComments(destinationFunction, 1, null);
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(void)", "undefined FUN_004011a0(void)");
@@ -2087,12 +1856,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkInline(false, false);
 		checkNoReturn(false, false);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(void)",
+		unapplyTestMatch("undefined addPerson(void)",
 			"undefined FUN_004011a0(void * * param_1, char * param_2, ...)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
@@ -2134,12 +1898,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkNoReturn(false, false);
 		checkSignatureSource(SourceType.USER_DEFINED, SourceType.DEFAULT);
 
-		List<VTMatch> matches = new ArrayList<>();
-		matches.add(testMatch);
-
-		// Test Apply
-		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
-		runTask(session, task);
+		applyTestMatch();
 
 		// Verify apply.
 		checkSignatures("undefined addPerson(void)", "undefined FUN_004011a0(void)");
@@ -2149,12 +1908,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkNoReturn(false, false);
 		checkSignatureSource(SourceType.USER_DEFINED, SourceType.USER_DEFINED);
 
-		// Test unapply
-		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		runTask(session, unapplyTask);
-
-		// Verify unapply.
-		checkSignatures("undefined addPerson(void)", "undefined FUN_004011a0()");
+		unapplyTestMatch("undefined addPerson(void)", "undefined FUN_004011a0()");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
 		checkInline(false, false);
@@ -2162,9 +1916,134 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkSignatureSource(SourceType.USER_DEFINED, SourceType.DEFAULT);
 	}
 
-	//==================================================================================================
-	// Helper Methods
-	//==================================================================================================
+//==================================================================================================
+// Helper Methods
+//==================================================================================================
+
+	private Structure makeSrcGadgetNonEmpty() {
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		return (Structure) sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+	}
+
+	private void applyTestMatch() {
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+	}
+
+	private void unapplyTestMatch(String expectedSrc, String expectedDest) {
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, List.of(testMatch));
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures(expectedSrc, expectedDest);
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+	}
+
+	private Structure applySourceNonEmtpyGadget() {
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
+
+		return gadgetStruct;
+	}
+
+	private Structure applySourceNonEmtpyGadget_DestEmtpyGadgetInDtm() {
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure gadgetStruct = createNonEmptyGadgetStruct();
+
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
+
+		// add empty gadget to the destination program
+		Structure emptyGadgetStruct = createEmptyGadgetStruct();
+		tx(destDtm, () -> {
+			destDtm.addDataType(emptyGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isNotYetDefined());
+
+		return gadgetStruct;
+	}
+
+	private void setSourceFunctionThisPointerToPersonStructure() {
+		tx(sourceProgram, () -> {
+			sourceFunction.setCustomVariableStorage(true);
+
+			Parameter param0 = sourceFunction.getParameter(0);
+			Parameter param1 = sourceFunction.getParameter(1);
+			param0.setDataType(param1.getDataType(), SourceType.USER_DEFINED);
+		});
+
+		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
+		assertNotNull(personType);
+
+		// non-custom storage
+		tx(destinationProgram, () -> {
+			destinationFunction.setReturnType(personType, SourceType.USER_DEFINED);
+		});
+	}
+
+	private void setSourceFunctionThisPointerToPersonStructureWithCustomStorage() {
+		tx(sourceProgram, () -> {
+			sourceFunction.setCustomVariableStorage(true);
+
+			Parameter param0 = sourceFunction.getParameter(0);
+			Parameter param1 = sourceFunction.getParameter(1);
+			param0.setDataType(param1.getDataType(), SourceType.USER_DEFINED);
+		});
+
+		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
+		assertNotNull(personType);
+
+		// custom storage
+		tx(destinationProgram, () -> {
+			destinationFunction.setCustomVariableStorage(true);
+		});
+	}
 
 	@SuppressWarnings("unused")
 	private String dumpStatus(List<VTMarkupItem> individualItems) {
@@ -2194,8 +2073,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(destinationFunction);
 	}
 
-	private void checkSignatures(String expectedSourceSignature,
-			String expectedDestinationSignature) {
+	private void checkSignatures(String expectedSrc, String expectedDest) {
 
 		final String[] sourceStringBox = new String[1];
 		final String[] destinationStringBox = new String[1];
@@ -2205,8 +2083,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			destinationStringBox[0] = destinationFunction.getPrototypeString(false, false);
 		});
 
-		assertEquals(expectedSourceSignature, sourceStringBox[0]);
-		assertEquals(expectedDestinationSignature, destinationStringBox[0]);
+		assertEquals("Source signature is not correct", expectedSrc, sourceStringBox[0]);
+		assertEquals("Destination signature is not correct", expectedDest, destinationStringBox[0]);
 	}
 
 	private void checkSignatureSource(SourceType expectedSourceSigSourceType,
@@ -2287,28 +2165,53 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		DataType dstDataType = dstDtman.getDataType(dataTypePath);
 
 		if (shouldExist) {
-			assertTrue(dstDataType instanceof Pointer);
+			assertTrue("Class type is not a pointer: " + dstDataType,
+				dstDataType instanceof Pointer);
 
 			Pointer dstDataTypePtr = (Pointer) dstDataType;
-
 			DataType pointedToDataType = dstDataTypePtr.getDataType();
-
 			assertTrue(pointedToDataType instanceof Structure);
 
 			Structure struct = (Structure) pointedToDataType;
-
 			assertNotNull(struct);
+
 			if (shouldBeNonEmpty) {
-				assertFalse(struct.isNotYetDefined());
+				assertFalse("The structure should not be empty", struct.isNotYetDefined());
 			}
 			else {
-				assertTrue(struct.isNotYetDefined());
+				assertTrue("The structure is not empty as expected", struct.isNotYetDefined());
 			}
 		}
 		else {
 			assertNull(dstDataType);
 		}
+	}
 
+	private void checkGadgetReturnType(boolean shouldBeNonEmpty) {
+
+		DataType dt = sourceFunction.getReturnType();
+		DataTypePath dataTypePath = dt.getDataTypePath();
+
+		ProgramBasedDataTypeManager dstDtman = destinationProgram.getDataTypeManager();
+		DataType dstDataType = dstDtman.getDataType(dataTypePath);
+
+		assertTrue("Class type is not a pointer: " + dstDataType,
+			dstDataType instanceof Pointer);
+
+		Pointer dstDataTypePtr = (Pointer) dstDataType;
+		DataType pointedToDataType = dstDataTypePtr.getDataType();
+		assertTrue(pointedToDataType instanceof Structure);
+
+		Structure struct = (Structure) pointedToDataType;
+		assertNotNull(struct);
+
+		if (shouldBeNonEmpty) {
+			assertFalse("The return type structure should not be empty", struct.isNotYetDefined());
+		}
+		else {
+			assertTrue("The return type structure is not empty as expected",
+				struct.isNotYetDefined());
+		}
 	}
 
 	private VTMarkupItem getFunctionSignatureMarkup(VTMatch match) {
@@ -2323,6 +2226,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		return null;
 	}
 
+	@SuppressWarnings("deprecation") // don't show warning for test code
 	private void removeParameter(Function function, int ordinal) {
 		Program program = function.getProgram();
 		int transaction = -1;
@@ -2454,13 +2358,18 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		}
 	}
 
-	private void runTask(VTSession session, VtTask task) {
-		int id = session.startTransaction("test");
+	private void runTask(VTSession vtSession, VtTask task) {
+		int id = vtSession.startTransaction("test");
 		try {
 			task.run(TaskMonitor.DUMMY);
 		}
 		finally {
-			session.endTransaction(id, true);
+			vtSession.endTransaction(id, true);
+
+			if (task.hasErrors()) {
+				String errorDetails = task.getErrorDetails();
+				fail("Error applying task: " + errorDetails);
+			}
 		}
 	}
 }
