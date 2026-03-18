@@ -1,346 +1,825 @@
 
+@if defined(VERSION_8M)
+#Cortex NEON only has q0-q7, no q8-q15, and the spacing is different from NEON
+attach variables [ cor_Qn0 cor_Qd0 cor_Qm0 ] [ q0 q1 q2 q3 q4 q5 q6 q7 ];
+attach variables [ cor_Qd1 ] [ q1 q2 q3 q4 q5 q6 q7 _ ];
+attach variables [ cor_Qd2 ] [ q2 q3 q4 q5 q6 q7 _  _ ];
+attach variables [ cor_Qd3 ] [ q3 q4 q5 q6 q7 _  _  _ ];
+
+attach variables [ cor_Rn ] [r0 r2 r4 r6 r8 r10 r12 lr ];
+attach variables [ cor_Rm ] [ r1 r3 r5 r7 r9 r11 sp _];
+
+accum0505: ""  is thv_c0505=0 { tmp:1 = 0; export *[const]:1 tmp; }
+accum0505: "a" is thv_c0505=1 { tmp:1 = 1; export *[const]:1 tmp; }
+exch1212: ""   is thv_c1212=0 { tmp:1 = 0; export *[const]:1 tmp; }
+exch1212: "x"  is thv_c1212=1 { tmp:1 = 1; export *[const]:1 tmp; }
+
+# All v8m instructions currently state that 
+cor_Qd: cor_Qd0 is thv_D22=0 & cor_Qd0 { export cor_Qd0; }
+cor_Qn: cor_Qn0 is thv_N7=0  & cor_Qn0 { export cor_Qn0; }
+cor_Qm: cor_Qm0 is thv_M5=0  & cor_Qm0 { export cor_Qm0; }
+
+cor_Qdm: cor_Qd0 is thv_N7=0 & cor_Qd0 { export cor_Qd0; }
+
+RZn: thv_Rn  is thv_Rn   { export thv_Rn; }
+RZn: 0       is thv_Rn=0 { local tmp:4 = 0; export *[const]:4 tmp; }
+
+RZm: thv_Rm  is thv_Rm   { export thv_Rm; }
+RZm: 0       is thv_Rm=0 { local tmp:4 = 0; export *[const]:4 tmp; }
+
+cor_immShiftSR: "#"^immval  is thv_c1214 & thv_c0607 [immval = (thv_c1214 << 2) | thv_c0607; ]     { export *[const]:1 immval; }
+cor_immShiftSR: "#"^immval  is thv_c1214=0 & thv_c0607=0 [immval = 32 + 0; ]                       { export *[const]:1 immval; }
+
+cor_immBF: reloc  is cor_immA & cor_immC & cor_immB [ reloc = (inst_start + 4) + ((cor_immA << 12) | (cor_immB << 2) | (cor_immC) | 1); ] { export *[ram]:4 reloc; }
+
+cor_bLabel: reloc  is cor_boff [ reloc = inst_next + 4 + (cor_boff << 1); ] { export *[ram]:4 reloc; }
+
+cor_immBFC:reloc  is thv_c1616 & cor_immC & cor_immB [ reloc = (inst_start + 4) + ((thv_c1616 << 12) | (cor_immB << 2) | (cor_immC) | 1); ] { export *[ram]:4 reloc; }
+
+cor_baLabel: reloc  is cor_boff & thv_c1717=0 [ reloc = inst_next + 4 + (cor_boff << 1) + 3; ] { export *[ram]:4 reloc; }
+cor_baLabel: reloc  is cor_boff & thv_c1717=1 [ reloc = inst_next + 4 + (cor_boff << 1) + 5; ] { export *[ram]:4 reloc; }
+
+cor_cc: "eq"  is cor_bcond=0  { export ZR; }
+cor_cc: "ne"  is cor_bcond=1  { tmp:1 = !ZR; export tmp; }
+cor_cc: "cs"  is cor_bcond=2  { export CY; }
+cor_cc: "cc"  is cor_bcond=3  { tmp:1 = !CY; export tmp; }
+cor_cc: "mi"  is cor_bcond=4  { export NG; }
+cor_cc: "pl"  is cor_bcond=5  { tmp:1 = !NG; export tmp; }
+cor_cc: "vs"  is cor_bcond=6  { export OV; }
+cor_cc: "vc"  is cor_bcond=7  { tmp:1 = !OV; export tmp; }
+cor_cc: "hi"  is cor_bcond=8  { tmp:1 = CY && (!ZR); export tmp; }
+cor_cc: "ls"  is cor_bcond=9  { tmp:1 = (!CY) || ZR; export tmp; }
+cor_cc: "ge"  is cor_bcond=10 { tmp:1 = (NG==OV); export tmp; }
+cor_cc: "lt"  is cor_bcond=11 { tmp:1 = (NG!=OV); export tmp; }
+cor_cc: "gt"  is cor_bcond=12 { tmp:1 = (!ZR) && (NG==OV); export tmp; }
+cor_cc: "le"  is cor_bcond=13 { tmp:1 = ZR || (NG!=OV); export tmp; }
+
+cor_fcc: "eq"  is cor_fcond=0  { tmp:1 = (ZR==0); export tmp; }
+cor_fcc: "ne"  is cor_fcond=1  { tmp:1 = (ZR!=0); export tmp; }
+cor_fcc: "cs"  is cor_fcond=2  { tmp:1 = (CY==0); export tmp; }
+cor_fcc: "cc"  is cor_fcond=3  { tmp:1 = (CY!=0); export tmp; }
+cor_fcc: "mi"  is cor_fcond=4  { tmp:1 = (NG==0); export tmp; }
+cor_fcc: "pl"  is cor_fcond=5  { tmp:1 = (NG!=0); export tmp; }
+cor_fcc: "vs"  is cor_fcond=6  { tmp:1 = (OV==0); export tmp; }
+cor_fcc: "vc"  is cor_fcond=7  { tmp:1 = (OV!=0); export tmp; }
+cor_fcc: "hi"  is cor_fcond=8  { tmp:1 = CY && !ZR; export tmp; }
+cor_fcc: "ls"  is cor_fcond=9  { tmp:1 = (!CY) || (ZR); export tmp; }
+cor_fcc: "ge"  is cor_fcond=10 { tmp:1 = (NG == OV); export tmp; }
+cor_fcc: "lt"  is cor_fcond=11 { tmp:1 = (NG != OV); export tmp; }
+cor_fcc: "gt"  is cor_fcond=12 { tmp:1 = !ZR && (NG == OV); export tmp; }
+cor_fcc: "le"  is cor_fcond=13 { tmp:1 = ZR || (NG != OV); export tmp; }
+
+# A handful of instructions use inverted conditions
+cor_ifcc: "eq"  is cor_fcond=1  { tmp:1 = (ZR==0); export tmp; }
+cor_ifcc: "ne"  is cor_fcond=0  { tmp:1 = (ZR!=0); export tmp; }
+cor_ifcc: "cs"  is cor_fcond=3  { tmp:1 = (CY==0); export tmp; }
+cor_ifcc: "cc"  is cor_fcond=2  { tmp:1 = (CY!=0); export tmp; }
+cor_ifcc: "mi"  is cor_fcond=5  { tmp:1 = (NG==0); export tmp; }
+cor_ifcc: "pl"  is cor_fcond=4  { tmp:1 = (NG!=0); export tmp; }
+cor_ifcc: "vs"  is cor_fcond=7  { tmp:1 = (OV==0); export tmp; }
+cor_ifcc: "vc"  is cor_fcond=6  { tmp:1 = (OV!=0); export tmp; }
+cor_ifcc: "hi"  is cor_fcond=9  { tmp:1 = CY && !ZR; export tmp; }
+cor_ifcc: "ls"  is cor_fcond=8  { tmp:1 = (!CY) || (ZR); export tmp; }
+cor_ifcc: "ge"  is cor_fcond=11 { tmp:1 = (NG == OV); export tmp; }
+cor_ifcc: "lt"  is cor_fcond=10 { tmp:1 = (NG != OV); export tmp; }
+cor_ifcc: "gt"  is cor_fcond=13 { tmp:1 = !ZR && (NG == OV); export tmp; }
+cor_ifcc: "le"  is cor_fcond=12 { tmp:1 = ZR || (NG != OV); export tmp; }
+
+VP_fc000712: "eq" is thv_c1212=0 & thv_c0000=0 & thv_c0707=0  { local tmp:1 = 0; export *[const]:1 tmp; }
+VP_fc000712: "ne" is thv_c1212=0 & thv_c0000=0 & thv_c0707=1  { local tmp:1 = 1; export *[const]:1 tmp; }
+VP_fc000712: "cs" is thv_c1212=0 & thv_c0000=1 & thv_c0707=0  { local tmp:1 = 2; export *[const]:1 tmp; }
+VP_fc000712: "hi" is thv_c1212=0 & thv_c0000=1 & thv_c0707=1  { local tmp:1 = 3; export *[const]:1 tmp; }
+VP_fc000712: "ge" is thv_c1212=1 & thv_c0000=0 & thv_c0707=0  { local tmp:1 = 4; export *[const]:1 tmp; }
+VP_fc000712: "lt" is thv_c1212=1 & thv_c0000=0 & thv_c0707=1  { local tmp:1 = 5; export *[const]:1 tmp; }
+VP_fc000712: "gt" is thv_c1212=1 & thv_c0000=1 & thv_c0707=0  { local tmp:1 = 6; export *[const]:1 tmp; }
+VP_fc000712: "le" is thv_c1212=1 & thv_c0000=1 & thv_c0707=1  { local tmp:1 = 7; export *[const]:1 tmp; }
+
+VP_fc050712: "eq" is thv_c1212=0 & thv_c0505=0 & thv_c0707=0  { local tmp:1 = 0; export *[const]:1 tmp; }
+VP_fc050712: "ne" is thv_c1212=0 & thv_c0505=0 & thv_c0707=1  { local tmp:1 = 1; export *[const]:1 tmp; }
+VP_fc050712: "cs" is thv_c1212=0 & thv_c0505=1 & thv_c0707=0  { local tmp:1 = 2; export *[const]:1 tmp; }
+VP_fc050712: "hi" is thv_c1212=0 & thv_c0505=1 & thv_c0707=1  { local tmp:1 = 3; export *[const]:1 tmp; }
+VP_fc050712: "ge" is thv_c1212=1 & thv_c0505=0 & thv_c0707=0  { local tmp:1 = 4; export *[const]:1 tmp; }
+VP_fc050712: "lt" is thv_c1212=1 & thv_c0505=0 & thv_c0707=1  { local tmp:1 = 5; export *[const]:1 tmp; }
+VP_fc050712: "gt" is thv_c1212=1 & thv_c0505=1 & thv_c0707=0  { local tmp:1 = 6; export *[const]:1 tmp; }
+VP_fc050712: "le" is thv_c1212=1 & thv_c0505=1 & thv_c0707=1  { local tmp:1 = 7; export *[const]:1 tmp; }
+
+clrmlist15: r0                is thv_c0000=1 & r0 & thv_c0115=0              { r0 = 0; }
+clrmlist15: r0,               is thv_c0000=1 & r0                            { r0 = 0; }
+clrmlist15:                   is thv_c0000=0                                 { }
+clrmlist14: clrmlist15^r1     is thv_c0101=1 & clrmlist15 & r1 & thv_c0215=0 { r1 = 0; }
+clrmlist14: clrmlist15^r1,    is thv_c0101=1 & clrmlist15 & r1               { r1 = 0; }
+clrmlist14: clrmlist15        is thv_c0101=0 & clrmlist15                    { }
+clrmlist13: clrmlist14^r2     is thv_c0202=1 & clrmlist14 & r2 & thv_c0315=0 { r2 = 0; }
+clrmlist13: clrmlist14^r2,    is thv_c0202=1 & clrmlist14 & r2               { r2 = 0; }
+clrmlist13: clrmlist14        is thv_c0202=0 & clrmlist14                    { }
+clrmlist12: clrmlist13^r3     is thv_c0303=1 & clrmlist13 & r3 & thv_c0415=0 { r3 = 0; }
+clrmlist12: clrmlist13^r3,    is thv_c0303=1 & clrmlist13 & r3               { r3 = 0; }
+clrmlist12: clrmlist13        is thv_c0303=0 & clrmlist13                    { }
+clrmlist11: clrmlist12^r4     is thv_c0404=1 & clrmlist12 & r4 & thv_c0515=0 { r4 = 0; }
+clrmlist11: clrmlist12^r4,    is thv_c0404=1 & clrmlist12 & r4               { r4 = 0; }
+clrmlist11: clrmlist12        is thv_c0404=0 & clrmlist12                    { }
+clrmlist10: clrmlist11^r5     is thv_c0505=1 & clrmlist11 & r5 & thv_c0615=0 { r5 = 0; }
+clrmlist10: clrmlist11^r5,    is thv_c0505=1 & clrmlist11 & r5               { r5 = 0; }
+clrmlist10: clrmlist11        is thv_c0505=0 & clrmlist11                    { }
+clrmlist9: clrmlist10^r6      is thv_c0606=1 & clrmlist10 & r6 & thv_c0715=0 { r6 = 0; }
+clrmlist9: clrmlist10^r6,     is thv_c0606=1 & clrmlist10 & r6               { r6 = 0; }
+clrmlist9: clrmlist10         is thv_c0606=0 & clrmlist10                    { }
+clrmlist8: clrmlist9^r7       is thv_c0707=1 & clrmlist9 & r7 & thv_c0815=0  { r7 = 0; }
+clrmlist8: clrmlist9^r7,      is thv_c0707=1 & clrmlist9 & r7                { r7 = 0; }
+clrmlist8: clrmlist9          is thv_c0707=0 & clrmlist9                     { }
+clrmlist7: clrmlist8^r8       is thv_c0808=1 & clrmlist8 & r8 & thv_c0915=0  { r8 = 0; }
+clrmlist7: clrmlist8^r8,      is thv_c0808=1 & clrmlist8 & r8                { r8 = 0; }
+clrmlist7: clrmlist8          is thv_c0808=0 & clrmlist8                     { }
+clrmlist6: clrmlist7^r9       is thv_c0909=1 & clrmlist7 & r9 & thv_c1015=0  { r9 = 0; }
+clrmlist6: clrmlist7^r9,      is thv_c0909=1 & clrmlist7 & r9                { r9 = 0; }
+clrmlist6: clrmlist7          is thv_c0909=0 & clrmlist7                     { }
+clrmlist5: clrmlist6^r10      is thv_c1010=1 & clrmlist6 & r10 & thv_c1115=0 { r10 = 0; }
+clrmlist5: clrmlist6^r10,     is thv_c1010=1 & clrmlist6 & r10               { r10 = 0; }
+clrmlist5: clrmlist6          is thv_c1010=0 & clrmlist6                     { }
+clrmlist4: clrmlist5^r11      is thv_c1111=1 & clrmlist5 & r11 & thv_c1215=0 { r11 = 0; }
+clrmlist4: clrmlist5^r11,     is thv_c1111=1 & clrmlist5 & r11               { r11 = 0; }
+clrmlist4: clrmlist5          is thv_c1111=0 & clrmlist5                     { }
+clrmlist3: clrmlist4^r12      is thv_c1212=1 & clrmlist4 & r12 & thv_c1315=0 { r12 = 0; }
+clrmlist3: clrmlist4^r12,     is thv_c1212=1 & clrmlist4 & r12               { r12 = 0; }
+clrmlist3: clrmlist4          is thv_c1212=0 & clrmlist4                     { }
+#clrmlist2 is impossible since sp (r13) is not allowed
+clrmlist1: clrmlist3^lr       is thv_c1414=1 & clrmlist3 & lr & thv_c1515=0  { lr = 0; }
+clrmlist1: clrmlist3^lr,      is thv_c1414=1 & clrmlist3 & lr                { lr = 0; }
+clrmlist1: clrmlist3          is thv_c1414=0 & clrmlist3                     { }
+clrmlist: {clrmlist1^"apsr"}  is thv_c1515=1 & clrmlist1                     {
+	Q  = 0;
+	OV = 0;
+	CY = 0;
+	ZR = 0;
+	NG = 0;
+}
+clrmlist: {clrmlist1}         is thv_c1515=0 & clrmlist1                     { }
+
+crot0012: "#"^0   is thv_c0000=0 & thv_c1212=0 { local tmp:4 = 0;  export *[const]:4 tmp; }
+crot0012: "#"^90  is thv_c0000=0 & thv_c1212=1 { local tmp:4 = 90; export *[const]:4  tmp; }
+crot0012: "#"^180  is thv_c0000=1 & thv_c1212=0 { local tmp:4 = 180; export *[const]:4  tmp; }
+crot0012: "#"^270  is thv_c0000=1 & thv_c1212=1 { local tmp:4 = 270; export *[const]:4  tmp; }
+
+esize0708: "8" 		is thv_c0708=0	{ tmp:1 = 1; export *[const]:1 tmp; }
+esize0708: "16" 	is thv_c0708=1	{ tmp:1 = 2; export *[const]:1 tmp; }
+esize0708: "32" 	is thv_c0708=2	{ tmp:1 = 4; export *[const]:1 tmp; }
+esize0708: "64" 	is thv_c0708=3	{ tmp:1 = 8; export *[const]:1 tmp; }
+
+esize1616: "16"		is thv_c1616=0 { tmp:1 = 1; export *[const]:1 tmp; }
+esize1616: "32"		is thv_c1616=1 { tmp:1 = 2; export *[const]:1 tmp; }
+
+esize1920x2: val is thv_c1920 [ val = 16 << thv_c1920; ] { export *[const]:1 val; }
+
+esize2828: "32"		is thv_c2828=0 { tmp:1 = 2; export *[const]:1 tmp; }
+esize2828: "16"		is thv_c2828=1 { tmp:1 = 1; export *[const]:1 tmp; }
+
+@endif #VERSION_8M
+
+
+@if defined(VERSION_8M)
+# (DDI0553B) C2.4.13 p. 555 ASRL (immediate)
+:asrl^ItCond thv_Rn, thv_Rt2, cor_immShiftSR  is $(TMODE_E) & ItCond & thv_c2327=0b10100 & thv_c2022=0b101 & thv_c1616=0 & thv_c1515=0 & thv_c0808=1 & thv_c0405=0b10 & thv_c0003=0b1111 & thv_Rn & thv_Rt2 &cor_immShiftSR {
+	build ItCond;
+	local tmp:8 = sext(thv_Rt2) << 32 | sext(thv_Rn);
+	tmp = tmp s>> cor_immShiftSR;
+	thv_Rn = tmp[0,32];
+	thv_Rt2 = tmp[32,32];
+}
+
+# (DDI0553B) C2.4.14 p. 556 ASRL (register)
+:asrl^ItCond thv_Rn, thv_Rt2, thv_Rd  is $(TMODE_E) & ItCond & thv_c2327=0b10100 & thv_c2022=0b101 & thv_c1616=0 & thv_c1515=0 & thv_c0808=1 & thv_c0405=0b10 & thv_c0003=0b1101 & thv_Rn & thv_Rt2 & thv_Rd {
+	build ItCond;
+	local shiftAmount:1 = thv_Rd[0,8];
+	local tmp:8 = sext(thv_Rt2) << 32 | sext(thv_Rn);
+	tmp = tmp s>> shiftAmount;
+	thv_Rn = tmp[0,32];
+	thv_Rt2 = tmp[32,32];
+}
+
+# (DDI0553B) C2.4.17 p. 561 AUT
+define pcodeop ValidatePAC;
+:aut r12, lr, sp                      is thv_c1631=0xf3af & thv_c0015=0x802d & lr & sp & r12 {
+	ValidatePAC(lr, sp, r12);
+}
+
+# (DDI0553B) C2.4.18 p. 563 AUTG
+:autg^ItCond thv_Rt, thv_Rn, thv_Rm   is ItCond & thv_c2031=0xfb5 & thv_c0811=0xf & thv_c0407=0 & thv_Rm & thv_Rn & thv_Rt {
+	build ItCond;
+	ValidatePAC(thv_Rn, thv_Rm, thv_Rt);
+}
+
+# (DDI0553B) C2.4.20 p. 567 BF, BFX, BFL, BFLX, BFCSEL
+define pcodeop BranchFuture;
+:bf^ItCond cor_bLabel, cor_immBF      is $(TMODE_F) & ItCond & thv_c2727=0 & thv_c2122=0b10 & thv_c1215=0xe & thv_bit00=1 & cor_bLabel & cor_immBF {
+	build ItCond;
+	BranchFuture(cor_bLabel, cor_immBF, 0x0:1, 0xe:1);
+}
+
+:bfcsel^ItCond cor_bLabel, cor_immBFC, cor_baLabel, cor_cc  is $(TMODE_F) & ItCond & thv_c2727=0 & thv_c2222=0b0 & thv_c1215=0xe & thv_bit00=1 & cor_bLabel & cor_immBFC & cor_baLabel & cor_cc {
+	build ItCond;
+	BranchFuture(cor_bLabel, cor_immBFC, cor_baLabel, cor_cc);
+}
+
+:bfx^ItCond cor_bLabel, thv_Rn        is $(TMODE_F) & ItCond & thv_c2727=0 & thv_c2022=0b110 & thv_c1215=0xe & cor_immC=0 & cor_immB=0 & thv_bit00=1 & cor_bLabel & thv_Rn {
+	build ItCond;
+	BranchFuture(cor_bLabel, thv_Rn, 0x0:1, 0xe:1);
+}
+
+:bfl^ItCond cor_bLabel, cor_immBF     is $(TMODE_F) & ItCond & thv_c2727=0 & thv_c2122=0b10 & thv_c1215=0xc & thv_bit00=1 & cor_bLabel & cor_immBF {
+	build ItCond;
+	BranchFuture(cor_bLabel, cor_immBF, 0x0:1, 0xe:1);
+}
+
+:bflx^ItCond cor_bLabel, thv_Rn       is $(TMODE_F) & ItCond & thv_c2727=0 & thv_c2022=0b111 & thv_c1215=0xc & cor_immC=0 & cor_immB=0 & thv_bit00=1 & cor_bLabel & thv_Rn {
+	build ItCond;
+	BranchFuture(cor_bLabel, thv_Rn, 0x0:1, 0xe:1);
+}
+
+# (DDI0553B) C2.4.28 p. 583 BTI
+define pcodeop BranchTargetID;
+:bti                                  is $(TMODE_F) & thv_c1627=0x3af & thv_c0015=0xf00f {
+	BranchTargetID();
+}
+
+# (DDI0553B) C2.4.30 p. 586 BXAUT
+:bxaut^ItCond	thv_Rt, thv_Rn, thv_Rm  is $(TMODE_F) & ItCond & thv_c2427=0xb & thv_c2023=0x5 & thv_Rn & thv_Rt & thv_c0811=0xf & thv_c0407=0x1 & thv_Rm {
+	build ItCond;
+	ValidatePAC(thv_Rn, thv_Rm, thv_Rt);
+	BXWritePC(thv_Rn);
+	return [pc];
+}
+
+# (DDI0553B) C2.4.33 p. 591 CINC
+:cinc thv_Rt2, RZn, cor_ifcc          is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & RZn & thv_c1215=0x9 & thv_Rt2 & cor_ifcc & (thv_c1619 < 15 & thv_c0003 < 15 & thv_c1619=thv_c0003) {
+	thv_Rt2 = (zext(cor_ifcc) * RZn + 1) + (zext(!cor_ifcc) * RZn);
+}
+
+# (DDI0553B) C2.4.34 p. 592 CINV
+:cinv thv_Rt2, RZn, cor_ifcc          is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0x8 & RZn & thv_Rt2 & cor_ifcc & (thv_c1619 < 15 & thv_c0003 < 15 & thv_c1619=thv_c0003) {
+	thv_Rt2 = (zext(cor_ifcc) * ~RZn) + (zext(!cor_ifcc) * RZn);
+}
+
+# (DDI0553B) C2.4.36 p. 594 CLRM
+:clrm^ItCond clrmlist                 is $(TMODE_E) & ItCond & thv_c2427=0x8 & thv_c2023=0x9 & thv_c1619=0xf & clrmlist {
+	build ItCond;
+	build clrmlist;
+}
+
+# (DDI0553B) C2.4.42 p. 605 CNEG
+:cneg  thv_Rt2, RZn, cor_ifcc         is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0xb & RZn & thv_Rt2 & cor_ifcc & (thv_c1619=thv_c0003) {
+	thv_Rt2 = (zext(cor_ifcc) * RZn) + (zext(!cor_ifcc) * -RZn);
+}
+
+# (DDI0553B) C2.4.45 p. 609 CSEL
+:csel thv_Rt2, RZn, RZm, cor_fcc      is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0x8 & RZn & thv_Rt2 & cor_fcc & RZm {
+	thv_Rt2 = (zext(cor_fcc) * RZn) + (zext(!cor_fcc) * RZm);
+}
+
+# (DDI0553B) C2.4.46 p. 611 CSET
+:cset thv_Rt2, cor_ifcc               is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0x9 & thv_Rt2 & cor_ifcc & (thv_c1619=0xf & thv_c0003=0xf) {
+	thv_Rt2 = zext(cor_ifcc);
+}
+
+# (DDI0553B) C2.4.37 p. 612 CSETM
+:csetm thv_Rt2, cor_ifcc              is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0xa & thv_Rt2 & cor_ifcc & (thv_c1619=0xf & thv_c0003=0xf) {
+	thv_Rt2 = (zext(cor_ifcc) * ~0) + (zext(!cor_ifcc) * 0);
+}
+
+# (DDI0553B) C2.4.48 p. 613 CSINC
+:csinc thv_Rt2, RZn, RZm, cor_fcc     is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0x9 & RZn & thv_Rt2 & cor_fcc & RZm {
+	thv_Rt2 = (zext(cor_fcc) * RZn) + (zext(!cor_fcc) * RZm + 1);
+}
+
+# (DDI0553B) C2.4.49 p. 615 CSINV
+:csinv thv_Rt2, RZn, RZm, cor_fcc     is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0xa & thv_c1215=0xa & RZn & thv_Rt2 & cor_fcc & RZm {
+	thv_Rt2 = (zext(cor_fcc) * RZn) + (zext(!cor_fcc) * ~RZm);
+}
+
+# (DDI0553B) C2.4.50 p. 617 CSNEG
+:csneg  thv_Rt2, RZn, RZm, cor_fcc    is $(TMODE_E) & thv_c2427=0xa & thv_c2023=0x5 & thv_c1215=0xb & RZn & thv_Rt2 & cor_fcc & RZm {
+	thv_Rt2 = (zext(cor_fcc) * RZn) + (zext(!cor_fcc) * -RZm);
+}
+
+@endif
+
 # This macro is always defined in this file, but the ifdef may be
 # useful if it is moved to ARMinstructions.sinc.
-
-crc32_type: "b"		is TMode=0 & c2122=0b00 & c0909=0 { }
-crc32_type: "h"		is TMode=0 & c2122=0b01 & c0909=0 { }
-crc32_type: "w"		is TMode=0 & c2122=0b10 & c0909=0 { }
-crc32_type: "cb"	is TMode=0 & c2122=0b00 & c0909=1 { }
-crc32_type: "ch"	is TMode=0 & c2122=0b01 & c0909=1 { }
-crc32_type: "cw"	is TMode=0 & c2122=0b10 & c0909=1 { }
-crc32_type: "b"		is TMode=1 & thv_c0405=0b00 { }
-crc32_type: "h"		is TMode=1 & thv_c0405=0b01 { }
-crc32_type: "w"		is TMode=1 & thv_c0405=0b10 { }
+crc32_type: "b"   is TMode=0 & c2122=0b00 & c0909=0 { }
+crc32_type: "h"   is TMode=0 & c2122=0b01 & c0909=0 { }
+crc32_type: "w"   is TMode=0 & c2122=0b10 & c0909=0 { }
+crc32_type: "cb"  is TMode=0 & c2122=0b00 & c0909=1 { }
+crc32_type: "ch"  is TMode=0 & c2122=0b01 & c0909=1 { }
+crc32_type: "cw"  is TMode=0 & c2122=0b10 & c0909=1 { }
+crc32_type: "b"   is TMode=1 & thv_c0405=0b00       { }
+crc32_type: "h"   is TMode=1 & thv_c0405=0b01       { }
+crc32_type: "w"   is TMode=1 & thv_c0405=0b10       { }
 
 define pcodeop Crc32Calc;
 
 # F5.1.39,40 p7226,7229 CRC32,CRC32C A1
-:crc32^crc32_type	Rd,Rn,Rm
-	is TMode=0 & c2831=0b1110 & c2327=0b00010 & c2020=0 & c0407=0b0100 & c1011=0b00 & c0808=0
-	& crc32_type & Rn & Rd & Rm
-	{ Rd = Crc32Calc(Rn,Rm); }
+:crc32^crc32_type Rd,Rn,Rm            is TMode=0 & c2831=0b1110 & c2327=0b00010 & c2020=0 & c0407=0b0100 & c1011=0b00 & c0808=0 & crc32_type & Rn & Rd & Rm {
+	Rd = Crc32Calc(Rn,Rm);
+}
 
 # F5.1.39 p7226 CRC32 T1
-:crc32^crc32_type	thv_Rt2,thv_Rn,thv_Rm
-	is TMode=1 & thv_c2031=0b111110101100 & thv_c1215=0b1111 & thv_c0607=0b10
-	& crc32_type & thv_Rn & thv_Rt2 & thv_Rm
-	{ thv_Rt2 = Crc32Calc(thv_Rn,thv_Rm); }
+:crc32^crc32_type thv_Rt2,thv_Rn,thv_Rm  is TMode=1 & thv_c2031=0b111110101100 & thv_c1215=0b1111 & thv_c0607=0b10 & crc32_type & thv_Rn & thv_Rt2 & thv_Rm {
+	thv_Rt2 = Crc32Calc(thv_Rn,thv_Rm);
+}
 
 # F5.1.40 p7229 CRC32C T1
-:crc32c^crc32_type	thv_Rt2,thv_Rn,thv_Rm
-	is TMode=1 & thv_c2031=0b111110101101 & thv_c1215=0b1111 & thv_c0607=0b10
-	& crc32_type & thv_Rn & thv_Rt2 & thv_Rm
-	{ thv_Rt2 = Crc32Calc(thv_Rn,thv_Rm); }
+:crc32c^crc32_type	thv_Rt2,thv_Rn,thv_Rm  is TMode=1 & thv_c2031=0b111110101101 & thv_c1215=0b1111 & thv_c0607=0b10 & crc32_type & thv_Rn & thv_Rt2 & thv_Rm {
+	thv_Rt2 = Crc32Calc(thv_Rn,thv_Rm);
+}
+
+# F5.1.41
+define pcodeop consumptionOfSpeculativeDataBarrier;
+
+:csdb^COND  is $(AMODE) & COND & c0027=0x320f014 {
+	build COND;
+	consumptionOfSpeculativeDataBarrier();
+}
+
+:csdb^ItCond  is TMode=1 & ItCond & thv_c1631=0xf3bf & thv_c0015=0x8014 {
+	build ItCond;
+	consumptionOfSpeculativeDataBarrier();
+}
 
 define pcodeop DCPSInstruction;
 
-dcps_lev:1		is TMode=1 & thv_c0001=0b01 { export 1:1; }
-dcps_lev:2		is TMode=1 & thv_c0001=0b10 { export 2:1; }
-dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
+dcps_lev:1  is TMode=1 & thv_c0001=0b01 { export 1:1; }
+dcps_lev:2  is TMode=1 & thv_c0001=0b10 { export 2:1; }
+dcps_lev:3  is TMode=1 & thv_c0001=0b11 { export 3:1; }
 
 # F5.1.43 p7235 DCPS1,DCPS2,DCPS3 DSPS1 variant
-:dcps^dcps_lev
-	is TMode=1 & thv_c1631=0b1111011110001111 & thv_c0215=0b10000000000000 & (thv_c0101=1 | thv_c0000=1) & dcps_lev
+:dcps^dcps_lev                        is TMode=1 & thv_c1631=0b1111011110001111 & thv_c0215=0b10000000000000 & (thv_c0101=1 | thv_c0000=1) & dcps_lev
 	{ DCPSInstruction(dcps_lev:1); }
 
-# F5.1.57 p7268 LDA
-:lda^COND Rd,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xc9f
-	{
-		build COND;
-		Rd = *Rn;
-	}
+# F5.1.52
+define pcodeop ErrorSynchronizationBarrier;
+
+:esb^COND                             is $(AMODE) & COND & c0027=0x320f010 {
+	build COND;
+	ErrorSynchronizationBarrier();
+}
+
+:esb^ItCond                           is TMode=1 & ItCond & thv_c1631=0xf3af & thv_c0015=0x8010 {
+	build ItCond;
+	ErrorSynchronizationBarrier();
+}
+
+@if defined(VERSION_8M)
+define pcodeop loopClearTailPredication;
+
+loopAddr: reloc  is cor_immB & thv_c1111 [ reloc = inst_next - (cor_immB <<2) | (thv_c1111 << 1); ] { export *[ram]:4 reloc; }
+
+# (DDI0553B) C2.4.67 p. 646 LCTP
+:lctp                                 is TMode=1 & thv_c1631=0xf00f & thv_c0015=0xe001 {
+	fpscr[16,3] = 4;
+}
+
+define pcodeop loopEnd;
+
+# (DDI0553B) C2.4.103 p. 713 LE, LETP
+:le lr, loopAddr                      is TMode=1 & thv_c1631=0xf00f & thv_c1215=0b1100 & thv_c0000=1 & loopAddr & lr {
+	lr = lr - 1;
+	loopEnd();
+	goto loopAddr;
+}
+
+# T2 == forever variant
+:le loopAddr                          is TMode=1 & thv_c1631=0xf02f & thv_c1215=0b1100 & thv_c0000=1 & loopAddr {
+	goto loopAddr;
+}
+
+:letp lr, loopAddr                    is TMode=1 & thv_c1631=0xf01f & thv_c1215=0b1100 & thv_c0000=1 & loopAddr & lr {
+	ltpsize:1 = fpscr[16,3];
+	if (lr <= (1 << (4-ltpsize))) goto <lastLoop>;
+	lr = lr - (1 << (4-ltpsize));
+	goto <end>;
+<lastLoop>
+	fpscr[16,3] = 4;
+<end>
+	goto loopAddr;
+}
+
+@endif # VERSION_8M
 
 # F5.1.57 p7268 LDA
-:lda thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1010
-	& ItCond & thv_Rn & thv_Rt
-	{
-		build ItCond;
-		thv_Rt = *thv_Rn;
-	}
+:lda^COND Rd,[Rn]                     is TMode=0 & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xc9f {
+	build COND;
+	Rd = *Rn;
+}
+
+# F5.1.57 p7268 LDA
+:lda thv_Rt,[thv_Rn]                  is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1010
+	& ItCond & thv_Rn & thv_Rt {
+	build ItCond;
+	thv_Rt = *thv_Rn;
+}
 
 # F5.1.58 p7270 LDAB
-:ldab^COND Rd,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xc9f
-	{
-		build COND;
-		val:1 = *Rn;
-		Rd = zext(val);
-	}
+:ldab^COND Rd,[Rn]                    is TMode=0 & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xc9f {
+	build COND;
+	val:1 = *Rn;
+	Rd = zext(val);
+}
 
 # F5.1.58 p7270 LDAB
-:ldab thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1000
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		val:1 = *thv_Rn;
-		thv_Rt = zext(val);
-	}
+:ldab thv_Rt,[thv_Rn]                 is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1000
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	val:1 = *thv_Rn;
+	thv_Rt = zext(val);
+}
 
 # F5.1.59 p7272 LDAEX
-:ldaex^COND Rd,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xe9f
-	{
-		build COND;
-		Rd = *Rn;
-	}
+:ldaex^COND Rd,[Rn]                   is TMode=0 & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xe9f {
+	build COND;
+	Rd = *Rn;
+}
 
 # F5.1.59 p7272 LDAEX
-:ldaex thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1110
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		thv_Rt = *thv_Rn;
-	}
+:ldaex thv_Rt,[thv_Rn]                is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1110
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	thv_Rt = *thv_Rn;
+}
 
 # F5.1.60 p7274 LDAEXB
-:ldaexb^COND Rd,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xe9f
-	{
-		build COND;
-		val:1 = *Rn;
-		Rd = zext(val);
-	}
+:ldaexb^COND Rd,[Rn]                  is TMode=0 & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xe9f {
+	build COND;
+	val:1 = *Rn;
+	Rd = zext(val);
+}
 
 # F5.1.60 p7274 LDAEXB
-:ldaexb thv_Rt,thv_Rn
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1100
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		val:1 = *thv_Rn;
-		thv_Rt = zext(val);
-	}
+:ldaexb thv_Rt,thv_Rn                 is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1100
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	val:1 = *thv_Rn;
+	thv_Rt = zext(val);
+}
 
 # F5.1.61 p7274 LDAEXD
-:ldaexd^COND Rd,Rd2,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xe9f
-	{
-		local addr:4 = Rn;
-		build COND;
+:ldaexd^COND Rd,Rd2,[Rn]              is TMode=0 & ARMcond=1 & COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xe9f {
+	local addr:4 = Rn;
+	build COND;
 @if ENDIAN == "big"
-		Rd = *(addr + 4);
-		Rd2 = *(addr);
-@else	# ENDIAN == "little"
-		Rd = *(addr);
-		Rd2 = *(addr + 4);
-@endif	# ENDIAN == "little"
-	}
+	Rd = *(addr + 4);
+	Rd2 = *(addr);
+@else # ENDIAN == "little"
+	Rd = *(addr);
+	Rd2 = *(addr + 4);
+@endif # ENDIAN == "little"
+}
 
 # F5.1.61 p7274 LDAEXD
-:ldaexd thv_Rt,thv_Rt2,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1111
-	& ItCond & thv_Rt & thv_Rt2 & thv_Rn
-	{
-		local addr:4 = thv_Rn;
-		build ItCond;
+:ldaexd thv_Rt,thv_Rt2,[thv_Rn]       is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1111
+	& ItCond & thv_Rt & thv_Rt2 & thv_Rn {
+	local addr:4 = thv_Rn;
+	build ItCond;
 @if ENDIAN == "big"
-		thv_Rt = *(addr + 4);
-		thv_Rt2 = *(addr);
-@else	# ENDIAN == "little"
-		thv_Rt = *(addr);
-		thv_Rt2 = *(addr + 4);
-@endif	# ENDIAN == "little"
-	}
+	thv_Rt = *(addr + 4);
+	thv_Rt2 = *(addr);
+@else # ENDIAN == "little"
+	thv_Rt = *(addr);
+	thv_Rt2 = *(addr + 4);
+@endif # ENDIAN == "little"
+}
 
 # F5.1.62 p7278 LDAEXH
-:ldaexh^COND Rd,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xe9f
-	{
-		build COND;
-		val:2 = *Rn;
-		Rd = zext(val);
-	}
+:ldaexh^COND Rd,[Rn]                  is TMode=0 & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xe9f {
+	build COND;
+	val:2 = *Rn;
+	Rd = zext(val);
+}
 
 # F5.1.62 p7278 LDAEXH
-:ldaexh thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1101
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		val:2 = *thv_Rn;
-		thv_Rt = zext(val);
-	}
+:ldaexh thv_Rt,[thv_Rn]               is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1101
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	val:2 = *thv_Rn;
+	thv_Rt = zext(val);
+}
 
 # F5.1.63 p7280 LDAH
-:ldah^COND Rd,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xc9f
-	{
-		build COND;
-		val:2 = *Rn;
-		Rd = zext(val);
-	}
+:ldah^COND Rd,[Rn]                    is TMode=0 & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xc9f {
+	build COND;
+	val:2 = *Rn;
+	Rd = zext(val);
+}
 
 # F5.1.63 p7280 LDAH
-:ldah thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1001
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		val:2 = *thv_Rn;
-		thv_Rt = zext(val);
-	}
+:ldah thv_Rt,[thv_Rn]                 is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1001
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	val:2 = *thv_Rn;
+	thv_Rt = zext(val);
+}
+
+@if defined(VERSION_8M)
+# (DDI0553B) C2.4.106 p. 719 LSLL (immediate) 
+:lsll^ItCond thv_Rn, thv_Rt2, cor_immShiftSR  is $(TMODE_E) & ItCond & thv_c2327=0b10100 & thv_c2022=0b101 & thv_c1616=0 & thv_c1515=0 & thv_c0808=1 & thv_c0405=0b00 & thv_c0003=0b1111 & thv_Rn & thv_Rt2 &cor_immShiftSR {
+	build ItCond;
+	local tmp:8 = sext(thv_Rt2) << 32 | sext(thv_Rn);
+	tmp = tmp << cor_immShiftSR;
+	thv_Rn = tmp[0,32];
+	thv_Rt2 = tmp[32,32];
+}
+
+# (DDI0553B) C2.4.107 p. 720 LSLL (register)
+:lsll^ItCond thv_Rn, thv_Rt2, thv_Rd  is $(TMODE_E) & ItCond & thv_c2327=0b10100 & thv_c2022=0b101 & thv_c1616=0 & thv_c1515=0 & thv_c0808=1 & thv_c0405=0b00 & thv_c0003=0b1101 & thv_Rn & thv_Rt2 & thv_Rd {
+	build ItCond;
+	local shiftAmount:1 = thv_Rd[0,8];
+	local tmp:8 = sext(thv_Rt2) << 32 | sext(thv_Rn);
+	tmp = tmp << shiftAmount;
+	thv_Rn = tmp[0,32];
+	thv_Rt2 = tmp[32,32];
+}
+
+# (DDI0553B) C2.4.112 p. 729 LSRL (immediate)
+:lsrl^ItCond thv_Rn, thv_Rt2, cor_immShiftSR  is $(TMODE_E) & ItCond & thv_c2327=0b10100 & thv_c2022=0b101 & thv_c1616=0 & thv_c1515=0 & thv_c0808=1 & thv_c0405=0b01 & thv_c0003=0b1111 & thv_Rn & thv_Rt2 &cor_immShiftSR {
+	build ItCond;
+	local tmp:8 = sext(thv_Rt2) << 32 | sext(thv_Rn);
+	tmp = tmp >> cor_immShiftSR;
+	thv_Rn = tmp[0,32];
+	thv_Rt2 = tmp[32,32];
+}
+
+define pcodeop createPAC;
+
+:pac r12, lr, sp                      is thv_c1631=0xf3af & thv_c0015=0x801d & lr & sp & r12 {
+	createPAC(lr, sp, r12, 0:1);
+}
+
+:pacbti r12, lr, sp                   is thv_c1631=0xf3af & thv_c0015=0x800d & lr & sp & r12 {
+	createPAC(lr, sp, r12, 1:1); # clear BTI
+}
+
+:pacg^ItCond thv_Rt, thv_Rn, thv_Rm   is ItCond & thv_c2031=0xf66 & thv_c0811=0xf & thv_c0407=0 & thv_Rm & thv_Rn & thv_Rt {
+	build ItCond;
+	createPAC(thv_Rn, thv_Rm, thv_Rt, 0:1);
+}
+
+@endif # VERSION_8M
+
+# F5.1.141 p7795 PSSBB A1 variant
+define pcodeop physicalSpeculativeStoreBypassBarrier;
+:pssbb  is $(AMODE) & c0031=0xf57ff044 {
+	physicalSpeculativeStoreBypassBarrier();
+}
+
+# F5.1.141 p7795 PSSBB T1 variant
+:pssbb  is TMode=1 & thv_c1631=0xf3bf & thv_c0015=0x8f44 {
+	physicalSpeculativeStoreBypassBarrier();
+}
 
 # F5.1.185 p7573 SEVL A1 variant
-:sevl^COND
-	is TMode=0 & ARMcond=1 & COND & c1627=0b001100100000 & c0007=0b00000101
-	{
-		build COND;
-		SendEvent();
-	}
+:sevl^COND                            is TMode=0 & ARMcond=1 & COND & c1627=0b001100100000 & c0007=0b00000101 {
+	build COND;
+	SendEvent();
+}
 
 # F5.1.185 p7573 SEVL T2 variant
-:sevl.w
-	is TMode=1 & thv_c2031=0b111100111010 & thv_c1415=0b10 & thv_c1212=0 & thv_c0010=0b00000000101
-	& ItCond
-	{
-		build ItCond;
-		SendEvent();
-	}
+:sevl.w                               is TMode=1 & thv_c0015=0x8005 & thv_c1631=0xf3af#thv_c2031=0b111100111010 & thv_c1415=0b10 & thv_c1212=0 & thv_c0010=0b00000000101
+	& ItCond {
+	build ItCond;
+	SendEvent();
+}
+
+@if defined(VERSION_8M)
+:sqrshr^ItCond thv_Rn, thv_Rt is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_Rn & thv_Rt & thv_c0811=0xf & thv_c0407=2 & thv_c0003=0xd {
+	build ItCond;
+	local amount = thv_Rt[0,8];
+	local left = amount s< 0;
+	local sum = thv_Rn;
+	sum = (zext(left) * (1 s>> (amount-1))) + (zext(!left) * (1 << (amount-1)));
+	sum = (zext(left) * (1 << amount)) + (zext(!left) * (1 s>> amount));
+	thv_Rn = SignedSaturate(sum,32:2);
+}
+
+qSat: "#"^satAmount is thv_c0707 [ satAmount = 48 << (thv_c0707 * 16); ] { export *[const]:2 satAmount; }
+
+:sqrshrl^ItCond thv_RdaLo, thv_RdaHi, qSat, thv_Rt is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_RdaLo & thv_c1616=1 & thv_RdaHi & thv_c0808=1 & thv_Rt & qSat & thv_c0406=2 & thv_c0003=0xd {
+	build ItCond;
+	local amount = thv_Rt[0,8];
+	local left = amount s< 0;
+	local sum:8 = zext(thv_RdaHi) << 32 | zext(thv_RdaLo);
+	sum = (zext(left) * (1 s>> (amount-1))) + (zext(!left) * (1 << (amount-1)));
+	sum = (zext(left) * (1 << amount)) + (zext(!left) * (1 s>> amount));
+	sum = SignedSaturate(sum,qSat);
+	thv_RdaLo = sum[0,32];
+	thv_RdaHi = sum[32,32];
+}
+
+qShift: "#"^shAmount is thv_c0607 & thv_c1214 [ shAmount = (thv_c1214 << 2) + thv_c0607; ] { export *[const]:1 shAmount; }
+qShift: "#"^0 is thv_c0607=0 & thv_c1214=0 { tmp:1 = 0; export *[const]:1 tmp; }
+
+:sqshl^ItCond thv_Rn, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_Rn & qShift & thv_c1515=0 & thv_c0811=0xf & thv_c0405=3 & thv_c0003=0xf {
+	local amount = qShift;
+	local result = thv_Rn << amount;
+	thv_Rn = SignedSaturate(result,32:2);
+}
+
+:sqshll^ItCond thv_RdaLo, thv_RdaHi, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_RdaLo & thv_c1616=1 & thv_RdaHi & thv_c0808=1 & thv_c1515=0 & qShift & thv_c0405=3 & thv_c0003=0xf {
+	build ItCond;
+	local amount = qShift;
+	local result:8 = zext(thv_RdaHi) << 32 | zext(thv_RdaLo);
+	result = result << amount;
+	result = SignedSaturate(result,64:2);
+	thv_RdaLo = result[0,32];
+	thv_RdaHi = result[32,32];
+}
+
+
+:sqshr^ItCond thv_Rn, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_Rn & qShift & thv_c1515=0 & thv_c0811=0xf & thv_c0405=2 & thv_c0003=0xf {
+	local amount = qShift;
+	local result = thv_Rn << (amount-1);
+	result = result s>> amount;
+	thv_Rn = SignedSaturate(result,32:2);
+}
+
+:sqshrl^ItCond thv_RdaLo, thv_RdaHi, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_RdaLo & thv_c1616=1 & thv_RdaHi & thv_c0808=1 & thv_c1515=0 & qShift & thv_c0405=2 & thv_c0003=0xf {
+	build ItCond;
+	local amount = qShift;
+	local result:8 = zext(thv_RdaHi) << 32 | zext(thv_RdaLo);
+	result = result s>> amount;
+	result = SignedSaturate(result,64:2);
+	thv_RdaLo = result[0,32];
+	thv_RdaHi = result[32,32];
+}
+
+@endif #VERSION_8M
 
 # F5.1.217 p7642 STL
-:stl^COND Rm,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x18 & Rn & c0415=0xfc9 & Rm
-	{
-		build COND;
-		*Rn = Rm;
-	}
+:stl^COND Rm,[Rn]                     is TMode=0 & ARMcond=1 & COND & c2027=0x18 & Rn & c0415=0xfc9 & Rm {
+	build COND;
+	*Rn = Rm;
+}
 
 # F5.1.217 p7642 STL
-:stl thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1010
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		*thv_Rn = thv_Rt;
-	}
+:stl thv_Rt,[thv_Rn]                  is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1010
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	*thv_Rn = thv_Rt;
+}
 
 # F5.1.218 p7644 STLB
-:stlb^COND Rm,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1c & Rn & c0415=0xfc9 & Rm
-	{
-		build COND;
-		*:1 Rn = Rm[0,8];
-	}
+:stlb^COND Rm,[Rn]                    is TMode=0 & ARMcond=1 & COND & c2027=0x1c & Rn & c0415=0xfc9 & Rm {
+	build COND;
+	*:1 Rn = Rm[0,8];
+}
 
 # F5.1.218 p7644 STLB
-:stlb thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1000
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		*:1 thv_Rn = thv_Rt[0,8];
-	}
+:stlb thv_Rt,[thv_Rn]                 is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1000
+	& ItCond & thv_Rt & thv_Rn {
+	build ItCond;
+	*:1 thv_Rn = thv_Rt[0,8];
+}
 
 # F5.1.219 p7646 STLEX
-:stlex^COND Rd,Rm,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x18 & Rn & Rd & c0411=0xe9 & Rm
-	{
-		build COND;
-		*Rn = Rm;
-		Rd = 0;
-	}
+:stlex^COND Rd,Rm,[Rn]                is TMode=0 & ARMcond=1 & COND & c2027=0x18 & Rn & Rd & c0411=0xe9 & Rm {
+	build COND;
+	*Rn = Rm;
+	Rd = 0;
+}
 
 # F5.1.219 p7646 STLEX
-:stlex thv_Rm,thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1110
-	& ItCond & thv_Rm & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		*thv_Rn = thv_Rt;
-		thv_Rm = 0;
-	}
+:stlex thv_Rm,thv_Rt,[thv_Rn]         is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1110
+	& ItCond & thv_Rm & thv_Rt & thv_Rn {
+	build ItCond;
+	*thv_Rn = thv_Rt;
+	thv_Rm = 0;
+}
 
 # F5.1.220 p7649 STLEXB
-:stlexb^COND Rd,Rm,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1c & Rn & Rd & c0411=0xe9 & Rm
-	{
-		build COND;
-		*:1 Rn = Rm[0,8];
-		Rd = 0;
-	}
+:stlexb^COND Rd,Rm,[Rn]               is TMode=0 & ARMcond=1 & COND & c2027=0x1c & Rn & Rd & c0411=0xe9 & Rm {
+	build COND;
+	*:1 Rn = Rm[0,8];
+	Rd = 0;
+}
 
 # F5.1.220 p7649 STLEXB
-:stlexb thv_Rm,thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1100
-	& ItCond & thv_Rm & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		*:1 thv_Rn = thv_Rt[0,8];
-		thv_Rm = 0;
-	}
+:stlexb thv_Rm,thv_Rt,[thv_Rn]        is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1100
+	& ItCond & thv_Rm & thv_Rt & thv_Rn {
+	build ItCond;
+	*:1 thv_Rn = thv_Rt[0,8];
+	thv_Rm = 0;
+}
 
 # F5.1.221 p7651 STLEXD
-:stlexd^COND Rd,Rm,Rm2,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1a & Rn & Rd & c0411=0xe9 & Rm & Rm2
-	{
-		build COND;
+:stlexd^COND Rd,Rm,Rm2,[Rn]           is TMode=0 & ARMcond=1 & COND & c2027=0x1a & Rn & Rd & c0411=0xe9 & Rm & Rm2 {
+	build COND;
 @if ENDIAN == "big"
-		*Rn = Rm;
-		*(Rn + 4) = Rm2;
-@else	# ENDIAN == "little"
-		*Rn = Rm2;
-		*(Rn + 4) = Rm;
-@endif	# ENDIAN == "little"
-		Rd = 0;
-	}
+	*Rn = Rm;
+	*(Rn + 4) = Rm2;
+@else # ENDIAN == "little"
+	*Rn = Rm2;
+	*(Rn + 4) = Rm;
+@endif # ENDIAN == "little"
+	Rd = 0;
+}
 
 # F5.1.221 p7651 STLEXD
-:stlexd thv_Rm,thv_Rt,thv_Rt2,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1111
-	& ItCond & thv_Rm & thv_Rt & thv_Rt2 & thv_Rn
-	{
-		build ItCond;
+:stlexd thv_Rm,thv_Rt,thv_Rt2,[thv_Rn] is TMode=1 & ItCond & thv_c2031=0b111010001100 & thv_c0407=0b1111 & thv_Rm & thv_Rt & thv_Rt2 & thv_Rn {
+	build ItCond;
 @if ENDIAN == "big"
-		*thv_Rn = thv_Rt;
-		*(thv_Rn + 4) = thv_Rt2;
-@else	# ENDIAN == "little"
-		*thv_Rn = thv_Rt2;
-		*(thv_Rn + 4) = thv_Rt;
-@endif	# ENDIAN == "little"
-		thv_Rm = 0;
-	}
+	*thv_Rn = thv_Rt;
+	*(thv_Rn + 4) = thv_Rt2;
+@else # ENDIAN == "little"
+	*thv_Rn = thv_Rt2;
+	*(thv_Rn + 4) = thv_Rt;
+@endif # ENDIAN == "little"
+	thv_Rm = 0;
+}
 
 # F5.1.222 p7654 STLEXH
-:stlexh^COND Rd,Rm,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1e & Rn & Rd & c0411=0xe9 & Rm
-	{
-		build COND;
-		*:2 Rn = Rm[0,16];
-		Rd = 0;
-	}
+:stlexh^COND Rd,Rm,[Rn]               is TMode=0 & ARMcond=1 & COND & c2027=0x1e & Rn & Rd & c0411=0xe9 & Rm {
+	build COND;
+	*:2 Rn = Rm[0,16];
+	Rd = 0;
+}
 
 # F5.1.222 p7654 STLEXH
-:stlexh thv_Rm,thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1101
-	& ItCond & thv_Rm & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		*:2 thv_Rn = thv_Rt[0,16];
-		thv_Rm = 0;
-	}
+:stlexh thv_Rm,thv_Rt,[thv_Rn]        is TMode=1 & ItCond & thv_c2031=0b111010001100 & thv_c0407=0b1101 & thv_Rm & thv_Rt & thv_Rn {
+	build ItCond;
+	*:2 thv_Rn = thv_Rt[0,16];
+	thv_Rm = 0;
+}
 
 # F5.1.223 p7657 STLH
-:stlh^COND Rm,[Rn]
-	is TMode=0 & ARMcond=1 & COND & c2027=0x1e & Rn & c0415=0xfc9 & Rm
-	{
-		build COND;
-		*:2 Rn = Rm[0,16];
-	}
+:stlh^COND Rm,[Rn]                    is TMode=0 & ARMcond=1 & COND & c2027=0x1e & Rn & c0415=0xfc9 & Rm {
+	build COND;
+	*:2 Rn = Rm[0,16];
+}
 
 # F5.1.223 p7657 STLH
-:stlh thv_Rt,[thv_Rn]
-	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1001
-	& ItCond & thv_Rt & thv_Rn
-	{
-		build ItCond;
-		*:2 thv_Rn = thv_Rt[0,16];
-	}
+:stlh thv_Rt,[thv_Rn]                 is TMode=1 & ItCond & thv_c2031=0b111010001100 & thv_c0407=0b1001 & thv_Rt & thv_Rn {
+	build ItCond;
+	*:2 thv_Rn = thv_Rt[0,16];
+}
 
-@ifdef INCLUDE_NEON
+@if defined(VERSION_8M)
+:uqrshr^ItCond thv_Rn, thv_Rt is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_Rn & thv_Rt & thv_c0811=0xf & thv_c0407=0 & thv_c0003=0xd {
+	build ItCond;
+	local amount = thv_Rt[0,8];
+	local left = amount s< 0;
+	local sum = thv_Rn;
+	sum = (zext(left) * (1 >> (amount-1))) + (zext(!left) * (1 << (amount-1)));
+	sum = (zext(left) * (1 << amount)) + (zext(!left) * (1 >> amount));
+	thv_Rn = UnsignedSaturate(sum,32:2);
+}
+
+:uqrshrl^ItCond thv_RdaLo, thv_RdaHi, qSat, thv_Rt is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_RdaLo & thv_c1616=1 & thv_RdaHi & thv_c0808=1 & thv_Rt & qSat & thv_c0406=0 & thv_c0003=0xd {
+	build ItCond;
+	local amount = thv_Rt[0,8];
+	local left = amount s< 0;
+	local sum:8 = zext(thv_RdaHi) << 32 | zext(thv_RdaLo);
+	sum = (zext(left) * (1 >> (amount-1))) + (zext(!left) * (1 << (amount-1)));
+	sum = (zext(left) * (1 << amount)) + (zext(!left) * (1 >> amount));
+	sum = UnsignedSaturate(sum,qSat);
+	thv_RdaLo = sum[0,32];
+	thv_RdaHi = sum[32,32];
+}
+
+:uqshl^ItCond thv_Rn, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_Rn & qShift & thv_c1515=0 & thv_c0811=0xf & thv_c0405=0 & thv_c0003=0xf {
+	local amount = qShift;
+	local result = thv_Rn << amount;
+	thv_Rn = UnsignedSaturate(result,32:2);
+}
+
+:uqshll^ItCond thv_RdaLo, thv_RdaHi, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_RdaLo & thv_c1616=1 & thv_RdaHi & thv_c0808=1 & thv_c1515=0 & qShift & thv_c0405=0 & thv_c0003=0xf {
+	build ItCond;
+	local amount = qShift;
+	local result:8 = zext(thv_RdaHi) << 32 | zext(thv_RdaLo);
+	result = result << amount;
+	result = UnsignedSaturate(result,64:2);
+	thv_RdaLo = result[0,32];
+	thv_RdaHi = result[32,32];
+}
+
+
+:uqshr^ItCond thv_Rn, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_Rn & qShift & thv_c1515=0 & thv_c0811=0xf & thv_c0405=1 & thv_c0003=0xf {
+	build ItCond;
+	local amount = qShift;
+	local result = thv_Rn << (amount-1);
+	result = result >> amount;
+	thv_Rn = UnsignedSaturate(result,32:2);
+}
+
+:uqshrl^ItCond thv_RdaLo, thv_RdaHi, qShift is $(TMODE_E) & ItCond & thv_c2427=0xa & thv_c2023=0x5 & thv_RdaLo & thv_c1616=1 & thv_RdaHi & thv_c0808=1 & thv_c1515=0 & qShift & thv_c0405=1 & thv_c0003=0xf {
+	build ItCond;
+	local amount = qShift;
+	local result:8 = zext(thv_RdaHi) << 32 | zext(thv_RdaLo);
+	result = result >> amount;
+	result = UnsignedSaturate(result,64:2);
+	thv_RdaLo = result[0,32];
+	thv_RdaHi = result[32,32];
+}
+
+@endif #VERSION_8M
+
+
 
 # Advanced SIMD support / NEON in ARMv8
 
@@ -367,13 +846,6 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 
 
 
-# FixedToFP(fp, M, N, fbits, unsigned, rounding)
-# 	Convert M-bit fixed point with fbits fractional bits to N-bit
-# 	floating point, controlled by unsigned flag and rounding. Can
-# 	also be used with packed "SIMD" floats.
-
-define pcodeop FixedToFP;
-
 # FPConvert(fp, M, N [, rounding])
 # 	Convert floating point between from M-bit to N-bit precision.
 # 	Can also be used with packed "SIMD" floats. Sometimes
@@ -395,13 +867,6 @@ define pcodeop FPConvert;
 
 define pcodeop FPConvertInexact;
 
-# FPToFixed(fp, M, N, fbits, unsigned, rounding)
-# 	Convert M-bit floating point to N-bit fixed point with fbits
-# 	fractional bits, controlled by unsigned flag and rounding.
-# 	between different precisions. Can also be used with packed
-# 	"SIMD" floats.
-
-define pcodeop FPToFixed;
 
 # FPRoundInt(fp, N, rounding, exact)
 #	Round fp to nearest integral floating point, controlled by
@@ -414,744 +879,1597 @@ define pcodeop FPRoundInt;
 
 define pcodeop PolynomialMult;
 
+@if defined(VERSION_8M)
+# (DDI0553B) C2.4.295 p. 1013 VABAV
+define pcodeop VectorAbsoluteDifferenceAndAccumulateAcrossVector;
+:vabav.^udt^esize2021 cor_Qn0, cor_Qm0  is $(TMODE_EorF) & udt & thv_c2427=0xe & thv_c2223=2 & esize2021 & thv_c1616=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=1 & thv_Rd & cor_Qn0 & cor_Qm0 {
+	thv_Rd = VectorAbsoluteDifferenceAndAccumulateAcrossVector(thv_Rd, cor_Qn0, cor_Qm0, esize2021, udt);
+}
+
+carryInit1212: ""   is thv_c1212=0 { tmp:1 = $(FPSCR_C); export *[const]:1 tmp; }
+carryInit1212: "i"  is thv_c1212=1 { tmp:1 = 1; export *[const]:1 tmp; }
+
+# (DDI0553B) C2.4.301 p. 1025 VADC
+define pcodeop WholeVectorAddWithCarry;
+:vadc^carryInit1212^".i32" cor_Qd, cor_Qn, cor_Qm  is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=0 & carryInit1212 & cor_Qd & cor_Qn & cor_Qm {
+	cor_Qd = WholeVectorAddWithCarry(cor_Qn, cor_Qm, carryInit1212);
+}
+
+fesize2828: "f16" 	is TMode=1 & thv_c2828=1	{ export 4:4; }
+fesize2828: "f32" 	is TMode=1 & thv_c2828=0	{ export 2:4; }
+
+# (DDI0553B) C2.4.303 T2 p. 1029 VADD (floating-point)
+:vadd.^fesize2828 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=0 & thv_c1212=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=0 & fesize2828 & cor_Qn & cor_Qd & thv_Rm
+{
+	cor_Qd = FloatVectorAdd(cor_Qn,thv_Rm,fesize2828);
+}
+
+# (DDI0553B) C2.4.304 p. 1031 VADD (vector) T2
+:vadd.i^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=0 & esize2021 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorAdd(cor_Qn,thv_Rm,esize2021);
+}
 
 
+
+# (DDI0553B) C2.4.305 p. 1033 VADDLV
+define pcodeop VectorAddLongAcrossVector;
+:vaddvl^accum0505^"."^udt^"32" thv_RdaLo,thv_RdaHi,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c1619=9 & thv_c1212=0 & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & udt & thv_RdaLo & thv_RdaHi & cor_Qm {
+	local result:8 = VectorAddLongAcrossVector(cor_Qm, thv_RdaLo, thv_RdaHi, accum0505, udt);
+	thv_RdaLo = result(0);
+	thv_RdaHi = result(4);
+}
+
+# (DDI0553B) C2.4.306 p. 1035 VADDV
+define pcodeop VectorAddAcrossVector;
+:vaddvl^accum0505^"."^udt^esize1819 thv_RdaLo,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c2022=7 & thv_c1617=1 & thv_c1212=0 & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & udt & esize1819 & thv_RdaLo & cor_Qm {
+	local result:4 = VectorAddAcrossVector(cor_Qm, thv_RdaLo, accum0505, udt, esize1819);
+	thv_RdaLo = result(0);
+}
+
+# (DDI0553B) C2.4.311 p. 1044 VBRSR
+define pcodeop VectorBitReverseAndShiftRight;
+:vbsr.^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=1 & thv_c0811=0xe & thv_Q6=1 & thv_c0405=2 & esize2021 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorBitReverseAndShiftRight(cor_Qn,thv_Rm,esize2021);
+}
+
+crot1212: "#"^90  is thv_c1212=0 { local tmp:4 = 90;  export tmp; }
+crot1212: "#"^270 is TMode=1 & thv_c1212=1 { local tmp:4 = 270; export tmp; }
+
+# (DDI0553B) C2.4.312 p. 1046 VCADD
+define pcodeop VectorComplexAdd;
+:vcadd.i^esize2021 cor_Qd,cor_Qn,cor_Qm,crot1212  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & crot1212 & esize2021 & cor_Qm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorComplexAdd(cor_Qn,cor_Qm,crot1212,esize2021);
+}
+# (DDI0553B) C2.4.318 p. 1060 VCMP (floating-point)
+define pcodeop FloatVectorCompareByLane; # FloatVectorCompareByLane(param1, param2, conditional)
+:vcmp.^fesize2828 VP_fc000712,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=3 & thv_c1616=1 & thv_c1315=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & fesize2828 & VP_fc000712 & cor_Qn & cor_Qm {
+	$(VPR_P0) = FloatVectorCompareByLane(cor_Qn, cor_Qm, VP_fc000712);
+}
+
+:vcmp.^fesize2828 VP_fc050712,cor_Qn,thv_Rm is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=3 & thv_c1616=1 & thv_c1315=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0404=0 & fesize2828 & VP_fc050712 & cor_Qn & thv_Rm {
+	$(VPR_P0) = FloatVectorCompareByLane(cor_Qn, thv_Rm, VP_fc050712);
+}
+
+
+# (DDI0553B) C2.4.319 p. 1062 VCMP (vector)
+define pcodeop VectorCompareByLane; # VectorCompareByLane(param1, param2, mask, withScalar, elementType, size, conditional)
+# T1
+:vcmp.i^esize2021 VP_fc000712,cor_Qn,cor_Qm is $(TMODE_F) & thv_c2427=0xe & thv_c2223=0 & thv_c1616=1 & thv_c1215=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & esize2021 & VP_fc000712 & cor_Qn & cor_Qm {
+	$(VPR_P0) = VectorCompareByLane(cor_Qn, cor_Qm, 0:1, 0:1, VP_fc000712);
+}
+
+# T2
+:vcmp.uesize2021 VP_fc000712,cor_Qn,cor_Qm is $(TMODE_F) & thv_c2427=0xe & thv_c2223=0 & thv_c1616=1 & thv_c1215=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=1 & esize2021 & VP_fc000712 & cor_Qn & cor_Qm {
+	$(VPR_P0) = VectorCompareByLane(cor_Qn, cor_Qm, 0:1, 1:1, VP_fc000712);
+}
+
+# T3
+:vcmp.s^esize2021 VP_fc000712,cor_Qn,cor_Qm is $(TMODE_F) & thv_c2427=0xe & thv_c2223=0 & thv_c1616=1 & thv_c1215=1 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & esize2021 & VP_fc000712 & cor_Qn & cor_Qm {
+	$(VPR_P0) = VectorCompareByLane(cor_Qn, cor_Qm, 0:1, 2:1, VP_fc000712);
+}
+
+# T4
+:vcmp.i^esize2021 VP_fc050712,cor_Qn,thv_Rm is $(TMODE_F) & thv_c2427=0xe & thv_c2023=0 & thv_c1616=1 & thv_c1215=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=0 & esize2021 & VP_fc050712 & cor_Qn & thv_Rm {
+	$(VPR_P0) = VectorCompareByLane(cor_Qn, thv_Rm, 1:1, 0:1, VP_fc050712);
+}
+
+# T5
+:vcmp.u^esize2021 VP_fc050712,cor_Qn,thv_Rm is $(TMODE_F) & thv_c2427=0xe & thv_c2023=0 & thv_c1616=1 & thv_c1215=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=1 & esize2021 & VP_fc050712 & cor_Qn & thv_Rm {
+	$(VPR_P0) = VectorCompareByLane(cor_Qn, thv_Rm, 1:1, 1:1, VP_fc050712);
+}
+
+# T6
+:vcmp.s^esize2021 VP_fc050712,cor_Qn,thv_Rm is $(TMODE_F) & thv_c2427=0xe & thv_c2023=0 & thv_c1616=1 & thv_c1215=1 & thv_c0811=0xf & thv_Q6=1 & thv_c0404=0 & esize2021 & VP_fc050712 & cor_Qn & thv_Rm {
+	$(VPR_P0) = VectorCompareByLane(cor_Qn, thv_Rm, 1:1, 2:1, VP_fc050712);
+}
+
+
+
+
+# (DDI0553B) C2.4.321 p. 1070 VCMUL (floating-point)
+define pcodeop FloatVectorComplexMultiply;
+:vcmul.^fesize2828 cor_Qd,cor_Qn,cor_Qm,crot0012 is $(TMODE_EorF) & thv_c2327=0x1e & thv_c2021=3 & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0 & fesize2828 & crot0012 & cor_Qd & cor_Qn & cor_Qm {
+	cor_Qd = FloatVectorComplexMultiply(cor_Qn, cor_Qm, crot0012, fesize2828);
+}
+# (DDI0553B) C2.4.322 p. 1073 VCTP
+define pcodeop CreateTailPredicate;
+:vctp.^esize2021 thv_Rn is $(TMODE_F) & thv_c2427=0 & thv_c2223=0 & thv_c1215=0xe & thv_c0811=8 & thv_c0407=0 & thv_c0003=1 & esize2021 & thv_Rn {
+	$(VPR_P0) = CreateTailPredicate(thv_Rn,esize2021);
+}
+
+bort1212: "b"  is TMode=1 & thv_c1212=1	{ local tmp:1 = 0; export *[const]:1 tmp; }
+bort1212: "t"  is TMode=1 & thv_c1212=0	{ local tmp:1 = 1; export *[const]:1 tmp; }
+
+# (DDI0553B) C2.4.327 p. 1082 VCVT (between single and half-precision floating-point)
+define pcodeop FloatVectorConvertSingleToHalf;
+define pcodeop FloatVectorConvertHalfToSingle;
+:vcvt^bort1212^".f16.f32" cor_Qd,cor_Qm is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=0x3 & thv_c1619=0xf & thv_c0811=0xe & thv_c0607=0 & thv_c0404=0 & thv_c0000=1 & bort1212 & cor_Qd & cor_Qm {
+	cor_Qd = FloatVectorConvertSingleToHalf(cor_Qd, cor_Qm, bort1212);
+}
+
+:vcvt^bort1212^".f32.f16" cor_Qd,cor_Qm is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=0x3 & thv_c1619=0xf & thv_c0811=0xe & thv_c0607=0 & thv_c0404=0 & thv_c0000=1 & bort1212 & cor_Qd & cor_Qm {
+	cor_Qd = FloatVectorConvertHalfToSingle(cor_Qm, bort1212);
+}
+
+@endif # VERSION_8M
 #######
 # The VCVT instructions are a large family for converting between
 # floating point numbers and integers, of all sizes and combinations
 
-# F6.1.58 p7998 A1 cases size = 10 (c0809)
-:vcvt^COND^".f64.f32"	Dd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11011 &     c1616=1 &     c1011=0b10 &     c0707=1 &     c0606=1 &     c0404=0 &     c0809=0b10)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11011 & thv_c1616=1 & thv_c1011=0b10 & thv_c0707=1 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
-	& COND & Dd & Sm
-	{ build COND; Dd = float2float(Sm); }
 
-# F6.1.58 p7998 A1 cases size = 11 (c0809)
-:vcvt^COND^".f32.f64"	Sd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11011 &     c1616=1 &     c1011=0b10 &     c0707=1 &     c0606=1 &     c0404=0 &     c0809=0b11)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11011 & thv_c1616=1 & thv_c1011=0b10 & thv_c0707=1 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
-	& COND & Sd & Dm
-	{ build COND; Sd = float2float(Dm); }
+vcvt_56_64_dt: ".f32.s32"  is ((TMode=0 &     c0708=0b00) | (TMode=1 & thv_c0708=0b00)) & Dd & Dm { Dd = FixedToFP(Dm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_56_64_dt: ".f32.u32"  is ((TMode=0 &     c0708=0b01) | (TMode=1 & thv_c0708=0b01)) & Dd & Dm { Dd = FixedToFP(Dm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_56_64_dt: ".s32.f32"  is ((TMode=0 &     c0708=0b10) | (TMode=1 & thv_c0708=0b10)) & Dd & Dm { Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_ZERO)); }
+vcvt_56_64_dt: ".u32.f32"  is ((TMode=0 &     c0708=0b11) | (TMode=1 & thv_c0708=0b11)) & Dd & Dm { Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_ZERO)); }
 
-# F6.1.59 p8000 A1 op == 1 (c0808)
-:vcvt.f32.f16	Qd,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=1)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b01 & thv_c1617=0b10 & thv_c0911=0b011 & thv_c0607=0b00 & thv_c0404=0 & thv_c0808=1))
-	& Qd & Dm
-	{ 
-		Qd = float2float(Dm:2);
-	}
-
-# F6.1.59 p8000 A1 op == 0 (c0808)
-:vcvt.f16.f32	Dd,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b01 & thv_c1617=0b10 & thv_c0911=0b011 & thv_c0607=0b00 & thv_c0404=0 & thv_c0808=0))
-	& Dd & Qm
-	{ Dd = float2float(Qm); }
-
-vcvt_56_64_dt: ".f32.s32"
-	is ((TMode=0 &     c0708=0b00)
-	|   (TMode=1 & thv_c0708=0b00))
-	& Dd & Dm
-	{ Dd = FixedToFP(Dm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_56_64_dt: ".f32.u32"
-	is ((TMode=0 &     c0708=0b01)
-	|   (TMode=1 & thv_c0708=0b01))
-	& Dd & Dm
-	{ Dd = FixedToFP(Dm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_56_64_dt: ".s32.f32"
-	is ((TMode=0 &     c0708=0b10)
-	|   (TMode=1 & thv_c0708=0b10))
-	& Dd & Dm
-	{ Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_ZERO)); }
-vcvt_56_64_dt: ".u32.f32"
-	is ((TMode=0 &     c0708=0b11)
-	  | (TMode=1 & thv_c0708=0b11))
-	& Dd & Dm
-	{ Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_ZERO)); }
-
-vcvt_56_128_dt: ".f32.s32"
-	is ((TMode=0 &     c0708=0b00)
-	  | (TMode=1 & thv_c0708=0b00))
-	& Qd & Qm
-	{ Qd = FixedToFP(Qm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_56_128_dt: ".f32.u32"
-	is ((TMode=0 &     c0708=0b01)
-	|   (TMode=1 & thv_c0708=0b01))
-	& Qd & Qm
-	{ Qd = FixedToFP(Qm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_56_128_dt: ".s32.f32"
-	is ((TMode=0 &     c0708=0b10)
-	|   (TMode=1 & thv_c0708=0b10))
-	& Qd & Qm
-	{ Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_ZERO)); }
-vcvt_56_128_dt: ".u32.f32"
-	is ((TMode=0 &     c0708=0b11)
-	|   (TMode=1 & thv_c0708=0b11))
-	& Qd & Qm
-	{ Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_ZERO)); }
+vcvt_56_128_dt: ".f32.s32"  is ((TMode=0 &     c0708=0b00) | (TMode=1 & thv_c0708=0b00)) & Qd & Qm { Qd = FixedToFP(Qm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_56_128_dt: ".f32.u32"  is ((TMode=0 &     c0708=0b01) | (TMode=1 & thv_c0708=0b01)) & Qd & Qm { Qd = FixedToFP(Qm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_56_128_dt: ".s32.f32"  is ((TMode=0 &     c0708=0b10) | (TMode=1 & thv_c0708=0b10)) & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 0:1, $(FPRounding_ZERO)); }
+vcvt_56_128_dt: ".u32.f32"  is ((TMode=0 &     c0708=0b11) | (TMode=1 & thv_c0708=0b11)) & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_ZERO)); }
 
 # F6.1.60 p8002 A1 Q == 0 (c0606)
-:vcvt^vcvt_56_64_dt	Dd,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=0)
+:vcvt^vcvt_56_64_dt	Dd,Dm             is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c0911=0b011 & thv_c0404=0 & thv_c0606=0))
 	& vcvt_56_64_dt & Dd & Dm
     { }
 
 # F6.1.60 p8002 A1 Q == 1 (c0606)
-:vcvt^vcvt_56_128_dt	Qd,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=1)
+:vcvt^vcvt_56_128_dt	Qd,Qm            is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c0911=0b011 & thv_c0404=0 & thv_c0606=1))
 	& vcvt_56_128_dt & Qd & Qm
 	{ }
 
 # F6.1.61 p8005 A1 opc2==100 && size==10 (c1618, c0809)
-:vcvt^COND^".u32.f32"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b10)
+:vcvt^COND^".u32.f32"	Sd,Sm           is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b10))
 	& COND & Sd & Sm
 	{ build COND; Sd = zext(Sm f> 0) * (trunc(Sm)); }
 
 # F6.1.61 p8005 A1 opc2==101 && size==10 (c1618, c0809)
-:vcvt^COND^".s32.f32"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
+:vcvt^COND^".s32.f32"	Sd,Sm           is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b10))
 	& COND & Sd & Sm
 	{ build COND; Sd = trunc(Sm);  }
 
 # F6.1.61 p8005 A1 opc2==100 && size==11 (c1618, c0809)
-:vcvt^COND^".u32.f64"	Sd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b11)
+:vcvt^COND^".u32.f64"	Sd,Dm           is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b11))
 	& COND & Sd & Dm
 	{ build COND; local tmp:8 = zext(Dm f> 0) * (trunc(Dm)); Sd = tmp:4; }
 
 # F6.1.61 p8005 A1 opc2==101 && size==11 (c1618, c0809)
-:vcvt^COND^".s32.f64"	Sd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
+:vcvt^COND^".s32.f64"	Sd,Dm           is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b11))
 	& COND & Sd & Dm
 	{ build COND; local tmp:8 = trunc(Dm); Sd = tmp:4; }
 
 # The rounding mode depends on c0707=0 => FPSCR else ZERO
-
-vcvt_58_3232_dt: ".f32.u32"
-	is ((TMode=0 &     c0708=0b00)
+vcvt_58_3232_dt: ".f32.u32"  is ((TMode=0 &     c0708=0b00)
 	|   (TMode=1 & thv_c0708=0b00))
-	& Sd & Sm
-	{ local tmp:8 = zext(Sm); Sd = int2float(tmp); }
-vcvt_58_3232_dt: ".f32.s32"
-	is ((TMode=0 &     c0708=0b01)
+	& Sd & Sm { local tmp:8 = zext(Sm); Sd = int2float(tmp); }
+vcvt_58_3232_dt: ".f32.s32"  is ((TMode=0 &     c0708=0b01)
 	|   (TMode=1 & thv_c0708=0b01))
-	& Sd & Sm
-	{ local tmp:8 = sext(Sm); Sd = int2float(tmp); }
+	& Sd & Sm { local tmp:8 = sext(Sm); Sd = int2float(tmp); }
 
-vcvt_58_6432_dt: ".f64.u32"
-	is ((TMode=0 &     c0708=0b10)
+vcvt_58_6432_dt: ".f64.u32"  is ((TMode=0 &     c0708=0b10)
 	|   (TMode=1 & thv_c0708=0b10))
-	& Dd & Sm
-	{ local tmp:8 = zext(Sm); Dd = int2float(tmp); }
-vcvt_58_6432_dt: ".f64.s32"
-	is ((TMode=0 &     c0708=0b11)
+	& Dd & Sm { local tmp:8 = zext(Sm); Dd = int2float(tmp); }
+vcvt_58_6432_dt: ".f64.s32"  is ((TMode=0 &     c0708=0b11)
 	|   (TMode=1 & thv_c0708=0b11))
-	& Dd & Sm
-	{ local tmp:8 = sext(Sm); Dd = int2float(tmp); }
+	& Dd & Sm { local tmp:8 = sext(Sm); Dd = int2float(tmp); }
 
 # F6.1.62 p8009 A1 size == 10 (c0809)
-:vcvt^COND^vcvt_58_3232_dt	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11100 &     c1616=0 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
+:vcvt^COND^vcvt_58_3232_dt	Sd,Sm      is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11100 &     c1616=0 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11100 & thv_c1616=0 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& COND & vcvt_58_3232_dt & Sd & Sm
 	{ build COND; build vcvt_58_3232_dt; }
 
 # F6.1.62 p8009 A1 size == 11 (c0809)
-:vcvt^COND^vcvt_58_6432_dt	Dd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11100 &     c1616=0 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
+:vcvt^COND^vcvt_58_6432_dt	Dd,Sm      is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11100 &     c1616=0 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11100 & thv_c1616=0 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
 	& COND & vcvt_58_6432_dt & Dd & Sm
 	{ build COND; build vcvt_58_6432_dt; }
 
-vcvt_59_fbits_built: fbits is TMode=0 &     c1621 [ fbits = 64 -     c1621; ] { export * [const]:1 fbits; }
-vcvt_59_fbits_built: fbits is TMode=1 & thv_c1621 [ fbits = 64 - thv_c1621; ] { export * [const]:1 fbits; }
-vcvt_59_fbits:   "#"^fbits is TMode=0 &     c1621 [ fbits = 64 -     c1621; ] { }
-vcvt_59_fbits:   "#"^fbits is TMode=1 & thv_c1621 [ fbits = 64 - thv_c1621; ] { }
+vcvt_59_fbits_built: fbits  is TMode=0 &     c1621 [ fbits = 64 -     c1621; ] { export * [const]:1 fbits; }
+vcvt_59_fbits_built: fbits  is TMode=1 & thv_c1621 [ fbits = 64 - thv_c1621; ] { export * [const]:1 fbits; }
 
-vcvt_59_32_dt: ".f32.s32"
-	is ((TMode=0 &     c0809=2 &     c2424=0)
+vcvt_59_fbits:   "#"^fbits  is TMode=0 &     c1621 [ fbits = 64 -     c1621; ] { }
+vcvt_59_fbits:   "#"^fbits  is TMode=1 & thv_c1621 [ fbits = 64 - thv_c1621; ] { }
+
+vcvt_59_32_dt: ".f32.s32"  is ((TMode=0 &     c0809=2 &     c2424=0)
 	|   (TMode=1 & thv_c0809=2 & thv_c2828=0))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_32_dt: ".f32.u32"
-	is ((TMode=0 &     c0809=2 &     c2424=1)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_32_dt: ".f32.u32"  is ((TMode=0 &     c0809=2 &     c2424=1)
 	|   (TMode=1 & thv_c0809=2 & thv_c2828=1))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_32_dt: ".s32.f32"
-	is ((TMode=0 &     c0809=3 &     c2424=0)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_32_dt: ".s32.f32"  is ((TMode=0 &     c0809=3 &     c2424=0)
 	|   (TMode=1 & thv_c0809=3 & thv_c2828=0))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_59_32_dt: ".u32.f32"
-	is ((TMode=0 &     c0809=3 &     c2424=1)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_59_32_dt: ".u32.f32"  is ((TMode=0 &     c0809=3 &     c2424=1)
 	|   (TMode=1 & thv_c0809=3 & thv_c2828=1))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
-vcvt_59_32_dt: ".f16.s16"
-	is ((TMode=0 &     c0809=0 &     c2424=0)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
+vcvt_59_32_dt: ".f16.s16"  is ((TMode=0 &     c0809=0 &     c2424=0)
 	|   (TMode=1 & thv_c0809=0 & thv_c2828=0))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_32_dt: ".f16.u16"
-	is ((TMode=0 &     c0809=0 &     c2424=1)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_32_dt: ".f16.u16"  is ((TMode=0 &     c0809=0 &     c2424=1)
 	|   (TMode=1 & thv_c0809=0 & thv_c2828=1))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_32_dt: ".s16.f16"
-	is ((TMode=0 &     c0809=1 &     c2424=0)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_32_dt: ".s16.f16"  is ((TMode=0 &     c0809=1 &     c2424=0)
 	|   (TMode=1 & thv_c0809=1 & thv_c2828=0))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_59_32_dt: ".u16.f16"
-	is ((TMode=0 &     c0809=1 &     c2424=1)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_59_32_dt: ".u16.f16"  is ((TMode=0 &     c0809=1 &     c2424=1)
 	|   (TMode=1 & thv_c0809=1 & thv_c2828=1))
-	& Dd & Dm & vcvt_59_fbits_built
-	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
-	
-vcvt_59_64_dt: ".f32.s32"
-	is ((TMode=0 &     c0809=2 &     c2424=0)
+	& Dd & Dm & vcvt_59_fbits_built { Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
+
+vcvt_59_64_dt: ".f32.s32"  is ((TMode=0 &     c0809=2 &     c2424=0)
 	|   (TMode=1 & thv_c0809=2 & thv_c2828=0))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_64_dt: ".f32.u32"
-	is ((TMode=0 &     c0809=2 &     c2424=1)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_64_dt: ".f32.u32"  is ((TMode=0 &     c0809=2 &     c2424=1)
 	|   (TMode=1 & thv_c0809=2 & thv_c2828=1))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_64_dt: ".s32.f32"
-	is ((TMode=0 &     c0809=3 &     c2424=0)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_64_dt: ".s32.f32"  is ((TMode=0 &     c0809=3 &     c2424=0)
 	|   (TMode=1 & thv_c0809=3 & thv_c2828=0))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_59_64_dt: ".u32.f32"
-	is ((TMode=0 &     c0809=3 &     c2424=1)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_59_64_dt: ".u32.f32"  is ((TMode=0 &     c0809=3 &     c2424=1)
 	|   (TMode=1 & thv_c0809=3 & thv_c2828=1))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
-vcvt_59_64_dt: ".f16.s16"
-	is ((TMode=0 &     c0809=0 &     c2424=0)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
+vcvt_59_64_dt: ".f16.s16"  is ((TMode=0 &     c0809=0 &     c2424=0)
 	|   (TMode=1 & thv_c0809=0 & thv_c2828=0))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_64_dt: ".f16.u16"
-	is ((TMode=0 &     c0809=0 &     c2424=1)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_64_dt: ".f16.u16"  is ((TMode=0 &     c0809=0 &     c2424=1)
 	|   (TMode=1 & thv_c0809=0 & thv_c2828=1))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_59_64_dt: ".s16.f16"
-	is ((TMode=0 &     c0809=1 &     c2424=0)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_64_dt: ".s16.f16"  is ((TMode=0 &     c0809=1 &     c2424=0)
 	|   (TMode=1 & thv_c0809=1 & thv_c2828=0))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_59_64_dt: ".u16.f16"
-	is ((TMode=0 &     c0809=1 &     c2424=1)
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_59_64_dt: ".u16.f16"  is ((TMode=0 &     c0809=1 &     c2424=1)
 	|   (TMode=1 & thv_c0809=1 & thv_c2828=1))
-	& Qd & Qm & vcvt_59_fbits_built
-	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
+	& Qd & Qm & vcvt_59_fbits_built { Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
 
 # Should add rounding here, if dt2 is s32 or u32 then rounding is
 # FPRounding_ZERO otherwise FPROunding_TIEEVEN
-
 # F6.1.63 p8012 A1 Q = 0 (c0606)
-:vcvt^vcvt_59_32_dt	Dd,Dm,vcvt_59_fbits
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=0)
+:vcvt^vcvt_59_32_dt	Dd,Dm,vcvt_59_fbits  is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c1011=0b11 & thv_c0707=0 & thv_c0404=1 & thv_c0606=0))
 	& vcvt_59_32_dt & vcvt_59_fbits & Dd & Dm
     { }	
 
 # F6.1.63 p8012 A1 Q = 1 (c0606)
-:vcvt^vcvt_59_64_dt	Qd,Qm,vcvt_59_fbits
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=1)
+:vcvt^vcvt_59_64_dt	Qd,Qm,vcvt_59_fbits  is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c1011=0b11 & thv_c0707=0 & thv_c0404=1 & thv_c0606=1))
 	& vcvt_59_64_dt & vcvt_59_fbits & Qd & Qm
 	{ }
 
-vcvt_60_fbits_built: fbits is TMode=0 &     c0707=0 &     c0505 &     c0003 [fbits = 16 - (    c0003 * 2 +     c0505); ] { export * [const]:1 fbits; }
-vcvt_60_fbits_built: fbits is TMode=1 & thv_c0707=0 & thv_c0505 & thv_c0003 [fbits = 16 - (thv_c0003 * 2 + thv_c0505); ] { export * [const]:1 fbits; }
-vcvt_60_fbits_built: fbits is TMode=0 &     c0707=1 &     c0505 &     c0003 [fbits = 32 - (    c0003 * 2 +     c0505); ] { export * [const]:1 fbits; }
-vcvt_60_fbits_built: fbits is TMode=1 & thv_c0707=1 & thv_c0505 & thv_c0003 [fbits = 32 - (thv_c0003 * 2 + thv_c0505); ] { export * [const]:1 fbits; }
-vcvt_60_fbits:   "#"^fbits is TMode=0 &     c0707=0 &     c0505 &     c0003 [fbits = 16 - (    c0003 * 2 +     c0505); ] { }
-vcvt_60_fbits:   "#"^fbits is TMode=1 & thv_c0707=0 & thv_c0505 & thv_c0003 [fbits = 16 - (thv_c0003 * 2 + thv_c0505); ] { }
-vcvt_60_fbits:   "#"^fbits is TMode=0 &     c0707=1 &     c0505 &     c0003 [fbits = 32 - (    c0003 * 2 +     c0505); ] { }
-vcvt_60_fbits:   "#"^fbits is TMode=1 & thv_c0707=1 & thv_c0505 & thv_c0003 [fbits = 32 - (thv_c0003 * 2 + thv_c0505); ] { }
+vcvt_60_fbits_built: fbits  is TMode=0 &     c0707=0 &     c0505 &     c0003 [fbits = 16 - (    c0003 * 2 +     c0505); ] { export * [const]:1 fbits; }
+vcvt_60_fbits_built: fbits  is TMode=1 & thv_c0707=0 & thv_c0505 & thv_c0003 [fbits = 16 - (thv_c0003 * 2 + thv_c0505); ] { export * [const]:1 fbits; }
+vcvt_60_fbits_built: fbits  is TMode=0 &     c0707=1 &     c0505 &     c0003 [fbits = 32 - (    c0003 * 2 +     c0505); ] { export * [const]:1 fbits; }
+vcvt_60_fbits_built: fbits  is TMode=1 & thv_c0707=1 & thv_c0505 & thv_c0003 [fbits = 32 - (thv_c0003 * 2 + thv_c0505); ] { export * [const]:1 fbits; }
 
-vcvt_60_32_dt: ".f32.s16"
-	is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b10 &     c0707=0)
+vcvt_60_fbits:   "#"^fbits  is TMode=0 &     c0707=0 &     c0505 &     c0003 [fbits = 16 - (    c0003 * 2 +     c0505); ] { }
+vcvt_60_fbits:   "#"^fbits  is TMode=1 & thv_c0707=0 & thv_c0505 & thv_c0003 [fbits = 16 - (thv_c0003 * 2 + thv_c0505); ] { }
+vcvt_60_fbits:   "#"^fbits  is TMode=0 &     c0707=1 &     c0505 &     c0003 [fbits = 32 - (    c0003 * 2 +     c0505); ] { }
+vcvt_60_fbits:   "#"^fbits  is TMode=1 & thv_c0707=1 & thv_c0505 & thv_c0003 [fbits = 32 - (thv_c0003 * 2 + thv_c0505); ] { }
+
+vcvt_60_32_dt: ".f32.s16"  is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b10 &     c0707=0)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=0 & thv_c0809=0b10 & thv_c0707=0))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FixedToFP(Sd2, 16:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_32_dt: ".f32.s32"
-	is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b10 &     c0707=1)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FixedToFP(Sd2, 16:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_32_dt: ".f32.s32"  is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b10 &     c0707=1)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=0 & thv_c0809=0b10 & thv_c0707=1))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FixedToFP(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_32_dt: ".f32.u16"
-	is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b10 &     c0707=0)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FixedToFP(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_32_dt: ".f32.u16"  is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b10 &     c0707=0)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=1 & thv_c0809=0b10 & thv_c0707=0))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FixedToFP(Sd2, 16:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_32_dt: ".f32.u32"
-	is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b10 &     c0707=1)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FixedToFP(Sd2, 16:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_32_dt: ".f32.u32"  is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b10 &     c0707=1)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=1 & thv_c0809=0b10 & thv_c0707=1))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FixedToFP(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_32_dt: ".s16.f32"
-	is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b10 &     c0707=0)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FixedToFP(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_32_dt: ".s16.f32"  is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b10 &     c0707=0)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=0 & thv_c0809=0b10 & thv_c0707=0))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FPToFixed(Sd2, 32:1, 16:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_60_32_dt: ".s32.f32"
-	is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b10 &     c0707=1)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FPToFixed(Sd2, 32:1, 16:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_60_32_dt: ".s32.f32"  is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b10 &     c0707=1)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=0 & thv_c0809=0b10 & thv_c0707=1))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FPToFixed(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_60_32_dt: ".u16.f32"
-	is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b10 &     c0707=0)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FPToFixed(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_60_32_dt: ".u16.f32"  is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b10 &     c0707=0)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=1 & thv_c0809=0b10 & thv_c0707=0))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FPToFixed(Sd2, 32:1, 16:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
-vcvt_60_32_dt: ".u32.f32"
-	is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b10 &     c0707=1)
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FPToFixed(Sd2, 32:1, 16:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
+vcvt_60_32_dt: ".u32.f32"  is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b10 &     c0707=1)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=1 & thv_c0809=0b10 & thv_c0707=1))
-	& Sd & Sd2 & vcvt_60_fbits_built
-	{ Sd = FPToFixed(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
+	& Sd & Sd2 & vcvt_60_fbits_built { Sd = FPToFixed(Sd2, 32:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
 
-vcvt_60_64_dt: ".f64.s16"
-	is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b11 &     c0707=0)
+vcvt_60_64_dt: ".f64.s16"  is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b11 &     c0707=0)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=0 & thv_c0809=0b11 & thv_c0707=0))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FixedToFP(Dd2, 16:1, 64:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_64_dt: ".f64.s32"
-	is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b11 &     c0707=1)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FixedToFP(Dd2, 16:1, 64:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_64_dt: ".f64.s32"  is ((TMode=0 &     c1818=0 &     c1616=0 &     c0809=0b11 &     c0707=1)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=0 & thv_c0809=0b11 & thv_c0707=1))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FixedToFP(Dd2, 32:1, 64:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_64_dt: ".f64.u16"
-	is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b11 &     c0707=0)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FixedToFP(Dd2, 32:1, 64:1, vcvt_60_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_64_dt: ".f64.u16"  is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b11 &     c0707=0)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=1 & thv_c0809=0b11 & thv_c0707=0))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FixedToFP(Dd2, 16:1, 64:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_64_dt: ".f64.u32"
-	is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b11 &     c0707=1)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FixedToFP(Dd2, 16:1, 64:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_64_dt: ".f64.u32"  is ((TMode=0 &     c1818=0 &     c1616=1 &     c0809=0b11 &     c0707=1)
 	|   (TMode=1 & thv_c1818=0 & thv_c1616=1 & thv_c0809=0b11 & thv_c0707=1))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FixedToFP(Dd2, 32:1, 64:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
-vcvt_60_64_dt: ".s16.f64"
-	is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b11 &     c0707=0)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FixedToFP(Dd2, 32:1, 64:1, vcvt_60_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_60_64_dt: ".s16.f64"  is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b11 &     c0707=0)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=0 & thv_c0809=0b11 & thv_c0707=0))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FPToFixed(Dd2, 64:1, 16:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_60_64_dt: ".s32.f64"
-	is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b11 &     c0707=1)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FPToFixed(Dd2, 64:1, 16:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_60_64_dt: ".s32.f64"  is ((TMode=0 &     c1818=1 &     c1616=0 &     c0809=0b11 &     c0707=1)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=0 & thv_c0809=0b11 & thv_c0707=1))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FPToFixed(Dd2, 64:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
-vcvt_60_64_dt: ".u16.f64"
-	is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b11 &     c0707=0)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FPToFixed(Dd2, 64:1, 32:1, vcvt_60_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_60_64_dt: ".u16.f64"  is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b11 &     c0707=0)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=1 & thv_c0809=0b11 & thv_c0707=0))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FPToFixed(Dd2, 64:1, 16:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
-vcvt_60_64_dt: ".u32.f64"
-	is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b11 &     c0707=1)
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FPToFixed(Dd2, 64:1, 16:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
+vcvt_60_64_dt: ".u32.f64"  is ((TMode=0 &     c1818=1 &     c1616=1 &     c0809=0b11 &     c0707=1)
 	|   (TMode=1 & thv_c1818=1 & thv_c1616=1 & thv_c0809=0b11 & thv_c0707=1))
-	& Dd & Dd2 & vcvt_60_fbits_built
-	{ Dd = FPToFixed(Dd2, 64:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
+	& Dd & Dd2 & vcvt_60_fbits_built { Dd = FPToFixed(Dd2, 64:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
 
 # F6.1.63 p8012 A1 op=0/1 sf=10 (c1818, c0809)
-:vcvt^COND^vcvt_60_32_dt	Sd,Sd2,vcvt_60_fbits
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1717=1 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c1818 &     c0809=0b10)
+:vcvt^COND^vcvt_60_32_dt	Sd,Sd2,vcvt_60_fbits  is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1717=1 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c1818 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1717=1 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c1818 & thv_c0809=0b10))
 	& COND & vcvt_60_fbits & vcvt_60_32_dt & Sd & Sd2
 	{ build COND; build vcvt_60_32_dt; }
 
 # F6.1.63 p8012 A1 op=0/1 sf=11 (c1818, c0809)
-:vcvt^COND^vcvt_60_64_dt	Dd,Dd2,vcvt_60_fbits
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1717=1 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c1818 &     c0809=0b11)
+:vcvt^COND^vcvt_60_64_dt	Dd,Dd2,vcvt_60_fbits  is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1717=1 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c1818 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1717=1 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c1818 & thv_c0809=0b11))
 	& COND & vcvt_60_fbits & vcvt_60_64_dt & Dd & Dd2
 	{ build COND; build vcvt_60_64_dt; }
 
-# vcvta, vcvtm, vcvtn, and vcvtp
-
-vcvt_amnp_simd_RM: "a"
-	is ((TMode=0 &     c0809=0b00)
-	|   (TMode=1 & thv_c0809=0b00))
-	{ export $(FPRounding_TIEAWAY); }
-vcvt_amnp_simd_RM: "n"
-	is ((TMode=0 &     c0809=0b01)
-	|   (TMode=1 & thv_c0809=0b01))
-	{ export $(FPRounding_TIEEVEN); }
-vcvt_amnp_simd_RM: "p"
-	is ((TMode=0 &     c0809=0b10)
-	|   (TMode=1 & thv_c0809=0b10))
-	{ export $(FPRounding_POSINF); }
-vcvt_amnp_simd_RM: "m"
-	is ((TMode=0 &     c0809=0b11)
-	|   (TMode=1 & thv_c0809=0b11))
-	{ export $(FPRounding_NEGINF); }
-
-# These RM values need to be converted properly
-vcvt_amnp_simd_64_dt: ".s32"  is TMode=0 &     c0707=0 &     c0809 & vcvt_amnp_simd_RM & Dd & Dm { Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 0:1, vcvt_amnp_simd_RM); }
-vcvt_amnp_simd_64_dt: ".s32"  is TMode=1 & thv_c0707=0 & thv_c0809 & vcvt_amnp_simd_RM & Dd & Dm { Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 0:1, vcvt_amnp_simd_RM); }
-vcvt_amnp_simd_64_dt: ".u32"  is TMode=0 &     c0707=1 &     c0809 & vcvt_amnp_simd_RM & Dd & Dm { Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_simd_RM); }
-vcvt_amnp_simd_64_dt: ".u32"  is TMode=1 & thv_c0707=1 & thv_c0809 & vcvt_amnp_simd_RM & Dd & Dm { Dd = FPToFixed(Dm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_simd_RM); }
-
-vcvt_amnp_simd_128_dt: ".s32" is TMode=0 &     c0707=0 &     c0809 & vcvt_amnp_simd_RM & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 0:1, vcvt_amnp_simd_RM); }
-vcvt_amnp_simd_128_dt: ".s32" is TMode=1 & thv_c0707=0 & thv_c0809 & vcvt_amnp_simd_RM & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 0:1, vcvt_amnp_simd_RM); }
-vcvt_amnp_simd_128_dt: ".u32" is TMode=0 &     c0707=1 &     c0809 & vcvt_amnp_simd_RM & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_simd_RM); }
-vcvt_amnp_simd_128_dt: ".u32" is TMode=1 & thv_c0707=1 & thv_c0809 & vcvt_amnp_simd_RM & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_simd_RM); }
-
-# F6.1.65,69,71,73 p8019,8028,8032,8036 A1 64-bit SIMD vector variant Q = 0 (c0606)
-:vcvt^vcvt_amnp_simd_RM^vcvt_amnp_simd_64_dt^".f32"	Dd,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c1011=0b00 & thv_c0404=0 & thv_c0606=0))
-	& vcvt_amnp_simd_RM & vcvt_amnp_simd_64_dt & Dd & Dm
-    { }	
-
-# F6.1.65,69,71,73 p8019,8028,8032,8036 A1 128-bit SIMD vector variant Q = 1(c0606)
-:vcvt^vcvt_amnp_simd_RM^vcvt_amnp_simd_128_dt^".f32"	Qd,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=1)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c1011=0b00 & thv_c0404=0 & thv_c0606=1))
-	& vcvt_amnp_simd_RM & vcvt_amnp_simd_128_dt & Qd & Qm
-	{ }
-
-vcvt_amnp_fp_RM: "a"
-	is ((TMode=0 &     c1617=0b00)
-	|   (TMode=1 & thv_c1617=0b00))
-	{ export $(FPRounding_TIEAWAY); }
-vcvt_amnp_fp_RM: "n"
-	is ((TMode=0 &     c1617=0b01)
-	|   (TMode=1 & thv_c1617=0b01))
-	{ export $(FPRounding_TIEEVEN); }
-vcvt_amnp_fp_RM: "p"
-	is ((TMode=0 &     c1617=0b10)
-	|   (TMode=1 & thv_c1617=0b10))
-	{ export $(FPRounding_POSINF); }
-vcvt_amnp_fp_RM: "m"
-	is ((TMode=0 &     c1617=0b11)
-	|   (TMode=1 & thv_c1617=0b11))
-	{ export $(FPRounding_NEGINF); }
-
-vcvt_amnp_fp_s_dt: ".u32" is TMode=0 &     c0707=0 &     c1617 & vcvt_amnp_fp_RM & Sd & Sm { Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_fp_RM); }
-vcvt_amnp_fp_s_dt: ".u32" is TMode=1 & thv_c0707=0 & thv_c1617 & vcvt_amnp_fp_RM & Sd & Sm { Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_fp_RM); }
-vcvt_amnp_fp_s_dt: ".s32" is TMode=0 &     c0707=1 &     c1617 & vcvt_amnp_fp_RM & Sd & Sm { Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 0:1, vcvt_amnp_fp_RM); }
-vcvt_amnp_fp_s_dt: ".s32" is TMode=1 & thv_c0707=1 & thv_c1617 & vcvt_amnp_fp_RM & Sd & Sm { Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 0:1, vcvt_amnp_fp_RM); }
-
-vcvt_amnp_fp_d_dt: ".u32" is TMode=0 &     c0707=0 &     c1617 & vcvt_amnp_fp_RM & Sd & Dm { Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 1:1, vcvt_amnp_fp_RM); }
-vcvt_amnp_fp_d_dt: ".u32" is TMode=1 & thv_c0707=0 & thv_c1617 & vcvt_amnp_fp_RM & Sd & Dm { Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 1:1, vcvt_amnp_fp_RM); }
-vcvt_amnp_fp_d_dt: ".s32" is TMode=0 &     c0707=1 &     c1617 & vcvt_amnp_fp_RM & Sd & Dm { Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 0:1, vcvt_amnp_fp_RM); }
-vcvt_amnp_fp_d_dt: ".s32" is TMode=1 & thv_c0707=1 & thv_c1617 & vcvt_amnp_fp_RM & Sd & Dm { Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 0:1, vcvt_amnp_fp_RM); }
-
-# F6.1.66,70,72,74 p8021,8030,8034,8038 Single-precision scalar variant size = 01 (c0809)
-:vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_s_dt^".f16"	Sd,Sm
-	is ((TMode=0 & ARMcond=0 &    c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b01)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b01))
-	& vcvt_amnp_fp_RM & vcvt_amnp_fp_s_dt & Sd & Sm
-	unimpl
-	
-# F6.1.66,70,72,74 p8021,8030,8034,8038 Single-precision scalar variant size = 11 (c0809)
-:vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_s_dt^".f32"	Sd,Sm
-	is ((TMode=0 &  ARMcond=0 &   c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
-	& vcvt_amnp_fp_RM & vcvt_amnp_fp_s_dt & Sd & Sm
-	{ }
-
-# F6.1.66,70,72,74 p8021,8030,8034,8038 Double-precision scalar variant size = 11 (c0809)
-:vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_d_dt^".f64"	Sd,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
-	& vcvt_amnp_fp_RM & vcvt_amnp_fp_d_dt & Sd & Dm
-	{ }
-
 # vcvtb and vcvtt
-
-vcvt_bt3216_op:	"b"
-	is ((TMode=0 &     c0707=0)
+vcvt_bt3216_op:	"b"  is ((TMode=0 &     c0707=0)
 	|   (TMode=1 & thv_c0707=0))
-	& Sd & Sm
-	{ Sd = float2float(Sm:2); }
-vcvt_bt3216_op:	"t"
-	is ((TMode=0 &     c0707=1)
+	& Sd & Sm { Sd = float2float(Sm:2); }
+vcvt_bt3216_op:	"t"  is ((TMode=0 &     c0707=1)
 	|   (TMode=1 & thv_c0707=1))
-	& Sd & Sm
-	{ w:2 = Sm(2); Sd = float2float(w); }
+	& Sd & Sm { w:2 = Sm(2); Sd = float2float(w); }
 
-vcvt_bt6416_op:	"b"
-	is ((TMode=0 &     c0707=0)
+vcvt_bt6416_op:	"b"  is ((TMode=0 &     c0707=0)
 	|   (TMode=1 & thv_c0707=0))
-	& Dd & Sm
-	{ Dd = float2float(Sm:2); }
-vcvt_bt6416_op:	"t"
-	is ((TMode=0 &     c0707=1)
+	& Dd & Sm { Dd = float2float(Sm:2); }
+vcvt_bt6416_op:	"t"  is ((TMode=0 &     c0707=1)
 	|   (TMode=1 & thv_c0707=1))
-	& Dd & Sm
-	{ w:2 = Sm(2); Dd = float2float(w); }
+	& Dd & Sm { w:2 = Sm(2); Dd = float2float(w); }
 
-vcvt_bt1632_op:	"b"
-	is ((TMode=0 &     c0707=0)
+vcvt_bt1632_op:	"b"  is ((TMode=0 &     c0707=0)
 	|   (TMode=1 & thv_c0707=0))
-	& Sd & Sm
-	{ Sd[0,16] = float2float(Sm); }
-vcvt_bt1632_op:	"t"
-	is ((TMode=0 &     c0707=1)
+	& Sd & Sm { Sd[0,16] = float2float(Sm); }
+vcvt_bt1632_op:	"t"  is ((TMode=0 &     c0707=1)
 	|   (TMode=1 & thv_c0707=1))
-	& Sd & Sm
-	{ tmp:2 = float2float(Sm); Sd = (zext(tmp)<<16) | zext(Sd[0,16]); }
+	& Sd & Sm { tmp:2 = float2float(Sm); Sd = (zext(tmp)<<16) | zext(Sd[0,16]); }
 
-vcvt_bt1664_op:	"b"
-	is ((TMode=0 &     c0707=0)
+vcvt_bt1664_op:	"b"  is ((TMode=0 &     c0707=0)
 	|   (TMode=1 & thv_c0707=0))
-	& Sd & Dm
-	{ Sd[0,16] = float2float(Dm); }
-vcvt_bt1664_op:	"t"
-	is ((TMode=0 &     c0707=1)
+	& Sd & Dm { Sd[0,16] = float2float(Dm); }
+vcvt_bt1664_op:	"t"  is ((TMode=0 &     c0707=1)
 	|   (TMode=1 & thv_c0707=1))
-	& Sd & Dm
-	{ tmp:2 = float2float(Dm); Sd = (zext(tmp)<<16) | zext(Sd[0,16]); }
+	& Sd & Dm { tmp:2 = float2float(Dm); Sd = (zext(tmp)<<16) | zext(Sd[0,16]); }
 
 # F6.1.67 p8023 A1 cases op:sz = 00 (c1616, c0808)
 # F6.1.76 p8044 A1 cases op:sz = 00 (c1616, c0808)
-:vcvt^vcvt_bt3216_op^COND^".f32.f16"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=0 &     c0808=0)
+:vcvt^vcvt_bt3216_op^COND^".f32.f16"	Sd,Sm  is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=0 &     c0808=0)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=0 & thv_c0808=0))
 	& COND & vcvt_bt3216_op & Sd & Sm
 	{ build COND; build vcvt_bt3216_op; }
 
 # F6.1.67 p8023 A1 cases op:sz = 01 (c1616, c0808)
 # F6.1.76 p8044 A1 cases op:sz = 01 (c1616, c0808)
-:vcvt^vcvt_bt6416_op^COND^".f64.f16"	Dd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=0 &     c0808=1)
+:vcvt^vcvt_bt6416_op^COND^".f64.f16"	Dd,Sm  is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=0 &     c0808=1)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=0 & thv_c0808=1))
 	& COND & vcvt_bt6416_op & Dd & Sm
 	{ build COND; build vcvt_bt6416_op; }
 
 # F6.1.67 p8023 A1 cases op:sz = 10 (c1616, c0808)
 # F6.1.76 p8044 A1 cases op:sz = 10 (c1616, c0808)
-:vcvt^vcvt_bt1632_op^COND^".f16.f32"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=1 &     c0808=0)
+:vcvt^vcvt_bt1632_op^COND^".f16.f32"	Sd,Sm  is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=1 &     c0808=0)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=1 & thv_c0808=0))
 	& COND & vcvt_bt1632_op & Sd & Sm
 	{ build COND; build vcvt_bt1632_op; }
 
 # F6.1.67 p8023 A1 cases op:sz = 11 (c1616, c0808)
 # F6.1.76 p8044 A1 cases op:sz = 11 (c1616, c0808)
-:vcvt^vcvt_bt1664_op^COND^".f16.f64"	Sd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=1 &     c0808=1)
+:vcvt^vcvt_bt1664_op^COND^".f16.f64"	Sd,Dm  is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=1 &     c0808=1)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=1 & thv_c0808=1))
 	& COND & vcvt_bt1664_op & Sd & Dm
 	{ build COND; build vcvt_bt1664_op; }
 
-# vcvtr
 
-# F6.1.75 p8040 A1 case opc2=100 size=10 (c1618, c0809)
-:vcvtr^COND^".u32.f32"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b100 &     c0809=0b10)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b10))
-	& COND & Sd & Sm
-	{ build COND; Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 1:1, $(FPSCR_RMODE)); }
 
-# F6.1.75 p8040 A1 case opc2=101 size=10
-:vcvtr^COND^".s32.f32"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b10))
-	& COND & Sd & Sm
-	{ build COND; Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 0:1, $(FPSCR_RMODE)); }
+@if defined(VERSION_8M)
+dupImm: "#"^val is thv_c0707 & thv_c0000 [ val = 1 << (thv_c0707 << 1 + thv_c0000);] { export *[const]:1 val; }
 
-# F6.1.75 p8040 A1 case opc2=100 size=11
-:vcvtr^COND^".u32.f64"	Sd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b100 &     c0809=0b11)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b11))
-	& COND & Sd & Dm
-	{ build COND; Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 1:1, $(FPSCR_RMODE)); }
+# (DDI0553B) C2.4.344 p. 1116 VDDUP, VDWDUP
+define pcodeop VectorDecrementAndDuplicate;
+:vdwdup.u^esize2021 cor_Qd,cor_Rn,cor_Rm,dupImm  is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=1 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=2 & esize2021 & cor_Qd & cor_Rn & cor_Rm & dupImm {
+	cor_Qd = VectorDecrementAndDuplicate(cor_Rn, cor_Rm, dupImm);
+}
 
-# F6.1.75 p8040 A1 case opc2=101 size=11
-:vcvtr^COND^".s32.f64"	Sd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b11))
-	& COND & Sd & Dm
-	{ build COND; Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 0:1, $(FPSCR_RMODE)); }
+:vddup.u^esize2021 cor_Qd,cor_Rn,dupImm  is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=1 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=2 & thv_c0103=7 & esize2021 & cor_Qd & cor_Rn & dupImm {
+	cor_Qd = VectorDecrementAndDuplicate(cor_Rn, 0:1, dupImm);
+}
+
+# (DDI0553B) C2.4.349 p. 1127  VFMA (vector by scalar plus vector, floating-point)
+define pcodeop VectorFusedMultiplyAccumulateVbSpV;
+define pcodeop VectorFusedMultiplyAccumulateVbVpS;
+:vfma.^fesize2828 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xe & thv_Q6=1 & thv_c0405=0 & fesize2828 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = VectorFusedMultiplyAccumulateVbSpV(cor_Qd, cor_Qn, thv_Rm, fesize2828);
+}
+
+# (DDI0553B) C2.4.351 p. 1131 VFMAS (vector by vector plus scalar, floating-point)
+
+:vfmas.^fesize2828 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1e & thv_c1616=1 & thv_c1212=1 & thv_c0811=0xe & thv_Q6=1 & thv_c0405=0 & fesize2828 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = VectorFusedMultiplyAccumulateVbVpS(cor_Qd, cor_Qn, thv_Rm, fesize2828);
+}
+
+# (DDI0553B) C2.4.355 T2 p. 1139 VHADD
+:vhadd.^udt^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c &thv_c1616=0 & thv_c1212=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=0 & udt & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = VectorHalvingAdd(cor_Qn,thv_Rm,esize2021,udt);
+}
+
+# (DDI0553B) C2.4.356 p. 1141 VHCADD
+define pcodeop VectorHavingComplexAdd;
+:vhcadd.s^esize2021 cor_Qd,cor_Qn,cor_Qm,crot1212 is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & esize2021 & cor_Qd & cor_Qn & cor_Qm & crot1212 {
+	cor_Qd = VectorHavingComplexAdd(cor_Qn, cor_Qm, crot1212);
+}
+
+# (DDI0553B) C2.4.357 T2 p. 1143 VHSUB
+:vhsub.^udt^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c &thv_c1616=0 & thv_c1212=1 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=0 & udt & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = VectorHalvingSubtract(cor_Qn,thv_Rm,esize2021,udt);
+}
+
+# (DDI0553B) C2.4.358 p. 1145 VIDUP, VIWDUP
+define pcodeop VectorIncrementAndDuplicate;
+:viwdup.u^esize2021 cor_Qd,cor_Rn,cor_Rm,dupImm  is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=2 & esize2021 & cor_Qd & cor_Rn & cor_Rm & dupImm {
+	cor_Qd = VectorIncrementAndDuplicate(cor_Rn, cor_Rm, dupImm);
+}
+
+:vidup.u^esize2021 cor_Qd,cor_Rn,dupImm  is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xf & thv_Q6=1 & thv_c0405=2 & thv_c0103=7 & esize2021 & cor_Qd & cor_Rn & dupImm {
+	cor_Qd = VectorIncrementAndDuplicate(cor_Rn, 0:1, dupImm);
+}
+
+pat0506: val is thv_c0506 [ val = thv_c0506 * 1; ] { export *[const]:4 val; }
+
+# (DDI0553B) C2.4.360 p. 1149 VLD2
+RnAddrPat: [thv_Rn] is thv_Rn & pat0506 { local baseAddr = thv_Rn + (pat0506 << 2); export baseAddr; }
+wbackRn2: "" is thv_Rn & thv_c2121=0 { }
+wbackRn2: "!" is thv_Rn & thv_c2121=1 { thv_Rn = thv_Rn + 32; }
+
+vld2List: {cor_Qd0,cor_Qd1} is cor_Qd0 & cor_Qd1 & thv_c0708=0 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 16*pat0506;
+	local ptr1 = &cor_Qd1 + 16*pat0506;
+<loop>
+	*[register]:1 ptr0 = *:1 mult_addr;
+	mult_addr = mult_addr + 1;
+	*[register]:1 ptr1 = *:1 mult_addr;
+	mult_addr = mult_addr + 1;
+	count = count + 1;
+	ptr0 = ptr0 + 1;
+	ptr1 = ptr1 + 1;
+	if count == 16 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vld2List: {cor_Qd0,cor_Qd1} is cor_Qd0 & cor_Qd1 & thv_c0708=1 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 16*pat0506;
+	local ptr1 = &cor_Qd1 + 16*pat0506;
+<loop>
+	*[register]:2 ptr0 = *:2 mult_addr;
+	mult_addr = mult_addr + 2;
+	*[register]:2 ptr1 = *:2 mult_addr;
+	mult_addr = mult_addr + 2;
+	count = count + 1;
+	ptr0 = ptr0 + 2;
+	ptr1 = ptr1 + 2;
+	if count == 8 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vld2List: {cor_Qd0,cor_Qd1} is cor_Qd0 & cor_Qd1 & thv_c0708=2 & pat0506 {
+	local count :1= 0;
+	local ptr0 = &cor_Qd0 + 16*pat0506;
+	local ptr1 = &cor_Qd1 + 16*pat0506;
+<loop>
+	*[register]:4 ptr0 = *:4 mult_addr;
+	mult_addr = mult_addr + 4;
+	*[register]:4 ptr1 = *:4 mult_addr;
+	mult_addr = mult_addr + 4;
+	count = count + 1;
+	ptr0 = ptr0 + 4;
+	ptr1 = ptr1 + 4;
+	if count == 4 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+:vld2^pat0506^"."^esize0708 vld2List, RnAddrPat^wbackRn2 is $(TMODE_F) & thv_c2327=0x19 & thv_c2020=1 & thv_c1212=1 & thv_c0911=7 & thv_Q6=0 & thv_c0004=0 & esize0708 & pat0506 & RnAddrPat & vld2List & wbackRn2 {
+	mult_addr = RnAddrPat;
+	build vld2List;
+	build wbackRn2;
+}
+
+# (DDI0553B) C2.4.361 p. 1151 VLD4
+wbackRn4: ""  is thv_Rn & thv_c2121=0 { }
+wbackRn4: "!" is thv_Rn & thv_c2121=1 { thv_Rn = thv_Rn + 64; }
+
+vld4List: {cor_Qd0,cor_Qd1,cor_Qd2,cor_Qd3} is cor_Qd0 & cor_Qd1 & cor_Qd2 & cor_Qd3 & thv_c0708=0 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 8*pat0506;
+	local ptr1 = &cor_Qd1 + 8*pat0506;
+	local ptr2 = &cor_Qd2 + 8*pat0506;
+	local ptr3 = &cor_Qd3 + 8*pat0506;
+<loop>
+	*[register]:1 ptr0 = *:1 mult_addr;
+	mult_addr = mult_addr + 1;
+	*[register]:1 ptr1 = *:1 mult_addr;
+	mult_addr = mult_addr + 1;
+	*[register]:1 ptr2 = *:1 mult_addr;
+	mult_addr = mult_addr + 1;
+	*[register]:1 ptr3 = *:1 mult_addr;
+	mult_addr = mult_addr + 1;
+	count = count + 1;
+	ptr0 = ptr0 + 1;
+	ptr1 = ptr1 + 1;
+	ptr2 = ptr2 + 1;
+	ptr3 = ptr3 + 1;
+	if count == 16 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vld4List: {cor_Qd0,cor_Qd1,cor_Qd2,cor_Qd3} is cor_Qd0 & cor_Qd1 & cor_Qd2 & cor_Qd3 & thv_c0708=1 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 8*pat0506;
+	local ptr1 = &cor_Qd1 + 8*pat0506;
+	local ptr2 = &cor_Qd2 + 8*pat0506;
+	local ptr3 = &cor_Qd3 + 8*pat0506;
+<loop>
+	*[register]:2 ptr0 = *:2 mult_addr;
+	mult_addr = mult_addr + 2;
+	*[register]:2 ptr1 = *:2 mult_addr;
+	mult_addr = mult_addr + 2;
+	*[register]:2 ptr2 = *:2 mult_addr;
+	mult_addr = mult_addr + 2;
+	*[register]:2 ptr3 = *:2 mult_addr;
+	mult_addr = mult_addr + 2;
+	count = count + 1;
+	ptr0 = ptr0 + 2;
+	ptr1 = ptr1 + 2;
+	ptr2 = ptr2 + 2;
+	ptr3 = ptr3 + 2;
+	if count == 8 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vld4List: {cor_Qd0,cor_Qd1,cor_Qd2,cor_Qd3} is cor_Qd0 & cor_Qd1 & cor_Qd2 & cor_Qd3 & thv_c0708=2 & pat0506 {
+	local count :1= 0;
+	local ptr0 = &cor_Qd0 + 8*pat0506;
+	local ptr1 = &cor_Qd1 + 8*pat0506;
+	local ptr2 = &cor_Qd2 + 8*pat0506;
+	local ptr3 = &cor_Qd3 + 8*pat0506;
+<loop>
+	*[register]:4 ptr0 = *:4 mult_addr;
+	mult_addr = mult_addr + 4;
+	*[register]:4 ptr1 = *:4 mult_addr;
+	mult_addr = mult_addr + 4;
+	*[register]:4 ptr2 = *:4 mult_addr;
+	mult_addr = mult_addr + 4;
+	*[register]:4 ptr3 = *:4 mult_addr;
+	mult_addr = mult_addr + 4;
+	count = count + 1;
+	ptr0 = ptr0 + 4;
+	ptr1 = ptr1 + 4;
+	ptr2 = ptr2 + 4;
+	ptr3 = ptr3 + 4;
+	if count == 4 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+:vld4^pat0506^"."^esize0708 vld4List, RnAddrPat^wbackRn4 is $(TMODE_F) & thv_c2327=0x19 & thv_c2020=1 & thv_c1212=1 & thv_c0911=7 & thv_Q6=0 & thv_c0004=1 & esize0708 & pat0506 & RnAddrPat & vld4List & wbackRn4 {
+	mult_addr = RnAddrPat;
+	build vld4List;
+	build wbackRn4;
+}
+
+# (DDI0553B) C2.4.364 p. 1160 VLDR (System Register)
+vldrSimm: "#"^val	is thv_c2323=0 & cor_imm7 [ val = cor_imm7 * 4; ] { export *[const]:4 val; }
+vldrSimm: "#"^val	is thv_c2323=1 & cor_imm7 [ val = cor_imm7 * (-4); ] { export *[const]:4 val; }
+
+vldrRnc: "["^thv_Rn^"]"				is thv_Rn & thv_c2424=1 & cor_imm7=0	{ ptr:4 = thv_Rn; export ptr; }
+vldrRnc: "["^thv_Rn,vldrSimm^"]"	is thv_Rn & thv_c2424=1 & thv_c2121=0 & vldrSimm		{ ptr:4 = thv_Rn + vldrSimm; export ptr; }
+vldrRnc: "["^thv_Rn,vldrSimm^"]!"	is thv_Rn & thv_c2424=1 & thv_c2121=1 & vldrSimm		{ ptr:4 = thv_Rn + vldrSimm; thv_Rn = ptr; export ptr; }
+vldrRnc: "["^thv_Rn^"]",vldrSimm	is thv_Rn & thv_c2424=0 & thv_c2121=1 & vldrSimm		{ ptr:4 = thv_Rn; thv_Rn = thv_Rn + vldrSimm; export ptr; }
+
+define pcodeop fpActiveCheck;
+:vldr fpscr, vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=0 & thv_c0711=0x1f & vldrRnc & thv_c2222=0 & thv_c1315=1 & fpscr {
+	fpscr = *:4 vldrRnc;
+}
+
+:vldr "fpscr_nzcvqc", vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=0 & thv_c0711=0x1f & vldrRnc & thv_c2222=0 & thv_c1315=2 {
+	local result:4 = *:4 vldrRnc;
+	fpscr[27,5] = result[27,5];
+}
+
+:vldr vpr, vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=0 & thv_c0711=0x1f & vldrRnc & thv_c2222=1 & thv_c1315=4 & vpr {
+	vpr = *:4 vldrRnc;
+}
+
+:vldr "p0", vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=0 & thv_c0711=0x1f & vldrRnc & thv_c2222=1 & thv_c1315=5 {
+	local result:4 = *:4 vldrRnc;
+	vpr[0,16] = result[0,16];
+}
+
+:vldr "fpcxt_ns", vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=0 & thv_c0711=0x1f & vldrRnc & thv_c2222=1 & thv_c1315=6 {
+	local result:4 = *:4 vldrRnc;
+	fpActive:1 = fpActiveCheck();
+	if fpActive == 0 goto <end>;
+	fpscr = zext(result[0,28]);
+<end>
+}
+
+:vldr "fpcxt_s", vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=0 & thv_c0711=0x1f & vldrRnc & thv_c2222=1 & thv_c1315=7 {
+	local result:4 = *:4 vldrRnc;
+	fpscr = zext(result[0,28]);
+}
+
+
+# (DDI0553B) C2.4.365 p. 1163 VLDRB, VLDRH, VLDRW
+define pcodeop VectorLoadRegister;
+:vldrb.^udt^esize0708 cor_Qd,vldrRnc is $(TMODE_EorF) & thv_c2527=6 & thv_c2222=0 & thv_c2020=1 & thv_c1919=0 & thv_c1212=0 & thv_c0911=7 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorLoadRegister(vldrRnc, 0:1, esize0708, udt);
+}
+
+:vldrh.^udt^esize0708 cor_Qd,vldrRnc is $(TMODE_EorF) & thv_c2527=6 & thv_c2222=0 & thv_c2020=1 & thv_c1919=1 & thv_c1212=0 & thv_c0911=7 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorLoadRegister(vldrRnc, 1:1, esize0708, udt);
+}
+
+:vldrb.8 cor_Qd,vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=1 & thv_c0811=0xe & thv_c0707=0 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorLoadRegister(vldrRnc, 0:1, esize0708, udt);
+}
+
+:vldrh.16 cor_Qd,vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=1 & thv_c0811=0xe & thv_c0707=1 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorLoadRegister(vldrRnc, 1:1, esize0708, udt);
+}
+
+:vldrw.32 cor_Qd,vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=1 & thv_c1212=1 & thv_c0811=0xf & thv_c0707=0 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorLoadRegister(vldrRnc, 2:1, esize0708, udt);
+}
+
+# Display for address vector, exports offset
+vldrRnQm: [thv_Rn,cor_Qm] is thv_Rn & cor_Qm & thv_c0000=0 {tmp:1 = 0; export *[const]:1 tmp; }
+vldrRnQm: [thv_Rn,cor_Qm,"UXTW #"^os] is thv_Rn & cor_Qm & thv_Q6 & thv_c0404 & thv_c0000=1 [os = (thv_Q6 << 1) + thv_c0404; ] {export *[const]:1 os; }
+
+# (DDI0553B) C2.4.366 p. 1168 VLDRB, VLDRH, VLDRW, VLDRD (vector)
+define pcodeop VectorGatherLoad; # output = VectorGatherLoad(base address, offset vector, immediate, shift, esize, msize, signed)
+:vldrb.^udt^esize0708 cor_Qd,vldrRnQm is $(TMODE_EorF) & thv_c2327=0x19 & thv_c2021=1 & thv_c1212=0 & thv_c0911=7 & thv_Q6=0 & thv_c0404=0 & thv_c0000 & udt & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	cor_Qd = VectorGatherLoad(thv_Rn, cor_Qm, 0:1, 0:1, esize0708, vldrRnQm, udt);
+}
+
+:vldrh.^udt^esize0708 cor_Qd,vldrRnQm is $(TMODE_EorF) & thv_c2327=0x19 & thv_c2021=1 & thv_c1212=0 & thv_c0911=7 & thv_Q6=0 & thv_c0404=1 & thv_c0000 & udt & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	cor_Qd = VectorGatherLoad(thv_Rn, cor_Qm, 0:1, thv_c0000:1, esize0708, vldrRnQm, udt);
+}
+
+:vldrw.^udt^esize0708 cor_Qd,vldrRnQm is $(TMODE_EorF) & thv_c2327=0x19 & thv_c2021=1 & thv_c1212=0 & thv_c0911=7 & thv_Q6=1 & thv_c0404=0 & thv_c0000 & udt & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	cor_Qd = VectorGatherLoad(thv_Rn, cor_Qm, 0:1, thv_c0000:1, esize0708, vldrRnQm, udt);
+}
+
+:vldrd.^udt^esize0708 cor_Qd,vldrRnQm is $(TMODE_EorF) & thv_c2327=0x19 & thv_c2021=1 & thv_c1212=0 & thv_c0911=7 & thv_Q6=1 & thv_c0404=1 & thv_c0000 & udt & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	cor_Qd = VectorGatherLoad(thv_Rn, cor_Qm, 0:1, thv_c0000:1, esize0708, vldrRnQm, udt);
+}
+
+# Display for address vector, exports writeback
+vldrQmImm: "["^cor_Qn^"]"				is cor_Qn & thv_c2121 & cor_imm7=0		{ tmp:1 = 0; export *[const]:1 tmp; }
+vldrQmImm: "["^cor_Qn,vldrSimm^"]"		is cor_Qn & thv_c2121=0 & vldrSimm		{ tmp:1 = 0; export *[const]:1 tmp; }
+vldrQmImm: "["^cor_Qn,vldrSimm^"]!"	is cor_Qn & thv_c2121=1 & vldrSimm		{ tmp:1 = 1; export *[const]:1 tmp; }
+
+:vldrw.32 cor_Qd,vldrQmImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2020=1 & thv_c1616=0 & thv_c1212=1 & thv_c0811=0xe & cor_Qd & vldrQmImm & vldrSimm & cor_Qn {
+	cor_Qd = VectorGatherLoad(0:4, cor_Qn, vldrSimm, 0:1, 2:1, 2:1, vldrQmImm);
+}
+
+:vldrd.64 cor_Qd,vldrQmImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2020=1 & thv_c1616=0 & thv_c1212=1 & thv_c0811=0xf & cor_Qd & vldrQmImm & vldrSimm & cor_Qn {
+	cor_Qd = VectorGatherLoad(0:4, cor_Qn, vldrSimm, 0:1, 3:1, 3:1, vldrQmImm);
+}
+
+macro vlldm_load(reg, ptr) {
+	reg = *:4 ptr;
+	ptr = ptr + 4;
+}
+
+# (DDI0553B) C2.4.367 p. 1174 VLLDM
+:vlldm thv_Rn,"{d0-d15}" is $(TMODE_E) & thv_c2427=0xc & thv_c2023=3 & thv_c1215=0 & thv_c0811=0xa & thv_c0007=0 & thv_Rn {
+	local ptr:4 = thv_Rn;
+	vlldm_load(s0, ptr);
+	vlldm_load(s1, ptr);
+	vlldm_load(s2, ptr);
+	vlldm_load(s3, ptr);
+	vlldm_load(s4, ptr);
+	vlldm_load(s5, ptr);
+	vlldm_load(s6, ptr);
+	vlldm_load(s7, ptr);
+	vlldm_load(s8, ptr);
+	vlldm_load(s9, ptr);
+	vlldm_load(s10, ptr);
+	vlldm_load(s11, ptr);
+	vlldm_load(s12, ptr);
+	vlldm_load(s13, ptr);
+	vlldm_load(s14, ptr);
+	vlldm_load(s15, ptr);
+	vlldm_load(fpscr, ptr);
+	vlldm_load(vpr, ptr);
+	vlldm_load(s16, ptr);
+	vlldm_load(s17, ptr);
+	vlldm_load(s18, ptr);
+	vlldm_load(s19, ptr);
+	vlldm_load(s20, ptr);
+	vlldm_load(s21, ptr);
+	vlldm_load(s22, ptr);
+	vlldm_load(s23, ptr);
+	vlldm_load(s24, ptr);
+	vlldm_load(s25, ptr);
+	vlldm_load(s26, ptr);
+	vlldm_load(s27, ptr);
+	vlldm_load(s28, ptr);
+	vlldm_load(s29, ptr);
+	vlldm_load(s30, ptr);
+	vlldm_load(s31, ptr);
+}
+
+# Behaves identically to the above variant in practice
+:vlldm thv_Rn,"{d0-d31}" is $(TMODE_E) & thv_c2427=0xc & thv_c2023=3 & thv_c1215=0 & thv_c0811=0xa & thv_c0007=0x80 & thv_Rn {
+	local ptr:4 = thv_Rn;
+	vlldm_load(s0, ptr);
+	vlldm_load(s1, ptr);
+	vlldm_load(s2, ptr);
+	vlldm_load(s3, ptr);
+	vlldm_load(s4, ptr);
+	vlldm_load(s5, ptr);
+	vlldm_load(s6, ptr);
+	vlldm_load(s7, ptr);
+	vlldm_load(s8, ptr);
+	vlldm_load(s9, ptr);
+	vlldm_load(s10, ptr);
+	vlldm_load(s11, ptr);
+	vlldm_load(s12, ptr);
+	vlldm_load(s13, ptr);
+	vlldm_load(s14, ptr);
+	vlldm_load(s15, ptr);
+	vlldm_load(fpscr, ptr);
+	vlldm_load(vpr, ptr);
+	vlldm_load(s16, ptr);
+	vlldm_load(s17, ptr);
+	vlldm_load(s18, ptr);
+	vlldm_load(s19, ptr);
+	vlldm_load(s20, ptr);
+	vlldm_load(s21, ptr);
+	vlldm_load(s22, ptr);
+	vlldm_load(s23, ptr);
+	vlldm_load(s24, ptr);
+	vlldm_load(s25, ptr);
+	vlldm_load(s26, ptr);
+	vlldm_load(s27, ptr);
+	vlldm_load(s28, ptr);
+	vlldm_load(s29, ptr);
+	vlldm_load(s30, ptr);
+	vlldm_load(s31, ptr);
+}
+
+macro vlstm_store(reg, ptr) {
+	*:4 ptr = reg;
+	ptr = ptr + 4;
+}
+# (DDI0553B) C2.4.368 p. 1177 VLSTM
+:vlstm thv_Rn,"{d0-d15}" is $(TMODE_E) & thv_c2427=0xc & thv_c2023=2 & thv_c1215=0 & thv_c0811=0xa & thv_c0007=0 & thv_Rn {
+	local ptr:4 = thv_Rn;
+	vlstm_store(s0, ptr);
+	vlstm_store(s1, ptr);
+	vlstm_store(s2, ptr);
+	vlstm_store(s3, ptr);
+	vlstm_store(s4, ptr);
+	vlstm_store(s5, ptr);
+	vlstm_store(s6, ptr);
+	vlstm_store(s7, ptr);
+	vlstm_store(s8, ptr);
+	vlstm_store(s9, ptr);
+	vlstm_store(s10, ptr);
+	vlstm_store(s11, ptr);
+	vlstm_store(s12, ptr);
+	vlstm_store(s13, ptr);
+	vlstm_store(s14, ptr);
+	vlstm_store(s15, ptr);
+	vlstm_store(fpscr, ptr);
+	vlstm_store(vpr, ptr);
+	vlstm_store(s16, ptr);
+	vlstm_store(s17, ptr);
+	vlstm_store(s18, ptr);
+	vlstm_store(s19, ptr);
+	vlstm_store(s20, ptr);
+	vlstm_store(s21, ptr);
+	vlstm_store(s22, ptr);
+	vlstm_store(s23, ptr);
+	vlstm_store(s24, ptr);
+	vlstm_store(s25, ptr);
+	vlstm_store(s26, ptr);
+	vlstm_store(s27, ptr);
+	vlstm_store(s28, ptr);
+	vlstm_store(s29, ptr);
+	vlstm_store(s30, ptr);
+	vlstm_store(s31, ptr);
+}
+
+# Behaves identically to the above variant in practice
+:vlstm thv_Rn,"{d0-d31}" is $(TMODE_E) & thv_c2427=0xc & thv_c2023=2 & thv_c1215=0 & thv_c0811=0xa & thv_c0007=0x80 & thv_Rn {
+	local ptr:4 = thv_Rn;
+	vlstm_store(s0, ptr);
+	vlstm_store(s1, ptr);
+	vlstm_store(s2, ptr);
+	vlstm_store(s3, ptr);
+	vlstm_store(s4, ptr);
+	vlstm_store(s5, ptr);
+	vlstm_store(s6, ptr);
+	vlstm_store(s7, ptr);
+	vlstm_store(s8, ptr);
+	vlstm_store(s9, ptr);
+	vlstm_store(s10, ptr);
+	vlstm_store(s11, ptr);
+	vlstm_store(s12, ptr);
+	vlstm_store(s13, ptr);
+	vlstm_store(s14, ptr);
+	vlstm_store(s15, ptr);
+	vlstm_store(fpscr, ptr);
+	vlstm_store(vpr, ptr);
+	vlstm_store(s16, ptr);
+	vlstm_store(s17, ptr);
+	vlstm_store(s18, ptr);
+	vlstm_store(s19, ptr);
+	vlstm_store(s20, ptr);
+	vlstm_store(s21, ptr);
+	vlstm_store(s22, ptr);
+	vlstm_store(s23, ptr);
+	vlstm_store(s24, ptr);
+	vlstm_store(s25, ptr);
+	vlstm_store(s26, ptr);
+	vlstm_store(s27, ptr);
+	vlstm_store(s28, ptr);
+	vlstm_store(s29, ptr);
+	vlstm_store(s30, ptr);
+	vlstm_store(s31, ptr);
+}
+# (DDI0553B) C2.4.369 p. 1180 VMAX, VMAXA T2
+define pcodeop VectorMaxAbsolute;
+:vmaxa.s^esize1819 cor_Qd, cor_Qm  is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=3 & thv_c1212=0 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & esize1819 & cor_Qm & cor_Qd {
+	cor_Qd = VectorMaxAbsolute(cor_Qd,cor_Qm,esize1819);
+}
+
+@endif # VERSION_8M
 
 #######
 # VMAXNM/VMINNM
-
-
-# FPMaxNum(Vn, Vm)
+# FPMaxNum(Vn, Vm, size, abs)
 # 	Return the maximum of two floating point numbers.
 # 	Includes FP and SIMD variants of all lane sizes.
-
 define pcodeop FPMaxNum;
 
-# FPMinNum(Vn, Vm)
+# FPMinNum(Vn, Vm, size, abs)
 # 	Return the minimum of two floating point numbers.
 # 	Includes FP and SIMD variants of all lane sizes.
 
 define pcodeop FPMinNum;
 
 # F6.1.117 p8178 A1/T1 Q = 0 (c0606)
-:vmaxnm^".f32"		Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+:vmaxnm^".f32"		Dd,Dn,Dm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b00 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMaxNum(Dn, Dm); }
 
 # F6.1.117 p8178 A1/T1 Q = 1 (c0606)
-:vmaxnm^".f32"		Qd,Qn,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+:vmaxnm^".f32"		Qd,Qn,Qm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b00 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMaxNum(Qn, Qm); }
 
 # F6.1.117 p8178 A1/T1 Q = 0 (c0606)
-:vmaxnm^".f16"		Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+:vmaxnm^".f16"		Dd,Dn,Dm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b01 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMaxNum(Dn, Dm); }
 
 # F6.1.117 p8178 A1/T1 Q = 1 (c0606)
-:vmaxnm^".f16"		Qd,Qn,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+:vmaxnm^".f16"		Qd,Qn,Qm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b01 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMaxNum(Qn, Qm); }
 
 # F6.1.117 p8178 A2/T2 size = 01 (c0809)
-:vmaxnm^".f16"		Sd,Sn,Sm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b01)
+:vmaxnm^".f16"		Sd,Sn,Sm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b01)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b01))
 	& Sd & Sn & Sm
 	{ Sd = FPMaxNum(Sn, Sm); }
 
 # F6.1.117 p8178 A2/T2 size = 10 (c0809)
-:vmaxnm^".f32"		Sd,Sn,Sm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
+:vmaxnm^".f32"		Sd,Sn,Sm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b10))
 	& Sd & Sn & Sm
 	{ Sd = FPMaxNum(Sn, Sm); }
 
 # F6.1.117 p8178 A2/T2 size = 11 (c0809)
-:vmaxnm^".f64"		Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
+:vmaxnm^".f64"		Dd,Dn,Dm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b11))
 	& Dd & Dn & Dm
 	{ Dd = FPMaxNum(Dn, Dm); }
 
+@if defined(VERSION_8M)
+# (DDI0553B) C2.4.371 p. 1185 VMAXNM, VMAXNMA (floating-point) T2
+define pcodeop FloatVectorMaxAbsolute;
+:vmaxnma.f16 is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1619=0xf & thv_c1212=0 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & cor_Qm & cor_Qd {
+	cor_Qd = FloatVectorMaxAbsolute(cor_Qd, cor_Qm, 1:1);
+}
+
+:vmaxnma.f32 is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1619=0xf & thv_c1212=0 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & cor_Qm & cor_Qd {
+	cor_Qd = FloatVectorMaxAbsolute(cor_Qd, cor_Qm, 2:1);
+}
+
+# (DDI0553B) C2.4.372 p. 1187 VMAXNMV, VMAXNMAV (floating-point)
+define pcodeop FloatVectorMaxAcrossVector;
+define pcodeop FloatVectorMaxAcrossVectorAbsolute;
+:vmaxnmv.f16 thv_Rd,cor_Qm is $(TMODE_F) & thv_c1631=0xfeee & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMaxAcrossVector(cor_Qm, 1:1);
+}
+
+:vmaxnmv.f32 thv_Rd,cor_Qm  is $(TMODE_E) & thv_c1631=0xeeee & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMaxAcrossVector(cor_Qm, 2:1);
+}
+
+:vmaxnmva.f16 thv_Rd,cor_Qm is $(TMODE_F) & thv_c1631=0xfeec & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMaxAcrossVectorAbsolute(cor_Qm, 1:1);
+}
+
+:vmaxnmva.f32 thv_Rd,cor_Qm  is $(TMODE_E) & thv_c1631=0xeeec & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMaxAcrossVectorAbsolute(cor_Qm, 2:1);
+}
+
+# (DDI0553B) C2.4.373 p. 1189 VMAXV, VMAXAV
+define pcodeop VectorMaxAcrossVector;
+define pcodeop VectorMaxAcrossVectorAbsolute;
+:vmaxv.^udt^esize1819 thv_Rd,cor_Qm  is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=0xe & thv_c1617=2 & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & udt & esize1819 & cor_Qm & thv_Rd {
+	thv_Rd = VectorMaxAcrossVector(thv_Rd,cor_Qm,esize1819);
+}
+:vmaxav.s^esize1819 thv_Rd,cor_Qm  is $(TMODE_E) & thv_c2427=0xe & thv_c2023=0xe & thv_c1617=0 & thv_c0811=0xf & thv_c0607=0 & thv_c0404=0 & thv_c0000=0 & esize1819 & cor_Qm & thv_Rd {
+	thv_Rd = VectorMaxAcrossVectorAbsolute(thv_Rd,cor_Qm,esize1819);
+}
+
+# (DDI0553B) C2.4.374 p. 1191 VMIN, VMINA T2
+define pcodeop VectorMinAbsolute;
+:vmina.s^esize1819 cor_Qd, cor_Qm  is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=3 & thv_c1212=1 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & esize1819 & cor_Qm & cor_Qd {
+	cor_Qd = VectorMinAbsolute(cor_Qd,cor_Qm,esize1819);
+}
+@endif # VERSION_8M
+
 # F6.1.120 p8178 A1/T1 Q = 0 (c0606)
-:vminnm^".f32"		Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+:vminnm^".f32"		Dd,Dn,Dm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b10 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMinNum(Dn, Dm); }
 
 # F6.1.120 p8178 A1/T1 Q = 1 (c0606)
-:vminnm^".f32"		Qd,Qn,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+:vminnm^".f32"		Qd,Qn,Qm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b10 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMinNum(Qn, Qm); }
 
 # F6.1.120 p8178 A1/T1 Q = 0 (c0606)
-:vminnm^".f16"		Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+:vminnm^".f16"		Dd,Dn,Dm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b11 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMinNum(Dn, Dm); }
 
 # F6.1.120 p8178 A1/T1 Q = 1 (c0606)
-:vminnm^".f16"		Qd,Qn,Qm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+:vminnm^".f16"		Qd,Qn,Qm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b11 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMinNum(Qn, Qm); }
 
 # F6.1.120 p8178 A2/T2 size = 01 (c0809)
-:vminnm^".f16"		Sd,Sn,Sm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b01)
+:vminnm^".f16"		Sd,Sn,Sm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b01)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b01))
 	& Sd & Sn & Sm
 	{ Sd = FPMinNum(Sn, Sm); }
 
 # F6.1.120 p8178 A2/T2 size = 10 (c0809)
-:vminnm^".f32"		Sd,Sn,Sm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
+:vminnm^".f32"		Sd,Sn,Sm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& Sd & Sn & Sm
 	{ Sd = FPMinNum(Sn, Sm); }
 
 # F6.1.120 p8178 A2/T2 size = 11 (c0809)
-:vminnm^".f64"		Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
+:vminnm^".f64"		Dd,Dn,Dm              is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
 	& Dd & Dn & Dm
 	{ Dd = FPMinNum(Dn, Dm); }
 
+@if defined(VERSION_8M)
+# (DDI0553B) C2.4.376 p. 1196 VMINNM, VMINNMA (floating-point) T2
+define pcodeop FloatVectorMinAbsolute;
+:vminnma.f16 is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1619=0xf & thv_c1212=1 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & cor_Qm & cor_Qd {
+	cor_Qd = FloatVectorMinAbsolute(cor_Qd, cor_Qm, 1:1);
+}
+
+:vminnma.f32 is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1619=0xf & thv_c1212=1 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & cor_Qm & cor_Qd {
+	cor_Qd = FloatVectorMinAbsolute(cor_Qd, cor_Qm, 2:1);
+}
+
+# (DDI0553B) C2.4.377 p. 1198 VMINNMV, VMINNMAV (floating-point)
+define pcodeop FloatVectorMinAcrossVector;
+define pcodeop FloatVectorMinAcrossVectorAbsolute;
+:vminnmv.f16 thv_Rd,cor_Qm is $(TMODE_F) & thv_c1631=0xfeee & thv_c0811=0xf & thv_c0607=2 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMinAcrossVector(cor_Qm, 1:1);
+}
+
+:vminnmv.f32 thv_Rd,cor_Qm  is $(TMODE_E) & thv_c1631=0xeeee & thv_c0811=0xf & thv_c0607=2 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMinAcrossVector(cor_Qm, 2:1);
+}
+
+:vminnmva.f16 thv_Rd,cor_Qm is $(TMODE_F) & thv_c1631=0xfeec & thv_c0811=0xf & thv_c0607=2 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMinAcrossVectorAbsolute(cor_Qm, 1:1);
+}
+
+:vminnmva.f32 thv_Rd,cor_Qm  is $(TMODE_E) & thv_c1631=0xeeec & thv_c0811=0xf & thv_c0607=2 & thv_c0404=0 & thv_c0000=0 & thv_Rd & cor_Qm {
+	thv_Rd = FloatVectorMinAcrossVectorAbsolute(cor_Qm, 2:1);
+}
+
+# (DDI0553B) C2.4.378 p. 1200 VMINV, VMINAV
+define pcodeop VectorMinAcrossVector;
+define pcodeop VectorMinAcrossVectorAbsolute;
+:vminv.^udt^esize1819 thv_Rd,cor_Qm  is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=0xe & thv_c1617=2 & thv_c0811=0xf & thv_c0607=2 & thv_c0404=0 & thv_c0000=0 & udt & esize1819 & cor_Qm & thv_Rd {
+	thv_Rd = VectorMinAcrossVector(thv_Rd,cor_Qm,esize1819);
+}
+:vminav.s^esize1819 thv_Rd,cor_Qm  is $(TMODE_E) & thv_c2427=0xe & thv_c2023=0xe & thv_c1617=0 & thv_c0811=0xf & thv_c0607=2 & thv_c0404=0 & thv_c0000=0 & esize1819 & cor_Qm & thv_Rd {
+	thv_Rd = VectorMinAcrossVectorAbsolute(thv_Rd,cor_Qm,esize1819);
+}
+
+# (DDI0553B) C2.4.380 p. 1204 VMLA (vector by scalar plus vector)
+define pcodeop VectorMultiplyAccumulateVectorByScalar;
+# Qd[e] = Qd[e] + Qn[e]*Rm
+:vmla.i^esize2021 cor_Qd,cor_Qn,thv_Rm is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xe & thv_c0406=4 & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = VectorMultiplyAccumulateVectorByScalar(cor_Qd, cor_Qn, thv_Rm, esize2021);
+}
+
+# (DDI0553B) C2.4.381 1206 VMLADAV
+define pcodeop VectorMultiplyAddDualAccumulate;
+:vmladav^accum0505^"x."^udt^esize1616 thv_Rda,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=0xf & thv_c1212=1 & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & udt & esize1616 & thv_Rda & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplyAddDualAccumulate(thv_Rda, cor_Qn, cor_Qm, accum0505, 1:1, esize1616, udt);
+}
+
+# Alias when X == 0
+:vmlav^accum0505^"."^udt^esize1616 thv_Rda,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=0xf & thv_c1212=0 & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & udt & esize1616 & thv_Rda & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplyAddDualAccumulate(thv_Rda, cor_Qn, cor_Qm, accum0505, 0:1, esize1616, udt);
+}
+
+:vmladav^accum0505^exch1212^"."^udt^"8" thv_Rda,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2427=0xe & thv_c2023=0xf & thv_c1616=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & exch1212 & udt & thv_Rda & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplyAddDualAccumulate(thv_Rda, cor_Qn, cor_Qm, accum0505, exch1212, 0:1, udt);
+}
+
+# (DDI0553B) C2.4.382 p. 1209 VMLALDAV
+define pcodeop VectorMultiplyAddLongDualAccumulate;
+:vmlaldav^accum0505^exch1212^"."^udt^esize1616 thv_Rda,thv_RdaHi2,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & exch1212 & udt & esize1616 & thv_Rda & thv_RdaHi2 & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplyAddLongDualAccumulate(thv_Rda, thv_RdaHi2, cor_Qn, cor_Qm, accum0505, exch1212, esize1616, udt);
+}
+
+# Alias when X == 0
+:vmlalv^accum0505^"."^udt^esize1616 thv_Rda,thv_RdaHi2,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c1212=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & udt & esize1616 & thv_Rda & thv_RdaHi2 & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplyAddLongDualAccumulate(thv_Rda, thv_RdaHi2, cor_Qn, cor_Qm, accum0505, 0:1, esize1616, udt);
+}
+
+
+# (DDI0553B) C2.4.384 p. 1212 VMLAS (vector by vector plus scalar)
+define pcodeop VectorMultiplyAccumulateVectorPlusScalar;
+# Qd[e] = Qd[e]*Qn[e] + Rm
+:vmlas.i^esize2021 cor_Qd,cor_Qn,thv_Rm is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=0 & thv_c1212=0 & thv_c0811=0xe & thv_c0406=4 & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = VectorMultiplyAccumulateVectorPlusScalar(cor_Qd, cor_Qn, thv_Rm, esize2021);
+}
+
+# (DDI0553B) C2.4.387 p. 1217 VMLSDAV
+define pcodeop VectorMultiplySubtractDualAccumulate;
+:vmlsdav^accum0505^exch1212^".s"^esize1616 thv_Rda,cor_Qn,cor_Qm is $(TMODE_E) & thv_c2427=0xe & thv_c2023=0xf & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0 & thv_c0000=1 & accum0505 & exch1212 & esize1616 & thv_Rda & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplySubtractDualAccumulate(thv_Rda, cor_Qn, cor_Qm, accum0505, exch1212, esize1616);
+}
+
+:vmlsdav^accum0505^exch1212^".s8" thv_Rda,cor_Qn,cor_Qm is $(TMODE_F) & thv_c2427=0xe & thv_c2023=0xf & thv_c1616=0 & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0 & thv_c0000=1 & accum0505 & exch1212 & thv_Rda & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplySubtractDualAccumulate(thv_Rda, cor_Qn, cor_Qm, accum0505, exch1212, 0:1);
+}
+
+# (DDI0553B) C2.4.388 p. 1220 VMLSLDAV
+define pcodeop VectorMultiplySubtractLongDualAccumulate;
+:vmlsldav^accum0505^exch1212^".s"^esize1616 thv_Rda,thv_RdaHi2,cor_Qn,cor_Qm is $(TMODE_E) & thv_c2327=0x1d & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0 & thv_c0000=1 & accum0505 & exch1212 & udt & esize1616 & thv_Rda & thv_RdaHi2 & cor_Qn & cor_Qm {
+	thv_Rda = VectorMultiplySubtractLongDualAccumulate(thv_Rda, thv_RdaHi2, cor_Qn, cor_Qm, accum0505, exch1212, esize1616);
+}
+
+
+# (DDI0553B) C2.4.393 p. 1228 VMOV (general-purpose register to vector lane) (VERY similar to F6.1.137 VMOV (general-purpose register to scalar) )
+vmov32Idx: val is thv_c1616 & thv_c2121 [ val = (thv_c1616 << 1) + thv_c2121; ] { export *[const]:1 val; }
+:vmov^ItCond^".32" cor_Qdm^"["^vmov32Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1c & thv_c2222=0 & thv_c2020=0 & thv_c0811=0xb & thv_c0406=1 & thv_c0003=0 & vmov32Idx & cor_Qdm & thv_Rt {
+	build ItCond;
+	vmask:4 = 0xffff;
+	invMask:16 = ~(zext(vmask) << (vmov32Idx * 32));
+	cor_Qdm = (cor_Qdm & invMask) + (zext(thv_Rt) << (vmov32Idx * 32));
+}
+
+vmov16Idx: val is thv_c1616 & thv_c2121 & thv_c0606 [ val = (thv_c1616 << 2) + (thv_c2121 << 1) + thv_c0606; ] { export *[const]:1 val; }
+:vmov^ItCond^".16" cor_Qdm^"["^vmov16Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1c & thv_c2222=0 & thv_c2020=0 & thv_c0811=0xb & thv_c0405=3 & thv_c0003=0 & vmov16Idx & cor_Qdm & thv_Rt {
+	build ItCond;
+	vmask:2 = 0xff;
+	invMask:16 = ~(zext(vmask) << (vmov16Idx * 16));
+	cor_Qdm = (cor_Qdm & invMask) + (zext(thv_Rt[0,16]) << (vmov16Idx * 16));
+}
+
+vmov8Idx: val is thv_c1616 & thv_c2121 & thv_c0506 [ val = (thv_c1616 << 3) + (thv_c2121 << 2) + thv_c0506; ] { export *[const]:1 val; }
+:vmov^ItCond^".8" cor_Qdm^"["^vmov8Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1c & thv_c2222=1 & thv_c2020=0 & thv_c0811=0xb & thv_c0404=1 & thv_c0003=0 & vmov8Idx & cor_Qdm & thv_Rt {
+	build ItCond;
+	vmask:1 = 0xf;
+	invMask:16 = ~(zext(vmask) << (vmov8Idx*8));
+	cor_Qdm = (cor_Qdm & invMask) | (zext(thv_Rt[0,8]) << (vmov8Idx*8));
+}
+
+# (DDI0553B) C2.4.400 p. 1239 VMOV (two 32-bit vector lanes to two general-purpose registers)
+idx1: cor_Qd^"[^"idxVal^"]" is cor_Qd & thv_c0404 [ idxVal = thv_c0404 + 2; ] { tmp:1 = (thv_c0404:1==1); export *[const]:1 tmp; }
+idx2: cor_Qd^"[^"idxVal^"]" is cor_Qd & thv_c0404 [ idxVal = thv_c0404 + 0; ] { tmp:1 = (thv_c0404:1==1); export *[const]:1 tmp; }
+
+:vmov^ItCond thv_Rm,thv_Rn,idx1,idx2  is $(TMODE_E) & ItCond & thv_c2327=0x18 & thv_c2021=0 & thv_c1212=0 & thv_c0811=0xf & thv_c0507=0 & thv_Rm & thv_Rn & cor_Qd & idx1 & idx2 {
+	build ItCond;
+	local w0:4 = cor_Qd[0,32];
+	local w1:4 = cor_Qd[32,32];
+	local w2:4 = cor_Qd[64,32];
+	local w3:4 = cor_Qd[96,32];
+	thv_Rm = (zext(!idx1) * w2) + (zext(idx1) * w3);
+	thv_Rn = (zext(!idx2) * w0) + (zext(idx2) * w1);
+}
+# (DDI0553B) C2.4.401 p. 1241 VMOV (two general-purpose registers to two 32-bit vector lanes)
+:vmov^ItCond idx1,idx2,thv_Rm,thv_Rn  is $(TMODE_E) & ItCond & thv_c2327=0x18 & thv_c2021=1 & thv_c1212=0 & thv_c0811=0xf & thv_c0507=0 & thv_Rm & thv_Rn & cor_Qd & idx1 & idx2 {
+	build ItCond;
+	cor_Qd[64,32] = (zext(!idx2) * thv_Rm)         + (zext(idx2) * cor_Qd[64,32]);
+	cor_Qd[96,32] = (zext(!idx2) * cor_Qd[64,32]) + (zext(idx2) * thv_Rm);
+	cor_Qd[0,32]  = (zext(!idx2) * thv_Rn)         + (zext(idx2) * cor_Qd[0,32]);
+	cor_Qd[32,32] = (zext(!idx2) * cor_Qd[32,32]) + (zext(idx2) * thv_Rn);
+}
+
+# (DDI0553B) C2.4.402 p. 1243 VMOV (vector lane to general-purpose register)
+:vmov^ItCond^".32" cor_Qn^"["^vmov32Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1c & thv_c2222=0 & thv_c2020=1 & thv_c0811=0xb & thv_c0406=1 & thv_c0003=0 & vmov32Idx & cor_Qn & thv_Rt {
+	build ItCond;
+	vmask:4 = 0xffff;
+	local val:16 = (cor_Qn >> (vmov32Idx * 32)) & zext(vmask);
+	thv_Rt = val:4;
+}
+
+:vmov^ItCond^".s16" cor_Qn^"["^vmov16Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1c & thv_c2222=0 & thv_c2020=1 & thv_c0811=0xb & thv_c0405=3 & thv_c0003=0 & vmov16Idx & cor_Qn & thv_Rt {
+	build ItCond;
+	vmask:2 = 0xff;
+	local val:16 = (cor_Qn >> (vmov16Idx * 16)) & zext(vmask);
+	thv_Rt = sext(val:2);
+}
+
+:vmov^ItCond^".u16" cor_Qn^"["^vmov16Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1d & thv_c2222=0 & thv_c2020=1 & thv_c0811=0xb & thv_c0405=3 & thv_c0003=0 & vmov16Idx & cor_Qn & thv_Rt {
+	build ItCond;
+	vmask:2 = 0xff;
+	local val:16 = (cor_Qn >> (vmov16Idx * 16)) & zext(vmask);
+	thv_Rt = zext(val:2);
+}
+
+:vmov^ItCond^".s8" cor_Qn^"["^vmov8Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1c & thv_c2222=1 & thv_c2020=1 & thv_c0811=0xb & thv_c0404=1 & thv_c0003=0 & vmov8Idx & cor_Qn & thv_Rt {
+	build ItCond;
+	vmask:1 = 0xf;
+	local val:16 = (cor_Qn >> (vmov8Idx*8)) & zext(vmask);
+	thv_Rt = sext(val:1);
+}
+
+:vmov^ItCond^".u8" cor_Qn^"["^vmov8Idx^"]", thv_Rt is $(TMODE_E) & ItCond & thv_c2327=0x1d & thv_c2222=1 & thv_c2020=1 & thv_c0811=0xb & thv_c0404=1 & thv_c0003=0 & vmov8Idx & cor_Qn & thv_Rt {
+	build ItCond;
+	vmask:1 = 0xf;
+	local val:16 = (cor_Qn >> (vmov8Idx*8)) & zext(vmask);
+	thv_Rt = zext(val:1);
+}
+
+# (DDI0553B) C2.4.403 p. 1245 VMOVL (nothing like F6.1.141)
+esize1920: "8"   is thv_c1920=0	{ export 1:4; }
+esize1920: "8"   is thv_c1920=1	{ export 1:4; }
+esize1920: "16"  is thv_c1920=2	{ export 2:4; }
+esize1920: "16"  is thv_c1920=3	{ export 2:4; }
+
+define pcodeop VectorMoveLong;
+:vmovl^bort1212^"."^udt^esize1920 cor_Qd,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c2121=1 & thv_c1618=0 & thv_c0811=0xf & thv_c0607=1 & thv_c0404=0 & thv_c0000=0 & bort1212 & udt & esize1920 & cor_Qd & cor_Qm {
+	cor_Qd = VectorMoveLong(cor_Qm,bort1212,esize1920);
+}
+
+# (DDI0553B) C2.4.404 p. 1247 VMOVN
+define pcodeop VectorMoveNarrow;
+:vmovn^bort1212^".i"^esize1819x2 cor_Qd,cor_Qm is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=1 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1819x2 & cor_Qd & cor_Qm {
+	cor_Qd = VectorMoveNarrow(cor_Qm,bort1212,1:1,esize1819x2);
+}
+
+# (DDI0553B) C2.4.406 VMRS and C2.4.407 VMSR p. 1250/1253 have additional status register decodes (see ARMneon.sinc)
+
+# (DDI0553B) C2.4.410 p. 1260 VMUL (vector) T2
+:vmul.i^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_E) & thv_c2327=0x1c & thv_c1212=1 & thv_c0811=0xe & thv_c0406=6 & esize2021 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorMultiply(cor_Qn,thv_Rm,esize2021);
+}
+
+# (DDI0553B) C2.4.411 p. 1262 VMULH, VRMULH
+rm1212: "" is thv_c1212=0 { tmp:1 = 0; export *[const]:1 tmp; }
+rm1212: "r" is thv_c1212=1 { tmp:1 = 1; export *[const]:1 tmp; }
+define pcodeop VectorMultiplyReturningHighHalf;
+:v^rm1212^"mulh."^udt^esize2021 is $(TMODE_EorF) & thv_c2327=0x1c & thv_c1616=1 & thv_c0811=0xe & thv_c0606=0 & thv_c0404=0 & thv_c0000=1 & udt & rm1212 & esize2021 & cor_Qd & cor_Qm & cor_Qn {
+	cor_Qd = VectorMultiplyReturningHighHalf(cor_Qn, cor_Qm, udt, esize2021, rm1212);
+}
+
+@endif # VERSION_8M
 #######
 # VMULL instructions vector/polynomial multiplication
+vmull_dt: ".s8"   is ((TMode=0 &     c0909=0 &     c2424=0 &     c2021=0b00)
+	|   (TMode=1 & thv_c0909=0 & thv_c2828=0 & thv_c2021=0b00)) { }
 
-vmull_dt: ".s8"
-	is ((TMode=0 &     c0909=0 &     c2424=0 &     c2021=0b00)
-	|   (TMode=1 & thv_c0909=0 & thv_c2828=0 & thv_c2021=0b00))
-	{ }
+vmull_dt: ".s16"  is ((TMode=0 &     c0909=0 &     c2424=0 &     c2021=0b01)
+	|   (TMode=1 & thv_c0909=0 & thv_c2828=0 & thv_c2021=0b01)) { }
 
-vmull_dt: ".s16"
-	is ((TMode=0 &     c0909=0 &     c2424=0 &     c2021=0b01)
-	|   (TMode=1 & thv_c0909=0 & thv_c2828=0 & thv_c2021=0b01))
-	{ }
+vmull_dt: ".s32"  is ((TMode=0 &     c0909=0 &     c2424=0 &     c2021=0b10)
+	|   (TMode=1 & thv_c0909=0 & thv_c2828=0 & thv_c2021=0b10)) { }
 
-vmull_dt: ".s32"
-	is ((TMode=0 &     c0909=0 &     c2424=0 &     c2021=0b10)
-	|   (TMode=1 & thv_c0909=0 & thv_c2828=0 & thv_c2021=0b10))
-	{ }
+vmull_dt: ".u8"   is ((TMode=0 &     c0909=0 &     c2424=1 &     c2021=0b00)
+	|   (TMode=1 & thv_c0909=0 & thv_c2828=1 & thv_c2021=0b00)) { }
 
-vmull_dt: ".u8"
-	is ((TMode=0 &     c0909=0 &     c2424=1 &     c2021=0b00)
-	|   (TMode=1 & thv_c0909=0 & thv_c2828=1 & thv_c2021=0b00))
-	{ }
+vmull_dt: ".u16"  is ((TMode=0 &     c0909=0 &     c2424=1 &     c2021=0b01)
+	|   (TMode=1 & thv_c0909=0 & thv_c2828=1 & thv_c2021=0b01)) { }
 
-vmull_dt: ".u16"
-	is ((TMode=0 &     c0909=0 &     c2424=1 &     c2021=0b01)
-	|   (TMode=1 & thv_c0909=0 & thv_c2828=1 & thv_c2021=0b01))
-	{ }
+vmull_dt: ".u32"  is ((TMode=0 &     c0909=0 &     c2424=1 &     c2021=0b10)
+	|   (TMode=1 & thv_c0909=0 & thv_c2828=1 & thv_c2021=0b10)) { }
 
-vmull_dt: ".u32"
-	is ((TMode=0 &     c0909=0 &     c2424=1 &     c2021=0b10)
-	|   (TMode=1 & thv_c0909=0 & thv_c2828=1 & thv_c2021=0b10))
-	{ }
+vmull_dt: ".p8"   is ((TMode=0 &     c0909=1 &     c2424=0 &     c2021=0b00)
+	|   (TMode=1 & thv_c0909=1 & thv_c2828=0 & thv_c2021=0b00)) { }
 
-vmull_dt: ".p8"
-	is ((TMode=0 &     c0909=1 &     c2424=0 &     c2021=0b00)
-	|   (TMode=1 & thv_c0909=1 & thv_c2828=0 & thv_c2021=0b00))
-	{ }
-
-vmull_dt: ".p64"
-	is ((TMode=0 &     c0909=1 &     c2424=0 &     c2021=0b10)
-	|   (TMode=1 & thv_c0909=1 & thv_c2828=0 & thv_c2021=0b10))
-	{ }
+vmull_dt: ".p64"  is ((TMode=0 &     c0909=1 &     c2424=0 &     c2021=0b10)
+	|   (TMode=1 & thv_c0909=1 & thv_c2828=0 & thv_c2021=0b10)) { }
 
 # F6.1.149 p8266 VMULL (-integer and +polynomial) op=1 (c0909) (with condition U!=1 and size!=0b11 and size!=01)
-:vmull^vmull_dt		Qd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2531=0b1111001 &     c2424=0 &     c2323=1       & (    c2121     &     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=1)
+:vmull^vmull_dt		Qd,Dn,Dm             is ((TMode=0 & ARMcond=0 &     c2531=0b1111001 &     c2424=0 &     c2323=1       & (    c2121     &     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=1)
 	|   (TMode=1 &             thv_c2931=0b111     & thv_c2828=0 & thv_c2327=0b11111 & (thv_c2121     & thv_c2020=0) & thv_c1011=0b11 & thv_c0808=0 & thv_c0606=0 & thv_c0404=0 & thv_c0909=1))
 	& vmull_dt & Qd & Dn & Dm
 	{ Qd = PolynomialMult(Dn, Dm); }
 
 # F6.1.149 p8266 VMULL (+integer and -polynomial) op=0 (c0909) (with condition size!=0b11)
-:vmull^vmull_dt		Qd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2531=0b1111001 &     c2323=1       & (    c2121=0 |     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=0)
+:vmull^vmull_dt		Qd,Dn,Dm             is ((TMode=0 & ARMcond=0 &     c2531=0b1111001 &     c2323=1       & (    c2121=0 |     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=0)
 	|   (TMode=1 &             thv_c2931=0b111     & thv_c2327=0b11111 & (thv_c2121=0 | thv_c2020=0) & thv_c1011=0b11 & thv_c0808=0 & thv_c0606=0 & thv_c0404=0 & thv_c0909=0))
 	& vmull_dt & Qd & Dn & Dm
 	{ Qd = VectorMultiply(Dn, Dm); }
 
+@if defined(VERSION_8M)
+
+psize28: val  is thv_c2828 [ val = 8 << thv_c2828;] { export *[const]:1 val; }
+
+# (DDI0553B) C2.4.412 p. 1264 VMULL (integer)
+:vmull^bort1212^"."^udt^esize2021 cor_Qd, cor_Qn, cor_Qm  is ($(TMODE_EorF) & thv_c2327=0x1c & thv_c2021<3 & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0) & esize2021 & cor_Qm & cor_Qn & cor_Qd & udt & bort1212 {
+	cor_Qd = VectorMultiply(cor_Qn,cor_Qm,bort1212,esize2021,udt);
+}
+
+# (DDI0553B) C2.4.413 p. 1266  VMULL (polynomial)
+:vmull^bort1212^"."^psize28 cor_Qd, cor_Qn, cor_Qm  is ($(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c0811=0xe & thv_Q6=0 & thv_c0404=0) & cor_Qm & cor_Qn & cor_Qd & psize28 & bort1212 {
+	cor_Qd = PolynomialMultiply(cor_Qn,cor_Qm,bort1212,psize28);
+}
+
+
+
+@if defined(VERSION_8M)
+
+# C2.4.426 VPNOT
+:vpnot is $(TMODE_F) & thv_c1627=0xe31 & thv_c0015=0x0f4d {
+	local p0:2 = $(VPR_P0);
+	p0 = ~(p0);
+	$(VPR_P0) = p0;
+}
+# C2.4.428 VPSEL
+:vpsel is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=1 & cor_Qd & cor_Qn & cor_Qm {
+	local vp:2 = $(VPR_P0);
+	local result:16 = 0;
+	vptest:1 = vp[0,1] == 0;
+	result[0,8] = (zext(vptest) * cor_Qn[0,8]) + (zext(vptest) * cor_Qm[0,8]);
+	vptest = vp[1,1] == 0;
+	result[8,8] = (zext(vptest) * cor_Qn[8,8]) + (zext(vptest) * cor_Qm[8,8]);
+	vptest = vp[2,1] == 0;
+	result[16,8] = (zext(vptest) * cor_Qn[16,8]) + (zext(vptest) * cor_Qm[16,8]);
+	vptest = vp[3,1] == 0;
+	result[24,8] = (zext(vptest) * cor_Qn[24,8]) + (zext(vptest) * cor_Qm[24,8]);
+	vptest = vp[4,1] == 0;
+	result[32,8] = (zext(vptest) * cor_Qn[32,8]) + (zext(vptest) * cor_Qm[32,8]);
+	vptest = vp[5,1] == 0;
+	result[40,8] = (zext(vptest) * cor_Qn[40,8]) + (zext(vptest) * cor_Qm[40,8]);
+	vptest = vp[6,1] == 0;
+	result[48,8] = (zext(vptest) * cor_Qn[48,8]) + (zext(vptest) * cor_Qm[48,8]);
+	vptest = vp[7,1] == 0;
+	result[56,8] = (zext(vptest) * cor_Qn[56,8]) + (zext(vptest) * cor_Qm[56,8]);
+	vptest = vp[8,1] == 0;
+	result[64,8] = (zext(vptest) * cor_Qn[64,8]) + (zext(vptest) * cor_Qm[64,8]);
+	vptest = vp[9,1] == 0;
+	result[72,8] = (zext(vptest) * cor_Qn[72,8]) + (zext(vptest) * cor_Qm[72,8]);
+	vptest = vp[10,1] == 0;
+	result[80,8] = (zext(vptest) * cor_Qn[80,8]) + (zext(vptest) * cor_Qm[80,8]);
+	vptest = vp[11,1] == 0;
+	result[88,8] = (zext(vptest) * cor_Qn[88,8]) + (zext(vptest) * cor_Qm[88,8]);
+	vptest = vp[12,1] == 0;
+	result[96,8] = (zext(vptest) * cor_Qn[96,8]) + (zext(vptest) * cor_Qm[96,8]);
+	vptest = vp[13,1] == 0;
+	result[104,8] = (zext(vptest) * cor_Qn[104,8]) + (zext(vptest) * cor_Qm[104,8]);
+	vptest = vp[14,1] == 0;
+	result[112,8] = (zext(vptest) * cor_Qn[112,8]) + (zext(vptest) * cor_Qm[112,8]);
+	vptest = vp[15,1] == 0;
+	result[120,8] = (zext(vptest) * cor_Qn[120,8]) + (zext(vptest) * cor_Qm[120,8]);
+	cor_Qd = result;
+}
+
+vX:    "t"  is TMode=1 & (thv_c2222=0) { }
+vX:    "e"  is TMode=1 & (thv_c2222=1) { }
+
+vY:    "t"  is TMode=1 & ((thv_c2222=0 & thv_c1515=0) | (thv_c2222=1 & thv_c1515=1)) & thv_c1314 != 0  { }
+vY:    "e"  is TMode=1 & ((thv_c2222=0 & thv_c1515=1) | (thv_c2222=1 & thv_c1515=0)) & thv_c1314 != 0  { }
+vY:    ""   is TMode=1 &                                                               thv_c1314=0     { }
+
+vZ:    "t"  is TMode=1 & ((thv_c2222=0 & (thv_c1515  = thv_c1414)) | (thv_c2222=1 & (thv_c1515 != thv_c1414))) & (thv_c1313=1) { }
+vZ:    "e"  is TMode=1 & ((thv_c2222=0 & (thv_c1515 != thv_c1414)) | (thv_c2222=1 & (thv_c1515  = thv_c1414))) & (thv_c1313=1) { }
+vZ:    ""   is TMode=1 &                                                                                          thv_c1313=0  { }
+
+VPmask:            is TMode=1 & thv_c2222=1 & thv_c1315=0 { }
+VPmask:  vX^vY^vZ  is TMode=1 & vX & vY & vZ { }
+
+
+######
+# (DDI0553B) C2.4.429 p. 1295 VPST
+#
+
+define pcodeop VectorPredicateSetThen;
+:vpst^VPmask is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1619=1 & thv_c1212=0 & thv_c0011=0xf4d & VPmask {
+	p0:2 = $(VPR_P0);
+	$(VPR_P0) = VectorPredicateSetThen(p0, VPmask);
+}
+
+
+VPsz:vpsz is thv_c2021  [ vpsz = 8 << thv_c2021; ]  { local tmp:1 = vpsz; export *[const]:1 tmp; } 
+
+
+######
+# (DDI0553B) C2.4.430 p. 1296 VPT
+#
+
+define pcodeop VectorPredicateThen; # VectorPredicateThen(param1, param2, mask, withScalar, elementType, size, conditional)
+# T1
+:vpt^VPmask^".i"^VPsz VP_fc000712,cor_Qn,cor_Qm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & VPsz & thv_c1212=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=0 & cor_Qn & cor_Qm & VPmask & VP_fc000712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,cor_Qm, VPmask, 0:1, 0:1, VPsz, VP_fc000712);
+}
+
+# T2
+:vpt^VPmask^".u"^VPsz VP_fc000712,cor_Qn,cor_Qm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & VPsz & thv_c1212=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=1 &  cor_Qn & cor_Qm & VPmask & VP_fc000712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,cor_Qm, VPmask, 0:1, 1:1, VPsz, VP_fc000712);
+}
+
+# T3
+:vpt^VPmask^".s"^VPsz VP_fc000712,cor_Qn,cor_Qm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & VPsz & thv_c1212=1 & thv_c0811=0xf & thv_c0404=0 & thv_c0000=1 &  cor_Qn & cor_Qm & VPmask & VP_fc000712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,cor_Qm, VPmask, 0:1, 2:1, VPsz, VP_fc000712);
+}
+
+# T4
+:vpt^VPmask^".i"^VPsz VP_fc050712,cor_Qn,thv_Rm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & VPsz & thv_c1212=0 & thv_c0811=0xf & thv_c0606=1 & thv_c0405=0 & thv_c0000=0 & cor_Qn & thv_Rm & VPmask & VP_fc050712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,thv_Rm, VPmask, 1:1, 0:1, VPsz, VP_fc050712);
+}
+
+# T5
+:vpt^VPmask^".u"^VPsz VP_fc050712,cor_Qn,thv_Rm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & VPsz & thv_c1212=0 & thv_c0811=0xf & thv_c0606=1 & thv_c0405=2 & thv_c0000=0 & cor_Qn & thv_Rm & VPmask & VP_fc050712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,thv_Rm, VPmask, 1:1, 1:1, VPsz, VP_fc050712);
+}
+
+# T6
+:vpt^VPmask^".s"^VPsz VP_fc050712,cor_Qn,thv_Rm  is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=1 & VPsz & thv_c1212=1 & thv_c0811=0xf & thv_c0606=1 & thv_c0404=0 & thv_c0000=0 & cor_Qn & thv_Rm & VPmask & VP_fc050712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,thv_Rm, VPmask, 1:1, 2:1, VPsz, VP_fc050712);
+}
+
+
+
+# C2.4.431 VPT (floating-point)
+:vpt^VPmask^".f"^esize2828 VP_fc000712,cor_Qn,cor_Qm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=1 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & cor_Qn & cor_Qm & VPmask & esize2828 & VP_fc000712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,cor_Qm, VPmask, 0:1, 3:1, esize2828, VP_fc000712);
+}
+
+:vpt^VPmask^".f"^esize2828 VP_fc050712,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=1 & thv_c0811=0xf & thv_c0606=1 & thv_c0404=0 & cor_Qn & thv_Rm & VPmask & esize2828 & VP_fc050712 {
+	# TODO: implement predication
+	$(VPR_P0) = VectorPredicateThen(cor_Qn,thv_Rm, VPmask, 1:1, 3:1, esize2828, VP_fc050712);
+}
+
+# (DDI0553B) C2.4.434 p. 1307 VQADD T2
+:vqadd.^udt^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c1616=0 & thv_c1212=0 & thv_c0811=0xf & thv_c0406=6 & udt & esize2021 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorAdd(cor_Qn,thv_Rm,esize2021,udt);
+	cor_Qd = SatQ(cor_Qd, esize2021, udt);
+}
+
+# (DDI0553B) C2.4.435 p. 1309 VQDMLADH, VQRDMLADH
+rm0000: ""  is thv_c0000=0 { tmp:1 = 0; export *[const]:1 tmp; }
+rm0000: "r" is thv_c0000=1 { tmp:1 = 1; export *[const]:1 tmp; }
+ex1212: ""  is thv_c1212=0 { tmp:1 = 0; export *[const]:1 tmp; }
+ex1212: "x" is thv_c1212=1 { tmp:1 = 1; export *[const]:1 tmp; }
+define pcodeop vqdmladh;
+:vq^rm0000^"dmladh"^ex1212^".s"^esize2021 cor_Qd,cor_Qn,cor_Qm is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=0 & thv_c0811=0xe & thv_c0606=0 & thv_c0404=0 & rm0000 & ex1212 & esize2021 & cor_Qd & cor_Qn & cor_Qm {
+	cor_Qd = vqdmladh(cor_Qn,cor_Qm,esize2021,rm0000,ex1212);
+}
+
+# (DDI0553B) C2.4.436 p. 1312 VQDMLAH, VQRDMLAH (vector by scalar plus vector)
+rm0505: "" is  thv_c0505=0 { tmp:1 = 0; export *[const]:1 tmp; }
+rm0505: "r" is thv_c0505=1 { tmp:1 = 1; export *[const]:1 tmp; }
+define pcodeop vqdmlah;
+:vq^rm0505^"dmlah.s"^esize2021 cor_Qd,cor_Qn,thv_Rm is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=0 & thv_c1212=1 & thv_c0811=0xe & thv_c0606=1 & thv_c0404=0 & rm0505 & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = vqdmlah(cor_Qn,thv_Rm,esize2021,rm0505);
+	
+}
+
+# (DDI0553B) C2.4.437 p. 1314 VQDMLASH, VQRDMLASH (vector by vector plus scalar)
+define pcodeop vqdmlash;
+:vq^rm0505^"dmlash.s"^esize2021 cor_Qd,cor_Qn,thv_Rm is $(TMODE_E) & thv_c2327=0x1c & thv_c1616=0 & thv_c1212=0 & thv_c0811=0xe & thv_c0606=1 & thv_c0404=0 & rm0505 & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = vqdmlash(cor_Qn,thv_Rm,esize2021,rm0505);
+	
+}
+# (DDI0553B) C2.4.438 p. 1316 VQDMLSDH, VQRDMLSDH
+define pcodeop vqdmlsdh;
+:vq^rm0000^"dmlsdh"^ex1212^".s"^esize2021 cor_Qd,cor_Qn,cor_Qm is $(TMODE_F) & thv_c2327=0x1c & thv_c1616=0 & thv_c0811=0xe & thv_c0606=0 & thv_c0404=0 & rm0000 & ex1212 & esize2021 & cor_Qd & cor_Qn & cor_Qm {
+	cor_Qd = vqdmlsdh(cor_Qn,cor_Qm,esize2021,rm0000,ex1212);
+}
+
+# (DDI0553B) C2.4.439 p. 1319 VQDMULH, VQRDMULH
+rm2727: ""  is thv_c2727=0 { tmp:1 = 0; export *[const]:1 tmp; }
+rm2727: "r" is thv_c2727=1 { tmp:1 = 1; export *[const]:1 tmp; }
+define pcodeop vqdmulh;
+:vq^rm2727^"dmulh.s"^esize2021 cor_Qd,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1e & thv_c1616=0 & thv_c1212=0 & thv_c0811=0xd & thv_c0606=1 & thv_c0404=0 & thv_c0000=0 & rm2727 & esize2021 & cor_Qd & cor_Qn & cor_Qm {
+	cor_Qd = vqdmulh(cor_Qn,cor_Qm,esize2021,rm2727);
+	
+}
+
+:vq^rm2727^"dmulh.s"^esize2021 cor_Qd,cor_Qn,thv_Rm is $(TMODE_EorF) & thv_c2327=0x1c & thv_c1616=1 & thv_c1212=0 & thv_c0811=0xe & thv_c0406=6 & rm2727 & esize2021 & cor_Qd & cor_Qn & thv_Rm {
+	cor_Qd = vqdmulh(cor_Qn,thv_Rm,esize2021,rm2727);
+}
+
+# C2.4.440 VQDMULL
+qdsize28: val  is thv_c2828 [ val = 8 << (thv_c2828+1);] { export *[const]:1 val; }
+define pcodeop VectorMultiplyLong;
+:vqdmull^bort1212^".s"^qdsize28 cor_Qd, cor_Qn, cor_Qm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=0 & thv_c0811=0xf & thv_Q6=0 & thv_c0404=0 & thv_c0000=0 & cor_Qm & cor_Qn & cor_Qd & qdsize28 & bort1212 {
+	cor_Qd = VectorMultiplyLong(cor_Qn,cor_Qm,bort1212,qdsize28);
+}
+
+:vqdmull^bort1212^".s"^qdsize28 cor_Qd, cor_Qn, thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=0 & thv_c0811=0xf & thv_c0406=6 & thv_Rm & cor_Qn & cor_Qd & qdsize28 & bort1212 {
+	cor_Qd = VectorMultiplyLong(cor_Qn,thv_Rm,bort1212,qdsize28);
+}
+
+# C2.4.441 VQMOVN
+:vqmovn^bort1212^".s"^esize1819x2 cor_Qd,cor_Qm is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=3 & thv_c0811=0xe & thv_c0607=0 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1819x2 & cor_Qd & cor_Qm {
+	cor_Qd = VectorMoveNarrow(cor_Qm,bort1212,0:1,esize1819x2);
+	cor_Qd = SignedSaturate(cor_Qd,esize1819x2);
+}
+
+:vqmovn^bort1212^".u"^esize1819x2 cor_Qd,cor_Qm is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=3 & thv_c0811=0xe & thv_c0607=0 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1819x2 & cor_Qd & cor_Qm {
+	cor_Qd = VectorMoveNarrow(cor_Qm,bort1212,1:1,esize1819x2);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1819x2);
+}
+
+# C2.4.442 VQMOVUN
+:vqmovun^bort1212^".s"^esize1819x2 cor_Qd,cor_Qm is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=3 & thv_c0811=0xe & thv_c0607=2 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1819x2 & cor_Qd & cor_Qm {
+	cor_Qd = VectorMoveNarrow(cor_Qm,bort1212,0:1,esize1819x2);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1819x2);
+}
+
+# C2.4.445 VQRSHRN
+esize1920x: "#"^val is thv_c2020=0 & thv_c1919=1 [ val = 16 << 0; ] { export *[const]:1 val; }
+esize1920x: "#"^val is thv_c2020=1               [ val = 32 << 0; ] { export *[const]:1 val; }
+cor_shImm: "#"^val is thv_c1618 [ val = thv_c1618 << 0; ] { export *[const]:1 val; }
+
+:vqrshrn^bort1212^".s"^esize1920x cor_Qd,cor_Qm,cor_shImm is $(TMODE_E) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=1 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1920x & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorRoundShiftRightNarrow(cor_Qm,cor_shImm,bort1212,0:1,esize1920x);
+	cor_Qd = SignedSaturate(cor_Qd,esize1920x);
+}
+
+:vqrshrn^bort1212^".u"^esize1920x cor_Qd,cor_Qm,cor_shImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=1 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1920x & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorRoundShiftRightNarrow(cor_Qm,cor_shImm,bort1212,1:1,esize1920x);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1920x);
+}
+
+# C2.4.446 VQRSHRUN
+:vqrshrun^bort1212^".s"^esize1920x cor_Qd,cor_Qm,cor_shImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=3 & thv_c0404=0 & thv_c0000=0 & bort1212 & esize1920x & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorRoundShiftRightNarrow(cor_Qm,cor_shImm,bort1212,0:1,esize1920x);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1920x);
+}
+
+# C2.4.447 VQSHL, VQSHLU
+esize1921: "#"^val is thv_c2021=0 & thv_c1919=1 [ val =  8 << 0; ] { export *[const]:1 val; }
+esize1921: "#"^val is thv_c2121=0 & thv_c2020=1 [ val = 16 << 0; ] { export *[const]:1 val; }
+esize1921: "#"^val is thv_c2121=1               [ val = 32 << 0; ] { export *[const]:1 val; }
+
+# T1
+:vqshl.s^esize1819 cor_Qd,thv_Rm is $(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=1 & thv_c1212=1 & thv_c0811=0xe & thv_c0407=0xe & esize1819 & cor_Qd & thv_Rm {
+	cor_Qd = VectorShiftLeft(cor_Qd, thv_Rm, esize1819, 0:1);
+	cor_Qd = SignedSaturate(cor_Qd,esize1819);
+}
+
+:vqshl.u^esize1819 cor_Qd,thv_Rm is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=1 & thv_c1212=1 & thv_c0811=0xe & thv_c0407=0xe & esize1819 & cor_Qd & thv_Rm {
+	cor_Qd = VectorShiftLeft(cor_Qd, thv_Rm, esize1819, 1:1);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1819);
+}
+
+# T2
+:vqshl.s^esize1921 cor_Qd,cor_Qm,cor_shImm is $(TMODE_E) & thv_c2327=0x1f & thv_c1212=0 & thv_c0811=0x7 & thv_c0607=0x1 & thv_c0404=1 & thv_c0000=0 & esize1921 & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftLeft(cor_Qm, cor_shImm, esize1921, 0:1);
+	cor_Qd = SignedSaturate(cor_Qd,esize1921);
+}
+
+:vqshl.u^esize1921 cor_Qd,cor_Qm,cor_shImm is $(TMODE_F) & thv_c2327=0x1f & thv_c1212=0 & thv_c0811=0x7 & thv_c0607=0x1 & thv_c0404=1 & thv_c0000=0 & esize1921 & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftLeft(cor_Qm, cor_shImm, esize1921, 1:1);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1921);
+}
+
+# T3
+:vqshlu.s^esize1921 cor_Qd,cor_Qm,cor_shImm is $(TMODE_F) & thv_c2327=0x1f & thv_c1212=0 & thv_c0811=0x6 & thv_c0607=0x1 & thv_c0404=1 & thv_c0000=0 & esize1921 & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftLeft(cor_Qm, cor_shImm, esize1921, 0:1);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1921);
+}
+
+# T4 see F6.1.187
+
+# C2.4.448 VQSHRN
+:vqshrn^bort1212^".s"^esize1920x cor_Qd,cor_Qm,cor_shImm is $(TMODE_E) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=1 & thv_c0404=0 & thv_c0000=0 & bort1212 & esize1920x & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftRightNarrow(cor_Qm,cor_shImm,bort1212,0:1,esize1920x);
+	cor_Qd = SignedSaturate(cor_Qd,esize1920x);
+}
+
+:vqrhrn^bort1212^".u"^esize1920x cor_Qd,cor_Qm,cor_shImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=1 & thv_c0404=0 & thv_c0000=0 & bort1212 & esize1920x & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftRightNarrow(cor_Qm,cor_shImm,bort1212,1:1,esize1920x);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1920x);
+}
+
+# C2.4.449 VQSHRUN
+:vqshrun^bort1212^".s"^esize1920x2 cor_Qd,cor_Qm,cor_shImm is $(TMODE_E) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=3 & thv_c0404=0 & thv_c0000=0 & bort1212 & esize1920x2 & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftRightNarrow(cor_Qm,cor_shImm,bort1212,0:1,esize1920x2);
+	cor_Qd = UnsignedSaturate(cor_Qd,esize1920x2);
+}
+
+# C2.4.450 VQSUB T2
+:vqsub.^udt^esize2021 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c1616=0 & thv_c1212=1 & thv_c0811=0xf & thv_c0406=6 & udt & esize2021 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorSub(cor_Qn,thv_Rm,esize2021,udt);
+	cor_Qd = SatQ(cor_Qd, esize2021, udt);
+}
+@endif #VERSION_8M
+
+@ifdef INCLUDE_NEON
 #######
 # The VRINT instructions round a "floating-point to an integral
 # floating point value of the same size", i.e. trunc.
@@ -1160,191 +2478,533 @@ vmull_dt: ".p64"
 # 2: rounding mode
 # 3: boolean exact, if true then raise the Inexact exception if the
 #    result differs from the original
+vrint_simd_RM: "a"  is ((TMode=0 &     c0709=0b010)
+	|   (TMode=1 & thv_c0709=0b010)) { export $(FPRounding_TIEAWAY); }
 
-vrint_simd_RM: "a"
-	is ((TMode=0 &     c0709=0b010)
-	|   (TMode=1 & thv_c0709=0b010))
-	{ export $(FPRounding_TIEAWAY); }
+vrint_simd_RM: "m"  is ((TMode=0 &     c0709=0b101)
+	|   (TMode=1 & thv_c0709=0b101)) { export $(FPRounding_NEGINF); }
 
-vrint_simd_RM: "m"
-	is ((TMode=0 &     c0709=0b101)
-	|   (TMode=1 & thv_c0709=0b101))
-	{ export $(FPRounding_NEGINF); }
+vrint_simd_RM: "n"  is ((TMode=0 &     c0709=0b000)
+	|   (TMode=1 & thv_c0709=0b000)) { export $(FPRounding_TIEEVEN); }
 
-vrint_simd_RM: "n"
-	is ((TMode=0 &     c0709=0b000)
-	|   (TMode=1 & thv_c0709=0b000))
-	{ export $(FPRounding_TIEEVEN); }
+vrint_simd_RM: "p"  is ((TMode=0 &     c0709=0b111)
+	|   (TMode=1 & thv_c0709=0b111)) { export $(FPRounding_POSINF); }
 
-vrint_simd_RM: "p"
-	is ((TMode=0 &     c0709=0b111)
-	|   (TMode=1 & thv_c0709=0b111))
-	{ export $(FPRounding_POSINF); }
+vrint_simd_RM: "x"  is ((TMode=0 &     c0709=0b001)
+	|   (TMode=1 & thv_c0709=0b001)) { export $(FPRounding_TIEEVEN); }
 
-vrint_simd_RM: "x"
-	is ((TMode=0 &     c0709=0b001)
-	|   (TMode=1 & thv_c0709=0b001))
-	{ export $(FPRounding_TIEEVEN); }
-
-vrint_simd_RM: "z"
-	is ((TMode=0 &     c0709=0b011)
-	|   (TMode=1 & thv_c0709=0b011))
-	{ export $(FPRounding_ZERO); }
+vrint_simd_RM: "z"  is ((TMode=0 &     c0709=0b011)
+	|   (TMode=1 & thv_c0709=0b011)) { export $(FPRounding_ZERO); }
 
 # For vrintx, the exact flag is 1, and the IXF flag is set (inexact)
+vrint_simd_exact: "x"  is ((TMode=0 &     c0709=0b001)
+	|   (TMode=1 & thv_c0709=0b001)) { export 1:1; }
 
-vrint_simd_exact: "x"
-	is ((TMode=0 &     c0709=0b001)
-	|   (TMode=1 & thv_c0709=0b001))
-	{ export 1:1; }
+vrint_simd_exact:      is ((TMode=0 & (     c0707=1 |     c0808=1 |     c0909=0))
+	|   (TMode=1 & ( thv_c0707=1 | thv_c0808=1 | thv_c0909=0))) { export 0:1; }
 
-vrint_simd_exact:
-	is ((TMode=0 & (     c0707=1 |     c0808=1 |     c0909=0))
-	|   (TMode=1 & ( thv_c0707=1 | thv_c0808=1 | thv_c0909=0)))
-	{ export 0:1; }
+vrint_simd_ixf:  is ((TMode=0 &     c0709=0b001)
+	|   (TMode=1 & thv_c0709=0b001)) { $(FPEXC_IXF) = FPConvertInexact(); }
 
-vrint_simd_ixf:
-	is ((TMode=0 &     c0709=0b001)
-	|   (TMode=1 & thv_c0709=0b001))
-	{ $(FPEXC_IXF) = FPConvertInexact(); }
-
-vrint_simd_ixf:
-	is ((TMode=0 & (     c0707=1 |     c0808=1 |     c0909=0))
-	|   (TMode=1 & ( thv_c0707=1 | thv_c0808=1 | thv_c0909=0)))
-	{ }
-
+vrint_simd_ixf:  is ((TMode=0 & (     c0707=1 |     c0808=1 |     c0909=0))
+	|   (TMode=1 & ( thv_c0707=1 | thv_c0808=1 | thv_c0909=0))) { }
 
 # F6.1.199,201,203,205,208,210 p8396,8400,8404,8408,8414,8420 Q = 0 (c0606)
-:vrint^vrint_simd_RM^".f32"	Dd,Dm
-	is ((TMode=0 &     c2331=0b111100111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c1011=0b01 & ((    c0707=0 &     c0909=0) | (    c0707=1 &     c0909=1) | (    c0707=1 &     c0909=0)) &     c0404=0 &     c0606=0)
+:vrint^vrint_simd_RM^".f32"	Dd,Dm     is ((TMode=0 &     c2331=0b111100111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c1011=0b01 & ((    c0707=0 &     c0909=0) | (    c0707=1 &     c0909=1) | (    c0707=1 &     c0909=0)) &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2331=0b111111111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b10 & thv_c1011=0b01 & ((thv_c0707=0 & thv_c0909=0) | (thv_c0707=1 & thv_c0909=1) | (thv_c0707=1 & thv_c0909=0)) & thv_c0404=0 & thv_c0606=0))
 	& vrint_simd_RM & vrint_simd_exact & vrint_simd_ixf & Dd & Dm
 	{ Dd = FPRoundInt(Dm, 32:1, vrint_simd_RM, 0:1); build vrint_simd_ixf; }
 
 # F6.1.199,201,203,205,208,210 p8396,8400,8404,8408,8414,8420 Q = 1 (c0606)
-:vrint^vrint_simd_RM^".f32"	Qd,Qm
-	is ((TMode=0 &     c2331=0b111100111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c1011=0b01 &     c0404=0 &     c0606=1)
+:vrint^vrint_simd_RM^".f32"	Qd,Qm     is ((TMode=0 &     c2331=0b111100111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c1011=0b01 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2331=0b111111111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b10 & thv_c1011=0b01 & thv_c0404=0 & thv_c0606=1))
 	& vrint_simd_RM & vrint_simd_exact & vrint_simd_ixf & Qd & Qm
 	{ Qd = FPRoundInt(Qm, 32:1, vrint_simd_RM, 0:1); build vrint_simd_ixf; }
 
-vrint_fp_RM: "a"
-	is ((TMode=0 &     c1617=0b00)
-	|   (TMode=1 & thv_c1617=0b00))
-	{ export $(FPRounding_TIEAWAY); }
+vrint_fp_RM: "a"  is ((TMode=0 &     c1617=0b00)
+	|   (TMode=1 & thv_c1617=0b00)) { export $(FPRounding_TIEAWAY); }
 
-vrint_fp_RM: "m"
-	is ((TMode=0 &     c1617=0b11)
-	|   (TMode=1 & thv_c1617=0b11))
-	{ export $(FPRounding_NEGINF); }
+vrint_fp_RM: "m"  is ((TMode=0 &     c1617=0b11)
+	|   (TMode=1 & thv_c1617=0b11)) { export $(FPRounding_NEGINF); }
 
-vrint_fp_RM: "n"
-	is ((TMode=0 &     c1617=0b01)
-	|   (TMode=1 & thv_c1617=0b01))
-	{ export $(FPRounding_TIEEVEN); }
+vrint_fp_RM: "n"  is ((TMode=0 &     c1617=0b01)
+	|   (TMode=1 & thv_c1617=0b01)) { export $(FPRounding_TIEEVEN); }
 
-vrint_fp_RM: "p"
-	is ((TMode=0 &     c1617=0b10)
-	|   (TMode=1 & thv_c1617=0b10))
-	{ export $(FPRounding_POSINF); }
+vrint_fp_RM: "p"  is ((TMode=0 &     c1617=0b10)
+	|   (TMode=1 & thv_c1617=0b10)) { export $(FPRounding_POSINF); }
 
 # F6.1.200,202,204,206 p8398,8402,8406,8410 size = 10 (c0809)
-:vrint^vrint_fp_RM^".f32"	Sd,Sm
-	is ((TMode=0 & ARMcond=0 & c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b10)
+:vrint^vrint_fp_RM^".f32"	Sd,Sm       is ((TMode=0 & ARMcond=0 & c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2331=0b111111101 & thv_c1821=0b1110 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c0809=0b10))
 	& vrint_fp_RM & Sd & Sm
 	{ Sd = FPRoundInt(Sm, 32:1, vrint_fp_RM, 0:1); }
 
 # F6.1.200,202,204,206 p8398,8402,8406,8410 size = 11 (c0809)
-:vrint^vrint_fp_RM^".f64"	Dd,Dm
-	is ((TMode=0 & ARMcond=0 & c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b11)
+:vrint^vrint_fp_RM^".f64"	Dd,Dm       is ((TMode=0 & ARMcond=0 & c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2331=0b111111101 & thv_c1821=0b1110 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c0809=0b11))
 	& vrint_fp_RM & Dd & Dm
 	{ Dd = FPRoundInt(Dm, 32:1, vrint_fp_RM, 0:1); }
 
-vrint_rxz_RM: "r"
-	is ((TMode=0 &     c1616=0 &     c0707=0)
-	|   (TMode=1 & thv_c1616=0 & thv_c0707=0))
-	{ tmp:1 = $(FPSCR_RMODE); export tmp; }
+vrint_rxz_RM: "r"  is ((TMode=0 &     c1616=0 &     c0707=0)
+	|   (TMode=1 & thv_c1616=0 & thv_c0707=0)) { tmp:1 = $(FPSCR_RMODE); export tmp; }
 
-vrint_rxz_RM: "x"
-	is ((TMode=0 &     c1616=1 &     c0707=0)
-	|   (TMode=1 & thv_c1616=1 & thv_c0707=0))
-	{ tmp:1 = $(FPSCR_RMODE); export tmp; }
+vrint_rxz_RM: "x"  is ((TMode=0 &     c1616=1 &     c0707=0)
+	|   (TMode=1 & thv_c1616=1 & thv_c0707=0)) { tmp:1 = $(FPSCR_RMODE); export tmp; }
 
-vrint_rxz_RM: "z"
-	is ((TMode=0 &     c1616=0 &     c0707=1)
-	|   (TMode=1 & thv_c1616=0 & thv_c0707=1))
-	{ export $(FPRounding_ZERO); }
+vrint_rxz_RM: "z"  is ((TMode=0 &     c1616=0 &     c0707=1)
+	|   (TMode=1 & thv_c1616=0 & thv_c0707=1)) { export $(FPRounding_ZERO); }
 
 # For vrintx, the exact flag is 1, and the IXF flag is set (inexact)
+vrint_rxz_exact: "x"  is ((TMode=0 &     c1616=1 &     c0707=0)
+	|   (TMode=1 & thv_c1616=1 & thv_c0707=0))     { export 1:1; }
 
-vrint_rxz_exact: "x"
-	is ((TMode=0 &     c1616=1 &     c0707=0)
-	|   (TMode=1 & thv_c1616=1 & thv_c0707=0))
-	{ export 1:1; }
+vrint_rxz_exact:      is ((TMode=0 & (    c1616=0 |     c0707=1))
+	|   (TMode=1 & (thv_c1616=0 | thv_c0707=1))) { export 0:1; }
 
-vrint_rxz_exact:
-	is ((TMode=0 & (    c1616=0 |     c0707=1))
-	|   (TMode=1 & (thv_c1616=0 | thv_c0707=1)))
-	{ export 0:1; }
+vrint_rxz_ixf:  is ((TMode=0 &     c1616=1 &     c0707=0)
+	|   (TMode=1 & thv_c1616=1 & thv_c0707=0))    { $(FPEXC_IXF) = FPConvertInexact(); }
 
-vrint_rxz_ixf:
-	is ((TMode=0 &     c1616=1 &     c0707=0)
-	|   (TMode=1 & thv_c1616=1 & thv_c0707=0))
-	{ $(FPEXC_IXF) = FPConvertInexact(); }
-
-vrint_rxz_ixf:
-	is ((TMode=0 & (    c1616=0 |     c0707=1))
-	|   (TMode=1 & (thv_c1616=0 | thv_c0707=1)))
-	{ }
+vrint_rxz_ixf:  is ((TMode=0 & (    c1616=0 |     c0707=1))
+	|   (TMode=1 & (thv_c1616=0 | thv_c0707=1))) { }
 
 # F6.1.207,209,211 p8412,8416,8420 A1 size = 10 (c0809)
-:vrint^vrint_rxz_RM^COND^".f32"	Sd,Sm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b110 &     c1718=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 & ((    c1616=0) | (    c1616=1 &     c0707=0)) &     c0809=0b10)
+:vrint^vrint_rxz_RM^COND^".f32"	Sd,Sm is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b110 &     c1718=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 & ((    c1616=0) | (    c1616=1 &     c0707=0)) &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b110 & thv_c1718=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & ((thv_c1616=0) | (thv_c1616=1 & thv_c0707=0)) & thv_c0809=0b10))
 	& vrint_rxz_RM & vrint_rxz_exact & vrint_rxz_ixf & COND & Sd & Sm
 	{ build COND; Sd = FPRoundInt(Sm, 32:1, vrint_rxz_RM, vrint_rxz_exact); build vrint_rxz_ixf; }
 
 # F6.1.207,209,211 p8412,8416,8420 A1 size = 11 (c0809)
-:vrint^vrint_rxz_RM^COND^".f64"	Dd,Dm
-	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b110 &     c1718=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 & ((    c1616=0) | (    c1616=1 &     c0707=0)) &     c0809=0b11)
+:vrint^vrint_rxz_RM^COND^".f64"	Dd,Dm is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b110 &     c1718=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 & ((    c1616=0) | (    c1616=1 &     c0707=0)) &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b110 & thv_c1718=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & ((thv_c1616=0) | (thv_c1616=1 & thv_c0707=0)) & thv_c0809=0b11))
 	& vrint_rxz_RM & vrint_rxz_exact & vrint_rxz_ixf & COND & Dd & Dm
 	{ build COND; Dd = FPRoundInt(Dm, 32:1, vrint_rxz_RM, vrint_rxz_exact); build vrint_rxz_ixf; }
 
+@if defined(VERSION_8M)
+# C2.4.463 VRMLALDAVH
+define pcodeop vrmlaldavh;
+:vrmlaldavh^accum0505^exch1212^"."^udt^"32" thv_RdaLo,thv_RdaHi,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c1616=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & exch1212 & udt & thv_RdaLo & thv_RdaHi & cor_Qn & cor_Qm {
+	local accum:8 = zext(accum0505)*(zext(thv_RdaLo) + (zext(thv_RdaHi) << 32));
+	local result:9 = vrmlaldavh(accum,cor_Qn,cor_Qm,udt,exch1212);
+	thv_RdaLo = result[8,32];
+	thv_RdaHi = result[40,32];
+}
+
+# C2.4.464 VRMLALVH (alias of VRMLALDAVH with X == 0)
+:vrmlalvh^accum0505^"."^udt^"32" thv_RdaLo,thv_RdaHi,cor_Qn,cor_Qm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c1616=0 & thv_c1212=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=0 & accum0505 & udt & thv_RdaLo & thv_RdaHi & cor_Qn & cor_Qm {
+	local accum:8 = zext(accum0505)*(zext(thv_RdaLo) + (zext(thv_RdaHi) << 32));
+	local result:9 = vrmlaldavh(accum,cor_Qn,cor_Qm,udt,0:1);
+	thv_RdaLo = result[8,32];
+	thv_RdaHi = result[40,32];
+}
+
+# C2.4.465 VRMLSLDAVH
+define pcodeop vrmlsldavh;
+:vrmlsldavh^accum0505^exch1212^".s32" thv_RdaLo,thv_RdaHi,cor_Qn,cor_Qm is $(TMODE_F) & thv_c2327=0x1d & thv_c1616=0 & thv_c0811=0xe & thv_c0606=0 & thv_c0404=0 & thv_c0000=1 & accum0505 & exch1212 & thv_RdaLo & thv_RdaHi & cor_Qn & cor_Qm {
+	local accum:8 = zext(accum0505)*(zext(thv_RdaLo) + (zext(thv_RdaHi) << 32));
+	local result:9 = vrmlsldavh(accum,cor_Qn,cor_Qm,0:1,exch1212);
+	thv_RdaLo = result[8,32];
+	thv_RdaHi = result[40,32];
+}
+
+# C2.4.466 VRSHL T2
+:vrshl.^udt^esize1819 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 &  thv_c1617=3 & thv_c1212=1 & thv_c0811=0xe & thv_c0407=6 & udt & esize1819 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorRoundShiftLeft(cor_Qn,thv_Rm,esize1819,udt);
+}
+
+# C2.4.468 VRSHRN
+:vqrshrn^bort1212^".i"^esize1920x cor_Qd,cor_Qm,cor_shImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=3 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1920x & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorRoundShiftRightNarrow(cor_Qm,cor_shImm,bort1212,1:1,esize1920x);
+}
+
+# C2.4.469 VSBC
+define pcodeop WholeVectorSubWithCarry;
+:vsbc^carryInit1212^".i32" cor_Qd, cor_Qn, cor_Qm  is $(TMODE_F) & thv_c2327=0x1c & thv_c2021=3 & thv_c1616=0 & thv_c0811=0xf & thv_c0606=0 & thv_c0404=0 & thv_c0000=0 & carryInit1212 & cor_Qd & cor_Qn & cor_Qm {
+	cor_Qd = WholeVectorSubWithCarry(cor_Qn, cor_Qm, carryInit1212);
+}
+
+# C2.4.470 VSCCLRM
+buildClrmDdList: Dreg					is Dreg & counter=1 					[ counter=0; regNum=regNum+1; ]
+{
+	Dreg = 0;
+}
+buildClrmDdList: Dreg,buildClrmDdList	is Dreg & buildClrmDdList               [ counter=counter-1; regNum=regNum+1; ]
+{
+	build Dreg;
+	Dreg = 0;
+	build buildClrmDdList;
+}
+
+clrmDdList: "{"^buildClrmDdList^","vpr^"}"	is thv_D22 & thv_c1215 & thv_c0107 & buildClrmDdList & vpr [ regNum=(thv_D22<<4)+thv_c1215-1; counter=thv_c0107; ] { }
+
+:vscclrm^ItCond clrmDdList is $(TMODE_E) & ItCond & thv_c2327=0x19 & thv_c2021=1 & thv_c1619=0xf & thv_c0811=0xb & thv_c0000=0 & clrmDdList {
+	build ItCond;
+	build clrmDdList;
+	vpr = 0;
+}
+
+:vscclrm^ItCond "{"^vpr^"}" is $(TMODE_E) & ItCond & thv_c2327=0x19 & thv_c2021=1 & thv_c1619=0xf & thv_c0811=0xb & thv_c0007=0 & vpr {
+	build ItCond;
+	vpr = 0;
+}
+
+# End of Single Regs list
+buildClrmSdList: Sreg					is Sreg & counter=1 & sdOv=0	[ counter=0; regNum=regNum+1; ]
+{
+	Sreg = 0;
+}
+
+# edge case for a length multiple of 32, transition to regs
+buildClrmSdList: Sreg,					is Sreg & counter=0 & sdOv=1	[ regNum=regNum+1; ]
+{
+	Sreg = 0;
+}
+
+# End of sregs list, transition to dregs
+buildClrmSdList: Sreg,					is Sreg & regNum=30 & counter > 1	[ regNum=regNum+1; ]
+{
+	Sreg = 0;
+}
+
+buildClrmSdList: Sreg,buildClrmSdList	is Sreg & buildClrmSdList	[ counter=counter-1; regNum=regNum+1; ]
+{
+	build Sreg;
+	Sreg = 0;
+	build buildClrmSdList;
+}
+
+clrmSdDdList: is thv_D22 & thv_c1215 & thv_c0007 & sdOv=0 & counter=0 {}
+clrmSdDdList: buildClrmDdList	is thv_D22 & thv_c1215 & thv_c0007 & buildClrmDdList [regNum=15; counter=(thv_c0007-(32-(thv_c1215 << 1)+thv_D22-1)) >> 1;] {
+}
+
+clrmSdList: "{"^buildClrmSdList^clrmSdDdList^","vpr^"}"	is thv_D22 & thv_c1215 & thv_c0007 & buildClrmSdList & clrmSdDdList & vpr [ regNum=(thv_c1215 << 1)+thv_D22-1; counter=thv_c0007; ] {
+	build buildClrmSdList;
+	build clrmSdDdList;
+}
+
+clrmSdList: "{"^buildClrmSdList^clrmSdDdList^","vpr^"}"	is thv_D22 & thv_c1215 & thv_c0507 !=0 & thv_c0007 & buildClrmSdList & clrmSdDdList & vpr [ regNum=(thv_c1215 << 1)+thv_D22-1; counter=31; sdOv=1; ] {
+	build buildClrmSdList;
+	build clrmSdDdList;
+}
+
+:vscclrm^ItCond clrmSdList is $(TMODE_E) & ItCond & thv_c2327=0x19 & thv_c2021=1 & thv_c1619=0xf & thv_c0811=0xa & clrmSdList {
+	build ItCond;
+	build clrmSdList;
+	vpr = 0;
+}
+
+:vscclrm^ItCond "{"^vpr^"}" is $(TMODE_E) & ItCond & thv_c2327=0x19 & thv_c2021=1 & thv_c1619=0xf & thv_c0811=0xa & thv_c0007=0 & vpr {
+	build ItCond;
+	vpr = 0;
+}
+
+@endif # VERSION_8M
+
 #######
 # VSEL
-
-vselcond: "eq"
-	is ((TMode=0 &     c2021=0b00)
-	|   (TMode=1 & thv_c2021=0b00))
-	{ tmp:1 = ZR; export tmp; }
-vselcond: "ge"
-	is ((TMode=0 &     c2021=0b10)
-	|   (TMode=1 & thv_c2021=0b10))
-	{ tmp:1 = (NG==OV); export tmp; }
-vselcond: "gt"
-	is ((TMode=0 &     c2021=0b11)
-	|   (TMode=1 & thv_c2021=0b11))
-	{ tmp:1 = (!ZR && NG==OV); export tmp; }
-vselcond: "vs"
-	is ((TMode=0 &     c2021=0b01)
-	|   (TMode=1 & thv_c2021=0b01))
-	{ tmp:1 = OV; export tmp; }
+vselcond: "eq"  is ((TMode=0 &     c2021=0b00)
+	|   (TMode=1 & thv_c2021=0b00)) { tmp:1 = ZR; export tmp; }
+vselcond: "ge"  is ((TMode=0 &     c2021=0b10)
+	|   (TMode=1 & thv_c2021=0b10)) { tmp:1 = (NG==OV); export tmp; }
+vselcond: "gt"  is ((TMode=0 &     c2021=0b11)
+	|   (TMode=1 & thv_c2021=0b11)) { tmp:1 = (!ZR && NG==OV); export tmp; }
+vselcond: "vs"  is ((TMode=0 &     c2021=0b01)
+	|   (TMode=1 & thv_c2021=0b01)) { tmp:1 = OV; export tmp; }
 
 # F6.1.223 p8447 A1/T1 size = 11 doubleprec (c0809)
-:vsel^vselcond^".f64" Dd,Dn,Dm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
+:vsel^vselcond^".f64" Dd,Dn,Dm        is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11100 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b11))
 	& vselcond & Dn & Dd & Dm
 	{ Dd = zext(vselcond != 0) * Dn + zext(vselcond == 0) * Dm; }
 
 # F6.1.223 p8447 A1/T1 size = 10 singleprec (c0809)
-:vsel^vselcond".f32" Sd,Sn,Sm
-	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
+:vsel^vselcond".f32" Sd,Sn,Sm         is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11100 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b10))
 	& vselcond & Sn & Sd & Sm
 	{ Sd = zext(vselcond != 0) * Sn + zext(vselcond == 0) * Sm; }
+
+@if defined(VERSION_8M)
+# C2.4.472 VSHL T2
+:vshl.^udt^esize1819 cor_Qd,cor_Qn,thv_Rm  is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=1 & thv_c1212=1 & thv_c0811=0xe & thv_c0407=6 & udt & esize1819 & thv_Rm & cor_Qn & cor_Qd
+{
+	cor_Qd = VectorShiftLeft(cor_Qn,thv_Rm,esize1819,udt);
+}
+# C2.4.473 VSHLC
+shImm5: "#"^32 is thv_c1620=0 { tmp:1 = 32; export *[const]:1 tmp; }
+shImm5: "#"^thv_c1620 is thv_c1620 { tmp:1 = thv_c1620; export *[const]:1 tmp; }
+
+define pcodeop VectorWholeShiftLeftCarry;
+:vshlc cor_Qd,thv_Rm,shImm5 is $(TMODE_E) & thv_c2327=0x1d & thv_c2121=1 & thv_c1212=0 & thv_c0811=0xf & thv_c0407=0xc & cor_Qd & thv_Rm & shImm5 {
+	cor_Qd = VectorWholeShiftLeftCarry(cor_Qd,thv_Rm,shImm5);
+}
+# C2.4.474 VSHLL
+define pcodeop VectorShiftLeftLong;
+:vshll^bort1212^"."^udt^esize1920 cor_Qd,cor_Qm,cor_shImm is $(TMODE_EorF) & thv_c2327=0x1d & thv_c2121=1 & thv_c0811=0xf & thv_c0607=1 & thv_c0404=0 & thv_c0000=0 & bort1212 & udt & esize1920 & cor_Qd & cor_Qm & cor_shImm {
+	cor_Qd = VectorShiftLeftLong(cor_Qm,cor_shImm,bort1212,udt,esize1920);
+}
+
+szShImm: "#"^8 is thv_c1819=0 { tmp:1 = 8; export *[const]:1 tmp; }
+szShImm: "#"^16 is thv_c1819=1 { tmp:1 = 16; export *[const]:1 tmp; }
+
+:vshll^bort1212^"."^udt^esize1819 cor_Qd,cor_Qm,szShImm is $(TMODE_EorF) & thv_c2327=0x1c & thv_c2021=3 & thv_c1617=1 & thv_c0811=0xe & thv_c0607=0 & thv_c0404=0 & thv_c0000=1 & bort1212 & udt & esize1819 & cor_Qd & cor_Qm & szShImm {
+	cor_Qd = VectorShiftLeftLong(cor_Qm,szShImm,bort1212,udt,esize1819);
+}
+
+# C2.4.476 VSHRN
+:vshrn^bort1212^".i"^esize1920x2 cor_Qd, cor_Qm, cor_shImm is $(TMODE_E) & thv_c2327=0x1d & thv_c2121=0 & thv_c0811=0xf & thv_c0607=3 & thv_c0404=0 & thv_c0000=1 & bort1212 & esize1920x2 & cor_Qd & cor_Qm & cor_shImm{
+	cor_Qd = VectorShiftRightNarrow(cor_Qm, cor_shImm, bort1212, esize1920x2);
+}
+# C2.4.480 VST2
+vst2List: {cor_Qd0,cor_Qd1} is cor_Qd0 & cor_Qd1 & thv_c0708=0 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 16*pat0506;
+	local ptr1 = &cor_Qd1 + 16*pat0506;
+<loop>
+	*:1 mult_addr  = *[register]:1 ptr0;
+	mult_addr = mult_addr + 1;
+	*:1 mult_addr  = *[register]:1 ptr0;
+	mult_addr = mult_addr + 1;
+	count = count + 1;
+	ptr0 = ptr0 + 1;
+	ptr1 = ptr1 + 1;
+	if count == 16 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vst2List: {cor_Qd0,cor_Qd1} is cor_Qd0 & cor_Qd1 & thv_c0708=1 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 16*pat0506;
+	local ptr1 = &cor_Qd1 + 16*pat0506;
+<loop>
+	*:2 mult_addr = *[register]:2 ptr0;
+	mult_addr = mult_addr + 2;
+	*:2 mult_addr = *[register]:2 ptr1;
+	mult_addr = mult_addr + 2;
+	count = count + 1;
+	ptr0 = ptr0 + 2;
+	ptr1 = ptr1 + 2;
+	if count == 8 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vst2List: {cor_Qd0,cor_Qd1} is cor_Qd0 & cor_Qd1 & thv_c0708=2 & pat0506 {
+	local count :1= 0;
+	local ptr0 = &cor_Qd0 + 16*pat0506;
+	local ptr1 = &cor_Qd1 + 16*pat0506;
+<loop>
+	*:4 mult_addr = *[register]:4 ptr0;
+	mult_addr = mult_addr + 4;
+	*:4 mult_addr = *[register]:4 ptr1;
+	mult_addr = mult_addr + 4;
+	count = count + 1;
+	ptr0 = ptr0 + 4;
+	ptr1 = ptr1 + 4;
+	if count == 4 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+:vst2^pat0506^"."^esize0708 vst2List, RnAddrPat^wbackRn2 is $(TMODE_F) & thv_c2327=0x19 & thv_c2020=0 & thv_c1212=1 & thv_c0911=7 & thv_c0606=0 & thv_c0004=0 & pat0506 & esize0708 & vst2List & RnAddrPat & wbackRn2 {
+	mult_addr = RnAddrPat;
+	build vst2List;
+	build wbackRn2;
+}
+
+# C2.4.481 VST4
+vst4List: {cor_Qd0,cor_Qd1,cor_Qd2,cor_Qd3} is cor_Qd0 & cor_Qd1 & cor_Qd2 & cor_Qd3 & thv_c0708=0 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 8*pat0506;
+	local ptr1 = &cor_Qd1 + 8*pat0506;
+	local ptr2 = &cor_Qd2 + 8*pat0506;
+	local ptr3 = &cor_Qd3 + 8*pat0506;
+<loop>
+	*:1 mult_addr = *[register]:1 ptr0;
+	mult_addr = mult_addr + 1;
+	*:1 mult_addr = *[register]:1 ptr1;
+	mult_addr = mult_addr + 1;
+	*:1 mult_addr = *[register]:1 ptr2;
+	mult_addr = mult_addr + 1;
+	*:1 mult_addr = *[register]:1 ptr3;
+	mult_addr = mult_addr + 1;
+	count = count + 1;
+	ptr0 = ptr0 + 1;
+	ptr1 = ptr1 + 1;
+	ptr2 = ptr2 + 1;
+	ptr3 = ptr3 + 1;
+	if count == 16 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vst4List: {cor_Qd0,cor_Qd1,cor_Qd2,cor_Qd3} is cor_Qd0 & cor_Qd1 & cor_Qd2 & cor_Qd3 & thv_c0708=1 & pat0506 {
+	local count:1 = 0;
+	local ptr0 = &cor_Qd0 + 8*pat0506;
+	local ptr1 = &cor_Qd1 + 8*pat0506;
+	local ptr2 = &cor_Qd2 + 8*pat0506;
+	local ptr3 = &cor_Qd3 + 8*pat0506;
+<loop>
+	*:2 mult_addr = *[register]:2 ptr0;
+	mult_addr = mult_addr + 2;
+	*:2 mult_addr = *[register]:2 ptr1;
+	mult_addr = mult_addr + 2;
+	*:2 mult_addr = *[register]:2 ptr2;
+	mult_addr = mult_addr + 2;
+	*:2 mult_addr = *[register]:2 ptr3;
+	mult_addr = mult_addr + 2;
+	count = count + 1;
+	ptr0 = ptr0 + 2;
+	ptr1 = ptr1 + 2;
+	ptr2 = ptr2 + 2;
+	ptr3 = ptr3 + 2;
+	if count == 8 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+vst4List: {cor_Qd0,cor_Qd1,cor_Qd2,cor_Qd3} is cor_Qd0 & cor_Qd1 & cor_Qd2 & cor_Qd3 & thv_c0708=2 & pat0506 {
+	local count :1= 0;
+	local ptr0 = &cor_Qd0 + 8*pat0506;
+	local ptr1 = &cor_Qd1 + 8*pat0506;
+	local ptr2 = &cor_Qd2 + 8*pat0506;
+	local ptr3 = &cor_Qd3 + 8*pat0506;
+<loop>
+	*:4 mult_addr = *[register]:4 ptr0;
+	mult_addr = mult_addr + 4;
+	*:4 mult_addr = *[register]:4 ptr1;
+	mult_addr = mult_addr + 4;
+	*:4 mult_addr = *[register]:4 ptr2;
+	mult_addr = mult_addr + 4;
+	*:4 mult_addr = *[register]:4 ptr3;
+	mult_addr = mult_addr + 4;
+	count = count + 1;
+	ptr0 = ptr0 + 4;
+	ptr1 = ptr1 + 4;
+	ptr2 = ptr2 + 4;
+	ptr3 = ptr3 + 4;
+	if count == 4 goto <loop_end>;
+	goto <loop>;
+<loop_end>
+}
+
+:vst4^pat0506^"."^esize0708 vst4List, RnAddrPat^wbackRn4 is $(TMODE_F) & thv_c2327=0x19 & thv_c2020=0 & thv_c1212=1 & thv_c0911=7 & thv_Q6=0 & thv_c0004=1 & esize0708 & pat0506 & RnAddrPat & vst4List & wbackRn4 {
+	mult_addr = RnAddrPat;
+	build vst4List;
+	build wbackRn4;
+}
+# C2.4.484 VSTR (System Register)
+vstrSimm: "#"^val	is thv_c2323=0 & cor_imm7 [ val = cor_imm7 * 4; ] { export *[const]:4 val; }
+vstrSimm: "#"^val	is thv_c2323=1 & cor_imm7 [ val = cor_imm7 * (-4); ] { export *[const]:4 val; }
+
+vstrRnc: "["^thv_Rn^"]"				is thv_Rn & thv_c2424=1 & cor_imm7=0	{ ptr:4 = thv_Rn; export ptr; }
+vstrRnc: "["^thv_Rn,vstrSimm^"]"	is thv_Rn & thv_c2424=1 & thv_c2121=0 & vstrSimm		{ ptr:4 = thv_Rn + vstrSimm; export ptr; }
+vstrRnc: "["^thv_Rn,vstrSimm^"]!"	is thv_Rn & thv_c2424=1 & thv_c2121=1 & vstrSimm		{ ptr:4 = thv_Rn + vstrSimm; thv_Rn = ptr; export ptr; }
+vstrRnc: "["^thv_Rn^"]",vstrSimm	is thv_Rn & thv_c2424=0 & thv_c2121=1 & vstrSimm		{ ptr:4 = thv_Rn; thv_Rn = thv_Rn + vstrSimm; export ptr; }
+
+:vstr fpscr, vstrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=0 & thv_c0711=0x1f & vstrRnc & thv_c2222=0 & thv_c1315=1 & fpscr {
+	*:4 vstrRnc = fpscr;
+}
+
+:vstr "fpscr_nzcvqc", vstrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=0 & thv_c0711=0x1f & vstrRnc & thv_c2222=0 & thv_c1315=2 {
+	local result:4 = 0;
+	result[27,5] = fpscr[27,5];
+	*:4 vstrRnc = result;
+}
+
+:vstr vpr, vstrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=0 & thv_c0711=0x1f & vstrRnc & thv_c2222=1 & thv_c1315=4 & vpr {
+	*:4 vstrRnc = vpr;
+}
+
+:vstr "p0", vstrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=0 & thv_c0711=0x1f & vstrRnc & thv_c2222=1 & thv_c1315=5 {
+	local result:2 = vpr[0,16];
+	*:4 vstrRnc = zext(result);
+}
+
+:vstr "fpcxt_ns", vstrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=0 & thv_c0711=0x1f & vstrRnc & thv_c2222=1 & thv_c1315=6 {
+	*:4 vstrRnc = fpscr;
+}
+
+:vstr "fpcxt_s", vstrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=0 & thv_c0711=0x1f & vstrRnc & thv_c2222=1 & thv_c1315=7 {
+	*:4 vstrRnc = fpscr;
+}
+# C2.4.485 VSTRB, VSTRH, VSTRW
+define pcodeop VectorStoreRegister;
+:vstrb.^udt^esize0708 cor_Qd,vldrRnc is $(TMODE_EorF) & thv_c2527=6 & thv_c2222=0 & thv_c1920=0 & thv_c1212=0 & thv_c0911=7 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorStoreRegister(vldrRnc, 0:1, esize0708, udt);
+}
+
+:vstrh.^udt^esize0708 cor_Qd,vldrRnc is $(TMODE_EorF) & thv_c2527=6 & thv_c2222=0 & thv_c1920=1 & thv_c1212=0 & thv_c0911=7 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorStoreRegister(vldrRnc, 1:1, esize0708, udt);
+}
+
+:vstrb.8 cor_Qd,vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=1 & thv_c0811=0xe & thv_c0707=0 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorStoreRegister(vldrRnc, 0:1, esize0708, udt);
+}
+
+:vstrh.16 cor_Qd,vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=1 & thv_c0811=0xe & thv_c0707=1 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorStoreRegister(vldrRnc, 1:1, esize0708, udt);
+}
+
+:vstrw.32 cor_Qd,vldrRnc is $(TMODE_E) & thv_c2527=6 & thv_c2020=0 & thv_c1212=1 & thv_c0811=0xf & thv_c0707=0 & cor_Qd & vldrRnc & udt & esize0708 {
+	cor_Qd = VectorStoreRegister(vldrRnc, 2:1, esize0708, udt);
+}
+# C2.4.486 VSTRB, VSTRH, VSTRW, VSTRD (vector)
+define pcodeop VectorScatterStore; # VectorScatterStore(base address, element vector, offset vector, immediate, shift, esize, msize, signed)
+:vldrb.^esize0708 cor_Qd,vldrRnQm is $(TMODE_E) & thv_c2327=0x19 & thv_c2021=0 & thv_c1212=0 & thv_c0911=7 & thv_Q6=0 & thv_c0404=0 & thv_c0000 & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	VectorScatterStore(thv_Rn, cor_Qd, cor_Qm, 0:1, 0:1, esize0708, vldrRnQm);
+}
+
+:vldrh.^esize0708 cor_Qd,vldrRnQm is $(TMODE_E) & thv_c2327=0x19 & thv_c2021=0 & thv_c1212=0 & thv_c0911=7 & thv_Q6=0 & thv_c0404=1 & thv_c0000 & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	VectorScatterStore(thv_Rn, cor_Qd, cor_Qm, 0:1, thv_c0000:1, esize0708, vldrRnQm);
+}
+
+:vldrw.^esize0708 cor_Qd,vldrRnQm is $(TMODE_E) & thv_c2327=0x19 & thv_c2021=0 & thv_c1212=0 & thv_c0911=7 & thv_Q6=1 & thv_c0404=0 & thv_c0000 & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	VectorScatterStore(thv_Rn, cor_Qd, cor_Qm, 0:1, thv_c0000:1, esize0708, vldrRnQm);
+}
+
+:vldrd.^esize0708 cor_Qd,vldrRnQm is $(TMODE_E) & thv_c2327=0x19 & thv_c2021=0 & thv_c1212=0 & thv_c0911=7 & thv_Q6=1 & thv_c0404=1 & thv_c0000 & esize0708 & cor_Qd & vldrRnQm & thv_Rn & cor_Qm {
+	VectorScatterStore(thv_Rn, cor_Qd, cor_Qm, 0:1, thv_c0000:1, esize0708, vldrRnQm);
+}
+
+
+:vldrw.32 cor_Qd,vldrQmImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2020=0 & thv_c1616=0 & thv_c1212=1 & thv_c0811=0xe & cor_Qd & vldrQmImm & vldrSimm & cor_Qn {
+	VectorScatterStore(0:4, cor_Qd, cor_Qn, vldrSimm, 0:1, 2:1, 2:1, vldrQmImm);
+}
+
+:vldrd.64 cor_Qd,vldrQmImm is $(TMODE_F) & thv_c2327=0x1d & thv_c2020=0 & thv_c1616=0 & thv_c1212=1 & thv_c0811=0xf & cor_Qd & vldrQmImm & vldrSimm & cor_Qn {
+	VectorScatterStore(0:4, cor_Qd, cor_Qn, vldrSimm, 0:1, 3:1, 3:1, vldrQmImm);
+}
+
+# C2.4.492 WLS, DLS, WLSTP, DLSTP
+wloopEndAddr: reloc  is cor_immB & thv_c1111 [ reloc = inst_next + (cor_immB <<2) | (thv_c1111 << 1); ] { export *[ram]:4 reloc; }
+
+:wls lr,thv_Rn,wloopEndAddr is $(TMODE_F) & thv_c2427=0 & thv_c2023=4 & thv_c1215=0xc & thv_c0000=1 & lr & thv_Rn & wloopEndAddr {
+	local count = thv_Rn;
+	if (count != 0) goto <end>;
+	goto wloopEndAddr;
+<end>
+	lr = count;
+}
+
+:dls lr, thv_Rn is $(TMODE_F) & thv_c2427=0 & thv_c2023=4 & thv_c1215=0xe & thv_c0811=0 & thv_c0407=0 & thv_c0003=1 & lr & thv_Rn {
+	lr = thv_Rn;
+}
+
+:wlstp.^esize2021 lr,thv_Rn,wloopEndAddr is $(TMODE_F) & thv_c2427=0 & thv_c2223=0 & thv_c1215=0xc & thv_c0000=1 & esize2021 & lr & thv_Rn & wloopEndAddr {
+	local count = thv_Rn;
+	if (count != 0) goto <end>;
+	goto wloopEndAddr;
+<end>
+	fpscr[16,3] = esize2021;
+	lr = count;
+}
+
+:dlstp.^esize2021 lr, thv_Rn is $(TMODE_F) & thv_c2427=0 & thv_c2223=0 & thv_c1215=0xe & thv_c0811=0 & thv_c0407=0 & thv_c0003=1 & esize2021 & lr & thv_Rn {
+	fpscr[16,3] = esize2021;
+	lr = thv_Rn;
+}
+
+@endif # VERSION_8M
 
 @endif # INCLUDE_NEON

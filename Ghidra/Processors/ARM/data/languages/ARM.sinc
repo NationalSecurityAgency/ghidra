@@ -75,8 +75,10 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 
 @endif # SIMD
 
-@if defined(CORTEX)
-  define register offset=0x400 size=4  [ msplim psplim ];
+@if defined(VERSION_8M)
+  define register offset=0x400 size=4  [ msplim psplim vpr fpccr ];
+  define register offset=0x420 size=2  [ vpr_p0]; # shadow register used with VPT
+@define VPR_P0 "vpr[0,16]"
 @endif
 
 # Define context bits
@@ -103,17 +105,17 @@ define context contextreg
   	cond_base   = (6,8)    # shift mask for controlling shift
   	cond_shft   = (9,13)   # mask and lower bit of it condition field
   	itmode      = (5,5)    # true if in ITBlock mode
-     
 @endif
 
 	# Transient context bits
-	counter		= (14,18)	# 0 to 7 counter (for building variable length register lists)
-#	dreg		= (17,21)	# D register (attached, for building register lists)
-#	sreg		= (17,21)	# S register (attached, for building register lists)
+	counter		= (14,18)	# 0 to 31 counter (for building variable length register lists)
+#	dreg		= (19,23)	# D register (attached, for building register lists)
+#	sreg		= (19,23)	# S register (attached, for building register lists)
 	regNum		= (19,23)	# D register number (see dreg)
+	sdOv		= (24,24)
 	counter2	= (24,26)	# 0 to 7 counter (for building variable length register lists)
-#	dreg2		= (25,29)	# 2nd D register (attached, for building register lists)
-#	sreg2		= (25,29)	# 2nd S register (attached, for building register lists)
+#	dreg2		= (27,31)	# 2nd D register (attached, for building register lists)
+#	sreg2		= (27,31)	# 2nd S register (attached, for building register lists)
 	reg2Num		= (27,31)	# 2nd D register number (see dreg2)
 # --- do not allow any field to span 32-bit boundary ---
 	regInc		= (32,33)	# Pair register increment
