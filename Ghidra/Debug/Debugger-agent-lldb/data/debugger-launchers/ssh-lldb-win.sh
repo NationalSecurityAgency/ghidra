@@ -62,7 +62,7 @@ function rewrite-lldbinit() {
 
 function launch-lldb-ssh-init() {
 	local -a sshargs
-	compute-ssh-args true "cat > .\.lldbinit"
+	compute-ssh-args true "cat > .\ghidra.lldbinit"
 
 	"${sshargs[@]}"
 }
@@ -71,7 +71,7 @@ rewrite-lldbinit | launch-lldb-ssh-init
 
 function launch-lldb-ssh() {
 	local -a sshargs
-	compute-ssh-args true "lldb"
+	compute-ssh-args true "lldb -s .\ghidra.lldbinit"
 
 	"${sshargs[@]}"
 }
