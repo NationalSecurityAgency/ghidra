@@ -237,7 +237,7 @@ macro th_add_with_carry_flags(op1,op2){
 macro th_sub_with_carry_flags(op1, op2){
   local result = op1 - op2;
   tmpCY = (op1 > op2) || (result < zext(CY)); 
-  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));	
+  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));
 }
 
 
@@ -516,6 +516,15 @@ thBitWidth: "#"^w	is imm3_shft & imm2_shft & thc0004	[ w = thc0004 - ((imm3_shft
 
 @endif # VERSION_6T2 || VERSION_7
 
+thAddrShift:[Rn0003, Rm0003]  is Rn0003; thc0405=0 & Rm0003 {
+	local addr = Rn0003 + Rm0003;
+	export *:4 addr;
+}
+
+thAddrShift: [Rn0003, Rm0003, "lsl #"^thc0405]  is Rn0003; thc0405 & Rm0003 {
+	local addr = Rn0003 + (Rm0003 << thc0405);
+	export *:4 addr;
+}
 
 #####################
 ######  thshift2 ######
@@ -523,7 +532,7 @@ thBitWidth: "#"^w	is imm3_shft & imm2_shft & thc0004	[ w = thc0004 - ((imm3_shft
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-thshift2: Rm0003 	   		is  imm3_shft=0 & imm2_shft=0 & thc0405=0 & Rm0003
+thshift2: Rm0003 				is  imm3_shft=0 & imm2_shft=0 & thc0405=0 & Rm0003
 {
   shift_carry = CY; export Rm0003;
 }
@@ -2215,10 +2224,10 @@ define pcodeop ExclusiveAccess;
   build RtGotoCheck;
 }
 
-:ldr^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf85 & Rn0003; Rt1215 & RtGotoCheck & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:ldr^ItCond^".w"  Rt1215,thAddrShift  is TMode=1 & ItCond & (op4=0xf85; Rt1215 & RtGotoCheck & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  local tmp = thAddrShift;
   Rt1215 = *tmp;
   build RtGotoCheck;
 }
@@ -2256,10 +2265,10 @@ define pcodeop ExclusiveAccess;
    Rt1215 = zext(tmp);
 }
 
-:ldrb^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
-   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
+:ldrb^ItCond^".w"  Rt1215,thAddrShift is TMode=1 & ItCond & (op4=0xf81; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
+  build ItCond;
+  build thAddrShift;
+  local tmp = thAddrShift;
   val:1 = *tmp;
   Rt1215 = zext(val);
 }
@@ -2305,14 +2314,14 @@ define pcodeop ExclusiveAccess;
 {
   build ItCond;
   addr:4 = Rn0003 - immed8;
-  	HintPreloadDataForWrite(addr);
+  HintPreloadDataForWrite(addr);
 }
 
-:pldw^ItCond	Rn0003,Rm0003,"lsl #"^thc0405 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xf0 & thc0607=0 & thc0405 & Rm0003
-{
+:pldw^ItCond  thAddrShift               is TMode=1 & ItCond & (op6=0x3e0 & thwbit=1 & thc0404=1; op8=0xf0 & thc0607=0) & thAddrShift {
   build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
-  	HintPreloadDataForWrite(addr);
+  build thAddrShift;
+  addr:4 = thAddrShift;
+  HintPreloadDataForWrite(addr);
 }
 
 
@@ -2320,12 +2329,14 @@ define pcodeop ExclusiveAccess;
 :ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf83 & sop0003=15; Rt1215) & PcrelOffset12
 {
    build ItCond;
+   build PcrelOffset12;
    local tmp = PcrelOffset12:2;
    Rt1215 = zext(tmp);
 }
 :ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8b & sop0003=15; Rt1215) & PcrelOffset12
 {
    build ItCond;
+   build PcrelOffset12;
    tmp:2 = PcrelOffset12:2;
    Rt1215 = zext(tmp);
 }
@@ -2346,11 +2357,11 @@ define pcodeop ExclusiveAccess;
    Rt1215 = zext(tmp);
 }
 
-:ldrh^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf83 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:ldrh^ItCond^".w"  Rt1215,thAddrShift is TMode=1 & ItCond & (op4=0xf83 ; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
-  val:2 = *tmp;
+  build thAddrShift;
+  local addr = thAddrShift;
+  val:2 = *addr;
   Rt1215 = zext(val);
 }
 
@@ -2364,7 +2375,7 @@ define pcodeop ExclusiveAccess;
 
 
 # pli moevd above ldrsb to avoid conflict for ldrsb when Rt == 1111
-:pli^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op4=0xf99 & Rn0003; op12=0xf & offset12
+:pli^ItCond	[Rn0003,"#"^offset12]		is TMode=1 & ItCond & op4=0xf99 & Rn0003; op12=0xf & offset12
 {
   build ItCond;
   addr:4 = Rn0003 + offset12;
@@ -2381,13 +2392,14 @@ define pcodeop ExclusiveAccess;
 :pli^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
 {
    build ItCond;
+   build PcrelOffset12;
    HintPreloadInstruction(PcrelOffset12);
 }
 
-:pli^ItCond	Rn0003,Rm0003"lsl #"^thc0405 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op6=0x3c0 & thc0405 & Rm0003
-{
+:pli^ItCond  thAddrShift              is TMode=1 & ItCond & (op4=0xf91; op6=0x3c0) & thAddrShift {
   build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  addr:4 = thAddrShift;
   HintPreloadInstruction(addr);
 }
 
@@ -2395,16 +2407,17 @@ define pcodeop ExclusiveAccess;
 # overlaps patterns with the other ldrsb intructions when Rn==1111, therefore it must occur first
 :ldrsb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
 {
-   build ItCond;
-   tmp:1 = PcrelOffset12:1;
-   Rt1215 = sext(tmp);
+  build ItCond;
+  build PcrelOffset12;
+  tmp:1 = *PcrelOffset12;
+  Rt1215 = sext(tmp);
 }
 
-:ldrsb^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12
-{
-   build ItCond;
-   tmp:1 = *RnIndirect12;
-   Rt1215 = sext(tmp);
+:ldrsb^ItCond^".w"  Rt1215,RnIndirect12          is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12 {
+  build ItCond;
+  build RnIndirect12;
+  tmp:1 = *RnIndirect12;
+  Rt1215 = sext(tmp);
 }
 
 :ldrsb^ItCond^".w"	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf91; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
@@ -2415,10 +2428,10 @@ define pcodeop ExclusiveAccess;
    Rt1215 = sext(tmp);
 }
 
-:ldrsb^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf91 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:ldrsb^ItCond^".w"  Rt1215,thAddrShift          is TMode=1 & ItCond & (op4=0xf91; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  local tmp = thAddrShift;
   val:1 = *tmp;
   Rt1215 = sext(val);
 }
@@ -2441,11 +2454,11 @@ define pcodeop ExclusiveAccess;
    Rt1215 = sext(tmp);
 }
 
-:ldrsh^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf9B; Rt1215) & RnIndirect12
-{
-   build ItCond;
-   tmp:2 = *RnIndirect12;
-   Rt1215 = sext(tmp);
+:ldrsh^ItCond^".w"  Rt1215,RnIndirect12  is TMode=1 & ItCond & (op4=0xf9B; Rt1215) & RnIndirect12 {
+  build ItCond;
+  build RnIndirect12;
+  tmp:2 = *RnIndirect12;
+  Rt1215 = sext(tmp);
 }
 
 :ldrsh^ItCond^".w"	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf93; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
@@ -2456,11 +2469,11 @@ define pcodeop ExclusiveAccess;
    Rt1215 = sext(tmp);
 }
 
-:ldrsh^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf93 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:ldrsh^ItCond^".w"  Rt1215,thAddrShift          is TMode=1 & ItCond & (op4=0xf93; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
-  val:2 = *tmp;
+  build thAddrShift;
+  local addr = thAddrShift;
+  val:2 = *addr;
   Rt1215 = sext(val);
 }
 
@@ -2542,9 +2555,9 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:lsl^thSBIT_CZN^ItCond^".w"    Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811 & thc0405=0 & Rm0003 & thLsbImm
-{
+:lsl^thSBIT_CZN^ItCond^".w"  Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811 & thc0405=0 & Rm0003 & thLsbImm {
   build ItCond;
+  build thLsbImm;
   th_set_carry_for_lsl(Rm0003,thLsbImm);
   Rd0811 = Rm0003 << thLsbImm;
   resflags(Rd0811);
@@ -2561,9 +2574,9 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   build thSBIT_CZN;
 }
 
-:lsr^thSBIT_CZN^ItCond^".w"    Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811 & thc0405=1 & Rm0003 & thLsbImm
-{
+:lsr^thSBIT_CZN^ItCond^".w"  Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811 & thc0405=1 & Rm0003 & thLsbImm {
   build ItCond;
+  build thLsbImm;
   th_set_carry_for_lsr(Rm0003,thLsbImm);
   Rd0811 = Rm0003 >> thLsbImm;
   resflags(Rd0811);
@@ -2664,9 +2677,9 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:mov^thSBIT_ZN^ItCond^".w"	Rd0811,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=2 & thSBIT_ZN & sop0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12
-{
+:mov^thSBIT_ZN^ItCond^".w"  Rd0811,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=2 & thSBIT_ZN & sop0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12 {
   build ItCond;
+  build ThumbExpandImm12;
   Rd0811 = ThumbExpandImm12;
   resflags(Rd0811);
   build thSBIT_ZN;
@@ -2817,6 +2830,7 @@ basepri: "basepri"			is epsilon {}
 :mrs^ItCond Rd0811,basepri 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=17 & basepri
 {
   build ItCond;
+  build basepri;
   Rd0811 = 0;
   b:1 = isCurrentModePrivileged();
   if (!b) goto inst_next;
@@ -2828,6 +2842,7 @@ basepri_max: "basepri_max" 	is epsilon {}
 :mrs^ItCond Rd0811,basepri_max 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=18 & basepri_max
 {
   build ItCond;
+  build basepri_max;
   Rd0811 = 0;
   b:1 = isCurrentModePrivileged();
   if (!b) goto inst_next;
@@ -2860,7 +2875,7 @@ control: "control" 			is epsilon {}
 
 @endif
 
-@if defined(CORTEX)
+@if defined(VERSION_8M)
 
 define pcodeop setMainStackPointerLimit;
 
@@ -2894,7 +2909,7 @@ define pcodeop getProcessStackPointerLimit;
   Rd0811 = getProcessStackPointerLimit();
 }
 
-@endif #CORTEX
+@endif #VERSION_8M
 
 :mrs^ItCond Rd0811,cpsr 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=0 & cpsr
 {
@@ -3047,17 +3062,18 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   spsr = (spsr& ~thspsrmask) | (Rn0003 & thspsrmask);
 }
 
-:mvn^thSBIT_ZN^ItCond    Rd0811,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=3 & thSBIT_ZN & thc0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12
-{
-  build ItCond;
-  Rd0811 = ~ThumbExpandImm12;
-  resflags(Rd0811);
-  build thSBIT_ZN;
+:mvn^thSBIT_ZN^ItCond  Rd0811,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=3 & thSBIT_ZN & thc0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12 {
+	build ItCond;
+	build ThumbExpandImm12;
+	Rd0811 = ~ThumbExpandImm12;
+	resflags(Rd0811);
+	build thSBIT_ZN;
 }
 
 :mvn^thSBIT_ZN^ItCond^".w"  Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=3 & thSBIT_ZN & thc0003=15; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
+  build thshift2;
   Rd0811 = ~thshift2;
   resflags(Rd0811);
   build thSBIT_ZN;
@@ -3128,6 +3144,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :orn^thSBIT_CZNO^ItCond	Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=3 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
+  build ThumbExpandImm12;
   Rd0811 = Rn0003 | ~(ThumbExpandImm12);
   th_logicflags();
   resflags(Rd0811);
@@ -3137,6 +3154,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :orn^thSBIT_CZNO^ItCond^".w"  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=3 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
+  build thshift2;
   Rd0811 = Rn0003 | ~(thshift2);
   th_logicflags();
   resflags(Rd0811);
@@ -3146,6 +3164,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :orr^thSBIT_CZNO^ItCond	Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=2 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
+  build ThumbExpandImm12;
   Rd0811 = Rn0003 | ThumbExpandImm12;
   th_logicflags();
   resflags(Rd0811);
@@ -3155,6 +3174,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :orr^thSBIT_CZNO^ItCond^".w"  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
+  build thshift2;
   Rd0811 = Rn0003 | thshift2;
   th_logicflags();
   resflags(Rd0811);
@@ -3164,6 +3184,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :pkhbt^ItCond^".w"  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op4=0xeac & Rn0003; thc1515=0 & Rd0811 & thc0505=0 & thc0404=0 & thshift2
 {
   build ItCond;
+  build thshift2;
   Rd0811 = (Rn0003 & 0x0000ffff) | (thshift2 & 0xffff0000);
   th_logicflags();
   resflags(Rd0811);
@@ -3172,6 +3193,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :pkhtb^ItCond^".w"  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op4=0xeac & Rn0003; thc1515=0 & Rd0811 & thc0505=1 & thc0404=0 & thshift2
 {
   build ItCond;
+  build thshift2;
   Rd0811 = (Rn0003 & 0xffff0000) | (thshift2 & 0x0000ffff);
   th_logicflags();
   resflags(Rd0811);
@@ -3195,13 +3217,14 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :pld^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf8 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
 {
    build ItCond;
+   build PcrelOffset12;
    HintPreloadData(PcrelOffset12);
 }
 
-:pld^ItCond	Rn0003,Rm0003"lsl #"^thc0405 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=0 & thc0404=1 & Rn0003; op8=0xf0 & thc0607=0 & thc0405 & Rm0003
-{
+:pld^ItCond  thAddrShift              is TMode=1 & ItCond & (op6=0x3e0 & thwbit=0 & thc0404=1; op8=0xf0 & thc0607=0) & thAddrShift {
   build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  addr:4 = thAddrShift;
   HintPreloadData(addr);
 }
 
@@ -3248,9 +3271,9 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 
 :pop^ItCond    thldrlist_inc       is TMode=1 & ItCond & op0=0xe8bd; thldrlist_inc & thc1515=1
 {
-    build ItCond;
+	build ItCond;
 #	mult_addr = sp & 0xfffffffc;
-  mult_addr = sp;
+	mult_addr = sp;
 	build thldrlist_inc;
 	sp = mult_addr;
 	LoadWritePC(pc);
@@ -3686,6 +3709,7 @@ macro BitReverse(val) {
 :rsb^thSBIT_CZNO^ItCond^".w"    Rd0811,Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=14 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
+  build ThumbExpandImm12;
   th_subflags(ThumbExpandImm12,Rn0003);
   Rd0811 = ThumbExpandImm12 - Rn0003;
   resflags(Rd0811);
@@ -3695,6 +3719,7 @@ macro BitReverse(val) {
 :rsb^thSBIT_CZNO^ItCond  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=14 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
+  build thshift2;
   th_subflags(thshift2,Rn0003);
   Rd0811 = thshift2 - Rn0003;
   resflags(Rd0811);
@@ -3724,6 +3749,7 @@ macro th_set_carry_for_ror(result, count) {
 :ror^thSBIT_CZN^ItCond  Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & thc0003=0xf; thc1515=0 & Rd0811 & thc0405=3 & thshift2
 {
   build ItCond;
+  build thshift2;
   Rd0811 = thshift2;
   tmpCY = shift_carry;
   resflags(Rd0811);
@@ -3929,9 +3955,8 @@ macro th_set_carry_for_ror(result, count) {
 }
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
-
-thXBIT: "b" is Rn0003 ; thc0505=0      { local tmpRn0003 = Rn0003; tmp_x:2 = tmpRn0003:2;   export tmp_x; }
-thXBIT: "t" is Rn0003 ; thc0505=1      { local tmpRn0003 = Rn0003; tmp_x:2 = tmpRn0003(2);  export tmp_x; }
+thXBIT: "b"  is Rn0003 ; thc0505=0 { local tmpRn0003 = Rn0003; tmp_x:2 = tmpRn0003:2; export tmp_x; }
+thXBIT: "t"  is Rn0003 ; thc0505=1 { local tmpRn0003 = Rn0003; tmp_x:2 = tmpRn0003(2); export tmp_x; }
 
 thYBIT: "b" is thc0404=0 & Rm0003       { local tmpRm0003 = Rm0003; tmp_y:2 = tmpRm0003:2;   export tmp_y; }
 thYBIT: "t" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp_y:2 = tmpRm0003(2);  export tmp_y; }
@@ -4196,14 +4221,13 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
   sp = ptr;
 }
 
-:srsia^ItCond sp,thSRSMode 		is TMode=1 & ItCond & op6=0x3a6 & sp & thc0505=0 & thc0004=0xd; op8=0xc0 & sop0507=0 & thSRSMode
-{
-  build ItCond;
-  # register list is always: r14, spsr
-  ptr:4 = sp + 4;
-  *ptr = lr;
-  ptr = ptr + 4;
-  *ptr = spsr;
+:srsia^ItCond  sp,thSRSMode           is TMode=1 & ItCond & op6=0x3a6 & sp & thc0505=0 & thc0004=0xd; op8=0xc0 & sop0507=0 & thSRSMode {
+	build ItCond;
+	# register list is always: r14, spsr
+	ptr:4 = sp + 4;
+	*ptr = lr;
+	ptr = ptr + 4;
+	*ptr = spsr;
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
@@ -4472,6 +4496,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 :str.w^ItCond	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf8c; Rt1215) & RnIndirect12
 {
   build ItCond;
+  build RnIndirect12;
   *RnIndirect12 = Rt1215;
 }
 
@@ -4489,10 +4514,10 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   *tmp = Rt1215;
 }
 
-:str^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf84 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:str^ItCond^".w"  Rt1215,thAddrShift  is TMode=1 & ItCond & (op4=0xf84; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  local tmp = thAddrShift;
   *tmp = Rt1215;
 }
 
@@ -4512,12 +4537,12 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   *RnIndirectPUW = tmpRt1215:1;
 }
 
-:strb^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf80 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:strb^ItCond^".w"  Rt1215,thAddrShift is TMode=1 & ItCond & (op4=0xf80; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  local addr = thAddrShift;
   local tmpRt1215 = Rt1215;
-  *tmp = tmpRt1215:1;
+  *addr = tmpRt1215:1;
 }
 
 :strbt^ItCond    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf80 & Rn0003; Rt1215 & thc0811=14 & Immed8
@@ -4553,12 +4578,12 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 	*RnIndirectPUW = tmpRt1215:2;
 }
 
-:strh^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf82 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
-{
+:strh^ItCond^".w"  Rt1215,thAddrShift  is TMode=1 & ItCond & (op4=0xf82; Rt1215 & thc1111=0 & sop0610=0) & thAddrShift {
   build ItCond;
-  local tmp = Rn0003 + (Rm0003 << thc0405);
+  build thAddrShift;
+  local addr = thAddrShift;
   local tmpRt1215 = Rt1215;
-  *tmp = tmpRt1215:2;
+  *addr = tmpRt1215:2;
 }
 
 :strht^ItCond    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf82 & Rn0003; Rt1215 & thc0811=14 & Immed8
@@ -4681,7 +4706,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sub^thSBIT_CZNO^ItCond^".w"	Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=13 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
 {
-   build ItCond;
+  build ItCond;
   build thshift2;
   local tmp = thshift2;
   th_subflags(Rn0003,tmp);
@@ -4692,7 +4717,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sub^thSBIT_CZNO^ItCond^".w"	Rd0811,sp,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=13 & thSBIT_CZNO & sp & sop0003=0xd; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
-   build ItCond;
+  build ItCond;
   build ThumbExpandImm12;
   th_subflags(sp,ThumbExpandImm12);
   Rd0811 = sp-ThumbExpandImm12;
@@ -4702,7 +4727,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sub^ItCond	pc,lr,Immed8 		is TMode=1 & ItCond & op4=0xf3d & pc & sop0003=0xe; op8=0x8f & lr & Immed8
 {
-   build ItCond;
+  build ItCond;
   build Immed8;
   th_subflags(lr,Immed8);
   dest:4 = lr-Immed8;
@@ -4715,7 +4740,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :subw^ItCond	Rd0811,sp,Immed12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=1 & sop0508=5 & thc0404=0 & sop0003=0xd & sp; thc1515=0 & Rd0811) & Immed12
 {
-   build ItCond;
+  build ItCond;
   th_subflags(sp,Immed12);
   Rd0811 = sp-Immed12;
   resflags(Rd0811);
@@ -4723,7 +4748,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sub^thSBIT_CZNO^ItCond^".w"	Rd0811,sp,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=13 & thSBIT_CZNO & sop0003=0xd & sp; thc1515=0 & Rd0811 & thshift2
 {
-   build ItCond;
+  build ItCond;
   build thshift2;
   local tmp = thshift2;
   th_subflags(sp,tmp);
@@ -4736,7 +4761,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :svc^ItCond	immed8			is TMode=1 & ItCond & op8=0xdf & immed8
 {
-   build ItCond;
+  build ItCond;
   tmp:4 = immed8;
   software_interrupt(tmp);
 }
@@ -4745,7 +4770,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxtab^ItCond   Rd0811, Rn0003, Rm0003, ByteRotate    is  TMode=1 & ItCond & op4=0xfa4 & Rn0003; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
 {
-   build ItCond;
+  build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
   Rd0811 = sext(tmp:1) + Rn0003;
 }
@@ -4759,7 +4784,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxtab16^ItCond   Rd0811, Rn0003, Rm0003, ByteRotate    is  TMode=1 & ItCond & op4=0xfa2 & Rn0003; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
 {
-   build ItCond;
+  build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
   local tmpRn0003 = Rn0003;
   tmpL:2 = sext(tmp:1) + tmpRn0003:2;
@@ -4770,7 +4795,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxtab16^ItCond   Rd0811, Rn0003, Rm0003    is  TMode=1 & ItCond & op4=0xfa2 & Rn0003; op12=0xf & Rd0811 & thc0707=1 & throt=0 & Rm0003
 {
-   build ItCond;
+  build ItCond;
    local tmpRn0003 = Rn0003;
    local tmpRm0003 = Rm0003;
   tmpL:2 = sext(tmpRm0003:1) + tmpRn0003:2;
@@ -4781,15 +4806,15 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxtah^ItCond   Rd0811, Rn0003, Rm0003, ByteRotate    is  TMode=1 & ItCond & op4=0xfa0 & Rn0003; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
 {
-   build ItCond;
+  build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
   Rd0811 = sext(tmp:2) + Rn0003;
 }
 
 :sxtah^ItCond   Rd0811, Rn0003, Rm0003    is  TMode=1 & ItCond & op4=0xfa0 & Rn0003; op12=0xf & Rd0811 & thc0707=1 & throt=0 & Rm0003
 {
-   build ItCond;
-   local tmpRm0003 = Rm0003;
+  build ItCond;
+  local tmpRm0003 = Rm0003;
   Rd0811 = sext(tmpRm0003:2) + Rn0003;
 }
 
@@ -4799,22 +4824,22 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxtb^ItCond   Rd0002, Rm0305    is  TMode=1 & ItCond & op8=0xb2 & thc0707=0 & thc0606=1 & Rm0305 & Rd0002
 {
-   build ItCond;
-   local tmpRm0305 = Rm0305;
+  build ItCond;
+  local tmpRm0305 = Rm0305;
   Rd0002 = sext(tmpRm0305:1);
 }
 
 :sxtb^ItCond^".w"   Rd0811, Rm0003, ByteRotate    is  TMode=1 & ItCond & op0=0xfa4f; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
 {
-   build ItCond;
+  build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
   Rd0811 = sext(tmp:1);
 }
 
 :sxtb^ItCond^".w"   Rd0811, Rm0003    is  TMode=1 & ItCond & op0=0xfa4f; op12=0xf & Rd0811 & thc0707=1 & throt=0 & Rm0003
 {
-   build ItCond;
-   local tmpRm0003 = Rm0003;
+  build ItCond;
+  local tmpRm0003 = Rm0003;
   Rd0811 = sext(tmpRm0003:1);
 }
 
@@ -4823,9 +4848,8 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 :sxtb16^ItCond   Rd0811, Rm0003, ByteRotate    is  TMode=1 & ItCond & op0=0xfa2f; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
-                                      
 {
-   build ItCond;
+  build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
   tmpL:2 = sext(tmp:1);
   tmp = tmp >> 16;
@@ -4835,8 +4859,8 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxtb16^ItCond   Rd0811, Rm0003    is  TMode=1 & ItCond & op0=0xfa2f; op12=0xf & Rd0811 & thc0707=1 & throt=0 & Rm0003
 {
-   build ItCond;
-   local tmpRm0003 = Rm0003;
+  build ItCond;
+  local tmpRm0003 = Rm0003;
   tmpL:2 = sext(tmpRm0003:1);
   tmp:4 = tmpRm0003 >> 16;
   tmpH:2 = sext(tmp:1);
@@ -4849,22 +4873,22 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :sxth^ItCond   Rd0002, Rm0305    is  TMode=1 & ItCond & op8=0xb2 & thc0707=0 & thc0606=0 & Rm0305 & Rd0002
 {
-   build ItCond;
-   local tmpRm0305 = Rm0305;
+  build ItCond;
+  local tmpRm0305 = Rm0305;
   Rd0002 = sext(tmpRm0305:2);
 }
 
 :sxth^ItCond^".w"   Rd0811, Rm0003, ByteRotate    is  TMode=1 & ItCond & op0=0xfa0f; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
 {
-   build ItCond;
-  tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
+  build ItCond;
+ tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
   Rd0811 = sext(tmp:2);
 }
 
 :sxth^ItCond^".w"   Rd0811, Rm0003    is  TMode=1 & ItCond & op0=0xfa0f; op12=0xf & Rd0811 & thc0707=1 & throt=0 & Rm0003
 {
-   build ItCond;
-   local tmpRm0003 = Rm0003;
+  build ItCond;
+  local tmpRm0003 = Rm0003;
   Rd0811 = sext(tmpRm0003:2);
 }
 
