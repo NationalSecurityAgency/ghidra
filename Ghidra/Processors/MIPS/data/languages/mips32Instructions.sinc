@@ -1018,6 +1018,7 @@ define pcodeop SYNC;
     ra = inst_next; 
     delayslot( 1 );
     ISAModeSwitch = 1;
+    setISAMode(ISAModeSwitch);
     call Abs26; 
 }
 @endif

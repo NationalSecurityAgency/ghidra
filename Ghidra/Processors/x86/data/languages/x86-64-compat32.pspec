@@ -4,6 +4,7 @@
   <properties>
     <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
     <property key="assemblyRating:x86:LE:64:compat32" value="GOLD"/>
+    <property key="useropLibs" value="x86"/>
   </properties>
   <programcounter register="RIP"/>
   <context_data>

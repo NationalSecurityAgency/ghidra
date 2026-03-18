@@ -174,5 +174,15 @@
         <register name="gp"/>  <!-- Compilers may save gp to the stack before a call and restore it afterward -->
       </internal_storage>
   </prototype> 
-    
+  
+  <callotherfixup targetop="setISAMode">
+    <pcode incidentalcopy="true">
+      <input name="newMode"/>
+      <!-- NOP -->
+      <body><![CDATA[
+        v0 = v0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
 </compiler_spec>
