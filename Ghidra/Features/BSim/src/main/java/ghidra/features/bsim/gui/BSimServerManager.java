@@ -18,6 +18,7 @@ package ghidra.features.bsim.gui;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import ghidra.features.bsim.gui.search.dialog.BSimServerManagerListener;
@@ -30,7 +31,6 @@ import ghidra.framework.Application;
 import ghidra.framework.options.GProperties;
 import ghidra.framework.options.JSonProperties;
 import ghidra.util.Msg;
-import ghidra.util.Swing;
 
 /**
  * Managers BSim database server definitions and connections
@@ -43,14 +43,14 @@ public class BSimServerManager {
 	 * Get static singleton instance for BSimServerManager
 	 * @return BSimServerManager instance
 	 */
-	static synchronized BSimServerManager getBSimServerManager() {
+	public static synchronized BSimServerManager getBSimServerManager() {
 		if (instance == null) {
 			instance = new BSimServerManager();
 		}
 		return instance;
 	}
 
-	private Set<BSimServerInfo> serverInfos = new HashSet<>();
+	private Set<BSimServerInfo> serverInfos = ConcurrentHashMap.newKeySet();
 	private List<BSimServerManagerListener> listeners = new CopyOnWriteArrayList<>();
 
 	private BSimServerManager() {
@@ -64,7 +64,7 @@ public class BSimServerManager {
 	}
 
 	/**
-	 * Get list of defined servers.  Method must be invoked from swing thread only.
+	 * Get list of defined servers.  
 	 * @return list of defined servers
 	 */
 	public Set<BSimServerInfo> getServerInfos() {
@@ -130,7 +130,7 @@ public class BSimServerManager {
 	}
 
 	/**
-	 * Add server to list.  Method must be invoked from swing thread only.
+	 * Add server to list.  
 	 * @param newServerInfo new BSim DB server
 	 */
 	public void addServer(BSimServerInfo newServerInfo) {
@@ -166,7 +166,7 @@ public class BSimServerManager {
 	}
 
 	/**
-	 * Remove BSim DB server from list.  Method must be invoked from swing thread only.
+	 * Remove BSim DB server from list.  
 	 * Specified server datasource will be dispose unless it is active or force is true.
 	 * @param info BSim DB server to be removed
 	 * @param force true if server datasource should be disposed even when active.
@@ -192,11 +192,9 @@ public class BSimServerManager {
 	}
 
 	private void notifyServerListChanged() {
-		Swing.runLater(() -> {
-			for (BSimServerManagerListener listener : listeners) {
-				listener.serverListChanged();
-			}
-		});
+		for (BSimServerManagerListener listener : listeners) {
+			listener.serverListChanged();
+		}
 	}
 
 	/**
