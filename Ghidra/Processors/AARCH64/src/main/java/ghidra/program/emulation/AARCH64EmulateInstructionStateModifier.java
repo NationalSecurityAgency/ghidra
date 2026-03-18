@@ -25,6 +25,7 @@ import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.pcode.Varnode;
 //import ghidra.pcode.emulate.callother.SignalingNaNOpBehavior;
 
+@Deprecated(forRemoval = true, since = "12.1")
 public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
 	public AARCH64EmulateInstructionStateModifier(Emulate emu) {

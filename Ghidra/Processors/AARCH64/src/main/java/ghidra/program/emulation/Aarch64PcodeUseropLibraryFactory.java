@@ -27,25 +27,25 @@ import ghidra.program.model.pcode.Varnode;
  * https://developer.arm.com/documentation/ddi0602/2024-12/SIMD-FP-Instructions/TBL--Table-vector-lookup-
  */
 @UseropLibrary("aarch64")
-public class AARCH64PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
+public class Aarch64PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		return new AARCH64PcodeUseropLibrary<>(language);
+		return new Aarch64PcodeUseropLibrary<>(language);
 	}
 
-	public static class AARCH64PcodeUseropLibrary<T> extends DefaultPcodeUseropLibrary<T> {
-		public AARCH64PcodeUseropLibrary(SleighLanguage language) {
+	public static class Aarch64PcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
+		public Aarch64PcodeUseropLibrary(SleighLanguage language) {
 			SleighPcodeUseropDefinition.Factory factory =
 				new SleighPcodeUseropDefinition.Factory(language);
 
 			putOp(factory.define("MP_INT_ABS").params("n").body(args -> """
 					if (n >= 0) goto <pos>;
 					  __op_output = -n;
-					goto <done>;
-					<pos>:
+					  goto <done>;
+					<pos>
 					  __op_output = n;
-					<done>:
+					<done>
 					""").build());
 
 			putOp(factory.define("SIMD_PIECE").params("simdBytes", "offset").body(args -> """
@@ -74,7 +74,7 @@ public class AARCH64PcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 				return "local table:16 = %s;\n".formatted(regs[0]);
 			}
 			int size = 16; // Table is always made up of 16-byte (128-bit) regs
-			StringBuffer buf = new StringBuffer();
+			StringBuilder buf = new StringBuilder();
 			buf.append("local table:%d;\n".formatted(size * regs.length));
 			for (int i = 0; i < regs.length; i++) {
 				buf.append("table[%d,%d] = %s;\n".formatted(8 * size * i, 8 * size, regs[i]));
@@ -84,7 +84,7 @@ public class AARCH64PcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 
 		protected String genIndex(int size, int regCount) {
 			int tableSize = 16 * regCount;
-			StringBuffer buf = new StringBuffer();
+			StringBuilder buf = new StringBuilder();
 			buf.append("local indicies:%d = m;\n".formatted(size));
 			buf.append("local result:%d = init;\n".formatted(size));
 			for (int i = 0; i < size; i++) {
@@ -102,6 +102,20 @@ public class AARCH64PcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 			}
 			buf.append("__op_output = result;");
 			return buf.toString();
+		}
+
+		@PcodeUserop(functional = true)
+		public void CallSecureMonitor(int imm16) {
+		}
+
+		@PcodeUserop(functional = true)
+		public int ExclusiveMonitorPass(long addr, int rsize) {
+			return 0;
+		}
+
+		@PcodeUserop(functional = true)
+		public byte ExclusiveMonitorsStatus() {
+			return 0;
 		}
 	}
 }

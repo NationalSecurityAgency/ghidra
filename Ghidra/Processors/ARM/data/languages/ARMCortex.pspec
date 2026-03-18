@@ -7,6 +7,7 @@
     <property key="useNewFunctionStackAnalysis" value="true"/>
     <property key="enableContiguousFunctionsOnly" value="false"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.ARMEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="arm"/>
   </properties>
   <programcounter register="pc"/>
   <context_data>
@@ -18,7 +19,11 @@
       <set name="spsr" val="0"/>
     </tracked_set>
   </context_data>
-  
+
+  <register_data>
+    <register name="TB" alias="ISAModeSwitch"/>
+  </register_data>
+
   <default_symbols>
     <symbol name="MasterStackPointer" address="ram:0x0" entry="false" type="code_ptr"/>
     <symbol name="Reset" address="ram:0x4" entry="true" type="code_ptr"/>

@@ -45,7 +45,7 @@ import ghidra.util.exception.MultipleCauses;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
-public class AARCH64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
+public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
 	static final LanguageID LANG_ID_AARCH64 = new LanguageID("AARCH64:LE:64:v8A");
 
 	private SleighLanguage aarch64;
