@@ -639,9 +639,10 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
 
 :jalx Abs26_m16						is ISA_MODE=1 & RELP=1 & ext_isjal=1 & ext_tgt_x=1 & Abs26_m16 
 [ ext_delay=0b10; ISA_MODE = 0; globalset(Abs26_m16, ISA_MODE); globalset(inst_next, ext_delay); ] {
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
     delayslot( 1 );
-    ISAModeSwitch = 0; 
+    ISAModeSwitch = 0;
+    setISAMode(ISAModeSwitch);
     call Abs26_m16;
 }
 

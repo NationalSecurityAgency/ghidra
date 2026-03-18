@@ -228,6 +228,7 @@
   
   <callotherfixup targetop="setISAMode">
     <pcode incidentalcopy="true">
+      <input name="newTB"/>
       <!-- NOP -->
       <body><![CDATA[
         r0 = r0;

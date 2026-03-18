@@ -26,6 +26,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.pcode.Varnode;
 
+@Deprecated(forRemoval = true, since = "12.1")
 public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
 	private Register TModeReg;

@@ -919,9 +919,12 @@ DXuPos: pos             is lsb          [ pos = lsb + 32; ]             { tmp:1 
 DinsXSize: mysize         is msbd & lsb   [ mysize = msbd - lsb + 1 + 32; ] { tmp:1 = mysize; export tmp; }
 @endif
 
+define pcodeop setISAMode;
+
 macro JXWritePC(addr) {
 @ifdef ISA_VARIANT 
    ISAModeSwitch = (addr & 0x1) != 0;
+   setISAMode(ISAModeSwitch);
    tmp:$(REGSIZE) = -2;
    tmp = tmp & addr;
    pc = tmp;
