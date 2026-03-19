@@ -4,6 +4,8 @@ In this section, we demonstrate some applications of our BSim database.
 
 ## Registering a BSim Database
 
+**Note**: This step is not necessary if the **Add New Server to Server Manager** option was checked in ``CreateH2BSimDatabaseScript.java``.
+
 In order to query the database, you must register it with Ghidra: 
 
 1. From The Code Browser, Select **BSim -> Manage Servers**.
