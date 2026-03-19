@@ -42,7 +42,6 @@ public class DBTraceAddressSnapRangePropertyMapTree<T,
 	 * On My Machine (TM), I get the following performance when setting register values, which imply
 	 * setting state to KNOWN, which is how that involves this tree:
 	 * 
-	 * <p>
 	 * <table border=1>
 	 * <tr>
 	 * <th>{@code MAX_CHILDREN}</th>

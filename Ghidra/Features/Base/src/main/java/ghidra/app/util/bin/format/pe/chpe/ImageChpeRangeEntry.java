@@ -61,7 +61,7 @@ public class ImageChpeRangeEntry implements StructConverter, PeMarkupable {
 	}
 
 	/**
-	 * {@return the {@link ChpeRangeType type} of range
+	 * {@return the {@link ChpeRangeType type} of range}
 	 */
 	public ChpeRangeType getRangeType() {
 		return type;

@@ -20,7 +20,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 /**
  * Simple class used to avoid immutable objects and autoboxing when storing changing integer 
  * primitives in a collection.
- * <P>
+ * 
  * @apiNote This class is not thread-safe.
  */
 public class Counter extends MutableInt {
