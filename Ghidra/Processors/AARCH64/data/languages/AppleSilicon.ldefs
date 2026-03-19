@@ -9,7 +9,7 @@
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:LE:64:AppleSilicon">
-    <description>AppleSilicon ARM v8.5-A LE instructions, LE data, AMX extensions</description>
+    <description>AppleSilicon ARM v8.5-A LE instructions, LE data, AMX and proprietary extensions</description>
     <compiler name="default" spec="AARCH64_apple.cspec" id="default"/>
     <compiler name="Swift" spec="AARCH64_swift.cspec" id="swift"/>
     <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
