@@ -130,7 +130,9 @@ public class SleighLanguageProviderTest extends AbstractGenericTest {
 
 	@Test
 	public void testSlaLockFileInReadOnlyDirectory() throws IOException {
+		// This test only works on unix'ish hosts, and normal, non-root user
 		assumeFalse(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+		assumeFalse("root".equals(System.getProperty("user.name")));
 
 		File tmpDir = createTempDirectory("sleighlockfiletest");
 		FileUtilities.writeStringToFile(new File(tmpDir, "mylang.slaspec"), "slaspec");
@@ -171,7 +173,9 @@ public class SleighLanguageProviderTest extends AbstractGenericTest {
 
 	@Test
 	public void testSlaLockFileReadOnlyFile() throws IOException {
+		// This test only works on unix'ish hosts, and normal, non-root user
 		assumeFalse(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+		assumeFalse("root".equals(System.getProperty("user.name")));
 
 		File tmpDir = createTempDirectory("sleighlockfiletest");
 		FileUtilities.writeStringToFile(new File(tmpDir, "mylang.slaspec"), "slaspec");
