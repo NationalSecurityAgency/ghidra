@@ -352,6 +352,7 @@ dfLoc: f8			is a=0 & f8_57=0x0 & f8					{ export *[DATA]:1 f8; } # 0x00-0x1f   (
 dfLoc: f8			is a=0 & f8_57=0x1 & f8					{ export *[DATA]:1 f8; } # 0x20-0x3f   (Access mode)
 dfLoc: f8			is a=0 & f8_57=0x2 & f8					{ export *[DATA]:1 f8; } # 0x40-0x5f   (Access mode)
 dfLoc: freg		is a=0 & freg							{ export freg; }		 # 0xf60-0xfff (Access mode)
+dfLoc: fREGLoc		is a=1 & fREGLoc						{ export fREGLoc; }		 # (Banked mode)
 
 # TOSL - access mirrored into stack space using STKPTR
 dfLoc: freg			is a=0 & f8=0xfd & freg				{
@@ -468,8 +469,8 @@ dfLoc: freg		is a=0 & f8=0xdb & freg					{
 
 # Destination operand representation (w: W register is destination; f: specified fREG is destination)
 # Destination register (either srcREG or WREG)
-destREG: "0"	is d=0											{ export WREG; }
-destREG: "1"	is d=1 & dfLoc									{ export dfLoc; }
+destREG: "w"	is d=0											{ export WREG; }
+destREG: "f"	is d=1 & dfLoc									{ export dfLoc; }
 
 # Source File Registers specified by a 12-bit absolute offsets within 32-bit instriction
 srcREG32: fs	is fs											{ export *[DATA]:1 fs; } # 0x000-0xeff
