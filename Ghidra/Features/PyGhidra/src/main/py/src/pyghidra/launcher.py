@@ -314,7 +314,18 @@ class PyGhidraLauncher:
                 launch_support = self.install_dir / "support" / "LaunchSupport.jar"
             if not launch_support.exists():
                 raise ValueError(f"{launch_support} does not exist")
-            cmd = f'java -cp "{launch_support}" LaunchSupport "{self.install_dir}" -jdk_home -save'
+
+            # Check to see if java is on the PATH. If not, use JAVA_HOME.
+            # NOTE: shutils.which() is not enough...macOS puts a stub java on the PATH which
+            # will prevent that from working as expected, so you have to actually run it.
+            java_cmd = 'java'
+            if not shutil.which(java_cmd) or subprocess.run([java_cmd, "-version"]).returncode != 0:
+                java_home_dir = os.environ.get('JAVA_HOME')
+                if java_home_dir and os.path.isdir(java_home_dir):
+                    java_cmd = java_home_dir + "/bin/java"
+                else:
+                    raise ValueError("Java was not found in PATH or JAVA_HOME...cannot run LaunchSupport")
+            cmd = f'"{java_cmd}" -cp "{launch_support}" LaunchSupport "{self.install_dir}" -jdk_home -save'
             home = subprocess.check_output(cmd, encoding="utf-8", shell=True)
             self._java_home = Path(home.rstrip())
         return self._java_home
