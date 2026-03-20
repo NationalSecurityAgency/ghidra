@@ -459,15 +459,31 @@ simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c111
 }
 
 # cmode 110x I32
-simdExpImm_8: "#"^imm		is TMode=0 & c2424 & c1618 & c0003 & c0911=6 & c0808
-							[ imm = ((c2424 << 7) | (c1618 << 4) | c0003) << (8*(c0808+1)) | (c0808*(0xff << 8)) | 0xff; ] {
+simdExpImm_8: "#"^imm		is TMode=0 & c2424 & c1618 & c0003 & c0911=6 & c0808=0
+							[ imm = ((c2424 << 7) | (c1618 << 4) | c0003) << 8 | 0xff; ] {
 	local val:8 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
 	export *[const]:8 val;
 }
-simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c0911=6 & thv_c0808
-							[ imm = ((thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003) << (8*(thv_c0808+1)) | (thv_c0808*(0xff << 8)) | 0xff; ]	{
+simdExpImm_8: "#"^imm		is TMode=0 & c2424 & c1618 & c0003 & c0911=6 & c0808=1
+							[ imm = ((c2424 << 7) | (c1618 << 4) | c0003) << 16 | 0xffff; ] {
+	local val:8 = 0;
+	val[0,32] = imm;
+	val[32,32] = imm;
+	export *[const]:8 val;
+}
+
+simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c0911=6 & thv_c0808=0
+							[ imm = ((thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003) << 8 | 0xff; ]	{
+	local val:8 = 0;
+	val[0,32] = imm;
+	val[32,32] = imm;
+	export *[const]:8 val;
+}
+
+simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c0911=6 & thv_c0808=1
+							[ imm = ((thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003) << 16 | 0xffff; ]	{
 	local val:8 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
@@ -504,24 +520,24 @@ simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_cmod
 
 # op 1 cmode 1110 I64
 simdExpImm_8: "#"^imm		is TMode=0 & c2424 & c1818 & c1717 & c1616 & c0303 & c0202 & c0101 & c0000 & cmode=0xe & c0505=1
-							[ imm = ((1 << (8*c2424))-1 << 56) | ((1 << (8*c1818))-1 << 48) | ((1 << (8*c1717))-1 << 40) | ((1 << (8*c1616))-1 << 32) | ((1 << (8*c0303))-1 << 24)  | ((1 << (8*c0202))-1 << 16) | ((1 << (8*c0101))-1 << 8) | (1 << (8*c0000))-1; ] {
+							[ imm = ((0xff*c2424) << 56) | ((0xff*c1818) << 48) | ((0xff*c1717) << 40) | ((0xff*c1616) << 32) | ((0xff*c0303) << 24)  | ((0xff*c0202) << 16) | ((0xff*c0101) << 8) | (0xff*c0000); ] {
 	export *[const]:8 imm;
 }
 simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1818 & thv_c1717 & thv_c1616 & thv_c0303 & thv_c0202 & thv_c0101 & thv_c0000 & thv_cmode=0xe & thv_c0505=1
-							[ imm = ((1 << (8*thv_c2828))-1 << 56) | ((1 << (8*thv_c1818))-1 << 48) | ((1 << (8*thv_c1717))-1 << 40) | ((1 << (8*thv_c1616))-1 << 32) | ((1 << (8*thv_c0303))-1 << 24)  | ((1 << (8*thv_c0202))-1 << 16) | ((1 << (8*thv_c0101))-1 << 8) | (1 << (8*thv_c0000))-1; ] {
+							[ imm = ((0xff*thv_c2828) << 56) | ((0xff*thv_c1818) << 48) | ((0xff*thv_c1717)<< 40) | ((0xff*thv_c1616) << 32) | ((0xff*thv_c0303)<< 24)  | ((0xff*thv_c0202) << 16) | ((0xff*thv_c0101) << 8) | (0xff*thv_c0000); ] {
 	export *[const]:8 imm;
 }
 
 # op 0 cmode 1111 F32
 simdExpImm_8: "#"^imm		is TMode=0 & c2424 & c1818 & c1717 & c1616 & c0003 & cmode=0xf & c0505=0
-							[ imm = (c2424 << 31) | ((~(c1818) & 0x1) << 30) | ((1 << (5*c1818))-1 << 25)  | (c1717 << 24) | (c1616 << 23) | (c0003 << 19); ] {
+							[ imm = (c2424 << 31) | ((~(c1818) & 0x1) << 30) | ((0x1f*c1818) << 25)  | (c1717 << 24) | (c1616 << 23) | (c0003 << 19); ] {
 	local val:8 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
 	export *[const]:8 val;
 }
 simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1818 & thv_c1717 & thv_c1616 & thv_c0003 & thv_cmode=0xf & thv_c0505=0
-							[ imm = (thv_c2828 << 31) | ((~(thv_c1818) & 0x1) << 30) | ((1 << (5*thv_c1818))-1 << 25)  | (thv_c1717 << 24) | (thv_c1616 << 23) | (thv_c0003 << 19); ] {
+							[ imm = (thv_c2828 << 31) | ((~(thv_c1818) & 0x1) << 30) | ((0x1f*thv_c1818) << 25)  | (thv_c1717 << 24) | (thv_c1616 << 23) | (thv_c0003 << 19); ] {
 	local val:8 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
@@ -576,16 +592,33 @@ simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c11
 }
 
 # cmode 110x I32
-simdExpImm_16: "#"^imm		is TMode=0 & c2424 & c1618 & c0003 & c0911=6 & c0808
-							[ imm = ((c2424 << 7) | (c1618 << 4) | c0003) << (8*(c0808+1)) | (c0808*(0xff << 8)) | 0xff; ] {
+simdExpImm_16: "#"^imm		is TMode=0 & c2424 & c1618 & c0003 & c0911=6 & c0808=0
+							[ imm = ((c2424 << 7) | (c1618 << 4) | c0003) << 8 | 0xff; ] {
 	local val:16 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
 	val = (val << 64) | val;
 	export *[const]:16 val;
 }
-simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c0911=6 & thv_c0808
-							[ imm = ((thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003) << (8*(thv_c0808+1)) | (thv_c0808*(0xff << 8)) | 0xff; ]	{
+simdExpImm_16: "#"^imm		is TMode=0 & c2424 & c1618 & c0003 & c0911=6 & c0808=1
+							[ imm = ((c2424 << 7) | (c1618 << 4) | c0003) << 16 | 0xffff; ] {
+	local val:16 = 0;
+	val[0,32] = imm;
+	val[32,32] = imm;
+	val = (val << 64) | val;
+	export *[const]:16 val;
+}
+
+simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c0911=6 & thv_c0808=0
+							[ imm = ((thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003) << 8 | 0xff; ]	{
+	local val:16 = 0;
+	val[0,32] = imm;
+	val[32,32] = imm;
+	val = (val << 64) | val;
+	export *[const]:16 val;
+}
+simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_c0911=6 & thv_c0808=1
+							[ imm = ((thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003) << 16 | 0xffff; ]	{
 	local val:16 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
@@ -625,14 +658,14 @@ simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1618 & thv_c0003 & thv_cmo
 
 # op 1 cmode 1110 I64
 simdExpImm_16: "#"^imm		is TMode=0 & c2424 & c1818 & c1717 & c1616 & c0303 & c0202 & c0101 & c0000 & cmode=0xe & c0505=1
-							[ imm = ((1 << (8*c2424))-1 << 56) | ((1 << (8*c1818))-1 << 48) | ((1 << (8*c1717))-1 << 40) | ((1 << (8*c1616))-1 << 32) | ((1 << (8*c0303))-1 << 24)  | ((1 << (8*c0202))-1 << 16) | ((1 << (8*c0101))-1 << 8) | (1 << (8*c0000))-1; ] {
+							[ imm = ((0xff*c2424) << 56) | ((0xff*c1818) << 48) | ((0xff*c1717) << 40) | ((0xff*c1616) << 32) | ((0xff*c0303) << 24)  | ((0xff*c0202) << 16) | ((0xff*c0101) << 8) | (0xff*c0000); ] {
 	local val:16 = 0;
 	val[0,64] = imm;
 	val = (val << 64) | val;
 	export *[const]:16 val;
 }
 simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1818 & thv_c1717 & thv_c1616 & thv_c0303 & thv_c0202 & thv_c0101 & thv_c0000 & thv_cmode=0xe & thv_c0505=1
-							[ imm = ((1 << (8*thv_c2828))-1 << 56) | ((1 << (8*thv_c1818))-1 << 48) | ((1 << (8*thv_c1717))-1 << 40) | ((1 << (8*thv_c1616))-1 << 32) | ((1 << (8*thv_c0303))-1 << 24)  | ((1 << (8*thv_c0202))-1 << 16) | ((1 << (8*thv_c0101))-1 << 8) | (1 << (8*thv_c0000))-1; ] {
+							[ imm = ((0xff*thv_c2828) << 56) | ((0xff*thv_c1818) << 48) | ((0xff*thv_c1717) << 40) | ((0xff*thv_c1616) << 32) | ((0xff*thv_c0303) << 24)  | ((0xff*thv_c0202) << 16) | ((0xff*thv_c0101) << 8) | (0xff*thv_c0000); ] {
 	local val:16 = 0;
 	val[0,64] = imm;
 	val = (val << 64) | val;
@@ -641,7 +674,7 @@ simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1818 & thv_c1717 & thv_c16
 
 # op 0 cmode 1111 F32
 simdExpImm_16: "#"^imm		is TMode=0 & c2424 & c1818 & c1717 & c1616 & c0003 & cmode=0xf & c0505=0
-							[ imm = (c2424 << 31) | ((~(c1818) & 0x1) << 30) | ((1 << (5*c1818))-1 << 25)  | (c1717 << 24) | (c1616 << 23) | (c0003 << 19); ] {
+							[ imm = (c2424 << 31) | ((~(c1818) & 0x1) << 30) | ((0x1f*c1818) << 25)  | (c1717 << 24) | (c1616 << 23) | (c0003 << 19); ] {
 	local val:16 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
@@ -649,7 +682,7 @@ simdExpImm_16: "#"^imm		is TMode=0 & c2424 & c1818 & c1717 & c1616 & c0003 & cmo
 	export *[const]:16 val;
 }
 simdExpImm_16: "#"^imm		is TMode=1 & thv_c2828 & thv_c1818 & thv_c1717 & thv_c1616 & thv_c0003 & thv_cmode=0xf & thv_c0505=0
-							[ imm = (thv_c2828 << 31) | ((~(thv_c1818) & 0x1) << 30) | ((1 << (5*thv_c1818))-1 << 25)  | (thv_c1717 << 24) | (thv_c1616 << 23) | (thv_c0003 << 19); ] {
+							[ imm = (thv_c2828 << 31) | ((~(thv_c1818) & 0x1) << 30) | ((0x1f*thv_c1818) << 25)  | (thv_c1717 << 24) | (thv_c1616 << 23) | (thv_c0003 << 19); ] {
 	local val:16 = 0;
 	val[0,32] = imm;
 	val[32,32] = imm;
@@ -4335,7 +4368,7 @@ vldrRn16: "["^pc^",#-"^vldrImm^"]"	is TMode=1 & thv_Rn=15 & pc & thv_immed & thv
 vldrRn16: "["^pc^",#"^vldrImm^"]"	is TMode=1 & thv_Rn=15 & pc & thv_immed & thv_c2323=1	[ vldrImm = thv_immed * 2; ]	{ ptr:4 = ((inst_start + 4) & 0xfffffffc) + vldrImm; export ptr; }
 
 
-:vldr^COND^".16" Sd,vldrRn16	is COND & ( ($(AMODE) & ARMcond=1 & c2427=13 & c2021=1 & c0811=01) | ($(TMODE_E) &  thv_c2427=13 & thv_c2021=1 & thv_c0811=01)) & Sd & vldrRn16
+:vldr^COND^".16" Sd,vldrRn16	is COND & ( ($(AMODE) & ARMcond=1 & c2427=13 & c2021=1 & c0811=9) | ($(TMODE_E) &  thv_c2427=13 & thv_c2021=1 & thv_c0811=9)) & Sd & vldrRn16
 {
 	Sd = *:2 vldrRn16;
 }
