@@ -29,9 +29,12 @@ import ghidra.util.task.TaskMonitor;
 public class ExceptionDataDirectory extends DataDirectory {
     private final static String NAME = "IMAGE_DIRECTORY_ENTRY_EXCEPTION";
 
+	private LoadConfigDirectory lcDir;
 	private ImageRuntimeFunctionEntries functionEntries;
 
-	ExceptionDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
+	ExceptionDataDirectory(NTHeader ntHeader, BinaryReader reader, LoadConfigDirectory lcDir)
+			throws IOException {
+		this.lcDir = lcDir;
 		processDataDirectory(ntHeader, reader);
 	}
 
@@ -52,7 +55,7 @@ public class ExceptionDataDirectory extends DataDirectory {
 
 		try {
 			FileHeader fileHeader = ntHeader.getFileHeader();
-			boolean isChpe = isChpe(fileHeader);
+			boolean isChpe = lcDir != null && lcDir.getChpeMetadataPointer() != 0;
 			if (fileHeader.isX86() && !isChpe) {
 				functionEntries = new ImageRuntimeFunctionEntries_X86(reader, size, ntHeader);
 			}
@@ -89,15 +92,5 @@ public class ExceptionDataDirectory extends DataDirectory {
 		if (functionEntries != null) {
 			functionEntries.markup(program, addr);
 		}
-	}
-
-	private boolean isChpe(FileHeader fileHeader) {
-		DataDirectory[] dirs = ntHeader.getOptionalHeader().getDataDirectories();
-		if (dirs.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG) {
-			LoadConfigDataDirectory dataDir =
-				(LoadConfigDataDirectory) dirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG];
-			return dataDir.getLoadConfigDirectory().getChpeMetadataPointer() != 0;
-		}
-		return false;
 	}
 }
