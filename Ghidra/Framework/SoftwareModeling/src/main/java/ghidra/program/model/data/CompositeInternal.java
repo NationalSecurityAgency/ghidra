@@ -260,5 +260,4 @@ public interface CompositeInternal extends Composite {
 		buf.append(")");
 		return buf.toString();
 	}
-
 }

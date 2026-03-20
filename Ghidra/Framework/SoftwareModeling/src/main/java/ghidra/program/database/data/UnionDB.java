@@ -17,6 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 import db.DBRecord;
 import db.Field;
@@ -61,7 +62,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			Field[] ids = componentAdapter.getComponentIdsInComposite(key);
 			for (Field id : ids) {
 				DBRecord rec = componentAdapter.getRecord(id.getLongValue());
-				components.add(new DataTypeComponentDB(dataMgr, componentAdapter, this, rec));
+				DataTypeComponentDB component =
+					new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+				components.add(component);
 			}
 		}
 		catch (IOException e) {
@@ -122,8 +125,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		return length;
 	}
 
-	private DataTypeComponent doAdd(DataType dataType, int length, String name, String comment,
-			boolean validateAlignAndNotify) throws DataTypeDependencyException {
+	private DataTypeComponent doAdd(DataType dataType, int length, String name,
+			String comment, boolean validateAlignAndNotify) throws DataTypeDependencyException {
 
 		dataType = validateDataType(dataType);
 
@@ -143,19 +146,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		components.add(dtc);
 
 		return dtc;
-	}
-
-	private DataTypeComponentDB createComponent(long dtID, int length, int ordinal, int offset,
-			String name, String comment) {
-		DBRecord rec;
-		try {
-			rec = componentAdapter.createRecord(dtID, key, length, ordinal, offset, name, comment);
-			return new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
-		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
-		return null;
 	}
 
 	@Override
@@ -222,8 +212,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			getComputedAlignment(true); // ensure previous alignment has been stored
 
 			DataTypeComponentDB dtc = components.remove(ordinal);
-			dtc.getDataType().removeParent(this);
-			removeComponentRecord(dtc.getKey());
+			doDelete(dtc);
+
 			shiftOrdinals(ordinal, -1);
 
 			if (!repack(false, true)) {
@@ -265,8 +255,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 				int ordinal = dtc.getOrdinal();
 				if (ordinals.contains(ordinal)) {
 					// component removed - delete record
-					dtc.getDataType().removeParent(this);
-					removeComponentRecord(dtc.getKey());
+					doDelete(dtc);
 					--ordinalAdjustment;
 				}
 				else {
@@ -347,9 +336,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		}
 
 		for (DataTypeComponentDB dtc : components) {
-			dtc.getDataType().removeParent(this);
-			removeComponentRecord(dtc.getKey());
+			doDelete(dtc);
 		}
+
 		components.clear();
 		unionAlignment = -1;
 		computedAlignment = -1;
@@ -358,7 +347,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 		for (int i = 0; i < otherComponents.length; i++) {
 			DataTypeComponent dtc = otherComponents[i];
-			doAdd(resolvedDts[i], dtc.getLength(), dtc.getFieldName(), dtc.getComment(), false);
+			doAdd(resolvedDts[i], dtc.getLength(), dtc.getFieldName(), dtc.getComment(),
+				false);
 		}
 
 		repack(false, false);
@@ -427,7 +417,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	}
 
 	@Override
-	public DataTypeComponent getComponent(int ordinal) {
+	public DataTypeComponentDB getComponent(int ordinal) {
 		lock.acquire();
 		try {
 			checkIsValid();
@@ -456,6 +446,11 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	@Override
 	public DataTypeComponentDB[] getDefinedComponents() {
 		return getComponents();
+	}
+
+	@Override
+	void forEachDefinedComponent(Consumer<DataTypeComponentDB> dtcConsumer) {
+		components.forEach(dtcConsumer);
 	}
 
 	@Override

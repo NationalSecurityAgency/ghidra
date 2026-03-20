@@ -802,13 +802,9 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 		DataTypeComponent dtc = getComponent(startRowIndex);
 
 		// Set the field name and comment the same as before
-		try {
-			dtc.setFieldName(oldDtc.getFieldName());
-		}
-		catch (DuplicateNameException e) {
-			Msg.showError(this, null, "Unexcected Exception", "Exception applying field name", e);
-		}
+		dtc.setFieldName(oldDtc.getFieldName());
 		dtc.setComment(oldDtc.getComment());
+
 		fixSelection();
 		selectionChanged();
 		return dtc;
@@ -1166,31 +1162,31 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 	}
 
 	@Override
-	public void validateComponentName(int rowIndex, String name) throws UsrException {
-		if (nameExistsElsewhere(name, rowIndex)) {
-			throw new InvalidNameException("Name \"" + name + "\" already exists.");
-		}
-	}
-
-	@Override
 	public boolean setComponentName(int rowIndex, String name) throws InvalidNameException {
 
-		String oldName = getComponent(rowIndex).getFieldName();
-		if (Objects.equals(oldName, name)) {
+		name = InternalDataTypeComponent.cleanupFieldName(name); // will trim name if needed
+		DataTypeComponent component = getComponent(rowIndex);
+		if (Objects.equals(name, component.getDefaultFieldName())) {
+			name = null;
+		}
+		if (Objects.equals(name, component.getFieldName())) {
 			return false;
 		}
 
-		if (nameExistsElsewhere(name, rowIndex)) {
-			throw new InvalidNameException("Name \"" + name + "\" already exists.");
+		if (viewComposite.findComponent(name) != null) {
+			// Warn user and confirm rename when duplicate name is used
+			if (OptionDialog.OPTION_ONE != OptionDialog.showOptionDialog(null,
+				"Duplicate Field Name",
+				"Duplicate field name. Proceed with rename?",
+				"Rename!", OptionDialog.WARNING_MESSAGE)) {
+				return false;
+			}
 		}
-		return viewDTM.withTransaction("Set Component Name", () -> {
-			try {
-				getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
-				return true;
-			}
-			catch (DuplicateNameException exc) {
-				throw new InvalidNameException(exc.getMessage());
-			}
+
+		String newName = name;
+		return viewDTM.withTransaction("Set Field Name", () -> {
+			getComponent(rowIndex).setFieldName(newName);
+			return true;
 		});
 	}
 
