@@ -35,6 +35,16 @@ public class PowerPC_ElfRelocationHandler extends
 	private static final int PPC_LOW14 = 0x0020FFFC;
 	private static final int PPC_HALF16 = 0xFFFF;
 
+	// VLE split-immediate field masks (per Power ISA VLE Extension / binutils elf32-ppc.c)
+	// split16a: UI[0:4] in instruction bits 20:16, UI[5:15] in bits 10:0
+	private static final int VLE_SPLIT16A_MASK = 0x001F07FF; // (0xF800 << 5) | 0x7FF
+	// split16d: UI[0:4] in instruction bits 25:21, UI[5:15] in bits 10:0
+	private static final int VLE_SPLIT16D_MASK = 0x03E007FF; // (0xF800 << 10) | 0x7FF
+	// BD24: 24-bit branch displacement, halfword-aligned, in bits 24:1
+	private static final int VLE_BD24_MASK = 0x01FFFFFE;
+	// BD15: 15-bit branch displacement in low halfword bits 15:1 (mask applied to full word)
+	private static final int VLE_BD15_MASK = 0x0000FFFE;
+
 	/**
 	 * Constructor
 	 */
@@ -56,6 +66,57 @@ public class PowerPC_ElfRelocationHandler extends
 	@Override
 	public int getRelrRelocationType() {
 		return PowerPC_ElfRelocationType.R_PPC_RELATIVE.typeId;
+	}
+
+	/**
+	 * Encode a 16-bit value into VLE split16a format (I16A form).
+	 * Per the Power ISA VLE Extension, the 16-bit immediate is split:
+	 *   UI[0:4]  -> instruction bits 20:16  (high 5 bits)
+	 *   UI[5:15] -> instruction bits 10:0   (low 11 bits)
+	 * Reference: binutils bfd/elf32-ppc.c ppc_elf_vle_split16()
+	 */
+	private static int encodeSplit16A(int instruction, int value16) {
+		instruction &= ~VLE_SPLIT16A_MASK;
+		instruction |= (value16 & 0xF800) << 5;   // high 5 bits shifted to bits 20:16
+		instruction |= (value16 & 0x7FF);          // low 11 bits at bits 10:0
+		return instruction;
+	}
+
+	/**
+	 * Encode a 16-bit value into VLE split16d format (D/I16D form).
+	 * Per the Power ISA VLE Extension, the 16-bit immediate is split:
+	 *   UI[0:4]  -> instruction bits 25:21  (high 5 bits)
+	 *   UI[5:15] -> instruction bits 10:0   (low 11 bits)
+	 * Reference: binutils bfd/elf32-ppc.c ppc_elf_vle_split16()
+	 */
+	private static int encodeSplit16D(int instruction, int value16) {
+		instruction &= ~VLE_SPLIT16D_MASK;
+		instruction |= (value16 & 0xF800) << 10;  // high 5 bits shifted to bits 25:21
+		instruction |= (value16 & 0x7FF);          // low 11 bits at bits 10:0
+		return instruction;
+	}
+
+	/**
+	 * Determine the SDA base value for a VLE SDAREL relocation based on the memory block
+	 * containing the target symbol.
+	 * @return SDA base offset, or null on failure (error already marked)
+	 */
+	private static Integer getSdaBaseForBlock(PowerPC_ElfRelocationContext elfRelocationContext,
+			MemoryBlock block, Program program, Address relocationAddress,
+			PowerPC_ElfRelocationType type, String symbolName, int symbolIndex) {
+		if (block != null) {
+			String blockName = block.getName();
+			if (".sdata".equals(blockName) || ".sbss".equals(blockName)) {
+				return elfRelocationContext.getSDABase();
+			}
+			if (".sdata2".equals(blockName) || ".sbss2".equals(blockName)) {
+				return elfRelocationContext.getSDA2Base();
+			}
+		}
+		markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+			"Failed to identify SDA base for VLE SDAREL relocation",
+			elfRelocationContext.getLog());
+		return null;
 	}
 
 	@Override
@@ -225,6 +286,214 @@ public class PowerPC_ElfRelocationHandler extends
 					return RelocationResult.FAILURE;
 				}
 				break;
+			// =================================================================
+			// VLE (Variable-Length Encoding) Relocations (types 216-232)
+			// Per Power ISA VLE Extension and binutils bfd/elf32-ppc.c
+			// =================================================================
+
+			// --- VLE PC-relative branches ---
+
+			case R_PPC_VLE_REL8: {
+				// 8-bit PC-relative branch displacement (se_b, se_bc forms).
+				// 16-bit instruction; 8-bit signed displacement in bits 7:0,
+				// halfword-aligned (value includes implicit <<1).
+				// HOW: size=2, bitsize=8, mask=0xFF, rightshift=1
+				int displacement8 = (int) symbolValue + addend - offset;
+				short oldInsn16 = memory.getShort(relocationAddress);
+				short newInsn16 = (short) ((oldInsn16 & 0xFF00) |
+					((displacement8 >> 1) & 0xFF));
+				memory.setShort(relocationAddress, newInsn16);
+				byteLength = 2;
+				break;
+			}
+
+			case R_PPC_VLE_REL15:
+				// 15-bit PC-relative branch displacement (e_bc form).
+				// 32-bit instruction; displacement in bits 16:30 (ISA) = bits 15:1.
+				// Halfword-aligned; mask 0xFFFE on lower 16 bits.
+				newValue = (int) symbolValue + addend - offset;
+				newValue = (oldValue & ~VLE_BD15_MASK) | (newValue & VLE_BD15_MASK);
+				memory.setInt(relocationAddress, newValue);
+				break;
+
+			case R_PPC_VLE_REL24:
+				// 24-bit PC-relative branch displacement (e_b, e_bl forms).
+				// 32-bit instruction; 24-bit displacement in bits 1:24 (halfword-aligned).
+				// HOW: bitsize=25, mask=0x1FFFFFE
+				newValue = (int) symbolValue + addend - offset;
+				newValue = (oldValue & ~VLE_BD24_MASK) | (newValue & VLE_BD24_MASK);
+				memory.setInt(relocationAddress, newValue);
+				break;
+
+			// --- VLE absolute 16-bit (LO/HI/HA) ---
+
+			case R_PPC_VLE_LO16A:
+				// Low 16 bits of (S + A) in split16a (I16A) format.
+				newValue = (int) (symbolValue + addend);
+				memory.setInt(relocationAddress,
+					encodeSplit16A(oldValue, newValue & 0xFFFF));
+				break;
+
+			case R_PPC_VLE_LO16D:
+				// Low 16 bits of (S + A) in split16d (D) format.
+				newValue = (int) (symbolValue + addend);
+				memory.setInt(relocationAddress,
+					encodeSplit16D(oldValue, newValue & 0xFFFF));
+				break;
+
+			case R_PPC_VLE_HI16A:
+				// High 16 bits of (S + A) in split16a format.
+				newValue = (int) ((symbolValue + addend) >> 16);
+				memory.setInt(relocationAddress,
+					encodeSplit16A(oldValue, newValue & 0xFFFF));
+				break;
+
+			case R_PPC_VLE_HI16D:
+				// High 16 bits of (S + A) in split16d format.
+				newValue = (int) ((symbolValue + addend) >> 16);
+				memory.setInt(relocationAddress,
+					encodeSplit16D(oldValue, newValue & 0xFFFF));
+				break;
+
+			case R_PPC_VLE_HA16A:
+				// High adjusted 16 bits of (S + A) in split16a format.
+				// "Adjusted" means +0x8000 before shift to account for sign
+				// extension when the low 16 bits are later added via e_add16i.
+				newValue = (int) (symbolValue + addend);
+				newValue = (newValue >> 16) + ((newValue & 0x8000) != 0 ? 1 : 0);
+				memory.setInt(relocationAddress,
+					encodeSplit16A(oldValue, newValue & 0xFFFF));
+				break;
+
+			case R_PPC_VLE_HA16D:
+				// High adjusted 16 bits of (S + A) in split16d format.
+				newValue = (int) (symbolValue + addend);
+				newValue = (newValue >> 16) + ((newValue & 0x8000) != 0 ? 1 : 0);
+				memory.setInt(relocationAddress,
+					encodeSplit16D(oldValue, newValue & 0xFFFF));
+				break;
+
+			// --- VLE SDA21 ---
+
+			case R_PPC_VLE_SDA21:
+			case R_PPC_VLE_SDA21_LO: {
+				// VLE SDA21 relocation for e_add16i instruction.
+				// 16-bit displacement relative to SDA base in bits 16:31.
+				// Register base determined by section (.sdata→r13, .sdata2→r2).
+				MemoryBlock sdaBlock = memory.getBlock(symbolAddr);
+				Integer vleSdaBase = null;
+
+				if (sdaBlock != null) {
+					String sdaBlockName = sdaBlock.getName();
+					if (".sdata".equals(sdaBlockName) || ".sbss".equals(sdaBlockName)) {
+						vleSdaBase = elfRelocationContext.getSDABase();
+					}
+					else if (".sdata2".equals(sdaBlockName) ||
+						".sbss2".equals(sdaBlockName)) {
+						vleSdaBase = elfRelocationContext.getSDA2Base();
+					}
+				}
+				if (vleSdaBase == null) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"Failed to identify SDA base for VLE SDA21 relocation",
+						elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) symbolValue + addend - vleSdaBase;
+				// Encode in low 16 bits of the instruction word
+				newValue = (oldValue & 0xFFFF0000) | (newValue & 0xFFFF);
+				memory.setInt(relocationAddress, newValue);
+				break;
+			}
+
+			// --- VLE SDA-relative 16-bit (split-immediate) ---
+
+			case R_PPC_VLE_SDAREL_LO16A: {
+				// Low 16 bits of (S + A - SDA_BASE) in split16a format.
+				MemoryBlock sdarelBlock = memory.getBlock(symbolAddr);
+				Integer sdarelBase = getSdaBaseForBlock(elfRelocationContext, sdarelBlock,
+					program, relocationAddress, type, symbolName, symbolIndex);
+				if (sdarelBase == null) {
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) (symbolValue + addend - sdarelBase);
+				memory.setInt(relocationAddress,
+					encodeSplit16A(oldValue, newValue & 0xFFFF));
+				break;
+			}
+
+			case R_PPC_VLE_SDAREL_LO16D: {
+				// Low 16 bits of (S + A - SDA_BASE) in split16d format.
+				MemoryBlock sdarelBlock = memory.getBlock(symbolAddr);
+				Integer sdarelBase = getSdaBaseForBlock(elfRelocationContext, sdarelBlock,
+					program, relocationAddress, type, symbolName, symbolIndex);
+				if (sdarelBase == null) {
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) (symbolValue + addend - sdarelBase);
+				memory.setInt(relocationAddress,
+					encodeSplit16D(oldValue, newValue & 0xFFFF));
+				break;
+			}
+
+			case R_PPC_VLE_SDAREL_HI16A: {
+				// High 16 bits of (S + A - SDA_BASE) in split16a format.
+				MemoryBlock sdarelBlock = memory.getBlock(symbolAddr);
+				Integer sdarelBase = getSdaBaseForBlock(elfRelocationContext, sdarelBlock,
+					program, relocationAddress, type, symbolName, symbolIndex);
+				if (sdarelBase == null) {
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) ((symbolValue + addend - sdarelBase) >> 16);
+				memory.setInt(relocationAddress,
+					encodeSplit16A(oldValue, newValue & 0xFFFF));
+				break;
+			}
+
+			case R_PPC_VLE_SDAREL_HI16D: {
+				// High 16 bits of (S + A - SDA_BASE) in split16d format.
+				MemoryBlock sdarelBlock = memory.getBlock(symbolAddr);
+				Integer sdarelBase = getSdaBaseForBlock(elfRelocationContext, sdarelBlock,
+					program, relocationAddress, type, symbolName, symbolIndex);
+				if (sdarelBase == null) {
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) ((symbolValue + addend - sdarelBase) >> 16);
+				memory.setInt(relocationAddress,
+					encodeSplit16D(oldValue, newValue & 0xFFFF));
+				break;
+			}
+
+			case R_PPC_VLE_SDAREL_HA16A: {
+				// High adjusted 16 bits of (S + A - SDA_BASE) in split16a format.
+				MemoryBlock sdarelBlock = memory.getBlock(symbolAddr);
+				Integer sdarelBase = getSdaBaseForBlock(elfRelocationContext, sdarelBlock,
+					program, relocationAddress, type, symbolName, symbolIndex);
+				if (sdarelBase == null) {
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) (symbolValue + addend - sdarelBase);
+				newValue = (newValue >> 16) + ((newValue & 0x8000) != 0 ? 1 : 0);
+				memory.setInt(relocationAddress,
+					encodeSplit16A(oldValue, newValue & 0xFFFF));
+				break;
+			}
+
+			case R_PPC_VLE_SDAREL_HA16D: {
+				// High adjusted 16 bits of (S + A - SDA_BASE) in split16d format.
+				MemoryBlock sdarelBlock = memory.getBlock(symbolAddr);
+				Integer sdarelBase = getSdaBaseForBlock(elfRelocationContext, sdarelBlock,
+					program, relocationAddress, type, symbolName, symbolIndex);
+				if (sdarelBase == null) {
+					return RelocationResult.FAILURE;
+				}
+				newValue = (int) (symbolValue + addend - sdarelBase);
+				newValue = (newValue >> 16) + ((newValue & 0x8000) != 0 ? 1 : 0);
+				memory.setInt(relocationAddress,
+					encodeSplit16D(oldValue, newValue & 0xFFFF));
+				break;
+			}
+
 			case R_PPC_EMB_SDA21:
 				// NOTE: PPC EABI V1.0 specifies this relocation on a 24-bit field address while 
 				// GNU assumes a 32-bit field address.  We cope with this difference by 
