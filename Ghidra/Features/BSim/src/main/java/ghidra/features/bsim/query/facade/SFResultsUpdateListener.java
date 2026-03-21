@@ -42,7 +42,7 @@ public interface SFResultsUpdateListener<R> {
 
 	/**
 	 * Callback to supply the final accumulated result.
-	 * @param result accumulated query result or null if a failure occured which prevented
+	 * @param result accumulated query result or null if a failure occurred which prevented
 	 * results from being returned.
 	 */
 	public void setFinalResult(R result);

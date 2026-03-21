@@ -85,7 +85,7 @@ public class PKIUtils {
 	 * @param caCertsFile CA certificates storage file
 	 * @return X509TrustManager
 	 * @throws CancelledException if password entry was cancelled
-	 * @throws GeneralSecurityException if error occured during truststore initialization
+	 * @throws GeneralSecurityException if error occurred during truststore initialization
 	 * @throws IOException if file read error occurs
 	 */
 	public static X509TrustManager getTrustManager(File caCertsFile)

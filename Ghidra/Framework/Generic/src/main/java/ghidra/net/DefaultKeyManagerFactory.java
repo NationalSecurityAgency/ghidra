@@ -99,7 +99,7 @@ public class DefaultKeyManagerFactory {
 	 * 
 	 * @param path keystore file path or null to clear current key store and preference.
 	 * @param savePreference if true will be saved as user preference
-	 * @return true if successful else false if error occured (see log).
+	 * @return true if successful else false if error occurred (see log).
 	 */
 	public static synchronized boolean setDefaultKeyStore(String path, boolean savePreference) {
 

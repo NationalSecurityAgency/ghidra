@@ -554,7 +554,7 @@ public class ElfLoadAdapter {
 	 * 
 	 * @param section ELF section header which is specified by the ELF symbol
 	 * @param sectionBase memory address where section has been loaded.  Could be within overlay
-	 * space if load conflict occured.
+	 * space if load conflict occurred.
 	 * @param elfSymbol ELF symbol
 	 * @return section relative symbol offset or null if symbol value offset is absolute
 	 */

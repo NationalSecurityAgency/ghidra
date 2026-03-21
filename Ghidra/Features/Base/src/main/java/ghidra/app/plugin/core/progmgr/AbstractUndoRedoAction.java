@@ -115,7 +115,7 @@ public abstract class AbstractUndoRedoAction extends MultiActionDockingAction {
 		}
 		catch (IOException e) {
 			Msg.showError(this, null, getName() + " Error",
-				"Error occured while attempting " + getName() + "!", e);
+				"Error occurred while attempting " + getName() + "!", e);
 		}
 
 	}

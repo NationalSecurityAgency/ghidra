@@ -258,7 +258,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	 * Open associated source and destination program files and complete session initialization.
 	 * @param projectData active project data
 	 * @throws IOException if source or destination program not found within specified project
-	 * or an error occured while opening them (e.g., upgrade required).
+	 * or an error occurred while opening them (e.g., upgrade required).
 	 */
 	private void openSourceAndDestinationPrograms(ProjectData projectData) throws IOException {
 		String sourceProgramID = getSourceProgramID();

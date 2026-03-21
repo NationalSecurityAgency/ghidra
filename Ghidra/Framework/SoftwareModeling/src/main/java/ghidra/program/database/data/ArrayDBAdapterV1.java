@@ -52,7 +52,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	 * @param create create table if true else acquire for read-only or update use
 	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
-	 * @throws IOException an IO error occured during table creation
+	 * @throws IOException an IO error occurred during table creation
 	 */
 	public ArrayDBAdapterV1(DBHandle handle, String tablePrefix, boolean create)
 			throws VersionException, IOException {

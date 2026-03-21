@@ -71,7 +71,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 				throw new IOException("Archive requires language upgrade: " + oldFile);
 			}
 			if (warning != ArchiveWarning.NONE) {
-				throw new IOException("Archive language error occured: " + oldFile,
+				throw new IOException("Archive language error occurred: " + oldFile,
 					oldFileArchive.getWarningDetail());
 			}
 
@@ -81,7 +81,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 				throw new IOException("Archive requires language upgrade: " + newFile);
 			}
 			if (warning != ArchiveWarning.NONE) {
-				throw new IOException("Archive language error occured: " + newFile,
+				throw new IOException("Archive language error occurred: " + newFile,
 					newFileArchive.getWarningDetail());
 			}
 

@@ -74,7 +74,7 @@ public class SynchronizeGDTCategoryPaths extends GhidraScript {
 					"\nIs it OK to proceed?");
 		}
 		popup(
-			"An architecture language error occured while opening archive (see log for details)\n" +
+			"An architecture language error occurred while opening archive (see log for details)\n" +
 				file.getPath());
 		return true;
 	}

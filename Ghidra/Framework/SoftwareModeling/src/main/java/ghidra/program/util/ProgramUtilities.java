@@ -226,7 +226,7 @@ public class ProgramUtilities {
 
 	/**
 	 * Determine if a program has a single unsaved change which corresponds to an
-	 * upgrade which occured during instantiation.
+	 * upgrade which occurred during instantiation.
 	 * @param program the program to be checked for an unsaved upgrade condition.
 	 * @return true if program upgraded and has not been saved, else false
 	 */

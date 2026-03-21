@@ -41,7 +41,7 @@ public class ContentTypeQueryTask extends GhidraURLQueryTask {
 
 	/**
 	 * Get the discovered content type (e.g., "Program")
-	 * @return content type or null if error occured or unsupported URL content
+	 * @return content type or null if error occurred or unsupported URL content
 	 * @throws IllegalStateException if task has not completed execution
 	 */
 	public String getContentType() {
