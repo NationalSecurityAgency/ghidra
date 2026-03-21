@@ -88,7 +88,7 @@ class GhidraFolderData {
 	 * Construct a folder instance with a specified name and a correpsonding parent folder
 	 * @param parent parent folder
 	 * @param name folder name
-	 * @throws FileNotFoundException if folder not found or error occured while checking
+	 * @throws FileNotFoundException if folder not found or error occurred while checking
 	 * for its existance
 	 */
 	GhidraFolderData(GhidraFolderData parent, String name) throws FileNotFoundException {

@@ -60,7 +60,7 @@ public class CompareGDTs extends GhidraScript {
 		firstArchive = openDataTypeArchive(firstFile, false);
 		if (firstArchive.getWarning() != ArchiveWarning.NONE) {
 			popup(
-				"An architecture language error occured while opening archive (see log for details)\n" +
+				"An architecture language error occurred while opening archive (see log for details)\n" +
 					firstFile.getPath());
 			return;
 		}
@@ -68,7 +68,7 @@ public class CompareGDTs extends GhidraScript {
 		secondArchive = openDataTypeArchive(secondFile, false);
 		if (secondArchive.getWarning() != ArchiveWarning.NONE) {
 			popup(
-				"An architecture language error occured while opening archive (see log for details)\n" +
+				"An architecture language error occurred while opening archive (see log for details)\n" +
 					secondFile.getPath());
 			firstArchive.close();
 			return;

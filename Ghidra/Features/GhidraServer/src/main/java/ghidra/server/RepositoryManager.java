@@ -571,7 +571,7 @@ public class RepositoryManager {
 	/**
 	 * Callback when user removed from server.  Remove user from all repository access lists.
 	 * @param username user name
-	 * @throws IOException if error occured while updating repository access lists.
+	 * @throws IOException if error occurred while updating repository access lists.
 	 */
 	void userRemoved(String username) throws IOException {
 		for (String repName : getRepositoryNames()) {

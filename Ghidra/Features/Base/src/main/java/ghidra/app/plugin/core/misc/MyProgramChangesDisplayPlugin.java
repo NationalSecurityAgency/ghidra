@@ -297,7 +297,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			}
 
 			// Update conflict markers when forced by server version change,
-			// local version change (merge may have occured) or a transaction has ended
+			// local version change (merge may have occurred) or a transaction has ended
 			if (updateConflicts) {
 				AddressSet intersect = changeSet.getAddressSetCollectionSinceCheckout()
 						.getCombinedAddressSet()

@@ -368,7 +368,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 		short sectionIndex = elfSymbol.getSectionHeaderIndex();
 		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT ||
 			sectionIndex == SHN_MIPS_DATA) {
-			// NOTE: logic assumes no memory conflict occured during section loading
+			// NOTE: logic assumes no memory conflict occurred during section loading
 			AddressSpace defaultSpace =
 				elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();
 			return defaultSpace.getAddress(

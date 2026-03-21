@@ -69,7 +69,7 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	 * Save the current data organization to facilitate future change detection and 
 	 * upgrades.  This method must be invoked by {@link ProgramDB} during the final
 	 * stage of program creation (i.e., openMode == CREATE).
-	 * @throws IOException if failure occured while saving data organization.
+	 * @throws IOException if failure occurred while saving data organization.
 	 */
 	@Override
 	public void saveDataOrganization() throws IOException {

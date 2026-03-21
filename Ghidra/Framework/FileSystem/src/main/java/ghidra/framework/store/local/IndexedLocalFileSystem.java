@@ -89,7 +89,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	 * to notify listeners.  If false, blocking notification will be performed.
 	 * @param create if true a new folder will be created.
 	 * @throws FileNotFoundException if specified rootPath does not exist
-	 * @throws IndexReadException failure occured reading index file
+	 * @throws IndexReadException failure occurred reading index file
 	 * @throws IOException if error occurs while reading/writing index files
 	 */
 	IndexedLocalFileSystem(String rootPath, boolean isVersioned, boolean readOnly,

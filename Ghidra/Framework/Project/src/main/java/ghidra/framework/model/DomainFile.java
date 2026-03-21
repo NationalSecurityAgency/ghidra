@@ -254,7 +254,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	 * Returns a new DomainObject that cannot be changed or saved to its original file.
 	 * NOTE: The use of this method should generally be avoided since it can't
-	 * handle version changes that may have occured and require a data upgrade
+	 * handle version changes that may have occurred and require a data upgrade
 	 * (e.g., DB schema change).
 	 * @param consumer consumer of the domain object which is responsible for
 	 * releasing it after use.

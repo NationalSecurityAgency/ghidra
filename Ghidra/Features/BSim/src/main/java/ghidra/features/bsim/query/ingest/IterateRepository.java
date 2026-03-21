@@ -36,7 +36,7 @@ public abstract class IterateRepository {
 	 * Perform processing on program obtained from repository.
 	 * @param program program obtained from repository
 	 * @param monitor processing task monitor
-	 * @throws IOException if an error occured during processing.
+	 * @throws IOException if an error occurred during processing.
 	 * @throws CancelledException if processing was cancelled
 	 */
 	protected abstract void process(Program program, TaskMonitor monitor)

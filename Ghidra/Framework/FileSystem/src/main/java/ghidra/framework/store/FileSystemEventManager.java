@@ -187,7 +187,7 @@ public class FileSystemEventManager implements FileSystemListener {
 	 * @param timeout the maximum time to wait
 	 * @param unit the time unit of the {@code time} argument
 	 * @return true if the events were processed in the given timeout.  A false value will be
-	 * returned if either a timeout occured
+	 * returned if either a timeout occurred
 	 */
 	public boolean flushEvents(long timeout, TimeUnit unit) {
 		if (!asyncDispatchEnabled) {
@@ -196,7 +196,7 @@ public class FileSystemEventManager implements FileSystemListener {
 
 		MarkerEvent event = new MarkerEvent();
 		if (!queueEvent(event)) {
-			// events are not queuing since there are no listeners or dispose has occured
+			// events are not queuing since there are no listeners or dispose has occurred
 			return true;
 		}
 		try {

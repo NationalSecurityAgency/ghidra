@@ -229,7 +229,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	/**
-	 * Get the {@link ArchiveWarning} which may have occured immediately following 
+	 * Get the {@link ArchiveWarning} which may have occurred immediately following 
 	 * instatiation of this {@link StandAloneDataTypeManager}.  {@link ArchiveWarning#NONE}
 	 * will be returned if not warning condition.
 	 * @return warning type.
@@ -555,9 +555,9 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	/**
-	 * Indicates that a failure occured establishing the program architecture 
+	 * Indicates that a failure occurred establishing the program architecture 
 	 * for the associated archive.
-	 * @return true if a failure occured establishing the program architecture 
+	 * @return true if a failure occurred establishing the program architecture 
 	 */
 	public boolean isProgramArchitectureMissing() {
 		return warning == ArchiveWarning.LANGUAGE_NOT_FOUND ||

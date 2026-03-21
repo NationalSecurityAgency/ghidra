@@ -606,7 +606,7 @@ Added `AbstractLocation/Selection/HighlightPluginEvent`.
 * _Search_. Corrected a problem with the Memory Search dialog which could prevent proper search of selected memory regions. (GP-5395)
 * _SourceMatching_. Corrected parsing of certain DWARF source file paths. (GP-5561, Issue #7963)
 * _Terminal_. Fixed issue with obtrusive scrolling when selecting text. (GP-5416)
-* _Version Tracking_. Fixed NullPointerException that occured when clicking on Version Tracking match where either source or destination address was not in current program memory. (GP-5549, Issue #7964)
+* _Version Tracking_. Fixed NullPointerException that occurred when clicking on Version Tracking match where either source or destination address was not in current program memory. (GP-5549, Issue #7964)
 
 ### Notable API Changes
 * _Debugger:Emulator_. (GP-5517) Added Stack and Frames to the `pure emulation` trace object schema.
@@ -979,7 +979,7 @@ Added API method `Structure.setLength(int length)` which allows the size of a no
 * _Importer:ELF_. Fixed ELF X86-64 GOT allocation bug which could cause exception during import. Also added unverified ELF relocation support for `R_X86_64_GOT64` and `R_X86_64_PLTOFF64`. (GP-4758, Issue #6691)
 * _Importer:Mach-O_. Fixed an issue with importing Mach-O binaries that have an empty `__chain_starts` section. (GP-4695)
 * _Importer:Mach-O_. Fixed a regression in the MachoLoader that prevented some KDK binaries from being loaded. (GP-4699)
-* _Multi-User:Merge_. Fixed assertion error which occured for multi-user merge of register context within overlay memory blocks. (GP-4508, Issue #6403)
+* _Multi-User:Merge_. Fixed assertion error which occurred for multi-user merge of register context within overlay memory blocks. (GP-4508, Issue #6403)
 * _Processors_. Fixed AARCH64 Windows stack alignment. (GP-4752, Issue #6680)
 
 # Ghidra 11.1.1 Change History (June 2024)

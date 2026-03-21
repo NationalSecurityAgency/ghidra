@@ -75,7 +75,7 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 					}
 				}
 				catch (Exception e) {
-					Msg.error(this, "Error occured while updating EXTERNAL relocation at " +
+					Msg.error(this, "Error occurred while updating EXTERNAL relocation at " +
 						b.getAddress() + ": " + e.getMessage());
 				}
 			}

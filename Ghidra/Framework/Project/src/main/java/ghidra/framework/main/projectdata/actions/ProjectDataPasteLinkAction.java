@@ -76,7 +76,7 @@ public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 			}
 			catch (IOException e) {
 				Msg.showError(getClass(), context.getTree(), "Cannot Create Link",
-					"Error occured while creating link file", e);
+					"Error occurred while creating link file", e);
 			}
 		}
 		else {
@@ -86,7 +86,7 @@ public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 			}
 			catch (IOException e) {
 				Msg.showError(getClass(), context.getTree(), "Cannot Create Link",
-					"Error occured while creating link file", e);
+					"Error occurred while creating link file", e);
 			}
 		}
 

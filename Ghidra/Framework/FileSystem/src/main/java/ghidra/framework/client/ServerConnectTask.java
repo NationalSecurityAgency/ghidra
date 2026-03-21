@@ -102,7 +102,7 @@ class ServerConnectTask extends Task {
 	 * if handle is null after running task.  If both the exception
 	 * and handle are null, it implies the connection attempt was cancelled
 	 * by the user.
-	 * @return exception which occured during a failed connection attempt, or null
+	 * @return exception which occurred during a failed connection attempt, or null
 	 */
 	Exception getException() {
 		return exc;
@@ -402,7 +402,7 @@ class ServerConnectTask extends Task {
 			// do nothing - connect occurs during instantiation
 		}
 		finally {
-			monitor.checkCancelled(); // circumvent any IOException which may have occured
+			monitor.checkCancelled(); // circumvent any IOException which may have occurred
 		}
 
 		// Perform secure socket test connection to prime keystore use without RMI involvement
@@ -416,7 +416,7 @@ class ServerConnectTask extends Task {
 			return socket.getSession().getPeerCertificates();
 		}
 		finally {
-			monitor.checkCancelled(); // circumvent any IOException which may have occured
+			monitor.checkCancelled(); // circumvent any IOException which may have occurred
 		}
 	}
 

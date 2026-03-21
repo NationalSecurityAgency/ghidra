@@ -437,7 +437,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 
 	/**
 	 * Drop this database
-	 * @throws SQLException if a database error occured
+	 * @throws SQLException if a database error occurred
 	 */
 	abstract protected void dropDatabase() throws SQLException;
 
