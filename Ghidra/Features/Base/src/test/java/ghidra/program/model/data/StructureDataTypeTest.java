@@ -116,6 +116,22 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 		assertEquals("Comment4", dtc.getComment());
 		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
 
+		dtc = struct.add(ByteDataType.dataType, "field3", "new comment");
+		assertEquals(8, dtc.getOffset());
+		assertEquals(4, dtc.getOrdinal());
+		assertEquals("field3", dtc.getFieldName()); // non-duplicate name was imposed
+		assertEquals("new comment", dtc.getComment());
+		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertNotNull(struct.findComponent("field3")); // which one is returned is arbitrary
+
+		dtc = struct.add(ByteDataType.dataType, "field3 1", "new comment");
+		assertEquals(9, dtc.getOffset());
+		assertEquals(5, dtc.getOrdinal());
+		assertEquals("field3_1", dtc.getFieldName()); // non-duplicate name was imposed
+		assertEquals("new comment", dtc.getComment());
+		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field3_1"));
+
 	}
 
 	@Test
@@ -1307,6 +1323,22 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testDelete() {
+
+		assertNotNull(struct.findComponent("field1"));
+
+		struct.delete(0);
+
+		assertNull(struct.findComponent("field1"));
+
+		assertEquals(7, struct.getLength());
+		assertEquals(3, struct.getNumComponents());
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
+		assertEquals(2, comps[1].getOffset());
+	}
+
+	@Test
 	public void testDeleteManyBF() throws InvalidDataTypeException {
 
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
@@ -1357,16 +1389,6 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDelete() {
-		struct.delete(1);
-		assertEquals(6, struct.getLength());
-		assertEquals(3, struct.getNumComponents());
-		DataTypeComponent[] comps = struct.getDefinedComponents();
-		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
-		assertEquals(1, comps[1].getOffset());
-	}
-
-	@Test
 	public void testDeleteBF() throws InvalidDataTypeException {
 
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
@@ -1409,7 +1431,11 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf2"));
+
 		struct.delete(3);
+
+		assertNull(struct.findComponent("bf2"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
@@ -1426,7 +1452,11 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf3"));
+
 		struct.delete(3);
+
+		assertNull(struct.findComponent("bf3"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
@@ -1443,7 +1473,11 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf4"));
+
 		struct.delete(4);
+
+		assertNull(struct.findComponent("bf4"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
@@ -1461,7 +1495,11 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf1"));
+
 		struct.delete(2);
+
+		assertNull(struct.findComponent("bf1"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
@@ -1729,6 +1767,21 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 		assertEquals(7, dtcs[2].getOrdinal());
 		assertEquals(8, dtcs[2].getOffset());
 
+	}
+
+	@Test
+	public void testGetComponentByName() {
+		DataTypeComponent dtc = struct.findComponent("field1");
+		assertNotNull(dtc);
+		assertEquals("field1", dtc.getFieldName());
+
+		dtc = struct.findComponent("field3");
+		assertNotNull(dtc);
+		assertEquals("field3", dtc.getFieldName());
+
+		dtc = struct.findComponent("field4");
+		assertNotNull(dtc);
+		assertEquals("field4", dtc.getFieldName());
 	}
 
 	@Test
@@ -2627,6 +2680,66 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 			Assert.fail(
 				"Should be able to replace a structure component with the structure's typedef array pointer.");
 		}
+	}
+
+	@Test
+	public void testFieldNameWhitespaceConvertedToUnderscores() {
+		StructureDataType newStruct = new StructureDataType("Test", 0);
+		DataTypeComponent component = newStruct.add(new ByteDataType(), " name with spaces", null);
+		assertEquals("name_with_spaces", component.getFieldName());
+
+		component = newStruct.getComponent(0);
+		component.setFieldName(" name in db with spaces ");
+		assertEquals("name_in_db_with_spaces", component.getFieldName());
+
+		component = newStruct.add(new ByteDataType(), " another test ", null);
+		assertEquals("another_test", component.getFieldName());
+
+		newStruct.insert(0, new ByteDataType(), 1, " insert test ", "");
+		component = newStruct.getComponent(0);
+		assertEquals("insert_test", component.getFieldName());
+
+		newStruct.replace(0, new ByteDataType(), 1, " insert test ", "");
+		component = newStruct.getComponent(0);
+		assertEquals("insert_test", component.getFieldName());
+	}
+
+	@Test
+	public void testDefaultFieldNames() {
+		StructureDataType newStruct = new StructureDataType("Test", 0);
+		DataTypeComponent component = newStruct.add(new ByteDataType(), " ", null);
+		assertNull(component.getFieldName());
+
+		component = newStruct.add(new ByteDataType(), null, null);
+		assertNull(component.getFieldName());
+
+		component = newStruct.getComponent(0);
+		assertNull(component.getFieldName());
+
+		component.setFieldName(" ");
+		assertNull(component.getFieldName());
+
+		component = newStruct.add(new ByteDataType(), null, null);
+		assertNull(component.getFieldName());
+
+		component = newStruct.add(new ByteDataType(), " ", null);
+		assertNull(component.getFieldName());
+
+		newStruct.insert(0, new ByteDataType(), 1, null, "");
+		component = newStruct.getComponent(0);
+		assertNull(component.getFieldName());
+
+		newStruct.insert(0, new ByteDataType(), 1, " ", "");
+		component = newStruct.getComponent(0);
+		assertNull(component.getFieldName());
+
+		newStruct.replace(0, new ByteDataType(), 1, null, "");
+		component = newStruct.getComponent(0);
+		assertNull(component.getFieldName());
+
+		newStruct.replace(0, new ByteDataType(), 1, " ", "");
+		component = newStruct.getComponent(0);
+		assertNull(component.getFieldName());
 	}
 
 	protected DataTypeManager createBigEndianDataTypeManager() {

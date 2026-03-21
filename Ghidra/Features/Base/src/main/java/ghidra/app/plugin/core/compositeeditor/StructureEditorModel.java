@@ -1009,12 +1009,7 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 
 			DataTypeComponent comp = getComponent(startRowIndex);
 			// Set the field name and comment the same as before
-			try {
-				comp.setFieldName(fieldName);
-			}
-			catch (DuplicateNameException exc) {
-				Msg.showError(this, null, null, null);
-			}
+			comp.setFieldName(fieldName);
 			comp.setComment(comment);
 
 			// Create any needed undefined data types.
@@ -1377,13 +1372,8 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 
 			DataTypeComponent comp = getComponent(rowIndex);
 			// Set the field name and comment the same as before if unspecified
-			try {
-				if (comp.getFieldName() == null) {
-					comp.setFieldName(fieldName);
-				}
-			}
-			catch (DuplicateNameException exc) {
-				Msg.showError(this, null, null, null);
+			if (comp.getFieldName() == null) {
+				comp.setFieldName(fieldName);
 			}
 			if (StringUtils.isBlank(comp.getComment())) {
 				comp.setComment(comment);

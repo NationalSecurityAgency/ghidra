@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import java.util.Set;
+import java.util.*;
 
 /**
  * Interface for common methods in Structure and Union
@@ -54,6 +54,61 @@ public interface Composite extends DataType {
 	 * @throws IndexOutOfBoundsException if the ordinal is out of bounds
 	 */
 	public abstract DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
+
+	/**
+	 * Find the first component which has the specified case-sensitive field name.  
+	 * Note that multiple components may be specified with the same name, if this is a possibility
+	 * the {@link #findComponents(String)} method should be used.  Only components with an explicit 
+	 * non-default field name will be considered.  The name specified may be sanitized to be 
+	 * consistent with those permitted by {@link Composite} data types.
+	 * 
+	 * @param fieldName field name
+	 * @return first data type component whose field name matches or null if not found
+	 */
+	public default DataTypeComponent findComponent(String fieldName) {
+
+		if (getNumDefinedComponents() == 0) {
+			return null;
+		}
+
+		fieldName = InternalDataTypeComponent.cleanupFieldName(fieldName);
+		if (fieldName == null) {
+			return null;
+		}
+
+		for (DataTypeComponent dtc : getDefinedComponents()) {
+			if (fieldName.equals(dtc.getFieldName())) {
+				return dtc;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Find all components which have the specified case-sensitive field name.  
+	 * Note that multiple components may be specified with the same name, if this is a possibility
+	 * the {@link #findComponents(String)} method should be used.  Only components with an explicit 
+	 * non-default field name will be considered.  The name specified may be sanitized to be 
+	 * consistent with those permitted by {@link Composite} data types.
+	 * 
+	 * @param name field name
+	 * @return all data type components whose field name matches or empty list if not found
+	 */
+	public default List<DataTypeComponent> findComponents(String name) {
+
+		if (getNumDefinedComponents() == 0) {
+			return List.of();
+		}
+
+		List<DataTypeComponent> list = new ArrayList<>();
+		for (DataTypeComponent dtc : getDefinedComponents()) {
+			if (name.equals(dtc.getFieldName())) {
+				list.add(dtc);
+			}
+		}
+		return list;
+	}
 
 	/**
 	 * Returns an array of Data Type Components that make up this composite including
@@ -113,15 +168,16 @@ public interface Composite extends DataType {
 	 * automatically to provide the proper alignment.
 	 * 
 	 * @param dataType the datatype to add.
-	 * @param name the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
+	 * @param comment the comment to associate with this component. (may be null)
 	 * @return the componentDataType created.
 	 * @throws IllegalArgumentException if the specified data type is not
 	 * allowed to be added to this composite data type.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to add dt1 to dt2 since this would cause a cyclic dependency.
 	 */
-	public DataTypeComponent add(DataType dataType, String name, String comment)
+	public DataTypeComponent add(DataType dataType, String componentName, String comment)
 			throws IllegalArgumentException;
 
 	/**
@@ -132,8 +188,9 @@ public interface Composite extends DataType {
 	 * 
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the bitfield size in bits
-	 * @param componentName the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
+	 * @param comment the comment to associate with this component. (may be null)
 	 * @return the componentDataType created whose associated data type will
 	 * be BitFieldDataType.
 	 * @throws InvalidDataTypeException if the specified data type is
@@ -151,16 +208,17 @@ public interface Composite extends DataType {
 	 * @param dataType the datatype to add.
 	 * @param length the length to associate with the datatype.
 	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
-	 * @param name the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
+	 * @param componentName the field name to associate with this component (may be null).
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
+	 * @param comment the comment to associate with this component (may be null).
 	 * @return the componentDataType created.
 	 * @throws IllegalArgumentException if the specified data type is not
 	 * allowed to be added to this composite data type or an invalid length is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to add dt1 to dt2 since this would cause a cyclic dependency.
 	 */
-	public DataTypeComponent add(DataType dataType, int length, String name, String comment)
-			throws IllegalArgumentException;
+	public DataTypeComponent add(DataType dataType, int length, String componentName,
+			String comment) throws IllegalArgumentException;
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
@@ -211,8 +269,9 @@ public interface Composite extends DataType {
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
 	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
-	 * @param name the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
+	 * @param componentName the field name to associate with this component (may be null).
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
+	 * @param comment the comment to associate with this component. (may be null)
 	 * @return the componentDataType created.
 	 * @throws IllegalArgumentException if the specified data type is not
 	 * allowed to be inserted into this composite data type or an invalid length
@@ -221,8 +280,9 @@ public interface Composite extends DataType {
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public DataTypeComponent insert(int ordinal, DataType dataType, int length, String name,
-			String comment) throws IndexOutOfBoundsException, IllegalArgumentException;
+	public DataTypeComponent insert(int ordinal, DataType dataType, int length,
+			String componentName, String comment)
+			throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
 	 * Deletes the component at the given ordinal position.

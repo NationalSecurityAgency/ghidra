@@ -134,6 +134,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals("field1", dtc.getFieldName());
 		assertEquals("Comment1", dtc.getComment());
 		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field1"));
 
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
@@ -148,6 +149,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals("field3", dtc.getFieldName());
 		assertEquals(null, dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field3"));
 
 		dtc = struct.getComponent(3);
 		assertEquals(7, dtc.getOffset());
@@ -155,7 +157,23 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals("field4", dtc.getFieldName());
 		assertEquals("Comment4", dtc.getComment());
 		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field4"));
 
+		dtc = struct.add(ByteDataType.dataType, "field3", "new comment");
+		assertEquals(8, dtc.getOffset());
+		assertEquals(4, dtc.getOrdinal());
+		assertEquals("field3", dtc.getFieldName());
+		assertEquals("new comment", dtc.getComment());
+		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertNotNull(struct.findComponent("field3")); // which one is returned is arbitrary
+
+		dtc = struct.add(ByteDataType.dataType, "field3 1", "new comment"); // cleanup required
+		assertEquals(9, dtc.getOffset());
+		assertEquals(5, dtc.getOrdinal());
+		assertEquals("field3_1", dtc.getFieldName());
+		assertEquals("new comment", dtc.getComment());
+		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field3_1")); // name gets modified
 	}
 
 	@Test
@@ -1869,7 +1887,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDelete() throws InvalidDataTypeException {
+	public void testDeleteBF() throws InvalidDataTypeException {
 
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 		struct.insertBitFieldAt(2, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
@@ -1911,7 +1929,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf2"));
+
 		struct.delete(3);
+
+		assertNull(struct.findComponent("bf2"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1928,7 +1950,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf3"));
+
 		struct.delete(3);
+
+		assertNull(struct.findComponent("bf3"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1945,7 +1971,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf4"));
+
 		struct.delete(4);
+
+		assertNull(struct.findComponent("bf4"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1963,7 +1993,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf1"));
+
 		struct.delete(2);
+
+		assertNull(struct.findComponent("bf1"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -2092,7 +2126,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDeleteComponent() {
+	public void testDataTypeDeleted() {
 		Structure s = new StructureDataType("test1", 0);
 		s.add(new ByteDataType());
 		s.add(new FloatDataType());
@@ -2147,6 +2181,21 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertTrue(s.isNotYetDefined());
 		assertTrue(s.isZeroLength());
 		assertEquals(0, s.getNumComponents());
+	}
+
+	@Test
+	public void testGetComponentByName() {
+		DataTypeComponent dtc = struct.findComponent("field1");
+		assertNotNull(dtc);
+		assertEquals("field1", dtc.getFieldName());
+
+		dtc = struct.findComponent("field3");
+		assertNotNull(dtc);
+		assertEquals("field3", dtc.getFieldName());
+
+		dtc = struct.findComponent("field4");
+		assertNotNull(dtc);
+		assertEquals("field4", dtc.getFieldName());
 	}
 
 	@Test

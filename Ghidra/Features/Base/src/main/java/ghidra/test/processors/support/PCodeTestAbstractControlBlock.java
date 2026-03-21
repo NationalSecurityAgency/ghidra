@@ -23,7 +23,6 @@ import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
@@ -296,10 +295,9 @@ public abstract class PCodeTestAbstractControlBlock {
 	}
 
 	protected int getStructureComponent(Structure testInfoStruct, String fieldName) {
-		for (DataTypeComponent component : testInfoStruct.getDefinedComponents()) {
-			if (fieldName.equals(component.getFieldName())) {
-				return component.getOffset();
-			}
+		DataTypeComponent component = testInfoStruct.findComponent(fieldName);
+		if (component != null) {
+			return component.getOffset();
 		}
 		throw new RuntimeException(fieldName + " field not found within " +
 			testInfoStruct.getName() + " structure definition at " + infoStructAddr.toString(true));
