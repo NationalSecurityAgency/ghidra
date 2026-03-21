@@ -59,29 +59,20 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					TypeDef td = new TypedefDataType(new CategoryPath("/Category1"), "TD_Default",
-						DataType.DEFAULT);
+				TypeDef td = new TypedefDataType(new CategoryPath("/Category1"), "TD_Default",
+					DataType.DEFAULT);
 
-					dtc = union.add(td);
-					dtc.setComment("a typedef");
-					dtc.setFieldName("typedef field name TD_Default");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				union.add(td, "typedef field name TD_Default", "a typedef");
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -137,42 +128,33 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					Pointer p = PointerDataType.getPointer(enumm, 4);// MyEnum *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * * *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * * * *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * * * * *
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create an array of MyEnum * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				Pointer p = PointerDataType.getPointer(enumm, 4);// MyEnum *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * * *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * * * *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * * * * *
 
-					TypeDef td = new TypedefDataType(new CategoryPath("/Category1"),
-						"TD_MyEnumPointer", array);
+				// create an array of MyEnum * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
 
-					dtc = union.add(td);
-					dtc.setComment("a typedef");
-					dtc.setFieldName("typedef field name TD_MyEnumPointer");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", array);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
+				union.add(td, "typedef field name TD_MyEnumPointer", "a typedef");
 
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -238,45 +220,37 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// MyEnum *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * * *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * * * *
-					p = PointerDataType.getPointer(p, 4);// MyEnum * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of MyEnum * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// MyEnum * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// MyEnum *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * * *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * * * *
+				p = PointerDataType.getPointer(p, 4);// MyEnum * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				// create an array of MyEnum * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// MyEnum * * * * *[5] *
 
-					dtc = union.add(td);
-					dtc.setComment("a typedef");
-					dtc.setFieldName("typedef field name TD_MyEnumPointer");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				union.add(td, "typedef field name TD_MyEnumPointer", "a typedef");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -353,47 +327,37 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					dtc = union.add(td);
-					dtc.setComment("a typedef");
-					dtc.setFieldName("typedef field name TD_MyEnumPointer");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
+				union.add(td, "typedef field name TD_MyEnumPointer", "a typedef");
 
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -474,46 +438,37 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					dtc = union.add(td);
-					dtc.setComment("a typedef");
-					dtc.setFieldName("typedef field name TD_MyEnumPointer");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				union.add(td, "typedef field name TD_MyEnumPointer", "a typedef");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -594,46 +549,37 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					dtc = union.add(td);
-					dtc.setComment("a typedef");
-					dtc.setFieldName("typedef field name TD_MyEnumPointer");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				union.add(td, "typedef field name TD_MyEnumPointer", "a typedef");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -727,46 +673,37 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
-					p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
-					dtc = union.add(p);
-					dtc.setComment("a pointer to a typedef");
-					dtc.setFieldName("typedef field name TD_MyEnumPointer *");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
+				union.add(p, "typedef field name TD_MyEnumPointer *", "a pointer to a typedef");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -851,49 +788,40 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
-					p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					// create a TypeDef on p
-					td = new TypedefDataType(new CategoryPath("/Category1"), "TD_on_Pointer", p);
-					dtc = union.add(td);
-					dtc.setFieldName("typedef field name");
-					dtc.setComment("a typedef on a pointer to a typedef");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				// create a TypeDef on p
+				td = new TypedefDataType(new CategoryPath("/Category1"), "TD_on_Pointer", p);
+				union.add(td, "typedef field name", "a typedef on a pointer to a typedef");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -985,52 +913,44 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
-					p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					// create a TypeDef on p
-					td = new TypedefDataType(new CategoryPath("/Category1"), "TD_on_Pointer", p);
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
 
-					// create an Array of TD_on_Pointer
-					array = new ArrayDataType(td, 7, td.getLength());
-					dtc = union.add(array);
-					dtc.setFieldName("array of typedef field name");
-					dtc.setComment("an array of typedefs on a pointer to a typedef");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				// create a TypeDef on p
+				td = new TypedefDataType(new CategoryPath("/Category1"), "TD_on_Pointer", p);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				// create an Array of TD_on_Pointer
+				array = new ArrayDataType(td, 7, td.getLength());
+				union.add(array, "array of typedef field name",
+					"an array of typedefs on a pointer to a typedef");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1496,59 +1416,52 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					// edit FavoriteColors
-					Enum enumm =
-						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					enumm.add("Cyan", 5);
-					enumm.add("Gold", 8);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create TypeDef on pointer to an Array of pointers
+				// edit FavoriteColors
+				Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
+				enumm.add("Cyan", 5);
+				enumm.add("Gold", 8);
 
-					Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
-					p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
+				// create TypeDef on pointer to an Array of pointers
 
-					// create an array of FavoriteColors * * * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
+				Pointer p = PointerDataType.getPointer(enumm, 4);// FavoriteColors *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * *
+				p = PointerDataType.getPointer(p, 4);// FavoriteColors * * * * *
 
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
-					p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
+				// create an array of FavoriteColors * * * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				p = PointerDataType.getPointer(array, 4);// FavoriteColors * * * * *[5] *
 
-					// create a TypeDef on p
-					td = new TypedefDataType(new CategoryPath("/Category1"), "TD_on_Pointer", p);
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer", p);
+				p = PointerDataType.getPointer(td, 4);//TD_MyEnumPointer *
 
-					// create an Array of TD_on_Pointer
-					array = new ArrayDataType(td, 11, td.getLength());
-					array = new ArrayDataType(array, 10, array.getLength());
-					array = new ArrayDataType(array, 9, array.getLength());
-					array = new ArrayDataType(array, 8, array.getLength());
-					array = new ArrayDataType(array, 7, array.getLength());
-					array = new ArrayDataType(array, 6, array.getLength());
-					array = new ArrayDataType(array, 5, array.getLength());
+				// create a TypeDef on p
+				td = new TypedefDataType(new CategoryPath("/Category1"), "TD_on_Pointer", p);
 
-					// create a pointer to array
-					p = PointerDataType.getPointer(array, 4);//TD_on_Pointer[5][6][7][8][9][10][11] *
-					dtc = union.add(p);
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				// create an Array of TD_on_Pointer
+				array = new ArrayDataType(td, 11, td.getLength());
+				array = new ArrayDataType(array, 10, array.getLength());
+				array = new ArrayDataType(array, 9, array.getLength());
+				array = new ArrayDataType(array, 8, array.getLength());
+				array = new ArrayDataType(array, 7, array.getLength());
+				array = new ArrayDataType(array, 6, array.getLength());
+				array = new ArrayDataType(array, 5, array.getLength());
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				// create a pointer to array
+				p = PointerDataType.getPointer(array, 4);//TD_on_Pointer[5][6][7][8][9][10][11] *
+				union.add(p);
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();

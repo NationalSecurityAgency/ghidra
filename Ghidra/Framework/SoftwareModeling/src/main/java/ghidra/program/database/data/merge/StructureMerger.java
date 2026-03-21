@@ -18,7 +18,6 @@ package ghidra.program.database.data.merge;
 import java.util.List;
 
 import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * DataType merger for structures.
@@ -215,12 +214,7 @@ public class StructureMerger extends DataTypeMerger<Structure> {
 							otherName));
 		}
 		if (workingName == null && otherName != null) {
-			try {
-				workingComp.setFieldName(otherName);
-			}
-			catch (DuplicateNameException e) {
-				// This exception is going away soon, so ignore it for now
-			}
+			workingComp.setFieldName(otherName);
 		}
 	}
 

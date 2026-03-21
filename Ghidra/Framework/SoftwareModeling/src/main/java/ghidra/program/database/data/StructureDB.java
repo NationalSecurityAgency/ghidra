@@ -17,6 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 import db.DBRecord;
 import db.Field;
@@ -182,8 +183,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 	}
 
-	private DataTypeComponent doAdd(DataType dataType, int length, String name, String comment,
-			boolean validatePackAndNotify)
+	private DataTypeComponent doAdd(DataType dataType, int length, String name,
+			String comment, boolean validatePackAndNotify)
 			throws DataTypeDependencyException, IllegalArgumentException {
 
 		lock.acquire();
@@ -204,9 +205,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 				else {
 					int componentLength = getPreferredComponentLength(dataType, length);
-					DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType),
-						key, componentLength, numComponents, structLength, name, comment);
-					dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+
+					dtc = createComponent(dataMgr.getResolvedID(dataType), componentLength,
+						numComponents, structLength, name, comment);
+
 					dataType.addParent(this);
 					components.add(dtc);
 				}
@@ -261,6 +263,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 				else {
 					index = backupToFirstComponentContainingOffset(index, len);
+					index = afterNonZeroComponentsAtOffset(index, len);
 				}
 				int definedComponentCount = components.size();
 				if (index >= 0 && index < definedComponentCount) {
@@ -370,9 +373,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			length = getPreferredComponentLength(dataType, length);
 
 			int offset = getComponent(ordinal).getOffset();
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
-				length, ordinal, offset, name, comment);
-			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+
+			DataTypeComponentDB dtc = createComponent(dataMgr.getResolvedID(dataType), length,
+				ordinal, offset, name, comment);
+
 			dataType.addParent(this);
 			shiftOffsets(idx, 1, dtc.getLength());
 			components.add(idx, dtc);
@@ -383,13 +387,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
 		finally {
 			lock.release();
 		}
-		return null;
 	}
 
 	@Override
@@ -544,9 +544,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			BitFieldDataType bitfieldDt =
 				new BitFieldDBDataType(baseDataType, bitSize, storageBitOffset);
 
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(bitfieldDt), key,
+			DataTypeComponentDB dtc = createComponent(dataMgr.getResolvedID(bitfieldDt),
 				bitfieldDt.getStorageSize(), ordinal, revisedOffset, componentName, comment);
-			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+
 			bitfieldDt.addParent(this); // has no affect
 			components.add(startIndex, dtc);
 
@@ -554,13 +554,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			notifySizeChanged(false);
 			return dtc;
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
 		finally {
 			lock.release();
 		}
-		return null;
 	}
 
 	@Override
@@ -597,7 +593,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Removes a defined component at the specified index from the components list without any 
-	 * alteration to other components and removes parent association for component datatype.
+	 * alteration to other components, removes parent association for component datatype and
+	 * remove name-map entry.
 	 * @param index defined component index
 	 * @return the defined component which was removed.
 	 * @throws IOException if an IO error occurs
@@ -606,17 +603,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		DataTypeComponentDB dtc = components.remove(index);
 		doDelete(dtc);
 		return dtc;
-	}
-
-	/**
-	 * Removes a defined component without any alteration to other components or the components 
-	 * list and removes parent association for component datatype.
-	 * @param dtc datatype component
-	 * @throws IOException if an IO error occurs
-	 */
-	private void doDelete(DataTypeComponentDB dtc) throws IOException {
-		dtc.getDataType().removeParent(this);
-		removeComponentRecord(dtc.getKey());
 	}
 
 	/**
@@ -1302,6 +1288,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	@Override
+	void forEachDefinedComponent(Consumer<DataTypeComponentDB> dtcConsumer) {
+		components.forEach(dtcConsumer);
+	}
+
+	@Override
 	public final DataTypeComponent insertAtOffset(int offset, DataType dataType, int length)
 			throws IllegalArgumentException {
 		return insertAtOffset(offset, dataType, length, null, null);
@@ -1384,10 +1375,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				return new DataTypeComponentDB(dataMgr, this, ordinal, offset);
 			}
 
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
-				length, ordinal, offset, name, comment);
+			length = getPreferredComponentLength(dataType, length);
+
+			DataTypeComponentDB dtc = createComponent(dataMgr.getResolvedID(dataType), length,
+				ordinal, offset, name, comment);
 			dataType.addParent(this);
-			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			shiftOffsets(index, 1 + additionalShift, length + additionalShift);
 			components.add(index, dtc);
 			repack(false, false);
@@ -1397,13 +1389,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
 		finally {
 			lock.release();
 		}
-		return null;
 	}
 
 	/**
@@ -1442,6 +1430,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			return oldComponent;
 		}
 
+		// Note: a unique componentName will be imposed if not null
 		DataTypeComponent replaceComponent =
 			replaceComponents(replacedComponents, dataType, offset, length, componentName, comment);
 
@@ -1729,13 +1718,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		for (int i = 0; i < otherComponents.length; i++) {
 			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType());
 		}
-		for (DataTypeComponentDB dtc : components) {
-			dtc.getDataType().removeParent(this);
-			long compKey = dtc.getKey();
-			componentAdapter.removeRecord(compKey);
-			dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
-		}
 
+		// Remove all existing components
+		for (DataTypeComponentDB dtc : components) {
+			doDelete(dtc);
+		}
 		components.clear();
 		numComponents = 0;
 		structLength = 0;
@@ -1799,8 +1786,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 	}
 
-	private void doReplaceWithNonPacked(Structure struct, DataType[] resolvedDts)
-			throws IOException {
+	private void doReplaceWithNonPacked(Structure struct, DataType[] resolvedDts) {
 
 		// caller responsible for record updates
 
@@ -1836,17 +1822,16 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				length = getPreferredComponentLength(dt, -1, maxLength);
 			}
 
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, length,
+			DataTypeComponentDB newDtc = createComponent(dataMgr.getResolvedID(dt), length,
 				dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
+
 			dt.addParent(this);
-			DataTypeComponentDB newDtc =
-				new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			components.add(newDtc);
 		}
 	}
 
 	private void doCopy(Structure struct, DataTypeComponent[] definedComponents,
-			DataType[] resolvedDts) throws IOException {
+			DataType[] resolvedDts) {
 
 		// simple replication of struct - caller must perform record updates
 		structLength = struct.isZeroLength() ? 0 : struct.getLength();
@@ -1857,12 +1842,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		for (int i = 0; i < otherComponents.length; i++) {
 			DataTypeComponent dtc = otherComponents[i];
 			DataType dt = resolvedDts[i]; // ancestry check already performed by caller
-			DBRecord rec =
-				componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, dtc.getLength(),
-					dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
+
+			DataTypeComponentDB newDtc = createComponent(dataMgr.getResolvedID(dt), dtc.getLength(),
+				dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
+
 			dt.addParent(this);
-			DataTypeComponentDB newDtc =
-				new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			components.add(newDtc);
 		}
 	}
@@ -2345,10 +2329,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		DataTypeComponentDB newDtc = null;
 		if (!clearOnly) {
 			// insert new component
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(resolvedDataType),
-				key, length, newOrdinal, newOffset, name, comment);
+			newDtc = createComponent(dataMgr.getResolvedID(resolvedDataType), length, newOrdinal,
+				newOffset, name, comment);
+
 			resolvedDataType.addParent(this);
-			newDtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			components.add(index, newDtc);
 		}
 
@@ -2477,15 +2461,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		try {
 			checkDeleted();
 			for (DataTypeComponentDB dtc : components) {
-				dtc.getDataType().removeParent(this);
-				try {
-					long compKey = dtc.getKey();
-					componentAdapter.removeRecord(compKey);
-					dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
-				}
-				catch (IOException e) {
-					dataMgr.dbError(e);
-				}
+				doDelete(dtc);
 			}
 			components.clear();
 			structLength = 0;

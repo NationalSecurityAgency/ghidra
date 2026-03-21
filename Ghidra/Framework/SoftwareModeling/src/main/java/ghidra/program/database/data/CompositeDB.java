@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.ConcurrentModificationException;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
@@ -61,6 +62,111 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * refresh
 	 */
 	protected abstract void initialize();
+
+	protected DataTypeComponentDB createComponent(long dtID, int length, int ordinal, int offset,
+			String componentName, String comment) {
+
+		DBRecord rec;
+		try {
+			rec = componentAdapter.createRecord(dtID, key, length, ordinal, offset, componentName,
+				comment);
+			return new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e); // throws RuntimeException
+		}
+		// Will never reach here
+		throw new AssertionError();
+	}
+
+	@Override
+	public abstract DataTypeComponentDB getComponent(int ordinal) throws IndexOutOfBoundsException;
+
+	private DataTypeComponentDB getValidatedComponent(DataTypeComponentDB component)
+			throws IOException {
+		// Verify that component is still valid for this composite
+		DBRecord rec = componentAdapter.getRecord(component.getKey());
+		if (rec == null || rec.getLongValue(ComponentDBAdapter.COMPONENT_PARENT_ID_COL) != key) {
+			throw new ConcurrentModificationException("Component has been deleted.");
+		}
+
+		// Verify specified component instance is 
+		DataTypeComponentDB myDtc = getComponent(component.getOrdinal());
+		if (myDtc != component) {
+			// supplied instance is stale - it should exist in our defined component list
+			myDtc = getComponent(rec.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL));
+		}
+		return myDtc;
+	}
+
+	/**
+	 * Set the name on a possibly stale component in support of the 
+	 * {@link DataTypeComponent#setFieldName(String)} method.
+	 * <p>
+	 * If the field name is empty it will be set to null,
+	 * which is the default field name. The field name may be sanitized to convert all whitespace
+	 * characters to an underscore.  If a name conflict occurs with another component, a one-up
+	 * number suffix will be added to avoid duplication.
+	 * 
+	 * @param component data type component which has this composite as its parent.
+	 * @param name new field name or null
+	 * @return updated component instance
+	 */
+	protected DataTypeComponentDB setFieldName(DataTypeComponentDB component, String name) {
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (component.getRecord() == null) {
+				return component; // unable to change undefined component
+			}
+
+			// Verify specified component instance is 
+			DataTypeComponentDB myDtc = getValidatedComponent(component);
+			if (myDtc.doSetFieldName(name)) {
+				dataMgr.dataTypeChanged(this, false);
+			}
+			return myDtc; // return modified component instance
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return component; // unchanged
+	}
+
+	/**
+	 * Set the comment on a possibly stale component in support of the 
+	 * {@link DataTypeComponent#setComment(String)} method.
+	 * 
+	 * @param component data type component which has this composite as its parent.
+	 * @param comment comment string
+	 * @return updated component instance
+	 */
+	protected DataTypeComponentDB setComment(DataTypeComponentDB component, String comment) {
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (component.getRecord() == null) {
+				return component; // unable to change undefined component
+			}
+
+			// Verify specified component instance is 
+			DataTypeComponentDB myDtc = getValidatedComponent(component);
+			if (myDtc.doSetComment(comment)) {
+				dataMgr.dataTypeChanged(this, false);
+			}
+			return myDtc; // return modified component instance
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return component; // unchanged
+	}
 
 	@Override
 	public final int getAlignedLength() {
@@ -329,9 +435,20 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		compositeAdapter.updateRecord(record, true);
 	}
 
-	protected void removeComponentRecord(long compKey) throws IOException {
-		componentAdapter.removeRecord(compKey);
-		dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
+	/**
+	 * Removes a defined component without any alteration to other components or the components 
+	 * list, removes parent association for component datatype and remove name-map entry.
+	 * @param dtc datatype component
+	 * @throws IOException if an IO error occurs
+	 */
+	protected void doDelete(DataTypeComponentDB dtc) throws IOException {
+
+		dtc.getDataType().removeParent(this);
+
+		// Remove component record
+		long dtcKey = dtc.getKey();
+		componentAdapter.removeRecord(dtcKey);
+		dataMgr.getSettingsAdapter().removeAllSettingsRecords(dtcKey);
 	}
 
 	/**
@@ -672,6 +789,8 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public abstract DataTypeComponentDB[] getDefinedComponents();
+
+	abstract void forEachDefinedComponent(Consumer<DataTypeComponentDB> dtcConsumer);
 
 	@Override
 	protected void postPointerResolve(DataType definitionDt, DataTypeConflictHandler handler) {
