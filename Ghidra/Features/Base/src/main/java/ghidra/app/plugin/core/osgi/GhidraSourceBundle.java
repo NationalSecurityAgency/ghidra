@@ -416,6 +416,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 				buildErrors.remove(newSourceFile);
 			}
 		}
+
+		// remove errors for missing source files
+		buildErrors.keySet().removeIf(sourceFile -> !sourceFile.exists());
 	}
 
 	private boolean stillHasErrors(ResourceFile newSourceFile) {
