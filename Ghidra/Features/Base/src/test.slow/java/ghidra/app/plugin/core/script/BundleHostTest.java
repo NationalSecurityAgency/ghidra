@@ -239,6 +239,42 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
+	public void testDeletedSourceRemovesStaleBuildError() throws Exception {
+
+		addClass(
+			"apackage.BClass", 
+			"@Override\n" + 
+			"public String toString() {\n" +
+			"   failing java goes here\n" +
+			"	return \"yupyup\";\n" + 
+			"}\n" 
+		);
+
+		buildWithExpectations(
+			"BClass.java:7: error: ';' expected\n" + 
+			"   failing java goes here\n" + 
+			"               ^\n" + 
+			"BClass.java:7: error: ';' expected\n" + 
+			"   failing java goes here\n" + 
+			"                         ^\n" + 
+			"skipping "+currentBundle.getFile().toString()+File.separator+"apackage"+File.separator+"BClass.java\n"
+			,
+			"1 source file with errors"
+		); 
+		Path srcDir = currentBundle.getFile().getFile(false).toPath();
+		Path bpath = srcDir.resolve("apackage").resolve("BClass.java");
+		Files.delete(bpath);
+		addClass(
+			"apackage.AClass", 
+			"@Override\n" + 
+			"public String toString() {\n" + 
+			"	return \"yupyup\";\n" + 
+			"}\n" 
+		);
+		buildAndActivate();
+	}
+
+	@Test
 	public void testLibraryInBundle() throws Exception {
 		// @formatter:off
 		addClass(
