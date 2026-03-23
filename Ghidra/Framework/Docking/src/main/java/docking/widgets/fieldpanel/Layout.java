@@ -186,11 +186,16 @@ public interface Layout {
 	int getEndRowFieldNum(int field2);
 
 	/**
+	 * {@Returns the actual width of the layout}
+	 */
+	int getWidth();
+
+	/**
 	 * Returns the smallest possible width of this layout that can display its full contents
 	 * @return the smallest possible width of this layout that can display its full contents
 	 */
 	int getCompressableWidth();
-	
+
 	/**
 	 * Returns the index of the field at the given coordinates (relative to the layout)
 	 * @param x the x coordinate

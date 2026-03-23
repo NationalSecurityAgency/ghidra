@@ -84,6 +84,15 @@ public class MultiRowLayout implements Layout {
 	}
 
 	@Override
+	public int getWidth() {
+		int max = 0;
+		for (Layout layout : layouts) {
+			max = Math.max(max, layout.getWidth());
+		}
+		return max;
+	}
+
+	@Override
 	public int getCompressableWidth() {
 		// 
 		// Since this is a multi-row layout, we have to make sure that our compressible width
