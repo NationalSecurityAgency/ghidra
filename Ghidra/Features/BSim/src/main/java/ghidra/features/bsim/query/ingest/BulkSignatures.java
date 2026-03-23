@@ -465,13 +465,11 @@ public class BulkSignatures implements AutoCloseable {
 		if (response == null) {
 			throw new IOException("Unable to drop database: " + querydb.getLastError().message);
 		}
+		if (response.dropSuccessful) {
+			Msg.info(this, "Successfully dropped database \"" + command.databaseName + "\"");
+		}
 		else {
-			if (response.dropSuccessful) {
-				Msg.info(this, "Successfully dropped database \"" + command.databaseName + "\"");
-			}
-			else {
-				Msg.error(this, "Unable to drop database: " + response.errorMessage);
-			}
+			Msg.error(this, "Unable to drop database: " + response.errorMessage);
 		}
 	}
 
