@@ -682,9 +682,9 @@ public class FunctionSignatureStringable extends Stringable {
 			markupOptions.getEnum(VTOptionDefines.FUNCTION_NAME, DEFAULT_OPTION_FOR_FUNCTION_NAME);
 		Symbol functionSymbol = destFunction.getSymbol();
 		String currentDestNamespace = functionSymbol.getParentNamespace().getName();
-		String newDestnClassName = destClassDt.getName();
+		String newDestClassName = destClassDt.getName();
 		if (functionNameChoice == FunctionNameChoices.EXCLUDE &&
-			!currentDestNamespace.equals(newDestnClassName)) {
+			!currentDestNamespace.equals(newDestClassName)) {
 
 			// This check is odd.  I suppose we are trying to handle the case where the name was not
 			// changed, but the namespace was updated.  In that case, we only need to copy the class
@@ -709,8 +709,9 @@ public class FunctionSignatureStringable extends Stringable {
 		}
 
 		// resolve the full data type
-		destDtm.resolve(dt,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataTypeConflictHandler conflictHandler =
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER;
+		destDtm.resolve(dt, conflictHandler);
 
 		warnAboutClassConflicts(destFunction, destClassDt, srcClassPath);
 	}
@@ -822,11 +823,11 @@ public class FunctionSignatureStringable extends Stringable {
 			boolean forceApply, boolean useCustomStorage, DataTypeCleaner dtCleaner)
 			throws InvalidInputException {
 
-		Parameter returnParam = destFunction.getReturn();
+		Parameter existingReturnParam = destFunction.getReturn();
 		ParameterDataTypeChoices returnTypeChoice =
 			markupOptions.getEnum(FUNCTION_RETURN_TYPE, DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE);
 		if (returnTypeChoice == ParameterDataTypeChoices.EXCLUDE) {
-			return returnParam; // Not replacing return type.
+			return existingReturnParam; // Not replacing return type.
 		}
 
 		DataType toReturnType = destFunction.getReturnType();
@@ -839,12 +840,12 @@ public class FunctionSignatureStringable extends Stringable {
 			returnTypeChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY;
 		if (!forceApply && onlyReplaceUndefineds) {
 			if (!isToDefault && !isToUndefined) {
-				return returnParam; // can't do it because we should only replace undefined data types.
+				return existingReturnParam; // can't do it because we should only replace undefined data types.
 			}
 		}
 
 		if (!forceApply && isFromDefault) {
-			return returnParam; // do nothing since default data type is lowest priority.
+			return existingReturnParam; // do nothing since default data type is lowest priority.
 		}
 
 		DataType returnType = (forceApply) ? fromReturnType

@@ -306,7 +306,8 @@ public interface SymbolTable {
 	 * requirement within their parent namespace.
 	 * 
 	 * @param name the name of the namespace to be retrieved
-	 * @param namespace the parent namespace of the namespace to be retrieved
+	 * @param namespace the parent namespace of the namespace to be retrieved; null for the global
+	 *        namespace
 	 * @return the namespace with the given name in the given parent namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table

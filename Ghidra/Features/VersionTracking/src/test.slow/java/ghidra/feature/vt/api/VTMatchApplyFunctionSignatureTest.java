@@ -41,6 +41,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
@@ -65,10 +66,6 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	//  addPerson 004011a0   FUN... 004011a0    2 params
 	//  call_Strncpy 00401300   FUN... 00401310    3 params w/ matching types
 	//  Canary_Tester_... 0040131c   FUN... 0040132c    1 param & identical signature
-
-	public VTMatchApplyFunctionSignatureTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -111,7 +108,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		env.dispose();
 	}
 
-	private StructureDataType getPersonStruct(Program program) {
+	private StructureDataType createPersonStruct(Program program) {
 		StructureDataType struct =
 			new StructureDataType(CategoryPath.ROOT, "Person", 0, program.getDataTypeManager());
 		TypeDef personType =
@@ -125,8 +122,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		return struct;
 	}
 
-	//Create Gadget structure - slightly different than usual in last field to simplify test
-	private Structure createNonEmptyGadgetStruct() {
+	private Structure createSourceGadgetStruct_NotEmpty() {
 
 		Structure gadgetStruct = new StructureDataType("Gadget", 0);
 		PointerDataType charPtr = new PointerDataType(new CharDataType());
@@ -139,7 +135,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 	}
 
-	private Structure createDifferentGadgetStruct() {
+	private Structure createDestinationGadgetStruct_NotEmpty() {
 
 		Structure gadgetStruct = new StructureDataType("Gadget", 0);
 		PointerDataType charPtr = new PointerDataType(new CharDataType());
@@ -165,7 +161,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 			builder.createClassNamespace("Gadget", null, SourceType.IMPORTED);
 
-			StructureDataType struct = getPersonStruct(p);
+			StructureDataType struct = createPersonStruct(p);
 			builder.addDataType(struct);
 			Pointer ptr1 = PointerDataType.getPointer(struct, p.getDataTypeManager());
 			Pointer ptr2 = PointerDataType.getPointer(ptr1, p.getDataTypeManager());
@@ -472,7 +468,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 	// Use case: Source has populated Gadget struct, dest has empty Gadget struct; apply empty structs 
 	@Test
-	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceThisParam_DestEmptyGadget()
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceThisParam_DestEmptyGadgetInDtm()
 			throws Exception {
 
 		useMatch("0x00401040", "0x00401040");
@@ -517,8 +513,177 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 	}
 
+	// Use Case: Source has populated Gadget struct this param, 
+	//           dest has different populated Gadget this param,
+	//           Option: apply empty structs
+	//                   replace undefined only
+	// Expect:   No replace
 	@Test
-	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceReturnGadger_DestReturnUndefined()
+	public void testApplyMatch_ReplaceUndefinedOnly_EmptyStructureOption_SourceNonEmptyGadget_DestNonEmptyGadget()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		applySourceNonEmtpyGadget_DestNonEmtpyGadget();
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(Gadget * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES,
+			ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		checkDestinationGadgetThisParamIsUnchanged();
+
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(Gadget * this, undefined4 param_1)");
+	}
+
+	// Use Case: Source has populated Gadget struct this param, 
+	//           dest has different populated Gadget this param,
+	//           Option: apply empty structs
+	//                   replace always
+	// Expect:   **The this param does not get changed, since there is already a class named Gadget
+	@Test
+	public void testApplyMatch_Replace_EmptyStructureOption_SourceNonEmptyGadget_DestNonEmptyGadget()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		applySourceNonEmtpyGadget_DestNonEmtpyGadget();
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(Gadget * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		checkDestinationGadgetThisParamIsUnchanged();
+
+		unapplyTestMatch("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(Gadget * this, undefined4 param_1)");
+	}
+
+	// Use Case: Source has populated Gadget struct return type, 
+	//           dest has different populated Gadget return type,
+	//           Option: apply empty structs
+	//                   replace always
+	// Expect:   **The this param does not get changed, since there is already a class named Gadget.
+	//           The return type is a conflict, since both programs had a non-empty Gadget.
+	@Test
+	public void testApplyMatch_Replace_EmptyStructureOption_SourceNonEmptyGadget_DestNonEmptyGadget_ReturnType()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		applySourceNonEmtpyGadgetReturnType_DestNonEmtpyGadgetReturnType();
+
+		// Check initial values
+		checkSignatures("Gadget * use(Gadget * this, Person * person)",
+			"Gadget * FUN_00401040(void * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES,
+			ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+		applyOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+
+		applyTestMatch();
+
+		// Verify apply.
+		checkSignatures("Gadget * use(Gadget * this, Person * person)",
+			"Gadget.conflict * use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		checkDestinationGadgetThisParamIsUnchanged();
+
+		// Since the destination already had a non-empty Gadget, a conflict gets created.  Further, 
+		// the destination signature is still using the original Gadget for the this pointer.  This
+		// is inconsistent with how the return type and other parameter types get applied.
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+		DataType gadgetConflict = destDtm.getDataType(CategoryPath.ROOT, "Gadget.conflict");
+
+		// not defined, since we used the empty composite option
+		assertTrue(gadgetConflict.isNotYetDefined());
+
+		unapplyTestMatch("Gadget * use(Gadget * this, Person * person)",
+			"Gadget * FUN_00401040(void * this, undefined4 param_1)");
+	}
+
+	private void checkDestinationGadgetThisParamIsUnchanged() {
+
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+		Structure destGadget = (Structure) destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+
+		// assume the test setup the dest Gadget to be not undefined
+		assertFalse(destGadget.isNotYetDefined());
+
+		Parameter p0 = destinationFunction.getParameter(0);
+		DataType dt = p0.getDataType();
+		Pointer p = (Pointer) dt;
+		DataType actualDt = p.getDataType();
+
+		Structure expectedGadget = createDestinationGadgetStruct_NotEmpty();
+		assertTrue("Gadget should not have changed.  Expected\n%s\nFound\n%s"
+				.formatted(expectedGadget, actualDt),
+			expectedGadget.isEquivalent(actualDt));
+	}
+
+	@Test
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOption_SourceReturnGadget_DestReturnUndefined()
 			throws Exception {
 
 		useMatch("0x00401060", "0x00401060");
@@ -561,7 +726,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	@Test
-	public void testApplyMatch_ReplaceSignature_EmptyStructureOptionOff_SourceReturnGadger_DestReturnUndefined()
+	public void testApplyMatch_ReplaceSignature_EmptyStructureOptionOff_SourceReturnGadget_DestReturnUndefined()
 			throws Exception {
 
 		useMatch("0x00401060", "0x00401060");
@@ -719,7 +884,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		Structure gadgetStruct = createSourceGadgetStruct_NotEmpty();
 		tx(sourceDtm, () -> {
 			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
 		});
@@ -798,7 +963,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		Structure gadgetStruct = createSourceGadgetStruct_NotEmpty();
 		tx(sourceDtm, () -> {
 			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
 		});
@@ -808,7 +973,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
 
 		// add different Gadget to the destination program
-		Structure differentGadgetStruct = createDifferentGadgetStruct();
+		Structure differentGadgetStruct = createDestinationGadgetStruct_NotEmpty();
 		tx(destDtm, () -> {
 			destDtm.addDataType(differentGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
 		});
@@ -1927,7 +2092,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		Structure gadgetStruct = createSourceGadgetStruct_NotEmpty();
 		tx(sourceDtm, () -> {
 			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
 		});
@@ -1965,7 +2130,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		Structure gadgetStruct = createSourceGadgetStruct_NotEmpty();
 		tx(sourceDtm, () -> {
 			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
 		});
@@ -1977,6 +2142,79 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		return gadgetStruct;
 	}
 
+	private void applySourceNonEmtpyGadget_DestNonEmtpyGadget()
+			throws Exception {
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure nonEmptyGadgetStruct = createSourceGadgetStruct_NotEmpty();
+
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(nonEmptyGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(nonEmptyGadgetStruct));
+
+		// add non-empty gadget to the destination program
+		Structure destGadget = createDestinationGadgetStruct_NotEmpty();
+		tx(destDtm, () -> {
+			destDtm.addDataType(destGadget, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		Structure resolvedDestGadget = (Structure) destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertFalse(resolvedDestGadget.isNotYetDefined());
+
+		tx(destinationProgram, () -> {
+			SymbolTable st = destinationProgram.getSymbolTable();
+			GhidraClass c = st.createClass(null, "Gadget", SourceType.USER_DEFINED);
+			destinationFunction.setParentNamespace(c);
+		});
+	}
+
+	private void applySourceNonEmtpyGadgetReturnType_DestNonEmtpyGadgetReturnType()
+			throws Exception {
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure nonEmptyGadgetStruct = createSourceGadgetStruct_NotEmpty();
+		tx(sourceDtm, () -> {
+			sourceDtm.addDataType(nonEmptyGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(nonEmptyGadgetStruct));
+
+		PointerDataType ptr = new PointerDataType(nonEmptyGadgetStruct);
+		setReturnType(sourceFunction, ptr, SourceType.USER_DEFINED);
+
+		// add non-empty gadget to the destination program
+		Structure destGadget = createDestinationGadgetStruct_NotEmpty();
+		tx(destDtm, () -> {
+			destDtm.addDataType(destGadget, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
+
+		// verify it took
+		Structure resolvedDestGadget = (Structure) destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertFalse(resolvedDestGadget.isNotYetDefined());
+
+		ptr = new PointerDataType(resolvedDestGadget);
+		setReturnType(destinationFunction, ptr, SourceType.USER_DEFINED);
+	}
+
 	private Structure applySourceNonEmtpyGadget_DestEmtpyGadgetInDtm() {
 
 		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
@@ -1986,7 +2224,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertNotNull(existingEmptyGadgetStruct);
 
 		// replace the source empty gadget with a populated one
-		Structure gadgetStruct = createNonEmptyGadgetStruct();
+		Structure gadgetStruct = createSourceGadgetStruct_NotEmpty();
 
 		tx(sourceDtm, () -> {
 			sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);

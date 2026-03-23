@@ -24,7 +24,6 @@ import javax.help.UnsupportedOperationException;
 
 import db.DBRecord;
 import ghidra.program.database.*;
-import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.symbol.*;
@@ -437,7 +436,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		if (storage != null && storage.isUnassignedStorage()) {
 			storage = null;
 		}
-		long typeId = ((DataTypeManagerDB) program.getDataTypeManager()).getResolvedID(type);
+		long typeId = program.getDataTypeManager().getResolvedID(type);
 		rec.setLongValue(FunctionAdapter.RETURN_DATA_TYPE_ID_COL, typeId);
 		rec.setString(FunctionAdapter.RETURN_STORAGE_COL,
 			storage != null ? storage.getSerializationString() : null);
@@ -1226,7 +1225,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 * Resolve a variable's type and storage.
 	 * @param var variable to be resolved
 	 * @param voidOK if true the use of a 0-length {@link VoidDataType} for the specified
-	 * variable is allowed (i.e., {@link ReturnParameterDB}), else false should be specifed.
+	 * variable is allowed (i.e., {@link ReturnParameterDB}), else false should be specified.
 	 * @param useUnassignedStorage if true storage should be set to {@link VariableStorage#UNASSIGNED_STORAGE}
 	 * else an attempt should be made to adjust the storage.
 	 * @return resolved variable
