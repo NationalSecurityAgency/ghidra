@@ -254,9 +254,39 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
+		name: "pywin32-311-cp314-cp314-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/90/4b/07c77d8ba0e01349358082713400435347df8426208171ce297da32c313d/pywin32-311-cp314-cp314-win_amd64.whl",
+		sha256: "3aca44c046bd2ed8c90de9cb8427f581c479e594e99b5c0bb19b29c10fd6cb87",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
 		name: "pywin32-311-cp313-cp313-win_amd64.whl",
 		url: "https://files.pythonhosted.org/packages/e3/28/e0a1909523c6890208295a29e05c2adb2126364e289826c0a8bc7297bd5c/pywin32-311-cp313-cp313-win_amd64.whl",
 		sha256: "718a38f7e5b058e76aee1c56ddd06908116d35147e133427e59a3983f703a20d",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "pywin32-311-cp312-cp312-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/d1/a8/a0e8d07d4d051ec7502cd58b291ec98dcc0c3fff027caad0470b72cfcc2f/pywin32-311-cp312-cp312-win_amd64.whl",
+		sha256: "b8c095edad5c211ff31c05223658e71bf7116daa0ecf3ad85f3201ea3190d067",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "pywin32-311-cp311-cp311-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/51/8f/9bb81dd5bb77d22243d33c8397f09377056d5c687aa6d4042bea7fbf8364/pywin32-311-cp311-cp311-win_amd64.whl",
+		sha256: "3ce80b34b22b17ccbd937a6e78e7225d80c52f5ab9940fe0506a1a16f3dab503",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "pywin32-311-cp310-cp310-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/5e/bf/360243b1e953bd254a82f12653974be395ba880e7ec23e3731d9f73921cc/pywin32-311-cp310-cp310-win_amd64.whl",
+		sha256: "797c2772017851984b97180b0bebe4b620bb86328e8a884bb626156295a63b3b",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "pywin32-311-cp39-cp39-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/9f/8a/1403d0353f8c5a2f0829d2b1c4becbf9da2f0a4d040886404fc4a5431e4d/pywin32-311-cp39-cp39-win_amd64.whl",
+		sha256: "e0c4cfb0621281fe40387df582097fd796e80430597cb9944f0ae70447bacd91",
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
