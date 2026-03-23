@@ -1853,6 +1853,10 @@ public class GTree extends JPanel implements BusyListener {
 				}
 
 				GTree gTree = getTree(context);
+				if (gTree.isFiltered()) {
+					return false;
+				}
+
 				List<GTreeNode> nodes = gTree.getSelectedNodes();
 				return !nodes.isEmpty();
 			}
@@ -1886,6 +1890,10 @@ public class GTree extends JPanel implements BusyListener {
 				}
 
 				GTree gTree = getTree(context);
+				if (gTree.isFiltered()) {
+					return false;
+				}
+
 				List<GTreeNode> nodes = gTree.getSelectedNodes();
 				return !nodes.isEmpty();
 			}
@@ -1908,6 +1916,17 @@ public class GTree extends JPanel implements BusyListener {
 				GTreeNode root = gTree.getViewRoot();
 				gTree.collapseAll(root);
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return !gTree.isFiltered();
+			}
 		};
 		//@formatter:off
 		collapseTreeAction.setPopupMenuData(new MenuData(
@@ -1924,6 +1943,17 @@ public class GTree extends JPanel implements BusyListener {
 			public void actionPerformed(ActionContext context) {
 				GTree gTree = getTree(context);
 				gTree.expandAll();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return !gTree.isFiltered();
 			}
 		};
 		//@formatter:off
