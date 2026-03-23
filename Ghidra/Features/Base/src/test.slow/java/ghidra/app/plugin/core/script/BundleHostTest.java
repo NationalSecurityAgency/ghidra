@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -241,6 +241,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testDeletedSourceRemovesStaleBuildError() throws Exception {
 
+		// @formatter:off
 		addClass(
 			"apackage.BClass", 
 			"@Override\n" + 
@@ -260,10 +261,14 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"skipping "+currentBundle.getFile().toString()+File.separator+"apackage"+File.separator+"BClass.java\n"
 			,
 			"1 source file with errors"
-		); 
+		);
+		// @formatter:on
+
 		Path srcDir = currentBundle.getFile().getFile(false).toPath();
 		Path bpath = srcDir.resolve("apackage").resolve("BClass.java");
 		Files.delete(bpath);
+
+		// @formatter:off
 		addClass(
 			"apackage.AClass", 
 			"@Override\n" + 
@@ -271,6 +276,8 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"	return \"yupyup\";\n" + 
 			"}\n" 
 		);
+		// @formatter:on
+
 		buildAndActivate();
 	}
 
