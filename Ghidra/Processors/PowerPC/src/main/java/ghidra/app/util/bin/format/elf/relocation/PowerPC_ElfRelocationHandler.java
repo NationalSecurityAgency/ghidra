@@ -101,7 +101,7 @@ public class PowerPC_ElfRelocationHandler extends
 	 * containing the target symbol.
 	 * @return SDA base offset, or null on failure (error already marked)
 	 */
-	private static Integer getSdaBaseForBlock(PowerPC_ElfRelocationContext elfRelocationContext,
+	private Integer getSdaBaseForBlock(PowerPC_ElfRelocationContext elfRelocationContext,
 			MemoryBlock block, Program program, Address relocationAddress,
 			PowerPC_ElfRelocationType type, String symbolName, int symbolIndex) {
 		if (block != null) {
