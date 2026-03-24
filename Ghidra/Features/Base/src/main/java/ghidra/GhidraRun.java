@@ -27,8 +27,7 @@ import org.apache.logging.log4j.Logger;
 import docking.framework.SplashScreen;
 import generic.jar.ResourceFile;
 import ghidra.base.help.GhidraHelpService;
-import ghidra.framework.Application;
-import ghidra.framework.GhidraApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
@@ -96,6 +95,8 @@ public class GhidraRun implements GhidraLaunchable {
 				
 				log.info("Ghidra startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() +
 					" ms)");
+
+				checkForMissingNativeComponents();
 			});
 		};
 
@@ -246,6 +247,22 @@ public class GhidraRun implements GhidraLaunchable {
 
 			}
 			tool.setActiveProject(null);
+		}
+	}
+
+	private void checkForMissingNativeComponents() {
+		boolean isWin = Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS;
+
+		try {
+			Application.getOSFile("Decompiler", isWin ? "decompile.exe" : "decompile");
+		}
+		catch (OSFileNotFoundException e) {
+			//@formatter:off
+			String msg =
+				"It appears that native components have not been built for this Ghidra installation.\n" +
+					"See the \"Building Native Components\" section of the Getting Started guide for build instructions.";
+			//@formatter:on
+			Msg.showWarn(GhidraRun.class, null, "Missing Native Components", msg);
 		}
 	}
 
