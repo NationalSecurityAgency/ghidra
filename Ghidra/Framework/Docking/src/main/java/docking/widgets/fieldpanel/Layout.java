@@ -186,7 +186,7 @@ public interface Layout {
 	int getEndRowFieldNum(int field2);
 
 	/**
-	 * {@Returns the actual width of the layout}
+	 * {@return the actual width of the layout}
 	 */
 	int getWidth();
 
