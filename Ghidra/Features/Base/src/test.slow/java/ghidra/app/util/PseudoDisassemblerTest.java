@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,13 +56,13 @@ public class PseudoDisassemblerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testToStringArmSeparator() throws Exception {
-		programBuilder.setBytes("0", "08 f8 00 00 40 00");// strb.w r0,[r8,r0,0x0]
+		programBuilder.setBytes("0", "08 f8 10 00");// strb.w r0,[r8,r0,lsl 0x1]
 		programBuilder.setRegisterValue("TMode", "0", "1", 1);
 		PseudoInstruction instr =
 			disassembler.disassemble(program.getAddressFactory().getAddress("0"));
 
 		String str = instr.toString();
-		assertEquals("strb.w r0,[r8,r0,lsl #0x0]", str);// wan't to make sure all markup is printed
+		assertEquals("strb.w r0,[r8,r0,lsl #0x1]", str);// want to make sure all markup is printed
 
 		programBuilder.setBytes("0", "00 f0 20 03");// nopeq
 		programBuilder.setRegisterValue("TMode", "0", "1", 0);
