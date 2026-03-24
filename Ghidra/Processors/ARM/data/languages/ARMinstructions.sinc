@@ -2413,7 +2413,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24			is $(AMODE) &  CALLoverride=0 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   call HAddr24;
   # don't do causes decompiler trouble  TB = 0;
 } # Always changes to THUMB mode
@@ -2421,7 +2421,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24			is $(AMODE) &  CALLoverride=1 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   goto HAddr24;
 } # Always changes to THUMB mode
 
@@ -2429,7 +2429,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=0 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   call HAddr24;
   # don't do causes decompiler trouble  TB = 0;
 }   # Always changes to THUMB mode
@@ -2437,7 +2437,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=1 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
-  SetThumbMode(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   goto HAddr24;
 }   # Always changes to THUMB mode
 

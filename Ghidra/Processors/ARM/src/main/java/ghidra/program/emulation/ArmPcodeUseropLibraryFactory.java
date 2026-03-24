@@ -19,9 +19,12 @@ import java.math.BigInteger;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
+import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 
 @UseropLibrary("arm")
@@ -39,7 +42,7 @@ public class ArmPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 		// LATER: This should probably be injected
 		private final ArmCpuState cpuState = new ArmCpuState();
 
-		public ArmPcodeUseropLibrary(Language language) {
+		public ArmPcodeUseropLibrary(SleighLanguage language) {
 			Register tModeReg = language.getRegister("TMode");
 			if (tModeReg != null) {
 				tMode = new RegisterValue(tModeReg, BigInteger.ONE);
@@ -49,6 +52,32 @@ public class ArmPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 				tMode = null;
 				aMode = null;
 			}
+
+			SleighPcodeUseropDefinition.Factory factory =
+				new SleighPcodeUseropDefinition.Factory(language);
+
+			putOp(factory.define("VectorSignedToFloat")
+					.params("s", "mode")
+					.body(args -> switch (args.get(0).getSize()) {
+						case 4 -> "__op_output = int2float(s);";
+						default -> throw new LowlevelError(
+							"VectorSignedToFloat: invalid dest size of " + args.get(0).getSize());
+					})
+					.build());
+			putOp(factory.define("VectorUnsignedToFloat")
+					.params("s", "mode")
+					.body(args -> switch (args.get(0).getSize()) {
+						case 4 -> {
+							Varnode s = args.get(1);
+							yield """
+									temp:%d = zext(s);
+									__op_output = int2float(s);
+									""".formatted(s.getSize() + 1);
+						}
+						default -> throw new LowlevelError(
+							"VectorSignedToFloat: invalid dest size of " + args.get(0).getSize());
+					})
+					.build());
 		}
 
 		@PcodeUserop(modifiesContext = true)

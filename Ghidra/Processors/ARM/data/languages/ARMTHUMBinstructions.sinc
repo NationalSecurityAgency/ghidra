@@ -518,12 +518,12 @@ thBitWidth: "#"^w	is imm3_shft & imm2_shft & thc0004	[ w = thc0004 - ((imm3_shft
 
 thAddrShift:[Rn0003,Rm0003]  is Rn0003; thc0405=0 & Rm0003 {
 	local addr = Rn0003 + Rm0003;
-	export *:4 addr;
+	export addr;
 }
 
 thAddrShift: [Rn0003,Rm0003,"lsl #"^thc0405]  is Rn0003; thc0405 & Rm0003 {
 	local addr = Rn0003 + (Rm0003 << thc0405);
-	export *:4 addr;
+	export addr;
 }
 
 #####################
