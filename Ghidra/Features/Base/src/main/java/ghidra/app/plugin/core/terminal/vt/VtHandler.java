@@ -28,10 +28,8 @@ import ghidra.util.Msg;
 
 /**
  * The handler of parsed ANSI VT control sequences
- * 
  * <p>
  * Here are some of the resources where I found useful documentation:
- * 
  * <ul>
  * <li><a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html">XTerm Control
  * Sequences</a></li>
@@ -39,13 +37,11 @@ import ghidra.util.Msg;
  * Terminal Control Escape Sequences</a></li>
  * <li><a href="https://en.wikipedia.org/wiki/ANSI_escape_code">Wikipedia: ANSI escape code</a></li>
  * </ul>
- * 
  * <p>
  * They were incredibly useful, even when experimentation was required to fill in details, because
  * they at least described the sort of behavior I should be looking for. Throughout the referenced
  * documents and within this documentation, the following abbreviations are used for escape
  * sequences:
- * 
  * <table>
  * <tr>
  * <th>Abbreviation</th>
@@ -78,13 +74,11 @@ import ghidra.util.Msg;
  * <td>{@code "\007"}</td>
  * </tr>
  * </table>
- * 
  * <p>
  * The separation between the parser and the handler deals in state management. The parser manages
  * state only of the control sequence parser itself, i.e., the current node in the token parsing
  * state machine. The state of the terminal, e.g., the current attributes, cursor position, etc.,
  * are managed by the handler and its delegates.
- * 
  * <p>
  * For example, the Cursor Position sequence is documented as:
  * <p>
@@ -97,7 +91,6 @@ import ghidra.util.Msg;
  * It will thus invoke the abstract {@link #handleMoveCursor(int, int)} method passing 12 and 39.
  * Note that 1 is subtracted from both parameters, because ANSI specifies 1-up indexing while Java
  * lends itself to 0-up indexing.
- * 
  * <p>
  * The XTerm documentation, which is arguably the most thorough, presents the CSI commands
  * alphabetically by the final byte, in ASCII order. For sanity and consistency, we adopt the same
@@ -134,10 +127,10 @@ public interface VtHandler {
 	public static final byte[] Q1048 = ascii("?1048");
 	public static final byte[] Q1049 = ascii("?1049");
 	public static final byte[] Q2004 = ascii("?2004");
+	public static final byte[] Q9001 = ascii("?9001");
 
 	/**
 	 * An ANSI color specification
-	 *
 	 * <p>
 	 * We avoid going straight to AWT colors, 1) Because it provides better separation between the
 	 * terminal logic and the rendering framework, and 2) Because some specifications, e.g., default
@@ -149,7 +142,6 @@ public interface VtHandler {
 
 	/**
 	 * A singleton representing the default color
-	 *
 	 * <p>
 	 * The actual color selected will depend on context and use. Most notably, the default color
 	 * used for foreground should greatly contrast the default color used for the background.
@@ -160,7 +152,6 @@ public interface VtHandler {
 
 	/**
 	 * One of the eight standard ANSI colors
-	 *
 	 * <p>
 	 * The actual color may be modified by other SGR attributes, notably {@link Intensity}. For
 	 * colors that are described by hue, some thought should be given to how the standard and
@@ -219,7 +210,6 @@ public interface VtHandler {
 
 		/**
 		 * Get the standard color for the given numerical code
-		 * 
 		 * <p>
 		 * For example, the sequence {@code CSI [ 34 m} would use code 4 (blue).
 		 * 
@@ -233,7 +223,6 @@ public interface VtHandler {
 
 	/**
 	 * One of the eight ANSI intense colors
-	 * 
 	 * <p>
 	 * Note that intense colors may also be specified using the standard color with the
 	 * {@link Intensity#BOLD} attribute, depending on the command sequence.
@@ -279,7 +268,6 @@ public interface VtHandler {
 
 		/**
 		 * Get the intense color for the given numerical code
-		 * 
 		 * <p>
 		 * For example, the sequence {@code CSI [ 94 m} would use code 4 (blue).
 		 * 
@@ -335,7 +323,6 @@ public interface VtHandler {
 
 		/**
 		 * Get the dim color for the given numerical code
-		 * 
 		 * <p>
 		 * For example, the sequence {@code CSI [ 34 m} would use code 4 (blue).
 		 * 
@@ -349,7 +336,6 @@ public interface VtHandler {
 
 	/**
 	 * For 8-bit colors, one of the 216 colors from the RGB cube
-	 * 
 	 * <p>
 	 * The r, g, and b fields give the "step" number from 0 to 5, dimmest to brightest.
 	 */
@@ -357,7 +343,6 @@ public interface VtHandler {
 
 	/**
 	 * For 8-bit colors, one of the 24 grays
-	 * 
 	 * <p>
 	 * The v field is a value from 0 to 23, 0 being the dimmest, but not true black, and 23 being
 	 * the brightest, but not true white.
@@ -366,7 +351,6 @@ public interface VtHandler {
 
 	/**
 	 * A 24-bit color
-	 * 
 	 * <p>
 	 * The r, g, and b fields are values from 0 to 255 dimmest to brightest.
 	 */
@@ -374,7 +358,6 @@ public interface VtHandler {
 
 	/**
 	 * Modifies the intensity of the character either by color or by font weight.
-	 * 
 	 * <p>
 	 * The renderer may choose a combination of strategies. For example, {@link #NORMAL} may be
 	 * rendered using the standard color and bold type. Then {@link #BOLD} would use the intense
@@ -434,7 +417,6 @@ public interface VtHandler {
 
 	/**
 	 * Causes text to blink
-	 * 
 	 * <p>
 	 * If implemented, renderers should take care not to irritate the user. One option is to make
 	 * {@link #FAST} actually slow, and {@link #SLOW} even slower. Another option is to only blink
@@ -567,7 +549,6 @@ public interface VtHandler {
 
 	/**
 	 * For cursor and keypad, specifies normal or application mode
-	 * 
 	 * <p>
 	 * This affects the codes sent by the terminal.
 	 */
@@ -628,7 +609,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle normal character output, i.e., place the character on the display
-	 * 
 	 * <p>
 	 * This excludes control sequences and control characters, e.g., tab, line feed. While we've not
 	 * tested, in theory, this can instead buffer the byte for decoding from UTF-8. Still, the
@@ -641,7 +621,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a character not part of an escape sequence.
-	 * 
 	 * <p>
 	 * This may include control characters, which are displatched appropriately by this method.
 	 * Additionally, this handles any exception thrown by {@link #handleChar(byte)}.
@@ -683,7 +662,6 @@ public interface VtHandler {
 
 	/**
 	 * Parse a sequence of integers in the form {@code <em>n</em> ; <em>m</em> ;} ....
-	 * 
 	 * <p>
 	 * This is designed to replace the {@link String#split(String)} and
 	 * {@link Integer#parseInt(String)} pattern, which should avoid some unnecessary object
@@ -798,6 +776,9 @@ public interface VtHandler {
 		}
 		else if (bufEq(csiParam, Q2004)) {
 			handleBracketedPasteMode(en);
+		}
+		else if (bufEq(csiParam, Q9001)) {
+			handleWin32InputMode(en);
 		}
 		else {
 			throw new UnknownCsiException();
@@ -1189,7 +1170,6 @@ public interface VtHandler {
 
 	/**
 	 * Decode the 8-bit ANSI color.
-	 * 
 	 * <p>
 	 * Colors 0-15 are the standard + high-intensity. Colors 16-231 come from a 6x6x6 RGB cube.
 	 * Finally, colors 232-255 are 24 steps of gray scale.
@@ -1413,7 +1393,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle toggling of reverse video
-	 * 
 	 * <p>
 	 * This can be a bit confusing with default colors. In general, this means swapping the
 	 * foreground and background color specifications (not inverting the colors or mirroring or some
@@ -1449,7 +1428,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle toggling insert mode
-	 * 
 	 * <p>
 	 * In insert mode, characters at and to the right of the cursor are shifted right to make room
 	 * for each new character. In replace mode (default), the character at the cursor is replaced
@@ -1482,7 +1460,6 @@ public interface VtHandler {
 
 	/**
 	 * Toggle blinking of the cursor
-	 * 
 	 * <p>
 	 * Renderers should take care not to irritate the user. Some possibilities are to blink slowly,
 	 * blink only for a short period of time after it moves, and/or blink only when the terminal has
@@ -1523,7 +1500,6 @@ public interface VtHandler {
 
 	/**
 	 * Switch to and from the alternate screen buffer, optionally clearing it
-	 * 
 	 * <p>
 	 * This will never clear the normal buffer. If the buffer does not change as a result of this
 	 * call, then the alternate buffer is not cleared, even if clearAlt is specified.
@@ -1544,6 +1520,20 @@ public interface VtHandler {
 	 * @param en true to bracket pasted text is special control sequences
 	 */
 	void handleBracketedPasteMode(boolean en);
+
+	/**
+	 * Toggle Win32 input mode
+	 * 
+	 * <p>
+	 * See the Windows Terminal specification:
+	 * https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md.
+	 * It should be safe to ignore this, but could provide us options if we'd like to forward more
+	 * detailed keyboard events to a Windows Console application than is permitted with standard VT
+	 * sequences.
+	 * 
+	 * @param en true to enable Win32 input mode
+	 */
+	void handleWin32InputMode(boolean en);
 
 	/**
 	 * Handle a request to save the cursor position
@@ -1573,7 +1563,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle an absolute cursor row movement command
-	 * 
 	 * <p>
 	 * The column should remain the same, i.e., do <em>not</em> reset the column to 0.
 	 * 
@@ -1595,7 +1584,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to save the terminal window's icon title
-	 * 
 	 * <p>
 	 * "Icon titles" are a concept from the X Windows system. Do the closest equivalent, if anything
 	 * applies at all. The current title is pushed to a stack of limited size.
@@ -1604,7 +1592,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to save the terminal window's title
-	 * 
 	 * <p>
 	 * Window titles are fairly applicable to all desktop windowing systems. The current title is
 	 * pushed to a stack of limited size.
@@ -1613,7 +1600,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to restore the terminal window's icon title
-	 * 
 	 * <p>
 	 * The title is set to the one popped from the stack of saved window icon titles.
 	 * 
@@ -1623,7 +1609,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to restore the terminal window's title
-	 * 
 	 * <p>
 	 * The title is set to the one popped from the stack of saved window titles.
 	 * 
@@ -1647,7 +1632,6 @@ public interface VtHandler {
 
 	/**
 	 * Insert n lines at and below the cursor
-	 * 
 	 * <p>
 	 * Lines within the viewport are shifted down or deleted to make room for the new lines.
 	 * 
@@ -1657,7 +1641,6 @@ public interface VtHandler {
 
 	/**
 	 * Delete n lines at and below the cursor
-	 * 
 	 * <p>
 	 * Lines within the viewport are shifted up, and new lines inserted at the bottom.
 	 * 
@@ -1702,7 +1685,6 @@ public interface VtHandler {
 
 	/**
 	 * Set the range of rows (viewport) involved in scrolling.
-	 * 
 	 * <p>
 	 * This applies not only to {@link #handleScrollUp()} and {@link #handleScrollDown()}, but also
 	 * to when the cursor moves far enough down that the display must scroll. Normally, start is 0
@@ -1721,7 +1703,6 @@ public interface VtHandler {
 
 	/**
 	 * Scroll the display n lines down, considering only those lines in the scrolling range.
-	 * 
 	 * <p>
 	 * To be unambiguous, this of movement of the viewport. The viewport scrolls down, so the lines
 	 * themselves scroll up. The default range is the whole display. The cursor is not moved.
@@ -1743,7 +1724,6 @@ public interface VtHandler {
 
 	/**
 	 * Scroll the lines n slots down, considering only those lines in the scrolling range.
-	 * 
 	 * <p>
 	 * This is equivalent to scrolling the <em>viewport</em> n lines <em>up</em>. This method exists
 	 * in attempt to reflect "up" and "down" correctly in the documentation. Unfortunately, the
@@ -1759,7 +1739,6 @@ public interface VtHandler {
 
 	/**
 	 * Scroll the lines n slots up, considering only those lines in the scrolling range.
-	 * 
 	 * <p>
 	 * The is equivalent to scrolling the <em>viewport</em> n lines <em>down</em>. This method
 	 * exists in attempt to reflect "up" and "down" correctly in the documentation. Unfortunately,
@@ -1784,7 +1763,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to fully reset the terminal
-	 * 
 	 * <p>
 	 * All buffers should be cleared and all state variables, positions, attributes, etc., should be
 	 * reset to their defaults.

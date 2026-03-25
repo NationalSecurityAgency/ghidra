@@ -15,6 +15,7 @@
  */
 package agent;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -47,6 +48,7 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.pty.*;
 import ghidra.pty.PtyChild.Echo;
 import ghidra.pty.testutil.DummyProc;
+import ghidra.pty.windows.AnsiBufferedInputStream;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema.MinimalSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
@@ -107,11 +109,14 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected Path getPathToPython() {
 		try {
-			return Paths.get(DummyProc.which("python3"));
+			String py3path = DummyProc.which("python3");
+			if (py3path != null && !py3path.contains("msys")) {
+				return Paths.get(py3path);
+			}
 		}
 		catch (RuntimeException e) {
-			return Paths.get(DummyProc.which("python"));
 		}
+		return Paths.get(DummyProc.which("python"));
 	}
 
 	@Before
@@ -119,6 +124,7 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
 		pathToPython = getPathToPython();
+		Msg.info(this, "Using python: %s".formatted(pathToPython));
 	}
 
 	protected void addAllDebuggerPlugins() throws PluginException {
@@ -180,6 +186,14 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 	protected ExecInPy execInPy(String script) throws IOException {
 		Map<String, String> env = new HashMap<>(System.getenv());
 		setPythonPath(env);
+		/**
+		 * A new REPL was instroduced in Python 3.13. Unfortunately, the REPL is in play when we use
+		 * a PTY, because it assumes that is a human. It will automatically insert indentation after
+		 * pressing ENTER, which really goofs up our input. (It's worth noting, this happens even
+		 * when copy-pasting a code block from notepad, which seems like a bug on their part.) This
+		 * environment variable (at least for the moment) disables that new REPL.
+		 */
+		env.put("PYTHON_BASIC_REPL", "1");
 		Pty pty = PtyFactory.local().openpty();
 
 		PtySession session =
@@ -187,7 +201,7 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		new Thread(() -> {
-			InputStream is = pty.getParent().getInputStream();
+			InputStream is = new AnsiBufferedInputStream(pty.getParent().getInputStream());
 			byte[] buf = new byte[1024];
 			while (true) {
 				try {
@@ -203,7 +217,12 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 		}).start();
 
 		PrintWriter stdin = new PrintWriter(pty.getParent().getOutputStream());
-		script.lines().forEach(stdin::println); // to transform newlines.
+		/**
+		 * Because we're using a pty, we need to use CR instead of LF, i.e., to simulate the user
+		 * pressing ENTER.
+		 */
+		script = script.replace("\n", "\r");
+		stdin.write(script);
 		stdin.flush();
 		return new ExecInPy(session, stdin, CompletableFuture.supplyAsync(() -> {
 			try {
