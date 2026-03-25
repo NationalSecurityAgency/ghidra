@@ -52,6 +52,7 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.TraceObjectManager.BypassWriteCache;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
@@ -151,10 +152,10 @@ public class TenetLoader implements Loader {
 		TENET_SESSION_SCHEMA = SAMPLE_CTX.getSchema(new SchemaName("TenetSession"));
 	}
 
-	private static AddressSpace defaultSpace;
-	private static Program program;
+	private AddressSpace defaultSpace;
+	private Program program;
 
-	private static boolean STORE_REG_ATTRS = false;
+	private static final boolean STORE_REG_ATTRS = false;
 
 	/**
 	 * Create an address in the processor's default space.
@@ -162,7 +163,7 @@ public class TenetLoader implements Loader {
 	 * @param offset the byte offset
 	 * @return the address
 	 */
-	private static Address addr(final long offset) {
+	private Address addr(final long offset) {
 		return defaultSpace.getAddress(offset);
 	}
 
@@ -205,11 +206,11 @@ public class TenetLoader implements Loader {
 	 * @param max the maximum (inclusive) byte offset
 	 * @return the range
 	 */
-	private static AddressRange rng(final long min, final long max) {
+	private AddressRange rng(final long min, final long max) {
 		return new AddressRangeImpl(addr(min), addr(max));
 	}
 
-	private static Address toAddr(final String addressString) {
+	private Address toAddr(final String addressString) {
 		return AddressEvaluator.evaluate(program, addressString);
 	}
 
@@ -321,14 +322,16 @@ public class TenetLoader implements Loader {
 			final Object consumer, final MessageLog log, final TaskMonitor monitor)
 			throws LanguageNotFoundException, IOException, CancelledException {
 
-		TenetLoader.program = program;
+		this.program = program;
 		final Language lang = program.getLanguage();
-		TenetLoader.defaultSpace = lang.getAddressFactory().getDefaultAddressSpace();
+		this.defaultSpace = lang.getAddressFactory().getDefaultAddressSpace();
 
 		final Trace trace = new DBTrace(name, program.getCompilerSpec(), consumer);
+		final TraceObjectManager om = trace.getObjectManager();
 
-		try (Transaction tx = trace.openTransaction("Import Tenet Trace: %s".formatted(name))) {
-			final TraceObjectManager om = trace.getObjectManager();
+		try (Transaction tx = trace.openTransaction("Import Tenet Trace: %s".formatted(name));
+				BypassWriteCache bypass = om.withoutWriteCache()) {
+
 			om.createRootObject(TENET_SESSION_SCHEMA);
 
 			final TraceThread traceThread =
@@ -364,8 +367,9 @@ public class TenetLoader implements Loader {
 					line = reader.readLine();
 				}
 
-				final TraceSnapshot snapshot =
+				TraceSnapshot snapshot =
 					trace.getTimeManager().createSnapshot("Snapshot %d".formatted(snapNumber));
+				snapshot.setEventThread(traceThread);
 				long snap = snapshot.getKey();
 
 				snapNumber++;
@@ -381,51 +385,33 @@ public class TenetLoader implements Loader {
 						}
 
 						final Matcher ipMatcher = ipPattern.matcher(line);
-						if (!ipMatcher.find()) {
+						if (ipMatcher.find()) {
+							curIp = Long.parseLong(ipMatcher.group(1), 16);
+
+							if (parseRegisterOperations(snap, curIp, line, lineNumber, traceThread,
+								trace, log, monitor)) {
+								parseMemoryOperations(snap, curIp, line, trace, monitor);
+							}
+							else {
+								errorCount++;
+							}
+						}
+						else {
 							log.appendMsg(
 								"Line %d: Unable to find PC, skipping...".formatted(lineNumber));
 							errorCount++;
-							lineNumber++;
-							monitor.setProgress(lineNumber);
-
-							line = reader.readLine();
-							if (line != null) {
-								snap = trace.getTimeManager()
-										.createSnapshot("Snapshot %d".formatted(snapNumber))
-										.getKey();
-								snapNumber++;
-							}
-							continue;
 						}
-						curIp = Long.parseLong(ipMatcher.group(1), 16);
-
-						if (!parseRegisterOperations(snap, curIp, line, lineNumber, traceThread,
-							trace, log, monitor)) {
-							errorCount++;
-							lineNumber++;
-							monitor.setProgress(lineNumber);
-
-							line = reader.readLine();
-							if (line != null) {
-								snap = trace.getTimeManager()
-										.createSnapshot("Snapshot %d".formatted(snapNumber))
-										.getKey();
-								snapNumber++;
-							}
-							continue;
-						}
-						parseMemoryOperations(snap, curIp, line, trace, monitor);
 
 						lineNumber++;
 						monitor.setProgress(lineNumber);
 
 						line = reader.readLine();
 						if (line != null) {
-							snap = trace.getTimeManager()
-									.createSnapshot("Snapshot %d".formatted(snapNumber))
-									.getKey();
+							snapshot = trace.getTimeManager()
+									.createSnapshot("Snapshot %d".formatted(snapNumber));
+							snap = snapshot.getKey();
+							snapshot.setEventThread(traceThread);
 							snapNumber++;
-
 						}
 					}
 				}
