@@ -90,6 +90,35 @@ public abstract class AbstractRStarConstraintsTree<
 		}
 	}
 
+	protected class LeastOverlap implements Comparable<LeastOverlap> {
+		private final NR node;
+		private final double areaEnlargement;
+		private final double overlapEnlargement;
+
+		public LeastOverlap(NR node, NS bounds, List<NR> all, double areaEnlargement) {
+			this.node = node;
+			this.areaEnlargement = areaEnlargement;
+
+			double overlap = computeOverlap(node.getShape(), all, node);
+			overlapEnlargement =
+				computeOverlap(node.getShape().unionBounds(bounds), all, node) - overlap;
+		}
+
+		@Override
+		public int compareTo(AbstractRStarConstraintsTree<DS, DR, NS, NR, T, Q>.LeastOverlap o) {
+			int result;
+			result = Double.compare(this.overlapEnlargement, o.overlapEnlargement);
+			if (result != 0) {
+				return result;
+			}
+			result = Double.compare(this.areaEnlargement, o.areaEnlargement);
+			if (result != 0) {
+				return result;
+			}
+			return 0;
+		}
+	}
+
 	protected class LeastDistanceFromCenterToPoint
 			implements Comparable<LeastDistanceFromCenterToPoint> {
 		private final DBTreeRecord<?, ? extends NS> record;
@@ -140,15 +169,15 @@ public abstract class AbstractRStarConstraintsTree<
 		NR node = root;
 
 		// CS2
+		/**
+		 * The paper recommends we only apply the nearly-minimal overlap reduction on the leaf
+		 * parent. I think this is just for cost savings. I get better search performance when I
+		 * apply it to all levels. Insertion is a little slower, though. We can explore reverting
+		 * this, if other tweaks work.
+		 */
 		for (int i = 0; i < dstLevelFromTop; i++) {
 			assert !node.getType().isLeaf();
-			if (node.getType().isLeafParent()) {
-				node = findChildByNearlyMinimumOverlapCost(node, bounds);
-			}
-			else {
-				assert node.getType().isDirectory();
-				node = findChildByMinimumEnlargementCost(node, bounds);
-			}
+			node = findChildByNearlyMinimumOverlapCost(node, bounds);
 			// CS3 (by virtue of setting node, and the while loop
 		}
 		return node;
@@ -163,21 +192,15 @@ public abstract class AbstractRStarConstraintsTree<
 	 * @return
 	 */
 	protected NR findChildByMinimumEnlargementCost(NR n, NS bounds) {
-		assert !n.getType().isLeafParent() && n.getType().isDirectory();
-		NR bestChild = null;
-		double bestAreaEnlargement = 0;
+		LeastAreaEnlargementThenLeastArea least = null;
 		for (NR child : getNodeChildrenOf(n)) {
-			double candidateAreaEnlargement =
-				child.getShape().computeAreaUnionBounds(bounds) - child.getShape().getArea();
-			if (bestChild == null || candidateAreaEnlargement < bestAreaEnlargement ||
-				(candidateAreaEnlargement == bestAreaEnlargement &&
-					child.getShape().getArea() < bestChild.getShape().getArea())) {
-				bestChild = child;
-				bestAreaEnlargement = candidateAreaEnlargement;
+			LeastAreaEnlargementThenLeastArea candidate =
+				new LeastAreaEnlargementThenLeastArea(child, bounds);
+			if (least == null || candidate.compareTo(least) < 0) {
+				least = candidate;
 			}
 		}
-		assert bestChild != null;
-		return bestChild;
+		return least.node;
 	}
 
 	/**
@@ -192,7 +215,6 @@ public abstract class AbstractRStarConstraintsTree<
 	 * @return the leaf node into which the object should be inserted
 	 */
 	protected NR findChildByNearlyMinimumOverlapCost(NR n, NS bounds) {
-		assert n.getType().isLeafParent();
 		PriorityQueue<LeastAreaEnlargementThenLeastArea> sorted =
 			new PriorityQueue<>(n.getChildCount());
 		List<NR> children = new ArrayList<>(getNodeChildrenOf(n));
@@ -200,29 +222,20 @@ public abstract class AbstractRStarConstraintsTree<
 			assert leaf.getType().isLeaf();
 			sorted.offer(new LeastAreaEnlargementThenLeastArea(leaf, bounds));
 		}
-		NR bestLeaf = null;
-		double bestOverlapEnlargement = 0;
-		double bestAreaEnlargement = 0;
+
+		LeastOverlap least = null;
 		for (int i = 0; i < CHEAT_OVERLAP_COUNT; i++) {
 			LeastAreaEnlargementThenLeastArea measure = sorted.poll();
 			if (measure == null) {
 				break;
 			}
-			double candidateOverlap =
-				computeOverlap(measure.node.getShape(), children, measure.node);
-			double candidateOverlapEnlargement =
-				computeOverlap(measure.node.getShape().unionBounds(bounds), children,
-					measure.node) - candidateOverlap;
-			if (bestLeaf == null || candidateOverlapEnlargement < bestOverlapEnlargement ||
-				(candidateOverlapEnlargement == bestOverlapEnlargement &&
-					measure.areaEnlargement < bestAreaEnlargement)) {
-				bestLeaf = measure.node;
-				bestOverlapEnlargement = candidateOverlapEnlargement;
-				bestAreaEnlargement = measure.areaEnlargement;
+			LeastOverlap candidate =
+				new LeastOverlap(measure.node, bounds, children, measure.areaEnlargement);
+			if (least == null || candidate.compareTo(least) < 0) {
+				least = candidate;
 			}
 		}
-		assert bestLeaf != null;
-		return bestLeaf;
+		return least.node;
 	}
 
 	/**
@@ -358,6 +371,19 @@ public abstract class AbstractRStarConstraintsTree<
 		return bestAxis;
 	}
 
+	record IndexScore(int index, double overlap, double areaSum, double areaDiff)
+			implements Comparable<IndexScore> {
+		static final Comparator<IndexScore> COMPARATOR = Comparator
+				.comparing(IndexScore::overlap)
+				.thenComparing(IndexScore::areaSum)
+				.thenComparing(IndexScore::areaDiff);
+
+		@Override
+		public int compareTo(IndexScore o) {
+			return COMPARATOR.compare(this, o);
+		}
+	}
+
 	protected int doChooseSplitIndex(List<DBTreeRecord<?, ? extends NS>> children,
 			Comparator<NS> axis) {
 		children.sort(Comparator.comparing(DBTreeRecord::getBounds, axis));
@@ -368,21 +394,20 @@ public abstract class AbstractRStarConstraintsTree<
 		// mmm-------mmm (m = 3)
 		// 8 distributions : 12 - 2*3 + 2
 
+		List<DBTreeRecord<?, ? extends NS>> reversed = children.reversed();
 		NS boundsFirstKChildren =
 			unionStream(children.subList(0, minChildren).stream().map(DBTreeRecord::getBounds));
 		NS boundsLastKChildren =
-			unionStream(children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
-					.stream()
-					.map(DBTreeRecord::getBounds));
+			unionStream(reversed.subList(0, minChildren).stream().map(DBTreeRecord::getBounds));
 		int maxK = maxChildren + 1 - minChildren * 2;
 
 		Deque<NS> boundsFirsts = new ArrayDeque<>();
 		Deque<NS> boundsSeconds = new ArrayDeque<>();
 		boundsFirsts.addLast(boundsFirstKChildren);
 		boundsSeconds.addFirst(boundsLastKChildren);
-		for (int k = 0; k <= maxK; k++) {
-			NS forFirst = children.get(minChildren + k).getBounds();
-			NS forSecond = children.get(maxChildren - minChildren - k).getBounds();
+		for (int k = 1; k <= maxK; k++) { // i=0 case already done
+			NS forFirst = children.get(minChildren - 1 + k).getBounds();
+			NS forSecond = reversed.get(minChildren - 1 + k).getBounds();
 
 			boundsFirstKChildren = boundsFirstKChildren.unionBounds(forFirst);
 			boundsLastKChildren = boundsLastKChildren.unionBounds(forSecond);
@@ -392,22 +417,22 @@ public abstract class AbstractRStarConstraintsTree<
 		}
 
 		// CSI1
-		double bestOverlapValue = Double.MAX_VALUE;
-		double bestAreaValue = Double.MAX_VALUE;
-		int bestIndex = -1;
+		IndexScore best = null;
 		for (int k = 0; k <= maxK; k++) {
 			NS boundsFirstGroup = boundsFirsts.removeFirst();
 			NS boundsSecondGroup = boundsSeconds.removeFirst();
-			double overlapValue = boundsFirstGroup.computeAreaIntersection(boundsSecondGroup);
-			double areaValue = boundsFirstGroup.getArea() + boundsSecondGroup.getArea();
-			if (bestIndex == -1 || overlapValue < bestOverlapValue ||
-				(overlapValue == bestOverlapValue && areaValue < bestAreaValue)) {
-				bestIndex = k;
-				bestOverlapValue = overlapValue;
+			double areaFirst = boundsFirstGroup.getArea();
+			double areaSecond = boundsSecondGroup.getArea();
+			IndexScore candidate = new IndexScore(k,
+				boundsFirstGroup.computeAreaIntersection(boundsSecondGroup),
+				areaFirst + areaSecond,
+				Math.abs(areaFirst - areaSecond));
+
+			if (best == null || candidate.compareTo(best) < 0) {
+				best = candidate;
 			}
 		}
-		assert bestIndex != -1;
-		return bestIndex + minChildren;
+		return best.index + minChildren;
 	}
 
 	protected static class ReInsertInfo {

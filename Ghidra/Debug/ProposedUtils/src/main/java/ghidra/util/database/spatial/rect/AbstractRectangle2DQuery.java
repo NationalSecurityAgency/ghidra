@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,43 +20,48 @@ import java.util.Comparator;
 import ghidra.util.database.spatial.BoundedShape;
 import ghidra.util.database.spatial.Query;
 
-public abstract class AbstractRectangle2DQuery< //
-		X, Y, //
-		DS extends BoundedShape<NS>, //
-		NS extends Rectangle2D<X, Y, NS>, //
-		Q extends AbstractRectangle2DQuery<X, Y, DS, NS, Q>> //
+public abstract class AbstractRectangle2DQuery<
+	X, Y,
+	DS extends BoundedShape<NS>,
+	NS extends Rectangle2D<X, Y, NS>,
+	Q extends AbstractRectangle2DQuery<X, Y, DS, NS, Q>>
 		implements Query<DS, NS> {
 
-	public interface QueryFactory<NS extends Rectangle2D<?, ?, NS>, Q extends AbstractRectangle2DQuery<?, ?, ?, NS, Q>> {
+	public interface QueryFactory<NS extends Rectangle2D<?, ?, NS>,
+		Q extends AbstractRectangle2DQuery<?, ?, ?, NS, Q>> {
 		Q create(NS r1, NS r2, Rectangle2DDirection direction);
 	}
 
-	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>, Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q intersecting(
-			NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>,
+		Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q intersecting(
+				NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
 		Rectangle2D<X, Y, ?> full = rect.getSpace().getFull();
 		NS r1 = rect.immutable(full.getX1(), rect.getX2(), full.getY1(), rect.getY2());
 		NS r2 = rect.immutable(rect.getX1(), full.getX2(), rect.getY1(), full.getY2());
 		return factory.create(r1, r2, direction);
 	}
 
-	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>, Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q enclosing(
-			NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>,
+		Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q enclosing(
+				NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
 		Rectangle2D<X, Y, ?> full = rect.getSpace().getFull();
 		NS r1 = rect.immutable(full.getX1(), rect.getX1(), full.getY1(), rect.getY1());
 		NS r2 = rect.immutable(rect.getX2(), full.getX2(), rect.getY2(), full.getY2());
 		return factory.create(r1, r2, direction);
 	}
 
-	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>, Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q enclosed(
-			NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>,
+		Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q enclosed(
+				NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
 		Rectangle2D<X, Y, ?> full = rect.getSpace().getFull();
 		NS r1 = rect.immutable(rect.getX1(), full.getX2(), rect.getY1(), full.getY2());
 		NS r2 = rect.immutable(full.getX1(), rect.getX2(), full.getY1(), rect.getY2());
 		return factory.create(r1, r2, direction);
 	}
 
-	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>, Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q equalTo(
-			NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>,
+		Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q equalTo(
+				NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
 		NS r1 = rect.immutable(rect.getX1(), rect.getX1(), rect.getY1(), rect.getY1());
 		NS r2 = rect.immutable(rect.getX2(), rect.getX2(), rect.getY2(), rect.getY2());
 		return factory.create(r1, r2, direction);

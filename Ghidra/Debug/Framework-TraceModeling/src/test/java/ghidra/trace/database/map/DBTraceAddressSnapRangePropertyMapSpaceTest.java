@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.*;
 
 import db.*;
@@ -42,7 +44,10 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
+import ghidra.util.database.spatial.DBTreeRecord;
 import ghidra.util.database.spatial.SpatialMap;
+import ghidra.util.database.spatial.rect.Abstract2DRStarTree.XAxis;
+import ghidra.util.database.spatial.rect.Abstract2DRStarTree.YAxis;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -410,5 +415,56 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		obj.undo();
 
 		assertEquals(ent(0x1000, 5, entry1), obj.space1.firstEntry());
+	}
+
+	@Test
+	public void testSplitChoiceLinear() throws Exception {
+		int total = DBTraceAddressSnapRangePropertyMapTree.MAX_CHILDREN + 1;
+
+		try (Transaction tx = obj.openTransaction("Create entries")) {
+			List<DBTreeRecord<?, ? extends TraceAddressSnapRange>> entries = new ArrayList<>();
+			for (int i = 0; i < total; i++) {
+				entries.add(
+					obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000 + i), 5), null));
+			}
+			/**
+			 * NOTE: Because we're using MAX+1, the internal tree will already have split by this
+			 * time. That shouldn't matter. We must use MAX+1, because this choose-axis function
+			 * assumes that number of children given in the list.
+			 */
+			Comparator<TraceAddressSnapRange> axis = obj.space1.tree.doChooseSplitAxis(entries);
+			MatcherAssert.assertThat(axis, Matchers.instanceOf(XAxis.class));
+
+			int index = obj.space1.tree.doChooseSplitIndex(entries, axis);
+			assertEquals(total / 2, index);
+		}
+	}
+
+	@Test
+	public void testSplitChoiceTwoLines() throws Exception {
+		int total = DBTraceAddressSnapRangePropertyMapTree.MAX_CHILDREN + 1;
+		int cut = total / 2;
+
+		try (Transaction tx = obj.openTransaction("Create entries")) {
+			List<DBTreeRecord<?, ? extends TraceAddressSnapRange>> entries = new ArrayList<>();
+			for (int i = 0; i < total / 2; i++) {
+				entries.add(obj.space1
+						.put(new ImmutableTraceAddressSnapRange(addr(0x1000 + i), 0), null));
+			}
+			for (int i = cut; i < total; i++) {
+				entries.add(obj.space1
+						.put(new ImmutableTraceAddressSnapRange(addr(0x1000 - cut + i), 10), null));
+			}
+			/**
+			 * NOTE: Because we're using MAX+1, the internal tree will already have split by this
+			 * time. That shouldn't matter. We must use MAX+1, because this choose-axis function
+			 * assumes that number of children given in the list.
+			 */
+			Comparator<TraceAddressSnapRange> axis = obj.space1.tree.doChooseSplitAxis(entries);
+			MatcherAssert.assertThat(axis, Matchers.instanceOf(YAxis.class));
+
+			int index = obj.space1.tree.doChooseSplitIndex(entries, axis);
+			assertEquals(cut, index);
+		}
 	}
 }

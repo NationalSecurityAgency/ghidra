@@ -25,18 +25,17 @@ import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
+import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.*;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.*;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMapSpace;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
-import ghidra.util.database.spatial.AbstractConstraintsTreeSpatialMap;
-import ghidra.util.database.spatial.SpatialMap;
+import ghidra.util.database.spatial.*;
 import ghidra.util.exception.VersionException;
 
-public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
+public class DBTraceAddressSnapRangePropertyMapSpace<T,
+	DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
 		implements DBTraceSpaceBased,
 		SpatialMap<TraceAddressSnapRange, T, TraceAddressSnapRangeQuery>,
 		TraceAddressSnapRangePropertyMapSpace<T> {
@@ -45,7 +44,8 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 	protected final AddressSpace space;
 	protected final ReadWriteLock lock;
 	protected final DBTraceAddressSnapRangePropertyMapTree<T, DR> tree;
-	protected final AbstractConstraintsTreeSpatialMap<TraceAddressSnapRange, DR, TraceAddressSnapRange, T, TraceAddressSnapRangeQuery> map;
+	protected final AbstractConstraintsTreeSpatialMap<TraceAddressSnapRange, DR,
+		TraceAddressSnapRange, T, TraceAddressSnapRangeQuery> map;
 	protected final AddressRangeImpl fullSpace;
 
 	public DBTraceAddressSnapRangePropertyMapSpace(String tableName, DBTrace trace,
@@ -204,5 +204,38 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 	@Internal
 	public void checkIntegrity() {
 		tree.checkIntegrity();
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public void paint(Painter painter, int depth) {
+		tree.paint(painter, depth);
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public int getDepth() {
+		return tree.getDepth();
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public TraceAddressSnapRange getRootBounds() {
+		return tree.getRootBounds();
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public Collection<? extends DBTreeRecord<?, ? extends TraceAddressSnapRange>>
+			getChildrenOf(DBTreeNodeRecord<?> rec) {
+		return tree.internalGetChildrenOf(rec);
 	}
 }
