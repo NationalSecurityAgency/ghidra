@@ -196,10 +196,10 @@ public Ghidra release includes native binaries for the following platforms:
 * Windows 10 or later, x86 64-bit
 * Windows 10 or later, ARM 64-bit (using x86 emulation)
 * Linux x86 64-bit
-* macOS x86 64-bit (may be omitted for some non-public builds)
-* macOS ARM 64-bit (may be omitted for some non-public builds)
 
 Ghidra supports running on the following additional platforms with user-built native binaries:
+* macOS x86 64-bit
+* macOS ARM 64-bit
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)

@@ -78,10 +78,10 @@ Objective-C binaries:
 * Objective-C Message Analyzer
 
 Where possible, calls to `_objc_msgSend()` and its variations (including `_objc_msgSend$` stubs) 
-have been overriden to reference the actual target method (if discoverable), which results in a much
-more user-friendly decompilation.
+have been overridden to reference the actual target method (if discoverable), which results in a
+much more user-friendly decompilation.
 
-Additionaly, a variety of AARCH64 call fixups have been implemented which further clean up 
+Additionally, a variety of AARCH64 call fixups have been implemented which further clean up 
 decompilation, hiding much of the noise that things like Automatic Reference Counting (ARC) can 
 generate.
 
@@ -101,10 +101,10 @@ when non-mangled symbols do not include the tag and demangled symbols do.
 
 Another option controls whether the standard **\`anonymous namespace'** is presented in a
 **_anon_ABCD01234** form using its encoded anonymous namespace number.  When the new form is used,
-it can reduce the comingling of symbols from two distinct anonymous namespaces into one generic
+it can reduce the commingling of symbols from two distinct anonymous namespaces into one generic
 **\`anonymous namespace'**.  Note, however, that non-mangled symbols with the generic
 **\`anonymous namespace'** (or one of its variants) can still be found in a program, coming from
-other sources, such as PDB.  There is curently no simple way to try to match these with the new
+other sources, such as PDB.  There is currently no simple way to try to match these with the new
 encoded form; thus, using the encoded form can also create bifurcation in the namespace.
 
 ## Processors
