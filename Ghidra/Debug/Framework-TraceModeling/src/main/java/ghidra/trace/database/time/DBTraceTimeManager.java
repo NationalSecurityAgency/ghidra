@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import db.DBRecord;
 import ghidra.framework.data.OpenMode;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
@@ -36,10 +37,33 @@ import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
+import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
+
+	@DBAnnotatedObjectInfo(version = 0)
+	public static class DBTraceFork extends DBAnnotatedObject {
+		protected static final String TABLE_NAME = "Forks";
+
+		protected static final String SNAP_COLUMN_NAME = "Snap";
+
+		@DBAnnotatedColumn(SNAP_COLUMN_NAME)
+		static DBObjectColumn SNAP_COLUMN;
+
+		@DBAnnotatedField(column = SNAP_COLUMN_NAME, indexed = true)
+		long snap;
+
+		public DBTraceFork(DBCachedObjectStore<?> store, DBRecord record) {
+			super(store, record);
+		}
+
+		protected void set(long snap) {
+			this.snap = snap;
+			update(SNAP_COLUMN);
+		}
+	}
 
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
@@ -47,6 +71,9 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 	protected final DBCachedObjectStore<DBTraceSnapshot> snapshotStore;
 	protected final DBCachedObjectIndex<String, DBTraceSnapshot> snapshotsBySchedule;
+
+	protected final DBCachedObjectStore<DBTraceFork> forkStore;
+	protected final DBCachedObjectIndex<Long, DBTraceFork> forksBySnap;
 
 	public DBTraceTimeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
@@ -60,6 +87,10 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 		snapshotStore = factory.getOrCreateCachedStore(DBTraceSnapshot.TABLE_NAME,
 			DBTraceSnapshot.class, (s, r) -> new DBTraceSnapshot(this, s, r), true);
 		snapshotsBySchedule = snapshotStore.getIndex(String.class, DBTraceSnapshot.SCHEDULE_COLUMN);
+
+		forkStore = factory.getOrCreateCachedStore(DBTraceFork.TABLE_NAME, DBTraceFork.class,
+			DBTraceFork::new, true);
+		forksBySnap = forkStore.getIndex(long.class, DBTraceFork.SNAP_COLUMN);
 	}
 
 	@Override
@@ -128,6 +159,23 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			Entry<Long, DBTraceSnapshot> ent = snapshotStore.asMap().floorEntry(snap);
 			return ent == null ? null : ent.getValue();
+		}
+	}
+
+	@Override
+	public long getMostRecentFork(long snap) {
+		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			Entry<Long, DBTraceFork> foundFork = forksBySnap.floorEntry(snap);
+			if (foundFork == null) {
+				if (snap < 0) {
+					return Long.MIN_VALUE;
+				}
+				return 0;
+			}
+			if (foundFork.getKey() < 0 && snap >= 0) {
+				return 0;
+			}
+			return foundFork.getValue().snap;
 		}
 	}
 
@@ -269,7 +317,11 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 	public void deleteSnapshot(DBTraceSnapshot snapshot) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			DBTraceFork foundFork = forksBySnap.getOne(snapshot.getKey());
 			snapshotStore.delete(snapshot);
+			if (foundFork != null) {
+				forkStore.delete(foundFork);
+			}
 			notifySnapshotDeleted(snapshot);
 		}
 	}

@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
 import db.DBHandle;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
@@ -32,6 +33,7 @@ import ghidra.trace.database.DBTraceUtils.AddressRangeMapSetter;
 import ghidra.trace.database.DBTraceUtils.OffsetSnap;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.map.*;
+import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Painter;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
@@ -43,6 +45,8 @@ import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.database.*;
+import ghidra.util.database.spatial.DBTreeNodeRecord;
+import ghidra.util.database.spatial.DBTreeRecord;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.VersionException;
@@ -66,7 +70,8 @@ public class DBTraceMemorySpace
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
 
-	protected final DBTraceAddressSnapRangePropertyMapSpace<TraceMemoryState, DBTraceMemoryStateEntry> stateMapSpace;
+	protected final DBTraceAddressSnapRangePropertyMapSpace<TraceMemoryState,
+		DBTraceMemoryStateEntry> stateMapSpace;
 
 	protected final DBCachedObjectStore<DBTraceMemoryBufferEntry> bufferStore;
 	protected final DBCachedObjectStore<DBTraceMemoryBlockEntry> blockStore;
@@ -135,7 +140,9 @@ public class DBTraceMemorySpace
 		var l = new Object() {
 			boolean changed;
 		};
-		new AddressRangeMapSetter<Entry<TraceAddressSnapRange, TraceMemoryState>, TraceMemoryState>() {
+		new AddressRangeMapSetter<Entry<TraceAddressSnapRange, TraceMemoryState>,
+			TraceMemoryState>() {
+
 			@Override
 			protected AddressRange getRange(Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
 				return entry.getKey().getRange();
@@ -316,6 +323,7 @@ public class DBTraceMemorySpace
 					if (predicate.test(entry.getValue())) {
 						result.add(foundRange);
 					}
+					break;
 				}
 			}
 			return result;
@@ -324,7 +332,7 @@ public class DBTraceMemorySpace
 
 	protected Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> doGetStates(Lifespan span,
 			AddressRange range) {
-		// TODO: A better way to handle memory-mapped registers?
+		// LATER: A better way to handle memory-mapped registers?
 		if (getAddressSpace().isRegisterSpace() && !range.getAddressSpace().isRegisterSpace()) {
 			return trace.getMemoryManager().doGetStates(span, range);
 		}
@@ -603,11 +611,11 @@ public class DBTraceMemorySpace
 	@Override
 	public int getViewBytes(long snap, Address start, ByteBuffer buf) {
 		assertInSpace(start);
-		AddressRange toRead;
 		int len = truncateLen(buf.remaining(), start);
 		if (len == 0) {
 			return 0;
 		}
+		AddressRange toRead;
 		try {
 			toRead = new AddressRangeImpl(start, len);
 		}
@@ -911,5 +919,38 @@ public class DBTraceMemorySpace
 			blockStore.invalidateCache();
 			blockCacheMostRecent.clear();
 		}
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public void paint(Painter painter, int depth) {
+		stateMapSpace.paint(painter, depth);
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public int getDepth() {
+		return stateMapSpace.getDepth();
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public TraceAddressSnapRange getRootBounds() {
+		return stateMapSpace.getRootBounds();
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public Collection<? extends DBTreeRecord<?, ? extends TraceAddressSnapRange>>
+			getChildrenOf(DBTreeNodeRecord<?> rec) {
+		return stateMapSpace.getChildrenOf(rec);
 	}
 }

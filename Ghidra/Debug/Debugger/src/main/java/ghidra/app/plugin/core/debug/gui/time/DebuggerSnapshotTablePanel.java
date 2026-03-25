@@ -471,10 +471,11 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 	}
 
 	public void setCurrent(DebuggerCoordinates coords) {
+		assert coords.getTrace() == currentTrace;
 		boolean fire = coords.getViewSnap() != current.getViewSnap();
 		current = coords;
 		if (fire) {
-			snapshotTableModel.fireTableDataChanged();
+			snapshotTable.repaint();
 		}
 	}
 

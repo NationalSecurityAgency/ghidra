@@ -44,10 +44,10 @@ public abstract class AbstractConstraintsTree<
 	protected final DBCachedObjectStore<DR> dataStore;
 	protected final DBCachedObjectStore<NR> nodeStore;
 
-	protected final Map<Long, Collection<DR>> cachedDataChildren =
-		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES);
-	protected final Map<Long, Collection<NR>> cachedNodeChildren =
-		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES);
+	protected final Map<Long, Collection<DR>> cachedDataChildren = Collections.synchronizedMap(
+		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES));
+	protected final Map<Long, Collection<NR>> cachedNodeChildren = Collections.synchronizedMap(
+		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES));
 
 	protected NR root;
 	protected int leafLevel;
@@ -314,16 +314,16 @@ public abstract class AbstractConstraintsTree<
 			}
 
 			private void descend(NR nr) {
-				queue.addAll(getChildrenOf(nr));
+				List<? extends DBTreeRecord<?, ? extends NS>> passed = getChildrenOf(nr).stream()
+						.filter(c -> query.testNode(c.getBounds()) != QueryInclusion.NONE)
+						.toList();
+				queue.addAll(passed);
 			}
 
 			private DR findNext() {
 				while (true) {
 					DBTreeRecord<?, ? extends NS> rec = queue.poll();
 					if (rec == null) {
-						return null;
-					}
-					if (query != null && query.terminateEarlyNode(rec.getBounds())) {
 						return null;
 					}
 					if (rec instanceof DBTreeDataRecord) {
@@ -337,9 +337,7 @@ public abstract class AbstractConstraintsTree<
 					assert rec instanceof DBTreeNodeRecord;
 					@SuppressWarnings("unchecked")
 					NR nr = (NR) rec;
-					if (query != null && query.testNode(nr.getShape()) != QueryInclusion.NONE) {
-						descend(nr);
-					}
+					descend(nr);
 					continue;
 				}
 			}
@@ -562,7 +560,7 @@ public abstract class AbstractConstraintsTree<
 
 	protected void doRecomputeBounds(NR node) {
 		/*
-		 * TODO: There may be optimizations here, esp. if no bound of the removed node is on the
+		 * LATER: There may be optimizations here, esp. if no bound of the removed node is on the
 		 * edge of the parent. Furthermore, since an implementation may index on those bounds, there
 		 * may be a fast way to discover the "next child in".
 		 */

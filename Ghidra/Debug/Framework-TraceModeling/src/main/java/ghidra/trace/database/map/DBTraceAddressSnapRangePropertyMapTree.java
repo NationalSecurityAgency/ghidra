@@ -19,14 +19,15 @@ import java.io.IOException;
 import java.util.*;
 
 import db.DBRecord;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.*;
 import ghidra.trace.model.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
-import ghidra.util.database.spatial.DBTreeDataRecord;
-import ghidra.util.database.spatial.DBTreeNodeRecord;
+import ghidra.util.database.spatial.*;
+import ghidra.util.database.spatial.Query.QueryInclusion;
 import ghidra.util.database.spatial.rect.*;
 import ghidra.util.exception.VersionException;
 
@@ -665,5 +666,99 @@ public class DBTraceAddressSnapRangePropertyMapTree<T,
 
 	public DBTraceAddressSnapRangePropertyMapSpace<T, DR> getMapSpace() {
 		return mapSpace;
+	}
+
+	public interface Painter {
+		void paint(TraceAddressSnapRange shape, int depth);
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public void paint(Painter painter, int depth) {
+		var visitor = new TreeRecordVisitor() {
+			int depth = 0;
+			int level = 0;
+
+			@Override
+			protected VisitResult beginNode(DBTraceAddressSnapRangePropertyMapNode parent,
+					DBTraceAddressSnapRangePropertyMapNode n, QueryInclusion inclusion) {
+				if (level == depth) {
+					painter.paint(n, depth);
+				}
+				if (level > depth) {
+					return VisitResult.NEXT;
+				}
+				level++;
+				return VisitResult.DESCEND;
+			}
+
+			@Override
+			protected VisitResult endNode(DBTraceAddressSnapRangePropertyMapNode parent,
+					DBTraceAddressSnapRangePropertyMapNode n, QueryInclusion inclusion) {
+				level--;
+				return super.endNode(parent, n, inclusion);
+			}
+
+			@Override
+			protected VisitResult visitData(DBTraceAddressSnapRangePropertyMapNode parent, DR d,
+					boolean included) {
+				painter.paint(d, depth);
+				return VisitResult.NEXT;
+			}
+		};
+
+		for (int i = 0; i < depth; i++) {
+			visitor.depth = i;
+			visit(null, visitor, false);
+		}
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public int getDepth() {
+		return leafLevel + 2;
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public TraceAddressSnapRange getRootBounds() {
+		return root;
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public Collection<? extends DBTreeRecord<?, ? extends TraceAddressSnapRange>>
+			internalGetChildrenOf(DBTreeNodeRecord<?> rec) {
+		if (!(rec instanceof DBTraceAddressSnapRangePropertyMapNode node)) {
+			return List.of();
+		}
+		return getChildrenOf(node);
+	}
+
+	@Override // expose for testing
+	protected Comparator<TraceAddressSnapRange>
+			doChooseSplitAxis(List<DBTreeRecord<?, ? extends TraceAddressSnapRange>> children) {
+		return super.doChooseSplitAxis(children);
+	}
+
+	@Override // expose for testing
+	protected int doChooseSplitIndex(
+			List<DBTreeRecord<?, ? extends TraceAddressSnapRange>> children,
+			Comparator<TraceAddressSnapRange> axis) {
+		return super.doChooseSplitIndex(children, axis);
+	}
+
+	@Override // expose for testing
+	protected Collection<? extends DBTreeRecord<?, ? extends TraceAddressSnapRange>>
+			getChildrenOf(DBTraceAddressSnapRangePropertyMapNode parent) {
+		return super.getChildrenOf(parent);
 	}
 }
