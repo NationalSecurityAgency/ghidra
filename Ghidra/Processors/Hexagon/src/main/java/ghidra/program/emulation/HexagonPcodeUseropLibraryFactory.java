@@ -104,7 +104,7 @@ public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 						case 4 -> "__op_output = __isClassifiedFloat32(bits, cls);";
 						case 8 -> "__op_output = __isClassifiedFloat64(bits, cls);";
 						default -> throw new LowlevelError(
-							"isClassifiedFloat: invalid float size of " + args.get(0).getSize());
+							"isClassifiedFloat: invalid float size of " + args.get(1).getSize());
 					})
 					.build());
 		}

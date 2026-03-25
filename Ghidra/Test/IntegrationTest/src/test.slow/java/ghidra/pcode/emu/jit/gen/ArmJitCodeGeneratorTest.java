@@ -122,8 +122,8 @@ public class ArmJitCodeGeneratorTest extends AbstractJitCodeGeneratorTest {
 				""", Map.ofEntries(
 			Map.entry(0x00400000L, """
 					if (!ZR) goto <skip>;
-					  ISAModeSwitch = 1;
-					  setISAMode(ISAModeSwitch);
+					  TB = 1;
+					  setISAMode(TB);
 					<skip>
 					emu_exec_decoded();
 					""")));
