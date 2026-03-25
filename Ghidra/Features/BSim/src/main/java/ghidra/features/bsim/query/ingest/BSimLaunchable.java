@@ -113,6 +113,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static final String PRINT_SELF_SIGNIFICANCE_OPTION = "--printselfsig";
 	private static final String CALL_GRAPH_OPTION = "--callgraph";
 	private static final String PRINT_JUST_EXE_OPTION = "--printjustexe";
+	private static final String DROP_DATABASE_FORCE_OPTION = "--force";
 
 	private static final Map<String, String> SHORTCUT_OPTION_MAP = new HashMap<>();
 	static {
@@ -136,7 +137,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	// Populate ALLOWED_OPTION_MAP for each command
 	private static final Set<String> CREATE_DATABASE_OPTIONS = 
 			Set.of(NAME_OPTION, OWNER_OPTION, DESCRIPTION_OPTION, NO_CALLGRAPH_OPTION);
-	private static final Set<String> DROP_DATABASE_OPTIONS = Set.of();
+	private static final Set<String> DROP_DATABASE_OPTIONS = Set.of(DROP_DATABASE_FORCE_OPTION);
 	private static final Set<String> COMMIT_SIGS_OPTIONS = 
 			Set.of(OVERRIDE_OPTION, MD5_OPTION); // url requires override param
 	private static final Set<String> COMMIT_UPDATES_OPTIONS = Set.of();
@@ -213,7 +214,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private BulkSignatures getBulkSignatures()
-			throws IllegalArgumentException, MalformedURLException {
+			throws IllegalArgumentException {
 		BSimServerInfo serverInfo = null;
 		if (bsimURL != null) {
 			serverInfo = new BSimServerInfo(bsimURL);
@@ -555,9 +556,28 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @throws IOException if there's an error establishing the database connection
 	 */
 	private void doDropDatabase(List<String> params) throws IOException {
+		if (!confirmDrop()) {
+			return;
+		}
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			bsim.dropDatabase();
 		}
+	}
+
+	private boolean confirmDrop() throws IOException {
+		if (booleanOptions.contains(DROP_DATABASE_FORCE_OPTION)) {
+			return true;
+		}
+		System.out.print("Are you sure you want to drop the database? (y/n): ");
+		try (InputStreamReader isReader = new InputStreamReader(System.in);
+				BufferedReader bReader = new BufferedReader(isReader)) {
+			String input = bReader.readLine();
+			if (input != null && input.equalsIgnoreCase("y")) {
+				return true;
+			}
+		}
+		System.out.println("Database NOT dropped");
+		return false;
 	}
 
 	private void doGenerateSigs(List<String> params, TaskMonitor monitor)
@@ -896,7 +916,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @param params the command-line params
 	 * @throws IOException if there's an error establishing the database connection
 	 */
-	private void doPrintMetadata(List<String> params) throws IOException, LSHException {
+	private void doPrintMetadata(List<String> params) throws IOException {
 
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			bsim.printMetadata();
@@ -999,7 +1019,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		System.err.println("\n" +
 			"USAGE: bsim [command]       required-args... [OPTIONS...]\n" + 
 			"            createdatabase  <bsimURL> <config_template> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"] [--nocallgraph]\n" + 
-			"            dropdatabase    <bsimURL> \n" + 
+			"            dropdatabase    <bsimURL> [--force]\n" + 
 			"            setmetadata     <bsimURL> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"]\n" + 
 			"            getmetadata     <bsimURL>\n" + 
 			"            addexecategory  <bsimURL> <category_name> [--date]\n" + 
