@@ -89,7 +89,18 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return Objc2Constants.isObjectiveC2(program);
+		if (Objc2Constants.isObjectiveC2(program)) {
+			Memory mem = program.getMemory();
+			if (mem.getBlock(Objc2Constants.OBJC2_STUBS) != null) {
+				return true;
+			}
+			for (Symbol s : program.getSymbolTable().getExternalSymbols()) {
+				if (s.getName().startsWith(Objc1Constants.OBJC_MSG_SEND)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
