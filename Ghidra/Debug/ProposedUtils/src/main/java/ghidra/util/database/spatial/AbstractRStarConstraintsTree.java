@@ -218,9 +218,8 @@ public abstract class AbstractRStarConstraintsTree<
 		PriorityQueue<LeastAreaEnlargementThenLeastArea> sorted =
 			new PriorityQueue<>(n.getChildCount());
 		List<NR> children = new ArrayList<>(getNodeChildrenOf(n));
-		for (NR leaf : children) {
-			assert leaf.getType().isLeaf();
-			sorted.offer(new LeastAreaEnlargementThenLeastArea(leaf, bounds));
+		for (NR child : children) {
+			sorted.offer(new LeastAreaEnlargementThenLeastArea(child, bounds));
 		}
 
 		LeastOverlap least = null;

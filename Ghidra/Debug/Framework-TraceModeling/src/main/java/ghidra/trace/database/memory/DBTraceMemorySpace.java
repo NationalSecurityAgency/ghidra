@@ -323,7 +323,6 @@ public class DBTraceMemorySpace
 					if (predicate.test(entry.getValue())) {
 						result.add(foundRange);
 					}
-					break;
 				}
 			}
 			return result;
