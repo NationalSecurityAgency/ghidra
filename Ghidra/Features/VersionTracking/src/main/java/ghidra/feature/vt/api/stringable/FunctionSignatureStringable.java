@@ -521,6 +521,7 @@ public class FunctionSignatureStringable extends Stringable {
 		applyInline(destFunction, isInline, markupOptions);
 		applyNoReturn(destFunction, hasNoReturn, markupOptions);
 
+		int origDestParamCount = destFunction.getParameterCount(); // must get before modifying
 		applyParameterTypes(destFunction, markupOptions, forceApply);
 
 		boolean hasSrcVarArgs = hasVarargs;
@@ -535,8 +536,7 @@ public class FunctionSignatureStringable extends Stringable {
 			forceParameterNames(destFunction);
 		}
 		else {
-			int paramCount = destFunction.getParameterCount();
-			applyParameterNames(destFunction, markupOptions, true, paramCount);
+			applyParameterNames(destFunction, markupOptions, true, origDestParamCount);
 		}
 
 		CommentChoices commentChoice =

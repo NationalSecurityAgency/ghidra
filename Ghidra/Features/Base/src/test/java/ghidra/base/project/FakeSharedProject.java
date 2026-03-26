@@ -380,25 +380,30 @@ public class FakeSharedProject {
 	public void dispose() {
 		ProjectLocator projectLocator = getProjectData().getProjectLocator();
 		programManager.disposeOpenPrograms();
-		
-		String projectName = gProject.getProject().getName();
+
+		String projectName = "<No project>";
+		Project project = gProject.getProject();
+		if (project != null) {
+			projectName = project.getName();
+		}
+
 		gProject.close();
-		
+
 		File projectDir = projectLocator.getProjectDir();
 		if (projectDir.exists()) {
 			boolean success = FileUtilities.deleteDir(projectDir);
-			if (!success) { 
-				Msg.error(this, "Unable to delete test project dir '%s' in %s".formatted(projectName, projectDir));
-			}	
+			if (!success) {
+				Msg.error(this, "Unable to delete test project dir '%s' in %s"
+						.formatted(projectName, projectDir));
+			}
 		}
-		
-		
+
 		File markerFile = projectLocator.getMarkerFile();
 		if (markerFile.exists()) {
 			boolean success = markerFile.delete();
-			if (!success) { 
+			if (!success) {
 				Msg.error(this, "Unable to delete test project marker file: " + markerFile);
-			}	
+			}
 		}
 	}
 

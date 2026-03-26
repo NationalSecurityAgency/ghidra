@@ -198,8 +198,8 @@ public class HistoryList<T> {
 	}
 
 	private void doGoToIndex(int index) {
-		historyIndex = index;
 		T leaving = getCurrentHistoryItem();
+		historyIndex = index;
 		T t = historyStack.get(index);
 
 		dropNull();
