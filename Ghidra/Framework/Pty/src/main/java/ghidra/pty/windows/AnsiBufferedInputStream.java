@@ -15,12 +15,16 @@
  */
 package ghidra.pty.windows;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import ghidra.util.Msg;
 
 // TODO: I shouldn't have to do any of this.
 public class AnsiBufferedInputStream extends InputStream {
@@ -434,9 +438,9 @@ public class AnsiBufferedInputStream extends InputStream {
 			throw new AssertionError();
 		}
 		if (yx[0] != 1) {
-			throw new AssertionError();
+			Msg.warn(this, "ANSI: CursorPosition y != 1 (%d)".formatted(yx[0]));
 		}
-		lineBuf.position(yx[1] - 1);
+		setPosition(yx[1] - 1);
 	}
 
 	protected void execTextCursorEnableBlinking() {
