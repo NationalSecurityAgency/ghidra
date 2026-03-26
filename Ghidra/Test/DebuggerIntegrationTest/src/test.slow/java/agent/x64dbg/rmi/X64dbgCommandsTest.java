@@ -107,10 +107,10 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("x86:LE:64:default",
@@ -140,14 +140,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 			addr -> """
 					%s
 					ghidra_trace_connect('%s')
-					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', start_trace=False, wait=True)
+					ghidra_trace_create('%s', start_trace=False, wait=True)
 					util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
 					util.set_convenience_variable('ghidra-compiler','default')
 					ghidra_trace_start('myToy')
 					util.terminate_session()
 					quit()
 					"""
-					.formatted(PREAMBLE, addr));
+					.formatted(PREAMBLE, addr, NOTEPAD));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/x64dbg/myToy");
 		assertNotNull(dfMyToy);
 		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
@@ -164,11 +164,11 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_stop()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		DomainFile dfNotepad =
 			env.getProject().getProjectData().getFile("/New Traces/x64dbg/notepad.exe");
 		assertNotNull(dfNotepad);
@@ -190,7 +190,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					print('---Connect---')
 					ghidra_trace_info()
 					print('---Create---')
-					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+					ghidra_trace_create('%s', wait=True)
 					print('---Start---')
 					ghidra_trace_info()
 					ghidra_trace_stop()
@@ -201,7 +201,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					ghidra_trace_info()
 					util.terminate_session()
 					quit()
-					""".formatted(PREAMBLE, addr);
+					""".formatted(PREAMBLE, addr, NOTEPAD);
 		});
 
 		assertEquals("""
@@ -235,7 +235,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					print('---Import---')
 					ghidra_trace_info_lcsp()
 					print('---Create---')
-					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', start_trace=False, wait=True)
+					ghidra_trace_create('%s', start_trace=False, wait=True)
 					print('---File---')
 					ghidra_trace_info_lcsp()
 					util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
@@ -247,7 +247,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					util.terminate_session()
 					quit()
 					"""
-					.formatted(PREAMBLE));
+					.formatted(PREAMBLE, NOTEPAD));
 
 		assertEquals("""
 				Selected Ghidra language: x86:LE:64:default
@@ -272,14 +272,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				ghidra_trace_txcommit()
 				ghidra_trace_stop()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -288,14 +288,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				ghidra_trace_txcommit()
 				ghidra_trace_save()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -307,13 +307,13 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				ghidra_trace_txcommit()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
@@ -327,7 +327,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		String out = runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				pc = util.get_pc()
@@ -342,7 +342,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -365,7 +365,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		String out = runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				pc = util.get_pc()
@@ -378,7 +378,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -398,7 +398,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		String out = runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				pc = util.get_pc()
@@ -413,7 +413,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -438,7 +438,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				util.dbg.cmd('rax=0xdeadbeef')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
@@ -447,7 +447,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr, count));
+				""".formatted(PREAMBLE, addr, NOTEPAD, count));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -474,7 +474,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				util.dbg.cmd('rax=0xdeadbeef')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
@@ -484,7 +484,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr, count));
+				""".formatted(PREAMBLE, addr, NOTEPAD, count));
 		// The spaces will be left over, but the values should be zeroed
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
@@ -561,7 +561,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
@@ -571,7 +571,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -588,7 +588,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
@@ -598,7 +598,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr, extra, x64dbgExpr, gtype));
+				""".formatted(PREAMBLE, addr, NOTEPAD, extra, x64dbgExpr, gtype));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -740,7 +740,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
@@ -753,7 +753,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -800,7 +800,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		String out = runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
@@ -833,7 +833,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
@@ -862,7 +862,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		String out = runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
@@ -874,7 +874,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
@@ -889,7 +889,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				#set language c++
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
@@ -899,7 +899,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
@@ -912,7 +912,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		String out = runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Tx')
 				pc = util.get_pc()
 				ghidra_trace_putmem(pc, 16)
@@ -923,7 +923,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
@@ -990,7 +990,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 			addr -> """
 					%s
 					ghidra_trace_connect('%s')
-					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+					ghidra_trace_create('%s', wait=True)
 					pc = util.get_pc()
 					util.dbg.client.clear_breakpoint(None)
 					util.dbg.client.clear_hardware_breakpoint(None)
@@ -1003,7 +1003,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					util.terminate_session()
 					quit()
 					"""
-					.formatted(PREAMBLE, addr));
+					.formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procSBreakLocVals = tb.trace.getObjectManager()
@@ -1035,7 +1035,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 			addr -> """
 					%s
 					ghidra_trace_connect('%s')
-					ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+					ghidra_trace_create('%s', wait=True)
 					ghidra_trace_txstart('Tx')
 					pc = util.get_pc()
 					util.dbg.client.clear_hardware_breakpoint(None)
@@ -1048,7 +1048,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					util.terminate_session()
 					quit()
 					"""
-					.formatted(PREAMBLE, addr));
+					.formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procBreakVals = tb.trace.getObjectManager()
@@ -1079,14 +1079,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Tx')
 				ghidra_trace_put_environment()
 				ghidra_trace_txcommit()
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Assumes LLDB on Linux amd64
@@ -1105,14 +1105,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Tx')
 				ghidra_trace_put_regions()
 				ghidra_trace_txcommit()
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1127,14 +1127,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Tx')
 				ghidra_trace_put_modules()
 				ghidra_trace_txcommit()
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1150,14 +1150,14 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra_trace_connect('%s')
-				ghidra_trace_create('C:\\\\Windows\\\\notepad.exe', wait=True)
+				ghidra_trace_create('%s', wait=True)
 				ghidra_trace_txstart('Tx')
 				ghidra_trace_put_threads()
 				ghidra_trace_txcommit()
 				ghidra_trace_kill()
 				util.terminate_session()
 				quit()
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, NOTEPAD));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
