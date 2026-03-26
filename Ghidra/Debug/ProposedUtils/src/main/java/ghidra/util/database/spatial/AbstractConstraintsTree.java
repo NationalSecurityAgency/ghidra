@@ -314,10 +314,16 @@ public abstract class AbstractConstraintsTree<
 			}
 
 			private void descend(NR nr) {
-				List<? extends DBTreeRecord<?, ? extends NS>> passed = getChildrenOf(nr).stream()
-						.filter(c -> query.testNode(c.getBounds()) != QueryInclusion.NONE)
-						.toList();
-				queue.addAll(passed);
+				Collection<? extends DBTreeRecord<?, ? extends NS>> all = getChildrenOf(nr);
+				if (query == null) {
+					queue.addAll(all);
+				}
+				else {
+					List<? extends DBTreeRecord<?, ? extends NS>> passed = all.stream()
+							.filter(c -> query.testNode(c.getBounds()) != QueryInclusion.NONE)
+							.toList();
+					queue.addAll(passed);
+				}
 			}
 
 			private DR findNext() {

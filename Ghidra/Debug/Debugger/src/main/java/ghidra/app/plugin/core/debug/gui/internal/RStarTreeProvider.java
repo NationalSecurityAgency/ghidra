@@ -21,7 +21,6 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.widgets.tree.*;
-import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.database.spatial.*;
@@ -34,8 +33,6 @@ public class RStarTreeProvider extends ComponentProviderAdapter {
 	}
 
 	class RootRStarNode extends GTreeLazyNode implements HasShape {
-		static final GIcon ICON = new GIcon("blargh");
-
 		@Override
 		public TraceAddressSnapRange getShape() {
 			if (plugin == null || plugin.space == null) {
@@ -55,7 +52,7 @@ public class RStarTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
-			return ICON;
+			return null;
 		}
 
 		@Override
@@ -78,7 +75,6 @@ public class RStarTreeProvider extends ComponentProviderAdapter {
 	}
 
 	class NodeRStarNode extends GTreeLazyNode implements HasShape {
-		static final GIcon ICON = new GIcon("blargh");
 		final DBTreeNodeRecord<?> rec;
 
 		public NodeRStarNode(DBTreeNodeRecord<?> rec) {
@@ -97,7 +93,7 @@ public class RStarTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
-			return ICON;
+			return null;
 		}
 
 		@Override
@@ -117,7 +113,6 @@ public class RStarTreeProvider extends ComponentProviderAdapter {
 	}
 
 	class DataRStarNode extends GTreeNode implements HasShape {
-		static final GIcon ICON = new GIcon("blargh");
 		final DBTreeDataRecord<?, ?, ?> rec;
 
 		public DataRStarNode(DBTreeDataRecord<?, ?, ?> rec) {
@@ -136,7 +131,7 @@ public class RStarTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
-			return ICON;
+			return null;
 		}
 
 		@Override

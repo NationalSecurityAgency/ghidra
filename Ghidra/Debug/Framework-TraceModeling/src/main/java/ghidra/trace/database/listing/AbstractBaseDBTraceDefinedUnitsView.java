@@ -263,8 +263,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		Address spaceMax = space.space.getMaxAddress();
 		Rectangle2DDirection direction =
 			forward ? Rectangle2DDirection.LEFTMOST : Rectangle2DDirection.RIGHTMOST;
-		return () -> mapSpace //
-				.reduce(TraceAddressSnapRangeQuery.intersecting(min, max, snap, snap)) //
+		return () -> mapSpace
+				.reduce(TraceAddressSnapRangeQuery.intersecting(min, max, snap, snap))
 				.reduce(TraceAddressSnapRangeQuery.enclosed(min, spaceMax, Long.MIN_VALUE,
 					Long.MAX_VALUE).starting(direction))
 				.orderedValues()

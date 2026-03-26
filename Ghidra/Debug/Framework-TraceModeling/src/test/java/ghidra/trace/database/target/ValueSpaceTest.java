@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,22 +30,22 @@ public class ValueSpaceTest {
 
 		assertEquals(0.0, dim.distance(new RecAddress(0, 0), new RecAddress(0, 0)), 0.0);
 
-		assertEquals(100.0, dim.distance(new RecAddress(0, 0), new RecAddress(0, 100)), 0.0);
-		assertEquals(-100.0, dim.distance(new RecAddress(0, 100), new RecAddress(0, 0)), 0.0);
-		assertEquals(Math.pow(2, 65), dim.distance(new RecAddress(0, 0), new RecAddress(2, 0)),
+		assertEquals(100.0, dim.distance(new RecAddress(0, 100), new RecAddress(0, 0)), 0.0);
+		assertEquals(-100.0, dim.distance(new RecAddress(0, 0), new RecAddress(0, 100)), 0.0);
+		assertEquals(Math.pow(2, 65), dim.distance(new RecAddress(2, 0), new RecAddress(0, 0)),
 			0.0);
-		assertEquals(-Math.pow(2, 65), dim.distance(new RecAddress(2, 0), new RecAddress(0, 0)),
+		assertEquals(-Math.pow(2, 65), dim.distance(new RecAddress(0, 0), new RecAddress(2, 0)),
 			0.0);
 
 		// 10000 instead of 100, because double precision will not detect just 100
 		assertEquals(Math.pow(2, 65) + 10000,
-			dim.distance(new RecAddress(0, 0), new RecAddress(2, 10000)), 0.0);
-		assertEquals(-Math.pow(2, 65) - 10000,
 			dim.distance(new RecAddress(2, 10000), new RecAddress(0, 0)), 0.0);
+		assertEquals(-Math.pow(2, 65) - 10000,
+			dim.distance(new RecAddress(0, 0), new RecAddress(2, 10000)), 0.0);
 		assertEquals(Math.pow(2, 65) - 10000,
-			dim.distance(new RecAddress(0, 10000), new RecAddress(2, 0)), 0.0);
-		assertEquals(-Math.pow(2, 65) + 10000,
 			dim.distance(new RecAddress(2, 0), new RecAddress(0, 10000)), 0.0);
+		assertEquals(-Math.pow(2, 65) + 10000,
+			dim.distance(new RecAddress(0, 10000), new RecAddress(2, 0)), 0.0);
 	}
 
 	@Test
@@ -98,19 +98,19 @@ public class ValueSpaceTest {
 		// null is not a valid key, but because it's the "absolute max", the tree may ask
 		assertEquals(0.0, dim.distance(null, null), 0.0);
 
-		assertEquals(25.0 * (Double.MAX_VALUE / 128), dim.distance("A", "Z"), 0.0);
-		assertEquals(-1.0 * (Double.MAX_VALUE / 128), dim.distance("B", "A"), 0.0);
-		assertEquals(1.0 * (Double.MAX_VALUE / 128), dim.distance("AA", "BA"), 0.0);
-		assertEquals(-1.0 * (Double.MAX_VALUE / 128), dim.distance("BA", "AA"), 0.0);
+		assertEquals(25.0 * (Double.MAX_VALUE / 128), dim.distance("Z", "A"), 0.0);
+		assertEquals(-1.0 * (Double.MAX_VALUE / 128), dim.distance("A", "B"), 0.0);
+		assertEquals(1.0 * (Double.MAX_VALUE / 128), dim.distance("BA", "AA"), 0.0);
+		assertEquals(-1.0 * (Double.MAX_VALUE / 128), dim.distance("AA", "BA"), 0.0);
 
 		assertEquals(1.0 * (Double.MAX_VALUE / 128) + 1.0 * (Double.MAX_VALUE / 128 / 128),
-			dim.distance("AA", "BB"), 0.0);
-		assertEquals(-1.0 * (Double.MAX_VALUE / 128) - 1.0 * (Double.MAX_VALUE / 128 / 128),
 			dim.distance("BB", "AA"), 0.0);
+		assertEquals(-1.0 * (Double.MAX_VALUE / 128) - 1.0 * (Double.MAX_VALUE / 128 / 128),
+			dim.distance("AA", "BB"), 0.0);
 		assertEquals(1.0 * (Double.MAX_VALUE / 128) - 1.0 * (Double.MAX_VALUE / 128 / 128),
-			dim.distance("AB", "BA"), 0.0);
-		assertEquals(-1.0 * (Double.MAX_VALUE / 128) + 1.0 * (Double.MAX_VALUE / 128 / 128),
 			dim.distance("BA", "AB"), 0.0);
+		assertEquals(-1.0 * (Double.MAX_VALUE / 128) + 1.0 * (Double.MAX_VALUE / 128 / 128),
+			dim.distance("AB", "BA"), 0.0);
 	}
 
 	@Test
