@@ -4605,6 +4605,15 @@ with : l=1 {
 	CopReg: trbidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=9 & CRm=11 & Op2_uimm3=7 & trbidr_el1 { export trbidr_el1; }  
 }
 
+# Write only registers
+with : l=0 {
+	CopReg: icc_asgi1r_el1 is Op0=3 & Op1_uimm3=0 & CRn=12 & CRm=11 & Op2_uimm3=6 & icc_asgi1r_el1 { export icc_asgi1r_el1; }
+	CopReg: icc_sgi0r_el1 is Op0=3 & Op1_uimm3=0 & CRn=12 & CRm=11 & Op2_uimm3=7 & icc_sgi0r_el1 { export icc_sgi0r_el1; }
+	CopReg: icc_sgi1r_el1 is Op0=3 & Op1_uimm3=0 & CRn=12 & CRm=11 & Op2_uimm3=5 & icc_sgi1r_el1 { export icc_sgi1r_el1; }
+	CopReg: pmzr_el0 is Op0=3 & Op1_uimm3=3 & CRn=9 & CRm=13 & Op2_uimm3=4 & pmzr_el0 { export pmzr_el0; }
+	CopReg: spmzr_el0 is Op0=2 & Op1_uimm3=3 & CRn=9 & CRm=12 & Op2_uimm3=4 & spmzr_el0 { export spmzr_el0; }
+}
+
 CopReg: dbgdtrrx_el0 is l=0 & Op0=2 & Op1_uimm3=3 & CRn=0 & CRm=5 & Op2_uimm3=0 & dbgdtrrx_el0 { export dbgdtrrx_el0; }
 CopReg: dbgdtrtx_el0 is l=1 & Op0=2 & Op1_uimm3=3 & CRn=0 & CRm=5 & Op2_uimm3=0 & dbgdtrtx_el0 { export dbgdtrtx_el0; }
 

@@ -108,7 +108,7 @@ define register offset=0x1000 size=8
 
 # System Registers
 
-# 547 registers 0x1118 bytes
+# 552 registers 0x1140 bytes
 define register offset=0x1100 size=8
 [
 	midr_el1
@@ -659,6 +659,11 @@ define register offset=0x1100 size=8
 	pmsidr_el1
 	id_aa64zfr0_el1
 	trbidr_el1
+    icc_asgi1r_el1
+	icc_sgi0r_el1
+	icc_sgi1r_el1
+	pmzr_el0
+	spmzr_el0
 ];
 
 # bitrange definitions are [<least significant bit>,<size>]
