@@ -108,7 +108,7 @@ define register offset=0x1000 size=8
 
 # System Registers
 
-# 496 registers 0xf80 bytes
+# 547 registers 0x1118 bytes
 define register offset=0x1100 size=8
 [
 	midr_el1
@@ -608,6 +608,57 @@ define register offset=0x1100 size=8
 	trbsr_el2
 	trbsr_el3
 	trbtrg_el1   
+    ccsidr2_el1
+	cntpctss_el0
+	cntvctss_el0
+	icc_domhppir_el3
+	icc_hppir_el3
+	icc_iaffidr_el1
+	icc_idr0_el1
+	ich_eisr_el2
+	ich_elrsr_el2
+	ich_hppir_el2
+	ich_misr_el2
+	ich_vtr_el2
+	id_aa64dfr2_el1
+	id_aa64fpfr0_el1
+	id_aa64isar2_el1
+	id_aa64isar3_el1
+	id_aa64mmfr2_el1
+	id_aa64mmfr3_el1
+	id_aa64mmfr4_el1
+	id_aa64pfr2_el1
+	id_dfr1_el1
+	id_isar6_el1
+	id_mmfr4_el1
+	id_mmfr5_el1
+	id_pfr2_el1
+	lorid_el1
+	mecidr_el2
+	pmccntsvr_el1
+	pmicntsvr_el1
+	pmmir_el1
+	smidr_el1
+	spmcfgr_el1
+	spmdevaff_el1
+	spmdevarch_el1
+	spmiidr_el1
+	tlbididr_el1
+	amcfgr_el0
+	amcg1idr_el0
+	amcgcr_el0
+	brbidr0_el1
+	mpambwidr_el1
+	mpamidr_el1
+	erridr_el1
+	erxfr_el1
+	erxgsr_el1
+	erxpfgf_el1
+	id_aa64smfr0_el1
+	pmbidr_el1
+	pmsidr_el1
+	id_aa64zfr0_el1
+	trbidr_el1
 ];
 
 # bitrange definitions are [<least significant bit>,<size>]
@@ -617,7 +668,7 @@ define bitrange gcr_el1.exclude=gcr_el1[0,16];
 # Debug Registers
 # 82 registers 0x290 bytes
 
-define register offset=0x2100 size=8
+define register offset=0x2500 size=8
 [
 	osdtrrx_el1
 	mdccint_el1

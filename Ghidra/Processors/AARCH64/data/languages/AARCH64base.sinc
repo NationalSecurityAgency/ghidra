@@ -4550,6 +4550,61 @@ CopReg: trbtrg_el1 is Op0=3 & Op1_uimm3=0 & CRn=9 & CRm=11 & Op2_uimm3=6 & trbtr
 
 } # with : (l=0 | l=1) {
 
+# Read only registers
+with : l=1 {
+	CopReg: ccsidr2_el1 is Op0=3 & Op1_uimm3=1 & CRn=0 & CRm=0 & Op2_uimm3=2 & ccsidr2_el1 { export ccsidr2_el1; }
+	CopReg: cntpctss_el0 is Op0=3 & Op1_uimm3=3 & CRn=14 & CRm=0 & Op2_uimm3=5 & cntpctss_el0 { export cntpctss_el0; }
+	CopReg: cntvctss_el0 is Op0=3 & Op1_uimm3=3 & CRn=14 & CRm=0 & Op2_uimm3=6 & cntvctss_el0 { export cntvctss_el0; }
+	CopReg: icc_domhppir_el3 is Op0=3 & Op1_uimm3=6 & CRn=12 & CRm=8 & Op2_uimm3=2 & icc_domhppir_el3 { export icc_domhppir_el3; }
+	CopReg: icc_hppir_el3 is Op0=3 & Op1_uimm3=6 & CRn=12 & CRm=9 & Op2_uimm3=1 & icc_hppir_el3 { export icc_hppir_el3; }
+	CopReg: icc_iaffidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=12 & CRm=10 & Op2_uimm3=5 & icc_iaffidr_el1 { export icc_iaffidr_el1; }
+	CopReg: icc_idr0_el1 is Op0=3 & Op1_uimm3=0 & CRn=12 & CRm=10 & Op2_uimm3=2 & icc_idr0_el1 { export icc_idr0_el1; }
+	CopReg: ich_eisr_el2 is Op0=3 & Op1_uimm3=4 & CRn=12 & CRm=11 & Op2_uimm3=3 & ich_eisr_el2 { export ich_eisr_el2; }
+	CopReg: ich_elrsr_el2 is Op0=3 & Op1_uimm3=4 & CRn=12 & CRm=11 & Op2_uimm3=5 & ich_elrsr_el2 { export ich_elrsr_el2; }
+	CopReg: ich_hppir_el2 is Op0=3 & Op1_uimm3=4 & CRn=12 & CRm=8 & Op2_uimm3=5 & ich_hppir_el2 { export ich_hppir_el2; }
+	CopReg: ich_misr_el2 is Op0=3 & Op1_uimm3=4 & CRn=12 & CRm=11 & Op2_uimm3=2 & ich_misr_el2 { export ich_misr_el2; }
+	CopReg: ich_vtr_el2 is Op0=3 & Op1_uimm3=4 & CRn=12 & CRm=11 & Op2_uimm3=1 & ich_vtr_el2 { export ich_vtr_el2; }
+	CopReg: id_aa64dfr2_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=5 & Op2_uimm3=2 & id_aa64dfr2_el1 { export id_aa64dfr2_el1; }
+	CopReg: id_aa64fpfr0_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=4 & Op2_uimm3=7 & id_aa64fpfr0_el1 { export id_aa64fpfr0_el1; }
+	CopReg: id_aa64isar2_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=6 & Op2_uimm3=2 & id_aa64isar2_el1 { export id_aa64isar2_el1; }
+	CopReg: id_aa64isar3_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=6 & Op2_uimm3=3 & id_aa64isar3_el1 { export id_aa64isar3_el1; }
+	CopReg: id_aa64mmfr2_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=7 & Op2_uimm3=2 & id_aa64mmfr2_el1 { export id_aa64mmfr2_el1; }
+	CopReg: id_aa64mmfr3_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=7 & Op2_uimm3=3 & id_aa64mmfr3_el1 { export id_aa64mmfr3_el1; }
+	CopReg: id_aa64mmfr4_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=7 & Op2_uimm3=4 & id_aa64mmfr4_el1 { export id_aa64mmfr4_el1; }
+	CopReg: id_aa64pfr2_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=4 & Op2_uimm3=2 & id_aa64pfr2_el1 { export id_aa64pfr2_el1; }
+	CopReg: id_dfr1_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=3 & Op2_uimm3=5 & id_dfr1_el1 { export id_dfr1_el1; }
+	CopReg: id_isar6_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=2 & Op2_uimm3=7 & id_isar6_el1 { export id_isar6_el1; }
+	CopReg: id_mmfr4_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=2 & Op2_uimm3=6 & id_mmfr4_el1 { export id_mmfr4_el1; }
+	CopReg: id_mmfr5_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=3 & Op2_uimm3=6 & id_mmfr5_el1 { export id_mmfr5_el1; }
+	CopReg: id_pfr2_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=3 & Op2_uimm3=4 & id_pfr2_el1 { export id_pfr2_el1; }
+	CopReg: lorid_el1 is Op0=3 & Op1_uimm3=0 & CRn=10 & CRm=4 & Op2_uimm3=7 & lorid_el1 { export lorid_el1; }
+	CopReg: mecidr_el2 is Op0=3 & Op1_uimm3=4 & CRn=10 & CRm=8 & Op2_uimm3=7 & mecidr_el2 { export mecidr_el2; }
+	CopReg: pmccntsvr_el1 is Op0=2 & Op1_uimm3=0 & CRn=14 & CRm=11 & Op2_uimm3=7 & pmccntsvr_el1 { export pmccntsvr_el1; }
+	CopReg: pmicntsvr_el1 is Op0=2 & Op1_uimm3=0 & CRn=14 & CRm=12 & Op2_uimm3=0 & pmicntsvr_el1 { export pmicntsvr_el1; }
+	CopReg: pmmir_el1 is Op0=3 & Op1_uimm3=0 & CRn=9 & CRm=14 & Op2_uimm3=6 & pmmir_el1 { export pmmir_el1; }
+	CopReg: smidr_el1 is Op0=3 & Op1_uimm3=1 & CRn=0 & CRm=0 & Op2_uimm3=6 & smidr_el1 { export smidr_el1; }
+	CopReg: spmcfgr_el1 is Op0=2 & Op1_uimm3=0 & CRn=9 & CRm=13 & Op2_uimm3=7 & spmcfgr_el1 { export spmcfgr_el1; }
+	CopReg: spmdevaff_el1 is Op0=2 & Op1_uimm3=0 & CRn=9 & CRm=13 & Op2_uimm3=6 & spmdevaff_el1 { export spmdevaff_el1; }
+	CopReg: spmdevarch_el1 is Op0=2 & Op1_uimm3=0 & CRn=9 & CRm=13 & Op2_uimm3=5 & spmdevarch_el1 { export spmdevarch_el1; }
+	CopReg: spmiidr_el1 is Op0=2 & Op1_uimm3=0 & CRn=9 & CRm=13 & Op2_uimm3=4 & spmiidr_el1 { export spmiidr_el1; }
+	CopReg: tlbididr_el1 is Op0=3 & Op1_uimm3=0 & CRn=10 & CRm=4 & Op2_uimm3=6 & tlbididr_el1 { export tlbididr_el1; }
+	CopReg: amcfgr_el0 is Op0=3 & Op1_uimm3=3 & CRn=13 & CRm=2 & Op2_uimm3=1 & amcfgr_el0 { export amcfgr_el0; }
+	CopReg: amcg1idr_el0 is Op0=3 & Op1_uimm3=3 & CRn=13 & CRm=2 & Op2_uimm3=6 & amcg1idr_el0 { export amcg1idr_el0; }
+	CopReg: amcgcr_el0 is Op0=3 & Op1_uimm3=3 & CRn=13 & CRm=2 & Op2_uimm3=2 & amcgcr_el0 { export amcgcr_el0; }
+	CopReg: brbidr0_el1 is Op0=2 & Op1_uimm3=1 & CRn=9 & CRm=2 & Op2_uimm3=0 & brbidr0_el1 { export brbidr0_el1; }
+	CopReg: mpambwidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=10 & CRm=4 & Op2_uimm3=5 & mpambwidr_el1 { export mpambwidr_el1; }
+	CopReg: mpamidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=10 & CRm=4 & Op2_uimm3=4 & mpamidr_el1 { export mpamidr_el1; }
+	CopReg: erridr_el1 is Op0=3 & Op1_uimm3=0 & CRn=5 & CRm=3 & Op2_uimm3=0 & erridr_el1 { export erridr_el1; }
+	CopReg: erxfr_el1 is Op0=3 & Op1_uimm3=0 & CRn=5 & CRm=4 & Op2_uimm3=0 & erxfr_el1 { export erxfr_el1; }
+	CopReg: erxgsr_el1 is Op0=3 & Op1_uimm3=0 & CRn=5 & CRm=3 & Op2_uimm3=2 & erxgsr_el1 { export erxgsr_el1; }
+	CopReg: erxpfgf_el1 is Op0=3 & Op1_uimm3=0 & CRn=5 & CRm=4 & Op2_uimm3=4 & erxpfgf_el1 { export erxpfgf_el1; }
+	CopReg: id_aa64smfr0_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=4 & Op2_uimm3=5 & id_aa64smfr0_el1 { export id_aa64smfr0_el1; }
+	CopReg: pmbidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=9 & CRm=10 & Op2_uimm3=7 & pmbidr_el1 { export pmbidr_el1; }
+	CopReg: pmsidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=9 & CRm=9 & Op2_uimm3=7 & pmsidr_el1 { export pmsidr_el1; }
+	CopReg: id_aa64zfr0_el1 is Op0=3 & Op1_uimm3=0 & CRn=0 & CRm=4 & Op2_uimm3=4 & id_aa64zfr0_el1 { export id_aa64zfr0_el1; }
+	CopReg: trbidr_el1 is Op0=3 & Op1_uimm3=0 & CRn=9 & CRm=11 & Op2_uimm3=7 & trbidr_el1 { export trbidr_el1; }  
+}
+
 CopReg: dbgdtrrx_el0 is l=0 & Op0=2 & Op1_uimm3=3 & CRn=0 & CRm=5 & Op2_uimm3=0 & dbgdtrrx_el0 { export dbgdtrrx_el0; }
 CopReg: dbgdtrtx_el0 is l=1 & Op0=2 & Op1_uimm3=3 & CRn=0 & CRm=5 & Op2_uimm3=0 & dbgdtrtx_el0 { export dbgdtrtx_el0; }
 
