@@ -224,6 +224,11 @@ public class ScriptTraceRmiLaunchOfferTest extends AbstractGhidraHeadedDebuggerT
 		public String description() {
 			return null;
 		}
+
+		@Override
+		public ProcessHandle handle() {
+			return null;
+		}
 	}
 
 	record MockPty() implements Pty {
