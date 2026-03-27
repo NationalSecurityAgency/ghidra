@@ -22,6 +22,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -831,7 +832,8 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 	private void assertEnabled(DockingActionIf action, ComponentProvider provider) {
 		boolean isEnabled = runSwing(() -> {
-			return action.isEnabledForContext(provider.getActionContext(null));
+			ActionContext context = createActionContext(provider);
+			return action.isEnabledForContext(context);
 		});
 		assertTrue("Action was not enabled when it should be", isEnabled);
 	}

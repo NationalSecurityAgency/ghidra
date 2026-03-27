@@ -57,12 +57,13 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 			return new DefaultActionContext();
 		}
 
-		ActionContext actionContext = localProvider.getActionContext(null);
-		if (actionContext != null) {
-			return actionContext;
+		ActionContext context = localProvider.getActionContext(null);
+		if (context == null) {
+			context = new DefaultActionContext(localProvider);
 		}
 
-		return new DefaultActionContext(localProvider, null);
+		context.setContextProvider(localProvider);
+		return context;
 	}
 
 	public List<DockingActionIf> getActions() {

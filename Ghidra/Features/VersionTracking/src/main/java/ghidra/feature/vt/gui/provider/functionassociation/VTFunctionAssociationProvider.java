@@ -279,6 +279,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 				vtListingContext.setCodeComparisonPanel(dualListingProvider);
 				vtListingContext.setContextObject(dualListingProvider);
 				vtListingContext.setSourceObject(source);
+				vtListingContext.setContextProvider(this);
 				return vtListingContext;
 			}
 

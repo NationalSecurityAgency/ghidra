@@ -352,6 +352,8 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return multiAction;
 		}
 
+		context.setContextProvider(provider);
+
 		/*
 		 	See the note in createNonDialogExecutableAction().
 		 */

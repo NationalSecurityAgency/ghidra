@@ -538,20 +538,26 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static void assertDisabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = createActionContext(provider);
 		assertFalse(action.isEnabledForContext(context));
 	}
 
 	protected static void assertEnabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = createActionContext(provider);
 		assertTrue(action.isEnabledForContext(context));
 	}
 
 	protected static void performEnabledAction(ActionContextProvider provider,
 			DockingActionIf action, boolean wait) {
 		ActionContext context = waitForValue(() -> {
-			ActionContext ctx =
-				provider == null ? new DefaultActionContext() : provider.getActionContext(null);
+
+			ActionContext ctx = null;
+			if (provider == null) {
+				ctx = new DefaultActionContext();
+			}
+
+			ctx.setContextProvider(provider);
+
 			if (!action.isEnabledForContext(ctx)) {
 				return null;
 			}
