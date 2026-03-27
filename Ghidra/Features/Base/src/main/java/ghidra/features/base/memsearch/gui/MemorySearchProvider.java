@@ -15,24 +15,14 @@
  */
 package ghidra.features.base.memsearch.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
+import javax.swing.*;
 
 import docking.ActionContext;
 import docking.DockingContextListener;
@@ -46,9 +36,7 @@ import docking.widgets.OptionDialogBuilder;
 import docking.widgets.table.actions.DeleteTableRowAction;
 import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
-import ghidra.app.nav.Navigatable;
-import ghidra.app.nav.NavigatableRegistry;
-import ghidra.app.nav.NavigatableRemovalListener;
+import ghidra.app.nav.*;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.script.AskDialog;
 import ghidra.app.util.HelpTopics;
@@ -58,10 +46,7 @@ import ghidra.features.base.memsearch.combiner.Combiner;
 import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 import ghidra.features.base.memsearch.scan.Scanner;
-import ghidra.features.base.memsearch.searcher.AlignmentFilter;
-import ghidra.features.base.memsearch.searcher.CodeUnitFilter;
-import ghidra.features.base.memsearch.searcher.MemoryMatch;
-import ghidra.features.base.memsearch.searcher.MemorySearcher;
+import ghidra.features.base.memsearch.searcher.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectClosedListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -69,9 +54,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.BytesFieldLocation;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
@@ -127,7 +110,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 
 	// used to show a temporary message over the table
 	private GGlassPaneMessage glassPaneMessage;
-	
+
 	public MemorySearchProvider(MemorySearchPlugin plugin, Navigatable navigatable,
 			SearchSettings settings, MemorySearchOptions options, SearchHistory history) {
 		super(plugin.getTool(), "Memory Search", plugin.getName());
@@ -721,13 +704,8 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	protected ActionContext createContext(Component focusedComponent, Object contextObject) {
+	public ActionContext getActionContext(MouseEvent event) {
 		ActionContext context = new NavigatableActionContext(this, navigatable);
-		context.setContextObject(contextObject);
-
-		// the 'sourceComponent' will be the focused item if the focus owner is in our provider, 
-		// otherwise it will be the main component
-		context.setSourceObject(focusedComponent);
 
 		// we make the source component be the table so that the 'activate filter' action works
 		// from anywhere in this provider
@@ -761,28 +739,31 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 			}
 		}
 		ArrayList<String> choices = new ArrayList<String>(programMap.keySet());
-		AskDialog<String> dialog = new AskDialog<String>(null, "Compare to...", "Program", AskDialog.STRING, choices, null);
+		AskDialog<String> dialog = new AskDialog<String>(null, "Compare to...", "Program",
+			AskDialog.STRING, choices, null);
 		if (dialog.isCanceled()) {
 			return;
 		}
 
 		Navigatable next = programMap.get(dialog.getChoiceValue());
-		MemorySearchProvider nextProvider = new MemorySearchProvider(plugin, next, model.getSettings(), options, new SearchHistory(searchHistory));
+		MemorySearchProvider nextProvider = new MemorySearchProvider(plugin, next,
+			model.getSettings(), options, new SearchHistory(searchHistory));
 		AddressableByteSource nextByteSource = nextProvider.byteSource;
 		nextProvider.setSearchInput(this.getSearchInput());
 		nextProvider.showScanPanel(true);
-		
+
 		List<MemoryMatch<SearchData>> searchResults = getSearchResults();
 		List<MemoryMatch<SearchData>> rebasedResults = new ArrayList<>();
 		for (MemoryMatch<SearchData> match : searchResults) {
 			ProgramLocation canonicalLocation = byteSource.getCanonicalLocation(match.getAddress());
 			Address rebase = nextByteSource.rebaseFromCanonical(canonicalLocation);
 			if (rebase != null) {
-				MemoryMatch<SearchData> nextMatch = new MemoryMatch<>(rebase, match.getBytes(), match.getPattern());
+				MemoryMatch<SearchData> nextMatch =
+					new MemoryMatch<>(rebase, match.getBytes(), match.getPattern());
 				rebasedResults.add(nextMatch);
 			}
 		}
-		
+
 		MemorySearchResultsPanel nextResultsPanel = nextProvider.getResultsPanel();
 		nextProvider.setBusy(true);
 		nextResultsPanel.refreshAndMaybeScanForChanges(nextByteSource, scanner, rebasedResults);

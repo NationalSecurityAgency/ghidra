@@ -24,6 +24,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
@@ -98,10 +99,12 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testActionEnablement() {
 		DockingAction saveAction = managePluginsDialog.getSaveAction();
 		performAction(saveAction, true);
-		assertFalse(saveAction.isEnabledForContext(managePluginsDialog.getActionContext(null)));
+		ActionContext context = createActionContext(managePluginsDialog);
+		assertFalse(saveAction.isEnabledForContext(context));
 
 		DockingAction saveAsAction = managePluginsDialog.getSaveAsAction();
-		assertTrue(saveAsAction.isEnabledForContext(managePluginsDialog.getActionContext(null)));
+		context = createActionContext(managePluginsDialog);
+		assertTrue(saveAsAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -148,7 +151,8 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(tool.hasConfigChanged());
 		DockingAction action = managePluginsDialog.getSaveAction();
-		assertTrue(action.isEnabledForContext(managePluginsDialog.getActionContext(null)));
+		ActionContext context = createActionContext(managePluginsDialog);
+		assertTrue(action.isEnabledForContext(context));
 		assertTrue(
 			pluginModel.isLoaded(PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
 	}
@@ -160,7 +164,8 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		pluginModel.removePlugin(PluginDescription.getPluginDescription(EquateTablePlugin.class));
 		assertTrue(tool.hasConfigChanged());
 		DockingAction action = managePluginsDialog.getSaveAction();
-		assertTrue(action.isEnabledForContext(managePluginsDialog.getActionContext(null)));
+		ActionContext context = createActionContext(managePluginsDialog);
+		assertTrue(action.isEnabledForContext(context));
 		assertFalse(
 			pluginModel.isLoaded(PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
 

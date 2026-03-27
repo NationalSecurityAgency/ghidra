@@ -320,7 +320,7 @@ public class FrontEndPluginOpenProgramActionsTest extends AbstractGhidraHeadedIn
 
 	private ActionContext getFrontEndContext() {
 		ComponentProvider provider = env.getFrontEndProvider();
-		return runSwing(() -> provider.getActionContext(null));
+		return createActionContext(provider);
 	}
 
 	private DomainFile openInDefaultTool(String fileName) throws Exception {

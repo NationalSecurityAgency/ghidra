@@ -511,7 +511,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected void setView() {
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = createActionContext(programTreeProvider);
 		performAction(setView, context, true);
 	}
 
