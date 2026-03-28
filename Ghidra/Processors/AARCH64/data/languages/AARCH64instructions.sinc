@@ -2195,7 +2195,8 @@ ExtendReg64: Rm_GPR32, "UXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=1 { tmp
 ExtendReg64: Rm_GPR32, "UXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=2 { tmp:8 = zext(Rm_GPR32); export tmp; }
 ExtendReg64: LSL_Sp_Special64 is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29=1 & b_25=1 & (Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
 ExtendReg64: LSL_Sp_Special64 is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29=0 & b_25=1 & (Rd=0x1f | Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
-ExtendReg64: Rm_GPR64, "LSL " is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR64, "LSL " is Rm_GPR64 & b_1212=1 & b_2121=1 & aa_extreg_option=3 & b_29 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR64 is Rm_GPR64 & b_1212=0 & b_2121=1 & aa_extreg_option=3 & b_29 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
 ExtendReg64: Rm_GPR64, "UXTX " is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 { tmp:8 = Rm_GPR64; export tmp; }
 ExtendReg64: Rm_GPR32, "SXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=4 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:1); export tmp; }
 ExtendReg64: Rm_GPR32, "SXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=5 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:2); export tmp; }
