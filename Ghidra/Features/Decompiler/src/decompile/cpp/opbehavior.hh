@@ -537,5 +537,19 @@ public:
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
 };
 
+/// CPUI_BITREV behavior
+class OpBehaviorBitrev : public OpBehavior {
+public:
+  OpBehaviorBitrev(void) : OpBehavior(CPUI_BITREV,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
+
+/// CPUI_TZCOUNT behavior
+class OpBehaviorTzcount : public OpBehavior {
+public:
+  OpBehaviorTzcount(void) : OpBehavior(CPUI_TZCOUNT,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
+
 } // End namespace ghidra
 #endif

@@ -865,6 +865,12 @@ void ConsistencyChecker::printOpName(ostream &s,OpTpl *op)
   case CPUI_LZCOUNT:
     s << "Count leading zero bits(lzcount)";
     break;
+  case CPUI_BITREV:
+    s << "Reverse bits(bitrev)";
+    break;
+  case CPUI_TZCOUNT:
+    s << "Count trailing zero bits(tzcount)";
+    break;
   default:
     break;
   }

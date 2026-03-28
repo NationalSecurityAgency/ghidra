@@ -106,6 +106,8 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
   inst[CPUI_LZCOUNT] = new TypeOpLzcount(tlst);
   inst[CPUI_SPULL] = new TypeOpSpull(tlst);
+  inst[CPUI_BITREV] = new TypeOpBitrev(tlst);
+  inst[CPUI_TZCOUNT] = new TypeOpTzcount(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -2620,6 +2622,20 @@ TypeOpLzcount::TypeOpLzcount(TypeFactory *t)
 {
   opflags = PcodeOp::unary;
   behave = new OpBehaviorLzcount();
+}
+
+TypeOpBitrev::TypeOpBitrev(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_BITREV,"BITREV",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorBitrev();
+}
+
+TypeOpTzcount::TypeOpTzcount(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_TZCOUNT,"TZCOUNT",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorTzcount();
 }
 
 } // End namespace ghidra

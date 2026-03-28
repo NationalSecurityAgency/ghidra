@@ -601,6 +601,8 @@ public:
   virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
   virtual void opLzcountOp(const PcodeOp *op)=0;			///< Emit a LZCOUNT operator
   virtual void opSpullOp(const PcodeOp *op)=0;				///< Emit an SPULL operator
+  virtual void opBitrevOp(const PcodeOp *op)=0;				///< Emit a BITREV operator
+  virtual void opTzcountOp(const PcodeOp* op)=0;			///< Emit a TZCOUNT operator
   virtual string unnamedField(int4 off,int4 size);			///< Generate an artificial field name
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
