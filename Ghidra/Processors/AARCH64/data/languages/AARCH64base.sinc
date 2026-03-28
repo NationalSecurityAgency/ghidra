@@ -2830,6 +2830,7 @@ is b_3031=0b10 & b_2129=0b011001100 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 :ldar Rt_GPR64, addrReg
 is size.ldstr=3 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR64
 {
+	LOAcquire();
 	Rt_GPR64 = *addrReg;
 }
 
@@ -2841,6 +2842,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :ldar Rt_GPR32, addrReg
 is size.ldstr=2 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_1620=0b11111 & b_15=1 & b_1014=0b11111 & addrReg & Rt_GPR32 & Rt_GPR64
 {
+	LOAcquire();
 	Rt_GPR64 = zext(*:4 addrReg);
 }
 
@@ -2852,6 +2854,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_1620=0b11111 & b_15=1 &
 :ldarb Rt_GPR32, addrReg
 is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR32 & Rt_GPR64
 {
+	LOAcquire();
 	Rt_GPR64 = zext(*:1 addrReg);
 }
 
@@ -2863,6 +2866,7 @@ is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :ldarh Rt_GPR32, addrReg
 is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_1620=0b11111 & b_15=1 & b_1014=0b11111 & addrReg & Rt_GPR32 & Rt_GPR64
 {
+	LOAcquire();
 	Rt_GPR64 = zext(*:2 addrReg);
 }
 
@@ -2874,6 +2878,7 @@ is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_1620=0b11111 & b_15=1 &
 :ldaxp Rt_GPR64, Rt2_GPR64, addrReg
 is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=1 & Rt2_GPR64 & addrReg & Rt_GPR64
 {
+	LOAcquire();
 	local addrval1:8 = *(addrReg);
 	local addrval2:8 = *(addrReg+8);
 	Rt_GPR64 = addrval1;
@@ -2887,6 +2892,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=1 & Rt2_GPR64 & addr
 :ldaxp Rt_GPR32, Rt2_GPR32, addrReg
 is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_1620 & b_15=1 & Rt2_GPR32 & addrReg & Rt_GPR32 & Rt_GPR64 & Rt2_GPR64
 {
+	LOAcquire();
 	local addrval1:8 = zext(*:4(addrReg));
 	local addrval2:8 = zext(*:4(addrReg+4));
 	Rt_GPR64 = addrval1;
@@ -2901,6 +2907,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_1620 & b_15=1 & Rt2_GPR
 :ldaxr Rt_GPR64, addrReg
 is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR64
 {
+	LOAcquire();
 	Rt_GPR64 = *addrReg;
 }
 
@@ -2912,6 +2919,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :ldaxr Rt_GPR32, addrReg
 is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR32 & Rt_GPR64
 {
+	LOAcquire();
 	tmp:4 = *addrReg;
 	Rt_GPR64 = zext(tmp);
 }
@@ -2924,6 +2932,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :ldaxrb Rt_GPR32, addrReg
 is size.ldstr=0 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR32 & Rt_GPR64
 {
+	LOAcquire();
 	tmp:1 = *addrReg;
 	Rt_GPR64 = zext(tmp);
 }
@@ -2936,6 +2945,7 @@ is size.ldstr=0 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :ldaxrh Rt_GPR32, addrReg
 is size.ldstr=1 & b_2429=0x8 & b_23=0 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR32 & Rt_GPR64
 {
+	LOAcquire();
 	tmp:2 = *addrReg;
 	Rt_GPR64 = zext(tmp);
 }
@@ -5638,6 +5648,7 @@ is b_3031=0b11 & b_2329=0b0010001 & b_22=0 & b_21=0 & b_15=0 & aa_Xt & Rn_GPR64x
 is size.ldstr=3 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR64
 {
 	*addrReg = Rt_GPR64;
+	LORelease();
 }
 
 # C6.2.310 STLR page C6-1846 line 108821 MATCH x88808000/mask=xbfe08000
@@ -5649,6 +5660,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 is size.ldstr=2 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR32
 {
 	*addrReg = Rt_GPR32;
+	LORelease();
 }
 
 # C6.2.311 STLRB page C6-1848 line 108904 MATCH x08808000/mask=xffe08000
@@ -5660,6 +5672,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR32
 {
 	*addrReg = Rt_GPR32;
+	LORelease();
 }
 
 # C6.2.312 STLRH page C6-1849 line 108967 MATCH x48808000/mask=xffe08000
@@ -5671,6 +5684,7 @@ is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR32
 {
 	*addrReg = Rt_GPR32;
+	LORelease();
 }
 
 # C6.2.313 STLUR page C6-1850 line 109030 MATCH x99000000/mask=xbfe00c00
@@ -5680,6 +5694,7 @@ is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 is b_3031=0b10 & b_2129=0b011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
 {
 	*addr_SIMM9 = aa_Wt;
+	LORelease();
 }
 
 # C6.2.313 STLUR page C6-1850 line 109030 MATCH x99000000/mask=xbfe00c00
@@ -5689,6 +5704,7 @@ is b_3031=0b10 & b_2129=0b011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
 is b_3031=0b11 & b_2129=0b011001000 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 {
 	*addr_SIMM9 = aa_Xt;
+	LORelease();
 }
 
 # C6.2.314 STLURB page C6-1852 line 109129 MATCH x19000000/mask=xffe00c00
@@ -5699,6 +5715,7 @@ is b_3031=0b11 & b_2129=0b011001000 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 is b_2131=0b00011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
 {
 	*addr_SIMM9 = aa_Wt:1;
+	LORelease();
 }
 
 # C6.2.315 STLURH page C6-1854 line 109217 MATCH x59000000/mask=xffe00c00
@@ -5709,6 +5726,7 @@ is b_2131=0b00011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
 is b_2131=0b01011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
 {
 	*addr_SIMM9 = aa_Wt:2;
+	LORelease();
 }
 
 # C6.2.316 STLXP page C6-1856 line 109305 MATCH x88208000/mask=xbfe08000
@@ -5724,6 +5742,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=0 & b_21=1 & Rs_GPR32 & b_15=1 & Rt2_G
 	if (!check) goto <fail>;
 	*addrReg = Rt_GPR64;
 	*(addrReg + 4) = Rt2_GPR64;
+	LORelease();
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
@@ -5742,6 +5761,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=0 & b_21=1 & Rs_GPR32 & b_15=1 & Rt2_G
 	if (!check) goto <fail>;
 	*addrReg = Rt_GPR32;
 	*(addrReg + 4) = Rt2_GPR32;
+	LORelease();
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
@@ -5760,6 +5780,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=0 & b_21=0 & Rs_GPR32 & b_15=1 & addrR
 	check:1 = ExclusiveMonitorPass(addrReg, rsize);
 	if (!check) goto <fail>;
 	*addrReg = Rt_GPR64;
+	LORelease();
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
@@ -5778,6 +5799,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=0 & b_21=0 & Rs_GPR32 & b_15=1 & addrR
 	check:1 = ExclusiveMonitorPass(addrReg, rsize);
 	if (!check) goto <fail>;
 	*addrReg = Rt_GPR32;
+	LORelease();
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
@@ -5797,6 +5819,7 @@ is size.ldstr=0 & b_2429=0x8 & b_23=0 & L=0 & b_21=0 & Rs_GPR32 & b_15=1 & addrR
 	if (!check) goto <fail>;
 	local tmp:4 = Rt_GPR32;
 	*addrReg = tmp:1;
+	LORelease();
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
@@ -5816,6 +5839,7 @@ is size.ldstr=1 & b_2429=0x8 & b_23=0 & L=0 & b_21=0 & Rs_GPR32 & b_15=1 & addrR
 	if (!check) goto <fail>;
 	local tmp:4 = Rt_GPR32;
 	*addrReg = tmp:2;
+	LORelease();
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
