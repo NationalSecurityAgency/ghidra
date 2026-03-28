@@ -175,6 +175,7 @@ public:
   virtual ~Sleigh(void);				///< Destructor
   void reset(LoadImage *ld,ContextDatabase *c_db);	///< Reset the engine for a new program
   virtual void initialize(DocumentStorage &store);
+  virtual void initialize(istream& ifs);// Initialize the engine from an std::ifstream that's opened in binary mode, caller is responsible for opening and closing the stream
   virtual void registerContext(const string &name,int4 sbit,int4 ebit);
   virtual void setContextDefault(const string &nm,uintm val);
   virtual void allowContextSet(bool val) const;
