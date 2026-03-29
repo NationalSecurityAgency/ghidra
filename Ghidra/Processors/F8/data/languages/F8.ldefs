@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+    <!-- Generic F8: minimal pspec, only RESET vector -->
+    <language processor="F8"
+              endian="big"
+              size="16"
+              variant="default"
+              version="1.1"
+              slafile="F8.sla"
+              processorspec="F8.pspec"
+              id="F8:BE:16:default">
+        <description>Fairchild F8 / Mostek MK3870 (generic)</description>
+        <compiler name="default" spec="F8.cspec" id="default"/>
+    </language>
+
+    <!-- F3850 multi-chip CPU: 16-bit address, programmable interrupt vectors -->
+    <language processor="F8"
+              endian="big"
+              size="16"
+              variant="F3850"
+              version="1.1"
+              slafile="F8.sla"
+              processorspec="F3850.pspec"
+              id="F8:BE:16:F3850">
+        <description>Fairchild F3850 CPU (multi-chip F8, 16-bit address)</description>
+        <compiler name="default" spec="F8.cspec" id="default"/>
+    </language>
+
+    <!-- MK3870 single-chip: 12-bit address, fixed Timer+External vectors -->
+    <language processor="F8"
+              endian="big"
+              size="16"
+              variant="MK3870"
+              version="1.1"
+              slafile="F8.sla"
+              processorspec="MK3870.pspec"
+              id="F8:BE:16:MK3870">
+        <description>Mostek MK3870 single-chip (Timer + External ISR vectors)</description>
+        <compiler name="default" spec="F8.cspec" id="default"/>
+    </language>
+
+    <!-- F3870: Fairchild's version of MK3870, same vectors -->
+    <language processor="F8"
+              endian="big"
+              size="16"
+              variant="F3870"
+              version="1.1"
+              slafile="F8.sla"
+              processorspec="MK3870.pspec"
+              id="F8:BE:16:F3870">
+        <description>Fairchild F3870 single-chip (same as MK3870)</description>
+        <compiler name="default" spec="F8.cspec" id="default"/>
+    </language>
+
+    <!-- MK3873 single-chip with serial port: 5 interrupt vectors -->
+    <language processor="F8"
+              endian="big"
+              size="16"
+              variant="MK3873"
+              version="1.1"
+              slafile="F8.sla"
+              processorspec="MK3873.pspec"
+              id="F8:BE:16:MK3873">
+        <description>Mostek MK3873 single-chip with serial port (5 ISR vectors)</description>
+        <compiler name="default" spec="F8.cspec" id="default"/>
+    </language>
+
+</language_definitions>
