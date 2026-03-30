@@ -819,6 +819,18 @@ int4 PcodeOp::compareOrder(const PcodeOp *bop) const
   return 0;
 }
 
+/// This must be a CPUI_INT_MULT and the second operand must be a constant -1.
+/// \return \b true if \b this multipies by -1
+bool PcodeOp::verifyMultNegOne(void) const
+
+{
+  if (opcode->getOpcode() != CPUI_INT_MULT) return false;
+  const Varnode *in1 = getIn(1);
+  if (!in1->isConstant()) return false;
+  if (in1->getOffset() != calc_mask(in1->getSize())) return false;
+  return true;
+}
+
 /// \brief Determine if a Varnode is a leaf within the CONCAT tree rooted at the given Varnode
 ///
 /// The CONCAT tree is the maximal set of Varnodes that are all inputs to CPUI_PIECE operations,

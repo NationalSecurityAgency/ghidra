@@ -882,6 +882,7 @@ void Heritage::analyzeNewLoadGuards(void)
   for(iter=storeIter;iter!=storeGuard.end(); ++iter) {
     LoadGuard &guard( *iter );
     guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    guard.op->setAliasUpdate();		// Mark that alias information for the STORE has been changed
     if (guard.analysisState == 0)
       runFullAnalysis = true;
   }

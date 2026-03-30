@@ -5920,7 +5920,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleShift2Mult("analysis") );
 	actprop->addRule( new RuleShiftPiece("analysis") );
 	actprop->addRule( new RuleMultiCollapse("analysis") );
-	actprop->addRule( new RuleIndirectCollapse("analysis") );
+	actprop->addRule( new RuleAliasUpdate("analysis") );
 	actprop->addRule( new Rule2Comp2Mult("analysis") );
 	actprop->addRule( new RuleSub2Add("analysis") );
 	actprop->addRule( new RuleCarryElim("analysis") );

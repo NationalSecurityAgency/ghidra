@@ -103,6 +103,7 @@ class Funcdata {
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
+  static void markIndirectAliasUpdate(Varnode *vn);	///< Inform defining INDIRECT of update in alias status for given Varnode
   bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 fl,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
@@ -503,6 +504,8 @@ public:
   static int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist,bool allowOpRemoval);
   void opFlipInPlaceExecute(vector<PcodeOp *> &fliplist);
   bool opNormalizeFlip(PcodeOp *cbranch);
+  void opCollapseIndirectsForCopy(PcodeOp *copyOp);	///< Convert INDIRECTs associated with the given COPY op
+  void opCollapseIndirectsForAlias(PcodeOp *effectOp);	///< Eliminate INDIRECTs for addresses with no alias
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }
