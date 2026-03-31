@@ -37,6 +37,7 @@ import org.junit.*;
 
 import docking.*;
 import docking.action.DockingActionIf;
+import docking.actions.ActionBindingsDescriptor;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
@@ -887,10 +888,10 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JTable table = (JTable) getInstanceField("actionTable", panel);
 		@SuppressWarnings("unchecked")
-		RowObjectFilterModel<DockingActionIf> model =
-			(RowObjectFilterModel<DockingActionIf>) table.getModel();
+		RowObjectFilterModel<ActionBindingsDescriptor> model =
+			(RowObjectFilterModel<ActionBindingsDescriptor>) table.getModel();
 
-		DockingActionIf rowValue = model.getModelData().get(row);
+		ActionBindingsDescriptor rowValue = model.getModelData().get(row);
 
 		String keyBindingColumnValue =
 			(String) model.getColumnValueForRow(rowValue, 1 /* key binding column */);
@@ -917,10 +918,10 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JTable table = (JTable) getInstanceField("actionTable", panel);
 		@SuppressWarnings("unchecked")
-		RowObjectFilterModel<DockingActionIf> model =
-			(RowObjectFilterModel<DockingActionIf>) table.getModel();
+		RowObjectFilterModel<ActionBindingsDescriptor> model =
+			(RowObjectFilterModel<ActionBindingsDescriptor>) table.getModel();
 
-		DockingActionIf rowValue = model.getModelData().get(row);
+		ActionBindingsDescriptor rowValue = model.getModelData().get(row);
 
 		String keyBindingColumnValue =
 			(String) model.getColumnValueForRow(rowValue, 1 /* key binding column */);
@@ -1036,14 +1037,14 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	private int selectRowForAction(KeyBindingsPanel panel, String actionName, String actionOwner) {
 		final JTable table = (JTable) getInstanceField("actionTable", panel);
 		@SuppressWarnings("unchecked")
-		final RowObjectFilterModel<DockingActionIf> model =
-			(RowObjectFilterModel<DockingActionIf>) table.getModel();
+		final RowObjectFilterModel<ActionBindingsDescriptor> model =
+			(RowObjectFilterModel<ActionBindingsDescriptor>) table.getModel();
 
 		int actionRow = -1;
-		List<DockingActionIf> modelData = model.getModelData();
+		List<ActionBindingsDescriptor> modelData = model.getModelData();
 		int rowCount = modelData.size();
 		for (int i = 0; i < rowCount; i++) {
-			DockingActionIf rowData = modelData.get(i);
+			ActionBindingsDescriptor rowData = modelData.get(i);
 			String rowActionName =
 				(String) model.getColumnValueForRow(rowData, 0 /* action name column */);
 			if (rowActionName.equals(actionName)) {
