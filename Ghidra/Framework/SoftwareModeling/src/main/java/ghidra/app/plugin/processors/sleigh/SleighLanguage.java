@@ -70,6 +70,7 @@ public class SleighLanguage implements Language {
 	private int numSections = 0;					// Number of named sections for this language
 	private int alignment = 1;
 	private int defaultPointerWordSize = 1;		// Default wordsize to send down with pointer data-types
+	private OptionalInt maxInstructionLength = OptionalInt.empty();
 	private final SleighLanguageDescription description;
 	private ParallelInstructionLanguageHelper parallelHelper;
 	private SourceFileIndexer indexer;  //used to provide source file info for constructors
@@ -134,9 +135,10 @@ public class SleighLanguage implements Language {
 
 		SleighLanguageValidator.validatePspecFile(description.getSpecFile());
 
-		readInitialDescription();
-		// should addressFactory and registers initialization be done at construction time?
-		// for now we'll assume yes.
+		readInitialDescription(); // process pspec file
+
+		// Should addressFactory and registers initialization be done at construction time?
+		// For now we'll assume yes.
 		contextcache = new ContextCache();
 		
 		SleighLanguageFile langFile = description.getLanguageFile();
@@ -190,6 +192,12 @@ public class SleighLanguage implements Language {
 		instructProtoMap = new ConcurrentHashMap<>();
 
 		initParallelHelper();
+
+		int maxLength =
+			getPropertyAsInt(GhidraLanguagePropertyKeys.MAXIMUM_INSTRUCTION_LENGTH, -1);
+		if (maxLength > 0) {
+			maxInstructionLength = OptionalInt.of(maxLength);
+		}
 
 		long initElapsed = System.currentTimeMillis() - startTS;
 		Msg.debug(this, "Took %dms (%dms inside lock) to initialize language %s"
@@ -1134,6 +1142,11 @@ public class SleighLanguage implements Language {
 		catch (CompilerSpecNotFoundException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+
+	@Override
+	public OptionalInt getMaximumInstructionLength() {
+		return maxInstructionLength;
 	}
 
 	@Override
