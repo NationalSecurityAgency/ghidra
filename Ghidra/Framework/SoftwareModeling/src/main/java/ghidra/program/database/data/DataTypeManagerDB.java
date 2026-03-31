@@ -1283,14 +1283,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					resolvedDataType = resolveDataTypeNoSource(dataType);
 				}
 				else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
-					(sourceArchive.getArchiveType() == ArchiveType.PROGRAM ||
-						sourceArchive.getArchiveType() == ArchiveType.TEMPORARY)) {
-					// dataTypes from a program or temporary archive don't carry over their identity
+					!sourceArchive.getArchiveType().isValidSourceArchive()) {
+
+					// dataTypes from a invalid source (program, built-in, temporary) archive 
+					// don't carry over their identity
 					resolvedDataType = resolveDataTypeNoSource(dataType);
 				}
 				else {
 					resolvedDataType = resolveDataTypeWithSource(dataType);
 				}
+
 				cacheResolvedDataType(dataType, resolvedDataType);
 				if (resolvedDataType instanceof DataTypeDB) {
 					setCachedEquivalence((DataTypeDB) resolvedDataType, dataType);
@@ -4594,8 +4596,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private record DedupedConflicts(int processCnt, int replaceCnt) {
-	}
+	private record DedupedConflicts(int processCnt, int replaceCnt) {}
 
 	private DedupedConflicts doDedupeConflicts(DataType dataType) {
 
