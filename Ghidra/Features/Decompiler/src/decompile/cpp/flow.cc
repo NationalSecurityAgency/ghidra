@@ -38,6 +38,7 @@ FlowInfo::FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs
   inline_recursion = (set<Address> *)0;
   insn_count = 0;
   insn_max = ~((uint4)0);
+  baddata_count = 0;
   flowoverride_present = data.getOverride().hasFlowOverride();
 }
 
@@ -72,6 +73,7 @@ FlowInfo::FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs
     inline_recursion = (set<Address> *)0;
   insn_count = op2->insn_count;
   insn_max = op2->insn_max;
+  baddata_count = op2->baddata_count;
   flowoverride_present = data.getOverride().hasFlowOverride();
 }
 
@@ -80,6 +82,7 @@ void FlowInfo::clearProperties(void)
 {
   flags &= ~((uint4)(unimplemented_present|baddata_present|outofbounds_present));
   insn_count = 0;
+  baddata_count = 0;
 }
 
 /// For efficiency, this method assumes the given op can actually fall-thru.
@@ -442,9 +445,10 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
     }
   }
   catch(BadDataError &err) {
-    if ((flags & error_unimplemented)!=0)
+    if ((flags & error_baddata)!=0)
       throw err;		// rethrow
     else {
+      countBadData(err.explain);
       // Add infinite loop instruction
       step = 1;			// Pretend size 1
       artificialHalt(curaddr,PcodeOp::badinstruction);
@@ -539,6 +543,17 @@ void FlowInfo::handleOutOfBounds(const Address &fromaddr,const Address &toaddr)
   }
 }
 
+/// If the count exceeds the maximum allowable, an exception is thrown.
+/// \param errMsg is the error message associated with the current bad data
+void FlowInfo::countBadData(const string &errMsg)
+
+{
+  if (baddata_count >= glb->max_baddata) {
+    throw BadDataError("Bad instruction count exceeded:\n    ...\n    "+ errMsg);
+  }
+  baddata_count += 1;
+}
+
 /// The address at the top stack that still needs processing is popped.
 /// P-code is generated for instructions starting at this address until
 /// one no longer has fall-thru flow (or some other error occurs).
@@ -622,6 +637,7 @@ void FlowInfo::reinterpreted(const Address &addr)
   if ((flags & error_reinterpreted)!=0)
     throw LowlevelError(s.str());
 
+  countBadData(s.str());
   if ((flags & reinterpreted_present)==0) {
     flags |= reinterpreted_present;
     data.warningHeader(s.str());
