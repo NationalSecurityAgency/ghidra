@@ -236,8 +236,8 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		return null;
 	}
 
-	public static MemoryBlock getFirstGoSection(Program program, String... blockNames) {
-		for (String blockToSearch : blockNames) {
+	public static MemoryBlock getFirstGoSection(Program program, String... sectionNames) {
+		for (String blockToSearch : sectionNames) {
 			MemoryBlock memBlock = getGoSection(program, blockToSearch);
 			if (memBlock != null) {
 				return memBlock;
@@ -522,7 +522,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * {@return new {@link GoParamStorageAllocator} param storage allocator instance}
 	 */
 	public GoParamStorageAllocator newStorageAllocator() {
-		GoParamStorageAllocator storageAllocator = new GoParamStorageAllocator(program, goVer);
+		GoParamStorageAllocator storageAllocator = new GoParamStorageAllocator(regInfo, program);
 		return storageAllocator;
 	}
 
@@ -709,7 +709,12 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 			GoFuncDef snapshotFuncdef =
 				apiSnapshot.getFuncdef(symbolName.getStrippedSymbolString());
 			if (snapshotFuncdef != null) {
-				return createFuncDefFromApiSnapshot(symbolName, recvType, snapshotFuncdef);
+				try {
+					return createFuncDefFromApiSnapshot(symbolName, recvType, snapshotFuncdef);
+				}
+				catch (IOException e) {
+					// fail, fall thru to catch-all at bottom
+				}
 			}
 		}
 
@@ -1196,5 +1201,9 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 	public MemoryBlock getGoSection(String sectionName) {
 		return getGoSection(program, sectionName);
+	}
+
+	public MemoryBlock getFirstGoSection(String... sectionNames) {
+		return getFirstGoSection(program, sectionNames);
 	}
 }
