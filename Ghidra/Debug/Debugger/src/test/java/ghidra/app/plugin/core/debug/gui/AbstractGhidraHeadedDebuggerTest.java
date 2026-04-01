@@ -555,6 +555,9 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 			if (provider == null) {
 				ctx = new DefaultActionContext();
 			}
+			else {
+				ctx = provider.getActionContext(null);
+			}
 
 			ctx.setContextProvider(provider);
 
