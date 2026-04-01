@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,28 +135,26 @@ public class AddressFieldFactory extends FieldFactory {
 	private String getAddressString(CodeUnit cu) {
 		Address addr = cu.getMinAddress();
 		AddressSpace space = addr.getAddressSpace();
-		String text;
+		int minDigits = padZeros ? 16 : minHexDigits;
+		String addrText = addr.toString(false, minDigits);
+		if (displayUpperCase) {
+			addrText = addrText.toUpperCase();
+		}
+
 		if (displayBlockName) {
-			text = addr.toString(false, padZeros ? 16 : minHexDigits);
 			MemoryBlock block = cu.getProgram().getMemory().getBlock(addr);
 			if (block != null) {
-				if (displayUpperCase) {
-					text = text.toUpperCase();
-				}
-				return block.getName() + ":" + text;
+				return block.getName() + ":" + addrText;
 			}
 		}
-		text = addr.toString(space.showSpaceName(), padZeros ? 16 : minHexDigits);
-		if (displayUpperCase) {
-			int colonIdx = text.lastIndexOf(':');
-			if (colonIdx >= 0) {
-				text = text.substring(0, colonIdx + 1) + text.substring(colonIdx + 1).toUpperCase();
-			}
-			else {
-				text = text.toUpperCase();
-			}
+
+		String spaceText = "";
+		if (space.showSpaceName()) {
+			// this will be the space name followed by one or two colons
+			spaceText = space.toString();
 		}
-		return text;
+
+		return spaceText + addrText;
 	}
 
 	@Override
@@ -195,8 +193,7 @@ public class AddressFieldFactory extends FieldFactory {
 		}
 		else if (loc instanceof AddressFieldLocation) {
 			if (hasSamePath(lf, loc)) {
-				return new FieldLocation(index, fieldNum, 0,
-					((AddressFieldLocation) loc).getCharOffset());
+				return new FieldLocation(index, fieldNum, 0, loc.getCharOffset());
 			}
 		}
 		return null;

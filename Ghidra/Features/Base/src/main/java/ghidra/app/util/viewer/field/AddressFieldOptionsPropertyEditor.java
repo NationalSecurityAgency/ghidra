@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,7 +142,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		}
 
 		addressFieldOptionsWrappedOption = (AddressFieldOptionsWrappedOption) value;
-		setLocalValues(addressFieldOptionsWrappedOption);
+		setValuesFromOption(addressFieldOptionsWrappedOption);
 		firePropertyChange();
 	}
 
@@ -150,29 +150,30 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		return minDigitsField.getIntValue();
 	}
 
-	private void setLocalValues(AddressFieldOptionsWrappedOption addressPaddingOption) {
-		if (addressPaddingOption.showBlockName() != showBlocknameCheckbox.isSelected()) {
-			showBlocknameCheckbox.setSelected(addressPaddingOption.showBlockName());
+	private void setValuesFromOption(AddressFieldOptionsWrappedOption option) {
+		if (option.showBlockName() != showBlocknameCheckbox.isSelected()) {
+			showBlocknameCheckbox.setSelected(option.showBlockName());
 		}
 		boolean rightJust = justificationCombobox.getSelectedItem().equals("Right");
-		if (addressPaddingOption.rightJustify() != rightJust) {
-			justificationCombobox.setSelectedIndex(addressPaddingOption.rightJustify() ? 1 : 0);
+		if (option.rightJustify() != rightJust) {
+			justificationCombobox.setSelectedIndex(option.rightJustify() ? 1 : 0);
 		}
-		if (addressPaddingOption.padWithZeros() != padCheckBox.isSelected()) {
-			padCheckBox.setSelected(addressPaddingOption.padWithZeros());
+		if (option.padWithZeros() != padCheckBox.isSelected()) {
+			padCheckBox.setSelected(option.padWithZeros());
 		}
-		if (!Integer.toString(addressPaddingOption.getMinimumHexDigits()).equals(
-			minDigitsField.getText())) {
-			minDigitsField.setValue(addressPaddingOption.getMinimumHexDigits());
+		if (!Integer.toString(option.getMinimumHexDigits())
+				.equals(
+					minDigitsField.getText())) {
+			minDigitsField.setValue(option.getMinimumHexDigits());
 		}
 		boolean enabled = !padCheckBox.isSelected();
 		minDigitsField.setEnabled(enabled);
-		if (addressPaddingOption.displayUpperCase() != upperCaseCheckbox.isSelected()) {
-			upperCaseCheckbox.setSelected(addressPaddingOption.displayUpperCase());
+		if (option.displayUpperCase() != upperCaseCheckbox.isSelected()) {
+			upperCaseCheckbox.setSelected(option.displayUpperCase());
 		}
 	}
 
-	private AddressFieldOptionsWrappedOption cloneAddressPadValues() {
+	private AddressFieldOptionsWrappedOption createOptionFromValues() {
 		AddressFieldOptionsWrappedOption newOption = new AddressFieldOptionsWrappedOption();
 		newOption.setPadWithZeros(padCheckBox.isSelected());
 		newOption.setMinimumHexDigits(getMinNumberOfDigits());
@@ -194,7 +195,7 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 
 	@Override
 	public Object getValue() {
-		return cloneAddressPadValues();
+		return createOptionFromValues();
 	}
 
 	@Override
