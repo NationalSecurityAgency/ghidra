@@ -536,6 +536,22 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
   }
 }
 
+/// If the Varnode has descendants or is address forced, this method does nothing.
+/// Otherwise, the Varnode is destroyed as is its defining PcodeOp.  Any dead inputs to the PcodeOp are
+/// then destroyed recursively.
+/// \param vn is the Varnode to destroy
+void Funcdata::destroyVarnodeRecursive(Varnode *vn)
+
+{
+  if (vn->isAutoLive() || !vn->hasNoDescend()) return;
+  if (!vn->isWritten()) {
+    vbank.destroy(vn);
+    return;
+  }
+  vector<PcodeOp *> scratch;
+  opDestroyRecursive(vn->getDef(), scratch);
+}
+
 /// All p-code ops that read the Varnode are transformed so that they read
 /// a special constant instead (associate with unreachable block removal).
 /// \param vn is the given Varnode
@@ -888,6 +904,9 @@ void Funcdata::calcNZMask(void)
       if (!vn->isWritten()) {
 	if (vn->isConstant())
 	  vn->nzm = vn->getOffset();
+	else if (vn->isTypeLock() && vn->getType()->getMetatype() == TYPE_BOOL) {
+	  vn->nzm = 1;
+	}
 	else {
 	  vn->nzm = calc_mask(vn->getSize());
 	  if (vn->isSpacebase())

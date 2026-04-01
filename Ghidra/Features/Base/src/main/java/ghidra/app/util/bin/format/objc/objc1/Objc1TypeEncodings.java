@@ -248,7 +248,8 @@ public final class Objc1TypeEncodings {
 			}
 			case _C_SEL: {
 				buffer.deleteCharAt(0);
-				return createTypeDef("SEL");
+				return new TypedefDataType("SEL",
+					PointerDataType.getPointer(new CharDataType(), pointerSize));
 			}
 			case _C_CHR: {
 				buffer.deleteCharAt(0);

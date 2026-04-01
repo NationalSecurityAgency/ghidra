@@ -425,7 +425,8 @@ public class OptionalHeader implements StructConverter {
 
 		monitor.setMessage("Parsing exceptions...");
 		try {
-			dataDirectory[ndata] = new ExceptionDataDirectory(ntHeader, reader);
+			dataDirectory[ndata] = new ExceptionDataDirectory(ntHeader, reader,
+				processLoadConfig(ntHeader, log, monitor));
 		}
 		catch (RuntimeException re) {
 			if (PortableExecutable.DEBUG) {
@@ -879,6 +880,28 @@ public class OptionalHeader implements StructConverter {
 	 */
 	public DataDirectory[] getDataDirectories() {
 		return dataDirectory;
+	}
+
+	/**
+	 * Parses the {@link LoadConfigDataDirectory} and returns its {@link LoadConfigDirectory}
+	 * 
+	 * @param nt The {@link NTHeader}
+	 * @param log The log
+	 * @param monitor The monitor
+	 * @return the parsed {@link LoadConfigDirectory}
+	 * @throws IOException if an IO-related error occurred
+	 */
+	public LoadConfigDirectory processLoadConfig(NTHeader nt, MessageLog log, TaskMonitor monitor)
+			throws IOException {
+
+		if (IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG >= numberOfRvaAndSizes) {
+			return null;
+		}
+
+		BinaryReader r = reader.clone(startOfDataDirs + IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG * 8);
+		LoadConfigDataDirectory dataDir = new LoadConfigDataDirectory(nt, r);
+
+		return dataDir.parse() ? dataDir.getLoadConfigDirectory() : null;
 	}
 
 	@Override

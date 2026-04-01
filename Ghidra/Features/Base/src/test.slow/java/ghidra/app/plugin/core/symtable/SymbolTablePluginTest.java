@@ -38,6 +38,7 @@ import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.filter.*;
 import docking.widgets.table.*;
+import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
@@ -105,7 +106,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		viewRefAction = CollectionUtils.any(symbolReferencesActions);
 
 		deleteAction = getAction(plugin, "Delete Symbols");
-		makeSelectionAction = getAction(plugin, "Make Selection");
+		makeSelectionAction = getLocalAction(provider, "Make Selection");
 		setFilterAction = getAction(plugin, "Set Filter");
 		setPinnedAction = getAction(plugin, "Pin Symbol");
 		clearPinnedAction = getAction(plugin, "Clear Pinned Symbol");
@@ -479,6 +480,51 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(expected, symbolTable.getRowCount());
 		assertEquals("Symbol Table (Filter settings matched " + expected + " Symbols)",
 			plugin.getSymbolProvider().getName() + " " + plugin.getSymbolProvider().getSubTitle());
+	}
+
+	private void assertEnabled(DockingActionIf action, boolean expected) {
+
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
+		boolean actual = runSwing(() -> action.isEnabledForContext(context));
+		if (expected) {
+			assertTrue("Action should have been enabled: " + action.getName(), actual);
+		}
+		else {
+			assertFalse("Action should not have been enabled: " + action.getName(), actual);
+		}
+	}
+
+	@Test
+	public void testDeleteAll() throws Exception {
+
+		openProgram("sample");
+
+		//
+		// Test that we can delete all references to a symbol from the symbol table.
+		// 
+		DockingActionIf deleteAllAction = getAction(plugin, "Delete All References");
+		int selectedRows = symbolTable.getSelectedRowCount();
+		assertEquals(0, selectedRows);
+		assertEnabled(deleteAllAction, false);
+
+		// Select a symbol with references
+		int row = findRow("ghidra");
+		Rectangle rect = symbolTable.getCellRect(row, 0, true);
+		symbolTable.scrollRectToVisible(rect);
+		singleClick(symbolTable, row, 0);
+		assertEnabled(deleteAllAction, true);
+
+		Symbol symbol = getSymbol(row);
+		int startRefCount = symbol.getReferenceCount();
+		assertTrue(startRefCount > 0);
+
+		performAction(deleteAllAction, provider, false);
+
+		DialogComponentProvider dialog = waitForDialogComponent("Delete References?");
+		pressButtonByText(dialog, "Delete");
+		waitForTasks();
+
+		assertEquals(0, symbol.getReferenceCount());
 	}
 
 	@Test
@@ -1160,6 +1206,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		showReferencesTable();
 		ReferenceProvider referencesProvider = waitForComponentProvider(ReferenceProvider.class);
 
+		setReferenceType(referencesProvider, "References To");
+
 		// pick symbol with refs
 		selectRow("ghidra");
 
@@ -1167,7 +1215,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertReference("01004101", "00000052", true);
 
 		DockingActionIf deleteRefsAction =
-			getAction(tool, plugin.getName(), "Delete Reference");
+			getAction(tool, plugin.getName(), "Delete References");
 		assertFalse(isEnabled(deleteRefsAction, referencesProvider));
 
 		selectRef(referenceTable, "01004101", "00000052");
@@ -1181,6 +1229,17 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Helper methods
 //==================================================================================================
+
+	private void setReferenceType(ComponentProvider referencesProvider, String referenceType) {
+
+		ToggleDockingAction action = (ToggleDockingAction) getAction(plugin, referenceType);
+		performAction(action, referencesProvider, true);
+
+		Object refProvider = getInstanceField("refProvider", plugin);
+		ThreadedTableModel<?, ?> model =
+			(ThreadedTableModel<?, ?>) getInstanceField("referenceKeyModel", refProvider);
+		waitForTableModel(model);
+	}
 
 	@SuppressWarnings("unchecked")
 	private void selectRef(GTable table, String from, String to) throws Exception {
@@ -1731,11 +1790,11 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return (GhidraTableFilterPanel<Symbol>) getInstanceField("tableFilterPanel", panel);
 	}
 
-	private void singleClick(final JTable table, final int row, final int col) throws Exception {
+	private void singleClick(final JTable table, final int row, final int col) {
 		clickTableCell(table, row, col, 1);
 	}
 
-	private void doubleClick(final JTable table, final int row, final int col) throws Exception {
+	private void doubleClick(final JTable table, final int row, final int col) {
 		clickTableCell(table, row, col, 2);
 	}
 
@@ -1776,5 +1835,4 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		return -1;
 	}
-
 }

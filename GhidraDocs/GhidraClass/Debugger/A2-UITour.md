@@ -41,6 +41,10 @@ They are:
 * ![interrupt button](images/interrupt.png) **Interrupt**:
   Interrupt, suspend, pause, break, etc.
   This is equivalent to **`CTRL`-`C`** or `interrupt` in GDB.
+* ![step into button](images/stepinto.png) **Step Into**, ![step over button](images/stepover.png) **Step Over**, ![step out button](images/stepout.png) **Step Out**, ![step last button](images/steplast.png) **Step [Extended]**:
+  These buttons step in various ways.
+  In order, the equivalent commands in GDB are `stepi`, `nexti`, and `finish`.
+  Step [Extended] represents additional step commands supported by the back end. GDB provides **Advance** and **Return**.
 * ![kill button](images/kill.png) **Kill**:
   Kill, terminate, etc.
   This is equivalent to `kill` in GDB.
@@ -48,10 +52,6 @@ They are:
   Disconnect from the back-end debugger.
   Typically, this will also end the session.
   It is equivalent to `quit` in GDB.
-* ![step into button](images/stepinto.png) **Step Into**, ![step over button](images/stepover.png) **Step Over**, ![step out button](images/stepout.png) **Step Out**, ![step last button](images/steplast.png) **Step [Extended]**:
-  These buttons step in various ways.
-  In order, the equivalent commands in GDB are `stepi`, `nexti`, and `finish`.
-  Step [Extended] represents additional step commands supported by the back end. GDB provides **Advance** and **Return**.
 
 ### Windows
 

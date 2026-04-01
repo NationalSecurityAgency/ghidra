@@ -331,14 +331,11 @@ public class GoApiSnapshotGeneratorTest extends AbstractGenericTest {
 	 * Build a frankenstein goroot directory using the guts of a go install (liveGoRoot) and
 	 * the src directory from a specific tagged version of a go git repo directory.
 	 * 
-	 * @param goRepoDir path to a golang git repo
-	 * @param liveGoRoot path to an installed golang instance
 	 * @param ver go version to checkout from the git repo and copy to the new directory
 	 * @return path to newly created goroot directory (under the workDir)
 	 * @throws IOException if failure
 	 */
-	File createVersionedGoRoot(GoVer ver)
-			throws IOException {
+	File createVersionedGoRoot(GoVer ver) throws IOException {
 		String verTagName = getGoRepoTagName(GOLANG_REPO_DIR, ver);
 
 		execGitCmd(GOLANG_REPO_DIR, null, "checkout", "-q", verTagName);

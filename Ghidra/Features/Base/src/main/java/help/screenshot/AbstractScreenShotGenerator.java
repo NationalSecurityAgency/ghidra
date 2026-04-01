@@ -63,8 +63,8 @@ import ghidra.app.util.viewer.field.AddressFieldFactory;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
-import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.listingpanel.ListingMarginProvider;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.plugintool.Plugin;
@@ -692,6 +692,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		Assert.assertNotNull("Did not find a dialog to capture for class: " + clazz,
 			dialogProvider);
 		JDialog dialog = (JDialog) getInstanceField("dialog", dialogProvider);
+		dialog.toFront();
 		waitForSwing();
 		paintFix(dialog);
 		runSwing(() -> generateImage(dialog));
@@ -702,7 +703,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		Assert.assertNotNull("Dialog cannot be null", provider);
 
 		JDialog dialog = (JDialog) getInstanceField("dialog", provider);
-
+		dialog.toFront();
 		paintFix(dialog);
 
 		runSwing(() -> generateImage(dialog));

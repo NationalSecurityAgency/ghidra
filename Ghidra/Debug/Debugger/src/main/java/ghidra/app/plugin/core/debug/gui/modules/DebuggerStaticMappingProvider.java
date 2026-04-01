@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,22 +24,21 @@ import java.util.Set;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
-import docking.widgets.table.CustomToStringCellRenderer;
+import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import docking.widgets.table.GTable;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.*;
+import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -55,16 +54,55 @@ import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		implements DebuggerProvider {
+
+	protected static final HexDefaultGColumnRenderer<BigInteger> LENGTH_RENDERER =
+		new HexDefaultGColumnRenderer<>();
+	protected static final HexDefaultGColumnRenderer<Long> SHIFT_RENDERER =
+		new HexDefaultGColumnRenderer<>();
+	protected static final SettingsDefinition[] SETTINGS_DEFS =
+		new SettingsDefinition[] { FormatSettingsDefinition.DEF_HEX, };
+
 	protected enum StaticMappingTableColumns
 		implements EnumeratedTableColumn<StaticMappingTableColumns, StaticMappingRow> {
-		DYNAMIC_ADDRESS("Dynamic Address", Address.class, StaticMappingRow::getTraceAddress),
+		DYNAMIC_ADDRESS("Dynamic Address", Address.class, StaticMappingRow::getTraceAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
 		STATIC_URL("Static Program", URL.class, StaticMappingRow::getStaticProgramURL),
-		STATIC_ADDRESS("Static Address", String.class, StaticMappingRow::getStaticAddress),
-		LENGTH("Length", BigInteger.class, StaticMappingRow::getBigLength),
-		SHIFT("Shift", Long.class, StaticMappingRow::getShift),
+		STATIC_ADDRESS("Static Address", String.class, StaticMappingRow::getStaticAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		LENGTH("Length", BigInteger.class, StaticMappingRow::getBigLength) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return LENGTH_RENDERER;
+			}
+
+			@Override
+			public SettingsDefinition[] getSettingsDefinitions() {
+				return SETTINGS_DEFS;
+			}
+		},
+		SHIFT("Shift", Long.class, StaticMappingRow::getShift) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return SHIFT_RENDERER;
+			}
+
+			@Override
+			public SettingsDefinition[] getSettingsDefinitions() {
+				return SETTINGS_DEFS;
+			}
+		},
 		LIFESPAN("Lifespan", Lifespan.class, StaticMappingRow::getLifespan);
 
 		private final String header;
@@ -79,6 +117,11 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		}
 
 		@Override
+		public String getHeader() {
+			return header;
+		}
+
+		@Override
 		public Class<?> getValueClass() {
 			return cls;
 		}
@@ -87,15 +130,10 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		public Object getValueOf(StaticMappingRow row) {
 			return getter.apply(row);
 		}
-
-		@Override
-		public String getHeader() {
-			return header;
-		}
 	}
 
 	protected static class MappingTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
-			StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
+		StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
 
 		public MappingTableModel(PluginTool tool) {
 			super(tool, "Mappings", StaticMappingTableColumns.class,
@@ -224,19 +262,6 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		String namePrefix = "Static Mappings";
 		mappingTable.setAccessibleNamePrefix(namePrefix);
 		mappingFilterPanel.setAccessibleNamePrefix(namePrefix);
-
-		TableColumnModel columnModel = mappingTable.getColumnModel();
-		TableColumn dynAddrCol =
-			columnModel.getColumn(StaticMappingTableColumns.DYNAMIC_ADDRESS.ordinal());
-		dynAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		TableColumn statAddrCol =
-			columnModel.getColumn(StaticMappingTableColumns.STATIC_ADDRESS.ordinal());
-		statAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		TableColumn lengthCol = columnModel.getColumn(StaticMappingTableColumns.LENGTH.ordinal());
-		// TODO: Get user column settings working. Still, should default to Hex
-		lengthCol.setCellRenderer(CustomToStringCellRenderer.MONO_BIG_HEX);
-		TableColumn shiftCol = columnModel.getColumn(StaticMappingTableColumns.SHIFT.ordinal());
-		shiftCol.setCellRenderer(CustomToStringCellRenderer.MONO_LONG_HEX);
 	}
 
 	protected void createActions() {

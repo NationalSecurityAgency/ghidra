@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,15 +133,23 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testInvalidName() throws Exception {
-		setText(toolNameField, "My Test Tool", true);
+
 		JLabel statusLabel = (JLabel) findComponentByName(saveDialog, "statusLabel");
-		String msg = statusLabel.getText();
-		pressButtonByText(saveDialog, "Cancel");
-		while (saveDialog.isVisible()) {
-			Thread.sleep(5);
-		}
+
+		setText(toolNameField, "My Test Tool", true);
 		waitForSwing();
-		assertEquals("Name cannot have spaces.", msg);
+		String msg = statusLabel.getText();
+		assertEquals("Name cannot have spaces", msg);
+
+		setText(toolNameField, ".MyTestTool", true);
+		waitForSwing();
+		msg = statusLabel.getText();
+		assertEquals("Name cannot start with a '.'", msg);
+
+		setText(toolNameField, "My`Tool`", true);
+		waitForSwing();
+		msg = statusLabel.getText();
+		assertEquals("Invalid character in name: '`'", msg);
 	}
 
 	@Test

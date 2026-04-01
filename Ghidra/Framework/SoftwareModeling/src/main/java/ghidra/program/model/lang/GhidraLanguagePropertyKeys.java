@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,6 +88,16 @@ public final class GhidraLanguagePropertyKeys {
 	 */
 	public static final String EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS =
 		"emulateInstructionStateModifierClass";
+
+	/**
+	 * USEROP_LIBS is a string property that indicates keys for matching one or more
+	 * {@code PcodeUseropLibaryFactory}s, which will be composed to form the library of custom
+	 * userop implementations available to an emulator. The default is empty. NOTE: This is
+	 * <em>not</em> the name of a class, but a comma-separated list of IDs. Each factory is also
+	 * tagged with a list of IDs. If any ID matches, then that factory is given a chance to
+	 * contribute userops.
+	 */
+	public static final String USEROP_LIBS = "useropLibs";
 
 	/**
 	 * PCODE_INJECT_LIBRARY_CLASS indicates the classname of a PcodeInjectLibrary implementation

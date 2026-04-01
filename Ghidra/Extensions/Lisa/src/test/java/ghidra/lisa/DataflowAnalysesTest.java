@@ -28,12 +28,12 @@ public class DataflowAnalysesTest extends AbstractLisaTest {
 	public void testAvailable() {
 		lisaOptions.setValueDomain(ValueDomainOption.DDATA_AVAILABLE);
 		runTest();
-		equalsAssert(valueOf("0040000b:1:register:00000000"), "register:00000000 < 5");   				 //SUB AX, 0x5
+		equalsAssert(valueOf("0040000b:1:register:00000000"), "register:00000000 < 5");   		 //SUB AX, 0x5
 		equalsAssert(valueOf("0040000b:5:register:00000000"),
-			"[register:00000000 == 0, register:00000000 INT_SLESS 0]");   								 //SUB AX, 0x5
+			"[register:00000000 < 0, register:00000000 == 0]");   								 //SUB AX, 0x5
 		equalsAssert(valueOf("0040000f:0:register:00000000"),
-			"[register:00000000 == 0, register:00000000 INT_AND 255, register:00000000 INT_SLESS 0]");   //MOV RDX, RAX
-		equalsAssert(valueOf("00400012:0:register:00000010"), null);  									 //RET
+			"[register:00000000 < 0, register:00000000 == 0, register:00000000 INT_AND 255]");   //MOV RDX, RAX
+		equalsAssert(valueOf("00400012:0:register:00000010"), null);  							 //RET
 	}
 
 	@Category(AbstractLisaTest.class)
@@ -42,8 +42,8 @@ public class DataflowAnalysesTest extends AbstractLisaTest {
 		lisaOptions.setValueDomain(ValueDomainOption.DDATA_CONSTPROP);
 		runTest();
 		equalsAssert(valueOf("0040000b:0:register:00000000"), "4");      //SUB AX, 0x5
-		equalsAssert(valueOf("0040000f:0:register:00000000"), "ffff");   //MOV RDX, RAX
-		equalsAssert(valueOf("00400012:0:register:00000010"), "ffff");   //RET
+		equalsAssert(valueOf("0040000f:0:register:00000000"), "-1");   	 //MOV RDX, RAX
+		equalsAssert(valueOf("00400012:0:register:00000010"), "-1");   	 //RET
 	}
 
 	@Category(AbstractLisaTest.class)

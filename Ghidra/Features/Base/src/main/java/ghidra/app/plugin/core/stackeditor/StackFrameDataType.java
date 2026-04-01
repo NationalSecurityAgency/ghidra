@@ -31,9 +31,11 @@ import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * {@link StackFrameDataType} provides a {@link Structure} representation of a {@link StackFrame}
@@ -419,19 +421,15 @@ class StackFrameDataType implements Structure {
 	 * @param name the new name. Null indicates the default name.
 	 * @return true if name change was successful, else false
 	 * @throws IndexOutOfBoundsException if specified ordinal is out of range
-	 * @throws IllegalArgumentException if name is invalid
+	 * @throws InvalidNameException if an invalid or duplicate name is specified
 	 */
-	public boolean setName(int ordinal, String name) throws IndexOutOfBoundsException {
+	public boolean setName(int ordinal, String name)
+			throws IndexOutOfBoundsException, InvalidNameException {
 
 		StackComponentWrapper comp = getComponent(ordinal);
 		String fieldName = comp.getFieldName();
 
-		if (name != null) {
-			name = name.trim();
-			if (name.length() == 0 || isDefaultName(name)) {
-				name = null;
-			}
-		}
+		name = checkNameChange(ordinal, name);
 
 		if (SystemUtilities.isEqual(name, fieldName)) {
 			return false;
@@ -445,15 +443,51 @@ class StackFrameDataType implements Structure {
 			comp = replace(comp.getOrdinal(), DataType.DEFAULT, 1, name, null);
 		}
 		else {
-			try {
-				comp.dtc.setFieldName(name);
-			}
-			catch (DuplicateNameException e) {
-				// FIXME: Inconsistent API / how should names be validated and on which methods?
-				return false;
-			}
+			comp.dtc.setFieldName(name);
 		}
 		return true;
+	}
+
+	/**
+	 * Preliminary check if a component may be renamed to the specified name.
+	 * 
+	 * @param ordinal the ordinal
+	 * @param name the new name. Null indicates the default name.
+	 * @return name which will actually be applied after cleaning
+	 * @throws IndexOutOfBoundsException if specified ordinal is out of range
+	 * @throws InvalidNameException if an invalid or duplicate name is specified
+	 */
+	public String checkNameChange(int ordinal, String name) throws InvalidNameException {
+		if (name != null) {
+			name = name.trim();
+			if (name.length() == 0 || isDefaultName(name)) {
+				name = null;
+			}
+		}
+
+		if (name != null) {
+			try {
+				SymbolUtilities.validateName(name);
+			}
+			catch (InvalidInputException e) {
+				throw new InvalidNameException(e.getMessage());
+			}
+		}
+
+		StackComponentWrapper comp = getComponent(ordinal);
+		String oldFieldName = comp.getFieldName();
+		if (SystemUtilities.isEqual(name, oldFieldName)) {
+			return oldFieldName;
+		}
+
+		SymbolTable symbolTable = function.getProgram().getSymbolTable();
+		if (name != null && (wrappedStruct.findComponent(name) != null ||
+			!symbolTable.getSymbols(name, function).isEmpty())) {
+			// Stack or symbol table storage has a conflicting variable or symbol with the same name
+			throw new InvalidNameException("Name conflicts with another variable: " + name);
+		}
+
+		return name;
 	}
 
 	/**
@@ -834,7 +868,7 @@ class StackFrameDataType implements Structure {
 		 * Unsupported method.  Must use {@link StackFrameDataType#setComment(int, String)}.
 		 */
 		@Override
-		public void setComment(String comment) {
+		public DataTypeComponent setComment(String comment) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -920,7 +954,7 @@ class StackFrameDataType implements Structure {
 		 * Unsupported method.  Must use {@link StackFrameDataType#setName(int, String)}.
 		 */
 		@Override
-		public void setFieldName(String fieldName) throws DuplicateNameException {
+		public DataTypeComponent setFieldName(String fieldName) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -1071,6 +1105,11 @@ class StackFrameDataType implements Structure {
 	}
 
 	@Override
+	public DataTypeComponent findComponent(String name) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void clearComponent(int ordinal) throws IndexOutOfBoundsException {
 		wrappedStruct.clearComponent(ordinal);
 	}
@@ -1192,6 +1231,19 @@ class StackFrameDataType implements Structure {
 		if (name != null && isDefaultName(name)) {
 			name = null;
 		}
+
+		if (name != null) {
+			try {
+				SymbolUtilities.validateName(name);
+			}
+			catch (InvalidInputException e) {
+				throw new IllegalArgumentException(e.getMessage());
+			}
+		}
+
+		// NOTE: We don't check for duplicate name since this method is intended for stack
+		// frame internal use only where any required conflict check should already have been
+		// performed
 
 		DataTypeComponent dtc = wrappedStruct.replace(ordinal, dataType, length, name, comment);
 

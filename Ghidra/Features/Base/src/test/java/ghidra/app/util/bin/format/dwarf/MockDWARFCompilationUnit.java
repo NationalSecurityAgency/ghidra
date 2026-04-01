@@ -23,9 +23,9 @@ public class MockDWARFCompilationUnit extends DWARFCompilationUnit {
 
 	private int dieCount;
 
-	public MockDWARFCompilationUnit(MockDWARFProgram dwarfProgram, long startOffset, long endOffset,
+	public MockDWARFCompilationUnit(MockDIEContainer dieContainer, long startOffset, long endOffset,
 			int intSize, short version, byte pointerSize, int compUnitNumber) {
-		super(dwarfProgram, startOffset, endOffset, intSize, version, pointerSize,
+		super(dieContainer, startOffset, endOffset, intSize, version, pointerSize,
 			compUnitNumber, startOffset, null);
 	}
 

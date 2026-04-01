@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,8 +78,10 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 	@Override // overridden to get the size based upon this class's two components
 	protected Dimension getPreferredAlignmentSize() {
 		Dimension dimension = label.getPreferredSize();
-		int maxHeight = Math.max(dimension.height, component.getPreferredSize().height);
-		return new Dimension(dimension.width, maxHeight);
+		int labelWidth = dimension.width;
+		int labelHeight = dimension.height;
+		int maxHeight = Math.max(labelHeight, component.getPreferredSize().height);
+		return new Dimension(labelWidth, maxHeight);
 	}
 
 	public String getLabelText() {

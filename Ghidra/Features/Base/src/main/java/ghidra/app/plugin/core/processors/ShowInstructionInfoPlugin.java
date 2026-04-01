@@ -21,6 +21,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,16 +239,14 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			return null;
 		}
 
-		URL url = new File(filename).toURI().toURL();
-
+		URI uri = new File(filename).toURI();
 		String pageNumber = entry.getPageNumber();
 		if (pageNumber != null) {
 			// include manual page as query string (respected by PDF readers)
-			String fileNameAndPage = url.getFile() + "#page=" + pageNumber;
-			url = new URL(url.getProtocol(), null, fileNameAndPage);
+			String pageRef = "#page=" + pageNumber;
+			uri = uri.resolve(pageRef);
 		}
-
-		return url;
+		return uri.toURL();
 	}
 
 	ManualEntry locateManualEntry(ProgramActionContext context, Language language) {

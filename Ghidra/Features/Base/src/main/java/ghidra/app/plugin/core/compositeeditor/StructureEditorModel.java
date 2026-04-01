@@ -1009,12 +1009,7 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 
 			DataTypeComponent comp = getComponent(startRowIndex);
 			// Set the field name and comment the same as before
-			try {
-				comp.setFieldName(fieldName);
-			}
-			catch (DuplicateNameException exc) {
-				Msg.showError(this, null, null, null);
-			}
+			comp.setFieldName(fieldName);
 			comp.setComment(comment);
 
 			// Create any needed undefined data types.
@@ -1328,91 +1323,47 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 			else if (currentDataType instanceof Structure struct) {
 				numComps = struct.getNumComponents();
 				if (numComps > 0) {
-					// Remove the structure.
-					int currentOffset = currentComp.getOffset();
+
 
 					// TODO: may want to add this functionality into the API
 
-					Stack<DataTypeComponent> zeroDtcStack = new Stack<>();
-					int zeroStackOffset = -1;
-					int zeroStackOrdinal = -1;
-					int packedOrdinal = 0;
-
-					deleteComponent(rowIndex);
-
 					if (struct.isZeroLength()) {
+						deleteComponent(rowIndex); // remove zero-length structure component
 						return;
 					}
 
+					int currentOffset = currentComp.getOffset();
+					int nextOffset = currentComp.getEndOffset() + 1;
+
+					List<DataTypeComponent> zeroDtcStash = new ArrayList<>();
+					int packedOrdinal = 0;
+
 					if (rowIndex != 0 && !viewComposite.isPackingEnabled()) {
-						// Must consume any preceeding zero-length components at the same offset
-						// into the zeroDtcStack to prevent their movement on subsequent component
-						// inserts at the same offset
+						// Must stash zero-length components which occur after the structure 
+						// component to be unpacked so that we may preserve their placement
 						DataTypeComponent dtc =
-							viewComposite.getDefinedComponentAtOrAfterOffset(currentOffset);
-						if (dtc != null && dtc.getOffset() == currentOffset) {
-							// zero-length is assumed if offset matches
-							zeroStackOffset = 0;
-							int componentCount = viewComposite.getNumComponents();
-							while (dtc != null && dtc.getOffset() == currentOffset) {
-								int ordinal = dtc.getOrdinal();
-								zeroDtcStack.push(dtc);
-								viewComposite.delete(ordinal);
-								--componentCount;
-								dtc = ordinal < componentCount ? viewComposite.getComponent(ordinal)
-										: null;
-							}
+							viewComposite.getDefinedComponentAtOrAfterOffset(nextOffset);
+						while (dtc != null && dtc.getLength() == 0) {
+							// Stash zero-length component
+							zeroDtcStash.add(dtc);
+							viewComposite.delete(dtc.getOrdinal());
+							dtc =
+								viewComposite.getDefinedComponentAtOrAfterOffset(nextOffset);
 						}
 					}
+
+					deleteComponent(rowIndex); // remove structure component to be unpacked
 
 					// Add the structure's elements
 					for (DataTypeComponent dtc : struct.getDefinedComponents()) {
-
-						DataType compDt = dtc.getDataType();
-						int compLength = dtc.getLength();
-						int compOffset = dtc.getOffset();
-
-						if (compOffset != zeroStackOffset && !zeroDtcStack.isEmpty()) {
-							packedOrdinal += zeroDtcStack.size();
-							applyZeroDtcStack(viewComposite, currentOffset, componentOrdinal,
-								zeroDtcStack, zeroStackOffset, zeroStackOrdinal);
-						}
-
-						if (compLength == 0) {
-							// Defer adding zero-length component until after non-zero-length
-							// has been added
-							if (zeroStackOffset != compOffset) {
-								zeroStackOffset = compOffset;
-								zeroStackOrdinal = packedOrdinal;
-							}
-							zeroDtcStack.push(dtc);
-							continue;
-						}
-
-						if (!isPackingEnabled()) {
-							if (dtc.isBitFieldComponent()) {
-								BitFieldDataType bitfield = (BitFieldDataType) compDt;
-								viewComposite.insertBitFieldAt(currentOffset + compOffset,
-									compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
-									bitfield.getDeclaredBitSize(), dtc.getFieldName(),
-									dtc.getComment());
-							}
-							else {
-								viewComposite.insertAtOffset(currentOffset + compOffset, compDt,
-									compLength, dtc.getFieldName(), dtc.getComment());
-							}
-						}
-						else {
-							viewComposite.insert(componentOrdinal + packedOrdinal, compDt,
-								compLength, dtc.getFieldName(), dtc.getComment());
-						}
-
+						// NOTE: ordinal is only used when packing is enabled
+						insertComponent(dtc, componentOrdinal + packedOrdinal, currentOffset);
 						++packedOrdinal;
 					}
 
-					if (!zeroDtcStack.isEmpty()) {
-						applyZeroDtcStack(viewComposite, currentOffset, componentOrdinal,
-							zeroDtcStack, zeroStackOffset, zeroStackOrdinal);
+					if (!zeroDtcStash.isEmpty()) {
+						applyZeroDtcStack(viewComposite, componentOrdinal,
+							struct.getNumDefinedComponents(), zeroDtcStash);
 					}
 				}
 			}
@@ -1421,13 +1372,8 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 
 			DataTypeComponent comp = getComponent(rowIndex);
 			// Set the field name and comment the same as before if unspecified
-			try {
-				if (comp.getFieldName() == null) {
-					comp.setFieldName(fieldName);
-				}
-			}
-			catch (DuplicateNameException exc) {
-				Msg.showError(this, null, null, null);
+			if (comp.getFieldName() == null) {
+				comp.setFieldName(fieldName);
 			}
 			if (StringUtils.isBlank(comp.getComment())) {
 				comp.setComment(comment);
@@ -1437,19 +1383,45 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 		selectionChanged();
 	}
 
-	private void applyZeroDtcStack(Structure viewStruct, int unpackOffset, int unpackOrdinal,
-			Stack<DataTypeComponent> zeroDtcStack, int zeroStackOffset, int zeroStackOrdinal) {
-
-		while (!zeroDtcStack.isEmpty()) {
-			DataTypeComponent zeroDtc = zeroDtcStack.pop();
-			if (!isPackingEnabled()) {
-				viewStruct.insertAtOffset(unpackOffset + zeroStackOffset, zeroDtc.getDataType(), 0,
-					zeroDtc.getFieldName(), zeroDtc.getComment());
+	private void insertComponent(DataTypeComponent dtc, int ordinal, int baseOffset)
+			throws InvalidDataTypeException {
+		DataType compDt = dtc.getDataType();
+		int compLength = dtc.getLength();
+		int compOffset = dtc.getOffset();
+		if (!isPackingEnabled()) {
+			if (dtc.isBitFieldComponent()) {
+				BitFieldDataType bitfield = (BitFieldDataType) compDt;
+				viewComposite.insertBitFieldAt(baseOffset + compOffset,
+					compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
+					bitfield.getDeclaredBitSize(), dtc.getFieldName(),
+					dtc.getComment());
 			}
 			else {
-				viewStruct.insert(unpackOrdinal + zeroStackOrdinal, zeroDtc.getDataType(), 0,
-					zeroDtc.getFieldName(), zeroDtc.getComment());
+				viewComposite.insertAtOffset(baseOffset + compOffset, compDt,
+					compLength, dtc.getFieldName(), dtc.getComment());
 			}
+		}
+		else {
+			viewComposite.insert(ordinal, compDt,
+				compLength, dtc.getFieldName(), dtc.getComment());
+		}
+	}
+
+	private void applyZeroDtcStack(Structure viewStruct, int unpackOrdinal,
+			int unpackDefinedComponentCount, List<DataTypeComponent> zeroDtcStash)
+			throws InvalidDataTypeException {
+
+		int structLen = viewStruct.isZeroLength() ? 0 : viewStruct.getLength();
+
+		for (DataTypeComponent zeroDtc : zeroDtcStash) {
+			int offset = zeroDtc.getOffset();
+			if (!isPackingEnabled() && offset < structLen &&
+				viewStruct.getComponentAt(offset) == null) {
+				continue; // drop component if it conflicts
+			}
+			// NOTE: ordinal is only used when packing is enabled
+			int ordinal = zeroDtc.getOrdinal() - unpackOrdinal + unpackDefinedComponentCount;
+			insertComponent(zeroDtc, ordinal, 0);
 		}
 	}
 }

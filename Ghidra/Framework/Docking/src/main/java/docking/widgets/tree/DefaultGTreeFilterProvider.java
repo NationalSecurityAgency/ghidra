@@ -198,6 +198,17 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 		if (isFilterDisplayed) {
 			filterPanel.requestFocus();
 		}
+		else {
+			gTree.requestFocus();
+		}
+	}
+
+	@Override
+	public void close() {
+		if (isFilterDisplayed) {
+			doToggleVisibility();
+			gTree.requestFocus();
+		}
 	}
 
 	private void doToggleVisibility() {

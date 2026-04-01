@@ -17,15 +17,12 @@ package ghidra.framework.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
 import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
-
-import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
@@ -125,16 +122,7 @@ class LinkedGhidraFile implements LinkedDomainFile {
 	public URL getSharedProjectURL(String ref) {
 		URL folderURL = parent.getSharedProjectURL();
 		if (GhidraURL.isServerRepositoryURL(folderURL)) {
-			try {
-				String spec = fileName;
-				if (!StringUtils.isEmpty(ref)) {
-					spec += "#" + ref;
-				}
-				return new URL(folderURL, spec);
-			}
-			catch (MalformedURLException e) {
-				// ignore
-			}
+			return GhidraURL.resolve(folderURL, getLinkedPathname(), ref);
 		}
 		return null;
 	}

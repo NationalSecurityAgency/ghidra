@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.features.bsim.gui.search.results.apply;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 
 import docking.DockingWindowManager;
@@ -199,9 +198,9 @@ public abstract class AbstractBSimApplyTask extends ProgramTask {
 	private URL getRemoteProgramURL(BSimMatchResult result) {
 		String urlString = result.getExecutableURLString();
 		try {
-			return new URL(urlString);
+			return new URI(urlString).toURL();
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			error("Bad URL: " + urlString, result);
 		}
 		return null;

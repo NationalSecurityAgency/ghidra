@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +17,18 @@ package ghidra.app.util;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.Objects;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
+import docking.widgets.OptionDialog;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import ghidra.util.exception.DuplicateNameException;
 
 public class EditFieldNameDialog extends DialogComponentProvider {
 
@@ -77,36 +77,39 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 	@Override
 	protected void okCallback() {
 
-		String newName = fieldName.getText().trim();
-
-		if (newName.equals(getCurrentFieldName())) {
+		String newName = InternalDataTypeComponent.cleanupFieldName(fieldName.getText());
+		if (Objects.equals(newName, dtComp.getDefaultFieldName())) {
+			newName = null;
+		}
+		if (Objects.equals(newName, dtComp.getFieldName())) {
 			close();
 			return;
 		}
 
-		boolean success = false;
+		DataType parent = dtComp.getParent();
+		if (newName != null && parent instanceof Composite composite &&
+			composite.findComponent(newName) != null) {
+
+			// Warn user and confirm rename when duplicate name is used
+			if (OptionDialog.OPTION_ONE != OptionDialog.showOptionDialog(getComponent(),
+				"Duplicate Field Name",
+				"Duplicate field name. Proceed with rename?",
+				"Rename!", OptionDialog.WARNING_MESSAGE)) {
+				return;
+			}
+		}
+
 		int txId = program.startTransaction("Edit Field Name");
 		try {
 			dtComp.setFieldName(newName);
-			DataType parent = dtComp.getParent();
-			if (parent != null) {
-				long timeNow = System.currentTimeMillis();
-				parent.setLastChangeTime(timeNow);
-			}
-			success = true;
-		}
-		catch (DuplicateNameException e) {
-			setStatusText(e.getMessage());
 		}
 		finally {
 			program.endTransaction(txId, true);
 		}
 
-		if (success) {
-			dtComp = null;
-			program = null;
-			close();
-		}
+		dtComp = null;
+		program = null;
+		close();
 	}
 
 	public void editField(DataTypeComponent dataTypeComponent, Program p) {

@@ -17,6 +17,7 @@ package ghidra.app.util.pdb.classtype;
 
 import java.util.*;
 
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.gclass.ClassID;
@@ -60,6 +61,7 @@ public abstract class VirtualBaseTable implements VBTable {
 		maxTableIndexSeen = -1;
 		entryByTableIndex = new HashMap<>();
 		baseOffsetByTableIndex = new HashMap<>();
+		addEntry(0, owner); // add self, which is not a virtual base
 	}
 
 	protected abstract VirtualBaseTableEntry getNewEntry(ClassID baseId);
@@ -155,11 +157,19 @@ public abstract class VirtualBaseTable implements VBTable {
 	}
 
 	/**
-	 * Returns the number of entries in the table
-	 * @return the number of entries
+	 * Returns the total number of entries in the table (self and virtual base)
+	 * @return the total number of entries
 	 */
-	public int getNumEntries() {
+	public int getTotalNumEntries() {
 		return entryByTableIndex.size();
+	}
+
+	/**
+	 * Returns the number of virtual base entries in the table
+	 * @return the number of virtual base entries
+	 */
+	public int getNumVirtualBaseEntries() {
+		return entryByTableIndex.size() - 1;
 	}
 
 	/**
@@ -221,24 +231,26 @@ public abstract class VirtualBaseTable implements VBTable {
 
 	/**
 	 * Returns the built data type for this vbtable for the current entries
-	 * @param dtm the data type manager
-	 * @param categoryPath category path for the table
 	 * @return the structure of the vbtable
 	 */
-	public Structure createDataType(DataTypeManager dtm, CategoryPath categoryPath) {
-		if (!isBuilt) { // what if we want to rebuild... what should we do?
-			build(dtm, categoryPath);
-		}
+	public Structure getDataType() {
 		return tableStructure;
 	}
 
-	private void build(DataTypeManager dtm, CategoryPath categoryPath) {
+	/**
+	 * Unlike vftables, we only create one vbtable for each table type.  The one table is usable
+	 * for both Decompiler pointer replacement as well as for laying down on vbtable location
+	 * in memory
+	 * @param dtm the data type manager
+	 * @param categoryPath the category path
+	 */
+	void build(DataTypeManager dtm, CategoryPath categoryPath) {
 		if (ptrOffsetInClass == null || maxTableIndexSeen == -1) {
 			tableStructure = null;
 			isBuilt = true;
 			return;
 		}
-		String name = ClassUtils.getSpecialVxTableName(ptrOffsetInClass);
+		String name = getVbTableName();
 		DataType defaultEntry = ClassUtils.getVbtDefaultEntry(dtm);
 		// Holding onto next line for now
 		//int entrySize = defaultEntry.getLength();
@@ -249,6 +261,7 @@ public abstract class VirtualBaseTable implements VBTable {
 		// Holding onto next line for now
 		//int tableSize = tableNumEntries * entrySize;
 		StructureDataType dt = new StructureDataType(categoryPath, name, 0, dtm);
+		dt.setDescription(ClassUtils.createVxTableDescriptionOffsetTag(ptrOffsetInClass));
 		int masterOrdinal = 0;
 		for (Map.Entry<Integer, VirtualBaseTableEntry> mapEntry : entryByTableIndex.entrySet()) {
 			// Note that entrie's tableIndex is based at 1 instead of 0
@@ -258,8 +271,20 @@ public abstract class VirtualBaseTable implements VBTable {
 				dt.add(defaultEntry, "", "");
 				masterOrdinal++;
 			}
-			String comment = entry.getClassId().getSymbolPath().toString();
-			dt.add(defaultEntry, "", comment); // we could add a comment here
+			ClassID id = entry.getClassId();
+			String memberName = "offset_" + id.getSymbolPath().getName();
+			Composite c = ClassUtils.getSelfBaseType(dtm, id);
+			if (c == null) {
+				c = ClassUtils.getSelfBaseType(dtm, id);
+			}
+			if (c != null) {
+				DataTypePath dtp = c.getDataTypePath();
+				String comment = dtp.toString();
+				dt.add(defaultEntry, memberName, comment);
+			}
+			else {
+				dt.add(defaultEntry, memberName, "");
+			}
 			masterOrdinal++;
 		}
 		while (masterOrdinal < tableNumEntries) {
@@ -269,8 +294,33 @@ public abstract class VirtualBaseTable implements VBTable {
 		dt.align(defaultEntry.getAlignedLength());
 		dt.setToDefaultPacking();
 		tableStructure = (Structure) dtm.resolve(dt, null);
-		//System.out.println(tableStructure.toString());
 		isBuilt = true;
+	}
+
+	private String getVbTableName() {
+		StringBuilder builder = new StringBuilder();
+		for (ClassID id : parentage) {
+			if (!builder.isEmpty()) {
+				builder.append("'s_");
+			}
+			builder.append(id.getSymbolPath());
+		}
+		if (builder.isEmpty()) {
+			builder.insert(0, "vbtable");
+		}
+		else {
+			builder.insert(0, "vbtable{for_");
+			builder.append("}");
+		}
+		return builder.toString();
+	}
+
+	/**
+	 * Returns the symbol path for this table
+	 * @return the symbol path
+	 */
+	public SymbolPath getVbtSymbolPath() {
+		return new SymbolPath(owner.getSymbolPath(), getVbTableName());
 	}
 
 }

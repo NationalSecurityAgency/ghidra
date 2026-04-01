@@ -17,18 +17,57 @@
 import os
 import sys
 
+cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
+target = os.getenv('OPT_TARGET_IMG')
+args = os.getenv('OPT_TARGET_ARGS')
+initdir = os.getenv('OPT_TARGET_DIR')
+
+
+def parse_parameters():
+    global cxn, target, args, initdir
+    argc = len(sys.argv)
+    if argc == 1:
+        return True
+    if argc >= 3:
+        cxn = sys.argv[1]
+        target = sys.argv[2]
+        os.environ['OPT_X64DBG_EXE'] = sys.argv[3]
+        if argc > 4:
+            initdir = sys.argv[4]
+        else:
+            initdir = "."
+        if argc > 5:
+            args = sys.argv[5]
+        else:
+            args = ""
+        return True
+    print("Error: expected (cxn, target, initdir, ...)")
+    return False
+
 
 def append_paths():
     sys.path.append(
         f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
-    from gmodutils import ghidra_module_pypath
-    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
-    sys.path.append(ghidra_module_pypath())
+    try:
+        from gmodutils import ghidra_module_pypath
+        sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+        sys.path.append(ghidra_module_pypath())
+    except Exception as e:
+        pass
 
 
 def main():
+    global cxn, target, args, initdir
     append_paths()
+    if parse_parameters() is False:
+        return
+    
     # Delay these imports until sys.path is patched
+    try:
+        import ghidraxdbg
+    except Exception as e:
+        print(e)
+        exit(253)
     from ghidraxdbg import commands as cmd
     from ghidraxdbg.hooks import on_state_changed
     from ghidraxdbg.util import dbg
@@ -37,10 +76,7 @@ def main():
     global repl
     repl = cmd.repl
 
-    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-    args = os.getenv('OPT_TARGET_ARGS')
-    initdir = os.getenv('OPT_TARGET_DIR')
-    target = os.getenv('OPT_TARGET_IMG')
+    cmd.ghidra_trace_connect(cxn)
 
     cmd.ghidra_trace_create(target, args=args, initdir=initdir, start_trace=False)
 
@@ -52,11 +88,11 @@ def main():
     cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()   
 
-    cmd.ghidra_trace_txstart()
-    if target is None or target == "":
-        cmd.ghidra_trace_put_available()
-    else:
-        cmd.ghidra_trace_put_all()
+    with cmd.open_tracked_tx("PutAll"):
+        if target is None or target == "":
+            cmd.ghidra_trace_put_available()
+        else:
+            cmd.ghidra_trace_put_all()
 
     cmd.repl()
 
@@ -65,5 +101,7 @@ if __name__ == '__main__':
     try:
         main()
     except SystemExit as x:
+        if x.code == 253:
+            exit(253)
         if x.code != 0:
             print(f"Exited with code {x.code}")

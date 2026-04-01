@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package help.screenshot;
 
-import java.awt.Component;
-import java.awt.Window;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -38,6 +37,7 @@ import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.jython.JythonScriptProvider;
 import ghidra.util.HelpLocation;
+import ghidra.util.datastruct.LRUSet;
 
 public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator {
 
@@ -234,30 +234,33 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testScriptQuickLaunchDialog() {
 
+		addRecentScripts("HelloWorldScript.java");
+
 		DockingActionIf action = getAction(tool, "Script Quick Launch");
 		performAction(action, false);
 		ScriptSelectionDialog dialog = waitForDialogComponent(ScriptSelectionDialog.class);
 
 		JTextField textField = findComponent(dialog.getComponent(), JTextField.class);
-		triggerText(textField, "Hello*Pop");
+		triggerText(textField, "Hello");
 
-		// note: textField is an instance of DropDownSelectionTextField
-		waitFor(() -> (Window) getInstanceField("matchingWindow", textField));
-
-		JComponent component = dialog.getComponent();
-		Window dataTypeDialog = windowForComponent(component);
-		Window[] popUpWindows = dataTypeDialog.getOwnedWindows();
-
-		List<Component> dataTypeWindows = new ArrayList<>(Arrays.asList(popUpWindows));
-		dataTypeWindows.add(dataTypeDialog);
-
-		captureComponents(dataTypeWindows);
+		waitForSwing();
+		captureDialog(dialog);
 		closeAllWindows();
 	}
 
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void addRecentScripts(String... names) {
+		GhidraScriptComponentProvider provider = getProvider(GhidraScriptComponentProvider.class);
+		@SuppressWarnings("unchecked")
+		LRUSet<String> recents = (LRUSet<String>) getInstanceField("recentScripts", provider);
+		for (String name : names) {
+			recents.add(name);
+		}
+		waitForSwing(); // flush the thread cache
+	}
 
 	private void collapse(final GTree tree, final String nodeName) {
 		runSwing(() -> {

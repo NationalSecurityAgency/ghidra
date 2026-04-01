@@ -21,6 +21,20 @@
 	<img src="help/shared/arrow.gif" border="0"> <b>Bytes: ...</b> menu.</p>
 	
 	<p>The following paragraphs describe the Byte Viewer.</p>
+	
+	<h2>Boundaries</h2>
+		<p>The Byte Viewer creates boundaries between memory blocks. Whenever a memory block
+		boundary is encountered, the Byte Viewer will display a line of dots to indicate the
+		transition to a new memory block. Since the Byte Viewer shows multiple addresses on a line, 
+		the block may start or end at some position other than the start of the line. In this case 
+		any value positions on a line that are not part of the current block are blank.</p> 
+		<p>One special
+		case is when a multi-byte value spans adjacent memory blocks, the value that spans the
+		blocks is shown with the block that it starts in. To indicate that the value spans blocks,
+		it is displayed in a different color, which by default, is gray.</p>
+		<p>Also, note that when a block starts somewhere other than the beginning of the line, the
+		address shows the address of the first byte in the block, regardless of what position it
+		starts at.</p>
 
 	<h2><a name="ToggleFormatAction"></a><a name="formats"></a>Data Formats</h2>
 		<blockquote>

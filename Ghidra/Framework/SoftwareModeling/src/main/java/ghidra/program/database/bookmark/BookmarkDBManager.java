@@ -103,7 +103,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				int typeId = (int) rec.getKey();
 				BookmarkTypeDB type =
 					new BookmarkTypeDB(typeId, rec.getString(BookmarkTypeDBAdapter.TYPE_NAME_COL));
-				type.setHasBookmarks(true);
+				type.setHasBookmarks(bookmarkAdapter.hasTable(typeId));
 				typesByName.put(type.getTypeString(), type);
 				typesArray.put(typeId, type);
 			}
@@ -208,9 +208,11 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 			typesArray.put(typeId, bmt);
 		}
 		if (create && !bmt.hasBookmarks()) {
+
+			// Ensure that both type record and bookmarks table exists
 			bookmarkTypeAdapter.addType(bmt.getTypeId(), bmt.getTypeString());
-			bmt.setHasBookmarks(true);
 			bookmarkAdapter.addType(bmt.getTypeId());
+			bmt.setHasBookmarks(true);
 
 			// fire event
 			program.setObjChanged(ProgramEvent.BOOKMARK_TYPE_ADDED, bmt, null, null);

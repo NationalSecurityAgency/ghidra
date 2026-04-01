@@ -98,7 +98,7 @@ public class BSimClientFactory {
 			// "ghidra://host/repo?service=bsim"
 			// String repositoryURL = "ghidra://" + ghidraURL.getAuthority() + "?service=bsim";
 
-			// Currenly all we do is assume that the BSim server is a PostgreSQL server
+			// Currently, all we do is assume that the BSim server is a PostgreSQL server
 			// on the same host and with the same repo name as the ghidra server
 			repositoryURL = "postgresql://" + url.getHost();		// Just use the hostname
 		}

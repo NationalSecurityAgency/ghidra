@@ -20,9 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to represent the <code>IMAGE_BASE_RELOCATION</code>
@@ -66,23 +70,35 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
 	/**
 	 * Names of the available base relocations.
 	 */
-    public final static String [] TYPE_STRINGS = {
-                        "ABSOLUTE",             // 0
-                        "HIGH",                 // 1
-                        "LOW",                  // 2
-                        "HIGHLOW",              // 3
-                        "HIGHADJ",              // 4
-                        "MIPS_JMPADDR",         // 5
-                         "???6",
-                         "???7",
-                         "???8",
-                        "IA64_IMM64",           // 9
-                        "DIR64",                // 10
-    };
+	public final static String[] TYPE_STRINGS = {
+		"ABSOLUTE",
+		"HIGH",
+		"LOW",
+		"HIGHLOW",
+		"HIGHADJ",
+		"MIPS_JMPADDR",
+		"RESERVED",
+		"THUMB_MOV32",
+		"RISCV_LOW12S",
+		"MIPS_JMPADDR16",
+		"DIR64"
+	};
 
     private int virtualAddress;
     private int sizeOfBlock;
     private List<TypeOffset> typeOffsetList = new ArrayList<TypeOffset>();
+
+	public BaseRelocation(BinaryReader reader) throws IOException {
+		virtualAddress = reader.readNextInt();
+		sizeOfBlock = reader.readNextInt();
+
+		int len = (sizeOfBlock - IMAGE_SIZEOF_BASE_RELOCATION) / BinaryReader.SIZEOF_SHORT;
+
+		for (int i = 0; i < len; ++i) {
+			short typeOffset = reader.readNextShort();
+			typeOffsetList.add(new TypeOffset(typeOffset));
+		}
+	}
 
 	BaseRelocation(BinaryReader reader, int index) throws IOException {
          virtualAddress = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
@@ -139,12 +155,22 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
         return typeOffsetList.size();
     }
 
+	/**
+	 * Returns the {@link TypeOffset}
+	 *
+	 * @param index the ith relocation
+	 * @return the {@link TypeOffset} of the relocation
+	 */
+	public TypeOffset getTypeOffset(int index) {
+		return typeOffsetList.get(index);
+	}
+
     /**
-     * Returns the lower 12 bits of the offset.
-     *
-     * @param index the ith relocation
-     * @return int the offset of the relocation
-     */
+	 * Returns the lower 12 bits of the offset.
+	 *
+	 * @param index the ith relocation
+	 * @return the offset of the relocation
+	 */
     public int getOffset(int index) {
         return typeOffsetList.get(index).offset;
     }
@@ -153,19 +179,51 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
 	 * Returns the upper 4 bits of the offset.
 	 *
 	 * @param index the ith relocation
-	 * @return int the type of the relocation
-,	 */
+	 * @return the type of the relocation
+	 */
     public int getType(int index) {
         return typeOffsetList.get(index).type;
     }
+
+	public String getName(int type) {
+		return (type >= 0 && type < TYPE_STRINGS.length) ? TYPE_STRINGS[type] : "<UNKNOWN TYPE>";
+    }
+
+	public void markup(Program program, Address addr, boolean isBinary, TaskMonitor monitor,
+			MessageLog log, NTHeader ntHeader) throws DuplicateNameException, IOException {
+//		ReferenceManager refMgr = program.getReferenceManager();
+//		Listing listing = program.getListing();
+//		Address imageBase = program.getImageBase();
+		DataType dt = toDataType();
+		PeUtils.createData(program, addr, dt, log);
+		addr = addr.add(dt.getLength());
+
+		for (TypeOffset typeOffset : typeOffsetList) {
+            if (monitor.isCancelled()) {
+                return;
+            }
+			DataType typeOffsetDt = typeOffset.toDataType();
+			PeUtils.createData(program, addr, typeOffsetDt, log);
+			
+//			if (typeOffset.typeOffset != 0) {
+//				refMgr.addMemoryReference(addr, imageBase.add(virtualAddress + typeOffset.offset),
+//					RefType.DATA, SourceType.IMPORTED, 0);
+//				listing.setComment(addr, CommentType.EOL, getName(typeOffset.type));
+//			}
+//			else {
+//				listing.setComment(addr, CommentType.EOL, "padding");
+//			}
+
+			addr = addr.add(typeOffsetDt.getLength());
+        }
+	}
 
 	@Override
     public DataType toDataType() throws DuplicateNameException {
         StructureDataType struct = new StructureDataType(NAME, 0);
 
-        struct.add(DWORD,"VirtualAddress",null);
+		struct.add(DWORD, "VirtualAddress", null);
         struct.add(DWORD,"SizeOfBlock",null);
-        struct.add(new ArrayDataType(WORD, typeOffsetList.size(), WORD.getLength()),"TypeOffset",null);
 
         struct.setCategoryPath(new CategoryPath("/PE"));
 
@@ -188,7 +246,7 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
 		return bytes;
 	}
 
-	private class TypeOffset {
+	public class TypeOffset implements StructConverter {
 		short typeOffset;
 		int type;
 		int offset;
@@ -203,6 +261,22 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
 			this.typeOffset = (short)(((type&0xf) << 12) | (offset & 0xfff));
 			this.type = type;
 			this.offset = offset;
+		}
+
+		@Override
+		public DataType toDataType() throws DuplicateNameException, IOException {
+//			StructureDataType struct = new StructureDataType("TypeOffset", 4);
+//			struct.setPackingEnabled(true);
+//			try {
+//				struct.addBitField(WORD, 12, "Offset", null);
+//				struct.addBitField(WORD, 4, "Type", null);
+//			}
+//			catch (InvalidDataTypeException e) {
+//				throw new IOException(e);
+//			}
+//			struct.setCategoryPath(new CategoryPath("/PE"));
+//			return struct;
+			return WORD;
 		}
 	}
 }

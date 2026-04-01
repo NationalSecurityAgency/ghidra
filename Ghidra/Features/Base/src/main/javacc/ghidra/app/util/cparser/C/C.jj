@@ -520,35 +520,54 @@ public class CParser {
     }
     
 
-    private DataType allocateEnumDT(Token t, ArrayList<EnumMember> list) {
-    	String enumName = (t != null ? t.image : ("enum_" + cnt++));
-    	
-    	// get the normal enum size, which is an int
-    	// TODO: allow for packing of enum to smallest value with either dataOrganization, or packing flag
-        int normalEnumLen = (dtMgr != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
+    private DataType allocateEnumDT(Token t, Declaration underlyingTypeDecl, ArrayList<EnumMember> list, boolean isPacked) {
+        String enumName = (t != null ? t.image : ("enum_" + cnt++));
+        int defaultSize = (dtMgr != null && dtMgr.getDataOrganization() != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
+        int initialEnumSize = defaultSize;
         
-        // create an initial enum and add all new members
-        EnumDataType enumDT= new EnumDataType(getCurrentCategoryPath(), enumName, 8, dtMgr);
+        if (underlyingTypeDecl != null) {
+            DataType resolvedUnderlyingType = underlyingTypeDecl.getDataType();
+            if (resolvedUnderlyingType == null) {
+                addNearParseMessage("Error: Enum '" + enumName + "' has undefined underlying type '" +
+                                    underlyingTypeDecl.getName() + "'. Using default integer size (" + defaultSize + ").");
+            } else {
+                int typeLength = resolvedUnderlyingType.getLength();
+                if (typeLength == 1 || typeLength == 2 || typeLength == 4 || typeLength == 8) {
+                    initialEnumSize = typeLength;
+                } else {
+                        addNearParseMessage("Warning: Enum '" + enumName + "' specified underlying type '" +
+                                            resolvedUnderlyingType.getDisplayName() +
+                                            "' has a non-standard length (" + typeLength +
+                                            "). Enums should have a length of 1, 2, 4, or 8. Using default integer size (" + defaultSize + ").");
+                }
+
+                if (!(resolvedUnderlyingType instanceof AbstractIntegerDataType)) {
+                    addNearParseMessage("Warning: Enum '" + enumName + "' has underlying type '" +
+                                        resolvedUnderlyingType.getDisplayName() +
+                                        "' which is not a standard C integer or char type. Behavior may be unexpected.");
+                }
+            }
+        }
+
+        EnumDataType enumDT = new EnumDataType(getCurrentCategoryPath(), enumName, initialEnumSize, dtMgr);
         if (list != null) {
             for (EnumMember member : list) {
                 try {
-                        enumDT.add(member.name, member.value);
+                    enumDT.add(member.name, member.value);
                 } catch (IllegalArgumentException exc) {
                     addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
                 }
             }
-            // get the minimum length to represent the values and resize if too big
-            int minLen = enumDT.getMinimumPossibleLength();
-            if (minLen > normalEnumLen) {
-                enumDT.setLength(minLen);
-            } else {
-                enumDT.setLength(normalEnumLen);
-            }
-        } else {
-            // length doesn't really matter, forward declaration with no values
-            enumDT.setLength(normalEnumLen);
         }
-        
+
+        int minLen = enumDT.getMinimumPossibleLength();
+        int finalEnumLength;
+        if (underlyingTypeDecl == null && isPacked) {
+            finalEnumLength = minLen;
+        } else {
+            finalEnumLength = Math.max(minLen, initialEnumSize);
+        }
+        enumDT.setLength(finalEnumLength);
         return addDef(enums, enumDT.getName(), enumDT);
     }
 
@@ -1088,11 +1107,11 @@ SKIP :
 TOKEN :
 {
     <INTEGER_LITERAL : 
-        <DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        <DECIMAL_LITERAL> ("u"|"U")? ("ll"|"LL"|"l"|"L")? (("i"|"I") ("8"|"16"|"32"|"64"|"128"))?
         |
-        <HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        <HEX_LITERAL> ("u"|"U")? ("ll"|"LL"|"l"|"L")? (("i"|"I") ("8"|"16"|"32"|"64"|"128"))?
         |
-        <OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        <OCTAL_LITERAL> ("u"|"U")? ("ll"|"LL"|"l"|"L")? (("i"|"I") ("8"|"16"|"32"|"64"|"128"))?
     >
     |
     <#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
@@ -1228,7 +1247,7 @@ TOKEN :
     |
     <UNALIGNED : "__unaligned" >
     |
-    <PACKED : "__packed" >
+    <PACKED : ("__packed" | "__packed__" | "packed") >
     |
     <ATTRIBUTE : "__attribute" (["_"])* >
     |
@@ -1862,7 +1881,7 @@ Declaration TypeQualifier(Declaration dec) : {}
       <EXTENSION> |
       <STATIC> |
       ( BasedSpec() ) |
-      <PACKED> |
+      <PACKED> { dec.addQualifier(PACKED); } |
       <UNALIGNED> |
       ( DeclSpec(dec) )
     )
@@ -2301,23 +2320,33 @@ DataType EnumSpecifier() : {
     Token t= null;
     DataType dt;
     ArrayList<EnumMember> list;
-    Declaration dec = new Declaration();
+    Declaration attributeDecl = new Declaration();
+    Declaration typeDecl = null;
+    boolean isPacked = false;
 }
 {
     <ENUM> 
+    [ LOOKAHEAD(2) AttributeSpecList(attributeDecl) ]
     (
-        LOOKAHEAD(3)
-        [AttributeSpecList(dec)] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
+        LOOKAHEAD(4)
+        [ t= <IDENTIFIER> ]
+        [ LOOKAHEAD(2) ":" typeDecl= TypeName() ]
+        "{" list= EnumeratorList() "}"
+        [ LOOKAHEAD(2) AttributeSpecList(attributeDecl) ]
         {
-            dt = allocateEnumDT(t, list);
+            isPacked = attributeDecl.getQualifiers().contains(PACKED);
+            dt = allocateEnumDT(t, typeDecl, list, isPacked);
         }
         |
         t= <IDENTIFIER>
+        [ LOOKAHEAD(2) ":" typeDecl= TypeName() ]
+        [ LOOKAHEAD(2) AttributeSpecList(attributeDecl) ]
         {
             dt= getEnumDef(t.image);
             // not defined yet, define an empty one
             if (dt == null) {
-            	dt = allocateEnumDT(t, null);
+                isPacked = attributeDecl.getQualifiers().contains(PACKED);
+                dt = allocateEnumDT(t, typeDecl, null, isPacked);
             }
         }
     )
@@ -3136,37 +3165,44 @@ Object Constant() : {
     (
         t = <INTEGER_LITERAL>
         {
-            String sval = t.image;
-            if (sval.endsWith("i8") || sval.endsWith("I8")) {
+            String sval = t.image.toLowerCase();
+            if (sval.endsWith("i8")) {
                 sval = sval.substring(0,sval.length()-2);
             }
-            else if (sval.endsWith("i16") || sval.endsWith("I16")) {
+            else if (sval.endsWith("i16")) {
                 sval = sval.substring(0,sval.length()-3);
             }
-            else if (sval.endsWith("i32") || sval.endsWith("I32")) {
+            else if (sval.endsWith("i32")) {
                 sval = sval.substring(0,sval.length()-3);
             }
-            else if (sval.endsWith("i64") || sval.endsWith("I64")) {
+            else if (sval.endsWith("i64")) {
                 sval = sval.substring(0,sval.length()-3);
+            }
+            else if (sval.endsWith("i128")) {
+                sval = sval.substring(0,sval.length()-4);
             }
             
-            if (sval.endsWith("ull") || sval.endsWith("ULL")) {
+            if (sval.endsWith("ull")) {
                 sval = sval.substring(0,sval.length()-3);
             }
-            else if (sval.endsWith("ll") || sval.endsWith("LL")) {
+            else if (sval.endsWith("ll")) {
                 sval = sval.substring(0,sval.length()-2);
             }
-            else if (sval.endsWith("ul") || sval.endsWith("UL")) {
+            else if (sval.endsWith("ul")) {
                 sval = sval.substring(0,sval.length()-2);
             }
-            else if (sval.endsWith("l") || sval.endsWith("L")) {
+            else if (sval.endsWith("l")) {
                 sval = sval.substring(0,sval.length()-1);
             }
-            else if (sval.endsWith("u") || sval.endsWith("U")) {
+            else if (sval.endsWith("u")) {
                 sval = sval.substring(0,sval.length()-1);
             }
-            if (sval.startsWith("0x") || sval.startsWith("0X")) {
+            if (sval.startsWith("0x")) {
                 BigInteger bigConst = new BigInteger(sval.substring(2), 16);           
+                obj = Long.valueOf(bigConst.longValue());
+            }
+            else if (sval.startsWith("0")) {
+                BigInteger bigConst = new BigInteger(sval, 8);           
                 obj = Long.valueOf(bigConst.longValue());
             }
             else {

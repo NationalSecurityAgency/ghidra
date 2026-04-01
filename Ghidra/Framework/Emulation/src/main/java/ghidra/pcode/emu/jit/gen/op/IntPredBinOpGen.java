@@ -171,8 +171,8 @@ public interface IntPredBinOpGen<T extends JitBinOp> extends BinOpGen<T> {
 			JitCodeGenerator<THIS> gen, T op, JitBlock block, Scope scope) {
 		JitType lType = gen.resolveType(op.l(), op.lType());
 		JitType rType = gen.resolveType(op.r(), op.rType());
-		assert rType == lType;
-		return new LiveOpResult(switch (lType) {
+		JitType uType = JitType.unify(lType, rType);
+		return new LiveOpResult(switch (uType) {
 			case IntJitType t -> em
 					.emit(gen::genReadToStack, localThis, op.l(), t, ext())
 					.emit(gen::genReadToStack, localThis, op.r(), t, rExt())

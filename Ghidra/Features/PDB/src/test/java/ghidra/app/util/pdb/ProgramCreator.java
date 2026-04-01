@@ -105,11 +105,13 @@ abstract public class ProgramCreator {
 		ClassFieldAttributes.get(Access.PRIVATE, Property.BLANK);
 
 	protected static CppCompositeType createStruct(DataTypeManager dtm, String name, int size) {
-		Composite composite = new StructureDataType(CategoryPath.ROOT, name, 0, dtm);
+		List<String> parts = SymbolPathParser.parse(name);
+		CategoryPath path = CategoryPath.ROOT.extend(parts);
+		Composite composite = new StructureDataType(path.getParent(), path.getName(), 0, dtm);
 		SymbolPath symbolPath = new SymbolPath(name);
 		String mangledName = createMangledName(name, ClassKey.STRUCT);
-		return CppCompositeType.createCppStructType(CategoryPath.ROOT, symbolPath, composite, name,
-			mangledName, size);
+		return CppCompositeType.createCppStructType(CategoryPath.ROOT, symbolPath, composite,
+			symbolPath.getName(), mangledName, size);
 	}
 
 	protected static String createMangledName(String className, ClassKey key) {

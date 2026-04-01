@@ -267,7 +267,7 @@ public class HeadlessAnalyzer {
 			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
 		}
 
-		if (GhidraURL.isLocalProjectURL(ghidraURL)) {
+		if (GhidraURL.isLocalURL(ghidraURL)) {
 			Msg.error(this,
 				"Ghidra URL command form does not supported local project URLs (ghidra:/path...)");
 			return;
@@ -1028,6 +1028,7 @@ public class HeadlessAnalyzer {
 
 		if (abortProcessing) {
 			Msg.info(this, "Processing aborted as a result of pre-script.");
+			mgr.dispose();
 			return !deleteProgram;
 		}
 
@@ -1058,6 +1059,7 @@ public class HeadlessAnalyzer {
 
 						// If no further scripts, just return the current program disposition
 						if (options.postScripts.isEmpty()) {
+							mgr.dispose();
 							return !deleteProgram;
 						}
 
@@ -1125,6 +1127,7 @@ public class HeadlessAnalyzer {
 
 		}
 
+		mgr.dispose();
 		return !deleteProgram;
 	}
 
@@ -1222,7 +1225,6 @@ public class HeadlessAnalyzer {
 
 			if (options.commit) {
 
-				AutoAnalysisManager.getAnalysisManager(program).dispose();
 				program.release(this);
 				program = null;
 
@@ -1255,7 +1257,6 @@ public class HeadlessAnalyzer {
 		finally {
 
 			if (program != null) {
-				AutoAnalysisManager.getAnalysisManager(program).dispose();
 				program.release(this);
 				program = null;
 			}
@@ -1415,7 +1416,7 @@ public class HeadlessAnalyzer {
 		return p;
 	}
 
-	private boolean checkOverwrite(Loaded<Program> loaded) throws IOException {
+	private boolean checkOverwrite(Loaded<? extends DomainObject> loaded) throws IOException {
 		DomainFolder folder = project.getProjectData().getFolder(loaded.getProjectFolderPath());
 		if (folder == null) {
 			return true;
@@ -1543,7 +1544,7 @@ public class HeadlessAnalyzer {
 
 		// Perform the load.
 		// Note that loading 1 file may result in more than 1 thing getting loaded.
-		LoadResults<Program> loadResults = null;
+		LoadResults<? extends DomainObject> loadResults = null;
 		try {
 			loadResults = ProgramLoader.builder()
 					.source(fsrl)
@@ -1554,37 +1555,40 @@ public class HeadlessAnalyzer {
 					.compiler(options.compilerSpec)
 					.loaders(options.loaderClass)
 					.loaderArgs(options.loaderArgs)
-					.load();
+					.loadAll();
 
 			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
 
-			// Make sure we are allowed to save ALL programs to the project.  If not, save none and
-			// fail.
+			// Make sure we are allowed to save ALL domain objects to the project.
+			// If not, save none and fail.
 			if (!options.readOnly) {
-				for (Loaded<Program> loaded : loadResults) {
+				for (Loaded<? extends DomainObject> loaded : loadResults) {
 					if (!checkOverwrite(loaded)) {
 						return false;
 					}
 				}
 			}
 
-			// Check if there are defined memory blocks in the primary program.
-			// Abort if not (there is nothing to work with!).
-			Loaded<Program> primary = loadResults.getPrimary();
-			if (primary.check(p -> p.getMemory().getAllInitializedAddressSet().isEmpty())) {
-				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " + fsrl);
-				return false;
-			}
-
-			// Analyze the primary program, and determine if we should save.
-			// TODO: Analyze non-primary programs (GP-2965).
-			Program primaryProgram = primary.getDomainObject(this);
-			boolean doSave;
+			boolean doSave = !options.readOnly;
+			Loaded<? extends DomainObject> primary = loadResults.getPrimary();
+			DomainObject primaryDomainObject = primary.getDomainObject(this);
 			try {
-				doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
+				if (primaryDomainObject instanceof Program primaryProgram) {
+					// Check if there are defined memory blocks in the primary program.
+					// Abort if not (there is nothing to work with!).
+					if (primaryProgram.getMemory().getAllInitializedAddressSet().isEmpty()) {
+						Msg.error(this,
+							"REPORT: Error: No memory blocks were defined for file " + fsrl);
+						return false;
+					}
+
+					// Analyze the primary program, and determine if we should save.
+					// TODO: Analyze non-primary programs (GP-2965).
+					doSave = analyzeProgram(fsrl.toString(), primaryProgram) && doSave;
+				}
 			}
 			finally {
-				primaryProgram.release(this);
+				primaryDomainObject.release(this);
 			}
 
 			// The act of marking the program as temporary by a script will signal
@@ -1605,8 +1609,8 @@ public class HeadlessAnalyzer {
 			}
 
 			// Save
-			for (Loaded<Program> loaded : loadResults) {
-				if (!loaded.check(Program::isTemporary)) {
+			for (Loaded<? extends DomainObject> loaded : loadResults) {
+				if (!loaded.check(DomainObject::isTemporary)) {
 					try {
 						DomainFile domainFile = loaded.save(TaskMonitor.DUMMY);
 						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)", loaded,
@@ -1630,11 +1634,8 @@ public class HeadlessAnalyzer {
 
 			// Commit changes
 			if (options.commit) {
-				for (Loaded<Program> loaded : loadResults) {
-					if (!loaded.check(Program::isTemporary)) {
-						if (loaded == primary) {
-							AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
-						}
+				for (Loaded<? extends DomainObject> loaded : loadResults) {
+					if (!loaded.check(DomainObject::isTemporary)) {
 						loaded.close(); // we need to close before committing
 						commitProgram(loaded.getSavedDomainFile());
 					}
@@ -1808,10 +1809,7 @@ public class HeadlessAnalyzer {
 		try {
 			tempProject = new HeadlessProject(getProjectManager(), locator);
 		}
-		catch (NotOwnerException e) {
-			throw new IOException(e);
-		}
-		catch (LockException e) {
+		catch (NotFoundException | NotOwnerException | LockException e) {
 			throw new IOException(e);
 		}
 
@@ -1852,7 +1850,7 @@ public class HeadlessAnalyzer {
 	private static class HeadlessProject extends DefaultProject {
 
 		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectLocator projectLocator)
-				throws NotOwnerException, LockException, IOException {
+				throws NotFoundException, NotOwnerException, LockException, IOException {
 			super(projectManager, projectLocator, false);
 			AppInfo.setActiveProject(this);
 		}

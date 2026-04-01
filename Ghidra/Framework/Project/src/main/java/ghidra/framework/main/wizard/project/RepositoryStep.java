@@ -20,6 +20,8 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.wizard.WizardModel;
 import docking.wizard.WizardStep;
 import ghidra.app.util.GenericHelpTopics;
@@ -77,10 +79,20 @@ public class RepositoryStep extends WizardStep<ProjectWizardData> {
 			if (repositoryName.length() == 0) {
 				return false;
 			}
-			if (!NamingUtilities.isValidProjectName(repositoryName)) {
-				setStatusMessage("Invalid project repository name");
+			if (StringUtils.isBlank(repositoryName)) {
+				setStatusMessage("Enter project repository name");
 				return false;
 			}
+
+			try {
+				NamingUtilities.checkName(repositoryName,
+					"Repository name");
+			}
+			catch (IllegalArgumentException e) {
+				setStatusMessage(e.getMessage());
+				return false;
+			}
+
 			if (List.of(repositoryNames).contains(repositoryName)) {
 				setStatusMessage("Repository " + repositoryName + " already exists");
 				return false;

@@ -16,6 +16,7 @@
 package docking.widgets.search;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -307,7 +308,11 @@ public class TextComponentSearchResults extends SearchResults {
 		try {
 			int start = location.getStartIndexInclusive();
 			int end = location.getEndIndexInclusive();
-			Rectangle startR = editorPane.modelToView2D(start).getBounds();
+			Rectangle2D start2d = editorPane.modelToView2D(start);
+			if (start2d == null) {
+				return; // not yet realized
+			}
+			Rectangle startR = start2d.getBounds();
 			Rectangle endR = editorPane.modelToView2D(end).getBounds();
 			endR.width += 20; // a little extra space so the view is not right at the text end
 			Rectangle union = startR.union(endR);
@@ -449,7 +454,7 @@ public class TextComponentSearchResults extends SearchResults {
 		}
 
 		Color c = location.isActive() ? activeHighlightColor : highlightColor;
-		HighlightPainter painter = new DefaultHighlightPainter(c);
+		HighlightPainter painter = new SearchResultsHighlightPainter(c);
 		int start = location.getStartIndexInclusive();
 		int end = location.getEndIndexInclusive() + 1; // +1 to make inclusive be exclusive
 		try {
@@ -463,6 +468,7 @@ public class TextComponentSearchResults extends SearchResults {
 
 	@Override
 	public void dispose() {
+
 		caretUpdater.dispose();
 
 		if (editorPane != null) {
@@ -557,7 +563,11 @@ public class TextComponentSearchResults extends SearchResults {
 			}
 
 			if (nonSearchDelegate) {
+				// Calling setHighlighter() will cause all old highlights to get removed.  We would
+				// like the non-search highlights to remain.  Grab them now and put them back after.
+				Highlight[] nonSearchHighlights = delegate.getHighlights();
 				editorPane.setHighlighter(delegate);
+				restoreNonSearchHighlights(nonSearchHighlights);
 			}
 			else {
 				editorPane.setHighlighter(null);
@@ -566,7 +576,30 @@ public class TextComponentSearchResults extends SearchResults {
 
 		@Override
 		public void install(JTextComponent c) {
+			Highlight[] nonSearchHighlights = delegate.getHighlights();
 			delegate.install(c);
+
+			// Calling delegate.install() will cause its existing highlights to get removed.  We 
+			// would like to keep them, so we have save and restore them.
+			restoreNonSearchHighlights(nonSearchHighlights);
+		}
+
+		private void restoreNonSearchHighlights(Highlight[] oldHighlights) {
+			for (Highlight hl : oldHighlights) {
+				int start = hl.getStartOffset();
+				int end = hl.getEndOffset();
+				HighlightPainter painter = hl.getPainter();
+				if (painter instanceof SearchResultsHighlightPainter) {
+					continue;
+				}
+				try {
+					delegate.addHighlight(start, end, painter);
+				}
+				catch (BadLocationException e) {
+					// shouldn't happen
+					Msg.error(this, "Could not add existing highlight", e);
+				}
+			}
 		}
 
 		@Override
@@ -599,7 +632,11 @@ public class TextComponentSearchResults extends SearchResults {
 
 		@Override
 		public void removeAllHighlights() {
-			delegate.removeAllHighlights();
+			// only remove our highlights, not any pre-existing client non-search highlights
+			for (TextComponentSearchLocation loc : searchLocations) {
+				Object tag = loc.getHighlightTag();
+				removeHighlight(tag);
+			}
 		}
 
 		@Override
@@ -611,6 +648,12 @@ public class TextComponentSearchResults extends SearchResults {
 		public Highlight[] getHighlights() {
 			return delegate.getHighlights();
 		}
+	}
 
+	// marker class
+	private class SearchResultsHighlightPainter extends DefaultHighlightPainter {
+		public SearchResultsHighlightPainter(Color c) {
+			super(c);
+		}
 	}
 }

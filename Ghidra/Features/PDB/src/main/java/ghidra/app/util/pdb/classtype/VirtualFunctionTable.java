@@ -23,6 +23,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
+import ghidra.util.InvalidNameException;
 
 public abstract class VirtualFunctionTable implements VFTable {
 
@@ -191,27 +192,29 @@ public abstract class VirtualFunctionTable implements VFTable {
 
 	/**
 	 * Returns the built data type for this vftable for the current entries
-	 * @param dtm the data type manager
-	 * @param categoryPath category path for the table
 	 * @return the structure of the vftable
 	 */
-	public Structure createDataType(DataTypeManager dtm, CategoryPath categoryPath) {
-		if (!isBuilt) { // what if we want to rebuild... what should we do?
-			build(dtm, categoryPath);
-		}
+	public Structure getDataType() {
 		return tableStructure;
 	}
 
-	private void build(DataTypeManager dtm, CategoryPath categoryPath) {
+	/**
+	 * Creates vftable type
+	 * @param dtm the data type manager
+	 * @param categoryPath the category path
+	 */
+	void build(DataTypeManager dtm, CategoryPath categoryPath) {
 		if (ptrOffsetInClass == null || maxTableIndexSeen == -1) {
 			tableStructure = null;
 			isBuilt = true;
 			return;
 		}
-		String name = ClassUtils.getSpecialVxTableName(ptrOffsetInClass);
-		DataType defaultEntry = ClassUtils.getVftDefaultEntry(dtm);
+		StringBuilder builder = new StringBuilder();
+		PointerDataType defaultEntry = ClassUtils.getVftDefaultEntry(dtm);
 		int entrySize = defaultEntry.getLength();
+		String name = getVfTableName();
 		StructureDataType dt = new StructureDataType(categoryPath, name, 0, dtm);
+		dt.setDescription(ClassUtils.createVxTableDescriptionOffsetTag(ptrOffsetInClass));
 		int masterOffset = 0;
 		for (Map.Entry<Integer, VirtualFunctionTableEntry> mapEntry : entriesByTableIndex
 				.entrySet()) {
@@ -219,16 +222,57 @@ public abstract class VirtualFunctionTable implements VFTable {
 			VFTableEntry tableEntry = mapEntry.getValue();
 			while (masterOffset < tableIndex) {
 				dt.add(defaultEntry, "", "");
+				builder.append(String.format("   %d\n", masterOffset));
 				masterOffset += entrySize;
 			}
-			dt.add(tableEntry.getFunctionPointer(), tableEntry.getOverridePath().toString(), "");
+			DataType pType = tableEntry.getFunctionPointer();
+			dt.add(pType, tableEntry.getOverridePath().getName(), "");
+			FunctionDefinition t = (FunctionDefinition) ((Pointer) pType).getDataType();
+			FunctionDefinitionDataType x = new FunctionDefinitionDataType(t);
+			//FunctionDefinitionDataType x = (FunctionDefinitionDataType) t.clone(null);
+			String n = tableEntry.getOverridePath().toString();
+			String fnNameSig;
+			try {
+				x.setName(n);
+				fnNameSig = x.getPrototypeString(false);
+				//fnNameSig = x.toString();
+			}
+			catch (InvalidNameException e) {
+				fnNameSig = n;
+			}
+			builder.append(String.format("   %d   %s\n", masterOffset, fnNameSig));
 			masterOffset += entrySize;
 		}
 		dt.align(defaultEntry.getAlignedLength());
 		dt.setToDefaultPacking();
 		tableStructure = (Structure) dtm.resolve(dt, null);
-		//System.out.println(tableStructure.toString());
 		isBuilt = true;
+	}
+
+	private String getVfTableName() {
+		StringBuilder builder = new StringBuilder();
+		for (ClassID id : parentage) {
+			if (!builder.isEmpty()) {
+				builder.append("'s_");
+			}
+			builder.append(id.getSymbolPath());
+		}
+		if (builder.isEmpty()) {
+			builder.insert(0, "vftable");
+		}
+		else {
+			builder.insert(0, "vftable{for_");
+			builder.append("}");
+		}
+		return builder.toString();
+	}
+
+	/**
+	 * Returns the symbol path for this table
+	 * @return the symbol path
+	 */
+	public SymbolPath getVftSymbolPath() {
+		return new SymbolPath(owner.getSymbolPath(), getVfTableName());
 	}
 
 }

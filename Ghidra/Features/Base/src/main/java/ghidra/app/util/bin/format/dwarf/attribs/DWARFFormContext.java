@@ -16,8 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.attribs;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
-import ghidra.app.util.bin.format.dwarf.DWARFProgram;
+import ghidra.app.util.bin.format.dwarf.*;
 
 /**
  * Context given to the {@link DWARFForm#readValue(DWARFFormContext)} method to enable it to
@@ -48,5 +47,9 @@ public record DWARFFormContext(BinaryReader reader, DWARFCompilationUnit compUni
 
 	DWARFProgram dprog() {
 		return compUnit.getProgram();
+	}
+
+	DIEContainer dieContainer() {
+		return compUnit.getDIEContainer();
 	}
 }

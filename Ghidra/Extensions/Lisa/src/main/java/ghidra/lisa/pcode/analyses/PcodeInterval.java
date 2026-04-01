@@ -413,6 +413,11 @@ public class PcodeInterval
 				MathNumber max = starting.interval.getHigh().max(eval.interval.getHigh());
 				yield new PcodeInterval(min, max);
 			}
+			case LogicalAnd op -> {
+				MathNumber min = starting.interval.getLow().max(eval.interval.getLow());
+				MathNumber max = starting.interval.getHigh().min(eval.interval.getHigh());
+				yield new PcodeInterval(min, max);
+			}
 			default -> throw new AssertionError();
 		};
 

@@ -15,9 +15,8 @@
  */
 package agent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -91,16 +90,24 @@ public abstract class AbstractRmiConnectorsTest
 		assertEquals("pip failed", 0, result);
 	}
 
+	protected boolean isWindows() {
+		return OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS;
+	}
+
 	protected PathIsFile chooseImage() {
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+		if (isWindows()) {
 			return new PathIsFile(Path.of("C:\\Windows\\notepad.exe"));
 		}
 		return new PathIsFile(Path.of("/bin/ls"));
 	}
 
+	protected String chooseImageToString() {
+		return chooseImage().path().toString();
+	}
+
 	protected PathIsFile findQemu(String bin) {
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-			return new PathIsFile(Path.of("C:\\msys64\\ucrt64\bin\\").resolve(bin));
+		if (isWindows()) {
+			return new PathIsFile(Path.of("C:\\msys64\\ucrt64\\bin\\").resolve(bin));
 		}
 		return new PathIsFile(Path.of(bin));
 	}

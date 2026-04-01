@@ -154,5 +154,15 @@
     </localrange>
   </prototype>
   </default_proto>
-    
+  
+  <callotherfixup targetop="setISAMode">
+    <pcode incidentalcopy="true">
+      <input name="newMode"/>
+      <!-- NOP -->
+      <body><![CDATA[
+        v0 = v0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
 </compiler_spec>

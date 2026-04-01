@@ -15,6 +15,7 @@
  */
 package docking.action;
 
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -102,6 +103,9 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 		// map standard keystroke to action
 		doAddKeyBinding(provider, action, keyStroke);
+
+		// map workaround keystroke to action
+		fixupAltGraphKeyStrokeMapping(provider, action, keyStroke);
 	}
 
 	public String validateActionKeyBinding(DockingActionIf dockingAction, KeyStroke ks) {
@@ -144,6 +148,39 @@ public class KeyBindingsManager implements PropertyChangeListener {
 	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
 		doAddKeyBinding(provider, action, keyStroke, keyStroke);
+	}
+
+	private void fixupAltGraphKeyStrokeMapping(ComponentProvider provider, DockingActionIf action,
+			KeyStroke keyStroke) {
+
+		KeyStroke altGraphKs = maybeGenerateAltGraphKeyStroke(keyStroke);
+		if (altGraphKs != null) {
+			doAddKeyBinding(provider, action, altGraphKs, keyStroke);
+		}
+	}
+
+	/**
+	 * Some operating systems allow the left and right Alt keys to be mapped separately.  Some users
+	 * find it convenient to be able to use both Alt keys for a single key binding.
+	 * @param keyStroke the key stroke
+	 * @return a new key stroke that uses the AltGraph key or null if not appropriate
+	 */
+	private KeyStroke maybeGenerateAltGraphKeyStroke(KeyStroke keyStroke) {
+		if (!DockingUtils.isCombineAltKeysEnabled()) {
+			return null;
+		}
+
+		// special case
+		int modifiers = keyStroke.getModifiers();
+		if ((modifiers & InputEvent.ALT_DOWN_MASK) == InputEvent.ALT_DOWN_MASK) {
+			// Also register the Alt binding with the 'Alt Graph' mask.  Some operating systems 
+			// allow the left and right Alt keys to be mapped separately.  Some users find it 
+			// convenient to be able to use both Alt keys for a single key binding.
+			modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
+			return KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, false);
+		}
+
+		return null;
 	}
 
 	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
@@ -208,6 +245,17 @@ public class KeyBindingsManager implements PropertyChangeListener {
 			return;
 		}
 
+		removeKeyBindingFromCache(action, keyStroke);
+
+		// also remove any secondarily mapped Alt key stroke
+		KeyStroke altGraphKs = maybeGenerateAltGraphKeyStroke(keyStroke);
+		if (altGraphKs != null) {
+			removeKeyBindingFromCache(action, altGraphKs);
+		}
+	}
+
+	private void removeKeyBindingFromCache(DockingActionIf action, KeyStroke keyStroke) {
+
 		DockingKeyBindingAction existingAction = dockingKeyMap.get(keyStroke);
 		if (existingAction == null) {
 			return;
@@ -216,9 +264,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		if (existingAction instanceof SystemKeyBindingAction) {
 			dockingKeyMap.remove(keyStroke);
 		}
-		else if (existingAction instanceof MultipleKeyAction) {
-
-			MultipleKeyAction mkAction = (MultipleKeyAction) existingAction;
+		else if (existingAction instanceof MultipleKeyAction mkAction) {
 			mkAction.removeAction(action);
 			if (mkAction.isEmpty()) {
 				dockingKeyMap.remove(keyStroke);

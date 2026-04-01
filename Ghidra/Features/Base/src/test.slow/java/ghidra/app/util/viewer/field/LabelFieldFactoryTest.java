@@ -60,7 +60,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory(".text", "1001000", 0x4000);
 		builder.addBytesNOP("1002000", 6);

@@ -18,6 +18,7 @@ package ghidra;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 import javax.swing.ToolTipManager;
 
@@ -27,11 +28,11 @@ import org.apache.logging.log4j.Logger;
 import docking.framework.SplashScreen;
 import generic.jar.ResourceFile;
 import ghidra.base.help.GhidraHelpService;
-import ghidra.framework.Application;
-import ghidra.framework.GhidraApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
@@ -66,6 +67,18 @@ public class GhidraRun implements GhidraLaunchable {
 
 	private Logger log; // intentionally load later, after initialization
 
+	/**
+	 * Supports the extended command line argument syntax: project.gpr:/path/to/domainfile
+	 * 
+	 * @param projectPath The FS path to the .gpr file (could be {@code null})
+	 * @param domainFilePath The project path to the {@link DomainFile} (could be {@code null})
+	 */
+	private record LaunchArguments(String projectPath, String domainFilePath) {
+		static LaunchArguments empty() {
+			return new LaunchArguments(null, null);
+		}
+	}
+
 	@Override
 	public void launch(GhidraApplicationLayout layout, String[] args) {
 
@@ -91,11 +104,13 @@ public class GhidraRun implements GhidraLaunchable {
 
 			updateSplashScreenStatusMessage("Checking for previous project...");
 			SystemUtilities.runSwingLater(() -> {
-				String projectPath = processArguments(args);
-				openProject(projectPath);
-				
+				LaunchArguments launchArgs = processArguments(args);
+				openProject(launchArgs);
+
 				log.info("Ghidra startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() +
 					" ms)");
+
+				checkForMissingNativeComponents();
 			});
 		};
 
@@ -120,12 +135,12 @@ public class GhidraRun implements GhidraLaunchable {
 		}
 	}
 
-	private String processArguments(String[] args) {
+	private LaunchArguments processArguments(String[] args) {
 		//TODO remove this special handling when possible
 		if (args.length == 1 && (args[0].startsWith("-D") || args[0].indexOf(" -D") >= 0)) {
 			args = args[0].split(" ");
 		}
-		String projectPath = null;
+		String projectArg = null;
 		for (String arg : args) {
 			if (arg.startsWith("-D")) {
 				String[] split = arg.substring(2).split("=");
@@ -134,10 +149,34 @@ public class GhidraRun implements GhidraLaunchable {
 				}
 			}
 			else {
-				projectPath = arg;
+				projectArg = arg;
 			}
 		}
-		return projectPath;
+
+		if (projectArg == null) {
+			return LaunchArguments.empty();
+		}
+
+		return parseProjectArgument(projectArg);
+	}
+
+	private LaunchArguments parseProjectArgument(String projectArg) {
+		// Trim any whitespace/newlines from the argument
+		projectArg = projectArg.trim();
+
+		String projectPath = projectArg;
+		String binaryPath = null;
+
+		// Look for the .gpr extension followed by a colon to separate project from binary path
+		String projectExt = ProjectLocator.getProjectExtension();
+		int extIndex = projectArg.indexOf(projectExt + ":");
+		if (extIndex >= 0) {
+			int colonIndex = extIndex + projectExt.length();
+			projectPath = projectArg.substring(0, colonIndex).trim();
+			binaryPath = projectArg.substring(colonIndex + 1).trim(); // skip the ':'
+		}
+
+		return new LaunchArguments(projectPath, binaryPath);
 	}
 
 	private void updateSplashScreenStatusMessage(final String message) {
@@ -150,11 +189,13 @@ public class GhidraRun implements GhidraLaunchable {
 	}
 
 	/**
-	 * Open the specified project or the last active project if projectPath is null.
+	 * Open the specified project or the last active project if launchArgs has no project.
+	 * If a binary path is specified, opens it in the default tool. 
 	 * Makes the project window visible.
-	 * @param projectPath optional project to be opened (specifies project file)
+	 *
+	 * @param launchArgs parsed command line arguments
 	 */
-	private void openProject(String projectPath) {
+	private void openProject(LaunchArguments launchArgs) {
 
 		updateSplashScreenStatusMessage("Creating project manager...");
 		ProjectManager pm = new GhidraProjectManager();
@@ -173,12 +214,12 @@ public class GhidraRun implements GhidraLaunchable {
 
 		boolean reopen = true;
 		ProjectLocator projectLocator = null;
-		if (projectPath != null) {
-			File projectFile = new File(projectPath);
+		if (launchArgs.projectPath() != null) {
+			File projectFile = new File(launchArgs.projectPath());
 			String name = projectFile.getName();
 			if (!name.endsWith(ProjectLocator.getProjectExtension())) {
 				Msg.showInfo(GhidraRun.class, null, "Invalid Project",
-					"The specified file is not a project file: " + projectPath);
+					"The specified file is not a project file: " + launchArgs.projectPath());
 			}
 			else {
 				projectLocator = new ProjectLocator(projectFile.getParent(), name);
@@ -194,19 +235,21 @@ public class GhidraRun implements GhidraLaunchable {
 		tool.setVisible(true);
 
 		if (projectLocator != null) {
-			openProject(tool, projectLocator, reopen);
+			openProject(tool, projectLocator, reopen, launchArgs.domainFilePath());
 		}
 	}
 
-	private void openProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen) {
+	private void openProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen,
+			String domainFilePath) {
 		SplashScreen.updateSplashScreenStatus(
 			(reopen ? "Reopening" : "Opening") + " project: " + projectLocator.getName());
 
-		Runnable r = () -> doOpenProject(tool, projectLocator, reopen);
+		Runnable r = () -> doOpenProject(tool, projectLocator, reopen, domainFilePath);
 		TaskLauncher.launchModal("Opening Project", () -> Swing.runNow(r));
 	}
 
-	private void doOpenProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen) {
+	private void doOpenProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen,
+			String domainFilePath) {
 		try {
 			ProjectManager pm = tool.getProjectManager();
 			Project activeProject = pm.openProject(projectLocator, true, false);
@@ -222,6 +265,10 @@ public class GhidraRun implements GhidraLaunchable {
 						"button on the Ghidra Project Window.\n \n" +
 						"See the Ghidra Help topic 'Project Repository' for troubleshooting\n" +
 						"a failed connection.");
+			}
+
+			if (domainFilePath != null && !domainFilePath.isEmpty()) {
+				openDomainFileInTool(activeProject, domainFilePath);
 			}
 
 		}
@@ -246,6 +293,48 @@ public class GhidraRun implements GhidraLaunchable {
 
 			}
 			tool.setActiveProject(null);
+		}
+	}
+
+	private void openDomainFileInTool(Project project, String domainFilePath) {
+		// Ensure path starts with /
+		if (!domainFilePath.startsWith("/")) {
+			domainFilePath = "/" + domainFilePath;
+		}
+
+		ProjectData projectData = project.getProjectData();
+		DomainFile domainFile = projectData.getFile(domainFilePath);
+
+		if (domainFile == null) {
+			Msg.showError(GhidraRun.class, null, "File Not Found",
+				"Could not find file in project: " + domainFilePath);
+			return;
+		}
+
+		log.info("Opening file from command line: " + domainFilePath);
+
+		ToolServices toolServices = project.getToolServices();
+		PluginTool tool = toolServices.launchDefaultTool(List.of(domainFile));
+
+		if (tool == null) {
+			Msg.showError(GhidraRun.class, null, "Tool Launch Failed",
+				"Failed to launch tool for: " + domainFile.getName());
+		}
+	}
+
+	private void checkForMissingNativeComponents() {
+		boolean isWin = Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS;
+
+		try {
+			Application.getOSFile("Decompiler", isWin ? "decompile.exe" : "decompile");
+		}
+		catch (OSFileNotFoundException e) {
+			//@formatter:off
+			String msg =
+				"It appears that native components have not been built for this Ghidra installation.\n" +
+					"See the \"Building Native Components\" section of the Getting Started guide for build instructions.";
+			//@formatter:on
+			Msg.showWarn(GhidraRun.class, null, "Missing Native Components", msg);
 		}
 	}
 

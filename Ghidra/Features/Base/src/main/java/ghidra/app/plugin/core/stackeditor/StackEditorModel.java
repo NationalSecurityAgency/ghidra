@@ -40,7 +40,6 @@ import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -707,10 +706,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 
 	@Override
 	public void validateComponentName(int currentIndex, String name) throws UsrException {
-		if (SymbolUtilities.containsInvalidChars(name)) {
-			throw new InvalidInputException(
-				"Symbol name \"" + name + "\"contains invalid characters.");
-		}
+		viewComposite.checkNameChange(currentIndex, name);
 	}
 
 	@Override

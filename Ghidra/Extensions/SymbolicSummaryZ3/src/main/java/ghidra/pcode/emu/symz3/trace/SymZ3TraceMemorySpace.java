@@ -26,6 +26,7 @@ import ghidra.pcode.emu.symz3.SymZ3MemoryMap;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
 import ghidra.pcode.emu.symz3.state.SymZ3PieceHandler;
 import ghidra.pcode.emu.symz3.state.SymZ3WriteDownHelper;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.*;
@@ -86,7 +87,7 @@ public class SymZ3TraceMemorySpace extends SymZ3TraceSpace {
 	}
 
 	@Override
-	public SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
+	public SymValueZ3 get(SymValueZ3 offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		if (mmap.hasValueFor(offset, size)) {
 			return mmap.load(offset, size, true, cb);
 		}

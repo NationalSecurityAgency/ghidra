@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,34 +115,65 @@ public class EquateSymbol extends HighSymbol {
 		decoder.closeElement(symel);
 	}
 
+	/**
+	 * @param convert is an integer conversion type
+	 * @return the name of the corresponding conversion
+	 */
+	public static String getIntegerFormatString(int convert) {
+		if (convert == FORMAT_HEX) {
+			return "hex";
+		}
+		else if (convert == FORMAT_DEC) {
+			return "dec";
+		}
+		else if (convert == FORMAT_OCT) {
+			return "oct";
+		}
+		else if (convert == FORMAT_BIN) {
+			return "bin";
+		}
+		else if (convert == FORMAT_CHAR) {
+			return "char";
+		}
+		else if (convert == FORMAT_FLOAT) {
+			return "float";
+		}
+		else if (convert == FORMAT_DOUBLE) {
+			return "double";
+		}
+		return "_";
+	}
+
+	/**
+	 * @param format is the name of a conversion format
+	 * @return return the matching conversion type or FORMAT_DEFAULT if there is no matching conversion
+	 */
+	public static int getFormatStringValue(String format) {
+		switch (format) {
+			case "hex":
+				return FORMAT_HEX;
+			case "dec":
+				return FORMAT_DEC;
+			case "oct":
+				return FORMAT_OCT;
+			case "bin":
+				return FORMAT_BIN;
+			case "char":
+				return FORMAT_CHAR;
+			case "float":
+				return FORMAT_FLOAT;
+			case "double":
+				return FORMAT_DOUBLE;
+		}
+		return FORMAT_DEFAULT;
+	}
+
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_EQUATESYMBOL);
 		encodeHeader(encoder);
 		if (convert != 0) {
-			String formString = "hex";
-			if (convert == FORMAT_HEX) {
-				// Most common case
-			}
-			else if (convert == FORMAT_DEC) {
-				formString = "dec";
-			}
-			else if (convert == FORMAT_OCT) {
-				formString = "oct";
-			}
-			else if (convert == FORMAT_BIN) {
-				formString = "bin";
-			}
-			else if (convert == FORMAT_CHAR) {
-				formString = "char";
-			}
-			else if (convert == FORMAT_FLOAT) {
-				formString = "float";
-			}
-			else if (convert == FORMAT_DOUBLE) {
-				formString = "double";
-			}
-
+			String formString = getIntegerFormatString(convert);
 			encoder.writeString(ATTRIB_FORMAT, formString);
 		}
 		encoder.openElement(ELEM_VALUE);

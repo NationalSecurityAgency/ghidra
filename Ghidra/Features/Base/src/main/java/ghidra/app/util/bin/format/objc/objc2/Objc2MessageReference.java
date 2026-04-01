@@ -70,9 +70,11 @@ public class Objc2MessageReference extends ObjcTypeMetadataStructure {
 		Data selData = messageRefData.getComponent(1);
 		Object selAddress = selData.getValue();
 		Data selStringData = program.getListing().getDataAt((Address) selAddress);
-		Object selString = selStringData.getValue();
-		ObjcUtils.createSymbol(program, null, selString + "_" + Objc2MessageReference.NAME,
-			address);
+		if (selStringData != null) {
+			Object selString = selStringData.getValue();
+			ObjcUtils.createSymbol(program, null, selString + "_" + Objc2MessageReference.NAME,
+				address);
+		}
 	}
 
 	@Override
@@ -80,6 +82,7 @@ public class Objc2MessageReference extends ObjcTypeMetadataStructure {
 		Structure struct = new StructureDataType(NAME, 0);
 		struct.add(new PointerDataType(VOID), pointerSize, "imp", null);
 		struct.add(new PointerDataType(ASCII), pointerSize, "sel", null);
+		struct.setCategoryPath(Objc2Constants.CATEGORY_PATH);
 		return struct;
 	}
 }

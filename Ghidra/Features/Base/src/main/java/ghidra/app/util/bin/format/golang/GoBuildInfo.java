@@ -283,7 +283,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	public static String getProgramGOOS(Program program) {
 		// TODO: this mapping needs more logic
 		String loaderName = program.getExecutableFormat();
-		if (ElfLoader.ELF_NAME.equals(loaderName)) {
+		if (ElfLoader.isElf(loaderName)) {
 			// TODO: this will require additional work to map all Go OSs to Ghidra loader info
 			return "linux";
 		}

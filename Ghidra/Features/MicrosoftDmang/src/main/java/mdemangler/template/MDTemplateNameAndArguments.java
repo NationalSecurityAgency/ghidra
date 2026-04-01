@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,9 @@
 package mdemangler.template;
 
 import mdemangler.*;
+import mdemangler.datatype.MDDataType;
 import mdemangler.naming.MDBasicName;
+import mdemangler.naming.MDQualifier;
 
 /**
  * This class represents the template name and arguments list portion of a
@@ -46,6 +48,10 @@ public class MDTemplateNameAndArguments extends MDParsableItem {
 		templateName.setName(name);
 	}
 
+	public void setXtorQual(MDQualifier qual) {
+		templateName.setXtorQual(qual);
+	}
+
 	public String getName() {
 		return templateName.getName();
 	}
@@ -55,6 +61,13 @@ public class MDTemplateNameAndArguments extends MDParsableItem {
 			return;
 		}
 		templateName.setCastTypeString(castTypeString);
+	}
+
+	public void setCastType(MDDataType castType) {
+		if (templateName == null) {
+			return;
+		}
+		templateName.setCastType(castType);
 	}
 
 	public MDTemplateArgumentsList getArgumentsList() {

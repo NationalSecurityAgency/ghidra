@@ -22,11 +22,9 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellEditor;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.menu.MultiActionDockingAction;
@@ -64,52 +62,150 @@ import ghidra.util.*;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		implements LogicalBreakpointsChangeListener, ControlModeChangeListener {
 
+	final static DebuggerBreakpointStateTableCellRenderer STATE_RENDERER =
+		new DebuggerBreakpointStateTableCellRenderer();
+	final static DebuggerBreakpointStateTableCellEditor<LogicalBreakpointRow> LOGICAL_STATE_EDITOR =
+		new DebuggerBreakpointStateTableCellEditor<>(LogicalBreakpointRow.class) {
+			@Override
+			protected State getToggledState(LogicalBreakpointRow row, State current) {
+				boolean mapped = row.isMapped();
+				if (!mapped) {
+					Tool tool = row.getTool();
+					tool.setStatusInfo("Breakpoint has no locations. Only toggling its bookmark.",
+						true);
+				}
+				return current.getToggled(mapped);
+			}
+		};
+
+	final static DebuggerBreakpointStateTableCellEditor<BreakpointLocationRow> LOC_STATE_EDITOR =
+		new DebuggerBreakpointStateTableCellEditor<>(BreakpointLocationRow.class) {
+			@Override
+			protected State getToggledState(BreakpointLocationRow row, State current) {
+				return current.getToggled(false);
+			}
+		};
+
 	protected enum LogicalBreakpointTableColumns
 		implements EnumeratedTableColumn<LogicalBreakpointTableColumns, LogicalBreakpointRow> {
-		STATE("State", State.class, LogicalBreakpointRow::getState, LogicalBreakpointRow::setState,
-				true),
+		STATE("State", State.class, LogicalBreakpointRow::getState,
+				LogicalBreakpointRow::setState) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return STATE_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return LOGICAL_STATE_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return 24;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 24;
+			}
+		},
 		NAME("Name", String.class, LogicalBreakpointRow::getName, LogicalBreakpointRow::setName,
-				LogicalBreakpointRow::isNamable, true),
-		ADDRESS("Address", Address.class, LogicalBreakpointRow::getAddress, true),
-		IMAGE("Image", String.class, LogicalBreakpointRow::getImageName, true),
-		LENGTH("Length", Long.class, LogicalBreakpointRow::getLength, true),
-		KINDS("Kinds", String.class, LogicalBreakpointRow::getKinds, true),
-		LOCATIONS("Locations", Integer.class, LogicalBreakpointRow::getLocationCount, true),
-		SLEIGH("Sleigh", Boolean.class, LogicalBreakpointRow::hasSleigh, true);
+				LogicalBreakpointRow::isNamable) {
+			@Override
+			public int getPreferredWidth() {
+				return 150;
+			}
+		},
+		ADDRESS("Address", Address.class, LogicalBreakpointRow::getAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 150;
+			}
+		},
+		IMAGE("Image", String.class, LogicalBreakpointRow::getImageName) {
+			@Override
+			public int getPreferredWidth() {
+				return 100;
+			}
+		},
+		LENGTH("Length", Long.class, LogicalBreakpointRow::getLength) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_ULONG_HEX;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 60;
+			}
+		},
+		KINDS("Kinds", String.class, LogicalBreakpointRow::getKinds) {
+			@Override
+			public int getPreferredWidth() {
+				return 150;
+			}
+		},
+		LOCATIONS("Locations", Integer.class, LogicalBreakpointRow::getLocationCount) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		SLEIGH("Sleigh", Boolean.class, LogicalBreakpointRow::hasSleigh) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+		};
 
 		private final String header;
 		private final Class<?> cls;
 		private final Function<LogicalBreakpointRow, ?> getter;
 		private final BiConsumer<LogicalBreakpointRow, Object> setter;
 		private final Predicate<LogicalBreakpointRow> editable;
-		private final boolean sortable;
 
 		<T> LogicalBreakpointTableColumns(String header, Class<T> cls,
-				Function<LogicalBreakpointRow, T> getter, boolean sortable) {
-			this(header, cls, getter, null, null, sortable);
+				Function<LogicalBreakpointRow, T> getter) {
+			this(header, cls, getter, null, null);
 		}
 
 		<T> LogicalBreakpointTableColumns(String header, Class<T> cls,
 				Function<LogicalBreakpointRow, T> getter,
-				BiConsumer<LogicalBreakpointRow, T> setter, boolean sortable) {
-			this(header, cls, getter, setter, null, sortable);
+				BiConsumer<LogicalBreakpointRow, T> setter) {
+			this(header, cls, getter, setter, null);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> LogicalBreakpointTableColumns(String header, Class<T> cls,
 				Function<LogicalBreakpointRow, T> getter,
 				BiConsumer<LogicalBreakpointRow, T> setter,
-				Predicate<LogicalBreakpointRow> editable, boolean sortable) {
+				Predicate<LogicalBreakpointRow> editable) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<LogicalBreakpointRow, Object>) setter;
 			this.editable = editable;
-			this.sortable = sortable;
+		}
+
+		@Override
+		public String getHeader() {
+			return header;
 		}
 
 		@Override
@@ -123,18 +219,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public String getHeader() {
-			return header;
-		}
-
-		@Override
 		public boolean isEditable(LogicalBreakpointRow row) {
 			return setter != null && (editable == null || editable.test(row));
-		}
-
-		@Override
-		public boolean isSortable() {
-			return sortable;
 		}
 
 		@Override
@@ -162,39 +248,84 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	protected enum BreakpointLocationTableColumns
 		implements EnumeratedTableColumn<BreakpointLocationTableColumns, BreakpointLocationRow> {
 		STATE("State", State.class, BreakpointLocationRow::getState,
-				BreakpointLocationRow::setState, true, true),
-		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName,
-				true, true),
-		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true, true),
-		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true, true),
-		THREADS("Threads", String.class, BreakpointLocationRow::getThreads, true, false),
+				BreakpointLocationRow::setState) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return STATE_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return LOC_STATE_EDITOR;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 24;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return 24;
+			}
+		},
+		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName),
+		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName),
+		THREADS("Threads", String.class, BreakpointLocationRow::getThreads) {
+			@Override
+			public boolean isVisible() {
+				return false;
+			}
+		},
 		COMMENT("Comment", String.class, BreakpointLocationRow::getComment,
-				BreakpointLocationRow::setComment, true, true),
-		EXPRESSION("Expression", String.class, BreakpointLocationRow::getExpression, true, true),
-		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh, true, true);
+				BreakpointLocationRow::setComment),
+		EXPRESSION("Expression", String.class, BreakpointLocationRow::getExpression),
+		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+
+			@Override
+			public boolean isVisible() {
+				return false;
+			}
+		};
 
 		private final String header;
+		private final Class<?> cls;
 		private final Function<BreakpointLocationRow, ?> getter;
 		private final BiConsumer<BreakpointLocationRow, Object> setter;
-		private final boolean sortable;
-		private final boolean visible;
-		private final Class<?> cls;
 
 		<T> BreakpointLocationTableColumns(String header, Class<T> cls,
-				Function<BreakpointLocationRow, T> getter, boolean sortable, boolean visible) {
-			this(header, cls, getter, null, sortable, visible);
+				Function<BreakpointLocationRow, T> getter) {
+			this(header, cls, getter, null);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> BreakpointLocationTableColumns(String header, Class<T> cls,
 				Function<BreakpointLocationRow, T> getter,
-				BiConsumer<BreakpointLocationRow, T> setter, boolean sortable, boolean visible) {
+				BiConsumer<BreakpointLocationRow, T> setter) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<BreakpointLocationRow, Object>) setter;
-			this.sortable = sortable;
-			this.visible = visible;
+		}
+
+		@Override
+		public String getHeader() {
+			return header;
 		}
 
 		@Override
@@ -208,23 +339,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public String getHeader() {
-			return header;
-		}
-
-		@Override
 		public boolean isEditable(BreakpointLocationRow row) {
 			return setter != null;
-		}
-
-		@Override
-		public boolean isSortable() {
-			return sortable;
-		}
-
-		@Override
-		public boolean isVisible() {
-			return visible;
 		}
 
 		@Override
@@ -1131,71 +1247,6 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				navigateToSelectedLocation();
 			}
 		});
-
-		TableColumnModel bptColModel = breakpointTable.getColumnModel();
-		TableColumn bptEnCol = bptColModel.getColumn(LogicalBreakpointTableColumns.STATE.ordinal());
-		bptEnCol.setCellRenderer(new DebuggerBreakpointStateTableCellRenderer());
-		bptEnCol.setCellEditor(new DebuggerBreakpointStateTableCellEditor<>(breakpointFilterPanel) {
-			@Override
-			protected State getToggledState(LogicalBreakpointRow row, State current) {
-				boolean mapped = row.isMapped();
-				if (!mapped) {
-					tool.setStatusInfo("Breakpoint has no locations. Only toggling its bookmark.",
-						true);
-				}
-				return current.getToggled(mapped);
-			}
-		});
-		bptEnCol.setMaxWidth(24);
-		bptEnCol.setMinWidth(24);
-		TableColumn bptNameCol =
-			bptColModel.getColumn(LogicalBreakpointTableColumns.NAME.ordinal());
-		bptNameCol.setPreferredWidth(150);
-		TableColumn bptAddrCol =
-			bptColModel.getColumn(LogicalBreakpointTableColumns.ADDRESS.ordinal());
-		bptAddrCol.setPreferredWidth(150);
-		bptAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		TableColumn bptImgCol =
-			bptColModel.getColumn(LogicalBreakpointTableColumns.IMAGE.ordinal());
-		bptImgCol.setPreferredWidth(100);
-		TableColumn lenCol = bptColModel.getColumn(LogicalBreakpointTableColumns.LENGTH.ordinal());
-		lenCol.setPreferredWidth(60);
-		lenCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
-		TableColumn kindCol = bptColModel.getColumn(LogicalBreakpointTableColumns.KINDS.ordinal());
-		kindCol.setPreferredWidth(150);
-		TableColumn locsCol =
-			bptColModel.getColumn(LogicalBreakpointTableColumns.LOCATIONS.ordinal());
-		locsCol.setPreferredWidth(20);
-		TableColumn bptSleighCol =
-			bptColModel.getColumn(LogicalBreakpointTableColumns.SLEIGH.ordinal());
-		bptSleighCol.setMaxWidth(30);
-		bptSleighCol.setMinWidth(30);
-
-		GTableColumnModel locColModel = (GTableColumnModel) locationTable.getColumnModel();
-		TableColumn locEnCol =
-			locColModel.getColumn(BreakpointLocationTableColumns.STATE.ordinal());
-		locEnCol.setCellRenderer(new DebuggerBreakpointStateTableCellRenderer());
-		locEnCol.setCellEditor(new DebuggerBreakpointStateTableCellEditor<>(locationFilterPanel) {
-			@Override
-			protected State getToggledState(BreakpointLocationRow row, State current) {
-				return current.getToggled(false);
-			}
-		});
-		locEnCol.setMaxWidth(24);
-		locEnCol.setMinWidth(24);
-		TableColumn locAddrCol =
-			locColModel.getColumn(BreakpointLocationTableColumns.ADDRESS.ordinal());
-		locAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-		TableColumn locThreadsCol =
-			locColModel.getColumn(BreakpointLocationTableColumns.THREADS.ordinal());
-		TableColumn locSleighCol =
-			locColModel.getColumn(BreakpointLocationTableColumns.SLEIGH.ordinal());
-		locSleighCol.setMaxWidth(30);
-		locSleighCol.setMinWidth(30);
-
-		locColModel.setVisible(locThreadsCol, false);
-		locColModel.setVisible(locSleighCol, false);
-
 	}
 
 	protected void navigateToSelectedBreakpoint() {

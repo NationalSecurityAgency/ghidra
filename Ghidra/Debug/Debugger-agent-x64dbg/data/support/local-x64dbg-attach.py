@@ -17,18 +17,43 @@
 import os
 import sys
 
+cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
+target = os.getenv('OPT_TARGET_PID')
+
+
+def parse_parameters():
+    argc = len(sys.argv)
+    global cxn, target, args, initdir
+    if argc == 1:
+        return True
+    if argc >= 3:
+        cxn = sys.argv[1]
+        target = sys.argv[2]
+        os.environ['OPT_X64DBG_EXE'] = sys.argv[3]
+        return True
+    print("Error: expected (cxn, target, initdir, ...)")
+    return False
+
 
 def append_paths():
     sys.path.append(
         f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
-    from gmodutils import ghidra_module_pypath
-    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
-    sys.path.append(ghidra_module_pypath())
+    try:
+        from gmodutils import ghidra_module_pypath
+        sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+        sys.path.append(ghidra_module_pypath())
+    except Exception as e:
+        pass
 
 
 def main():
     append_paths()
     # Delay these imports until sys.path is patched
+    try:
+        import ghidraxdbg
+    except:
+        print(e)
+        exit(253)
     from ghidraxdbg import commands as cmd
     from ghidraxdbg.hooks import on_state_changed
     from ghidraxdbg.util import dbg
@@ -37,19 +62,19 @@ def main():
     global repl
     repl = cmd.repl
 
-    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-    cmd.ghidra_trace_attach(os.getenv('OPT_TARGET_PID'), start_trace=False)
+    cmd.ghidra_trace_connect(cxn)
+    cmd.ghidra_trace_attach(target, start_trace=False)
 
     try:
         dbg.wait()
     except KeyboardInterrupt as ki:
         dbg.interrupt()
 
-    cmd.ghidra_trace_start(os.getenv('OPT_TARGET_PID'))
+    cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()
 
-    cmd.ghidra_trace_txstart()
-    cmd.ghidra_trace_put_all()
+    with cmd.open_tracked_tx("PutAll"):
+        cmd.ghidra_trace_put_all()
 
     cmd.repl()
 
@@ -58,5 +83,7 @@ if __name__ == '__main__':
     try:
         main()
     except SystemExit as x:
+        if x.code == 253:
+            exit(253)
         if x.code != 0:
             print(f"Exited with code {x.code}")

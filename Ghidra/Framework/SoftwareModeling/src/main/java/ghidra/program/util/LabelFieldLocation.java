@@ -54,12 +54,16 @@ public class LabelFieldLocation extends CodeUnitLocation {
 			Namespace namespace, int row, int charOffset) {
 
 		super(program, addr, componentPath, row, 0, charOffset);
-		if (namespace == null || namespace.isGlobal()) {
-			symbolPath = new SymbolPath(label);
+		SymbolPath nsPath = null;
+		if (namespace != null && !namespace.isGlobal()) {
+			nsPath = new SymbolPath(namespace.getSymbol());
 		}
-		else {
-			symbolPath = new SymbolPath(new SymbolPath(namespace.getSymbol()), label);
-		}
+
+		// Note: use the constructor that does not parse the name.  Assume all label field 
+		// locations are for existing symbol names or those that otherwise should not need to be
+		// parsed.  Parsing for existing symbols may incorrectly split on namespace delimiters that
+		// are part of the symbol name.
+		symbolPath = new SymbolPath(nsPath, label);
 	}
 
 	/**

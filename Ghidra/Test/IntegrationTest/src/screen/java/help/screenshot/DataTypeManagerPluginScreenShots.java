@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import docking.*;
 import docking.action.DockingActionIf;
+import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.GTree;
@@ -138,6 +139,59 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		GTreeNode child = rootNode.getChild("BuiltInTypes");
 		tree.expandPath(child);
 		captureIsolatedProvider(DataTypesProvider.class, 500, 400);
+	}
+
+	@Test
+	public void testMergeConfirmationDialog() {
+		createStructure("foo", 0, new IntegerDataType(), "aaa", 12);
+		createStructure("bar", 4, new FloatDataType(), "bbb", 16);
+
+		DataTypesProvider provider = getProvider(DataTypesProvider.class);
+		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
+		GTreeNode rootNode = tree.getViewRoot();
+		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
+		tree.expandPath(child);
+		GTreeNode dtNode = child.getChild("foo");
+		tree.addSelectionPath(dtNode.getTreePath());
+		performAction("Merge Data Types", "DataTypeManagerPlugin", provider, false);
+		DialogComponentProvider dialog = getDialog();
+		DropDownSelectionTextField<?> textField =
+			findComponent(dialog, DropDownSelectionTextField.class);
+		runSwing(() -> textField.setText("bar"));
+		pressOkOnDialog();
+		captureDialog();
+		pressButtonOnDialog("Cancel");
+	}
+
+	@Test
+	public void testMergeErrorDialog() {
+		createStructure("foo", 0, new IntegerDataType(), "aaa", 12);
+		createStructure("bar", 0, new FloatDataType(), "bbb", 16);
+
+		DataTypesProvider provider = getProvider(DataTypesProvider.class);
+		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
+		GTreeNode rootNode = tree.getViewRoot();
+		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
+		tree.expandPath(child);
+		GTreeNode dtNode = child.getChild("foo");
+		tree.addSelectionPath(dtNode.getTreePath());
+		performAction("Merge Data Types", "DataTypeManagerPlugin", provider, false);
+		DialogComponentProvider dialog = getDialog();
+		DropDownSelectionTextField<?> textField =
+			findComponent(dialog, DropDownSelectionTextField.class);
+		runSwing(() -> textField.setText("bar"));
+		pressOkOnDialog();
+		captureDialog();
+		pressButtonOnDialog("OK");
+	}
+
+	private void createStructure(String name, int offset, DataType dt, String fieldName, int size) {
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		Structure struct = new StructureDataType(name, size);
+		struct.replaceAtOffset(offset, dt, dt.getLength(), fieldName, null);
+		program.withTransaction("test", () -> {
+			dtm.addDataType(struct, null);
+		});
 	}
 
 	@Test

@@ -15,10 +15,8 @@
  */
 package ghidra.features.bsim.query.ingest;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -59,6 +57,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * bsim commands
 	 */
 	private static final String COMMAND_CREATE_DATABASE = defineCommand("createdatabase");
+	private static final String COMMAND_DROP_DATABASE = defineCommand("dropdatabase");
 	private static final String COMMAND_SET_METADATA = defineCommand("setmetadata");
 	private static final String COMMAND_GET_METADATA = defineCommand("getmetadata");
 	private static final String COMMAND_ADD_EXE_CATEGORY = defineCommand("addexecategory");
@@ -114,6 +113,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static final String PRINT_SELF_SIGNIFICANCE_OPTION = "--printselfsig";
 	private static final String CALL_GRAPH_OPTION = "--callgraph";
 	private static final String PRINT_JUST_EXE_OPTION = "--printjustexe";
+	private static final String DROP_DATABASE_FORCE_OPTION = "--force";
 
 	private static final Map<String, String> SHORTCUT_OPTION_MAP = new HashMap<>();
 	static {
@@ -137,6 +137,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	// Populate ALLOWED_OPTION_MAP for each command
 	private static final Set<String> CREATE_DATABASE_OPTIONS = 
 			Set.of(NAME_OPTION, OWNER_OPTION, DESCRIPTION_OPTION, NO_CALLGRAPH_OPTION);
+	private static final Set<String> DROP_DATABASE_OPTIONS = Set.of(DROP_DATABASE_FORCE_OPTION);
 	private static final Set<String> COMMIT_SIGS_OPTIONS = 
 			Set.of(OVERRIDE_OPTION, MD5_OPTION); // url requires override param
 	private static final Set<String> COMMIT_UPDATES_OPTIONS = Set.of();
@@ -167,6 +168,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
 	static {
 		ALLOWED_OPTION_MAP.put(COMMAND_CREATE_DATABASE, CREATE_DATABASE_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_DROP_DATABASE, DROP_DATABASE_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_SET_METADATA, SET_METADATA_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_GET_METADATA, GET_METADATA_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_ADD_EXE_CATEGORY, ADD_EXE_CATEGORY_OPTIONS);
@@ -212,7 +214,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private BulkSignatures getBulkSignatures()
-			throws IllegalArgumentException, MalformedURLException {
+			throws IllegalArgumentException {
 		BSimServerInfo serverInfo = null;
 		if (bsimURL != null) {
 			serverInfo = new BSimServerInfo(bsimURL);
@@ -221,19 +223,19 @@ public class BSimLaunchable implements GhidraLaunchable {
 		return new BulkSignatures(serverInfo, connectingUserName);
 	}
 
-	private void setupGhidraURL(String ghidraURLString) throws MalformedURLException {
+	private void setupGhidraURL(String ghidraURLString) throws IllegalArgumentException {
 
 		if (ghidraURLString == null) {
 			return;
 		}
 
 		if (!GhidraURL.isGhidraURL(ghidraURLString)) {
-			throw new MalformedURLException("URL is not ghidra protocol: " + ghidraURLString);
+			throw new IllegalArgumentException("URL is not ghidra protocol: " + ghidraURLString);
 		}
-		ghidraURL = new URL(ghidraURLString);
+		ghidraURL = GhidraURL.toURL(ghidraURLString);
 		if (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
-			!GhidraURL.isLocalProjectURL(ghidraURL)) {
-			throw new MalformedURLException("Invalid repository URL: " + ghidraURLString);
+			!GhidraURL.isLocalURL(ghidraURL)) {
+			throw new IllegalArgumentException("Invalid repository URL: " + ghidraURLString);
 		}
 	}
 
@@ -258,8 +260,18 @@ public class BSimLaunchable implements GhidraLaunchable {
 					throw new IllegalArgumentException(
 						"Unable to infer ghidra URL from BSim file DB URL");
 				}
-				ghidraURLString = "ghidra://" + bsimURL.getHost() + bsimURL.getPath();
-				setupGhidraURL(ghidraURLString);
+
+				// Derive Ghidra URL from BSim DB host and dbName
+				String path = bsimURL.getPath();
+				try {
+					path = URLDecoder.decode(path, "UTF-8");
+				}
+				catch (UnsupportedEncodingException e) {
+					throw new MalformedURLException(e.getMessage());
+				}
+				String dbName = path.substring(path.lastIndexOf('/') + 1);
+
+				ghidraURL = GhidraURL.makeURL(bsimURL.getHost(), -1, dbName);
 			}
 		}
 		else if (ghidraURLString != null) {
@@ -400,6 +412,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doCreateDatabase(subParams);
 		}
+		else if (COMMAND_DROP_DATABASE.equals(command)) {
+			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
+			doDropDatabase(subParams);
+		}
 		else if (COMMAND_SET_METADATA.equals(command)) {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doInstallMetadata(subParams);
@@ -476,7 +492,8 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
-	private void processSigAndUpdateOptions(String urlstring) throws MalformedURLException {
+	private void processSigAndUpdateOptions(String urlstring)
+			throws IllegalArgumentException, MalformedURLException {
 		String bsimURLOption = optionValueMap.get(BSIM_URL_OPTION);
 		String configOption = optionValueMap.get(CONFIG_OPTION);
 		if (configOption != null) {
@@ -530,6 +547,37 @@ public class BSimLaunchable implements GhidraLaunchable {
 			bsim.createDatabase(configTemplate, nameOption, ownerOption, descOption,
 				!noTrackCallGraph);
 		}
+	}
+
+	/**
+	 * Drops the current BSim database.
+	 * 
+	 * @param params the command-line parameters
+	 * @throws IOException if there's an error establishing the database connection
+	 */
+	private void doDropDatabase(List<String> params) throws IOException {
+		if (!confirmDrop()) {
+			return;
+		}
+		try (BulkSignatures bsim = getBulkSignatures()) {
+			bsim.dropDatabase();
+		}
+	}
+
+	private boolean confirmDrop() throws IOException {
+		if (booleanOptions.contains(DROP_DATABASE_FORCE_OPTION)) {
+			return true;
+		}
+		System.out.print("Are you sure you want to drop the database? (y/n): ");
+		try (InputStreamReader isReader = new InputStreamReader(System.in);
+				BufferedReader bReader = new BufferedReader(isReader)) {
+			String input = bReader.readLine();
+			if (input != null && input.equalsIgnoreCase("y")) {
+				return true;
+			}
+		}
+		System.out.println("Database NOT dropped");
+		return false;
 	}
 
 	private void doGenerateSigs(List<String> params, TaskMonitor monitor)
@@ -868,7 +916,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @param params the command-line params
 	 * @throws IOException if there's an error establishing the database connection
 	 */
-	private void doPrintMetadata(List<String> params) throws IOException, LSHException {
+	private void doPrintMetadata(List<String> params) throws IOException {
 
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			bsim.printMetadata();
@@ -971,6 +1019,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		System.err.println("\n" +
 			"USAGE: bsim [command]       required-args... [OPTIONS...]\n" + 
 			"            createdatabase  <bsimURL> <config_template> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"] [--nocallgraph]\n" + 
+			"            dropdatabase    <bsimURL> [--force]\n" + 
 			"            setmetadata     <bsimURL> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"]\n" + 
 			"            getmetadata     <bsimURL>\n" + 
 			"            addexecategory  <bsimURL> <category_name> [--date]\n" + 

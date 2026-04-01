@@ -21,6 +21,7 @@ import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.util.*;
 import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
 import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -65,8 +66,16 @@ public record ExceptionHandler(PcodeOp op, JitBlock block, Lbl<Ent<Bot, TRef<Thr
 	 */
 	public <THIS extends JitCompiledPassage> Emitter<Dead> genRun(Emitter<Dead> em,
 			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
-		return em
-				.emit(Lbl::placeDead, lbl)
+		var emLive = em.emit(Lbl::placeDead, lbl);
+		if (gen.context.getConfiguration().logStackTraces()) {
+			emLive = emLive
+					.emit(Op::dup)
+					.emit(Op::invokevirtual, GenConsts.T_THROWABLE, "printStackTrace",
+						GenConsts.MDESC_THROWABLE__PRINT_STACK_TRACE, false)
+					.step(Inv::takeObjRef)
+					.step(Inv::retVoid);
+		}
+		return emLive
 				.emit(gen::genExit, localThis, block, PcGen.loadOffset(gen.getAddressForOp(op)),
 					gen.getExitContext(op))
 				.emit(Op::athrow);

@@ -191,6 +191,20 @@ python3 -m pip install --no-index -f ~/ghidra-pypkg/ ghidragdb
       <LI>Note there is no option to create a second Terminal (TTY) for the target.</LI>
     </UL>
 
+	<H2><A name="ssh-win"></A>Via SSH (to Windows cmd shell)</H2>
+
+	<P>Essentially identical to <TT>ssh</TT> from the standpoint of usage and options, this launcher	
+	   runs <TT>gdb</TT> on a remote Windows system via <TT>ssh</TT>.  The behavior of <TT>ssh</TT>
+	   on Windows, however, requires a slightly different mechanism. The command options are used to 
+       rewrite the <TT>gdbinit_template</TT> in the <TT>support</TT> directory. The result is copied to 
+	   <TT>.gdbinit</TT> in the user's home directory on the remote machine. Because two commands are
+	   executed, the user may be asked to authenticate twice depending on their <TT>ssh</TT> configuration.
+    </P>
+
+	<P>Once the <TT>.gdbinit</TT> file is in place, the user may wish to modify the launchers, or connect
+	   without the launcher by setting the RMI port by hand and running <TT>gdb</TT> on the remote box.
+	</P>	
+
     <H2><A name="gdbserver_ssh"></A><TT>gdbserver</TT> via SSH</H2>
 
     <P>This works similarly to the GDB via SSH launcher, but instead of tunneling the Trace RMI

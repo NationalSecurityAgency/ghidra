@@ -419,7 +419,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		// Apply the new middle-mouse highlighter when we have rebuilt the token
 		controller.doWhenNotBusy(() -> {
-			activeMiddleMouse.apply();
+			if (activeMiddleMouse != null) {
+				activeMiddleMouse.apply();
+			}
 		});
 	}
 
@@ -510,6 +512,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (layoutController == null) {
 			// we've been disposed!
 			return;
+		}
+
+		if (activeMiddleMouse != null) {
+			activeMiddleMouse.clear();
+			activeMiddleMouse = null;
 		}
 
 		DecompileData oldData = this.decompileData;
@@ -894,6 +901,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			if (addr.isMemoryAddress()) {
 				controller.goToAddress(vn.getAddress(), newWindow);
 			}
+		}
+		else if (highVar.getSymbol() != null) {
+			VariableStorage storage = highVar.getSymbol().getStorage();
+			if (storage.isMemoryStorage()) {
+				controller.goToAddress(storage.getMinAddress(), newWindow);
+			}
+			return;		// Don't goto if symbol is on the stack or in a register
 		}
 		else if (vn.isConstant()) {
 			controller.goToScalar(vn.getOffset(), newWindow);

@@ -449,10 +449,17 @@ def target(process: Process, spec: str) -> None:
     exec_convert_errors(f'target select {spec}')
 
 
-@REGISTRY.method(action='attach', display="Attach by Attachable")
-def attach_obj(process: Process, target: Attachable) -> None:
-    """Attach the process to the given target."""
+@REGISTRY.method(action='attach', display="Attach")
+def attach(target: Attachable) -> None:
+    """Attach to the given target."""
     pid = find_availpid_by_obj(target)
+    exec_convert_errors(f'process attach -p {pid}')
+
+
+@REGISTRY.method(action='attach', display="Attach")
+def attach_obj(process: Process) -> None:
+    """Attach the process to the given target."""
+    pid = find_availpid_by_obj(process)
     exec_convert_errors(f'process attach -p {pid}')
 
 

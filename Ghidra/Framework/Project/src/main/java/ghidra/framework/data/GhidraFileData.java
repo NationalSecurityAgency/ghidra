@@ -17,7 +17,6 @@ package ghidra.framework.data;
 
 import java.awt.*;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -398,16 +397,7 @@ public class GhidraFileData {
 			RepositoryAdapter repository = projectData.getRepository();
 			if (versionedFolderItem != null && repository != null) {
 				URL folderURL = parent.getDomainFolder().getSharedProjectURL();
-				try {
-					String spec = name;
-					if (!StringUtils.isEmpty(ref)) {
-						spec += "#" + ref;
-					}
-					return new URL(folderURL, spec);
-				}
-				catch (MalformedURLException e) {
-					// ignore
-				}
+				return GhidraURL.resolve(folderURL, getPathname(), ref);
 			}
 			return null;
 		}
@@ -751,8 +741,15 @@ public class GhidraFileData {
 					}
 
 					// Handle link to Ghidra URL
-					URL ghidraUrl = new URL(resolvedLinkPath);
-					doa = linkHandler.getObject(ghidraUrl, version, consumer, monitor, false);
+					try {
+						URL ghidraUrl = GhidraURL.toURL(resolvedLinkPath);
+						doa = linkHandler.getObject(ghidraUrl, version, consumer, monitor, false);
+					}
+					catch (IllegalArgumentException e) {
+						// Bad URL from link path
+						throw new IOException(
+							"Failed to form valid URL from linkPath: " + resolvedLinkPath, e);
+					}
 				}
 				else {
 					doa = contentHandler.getReadOnlyObject(item, version, true, consumer, monitor);
@@ -819,8 +816,15 @@ public class GhidraFileData {
 					}
 
 					// Handle link to Ghidra URL
-					URL ghidraUrl = new URL(resolvedLinkPath);
-					doa = linkHandler.getObject(ghidraUrl, version, consumer, monitor, true);
+					try {
+						URL ghidraUrl = GhidraURL.toURL(resolvedLinkPath);
+						doa = linkHandler.getObject(ghidraUrl, version, consumer, monitor, true);
+					}
+					catch (IllegalArgumentException e) {
+						// Bad URL from link path
+						throw new IOException(
+							"Failed to form valid URL from linkPath: " + resolvedLinkPath, e);
+					}
 				}
 				else {
 					doa = contentHandler.getImmutableObject(item, consumer, version, -1, monitor);
@@ -938,8 +942,6 @@ public class GhidraFileData {
 			return DomainFile.UNSUPPORTED_FILE_ICON;
 		}
 		synchronized (fileSystem) {
-
-			boolean isLink = isLink();
 
 			FolderItem item = getFolderItem(DomainFile.DEFAULT_VERSION);
 
@@ -2372,7 +2374,7 @@ public class GhidraFileData {
 		return linkPath;
 	}
 
-	private String getAbsolutePath(String path) throws IOException {
+	private String getAbsolutePath(String path) {
 		String absPath = path;
 		if (!path.startsWith(FileSystem.SEPARATOR)) {
 			absPath = getParent().getPathname();

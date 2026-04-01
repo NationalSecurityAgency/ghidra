@@ -54,11 +54,11 @@ public class PcodeProgram {
 		}
 
 		@Override
-		protected void appendString(String string) {
+		public void appendString(String string) {
 			buf.append(string);
 		}
 
-		protected void endLine() {
+		public void endLine() {
 			buf.append("\n");
 		}
 
@@ -89,6 +89,10 @@ public class PcodeProgram {
 				buf.append(op.getSeqnum().getTime());
 				buf.append(": ");
 			}
+		}
+
+		public int getOpIdx() {
+			return opIdx;
 		}
 	}
 

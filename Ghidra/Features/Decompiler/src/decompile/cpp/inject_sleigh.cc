@@ -382,7 +382,7 @@ void PcodeInjectLibrarySleigh::parseInject(InjectPayload *payload)
   }
   if (contextCache.pos == (ParserContext *)0) {	// Make sure we have a context
     contextCache.pos = new ParserContext((ContextCache *)0,(Translate *)0);
-    contextCache.pos->initialize(8,8,slgh->getConstantSpace());
+    contextCache.pos->initialize(slgh->getConstantSpace(),8);
   }
   PcodeSnippet compiler(slgh);
 //  compiler.clear();			// Not necessary unless we reuse

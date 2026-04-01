@@ -627,6 +627,246 @@ void RangeList::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+BitRange::BitRange(const BitRange &op2,int4 off,int4 sz)
+
+{
+  byteOffset = off;
+  byteSize = sz;
+  numBits = op2.numBits;
+  isBigEndian = op2.isBigEndian;
+  leastSigBit = translateLSB(op2);
+}
+
+/// Both the byte container and the bit range are compared and must be equal to return 0.
+/// \param op2 is the other bit range to compare with
+/// \return -1, 0, or 1 to establish ordering the two ranges
+int4 BitRange::compare(const BitRange &op2) const
+
+{
+  if (byteOffset != op2.byteOffset)
+    return (byteOffset < op2.byteOffset) ? -1:1;
+  if (byteSize != op2.byteSize)
+    return (byteSize < op2.byteSize) ? -1 : 1;
+  if (leastSigBit != op2.leastSigBit)
+    return (leastSigBit < op2.leastSigBit) ? -1:1;
+  if (numBits != op2.numBits)
+    return (numBits < op2.numBits) ? -1:1;
+  return 0;
+}
+
+/// The returned result is directly comparable with \b leastSigBit for determining order/overlap.
+/// \param op2 is the other BitRange to translate into \b this frame
+/// \return the translated value of op2.leastSigBit
+int4 BitRange::translateLSB(const BitRange &op2) const
+
+{
+  int4 op2Sig = op2.leastSigBit;
+  if (isBigEndian) {
+    int4 thisPos = byteOffset + byteSize;
+    int4 op2Pos = op2.byteOffset + op2.byteSize;
+    op2Sig += 8 * (thisPos - op2Pos);
+  }
+  else {
+    op2Sig += 8 * (op2.byteOffset - byteOffset);
+  }
+  return op2Sig;
+}
+
+/// Return:
+///   -  -1 if \b this should come before (no intersection)
+///   -  0 if \b this and op2 are the same bitrange
+///   -  1 if \b this should come after (no intersection)
+///   -  2 if \b this is contained in op2
+///   -  3 if op2 is contained in \b this
+///   -  4 if partial overlap
+///
+/// \param op2 is the other range to compare
+/// \return the intersection code
+int4 BitRange::overlapTest(const BitRange &op2) const
+
+{
+  int4 op2Sig = translateLSB(op2);
+  int4 thisMost = leastSigBit + numBits;
+  int4 op2Most = op2Sig + op2.numBits;
+  if (isBigEndian) {
+    if (leastSigBit >= op2Most) return -1;
+    if (op2Sig >= thisMost) return 1;
+  }
+  else {
+    if (thisMost <= op2Sig) return -1;
+    if (op2Most <= leastSigBit) return 1;
+  }
+  // Reaching here we have some kind of intersection
+  if (leastSigBit == op2Sig && thisMost == op2Most) return 0;
+  if (op2Sig <= leastSigBit && op2Most >= thisMost) return 2;	/// this contained in op2
+  if (leastSigBit <= op2Sig && thisMost >= op2Most) return 3;	/// op2 contained in this
+  return 4;
+}
+
+/// The byte container for \b this does not change only \b leastSigBit and \b numBits.
+/// If the intersection is empty, \b numBits is set to 0.
+/// \param op2 is the bit range to intersect with \b this.
+void BitRange::intersection(const BitRange &op2)
+
+{
+  int4 op2Sig = translateLSB(op2);
+  int4 op2Most = op2Sig + op2.numBits;
+  int4 thisMost = leastSigBit + numBits;
+  if (op2Sig > leastSigBit) {
+    numBits -= (op2Sig - leastSigBit);
+    leastSigBit = op2Sig;
+  }
+  if (op2Most < thisMost) {
+    numBits -= (thisMost - op2Most);
+  }
+  if (numBits < 0) {
+    leastSigBit = 0;
+    numBits = 0;
+  }
+}
+
+/// The range of bits is intersected with the 1-bits of the mask.  The resulting
+/// range is the minimal cover of the bits in the intersection.
+/// \param mask is the mask to intersect with
+void BitRange::intersectMask(uintb mask)
+
+{
+  mask &= getMask();
+  if (mask == 0) {
+    leastSigBit = 0;
+    numBits = 0;
+    return;
+  }
+  int4 newLeastSig = leastsigbit_set(mask);
+  int4 newMostSig = mostsigbit_set(mask) + 1;
+  int4 thisMost = leastSigBit + numBits;
+  if (newLeastSig > leastSigBit) {
+    numBits -= (newLeastSig - leastSigBit);
+    leastSigBit = newLeastSig;
+  }
+  if (newMostSig < thisMost) {
+    numBits -= (thisMost - newMostSig);
+  }
+}
+
+/// The bit range is shifted to the left by the given amount.
+/// \param leftShiftAmount is the amount to shift the range by
+void BitRange::shift(int4 leftShiftAmount)
+
+{
+  leastSigBit += leftShiftAmount;
+  int4 most = leastSigBit + numBits;
+  if (leastSigBit < 0) {
+    numBits += leastSigBit;
+    leastSigBit = 0;
+  }
+  else if (most > byteSize * 8) {
+    numBits -= (most - byteSize * 8);
+  }
+  if (numBits < 0) {
+    leastSigBit = 0;
+    numBits = 0;
+  }
+}
+
+/// The number of bits may be affected.
+/// \param num is the number of bytes to truncate
+void BitRange::truncateMostSigBytes(int4 num)
+
+{
+  if (isBigEndian) {
+    byteOffset += num;
+  }
+  byteSize -= num;
+  int4 maxOffset = leastSigBit + numBits;
+  if (maxOffset > byteSize * 8)
+    numBits -= (maxOffset - byteSize * 8);
+  if (numBits < 0)
+    numBits = 0;
+}
+
+/// \param num is the number of bytes to truncate
+void BitRange::truncateLeastSigBytes(int4 num)
+
+{
+  if (!isBigEndian)
+    byteOffset += num;
+  byteSize -= num;
+  leastSigBit -= num * 8;
+  if (leastSigBit < 0) {
+    numBits = numBits + leastSigBit;
+    leastSigBit = 0;
+    if (numBits < 0)
+      numBits = 0;
+  }
+}
+
+/// Only the container is affected, the bit range itself does not change.
+/// \param num is the number of bytes to add
+void BitRange::extendBytes(int4 num)
+
+{
+  if (isBigEndian)
+    byteOffset -= num;
+  byteSize += num;
+}
+
+/// The bit-mask is aligned with the byte container.
+/// \return the bit-mask describing \b this range
+uintb BitRange::getMask(void) const
+
+{
+  uintb res;
+  if (numBits >= sizeof(uintb)*8)
+    res = 0;
+  else {
+    res = 1;
+    res <<= numBits;
+  }
+  res -= 1;
+  res <<= leastSigBit;
+  return res;
+}
+
+/// \return \b true if the beginning and end of the range fall on byte boundaries
+bool BitRange::isByteRange(void) const
+
+{
+  if ((numBits & 7) != 0) return false;
+  if ((leastSigBit & 7) != 0) return false;
+  return true;
+}
+
+/// \return \b true if the most significant bit of the field and the container are the same
+bool BitRange::isMostSignificant(void) const
+
+{
+  return 8*byteSize == leastSigBit + numBits;
+}
+
+void BitRange::minimizeContainer(void)
+
+{
+  int4 trunc = leastSigBit / 8;
+  if (isBigEndian)
+    byteSize -= trunc;
+  else
+    byteOffset += trunc;
+  leastSigBit &= 7;
+  int4 num = byteSize - ((leastSigBit + numBits + 7) / 8);
+  if (num > 0) {
+    if (isBigEndian)
+      byteOffset += num;
+    byteSize -= num;
+  }
+}
+
+void BitRange::expandToMost(void)
+
+{
+  numBits = 8*byteSize - leastSigBit;	// Increase number of bits to maximum that still fits
+}
+
 #ifdef UINTB4
 uintb uintbmasks[9] = { 0, 0xff, 0xffff, 0xffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
 #else
@@ -673,6 +913,22 @@ uintb sign_extend(uintb in,int4 sizein,int4 sizeout)
   uintb res = (uintb)(sval >> (sizeout - sizein) * 8);
   res >>= (sizeof(uintb) - sizeout)*8;
   return res;
+}
+
+/// \param val is the value to extend
+/// \param numbits is the number of bits in the value
+/// \param size is the integer size in bytes
+/// \return the extended value
+uintb extend_signbit(uintb val,int4 numbits,int4 size)
+
+{
+  if (numbits < size * 8) {
+    int4 sa = 8*sizeof(intb) - numbits;
+    intb sval = val;
+    val = (sval << sa) >> sa;
+    val &= calc_mask(size);
+  }
+  return val;
 }
 
 /// Swap the least significant \b size bytes in \b val

@@ -6087,39 +6087,41 @@ bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) con
 
   int8 elSizeBefore;
   int8 offBefore;
-  Datatype *typeBefore = baseType->nearestArrayedComponentBackward(off, &offBefore, &elSizeBefore);
-  if (typeBefore != (Datatype *)0) {
-    if (arrayHint == 1 || elSizeBefore == arrayHint) {
-      int8 sizeAddr = AddrSpace::byteToAddressInt(typeBefore->getSize(),ct->getWordSize());
-      if (offBefore >= 0 && offBefore < sizeAddr) {
-	// If the offset is \e inside a component with a compatible array, return it.
-	*newoff = offBefore;
-	return true;
-      }
-    }
-  }
+  int8 typeBefore = baseType->nearestArrayedComponentBackward(off, 128, &offBefore, &elSizeBefore);
   int8 elSizeAfter;
   int8 offAfter;
-  Datatype *typeAfter = baseType->nearestArrayedComponentForward(off, &offAfter, &elSizeAfter);
-  if (typeBefore == (Datatype *)0 && typeAfter == (Datatype *)0)
+  int8 typeAfter = baseType->nearestArrayedComponentForward(off, 128, &offAfter, &elSizeAfter);
+  if (typeBefore < 0 && typeAfter < 0)
     return (baseType->getSubType(off,newoff) != (Datatype *)0);
-  if (typeBefore == (Datatype *)0) {
+  if (typeBefore < 0) {
+    *newoff = offAfter;		// Only array is after
+    return true;
+  }
+  if (typeAfter < 0) {
+    *newoff = offBefore;	// Only array is before
+    return true;
+  }
+  if (offAfter == offBefore) {
     *newoff = offAfter;
     return true;
   }
-  if (typeAfter == (Datatype *)0) {
-    *newoff = offBefore;
-    return true;
+  // Reaching here we know there is an array before and an array after the offset point
+  if (arrayHint != 1 && elSizeBefore != elSizeAfter) {	// element sizes are different, try to distinguish by arrayHint
+    if (elSizeBefore == arrayHint) {
+      *newoff = offBefore;
+      return true;
+    }
+    if (elSizeAfter == arrayHint) {
+      *newoff = offAfter;
+      return true;
+    }
   }
-
+  if (baseType->getSubType(off,newoff) != (Datatype *)0) {
+    if (*newoff == offBefore || *newoff == offAfter)
+      return true;		// Offset is contained in one of the arrayed components.  Return it.
+  }
   uint8 distBefore = (offBefore < 0) ? -offBefore : offBefore;
   uint8 distAfter = (offAfter < 0) ? -offAfter : offAfter;
-  if (arrayHint != 1) {
-    if (elSizeBefore != arrayHint)
-      distBefore += 0x1000;
-    if (elSizeAfter != arrayHint)
-      distAfter += 0x1000;
-  }
   *newoff = (distAfter < distBefore) ? offAfter : offBefore;
   return true;
 }
@@ -10965,7 +10967,8 @@ int4 RuleExpandLoad::applyOp(PcodeOp *op,Funcdata &data)
   if (elType->getSize() < outSize + offset) return 0;
 
   type_metatype meta = elType->getMetatype();
-  if (meta == TYPE_UNKNOWN) return 0;
+  if (meta == TYPE_UNKNOWN || meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_UNION
+      || meta == TYPE_PARTIALSTRUCT || meta == TYPE_PARTIALUNION) return 0;
   bool addForm = checkAndComparison(outVn);
   AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
   int4 lsbCut = 0;

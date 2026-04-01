@@ -70,6 +70,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	static final GColor BG_COLOR = new GColor("color.bg.byteviewer");
 	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator");
 	
+	static final GColor BOUNDARY_CROSSING_COLOR = new GColor("color.fg.byteviewer.boundary.crossing");
 	static final GColor EDITED_TEXT_COLOR = new GColor("color.fg.byteviewer.changed");
 	static final GColor CURSOR_COLOR_FOCUSED_EDIT = new GColor("color.cursor.byteviewer.focused.edit");
 	static final GColor CURSOR_COLOR_UNFOCUSED_EDIT = new GColor("color.cursor.byteviewer.unfocused.edit");

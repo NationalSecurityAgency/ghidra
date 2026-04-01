@@ -356,23 +356,20 @@ public enum DWARFForm {
 			case DW_FORM_strx3:
 			case DW_FORM_strx4: {
 				long index = context.reader().readNextUnsignedValue(size);
-				String s =
-					context.compUnit().getProgram().getString(this, index, context.compUnit());
+				String s = context.dieContainer().getString(this, index, context.compUnit());
 				return new DWARFStringAttribute(s);
 			}
 			case DW_FORM_strp:
 			case DW_FORM_line_strp:
 			case DW_FORM_gnu_strp_alt: {
 				long offset = context.reader().readNextUnsignedValue(context.dwarfIntSize());
-				String s =
-					context.compUnit().getProgram().getString(this, offset, context.compUnit());
+				String s = context.dieContainer().getString(this, offset, context.compUnit());
 				return new DWARFStringAttribute(s);
 			}
 			case DW_FORM_strx:
 			case DW_FORM_gnu_str_index: {
 				int index = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
-				String s =
-					context.compUnit().getProgram().getString(this, index, context.compUnit());
+				String s = context.dieContainer().getString(this, index, context.compUnit());
 				return new DWARFStringAttribute(s);
 			}
 

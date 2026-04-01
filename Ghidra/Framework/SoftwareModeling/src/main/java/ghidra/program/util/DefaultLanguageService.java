@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.model.lang.*;
 import ghidra.util.task.TaskBuilder;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Default Language service used gather up all the languages that were found
@@ -318,27 +320,54 @@ public class DefaultLanguageService implements LanguageService {
 			this.provider = lp;
 		}
 
-		// synchronized to prevent multiple clients from trying to load the language at once
-		synchronized Language getLanguage() {
+		/**
+		 * Loads a {@link Language} from a {@link LanguageProvider}, using a Task with a modal
+		 * {@link TaskMonitor}.
+		 * <p>
+		 * This is the call path that users will see when using Ghidra and a language is
+		 * initially loaded from disk.
+		 * 
+		 * @return {@link Language}
+		 * @throws LanguageNotFoundException if error initializing Language
+		 */
+		synchronized Language getLanguage() throws LanguageNotFoundException {
+			// synchronized to prevent multiple clients from trying to load the language at once
 
 			LanguageID id = description.getLanguageID();
 			if (provider.isLanguageLoaded(id)) {
 				// already loaded; no need to create a task
-				return provider.getLanguage(id);
+				return provider.getLanguage(id, TaskMonitor.DUMMY);
 			}
 
-			//@formatter:off
-			TaskBuilder.withRunnable(monitor -> {			
-					provider.getLanguage(id); // load and cache				
-				})
-				.setTitle("Loading language '" + id + "'")
-				.setCanCancel(false)
-				.setHasProgress(false)
-				.launchModal()
-				;
-			//@formatter:on	
+			AtomicReference<Throwable> langError = new AtomicReference<>();
+			AtomicReference<Language> langResult = new AtomicReference<>();
 
-			return provider.getLanguage(id);
+			//@formatter:off
+			// Need to start task with canCancel true to get the cancel button added to the task dialog
+			TaskBuilder.withRunnable(monitor -> {
+					monitor.setCancelEnabled(false);
+					try {
+						langResult.set(provider.getLanguage(id, monitor));
+					}
+					catch (Throwable th) {
+						langError.set(th);
+					}
+				})
+				.setTitle("Loading language '%s'".formatted(id))
+				.setCanCancel(true)
+				.setHasProgress(false)
+				.launchModal();
+			//@formatter:on
+
+			Throwable th = langError.get();
+			if (th instanceof LanguageNotFoundException lnfe) {
+				throw lnfe;
+			}
+			else if (th != null) {
+				throw new LanguageNotFoundException(id, th);
+			}
+
+			return langResult.get();
 		}
 
 		@Override

@@ -1,0 +1,8 @@
+<callfixup name="_objc_getProperty_fixup">
+    <target name="_objc_getProperty"/>
+    <pcode>
+        <body><![CDATA[
+            x0 = *(x0 + x2);
+        ]]></body>
+    </pcode>
+</callfixup>

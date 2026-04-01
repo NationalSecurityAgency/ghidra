@@ -204,12 +204,27 @@ public abstract class MDModifierType extends MDDataType {
 		dmang.cleanOutput(builder); // 20170714
 	}
 
-	protected void insertReferredType(StringBuilder builder) {
-		refType.insert(builder);
+	protected void insertReferredType(StringBuilder builder, boolean asArg) {
+		// LATER: Investigate weather we can change refType definition from MDType to MDDataType
+		if (refType instanceof MDDataType mdt && asArg) {
+			mdt.insertAsArg(builder);
+		}
+		else {
+			refType.insert(builder);
+		}
 	}
 
 	@Override
 	public void insert(StringBuilder builder) {
+		insertInternal(builder, false);
+	}
+
+	@Override
+	public void insertAsArg(StringBuilder builder) {
+		insertInternal(builder, true);
+	}
+
+	private void insertInternal(StringBuilder builder, boolean asArg) {
 		// Added 20170412 to try have available to get MSFT affect on this
 		// "invalid" condition.
 		// if (cvMod.isBasedPtrBased()) {
@@ -274,12 +289,12 @@ public abstract class MDModifierType extends MDDataType {
 		// builder.insertString(" "); //20160701
 		if (refType instanceof MDArrayReferencedType) {
 			// 20170714 refType.insert(builder);
-			insertReferredType(builder);// 20170714
+			insertReferredType(builder, asArg);// 20170714
 		}
 		else if (cvMod.isPinPointer()) {
 			StringBuilder refBuilder = new StringBuilder();
 			// 20170714 refType.insert(refBuilder);
-			insertReferredType(refBuilder);// 20170714
+			insertReferredType(refBuilder, asArg);// 20170714
 			dmang.appendString(refBuilder, " ");
 			if (!(cvMod.isQuestionType() ||
 				(cvMod.isPointerType() && (refType instanceof MDVoidDataType)))) {
@@ -296,7 +311,7 @@ public abstract class MDModifierType extends MDDataType {
 		else if (cvMod.isCLIArray()) {
 			StringBuilder refBuilder = new StringBuilder();
 			// 20170714 refType.insert(refBuilder);
-			insertReferredType(refBuilder);// 20170714
+			insertReferredType(refBuilder, asArg);// 20170714
 			if (!(refType instanceof MDVoidDataType)) {
 				cvMod.insertManagedPropertiesPrefix(refBuilder);
 				// cvMod.insertManagedProperties(refBuilder);
@@ -319,7 +334,7 @@ public abstract class MDModifierType extends MDDataType {
 			// }
 			// //Could be function (function pointer or function) or data.
 			// 20170714 refType.insert(builder);
-			insertReferredType(builder);// 20170714
+			insertReferredType(builder, asArg);// 20170714
 		}
 	}
 }

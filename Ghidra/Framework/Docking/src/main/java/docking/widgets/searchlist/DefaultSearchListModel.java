@@ -53,7 +53,7 @@ public class DefaultSearchListModel<T> extends AbstractListModel<SearchListEntry
 
 	/**
 	 * Adds the list of items to the given category. If the category already exists, these items
-	 * will be added to any items already associated with that cateogry.
+	 * will be added to any items already associated with that category.
 	 * @param category the category to add the items to
 	 * @param items the list of items to add to and be associated with the given category
 	 */

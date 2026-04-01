@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
+import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
@@ -115,11 +116,11 @@ public class DWARFFunctionImporter {
 						}
 						break;
 					case DW_TAG_variable:
-						// only process variable definitions that are static variables
-						// (ie. they are children of the compunit root, ie. depth == 1).
-						// Local variables should be children of dw_tag_subprograms
-						// and will be handled in processFuncChildren()
-						if (diea.getDepth() == 1) {
+						// Only process variable definitions that are global static variables
+						// (not nested under a subprogram DIE)
+						// Static variables scoped inside a function should be children of 
+						// dw_tag_subprograms and will be handled in processFuncChildren()
+						if (diea.findAncestor(DW_TAG_subprogram) == null) {
 							outputGlobal(DWARFVariable.readGlobalVariable(diea));
 						}
 						break;
@@ -331,7 +332,7 @@ public class DWARFFunctionImporter {
 		// offsetFromFuncStart will be -1 if the containing block didn't have location info
 
 		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 
 			switch (childDIEA.getTag()) {
 				case DW_TAG_variable: {
@@ -388,6 +389,11 @@ public class DWARFFunctionImporter {
 		Namespace namespace = globalVar.name.getParentNamespace(currentProgram);
 		String name = globalVar.name.getName();
 		Address address = globalVar.getRamAddress();
+		if (prog.isZeroDataAddress(address)) {
+			// skip, its probably an incomplete DIE with a zero-d out location / address
+			// we can't create a bookmark with a warning since we don't have a good address.
+			return;
+		}
 		DataType dataType = globalVar.type;
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();

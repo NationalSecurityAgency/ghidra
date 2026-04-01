@@ -144,7 +144,7 @@ public interface PcodeFormatter<T> {
 		Collections.sort(offsetList);
 		for (int i = offsetList.size() - 1; i >= 0; i--) {
 			int labelOffset = offsetList.get(i);
-			if (labelOffset > pcodeOps.size()) {
+			if (labelOffset > pcodeOps.size() || labelOffset < 0) {
 				// Skip jumps out of this block/program
 				continue;
 			}

@@ -35,10 +35,9 @@ import ghidra.util.NumericUtilities;
  */
 public class ProgramByteBlockSet implements ByteBlockSet {
 
-	private MemoryBlock[] memBlocks;
 	protected final Program program;
 	private ByteBlockChangeManager bbcm;
-	private ByteBlock[] blocks;
+	private MemoryByteBlock[] blocks;
 	private final ProgramByteViewerComponentProvider provider;
 
 	protected ProgramByteBlockSet(ProgramByteViewerComponentProvider provider, Program program,
@@ -113,8 +112,8 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 		//   Use entries that groups the relevant objects instead of co-indexed arrays
 		//     Though a nicety, it becomes necessary if indexing/sorting by start address
 		for (int i = 0; i < blocks.length; i++) {
-			Address blockStart = memBlocks[i].getStart();
-			Address blockEnd = memBlocks[i].getEnd();
+			Address blockStart = blocks[i].getStart();
+			Address blockEnd = blocks[i].getEnd();
 			AddressRange intersection =
 				range.intersect(new AddressRangeImpl(blockStart, blockEnd));
 			if (intersection != null) {
@@ -210,7 +209,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 			}
 			try {
 
-				Address addr = memBlocks[i].getStart();
+				Address addr = blocks[i].getStart();
 				return addr.addNoWrap(offset);
 
 			}
@@ -233,12 +232,12 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 		}
 
 		for (int i = 0; i < blocks.length; i++) {
-			if (!memBlocks[i].contains(address)) {
+			if (!blocks[i].contains(address)) {
 				continue;
 			}
 
 			try {
-				long off = address.subtract(memBlocks[i].getStart());
+				long off = address.subtract(blocks[i].getStart());
 				BigInteger offset = NumericUtilities.unsignedLongToBigInteger(off);
 				return new ByteBlockInfo(blocks[i], offset);
 			}
@@ -254,12 +253,12 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 	}
 
 	protected Address getBlockStart(int blockNumber) {
-		return memBlocks[blockNumber].getStart();
+		return blocks[blockNumber].getStart();
 	}
 
 	protected int getByteBlockNumber(Address blockStartAddr) {
-		for (int i = 0; i < memBlocks.length; i++) {
-			if (memBlocks[i].getStart().compareTo(blockStartAddr) == 0) {
+		for (int i = 0; i < blocks.length; i++) {
+			if (blocks[i].getStart().compareTo(blockStartAddr) == 0) {
 				return i;
 			}
 		}
@@ -282,15 +281,15 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 	protected void newMemoryBlocks() {
 		Memory memory = program.getMemory();
-		memBlocks = memory.getBlocks();
-		blocks = new ByteBlock[memBlocks.length];
+		MemoryBlock[] memBlocks = memory.getBlocks();
+		blocks = new MemoryByteBlock[memBlocks.length];
 		for (int i = 0; i < memBlocks.length; i++) {
-			blocks[i] = newMemoryByteBlock(memory, memBlocks[i]);
+			blocks[i] = newMemoryByteBlock(memBlocks[i]);
 		}
 	}
 
-	protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
-		return new MemoryByteBlock(program, memory, memBlock);
+	protected MemoryByteBlock newMemoryByteBlock(MemoryBlock memBlock) {
+		return new MemoryByteBlock(program, memBlock);
 	}
 
 	@Override

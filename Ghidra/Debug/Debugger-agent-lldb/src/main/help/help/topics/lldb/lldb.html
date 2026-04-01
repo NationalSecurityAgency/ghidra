@@ -206,7 +206,13 @@ perl -i -pe 's/(?&lt;=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
     <P>This works the same as the <A href="help/topics/gdb/gdb.html#ssh">GDB via SSH</A> launcher,
     but runs <TT>lldb</TT> on a remote system via <TT>ssh</TT>.</P>
 
-    <H2><A name="android"></A>Android</H2>
+	<H2><A name="ssh-win"></A>Via SSH (to Windows cmd shell)</H2>
+
+	<P>	This works the same as the <A href="help/topics/gdb/gdb.html#ssh-win">GDB via SSH (to Windows cmd shell)</A> 
+		launcher, but runs <TT>lldb</TT> on a remote Windows system via <TT>ssh</TT>.
+	</P>
+	
+	<H2><A name="android"></A>Android</H2>
 
     <P>This has the same options as the <A href="#ssh">LLDB via SSH</A> launcher, which are
     necessary for connecting to the Android debugger, but uses <B>Device</B> in place of <B>Host</B>

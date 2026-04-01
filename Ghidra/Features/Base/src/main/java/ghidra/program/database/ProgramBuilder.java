@@ -51,6 +51,7 @@ import ghidra.program.model.util.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.TestEnv;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -58,6 +59,8 @@ import utility.function.ExceptionalCallback;
 
 // TODO: Move this class into a different package (i.e., ghidra.test.program)
 public class ProgramBuilder {
+
+	private static Set<ProgramBuilder> allBuilders = new HashSet<>();
 
 	public static final String _ARM = "ARM:LE:32:v7";
 	public static final String _AARCH64 = "AARCH64:LE:64:v8A";
@@ -138,6 +141,9 @@ public class ProgramBuilder {
 		CompilerSpec compilerSpec = compilerSpecID == null ? language.getDefaultCompilerSpec()
 				: language.getCompilerSpecByID(new CompilerSpecID(compilerSpecID));
 		program = new ProgramDB(name, language, compilerSpec, consumer == null ? this : consumer);
+
+		allBuilders.add(this);
+
 		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
@@ -151,6 +157,9 @@ public class ProgramBuilder {
 	public ProgramBuilder(String name, Language language) throws Exception {
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB(name, language, compilerSpec, this);
+
+		allBuilders.add(this);
+
 		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
@@ -214,7 +223,19 @@ public class ProgramBuilder {
 		return addr;
 	}
 
+	/**
+	 * A methods called by {@link TestEnv} to cleanup all resources.
+	 */
+	public static void disposeAllBuilders() {
+		HashSet<ProgramBuilder> set = new HashSet<>(allBuilders);
+		allBuilders.clear();
+		for (ProgramBuilder builder : set) {
+			builder.dispose();
+		}
+	}
+
 	public void dispose() {
+		allBuilders.remove(this);
 		if (program.isUsedBy(this)) {
 
 			// Make sure any buffered events are processed before we release.  This fixes a timing

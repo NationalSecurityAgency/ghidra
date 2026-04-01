@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,8 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 			return null;
 		}
 		if (mType instanceof AbstractPointerMsType msPtr) {
-			predefineClass(msPtr.getUnderlyingRecordNumber());
+			SymbolPath sp = getClassSymbolPath(msPtr.getUnderlyingRecordNumber());
+			applicator.predefineClass(sp);
 		}
 		applicator.getPdbApplicatorMetrics().witnessMemberFunctionThisPointer(mType);
 		DataType dt = applicator.getDataType(ptrRecord);
@@ -78,32 +79,33 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 	}
 
 	@Override
-	protected void processContainingType(AbstractMsType type) {
+	protected SymbolPath processContainingType(AbstractMsType type) {
 		// TODO: evaluate whether we need to schedule this container type... guessing not
 		RecordNumber containerRecord =
 			((AbstractMemberFunctionMsType) type).getContainingClassRecordNumber();
 		if (containerRecord == null) {
-			return;
+			return null;
 		}
-		predefineClass(containerRecord);
+		SymbolPath sp = getClassSymbolPath(containerRecord);
+		applicator.predefineClass(sp);
 		AbstractMsType mType = applicator.getTypeRecord(containerRecord);
 		applicator.getPdbApplicatorMetrics().witnessMemberFunctionContainingType(mType);
+		return sp;
 	}
 
-	private void predefineClass(RecordNumber recordNumber) {
+	private SymbolPath getClassSymbolPath(RecordNumber recordNumber) {
 		AbstractMsType type = applicator.getTypeRecord(recordNumber);
 		if (!(type instanceof AbstractCompositeMsType msComposite)) {
-			return;
+			return null;
 		}
 		MsTypeApplier applier = applicator.getTypeApplier(recordNumber);
 		if (!(applier instanceof CompositeTypeApplier compApplier)) {
-			return;
+			return null;
 		}
 		// 20240709: found example of "this" pointer of method that referenced a composite that
 		//  did not have any base classes or methods.  So we want to make sure we take the
 		//  opportunity here to promote the namespace to a class.
-		SymbolPath sp = compApplier.getFixedSymbolPath(msComposite);
-		applicator.predefineClass(sp);
+		return compApplier.getFixedSymbolPath(msComposite);
 	}
 
 	@Override

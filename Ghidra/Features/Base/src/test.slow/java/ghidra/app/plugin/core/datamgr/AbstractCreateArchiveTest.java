@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
 import ghidra.program.model.lang.*;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
+import ghidra.test.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -57,7 +56,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 	protected TreeModelModCounter treeModelModListener;
 
 	protected ProgramDB buildProgram() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY, this);
+		ProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.createMemory(".data", "0x1008000", 0x600);
@@ -242,7 +241,6 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 
 		// this handles the save changes dialog and potential analysis dialogs
 		closeAllWindows();
-		env.release(program);
 		env.dispose();
 	}
 

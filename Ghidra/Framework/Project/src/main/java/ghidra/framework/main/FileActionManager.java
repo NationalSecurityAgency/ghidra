@@ -311,7 +311,7 @@ class FileActionManager {
 				locked = false;
 				break;
 			}
-			if (!domainObjects[lastIndex].lock(null)) {
+			if (!domainObjects[lastIndex].lock("save changes")) {
 				String title = "Exit Ghidra";
 				StringBuffer buf = new StringBuffer();
 				DomainObject d = domainObjects[lastIndex];

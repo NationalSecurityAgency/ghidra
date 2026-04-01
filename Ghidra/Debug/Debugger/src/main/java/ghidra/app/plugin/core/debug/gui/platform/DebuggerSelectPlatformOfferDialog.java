@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,8 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 
 	protected enum OfferTableColumns
 		implements EnumeratedTableColumn<OfferTableColumns, DebuggerPlatformOffer> {
-		CONFIDENCE("Confidence", Integer.class, DebuggerPlatformOffer::getConfidence, SortDirection.DESCENDING),
+		CONFIDENCE("Confidence", Integer.class, DebuggerPlatformOffer::getConfidence,
+				SortDirection.DESCENDING),
 		PROCESSOR("Processor", String.class, OfferTableColumns::getProcessor),
 		VARIANT("Variant", String.class, OfferTableColumns::getVariant),
 		SIZE("Size", Integer.class, OfferTableColumns::getSize),
@@ -112,6 +113,11 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		}
 
 		@Override
+		public String getHeader() {
+			return header;
+		}
+
+		@Override
 		public Class<?> getValueClass() {
 			return cls;
 		}
@@ -119,11 +125,6 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		@Override
 		public Object getValueOf(DebuggerPlatformOffer row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public String getHeader() {
-			return header;
 		}
 
 		@Override

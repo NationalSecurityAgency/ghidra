@@ -19,7 +19,11 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.pe.chpe.ImageArm64ecMetadata;
+import ghidra.app.util.bin.format.pe.chpe.ImageChpeMetadataX86;
+import ghidra.app.util.bin.format.pe.dvrt.ImageDynamicRelocationTable;
 import ghidra.program.model.data.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -67,16 +71,30 @@ public class LoadConfigDirectory implements StructConverter {
 	private long guardRfFailureRoutineFunctionPointer;
 	private int dynamicValueRelocTableOffset;
 	private short dynamicValueRelocTableSection;
-	private short reserved1;
+	private short reserved2;
 	private long guardRfVerifyStackPointerFunctionPointer;
 	private int hotPatchTableOffset;
-	private int reserved2;
-	private long reserved3;
+	private int reserved3;
+	private long enclaveConfigurationPointer;
+	private long volatileMetadataPointer;
+	private long guardEhContinuationTable;
+	private long guardEhContinuationCount;
+	private long guardXfgCheckFunctionPointer;
+	private long guardXfgDispatchFunctionPointer;
+	private long guardXfgTableDispatchFunctionPointer;
+	private long castGuardOsDeterminedFailureMode;
+	private long guardMemcpyFunctionPointer;
+	private long umaFunctionPointers;
 
 	private boolean is64bit;
+	private ImageDynamicRelocationTable dvrt;
+	private ImageChpeMetadataX86 chpeMetadataX86;
+	private ImageArm64ecMetadata arm64ecMetadata;
 
-	LoadConfigDirectory(BinaryReader reader, int index, OptionalHeader oh) throws IOException {
-		is64bit = oh.is64bit();
+	LoadConfigDirectory(BinaryReader reader, int index, NTHeader nt) throws IOException {
+		FileHeader fh = nt.getFileHeader();
+		OptionalHeader oh = nt.getOptionalHeader();
+		is64bit = nt.getOptionalHeader().is64bit();
 
 		long oldIndex = reader.getPointerIndex();
 		reader.setPointerIndex(index);
@@ -139,151 +157,210 @@ public class LoadConfigDirectory implements StructConverter {
 			guardRfFailureRoutineFunctionPointer = readPointer(reader);
 			dynamicValueRelocTableOffset = reader.readNextInt();
 			dynamicValueRelocTableSection = reader.readNextShort();
-			reserved1 = reader.readNextShort();
+			reserved2 = reader.readNextShort();
 		}
 		if (reader.getPointerIndex() - index < size) {
 			guardRfVerifyStackPointerFunctionPointer = readPointer(reader);
 			hotPatchTableOffset = reader.readNextInt();
 		}
 		if (reader.getPointerIndex() - index < size) {
-			reserved2 = reader.readNextInt();
-			reserved3 = readPointer(reader);
+			reserved3 = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() - index < size) {
+			enclaveConfigurationPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			volatileMetadataPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardEhContinuationTable = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardEhContinuationCount = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardXfgCheckFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardXfgDispatchFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardXfgTableDispatchFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			castGuardOsDeterminedFailureMode = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			guardMemcpyFunctionPointer = readPointer(reader);
+		}
+		if (reader.getPointerIndex() - index < size) {
+			umaFunctionPointers = readPointer(reader);
+		}
+		
+		// Parse the CHPE Metadata
+		if (chpeMetadataPointer != 0) {
+			FileHeader fileHeader = nt.getFileHeader();
+			BinaryReader r = reader.clone(nt.vaToPointer(chpeMetadataPointer));
+			if (fileHeader.isArm()) {
+				arm64ecMetadata = new ImageArm64ecMetadata(r, nt, chpeMetadataPointer);
+			}
+			if (fileHeader.isX86()) {
+				chpeMetadataX86 = new ImageChpeMetadataX86(r, nt, chpeMetadataPointer);
+			}
+		}
+
+		// Parse the Dynamic Value Relocation Table (DVRT)
+		if (dynamicValueRelocTableOffset != 0 && dynamicValueRelocTableSection != 0) {
+			SectionHeader section = fh.getSectionHeader(dynamicValueRelocTableSection - 1);
+			if (section != null) {
+				long fileOffset = section.getPointerToRawData() + dynamicValueRelocTableOffset;
+				long rva = section.getVirtualAddress() + dynamicValueRelocTableOffset;
+				dvrt = new ImageDynamicRelocationTable(reader.clone(fileOffset), rva, is64bit);
+			}
+			else {
+				Msg.error(this,
+					"Dynamic value relocation table specifies invalid section number: " +
+						dynamicValueRelocTableSection);
+			}
 		}
 
 		reader.setPointerIndex(oldIndex);
 	}
 
 	/**
-	 * Returns the size (in bytes) of this structure.
-	 *
-	 * @return the size (in bytes) of this structure
+	 * {@return the size (in bytes) of this structure}
 	 */
 	public int getSize() {
 		return size;
 	}
 
 	/**
-	 * Returns the critical section default time-out value.
-	 *
-	 * @return the critical section default time-out value
+	 * {@return the critical section default time-out value}
 	 */
 	public int getCriticalSectionDefaultTimeout() {
 		return criticalSectionDefaultTimeout;
 	}
 
 	/**
-	 * Gets the safe exception handler table.
-	 *
-	 * @return the safe exception handler table.
+	 * {@return the safe exception handler table}
 	 */
 	public long getSeHandlerTable() {
 		return seHandlerTable;
 	}
 
 	/**
-	 * Gets the safe exception handler table count.
-	 *
-	 * @return the safe exception handler table count.
+	 * {@return the safe exception handler table count}
 	 */
 	public long getSeHandlerCount() {
 		return seHandlerCount;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard {@link GuardFlags}.
-	 * 
-	 * @return The ControlFlowGuard {@link GuardFlags}.
+	 * {@return the ControlFlowGuard {@link GuardFlags}}
 	 */
 	public GuardFlags getCfgGuardFlags() {
 		return guardFlags;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard check function pointer address.
-	 * 
-	 * @return The ControlFlowGuard check function pointer address.  
-	 *   Could be 0 if ControlFlowGuard is not being used.
+	 * {@return the ControlFlowGuard check function pointer address (could be 0 if ControlFlowGuard
+	 * is not being used)}
 	 */
 	public long getCfgCheckFunctionPointer() {
 		return guardCfcCheckFunctionPointer;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard dispatch function pointer address.
-	 * 
-	 * @return The ControlFlowGuard dispatch function pointer address.  
-	 *   Could be 0 if ControlFlowGuard is not being used.
+	 * {@return the ControlFlowGuard dispatch function pointer address (could be 0 if 
+	 * ControlFlowGuard is not being used)}
 	 */
 	public long getCfgDispatchFunctionPointer() {
 		return guardCfDispatchFunctionPointer;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard function table pointer address.
-	 * 
-	 * @return The ControlFlowGuard function table function pointer address.  
-	 *   Could be 0 if ControlFlowGuard is not being used.
+	 * {@return the ControlFlowGuard function table function pointer address (could be 0 if 
+	 * ControlFlowGuard is not being used)}
 	 */
 	public long getCfgFunctionTablePointer() {
 		return guardCfFunctionTable;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard function count.
-	 * 
-	 * @return The ControlFlowGuard function count.  Could be 0 if ControlFlowGuard is 
-	 *   not being used.
+	 * {@return the ControlFlowGuard function count (could be 0 if ControlFlowGuard is not being 
+	 * used)}
 	 */
 	public long getCfgFunctionCount() {
 		return guardCfFunctionCount;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard IAT table pointer address.
-	 * 
-	 * @return The ControlFlowGuard IAT table function pointer address. Could be 0 if ControlFlowGuard is not being used
+	 * {@return the ControlFlowGuard IAT table function pointer address (could be 0 if 
+	 * ControlFlowGuard is not being used)}
 	 */
 	public long getGuardAddressIatTableTablePointer() {
 		return guardAddressTakenIatEntryTable;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard IAT entries count.
-	 * 
-	 * @return The ControlFlowGuard IAT entries count.  Could be 0 if ControlFlowGuard is not being used
+	 * {@return the ControlFlowGuard IAT entries count (could be 0 if ControlFlowGuard is not being
+	 * used)}
 	 */
 	public long getGuardAddressIatTableCount() {
 		return guardAddressTakenIatEntryCount;
 	}
 
 	/**
-	 * Gets the ReturnFlowGuard failure routine address.
-	 * 
-	 * @return The ReturnFlowGuard failure routine address.
-	 *   Could be 0 if ReturnFlowGuard is not being used.
+	 * {@return the CHPE metadata pointer (could be 0 if it's not a CHPE)}
+	 */
+	public long getChpeMetadataPointer() {
+		return chpeMetadataPointer;
+	}
+
+	/**
+	 * {@return the ReturnFlowGuard failure routine address (could be 0 if ReturnFlowGuard is not 
+	 * being used)}
 	 */
 	public long getRfgFailureRoutine() {
 		return guardRfFailureRoutine;
 	}
 
 	/**
-	 * Gets the ReturnFlowGuard failure routine function pointer address.
-	 * 
-	 * @return The ReturnFlowGuard failure routine function pointer address.
-	 *   Could be 0 if ReturnFlowGuard is not being used.
+	 * {@return the ReturnFlowGuard failure routine function pointer address (could be 0 if 
+	 * ReturnFlowGuard is not being used)}
 	 */
 	public long getRfgFailureRoutineFunctionPointer() {
 		return guardRfFailureRoutineFunctionPointer;
 	}
 
 	/**
-	 * Gets the ReturnFlowGuard verify stack pointer function pointer address.
-	 * 
-	 * @return The ReturnFlowGuard verify stack pointer function pointer address.
-	 *   Could be 0 if ReturnFlowGuard is not being used.
+	 * {@return the ReturnFlowGuard verify stack pointer function pointer address (could be 0 if 
+	 * ReturnFlowGuard is not being used)}
 	 */
 	public long getRfgVerifyStackPointerFunctionPointer() {
 		return guardRfVerifyStackPointerFunctionPointer;
+	}
+
+	/**
+	 * {@return the Dynamic Value Relocation Table (could be {@code null} if DVRT is not being 
+	 * used)}
+	 */
+	public ImageDynamicRelocationTable getDynamicRelocationTable() {
+		return dvrt;
+	}
+
+	/**
+	 * {@return the ARM64EC metadata (could be {@code null} if there is none)}
+	 */
+	public ImageArm64ecMetadata getArm64ecMetadata() {
+		return arm64ecMetadata;
+	}
+
+	/**
+	 * {@return the X86 CHPE metadata (could be {@code null} if there is none)}
+	 */
+	public ImageChpeMetadataX86 getChpeMetadataX86() {
+		return chpeMetadataX86;
 	}
 
 	@Override
@@ -351,15 +428,42 @@ public class LoadConfigDirectory implements StructConverter {
 			struct.add(ptr, "GuardRFFailureRoutineFunctionPointer", null);
 			struct.add(DWORD, "DynamicValueRelocTableOffset", null);
 			struct.add(WORD, "DynamicValueRelocTableSection", null);
-			struct.add(WORD, "Reserved1", null);
+			struct.add(WORD, "Reserved2", null);
 		}
 		if (struct.getLength() < size) {
 			struct.add(ptr, "GuardRFVerifyStackPointerFunctionPointer", null);
 			struct.add(DWORD, "HotPatchTableOffset", null);
 		}
 		if (struct.getLength() < size) {
-			struct.add(DWORD, "Reserved2", null);
-			struct.add(counter, "Reserved3", null);
+			struct.add(DWORD, "Reserved3", null);
+			struct.add(ptr, "EnclaveConfigurationPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "VolatileMetadataPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardEHContinuationTable", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(counter, "GuardEHContinuationCount", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardXFGCheckFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardXFGDispatchFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardXFGTableDispatchFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "CastGuardOsDeterminedFailureMode", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "GuardMemcpyFunctionPointer", null);
+		}
+		if (struct.getLength() < size) {
+			struct.add(ptr, "UmaFunctionPointers", null);
 		}
 
 		struct.setCategoryPath(new CategoryPath("/PE"));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,11 +123,12 @@ enum OpCode {
   CPUI_CPOOLREF = 68,		///< Recover a value from the \e constant \e pool
   CPUI_NEW = 69,		///< Allocate a new object (new)
   CPUI_INSERT = 70,		///< Insert a bit-range
-  CPUI_EXTRACT = 71,		///< Extract a bit-range
+  CPUI_ZPULL = 71,		///< Extract an unsigned bit-range
   CPUI_POPCOUNT = 72,		///< Count the 1-bits
   CPUI_LZCOUNT = 73,		///< Count the leading 0-bits
+  CPUI_SPULL = 74,		///< Extract a signed bit-range
 
-  CPUI_MAX = 74			///< Value indicating the end of the op-code values
+  CPUI_MAX = 75			///< Value indicating the end of the op-code values
 };
 
 extern const char *get_opname(OpCode opc);		///< Convert an OpCode to the name as a string

@@ -28,6 +28,7 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
+import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.framework.OperatingSystem;
@@ -463,7 +464,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 	}
 
 	@Test
-	public void testAttachObj() throws Exception {
+	public void testAttach() throws Exception {
 		// Missing specimen for macOS
 		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 		String sleep = DummyProc.which("expTraceableSleep");
@@ -473,14 +474,12 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				txPut(conn, "available");
 				txPut(conn, "processes");
 
-				RemoteMethod attachObj = conn.getMethod("attach_obj");
+				RemoteMethod attachObj = conn.getMethod("attach");
 				try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 					tb = new ToyDBTraceBuilder((Trace) mdo.get());
-					TraceObject proc =
-						Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
 					TraceObject target =
 						Objects.requireNonNull(tb.obj("Available[%d]".formatted(dproc.pid)));
-					attachObj.invoke(Map.of("process", proc, "target", target));
+					attachObj.invoke(Map.of("target", target));
 
 					String out = conn.executeCapture("target list");
 					assertThat(out, containsString("pid=%d".formatted(dproc.pid)));
@@ -1173,6 +1172,8 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 		conn.execute("file " + obj);
 		conn.execute("ghidra trace start");
 		conn.execute("process launch --stop-at-entry");
+		conn.execute("ghidra trace sync-enable");
+		conn.execute("ghidra trace sync-synth-stopped");
 	}
 
 	private void txPut(LldbAndConnection conn, String obj) {

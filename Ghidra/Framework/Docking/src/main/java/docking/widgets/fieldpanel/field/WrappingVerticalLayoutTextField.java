@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,11 +47,14 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	 * @param maxLines is the max number of lines to display
 	 * @param hlFactory is the highlight factory
 	 * @param breakOnWhiteSpace is true if wrapping should break on word boundaries
+	 * @param rowSeparator The string used to space lines of text when concatenated by the
+	 *        getText() method.
 	 */
 	public WrappingVerticalLayoutTextField(FieldElement textElement, int startX, int width,
-			int maxLines, FieldHighlightFactory hlFactory, boolean breakOnWhiteSpace) {
+			int maxLines, FieldHighlightFactory hlFactory, boolean breakOnWhiteSpace,
+			String rowSeparator) {
 		super(FieldUtils.wrap(textElement, width, breakOnWhiteSpace), startX, width, maxLines,
-			hlFactory, " ");
+			hlFactory, rowSeparator);
 	}
 
 	@Override

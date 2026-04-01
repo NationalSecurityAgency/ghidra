@@ -63,7 +63,8 @@ class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		CHARSET_COL,
 		HAS_ENCODING_ERROR,
 		UNICODE_SCRIPT,
-		TRANSLATED_VALUE
+		TRANSLATED_VALUE,
+		LENGTH_COL
 	}
 
 	DefinedStringsTableModel(PluginTool tool) {
@@ -103,6 +104,7 @@ class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		descriptor.addHiddenColumn(new HasEncodingErrorColumn());
 		descriptor.addHiddenColumn(new UnicodeScriptColumn());
 		descriptor.addHiddenColumn(new TranslatedValueColumn());
+		descriptor.addHiddenColumn(new StringLengthColumn());
 
 		return descriptor;
 	}
@@ -220,8 +222,8 @@ class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		@Override
 		public StringDataInstance getValue(ProgramLocation rowObject, Settings settings,
 				Program program, ServiceProvider serviceProvider) throws IllegalArgumentException {
-			return StringDataInstance.getStringDataInstance(
-				DataUtilities.getDataAtLocation(rowObject));
+			return StringDataInstance
+					.getStringDataInstance(DataUtilities.getDataAtLocation(rowObject));
 		}
 
 		@Override
@@ -269,8 +271,8 @@ class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		}
 
 		@Override
-		public String getValue(ProgramLocation rowObject, Settings settings,
-				Program program, ServiceProvider serviceProvider) throws IllegalArgumentException {
+		public String getValue(ProgramLocation rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			Data data = DataUtilities.getDataAtLocation(rowObject);
 			if (StringDataInstance.isString(data)) {
 				StringDataInstance sdi = StringDataInstance.getStringDataInstance(data);
@@ -358,8 +360,7 @@ class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 			String s = StringDataInstance.getStringDataInstance(data).getStringValue();
 
 			return (s != null) && s.codePoints()
-					.anyMatch(
-						codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
+					.anyMatch(codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 		}
 
 		@Override
@@ -441,6 +442,32 @@ class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 				scripts.stream().map(UnicodeScript::name).collect(Collectors.joining(","));
 
 			return formattedColStr;
+		}
+
+		@Override
+		public ProgramLocation getProgramLocation(ProgramLocation rowObject, Settings settings,
+				Program program, ServiceProvider serviceProvider) {
+			return rowObject;
+		}
+
+	}
+
+	private static class StringLengthColumn
+			extends AbstractProgramLocationTableColumn<ProgramLocation, Integer> {
+
+		@Override
+		public String getColumnName() {
+			return "String Length";
+		}
+
+		@Override
+		public Integer getValue(ProgramLocation rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+
+			Data data = DataUtilities.getDataAtLocation(rowObject);
+			String s = StringDataInstance.getStringDataInstance(data).getStringValue();
+
+			return s != null ? s.length() : 0;
 		}
 
 		@Override

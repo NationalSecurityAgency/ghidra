@@ -172,14 +172,6 @@ public class PortableExecutable {
 	}
 	
 	public long getFileLength() {
-		if (reader != null) {
-			try {
-				return reader.length();
-			} catch (IOException e) {
-				// IGNORE
-				return  0;
-			}
-		}
-		return  0;
+		return reader != null ? reader.length() : 0;
 	}
 }

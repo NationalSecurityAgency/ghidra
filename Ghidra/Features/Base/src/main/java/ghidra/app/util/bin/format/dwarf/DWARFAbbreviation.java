@@ -23,8 +23,6 @@ import ghidra.app.util.bin.format.dwarf.attribs.*;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 import ghidra.program.model.data.LEB128;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents the 'schema' for a DWARF DIE record.
@@ -45,14 +43,12 @@ public class DWARFAbbreviation {
 	 * Reads a {@link DWARFAbbreviation} from the stream.
 	 * 
 	 * @param reader {@link BinaryReader} stream
-	 * @param prog {@link DWARFProgram}
-	 * @param monitor {@link TaskMonitor}
+	 * @param dieContainer {@link DIEContainer}
 	 * @return {@link DWARFAbbreviation}, or null if the stream was at a end-of-list marker
 	 * @throws IOException if error reading
-	 * @throws CancelledException if canceled
 	 */
-	public static DWARFAbbreviation read(BinaryReader reader, DWARFProgram prog,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public static DWARFAbbreviation read(BinaryReader reader, DIEContainer dieContainer)
+			throws IOException {
 
 		int ac = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		if (ac == EOL) {
@@ -65,8 +61,6 @@ public class DWARFAbbreviation {
 		List<AttrDef> tmpAttrSpecs = new ArrayList<>();
 		AttrDef attrSpec;
 		while ((attrSpec = AttrDef.read(reader)) != null) {
-			monitor.checkCancelled();
-			attrSpec = prog.internAttributeSpec(attrSpec);
 			tmpAttrSpecs.add(attrSpec);
 			warnIfMismatchedForms(attrSpec);
 		}
@@ -99,20 +93,17 @@ public class DWARFAbbreviation {
 	 * encountered.
 	 * 
 	 * @param reader {@link BinaryReader} .debug_abbr stream
-	 * @param prog {@link DWARFProgram}
-	 * @param monitor {@link TaskMonitor}
+	 * @param dieContainer {@link DIEContainer}
 	 * @return map of abbrCode -> abbr instance
 	 * @throws IOException if error reading
-	 * @throws CancelledException if cancelled
 	 */
 	public static Map<Integer, DWARFAbbreviation> readAbbreviations(BinaryReader reader,
-			DWARFProgram prog, TaskMonitor monitor) throws IOException, CancelledException {
+			DIEContainer dieContainer) throws IOException {
 		Map<Integer, DWARFAbbreviation> result = new HashMap<>();
 
 		// Read a list of abbreviations, terminated by a marker value that returns null from read()
 		DWARFAbbreviation abbrev = null;
-		while ((abbrev = DWARFAbbreviation.read(reader, prog, monitor)) != null) {
-			monitor.checkCancelled();
+		while ((abbrev = DWARFAbbreviation.read(reader, dieContainer)) != null) {
 			result.put(abbrev.getAbbreviationCode(), abbrev);
 		}
 

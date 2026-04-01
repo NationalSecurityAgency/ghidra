@@ -31,7 +31,8 @@ public class MDMangVS2015 extends MDMang {
 	public MDParsableItem demangle() throws MDException {
 		MDParsableItem returnedItem = super.demangle();
 		//VS2015 does not understand all of the object types that we made up.  These all fall
-		// under MDObjectReserved; but it does understand MDObjectBracket objects.
+		// under MDObjectReserved; but it does understand MDObjectBracket objects, which is derived
+		// from MDObjectReserved, which must be checked afterward.
 		if (returnedItem instanceof MDObjectBracket) {
 			return returnedItem;
 		}

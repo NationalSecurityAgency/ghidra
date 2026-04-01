@@ -253,6 +253,37 @@ public:
   void decode(Decoder &decoder);				///< Decode \b this RangeList from a \<rangelist> element
 };
 
+/// \brief An endian aware range of bits contained in a contiguous set of bytes
+class BitRange {
+public:
+  int4 byteOffset;		///< Byte offset of the region containing the range
+  int4 byteSize;		///< Size of the region in bytes
+  int4 leastSigBit;		///< Least significant bit of the bit-range within its region
+  int4 numBits;			///< Number of bits in the range
+  bool isBigEndian;		///< Is the underlying encoding big endian
+  BitRange(void) { byteOffset = -1; byteSize = -1; leastSigBit = -1; numBits = -1; isBigEndian = false; }	///< Construct \e undefined range
+  BitRange(int4 bOff,int4 bSize,bool bigEndian) {
+    byteOffset = bOff; byteSize = bSize; leastSigBit = 0; numBits = bSize * 8; isBigEndian = bigEndian; }	///< Construct byte range
+  BitRange(const BitRange &op2,int4 off,int4 sz);	///< Constructor, copy range into new container
+  BitRange(int4 bOff,int4 bSize,int4 least,int4 num,bool bigEndian) { byteOffset = bOff; byteSize = bSize; leastSigBit = least;
+				  numBits = num; isBigEndian = bigEndian; }	///< Constructor
+  bool empty(void) const { return (numBits <= 0); }	///< Return \b true if \b this is an empty bit range (zero bits)
+  int4 compare(const BitRange &op2) const;	///< Compare \b this with another as containers
+  int4 translateLSB(const BitRange &op2) const;	///< Translate the \b leastSigBit of the given range into \b this reference frame
+  int4 overlapTest(const BitRange &op2) const;	///< Characterize the type of overlap between \b this and another range
+  void intersection(const BitRange &op2);	///< Replace \b this with the intersection of \b this with another BitRange
+  void intersectMask(uintb mask);		///< Restrict \b this with a mask that lines up with the container
+  void shift(int4 leftShiftAmount);		///< Replace \b this with the shifted range
+  void truncateMostSigBytes(int4 num);		///< Truncate the most significant bytes in the byte container
+  void truncateLeastSigBytes(int4 num);		///< Truncate the least significant bytes in the byte container
+  void extendBytes(int4 num);			///< Add most significant bytes to the container
+  uintb getMask(void) const;			///< Get mask representing \b this range
+  bool isByteRange(void) const;			///< Return \b true if \b this bit range is also a byte range
+  bool isMostSignificant(void) const;		///< Return \b true if the bit range occupies the most significant bits of the container
+  void minimizeContainer(void);			///< Shrink the container to fit the bit range
+  void expandToMost(void);			///< Expand the bitrange until it includes the most significant bits of the container
+};
+
 /// Precalculated masks indexed by size
 extern uintb uintbmasks[];
 
@@ -577,6 +608,7 @@ extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-
 extern uintb calc_mask(int4 size);			///< Calculate a mask for a given byte size
 extern uintb uintb_negate(uintb in,int4 size);		///< Negate the \e sized value
 extern uintb sign_extend(uintb in,int4 sizein,int4 sizeout);	///< Sign-extend a value between two byte sizes
+extern uintb extend_signbit(uintb val,int4 numbits,int4 size);	///< Extend a signed value of given number of bits to a full integer
 
 extern void byte_swap(intb &val,int4 size);		///< Swap bytes in the given value
 

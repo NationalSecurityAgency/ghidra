@@ -28,6 +28,7 @@ import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.gclass.ClassUtils;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
@@ -38,7 +39,7 @@ import ghidra.xml.XmlParseException;
 /**
  *
  * Class for marshaling DataType objects to and from the Decompiler.
- * 
+ *
  */
 public class PcodeDataTypeManager {
 
@@ -119,6 +120,17 @@ public class PcodeDataTypeManager {
 	private TypeMap byteMap;
 	private int pointerWordSize;				// Wordsize to assign to all pointer datatypes
 
+	// If we continue down this path, the following will probably get replaced with a tool option
+	// and might eventually be eliminated, such that we always do or never do type replacement
+	// in this manner.
+	private static final boolean TYPE_REPLACEMENT_ENABLED =
+		Boolean.getBoolean("ghidra.decompiler.typeReplacement");
+
+	/**
+	 * Constructor
+	 * @param prog the program for the p-code data type maanger
+	 * @param simplifier the name transformer to be used
+	 */
 	public PcodeDataTypeManager(Program prog, NameTransformer simplifier) {
 
 		program = prog;
@@ -134,14 +146,26 @@ public class PcodeDataTypeManager {
 		pointerWordSize = ((SleighLanguage) prog.getLanguage()).getDefaultPointerWordSize();
 	}
 
+	/**
+	 * Returns the program associated with this PcodeDataTypeManager
+	 * @return the program
+	 */
 	public Program getProgram() {
 		return program;
 	}
 
+	/**
+	 * Returns the name transformer
+	 * @return the name transformer
+	 */
 	public NameTransformer getNameTransformer() {
 		return nameTransformer;
 	}
 
+	/**
+	 * Sets the name transformer
+	 * @param newTransformer the name transformer to set to this manager
+	 */
 	public void setNameTransformer(NameTransformer newTransformer) {
 		nameTransformer = newTransformer;
 	}
@@ -184,7 +208,7 @@ public class PcodeDataTypeManager {
 	 * Decode a data-type from the stream
 	 * @param decoder is the stream decoder
 	 * @return the decoded data-type object
-	 * @throws DecoderException for invalid encodings 
+	 * @throws DecoderException for invalid encodings
 	 */
 	public DataType decodeDataType(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement();
@@ -476,8 +500,6 @@ public class PcodeDataTypeManager {
 	private void encodeStructure(Encoder encoder, Structure type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		// if size is 0, insert an Undefined4 component
-		//
 		int sz = type.getLength();
 		if (sz == 0) {
 			type = new StructureDataType(type.getCategoryPath(), type.getName(), 1);
@@ -486,22 +508,36 @@ public class PcodeDataTypeManager {
 		encoder.writeString(ATTRIB_METATYPE, "struct");
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
+		type = ClassUtils.getReplacementType(type, TYPE_REPLACEMENT_ENABLED);
 		DataTypeComponent[] comps = type.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
-			if (comp.isBitFieldComponent() || comp.getLength() == 0) {
-				// TODO: bitfields, zero-length components and zero-element arrays are not yet supported by decompiler
+			if (comp.getLength() == 0) {
 				continue;
 			}
-			encoder.openElement(ELEM_FIELD);
 			String field_name = comp.getFieldName();
 			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
-			encoder.writeString(ATTRIB_NAME, field_name);
-			encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
-			DataType fieldtype = comp.getDataType();
-			encodeTypeRef(encoder, fieldtype, comp.getLength());
-			encoder.closeElement(ELEM_FIELD);
+			if (comp.isBitFieldComponent()) {
+				BitFieldDataType bitfield = (BitFieldDataType) comp.getDataType();
+				encoder.openElement(ELEM_BITFIELD);
+				encoder.writeString(ATTRIB_NAME, field_name);
+				encoder.writeSignedInteger(ATTRIB_ID, comp.getOrdinal());
+				encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
+				encoder.writeSignedInteger(ATTRIB_FIRST, bitfield.getBitOffset());
+				encoder.writeSignedInteger(ATTRIB_SIZE, bitfield.getBitSize());
+				DataType inttype = bitfield.getBaseDataType();
+				encodeTypeRef(encoder, inttype, inttype.getLength());
+				encoder.closeElement(ELEM_BITFIELD);
+			}
+			else {
+				encoder.openElement(ELEM_FIELD);
+				encoder.writeString(ATTRIB_NAME, field_name);
+				encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
+				DataType fieldtype = comp.getDataType();
+				encodeTypeRef(encoder, fieldtype, comp.getLength());
+				encoder.closeElement(ELEM_FIELD);
+			}
 		}
 		encoder.closeElement(ELEM_TYPE);
 	}
@@ -1071,7 +1107,7 @@ public class PcodeDataTypeManager {
 
 	/**
 	 * Encode information for a data-type to the stream
-	 * 
+	 *
 	 * @param encoder is the stream encoder
 	 * @param type is the data-type to encode
 	 * @param size is the size of the data-type
@@ -1148,7 +1184,7 @@ public class PcodeDataTypeManager {
 	/**
 	 * Build the list of core data-types. Data-types that are always available to the Decompiler
 	 * and are associated with a (metatype,size) pair.
-	 * 
+	 *
 	 */
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);

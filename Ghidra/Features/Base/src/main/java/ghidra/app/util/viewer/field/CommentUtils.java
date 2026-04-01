@@ -58,28 +58,24 @@ public class CommentUtils {
 			return null;
 		}
 
-		// this function will take any given Symbol annotations and change the text, replacing
-		// the symbol name with the address of the symbol
-		Function<Annotation, Annotation> symbolFixer = annotation -> {
-
+		// this function will take any annotation and call the annotation to perform updates to the 
+		// input text as needed.   An example is the Symbol annotation, which will replace any 
+		// symbol name with that symbol's address.  This allows future renames of that symbol to 
+		// appear in the comment text containing the annotation. 
+		Function<Annotation, Annotation> fixer = annotation -> {
 			String[] annotationParts = annotation.getAnnotationParts();
 			AnnotatedStringHandler handler = getAnnotationHandler(annotationParts);
-			if (!(handler instanceof SymbolAnnotatedStringHandler)) {
+
+			String[] updatedParts = handler.modify(annotationParts, program);
+			if (updatedParts == null) {
 				return annotation; // nothing to change
 			}
 
-			String rawText = annotation.getAnnotationText();
-			String updatedText =
-				convertAnnotationSymbolToAddress(annotationParts, rawText, program);
-			if (updatedText == null) {
-				return annotation; // nothing to change
-			}
-
-			return new Annotation(updatedText, program);
+			return new Annotation(updatedParts);
 		};
 
 		StringBuilder buffy = new StringBuilder();
-		List<CommentPart> parts = doParseTextIntoParts(rawCommentText, symbolFixer, program);
+		List<CommentPart> parts = doParseTextIntoParts(rawCommentText, fixer, program);
 		for (CommentPart part : parts) {
 			buffy.append(part.getRawText());
 		}
@@ -224,7 +220,7 @@ public class CommentUtils {
 			}
 
 			String annotationText = word.getWord();
-			Annotation annotation = new Annotation(annotationText, program);
+			Annotation annotation = new Annotation(annotationText);
 			annotation = fixerUpper.apply(annotation);
 			results.add(new AnnotationCommentPart(annotationText, annotation));
 
@@ -290,62 +286,30 @@ public class CommentUtils {
 	 */
 	private static int findAnnotationEnd(String comment, int start) {
 
-		boolean escaped = false;
-		boolean inQuote = false;
+		boolean escape = false;
+		boolean quote = false;
 		for (int i = start; i < comment.length(); i++) {
-
-			boolean wasEscaped = escaped;
-			escaped = false;
-			char prev = '\0';
-			if (i != 0 && !wasEscaped) {
-				prev = comment.charAt(i - 1);
+			char c = comment.charAt(i);
+			if (escape) {
+				escape = false;
+				continue;
 			}
 
-			char c = comment.charAt(i);
-			if (prev == '\\') {
-				if (Annotation.ESCAPABLE_CHARS.indexOf(c) != -1) {
-					escaped = true;
-					continue;
-				}
+			if (c == '\\') {
+				escape = true;
+				continue;
 			}
 
 			if (c == '"') {
-				inQuote = !inQuote;
+				quote = !quote;
 			}
 			else if (c == '}') {
-				if (!inQuote) {
+				if (!quote) {
 					return i + 1;
 				}
 			}
 		}
-
 		return -1;
-	}
-
-	private static String convertAnnotationSymbolToAddress(String[] annotationParts, String rawText,
-			Program program) {
-		if (annotationParts.length <= 1) {
-			return null;
-		}
-
-		if (program == null) { // this can happen during merge operations
-			return null;
-		}
-
-		Address address = program.getAddressFactory().getAddress(annotationParts[1]);
-		if (address != null) {
-			return null; // nothing to do
-		}
-
-		String originalValue = annotationParts[1];
-		List<Symbol> symbols = getSymbols(originalValue, program);
-		if (symbols.size() != 1) {
-			// no unique symbol, so leave it as string name
-			return null;
-		}
-
-		Address symbolAddress = symbols.get(0).getAddress();
-		return rawText.replaceFirst(Pattern.quote(originalValue), symbolAddress.toString());
 	}
 
 	/**

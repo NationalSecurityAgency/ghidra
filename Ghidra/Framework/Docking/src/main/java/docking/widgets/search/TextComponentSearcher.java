@@ -23,6 +23,8 @@ import javax.swing.JEditorPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.CursorPosition;
 import docking.widgets.SearchLocation;
 import ghidra.util.Msg;
@@ -235,6 +237,11 @@ public class TextComponentSearcher implements FindDialogSearcher {
 				return;
 			}
 
+			if (StringUtils.isBlank(fullText)) {
+				Msg.error(this, "Cannot search a blank document");
+				return;
+			}
+
 			TreeMap<Integer, Line> lineRangeMap = mapLines(fullText);
 
 			Pattern pattern = createSearchPattern(searchText, useRegex);
@@ -252,7 +259,6 @@ public class TextComponentSearcher implements FindDialogSearcher {
 						context);
 				matchesByPosition.put(start, location);
 			}
-
 		}
 
 		private TreeMap<Integer, Line> mapLines(String fullText) {
@@ -270,6 +276,7 @@ public class TextComponentSearcher implements FindDialogSearcher {
 
 		private SearchLocationContext createContext(Line line, int start, int end) {
 			SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
+			builder.lineNumber(line.lineNumber);
 			String text = line.text();
 			int offset = line.offset(); // document offset
 			int rstart = start - offset; // line-relative start

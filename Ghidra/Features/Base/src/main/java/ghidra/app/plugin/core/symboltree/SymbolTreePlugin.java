@@ -47,8 +47,8 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 //@formatter:on
 public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 
-	private static final String OPTIONS_CATEGORY = "Symbol Tree";
-	private static final String OPTION_NAME_GROUP_THRESHOLD = "Group Threshold";
+	public static final String OPTIONS_CATEGORY = "Symbol Tree";
+	public static final String OPTION_NAME_GROUP_THRESHOLD = "Group Threshold";
 
 	private SymbolTreeProvider connectedProvider;
 	private List<SymbolTreeProvider> disconnectedProviders = new ArrayList<>();

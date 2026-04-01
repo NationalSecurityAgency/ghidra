@@ -21,11 +21,12 @@ import java.io.File;
 
 import javax.swing.JComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.wizard.WizardModel;
 import docking.wizard.WizardStep;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.util.HelpLocation;
-import ghidra.util.NamingUtilities;
 
 /**
  * Wizard step in the new project wizard for choosing the new project's root folder location and
@@ -76,7 +77,7 @@ public class SelectProjectStep extends WizardStep<ProjectWizardData> {
 			return false;
 		}
 
-		if (!NamingUtilities.isValidProjectName(projectName)) {
+		if (StringUtils.isBlank(projectName)) {
 			setStatusMessage("Please specify valid project name");
 			return false;
 		}

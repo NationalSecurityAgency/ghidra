@@ -119,7 +119,7 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			FieldLocation last = searchLocation.getFieldLocation();
 			int line = last.getIndex().intValue();
 			int field = 0; // there is only 1 field
-			int row = 0; // there is only 1 row 
+			int row = last.getRow(); // more than 1 row when the line wraps 
 			int col = last.getCol() + 1; // move over one char to handle sub-matches
 			start = new FieldLocation(line, field, row, col);
 			searchLocation = findNext(forwardMatcher, searchText, start);
@@ -215,7 +215,6 @@ public class DecompilerSearcher implements FindDialogSearcher {
 
 	private DecompilerSearchLocation findNext(Function<String, SearchMatch> matcher,
 			String searchString, FieldLocation currentLocation) {
-
 		List<Field> fields = decompilerPanel.getFields();
 		int line = currentLocation.getIndex().intValue();
 		for (int i = line; i < fields.size(); i++) {
@@ -234,6 +233,8 @@ public class DecompilerSearcher implements FindDialogSearcher {
 				// the match start is relative to the cursor position.  Update the start to
 				// compensate for the difference between the start of the line and the cursor.
 				//				
+				// The match start/end for a partial line will be relative to that line's text.  We
+				// want the start/end to be based on a full line.
 				int cursorOffset = fullLine.length() - partialLine.length();
 				match.start += cursorOffset;
 				match.end += cursorOffset;
@@ -241,16 +242,16 @@ public class DecompilerSearcher implements FindDialogSearcher {
 
 			FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
 			FieldLocation fieldLocation =
-				new FieldLocation(i, lineInfo.fieldNumber(), 0, lineInfo.column());
+				new FieldLocation(i, lineInfo.fieldNumber(), lineInfo.row(), lineInfo.column());
 			int lineNumber = lineInfo.lineNumber();
-			SearchLocationContext context = createContext(fullLine, match);
+			SearchLocationContext context = createContext(fullLine, lineNumber, match);
 			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
 				searchString, true, field.getText(), lineNumber, context);
 		}
 		return null;
 	}
 
-	private SearchLocationContext createContext(String line, SearchMatch match) {
+	private SearchLocationContext createContext(String line, int lineNumber, SearchMatch match) {
 		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
 		int start = match.start;
 		int end = match.end;
@@ -260,37 +261,42 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			builder.append(line.substring(end));
 		}
 
+		builder.lineNumber(lineNumber);
 		return builder.build();
 	}
 
 	private String substring(ClangTextField textField, FieldLocation location,
 			boolean forwardSearch) {
 
+		// Note: full text may include multiple wrapped UI lines that are then put back into one
+		// line here for searching.
+		String fullText = textField.getText();
 		if (location == null) { // the cursor location is not on this line; use all of the text
-			return textField.getText();
+			return fullText;
 		}
 
-		if (textField.getText().isEmpty()) { // the cursor is on blank line
+		if (fullText.isEmpty()) { // the cursor is on blank line
 			return "";
 		}
 
-		String partialText = textField.getText();
-		if (forwardSearch) {
+		int row = location.getRow();
+		int nextCol = location.getCol();
+		int screenCol = textField.screenLocationToTextOffset(row, nextCol);
 
-			int nextCol = location.getCol();
+		if (forwardSearch) {
 
 			// protects against the location column being out of range (this can happen if we're
 			// searching forward and the cursor is past the last token)
-			if (nextCol >= partialText.length()) {
+			if (screenCol >= fullText.length()) {
 				return "";
 			}
 
 			// skip a character to start the next search; this prevents matching the previous match
-			return partialText.substring(nextCol);
+			return fullText.substring(screenCol);
 		}
 
 		// backwards search
-		return partialText.substring(0, location.getCol());
+		return fullText.substring(0, screenCol);
 	}
 
 	private FieldLineLocation getFieldIndexFromOffset(int screenOffset, ClangTextField textField) {
@@ -298,8 +304,10 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		RowColLocation rowColLocation = textField.textOffsetToScreenLocation(screenOffset);
 		int lineNumber = textField.getLineNumber();
 
-		// we use 0 here because currently there is only one field, which is the entire line
-		return new FieldLineLocation(0, lineNumber, rowColLocation.col());
+		int fieldNumber = 0; // We use 0 here because there is only one field, which is the entire line
+		int row = rowColLocation.row();
+		int col = rowColLocation.col();
+		return new FieldLineLocation(fieldNumber, lineNumber, row, col);
 	}
 
 	private static class SearchMatch {
@@ -323,5 +331,5 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		}
 	}
 
-	private record FieldLineLocation(int fieldNumber, int lineNumber, int column) {}
+	private record FieldLineLocation(int fieldNumber, int lineNumber, int row, int column) {}
 }

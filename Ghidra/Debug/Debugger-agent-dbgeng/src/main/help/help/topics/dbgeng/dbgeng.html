@@ -170,7 +170,35 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
       </LI>
     </UL>
 
-    <H2><A name="svrcx"></A>Process Server</H2>
+	<H2><A name="ssh"></A>Remote via SSH</H2>
+
+	<P>"<TT>ssh-dbgeng</TT>" is the remote equivalent to "<TT>dbgeng</TT>";
+	"<TT>ssh-dbgeng-attach</TT>" is the remote equivalent to "<TT>dbgeng-attach</TT>".
+	</P>
+
+	<H3><A name="remote_setup"></A>Setup</H3>
+
+	<P>Instructions are indentical to those above but executed on the remote machine.</P>
+
+	<H3>Additional Options</H3>
+
+	<UL>
+		<LI><B>ssh command</B>: The ssh command to execute, optionaly with full path.</LI>
+		
+		<LI><B>[User@]Host</B>: This is the host name of the target system, optionally including a
+		user name. This is passed as is to <TT>ssh</TT>, which may interpret it according to local
+		configuration.</LI>
+
+		<LI><B>Remote Trace RMI Port</B>: An available TCP port on the target system, which will
+		listen for dbgeng's Trace RMI connection and forward it back to Ghidra.</LI>
+
+		<LI><B>Extra <TT>ssh</TT> arguments</B>: These are extra arguments to pass to <TT>ssh</TT>.
+		They are inserted immediately after the <TT>ssh</TT> command but before the host name. Beware
+		that syntax errors may cause strange behavior, and that not all features may be compatible
+		with this launcher.</LI>
+	</UL>
+
+	<H2><A name="svrcx"></A>Process Server</H2>
 
     <P>The "<TT>dbgeng-svrcx</TT>" launcher extends the base dbgeng launcher adding an option for
     connecting through a remote process server.</P>

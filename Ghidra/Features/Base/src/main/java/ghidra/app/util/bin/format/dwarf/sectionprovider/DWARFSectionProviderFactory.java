@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf.sectionprovider;
 
+import static ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId.*;
+
 import java.io.Closeable;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -48,7 +50,7 @@ public class DWARFSectionProviderFactory {
 	/**
 	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},
 	 * trying each factory method until one returns a {@link DWARFSectionProvider} 
-	 * that can successfully retrieve the {@link DWARFSectionNames#MINIMAL_DWARF_SECTIONS minimal} 
+	 * that can successfully retrieve the {@link DWARFSectionId#MINIMAL_DWARF_SECTIONS minimal} 
 	 * sections we need to do a DWARF import.
 	 * <p>
 	 * The resulting {@link DWARFSectionProvider} is {@link Closeable} and it is the caller's
@@ -65,14 +67,14 @@ public class DWARFSectionProviderFactory {
 			DWARFSectionProvider sp = factoryFunc.apply(program, monitor);
 			if (sp != null) {
 				try {
-					if (sp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS)) {
+					if (sp.hasSection(MINIMAL_DWARF_SECTIONS)) {
 						return sp;
 					}
 
 					// if normal sections were not found, look for compressed sections in the
 					// same provider
 					sp = new CompressedSectionProvider(sp);
-					if (sp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS)) {
+					if (sp.hasSection(MINIMAL_DWARF_SECTIONS)) {
 						return sp;
 					}
 				}

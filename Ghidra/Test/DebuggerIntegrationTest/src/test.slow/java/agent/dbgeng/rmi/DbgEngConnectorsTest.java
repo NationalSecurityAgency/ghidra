@@ -16,13 +16,14 @@
 package agent.dbgeng.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,7 +53,27 @@ public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 		// Make sure system doesn't cause path failures to pass
 		unpip("ghidradbg", "ghidratrace");
 		// Ensure a compatible version of protobuf
-		pip("protobuf==6.31.0");
+		pip("protobuf>=6.31.0");
+	}
+
+	@Test
+	public void testLocalDbgWithImage() throws Exception {
+		try (LaunchResult result = doLaunch("dbgeng", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("env:OPT_PYTHON_EXE",
+				new PathIsFile(Path.of(getPythonCmd())))))) {
+			checkResult(result);
+		}
+	}
+
+	@Test
+	public void testLocalDbgWithImageBat() throws Exception {
+		try (LaunchResult result = doLaunch("dbgeng (.bat)", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("env:OPT_PYTHON_EXE",
+				new PathIsFile(Path.of(getPythonCmd())))))) {
+			checkResult(result);
+		}
 	}
 
 	@Test
@@ -61,7 +82,7 @@ public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 		try (LaunchResult result = doLaunch("dbgeng", Map.ofEntries(
 			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
 			Map.entry("env:OPT_PYTHON_EXE",
-				new PathIsFile(Path.of("C:\\Python313\\python.exe")))))) {
+				new PathIsFile(Path.of(getPythonCmd())))))) {
 			assertThat(result.exception(), instanceOf(EarlyTerminationException.class));
 			assertThat(result.sessions().get("Shell").content(),
 				containsString("Would you like to install"));
@@ -69,17 +90,77 @@ public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 		try (LaunchResult result = doLaunch("dbgeng", Map.ofEntries(
 			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
 			Map.entry("env:OPT_PYTHON_EXE",
-				new PathIsFile(Path.of("C:\\Python313\\python.exe")))))) {
+				new PathIsFile(Path.of(getPythonCmd())))))) {
 			checkResult(result);
 		}
 	}
 
 	@Test
-	public void testLocalDbgWithImage() throws Exception {
-		try (LaunchResult result = doLaunch("dbgeng", Map.ofEntries(
+	public void testLocalDbgSetupBat() throws Exception {
+		pipOob("protobuf==3.19.0");
+		try (LaunchResult result = doLaunch("dbgeng (.bat)", Map.ofEntries(
 			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
 			Map.entry("env:OPT_PYTHON_EXE",
-				new PathIsFile(Path.of("C:\\Python313\\python.exe")))))) {
+				new PathIsFile(Path.of(getPythonCmd())))))) {
+			assertThat(result.exception(), instanceOf(EarlyTerminationException.class));
+			assertThat(result.sessions().get("Shell").content(),
+				containsString("Would you like to install"));
+		}
+		try (LaunchResult result = doLaunch("dbgeng (.bat)", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("env:OPT_PYTHON_EXE",
+				new PathIsFile(Path.of(getPythonCmd())))))) {
+			checkResult(result);
+		}
+	}
+
+	// NB: The next three tests tend to leave residual python processes running
+	//  which will cause permissions problems when subsequent tests attempt
+	//  to access python's site-packages
+
+	@Test
+	public void testDbgViaSsh() throws Exception {
+		pip("ghidradbg==%s".formatted(Application.getApplicationVersion()));
+		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("OPT_HOST", "localhost")))) {
+			checkResult(result);
+		}
+	}
+
+	@Test
+	public void testDbgViaSshSetupProtobuf() throws Exception {
+		// NB: If you fail on the next line, delete everything (ghidradbg,
+		//   ghidratrace, google, protobuf) from site-packages
+		pip("ghidradbg==%s".formatted(Application.getApplicationVersion()));
+		// Overwrite with an incompatible version we don't include
+		pipOob("protobuf==3.19.0");
+		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("OPT_HOST", "localhost")))) {
+			assertTrue(result.exception() instanceof EarlyTerminationException);
+			assertThat(result.sessions().get("Shell").content(),
+				Matchers.containsString("Would you like to install"));
+		}
+		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("OPT_HOST", "localhost")))) {
+			checkResult(result);
+		}
+	}
+
+	@Test
+	public void testDbgViaSshSetupGhidraDbg() throws Exception {
+		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("OPT_HOST", "localhost")))) {
+			assertTrue(result.exception() instanceof EarlyTerminationException);
+			assertThat(result.sessions().get("Shell").content(),
+				Matchers.containsString("Would you like to install"));
+		}
+		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
+			Map.entry("OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
 	}

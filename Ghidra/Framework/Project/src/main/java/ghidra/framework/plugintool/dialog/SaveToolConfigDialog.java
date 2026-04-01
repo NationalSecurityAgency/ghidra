@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,13 +207,20 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 			return;
 		}
 
+		// Impose same naming restrictions as Project uses - other than the blank space
 		if (newName.indexOf(" ") >= 0) {
-			setStatusText("Name cannot have spaces.");
+			setStatusText("Name cannot have spaces");
 			nameField.requestFocus();
 			return;
 		}
-		if (!NamingUtilities.isValidName(newName)) {
-			setStatusText("Invalid character in name: " + NamingUtilities.findInvalidChar(newName));
+		if (newName.startsWith(".")) {
+			setStatusText("Name cannot start with a '.'");
+			nameField.requestFocus();
+			return;
+		}
+		String invalidChar = NamingUtilities.findInvalidChar(newName);
+		if (invalidChar != null) {
+			setStatusText("Invalid character in name: '" + invalidChar + "'");
 			nameField.requestFocus();
 			return;
 		}

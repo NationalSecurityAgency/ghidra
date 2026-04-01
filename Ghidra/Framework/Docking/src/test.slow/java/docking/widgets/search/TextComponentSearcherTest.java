@@ -288,7 +288,7 @@ public class TextComponentSearcherTest extends AbstractDockingTest {
 			assertNotNull("No match at line: " + n, result);
 
 			SearchLocationContext context = result.getContext();
-			String text = context.getPlainText();
+			String text = context.getPlainText(false);
 			int length = text.length();
 			int maxWithEllipses = max + 6; // ... text ...
 			assertTrue("Length is to long.  Expected max %s, but found %s"

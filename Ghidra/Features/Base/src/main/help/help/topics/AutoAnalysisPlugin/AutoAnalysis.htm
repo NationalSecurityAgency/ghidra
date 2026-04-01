@@ -422,7 +422,7 @@
 				</TD>				
 			</TR>
 			<TR>
-				<TD>Only Demangle Known Mangled Symbols
+				<TD>Demangle Only Known Mangled Symbols
 				</TD>
 				<TD>
 				Only demangle symbols that follow known compiler mangling patterns. 
@@ -509,7 +509,7 @@
 		<BR>
 		<BR>
       	<P><A name="Microsoft_Demangler_Options">
-		<B>The Microsoft Demangler</B></H4> adds the following analysis option:
+		<B>The Microsoft Demangler</B></H4> adds the following analysis options:
 		
 		<BLOCKQUOTE>
 			<P>
@@ -534,6 +534,33 @@
 			be removed in a future release.
 			</P>
 		</P>
+		</BLOCKQUOTE>
+
+		<BLOCKQUOTE>
+			<P>
+			<U><B>Use Encoded Anonymous Namespace</B></U> -
+				This output option is used to create a more unique namespace node from the
+				standard output for anonymous namespaces, thus helping to prevent collisions
+				between multiple types of the same name, but each in their own unique anonymous
+				namespace. When turned on, variations of the standard namespace
+				<B>`anonymous namespace'</B> will be replaced with a more specific namespace of
+				the form <B>_anon_ABCD1234</B> where the hexadecimal number comes from a number
+				encoded in the mangled string. The trade-off is that when this option is turned on,
+				the resultant namespace will not match non-mangled names that have the standard,
+				non-specific anonymous namespace.  
+			</P>
+		</BLOCKQUOTE>
+
+		<BLOCKQUOTE>
+			<P>
+			<U><B>Apply Argument UDT Tags</B></U> -
+				This output option controls whether user-defined type tags (e.g., class, enum,
+				struct, union) are placed in front of the named type when the type is used as a
+				template or function argument.  When turned on, the demangled string matches the
+				common demangler standard. When turned off, the standard demangled strings of
+				<B>struct AAA&lt;class BBB&gt;</B> and <B>struct AAA&lt;struct BBB&gt;</B> would
+				both be reduced to <B>struct AAA&lt;BBB&gt;</B>.  
+			</P>
 		</BLOCKQUOTE>
 
         

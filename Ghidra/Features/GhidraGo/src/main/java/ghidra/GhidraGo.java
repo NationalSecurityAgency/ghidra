@@ -16,7 +16,7 @@
 package ghidra;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Path;
 
 import docking.framework.DockingApplicationConfiguration;
@@ -59,8 +59,10 @@ public class GhidraGo implements GhidraLaunchable {
 			if (args != null && args.length > 0) {
 				ghidra.framework.protocol.ghidra.Handler.registerHandler();
 				sender = new GhidraGoSender();
+
 				// check if ghidra url is valid
-				GhidraURL.getProjectURL(new URL(args[0]));
+				URL ghidraUrl = new URI(args[0]).toURL();
+				GhidraURL.getProjectURL(ghidraUrl); // perform Ghidra URL validation only
 
 				startGhidraIfNeeded(layout);
 
@@ -76,7 +78,7 @@ public class GhidraGo implements GhidraLaunchable {
 				throw new IllegalArgumentException();
 			}
 		}
-		catch (IllegalArgumentException e) {
+		catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
 			System.err.println("\n" + "USAGE: ghidraGo <ghidraURL>\n\n" +
 				"Ghidra URL Forms (ghidraURL):\n" +
 				"    ghidra://<hostname>[:<port>]/<repo-name>[/<folder-path>[/<program-name>]]\n" +
@@ -172,6 +174,6 @@ public class GhidraGo implements GhidraLaunchable {
 		}
 
 		Msg.info(this, "Starting new Ghidra using ghidraRun script at " + ghidraRunPath);
-		return Runtime.getRuntime().exec(ghidraRunPath.toString());
+		return Runtime.getRuntime().exec(new String[] { ghidraRunPath.toString() });
 	}
 }

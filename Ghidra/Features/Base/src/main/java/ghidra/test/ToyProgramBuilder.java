@@ -34,18 +34,11 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	private List<Address> definedInstrAddresses;
 
 	/**
-	 * Construct toy program builder using specified toy language
-	 * @param name program name
-	 * @param languageName toy language ID (note: only builder variant supports all instructions)
-	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
-	 * @throws Exception
+	 * Default toy program using the default big endian language.
+	 * @throws Exception if there are any exceptions
 	 */
-	public ToyProgramBuilder(String name, String languageName, Object consumer) throws Exception {
-		super(name, checkLanguageName(languageName), consumer);
-		Program program = getProgram();
-		addrFactory = program.getAddressFactory();
-		defaultSpace = addrFactory.getDefaultAddressSpace();
-		definedInstrAddresses = new ArrayList<>();
+	public ToyProgramBuilder() throws Exception {
+		this("TestProgram", true);
 	}
 
 	/**
@@ -53,7 +46,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
 	 * @param bigEndian language endianness
-	 * @throws Exception
+	 * @throws Exception if there are any exceptions
 	 */
 	public ToyProgramBuilder(String name, boolean bigEndian) throws Exception {
 		this(name, bigEndian, false, null);
@@ -64,8 +57,9 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
 	 * @param bigEndian language endianness
-	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
-	 * @throws Exception
+	 * @param consumer program consumer (if null this builder will be used as consumer and must be 
+	 * disposed to release program)
+	 * @throws Exception if there are any exceptions
 	 */
 	public ToyProgramBuilder(String name, boolean bigEndian, Object consumer) throws Exception {
 		this(name, bigEndian, false, consumer);
@@ -76,8 +70,10 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
 	 * @param bigEndian language endianness
-	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
-	 * @throws Exception
+	 * @param wordAligned true if word aligned
+	 * @param consumer program consumer (if null this builder will be used as consumer and must be 
+	 * disposed to release program)
+	 * @throws Exception if there are any exceptions
 	 */
 	public ToyProgramBuilder(String name, boolean bigEndian, boolean wordAligned, Object consumer)
 			throws Exception {
@@ -93,13 +89,6 @@ public class ToyProgramBuilder extends ProgramBuilder {
 			return bigEndian ? TOY_LANGUAGE_ID_BE_ALIGN2 : TOY_LANGUAGE_ID_LE_ALIGN2;
 		}
 		return bigEndian ? TOY_LANGUAGE_ID_BE : TOY_LANGUAGE_ID_LE;
-	}
-
-	private static String checkLanguageName(String languageName) {
-		if (!languageName.startsWith(_TOY_LANGUAGE_PREFIX)) {
-			throw new IllegalArgumentException("Toy language required");
-		}
-		return languageName;
 	}
 
 	/**
@@ -190,7 +179,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add NOP instruction bytes of specified byte length
 	 * @param offset instruction address offset
 	 * @param length length of NOP instruction in bytes
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesNOP(long offset, int length) throws MemoryAccessException {
 		addBytesNOP(toHex(offset), length);
@@ -200,7 +189,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add NOP instruction bytes of specified byte length
 	 * @param addr instruction address
 	 * @param length length of NOP instruction in bytes
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesNOP(String addr, int length) throws MemoryAccessException {
 		if (length == 1) {
@@ -224,7 +213,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add simple fall-through (consumes 2-bytes)
 	 * @param offset instruction address offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthrough(long offset) throws MemoryAccessException {
 		addBytesFallthrough(toHex(offset));
@@ -233,7 +222,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add simple fall-through (consumes 2-bytes)
 	 * @param addr instruction address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthrough(String addr) throws MemoryAccessException {
 		addInstructionWords(addr(addr), (short) 0xd100); // or r0,r0,r0
@@ -244,7 +233,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param offset instruction address offset
 	 * @param srcRegIndex source register index (0..15)
 	 * @param destRegIndex destination register index (contained indirect memory address)  (0..15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesStore(long offset, int srcRegIndex, int destRegIndex)
 			throws MemoryAccessException {
@@ -256,7 +245,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param addr instruction address
 	 * @param srcRegIndex source register index (0..15)
 	 * @param destRegIndex destination register index (contained indirect memory address)  (0..15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesStore(String addr, int srcRegIndex, int destRegIndex)
 			throws MemoryAccessException {
@@ -269,7 +258,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param offset instruction address offset
 	 * @param srcRegIndex source register index (contained indirect memory address) (0..15)
 	 * @param destRegIndex destination register index (0..15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesLoad(long offset, int srcRegIndex, int destRegIndex)
 			throws MemoryAccessException {
@@ -281,7 +270,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param addr instruction address
 	 * @param srcRegIndex source register index (contained indirect memory address) (0..15)
 	 * @param destRegIndex destination register index (0..15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesLoad(String addr, int srcRegIndex, int destRegIndex)
 			throws MemoryAccessException {
@@ -293,7 +282,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add move immediate instruction (consumes 2-bytes)
 	 * @param offset instruction offset
 	 * @param imm immediate byte value
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesMoveImmediate(long offset, short imm) throws MemoryAccessException {
 		addBytesMoveImmediate(toHex(offset), imm);
@@ -303,7 +292,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add move immediate instruction (consumes 2-bytes)
 	 * @param addr instruction address
 	 * @param imm immediate byte value
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesMoveImmediate(String addr, short imm) throws MemoryAccessException {
 		addInstructionWords(addr(addr), (short) ((imm & 0x700) << 4 | (imm & 0xff))); // imm r0,#<imm>
@@ -313,7 +302,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add simple fall-through which sets noflow context value on next instruction (consumes 2-bytes)
 	 * @param offset instruction address offset
 	 * @param ctxVal context value (0-15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthroughSetNoFlowContext(long offset, int ctxVal)
 			throws MemoryAccessException {
@@ -324,7 +313,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add simple fall-through which sets noflow context value on next instruction (consumes 2-bytes)
 	 * @param addr instruction address
 	 * @param ctxVal context value (0-15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthroughSetNoFlowContext(String addr, int ctxVal)
 			throws MemoryAccessException {
@@ -336,7 +325,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param offset instruction address offset
 	 * @param ctxVal context value (0-15)
 	 * @param target context target address offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthroughSetNoFlowContext(long offset, int ctxVal, long target)
 			throws MemoryAccessException {
@@ -348,7 +337,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param addr instruction address
 	 * @param ctxVal context value (0-15)
 	 * @param targetAddr context target address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthroughSetNoFlowContext(String addr, int ctxVal, String targetAddr)
 			throws MemoryAccessException {
@@ -362,7 +351,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add simple fall-through which sets flowing context value on next instruction (consumes 2-bytes)
 	 * @param offset instruction address offset
 	 * @param ctxVal context value (0-15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthroughSetFlowContext(long offset, int ctxVal)
 			throws MemoryAccessException {
@@ -373,7 +362,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add simple fall-through which sets flowing context value on next instruction (consumes 2-bytes)
 	 * @param addr instruction address
 	 * @param ctxVal context value (0-15)
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesFallthroughSetFlowContext(String addr, int ctxVal)
 			throws MemoryAccessException {
@@ -384,7 +373,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add call (consumes 2-bytes)
 	 * @param offset instruction address offset
 	 * @param dest call destination offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCall(long offset, long dest) throws MemoryAccessException {
 		addBytesCall(toHex(offset), toHex(dest));
@@ -394,7 +383,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add call (consumes 2-bytes)
 	 * @param offset instruction address offset
 	 * @param dest call destination offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCall(String offset, long dest) throws MemoryAccessException {
 		addBytesCall(offset, toHex(dest));
@@ -404,7 +393,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add call (consumes 2-bytes)
 	 * @param addr instruction address
 	 * @param destAddr call destination address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCall(String addr, String destAddr) throws MemoryAccessException {
 		Address address = addr(addr);
@@ -417,7 +406,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add call w/ delayslot (consumes 4-bytes)
 	 * @param offset instruction address offset
 	 * @param dest call destination offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCallWithDelaySlot(long offset, long dest) throws MemoryAccessException {
 		addBytesCallWithDelaySlot(toHex(offset), toHex(dest));
@@ -427,7 +416,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add call w/ delayslot (consumes 4-bytes)
 	 * @param addr instruction address
 	 * @param destAddr call destination address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCallWithDelaySlot(String addr, String destAddr)
 			throws MemoryAccessException {
@@ -441,7 +430,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add terminal/return (consumes 2-bytes)
 	 * @param offset instruction address offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesReturn(long offset) throws MemoryAccessException {
 		addBytesReturn(toHex(offset));
@@ -450,7 +439,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add terminal/return (consumes 2-bytes)
 	 * @param addr instruction address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesReturn(String addr) throws MemoryAccessException {
 		addInstructionWords(addr(addr), (short) 0xf400); // ret
@@ -460,7 +449,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add branch (consumes 2-bytes)
 	 * @param offset address offset
 	 * @param dest call destination offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBranch(long offset, long dest) throws MemoryAccessException {
 		addBytesBranch(toHex(offset), toHex(dest));
@@ -470,7 +459,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add branch (consumes 2-bytes)
 	 * @param addr instruction address offset
 	 * @param destAddr call destination address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBranch(String addr, String destAddr) throws MemoryAccessException {
 		Address address = addr(addr);
@@ -483,7 +472,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add branch (consumes 2-bytes)
 	 * @param offset instruction address offset
 	 * @param dest call destination offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBranchConditional(long offset, long dest) throws MemoryAccessException {
 		addBytesBranchConditional(toHex(offset), toHex(dest));
@@ -493,7 +482,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add branch (consumes 2-bytes)
 	 * @param addr instruction address
 	 * @param destAddr call destination address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBranchConditional(String addr, String destAddr)
 			throws MemoryAccessException {
@@ -506,7 +495,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add conditional skip (consumes 2-bytes)
 	 * @param offset instruction address offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesSkipConditional(long offset) throws MemoryAccessException {
 		addBytesSkipConditional(toHex(offset));
@@ -515,7 +504,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add conditional skip (consumes 2-bytes)
 	 * @param addr instruction address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesSkipConditional(String addr) throws MemoryAccessException {
 		Address address = addr(addr);
@@ -526,7 +515,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add branch w/ delay slot (consumes 4-bytes)
 	 * @param offset instruction address offset
 	 * @param dest call destination offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBranchWithDelaySlot(long offset, long dest) throws MemoryAccessException {
 		addBytesBranchWithDelaySlot(toHex(offset), toHex(dest));
@@ -536,7 +525,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add branch w/ delay slot (consumes 4-bytes)
 	 * @param addr instruction address
 	 * @param destAddr call destination address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBranchWithDelaySlot(String addr, String destAddr)
 			throws MemoryAccessException {
@@ -551,7 +540,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add COP instruction for exercising nfctx context (consumes 2-bytes).  Location will not be added to
 	 * defined instruction address list.
 	 * @param offset instruction address offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCopInstruction(long offset) throws MemoryAccessException {
 		addBytesCopInstruction(toHex(offset));
@@ -561,7 +550,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add COP instruction for exercising nfctx context (consumes 2-bytes).  Location will not be added to
 	 * defined instruction address list.
 	 * @param addr instruction address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesCopInstruction(String addr) throws MemoryAccessException {
 		addInstructionWords(addr(addr), (short) 0xda00);
@@ -571,7 +560,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add BAD instruction (consumes 2-bytes).  Location will not be added to
 	 * defined instruction address list.
 	 * @param offset bad instruction address offset
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBadInstruction(long offset) throws MemoryAccessException {
 		addBytesBadInstruction(toHex(offset));
@@ -581,7 +570,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Add BAD instruction (consumes 2-bytes).  Location will not be added to
 	 * defined instruction address list.
 	 * @param addr bad instruction address
-	 * @throws MemoryAccessException
+	 * @throws MemoryAccessException shouldn't happen
 	 */
 	public void addBytesBadInstruction(String addr) throws MemoryAccessException {
 		// do not add to definedInstrAddresses

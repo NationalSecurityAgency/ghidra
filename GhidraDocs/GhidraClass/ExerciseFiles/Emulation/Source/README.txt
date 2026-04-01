@@ -7,4 +7,4 @@ Sample scripts deobExampleX86 and deobHookExampleX86 may be built under Linux.
 	
 Once these examples have been compiled they may be imported into a Ghidra project and the
 corresponding Ghidra Scripts (EmuX86DeobfuscateExampleScript and EmuX86GccDeobfuscateHookExampleScript) 
-used to demonstrate the use of the EmulatorHelper class. 
+used to demonstrate the use of the PcodeEmulator class. 

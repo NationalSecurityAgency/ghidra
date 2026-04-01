@@ -202,6 +202,13 @@ public class DecompileOptions {
 	private final static AliasBlockEnum ALIASBLOCK_OPTIONDEFAULT = AliasBlockEnum.Array;	// Must match Architecture::resetDefaultsInternal
 	private AliasBlockEnum aliasBlock;
 
+	private final static String BITFIELD_OPTIONSTRING = "Analysis.Simplify bitfield access";
+	private final static String BITFIELD_OPTIONDESCRIPTION =
+		"If set, expressions that insert to or pull from individual bitfields will be displayed " +
+			"as a normal member field access.";
+	private final static boolean BITFIELD_OPTIONDEFAULT = true;
+	private boolean bitfieldAccess;
+
 	private final static String CONVENTION_OPTIONSTRING = "Display.Print calling convention name";
 	private final static String CONVENTION_OPTIONDESCRIPTION =
 		"If set, the names of calling conventions (when they differ " +
@@ -499,6 +506,7 @@ public class DecompileOptions {
 		nullToken = NULLTOKEN_OPTIONDEFAULT;
 		inplaceTokens = INPLACEOP_OPTIONDEFAULT;
 		aliasBlock = ALIASBLOCK_OPTIONDEFAULT;
+		bitfieldAccess = BITFIELD_OPTIONDEFAULT;
 		conventionPrint = CONVENTION_OPTIONDEFAULT;
 		noCastPrint = NOCAST_OPTIONDEFAULT;
 		braceFunction = BRACEFUNCTION_OPTIONDEFAULT;
@@ -563,6 +571,7 @@ public class DecompileOptions {
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
 		aliasBlock = opt.getEnum(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT);
+		bitfieldAccess = opt.getBoolean(BITFIELD_OPTIONSTRING, BITFIELD_OPTIONDEFAULT);
 		conventionPrint = opt.getBoolean(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT);
 		noCastPrint = opt.getBoolean(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT);
 		braceFunction = opt.getEnum(BRACEFUNCTION_OPTIONSTRING, BRACEFUNCTION_OPTIONDEFAULT);
@@ -693,6 +702,9 @@ public class DecompileOptions {
 		opt.registerOption(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisAliasBlocking"),
 			ALIASBLOCK_OPTIONDESCRIPTION);
+		opt.registerOption(BITFIELD_OPTIONSTRING, BITFIELD_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisBitfields"),
+			BITFIELD_OPTIONDESCRIPTION);
 		opt.registerOption(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayConvention"),
 			CONVENTION_OPTIONDESCRIPTION);
@@ -891,6 +903,10 @@ public class DecompileOptions {
 		}
 		if (aliasBlock != ALIASBLOCK_OPTIONDEFAULT) {
 			appendOption(encoder, ELEM_ALIASBLOCK, aliasBlock.getOptionString(), "", "");
+		}
+		if (bitfieldAccess != BITFIELD_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_CURRENTACTION, "bitfields", bitfieldAccess ? "on" : "off",
+				"");
 		}
 		if (conventionPrint != CONVENTION_OPTIONDEFAULT) {
 			appendOption(encoder, ELEM_CONVENTIONPRINTING, conventionPrint ? "on" : "off", "", "");
@@ -1662,6 +1678,22 @@ public class DecompileOptions {
 	 */
 	public void setAliasBlock(AliasBlockEnum aliasBlock) {
 		this.aliasBlock = aliasBlock;
+	}
+
+	/**
+	 * {@return true if expressions accessing bitfields are simplified.}
+	 * @see #BITFIELD_OPTIONDESCRIPTION
+	 */
+	public boolean isBitfieldAccess() {
+		return bitfieldAccess;
+	}
+
+	/**
+	 * Set whether expressions accessing bitfields are simplified.
+	 * @param bitfield true to enable simplification of expressions
+	 */
+	public void setBitfieldAccess(boolean bitfield) {
+		this.bitfieldAccess = bitfield;
 	}
 
 	/**

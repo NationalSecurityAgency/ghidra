@@ -105,6 +105,7 @@ model {
 		                include "merge.cc"
 		                include "double.cc"
 		                include "constseq.cc"
+		                include "bitfield.cc"
 		                include "coreaction.cc"
 		                include "condexe.cc"
 		                include "override.cc"

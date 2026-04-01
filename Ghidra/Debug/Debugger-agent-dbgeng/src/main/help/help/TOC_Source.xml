@@ -17,6 +17,9 @@
 			<tocdef id="dbgeng_remote" text="Remote"
 				target="help/topics/dbgeng/dbgeng.html#remote" />
 
+			<tocdef id="dbgeng_ssh" text="Remote via SSH"
+				target="help/topics/dbgeng/dbgeng.html#ssh" />
+
 			<tocdef id="dbgeng_svrcx" text="Process Server"
 				target="help/topics/dbgeng/dbgeng.html#svrcx" />
 

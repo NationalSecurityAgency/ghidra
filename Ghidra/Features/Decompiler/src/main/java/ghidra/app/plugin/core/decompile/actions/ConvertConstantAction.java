@@ -17,27 +17,21 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.util.List;
 
 import javax.swing.JMenuItem;
 
+import ghidra.app.decompiler.ClangCaseToken;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.block.CodeBlock;
-import ghidra.program.model.block.SimpleBlockModel;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * Abstract pop-up menu convert action for the decompiler. If triggered, it lays down
@@ -46,29 +40,46 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 
-	/**
-	 * Max instructions to search through, when looking for a scalar match in the listing
-	 * that corresponds with the selected constant in the decompiler window.
-	 */
-	private final static int MAX_INSTRUCTION_WINDOW = 20;
-
-	private static final int MAX_SCALAR_SIZE = 8;
 	protected DecompilePlugin plugin;
 	private FontMetrics metrics = null;
-	private int convertType;				// The EquateSymbol conversion type performed by the action
+	protected int convertType;				// The conversion type performed by the action
 
 	/**
-	 * A helper class describing a (matching) scalar operand
+	 * Helper class for identifying integer values that are "near" a given value.
+	 * "Near" can mean off by 1, negated, or inverted.
 	 */
-	private static class ScalarMatch {
-		Address refAddr;		// Address of instruction
-		Scalar scalar;
-		int opIndex;
+	public static class NearMatchValues {
+		private long[] values;
+		private long mask;
 
-		public ScalarMatch(Address addr, Scalar value, int index) {
-			refAddr = addr;
-			scalar = value;
-			opIndex = index;
+		public NearMatchValues(long value, int size) {
+			mask = -1;
+			if (size < 8) {
+				mask = mask >>> (8 - size) * 8;
+			}
+			values = new long[4];
+			values[0] = value & mask;
+			values[1] = (value - 1) & mask;
+			values[2] = (value + 1) & mask;
+			values[3] = (-value) & mask;
+		}
+
+		public NearMatchValues(Scalar scalar) {
+			this(scalar.getValue(), scalar.bitLength() / 8);
+		}
+
+		/**
+		 * @param value is the value to match
+		 * @return true if the value matches
+		 */
+		public boolean isMatch(long value) {
+			value = value & mask;
+			for (long match : values) {
+				if (match == value) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -106,242 +117,27 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		return buf.toString();
 	}
 
-	/**
-	 * Find a scalar in the instruction matching one of the given values.
-	 * Return an object describing the match or null if there is no match.
-	 * @param instr is the instruction
-	 * @param values is an array of the given values
-	 * @return the Scalar and
-	 */
-	private ScalarMatch findScalarInInstruction(Instruction instr, long values[]) {
-		int numOperands = instr.getNumOperands();
-		ScalarMatch scalarMatch = null;
-		for (int i = 0; i < numOperands; i++) {
-			for (Object obj : instr.getOpObjects(i)) {
-				if (obj instanceof Scalar) {
-					Scalar scalar = (Scalar) obj;
-					for (long value : values) {
-						if (scalar.getUnsignedValue() != value) {
-							continue;
-						}
-						if (scalarMatch != null) {
-							scalarMatch.opIndex = -1;	// non-unique scalar operand value - can't identify operand
-							return scalarMatch;
-						}
-						scalarMatch = new ScalarMatch(instr.getAddress(), scalar, i);
-					}
-				}
-			}
-		}
-		return scalarMatch;
-	}
-
-	/**
-	 * Find a scalar (instruction operand) that matches the given constant Varnode.
-	 * We walk backward from the starting address inspecting operands until a match is found.
-	 * The search is terminated if either a match is found, the beginning of the basic block
-	 * is reached, or if 20 instructions are traversed.  The scalar can be a "near" match, meaning
-	 * off by 1 or the negated value.
-	 * @param program is the Program
-	 * @param startAddress is the starting address to search backward from
-	 * @param constVn is the given constant Varnode
-	 * @return a description of the scalar match, or null if there is no match
-	 */
-	private ScalarMatch findScalarMatch(Program program, Address startAddress, Varnode constVn) {
-		long value = constVn.getOffset();
-		long mask = -1;
-		if (constVn.getSize() < 8) {
-			mask = mask >>> (8 - constVn.getSize()) * 8;
-		}
-		long values[] = new long[4];
-		values[0] = value;
-		values[1] = (value - 1) & mask;
-		values[2] = (value + 1) & mask;
-		values[3] = (-value) & mask;
-		int count = 0;
-		ScalarMatch scalarMatch = null;
-		Instruction curInst = program.getListing().getInstructionAt(startAddress);
-		if (curInst == null) {
-			return null;
-		}
-
-		SimpleBlockModel model = new SimpleBlockModel(program);
-		CodeBlock basicBlock = null;
-		try {
-			basicBlock = model.getFirstCodeBlockContaining(startAddress, TaskMonitor.DUMMY);
-		}
-		catch (CancelledException e) {
-			// can't happen; dummy monitor
-		}
-		if (basicBlock == null) {
-			return null;
-		}
-
-		while (count < MAX_INSTRUCTION_WINDOW) {
-			count += 1;
-			ScalarMatch newMatch = findScalarInInstruction(curInst, values);
-			if (newMatch != null) {
-				if (scalarMatch != null) {
-					return null;		// Matches at more than one address
-				}
-				if (newMatch.opIndex < 0) {
-					return null;		// Matches at more than one operand
-				}
-				scalarMatch = newMatch;
-			}
-			curInst = curInst.getPrevious();
-			if (curInst == null) {
-				break;
-			}
-			if (!basicBlock.contains(curInst.getAddress())) {
-				break;
-			}
-		}
-		return scalarMatch;
-	}
-
-	/**
-	 * Given the context, set up the task object that will execute the conversion.
-	 * If setupFinal toggle is false, only enough of the task is set up to complete
-	 * the isEnabled test for the action.  Otherwise the whole task is set up, ready for runTask().
-	 * If the context is not suitable for a conversion, null is returned.
-	 * @param context is the given context for the action
-	 * @param setupFinal is true if a full task setup is needed
-	 * @return the task object or null
-	 */
-	protected ConvertConstantTask establishTask(DecompilerActionContext context,
-			boolean setupFinal) {
-
-		ClangToken tokenAtCursor = context.getTokenAtCursor();
-		if (!(tokenAtCursor instanceof ClangVariableToken)) {
-			return null;
-		}
-		Varnode convertVn = tokenAtCursor.getVarnode();
-		if (convertVn == null || !convertVn.isConstant() || convertVn.getSize() > MAX_SCALAR_SIZE) {
-			return null;
-		}
-
-		HighSymbol symbol = convertVn.getHigh().getSymbol();
-		EquateSymbol convertSymbol = null;
-		if (symbol != null) {
-			if (symbol instanceof EquateSymbol) {
-				convertSymbol = (EquateSymbol) symbol;
-				int type = convertSymbol.getConvert();
-				if (type == convertType || type == EquateSymbol.FORMAT_DEFAULT) {
-					return null;
-				}
-			}
-			else {
-				return null;		// Something already attached to constant
-			}
-		}
-
-		DataType convertDataType = convertVn.getHigh().getDataType();
-		boolean convertIsSigned = false;
-		if (convertDataType instanceof AbstractIntegerDataType) {
-			if (convertDataType instanceof BooleanDataType) {
-				return null;
-			}
-			convertIsSigned = ((AbstractIntegerDataType) convertDataType).isSigned();
-		}
-		else if (convertDataType instanceof Enum) {
-			return null;
-		}
-		if (!setupFinal) {
-			return new ConvertConstantTask(convertVn, convertIsSigned);
-		}
-
-		if (convertSymbol != null) {
-			return convertExistingSymbol(context, convertSymbol, convertVn, convertIsSigned);
-		}
-
-		PcodeOp op = convertVn.getLoneDescend();
-		Address convertAddr = op.getSeqnum().getTarget();
-		DynamicHash dynamicHash = new DynamicHash(convertVn, 0);
-		long convertHash = dynamicHash.getHash();
-		Program program = context.getProgram();
-		ScalarMatch scalarMatch = findScalarMatch(program, convertAddr, convertVn);
-		if (scalarMatch == null) {
-			String equateName = getEquateName(convertVn.getOffset(), convertVn.getSize(),
-				convertIsSigned, program);
-			if (equateName == null) {
-				return null; // A null is a user cancel
-			}
-			return new ConvertConstantTask(context, equateName, convertAddr, convertVn,
-				convertIsSigned, convertHash, -1);
-		}
-
-		long value = scalarMatch.scalar.getUnsignedValue();
-		int size = scalarMatch.scalar.bitLength() / 8;
-		if (size == 0) {
-			size = 1;
-		}
-		value = ConvertConstantTask.signExtendValue(convertIsSigned, value, size);
-		String equateName = getEquateName(value, size, convertIsSigned, program);
-		if (equateName == null) {
-			return null; // user cancelled
-		}
-
-		ConvertConstantTask task =
-			new ConvertConstantTask(context, equateName, convertAddr, convertVn,
-				convertIsSigned, convertHash, -1);
-
-		// Don't create a named equate if the varnode and the instruction operand differ
-		// as the name was selected specifically for the varnode
-		if (convertType != EquateSymbol.FORMAT_DEFAULT || value == task.getValue()) {
-			task.setAlternate(equateName, scalarMatch.refAddr, scalarMatch.opIndex, value);
-		}
-		return task;
-	}
-
-	private ConvertConstantTask convertExistingSymbol(DecompilerActionContext context,
-			EquateSymbol convertSymbol, Varnode convertVn, boolean convertIsSigned) {
-
-		Address convertAddr = convertSymbol.getPCAddress();
-		long convertHash = 0;
-		int convertIndex = -1;
-		boolean foundEquate = false;
-		Program program = context.getProgram();
-		EquateTable equateTable = program.getEquateTable();
-		List<Equate> equates = equateTable.getEquates(convertAddr);
-		for (Equate equate : equates) {
-			if (equate.getValue() != convertVn.getOffset()) {
-				continue;
-			}
-			for (EquateReference equateRef : equate.getReferences(convertAddr)) {
-				convertHash = equateRef.getDynamicHashValue();
-				convertIndex = equateRef.getOpIndex();
-				foundEquate = true;
-				break;
-			}
-			break;
-		}
-		if (!foundEquate) {
-			Msg.error(this, "Symbol does not have matching entry in equate table");
-			return null;
-		}
-
-		String equateName = getEquateName(convertVn.getOffset(), convertVn.getSize(),
-			convertIsSigned, context.getProgram());
-		if (equateName == null) {		// A null is a user cancel
-			return null;
-		}
-		return new ConvertConstantTask(context, equateName, convertAddr, convertVn,
-			convertIsSigned, convertHash, convertIndex);
-	}
-
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		ConvertConstantTask task = establishTask(context, false);
-		if (task == null) {
+		Scalar scalar;
+		scalar = getCaseConstant(context, convertType);
+		if (scalar == null) {
+			scalar = ConvertConstantEquateTask.getConvertibleConstant(context, convertType);
+		}
+		if (scalar == null) {
 			return false;
 		}
-		String convDisplay =
-			getMenuDisplay(task.getValue(), task.getSize(), task.isSigned(), context.getProgram());
+		String convDisplay = getMenuDisplay(scalar, context.getProgram());
 		if (convDisplay == null) {
 			return false;
 		}
-		if (convDisplay.equals(context.getTokenAtCursor().getText())) {
+
+		ClangToken token = context.getTokenAtCursor();
+		if (token == null) {
+			return false;
+		}
+
+		if (convDisplay.equals(token.getText())) {
 			return false;
 		}
 		String menuString = getStandardLengthString(getMenuPrefix()) + convDisplay;
@@ -352,11 +148,70 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		ConvertConstantTask task = establishTask(context, true);
+		if (context.getTokenAtCursor() instanceof ClangCaseToken) {
+			writeSwitchFormat(context);
+			return;
+		}
+		ConvertConstantEquateTask task = ConvertConstantEquateTask.establishTask(context, this);
 		if (task == null) {
 			return;
 		}
 		task.runTask();
+	}
+
+	/**
+	 * If the mouse context is a constant from a switch case that is suitable for conversion
+	 * return a description of the constant. Otherwise return null.
+	 * @param context is the mouse context
+	 * @param convertType is the type of conversion being selected (FORMAT_DEC FORMAT_HEX etc.)
+	 * @return the constant description or null
+	 */
+	static protected Scalar getCaseConstant(DecompilerActionContext context,
+			int convertType) {
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
+		if (!(tokenAtCursor instanceof ClangCaseToken)) {
+			return null;
+		}
+		if (convertType == EquateSymbol.FORMAT_DEFAULT ||
+			convertType == EquateSymbol.FORMAT_DOUBLE || convertType == EquateSymbol.FORMAT_FLOAT) {
+			return null;
+		}
+		ClangCaseToken caseToken = (ClangCaseToken) tokenAtCursor;
+		HighVariable high = caseToken.getHighVariable();
+		if (high == null) {
+			return null;
+		}
+		DataType convertDataType = high.getDataType();
+		boolean convertIsSigned = false;
+		if (convertDataType instanceof AbstractIntegerDataType) {
+			if (convertDataType instanceof BooleanDataType) {
+				return null;
+			}
+			convertIsSigned = ((AbstractIntegerDataType) convertDataType).isSigned();
+		}
+		else if (convertDataType instanceof Enum) {
+			return null;
+		}
+		return new Scalar(high.getSize() * 8, caseToken.getValue(), convertIsSigned);
+	}
+
+	private void writeSwitchFormat(DecompilerActionContext context) {
+		ClangCaseToken caseToken = (ClangCaseToken) context.getTokenAtCursor();
+		PcodeOp switchOp = caseToken.getSwitchOp();
+		Function func = context.getFunction();
+		Program program = context.getProgram();
+		int transaction = program.startTransaction("Convert case constants");
+		boolean commit = false;
+		try {
+			JumpTable.writeFormat(func, switchOp.getSeqnum().getTarget(), convertType);
+			commit = true;
+		}
+		catch (InvalidInputException ex) {
+			Msg.error(this, ex);
+		}
+		finally {
+			program.endTransaction(transaction, commit);
+		}
 	}
 
 	/**
@@ -372,22 +227,18 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	 *    {@literal Hexadecimal: 0x2408}
 	 * This method constructs the final part of this string, after the colon by
 	 * formatting the actual value that is to be converted.
-	 * @param value is the actual value
-	 * @param size is the number of bytes used for the constant Varnode
-	 * @param isSigned is true if the constant represents a signed data-type
+	 * @param scalar is the constant being converted
 	 * @param program the program
 	 * @return the formatted String
 	 */
-	public abstract String getMenuDisplay(long value, int size, boolean isSigned, Program program);
+	public abstract String getMenuDisplay(Scalar scalar, Program program);
 
 	/**
 	 * Construct the name of the Equate, either absolutely for a conversion or
 	 * by preventing the user with a dialog to select a name.
-	 * @param value is the value being converted
-	 * @param size is the number of bytes used for the constant Varnode
-	 * @param isSigned is true if the constant represents a signed data-type
+	 * @param scalar is the constant being converted
 	 * @param program is the current Program
 	 * @return the equate name
 	 */
-	public abstract String getEquateName(long value, int size, boolean isSigned, Program program);
+	public abstract String getEquateName(Scalar scalar, Program program);
 }

@@ -56,6 +56,7 @@ public class SarifFunctionWriter extends AbstractExtWriter {
 	private void genFunctions(TaskMonitor monitor) throws CancelledException, IOException{
 		monitor.initialize(requestedFunctions.size());
 		for (Function f : requestedFunctions) {
+			monitor.checkCancelled();
 			addSymbol(f.getSymbol());
 			ExtFunction isf = new ExtFunction(f, monitor);
 			SarifObject sarif = new SarifObject("Function", FunctionsSarifMgr.KEY, getTree(isf), f.getBody());

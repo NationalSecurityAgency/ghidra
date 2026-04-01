@@ -136,6 +136,7 @@ define token instrArm (32)
 	Sm0_3=(0,2)
 	Sm1_3=(0,2)
 	cmode=(8,11)
+	cmode3_1=(9,11)
 	
 	
 	
@@ -199,6 +200,7 @@ define token instrArm (32)
     c0916=(9,16)
     c0915=(9,15)
     c0911=(9,11)
+    c0910=(9,10)
     c0909=(9,9)
     c0815=(8,15)
     c0811=(8,11)
@@ -303,18 +305,40 @@ define token instrArm (32)
 	thv_Sd1=(28,31)
 	thv_Sm1=(16,19)
 	thv_Sm1next=(16,19)
-	thv_cmode=(24,27)
 	thv_Sm0_3=(16,18)
 	thv_Sm1_3=(16,18)
+	thv_cmode=(24,27)
+	thv_cmode3_1=(25,27)
 	
 	thv_Rd=(28,31)
 	thv_Rt=(28,31)
 	thv_Rn=(0,3)
 	thv_Rm=(16,19)
-    thv_Rt2=(24,27)
+	thv_Rt2=(24,27)
 	thv_immed=(16,23)
 	thv_cpn=(8,10)
-	    
+	thv_RdaHi=(25,27)
+	thv_RdaHi2=(4,6)
+	thv_RdaLo=(1,3)
+	thv_Rda=(29,31)
+	
+	cor_Qn0=(1,3)
+	cor_Qd0=(29,31)
+	cor_Qd1=(29,31)
+	cor_Qd2=(29,31)
+	cor_Qd3=(29,31)
+	cor_Qm0=(17,19)
+	cor_Rn=(1,3)
+	cor_Rm=(17,19)
+	
+	cor_immA=(0,4)
+	cor_immB=(17,26)
+	cor_immC=(27,27)
+	cor_imm7=(16,23)
+	cor_boff=(7,10)
+	cor_bcond=(2,5)
+	cor_fcond=(20,23)
+	
     # Arbitrary bit fields for 32-bit Little Endian Thumb
 
     thv_bit31=(15,15)
@@ -324,12 +348,22 @@ define token instrArm (32)
     thv_bit23=(7,7)
     thv_bit21=(5,5)
     thv_bit20=(4,4)
+    c16=(0,0)
+    c17=(1,1)
+    c18=(2,2)
+    c19=(3,3)
+    c0=(16,16)
+    c1=(17,17)
+    c2=(18,18)
+    c3=(19,19)
     thv_bit07=(23,23)
     thv_bit06=(22,22)
     thv_bit00=(16,16)
     thv_c2931=(13,15)
     thv_c2831=(12,15)
     thv_c2828=(12,12)
+    thv_c2731=(11,15)
+    thv_c2727=(11,11)
     thv_c2627=(10,11)
     thv_c2527=(9,11)
     thv_c2525=(9,9)
@@ -351,10 +385,12 @@ define token instrArm (32)
     thv_c2031=(4,15)
     thv_c2027=(4,11)
     thv_c2024=(4,8)
+    thv_c2023=(4,7)
     thv_c2022=(4,6)
     thv_c2021=(4,5)
     thv_c2020=(4,4)
     thv_c1921=(3,5)
+    thv_c1920=(3,4)
     thv_c1919=(3,3)
     thv_c1821=(2,5)
     thv_c1819=(2,3)
@@ -374,43 +410,55 @@ define token instrArm (32)
     thv_c1515=(31,31)
     thv_c1415=(30,31)
     thv_c1414=(30,30)
+    thv_c1315=(29,31)
+    thv_c1314=(29,30)
     thv_c1313=(29,29)
     thv_c1215=(28,31)
+    thv_c1214=(28,30)
     thv_c1212=(28,28)
+    thv_c1115=(27,31)
     thv_c1111=(27,27)
+    thv_c1015=(26,31)
     thv_c1011=(26,27)
     thv_c1010=(26,26)
+    thv_c0915=(25,31)
     thv_c0911=(25,27)
+    thv_c0910=(25,26)
     thv_c0909=(25,25)
+    thv_c0815=(24,31)
     thv_c0811=(24,27)
     thv_c0809=(24,25)
     thv_c0808=(24,24)
+    thv_c0715=(23,31)
     thv_c0711=(23,27)
     thv_c0709=(23,25)
     thv_c0708=(23,24)
     thv_c0707=(23,23)
+    thv_c0615=(22,31)
     thv_c0611=(22,27)
     thv_c0607=(22,23)
     thv_c0606=(22,22)
+    thv_c0515=(21,31)
     thv_c0508=(21,24)
     thv_c0507=(21,23)
     thv_c0506=(21,22)
     thv_c0505=(21,21)
-    thv_c0431=(4,31)
-    thv_c0427=(4,27)
+    thv_c0415=(20,31)
     thv_c0411=(20,27)
     thv_c0409=(20,25)
     thv_c0407=(20,23)
     thv_c0406=(20,22)
     thv_c0405=(20,21)
     thv_c0404=(20,20)
+    thv_c0315=(19,31)
     thv_c0303=(19,19)
     thv_c0215=(18,31)
     thv_c0202=(18,18)
-    thv_c0101=(17,17)
+    thv_c0115=(17,31)
+    thv_c0107=(17,23)
     thv_c0104=(17,20)
-    thv_c0031=(0,31)
-    thv_c0027=(0,27)
+    thv_c0103=(17,19)
+    thv_c0101=(17,17)
     thv_c0015=(16,31)
     thv_c0011=(16,27)
     thv_c0010=(16,26)
@@ -473,15 +521,38 @@ define token instrArm (32)
 	thv_Sm0_3=(0,2)
 	thv_Sm1_3=(0,2)
 	thv_cmode=(8,11)
+	thv_cmode3_1=(9,11)
 	
 	thv_Rd=(12,15)
 	thv_Rt=(12,15)
 	thv_Rn=(16,19)
 	thv_Rm=(0,3)
-    thv_Rt2=(8,11)
+	thv_Rt2=(8,11)
 	thv_immed=(0,7)
 	thv_cpn=(24,26)
-	    
+	thv_Rda=(13,15)
+	thv_RdaHi=(9,11)
+	thv_RdaHi2=(20,22)
+	thv_RdaLo=(17,19)
+
+	# ARM Cortex
+	cor_Qn0=(17,19)
+	cor_Qd0=(13,15)
+	cor_Qd1=(13,15)
+	cor_Qd2=(13,15)
+	cor_Qd3=(13,15)
+	cor_Qm0=(1,3)
+	cor_Rn=(17,19)
+	cor_Rm=(1,3)
+	
+	cor_immA=(16,20)
+	cor_immB=(1,10)
+	cor_immC=(11,11)
+	cor_imm7=(0,6)
+	cor_boff=(23,26)
+	cor_bcond=(18,21)
+	cor_fcond=(4,7)
+
     # Arbitrary bit fields for 32-bit Big Endian Thumb
     thv_bit31=(31,31)
     thv_bit30=(30,30)
@@ -493,9 +564,19 @@ define token instrArm (32)
     thv_bit07=(7,7)
     thv_bit06=(6,6)
     thv_bit00=(0,0)
+    c16=(16,16)
+    c17=(17,17)
+    c18=(18,18)
+    c19=(19,19)
+    c0=(0,0)
+    c1=(1,1)
+    c2=(2,2)
+    c3=(3,3)
     thv_c2931=(29,31)
     thv_c2831=(28,31)
     thv_c2828=(28,28)
+    thv_c2731=(27,31)
+    thv_c2727=(27,27)
     thv_c2627=(26,27)
     thv_c2527=(25,27)
     thv_c2525=(25,25)
@@ -517,10 +598,12 @@ define token instrArm (32)
     thv_c2031=(20,31)
     thv_c2027=(20,27)
     thv_c2024=(20,24)
+    thv_c2023=(20,23)
     thv_c2022=(20,22)
     thv_c2021=(20,21)
     thv_c2020=(20,20)
     thv_c1921=(19,21)
+    thv_c1920=(19,20)
     thv_c1919=(19,19)
     thv_c1821=(18,21)
     thv_c1819=(18,19)
@@ -540,43 +623,55 @@ define token instrArm (32)
     thv_c1515=(15,15)
     thv_c1415=(14,15)
     thv_c1414=(14,14)
+    thv_c1315=(13,15)
+    thv_c1314=(13,14)
     thv_c1313=(13,13)
     thv_c1215=(12,15)
+    thv_c1214=(12,14)
     thv_c1212=(12,12)
+    thv_c1115=(11,15)
     thv_c1111=(11,11)
+    thv_c1015=(10,15)
     thv_c1011=(10,11)
     thv_c1010=(10,10)
+    thv_c0915=(9,15)
     thv_c0911=(9,11)
+    thv_c0910=(9,10)
     thv_c0909=(9,9)
+    thv_c0815=(8,15)
     thv_c0811=(8,11)
     thv_c0809=(8,9)
     thv_c0808=(8,8)
+    thv_c0715=(7,15)
     thv_c0711=(7,11)
     thv_c0709=(7,9)
     thv_c0708=(7,8)
     thv_c0707=(7,7)
+    thv_c0615=(6,15)
     thv_c0611=(6,11)
     thv_c0607=(6,7)
     thv_c0606=(6,6)
     thv_c0508=(5,8)
     thv_c0507=(5,7)
     thv_c0506=(5,6)
+    thv_c0515=(5,15)
     thv_c0505=(5,5)
-    thv_c0431=(4,31)
-    thv_c0427=(4,27)
+    thv_c0415=(4,15)
     thv_c0411=(4,11)
     thv_c0409=(4,9)
     thv_c0407=(4,7)
     thv_c0406=(4,6)
     thv_c0405=(4,5)
     thv_c0404=(4,4)
+    thv_c0315=(3,15)
     thv_c0303=(3,3)
     thv_c0215=(2,15)
     thv_c0202=(2,2)
-    thv_c0101=(1,1)
+    thv_c0115=(1,15)
+    thv_c0107=(17,23)
     thv_c0104=(1,4)
-    thv_c0031=(0,31)
-    thv_c0027=(0,27)
+    thv_c0103=(1,3)
+    thv_c0101=(1,1)
     thv_c0015=(0,15)
     thv_c0011=(0,11)
     thv_c0010=(0,10)
@@ -598,7 +693,8 @@ attach variables [ Rn Rd Rs Rm RdHi RdLo smRd smRn smRm smRa RmHi RnLo ] [ r0 r1
 attach variables [ Rd2 Rm2 ] [ r1 _ r3 _ r5 _ r7 _ r9 _ r11 _ sp _ _ _ ]; # see LDREXD
 attach variables [ CRd CRn CRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ]; 										
 attach variables [ thv_Rd thv_Rn thv_Rt thv_Rt2 ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
-
+attach variables [ thv_RdaHi thv_RdaHi2 ] [r1 r3 r5 r7 r9 r11 _ _];
+attach variables [ thv_Rda thv_RdaLo ] [r0 r2 r4 r6 r8 r10 r12 lr ];
 attach names [ cpn ] [ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15  ];
 attach names [ thv_cpn ] [ p0 p1 p2 p3 p4 p5 p6 p7  ];
 attach names [ ibOption ] [ opt0 opt1 opt2 opt3 opt4 opt5 opt6 opt7 opt8 opt9 opt10 opt11 opt12 opt13 opt14 SY ];
@@ -1595,7 +1691,7 @@ immed12_4: "#"^tmp is $(AMODE) & immed12 & immed4 [tmp = (immed12 << 4) | immed4
 
 define pcodeop SG;
 
-:sg is TMode=1 & thv_c0031=0xe97fe97f
+:sg is TMode=1 & thv_c1631=0xe97f & thv_c0015=0xe97f
 {
 	SG();
 }
@@ -2317,7 +2413,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24			is $(AMODE) &  CALLoverride=0 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
-  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   call HAddr24;
   # don't do causes decompiler trouble  TB = 0;
 } # Always changes to THUMB mode
@@ -2325,7 +2421,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24			is $(AMODE) &  CALLoverride=1 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
-  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   goto HAddr24;
 } # Always changes to THUMB mode
 
@@ -2333,7 +2429,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=0 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
-  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   call HAddr24;
   # don't do causes decompiler trouble  TB = 0;
 }   # Always changes to THUMB mode
@@ -2341,7 +2437,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=1 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
-  SetISAModeSwitch(1); # TMode done by HAddr24's globalset
+  TB = 1; # TMode done by HAddr24's globalset, no need to invoke SetThumbMode(), since static
   goto HAddr24;
 }   # Always changes to THUMB mode
 

@@ -16,8 +16,11 @@
 package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.util.demangler.*;
-import ghidra.app.util.demangler.microsoft.*;
+import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
+import ghidra.app.util.demangler.microsoft.MicrosoftDemanglerOptions;
+import ghidra.app.util.demangler.microsoft.options.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -32,34 +35,16 @@ public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"After a function is created, this analyzer will attempt to demangle " +
 			"the name and apply datatypes to parameters.";
 
-	public static final String OPTION_NAME_APPLY_SIGNATURE = "Apply Function Signatures";
-	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
-		"Apply any recovered function signature, in addition to the function name";
+	public static final String APPLY_OPTIONS_LABEL = "msdApplyOptions";
+	private static final String OUTPUT_OPTIONS_LABEL = "msdOutputOptions";
 
-	public static final String OPTION_NAME_APPLY_CALLING_CONVENTION =
-		"Apply Function Calling Conventions";
-	private static final String OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION =
-		"Apply any recovered function signature calling convention";
-
-	private static final String OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS =
-		"Demangle Only Known Mangled Symbols";
-	private static final String OPTION_DESCRIPTION_USE_KNOWN_PATTERNS =
-		"Only demangle symbols that follow known compiler mangling patterns. " +
-			"Leaving this option off may cause non-mangled symbols to get demangled.";
-
-	public static final String OPTION_NAME_MS_C_INTERPRETATION =
-		"C-Style Symbol Interpretation";
-	private static final String OPTION_DESCRIPTION_MS_C_INTERPRETATION =
-		"When ambiguous, treat C-Style mangled symbol as: function, variable," +
-			" or function if a function exists";
-
-	private boolean applyFunctionSignature = true;
-	private boolean applyCallingConvention = true;
-	private boolean demangleOnlyKnownPatterns = false;
-	private MsCInterpretation interpretation = MsCInterpretation.FUNCTION_IF_EXISTS;
+	private MsdApplyOption applyOption;
+	private MsdOutputOption outputOption;
+	private MicrosoftDemanglerOptions msOptions;
 
 	public MicrosoftDemanglerAnalyzer() {
 		super(NAME, DESCRIPTION);
+		msOptions = new MicrosoftDemanglerOptions();
 		demangler = new MicrosoftDemangler();
 		setDefaultEnablement(true);
 	}
@@ -71,45 +56,41 @@ public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
 
-		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature, help,
-			OPTION_DESCRIPTION_APPLY_SIGNATURE);
+		options.registerOption(APPLY_OPTIONS_LABEL, OptionType.CUSTOM_TYPE,
+			new MsdApplyOption(msOptions.demangleOnlyKnownPatterns(), msOptions.applySignature(),
+				msOptions.applyCallingConvention(), msOptions.getInterpretation()),
+			help, "Configures how demangling is applied",
+			() -> new MsdApplyOptionsEditor());
 
-		options.registerOption(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention, help,
-			OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION);
+		applyOption =
+			(MsdApplyOption) options.getCustomOption(APPLY_OPTIONS_LABEL, null);
 
-		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
-			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
-
-		options.registerOption(OPTION_NAME_MS_C_INTERPRETATION, interpretation, help,
-			OPTION_DESCRIPTION_MS_C_INTERPRETATION);
+		options.registerOption(OUTPUT_OPTIONS_LABEL, OptionType.CUSTOM_TYPE,
+			new MsdOutputOption(msOptions.getUseEncodedAnonymousNamespace(),
+				msOptions.getApplyUdtArgumentTypeTag()),
+			help, "Controls demangled output", () -> new MsdOutputOptionsEditor());
+		outputOption = (MsdOutputOption) options.getCustomOption(OUTPUT_OPTIONS_LABEL, null);
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		applyFunctionSignature =
-			options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature);
-
-		applyCallingConvention =
-			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
-
-		demangleOnlyKnownPatterns =
-			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
-
-		interpretation = options.getEnum(OPTION_NAME_MS_C_INTERPRETATION, interpretation);
+		applyOption = (MsdApplyOption) options.getCustomOption(APPLY_OPTIONS_LABEL, applyOption);
+		outputOption =
+			(MsdOutputOption) options.getCustomOption(OUTPUT_OPTIONS_LABEL, outputOption);
+		msOptions.setApplySignature(applyOption.applySignature());
+		msOptions.setApplyCallingConvention(applyOption.applyCallingConvention());
+		msOptions.setDemangleOnlyKnownPatterns(applyOption.demangleOnlyKnownPatterns());
+		msOptions.setInterpretation(applyOption.getInterpretation());
+		msOptions.setUseEncodedAnonymousNamespace(outputOption.getUseEncodedAnonymousNamespace());
+		msOptions.setApplyUdtArgumentTypeTag(outputOption.getApplyUdtArgumentTypeTag());
+		msOptions.setErrorOnRemainingChars(true);
 	}
 
 	@Override
 	protected DemanglerOptions getOptions() {
-		MicrosoftDemanglerOptions options = new MicrosoftDemanglerOptions();
-		options.setApplySignature(applyFunctionSignature);
-		options.setApplyCallingConvention(applyCallingConvention);
-		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
-		options.setInterpretation(interpretation);
-		options.setErrorOnRemainingChars(true);
-		return options;
+		return msOptions;
 	}
 
 	@Override

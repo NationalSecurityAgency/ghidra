@@ -1086,11 +1086,53 @@
           <P>A data type can be replaced by another data type. This means that every occurrence of
           the original data type in a program is replaced by the new data type and the original
           data type is deleted. To replace a data type, right-click on the type to be replaced 
-          and select the <B><I>Replace Data Type...</I></B> action.  This will show a 
+          and select the <B><I>Replace...</I></B> action.  This will show a 
           <A HREF="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">dialog</A> that allows
           you to choose the replacement data type.
           </P>
 
+        </BLOCKQUOTE>
+       <H3><A name="MergeDataType"></A>Merging Data Types</H3>
+
+        <BLOCKQUOTE>
+          <P>Some data types can be merged with others of the same type, provided there are no
+          conflicting entries in the two data types. Currently,
+          structures, unions and enums are supported for merging. If a conflict is detected, 
+          an error dialog will be displayed showing the two data types and a message explaining 
+          why the merge failed.</P>
+          <P>If the merge succeeds in producing a merged data type result, a confirmation dialog
+          will be displayed showing the result and the two datatypes being merged. If the user
+          confirms the merge, the original target data type will have its internals replaced
+          with the merged data type and the other data type will have all its references replaced 
+          with the resulting datatype and then it will be deleted. 
+          </P>
+          <P>To Merge a data type, right-click on the type to be merged into and select the 
+          <B><I>Merge...</I></B> action.  This will show a 
+          <A HREF="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">dialog</A> that allows
+          you to choose the data type to merge with.
+          </P>
+          <A name="Merge_Confirmation"></A><P>If the merge succeeds in producing a merged data type, 
+          the following confirmation dialog will be displayed before the changes are actually 
+          applied.</P>
+         <P><CENTER>
+          <IMG src="images/MergeConfirmationDialog.png" alt="" border="0"/>
+         </CENTER></P>
+         
+         <P>This dialog shows a side-by-side preview of the merged data type along with two 
+         data types that were merged. It also will display any warning associated associated
+         with the merge. If the user presses the apply button, the first data type will be updated
+         to match the preview data type and the second data type will be deleted with all of its
+         uses replaced with the updated first data type.</P>
+
+		<A name="Merge_Error"></A>
+         <P>If the merge fails, the following error dialog is displayed showing a side-by-side
+         view of the two data types that couldn't be merged, along with a description of the error
+         that prevented the merge.</P>
+
+         <P><CENTER>
+          <IMG src="images/MergeErrorDialog.png" alt="" border="0"/>
+         </CENTER></P>
+          <BR><BR><BR>
         </BLOCKQUOTE>
 
         <H3><A name="Favorites"></A>Setting Favorite Data Types</H3>

@@ -272,6 +272,8 @@ public interface GenConsts {
 						.param(Types.T_INT_ARR)
 						.param(Types.T_INT)
 						.build();
+	public static final MthDesc<TVoid, Bot> MDESC_THROWABLE__PRINT_STACK_TRACE =
+		MthDesc.returns(Types.T_VOID).build();
 
 	/**
 	 * This is just to assure all the methods referred to below have the same signature. The fields

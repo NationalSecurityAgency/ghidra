@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.features.bsim.query.description;
 
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
 import java.util.*;
 
@@ -222,16 +222,10 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 	protected void setRepository(String repo, String newpath) {
 		repository = null;
 		if (repo != null) {
-			URL ghidraURL;
-			try {
-				ghidraURL = new URL(repo);
-				if (!GhidraURL.isGhidraURL(repo) || (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
-					!GhidraURL.isLocalProjectURL(ghidraURL))) {
-					throw new IllegalArgumentException("Unsupported repository URL: " + repo);
-				}
-			}
-			catch (MalformedURLException e) {
-				throw new IllegalArgumentException("Unsupported repository URL: " + repo, e);
+			URL ghidraURL = GhidraURL.toURL(repo);
+			if (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
+				!GhidraURL.isLocalURL(ghidraURL)) {
+				throw new IllegalArgumentException("Unsupported repository URL: " + repo);
 			}
 			URL projectURL = GhidraURL.getProjectURL(ghidraURL);
 			repository = projectURL.toExternalForm();
@@ -473,7 +467,7 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 		}
 		final StringBuffer buf = new StringBuffer();
 		buf.append(repository);
-		if (GhidraURL.isLocalGhidraURL(repository)) {
+		if (GhidraURL.isLocalURL(repository)) {
 			if (!repository.endsWith("?")) {
 				// local URLs add path as a query string
 				buf.append("?");

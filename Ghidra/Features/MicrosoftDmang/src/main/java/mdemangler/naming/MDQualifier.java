@@ -25,63 +25,99 @@ public class MDQualifier extends MDParsableItem {
 	private static final String ANONYMOUS_NAMESPACE = "`anonymous namespace'";
 	private static final String UNKNOWN_NAMESPACE = "MDMANG_UNK_QUALIFICATION";
 	private MDReusableName name;
+	private MDReusableName templateName;
 	private MDReusableName nameAnonymous;
 	private MDReusableName nameInterface;
 	private MDNestedName nameNested;
 	private MDNumberedNamespace nameNumbered;
-	private String nameQ;
-	private String nameC; // Windows 10 stuff
+	private MDQualification nameQ;
+	private MDFragmentName nameC; // Windows 10 stuff
 
 	public MDQualifier(MDMang dmang) {
 		super(dmang);
 	}
 
-	public boolean isInterface() {
-		return (nameInterface != null);
+	//====
+
+	public boolean isName() {
+		return name != null;
 	}
 
-	public boolean isNested() {
-		return (nameNested != null);
+	public boolean isTemplate() {
+		return templateName != null;
 	}
 
 	public boolean isAnon() {
-		return (nameAnonymous != null);
+		return nameAnonymous != null;
 	}
 
+	public boolean isInterface() {
+		return nameInterface != null;
+	}
+
+	public boolean isNested() {
+		return nameNested != null;
+	}
+
+	// possibly delete this one and use isNameNumbered() instead; TODO
 	public boolean isLocalNamespace() {
-		return (nameNumbered != null);
+		return nameNumbered != null;
 	}
 
-	public boolean isNameC() {
-		return (nameC != null);
+	public boolean isNameNumbered() {
+		return nameNumbered != null;
 	}
 
 	public boolean isNameQ() {
-		return (nameQ != null);
+		return nameQ != null;
 	}
 
-	public MDNestedName getNested() {
-		return nameNested;
+	public boolean isNameC() {
+		return nameC != null;
+	}
+
+	//====
+
+	public MDReusableName getName() {
+		return name;
+	}
+
+	public MDReusableName getTemplate() {
+		return templateName;
 	}
 
 	public String getAnonymousName() {
 		return nameAnonymous.getName();
 	}
 
+	public MDReusableName getInterface() {
+		return nameInterface;
+	}
+
+	public MDNestedName getNested() {
+		return nameNested;
+	}
+
+	// possibly delete this one and use getNameNumbered() instead; TODO
 	public String getLocalNamespace() {
 		return nameNumbered.getName();
 	}
 
+	// possibly delete this one and use getNameNumbered() instead; TODO
 	public String getLocalNamespaceNumber() {
 		return nameNumbered.getNumber().toString();
 	}
 
-	public String getNameC() {
-		return nameC;
+	public MDNumberedNamespace getNameNumbered() {
+		return nameNumbered;
 	}
 
-	public String getNameQ() {
+	public MDQualification getNameQ() {
 		return nameQ;
+	}
+
+	public MDFragmentName getNameC() {
+		return nameC;
 	}
 
 	@Override
@@ -89,6 +125,9 @@ public class MDQualifier extends MDParsableItem {
 		// Only one of these will hit.
 		if (name != null) {
 			name.insert(builder);
+		}
+		else if (templateName != null) {
+			templateName.insert(builder);
 		}
 		else if (nameAnonymous != null) {
 			if (dmang.getOutputOptions().useEncodedAnonymousNamespace()) {
@@ -109,10 +148,21 @@ public class MDQualifier extends MDParsableItem {
 			nameNumbered.insert(builder);
 		}
 		else if (nameQ != null) {
-			dmang.insertString(builder, nameQ);
+			// Could create a new object for this type and modify its insert method (and getName
+			//  method) to return the right things.  As it is, the above access getNameQ method
+			//  will return an MDQualification that has no concept of the brackets here.  But
+			//  it could be remedied with the separate object.  Similarly (but no bracket issue),
+			//  the "nameC" could also get its own type to represent its object, but we don't
+			//  quite know what that is at this time.
+			StringBuilder nameQBuilder = new StringBuilder();
+			nameQ.insert(nameQBuilder);
+			dmang.insertString(nameQBuilder, "[");
+			dmang.appendString(nameQBuilder, "]");
+			String str = nameQBuilder.toString();
+			dmang.insertString(builder, str);
 		}
 		else if (nameC != null) {
-			dmang.insertString(builder, nameC);
+			nameC.insert(builder);
 		}
 		else {
 			dmang.insertString(builder, UNKNOWN_NAMESPACE);
@@ -129,8 +179,8 @@ public class MDQualifier extends MDParsableItem {
 					break;
 				case '$':
 					// This is a template, but it will get processed through MDReusableName.
-					name = new MDReusableName(dmang);
-					name.parse();
+					templateName = new MDReusableName(dmang);
+					templateName.parse();
 					break;
 				case 'A': // Anonymous namespace
 					// 20140522 found that we should Keep the 'A' as part of the name
@@ -165,7 +215,7 @@ public class MDQualifier extends MDParsableItem {
 						MDFragmentName fragName = new MDFragmentName(dmang);
 						fragName.keepTerminator(); // keeps the terminating '@'
 						fragName.parse();
-						nameC = fragName.toString();
+						nameC = fragName;
 						dmang.parseInfoPop();
 						break;
 					}
@@ -214,11 +264,7 @@ public class MDQualifier extends MDParsableItem {
 					dmang.increment(); // skip the 'Q'
 					MDQualification qualName = new MDQualification(dmang);
 					qualName.parse();
-					StringBuilder nameQBuilder = new StringBuilder();
-					qualName.insert(nameQBuilder);
-					dmang.insertString(nameQBuilder, "[");
-					dmang.appendString(nameQBuilder, "]");
-					nameQ = nameQBuilder.toString();
+					nameQ = qualName;
 					dmang.parseInfoPop();
 					break;
 				default: // special name

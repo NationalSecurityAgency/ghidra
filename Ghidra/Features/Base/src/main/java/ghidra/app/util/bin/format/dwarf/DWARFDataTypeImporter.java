@@ -467,7 +467,7 @@ public class DWARFDataTypeImporter {
 		// NOTE: gcc tends to emit values without an explicit signedness.  The caller
 		// can specify a default signedness, but this should probably always be unsigned.
 		for (DebugInfoEntry childEntry : diea.getChildren(DW_TAG_enumerator)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 			String valueName = childDIEA.getName();
 
 			DWARFNumericAttribute enumValAttr = childDIEA
@@ -642,7 +642,7 @@ public class DWARFDataTypeImporter {
 
 		UnionDataType union = (UnionDataType) ddt.dataType;
 		for (DebugInfoEntry childEntry : diea.getChildren(DW_TAG_member)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 
 			// skip static member vars as they do not have storage in the structure
 			// C does not allow static member vars in unions
@@ -836,7 +836,7 @@ public class DWARFDataTypeImporter {
 
 		for (DebugInfoEntry childEntry : diea.getChildren(childTagType)) {
 
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 			// skip static member vars as they do not have storage in the structure
 			if (childDIEA.hasAttribute(DW_AT_external)) {
 				continue;
@@ -1099,7 +1099,8 @@ public class DWARFDataTypeImporter {
 		List<Integer> dimensions = new ArrayList<>();
 		List<DebugInfoEntry> subrangeDIEs = diea.getChildren(DW_TAG_subrange_type);
 		for (int subRangeDIEIndex = 0; subRangeDIEIndex < subrangeDIEs.size(); subRangeDIEIndex++) {
-			DIEAggregate subrangeAggr = prog.getAggregate(subrangeDIEs.get(subRangeDIEIndex));
+			DIEAggregate subrangeAggr =
+				prog.getDIEContainer().getAggregate(subrangeDIEs.get(subRangeDIEIndex));
 			long numElements = -1;
 			try {
 				if (subrangeAggr.hasAttribute(DW_AT_count)) {

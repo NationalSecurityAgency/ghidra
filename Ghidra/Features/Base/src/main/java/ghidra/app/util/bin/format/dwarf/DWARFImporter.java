@@ -21,7 +21,6 @@ import java.util.*;
 import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.DWARFImportOptions.MacroEnumSetting;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
@@ -39,7 +38,6 @@ import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import utility.function.Dummy;
 
 /**
  * Performs a DWARF datatype import and a DWARF function import, under the control of the
@@ -102,7 +100,7 @@ public class DWARFImporter {
 
 			if ((monitor.getProgress() % 5) == 0) {
 				/* balance between getting work done and pampering the swing thread */
-				Swing.runNow(Dummy.runnable());
+				Swing.allowSwingToProcessEvents();
 			}
 
 			DataType dataType =
@@ -199,17 +197,11 @@ public class DWARFImporter {
 	 * "." and "/../" entries stripped and then be placed under artificial directories based on
 	 * {@code DEFAULT_COMPILATION_DIR}.
 	 * 
-	 * @param reader reader
 	 * @throws CancelledException if cancelled by user
 	 * @throws IOException if error during reading
 	 * @throws LockException if invoked without exclusive access
 	 */
-	private void addSourceLineInfo(BinaryReader reader)
-			throws CancelledException, IOException, LockException {
-		if (reader == null) {
-			Msg.warn(this, "Can't add source line info - reader is null");
-			return;
-		}
+	private void addSourceLineInfo() throws CancelledException, IOException, LockException {
 		int entryCount = 0;
 		Program ghidraProgram = prog.getGhidraProgram();
 		long maxLength = prog.getImportOptions().getMaxSourceMapEntryLength();
@@ -223,7 +215,7 @@ public class DWARFImporter {
 		List<SourceFileAddr> sourceInfo = new ArrayList<>();
 		for (DWARFCompilationUnit cu : compUnits) {
 			DWARFLine dLine = cu.getLine();
-			monitor.increment(1);
+			monitor.increment();
 			for (SourceFileInfo sfi : dLine.getAllSourceFileInfos()) {
 				if (sourceFileInfoToSourceFile.containsKey(sfi)) {
 					continue;
@@ -249,7 +241,7 @@ public class DWARFImporter {
 					continue;
 				}
 			}
-			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu, reader));
+			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu));
 		}
 
 		int sourceInfoSize = sourceInfo.size();
@@ -263,7 +255,7 @@ public class DWARFImporter {
 
 		AddressSet warnedAddresses = new AddressSet();
 		for (int i = 0; i < sourceInfo.size(); i++) {
-			monitor.increment(1);
+			monitor.increment();
 			SourceFileAddr sfa = sourceInfo.get(i);
 			if (SOURCEFILENAMES_IGNORE.contains(sfa.fileName()) ||
 				SOURCEFILENAMES_IGNORE.contains(FilenameUtils.getName(sfa.fileName())) ||
@@ -424,7 +416,7 @@ public class DWARFImporter {
 			}
 			else {
 				try {
-					addSourceLineInfo(prog.getDebugLineBR());
+					addSourceLineInfo();
 				}
 				catch (LockException e) {
 					throw new AssertException("LockException after exclusive access verified");

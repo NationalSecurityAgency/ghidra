@@ -2,7 +2,7 @@
 <article id="pcoderef_title">
 <info>
   <title>P-Code Reference Manual</title>
-  <releaseinfo>Last updated March 2, 2023</releaseinfo>
+  <releaseinfo>Last updated January 16, 2026</releaseinfo>
 </info>
 <table xml:id="mytoc.htmltable" width="90%" frame='none'>
   <col width="25%"/>
@@ -307,7 +307,7 @@ at the destination address.
 </para>
 <para>
 The list of possible
-opcodes are similar to many RISC based instruction sets. The effect of
+opcodes is similar to many RISC based instruction sets. The effect of
 each opcode is described in detail in the following sections,
 and a reference table is given
 in <xref linkend="reference"/>. In general, the size or
@@ -560,7 +560,7 @@ In this case, the offset of input0 is considered a relative offset into
 the indexed list of p-code operations corresponding to the translation
 of the current machine instruction. This allows branching within the
 operations forming a single instruction. For example, if
-the <emphasis role="bold">BRANCH</emphasis> occurs as the pcode
+the <emphasis role="bold">BRANCH</emphasis> occurs as the p-code
 operation with index 5 for the instruction, it can branch to operation
 with index 8 by specifying a constant destination “address” of
 3. Negative constants can be used for backward branches.
@@ -3908,26 +3908,29 @@ interpretation as a data-type changes at this point.
 </table>
 </informalexample>
 <para>
-The values <emphasis>position</emphasis> and <emphasis>size</emphasis> must be constants.
-The least significant <emphasis>size</emphasis> bits from input1 are
-inserted into input0, overwriting a range of bits of the same size,
-but leaving any other bits in input0 unchanged. The least significant bit of the overwritten
-range is given by <emphasis>position</emphasis>, where bits in index0 are labeled from least significant
-to most significant, starting at 0. The value obtained after this overwriting is returned
-as output.
-Varnodes input0 and output must be the same size and are intended to be the same varnode. 
-The value <emphasis>size</emphasis> must be not be bigger than the varnode input1, and
-<emphasis>size</emphasis> + <emphasis>position</emphasis> must not be bigger than the varnode input0.
+  An <emphasis role="bold">INSERT</emphasis> operation takes the least significant
+  <emphasis>size</emphasis> bits from input1 and inserts them into input0, overwriting
+  a range of bits of the same size, but leaving any other bits in input0 unchanged.
 </para>
 <para>
-This operation is never generated as raw p-code, even though it is equivalent
-to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as input0[10,1] = input1.
+  The least significant bit of the overwritten range is given by <emphasis>position</emphasis>,
+  where bits in index0 are labeled from least significant to most significant, starting at 0.
+  The value obtained after this overwriting is returned
+  as output. Varnodes input0 and output must be the same size and are intended to be the same
+  varnode. The values <emphasis>position</emphasis> and <emphasis>size</emphasis> must be
+  constants. The value <emphasis>size</emphasis> must be not be bigger than the varnode input1,
+  and <emphasis>size</emphasis> + <emphasis>position</emphasis> must not be bigger than the
+  varnode input0.
+</para>
+<para>
+  This operation is never generated as raw p-code, even though it is equivalent
+  to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as input0[10,1] = input1.
 </para>
 </sect2>
 
-<sect2 id="cpui_extract"><title>EXTRACT</title>
+<sect2 id="cpui_zpull"><title>ZPULL</title>
 <informalexample>
-<table xml:id="extract.htmltable" frame="above" width="80%" rules="groups">
+<table xml:id="zpull.htmltable" frame="above" width="80%" rules="groups">
 <col width="23%"/>
 <col width="15%"/>
 <col width="61%"/>
@@ -3956,7 +3959,7 @@ to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as input0[10,1] 
 <tr>
   <td align='right'>output</td>
   <td/>
-  <td>Varnode result containing the extracted value.</td>
+  <td>Varnode containing the extracted value as an unsigned integer.</td>
 </tr>
 </tbody>
 <tfoot>
@@ -3972,19 +3975,90 @@ to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as input0[10,1] 
 </table>
 </informalexample>
 <para>
-The values <emphasis>position</emphasis> and <emphasis>size</emphasis> must be constants.
-The operation extracts <emphasis>size</emphasis> bits from input0 and returns it in output.
-The <emphasis>position</emphasis> indicates the least significant bit in the range being extracted, with
-the bits in input0 labeled from least to most significant, starting at 0. The varnodes input0 and output
-can be different sizes, and the extracted value is zero extended into output.
-The value <emphasis>size</emphasis> must not be bigger than the varnode output, and
-<emphasis>size</emphasis> + <emphasis>position</emphasis> must not be bigger
-than the varnode input0.
+  A <emphasis role="bold">ZPULL</emphasis> operation extracts <emphasis>size</emphasis> bits
+  from input0 and returns them as an unsigned integer value in output, zero extending the
+  bits to the size of output.
 </para>
 <para>
-This operation is never generated as raw p-code, even though it is equivalent
-to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as output = input0[10,1].
+  The <emphasis>position</emphasis> indicates the least significant bit in the range
+  being extracted, with the bits in input0 labeled from least to most significant,
+  starting at 0. The varnodes input0 and output can be different size.
+  The values <emphasis>position</emphasis> and <emphasis>size</emphasis> must be constants.
+  The value <emphasis>size</emphasis> must not be bigger than the varnode output, and
+  <emphasis>size</emphasis> + <emphasis>position</emphasis> must not be bigger
+  than the varnode input0.
 </para>
+<para>
+  <emphasis role="bold">ZPULL</emphasis> is never generated as raw p-code, even though it
+  is equivalent to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as
+  output = input0[10,1].
+</para>
+</sect2>
+
+<sect2 id="cpui_spull"><title>SPULL</title>
+<informalexample>
+<table xml:id="spull.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Varnode to extract a value from.</td>
+</tr>
+<tr>
+  <td align='right'>position</td>
+  <td>(<emphasis role="bold">constant</emphasis>)</td>
+  <td>Constant indicating the bit position to extract from.</td>
+</tr>
+<tr>
+  <td align='right'>size</td>
+  <td>(<emphasis role="bold">constant</emphasis>)</td>
+  <td>Constant indicating the number of bits to extract.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Varnode containing the extracted value as a signed integer</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><emphasis>Cannot be explicitly coded.</emphasis></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+  An <emphasis role="bold">SPULL</emphasis> operation extracts <emphasis>size</emphasis> bits
+  from input0 and returns them as a signed integer value in output. The value is sign extended
+  to the size of output, duplicating the most significant extracted bit.
+</para>
+<para>
+  The <emphasis>position</emphasis> indicates the least significant bit in the range
+  being extracted, with the bits in input0 labeled from least to most significant,
+  starting at 0. The varnodes input0 and output can be different size.
+  The values <emphasis>position</emphasis> and <emphasis>size</emphasis> must be constants.
+  The value <emphasis>size</emphasis> must not be bigger than the varnode output, and
+  <emphasis>size</emphasis> + <emphasis>position</emphasis> must not be bigger
+  than the varnode input0.
+</para>
+<para>
+  <emphasis role="bold">SPULL</emphasis> is never generated as raw p-code.
+</para>
+
 </sect2>
 
 </sect1>
@@ -4096,7 +4170,7 @@ to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as output = inpu
 <tr>
   <td>SUBPIECE</td>
   <td><code>v0:2</code></td>
-  <td>The least signficant n bytes of v0.</td>
+  <td>The least significant n bytes of v0.</td>
 </tr>
 <tr>
   <td>SUBPIECE</td>

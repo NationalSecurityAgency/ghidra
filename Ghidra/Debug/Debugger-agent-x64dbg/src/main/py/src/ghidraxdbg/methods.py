@@ -665,15 +665,22 @@ def read_mem(process: Process, range: AddressRange) -> None:
 def write_mem(process: Process, address: Address, data: bytes) -> None:
     """Write memory."""
     nproc = find_proc_by_obj(process)
-    offset = process.trace.extra.required_mm().map_back(nproc, address)
+    offset = process.trace.extra.require_mm().map_back(nproc, address)
     dbg().write_memory(offset, data)
+    with commands.open_tracked_tx('Write memory'):
+        commands.putmem(offset, len(data), True, True)
 
 
-@REGISTRY.method(action='set_reg', display='Set Register')
-def write_reg(reg: RegisterValueContainer, name: str, value: int) -> None:
+@REGISTRY.method(action='write_reg', display='Write Register')
+def write_reg(reg: RegisterValueContainer, name: str, value: bytes) -> None:
     """Write a register."""
     nproc = util.selected_process()
-    dbg().set_reg(name, value)
+    trace: Trace[commands.Extra] = reg.trace
+    rv = trace.extra.require_rm().map_value_back(nproc, name, value)
+    rval = int.from_bytes(rv.value, signed=False)
+    dbg().set_reg(name, rval)
+    with commands.open_tracked_tx('Write Register'):
+        commands.putreg()
 
 
 def dbg():

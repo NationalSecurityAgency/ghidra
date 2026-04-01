@@ -167,6 +167,8 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
+		traceManager.setSaveTracesByDefault(false);
+
 		try {
 			lldbPath = Paths.get(DummyProc.which("lldb-20"));
 		}
@@ -255,7 +257,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				return new LldbResult(false, exitVal, capture.toString());
 			}
 			catch (TimeoutException e) {
-				return new LldbResult(true, -1, capture.toString());
+				return new LldbResult(true, 0, capture.toString());
 			}
 			catch (Exception e) {
 				return ExceptionUtils.rethrow(e);

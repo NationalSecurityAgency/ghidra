@@ -48,7 +48,12 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 		if (!(context instanceof DecompilerActionContext dac)) {
 			return false;
 		}
-		updateMenuName(dac.getAddress());
+
+		Address address = dac.getAddress();
+		if (address == null) {
+			return false;
+		}
+		updateMenuName(address);
 		return super.isEnabledForContext(context);
 	}
 

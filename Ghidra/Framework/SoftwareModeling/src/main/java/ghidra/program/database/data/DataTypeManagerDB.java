@@ -2646,6 +2646,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					status = compositeAdapter.removeRecord(dataTypeID);
 					break;
 				case COMPONENT:
+					// NOTE: This is only used when completely removing a composite datatype
 					status = componentAdapter.removeRecord(dataTypeID);
 					break;
 				case TYPEDEF:

@@ -128,6 +128,8 @@ public class PersistentOpenCloseManagerTest extends AbstractGhidraHeadedIntegrat
 		assertTrue(openCloseMgr.isOpen(addr(0)));
 		assertFalse(openCloseMgr.isOpen(addr(100)));
 		assertFalse(openCloseMgr.isOpenByDefault());
+
+		program.release(this);
 	}
 
 	private Address addr(long offset) {

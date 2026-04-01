@@ -24,8 +24,7 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellEditor;
 
 import db.Transaction;
 import docking.ReusableDialogComponentProvider;
@@ -51,6 +50,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.*;
 
 public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvider {
@@ -136,15 +136,48 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		}
 	}
 
+	private static final IconButtonTableCellRenderer REMOVE_BUTTON_RENDERER =
+		new IconButtonTableCellRenderer(DebuggerResources.ICON_DELETE, BUTTON_SIZE);
+	private static final IconButtonTableCellEditor<RangeEntry> REMOVE_BUTTON_EDITOR =
+		new IconButtonTableCellEditor<>(RangeEntry.class, DebuggerResources.ICON_DELETE) {
+			@Override
+			protected void clicked() {
+				if (!(model instanceof RangeTableModel mapModel)) {
+					return;
+				}
+				mapModel.dialog.removeEntry(row);
+			}
+		};
+
 	protected enum RangeTableColumns
 		implements EnumeratedTableColumn<RangeTableColumns, RangeEntry> {
-		REMOVE("Remove", String.class, e -> "Remove Range", (e, v) -> nop(), null),
+		REMOVE("Remove", String.class, e -> "Remove Range", (e, v) -> nop(), null) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return REMOVE_BUTTON_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return REMOVE_BUTTON_EDITOR;
+			}
+
+			@Override
+			public int getMaxWidth() {
+				return BUTTON_SIZE;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return BUTTON_SIZE;
+			}
+		},
 		REGION("Region", String.class, RangeEntry::getRegionName),
 		MODULES("Modules", String.class, RangeEntry::getModuleNames),
 		SECTIONS("Sections", String.class, RangeEntry::getSectionNames),
 		SRC_MIN("SrcMin", Address.class, RangeEntry::getSrcMinAddress),
 		SRC_MAX("SrcMax", Address.class, RangeEntry::getSrcMaxAddress),
-		BLOCK("Block", String.class, RangeEntry::getBlockName, RangeEntry::setBlockName, //
+		BLOCK("Block", String.class, RangeEntry::getBlockName, RangeEntry::setBlockName,
 				RangeEntry::isCreate),
 		OVERLAY("Overlay", Boolean.class, RangeEntry::isOverlay),
 		DST_MIN("DstMin", Address.class, RangeEntry::getDstMinAddress),
@@ -201,8 +234,11 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 
 	protected static class RangeTableModel
 			extends DefaultEnumeratedColumnTableModel<RangeTableColumns, RangeEntry> {
-		public RangeTableModel(PluginTool tool) {
+		private final DebuggerCopyIntoProgramDialog dialog;
+
+		public RangeTableModel(PluginTool tool, DebuggerCopyIntoProgramDialog dialog) {
 			super(tool, "Ranges", RangeTableColumns.class);
+			this.dialog = dialog;
 		}
 
 		@Override
@@ -311,7 +347,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	public DebuggerCopyIntoProgramDialog(PluginTool tool) {
 		super("Copy Into Program", true, true, true, true);
 
-		tableModel = new RangeTableModel(tool);
+		tableModel = new RangeTableModel(tool, this);
 		populateComponents();
 	}
 
@@ -435,11 +471,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		addCancelButton();
 		addResetButton();
 
-		TableColumnModel columnModel = table.getColumnModel();
-
-		TableColumn removeCol = columnModel.getColumn(RangeTableColumns.REMOVE.ordinal());
-		CellEditorUtils.installButton(table, filterPanel, removeCol, DebuggerResources.ICON_DELETE,
-			BUTTON_SIZE, this::removeEntry);
+		table.setRowHeight(BUTTON_SIZE);
 	}
 
 	protected void addResetButton() {

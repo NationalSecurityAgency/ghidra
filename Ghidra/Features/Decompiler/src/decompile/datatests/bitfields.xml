@@ -1,0 +1,117 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x10027f" readonly="true">
+                              89
+f083e00f83fe090f9ec2c1e2078d04c5
+0200000009d0880783c61483e61f0fb6
+470883e0e009f08847080fb747086625
+7fc080cc3266894708c383fe01742183
+fe0274230fb60701c03c2f7e2c0fb607
+c0e8073c0119c0258403000083c064c3
+0fb60783e007c30fb6570889d083e01f
+c0ea0583e20301d0c30fb64708c0e805
+83e003c34883ec188d04fd0800000083
+e07883ff090f9ec1c1e10783e60709c8
+09f0884424040fb644240c83e08083c8
+2a8844240c83e27f89d0c1e0070fb754
+240c6681e27fc009c2668954240c488d
+7c2404e8a8fcffff4883c418c34883ec
+1089fe488d7c2404e812ffffff807c24
+040079170fb644240483e0070fb65424
+0c83e21f01d04883c410c3f644240440
+750e0fb744240c66c1e80783e07febe6
+0fb644240cc0e80583e003ebd90fb617
+89d183e107b80100000080f905744983
+e278b80200000080fa68743cb8030000
+00803f0078320fb6570889d183e11fb8
+0400000080f91b741fb805000000f6c2
+6074150fb747086625803f663d00210f
+94c00fb6c083c006c34883ec1089fe48
+8d7c2404e866feffff0fb644240483e0
+7fba010000003c5d74160fb744240c66
+25e03f663d80100f94c20fb6d283c202
+89d04883c410c3
+</bytechunk>
+<bytechunk space="ram" offset="0x10045a" readonly="true">
+                    0fb60701c0c0
+f8040fbec0034704c30fb647088d5001
+83e21f83e0e009d0884708c3
+</bytechunk>
+<symbol space="ram" offset="0x10027f" name="dosomething"/>
+<symbol space="ram" offset="0x1002ba" name="doload"/>
+<symbol space="ram" offset="0x100304" name="dostackinsert"/>
+<symbol space="ram" offset="0x10035d" name="dostackextract"/>
+<symbol space="ram" offset="0x1003ad" name="docompare"/>
+<symbol space="ram" offset="0x100409" name="doublecompare"/>
+<symbol space="ram" offset="0x10045a" name="addsigned"/>
+<symbol space="ram" offset="0x100469" name="increment"/>
+</binaryimage>
+<script>
+  <com>map fun r0x100000 receive</com>
+  <com>parse line struct myfoo { uint4 field3:3; int4 sfield4:4; bool fieldb:1; char a; char b; char c; int4 d; uint4 field5:5; uint4 field2:2; uint4 field7:7; };</com>
+  <com>parse line extern void receive(myfoo *ptr);</com>
+  <com>parse line extern void dosomething(myfoo *ptr,int4 val);</com>
+  <com>parse line extern int4 doload(myfoo *loadptr,int4 loadval);</com>
+  <com>parse line extern void dostackinsert(int4 stki_a,uint4 stki_b,uint4 stki_c);</com>
+  <com>parse line extern int4 docompare(myfoo *ptrcomp);</com>
+  <com>parse line extern int4 doublecompare(int4 val);</com>
+  <com>parse line extern int4 addsigned(myfoo *ap);</com>
+  <com>parse line extern void increment(myfoo *ip);</com>
+  <com>lo fu dosomething</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu doload</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu dostackinsert</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu dostackextract</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu docompare</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu doublecompare</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu addsigned</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu increment</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Bitfields #1" min="1" max="1">ptr-&gt;field3 = 2;</stringmatch>
+<stringmatch name="Bitfields #2" min="1" max="1">ptr-&gt;fieldb = val &lt; 10;</stringmatch>
+<stringmatch name="Bitfields #3" min="1" max="1">ptr-&gt;sfield4 = val;</stringmatch>
+<stringmatch name="Bitfields #4" min="1" max="1">ptr-&gt;field5 = \(uint1\)val \+ 0x14;</stringmatch>
+<stringmatch name="Bitfields #5" min="1" max="1">ptr-&gt;field7 = 100;</stringmatch>
+<stringmatch name="Bitfields #6" min="1" max="1">return loadptr-&gt;field3;</stringmatch>
+<stringmatch name="Bitfields #7" min="1" max="1">if \(.*2.* &lt; loadptr-&gt;sfield4\)</stringmatch>
+<stringmatch name="Bitfields #8" min="1" max="1">-\(uint4\)!loadptr-&gt;fieldb &amp; 900</stringmatch>
+<stringmatch name="Bitfields #9" min="1" max="1">return loadptr-&gt;field2;</stringmatch>
+<stringmatch name="Bitfields #10" min="1" max="1">return loadptr-&gt;field5 \+ loadptr-&gt;field2;</stringmatch>
+<stringmatch name="Bitfields #11" min="1" max="1">mStack_14\.fieldb = stki_a &lt; 10;</stringmatch>
+<stringmatch name="Bitfields #12" min="1" max="1">mStack_14\.sfield4 = \(char\)stki_a \+ 1;</stringmatch>
+<stringmatch name="Bitfields #13" min="1" max="1">mStack_14\.field3 = stki_b;</stringmatch>
+<stringmatch name="Bitfields #14" min="1" max="1">mStack_14\.field2 = 1;</stringmatch>
+<stringmatch name="Bitfields #15" min="1" max="1">mStack_14\.field5 = 10;</stringmatch>
+<stringmatch name="Bitfields #16" min="1" max="1">mStack_14\.field7 = stki_c;</stringmatch>
+<stringmatch name="Bitfields #17" min="1" max="1">if \(mStack_c\.fieldb\)</stringmatch>
+<stringmatch name="Bitfields #18" min="1" max="1">uVar1 = mStack_c\.field3 \+ mStack_c\.field5;</stringmatch>
+<stringmatch name="Bitfields #19" min="1" max="1">if \(mStack_c\.sfield4 &lt; 0\)</stringmatch>
+<stringmatch name="Bitfields #20" min="1" max="1">uVar1 = mStack_c\.field2;</stringmatch>
+<stringmatch name="Bitfields #21" min="1" max="1">uVar1 = mStack_c\.field7;</stringmatch>
+<stringmatch name="Bitfields #22" min="1" max="1">ptrcomp-&gt;field3 .= 5\)</stringmatch>
+<stringmatch name="Bitfields #23" min="1" max="1">ptrcomp-&gt;sfield4 .= -3\)</stringmatch>
+<stringmatch name="Bitfields #24" min="1" max="1">ptrcomp-&gt;fieldb\)</stringmatch>
+<stringmatch name="Bitfields #25" min="1" max="1">ptrcomp-&gt;field5 .= 0x1b\)</stringmatch>
+<stringmatch name="Bitfields #26" min="1" max="1">ptrcomp-&gt;field2 .= 0\)</stringmatch>
+<stringmatch name="Bitfields #27" min="1" max="1">ptrcomp-&gt;field7 .= 0x42\)</stringmatch>
+<stringmatch name="Bitfields #28" min="1" max="1">\(mStack_c\.field3 .= 5 .. mStack_c\.sfield4 .= -5\)</stringmatch>
+<stringmatch name="Bitfields #29" min="1" max="1">\(mStack_c\.field2 .= 0 .. mStack_c\.field7 .= 0x21\)</stringmatch>
+<stringmatch name="Bitfields #30" min="1" max="1">return ap-&gt;sfield4 \+ ap-&gt;d;</stringmatch>
+<stringmatch name="Bitfields #31" min="1" max="1">ip-&gt;field5 = ip-&gt;field5 \+ 1;</stringmatch>
+</decompilertest>

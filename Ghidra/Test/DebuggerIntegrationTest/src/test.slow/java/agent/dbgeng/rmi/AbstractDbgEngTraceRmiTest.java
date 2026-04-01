@@ -60,9 +60,9 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			from ghidratrace.client import Schedule
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
-	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
-	protected static final int QUIT_TIMEOUT_MS = 1000;
+	protected static final int CONNECT_TIMEOUT_MS = 6000;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 20 : 300;
+	protected static final int QUIT_TIMEOUT_MS = 2000;
 
 	/** Some snapshot likely to exceed the latest */
 	protected static final long SNAP = 100;

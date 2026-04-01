@@ -61,6 +61,10 @@ public class RustDemangler implements Demangler {
 			demangled = RustDemanglerV0.demangle(mangled);
 		}
 
+		if (demangled == null) {
+			return null;
+		}
+
 		RustDemanglerParser parser = new RustDemanglerParser();
 		DemangledObject demangledObject = parser.parse(mangled, demangled);
 

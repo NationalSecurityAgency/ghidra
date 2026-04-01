@@ -5,8 +5,8 @@
 	Log4j appender that writes messages to a file. 
 	
 	We filter the messages for this file by using the 'GhidraScript' text.  This text is added
-	to the 'unformatted message' by using the log4j's Message class.  We then emit the 
-	original message when writing to the file.
+	to the 'unformatted message' by using our ScriptMessage class, which extends log4j's 
+	StringFormattedMessage class.  We then emit the original message when writing to the file.
 	
 -->	
 <RollingFile 

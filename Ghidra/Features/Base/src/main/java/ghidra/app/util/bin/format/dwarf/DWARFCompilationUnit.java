@@ -24,8 +24,6 @@ import java.util.Map;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.macro.DWARFMacroHeader;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A DWARF CompilationUnit is a contiguous block of {@link DebugInfoEntry DIE} records found
@@ -39,8 +37,7 @@ import ghidra.util.task.TaskMonitor;
 public class DWARFCompilationUnit extends DWARFUnitHeader {
 	/**
 	 * Creates a new {@link DWARFCompilationUnit} by reading a compilationUnit's header data
-	 * from the debug_info section and the debug_abbr section and its compileUnit DIE (ie.
-	 * the first DIE right after the header).
+	 * from the debug_info section.
 	 * <p>
 	 * Returns {@code NULL} if there was an ignorable error while reading the compilation unit (and
 	 * leaves the input stream at the next compilation unit to read), otherwise throws
@@ -51,17 +48,13 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 *  
 	 * @param partial already read partial unit header
 	 * @param reader .debug_info BinaryReader 
-	 * @param abbrReader .debug_abbr BinaryReader
-	 * @param monitor the current task monitor
 	 * @return the read compilation unit, or null if the compilation unit was bad/empty and should 
 	 * be ignored
 	 * @throws DWARFException if an invalid or unsupported DWARF version is read.
 	 * @throws IOException if the length of the compilation unit is invalid.
-	 * @throws CancelledException if the task has been canceled.
 	 */
-	public static DWARFCompilationUnit readV4(DWARFUnitHeader partial, BinaryReader reader,
-			BinaryReader abbrReader, TaskMonitor monitor)
-			throws DWARFException, IOException, CancelledException {
+	public static DWARFCompilationUnit readV4(DWARFUnitHeader partial, BinaryReader reader)
+			throws DWARFException, IOException {
 
 		long abbreviationOffset = reader.readNextUnsignedValue(partial.getIntSize());
 		byte pointerSize = reader.readNextByte();
@@ -76,19 +69,17 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 			return null;
 		}
 
-		abbrReader.setPointerIndex(abbreviationOffset);
-		Map<Integer, DWARFAbbreviation> abbrMap =
-			DWARFAbbreviation.readAbbreviations(abbrReader, partial.dprog, monitor);
+		Map<Integer, DWARFAbbreviation> abbrevs =
+			partial.getDIEContainer().getAbbrevs(abbreviationOffset);
 
 		DWARFCompilationUnit cu =
-			new DWARFCompilationUnit(partial, pointerSize, firstDIEOffset, abbrMap);
+			new DWARFCompilationUnit(partial, pointerSize, firstDIEOffset, abbrevs);
 		return cu;
 	}
 
 	/**
 	 * Creates a new {@link DWARFCompilationUnit} by reading a compilationUnit's header data
-	 * from the debug_info section and the debug_abbr section and its compileUnit DIE (ie.
-	 * the first DIE right after the header).
+	 * from the debug_info section.
 	 * <p>
 	 * Returns {@code NULL} if there was an ignorable error while reading the compilation unit (and
 	 * leaves the input stream at the next compilation unit to read), otherwise throws
@@ -99,17 +90,13 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 *  
 	 * @param partial already read partial unit header
 	 * @param reader .debug_info BinaryReader 
-	 * @param abbrReader .debug_abbr BinaryReader
-	 * @param monitor the current task monitor
 	 * @return the read compilation unit, or null if the compilation unit was bad/empty and should 
 	 * be ignored
 	 * @throws DWARFException if an invalid or unsupported DWARF version is read.
 	 * @throws IOException if the length of the compilation unit is invalid.
-	 * @throws CancelledException if the task has been canceled.
 	 */
-	public static DWARFCompilationUnit readV5(DWARFUnitHeader partial, BinaryReader reader,
-			BinaryReader abbrReader, TaskMonitor monitor)
-			throws DWARFException, IOException, CancelledException {
+	public static DWARFCompilationUnit readV5(DWARFUnitHeader partial, BinaryReader reader)
+			throws DWARFException, IOException {
 
 		byte pointerSize = reader.readNextByte();
 		long abbreviationOffset = reader.readNextUnsignedValue(partial.getIntSize());
@@ -125,12 +112,10 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 			return null;
 		}
 
-		abbrReader.setPointerIndex(abbreviationOffset);
-		Map<Integer, DWARFAbbreviation> abbrMap =
-			DWARFAbbreviation.readAbbreviations(abbrReader, partial.dprog, monitor);
-
+		Map<Integer, DWARFAbbreviation> abbrevs =
+			partial.getDIEContainer().getAbbrevs(abbreviationOffset);
 		DWARFCompilationUnit cu =
-			new DWARFCompilationUnit(partial, pointerSize, firstDIEOffset, abbrMap);
+			new DWARFCompilationUnit(partial, pointerSize, firstDIEOffset, abbrevs);
 		return cu;
 	}
 
@@ -168,20 +153,20 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	/**
 	 * This ctor is public only for junit tests.  Do not use directly.
 	 * 
-	 * @param dwarfProgram {@link DWARFProgram} 
+	 * @param dieContainer holds all DIE records and related serialization info 
 	 * @param startOffset offset in provider where it starts
 	 * @param endOffset offset in provider where it ends
 	 * @param intSize 4 (DWARF_32) or 8 (DWARF_64)
 	 * @param dwarfVersion 2-5 
 	 * @param pointerSize default size of pointers
-	 * @param unitNumber this compunits ordinal in the file
+	 * @param unitNumber this compunit's ordinal in the file
 	 * @param firstDIEOffset start of DIEs in the provider
 	 * @param codeToAbbreviationMap map of abbreviation numbers to {@link DWARFAbbreviation} instances
 	 */
-	public DWARFCompilationUnit(DWARFProgram dwarfProgram, long startOffset, long endOffset,
+	public DWARFCompilationUnit(DIEContainer dieContainer, long startOffset, long endOffset,
 			int intSize, short dwarfVersion, byte pointerSize, int unitNumber,
 			long firstDIEOffset, Map<Integer, DWARFAbbreviation> codeToAbbreviationMap) {
-		super(dwarfProgram, startOffset, endOffset, intSize, dwarfVersion, unitNumber);
+		super(dieContainer, startOffset, endOffset, intSize, dwarfVersion, unitNumber);
 		this.pointerSize = pointerSize;
 		this.firstDIEOffset = firstDIEOffset;
 		this.codeToAbbreviationMap =
@@ -197,7 +182,7 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 */
 	public void init(DebugInfoEntry rootDIE) throws IOException {
 		diea = DIEAggregate.createSingle(rootDIE);
-		line = getProgram().getLine(diea, DW_AT_stmt_list);
+		line = getDIEContainer().getLine(diea, DW_AT_stmt_list);
 	}
 
 	/**
@@ -237,7 +222,7 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	public DWARFMacroHeader getMacros() {
 		long macrosOffset = diea.getUnsignedLong(DW_AT_macros, -1);
 		return macrosOffset != -1
-				? diea.getProgram().getMacroHeader(macrosOffset, this)
+				? getDIEContainer().getMacroHeader(macrosOffset, this)
 				: DWARFMacroHeader.EMTPY;
 	}
 

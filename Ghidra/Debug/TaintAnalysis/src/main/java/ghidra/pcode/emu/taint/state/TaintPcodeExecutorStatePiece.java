@@ -118,7 +118,7 @@ public class TaintPcodeExecutorStatePiece
 	@Override
 	protected TaintVec getFromSpace(TaintSpace space, long offset, int size, Reason reason,
 			PcodeStateCallbacks cb) {
-		return space.get(offset, size, cb);
+		return space.get(offset, size, reason, cb);
 	}
 
 	@Override

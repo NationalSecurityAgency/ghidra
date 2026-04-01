@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
@@ -1061,6 +1062,27 @@ public class JitPassage extends PcodeProgram {
 		return "<" + getClass().getSimpleName() + ":\n  " + instructions.stream().map(i -> {
 			return "(" + getInCtx(i) + ") " + i.getAddressString(false, true) + " " + i.toString();
 		}).collect(Collectors.joining("\n  ")) + "\n>\n" + format(true);
+	}
+
+	@Override
+	public String format(boolean numberOps) {
+		return new MyFormatter(this, numberOps) {
+			@Override
+			protected FormatResult formatOpTemplate(MyAppender appender, OpTpl tpl) {
+				if (tpl.getOpcode() != PcodeOp.UNIMPLEMENTED) {
+					return super.formatOpTemplate(appender, tpl);
+				}
+				return switch (code.get(appender.getOpIdx())) {
+					case NopPcodeOp nop -> {
+						appender.appendIndent();
+						appender.appendString("NOP(%d)".formatted(System.identityHashCode(nop)));
+						appender.endLine();
+						yield FormatResult.CONTINUE;
+					}
+					default -> super.formatOpTemplate(appender, tpl);
+				};
+			}
+		}.formatOps(language, code);
 	}
 
 	/**

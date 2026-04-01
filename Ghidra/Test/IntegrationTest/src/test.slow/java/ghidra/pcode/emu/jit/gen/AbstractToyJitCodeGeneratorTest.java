@@ -194,7 +194,7 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 	}
 
 	@Test
-	public void testReadMemMappedRegBE() throws Exception {
+	public void testReadMemMappedReg() throws Exception {
 		Translation tr = translateSleigh(getLanguageID(), """
 				* 0:8 = 0x%x:8;
 				temp:8 = mmr0;
@@ -366,7 +366,7 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 	}
 
 	@Test
-	public void testMpIntOffcutLoadBE() throws Exception {
+	public void testMpIntOffcutLoad() throws Exception {
 		runEquivalenceTest(translateSleigh(getLanguageID(), """
 				local temp:16;
 				temp[0,64] = r1;
@@ -384,7 +384,7 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 	}
 
 	@Test
-	public void testLongOffcutLoadBE() throws Exception {
+	public void testLongOffcutLoad() throws Exception {
 		runEquivalenceTest(translateSleigh(getLanguageID(), """
 				local temp:16;
 				temp[0,64] = r1;
@@ -1986,12 +1986,13 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 						ev("r9", "4")))));
 	}
 
-	protected void runTestIntAddMpIntOpGen(Endian endian) throws Exception {
+	@Test
+	public void testIntAddMpIntOpGen() throws Exception {
 		/**
 		 * NOTE: We copy temp1 and temp2 back into r1 and r2 and assert their values, to ensure the
 		 * input operands remain unmodified.
 		 */
-		runEquivalenceTest(translateSleigh(endian.isBigEndian() ? getLanguageID() : ID_TOYLE64, """
+		runEquivalenceTest(translateSleigh(getLanguageID(), """
 				temp1:9 = zext(r1);
 				temp2:9 = zext(r2);
 				temp0:9 = temp1 + temp2;
@@ -2011,17 +2012,14 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 					List.of(
 						ev("r0", "0x087654323456789a"),
 						ev("r1", "0x8111111122222222"),
-						ev("r2", "0x8765432112345678")))));
-	}
-
-	@Test
-	public void testIntAddMpIntOpGenBE() throws Exception {
-		runTestIntAddMpIntOpGen(Endian.BIG);
-	}
-
-	@Test
-	public void testIntAddMpIntOpGenLE() throws Exception {
-		runTestIntAddMpIntOpGen(Endian.LITTLE);
+						ev("r2", "0x8765432112345678"))),
+				new Case("negLeg", """
+						r1 = 0x5555555588888888; r2 = 0x4444444499999999;
+						""",
+					List.of(
+						ev("r0", "0x9999999a22222221"),
+						ev("r1", "0x5555555588888888"),
+						ev("r2", "0x4444444499999999")))));
 	}
 
 	@Test
@@ -2061,7 +2059,14 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 						""",
 					List.of(
 						ev("r0", "0xf9abcdf00fedcbaa"),
-						ev("r3", "0xfff9abcdf00fedcb")))));
+						ev("r3", "0xfff9abcdf00fedcb"))),
+				new Case("negLeg", """
+						r1 = 0x5555555588888888; r2 = 0x4444444499999999;
+						""",
+					List.of(
+						ev("r0", "0x11111110eeeeeeef"),
+						ev("r1", "0x5555555588888888"),
+						ev("r2", "0x4444444499999999")))));
 	}
 
 	@Test

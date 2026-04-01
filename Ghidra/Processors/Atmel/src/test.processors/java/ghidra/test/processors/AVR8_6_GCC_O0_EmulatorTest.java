@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ public class AVR8_6_GCC_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
 	@Override
 	protected void initializeState(EmulatorTestRunner testRunner, Program program)
 			throws Exception {
+		super.initializeState(testRunner, program);
 		// These eliminate "uninitialized register" errors. Not strictly needed, but helps find actual problems.
 		testRunner.setRegister("SP", 0x0);
 		testRunner.setRegister("R1", 0x0);

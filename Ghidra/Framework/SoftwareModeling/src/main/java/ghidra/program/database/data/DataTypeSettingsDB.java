@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.data;
 
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 
 import ghidra.docking.settings.*;
 import ghidra.program.model.data.*;
@@ -88,7 +88,7 @@ class DataTypeSettingsDB implements Settings {
 			return false;
 		}
 		if (allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(settingsDefinition.getStorageKey())) {
+			!allowedSettingPredicate.test(settingsDefinition.getStorageKey())) {
 			return false;
 		}
 		return true;
@@ -118,7 +118,7 @@ class DataTypeSettingsDB implements Settings {
 			return false;
 		}
 		if (name != null && allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(name)) {
+			!allowedSettingPredicate.test(name)) {
 			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
 			return false;
 		}

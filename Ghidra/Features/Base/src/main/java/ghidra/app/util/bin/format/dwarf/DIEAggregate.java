@@ -232,6 +232,13 @@ public class DIEAggregate {
 	}
 
 	/**
+	 * {@return the program's single {@link DIEContainer}}
+	 */
+	public DIEContainer getDIEContainer() {
+		return getProgram().getDIEContainer();
+	}
+
+	/**
 	 * Returns the last {@link DebugInfoEntry DIE} fragment, ie. the decl DIE.
 	 * @return last DIE of this aggregate
 	 */
@@ -251,13 +258,28 @@ public class DIEAggregate {
 	public DIEAggregate getDeclParent() {
 		DebugInfoEntry declDIE = getLastFragment();
 		DebugInfoEntry declParent = declDIE.getParent();
-		return getProgram().getAggregate(declParent);
+		return getDIEContainer().getAggregate(declParent);
 	}
 
 	public DIEAggregate getParent() {
 		DebugInfoEntry die = getHeadFragment();
 		DebugInfoEntry parent = die.getParent();
-		return getProgram().getAggregate(parent);
+		return getDIEContainer().getAggregate(parent);
+	}
+
+	/**
+	 * Returns the first ancestor (parent, grandparent, etc) that matches the specified DIE
+	 * tag type.
+	 * 
+	 * @param ancestorType {@link DWARFTag} DIE type
+	 * @return {@link DIEAggregate} containing requested ancestor, or null if not found
+	 */
+	public DIEAggregate findAncestor(DWARFTag ancestorType) {
+		DIEAggregate parent = getParent();
+		while (parent != null && parent.getTag() != ancestorType) {
+			parent = parent.getParent();
+		}
+		return parent;
 	}
 
 	/**
@@ -274,7 +296,7 @@ public class DIEAggregate {
 	 * that this instance was already the root of the compUnit  
 	 */
 	public int getDepth() {
-		return getProgram().getParentDepth(getHeadFragment().getIndex());
+		return getHeadFragment().getDepth();
 	}
 
 	/**
@@ -294,7 +316,7 @@ public class DIEAggregate {
 			return attributeValue;
 		}
 		for (DebugInfoEntry childDIE : getChildren(childTag)) {
-			DIEAggregate childDIEA = getProgram().getAggregate(childDIE);
+			DIEAggregate childDIEA = getDIEContainer().getAggregate(childDIE);
 			attributeValue = childDIEA.findValue(attrId, clazz);
 			if (attributeValue != null) {
 				return attributeValue;
@@ -428,7 +450,7 @@ public class DIEAggregate {
 		}
 
 		try {
-			return getProgram().getDIE(foundAttr.getAttributeForm(), val.getUnsignedValue(),
+			return getDIEContainer().getDIE(foundAttr.getAttributeForm(), val.getUnsignedValue(),
 				foundAttr.getDIE().getCompilationUnit());
 		}
 		catch (IOException e) {
@@ -449,7 +471,7 @@ public class DIEAggregate {
 	 */
 	public DIEAggregate getRef(DWARFAttributeId attrId) {
 		DebugInfoEntry die = getRefDIE(attrId);
-		return getProgram().getAggregate(die);
+		return getDIEContainer().getAggregate(die);
 	}
 
 	/**
@@ -650,7 +672,7 @@ public class DIEAggregate {
 	 * @throws IOException if error reading data
 	 */
 	public DWARFLocationList getLocationList(DWARFAttributeId attrId) throws IOException {
-		return getProgram().getLocationList(this, attrId);
+		return getDIEContainer().getLocationList(this, attrId);
 	}
 
 	/**
@@ -708,7 +730,7 @@ public class DIEAggregate {
 	 * @throws IOException if an I/O error occurs
 	 */
 	public DWARFRangeList getRangeList(DWARFAttributeId attrId) throws IOException {
-		return getProgram().getRangeList(this, attrId);
+		return getDIEContainer().getRangeList(this, attrId);
 	}
 
 	/**
@@ -723,7 +745,7 @@ public class DIEAggregate {
 			try {
 				// TODO: previous code excluded lowPc values that were == 0 as invalid.
 				long rawLowPc = lowPcAttrVal.getUnsignedValue();
-				long lowPcOffset = getProgram().getAddress(lowPc.getAttributeForm(), rawLowPc,
+				long lowPcOffset = getDIEContainer().getAddress(lowPc.getAttributeForm(), rawLowPc,
 					getCompilationUnit());
 				long highPcOffset = lowPcOffset;
 
@@ -758,7 +780,7 @@ public class DIEAggregate {
 		// build list of params, as seen by the function's DIEA
 		List<DIEAggregate> params = new ArrayList<>();
 		for (DebugInfoEntry paramDIE : getChildren(DW_TAG_formal_parameter)) {
-			DIEAggregate paramDIEA = getProgram().getAggregate(paramDIE);
+			DIEAggregate paramDIEA = getDIEContainer().getAggregate(paramDIE);
 			params.add(paramDIEA);
 		}
 
@@ -777,7 +799,7 @@ public class DIEAggregate {
 				}
 				else {
 					// add generic (abstract) definition of the param to the list
-					newParams.add(getProgram().getAggregate(paramDIE));
+					newParams.add(getDIEContainer().getAggregate(paramDIE));
 				}
 			}
 			if (!params.isEmpty()) {

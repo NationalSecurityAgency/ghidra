@@ -555,13 +555,13 @@ public static class ExprSpace {
 		cb.dataWritten(piece, space.getAddress(offset), size, val);
 	}
 
-	public Expr get(long offset, int size, PcodeStateCallbacks cb) {
+	public Expr get(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		// TODO: Handle overlaps / offcut gets and sets
 		Expr expr = map.get(offset);
 		if (expr == null) {
 			byte[] aOffset =
 				piece.getAddressArithmetic().fromConst(offset, space.getPointerSize());
-			if (cb.readUninitialized(piece, space, aOffset, size) != 0) {
+			if (cb.readUninitialized(piece, space, aOffset, size, reason) != 0) {
 				return map.get(offset);
 			}
 		}
@@ -621,7 +621,7 @@ public static class ExprPcodeExecutorStatePiece
 	@Override
 	protected Expr getFromSpace(ExprSpace space, long offset, int size, Reason reason,
 			PcodeStateCallbacks cb) {
-		return space.get(offset, size, cb);
+		return space.get(offset, size, reason, cb);
 	}
 
 	@Override

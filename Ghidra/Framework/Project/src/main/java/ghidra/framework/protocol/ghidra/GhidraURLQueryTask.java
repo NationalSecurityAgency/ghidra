@@ -61,7 +61,7 @@ public abstract class GhidraURLQueryTask extends Task implements GhidraURLResult
 	protected GhidraURLQueryTask(String title, URL ghidraUrl,
 			Class<? extends DomainObject> contentClass, LinkFileControl linkFileControl) {
 		super(title, true, false, true);
-		if (!GhidraURL.isLocalProjectURL(ghidraUrl) &&
+		if (!GhidraURL.isLocalURL(ghidraUrl) &&
 			!GhidraURL.isServerRepositoryURL(ghidraUrl)) {
 			throw new IllegalArgumentException("Unsupported URL: " + ghidraUrl);
 		}

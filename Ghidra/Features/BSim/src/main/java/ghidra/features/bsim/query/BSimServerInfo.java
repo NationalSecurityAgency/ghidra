@@ -65,7 +65,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 	 * @param userinfo connection user info, {@code username[:password]}  (ignored for {@link DBType#file}).  
 	 *   If blank, {@link ClientUtil#getUserName()} is used.
 	 * @param host host name (ignored for {@link DBType#file})
-	 * @param port port number (ignored for {@link DBType#file})
+	 * @param port port number (ignored for {@link DBType#file}, -1 for default)
 	 * @param dbName name of database (simple database name except for {@link DBType#file}
 	 * which should reflect an absolute file path.  On Windows OS the path may start with a
 	 * drive letter.
@@ -118,7 +118,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 	 * 
 	 * @param dbType BSim DB type
 	 * @param host host name (ignored for {@link DBType#file})
-	 * @param port port number (ignored for {@link DBType#file})
+	 * @param port port number (ignored for {@link DBType#file}, -1 for default)
 	 * @param dbName name of database (simple database name except for {@link DBType#file}
 	 * which should reflect an absolute file path.  On Windows OS the path may start with a
 	 * drive letter.

@@ -20,8 +20,8 @@ import java.util.List;
 
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.opnd.MpIntLocalOpnd;
-import ghidra.pcode.emu.jit.gen.opnd.SimpleOpnd;
+import ghidra.pcode.emu.jit.gen.opnd.*;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
 import ghidra.pcode.emu.jit.gen.opnd.SimpleOpnd.SimpleOpndEm;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.util.*;
@@ -77,7 +77,7 @@ public enum IntAddOpGen implements IntOpBinOpGen<JitIntAddOp> {
 				.emit(Op::ldc__i, Integer.SIZE)
 				.emit(Op::lushr)
 				.emit(left::read)
-				.emit(Op::i2l)
+				.emit(Opnd::convert, left.type(), LongJitType.I8, Ext.ZERO)
 				.emit(Op::ladd);
 	}
 
@@ -95,7 +95,7 @@ public enum IntAddOpGen implements IntOpBinOpGen<JitIntAddOp> {
 			SimpleOpnd<TInt, IntJitType> right) {
 		return em
 				.emit(right::read)
-				.emit(Op::i2l)
+				.emit(Opnd::convert, right.type(), LongJitType.I8, Ext.ZERO)
 				.emit(Op::ladd);
 	}
 
@@ -189,7 +189,7 @@ public enum IntAddOpGen implements IntOpBinOpGen<JitIntAddOp> {
 			boolean storesResult, Scope scope) {
 		return em
 				.emit(left::read)
-				.emit(Op::i2l)
+				.emit(Opnd::convert, left.type(), LongJitType.I8, Ext.ZERO)
 				.emit(IntAddOpGen::addRight, right)
 				.emit(IntAddOpGen::maybeStore, left, storesResult, scope);
 	}

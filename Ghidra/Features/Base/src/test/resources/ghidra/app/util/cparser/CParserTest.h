@@ -959,6 +959,89 @@ typedef enum _PARAM_TYPE { A, B, C } PARAM_TYPE;
 
 
 /**
+ ** C23 enum types
+ **/
+enum _C23_enum_char: char {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_short : short
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_int : int
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_long : long
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_longlong : long long
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_DWORD : DWORD {
+    A = 1,
+    B = 2,
+    C = 3
+};
+
+
+/**
+ ** Packed enums
+ **/
+enum packed_enum_style_1 {
+    A = 1,
+    B = 2,
+    C = 3
+} __attribute__((__packed__));
+enum __attribute__((__packed__)) packed_enum_style_2 {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum [[packed]] packed_enum_cpp_style_1 {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum packed_enum_cpp_style_2 {
+    A = 1,
+    B = 2,
+    C = 3
+} [[packed]];
+enum [[gnu::packed]] packed_enum_cpp_style_gnu {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum non_packed_enum {
+    D = 4,
+    E = 5,
+    F = 6
+};
+enum packed_negative_enum {
+    A = -1,
+    B = -2,
+    C = -3
+} __attribute__((__packed__));
+enum normal_negative_enum {
+    A = -1,
+    B = -2,
+    C = -3
+};
+
+/**
  ** Casting
  **/
 char * retInitedStorage(int i)
@@ -1189,8 +1272,37 @@ void multilineStrings(void)
     char b[] = "This is a "
                "multiline string.";
 }
- 
 
+/**
+ ** Constants
+ **/
+ /* Decimal */
+ int                 d_int    = 123;
+ unsigned            d_uint   = 4000000123u;
+ long                d_long   = 1000000123l;
+ unsigned long       d_ulong  = 7000000001ul;
+ long long           d_llong  = 6000000002LL;
+ unsigned long long  d_ullong = 50000000003ull;
+ __int64             d_i64    = 500000000004I64;
+ unsigned __int64    d_ui64   = 5000000000005ui64;
+ /* Octal */
+ int                 o_int    = 01234;
+ unsigned            o_uint   = 04000000012u;
+ long                o_long   = 02000000024l;
+ unsigned long       o_ulong  = 01000000001UL;
+ long long           o_llong  = 01100000000002ll;
+ unsigned long long  o_ullong = 01110000000000003Ull;
+ __int64             o_i64    = 0111100000000000004i64;
+ unsigned __int64    o_ui64   = 0222200000000000005uI64;
+ /* Hexadecimal  */
+ int                 h_int    = 0x123b;
+ unsigned            h_uint   = 0XB0000012u;
+ long                h_long   = 0x20000034l;
+ unsigned long       h_ulong  = 0XA0000056uL;
+ long long           h_llong  = 0x8b00000000000ll;
+ unsigned long long  h_ullong = 0xAC4000000000012uLL;
+ __int64             h_i64    = 0x6d2200000000023I64;
+ unsigned __int64    h_ui64   = 0x7e4400000000034Ui64;
 
 /**
  ** #line in structure/function body
