@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,8 @@
  */
 package ghidra.app.cmd.formats;
 
-import java.util.List;
-
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -27,6 +26,7 @@ import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.framework.cmd.BinaryAnalysisCommand;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
@@ -47,6 +47,9 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 
 	@Override
 	public boolean canApply(Program program) {
+		if (!BinaryLoader.BINARY_NAME.equals(program.getExecutableFormat())) {
+			return false;
+		}
 		try {
 			ByteProvider provider =
 				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
@@ -55,15 +58,13 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 			DOSHeader dosHeader = new DOSHeader(reader);
 
 			if (dosHeader.isDosSignature()) {
-
-				reader.setPointerIndex( dosHeader.e_lfanew( ) );
-
-				short peMagic = reader.readNextShort();//we should be pointing at the PE magic value!
-
-				return ( peMagic & 0x0000ffff ) == Constants.IMAGE_NT_SIGNATURE;
+				reader.setPointerIndex(dosHeader.e_lfanew());
+				short peMagic = reader.readNextShort(); //we should be pointing at the PE magic value!
+				return (peMagic & 0x0000ffff) == Constants.IMAGE_NT_SIGNATURE;
 			}
 		}
 		catch (Exception e) {
+			// safe to assume it's not a PE
 		}
 		return false;
 	}
