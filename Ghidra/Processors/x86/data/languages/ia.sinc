@@ -2111,40 +2111,44 @@ macro packeflags(tmp) {
 macro addflags(op1,op2) {
  CF = carry(op1,op2);
  OF = scarry(op1,op2);
+ local result = op1 + op2;
+ AF = ((op1 ^ op2 ^ result) & 0x10) != 0;
 }
 
 #
 # full-adder carry and overflow calculations
 #
 macro addCarryFlags ( op1, op2 ) {
-	local CFcopy = zext(CF);
+	local CFcopy = CF;
 	CF = carry( op1, op2 );
 	OF = scarry( op1, op2 );
 	local result = op1 + op2;
-	CF = CF || carry( result, CFcopy );
-	OF = OF ^^ scarry( result, CFcopy );
-	op1 = result + CFcopy;
-	# AF not implemented
+    AF = ((op1 ^ op2 ^ result) & 0x10) != 0;
+	CF = CF || carry( result, zext(CFcopy) );
+	OF = OF ^^ scarry( result, zext(CFcopy) );
+    op1 = result + zext(CFcopy);
+    AF = AF || (((op1 ^ result ^ zext(CFcopy)) & 0x10) != 0);
 }
 
 
 macro subCarryFlags ( op1, op2 ) {
-	local CFcopy = zext(CF);
+	local CFcopy = CF;
 	CF = op1 < op2;
 	OF = sborrow( op1, op2 );
+	AF = ((op1 & 0xF) < (op2 & 0xF));
 	local result = op1 - op2;
-	CF = CF || (result < CFcopy);
-	OF = OF ^^ sborrow( result, CFcopy );
-	op1 = result - CFcopy;
-	# AF not implemented
+	CF = CF || (result < zext(CFcopy));
+	OF = OF ^^ sborrow( result, zext(CFcopy));
+	AF = AF || ((result & 0xF) < (zext(CFcopy) & 0xF));
+	op1 = result - zext(CFcopy);
 }
 
 macro resultflags(result) {
  SF = result s< 0;
  ZF = result == 0;
  PF = ((popcount(result & 0xff) & 1:1) == 0);
- # AF not implemented
 }
+
 
 macro shiftresultflags(result,count) {
 
@@ -2158,17 +2162,28 @@ macro shiftresultflags(result,count) {
  
  local newPF = ((popcount(result & 0xff) & 1:1) == 0);
  PF = (!notzero & PF) | (notzero & newPF);
- # AF not implemented
 }
 
 macro subflags(op1,op2) {
  CF = op1 < op2;
  OF = sborrow(op1,op2);
+ AF = ((op1 & 0xF) < (op2 & 0xF));
 }
 
 macro negflags(op1) {
  CF = (op1 != 0);
  OF = sborrow(0,op1);
+ AF = (op1 & 0xF) != 0;
+}
+
+macro incflags(op1) {
+ OF = scarry(op1, 1);
+ AF = (op1 & 0xF) == 0xF;
+}
+
+macro decflags(op1) {
+ OF = sborrow(op1, 1);
+ AF = (op1 & 0xF) == 0;
 }
 
 macro logicalflags() {
@@ -3274,15 +3289,15 @@ define pcodeop cpuid_brand_part3_info;
                            CF = car; }
 
 # See 'lockable.sinc' for memory destination, lockable variants
-:DEC Rmr8       is vexMode=0 & byte=0xfe; mod=3 & Rmr8 & reg_opcode=1         { OF = sborrow(Rmr8,1);   Rmr8 =  Rmr8 - 1; resultflags( Rmr8); }
-:DEC Rmr16      is vexMode=0 & opsize=0 & byte=0xff; mod=3 & Rmr16 & reg_opcode=1 { OF = sborrow(Rmr16,1); Rmr16 = Rmr16 - 1; resultflags(Rmr16); }
-:DEC Rmr32      is vexMode=0 & opsize=1 & byte=0xff; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=1 { OF = sborrow(Rmr32,1); Rmr32 = Rmr32 - 1; build check_rm32_dest; resultflags(Rmr32); }
+:DEC Rmr8       is vexMode=0 & byte=0xfe; mod=3 & Rmr8 & reg_opcode=1         { decflags(Rmr8);   Rmr8 =  Rmr8 - 1; resultflags( Rmr8); }
+:DEC Rmr16      is vexMode=0 & opsize=0 & byte=0xff; mod=3 & Rmr16 & reg_opcode=1 { decflags(Rmr16); Rmr16 = Rmr16 - 1; resultflags(Rmr16); }
+:DEC Rmr32      is vexMode=0 & opsize=1 & byte=0xff; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=1 { decflags(Rmr32); Rmr32 = Rmr32 - 1; build check_rm32_dest; resultflags(Rmr32); }
 @ifdef IA64
-:DEC Rmr64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xff; mod=3 & Rmr64 & reg_opcode=1 { OF = sborrow(Rmr64,1); Rmr64 = Rmr64 - 1; resultflags(Rmr64); }
+:DEC Rmr64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xff; mod=3 & Rmr64 & reg_opcode=1 { decflags(Rmr64); Rmr64 = Rmr64 - 1; resultflags(Rmr64); }
 @endif
 
-:DEC Rmr16     is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & row=4 & page=1 & Rmr16  { OF = sborrow(Rmr16,1);   Rmr16 =  Rmr16 - 1; resultflags( Rmr16); }
-:DEC Rmr32     is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & row=4 & page=1 & Rmr32 & check_Rmr32_dest  { OF = sborrow(Rmr32,1);   Rmr32 =  Rmr32 - 1; build check_Rmr32_dest; resultflags( Rmr32); }
+:DEC Rmr16     is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & row=4 & page=1 & Rmr16  { decflags(Rmr16);   Rmr16 =  Rmr16 - 1; resultflags( Rmr16); }
+:DEC Rmr32     is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & row=4 & page=1 & Rmr32 & check_Rmr32_dest  { decflags(Rmr32);   Rmr32 =  Rmr32 - 1; build check_Rmr32_dest; resultflags( Rmr32); }
 
 :DIV rm8        is vexMode=0 & byte=0xf6; rm8 & reg_opcode=6 ...            { rm8ext:2 = zext(rm8);
                                                   local quotient = AX / rm8ext;  # DE exception if quotient doesn't fit in AL
@@ -3638,15 +3653,15 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 @endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
-:INC  Rmr8	is vexMode=0 & byte=0xfe;  mod=3 & Rmr8 & reg_opcode=0			{ OF = scarry(Rmr8,1);   Rmr8 =  Rmr8 + 1; resultflags( Rmr8); }
-:INC Rmr16	is vexMode=0 & opsize=0 & byte=0xff; mod=3 & Rmr16 & reg_opcode=0	{ OF = scarry(Rmr16,1); Rmr16 = Rmr16 + 1; resultflags(Rmr16); }
-:INC Rmr32	is vexMode=0 & opsize=1 & byte=0xff; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=0	{ OF = scarry(Rmr32,1); Rmr32 = Rmr32 + 1; build check_Rmr32_dest; resultflags(Rmr32); }
+:INC  Rmr8	is vexMode=0 & byte=0xfe;  mod=3 & Rmr8 & reg_opcode=0			{ incflags(Rmr8);   Rmr8 =  Rmr8 + 1; resultflags( Rmr8); }
+:INC Rmr16	is vexMode=0 & opsize=0 & byte=0xff; mod=3 & Rmr16 & reg_opcode=0	{ incflags(Rmr16); Rmr16 = Rmr16 + 1; resultflags(Rmr16); }
+:INC Rmr32	is vexMode=0 & opsize=1 & byte=0xff; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=0	{ incflags(Rmr32); Rmr32 = Rmr32 + 1; build check_Rmr32_dest; resultflags(Rmr32); }
 @ifdef IA64
-:INC      Rmr64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xff; mod=3 & Rmr64 & reg_opcode=0	{ OF = scarry(Rmr64,1); Rmr64 = Rmr64 + 1; resultflags(Rmr64); }
+:INC      Rmr64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xff; mod=3 & Rmr64 & reg_opcode=0	{ incflags(Rmr64); Rmr64 = Rmr64 + 1; resultflags(Rmr64); }
 @endif
 
-:INC          Rmr16	is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & row = 4 & page = 0 & Rmr16 { OF = scarry(Rmr16,1);   Rmr16 =  Rmr16 + 1; resultflags( Rmr16); }
-:INC          Rmr32	is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & row = 4 & page = 0 & Rmr32 { OF = scarry(Rmr32,1);   Rmr32 =  Rmr32 + 1; resultflags( Rmr32); }
+:INC          Rmr16	is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & row = 4 & page = 0 & Rmr16 { incflags(Rmr16);   Rmr16 =  Rmr16 + 1; resultflags( Rmr16); }
+:INC          Rmr32	is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & row = 4 & page = 0 & Rmr32 { incflags(Rmr32);   Rmr32 =  Rmr32 + 1; resultflags( Rmr32); }
 
 :INSB^rep^reptail eseDI1,DX is vexMode=0 & rep & reptail & byte=0x6c & eseDI1 & DX      { build rep; build eseDI1; eseDI1 = in(DX); build reptail; }
 :INSW^rep^reptail eseDI2,DX is vexMode=0 & rep & reptail & opsize=0 & byte=0x6d & eseDI2 & DX   { build rep; build eseDI2; eseDI2 = in(DX); build reptail; }
