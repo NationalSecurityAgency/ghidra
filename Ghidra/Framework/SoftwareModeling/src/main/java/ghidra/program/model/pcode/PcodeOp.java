@@ -134,8 +134,10 @@ public class PcodeOp {
 	public static final int POPCOUNT = 72;
 	public static final int LZCOUNT = 73;
 	public static final int SPULL = 74;
+	public static final int BITREV = 75;
+	public static final int TZCOUNT = 76;
 
-	public static final int PCODE_MAX = 75;
+	public static final int PCODE_MAX = 77;
 
 	private static Hashtable<String, Integer> opcodeTable;
 
@@ -706,6 +708,10 @@ public class PcodeOp {
 				return "LZCOUNT";
 			case SPULL:
 				return "SPULL";
+			case BITREV:
+				return "BITREV";
+			case TZCOUNT:
+				return "TZCOUNT";
 			default:
 				return "INVALID_OP";
 		}

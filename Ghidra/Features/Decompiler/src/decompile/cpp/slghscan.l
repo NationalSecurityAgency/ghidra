@@ -649,6 +649,8 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>newobject     { return OP_NEW; }
 <sem>popcount      { return OP_POPCOUNT; }
 <sem>lzcount       { return OP_LZCOUNT; }
+<sem>bitrev        { return OP_BITREV; }
+<sem>tzcount       { return OP_TZCOUNT; }
 <sem>if            { return IF_KEY; }
 <sem>goto          { return GOTO_KEY; }
 <sem>call          { return CALL_KEY; }

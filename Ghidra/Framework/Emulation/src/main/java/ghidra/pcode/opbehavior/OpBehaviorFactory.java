@@ -106,6 +106,8 @@ public class OpBehaviorFactory {
 		opBehaviorMap.put(PcodeOp.POPCOUNT, new OpBehaviorPopcount());
 		opBehaviorMap.put(PcodeOp.LZCOUNT, new OpBehaviorLzcount());
 		opBehaviorMap.put(PcodeOp.SPULL, new SpecialOpBehavior(PcodeOp.SPULL));
+		opBehaviorMap.put(PcodeOp.BITREV, new OpBehaviorBitrev());
+		opBehaviorMap.put(PcodeOp.TZCOUNT, new OpBehaviorTzcount());
 	}
 
 	private OpBehaviorFactory() {

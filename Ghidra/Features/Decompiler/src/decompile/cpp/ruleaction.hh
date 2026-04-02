@@ -1559,6 +1559,17 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class RuleTzcountFromBitrevLzcount : public Rule {
+public:
+  RuleTzcountFromBitrevLzcount(const string &g) : Rule( g, 0, "tzcountfrombitrevlzcount") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleTzcountFromBitrevLzcount(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleFloatSign : public Rule {
 public:
   RuleFloatSign(const string &g) : Rule( g, 0, "floatsign") {}	///< Constructor

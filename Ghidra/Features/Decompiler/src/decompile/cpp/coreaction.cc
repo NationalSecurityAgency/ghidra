@@ -3670,6 +3670,7 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     }
     break;
   case CPUI_COPY:
+  case CPUI_BITREV:
   case CPUI_INT_NEGATE:
     pushConsumed(outc,op->getIn(0),worklist);
     break;
@@ -3787,6 +3788,7 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     break;
   case CPUI_POPCOUNT:
   case CPUI_LZCOUNT:
+  case CPUI_TZCOUNT:
     a = 16 * op->getIn(0)->getSize() - 1;	// Mask for possible bits that could be set
     a &= outc;					// Of the bits that could be set, which are consumed
     b = (a == 0) ? 0 : ~((uintb)0);		// if any consumed, treat all input bits as consumed
@@ -5627,6 +5629,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePopcountBoolXor("analysis") );
 	actprop->addRule( new RuleXorSwap("analysis") );
 	actprop->addRule( new RuleLzcountShiftBool("analysis") );
+	actprop->addRule( new RuleTzcountFromBitrevLzcount("analysis") );
 	actprop->addRule( new RuleFloatSign("analysis") );
 	actprop->addRule( new RuleOrCompare("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );

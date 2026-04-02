@@ -617,6 +617,8 @@ extern int4 leastsigbit_set(uintb val);			///< Return index of least significant
 extern int4 mostsigbit_set(uintb val);			///< Return index of most significant bit set in given value
 extern int4 popcount(uintb val);			///< Return the number of one bits in the given value
 extern int4 count_leading_zeros(uintb val);		///< Return the number of leading zero bits in the given value
+extern uintb bit_reverse(uintb val, int4 size);		///< Return the value with its bits reversed
+extern int4 count_trailing_zeros(uintb val);		///< Return the number of trailing zero bits in the given value
 
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
 extern int4 bit_transitions(uintb val,int4 sz);		///< Calculate the number of bit transitions in the sized value

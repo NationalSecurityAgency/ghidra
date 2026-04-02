@@ -997,6 +997,12 @@ public abstract class PcodeCompile {
 		if ("lzcount".equals(name) && hasOperands(1, operands, location, name)) {
 			return createOp(location, OpCode.CPUI_LZCOUNT, r);
 		}
+		if ("bitrev".equals(name) && hasOperands(1, operands, location, name)) {
+			return createOp(location, OpCode.CPUI_BITREV, r);
+		}
+		if ("tzcount".equals(name) && hasOperands(1, operands, location, name)) {
+			return createOp(location, OpCode.CPUI_TZCOUNT, r);
+		}
 
 		return null;
 	}
@@ -1075,6 +1081,12 @@ public abstract class PcodeCompile {
 			return true;
 		}
 		if ("lzcount".equals(name)) {
+			return true;
+		}
+		if ("bitrev".equals(name)) {
+			return true;
+		}
+		if ("tzcount".equals(name)) {
 			return true;
 		}
 

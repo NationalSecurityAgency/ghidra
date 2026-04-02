@@ -1050,6 +1050,51 @@ int4 count_leading_zeros(uintb val)
   return bit;
 }
 
+/// Swap the least significant \b size bits in \b val
+/// \param val is the value to swap
+/// \param size is the number of bits to swap
+/// \return the swapped value
+uintb bit_reverse(uintb val, int4 size)
+
+{
+  uintb res=0;
+  while (size>0) {
+    res <<= 1;
+    res |= (val&1);
+    val >>= 1;
+    size -= 1;
+  }
+  return res;
+}
+
+/// Count the number of less significant zero bits before the least significant
+/// one bit in the representation of the given value;
+/// \param val is the given value
+/// \return the number of zero bits
+int4 count_trailing_zeros(uintb val)
+
+{
+  if (val == 0)
+    return 8*sizeof(uintb);
+  uintb mask = ~((uintb)0);
+  int4 maskSize = 4*sizeof(uintb);
+  mask &= (mask >> maskSize);
+  int4 bit = 0;
+
+  do {
+    if ((mask & val)==0) {
+      bit += maskSize;
+      maskSize >>= 1;
+      mask |= (mask << maskSize);
+    }
+    else {
+      maskSize >>= 1;
+      mask &= (mask >> maskSize);
+    }
+  } while(maskSize != 0);
+  return bit;
+}
+
 /// Return smallest number of form 2^n-1, bigger or equal to the given value
 /// \param val is the given value
 /// \return the mask
