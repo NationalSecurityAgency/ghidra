@@ -1095,21 +1095,69 @@
        <H3><A name="MergeDataType"></A>Merging Data Types</H3>
 
         <BLOCKQUOTE>
-          <P>Some data types can be merged with others of the same type, provided there are no
-          conflicting entries in the two data types. Currently,
-          structures, unions and enums are supported for merging. If a conflict is detected, 
-          an error dialog will be displayed showing the two data types and a message explaining 
-          why the merge failed.</P>
+          <P>Some data types can be merged with others of the same type. </P>
+          <P>Currently, Ghidra supports
+          merging structures, unions, and enums. Unions and enums have limited support in that you
+          can only merge them if there are no conflicts and Ghidra can auto-merge them. For 
+          structures, Ghidra will launch an interactive structure merger dialog that allows users
+          to pick and choose various elements from either structure.</P>
+          <P>To Merge a data type, right-click on the type to be merged into and select the 
+          <B><I>Merge...</I></B> action.  This will show a 
+          <A HREF="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">dialog</A> that allows
+          you to choose the data type to merge with.
+          </P>
+          
+          <H4><A name="MergeStructures">Merging Structures</H4>
+          <BLOCKQUOTE>
+          <P>When merging structures, an interactive dialog will be displayed showing the two
+          structures being merged along with a preview of the resulting merged structure.
+          </BLOCKQUOTE>
+                <P><CENTER>
+          <IMG src="images/StructureMergeDialog.png" alt="" border="0"/>
+         </CENTER></P>
+          <BLOCKQUOTE>
+           <P>In the upper half of the dialog, the two structures being merged are displayed side by
+           side and aligned by offset. The lower section displays the resulting structure which changes
+           as the user selects different components from the two structures being merged. All three
+           structure views scroll together and selecting a line in any view, will also select
+           the corresponding line in the other views.</P>
+           <P>In between the the display of the two input structures is a button panel that displays
+           buttons on any lines where there is a conflict and the user has a choice to select the
+           values from the left or right side structure.</P>
+           <P>The displays of the left/right input structures will have optional values bolded or
+           faded, depending on if that value is currently chosen to be included in the resulting
+           merged structure.</P>
+           <P>Selecting a button will cause that side's corresponding values to be applied to the
+           resulting structure and will cause any conflicting components from the other side to
+           be removed.</P>
+           <P>Buttons associated with structure component lines can also be deselected, clearing
+           the corresponding component from the merged structure.</P>  
+           <P>The choices for the structure name and description always require one side or the
+           other to be selected, but for component choices, it is possible also deselect a button,
+           causing the resulting structure to not have a value from either side, instead reverting
+           to undefined bytes.</P>
+           <P>The dialog has several features to make it easier to control from just the keyboard.
+           Using the tab and <shift>tab, the focus can be quickly moved between the left display,
+           the right display, the merged display, apply button and the cancel button. In addition,
+           you can quickly jump to the the left or right display by pressing the left or
+           right arrow keys respectively. Also, you can apply/unapply a left or right side item by
+           navigating to the item on the left or right side and pressing the [SPACE] key. </P>
+           <P>Also, you can quickly give focus to the left or right display, by pressing the
+           [LEFT ARROW] or [RIGHT ARROW] keys respectively. </P>
+           <P>When the resulting structure has been adjusted to the desired result, press the 
+           <B>Apply</B> button to perform the merge.</P>
+            </BLOCKQUOTE>
+          
+          <H4>Merging Enums and Unions</H4>
+          <BLOCKQUOTE>
+          <P>Merging Enums and Unions is a simple pass/fail action. Generally, enums and unions
+          will merge without conflicts unless one or more elements have the same name for different
+          values/datatypes.</P>
           <P>If the merge succeeds in producing a merged data type result, a confirmation dialog
           will be displayed showing the result and the two datatypes being merged. If the user
           confirms the merge, the original target data type will have its internals replaced
           with the merged data type and the other data type will have all its references replaced 
           with the resulting datatype and then it will be deleted. 
-          </P>
-          <P>To Merge a data type, right-click on the type to be merged into and select the 
-          <B><I>Merge...</I></B> action.  This will show a 
-          <A HREF="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">dialog</A> that allows
-          you to choose the data type to merge with.
           </P>
           <A name="Merge_Confirmation"></A><P>If the merge succeeds in producing a merged data type, 
           the following confirmation dialog will be displayed before the changes are actually 
@@ -1123,7 +1171,6 @@
          with the merge. If the user presses the apply button, the first data type will be updated
          to match the preview data type and the second data type will be deleted with all of its
          uses replaced with the updated first data type.</P>
-
 		<A name="Merge_Error"></A>
          <P>If the merge fails, the following error dialog is displayed showing a side-by-side
          view of the two data types that couldn't be merged, along with a description of the error
@@ -1134,6 +1181,7 @@
          </CENTER></P>
           <BR><BR><BR>
         </BLOCKQUOTE>
+		</BLOCKQUOTE>
 
         <H3><A name="Favorites"></A>Setting Favorite Data Types</H3>
 

@@ -36,6 +36,7 @@ import ghidra.app.plugin.core.datamgr.actions.FindStructuresBySizeAction;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
 import ghidra.framework.preferences.Preferences;
+import ghidra.program.database.data.merge.StructureBuilder;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
 import ghidra.util.table.GhidraTable;
@@ -131,9 +132,39 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 	}
 
 	@Test
+	public void testStructureMergeDialog() {
+		Structure structure1 = new StructureBuilder("foo", 8)
+				.add(0, new IntegerDataType(), "aaa")
+				.add(4, new IntegerDataType(), "bbb")
+				.build();
+		Structure structure2 = new StructureBuilder("bar", 8)
+				.add(0, new DWordDataType(), "aaa")
+				.add(6, new WordDataType(), "ccc")
+				.build();
+		addDataType(structure1);
+		addDataType(structure2);
+
+		DataTypesProvider provider = getProvider(DataTypesProvider.class);
+		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
+		GTreeNode rootNode = tree.getViewRoot();
+		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
+		tree.expandPath(child);
+		GTreeNode dtNode = child.getChild("foo");
+		tree.addSelectionPath(dtNode.getTreePath());
+		performAction("Merge Data Types", "DataTypeManagerPlugin", provider, false);
+		DialogComponentProvider dialog = getDialog();
+		DropDownSelectionTextField<?> textField =
+			findComponent(dialog, DropDownSelectionTextField.class);
+		runSwing(() -> textField.setText("bar"));
+		pressOkOnDialog();
+		captureDialog();
+		pressButtonOnDialog("Cancel");
+	}
+
+	@Test
 	public void testMergeConfirmationDialog() {
-		createStructure("foo", 0, new IntegerDataType(), "aaa", 12);
-		createStructure("bar", 4, new FloatDataType(), "bbb", 16);
+		createEnum("foo", "AAAA", 6);
+		createEnum("bar", "BBBB", 2);
 
 		DataTypesProvider provider = getProvider(DataTypesProvider.class);
 		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
@@ -154,8 +185,8 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testMergeErrorDialog() {
-		createStructure("foo", 0, new IntegerDataType(), "aaa", 12);
-		createStructure("bar", 0, new FloatDataType(), "bbb", 16);
+		createEnum("foo", "AAAA", 6);
+		createEnum("bar", "AAAA", 4);
 
 		DataTypesProvider provider = getProvider(DataTypesProvider.class);
 		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
@@ -174,12 +205,16 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		pressButtonOnDialog("OK");
 	}
 
-	private void createStructure(String name, int offset, DataType dt, String fieldName, int size) {
+	private void createEnum(String name, String valueName, int value) {
+		EnumDataType enumm = new EnumDataType(name, 4);
+		enumm.add(valueName, value);
+		addDataType(enumm);
+	}
+
+	private void addDataType(DataType dt) {
 		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
-		Structure struct = new StructureDataType(name, size);
-		struct.replaceAtOffset(offset, dt, dt.getLength(), fieldName, null);
 		program.withTransaction("test", () -> {
-			dtm.addDataType(struct, null);
+			dtm.addDataType(dt, null);
 		});
 	}
 

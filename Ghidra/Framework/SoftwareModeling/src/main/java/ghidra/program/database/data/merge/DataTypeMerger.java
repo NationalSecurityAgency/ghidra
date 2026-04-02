@@ -175,9 +175,10 @@ public abstract class DataTypeMerger<T extends DataType> {
 	}
 
 	protected void mergeDescription() {
-		String description1 = dt1.getDescription();
-		String description2 = dt2.getDescription();
-		String merged = join(description1, description2);
-		working.setDescription(merged);
+		String description = dt1.getDescription();
+		if (StringUtils.isBlank(description)) {
+			description = dt2.getDescription();
+		}
+		working.setDescription(description);
 	}
 }
