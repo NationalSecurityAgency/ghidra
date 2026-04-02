@@ -842,3 +842,19 @@ PCodeTest({
     'language_id': 'Xtensa:BE:32:default',
     'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-elf/%(gcc_version)s',
 })
+
+
+PCodeTest({
+    'name': 'cpu32',
+    'build_all': 1,
+    'build_exe': 0,
+    'has_float': 0,
+    'has_double': 0,
+    'toolchain': 'm68k/m68k-linux-gnu',
+    'exec_prefix': 'm68k-linux-gnu-',
+    'gcc_version': '14',
+    'ccflags': '-mcpu=cpu32 -nostdlib -static',
+    'cclibs': '-lgcc',
+    'gcc_libdir': '/usr/lib/gcc-cross/m68k-linux-gnu/14',
+    'language_id': '68000:BE:32:CPU32',
+})
