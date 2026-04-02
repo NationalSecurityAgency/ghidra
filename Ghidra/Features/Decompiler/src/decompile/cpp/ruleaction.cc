@@ -8612,7 +8612,7 @@ int4 RuleSignNearMult::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleModOpt
-/// \brief Simplify expressions that optimize INT_REM and INT_SREM
+/// \brief Simplify expressions that optimize INT_REM and INT_SREM: `(x + (x / div) * -div)  =>  x % div`
 void RuleModOpt::getOpList(vector<uint4> &oplist) const
 
 {
@@ -8667,6 +8667,65 @@ int4 RuleModOpt::applyOp(PcodeOp *op,Funcdata &data)
       else
 	data.opSetOpcode(addop,CPUI_INT_SREM);
       return 1;
+    }
+  }
+  return 0;
+}
+
+/// \class RuleModOpt2
+/// \brief Simplify expressions that optimize INT_REM and INT_SREM: `(x + ((x / div) * div) * -1)  =>  x % div`
+void RuleModOpt2::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_DIV);
+  oplist.push_back(CPUI_INT_SDIV);
+}
+
+int4 RuleModOpt2::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  PcodeOp *multop,*addop,*negop;
+  Varnode *div,*x,*outvn,*outvn2,*outvn3,*div2,*negvn2;
+  list<PcodeOp *>::const_iterator iter1,iter2,iter3;
+
+  x = op->getIn(0);
+  div = op->getIn(1);
+  outvn = op->getOut();
+  for(iter1=outvn->beginDescend();iter1!=outvn->endDescend();++iter1) {
+    multop = *iter1;
+    if (multop->code() != CPUI_INT_MULT) continue;
+    div2 = multop->getIn(1);
+    if (div2 == outvn)
+      div2 = multop->getIn(0);
+    if (div2 != div) continue;
+    outvn2 = multop->getOut();
+    for(iter2=outvn2->beginDescend();iter2!=outvn2->endDescend();++iter2) {
+      negop = *iter2;
+      negvn2 = negop->getIn(1);
+      if (negvn2 == outvn2)
+	negvn2 = negop->getIn(0);
+      if (negop->code() != CPUI_INT_MULT) continue;
+      if (!negvn2->isConstant() || negvn2->getOffset() != calc_mask(negvn2->getSize())) continue;
+      outvn3 = negop->getOut();
+      for(iter3=outvn3->beginDescend();iter3!=outvn3->endDescend();++iter3) {
+	addop = *iter3;
+	if (addop->code() != CPUI_INT_ADD) continue;
+	Varnode *lvn;
+	lvn = addop->getIn(0);
+	if (lvn == outvn2)
+	  lvn = addop->getIn(1);
+	if (lvn != x) continue;
+	data.opSetInput(addop,x,0);
+	if (div->isConstant())
+	  data.opSetInput(addop,data.newConstant(div->getSize(),div->getOffset()),1);
+	else
+	  data.opSetInput(addop,div,1);
+	if (op->code() == CPUI_INT_DIV) // Remainder of proper signedness
+	  data.opSetOpcode(addop,CPUI_INT_REM);
+	else
+	  data.opSetOpcode(addop,CPUI_INT_SREM);
+	return 1;
+      }
     }
   }
   return 0;
