@@ -249,8 +249,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				if (contextObject != GhidraScriptEditorComponentProvider.this) {
+				ComponentProvider contextProvider = context.getComponentProvider();
+				if (contextProvider != GhidraScriptEditorComponentProvider.this) {
 					return false;
 				}
 

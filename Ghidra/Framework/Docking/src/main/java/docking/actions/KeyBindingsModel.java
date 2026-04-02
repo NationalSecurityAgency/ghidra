@@ -120,8 +120,12 @@ public class KeyBindingsModel {
 
 			String name = names.get(i);
 			KeyBindingState state = actionInfoByFullName.get(name);
-			String fullName = state.getFullName();
-			sb.append(fullName);
+
+			// Note: we do not use state.getFullName() here as that only displays 'Shared' for 
+			// shared actions.  We would like to see all shared action owners here.
+			String shortName = state.getName();
+			sb.append(shortName);
+			sb.append(" (").append(state.getOwnerDescription()).append(')');
 			if (i < names.size() - 1) {
 				sb.append("\n");
 			}
