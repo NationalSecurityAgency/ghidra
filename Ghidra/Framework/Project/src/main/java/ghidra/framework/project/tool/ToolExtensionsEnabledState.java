@@ -16,25 +16,24 @@
 package ghidra.framework.project.tool;
 
 import java.io.File;
-import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import docking.widgets.OptionDialog;
-import generic.json.Json;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.dialog.PluginInstallerDialog;
 import ghidra.framework.plugintool.util.PluginDescription;
+import ghidra.framework.project.extensions.ExtensionInstallationInfo;
 import ghidra.util.SystemUtilities;
-import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.extensions.ExtensionDetails;
-import ghidra.util.extensions.ExtensionUtils;
-import utilities.util.FileUtilities;
 
 /**
  * The default extension state for a {@link PluginTool}.
  */
 class ToolExtensionsEnabledState implements ExtensionsEnabledState {
+
+	private static String PLUGIN_SUFFIX = Plugin.class.getSimpleName();
 
 	private PluginTool tool;
 
@@ -43,33 +42,61 @@ class ToolExtensionsEnabledState implements ExtensionsEnabledState {
 	}
 
 	@Override
-	public Map<String, Set<Class<?>>> getAllKnownExtensions() {
+	public Map<String, Set<ClassFileInfo>> getAllKnownExtensions() {
 
-		Set<ExtensionDetails> extensions = getExtensions();
+		Set<ExtensionInstallationInfo> extensions = getExtensions();
 		if (extensions.isEmpty()) {
 			return Map.of();
 		}
 
-		Map<String, Set<Class<?>>> plugins = new HashMap<>();
-		Set<PluginPath> pluginPaths = getAllPluginPaths();
-		for (ExtensionDetails extension : extensions) {
-			Set<Class<?>> classes = findPluginsLoadedFromExtension(extension, pluginPaths);
-			plugins.put(extension.getName(), classes);
+		Map<String, Set<ClassFileInfo>> result = new HashMap<>();
+		for (ExtensionInstallationInfo info : extensions) {
+
+			ExtensionDetails extension = info.getExtension();
+			Set<ClassFileInfo> plugins = getPlugins(info);
+			if (plugins.isEmpty()) {
+				continue;
+			}
+
+			result.put(extension.getName(), plugins);
 		}
-		return plugins;
+		return result;
+	}
+
+	private Set<ClassFileInfo> getPlugins(ExtensionInstallationInfo info) {
+
+		Set<ClassFileInfo> result = new HashSet<>();
+		Set<ClassFileInfo> classInfos = info.getClassInfos();
+		for (ClassFileInfo classInfo : classInfos) {
+			String suffix = classInfo.suffix();
+			if (PLUGIN_SUFFIX.equals(suffix)) {
+				result.add(classInfo);
+			}
+		}
+		return result;
 	}
 
 	@Override
-	public void removeInstalledPlugins(Set<Class<?>> plugins) {
+	public void removeInstalledPlugins(Set<ClassFileInfo> plugins) {
 		List<Plugin> activePlugins = tool.getManagedPlugins();
-		for (Plugin plugin : activePlugins) {
-			Class<? extends Plugin> clazz = plugin.getClass();
-			plugins.remove(clazz);
+
+		Set<String> activeClassNames = activePlugins.stream()
+				.map(Plugin::getClass)
+				.map(Class::getName)
+				.collect(Collectors.toSet());
+
+		Iterator<ClassFileInfo> it = plugins.iterator();
+		while (it.hasNext()) {
+			ClassFileInfo info = it.next();
+			String name = info.name();
+			if (activeClassNames.contains(name)) {
+				it.remove();
+			}
 		}
 	}
 
 	@Override
-	public void propmtToConfigureNewPlugins(Set<Class<?>> plugins) {
+	public void propmtToConfigureNewPlugins(Set<ClassFileInfo> plugins) {
 		// Offer the user a chance to configure any newly discovered plugins
 		int option = OptionDialog.showYesNoDialog(tool.getToolFrame(), "New Plugins Found!",
 			"New extension plugins detected. Would you like to configure them?");
@@ -81,20 +108,20 @@ class ToolExtensionsEnabledState implements ExtensionsEnabledState {
 		}
 	}
 
-	private static Set<PluginPath> getAllPluginPaths() {
-		Set<PluginPath> paths = new HashSet<>();
-		List<Class<? extends Plugin>> plugins = ClassSearcher.getClasses(Plugin.class);
-		for (Class<? extends Plugin> plugin : plugins) {
-			paths.add(new PluginPath(plugin));
-		}
-		return paths;
-	}
+	private static Set<ExtensionInstallationInfo> getExtensions() {
 
-	private static Set<ExtensionDetails> getExtensions() {
-		Set<ExtensionDetails> installedExtensions = ExtensionUtils.getActiveInstalledExtensions();
-		return installedExtensions.stream()
-				.filter(e -> !isRepoExtension(e))
-				.collect(Collectors.toSet());
+		Set<ExtensionInstallationInfo> infos = ExtensionInstallationInfo.get();
+		Iterator<ExtensionInstallationInfo> it = infos.iterator();
+		while (it.hasNext()) {
+
+			ExtensionInstallationInfo info = it.next();
+			ExtensionDetails e = info.getExtension();
+			if (isRepoExtension(e) || e.isPendingUninstall()) {
+				it.remove();
+			}
+		}
+
+		return infos;
 	}
 
 	/**
@@ -118,45 +145,6 @@ class ToolExtensionsEnabledState implements ExtensionsEnabledState {
 	}
 
 	/**
-	 * Finds all plugin classes loaded from a particular extension folder.
-	 * <p>
-	 * This uses the {@link ClassSearcher} to find all <code>Plugin.class</code> objects on the
-	 * classpath. For each class, the original resource file is compared against the
-	 * given extension folder and the jar files for that extension. 
-	 *
-	 * @param extension the extension from which to find plugins
-	 * @param pluginPaths all loaded plugin paths
-	 * @return list of {@link Plugin} classes, or empty list if none found
-	 */
-	private static Set<Class<?>> findPluginsLoadedFromExtension(ExtensionDetails extension,
-			Set<PluginPath> pluginPaths) {
-
-		if (!extension.isInstalled()) {
-			return Collections.emptySet();
-		}
-
-		// Find any jar files in the directory provided
-		Set<URL> jarPaths = extension.getLibraries();
-
-		// Now get all Plugin.class file paths and see if any of them were loaded from one of the 
-		// extension the given extension directory
-		Set<Class<?>> result = new HashSet<>();
-		for (PluginPath pluginPath : pluginPaths) {
-			if (pluginPath.isFrom(extension.getInstallDir())) {
-				result.add(pluginPath.getPluginClass());
-				continue;
-			}
-
-			for (URL jarUrl : jarPaths) {
-				if (pluginPath.isFrom(jarUrl)) {
-					result.add(pluginPath.getPluginClass());
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
 	 * Finds all {@link PluginDescription} objects that match a given set of plugin classes. This
 	 * effectively tells the caller which of the given plugins have been loaded by the class loader.
 	 * <p>
@@ -167,7 +155,7 @@ class ToolExtensionsEnabledState implements ExtensionsEnabledState {
 	 * @param plugins the list of plugin classes to search for
 	 * @return list of plugin descriptions
 	 */
-	private List<PluginDescription> getPluginDescriptions(Set<Class<?>> plugins) {
+	private List<PluginDescription> getPluginDescriptions(Set<ClassFileInfo> plugins) {
 
 		// First define the list of plugin descriptions to return
 		List<PluginDescription> descriptions = new ArrayList<>();
@@ -178,11 +166,11 @@ class ToolExtensionsEnabledState implements ExtensionsEnabledState {
 			pluginsConfiguration.getManagedPluginDescriptions();
 
 		// see if an entry exists in the list of all loaded plugins
-		for (Class<?> plugin : plugins) {
-			String pluginName = plugin.getSimpleName();
+		for (ClassFileInfo info : plugins) {
+			String pluginName = info.simpleName();
 
 			Optional<PluginDescription> desc = allPluginDescriptions.stream()
-					.filter(d -> (pluginName.equals(d.getName())))
+					.filter(d -> pluginName.equals(d.getName()))
 					.findAny();
 			if (desc.isPresent()) {
 				descriptions.add(desc.get());
@@ -192,35 +180,4 @@ class ToolExtensionsEnabledState implements ExtensionsEnabledState {
 		return descriptions;
 	}
 
-	private static class PluginPath {
-		private Class<? extends Plugin> pluginClass;
-		private String pluginLocation;
-		private File pluginFile;
-
-		PluginPath(Class<? extends Plugin> pluginClass) {
-			this.pluginClass = pluginClass;
-			String name = pluginClass.getName();
-			URL url = pluginClass.getResource('/' + name.replace('.', '/') + ".class");
-			this.pluginLocation = url.getPath();
-			this.pluginFile = new File(pluginLocation);
-		}
-
-		public boolean isFrom(File dir) {
-			return FileUtilities.isPathContainedWithin(dir, pluginFile);
-		}
-
-		boolean isFrom(URL jarUrl) {
-			String jarPath = jarUrl.getPath();
-			return pluginLocation.contains(jarPath);
-		}
-
-		Class<? extends Plugin> getPluginClass() {
-			return pluginClass;
-		}
-
-		@Override
-		public String toString() {
-			return Json.toString(this);
-		}
-	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import help.HelpService;
  */
 public class ExtensionTablePanel extends JPanel {
 
-	private GTableFilterPanel<ExtensionDetails> tableFilterPanel;
+	private GTableFilterPanel<ExtensionRowObject> tableFilterPanel;
 	private ExtensionTableModel tableModel;
 	private GTable table;
 
@@ -85,7 +85,7 @@ public class ExtensionTablePanel extends JPanel {
 		return table;
 	}
 
-	public ExtensionDetails getSelectedItem() {
+	public ExtensionRowObject getSelectedItem() {
 		return tableFilterPanel.getSelectedItem();
 	}
 
@@ -94,15 +94,6 @@ public class ExtensionTablePanel extends JPanel {
 	 */
 	public void refreshTable() {
 		tableModel.refreshTable();
-	}
-
-	/**
-	 * Returns the filter panel.
-	 *
-	 * @return the filter panel
-	 */
-	public GTableFilterPanel<ExtensionDetails> getFilterPanel() {
-		return tableFilterPanel;
 	}
 
 	/**

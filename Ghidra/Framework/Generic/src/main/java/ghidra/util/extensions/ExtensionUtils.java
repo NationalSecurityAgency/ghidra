@@ -120,6 +120,9 @@ public class ExtensionUtils {
 		return success;
 	}
 
+	/**
+	 * {@return all installed extensions that are not marked for uninstall}
+	 */
 	public static Set<ExtensionDetails> getActiveInstalledExtensions() {
 		return getAllInstalledExtensions().getActiveExtensions();
 	}
