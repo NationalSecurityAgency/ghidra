@@ -24,6 +24,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.label.GLabel;
 import docking.widgets.tree.GTree;
+import ghidra.app.merge.structures.StructureMergeDialog;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
@@ -36,9 +37,9 @@ import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.data.merge.DataTypeMergeException;
 import ghidra.program.database.data.merge.DataTypeMerger;
 import ghidra.program.model.data.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.layout.VerticalLayout;
 
 /**
@@ -72,7 +73,7 @@ public class MergeDataTypeAction extends DockingAction {
 		if (!DataTypeUtilities.supportsMerge(dataType)) {
 			return false;
 		}
-		
+
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 
 		// for now, only allow merging on program datatypes.
@@ -143,16 +144,25 @@ public class MergeDataTypeAction extends DockingAction {
 	}
 
 	private void merge(DataType mergeToDt, DataType mergeFromDt) {
+		if (mergeToDt == mergeFromDt) {
+			Msg.showError(this, null, "Merge Failed", "You can't merge a datatype with itself!");
+			return;
+		}
+
 		try {
+			// we have a specialized interactive structure merger available
+			if ((mergeToDt instanceof Structure mergeToStruct) &&
+				(mergeFromDt instanceof Structure mergeFromStruct)) {
+				mergeStructures(mergeToStruct, mergeFromStruct);
+				return;
+			}
+
+			// otherwise, fall back to a generic non-interactive merger
 			DataTypeMerger<?> merger = DataTypeUtilities.getMerger(mergeToDt, mergeFromDt);
 			DataType merged = merger.merge();
 
 			if (confirmMerger(merger, merged, mergeToDt, mergeFromDt)) {
-				DataTypeManager dtm = mergeToDt.getDataTypeManager();
-				// first replace the guts of the original 'mergeTo' datatype with the results
-				mergeToDt.replaceWith(merged);
-				// now replace all uses of the mergeFromDt with the merged datatype and remove it
-				dtm.replaceDataType(mergeFromDt, mergeToDt, false);
+				performMerge(mergeToDt, mergeFromDt, merged);
 			}
 		}
 		catch (DataTypeMergeException e) {
@@ -160,13 +170,33 @@ public class MergeDataTypeAction extends DockingAction {
 				new DataTypeMergeErrorDialog(mergeToDt, mergeFromDt, e.getMessage());
 			DockingWindowManager.showDialog(dialog);
 		}
-		catch (DataTypeDependencyException e) {
+		catch (Exception e) {
 			Msg.showError(this, null, "Merge Failed",
 				"Merge failed.  Existing type '%s', replacement type '%s'.".formatted(
 					mergeFromDt.getName(),
 					mergeToDt.getName()),
 				e);
 		}
+	}
+
+	private void performMerge(DataType mergeToDt, DataType mergeFromDt, DataType merged)
+			throws IllegalArgumentException, DataTypeDependencyException, InvalidNameException,
+			DuplicateNameException {
+		DataTypeManager dtm = mergeToDt.getDataTypeManager();
+		// first replace the guts of the original 'mergeTo' datatype with the results
+		mergeToDt.replaceWith(merged);
+		// now replace all uses of the mergeFromDt with the merged datatype and remove it
+		dtm.replaceDataType(mergeFromDt, mergeToDt, false);
+		if (!mergeToDt.getName().equals(merged.getName())) {
+			mergeToDt.setName(merged.getName());
+		}
+	}
+
+	private void mergeStructures(Structure mergeToStruct, Structure mergeFromStruct) {
+		StructureMergeDialog dialog =
+			new StructureMergeDialog("Merge Structures", mergeToStruct, mergeFromStruct,
+				s -> performMerge(mergeToStruct, mergeFromStruct, s));
+		DockingWindowManager.showDialog(dialog);
 	}
 
 	private boolean confirmMerger(DataTypeMerger<?> merger, DataType merged, DataType mergeTo,
@@ -199,7 +229,7 @@ public class MergeDataTypeAction extends DockingAction {
 			updatedPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 0));
 			updatedPanel.setLayout(new VerticalLayout(5));
 
-			GLabel label = new GLabel("Choose the data type to merge: ");
+			GLabel label = new GLabel("Choose the data type to merge from: ");
 			label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 			updatedPanel.add(label);
 
