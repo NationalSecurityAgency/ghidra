@@ -17,6 +17,11 @@
         rd0 = imm4_8;
 }
 
+:MOV rd0, imm4_8 is op13_3=0x1 & op12_1=1 & rd0 & rd0=0xf & imm4_8 {
+        PC = imm4_8;
+        goto [PC];
+}
+
 # MOV Format II
 # 111i iii0 011i dddd   iiii iiii iiii iiii
 
@@ -26,11 +31,23 @@
        rd0 = imm;
 }       
 
+:MOV rd0, imm is op13_3=0x7 & op5_4=0x3 & imm9_4 & imm4_1 & rd0 & rd0=0xf; imm16
+        [ imm = (imm9_4 << 17) | (imm4_1 << 16) | imm16; ]
+{
+        PC = imm;
+        goto [PC];
+}       
+
 # MOV Format III
 # 000s sss0 1001 dddd
 
 :MOV rd0, rs9 is op13_3=0x0 & op4_5=0x09 & rd0 & rs9 {
         rd0 = rs9;
+}
+
+:MOV rd0, rs9 is op13_3=0x0 & op4_5=0x09 & rd0 & rs9 & rd0=0xf {
+        PC = rs9;
+        goto [PC];
 }
 
 #---------------------------------------------------------------------
@@ -55,6 +72,14 @@
         rd0 = rs9;
 }
 
+:MOV^{ECOND_4_4} rd0, rs9 is op13_3=0x7 & op4_5=0 & rd0 & rs9 & rd0=0xf;
+        eop8_8=0x17 & eop0_4=0 & ECOND_4_4
+{
+        build ECOND_4_4;
+        PC = rs9;
+        goto [PC];
+}
+
 # MOV{cond4} Format II
 # Operation:  if (cond4)
 #                 Rd <- SE(imm8)
@@ -68,8 +93,21 @@
         rd0 = simm0_8;
 }
 
+:MOV^{ECOND_8_4} rd0, simm0_8 is op4_12=0xf9b & rd0 & rd0=0xf ;
+                                 eop12_4=0 & simm0_8 & ECOND_8_4
+{
+        build ECOND_8_4;
+        PC = simm0_8;
+        goto [PC];
+}
+
 :MOVH	rd0, imm16		is op4_12=0xfc1 & rd0 ; imm16 {
 	rd0 = imm16 << 16;
+}
+
+:MOVH	rd0, imm16		is op4_12=0xfc1 & rd0 & rd0=0xf ; imm16 {
+	PC = imm16 << 16;
+        goto [PC];
 }
 
 #---------------------------------------------------------------------
@@ -609,10 +647,10 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # ST.B{cond4} Format I
 # 111p ppp1 1111 ssss   cccc 111n nnnn nnnn
 
-:ST.B^{COND_e12} RPwDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
-                                      eop9_3=0x7 & COND_e12) & RPwDisp9 { 
+:ST.B^{COND_e12} RPbDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
+                                      eop9_3=0x7 & COND_e12) & RPbDisp9 { 
         build COND_e12;
-        *:4 RPwDisp9 = rs0:1;
+        *:1 RPbDisp9 = rs0:1;
 }
 
 #---------------------------------------------------------------------
