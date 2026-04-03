@@ -268,8 +268,13 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 	}
 
 	/**
-	 * {@return true if this extension is installed under an installation folder or inside of a 
-	 * source control repository folder}
+	 * Returns true if this extension is installed under an installation folder or inside of a 
+	 * source control repository folder.
+	 * <p>
+	 * In a repo, extension modules live under repo/Ghidra/Extensions.  In an installation, there 
+	 * may exist pre-installed extensions under installDir/Ghidra/Extensions.
+	 * 
+	 * @return true if this extension is installed under an installation folder
 	 */
 	public boolean isInstalledInInstallationFolder() {
 		if (installDir == null) {
@@ -284,7 +289,10 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 			return false;
 		}
 
-		// extDirs.get(0) is the user extension dir
+		// extDirs.get(0) is the user extension dir (e.g., '.config/ghidra/ghidra<version>/Extensions
+		// The remaining dirs are of the form: 
+		// 		<repo>/Ghidra/Extensions
+		//      <install dir>/Ghidra/Extensions
 		return extDirs.stream()
 				.skip(1)
 				.anyMatch(

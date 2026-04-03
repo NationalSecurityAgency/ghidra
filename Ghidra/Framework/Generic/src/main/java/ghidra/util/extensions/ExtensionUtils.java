@@ -242,8 +242,8 @@ public class ExtensionUtils {
 		}
 
 		Set<ExtensionDetails> results = new HashSet<>();
-		findExtensionsInZips(archiveFiles, results);
-		findExtensionsInFolder(archiveDir.getFile(false), results);
+		findExtensionsInArchiveZips(archiveFiles, results);
+		findExtensionsInArchiveSubfolder(archiveDir.getFile(false), results);
 
 		return results;
 	}
@@ -258,7 +258,7 @@ public class ExtensionUtils {
 		}
 	}
 
-	public static ExtensionDetails createExtensionDetailsFromArchive(ResourceFile resourceFile) {
+	private static ExtensionDetails createExtensionDetailsFromArchive(ResourceFile resourceFile) {
 
 		File file = resourceFile.getFile(false);
 		if (!isZip(file)) {
@@ -279,7 +279,7 @@ public class ExtensionUtils {
 		return null;
 	}
 
-	private static void findExtensionsInZips(ResourceFile[] archiveFiles,
+	private static void findExtensionsInArchiveZips(ResourceFile[] archiveFiles,
 			Set<ExtensionDetails> results) {
 		for (ResourceFile file : archiveFiles) {
 			ExtensionDetails extension = ExtensionUtils.createExtensionDetailsFromArchive(file);
@@ -318,7 +318,7 @@ public class ExtensionUtils {
 		return null;
 	}
 
-	private static void findExtensionsInFolder(File dir, Set<ExtensionDetails> results) {
+	private static void findExtensionsInArchiveSubfolder(File dir, Set<ExtensionDetails> results) {
 		List<File> propFiles = findExtensionPropertyFiles(dir);
 		for (File propFile : propFiles) {
 			ExtensionDetails extension = ExtensionUtils.createExtensionFromProperties(propFile);
@@ -326,8 +326,8 @@ public class ExtensionUtils {
 				continue;
 			}
 
-			// We found this extension in the installation directory, so set the archive path
-			// property and add to the final set.
+			// We found this extension in the installation archive directory, so set the archive 
+			// path property and add to the final set.
 			File extDir = propFile.getParentFile();
 			extension.setArchivePath(extDir.getAbsolutePath());
 
