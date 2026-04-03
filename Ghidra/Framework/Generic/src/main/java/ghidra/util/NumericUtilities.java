@@ -862,7 +862,7 @@ public final class NumericUtilities {
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(byte[] bytes) {
-		return convertBytesToString(bytes, 0, bytes.length, null);
+		return bytes != null ? convertBytesToString(bytes, 0, bytes.length, null) : null;
 	}
 
 	/**
@@ -873,7 +873,7 @@ public final class NumericUtilities {
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(byte[] bytes, String delimiter) {
-		return convertBytesToString(bytes, 0, bytes.length, delimiter);
+		return bytes != null ? convertBytesToString(bytes, 0, bytes.length, delimiter) : null;
 	}
 
 	/**
