@@ -94,7 +94,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			return false;
 		}
 
-		// Do not allow GUI removal of extensions manually installed in installation directory. 
+		// Do not allow GUI removal of extensions manually installed in installation directory or
+		// in a repo directory.
 		ExtensionDetails extension = getSelectedExtension(rowIndex);
 		if (extension.isInstalledInInstallationFolder()) {
 			return false;

@@ -92,7 +92,8 @@ public class XmlUtilities {
 			int codePoint = xml.codePointAt(offset);
 			offset += Character.charCount(codePoint);
 
-			if ((codePoint < ' ') && (codePoint != 0x09) && (codePoint != 0x0A) && (codePoint != 0x0D)) {
+			if ((codePoint < ' ') && (codePoint != 0x09) && (codePoint != 0x0A) &&
+				(codePoint != 0x0D)) {
 				continue;
 			}
 			if (codePoint >= 0x7F) {
@@ -189,10 +190,10 @@ public class XmlUtilities {
 	/**
 	 * Convert a String into a JDOM {@link Element}.
 	 * 
-	 * @param s
-	 * @return
-	 * @throws JDOMException
-	 * @throws IOException
+	 * @param s the xml string
+	 * @return an element
+	 * @throws JDOMException if there is an exception building the element
+	 * @throws IOException if there is an exception building the element
 	 */
 	public static Element fromString(String s) throws JDOMException, IOException {
 		SAXBuilder sax = createSecureSAXBuilder(false, false);
@@ -547,7 +548,7 @@ public class XmlUtilities {
 
 	/**
 	 * Parses the given string into a boolean value. Acceptable inputs are
-	 * y,n,true,fase. A null input string will return false (useful if optional
+	 * y,n,true,false. A null input string will return false (useful if optional
 	 * boolean attribute is false by default)
 	 * 
 	 * @param boolStr the string to parse into a boolean value
