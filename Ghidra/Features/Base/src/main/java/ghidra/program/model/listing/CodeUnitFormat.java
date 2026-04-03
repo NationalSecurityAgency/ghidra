@@ -111,7 +111,7 @@ public class CodeUnitFormat {
 	 */
 	public String getRepresentationString(CodeUnit cu, boolean includeEOLcomment) {
 
-		StringBuffer stringBuffer = new StringBuffer(getMnemonicRepresentation(cu));
+		StringBuilder stringBuffer = new StringBuilder(getMnemonicRepresentation(cu));
 		if (cu instanceof Instruction) {
 			Instruction instr = (Instruction) cu;
 			int n = instr.getNumOperands();
@@ -128,9 +128,11 @@ public class CodeUnitFormat {
 				stringBuffer.append(getOperandRepresentationString(cu, i));
 			}
 		}
-		else { // data always has one operand
-			stringBuffer.append(" ");
-			stringBuffer.append(getOperandRepresentationString(cu, 0));
+		else {
+			String dataRepString = getOperandRepresentationString(cu, 0);
+			if (!dataRepString.isBlank()) {
+				stringBuffer.append(" ").append(dataRepString);
+			}
 		}
 		if (includeEOLcomment) {
 			String eolComment = cu.getComment(CommentType.EOL);
