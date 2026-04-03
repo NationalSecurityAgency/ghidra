@@ -28,10 +28,10 @@
 //     directory once the extension has been installed/unpacked by Ghidra.  The binutils referenced 
 //     by the script below may be downloaded from the following URL:
 //
-//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.41.tar.bz2
+//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.44.tar.bz2
 //
 
-ext.binutils = "binutils-2.41"
+ext.binutils = "binutils-2.44"
 ext.binutilsDistro = "${binutils}.tar.bz2"
 
 // Find the GPL dir
