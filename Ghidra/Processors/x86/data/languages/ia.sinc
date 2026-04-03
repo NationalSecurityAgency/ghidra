@@ -2623,7 +2623,7 @@ with : lockprefx=0 {
 
 #ARPL is not encodable in 64-bit mode
 :ARPL rm16,Reg16    is $(LONGMODE_OFF) & vexMode=0 & bit64=0 & byte=0x63; rm16 & Reg16 ...                { local rpldest=rm16&3; local rplsrc=Reg16&3; local rpldiff=rplsrc-rpldest;
-                                          ZF = rpldiff s> 0; rm16 = rm16 + (zext(CF) * rpldiff); }
+                                          ZF = rpldiff s> 0; rm16 = rm16 + (zext(ZF) * rpldiff); }
 
 :BOUND Reg16,m16    is $(LONGMODE_OFF) & vexMode=0 & bit64=0 & opsize=0 & byte=0x62; m16 & Reg16 ...      { }
 :BOUND Reg32,m32    is $(LONGMODE_OFF) & vexMode=0 & bit64=0 & opsize=1 & byte=0x62; m32 & Reg32 ...      { }
@@ -3258,20 +3258,24 @@ define pcodeop cpuid_brand_part3_info;
 }
 
 
-:DAA            is vexMode=0 & bit64=0 & byte=0x27       { local car = ((AL & 0xf) > 9) | AF;
+:DAA            is vexMode=0 & bit64=0 & byte=0x27       { local oldAL = AL;
+                           local oldCF = CF;
+                           local car = ((AL & 0xf) > 9) | AF;
                            AL = AL + 6 * car;
-                           CF = CF | car * carry(AL,6);
                            AF = car;
-                           car = ((AL & 0xf0) > 0x90) | CF;
+                           car = (oldAL > 0x99) | oldCF;
                            AL = AL + 0x60 * car;
-                           CF = car; }
-:DAS            is vexMode=0 & bit64=0 & byte=0x2f       { local car = ((AL & 0xf) > 9) | AF;
+                           CF = car;
+                           resultflags(AL); }
+:DAS            is vexMode=0 & bit64=0 & byte=0x2f       { local oldAL = AL;
+                           local oldCF = CF;
+                           local car = ((AL & 0xf) > 9) | AF;
                            AL = AL - 6 * car;
-                           CF = CF | car * (AL < 6);
                            AF = car;
-                           car = (AL > 0x9f) | CF;
+                           car = (oldAL > 0x99) | oldCF;
                            AL = AL - 0x60 * car;
-                           CF = car; }
+                           CF = car;
+                           resultflags(AL); }
 
 # See 'lockable.sinc' for memory destination, lockable variants
 :DEC Rmr8       is vexMode=0 & byte=0xfe; mod=3 & Rmr8 & reg_opcode=1         { OF = sborrow(Rmr8,1);   Rmr8 =  Rmr8 - 1; resultflags( Rmr8); }
@@ -4670,23 +4674,23 @@ define pcodeop smm_restore_state;
                                           shrdflags(tmp,rm64,count); shiftresultflags(rm64,count); }
 @endif
 
-:SHR  rm8,n1    is vexMode=0 & byte=0xD0;  rm8 & n1 & reg_opcode=5 ...              { CF = rm8 & 1; OF = 0; rm8 = rm8 >> 1; resultflags(rm8); }
+:SHR  rm8,n1    is vexMode=0 & byte=0xD0;  rm8 & n1 & reg_opcode=5 ...              { OF = (rm8 >> 7) & 1; CF = rm8 & 1; rm8 = rm8 >> 1; resultflags(rm8); }
 :SHR  rm8,CL    is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=5 ...           { local count =   CL & 0x1f; local tmp = rm8; rm8 = rm8 >> count;
                                           shrflags(tmp, rm8,count); shiftresultflags(rm8,count); }
 :SHR  rm8,imm8  is vexMode=0 & byte=0xC0;  rm8 & reg_opcode=5 ... ; imm8            { local count = imm8 & 0x1f; local tmp = rm8; rm8 = rm8 >> count;
                                           shrflags(tmp, rm8,count); shiftresultflags(rm8,count); }
-:SHR rm16,n1    is vexMode=0 & opsize=0 & byte=0xD1; rm16 & n1 & reg_opcode=5 ...       { CF = (rm16 & 1) != 0; OF = 0; rm16 = rm16 >> 1; resultflags(rm16); }
+:SHR rm16,n1    is vexMode=0 & opsize=0 & byte=0xD1; rm16 & n1 & reg_opcode=5 ...       { OF = (rm16 s< 0); CF = (rm16 & 1) != 0; rm16 = rm16 >> 1; resultflags(rm16); }
 :SHR rm16,CL    is vexMode=0 & opsize=0 & byte=0xD3; CL & rm16 & reg_opcode=5 ...       { local count =   CL & 0x1f; local tmp = rm16; rm16 = rm16 >> count;
                                           shrflags(tmp, rm16,count); shiftresultflags(rm16,count); }
 :SHR rm16,imm8  is vexMode=0 & opsize=0 & byte=0xC1; rm16 & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x1f; local tmp = rm16; rm16 = rm16 >> count;
                                           shrflags(tmp, rm16,count); shiftresultflags(rm16,count); }
-:SHR rm32,n1    is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=5 ...        { CF = (rm32 & 1) != 0; OF = 0; rm32 = rm32 >> 1; build check_rm32_dest; resultflags(rm32); }
+:SHR rm32,n1    is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=5 ...        { OF = (rm32 s< 0); CF = (rm32 & 1) != 0; rm32 = rm32 >> 1; build check_rm32_dest; resultflags(rm32); }
 :SHR rm32,CL    is vexMode=0 & opsize=1 & byte=0xD3; CL & rm32 & check_rm32_dest ... & reg_opcode=5 ...       { local count =   CL & 0x1f; local tmp = rm32; rm32 = rm32 >> count; build check_rm32_dest;
                                           shrflags(tmp, rm32,count); shiftresultflags(rm32,count); }
 :SHR rm32,imm8  is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x1f; local tmp = rm32; rm32 = rm32 >> count; build check_rm32_dest;
                                           shrflags(tmp, rm32,count); shiftresultflags(rm32,count); }
 @ifdef IA64
-:SHR rm64,n1    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 &reg_opcode=5 ...        { CF = (rm64 & 1) != 0; OF = 0; rm64 = rm64 >> 1; resultflags(rm64); }
+:SHR rm64,n1    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 &reg_opcode=5 ...        { OF = (rm64 s< 0); CF = (rm64 & 1) != 0; rm64 = rm64 >> 1; resultflags(rm64); }
 :SHR rm64,CL    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=5 ...       { local count =   CL & 0x3f; local tmp = rm64; rm64 = rm64 >> count;
                                           shrflags(tmp, rm64,count); shiftresultflags(rm64,count); }
 :SHR rm64,imm8  is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x3f; local tmp = rm64; rm64 = rm64 >> count;
@@ -4799,11 +4803,15 @@ define pcodeop skinit;
 :SYSENTER           is vexMode=0 & byte=0x0f; byte=0x34                     { sysenter(); }
 :SYSEXIT            is vexMode=0 & byte=0x0f; byte=0x35                     { sysexit();
 @ifdef IA64
-                                                                  RIP=RCX; return [RIP];
+                                                                  RSP=RCX; RIP=RDX; return [RIP];
 @endif
                                                                 }
 
-:SYSCALL            is vexMode=0 & byte=0x0f; byte=0x05                     { syscall(); }
+:SYSCALL            is vexMode=0 & byte=0x0f; byte=0x05                     {
+@ifdef IA64
+                                                                  RCX = inst_next; R11 = rflags;
+@endif
+                                                                  syscall(); }
 
 # returning to 32bit mode loads ECX
 # returning to 64bit mode loads RCX
@@ -4815,7 +4823,7 @@ define pcodeop skinit;
 
 :SWAPGS             is vexMode=0 & bit64=1 & byte=0x0f; byte=0x01; byte=0xf8   { swapgs(); }
 
-:RDTSCP             is vexMode=0 & bit64=1 & byte=0x0f; byte=0x01; byte=0xf9   { rdtscp(); }
+:RDTSCP             is vexMode=0 & byte=0x0f; byte=0x01; byte=0xf9   { rdtscp(); }
 
 :TEST   AL,imm8     is vexMode=0 & byte=0xA8; AL & imm8                 { logicalflags(); local tmp =   AL & imm8;  resultflags(tmp); }
 :TEST   AX,imm16    is vexMode=0 & opsize=0; byte=0xA9; AX & imm16          { logicalflags(); local tmp =   AX & imm16; resultflags(tmp); }
@@ -4877,9 +4885,7 @@ define pcodeop verw;
 @endif
 :INVVPID Reg32, m128 is vexMode=0 & bit64=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x81; Reg32 ... & m128 { invvpid(Reg32, m128); }
 :VMCALL         is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc1                          { vmcall(); }
-@ifdef IA64
-:VMCLEAR m64    is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmclear(m64); }
-@endif
+:VMCLEAR m64    is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmclear(m64); }
 #TODO: invokes a VM function specified in EAX
 :VMFUNC EAX     is vexMode=0 & byte=0x0f; byte=0x01; byte=0xd4 & EAX                         { vmfunc(EAX); }
 #TODO: this launches the VM managed by the current VMCS.  How is the VMCS expressed for the emulator?  For Ghidra analysis?
@@ -4998,8 +5004,8 @@ define pcodeop xend;
 :XOR Reg64,rm64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x33; rm64 & Reg64 ...        { logicalflags(); Reg64 = Reg64 ^  rm64; resultflags(Reg64); }
 @endif
 
-:XGETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD0  { local tmp = XCR0 >> 32; EDX = tmp:4;  EAX = XCR0:4; }
-:XSETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD1  { XCR0 = (zext(EDX) << 32) | zext(EAX); }
+:XGETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD0  { local sel = ECX; local tmp = XCR0 >> 32; EDX = tmp:4;  EAX = XCR0:4; }
+:XSETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD1  { local sel = ECX; XCR0 = (zext(EDX) << 32) | zext(EAX); }
 
 define pcodeop xsave;
 define pcodeop xsave64;
@@ -5193,11 +5199,11 @@ define pcodeop to_bcd;
     ST0 = freg; 
 }    
 
-:FCMOVNBE ST0, freg is vexMode=0 & byte=0xDB; frow=13 & fpage=0 & freg & ST0        
-{ 
+:FCMOVNBE ST0, freg is vexMode=0 & byte=0xDB; frow=13 & fpage=0 & freg & ST0
+{
     FPUInstructionPointer = inst_start;
-    if ( CF & ZF ) goto inst_next; 
-    ST0 = freg; 
+    if ( CF | ZF ) goto inst_next;
+    ST0 = freg;
 }   
 :FCMOVNU  ST0, freg is vexMode=0 & byte=0xDB; frow=13 & fpage=1 & freg & ST0        
 { 
@@ -5303,12 +5309,12 @@ define pcodeop fcos;
     ST0 = fcos(ST0); 
 }
                                                                  
-:FDECSTP		    is vexMode=0 & byte=0xD9; byte=0xF6					
-{ 
+:FDECSTP		    is vexMode=0 & byte=0xD9; byte=0xF6
+{
    FPUInstructionPointer = inst_start;
-   fdec(); 
-   FPUStatusWord = FPUStatusWord & 0xfeff; 
-   C0 = 0; #Clear C0
+   fdec();
+   FPUStatusWord = FPUStatusWord & 0xfdff;
+   C1 = 0; #Clear C1
 }
 
 # Legacy 8087 instructions. Still valid but treated as NOP instructions.
@@ -5732,20 +5738,22 @@ define pcodeop fpatan;
     fpop(); 
 }
 
-:FPREM          is vexMode=0 & byte=0xD9; byte=0xF8                 
-{ 
+:FPREM          is vexMode=0 & byte=0xD9; byte=0xF8
+{
     FPUInstructionPointer = inst_start;
-    local tmp = ST0 f/ ST1; 
-    tmp = tmp f* ST1; 
-    ST0 = ST0 f- tmp; 
+    local tmp = ST0 f/ ST1;
+    tmp = trunc(tmp);
+    tmp = tmp f* ST1;
+    ST0 = ST0 f- tmp;
 }
 
-:FPREM1         is vexMode=0 & byte=0xD9; byte=0xF5                 
-{ 
+:FPREM1         is vexMode=0 & byte=0xD9; byte=0xF5
+{
     FPUInstructionPointer = inst_start;
-    local tmp = ST0 f/ ST1; 
-    tmp = tmp f* ST1; 
-    ST0 = ST0 f- tmp; 
+    local tmp = ST0 f/ ST1;
+    tmp = round(tmp);
+    tmp = tmp f* ST1;
+    ST0 = ST0 f- tmp;
 }
 
 define pcodeop fptan;
@@ -6179,6 +6187,7 @@ define pcodeop _fxrstor64;
 
 define pcodeop extract_significand;
 define pcodeop extract_exponent;
+define pcodeop log2;
 :FXTRACT        is vexMode=0 & byte=0xD9; byte=0xF4                 
 { 
     FPUInstructionPointer = inst_start;
@@ -6188,20 +6197,20 @@ define pcodeop extract_exponent;
     fpushv(significand);
 }
 
-:FYL2X          is vexMode=0 & byte=0xD9; byte=0xF1                 
-{ 
+:FYL2X          is vexMode=0 & byte=0xD9; byte=0xF1
+{
     FPUInstructionPointer = inst_start;
-    local log2st0 = ST0; 
-    ST1 = ST1 f* log2st0; 
+    local log2st0:10 = log2(ST0);
+    ST1 = ST1 f* log2st0;
     fpop();
 }
-:FYL2XP1        is vexMode=0 & byte=0xD9; byte=0xF9                 
-{ 
+:FYL2XP1        is vexMode=0 & byte=0xD9; byte=0xF9
+{
     FPUInstructionPointer = inst_start;
     one:4 = 1;
     tmp:10 = int2float(one);
-    log2st0:10 = ST0 f+ tmp;
-    ST1 = ST1 f* log2st0; 
+    log2st0:10 = log2(ST0 f+ tmp);
+    ST1 = ST1 f* log2st0;
     fpop(); 
 }
 
@@ -6724,16 +6733,20 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 :CVTPD2DQ     XmmReg, m128      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xE6; m128 & XmmReg ...
 {
     local m:16 = m128;
-    XmmReg[0,32] = trunc( m[0,64] );
-    XmmReg[32,32] = trunc( m[64,64] );
+    local tmp0:8 = round( m[0,64] );
+    local tmp1:8 = round( m[64,64] );
+    XmmReg[0,32] = tmp0:4;
+    XmmReg[32,32] = tmp1:4;
     XmmReg[64,32] = 0;
     XmmReg[96,32] = 0;
 }
 
 :CVTPD2DQ     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,32] = trunc( XmmReg2[0,64] );
-    XmmReg1[32,32] = trunc( XmmReg2[64,64] );
+    local tmp0:8 = round( XmmReg2[0,64] );
+    local tmp1:8 = round( XmmReg2[64,64] );
+    XmmReg1[0,32] = tmp0:4;
+    XmmReg1[32,32] = tmp1:4;
     XmmReg1[64,32] = 0;
     XmmReg1[96,32] = 0;
 }
@@ -6741,14 +6754,18 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 :CVTPD2PI     mmxreg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2D; mmxreg ... & m128
 {
     local m:16 = m128;
-    mmxreg[0,32] = trunc( m[0,64] );
-    mmxreg[32,32] = trunc( m[64,64] );
+    local tmp0:8 = round( m[0,64] );
+    local tmp1:8 = round( m[64,64] );
+    mmxreg[0,32] = tmp0:4;
+    mmxreg[32,32] = tmp1:4;
 }
 
 :CVTPD2PI     mmxreg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2D; xmmmod=3 & mmxreg1 & XmmReg2
 {
-    mmxreg1[0,32] = trunc( XmmReg2[0,64] );
-    mmxreg1[32,32] = trunc( XmmReg2[64,64] );
+    local tmp0:8 = round( XmmReg2[0,64] );
+    local tmp1:8 = round( XmmReg2[64,64] );
+    mmxreg1[0,32] = tmp0:4;
+    mmxreg1[32,32] = tmp1:4;
 }
 
 :CVTPD2PS     XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5A; m128 & XmmReg ...
@@ -6797,18 +6814,18 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 :CVTPS2DQ      XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5B; m128 & XmmReg ...
 {
     local m:16 = m128;
-    XmmReg[0,32] = trunc( m[0,32] );
-    XmmReg[32,32] = trunc( m[32,32] );
-    XmmReg[64,32] = trunc( m[64,32] );
-    XmmReg[96,32] = trunc( m[96,32] );
+    XmmReg[0,32] = round( m[0,32] );
+    XmmReg[32,32] = round( m[32,32] );
+    XmmReg[64,32] = round( m[64,32] );
+    XmmReg[96,32] = round( m[96,32] );
 }
 
 :CVTPS2DQ      XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,32] = trunc( XmmReg2[0,32] );
-    XmmReg1[32,32] = trunc( XmmReg2[32,32] );
-    XmmReg1[64,32] = trunc( XmmReg2[64,32] );
-    XmmReg1[96,32] = trunc( XmmReg2[96,32] );
+    XmmReg1[0,32] = round( XmmReg2[0,32] );
+    XmmReg1[32,32] = round( XmmReg2[32,32] );
+    XmmReg1[64,32] = round( XmmReg2[64,32] );
+    XmmReg1[96,32] = round( XmmReg2[96,32] );
 }
 
 :CVTPS2PD     XmmReg, m64       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5A; m64 & XmmReg ...
@@ -7146,7 +7163,7 @@ define pcodeop lddqu;
 :LDDQU        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xF0; XmmReg ... & m128 { XmmReg = lddqu(XmmReg, m128); }
 
 define pcodeop maskmovdqu;
-:MASKMOVDQU        XmmReg1, XmmReg2   is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xF7; XmmReg1 & XmmReg2		{ XmmReg1 = maskmovdqu(XmmReg1, XmmReg2); }
+:MASKMOVDQU        XmmReg1, XmmReg2   is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xF7; XmmReg1 & XmmReg2		{ maskmovdqu(XmmReg1, XmmReg2); }
 
 define pcodeop maxpd;
 :MAXPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5F; XmmReg ... & m128 { XmmReg = maxpd(XmmReg, m128); }
@@ -8868,17 +8885,19 @@ define pcodeop psllw;
 
 :PSLLD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; XmmReg ... & m128 ... {
   local m:16 = m128;
-  XmmReg[0,32] = XmmReg[0,32] << m[0,32];
-  XmmReg[32,32] = XmmReg[32,32] << m[32,32];
-  XmmReg[64,32] = XmmReg[64,32] << m[64,32];
-  XmmReg[96,32] = XmmReg[96,32] << m[96,32];
+  local count:4 = m[0,32];
+  XmmReg[0,32] = XmmReg[0,32] << count;
+  XmmReg[32,32] = XmmReg[32,32] << count;
+  XmmReg[64,32] = XmmReg[64,32] << count;
+  XmmReg[96,32] = XmmReg[96,32] << count;
 }
 
 :PSLLD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; xmmmod = 3 & XmmReg1 & XmmReg2 {
-  XmmReg1[0,32] = XmmReg1[0,32] << XmmReg2[0,32];
-  XmmReg1[32,32] = XmmReg1[32,32] << XmmReg2[32,32];
-  XmmReg1[64,32] = XmmReg1[64,32] << XmmReg2[64,32];
-  XmmReg1[96,32] = XmmReg1[96,32] << XmmReg2[96,32];
+  local count:4 = XmmReg2[0,32];
+  XmmReg1[0,32] = XmmReg1[0,32] << count;
+  XmmReg1[32,32] = XmmReg1[32,32] << count;
+  XmmReg1[64,32] = XmmReg1[64,32] << count;
+  XmmReg1[96,32] = XmmReg1[96,32] << count;
 }
 
 :PSLLD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=6 & XmmReg2; imm8 {
@@ -8890,13 +8909,15 @@ define pcodeop psllw;
                     
 :PSLLQ          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF3; XmmReg ... & m128 ... {
   local m:16 = m128;
-  XmmReg[0,64] = XmmReg[0,64] << m[0,64];
-  XmmReg[64,64] = XmmReg[64,64] << m[64,64];
+  local count:8 = m[0,64];
+  XmmReg[0,64] = XmmReg[0,64] << count;
+  XmmReg[64,64] = XmmReg[64,64] << count;
 }
 
 :PSLLQ          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF3; xmmmod = 3 & XmmReg1 & XmmReg2 {
-  XmmReg1[0,64] = XmmReg1[0,64] << XmmReg2[0,64];
-  XmmReg1[64,64] = XmmReg1[64,64] << XmmReg2[64,64];
+  local count:8 = XmmReg2[0,64];
+  XmmReg1[0,64] = XmmReg1[0,64] << count;
+  XmmReg1[64,64] = XmmReg1[64,64] << count;
 }
 
 :PSLLQ          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x73; mod = 0b11 & reg_opcode=6 & XmmReg2; imm8 {
@@ -8937,19 +8958,22 @@ define pcodeop psraw;
 :PSRAD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE2; m128 & XmmReg ...
 {
 # a count greater than 31 just clears all the bits
-    XmmReg[0,32] = XmmReg[0,32] s>> m128;
-    XmmReg[32,32] = XmmReg[32,32] s>> m128;
-    XmmReg[64,32] = XmmReg[64,32] s>> m128;
-    XmmReg[96,32] = XmmReg[96,32] s>> m128;
+    local m:16 = m128;
+    local count:4 = m[0,32];
+    XmmReg[0,32] = XmmReg[0,32] s>> count;
+    XmmReg[32,32] = XmmReg[32,32] s>> count;
+    XmmReg[64,32] = XmmReg[64,32] s>> count;
+    XmmReg[96,32] = XmmReg[96,32] s>> count;
 }
 
 :PSRAD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE2; xmmmod = 3 & XmmReg1 & XmmReg2
 {
 # a count greater than 31 just clears all the bits
-    XmmReg1[0,32] = XmmReg1[0,32] s>> XmmReg2;
-    XmmReg1[32,32] = XmmReg1[32,32] s>> XmmReg2;
-    XmmReg1[64,32] = XmmReg1[64,32] s>> XmmReg2;
-    XmmReg1[96,32] = XmmReg1[96,32] s>> XmmReg2;
+    local count:4 = XmmReg2[0,32];
+    XmmReg1[0,32] = XmmReg1[0,32] s>> count;
+    XmmReg1[32,32] = XmmReg1[32,32] s>> count;
+    XmmReg1[64,32] = XmmReg1[64,32] s>> count;
+    XmmReg1[96,32] = XmmReg1[96,32] s>> count;
 }
 
 :PSRAD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=4 & XmmReg2; imm8
@@ -9127,6 +9151,7 @@ define pcodeop psraw;
 :PSUBB           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF8; mmxmod = 3 & mmxreg1 & mmxreg2
 {
     mmxreg1[0,8] =  mmxreg1[0,8] -  mmxreg2[0,8];
+    mmxreg1[8,8] =  mmxreg1[8,8] -  mmxreg2[8,8];
     mmxreg1[16,8] = mmxreg1[16,8] - mmxreg2[16,8];
     mmxreg1[24,8] = mmxreg1[24,8] - mmxreg2[24,8];
     mmxreg1[32,8] = mmxreg1[32,8] - mmxreg2[32,8];
@@ -10248,20 +10273,20 @@ define pcodeop crc32;
 @endif
 
 define pcodeop pcmpestri;
-:PCMPESTRI XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; XmmReg ... & m128; imm8 { ECX = pcmpestri(XmmReg, m128, imm8:8); }
-:PCMPESTRI XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { ECX = pcmpestri(XmmReg1, XmmReg2, imm8:8); }
+:PCMPESTRI XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; XmmReg ... & m128; imm8 { ECX = pcmpestri(XmmReg, m128, imm8:8, EAX, EDX); CF = (ECX != 0); ZF = (ECX != 0); SF = (ECX != 0); OF = (ECX != 0); }
+:PCMPESTRI XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { ECX = pcmpestri(XmmReg1, XmmReg2, imm8:8, EAX, EDX); CF = (ECX != 0); ZF = (ECX != 0); SF = (ECX != 0); OF = (ECX != 0); }
 
 define pcodeop pcmpestrm;
-:PCMPESTRM XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; XmmReg ... & m128; imm8 { XMM0 = pcmpestrm(XmmReg, m128, imm8:8); }
-:PCMPESTRM XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XMM0 = pcmpestrm(XmmReg1, XmmReg2, imm8:8); }
+:PCMPESTRM XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; XmmReg ... & m128; imm8 { XMM0 = pcmpestrm(XmmReg, m128, imm8:8, EAX, EDX); CF = (EAX != 0); ZF = (EAX != 0); SF = (EAX != 0); OF = (EAX != 0); }
+:PCMPESTRM XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XMM0 = pcmpestrm(XmmReg1, XmmReg2, imm8:8, EAX, EDX); CF = (EAX != 0); ZF = (EAX != 0); SF = (EAX != 0); OF = (EAX != 0); }
 
 define pcodeop pcmpistri;
-:PCMPISTRI XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x63; XmmReg ... & m128; imm8 { ECX = pcmpistri(XmmReg, m128, imm8:8); }
-:PCMPISTRI XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x63; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { ECX = pcmpistri(XmmReg1, XmmReg2, imm8:8); }
+:PCMPISTRI XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x63; XmmReg ... & m128; imm8 { ECX = pcmpistri(XmmReg, m128, imm8:8); CF = (ECX != 0); ZF = (ECX != 0); SF = (ECX != 0); OF = (ECX != 0); }
+:PCMPISTRI XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x63; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { ECX = pcmpistri(XmmReg1, XmmReg2, imm8:8); CF = (ECX != 0); ZF = (ECX != 0); SF = (ECX != 0); OF = (ECX != 0); }
 
 define pcodeop pcmpistrm;
-:PCMPISTRM XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x62; XmmReg ... & m128; imm8 { XMM0 = pcmpistrm(XmmReg, m128, imm8:8); }
-:PCMPISTRM XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x62; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XMM0 = pcmpistrm(XmmReg1, XmmReg2, imm8:8); }
+:PCMPISTRM XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x62; XmmReg ... & m128; imm8 { XMM0 = pcmpistrm(XmmReg, m128, imm8:8); CF = (EAX != 0); ZF = (EAX != 0); SF = (EAX != 0); OF = (EAX != 0); }
+:PCMPISTRM XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x62; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XMM0 = pcmpistrm(XmmReg1, XmmReg2, imm8:8); CF = (EAX != 0); ZF = (EAX != 0); SF = (EAX != 0); OF = (EAX != 0); }
 
 :PCMPGTQ XmmReg1, XmmReg2_m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x37; XmmReg1 ... & XmmReg2_m128 
 { 
