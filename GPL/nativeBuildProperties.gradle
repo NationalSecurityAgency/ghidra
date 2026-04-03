@@ -49,6 +49,10 @@ model {
 			gcc(Gcc).target(current)
 			clang(Clang).target(current)
 		}
+		if (isOpenBSD(current)) {
+			gcc(Gcc).target(current)
+			clang(Clang).target(current)
+		}
 		if (isWindows(current) && VISUAL_STUDIO_INSTALL_DIR) {
 			// https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288
 			visualCpp(VisualCpp) {
