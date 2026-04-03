@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,17 +27,20 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 	private static final String MIN_HEXL_DIGITS = "MinHexDigits";
 	private static final String RIGHT_JUSTIFY = "RightJustify";
 	private static final String SHOW_BLOCK_NAME = "ShowBlockName";
+	private static final String DISPLAY_UPPER_CASE = "DisplayUpperCase";
 
 	private static final boolean DEFAULT_PAD_WITH_ZEROS = false;
 	private static final boolean DEFAULT_SHOW_BLOCK_NAME = false;
 	private static final boolean DEFAULT_RIGHT_JUSTIFY = true;
 	private static final int DEFAULT_MIN_HEX_DIGITS = 8;
+	private static final boolean DEFAULT_DISPLAY_UPPER_CASE = false;
 
 	// init with default values
 	private boolean padWithZeros = DEFAULT_PAD_WITH_ZEROS;
 	private boolean showBlockName = DEFAULT_SHOW_BLOCK_NAME;
 	private boolean rightJustify = DEFAULT_RIGHT_JUSTIFY;
 	private int minHexDigits = DEFAULT_MIN_HEX_DIGITS;
+	private boolean displayUpperCase = DEFAULT_DISPLAY_UPPER_CASE;
 
 	public AddressFieldOptionsWrappedOption() {
 		// required for persistence
@@ -75,6 +78,14 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 		rightJustify = b;
 	}
 
+	public boolean displayUpperCase() {
+		return displayUpperCase;
+	}
+
+	public void setDisplayUpperCase(boolean b) {
+		displayUpperCase = b;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof AddressFieldOptionsWrappedOption)) {
@@ -89,7 +100,8 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 		return (padWithZeros == otherOption.padWithZeros) &&
 			(minHexDigits == otherOption.minHexDigits) &&
 			(rightJustify == otherOption.rightJustify) &&
-			(showBlockName == otherOption.showBlockName);
+			(showBlockName == otherOption.showBlockName) &&
+			(displayUpperCase == otherOption.displayUpperCase);
 	}
 
 	@Override
@@ -99,6 +111,7 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 		result = prime * result + (padWithZeros ? 1 : 0);
 		result = prime * result + (rightJustify ? 1 : 0);
 		result = prime * result + (showBlockName ? 1 : 0);
+		result = prime * result + (displayUpperCase ? 1 : 0);
 		result = prime * result + minHexDigits;
 		return result;
 	}
@@ -112,6 +125,7 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 		minHexDigits = properties.getInt(MIN_HEXL_DIGITS, minHexDigits);
 		rightJustify = properties.getBoolean(RIGHT_JUSTIFY, rightJustify);
 		showBlockName = properties.getBoolean(SHOW_BLOCK_NAME, showBlockName);
+		displayUpperCase = properties.getBoolean(DISPLAY_UPPER_CASE, displayUpperCase);
 	}
 
 	@Override
@@ -120,5 +134,6 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 		properties.putInt(MIN_HEXL_DIGITS, minHexDigits);
 		properties.putBoolean(RIGHT_JUSTIFY, rightJustify);
 		properties.putBoolean(SHOW_BLOCK_NAME, showBlockName);
+		properties.putBoolean(DISPLAY_UPPER_CASE, displayUpperCase);
 	}
 }
