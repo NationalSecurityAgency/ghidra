@@ -85,8 +85,9 @@ public class Apport extends DumpFile {
 			DecodedProvider provider =
 				new DecodedProvider(this, reader.getByteProvider(), monitor)) {
 			ElfLoader elfLoader = new ElfLoader();
-			Option base = new Option(ElfLoaderOptionsFactory.IMAGE_BASE_OPTION_NAME,
-				Long.toHexString(header.getMemoryInfo(0).getBaseAddress()));
+			Option base = Option.newString(ElfLoaderOptionsFactory.IMAGE_BASE_OPTION_NAME)
+					.value(Long.toHexString(header.getMemoryInfo(0).getBaseAddress()))
+					.build();
 			options.add(base);
 			program.addConsumer(consumer);
 			ImporterSettings settings = new ImporterSettings(provider, program.getName(), null,
@@ -192,8 +193,10 @@ public class Apport extends DumpFile {
 	public static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
 		List<Option> list = new ArrayList<>();
 
-		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
+		list.add(Option.newBoolean(CREATE_MEMORY_BLOCKS_OPTION_NAME)
+				.value(CREATE_MEMORY_BLOCKS_OPTION_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks")
+				.build());
 
 		return list;
 	}

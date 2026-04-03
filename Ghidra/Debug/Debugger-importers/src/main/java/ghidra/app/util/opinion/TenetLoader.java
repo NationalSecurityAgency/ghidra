@@ -29,7 +29,6 @@ import org.jdom2.JDOMException;
 import db.Transaction;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.DomainFileOption;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
@@ -232,8 +231,9 @@ public class TenetLoader implements Loader {
 			final DomainObject domainObject, final boolean loadIntoProgram,
 			final boolean mirrorFsLayout) {
 		final List<Option> list = new ArrayList<>();
-		list.add(new DomainFileOption(DOMAIN_FILE_OPTION_NAME,
-			COMMAND_LINE_ARG_PREFIX + "-associatedProgram", false));
+		list.add(Option.newDomainFile(DOMAIN_FILE_OPTION_NAME)
+				.commandLineArgument(createArg("-associatedProgram"))
+				.build());
 		return list;
 	}
 

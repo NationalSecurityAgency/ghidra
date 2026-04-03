@@ -275,6 +275,18 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 		return false;
 	}
 
+	/**
+	 * {@return the given argument with {@link #COMMAND_LINE_ARG_PREFIX} prepended}
+	 * <p>
+	 * This is a convenience method to make working with {@link Loader} command line options less
+	 * verbose.
+	 * 
+	 * @param arg the argument
+	 */
+	public default String createArg(String arg) {
+		return COMMAND_LINE_ARG_PREFIX + arg;
+	}
+
 	@Override
 	public default int compareTo(Loader o) {
 		int compareTiers = getTier().compareTo(o.getTier());

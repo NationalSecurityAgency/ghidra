@@ -193,8 +193,10 @@ public class PeLoader extends AbstractPeDebugLoader {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(PARSE_CLI_HEADERS_OPTION_NAME, PARSE_CLI_HEADERS_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-parseCliHeaders"));
+			list.add(Option.newBoolean(PARSE_CLI_HEADERS_OPTION_NAME)
+					.value(PARSE_CLI_HEADERS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-parseCliHeaders"))
+					.build());
 		}
 		return list;
 	}

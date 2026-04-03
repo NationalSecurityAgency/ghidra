@@ -98,8 +98,9 @@ public class IntelHexExporter extends Exporter {
 		}
 		Program program = (Program) domainObject;
 
-		addressSpaceOption = new Option("Address Space",
-			program.getAddressFactory().getDefaultAddressSpace(), AddressSpace.class, null);
+		addressSpaceOption = Option.newAddressSpace("Address Space")
+				.value(program.getAddressFactory().getDefaultAddressSpace())
+				.build();
 
 		if (recordSizeOption == null) {
 			recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
@@ -235,16 +236,16 @@ public class IntelHexExporter extends Exporter {
 		private final RecordSizeComponent comp = new RecordSizeComponent(DEFAULT_RECORD_SIZE);
 
 		public RecordSizeOption(String name, Class<?> valueClass) {
-			super(name, valueClass);
+			super(name, valueClass, null, null, null, null, false, null);
 		}
 
 		public RecordSizeOption(String name, Class<?> valueClass, Object value, String arg,
 				String group) {
-			super(name, valueClass, value, arg, group);
+			super(name, valueClass, value, arg, group, null, false, null);
 		}
 
 		@Override
-		public Component getCustomEditorComponent() {
+		public Component getCustomEditorComponent(AddressFactoryService addressFactoryService) {
 			return comp;
 		}
 
