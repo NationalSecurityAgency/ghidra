@@ -207,7 +207,7 @@
 {
 	local adr:4 = R0004 + disp23;
 	local tmp:4 = R2731;
-	*:2 adr = tmp:2;
+	*:4 adr = tmp;
 }
 
 
@@ -224,7 +224,7 @@
 	local x2 = R1115[8,8];
 	local x3 = R1115[16,8];
 	local x4 = R1115[24,8];
-	R2731 = zext(x3 << 24) | zext(x4 << 16) | zext(x1 << 8) | zext(x2);
+	R2731 = (zext(x3) << 24) | (zext(x4) << 16) | (zext(x1) << 8) | zext(x2);
 	set_S(R2731);
 	$(OV) = 0;
 	$(Z) = (x1 == 0) && (x2 == 0);
@@ -238,7 +238,7 @@
 	local x2 = R1115[8,8];
 	local x3 = R1115[16,8];
 	local x4 = R1115[24,8];
-	R2731 = zext(x1 << 24) | zext(x2 << 16) | zext(x3 << 8) | zext(x4);
+	R2731 = (zext(x1) << 24) | (zext(x2) << 16) | (zext(x3) << 8) | zext(x4);
 	set_OV0_S_Z(R2731);
 	$(CY) = (x1 == 0) || (x2 == 0) || (x3 == 0) || (x4 == 0);
 }
@@ -246,15 +246,23 @@
 # CMOV cccc, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww011001cccc0
 :cmov^c1720 R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op2126=0x19 & op1616=0 & c1720 & R2731
 {
-	local result:4 = zext(c1720);
-	R2731 = R0004 * zext(result != 0) + R1115 * zext(result == 0);
+	if (c1720) goto <true>;
+	R2731 = R1115;
+	goto <done>;
+	<true>
+	R2731 = R0004;
+	<done>
 }
 
 # CMOV cccc, imm5, reg2, reg3 - rrrrr111111iiiii|wwwww011000cccc0
 :cmov^c1720 s0004, R1115, R2731 is op0510=0x3F & s0004 & R1115; op2126=0x18 & op1616=0 & c1720 & R2731
 {
-	local result:4 = zext(c1720);
-	R2731 = s0004 * zext(result != 0) + R1115 * zext(result == 0);
+	if (c1720) goto <true>;
+	R2731 = R1115;
+	goto <done>;
+	<true>
+	R2731 = s0004;
+	<done>
 }
 
 # HSH reg2, reg3 - rrrrr11111100000|wwwww01101000110
@@ -272,7 +280,7 @@
 {
 	local x1 = R1115:2;
 	local x2 = R1115[16,16];
-	R2731 = zext(x1 << 16) | zext(x2);
+	R2731 = (zext(x1) << 16) | zext(x2);
 	set_OV0_S_Z(R2731);
 	$(CY) = (x1 == 0) || (x2 == 0);
 }
