@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -220,10 +220,14 @@ public class OriginalFileExporter extends Exporter {
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		if (options == null) {
 			options = new ArrayList<>();
-			options.add(new Option(USER_MODS_OPTION_NAME, USER_MODS_OPTION_DEFAULT));
+			options.add(Option.newBoolean(USER_MODS_OPTION_NAME)
+					.value(USER_MODS_OPTION_DEFAULT)
+					.build());
 			if (domainObjectService.getDomainObject() instanceof Program program &&
 				program.getMemory().getAllFileBytes().size() > 1) {
-				options.add(new Option(CREATE_DIR_OPTION_NAME, CREATE_DIR_OPTION_DEFAULT));
+				options.add(Option.newBoolean(CREATE_DIR_OPTION_NAME)
+						.value(CREATE_DIR_OPTION_DEFAULT)
+						.build());
 			}
 		}
 		return options;

@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.importer;
+package ghidra.app.util.importer.options;
 
 import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.util.Objects;
 
 import javax.swing.*;
 
 import docking.widgets.button.BrowseButton;
 import docking.widgets.textfield.ElidingFilePathTextField;
+import ghidra.app.util.AddressFactoryService;
 import ghidra.app.util.Option;
 import ghidra.app.util.opinion.Loader;
 import ghidra.framework.main.AppInfo;
@@ -34,23 +36,29 @@ import ghidra.framework.options.SaveState;
 /**
  * An {@link Option} used to specify a {@link DomainFolder}
  */
-public class DomainFolderOption extends Option {
+public class DomainFolderOption extends StringOption {
 
 	/**
 	 * Creates a new {@link DomainFolderOption}
 	 * 
-	 * @param name The name of the option
-	 * @param arg The option's command line argument (could be null)
-	 * @param hidden true if this option should be hidden from the user; otherwise, false
+	* @param name the name of the option
+	* @param value the value of the option
+	* @param arg the option's command line argument
+	* @param group the name for group of options
+	* @param stateKey the state key name
+	* @param hidden true if this option should be hidden from the user; otherwise, false
+	* @param description a description of the option
 	 */
-	public DomainFolderOption(String name, String arg, boolean hidden) {
-		super(name, String.class, "", arg, null, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, hidden);
+	public DomainFolderOption(String name, String value, String arg, String group,
+			String stateKey, boolean hidden, String description) {
+		super(name, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, hidden,
+			description);
 	}
 
 	@Override
-	public Component getCustomEditorComponent() {
+	public Component getCustomEditorComponent(AddressFactoryService addressFactoryService) {
 		final SaveState state = getState();
-		String defaultValue = (String) getValue();
+		String defaultValue = getValue();
 		String lastFolderPath =
 			state != null ? state.getString(getName(), defaultValue) : defaultValue;
 		setValue(lastFolderPath);
@@ -82,12 +90,29 @@ public class DomainFolderOption extends Option {
 	}
 
 	@Override
-	public Class<?> getValueClass() {
-		return String.class;
+	public DomainFolderOption copy() {
+		return new DomainFolderOption(getName(), getValue(), getArg(), getGroup(),
+			getStateKey(), isHidden(), getDescription());
 	}
 
-	@Override
-	public Option copy() {
-		return new DomainFolderOption(getName(), getArg(), isHidden());
+	/**
+	 * Builds a {@link DomainFolderOption}
+	 */
+	public static class Builder extends StringOption.Builder {
+
+		/**
+		 * Creates a new {@link Builder}
+		 * 
+		 * @param name The name of the {@link DomainFolderOption} to be built
+		 */
+		public Builder(String name) {
+			super(name);
+		}
+
+		@Override
+		public DomainFolderOption build() {
+			return new DomainFolderOption(name, Objects.requireNonNullElse(value, ""),
+				commandLineArgument, group, stateKey, hidden, description);
+		}
 	}
 }
