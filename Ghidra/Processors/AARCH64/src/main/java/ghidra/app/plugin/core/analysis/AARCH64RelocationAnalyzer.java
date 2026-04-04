@@ -56,10 +56,10 @@ public class AARCH64RelocationAnalyzer extends ConstantPropagationAnalyzer {
 			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
-		HashSet<Address> adrpInstructions = new HashSet<>();
-
 		final ConstantPropagationContextEvaluator eval;
 		if (createDataRefsFromAddressRelocationsOption) {
+			HashSet<Address> adrpInstructions = new HashSet<>();
+
 			eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 
 				@Override
@@ -78,14 +78,18 @@ public class AARCH64RelocationAnalyzer extends ConstantPropagationAnalyzer {
 							Address addendProvenanceAddr = context.getLastSetLocation(addend, null);
 
 							if (addendVal != null && adrpInstructions.contains(addendProvenanceAddr)) {
-								long offsetAddr = addendVal.longValue() + constantOffset.getUnsignedValue();
-								AddressSpace space = instr.getMinAddress().getAddressSpace();
-								Address addr = space.getTruncatedAddress(offsetAddr, true);
-								instr.addOperandReference(0, addr, RefType.DATA, SourceType.ANALYSIS);
+								createDataReference(instr, 0, addendVal.longValue() + constantOffset.getUnsignedValue());
 							}
 						}
-					}
+					} else if (mnemonic.equals("adr")) {
+						// fixup_aarch64_pcrel_adr_imm21
+						Register dest = instr.getRegister(0);
+						Scalar constantOffset = getScalar(instr, 1);
 
+						if (dest != null && constantOffset != null) {
+							createDataReference(instr, 0, constantOffset.getUnsignedValue());
+						}
+					}
 					return false;
 				}
 
@@ -100,6 +104,12 @@ public class AARCH64RelocationAnalyzer extends ConstantPropagationAnalyzer {
 					}
 
 					return null;
+				}
+
+				private void createDataReference(Instruction instr, int opIndex, long offset) {
+					AddressSpace space = instr.getMinAddress().getAddressSpace();
+					Address addr = space.getTruncatedAddress(offset, true);
+					instr.addOperandReference(opIndex, addr, RefType.DATA, SourceType.ANALYSIS);
 				}
 
 			};
