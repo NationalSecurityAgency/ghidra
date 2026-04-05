@@ -23,6 +23,17 @@ using std::cin;
 using std::cout;
 using std::cerr;
 
+/// \brief Expand a leading ~ to the user's home directory
+static void expandTilde(string &path)
+
+{
+  if (path.empty() || path[0] != '~') return;
+  if (path.size() > 1 && path[1] != '/') return;	// ~user syntax not supported
+  const char *home = getenv("HOME");
+  if (home == (const char *)0) return;
+  path.replace(0, 1, home);
+}
+
 class IfcLoadFile : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
@@ -57,6 +68,7 @@ void IfcLoadFile::execute(istream &s)
   }
   else
     target = "default";
+  expandTilde(filename);
 
   ArchitectureCapability *capa = ArchitectureCapability::findCapability(filename);
   if (capa == (ArchitectureCapability *)0)
@@ -116,6 +128,7 @@ void IfcAddpath::execute(istream &s)
   s >> newpath;
   if (newpath.empty())
     throw IfaceParseError("Missing path name");
+  expandTilde(newpath);
   SleighArchitecture::specpaths.addDir2Path(newpath);
 }
 
@@ -132,7 +145,7 @@ void IfcSave::execute(istream &s)
 
   if (savefile.size()==0)
     throw IfaceParseError("Missing savefile name");
-
+  expandTilde(savefile);
   fs.open( savefile.c_str() );
   if (!fs)
     throw IfaceExecutionError("Unable to open file: "+savefile);
@@ -148,7 +161,7 @@ void IfcRestore::execute(istream &s)
   s >> savefile;
   if (savefile.size()==0)
     throw IfaceParseError("Missing file name");
-
+  expandTilde(savefile);
   DocumentStorage store;
   Document *doc = store.openDocument(savefile);
   store.registerTag(doc->getRoot());
