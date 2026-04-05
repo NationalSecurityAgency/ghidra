@@ -218,7 +218,7 @@ class FunctionData extends FunctionDataView {
 		}
 
 		VariableStorage[] paramStorage =
-			effectiveCallingConvention.getStorageLocations(getProgram(), dataTypes, true);
+			effectiveCallingConvention.getStorageLocations(getProgram(), dataTypes, true, hasVarArgs);
 
 		returnInfo.setStorage(paramStorage[0]);
 

@@ -398,6 +398,30 @@ public class PrototypeModel {
 	 */
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
+		return getStorageLocations(program, dataTypes, addAutoParams, false);
+	}
+
+	/**
+	 * Calculate input and output storage locations given a function prototype,
+	 * with optional variable-argument support.
+	 * <p>
+	 * This overload additionally sets {@link PrototypePieces#firstVarArgSlot} when
+	 * {@code isVarArgs} is true, enabling {@code VarargsFilter}-based calling-convention
+	 * rules (e.g. {@code <varargs/>} in a .cspec) to be applied correctly.
+	 *
+	 * @param program is the Program
+	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
+	 * i.e., minimum array length is 1)
+	 * @param addAutoParams true if auto-parameter storage locations can be generated
+	 * @param isVarArgs true if the function takes variable arguments; when true, all
+	 * data-types supplied in {@code dataTypes} are treated as non-optional and the first
+	 * vararg slot is set to immediately follow the last supplied parameter
+	 * @return dynamic storage locations ordered by ordinal where first element corresponds to
+	 * return storage. The returned array may also include additional auto-parameter storage
+	 * locations.
+	 */
+	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
+			boolean addAutoParams, boolean isVarArgs) {
 
 		DataType injectedThis = null;
 		if (addAutoParams && hasThis) {
@@ -406,6 +430,10 @@ public class PrototypeModel {
 			injectedThis = new PointerDataType(program.getDataTypeManager());
 		}
 		PrototypePieces proto = new PrototypePieces(this, dataTypes, injectedThis);
+		if (isVarArgs) {
+			// All supplied parameters are non-optional; varargs begin immediately after them.
+			proto.firstVarArgSlot = proto.intypes.size();
+		}
 
 		ArrayList<ParameterPieces> res = new ArrayList<>();
 		assignParameterStorage(proto, program.getDataTypeManager(), res, addAutoParams);
