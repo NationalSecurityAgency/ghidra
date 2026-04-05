@@ -615,4 +615,39 @@ void IfcEcho::execute(istream &s)
   *status->fileoptr << endl;
 }
 
+/// \class IfcHelp
+/// \brief Help command to list all registered commands or describe a specific command
+void IfcHelp::execute(istream &s)
+
+{
+  const vector<IfaceCommand *> &cmds( status->getCommandList() );
+  vector<IfaceCommand *>::const_iterator first = cmds.begin();
+  vector<IfaceCommand *>::const_iterator last = cmds.end();
+
+  s >> ws;
+  if (!s.eof()) {
+    // Search for commands matching input
+    vector<string> words;
+
+    string tok;
+    while(!s.eof()) {
+      s >> tok >> ws;
+      if (!tok.empty())
+        words.push_back(tok);
+    }
+
+    status->restrictCom(first, last, words);
+    if (first == last) {
+      *status->optr << "ERROR: No commands match" << "\n";
+      return;
+    }
+  }
+
+  for(;first != last;++first) {
+    string cmdstr;
+    (*first)->commandString(cmdstr);
+    *status->optr << cmdstr << "\n";
+  }
+}
+
 } // End namespace ghidra
