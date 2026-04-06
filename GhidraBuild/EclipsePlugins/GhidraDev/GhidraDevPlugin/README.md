@@ -302,6 +302,7 @@ GhidraDev can add Python support to a Ghidra project when:
 * Creating a new Ghidra module project
 * Creating a new Ghidra script project
 * Linking a Ghidra installation to an existing Java project
+* Launching Ghidra in PyGhidra mode
 
 In order for GhidraDev to add in Python support, PyDev must have a PyGhidra or Jython interpreter 
 configured. GhidraDev will present a list of detected PyGhidra/Jython interpreters that it found in 
@@ -316,6 +317,10 @@ to be added manually in the PyDev preferences.
 When the PyGhidra `+` icon is clicked, GhidraDev will attempt to find the PyGhidra interpreter
 that was last used to launch PyGhidra.  If it cannot find it, you will have to launch PyGhidra
 and try again.
+
+### Launching and Debugging PyGhidra
+GhidraDev can interface with PyDev to provide a __PyGhidra__ run configuration that is capable of
+launching PyGhidra in both GUI mode and GUI debug mode.
 
 ## Upgrading
 GhidraDev is upgraded differently depending on how it was installed.  If GhidraDev was
@@ -363,6 +368,10 @@ installation directory.
       to your Ghidra module project, which automatically happens when the project is created.
       Simply [relink](#link-ghidra) your Ghidra installation to the project, and your project will 
       pick up any newly discovered Ghidra extensions.
+* __How do I launch/debug PyGhidra from Eclipse?__
+    * In order to launch and debug Ghidra in PyGhidra mode, PyDev must be installed and your project
+      must be configured with PyGhidra support. When these conditions are met, a __PyGhidra__ run 
+      configuration will become available to use.
 
 ## Additional Resources
 For more information on the GhidraDev plugin and developing for Ghidra in an Eclipse environment,
