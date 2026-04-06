@@ -52,13 +52,12 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.path.PathPattern;
-import ghidra.util.exception.TimeoutException;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	private final static long CAPTURE_PC_TIMEOUT_MILLIS = 3000;
-	
+
 	@Test
 	public void testExecuteCapture() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
@@ -467,6 +466,8 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testActivateThread() throws Exception {
+		// NB: The windows variant does not appear to support multi-process debugging
+		assumeFalse(IS_WINDOWS);
 		try (GdbAndConnection conn = startAndConnectGdb()) {
 			String target = which("expPrint");
 			conn.execute("""
