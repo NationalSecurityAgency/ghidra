@@ -165,10 +165,14 @@ public abstract class AbstractProgramLoader implements Loader {
 		list.add(Option.newBoolean(APPLY_LABELS_OPTION_NAME)
 				.value(shouldApplyProcessorLabelsByDefault())
 				.commandLineArgument(createArg("-applyLabels"))
+				.description("Create processor labels at specific addresses as defined by the " +
+					"processor specification.")
 				.build());
 		list.add(Option.newBoolean(ANCHOR_LABELS_OPTION_NAME)
 				.value(true)
 				.commandLineArgument("-anchorLabels")
+				.description(
+					"Prevent processor labels from moving on imagebase or memory block change.")
 				.build());
 
 		return list;

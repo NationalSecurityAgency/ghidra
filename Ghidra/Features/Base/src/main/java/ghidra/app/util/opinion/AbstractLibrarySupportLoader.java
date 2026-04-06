@@ -289,27 +289,35 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		list.add(Option.newBoolean(LINK_EXISTING_OPTION_NAME)
 				.value(LINK_EXISTING_OPTION_DEFAULT)
 				.commandLineArgument(createArg("-linkExistingProjectLibraries"))
+				.description("Search the project for existing library programs and create " +
+					"external references to them.")
 				.build());
 		list.add(Option.newDomainFolder(LINK_SEARCH_FOLDER_OPTION_NAME)
 				.commandLineArgument(createArg("-projectLibrarySearchFolder"))
+				.description("The project folder to search for existing libaries to link.")
 				.hidden(mirrorFsLayout)
 				.build());
 		list.add(Option.newBoolean(LOAD_LIBRARY_OPTION_NAME)
 				.value(LOAD_LIBRARY_OPTION_DEFAULT)
 				.commandLineArgument(createArg("-loadLibraries"))
+				.description("Load libraries discovered in the specified search paths.")
 				.build());
 		list.add(new LibrarySearchPathDummyOption(LIBRARY_SEARCH_PATH_DUMMY_OPTION_NAME));
 		list.add(Option.newInteger(DEPTH_OPTION_NAME)
 				.value(DEPTH_OPTION_DEFAULT)
 				.commandLineArgument(createArg("-libraryLoadDepth"))
+				.description("How many levels deep the depth-first library dependency tree will " +
+					"be traversed when loading libraries.")
 				.build());
 		list.add(Option.newDomainFolder(LIBRARY_DEST_FOLDER_OPTION_NAME)
 				.commandLineArgument(createArg("-libraryDestinationFolder"))
+				.description("The project folder to save newly loaded libraries to.")
 				.hidden(mirrorFsLayout)
 				.build());
 		list.add(Option.newBoolean(MIRROR_LAYOUT_OPTION_NAME)
 				.value(mirrorFsLayout)
 				.commandLineArgument(createArg("-libraryMirrorLayout"))
+				.description("Mirror filesystem layout when saving newly loaded libraries.")
 				.hidden(mirrorFsLayout)
 				.build());
 		list.add(Option.newBoolean(LOAD_ONLY_LIBRARIES_OPTION_NAME)
@@ -1200,12 +1208,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		 * @param name The name of the option
 		 */
 		public LibrarySearchPathDummyOption(String name) {
-			super(name, null, null, null, null, null, false, null);
+			super(name, null, null, null, null, null, false, "Edit the library search paths.");
 		}
 
 		@Override
 		public Component getCustomEditorComponent(AddressFactoryService addressFactoryService) {
 			JButton button = new JButton("Edit Paths");
+			button.setToolTipText(getDescription());
 			button.addActionListener(e -> {
 				DockingWindowManager.showDialog(null, new LibraryPathsDialog());
 			});

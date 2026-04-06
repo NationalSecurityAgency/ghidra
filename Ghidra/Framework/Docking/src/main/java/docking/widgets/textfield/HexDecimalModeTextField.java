@@ -68,7 +68,7 @@ public class HexDecimalModeTextField extends JTextField {
 			return "Press '" + key + "-M' to toggle Hex or Decimal Mode";
 		}
 
-		return null;
+		return super.getToolTipText();
 	}
 
 	public void setHexMode(boolean hexMode) {

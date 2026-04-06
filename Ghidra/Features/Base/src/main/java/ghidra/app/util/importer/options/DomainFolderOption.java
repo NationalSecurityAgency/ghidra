@@ -65,6 +65,7 @@ public class DomainFolderOption extends StringOption {
 		JTextField textField = new ElidingFilePathTextField(lastFolderPath);
 		textField.setEditable(false);
 		textField.setColumns(10);
+		textField.setToolTipText(getDescription());
 		JButton button = new BrowseButton();
 		button.addActionListener(e -> {
 			DataTreeDialog dataTreeDialog =
