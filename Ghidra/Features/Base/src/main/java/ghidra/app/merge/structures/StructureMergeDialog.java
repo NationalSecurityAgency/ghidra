@@ -43,8 +43,8 @@ import utility.function.ExceptionalConsumer;
  * <P>
  * The dialog also provides the following actions as keyboard only actions:
  * <OL>
- * 	<LI>Apply Item (&LTSPACE&GT): pressing the space bar key will apply the currently focussed and
- *  selected item from either the left side or right sided. (Assuming it is appliable).</LI>
+ * 	<LI>Apply Item (&LT;SPACE&GT;): pressing the space bar key will apply the currently focussed and
+ *  selected item from either the left side or right sided. (Assuming it is applicable).</LI>
  *  <LI>Focus Left Side (&LT;LEFT ARROW&GT;): pressing the left arrow will give focus to the left side
  *  display.</LI>
  *  <LI>Focus Right Side (&LT;RIGHT ARROW&GT;): pressing the right arrow will give focus to the right side

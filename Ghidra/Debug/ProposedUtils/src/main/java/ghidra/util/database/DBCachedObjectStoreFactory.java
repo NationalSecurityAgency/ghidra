@@ -169,7 +169,7 @@ public class DBCachedObjectStoreFactory {
 	 * 	MyContext getContext();
 	 * }
 	 * 
-	 * public static class MyDBFieldCodec&lt;OT extends DBAnnotatedObject & ContextProvider&gt; extends
+	 * public static class MyDBFieldCodec&lt;OT extends DBAnnotatedObject &amp; ContextProvider&gt; extends
 	 * 		AbstractDBFieldCodec&lt;MyType, OT, BinaryField&gt; {
 	 * 
 	 * 	public MyDBFieldCodec(Class&lt;OT&gt; objectType, Field field, int column) {
