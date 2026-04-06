@@ -10,6 +10,7 @@
     </prepatterns>
     <postpatterns>
       <data>0x558bec</data>  <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x5589e5</data>  <!-- PUSH EBP : MOV EBP,ESP -->
       <data>0x83ec 0.....00 </data> <!-- SUBESP#small -->
       <data>0x6aff68........64a100000000 </data> <!-- PUSH-1 PUSHFUNC MOVEAXFS[0] -->
       <data>0x568bf1 </data> <!-- PUSHESI MOVESIECX -->
@@ -29,6 +30,7 @@
       <data>0x53568bf0</data> <!-- PUSH EBX : PUSH ESI : MOV ESI,EAX -->
       <data>0x56578bf9</data> <!-- PUSH ESI : PUSH EDI : MOV EDI,ECX -->
       <data>0x56578bf1</data> <!-- PUSH ESI : PUSH EDI : MOV ESI,ECX -->
+      <data>0x55575653</data> <!-- PUSH EBP : PUSH EDI : PUSH ESI : PUSH EBX -->
 
       <funcstart/>
     </postpatterns>
