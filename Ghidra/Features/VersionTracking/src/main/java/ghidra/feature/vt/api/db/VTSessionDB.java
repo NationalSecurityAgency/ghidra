@@ -21,6 +21,7 @@ import java.util.*;
 import db.*;
 import ghidra.app.util.task.OpenProgramRequest;
 import ghidra.app.util.task.OpenProgramTask;
+import ghidra.feature.vt.api.correlator.program.BasicBlockMnemonicFunctionBulker;
 import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;
@@ -36,6 +37,7 @@ import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -204,14 +206,24 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 			changed = true;
 		}
 
-		// NOTE: code below will not make changes (no transaction is open)
-		// Additional supported required to facilitate schema change during upgrade if needed.
-
-		matchSetTableAdapter = VTMatchSetTableDBAdapter.getAdapter(dbHandle, openMode, monitor);
-		associationManager =
-			AssociationDatabaseManager.getAssociationManager(dbHandle, this, openMode, monitor);
-		matchTagAdapter = VTMatchTagDBAdapter.getAdapter(dbHandle, openMode, monitor);
-		loadMatchSets(openMode, monitor);
+		// --- Adapter initialization (within transaction for schema upgrades) ---
+		// The original code ran this WITHOUT a transaction, but the v0→v1 match-table
+		// schema upgrade needs deleteTable/createTable which require an active transaction.
+		// We wrap the entire adapter + match-set loading phase in a transaction, then
+		// clear undo so the upgrade isn't user-reversible.
+		int txId = startTransaction("Upgrade match table schemas");
+		try {
+			matchSetTableAdapter =
+				VTMatchSetTableDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			associationManager = AssociationDatabaseManager.getAssociationManager(dbHandle,
+				this, openMode, monitor);
+			matchTagAdapter = VTMatchTagDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			loadMatchSets(openMode, monitor);
+		}
+		finally {
+			endTransaction(txId, true);
+		}
+		clearUndo(false);
 	}
 
 	private void updateVersion() throws IOException {
@@ -309,6 +321,12 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 		associationManager.sessionInitialized();
 
+		// After programs are loaded, compute PDiff scores for any function matches
+		// that don't have one yet (migrated from v0, or created before this feature).
+		// This is a one-time operation — subsequent opens find all scores populated
+		// and bail out immediately.
+		backfillPdiffScores();
+
 		try {
 			addSynchronizedDomainObject(destinationProgram);
 		}
@@ -319,6 +337,91 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 			destinationProgram = null;
 			throw new IOException(e.getMessage());
 		}
+	}
+
+	/**
+	 * Compute and store PDiff similarity scores for any function matches that
+	 * don't have one yet. This handles two cases:
+	 *
+	 * <ol>
+	 *   <li><b>Schema migration:</b> v0 → v1 upgrade adds the PDIFF column but
+	 *       initializes it to empty (programs aren't available yet at upgrade time).
+	 *       This method fills in the actual scores once programs are loaded.</li>
+	 *   <li><b>N/A detection:</b> any match with a null PDiff score (e.g. if a
+	 *       correlator was run before this feature existed) gets backfilled.</li>
+	 * </ol>
+	 *
+	 * <p>Performance: does a quick scan first — if all function matches already have
+	 * scores, returns immediately with zero overhead. The computation is one-time;
+	 * subsequent session opens skip this entirely.</p>
+	 */
+	private void backfillPdiffScores() {
+		// --- Quick scan: check if any function match lacks a PDiff score ---
+		boolean needed = false;
+		for (VTMatchSet matchSet : getMatchSets()) {
+			for (VTMatch match : matchSet.getMatches()) {
+				if (match.getAssociation().getType() == VTAssociationType.FUNCTION &&
+						match.getPdiffSimilarityScore() == null) {
+					needed = true;
+					break;
+				}
+			}
+			if (needed) {
+				break;
+			}
+		}
+		if (!needed) {
+			return;
+		}
+
+		// --- Compute and persist scores for all unscored function matches ---
+		int txId = startTransaction("Backfill PDiff similarity scores");
+		try {
+			for (VTMatchSet matchSet : getMatchSets()) {
+				for (VTMatch match : matchSet.getMatches()) {
+					// Skip non-function matches (PDiff is only meaningful for functions)
+					if (match.getAssociation().getType() != VTAssociationType.FUNCTION) {
+						continue;
+					}
+					// Skip matches that already have a computed score
+					if (match.getPdiffSimilarityScore() != null) {
+						continue;
+					}
+
+					// Look up source and destination functions by address
+					VTAssociation assoc = match.getAssociation();
+					Function srcFunc = sourceProgram.getFunctionManager()
+						.getFunctionAt(assoc.getSourceAddress());
+					Function dstFunc = destinationProgram.getFunctionManager()
+						.getFunctionAt(assoc.getDestinationAddress());
+					if (srcFunc == null || dstFunc == null) {
+						continue; // function not found — leave score as null
+					}
+
+					// Compute combined similarity (95% mnemonic hashes + 5% stack frame)
+					// and persist directly into the match's DB record
+					try {
+						List<Long> srcHashes = BasicBlockMnemonicFunctionBulker.INSTANCE
+							.hashes(srcFunc, TaskMonitor.DUMMY);
+						List<Long> dstHashes = BasicBlockMnemonicFunctionBulker.INSTANCE
+							.hashes(dstFunc, TaskMonitor.DUMMY);
+						int srcFrame = srcFunc.getStackFrame().getFrameSize();
+						int dstFrame = dstFunc.getStackFrame().getFrameSize();
+						double similarity = BasicBlockMnemonicFunctionBulker
+							.getCombinedSimilarity(srcHashes, dstHashes, srcFrame, dstFrame);
+						((VTMatchDB) match).setPdiffSimilarityScore(new VTScore(similarity));
+					}
+					catch (CancelledException e) {
+						// skip this match — score remains null (shows as N/A)
+					}
+				}
+			}
+		}
+		finally {
+			endTransaction(txId, true);
+		}
+		// Clear undo so the backfill isn't user-reversible
+		clearUndo(false);
 	}
 
 	private Program openProgram(DomainFile domainFile, boolean isSource) {

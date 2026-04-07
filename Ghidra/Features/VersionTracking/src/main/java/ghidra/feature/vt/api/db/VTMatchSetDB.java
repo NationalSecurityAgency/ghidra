@@ -25,6 +25,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 
 import db.*;
+import ghidra.feature.vt.api.correlator.program.BasicBlockMnemonicFunctionBulker;
 import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.framework.data.OpenMode;
@@ -34,9 +35,11 @@ import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Lock;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
@@ -158,6 +161,51 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 
 	@Override
 	public VTMatch addMatch(VTMatchInfo info) {
+
+		// --- PDiff score computation (before lock) ---
+		// For FUNCTION matches, compute the combined PDiff similarity score so it can be
+		// persisted in the DB alongside the correlator's own similarity/confidence scores.
+		// This is done here (central location) so ALL correlators benefit automatically —
+		// no per-correlator code changes needed.
+		//
+		// The score is a weighted blend:
+		//   95% basic-block mnemonic hash similarity (structural comparison)
+		//   5% stack frame size similarity (detects local variable allocation changes)
+		//
+		// Computed before lock.acquire() since hashing can be slow for large functions.
+		// Skipped for DATA matches (leave null) or if already set by the caller.
+		if (info.getAssociationType() == VTAssociationType.FUNCTION &&
+				info.getPdiffSimilarityScore() == null) {
+			Program srcProg = session.getSourceProgram();
+			Program dstProg = session.getDestinationProgram();
+			if (srcProg != null && dstProg != null) {
+				Function srcFunc =
+					srcProg.getFunctionManager().getFunctionAt(info.getSourceAddress());
+				Function dstFunc =
+					dstProg.getFunctionManager().getFunctionAt(info.getDestinationAddress());
+				if (srcFunc != null && dstFunc != null) {
+					try {
+						List<Long> srcHashes =
+							BasicBlockMnemonicFunctionBulker.INSTANCE.hashes(srcFunc,
+								TaskMonitor.DUMMY);
+						List<Long> dstHashes =
+							BasicBlockMnemonicFunctionBulker.INSTANCE.hashes(dstFunc,
+								TaskMonitor.DUMMY);
+						int srcFrameSize = srcFunc.getStackFrame().getFrameSize();
+						int dstFrameSize = dstFunc.getStackFrame().getFrameSize();
+						double similarity = BasicBlockMnemonicFunctionBulker
+							.getCombinedSimilarity(srcHashes, dstHashes,
+								srcFrameSize, dstFrameSize);
+						info.setPdiffSimilarityScore(new VTScore(similarity));
+					}
+					catch (CancelledException e) {
+						// leave null — score column will show N/A
+					}
+				}
+			}
+		}
+
+		// --- Standard match insertion (under lock) ---
 		AssociationDatabaseManager associationManager = session.getAssociationManagerDBM();
 		VTAssociationDB associationDB = associationManager.getOrCreateAssociationDB(
 			info.getSourceAddress(), info.getDestinationAddress(), info.getAssociationType());

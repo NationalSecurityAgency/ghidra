@@ -88,6 +88,31 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 		return new VTScore(record.getString(CONFIDENCE_SCORE_COL.column()));
 	}
 
+	/**
+	 * Reads the precomputed PDiff similarity score from the DB record.
+	 * Returns null if the score was never computed (empty string in DB),
+	 * which happens for DATA matches or matches migrated from schema v0.
+	 */
+	@Override
+	public VTScore getPdiffSimilarityScore() {
+		String stored = record.getString(PDIFF_SIMILARITY_SCORE_COL.column());
+		if (stored == null || stored.isEmpty()) {
+			return null;
+		}
+		return new VTScore(stored);
+	}
+
+	/**
+	 * Updates the stored PDiff similarity score in the DB record.
+	 * Package-private: called by VTSessionDB.backfillPdiffScores() during
+	 * session open to populate scores for migrated matches.
+	 */
+	void setPdiffSimilarityScore(VTScore score) {
+		record.setString(PDIFF_SIMILARITY_SCORE_COL.column(),
+			score != null ? score.toStorageString() : "");
+		updateRecord();
+	}
+
 	public String getLengthType() {
 		return record.getString(LENGTH_TYPE.column());
 	}
