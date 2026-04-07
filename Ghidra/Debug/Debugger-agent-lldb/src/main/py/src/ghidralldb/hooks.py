@@ -511,6 +511,7 @@ def on_stop(event: lldb.SBEvent) -> bool:
             commands.put_threads()
             commands.put_frames()
             commands.activate()
+            commands.put_breakpoints()
     return True
 
 
