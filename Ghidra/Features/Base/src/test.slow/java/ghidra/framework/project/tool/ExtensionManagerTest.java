@@ -73,6 +73,7 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify user is prompted to add new plugins
 		extensionManager.checkForNewExtensions();
+		waitForSwing();
 		assertTrue(extensionsState.didPrompt());
 	}
 
@@ -99,6 +100,7 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify no prompt
 		extensionManager.checkForNewExtensions();
+		waitForSwing();
 		assertFalse(extensionsState.didPrompt());
 	}
 
@@ -127,6 +129,7 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify user is prompted to add new plugins
 		extensionManager.checkForNewExtensions();
+		waitForSwing();
 		assertTrue(extensionsState.didPrompt());
 	}
 
@@ -159,6 +162,7 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify no prompt, since the plugins in the extension have already been installed
 		extensionManager.checkForNewExtensions();
+		waitForSwing();
 		assertFalse(extensionsState.didPrompt());
 	}
 
@@ -191,6 +195,7 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify user is prompted to add new plugins
 		extensionManager.checkForNewExtensions();
+		waitForSwing();
 		assertTrue(extensionsState.didPrompt());
 	}
 
