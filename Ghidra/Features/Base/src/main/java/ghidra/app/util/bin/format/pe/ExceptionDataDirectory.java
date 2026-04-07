@@ -90,7 +90,7 @@ public class ExceptionDataDirectory extends DataDirectory {
 		}
 		createDirectoryBookmark(program, addr);
 		if (functionEntries != null) {
-			functionEntries.markup(program, addr);
+			functionEntries.markup(program, addr, log);
 		}
 	}
 }
