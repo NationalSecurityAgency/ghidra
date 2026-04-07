@@ -18,16 +18,16 @@ package ghidradev.ghidraprojectcreator.launchers;
 import ghidradev.ghidraprojectcreator.utils.GhidraLaunchUtils;
 
 /**
- * The PyGhidra GUI launch shortcut actions.  
+ * The PyGhidra Headless launch shortcut actions.  
  * 
  * @see AbstractPyGhidraLaunchShortcut 
  */
-public class PyGhidraGuiLaunchShortcut extends AbstractPyGhidraLaunchShortcut {
+public class PyGhidraHeadlessLaunchShortcut extends AbstractPyGhidraLaunchShortcut {
 
 	/**
-	 * Creates a new PyGhidra GUI launch shortcut.
+	 * Creates a new PyGhidra Headless launch shortcut.
 	 */
-	public PyGhidraGuiLaunchShortcut() {
-		super(GhidraLaunchUtils.PYGHIDRA_GUI_LAUNCH, " (PyGhidra)");
+	public PyGhidraHeadlessLaunchShortcut() {
+		super(GhidraLaunchUtils.PYGHIDRA_HEADLESS_LAUNCH, " (PyGhidra Headless)");
 	}
 }

@@ -1,7 +1,7 @@
 # GhidraDev Eclipse Plugin
 GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 
-The information provided in this document is effective as of GhidraDev 5.0.1 and is subject to
+The information provided in this document is effective as of GhidraDev 5.1.0 and is subject to
 change with future releases.
 
 ## Table of Contents
@@ -31,6 +31,9 @@ change with future releases.
  12. [Building](#building)
 
 ## Change History
+__5.1.0:__
+* Added a PyGhidra Headless run configuration
+
 __5.0.1:__
 * Fixed a bug that prevented Ghidra from discovering the Ghidra module project when launched with
   the PyGhidra run configuration. 
@@ -319,8 +322,16 @@ that was last used to launch PyGhidra.  If it cannot find it, you will have to l
 and try again.
 
 ### Launching and Debugging PyGhidra
-GhidraDev can interface with PyDev to provide a __PyGhidra__ run configuration that is capable of
-launching PyGhidra in both GUI mode and GUI debug mode.
+When PyDev is installed, GhidraDev introduces two new run configurations to Eclipse which are
+capable of launching the installation of Ghidra (in PyGhidra mode) that an Eclipse Ghidra project is
+linked to:
+* __PyGhidra:__ Launches the PyGhidra GUI.
+* __PyGhidra Headless:__ Launches PyGhidra in headless mode. By default, this run configuration will
+  not have any program arguments associated with it, which are required to tell headless PyGhidra
+  what project to open, what scripts to run, etc.  Newly created `PyGhidra Headless` run 
+  configurations will have to be modified with the desired headless program arguments. For more 
+  information on headless command line arguments, see 
+  `<GhidraInstallDir>/support/analyzeHeadlessREADME.html`.
 
 ## Upgrading
 GhidraDev is upgraded differently depending on how it was installed.  If GhidraDev was
