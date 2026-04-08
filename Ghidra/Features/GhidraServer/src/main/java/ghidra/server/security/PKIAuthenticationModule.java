@@ -141,14 +141,14 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 			DefaultTrustManagerFactory.validateClient(certChain, PKIUtils.RSA_TYPE);
 
 			byte[] sigBytes = sigCb.getSignature();
-			if (sigBytes != null) {
-
-				Signature sig = Signature.getInstance(certChain[0].getSigAlgName());
-				sig.initVerify(certChain[0]);
-				sig.update(token);
-				if (!sig.verify(sigBytes)) {
-					throw new FailedLoginException("Incorrect signature");
-				}
+			if (sigBytes == null) {
+				throw new FailedLoginException("Client signature required");
+			}
+			Signature sig = Signature.getInstance(certChain[0].getSigAlgName());
+			sig.initVerify(certChain[0]);
+			sig.update(token);
+			if (!sig.verify(sigBytes)) {
+				throw new FailedLoginException("Incorrect signature");
 			}
 
 			String dnUsername =
