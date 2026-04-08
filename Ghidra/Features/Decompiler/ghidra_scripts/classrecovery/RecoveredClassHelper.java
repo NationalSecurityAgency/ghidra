@@ -465,9 +465,11 @@ public class RecoveredClassHelper {
 					continue;
 				}
 
-				if (calledFunction.isExternal()) {
-					continue;
-				}
+				// TODO: might redo to have separate call maps that do/don't include external
+				// keeping this here for reminder
+//				if (calledFunction.isExternal()) {
+//					continue;
+//				}
 
 				// include the null functions in map so things using map can get accurate count
 				// of number of CALL instructions even if the call reg type
@@ -4470,6 +4472,7 @@ public class RecoveredClassHelper {
 			if (vftablePointerDataType == null) {
 				Msg.debug(this,
 					"vftablePointerDataType is null for vftableAddress: " + vftableAddress);
+				continue;
 			}
 
 			DataType vftableDataType = vftablePointerDataType.getDataType();
