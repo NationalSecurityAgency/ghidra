@@ -174,8 +174,9 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		//
 		// Computed before lock.acquire() since hashing can be slow for large functions.
 		// Skipped for DATA matches (leave null) or if already set by the caller.
-		if (info.getAssociationType() == VTAssociationType.FUNCTION &&
-				info.getPdiffSimilarityScore() == null) {
+		// Always compute for FUNCTION matches — VTMatchInfo is reused across addMatch()
+		// calls by correlators, so the previous score would be stale if we checked for null.
+		if (info.getAssociationType() == VTAssociationType.FUNCTION) {
 			Program srcProg = session.getSourceProgram();
 			Program dstProg = session.getDestinationProgram();
 			if (srcProg != null && dstProg != null) {
