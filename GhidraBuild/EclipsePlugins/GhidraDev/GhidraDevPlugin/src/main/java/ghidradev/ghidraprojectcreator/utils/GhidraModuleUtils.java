@@ -173,6 +173,11 @@ public class GhidraModuleUtils {
 			if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
 				throw new IOException("Failed to rename: " + buildTemplateGradleFile);
 			}
+			File gitIgnoreFile = new File(projectDir, "gitignore");
+			File dotGitIgnoreFile = new File(projectDir, ".gitignore");
+			if (gitIgnoreFile.exists() && !gitIgnoreFile.renameTo(dotGitIgnoreFile)) {
+				throw new IOException("Failed to rename: " + gitIgnoreFile);
+			}
 		}
 		catch (CancelledException | IOException e) {
 			throw new IOException("Failed to copy skeleton directory: " + projectDir);

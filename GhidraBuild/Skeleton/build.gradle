@@ -36,7 +36,6 @@ rootProject.assembleDistribution {
 		exclude '.classpath'
 		exclude '.project'
 		exclude 'build.gradle'
-		rename "gitignore", ".gitignore"
 		into "Extensions/Ghidra/Skeleton"
 	}
 }
