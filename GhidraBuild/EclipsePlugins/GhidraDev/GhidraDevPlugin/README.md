@@ -32,7 +32,8 @@ change with future releases.
 
 ## Change History
 __5.1.0:__
-* Added a PyGhidra Headless run configuration
+* Added a PyGhidra Headless run configuration.
+* New Ghidra module projects now contain a default .gitignore file (requires Ghidra 12.2 or later).
 
 __5.0.1:__
 * Fixed a bug that prevented Ghidra from discovering the Ghidra module project when launched with
