@@ -299,6 +299,12 @@ public class DecompilerScriptUtils {
 	 * @return a new address with the specified offset in the default address space
 	 */
 	public final Address toAddr(long offset) {
+
+		long maxOffset = program.getMaxAddress().getOffset();
+
+		if (Long.compareUnsigned(offset, maxOffset) > 0) {
+			return null;
+		}
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 
