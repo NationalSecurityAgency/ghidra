@@ -576,6 +576,7 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     resmask=1;			// Only 1 bit not guaranteed to be 0
     break;
   case CPUI_COPY:
+  case CPUI_BITREV:
   case CPUI_INT_ZEXT:
     resmask = getIn(0)->getNZMask();
     break;
@@ -668,6 +669,7 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     resmask &= fullmask;
     break;
   case CPUI_LZCOUNT:
+  case CPUI_TZCOUNT:
     resmask = coveringmask(getIn(0)->getSize() * 8);
     resmask &= fullmask;
     break;

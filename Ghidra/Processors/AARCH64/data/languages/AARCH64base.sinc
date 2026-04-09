@@ -4829,13 +4829,7 @@ is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & addr_SIMM9 &
 :rbit Rd_GPR32, Rn_GPR32
 is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x0 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
-	# The algorithm swaps 1, 2, 4, 8 bits, ect
-	local tmp:4 = Rn_GPR32;
-	tmp = (((tmp & 0xaaaaaaaa) >> 1) | ((tmp & 0x55555555) << 1));
-	tmp = (((tmp & 0xcccccccc) >> 2) | ((tmp & 0x33333333) << 2));
-	tmp = (((tmp & 0xf0f0f0f0) >> 4) | ((tmp & 0x0f0f0f0f) << 4));
-	tmp = (((tmp & 0xff00ff00) >> 8) | ((tmp & 0x00ff00ff) << 8));
-	tmp = ((tmp >> 16) | (tmp << 16));
+	local tmp:4 = bitrev(Rn_GPR32);
 	Rd_GPR64 = zext(tmp);
 }
 
@@ -4846,14 +4840,7 @@ is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x0
 :rbit Rd_GPR64, Rn_GPR64
 is sf=1 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x0 & Rn_GPR64 & Rd_GPR64
 {
-	# The algorithm swaps 1, 2, 4, 8 bits, ect
-	local tmp:8 = Rn_GPR64;
-	tmp = (((tmp & 0xaaaaaaaaaaaaaaaa) >> 1) | ((tmp & 0x5555555555555555) << 1));
-	tmp = (((tmp & 0xcccccccccccccccc) >> 2) | ((tmp & 0x3333333333333333) << 2));
-	tmp = (((tmp & 0xf0f0f0f0f0f0f0f0) >> 4) | ((tmp & 0x0f0f0f0f0f0f0f0f) << 4));
-	tmp = (((tmp & 0xff00ff00ff00ff00) >> 8) | ((tmp & 0x00ff00ff00ff00ff) << 8));
-	tmp = (((tmp & 0xffff0000ffff0000) >> 16) | ((tmp & 0x0000ffff0000ffff) << 16));
-	Rd_GPR64 = ((tmp >> 32) | (tmp << 32));
+	Rd_GPR64 = bitrev(Rn_GPR64);
 }
 
 # C6.2.254 RET page C6-1730 line 102090 MATCH xd65f0000/mask=xfffffc1f
@@ -8400,28 +8387,14 @@ is sf=1 & b_30=1 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1620=0x0 & b_1015=0x7 & Rd
 :ctz Rd_GPR32, Rn_GPR32
 is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x6 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
-	# equivalent to RBIT; CLZ
-	local tmp = Rn_GPR32;
-	tmp = (((tmp & 0xaaaaaaaa) >> 1) | ((tmp & 0x55555555) << 1));
-	tmp = (((tmp & 0xcccccccc) >> 2) | ((tmp & 0x33333333) << 2));
-	tmp = (((tmp & 0xf0f0f0f0) >> 4) | ((tmp & 0x0f0f0f0f) << 4));
-	tmp = (((tmp & 0xff00ff00) >> 8) | ((tmp & 0x00ff00ff) << 8));
-	tmp = ((tmp >> 16) | (tmp << 16));
-	Rd_GPR64 = lzcount(tmp);
+	local tmp:4 = tzcount(Rn_GPR32);
+	Rd_GPR64 = zext(tmp);
 }
 
 :ctz Rd_GPR64, Rn_GPR64
 is sf=1 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x6 & Rn_GPR64 & Rd_GPR64
 {
-	# equivalent to RBIT; CLZ
-	local tmp = Rn_GPR64;
-	tmp = (((tmp & 0xaaaaaaaaaaaaaaaa) >> 1) | ((tmp & 0x5555555555555555) << 1));
-	tmp = (((tmp & 0xcccccccccccccccc) >> 2) | ((tmp & 0x3333333333333333) << 2));
-	tmp = (((tmp & 0xf0f0f0f0f0f0f0f0) >> 4) | ((tmp & 0x0f0f0f0f0f0f0f0f) << 4));
-	tmp = (((tmp & 0xff00ff00ff00ff00) >> 8) | ((tmp & 0x00ff00ff00ff00ff) << 8));
-	tmp = (((tmp & 0xffff0000ffff0000) >> 16) | ((tmp & 0x0000ffff0000ffff) << 16));
-	tmp = ((tmp >> 32) | (tmp << 32));
-	Rd_GPR64 = lzcount(tmp);
+	Rd_GPR64 = tzcount(Rn_GPR64);
 }
 
 cssc_simm32: "#"^val is simm8 [ val = simm8 * 1; ] { export *[const]:4 val; }

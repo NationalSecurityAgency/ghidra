@@ -10713,6 +10713,26 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
+/// \class RuleTzcountFromBitrevLzcount
+/// \brief Simplify combination of bit reverse and leading-zero count into trailing-zero count
+void RuleTzcountFromBitrevLzcount::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_LZCOUNT);
+}
+
+int4 RuleTzcountFromBitrevLzcount::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *bitrevvn = op->getIn(0);
+  PcodeOp *bitrevop = bitrevvn->getDef();
+  if (!bitrevop || bitrevop->code() != CPUI_BITREV) return 0;
+
+  data.opSetOpcode(op, CPUI_TZCOUNT);
+  data.opSetInput(op, bitrevop->getIn(0), 0);
+  return 1;
+}
+
 /// \class RuleFloatSign
 /// \brief Convert floating-point \e sign bit manipulation into FLOAT_ABS or FLOAT_NEG
 ///

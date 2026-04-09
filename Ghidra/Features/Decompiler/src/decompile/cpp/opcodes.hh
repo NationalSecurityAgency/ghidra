@@ -127,8 +127,10 @@ enum OpCode {
   CPUI_POPCOUNT = 72,		///< Count the 1-bits
   CPUI_LZCOUNT = 73,		///< Count the leading 0-bits
   CPUI_SPULL = 74,		///< Extract a signed bit-range
+  CPUI_BITREV = 75,		///< Reverse bits
+  CPUI_TZCOUNT = 76,		///< Count the trailing 0-bits
 
-  CPUI_MAX = 75			///< Value indicating the end of the op-code values
+  CPUI_MAX = 77			///< Value indicating the end of the op-code values
 };
 
 extern const char *get_opname(OpCode opc);		///< Convert an OpCode to the name as a string

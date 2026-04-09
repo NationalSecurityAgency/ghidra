@@ -106,6 +106,8 @@ void OpBehavior::registerInstructions(vector<OpBehavior *> &inst,const Translate
   inst[CPUI_POPCOUNT] = new OpBehaviorPopcount();
   inst[CPUI_LZCOUNT] = new OpBehaviorLzcount();
   inst[CPUI_SPULL] = new OpBehavior(CPUI_SPULL,false);
+  inst[CPUI_BITREV] = new OpBehaviorBitrev();
+  inst[CPUI_TZCOUNT] = new OpBehaviorTzcount();
 }
 
 /// \param sizeout is the size of the output in bytes
@@ -791,5 +793,18 @@ uintb OpBehaviorLzcount::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const
 {
   return (uintb)(count_leading_zeros(in1) - 8*(sizeof(uintb) - sizein));
 }
+
+uintb OpBehaviorBitrev::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const
+
+{
+  return bit_reverse(in1, 8*sizein);
+}
+
+uintb OpBehaviorTzcount::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const
+
+{
+  return (uintb)min(count_trailing_zeros(in1), 8*sizein);
+}
+
 
 } // End namespace ghidra

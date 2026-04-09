@@ -926,5 +926,20 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opLzcountOp(op); }
 };
 
+/// \brief Information about the BITREV op-code
+class TypeOpBitrev : public TypeOpFunc {
+public:
+  TypeOpBitrev(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBitrevOp(op); }
+};
+
+/// \brief Information about the TZCOUNT op-code
+class TypeOpTzcount : public TypeOpFunc {
+public:
+  TypeOpTzcount(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opTzcountOp(op); }
+};
+
+
 } // End namespace ghidra
 #endif
