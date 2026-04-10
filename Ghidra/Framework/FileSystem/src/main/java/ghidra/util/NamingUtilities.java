@@ -37,7 +37,7 @@ public final class NamingUtilities {
 
 	public final static Set<Character> VALID_NAME_CHARSET =
 		Collections.unmodifiableSet(
-			Set.of('.', '-', '=', '@', ' ', '_', '(', ')', '[', ']'));
+			Set.of('.', '-', '+', '=', '@', ' ', '_', '(', ')', '[', ']'));
 
 	private NamingUtilities() {
 	}
@@ -50,7 +50,7 @@ public final class NamingUtilities {
 	 * <li>Name may not be blank (i.e., no characters or all space characters)</li>
 	 * <li>Name may not start with period</li>
 	 * <li>All characters must be a letter, digit (0..9), or within the allowed character set:
-	 *    '.', '-', '=', '@', ' ', '_', '(', ')', '[', ']' </li>
+	 *    '.', '-', '+', '=', '@', ' ', '_', '(', ')', '[', ']' </li>
 	 * </ul>
 	 * 
 	 * @param name name to validate
@@ -88,7 +88,7 @@ public final class NamingUtilities {
 	 * <li>Path element may not start with a '.' which may result in path traversal or hidden 
 	 *     file/folder use.</li>
 	 * <li>Path element may only contain the letters, numbers, or the following characters:
-	 *     '.', '-', '=', '@', ' ', '_', '(', ')', '[', ']'</li>
+	 *     '.', '-', '+', '=', '@', ' ', '_', '(', ')', '[', ']'</li>
 	 * </ul>
 	 * 
 	 * @param pathElement project or file path element (use of leading and trailing spaces should be 
