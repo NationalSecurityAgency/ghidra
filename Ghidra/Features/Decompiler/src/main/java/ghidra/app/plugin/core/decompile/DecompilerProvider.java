@@ -725,11 +725,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			ViewerPosition myViewPosition = controller.getDecompilerPanel().getViewerPosition();
 			newProvider.doSetProgram(program);
 
-			// Any change in the HighlightTokens should be delivered to the new panel
-			DecompilerPanel myPanel = getDecompilerPanel();
-			newProvider.setLocation(currentLocation, myPanel.getViewerPosition());
+			// initialize the new provider's cache and then set the location
+			DecompileData myDecompileData = controller.getDecompileData();
+			newProvider.controller.addToCache(myDecompileData);
+			newProvider.setLocation(currentLocation, myViewPosition);
 
 			// transfer any state after the new decompiler is initialized
+			DecompilerPanel myPanel = getDecompilerPanel();
 			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
 			newProvider.doWhenNotBusy(() -> {
 				newPanel.setViewerPosition(myViewPosition);
