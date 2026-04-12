@@ -155,6 +155,10 @@ public class DecompilerSearcher implements FindDialogSearcher {
 
 	private FieldLocation getNextSearchStartLocation(
 			DecompilerCursorPosition decompilerCursorPosition, boolean searchForward) {
+		
+		if (searchResults == null) {
+			return decompilerCursorPosition.getFieldLocation();
+		}
 
 		FieldLocation cursor = decompilerCursorPosition.getFieldLocation();
 		DecompilerSearchLocation containingLocation =
