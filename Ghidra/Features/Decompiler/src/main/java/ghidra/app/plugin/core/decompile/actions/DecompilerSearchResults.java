@@ -109,7 +109,9 @@ public class DecompilerSearchResults extends SearchResults {
 
 	public DecompilerSearchLocation getContainingLocation(FieldLocation fieldLocation,
 			boolean searchForward) {
-
+		if (fieldLocation == null) {
+			return null;
+		}
 		// getNextLocation() will find the next matching location, starting at the given field
 		// location.  The next location may or may not actually contain the given field location.
 		DecompilerSearchLocation nextLocation = getNextLocation(fieldLocation, searchForward);
