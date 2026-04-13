@@ -42,7 +42,7 @@ import resources.Icons;
  * Component Provider that shows the known extensions in Ghidra in a {@link GTable}. Users may
  * install/uninstall extensions, or add new ones.
  */
-public class ExtensionTableProvider extends DialogComponentProvider {
+public class ExtensionTableDialog extends DialogComponentProvider {
 
 	private static final String LAST_IMPORT_DIRECTORY_KEY = "LastExtensionImportDirectory";
 
@@ -55,7 +55,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	 * 
 	 * @param tool the plugin tool
 	 */
-	public ExtensionTableProvider(PluginTool tool) {
+	public ExtensionTableDialog(PluginTool tool) {
 		super("Install Extensions");
 		addWorkPanel(createMainPanel(tool));
 		setHelpLocation(new HelpLocation(GenericHelpTopics.FRONT_END, "Extensions"));
@@ -73,12 +73,11 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 
 		extensionTablePanel = new ExtensionTablePanel(tool);
 		extensionTablePanel.getAccessibleContext().setAccessibleName("Extenstion Table");
-		ExtensionDetailsPanel extensionDetailsPanel =
-			new ExtensionDetailsPanel(extensionTablePanel);
-		extensionDetailsPanel.getAccessibleContext().setAccessibleName("Extension Details");
+		ExtensionDetailsPanel detailsPanel = new ExtensionDetailsPanel(extensionTablePanel);
+		detailsPanel.getAccessibleContext().setAccessibleName("Extension Details");
 
-		final JSplitPane splitPane =
-			new JSplitPane(JSplitPane.VERTICAL_SPLIT, extensionTablePanel, extensionDetailsPanel);
+		JSplitPane splitPane =
+			new JSplitPane(JSplitPane.VERTICAL_SPLIT, extensionTablePanel, detailsPanel);
 		splitPane.setResizeWeight(.75);
 		splitPane.getAccessibleContext().setAccessibleName("Extension Table and Details");
 		panel.add(splitPane, BorderLayout.CENTER);
@@ -86,7 +85,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		splitPane.setDividerLocation(.75);
 
 		createAddAction(extensionTablePanel);
-		createRefreshAction(extensionTablePanel, extensionDetailsPanel);
+		createRefreshAction(extensionTablePanel, detailsPanel);
 
 		addOKButton();
 		panel.getAccessibleContext().setAccessibleName("Extension Table Provider");
@@ -129,41 +128,12 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 					return false;
 				}
 				Object contextObject = context.getContextObject();
-				return ExtensionTableProvider.this == contextObject;
+				return ExtensionTableDialog.this == contextObject;
 			}
 
 			@Override
 			public void actionPerformed(ActionContext context) {
-
-				// Don't let the user attempt to install anything if they don't have write
-				// permissions on the installation dir.
-				ResourceFile installDir =
-					Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
-				if (!installDir.exists() && !installDir.mkdir()) {
-					Msg.showError(this, null, "Directory Error",
-						"Cannot install/uninstall extensions: Failed to create extension " +
-							"installation directory: " + installDir);
-				}
-				if (!installDir.canWrite()) {
-					Msg.showError(this, null, "Permissions Error",
-						"Cannot install/uninstall extensions: Invalid write permissions on " +
-							"installation directory: " + installDir);
-					return;
-				}
-
-				GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
-				chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-				chooser.setLastDirectoryPreference(LAST_IMPORT_DIRECTORY_KEY);
-				chooser.setTitle("Select Extension");
-				chooser.addFileFilter(new ExtensionFileFilter());
-
-				List<File> files = chooser.getSelectedFiles();
-				chooser.dispose();
-
-				if (installExtensions(files)) {
-					panel.refreshTable();
-					requireRestart = true;
-				}
+				doAddExtension(panel);
 			}
 		};
 
@@ -175,6 +145,38 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		addAction(addAction);
 	}
 
+	private void doAddExtension(ExtensionTablePanel panel) {
+		// Don't let the user attempt to install anything if they don't have write
+		// permissions on the installation dir.
+		List<ResourceFile> dirs = Application.getApplicationLayout().getExtensionInstallationDirs();
+		ResourceFile installDir = dirs.get(0);
+		if (!installDir.exists() && !installDir.mkdir()) {
+			Msg.showError(this, null, "Directory Error",
+				"Cannot install/uninstall extensions: Failed to create extension " +
+					"installation directory: " + installDir);
+		}
+		if (!installDir.canWrite()) {
+			Msg.showError(this, null, "Permissions Error",
+				"Cannot install/uninstall extensions: Invalid write permissions on " +
+					"installation directory: " + installDir);
+			return;
+		}
+
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
+		chooser.setLastDirectoryPreference(LAST_IMPORT_DIRECTORY_KEY);
+		chooser.setTitle("Select Extension");
+		chooser.addFileFilter(new ExtensionFileFilter());
+
+		List<File> files = chooser.getSelectedFiles();
+		chooser.dispose();
+
+		if (installExtensions(files)) {
+			panel.refreshTable();
+			requireRestart = true;
+		}
+	}
+
 	private boolean installExtensions(List<File> files) {
 		boolean didInstall = false;
 		for (File file : files) {
@@ -183,9 +185,9 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 			// instead of a fully built extension.
 			if (new File(file, "build.gradle").isFile()) {
 				Msg.showWarn(this, null, "Invalid Extension",
-					"The selected extension " +
-						"contains a 'build.gradle' file.\nGhidra does not support installing " +
-						"extensions in source form.\nPlease build the extension and try again.");
+					"The selected extension contains a 'build.gradle' file.\n" +
+						"Ghidra does not support installing extensions in source form.\n" +
+						"Please build the extension and try again.");
 				continue;
 			}
 
@@ -196,7 +198,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	}
 
 	/**
-	 * Creates an action to refresh the extensions list.
+	 * Creates an action to refresh the extensions list. 
 	 * 
 	 * @param tablePanel the table to be refreshed
 	 * @param detailsPanel the details to be refreshed
@@ -210,7 +212,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return ExtensionTableProvider.this == contextObject;
+				return ExtensionTableDialog.this == contextObject;
 			}
 
 			@Override

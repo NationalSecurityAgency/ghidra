@@ -46,7 +46,7 @@ import utility.application.ApplicationLayout;
  *
  * <p>
  * Extensions may be installed/uninstalled by users at runtime, using the
- * {@link ExtensionTableProvider}. Installation consists of unzipping the extension archive to an
+ * {@link ExtensionTableDialog}. Installation consists of unzipping the extension archive to an
  * installation folder, currently <code>{ghidra user settings dir}/Extensions</code>. To uninstall,
  * the unpacked folder is simply removed.
  */

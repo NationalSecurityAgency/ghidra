@@ -31,13 +31,14 @@ import ghidra.framework.Application;
 import ghidra.framework.project.tool.testplugins.TestExtensionHello2Plugin;
 import ghidra.framework.project.tool.testplugins.TestExtensionHelloPlugin;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 
-public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
+public class ToolExtensionStatusManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private ApplicationLayout appLayout;
 	private FakeToolExtensionsEnabledState extensionsState;
@@ -129,6 +130,7 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify user is prompted to add new plugins
 		extensionManager.checkForNewExtensions();
+		waitForSwing();
 		waitForSwing();
 		assertTrue(extensionsState.didPrompt());
 	}
@@ -274,27 +276,36 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private class FakeToolExtensionsEnabledState implements ExtensionsEnabledState {
 
-		private Map<String, Set<Class<?>>> extensions = new HashMap<>();
-		private Set<Class<?>> installedPlugins = new HashSet<>();
+		private Map<String, Set<ClassFileInfo>> extensions = new HashMap<>();
+		private Set<ClassFileInfo> installedPlugins = new HashSet<>();
 		private boolean didPrompt = false;
 
 		@Override
-		public Map<String, Set<Class<?>>> getAllKnownExtensions() {
+		public Map<String, Set<ClassFileInfo>> getAllKnownExtensions() {
 			return extensions;
 		}
 
 		@Override
-		public void removeInstalledPlugins(Set<Class<?>> plugins) {
+		public void removeInstalledPlugins(Set<ClassFileInfo> plugins) {
 			plugins.removeAll(installedPlugins);
 		}
 
 		@Override
-		public void propmtToConfigureNewPlugins(Set<Class<?>> plugins) {
+		public void propmtToConfigureNewPlugins(Set<ClassFileInfo> plugins) {
 			didPrompt = true;
 		}
 
-		void addExtension(String name, Class<?>... classes) {
+		void addExtension(String name, ClassFileInfo... classes) {
 			extensions.put(name, Set.of(classes));
+		}
+
+		void addExtension(String name, Class<?>... classes) {
+
+			for (Class<?> c : classes) {
+				String className = c.getName();
+				ClassFileInfo info = new ClassFileInfo("/fake/path", className, "Plugin", "");
+				addExtension(name, info);
+			}
 		}
 
 		boolean didPrompt() {
@@ -302,7 +313,10 @@ public class ExtensionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		void setInstalled(Class<TestExtensionHelloPlugin> c) {
-			installedPlugins.add(c);
+
+			String name = c.getName();
+			ClassFileInfo info = new ClassFileInfo("/fake/path", name, "Plugin", "");
+			installedPlugins.add(info);
 		}
 	}
 

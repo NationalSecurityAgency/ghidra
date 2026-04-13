@@ -175,8 +175,8 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			labelPanel.setBackground(BG);
 
 			GLabel nameLabel = new GLabel(pluginPackage.getName());
-			Gui.registerFont(nameLabel, "font.pluginpanel.name");
-			nameLabel.setForeground(new GColor("color.fg.pluginpanel.name"));
+			Gui.registerFont(nameLabel, "font.plugin.package.panel.name");
+			nameLabel.setForeground(new GColor("color.fg.plugin.package.panel.name"));
 			labelPanel.add(nameLabel);
 
 			GHyperlinkComponent configureHyperlink = createConfigureHyperlink();
@@ -206,7 +206,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			String htmlDescription = enchanceDescription(pluginPackage.getDescription());
 
 			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
-			descriptionlabel.setForeground(new GColor("color.fg.pluginpanel.description"));
+			descriptionlabel.setForeground(new GColor("color.fg.plugin.package.panel.description"));
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
 			descriptionlabel.setToolTipText(

@@ -37,18 +37,19 @@ import ghidra.util.task.TaskMonitor;
  * Model for the {@link ExtensionTablePanel}. This defines 5 columns for displaying information in
  * {@link ExtensionDetails} objects:
  * <pre>
- * 		- Installed (checkbox)
+ * 		- Installation Status
  * 		- Name
  * 		- Description
- * 		- Installation directory (hidden)
- * 		- Archive directory (hidden)
+ * 		- Version
+ * 		- Installation Directory (hidden)
+ * 		- Archive File (hidden)
  * </pre>
  * <p>
  * All columns are for display purposes only, except for the <code>installed</code> column, which
  * is a checkbox allowing users to install/uninstall a particular extension.
  *
  */
-class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
+class ExtensionTableModel extends ThreadedTableModel<ExtensionRowObject, Object> {
 
 	/** We don't care about the ordering of other columns, but the install/uninstall checkbox should be
 	 the first one and the name col is our initial sort column. */
@@ -56,7 +57,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	final static int NAME_COL = 1;
 
 	/** This is the data source for the model. Whatever is here will be displayed in the table. */
-	private Set<ExtensionDetails> extensions;
+	private Set<ExtensionRowObject> extensions;
 	private Map<String, Boolean> originalInstallStates = new HashMap<>();
 
 	/**
@@ -69,9 +70,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	}
 
 	@Override
-	protected TableColumnDescriptor<ExtensionDetails> createTableColumnDescriptor() {
+	protected TableColumnDescriptor<ExtensionRowObject> createTableColumnDescriptor() {
 
-		TableColumnDescriptor<ExtensionDetails> descriptor = new TableColumnDescriptor<>();
+		TableColumnDescriptor<ExtensionRowObject> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new ExtensionInstalledColumn(), INSTALLED_COL, true);
 		descriptor.addVisibleColumn(new ExtensionNameColumn(), NAME_COL, true);
@@ -111,27 +112,23 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 
-		// We only care about the install column here, as it's the only one that
-		// is editable.
+		// We only care about the install column here, as it's the only one that is editable.
 		if (columnIndex != INSTALLED_COL) {
 			return;
 		}
 
-		// If the user does not have write permissions on the installation dir, they cannot
-		// install.
-		ResourceFile installDir =
-			Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
+		// If the user does not have write permissions on the installation dir, they cannot install.
+		List<ResourceFile> dirs = Application.getApplicationLayout().getExtensionInstallationDirs();
+		ResourceFile installDir = dirs.get(0);
 		if (!installDir.exists() && !installDir.mkdir()) {
 			Msg.showError(this, null, "Directory Error",
-				"Cannot install/uninstall extensions: Failed to create extension installation " +
-					"directory.\nSee the \"Ghidra Extension Notes\" section of the Ghidra " +
-					"Installation Guide for more information.");
+				"Cannot install/uninstall extensions: Failed to create installation directory.\n" +
+					"See the 'Ghidra Extension Notes' section of the Ghidra Installation Guide.");
 		}
 		if (!installDir.canWrite()) {
 			Msg.showError(this, null, "Permissions Error",
-				"Cannot install/uninstall extensions: Invalid write permissions on installation " +
-					"directory.\nSee the \"Ghidra Extension Notes\" section of the Ghidra " +
-					"Installation Guide for more information.");
+				"Cannot install/uninstall extensions: Cannot write to installation directory.\n" +
+					"See the 'Ghidra Extension Notes' section of the Ghidra Installation Guide.");
 			return;
 		}
 
@@ -165,8 +162,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 		// This is a programming error
 		Msg.error(this,
-			"Unable install an extension that no longer exists. Restart Ghidra and " +
-				"try manually installing the extension: '" + extension.getName() + "'");
+			"Unable install an extension that no longer exists.\n" +
+				"Restart Ghidra and try manually installing the extension: '" +
+				extension.getName() + "'");
 	}
 
 	/**
@@ -187,7 +185,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	}
 
 	@Override
-	protected void doLoad(Accumulator<ExtensionDetails> accumulator, TaskMonitor monitor)
+	protected void doLoad(Accumulator<ExtensionRowObject> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		if (extensions != null) {
 			accumulator.addAll(extensions);
@@ -196,22 +194,29 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 		ExtensionUtils.reload();
 		Set<ExtensionDetails> archived = ExtensionUtils.getArchiveExtensions();
-		Set<ExtensionDetails> installed = ExtensionUtils.getInstalledExtensions();
-
-		// don't show archived extensions that have been installed
-		for (ExtensionDetails extension : installed) {
-			if (archived.remove(extension)) {
-				Msg.trace(this,
-					"Not showing archived extension that has been installed.  Archive path: " +
-						extension.getArchivePath()); // useful for debugging
-			}
-		}
+		Set<ExtensionInstallationInfo> installed = ExtensionInstallationInfo.get();
 
 		extensions = new HashSet<>();
-		extensions.addAll(installed);
-		extensions.addAll(archived);
 
-		for (ExtensionDetails e : extensions) {
+		// don't show archived extensions that have been installed
+		for (ExtensionInstallationInfo info : installed) {
+
+			ExtensionDetails e = info.getExtension();
+			if (archived.remove(e)) {
+				Msg.trace(this,
+					"Not showing archived extension that has been installed.  Archive path: " +
+						e.getArchivePath()); // useful for debugging
+			}
+
+			extensions.add(new ExtensionRowObject(e, info));
+		}
+
+		for (ExtensionDetails e : archived) {
+			extensions.add(new ExtensionRowObject(e));
+		}
+
+		for (ExtensionRowObject ro : extensions) {
+			ExtensionDetails e = ro.getExtension();
 			String name = e.getName();
 			if (originalInstallStates.containsKey(name)) {
 				continue; // preserve the original value
@@ -229,7 +234,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 */
 	public boolean hasModelChanged() {
 
-		for (ExtensionDetails e : extensions) {
+		for (ExtensionRowObject ro : extensions) {
+			ExtensionDetails e = ro.getExtension();
 			Boolean wasInstalled = originalInstallStates.get(e.getName());
 			if (wasInstalled == null) {
 				return false;
@@ -248,7 +254,12 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * @param model the list to use as the model
 	 */
 	public void setModelData(List<ExtensionDetails> model) {
-		extensions = new HashSet<>(model);
+
+		extensions = new HashSet<>();
+		for (ExtensionDetails e : model) {
+			extensions.add(new ExtensionRowObject(e));
+		}
+
 		reload();
 	}
 
@@ -270,14 +281,18 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * @return the selected extension, or null if nothing is selected
 	 */
 	private ExtensionDetails getSelectedExtension(int row) {
-		return getRowObject(row);
+		ExtensionRowObject ro = getRowObject(row);
+		if (ro != null) {
+			return ro.getExtension();
+		}
+		return null;
 	}
 
 	/**
 	 * Table column for displaying the extension name.
 	 */
 	private class ExtensionNameColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
+			extends AbstractDynamicTableColumn<ExtensionRowObject, String, Object> {
 
 		private ExtRenderer renderer = new ExtRenderer();
 
@@ -292,9 +307,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+		public String getValue(ExtensionRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			return rowObject.getName();
+			return rowObject.getExtension().getName();
 		}
 
 		@Override
@@ -307,7 +322,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * Table column for displaying the extension description.
 	 */
 	private class ExtensionDescriptionColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
+			extends AbstractDynamicTableColumn<ExtensionRowObject, String, Object> {
 
 		private ExtRenderer renderer = new ExtRenderer();
 
@@ -322,9 +337,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+		public String getValue(ExtensionRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			return rowObject.getDescription();
+			return rowObject.getExtension().getDescription();
 		}
 
 		@Override
@@ -337,7 +352,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * Table column for displaying the extension description.
 	 */
 	private class ExtensionVersionColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
+			extends AbstractDynamicTableColumn<ExtensionRowObject, String, Object> {
 
 		private ExtRenderer renderer = new ExtRenderer();
 
@@ -352,10 +367,10 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+		public String getValue(ExtensionRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
 
-			String version = rowObject.getVersion();
+			String version = rowObject.getExtension().getVersion();
 
 			// Check for the default version value. If this is still set, then no version has been
 			// established so just display an empty string.
@@ -376,7 +391,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * Table column for displaying the extension installation status.
 	 */
 	private class ExtensionInstalledColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, Boolean, Object> {
+			extends AbstractDynamicTableColumn<ExtensionRowObject, Boolean, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -389,9 +404,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public Boolean getValue(ExtensionDetails rowObject, Settings settings, Object data,
+		public Boolean getValue(ExtensionRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			return rowObject.isInstalled();
+			return rowObject.getExtension().isInstalled();
 		}
 	}
 
@@ -399,7 +414,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * Table column for displaying the extension installation directory.
 	 */
 	private class ExtensionInstallationDirColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
+			extends AbstractDynamicTableColumn<ExtensionRowObject, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -412,9 +427,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+		public String getValue(ExtensionRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			return rowObject.getInstallPath();
+			return rowObject.getExtension().getInstallPath();
 		}
 	}
 
@@ -422,7 +437,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * Table column for displaying the extension archive file.
 	 */
 	private class ExtensionArchiveFileColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
+			extends AbstractDynamicTableColumn<ExtensionRowObject, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -435,9 +450,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+		public String getValue(ExtensionRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			return rowObject.getArchivePath();
+			return rowObject.getExtension().getArchivePath();
 		}
 	}
 

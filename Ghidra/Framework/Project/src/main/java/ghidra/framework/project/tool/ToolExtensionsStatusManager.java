@@ -25,6 +25,7 @@ import org.jdom2.Element;
 
 import ghidra.util.NumericUtilities;
 import ghidra.util.Swing;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.xml.XmlUtilities;
 
 /**
@@ -39,7 +40,7 @@ class ToolExtensionsStatusManager {
 	private static final String XML_ATTR_EXTENSION_NAME = "NAME";
 	private static final String XML_ATTR_EXTENSION_PLUGIN_CLASS = "CLASS";
 
-	private Set<Class<?>> newExtensionPlugins = new HashSet<>();
+	private Set<ClassFileInfo> newExtensionPlugins = new HashSet<>();
 	private ExtensionsEnabledState extensionsState;
 
 	ToolExtensionsStatusManager(ExtensionsEnabledState extensionState) {
@@ -60,21 +61,21 @@ class ToolExtensionsStatusManager {
 
 	void saveToXml(Element xml) {
 
-		Map<String, Set<Class<?>>> pluginsByExtension =
+		Map<String, Set<ClassFileInfo>> pluginsByExtension =
 			extensionsState.getAllKnownExtensions();
 		Element extensionsParent = new Element(XML_TAG_EXTENSIONS);
 
-		Set<Entry<String, Set<Class<?>>>> entries = pluginsByExtension.entrySet();
-		for (Entry<String, Set<Class<?>>> entry : entries) {
+		Set<Entry<String, Set<ClassFileInfo>>> entries = pluginsByExtension.entrySet();
+		for (Entry<String, Set<ClassFileInfo>> entry : entries) {
 			String name = entry.getKey();
 
 			Element extensionsElement = new Element(XML_TAG_EXTENSION);
 			setExtensionName(extensionsElement, name);
 			extensionsParent.addContent(extensionsElement);
 
-			Set<Class<?>> plugins = entry.getValue();
-			for (Class<?> clazz : plugins) {
-				String className = clazz.getName();
+			Set<ClassFileInfo> infos = entry.getValue();
+			for (ClassFileInfo info : infos) {
+				String className = info.name();
 				Element pluginElement = new Element(XML_TAG_PLUGIN);
 				pluginElement.setAttribute(XML_ATTR_EXTENSION_PLUGIN_CLASS, className);
 				extensionsElement.addContent(pluginElement);
@@ -98,7 +99,7 @@ class ToolExtensionsStatusManager {
 		 	
 		 	5) Save the new extension plugins for later user prompting when saving to xml.
 		 */
-		Map<String, Set<Class<?>>> extensionPlugins = extensionsState.getAllKnownExtensions();
+		Map<String, Set<ClassFileInfo>> extensionPlugins = extensionsState.getAllKnownExtensions();
 		Map<String, ExtensionMemento> xmlMementosByName = getKnownExtensions(xml);
 		Set<String> names = extensionPlugins.keySet();
 		Set<String> newExtensions = new HashSet<>(names);
@@ -115,7 +116,7 @@ class ToolExtensionsStatusManager {
 			}
 		}
 
-		Set<Class<?>> newPlugins = newExtensions.stream()
+		Set<ClassFileInfo> newPlugins = newExtensions.stream()
 				.map(name -> extensionPlugins.get(name)) // classes by extension name
 				.flatMap(set -> set.stream())		     // map all sets to a single stream
 				.collect(Collectors.toSet());
@@ -129,19 +130,19 @@ class ToolExtensionsStatusManager {
 	}
 
 	private static boolean hasNewPlugins(ExtensionMemento xmlMemento,
-			Map<String, Set<Class<?>>> pluginsByExtensionName) {
+			Map<String, Set<ClassFileInfo>> pluginsByExtensionName) {
 
 		// If the xml memento is empty, it is either the old style xml that did not save plugin 
 		// names or is the new style xml, but the extension did not previously have any plugins. In
 		// this case, we want to prompt the user if there are plugins to install.
 		Set<String> xmlClassNames = xmlMemento.pluginClassNames();
-		Set<Class<?>> cpPluginClasses = pluginsByExtensionName.get(xmlMemento.name());
+		Set<ClassFileInfo> cpPluginClasses = pluginsByExtensionName.get(xmlMemento.name());
 		if (xmlClassNames.isEmpty() && !cpPluginClasses.isEmpty()) {
 			return true;
 		}
 
 		List<String> cpNames = cpPluginClasses.stream()
-				.map(c -> c.getName())
+				.map(c -> c.name())
 				.collect(Collectors.toList());
 
 		cpNames.removeAll(xmlClassNames);
