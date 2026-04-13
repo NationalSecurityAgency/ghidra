@@ -168,10 +168,9 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	 */
 	public boolean isInExtension() {
 		String myPath = getSourceLocation();
-		ResourceFile myLocation = new ResourceFile(myPath);
 		ApplicationLayout layout = Application.getApplicationLayout();
 		List<ResourceFile> extDirs = layout.getExtensionInstallationDirs();
-		return FileUtilities.isPathContainedWithin(extDirs, myLocation);
+		return FileUtilities.startsWith(extDirs, myPath);
 	}
 
 	/**

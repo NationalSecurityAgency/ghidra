@@ -398,11 +398,11 @@ public class ModuleUtilities {
 	 *   directory
 	 */
 	public static boolean isExternalModule(GModule module, ApplicationLayout layout) {
-		File moduleRootDir = module.getModuleRoot().getFile(false);
+		String moduleRootPath = module.getModuleRoot().getFile(false).getAbsolutePath();
 		return !layout.getApplicationRootDirs()
 				.stream()
-				.map(dir -> dir.getParentFile().getFile(false))
-				.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir, moduleRootDir));
+				.map(rootDir -> rootDir.getParentFile().getFile(false).getAbsolutePath())
+				.anyMatch(appPath -> FileUtilities.startsWith(appPath, moduleRootPath));
 	}
 
 	/**
