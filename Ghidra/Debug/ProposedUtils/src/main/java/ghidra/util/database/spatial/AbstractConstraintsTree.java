@@ -874,27 +874,31 @@ public abstract class AbstractConstraintsTree<
 	 * {@link #checkDataIntegrity(DBTreeDataRecord)} instead of this method.
 	 */
 	public void checkIntegrity() {
-		// Before we visit, integrity check that cache. Visiting will affect cache.
-		for (Entry<Long, Collection<DR>> ent : cachedDataChildren.entrySet()) {
-			Set<DR> databasedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
-			// NOTE: Bypass the cache by using the variant with a key parameter
-			databasedChildren.addAll(getDataChildrenOf(ent.getKey()));
-			Set<DR> cachedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
-			cachedChildren.addAll(ent.getValue());
-			if (!databasedChildren.equals(cachedChildren)) {
-				throw new AssertionError("Cached children of node " + ent.getKey() +
-					" out of sync: cache=" + cachedChildren + " db=" + databasedChildren);
+		synchronized (cachedDataChildren) {
+			// Before we visit, integrity check that cache. Visiting will affect cache.
+			for (Entry<Long, Collection<DR>> ent : cachedDataChildren.entrySet()) {
+				Set<DR> databasedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
+				// NOTE: Bypass the cache by using the variant with a key parameter
+				databasedChildren.addAll(getDataChildrenOf(ent.getKey()));
+				Set<DR> cachedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
+				cachedChildren.addAll(ent.getValue());
+				if (!databasedChildren.equals(cachedChildren)) {
+					throw new AssertionError("Cached children of node " + ent.getKey() +
+						" out of sync: cache=" + cachedChildren + " db=" + databasedChildren);
+				}
 			}
 		}
-		for (Entry<Long, Collection<NR>> ent : cachedNodeChildren.entrySet()) {
-			Set<NR> databasedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
-			// NOTE: Bypass the cache by using the variant with a key parameter
-			databasedChildren.addAll(getNodeChildrenOf(ent.getKey()));
-			Set<NR> cachedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
-			cachedChildren.addAll(ent.getValue());
-			if (!databasedChildren.equals(cachedChildren)) {
-				throw new AssertionError("Cached children of node " + ent.getKey() +
-					" out of sync: cache=" + cachedChildren + " db=" + databasedChildren);
+		synchronized (cachedNodeChildren) {
+			for (Entry<Long, Collection<NR>> ent : cachedNodeChildren.entrySet()) {
+				Set<NR> databasedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
+				// NOTE: Bypass the cache by using the variant with a key parameter
+				databasedChildren.addAll(getNodeChildrenOf(ent.getKey()));
+				Set<NR> cachedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
+				cachedChildren.addAll(ent.getValue());
+				if (!databasedChildren.equals(cachedChildren)) {
+					throw new AssertionError("Cached children of node " + ent.getKey() +
+						" out of sync: cache=" + cachedChildren + " db=" + databasedChildren);
+				}
 			}
 		}
 		visit(null, new TreeRecordVisitor() {

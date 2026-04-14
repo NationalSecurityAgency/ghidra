@@ -236,7 +236,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	@Override
 	public String[] getPath() {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			checkIsValid();
+			refreshIfNeeded();
 			if (isGlobal()) {
 				return new String[] { getName() };
 			}

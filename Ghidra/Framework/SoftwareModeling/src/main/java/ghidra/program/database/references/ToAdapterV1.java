@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 
 import db.*;
 import db.util.ErrorHandler;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.*;
 import ghidra.program.model.address.*;
@@ -65,20 +64,19 @@ class ToAdapterV1 extends ToAdapter {
 	}
 
 	@Override
-	public RefList createRefList(ProgramDB program, DBObjectCache<RefList> cache, Address to)
+	public RefList createRefList(ProgramDB program, Address to)
 			throws IOException {
-		return new RefListV0(to, this, addrMap, program, cache, false);
+		return RefListV0.createNew(to, this, addrMap, program, false);
 	}
 
 	@Override
-	public RefList getRefList(ProgramDB program, DBObjectCache<RefList> cache, Address to,
-			long toAddr) throws IOException {
+	public RefList getRefList(ProgramDB program, Address to, long toAddr) throws IOException {
 		DBRecord rec = table.getRecord(toAddr);
 		if (rec != null) {
 			if (rec.getBinaryData(REF_DATA_COL) == null) {
-				return new BigRefListV0(rec, this, addrMap, program, cache, false);
+				return BigRefListV0.createExisting(rec, this, addrMap, program, false);
 			}
-			return new RefListV0(rec, this, addrMap, program, cache, false);
+			return RefListV0.instantiateExisting(rec, this, addrMap, program, false);
 		}
 		return null;
 	}

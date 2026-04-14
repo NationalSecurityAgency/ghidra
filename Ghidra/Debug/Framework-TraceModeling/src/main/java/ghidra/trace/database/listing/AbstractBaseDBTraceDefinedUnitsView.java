@@ -65,13 +65,13 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		}
 
 		@Override
-		protected void loadRangeCache(TraceAddressSnapRange range) {
+		protected synchronized void loadRangeCache(TraceAddressSnapRange range) {
 			rangeCache.addAll(
 				mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range)).entries());
 		}
 
 		@Override
-		protected T doGetContaining(GetKey key) {
+		protected synchronized T doGetContaining(GetKey key) {
 			ensureInCachedRange(key.snap, key.addr);
 			return getFirstInRangeCacheContaining(key);
 		}
@@ -87,14 +87,15 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		}
 
 		@Override
-		protected void loadCachedRegion(CachedRegion region) {
+		protected synchronized void loadCachedRegion(CachedRegion region) {
 			region.load(new ArrayList<>(
 				mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(region.min, region.max,
 					region.snap, region.snap)).entries()));
 		}
 
 		@Override
-		protected Entry<TraceAddressSnapRange, T> doFloorEntry(long snap, Address max) {
+		protected synchronized Entry<TraceAddressSnapRange, T> doFloorEntry(long snap,
+				Address max) {
 			Address spaceMin = space.space.getMinAddress();
 			return mapSpace
 					.reduce(TraceAddressSnapRangeQuery.intersecting(spaceMin, max, snap, snap)
@@ -103,7 +104,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		}
 
 		@Override
-		protected Entry<TraceAddressSnapRange, T> doCeilingEntry(long snap, Address min) {
+		protected synchronized Entry<TraceAddressSnapRange, T> doCeilingEntry(long snap,
+				Address min) {
 			Address spaceMax = space.space.getMaxAddress();
 			return mapSpace
 					.reduce(TraceAddressSnapRangeQuery.intersecting(min, spaceMax, snap, snap))

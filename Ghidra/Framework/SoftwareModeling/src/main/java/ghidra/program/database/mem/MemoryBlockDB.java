@@ -27,6 +27,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.AssertException;
 
@@ -107,7 +108,8 @@ public class MemoryBlockDB implements MemoryBlock {
 	 * @return collection of blocks which map onto this block or null if none identified
 	 */
 	Collection<MemoryBlockDB> getMappedBlocks() {
-		memMap.buildAddressSets(false); // updates mappedBlocks if needed
+		// this call will force mapped blocks to be rebuilt if out of date
+		memMap.getMemoryAddressSetViews();
 		return mappedBlocks;
 	}
 
@@ -177,8 +179,7 @@ public class MemoryBlockDB implements MemoryBlock {
 	@Override
 	public void setName(String name) throws LockException {
 		String oldName = getName();
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			if (oldName.equals(name)) {
 				return;
@@ -193,9 +194,6 @@ public class MemoryBlockDB implements MemoryBlock {
 			}
 			memMap.fireBlockChanged(this);
 		}
-		finally {
-			memMap.lock.release();
-		}
 	}
 
 	@Override
@@ -205,8 +203,7 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setComment(String comment) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			try {
 				record.setString(MemoryMapDBAdapter.COMMENTS_COL, comment);
@@ -217,9 +214,6 @@ public class MemoryBlockDB implements MemoryBlock {
 				memMap.dbError(e);
 			}
 		}
-		finally {
-			memMap.lock.release();
-		}
 	}
 
 	@Override
@@ -229,15 +223,11 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setRead(boolean r) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			if (setFlagBit(READ, r)) {
 				memMap.fireBlockChanged(this);
 			}
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -248,15 +238,11 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setWrite(boolean w) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			if (setFlagBit(WRITE, w)) {
 				memMap.fireBlockChanged(this);
 			}
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -267,23 +253,18 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setExecute(boolean x) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			if (setFlagBit(EXECUTE, x)) {
 				memMap.blockExecuteChanged(this);
 				memMap.fireBlockChanged(this);
 			}
 		}
-		finally {
-			memMap.lock.release();
-		}
 	}
 
 	@Override
 	public void setPermissions(boolean read, boolean write, boolean execute) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			boolean changed = setFlagBit(READ, read);
 			changed |= setFlagBit(WRITE, write);
@@ -292,9 +273,6 @@ public class MemoryBlockDB implements MemoryBlock {
 				memMap.blockExecuteChanged(this);
 				memMap.fireBlockChanged(this);
 			}
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -305,15 +283,11 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setVolatile(boolean v) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			if (setFlagBit(VOLATILE, v)) {
 				memMap.fireBlockChanged(this);
 			}
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -324,15 +298,11 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setArtificial(boolean a) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			if (setFlagBit(ARTIFICIAL, a)) {
 				memMap.fireBlockChanged(this);
 			}
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -343,8 +313,7 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public void setSourceName(String sourceName) {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			try {
 				record.setString(MemoryMapDBAdapter.SOURCE_COL, sourceName);
@@ -354,9 +323,6 @@ public class MemoryBlockDB implements MemoryBlock {
 				memMap.dbError(e);
 			}
 			memMap.fireBlockChanged(this);
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -383,15 +349,11 @@ public class MemoryBlockDB implements MemoryBlock {
 	@Override
 	public void putByte(Address addr, byte b) throws MemoryAccessException {
 		long offset = getBlockOffset(addr);
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			memMap.checkMemoryWrite(this, addr, 1);
 			putByte(offset, b);
 			memMap.fireBytesChanged(addr, 1);
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -403,8 +365,7 @@ public class MemoryBlockDB implements MemoryBlock {
 	@Override
 	public int putBytes(Address addr, byte[] b, int off, int len)
 			throws IndexOutOfBoundsException, MemoryAccessException {
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			checkValid();
 			memMap.checkMemoryWrite(this, addr, len);
 
@@ -413,9 +374,6 @@ public class MemoryBlockDB implements MemoryBlock {
 
 			memMap.fireBytesChanged(addr, n);
 			return n;
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
@@ -527,15 +485,11 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	private void putByte(long offset, byte b) throws MemoryAccessException {
 		SubMemoryBlock subBlock = getSubBlock(offset);
-		memMap.lock.acquire();
-		try {
+		try (Closeable c = memMap.lock.write()) {
 			subBlock.putByte(offset, b);
 		}
 		catch (IOException e) {
 			memMap.dbError(e);
-		}
-		finally {
-			memMap.lock.release();
 		}
 	}
 
