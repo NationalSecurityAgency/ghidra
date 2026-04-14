@@ -23,9 +23,9 @@ import java.util.function.Consumer;
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
@@ -42,16 +42,14 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * Constructor for a composite data type (structure or union).
 	 * 
 	 * @param dataMgr          the data type manager containing this data type.
-	 * @param cache            DataTypeDB object cache
 	 * @param compositeAdapter the database adapter for this data type.
 	 * @param componentAdapter the database adapter for the components of this data
 	 *                         type.
 	 * @param record           the database record for this data type.
 	 */
-	CompositeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			CompositeDBAdapter compositeAdapter, ComponentDBAdapter componentAdapter,
-			DBRecord record) {
-		super(dataMgr, cache, record);
+	protected CompositeDB(DataTypeManagerDB dataMgr, CompositeDBAdapter compositeAdapter,
+			ComponentDBAdapter componentAdapter, DBRecord record) {
+		super(dataMgr, record);
 		this.compositeAdapter = compositeAdapter;
 		this.componentAdapter = componentAdapter;
 		initialize();
@@ -113,8 +111,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * @return updated component instance
 	 */
 	protected DataTypeComponentDB setFieldName(DataTypeComponentDB component, String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (component.getRecord() == null) {
 				return component; // unable to change undefined component
@@ -130,9 +127,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return component; // unchanged
 	}
 
@@ -145,8 +139,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * @return updated component instance
 	 */
 	protected DataTypeComponentDB setComment(DataTypeComponentDB component, String comment) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (component.getRecord() == null) {
 				return component; // unable to change undefined component
@@ -161,9 +154,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return component; // unchanged
 	}
@@ -316,8 +306,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public void setDescription(String desc) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (Objects.equals(desc, record.getString(CompositeDBAdapter.COMPOSITE_COMMENT_COL))) {
 				return;
@@ -329,21 +318,14 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public String getDescription() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			String s = record.getString(CompositeDBAdapter.COMPOSITE_COMMENT_COL);
 			return s == null ? "" : s;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -409,13 +391,9 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public boolean isPartOf(DataType dataTypeOfInterest) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return DataTypeUtilities.isSecondPartOfFirst(this, dataTypeOfInterest);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -499,8 +477,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public void setLastChangeTime(long lastChangeTime) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			doSetLastChangeTime(lastChangeTime);
 			dataMgr.dataTypeChanged(this, false);
@@ -508,15 +485,11 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void setLastChangeTimeInSourceArchive(long lastChangeTime) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_SOURCE_SYNC_TIME_COL, lastChangeTime);
 			compositeAdapter.updateRecord(record, false);
@@ -524,9 +497,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -537,8 +507,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	void setUniversalID(UniversalID id) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_UNIVERSAL_DT_ID, id.getValue());
 			compositeAdapter.updateRecord(record, false);
@@ -546,9 +515,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 
 	}
@@ -561,8 +527,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	protected void setSourceArchiveID(UniversalID id) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_SOURCE_ARCHIVE_ID_COL, id.getValue());
 			compositeAdapter.updateRecord(record, false);
@@ -571,10 +536,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	protected final int getNonPackedAlignment() {
@@ -602,24 +563,16 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public final int getAlignment() {
-		lock.acquire();
-		try {
-			return getComputedAlignment(checkIsValid() && dataMgr.isTransactionActive());
-		}
-		finally {
-			lock.release();
+		try (Closeable c = lock.read()) {
+			return getComputedAlignment(refreshIfNeeded() && dataMgr.isTransactionActive());
 		}
 	}
 
 	@Override
 	public final void repack() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			repack(false, true);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -644,13 +597,9 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public int getStoredPackingValue() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return record.getIntValue(CompositeDBAdapter.COMPOSITE_PACKING_COL);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -689,8 +638,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		if (packingValue < NO_PACKING) {
 			throw new IllegalArgumentException("invalid packing value: " + packingValue);
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			int oldPackingValue = getStoredPackingValue();
 			if (packingValue == oldPackingValue) {
@@ -708,9 +656,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -743,13 +688,9 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public int getStoredMinimumAlignment() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return record.getIntValue(CompositeDBAdapter.COMPOSITE_MIN_ALIGN_COL);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -767,8 +708,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 			throw new IllegalArgumentException(
 				"invalid minimum alignment value: " + minimumAlignment);
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (minimumAlignment == getStoredMinimumAlignment()) {
 				return;
@@ -781,9 +721,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

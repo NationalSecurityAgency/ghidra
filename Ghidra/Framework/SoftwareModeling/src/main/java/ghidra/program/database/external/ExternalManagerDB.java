@@ -36,6 +36,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -198,28 +199,20 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	public ExternalLocation addExtLocation(String extLibraryName, String extLabel, Address extAddr,
 			SourceType sourceType) throws InvalidInputException, DuplicateNameException {
 		SourceType locSourceType = checkExternalLabel(extLabel, extAddr, sourceType);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Library libraryScope = getLibraryScope(extLibraryName);
 			if (libraryScope == null) {
 				libraryScope = addExternalName(extLibraryName, null, sourceType);
 			}
 			return addExtLocation(libraryScope, extLabel, extAddr, false, locSourceType, true);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
 			Address extAddr, SourceType sourceType) throws InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType, true);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -227,13 +220,9 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
 			Address extAddr, SourceType sourceType, boolean reuseExisting)
 			throws InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType,
 				reuseExisting);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -241,8 +230,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	public ExternalLocation addExtFunction(String extLibraryName, String extLabel, Address extAddr,
 			SourceType sourceType) throws InvalidInputException, DuplicateNameException {
 		SourceType locSourceType = checkExternalLabel(extLabel, extAddr, sourceType);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Library libraryScope = getLibraryScope(extLibraryName);
 			if (libraryScope == null) {
 				libraryScope = addExternalName(extLibraryName, null,
@@ -250,34 +238,22 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			}
 			return addExtLocation(libraryScope, extLabel, extAddr, true, locSourceType, true);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public ExternalLocation addExtFunction(Namespace extParentNamespace, String extLabel,
 			Address extAddr, SourceType sourceType) throws InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, true, sourceType, true);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
 			SourceType sourceType, boolean reuseExisting) throws InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			return addExtLocation(extNamespace, extLabel, extAddr, true, sourceType, reuseExisting);
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	private SourceType checkExternalLabel(String extLabel, Address extAddr, SourceType source)
@@ -322,8 +298,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 					"Memory address not defined for program: " + extAddr);
 			}
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (sourceType == SourceType.DEFAULT) {
 				extLabel = null;
 			}
@@ -367,9 +342,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		catch (IOException e) {
 			program.dbError(e); // will not return
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -563,8 +535,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		if (externalAddr.getAddressSpace() != AddressSpace.EXTERNAL_SPACE) {
 			throw new IllegalArgumentException("Expected external address");
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Symbol[] symbols = symbolMgr.getSymbols(externalAddr);
 			if (symbols.length == 1) {
 				return new ExternalLocationDB(this, (MemorySymbol) symbols[0]);
@@ -575,9 +546,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 						externalAddr);
 			}
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -601,16 +569,12 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	 * @return true if external location was successfully removed else false
 	 */
 	public boolean removeExternalLocation(Address externalAddr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			ExternalLocationDB loc = (ExternalLocationDB) getExtLocation(externalAddr);
 			if (loc != null) {
 				loc.getSymbol().delete();
 				return true;
 			}
-		}
-		finally {
-			lock.release();
 		}
 		return false;
 	}
@@ -621,8 +585,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public boolean removeExternalLibrary(String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Symbol s = symbolMgr.getLibrarySymbol(name);
 			if (s != null) {
 				if (symbolMgr.getChildren(s).hasNext()) {
@@ -630,9 +593,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 				}
 				s.delete();
 			}
-		}
-		finally {
-			lock.release();
 		}
 		return true;
 	}
@@ -649,16 +609,12 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	@Override
 	public Library addExternalLibraryName(String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Symbol librarySymbol = symbolMgr.getLibrarySymbol(name);
 			if (librarySymbol != null) {
 				return (Library) librarySymbol.getObject();
 			}
 			return addExternalName(name, null, source);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -718,8 +674,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 		validateExternalPath(externalPath);
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			LibrarySymbol s = symbolMgr.getLibrarySymbol(externalName);
 			if (s == null) {
 				try {
@@ -733,9 +688,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			else {
 				s.setExternalLibraryPath(externalPath);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -755,8 +707,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		if (extLoc.isFunction()) {
 			return extLoc.getFunction();
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			SymbolDB symbol = (SymbolDB) extLoc.getSymbol();
 			if (!(symbol instanceof CodeSymbol)) {
 				throw new IllegalStateException("Expected external code symbol");
@@ -775,9 +726,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Unexpected exception", e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

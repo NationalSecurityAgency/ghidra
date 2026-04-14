@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,13 @@ import static ghidra.feature.fid.db.FunctionsTable.*;
 
 import db.DBRecord;
 import ghidra.feature.fid.hash.FidHashQuad;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.util.NumericUtilities;
 
 /**
  * Represents a function record in the FID database.
  */
-public class FunctionRecord extends DatabaseObject implements FidHashQuad {
+public class FunctionRecord extends DbObject implements FidHashQuad {
 	public final static int HAS_TERMINATOR_FLAG = 1;
 	public final static int AUTO_PASS_FLAG = 2;
 	public final static int AUTO_FAIL_FLAG = 4;
@@ -46,11 +45,10 @@ public class FunctionRecord extends DatabaseObject implements FidHashQuad {
 	/**
 	 * Package private constructor, to be called from FunctionsTable exclusively.
 	 * @param fid database (for string references)
-	 * @param cache FunctionRecord object cache
 	 * @param record record for this function
 	 */
-	FunctionRecord(FidDB fid, DBObjectCache<FunctionRecord> cache, DBRecord record) {
-		super(cache, record.getKey());
+	FunctionRecord(FidDB fid, DBRecord record) {
+		super(record.getKey());
 		this.record = record;
 		this.fidDb = fid;
 	}
@@ -169,6 +167,7 @@ public class FunctionRecord extends DatabaseObject implements FidHashQuad {
 		byte val = record.getByteValue(FLAGS_COL);
 		return ((val & FORCE_RELATION_FLAG) != 0);
 	}
+
 	/**
 	 * Returns the record id (primary key).
 	 * @return the record id

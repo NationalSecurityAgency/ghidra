@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.data;
 
-import java.util.LinkedHashMap;
-import java.util.Objects;
+import java.util.*;
 
 import ghidra.util.datastruct.FixedSizeHashMap;
 
@@ -46,14 +45,14 @@ class SettingsCache<K> {
 		}
 	}
 
-	private LinkedHashMap<IdNamePair, SettingDB> map;
+	private Map<IdNamePair, SettingDB> map;
 
 	/**
 	 * Construct settings cache of a specified size
 	 * @param size cache size (maximum number of entries held)
 	 */
 	SettingsCache(int size) {
-		map = new FixedSizeHashMap<>(size, size);
+		map = Collections.synchronizedMap(new FixedSizeHashMap<>(size, size));
 	}
 
 	/**

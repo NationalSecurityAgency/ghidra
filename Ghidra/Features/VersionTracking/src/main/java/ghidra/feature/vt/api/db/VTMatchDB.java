@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,14 +23,14 @@ import db.DBRecord;
 import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
 import ghidra.feature.vt.api.main.*;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.address.Address;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 
-public class VTMatchDB extends DatabaseObject implements VTMatch {
+public class VTMatchDB extends DbObject implements VTMatch {
 
 	private DBRecord record;
 	private final VTMatchSetDB matchSet;
@@ -42,8 +42,8 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 	private boolean doCalculateHash = true;
 	private int hash;
 
-	public VTMatchDB(DBObjectCache<VTMatchDB> cache, DBRecord record, VTMatchSetDB matchSet) {
-		super(cache, record.getKey());
+	public VTMatchDB(DBRecord record, VTMatchSetDB matchSet) {
+		super(record.getKey());
 		this.record = record;
 		this.matchSet = matchSet;
 		session = (VTSessionDB) matchSet.getSession();
@@ -105,8 +105,7 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 
 	@Override
 	public void setTag(VTMatchTag tag) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (record == null) {
 				return;
@@ -127,9 +126,6 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 			updateRecord();
 			session.setObjectChanged(VTEvent.MATCH_TAG_CHANGED, this, oldTag, newTagDB);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	private VTAssociation loadAssociation() {
@@ -145,15 +141,11 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 
 	@Override
 	public VTAssociation getAssociation() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (association == null) {
 				association = loadAssociation();
 			}
-		}
-		finally {
-			lock.release();
 		}
 		return association;
 	}

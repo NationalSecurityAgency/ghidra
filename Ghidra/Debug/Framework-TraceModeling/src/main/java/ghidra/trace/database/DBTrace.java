@@ -286,7 +286,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceAddressPropertyManager createAddressPropertyManager(
 			DBTraceThreadManager threadManager) throws CancelledException, IOException {
 		return createTraceManager("Address Property Manager",
-			(openMode, monitor) -> new DBTraceAddressPropertyManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceAddressPropertyManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager));
 	}
 
@@ -294,7 +294,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceBookmarkManager createBookmarkManager(DBTraceThreadManager threadManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Bookmark Manager",
-			(openMode, monitor) -> new DBTraceBookmarkManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceBookmarkManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager));
 	}
 
@@ -302,7 +302,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceBreakpointManager createBreakpointManager(DBTraceObjectManager objectManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Breakpoint Manager",
-			(openMode, monitor) -> new DBTraceBreakpointManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceBreakpointManager(dbh, openMode, lock, monitor,
 				this, objectManager));
 	}
 
@@ -312,7 +312,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			DBTraceOverlaySpaceAdapter overlayAdapter, DBTraceReferenceManager referenceManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Code Manager",
-			(openMode, monitor) -> new DBTraceCodeManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceCodeManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager, platformManager, dataTypeManager, overlayAdapter,
 				referenceManager));
 	}
@@ -321,7 +321,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceCommentAdapter createCommentAdapter(DBTraceThreadManager threadManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Comment Adapter",
-			(openMode, monitor) -> new DBTraceCommentAdapter(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceCommentAdapter(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager));
 	}
 
@@ -329,7 +329,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceDataSettingsAdapter createDataSettingsAdapter(
 			DBTraceThreadManager threadManager) throws CancelledException, IOException {
 		return createTraceManager("Data Settings Adapter",
-			(openMode, monitor) -> new DBTraceDataSettingsAdapter(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceDataSettingsAdapter(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager));
 	}
 
@@ -337,7 +337,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceDataTypeManager createDataTypeManager(DBTracePlatformManager platformManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Data Type Manager", (openMode,
-				monitor) -> new DBTraceDataTypeManager(dbh, openMode, rwLock, monitor, this,
+				monitor) -> new DBTraceDataTypeManager(dbh, openMode, lock, monitor, this,
 					platformManager.getHostPlatform()));
 	}
 
@@ -345,7 +345,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceEquateManager createEquateManager(DBTraceThreadManager threadManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Equate Manager",
-			(openMode, monitor) -> new DBTraceEquateManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceEquateManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager));
 	}
 
@@ -353,7 +353,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTracePlatformManager createPlatformManager()
 			throws CancelledException, IOException {
 		return createTraceManager("Platform Manager",
-			(openMode, monitor) -> new DBTracePlatformManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTracePlatformManager(dbh, openMode, lock, monitor,
 				baseCompilerSpec, this));
 	}
 
@@ -361,7 +361,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceMemoryManager createMemoryManager(DBTraceThreadManager threadManager,
 			DBTraceOverlaySpaceAdapter overlayAdapter) throws IOException, CancelledException {
 		return createTraceManager("Memory Manager",
-			(openMode, monitor) -> new DBTraceMemoryManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceMemoryManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager, overlayAdapter));
 	}
 
@@ -369,14 +369,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceModuleManager createModuleManager(DBTraceObjectManager objectManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Module Manager",
-			(openMode, monitor) -> new DBTraceModuleManager(dbh, openMode, rwLock, monitor, this,
+			(openMode, monitor) -> new DBTraceModuleManager(dbh, openMode, lock, monitor, this,
 				objectManager));
 	}
 
 	@DependentService
 	protected DBTraceObjectManager createObjectManager() throws CancelledException, IOException {
 		return createTraceManager("Object Manager",
-			(openMode, monitor) -> new DBTraceObjectManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceObjectManager(dbh, openMode, lock, monitor,
 				baseLanguage, this));
 	}
 
@@ -384,14 +384,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceOverlaySpaceAdapter createOverlaySpaceAdapter()
 			throws CancelledException, IOException {
 		return createTraceManager("Overlay Space Adapter", (openMode,
-				monitor) -> new DBTraceOverlaySpaceAdapter(dbh, openMode, rwLock, monitor, this));
+				monitor) -> new DBTraceOverlaySpaceAdapter(dbh, openMode, lock, monitor, this));
 	}
 
 	@DependentService
 	protected DBTraceReferenceManager createReferenceManager(DBTraceThreadManager threadManager,
 			DBTraceOverlaySpaceAdapter overlayAdapter) throws CancelledException, IOException {
 		return createTraceManager("Reference Manager",
-			(openMode, monitor) -> new DBTraceReferenceManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceReferenceManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager, overlayAdapter));
 	}
 
@@ -400,7 +400,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			DBTraceThreadManager threadManager, DBTracePlatformManager platformManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Context Manager",
-			(openMode, monitor) -> new DBTraceRegisterContextManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceRegisterContextManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager, platformManager));
 	}
 
@@ -408,7 +408,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceStackManager createStackManager(DBTraceThreadManager threadManager,
 			DBTraceOverlaySpaceAdapter overlayAdapter) throws CancelledException, IOException {
 		return createTraceManager("Stack Manager",
-			(openMode, monitor) -> new DBTraceStackManager(dbh, openMode, rwLock, monitor, this,
+			(openMode, monitor) -> new DBTraceStackManager(dbh, openMode, lock, monitor, this,
 				threadManager, overlayAdapter));
 	}
 
@@ -416,7 +416,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceStaticMappingManager createStaticMappingManager(
 			DBTraceOverlaySpaceAdapter overlayAdapter) throws CancelledException, IOException {
 		return createTraceManager("Static Mapping Manager",
-			(openMode, monitor) -> new DBTraceStaticMappingManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceStaticMappingManager(dbh, openMode, lock, monitor,
 				this, overlayAdapter));
 	}
 
@@ -425,7 +425,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			DBTraceDataTypeManager dataTypeManager, DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws CancelledException, IOException {
 		return createTraceManager("Symbol Manager",
-			(openMode, monitor) -> new DBTraceSymbolManager(dbh, openMode, rwLock, monitor,
+			(openMode, monitor) -> new DBTraceSymbolManager(dbh, openMode, lock, monitor,
 				baseLanguage, this, threadManager, dataTypeManager, overlayAdapter));
 	}
 
@@ -433,7 +433,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceThreadManager createThreadManager(DBTraceObjectManager objectManager)
 			throws IOException, CancelledException {
 		return createTraceManager("Thread Manager",
-			(openMode, monitor) -> new DBTraceThreadManager(dbh, openMode, rwLock, monitor, this,
+			(openMode, monitor) -> new DBTraceThreadManager(dbh, openMode, lock, monitor, this,
 				objectManager));
 	}
 
@@ -441,7 +441,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceTimeManager createTimeManager(DBTraceThreadManager threadManager)
 			throws IOException, CancelledException {
 		return createTraceManager("Time Manager", (openMode, monitor) -> new DBTraceTimeManager(dbh,
-			openMode, rwLock, monitor, this, threadManager));
+			openMode, lock, monitor, this, threadManager));
 	}
 
 	@Override
@@ -650,12 +650,12 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@Override
 	public LockHold lockRead() {
-		return LockHold.lock(rwLock.readLock());
+		return LockHold.lock(lock.readLock());
 	}
 
 	@Override
 	public LockHold lockWrite() {
-		return LockHold.lock(rwLock.writeLock());
+		return LockHold.lock(lock.writeLock());
 	}
 
 	public void sourceArchiveChanged(UniversalID sourceArchiveID) {
@@ -755,7 +755,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@Override
 	protected void clearCache(boolean all) {
-		try (LockHold hold = LockHold.lock(rwLock.writeLock())) {
+		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceManager m : managers) {
 				m.invalidateCache(all);
 			}

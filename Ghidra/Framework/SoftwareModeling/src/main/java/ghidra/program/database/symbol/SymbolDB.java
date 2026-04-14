@@ -21,7 +21,8 @@ import java.util.List;
 
 import db.DBRecord;
 import db.Field;
-import ghidra.program.database.*;
+import ghidra.program.database.DbObject;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.model.address.Address;
@@ -32,6 +33,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -39,7 +41,7 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Base class for symbols
  */
-public abstract class SymbolDB extends DatabaseObject implements Symbol {
+public abstract class SymbolDB extends DbObject implements Symbol {
 
 	private boolean isDeleting = false;
 
@@ -51,19 +53,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	private volatile String cachedName;
 	private volatile long cachedNameModCount;
 
-	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			DBRecord record) {
-		super(cache, record.getKey());
+	SymbolDB(SymbolManager symbolMgr, Address address, DBRecord record, long key) {
+		super(key);
 		this.symbolMgr = symbolMgr;
 		this.address = address;
 		this.record = record;
-		lock = symbolMgr.getLock();
-	}
-
-	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address, long key) {
-		super(cache, key);
-		this.symbolMgr = symbolMgr;
-		this.address = address;
 		lock = symbolMgr.getLock();
 	}
 
@@ -108,13 +102,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public Address getAddress() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return address;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -139,15 +129,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			return name;
 		}
 
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			cachedName = doGetName();
 			cachedNameModCount = symbolMgr.getProgram().getModificationNumber();
 			return cachedName;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -178,9 +164,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public String getName(boolean includeNamespace) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			String symName = getName();
 			if (includeNamespace) {
 				Namespace ns = getParentNamespace();
@@ -190,9 +175,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				}
 			}
 			return symName;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -210,17 +192,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public String[] getPath() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			ArrayList<String> list = new ArrayList<>();
 			fillListWithNamespacePath(getParentNamespace(), list);
 			list.add(getName());
 			String[] path = list.toArray(new String[list.size()]);
 			return path;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -239,8 +217,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 */
 	@Override
 	public void setSource(SourceType newSource) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			symbolMgr.validateSource(getName(), getAddress(), getSymbolType(), newSource);
 			SourceType oldSource = getSource();
@@ -258,9 +235,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				symbolMgr.symbolSourceChanged(this);
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	protected void setSourceFlagBits(SourceType newSource) {
@@ -274,17 +248,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public SourceType getSource() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return SourceType.DEFAULT;
 			}
 			byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
 			return SymbolDatabaseAdapter.decodeSourceTypeFromFlags(flags);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -322,8 +292,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			boolean checkForDuplicates)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			checkEditOK();
 
@@ -417,9 +386,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			else {
 				symbolMgr.convertDynamicSymbol(this, newName, newNamespace.getID(), source);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -530,47 +496,35 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public Symbol getParentSymbol() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return null;
 			}
 			return symbolMgr
 					.getSymbol(record.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL));
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	long getParentID() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return Namespace.GLOBAL_NAMESPACE_ID;
 			}
 			return record.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean isGlobal() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return true;
 			}
 			return record.getLongValue(
 				SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL) == Namespace.GLOBAL_NAMESPACE_ID;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -589,8 +543,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 * @param value the value to set as symbol data 1.
 	 */
 	public void setDataTypeId(long value) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (record != null) {
 				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL, value);
@@ -598,14 +551,10 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				symbolMgr.symbolDataChanged(this);
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	protected void doSetPrimary(boolean primary) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (record != null) {
 				if (primary) {
@@ -619,38 +568,28 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				symbolMgr.symbolDataChanged(this);
 			}
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	protected boolean doCheckIsPrimary() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record != null) {
 				return !record.getFieldValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL).isNull();
 			}
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean delete() {
-		lock.acquire();
 		isDeleting = true;
-		try {
-			if (checkIsValid() && record != null) {
+		try (Closeable c = lock.write()) {
+			if (refreshIfNeeded() && record != null) {
 				return symbolMgr.doRemoveSymbol(this);
 			}
 		}
 		finally {
 			isDeleting = false;
-			lock.release();
 		}
 		return false;
 	}

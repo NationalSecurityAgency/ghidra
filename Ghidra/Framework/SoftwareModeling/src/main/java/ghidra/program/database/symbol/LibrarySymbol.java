@@ -16,12 +16,12 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramEvent;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -39,11 +39,10 @@ public class LibrarySymbol extends SymbolDB {
 	/**
 	 * Constructs a new Library Symbol
 	 * @param symbolMgr the symbol manager
-	 * @param cache symbol object cache
 	 * @param record the record for this symbol
 	 */
-	public LibrarySymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, DBRecord record) {
-		super(symbolMgr, cache, Address.NO_ADDRESS, record);
+	LibrarySymbol(SymbolManager symbolMgr, DBRecord record) {
+		super(symbolMgr, Address.NO_ADDRESS, record, record.getKey());
 	}
 
 	@Override
@@ -90,18 +89,14 @@ public class LibrarySymbol extends SymbolDB {
 
 	@Override
 	public Library getObject() {
-		lock.acquire();
-		try {
-			if (!checkIsValid()) {
+		try (Closeable c = lock.read()) {
+			if (!refreshIfNeeded()) {
 				return null;
 			}
 			if (library == null) {
 				library = new LibraryDB(this, symbolMgr.getProgram().getNamespaceManager());
 			}
 			return library;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -132,16 +127,11 @@ public class LibrarySymbol extends SymbolDB {
 
 		String oldPath = getExternalLibraryPath();
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			setRecordFields(record, libraryPath);
 			updateRecord();
 		}
-		finally {
-			lock.release();
-		}
-
 		symbolMgr.getProgram()
 				.setObjChanged(ProgramEvent.EXTERNAL_PATH_CHANGED, getName(), oldPath, libraryPath);
 	}

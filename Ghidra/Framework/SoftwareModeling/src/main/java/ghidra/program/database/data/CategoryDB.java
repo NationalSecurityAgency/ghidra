@@ -21,19 +21,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import db.DBRecord;
 import db.Field;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Database implementation for Category.
  */
-class CategoryDB extends DatabaseObject implements Category {
+class CategoryDB extends DbObject implements Category {
 
 	private DataTypeManagerDB mgr;
 	private volatile CategoryDB parent;
@@ -47,14 +47,12 @@ class CategoryDB extends DatabaseObject implements Category {
 	/**
 	 * Category Constructor
 	 * @param dtMgr the data type manager
-	 * @param cache CategoryDB object cache
 	 * @param id the id for this category
 	 * @param parent the parent for this category
 	 * @param name the name of this category
 	 */
-	CategoryDB(DataTypeManagerDB dtMgr, DBObjectCache<CategoryDB> cache, long id, CategoryDB parent,
-			String name) {
-		super(cache, id);
+	CategoryDB(DataTypeManagerDB dtMgr, long id, CategoryDB parent, String name) {
+		super(id);
 		this.mgr = dtMgr;
 		this.name = name;
 		this.parent = parent;
@@ -74,33 +72,20 @@ class CategoryDB extends DatabaseObject implements Category {
 		conflictMap = new ConflictMap(mgr.lock);
 	}
 
-	/**
-	 * Root Category Constructor
-	 * @param dtMgr the data type manager
-	 * @param cache CategoryDB object cache
-	 */
-	CategoryDB(DataTypeManagerDB dtMgr, DBObjectCache<CategoryDB> cache) {
-		this(dtMgr, cache, DataTypeManagerDB.ROOT_CATEGORY_ID, null, "/");
-	}
-
 	@Override
 	public CategoryPath getCategoryPath() {
 		CategoryPath localCategoryPath = categoryPath;
-		if (localCategoryPath != null && !isInvalid()) {
+		if (localCategoryPath != null && !needsRefreshing()) {
 			return localCategoryPath;
 		}
-		mgr.lock.acquire();
-		try {
-			if (!checkIsValid() || isRoot()) {
+		try (Closeable c = mgr.lock.read()) {
+			if (!refreshIfNeeded() || isRoot()) {
 				categoryPath = CategoryPath.ROOT;
 			}
 			if (categoryPath == null) {
 				categoryPath = new CategoryPath(parent.getCategoryPath(), name);
 			}
 			return categoryPath;
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 
@@ -126,8 +111,8 @@ class CategoryDB extends DatabaseObject implements Category {
 			if (rec == null) {
 				return false;
 			}
-			this.parent =
-				mgr.getCategoryDB(rec.getLongValue(CategoryDBAdapter.CATEGORY_PARENT_COL));
+			long id = rec.getLongValue(CategoryDBAdapter.CATEGORY_PARENT_COL);
+			this.parent = mgr.getCategoryDB(id);
 			this.name = rec.getString(CategoryDBAdapter.CATEGORY_NAME_COL);
 		}
 		catch (IOException e) {
@@ -154,8 +139,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	@Override
 	public void setName(String newName) throws InvalidNameException, DuplicateNameException {
 		testName(newName);
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 			CategoryPath oldPath = getCategoryPath();
 			if (isRoot()) {
@@ -178,9 +162,6 @@ class CategoryDB extends DatabaseObject implements Category {
 			}
 			parent.catagoryRenamed(this, oldName);
 			mgr.categoryRenamed(oldPath, this);
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 
@@ -242,8 +223,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	 */
 	@Override
 	public DataType addDataType(DataType dt, DataTypeConflictHandler handler) {
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 			if (!getCategoryPath().equals(dt.getCategoryPath())) {
 				dt = dt.clone(mgr);
@@ -256,9 +236,6 @@ class CategoryDB extends DatabaseObject implements Category {
 			}
 			DataType resolvedDataType = mgr.resolve(dt, handler);
 			return resolvedDataType;
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 
@@ -292,8 +269,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	@Override
 	public Category createCategory(String categoryName) throws InvalidNameException {
 		testName(categoryName);
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 			CategoryDB cat = mgr.createCategoryDB(this, categoryName);
 			return cat;
@@ -301,16 +277,12 @@ class CategoryDB extends DatabaseObject implements Category {
 		catch (IOException e1) {
 			mgr.dbError(e1);
 		}
-		finally {
-			mgr.lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public boolean removeCategory(String categoryName, TaskMonitor monitor) {
-		mgr.lock.acquire();
-		try {
+		try (Closeable c1 = mgr.lock.write()) {
 			checkDeleted();
 			CategoryDB c = getCategory(categoryName);
 			if (c == null) {
@@ -345,38 +317,31 @@ class CategoryDB extends DatabaseObject implements Category {
 			}
 			return false;
 		}
-		finally {
-			mgr.lock.release();
-		}
 	}
 
 	@Override
 	public boolean removeEmptyCategory(String categoryName, TaskMonitor monitor) {
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
-			CategoryDB c = getCategory(categoryName);
-			if (c == null) {
+			CategoryDB cat = getCategory(categoryName);
+			if (cat == null) {
 				return false;
 			}
-			Category[] cats = c.getCategories();
-			DataType[] dts = c.getDataTypes();
+			Category[] cats = cat.getCategories();
+			DataType[] dts = cat.getDataTypes();
 			if (cats.length != 0 || dts.length != 0) {
 				return false;
 			}
 			try {
-				mgr.getCategoryDBAdapter().removeCategory(c.getKey());
+				mgr.getCategoryDBAdapter().removeCategory(cat.getKey());
 				subcategoryMap.remove(categoryName);
-				mgr.categoryRemoved(this, categoryName, c.getKey());
+				mgr.categoryRemoved(this, categoryName, cat.getKey());
 				return true;
 			}
 			catch (IOException e) {
 				mgr.dbError(e);
 			}
 			return false;
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 
@@ -392,8 +357,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			throw new IllegalArgumentException("Category is not a CategoryDB");
 		}
 		CategoryDB categoryDB = (CategoryDB) category;
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 			if (getCategory(categoryDB.getName()) != null) {
 				throw new DuplicateNameException(
@@ -414,9 +378,6 @@ class CategoryDB extends DatabaseObject implements Category {
 			subcategoryMap.put(categoryDB.getName(), categoryDB);
 			mgr.categoryMoved(movedCategoryOriginalPath, categoryDB);
 		}
-		finally {
-			mgr.lock.release();
-		}
 	}
 
 	/**
@@ -427,8 +388,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			TaskMonitor monitor) {
 		// TODO: source archive handling is not documented
 		boolean isInSameArchive = (mgr == category.getDataTypeManager());
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 			Category cat = createCategory(category.getName());
 			Category[] cats = category.getCategories();
@@ -450,9 +410,6 @@ class CategoryDB extends DatabaseObject implements Category {
 		}
 		catch (InvalidNameException e) {
 			// can't happen--already had a valid name
-		}
-		finally {
-			mgr.lock.release();
 		}
 		return null;
 	}
@@ -513,8 +470,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	@Override
 	public void moveDataType(DataType movedDataType, DataTypeConflictHandler handler)
 			throws DataTypeDependencyException {
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 			CategoryPath path = getCategoryPath();
 			if (handler == null) {
@@ -549,9 +505,6 @@ class CategoryDB extends DatabaseObject implements Category {
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertException(e); // can't happen?
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 

@@ -28,7 +28,7 @@ import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.golang.rtti.types.GoKind;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -247,7 +247,7 @@ public class DWARFDataTypeImporter {
 	 * 						offset -> ddt
 	 */
 	private void recordTempDataType(DWARFDataType ddt) {
-		if (ddt.dataType instanceof DatabaseObject) {
+		if (ddt.dataType instanceof DbObject) {
 			// don't store info about types that are already in the database
 			return;
 		}

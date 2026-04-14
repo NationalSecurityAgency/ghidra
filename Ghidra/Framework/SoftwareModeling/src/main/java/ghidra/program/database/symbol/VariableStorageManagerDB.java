@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,22 +16,19 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.List;
 
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.LanguageTranslator;
 import ghidra.util.Lock;
-import ghidra.util.Msg;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -44,9 +41,8 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 
 	private VariableStorageDBAdapter adapter;
 
-	private DBObjectCache<MyVariableStorage> cache = new DBObjectCache<>(256);
-	private WeakValueHashMap<Long, MyVariableStorage> cacheMap =
-		new WeakValueHashMap<Long, MyVariableStorage>(256);
+	private DbCache<MyVariableStorage> cache;
+	private ByHashCache byHashCache = new ByHashCache();
 
 	/**
 	 * Construct a new variable manager.
@@ -67,6 +63,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 		this.errorHandler = errorHandler;
 		this.lock = lock;
 		adapter = VariableStorageDBAdapter.getAdapter(handle, openMode, addrMap, monitor);
+		cache = new DbCache<MyVariableStorage>(new VariableStorageFactory(), lock, 256);
 	}
 
 	/**
@@ -97,50 +94,14 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 
 	void invalidateCache(boolean all) {
 		cache.invalidate();
-		cacheMap.clear();
+		byHashCache.clear();
 	}
 
-	private MyVariableStorage getMyVariableStorage(Address variableAddr) throws IOException {
+	private MyVariableStorage getMyVariableStorage(Address variableAddr) {
 		if (!variableAddr.isVariableAddress()) {
 			throw new IllegalArgumentException("Address is not a VariableAddress: " + variableAddr);
 		}
-		MyVariableStorage varStore = cache.get(variableAddr.getOffset());
-		if (varStore != null) {
-			return varStore;
-		}
-		DBRecord rec = adapter.getRecord(variableAddr.getOffset());
-		if (rec == null) {
-			return null;
-		}
-		varStore = new MyVariableStorage(cache, rec);
-		cacheMap.put(varStore.getLongHash(), varStore);
-		return varStore;
-	}
-
-	/**
-	 * Get the list of varnodes associated with the specified variable storage address.
-	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
-	 * @param variableAddr variable storage address
-	 * @return storage varnode list or null if address unknown
-	 * @throws IOException if a database IO error occurs
-	 */
-	List<Varnode> getStorageVarnodes(Address variableAddr) throws IOException {
-		if (!variableAddr.isVariableAddress()) {
-			throw new IllegalArgumentException();
-		}
-		DBRecord rec = adapter.getRecord(variableAddr.getOffset());
-		if (rec == null) {
-			return null;
-		}
-		try {
-			return VariableStorage.getVarnodes(arch.getAddressFactory(),
-				rec.getString(VariableStorageDBAdapter.STORAGE_COL));
-		}
-		catch (InvalidInputException e) {
-			Msg.error(this, "Invalid variable storage: " + e.getMessage());
-		}
-		return null;
+		return cache.getCachedInstance(variableAddr.getOffset());
 	}
 
 	/**
@@ -172,88 +133,61 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	@Override
 	public Address getVariableStorageAddress(VariableStorage storage, boolean create)
 			throws IOException {
-		long hash = storage.getLongHash();
-		MyVariableStorage myStorage = cacheMap.get(hash);
-		long key;
-		if (myStorage != null) {
-			key = myStorage.getKey();
-			// verify that cache entry is still valid
-			if (cache.get(key) == null) {
-				key = -1;
-			}
-		}
-		else {
-			key = adapter.findRecordKey(hash);
-		}
 
-		if (key == -1) {
-			if (!create) {
-				return null;
-			}
-
+		long key = getExistingKey(storage);
+		if (key == -1 && create) {
 			// create new storage record
 			key = adapter.getNextStorageID();
 			DBRecord rec = VariableStorageDBAdapter.VARIABLE_STORAGE_SCHEMA.createRecord(key);
 			rec.setLongValue(VariableStorageDBAdapter.HASH_COL, storage.getLongHash());
 			rec.setString(VariableStorageDBAdapter.STORAGE_COL, storage.getSerializationString());
 			adapter.updateRecord(rec);
-
-			// add to cache
-			myStorage = new MyVariableStorage(cache, rec);
-			cacheMap.put(hash, myStorage);
+			MyVariableStorage myStorage = new MyVariableStorage(rec);
+			cache.add(myStorage);
+			byHashCache.add(myStorage);
 		}
-		return AddressSpace.VARIABLE_SPACE.getAddress(key);
+		return key == -1 ? null : AddressSpace.VARIABLE_SPACE.getAddress(key);
 	}
 
-//	void deleteVariableStorage(Address variableAddr) throws IOException {
-//		cache.removeObj(variableAddr.getOffset());
-//		adapter.deleteRecord(variableAddr.getOffset());
-//	}
-//
-//	void setVariableStorage(Address variableAddr, VariableStorage storage) throws IOException {
-//		if (storage == null || storage.isUnassignedStorage()) {
-//			deleteVariableStorage(variableAddr);
-//			return;
-//		}
-//		cache.invalidate(variableAddr.getOffset());
-//		Record rec = adapter.getRecord(variableAddr.getOffset());
-//		if (rec == null) {
-//			rec =
-//				VariableStorageDBAdapter.VARIABLE_STORAGE_SCHEMA.createRecord(variableAddr.getOffset());
-//		}
-//		rec.setString(VariableStorageDBAdapter.STORAGE_COL, storage.getSerializationString());
-//		adapter.updateRecord(rec);
-//	}
-//
-//	/**
-//	 * Set variable storage based upon unrestricted varnodes (useful for upgrades)
-//	 * @param variableAddr
-//	 * @param varnodes
-//	 * @throws IOException
-//	 */
-//	void setVariableStorage(Address variableAddr, Varnode... varnodes) throws IOException {
-//		if (varnodes == null || varnodes.length == 0) {
-//			deleteVariableStorage(variableAddr);
-//			return;
-//		}
-//		cache.invalidate(variableAddr.getOffset());
-//		Record rec = adapter.getRecord(variableAddr.getOffset());
-//		if (rec == null) {
-//			rec =
-//				VariableStorageDBAdapter.VARIABLE_STORAGE_SCHEMA.createRecord(variableAddr.getOffset());
-//		}
-//		rec.setString(VariableStorageDBAdapter.STORAGE_COL,
-//			VariableStorage.getSerializationString(varnodes));
-//		adapter.updateRecord(rec);
-//	}
+	private long getExistingKey(VariableStorage storage) throws IOException {
+		long hash = storage.getLongHash();
+		MyVariableStorage myStorage = byHashCache.get(hash);
+		if (myStorage != null && myStorage.isValid()) {
+			return myStorage.getKey();
+		}
+		return adapter.findRecordKey(hash);
+	}
 
-	private class MyVariableStorage extends DatabaseObject {
+	private class VariableStorageFactory implements DbFactory<MyVariableStorage> {
+
+		@Override
+		public MyVariableStorage instantiate(long key) {
+			DBRecord record;
+			try {
+				record = adapter.getRecord(key);
+				return record == null ? null : instantiate(record);
+			}
+			catch (IOException e) {
+				errorHandler.dbError(e);
+				return null;
+			}
+		}
+
+		@Override
+		public MyVariableStorage instantiate(DBRecord record) {
+			MyVariableStorage storage = new MyVariableStorage(record);
+			byHashCache.add(storage);
+			return storage;
+		}
+	}
+
+	private class MyVariableStorage extends DbObject {
 
 		private VariableStorage storage;
 		private DBRecord record;
 
-		private MyVariableStorage(DBObjectCache<MyVariableStorage> cache, DBRecord record) {
-			super(cache, record.getKey());
+		private MyVariableStorage(DBRecord record) {
+			super(record.getKey());
 			this.record = record;
 			try {
 				storage = VariableStorage.deserialize(arch,
@@ -265,13 +199,9 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 		}
 
 		VariableStorage getVariableStorage() {
-			lock.acquire();
-			try {
-				checkIsValid();
+			try (Closeable c = lock.read()) {
+				refreshIfNeeded();
 				return storage;
-			}
-			finally {
-				lock.release();
 			}
 		}
 
@@ -281,7 +211,6 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 
 		@Override
 		protected boolean refresh() {
-			lock.acquire();
 			try {
 				storage = VariableStorage.BAD_STORAGE;
 				if (record != null) {
@@ -302,9 +231,6 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 			}
 			catch (IOException e) {
 				errorHandler.dbError(e);
-			}
-			finally {
-				lock.release();
 			}
 			return false;
 		}
@@ -327,8 +253,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 		monitor.initialize(adapter.getRecordCount());
 		int cnt = 0;
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			RecordIterator recIter = adapter.getRecords();
 			while (recIter.hasNext()) {
 				monitor.checkCancelled();
@@ -349,14 +274,32 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 					continue;
 				}
 				monitor.setProgress(++cnt);
+				invalidateCache(true);
 			}
 		}
 		catch (IOException e) {
 			errorHandler.dbError(e);
 		}
-		finally {
-			invalidateCache(true);
-			lock.release();
+	}
+
+	/**
+	 * Cache of MyVariableStorage by their long hash value
+	 */
+	private static class ByHashCache {
+		private WeakValueHashMap<Long, MyVariableStorage> cacheMap =
+			new WeakValueHashMap<Long, MyVariableStorage>();
+
+		synchronized void add(MyVariableStorage storage) {
+			cacheMap.put(storage.getLongHash(), storage);
+		}
+
+		synchronized void clear() {
+			cacheMap.clear();
+		}
+
+		synchronized MyVariableStorage get(long hash) {
+			return cacheMap.get(hash);
 		}
 	}
+
 }
