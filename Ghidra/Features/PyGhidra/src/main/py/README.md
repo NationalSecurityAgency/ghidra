@@ -567,6 +567,9 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.2.0__
+* When an uncaught `JException` occurs, PyGhidra will now output the full Java stack trace.
+
 __3.1.0__
 * PyGhidra will now, by default, restore `sys.modules` to its prior state after a PyGhidra script is
   run (or the interactive interpreter is reset) so the next time a script is run, it freshly loads
