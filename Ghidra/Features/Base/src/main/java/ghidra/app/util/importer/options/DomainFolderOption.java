@@ -27,7 +27,6 @@ import docking.widgets.button.BrowseButton;
 import docking.widgets.textfield.ElidingFilePathTextField;
 import ghidra.app.util.AddressFactoryService;
 import ghidra.app.util.Option;
-import ghidra.app.util.opinion.Loader;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFolder;
@@ -51,8 +50,7 @@ public class DomainFolderOption extends StringOption {
 	 */
 	public DomainFolderOption(String name, String value, String arg, String group,
 			String stateKey, boolean hidden, String description) {
-		super(name, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, hidden,
-			description);
+		super(name, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override

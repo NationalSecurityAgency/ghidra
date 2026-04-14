@@ -51,6 +51,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 		list.add(Option.newBoolean(ORDINAL_LOOKUP_OPTION_NAME)
 				.value(ORDINAL_LOOKUP_OPTION_DEFAULT)
 				.commandLineArgument(createArg("-ordinalLookup"))
+				.stateKey(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY)
 				.build());
 		return list;
 	}

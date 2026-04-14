@@ -18,7 +18,6 @@ package ghidra.app.util.importer.options;
 import java.awt.Component;
 
 import ghidra.app.util.*;
-import ghidra.app.util.opinion.Loader;
 import ghidra.program.model.address.*;
 
 /**
@@ -39,8 +38,7 @@ public class AddressOption extends AbstractOption<Address> {
 	 */
 	public AddressOption(String name, Address value, String arg, String group, String stateKey,
 			boolean hidden, String description) {
-		super(name, Address.class, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY,
-			hidden, description);
+		super(name, Address.class, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override

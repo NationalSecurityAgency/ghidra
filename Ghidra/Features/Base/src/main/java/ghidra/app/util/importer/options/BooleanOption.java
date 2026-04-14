@@ -21,7 +21,6 @@ import org.apache.commons.lang3.BooleanUtils;
 
 import docking.widgets.checkbox.GCheckBox;
 import ghidra.app.util.*;
-import ghidra.app.util.opinion.Loader;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.AddressFactory;
 
@@ -43,8 +42,7 @@ public class BooleanOption extends AbstractOption<Boolean> {
 	 */
 	public BooleanOption(String name, boolean value, String arg, String group, String stateKey,
 			boolean hidden, String description) {
-		super(name, Boolean.class, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY,
-			hidden, description);
+		super(name, Boolean.class, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override

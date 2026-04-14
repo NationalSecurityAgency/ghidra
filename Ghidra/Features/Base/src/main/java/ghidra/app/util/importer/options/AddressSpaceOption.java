@@ -21,7 +21,6 @@ import javax.swing.JComboBox;
 
 import docking.widgets.combobox.GComboBox;
 import ghidra.app.util.*;
-import ghidra.app.util.opinion.Loader;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
 
@@ -43,8 +42,7 @@ public class AddressSpaceOption extends AbstractOption<AddressSpace> {
 	 */
 	public AddressSpaceOption(String name, AddressSpace value, String arg, String group,
 			String stateKey, boolean hidden, String description) {
-		super(name, AddressSpace.class, value, arg, group,
-			Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, hidden, description);
+		super(name, AddressSpace.class, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override

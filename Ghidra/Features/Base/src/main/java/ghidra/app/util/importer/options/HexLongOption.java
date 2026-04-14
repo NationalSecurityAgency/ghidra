@@ -19,7 +19,6 @@ import java.awt.Component;
 
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.*;
-import ghidra.app.util.opinion.Loader;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.util.NumericUtilities;
@@ -42,8 +41,7 @@ public class HexLongOption extends AbstractOption<HexLong> {
 	 */
 	public HexLongOption(String name, HexLong value, String arg, String group, String stateKey,
 			boolean hidden, String description) {
-		super(name, HexLong.class, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY,
-			hidden, description);
+		super(name, HexLong.class, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override

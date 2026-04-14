@@ -19,7 +19,6 @@ import java.awt.Component;
 
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.*;
-import ghidra.app.util.opinion.Loader;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.AddressFactory;
 
@@ -41,8 +40,7 @@ public class IntegerOption extends AbstractOption<Integer> {
 	 */
 	public IntegerOption(String name, int value, String arg, String group, String stateKey,
 			boolean hidden, String description) {
-		super(name, Integer.class, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY,
-			hidden, description);
+		super(name, Integer.class, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override

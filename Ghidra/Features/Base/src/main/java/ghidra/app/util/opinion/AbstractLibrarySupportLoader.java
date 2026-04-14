@@ -295,6 +295,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		list.add(Option.newDomainFolder(LINK_SEARCH_FOLDER_OPTION_NAME)
 				.commandLineArgument(createArg("-projectLibrarySearchFolder"))
 				.description("The project folder to search for existing libaries to link.")
+				.stateKey(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY)
 				.hidden(mirrorFsLayout)
 				.build());
 		list.add(Option.newBoolean(LOAD_LIBRARY_OPTION_NAME)
@@ -312,6 +313,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		list.add(Option.newDomainFolder(LIBRARY_DEST_FOLDER_OPTION_NAME)
 				.commandLineArgument(createArg("-libraryDestinationFolder"))
 				.description("The project folder to save newly loaded libraries to.")
+				.stateKey(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY)
 				.hidden(mirrorFsLayout)
 				.build());
 		list.add(Option.newBoolean(MIRROR_LAYOUT_OPTION_NAME)

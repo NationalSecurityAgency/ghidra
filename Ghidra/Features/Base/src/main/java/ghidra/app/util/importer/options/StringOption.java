@@ -22,7 +22,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import ghidra.app.util.*;
-import ghidra.app.util.opinion.Loader;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.AddressFactory;
 
@@ -44,8 +43,7 @@ public class StringOption extends AbstractOption<String> {
 	 */
 	public StringOption(String name, String value, String arg, String group, String stateKey,
 			boolean hidden, String description) {
-		super(name, String.class, value, arg, group, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY,
-			hidden, description);
+		super(name, String.class, value, arg, group, stateKey, hidden, description);
 	}
 
 	@Override
