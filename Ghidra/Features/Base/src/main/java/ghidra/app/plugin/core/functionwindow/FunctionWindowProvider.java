@@ -25,12 +25,13 @@ import javax.swing.table.*;
 
 import docking.ActionContext;
 import docking.DefaultActionContext;
-import docking.action.DockingAction;
+import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import generic.theme.GIcon;
 import ghidra.app.context.FunctionSupplierContext;
 import ghidra.app.context.ProgramLocationSupplierContext;
 import ghidra.app.services.FunctionComparisonService;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
@@ -39,6 +40,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
+import resources.Icons;
 
 /**
  * Provider that displays all functions in the selected program
@@ -47,6 +49,9 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 	public static final Icon ICON = new GIcon("icon.plugin.functionwindow.provider");
 	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
+
+	private static final String NAVIGATE_ON_INCOMING_EVENT_KEY = "NAVIGATE_ON_INCOMING_EVENT";
+	private static final String NAVIGATE_ON_OUTGOING_EVENT_KEY = "NAVIGATE_ON_OUTGOING_EVENT";
 
 	private FunctionWindowPlugin plugin;
 	private GhidraTable functionTable;
@@ -57,6 +62,8 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	private GhidraThreadedTablePanel<FunctionRowObject> threadedTablePanel;
 
 	private DockingAction compareAction;
+	private ToggleDockingAction navigateIncomingAction;
+	private SelectionNavigationAction navigateOutgoingAction;
 
 	/**
 	 * Constructor
@@ -76,7 +83,22 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	}
 
 	private void createActions() {
-		addLocalAction(new SelectionNavigationAction(plugin.getName(), getTable()));
+		String navGroup = "A";
+
+		navigateIncomingAction =
+			new ToggleDockingAction("Navigate on Incoming Location Changes", plugin.getName(),
+				KeyBindingType.SHARED) {
+				// stub
+			};
+		navigateIncomingAction
+				.setToolBarData(new ToolBarData(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navGroup));
+		addLocalAction(navigateIncomingAction);
+
+		navigateOutgoingAction = new SelectionNavigationAction(plugin.getName(), getTable());
+		ToolBarData tbData = navigateOutgoingAction.getToolBarData();
+		tbData.setToolBarGroup(navGroup);
+		addLocalAction(navigateOutgoingAction);
+
 		addLocalAction(new MakeProgramSelectionAction(plugin, getTable()));
 	}
 
@@ -107,6 +129,20 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 		FunctionComparisonService service = getTool().getService(FunctionComparisonService.class);
 		service.createComparison(functions);
+	}
+
+	void readConfigState(SaveState saveState) {
+		boolean navigateIncoming = saveState.getBoolean(NAVIGATE_ON_INCOMING_EVENT_KEY, false);
+		boolean navigateOutgoing = saveState.getBoolean(NAVIGATE_ON_OUTGOING_EVENT_KEY, false);
+		navigateIncomingAction.setSelected(navigateIncoming);
+		navigateOutgoingAction.setSelected(navigateOutgoing);
+	}
+
+	void writeConfigState(SaveState saveState) {
+		boolean navigateIncoming = navigateIncomingAction.isSelected();
+		boolean navigateOutgoing = navigateOutgoingAction.isSelected();
+		saveState.putBoolean(NAVIGATE_ON_INCOMING_EVENT_KEY, navigateIncoming);
+		saveState.putBoolean(NAVIGATE_ON_OUTGOING_EVENT_KEY, navigateOutgoing);
 	}
 
 	@Override
@@ -217,6 +253,27 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	public void locationChanged(ProgramLocation loc) {
+		if (!navigateIncomingAction.isSelected()) {
+			return;
+		}
+
+		if (loc == null) {
+			return;
+		}
+
+		Program p = loc.getProgram();
+		FunctionManager fm = p.getFunctionManager();
+		Address address = loc.getAddress();
+		Function function = fm.getFunctionContaining(address);
+		if (function == null) {
+			return;
+		}
+
+		FunctionRowObject ro = new FunctionRowObject(function);
+		tableFilterPanel.setSelectedItem(ro);
+	}
+
 	/**
 	 * Gathers this function and any functions that thunk it
 	 * @param f the function
@@ -311,4 +368,5 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 			return s.getProgramLocation();
 		}
 	}
+
 }
