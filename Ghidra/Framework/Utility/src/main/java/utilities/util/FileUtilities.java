@@ -842,12 +842,50 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns true if the given <code>potentialParentFile</code> is the parent path of
-	 * the given <code>otherFile</code>, or if the two file paths point to the same path.
+	 * Tests if {@code otherPath} starts with {@code potentialParentPath}. The paths are
+	 * {@link Path#normalize() normalized} before comparing.
+	 *
+	 * @param potentialParentPath The path that may be the parent
+	 * @param otherPath The path that may be the child
+	 * @return true if the normalized {@code otherPath} starts with the normalized 
+	 *   {@code potentialParentPath} and the paths are {@link Paths#get valid}; otherwise false
+	 */
+	public static boolean startsWith(String potentialParentPath, String otherPath) {
+		try {
+			return Paths.get(otherPath)
+					.normalize()
+					.startsWith(Paths.get(potentialParentPath).normalize());
+		}
+		catch (InvalidPathException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Tests if {@code otherPath} starts with any of the given {@code potentialParents}. The paths 
+	 * are {@link Path#normalize() normalized} before comparing.
+	 *
+	 * @param potentialParents The paths that may be the parent
+	 * @param otherPath The path that may be the child
+	 * @return boolean true if the normalized {@code otherPath} starts with any of the given
+	 *   normalized {@code potentialParents}s and the paths are {@link Paths#get valid}; otherwise
+	 *   false
+	 */
+	public static boolean startsWith(Collection<ResourceFile> potentialParents, String otherPath) {
+		return potentialParents.stream().anyMatch(p -> startsWith(p.getAbsolutePath(), otherPath));
+	}
+
+	/**
+	 * Returns true if the given {@code potentialParentFile} is the parent path of
+	 * the given {@code otherFile}, or if the two file paths point to the same path.
+	 * <p>
+	 * NOTE: Both files are converted to their {@link File#getCanonicalPath() canonical form} prior
+	 * to comparing their paths, which may have performance implications, particularly on Windows.
 	 *
 	 * @param potentialParentFile The file that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within potentialParentFile's path
+	 * @return boolean true if {@code otherFile}'s canonical path is within 
+	 *   {@code potentialParentFile}'s canonical path
 	 */
 	public static boolean isPathContainedWithin(File potentialParentFile, File otherFile) {
 		try {
@@ -869,17 +907,21 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns true if any of the given <code>potentialParents</code> is the parent path of or has
-	 * the same path as the given <code>otherFile</code>.
+	 * Returns true if any of the given {@code potentialParents} is the parent path of or has
+	 * the same path as the given {@code otherFile}.
+	 * <p>
+	 * NOTE: All files are converted to their {@link File#getCanonicalPath() canonical form} prior
+	 * to comparing their paths, which may have performance implications, particularly on Windows.
 	 *
 	 * @param potentialParents The files that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within any of the potentialParents' paths 
+	 * @return boolean true if {@code otherFile}'s canonical path is within any of the 
+	 *   {@code potentialParents}' canonical paths 
 	 */
 	public static boolean isPathContainedWithin(Collection<ResourceFile> potentialParents,
 			ResourceFile otherFile) {
-
-		return potentialParents.stream().anyMatch(parent -> parent.containsPath(otherFile));
+		File f = otherFile.getFile(false);
+		return potentialParents.stream().anyMatch(p -> isPathContainedWithin(p.getFile(false), f));
 	}
 
 	/**

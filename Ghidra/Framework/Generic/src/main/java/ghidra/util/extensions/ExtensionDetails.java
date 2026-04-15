@@ -293,10 +293,8 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 		// The remaining dirs are of the form: 
 		// 		<repo>/Ghidra/Extensions
 		//      <install dir>/Ghidra/Extensions
-		return extDirs.stream()
-				.skip(1)
-				.anyMatch(
-					dir -> FileUtilities.isPathContainedWithin(dir.getFile(false), installDir));
+		List<ResourceFile> remainingDirs = extDirs.subList(1, extDirs.size());
+		return FileUtilities.startsWith(remainingDirs, installDir.getAbsolutePath());
 	}
 
 	/**
