@@ -266,9 +266,9 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public int getBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to get len bytes from this block at the given address and put them into the given byte
-	 * array at the specified offet. May return fewer bytes if the requested length is beyond the
-	 * end of the block.
+	 * Tries to get {@code len} bytes from this block at the given address and put them into the 
+	 * given byte array at the specified offset. May return fewer bytes if the requested length is 
+	 * beyond the end of the block.
 	 * 
 	 * @param addr the address from which to get the bytes.
 	 * @param b the byte array to populate.

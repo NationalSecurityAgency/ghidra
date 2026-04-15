@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,9 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 	private static SettingsDefinition[] SETTINGS_DEFS =
 		{ BYTE_COUNT, MEMORY_OFFSET, ENDIANNESS, FORMAT };
 
+	// arbitrary limit to keep the table from reading too many bytes and becoming sluggish
+	private static final int BYTE_LIMIT = 20;
+
 	private final GColumnRenderer<Byte[]> monospacedRenderer = new MonospacedByteRenderer();
 
 	/**
@@ -68,50 +71,32 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 	}
 
 	@Override
-	public Byte[] getValue(Address rowObject, Settings settings, Program pgm,
+	public Byte[] getValue(Address rowObject, Settings settings, Program program,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 
-		Address addr = rowObject;
 		try {
 
 			int offset = MEMORY_OFFSET.getOffset(settings);
-			int byteCnt = BYTE_COUNT.getChoice(settings);
-			byte[] bytes = null;
+			int byteCount = BYTE_COUNT.getChoice(settings);
 
+			Address addr = rowObject;
 			if (offset != 0) {
 				addr = addr.add(offset);
-			}
-
-			if (byteCnt == 0) {
-				if (offset != 0) {
-					byteCnt = 1;
-				}
-				else {
-					CodeUnit cu = pgm.getListing().getCodeUnitContaining(addr);
-					if (cu == null) { // can happen for 'SpecialAddress'es
-						return new Byte[0];
-					}
-					if (cu instanceof Instruction instr) {
-						bytes = instr.getParsedBytes();
-					}
-					else {
-						bytes = cu.getBytes();
-					}
+				if (byteCount == 0) {
+					// note: would be nice to know why we only read one byte when there is an offset
+					byteCount = 1;
 				}
 			}
 
-			if (bytes == null) {
-				bytes = new byte[byteCnt];
-				pgm.getMemory().getBytes(addr, bytes);
+			if (byteCount == 0) {
+				return getBytesFromCodeUnit(program, addr);
 			}
 
-			Byte[] bytesObj = new Byte[bytes.length];
-			for (int i = 0; i < bytes.length; i++) {
-				bytesObj[i] = Byte.valueOf(bytes[i]);
-			}
+			// read bytes; one of: 1, 2, 3, 4, 5, 6, 7, 8
+			byte[] bytes = new byte[byteCount];
+			program.getMemory().getBytes(addr, bytes);
 
-			return bytesObj;
-
+			return toBigBytes(bytes);
 		}
 		catch (MemoryAccessException e) {
 			// handled below
@@ -121,6 +106,36 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 		}
 
 		return new Byte[0];
+	}
+
+	private Byte[] getBytesFromCodeUnit(Program p, Address addr) throws MemoryAccessException {
+
+		Listing listing = p.getListing();
+		CodeUnit cu = listing.getCodeUnitContaining(addr);
+		if (cu == null) { // can happen for 'SpecialAddress'es
+			return new Byte[0];
+		}
+
+		byte[] bytes;
+		int n = Math.min(cu.getLength(), BYTE_LIMIT);
+		if (cu instanceof Instruction instr) {
+			bytes = instr.getParsedBytes();
+		}
+		else {
+			bytes = new byte[n];
+			cu.getBytes(bytes, 0);
+		}
+
+		return toBigBytes(bytes);
+	}
+
+	private Byte[] toBigBytes(byte[] b) {
+
+		Byte[] bigBytes = new Byte[b.length];
+		for (int i = 0; i < b.length; i++) {
+			bigBytes[i] = Byte.valueOf(b[i]);
+		}
+		return bigBytes;
 	}
 
 	@Override
