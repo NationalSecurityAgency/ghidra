@@ -59,7 +59,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 
 	private MemoryBlock lastBlock;// the last accessed block
 
-	// lazy hashmap of block names to blocks, must be reloaded if blocks are removed or added
+	// lazy map of block names to blocks, must be reloaded if blocks are removed or added
 	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<>();
 	private final static MemoryBlock NoBlock = new MemoryBlockStub();  // placeholder for no block, not given out
 
@@ -135,9 +135,8 @@ public class MemoryMapDB implements Memory, ManagerDB {
 	 * <br>
 	 * NOTE: The {@link #initializeBlocks()} method is used to invalidate the {code addrSetViews}
 	 * without affecting {@code allAddrSet}, while {@link #reloadAll()} will force a complete
-	 * rebuild of all addresss sets.
+	 * rebuild of all address sets.
 	 * 
-	 * @param rebuildAllAddrSets if true all address sets will be rebuilt before returning the
 	 * address set view object.
 	 * @return the address set view object
 	 */
@@ -2126,8 +2125,6 @@ public class MemoryMapDB implements Memory, ManagerDB {
 		 * In addition, allAddrSet will be updated if addToAll parameter is true.
 		 * 
 		 * @param block memory block to be added
-		 * @param newAddrSetViews address set views which should be built-up
-		 * @param newAllAddrs if not null this set will be updated with the specified block's address range,
 		 * otherwise only the {@code addrSetView} sets will be updated.
 		 */
 		private void addBlockAddresses(MemoryBlockDB block) {
