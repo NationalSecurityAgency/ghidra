@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package ghidra.util;
 
+import java.util.Collections;
 import java.util.Set;
 
 import ghidra.framework.store.local.LocalFileSystem;
-import util.CollectionUtils;
 
 /**
  * Utility class with static methods for validating project file names.
@@ -32,7 +32,9 @@ public final class NamingUtilities {
 
 	private final static char MANGLE_CHAR = '_';
 
-	private final static Set<Character> VALID_NAME_SET = CollectionUtils.asSet('.', '-', ' ', '_');
+	public final static Set<Character> VALID_NAME_CHARSET =
+		Collections.unmodifiableSet(
+			Set.of('.', '-', '=', '@', ' ', '_', '(', ')', '[', ']', '~'));
 
 	private NamingUtilities() {
 	}
@@ -63,7 +65,7 @@ public final class NamingUtilities {
 
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
-			if (!Character.isLetterOrDigit(c) && !VALID_NAME_SET.contains(c)) {
+			if (!Character.isLetterOrDigit(c) && !VALID_NAME_CHARSET.contains(c)) {
 				return false;
 			}
 		}
@@ -97,7 +99,7 @@ public final class NamingUtilities {
 
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
-			if (!Character.isLetterOrDigit(c) && !VALID_NAME_SET.contains(c)) {
+			if (!Character.isLetterOrDigit(c) && !VALID_NAME_CHARSET.contains(c)) {
 				return false;
 			}
 		}
@@ -122,7 +124,7 @@ public final class NamingUtilities {
 	public static char findInvalidChar(String name) {
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
-			if (!Character.isLetterOrDigit(c) && !VALID_NAME_SET.contains(c)) {
+			if (!Character.isLetterOrDigit(c) && !VALID_NAME_CHARSET.contains(c)) {
 				return c;
 			}
 		}
