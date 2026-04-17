@@ -51,8 +51,11 @@ public class Img3 implements StructConverter {
 
 			AbstractImg3Tag tag = Img3TagFactory.get(reader);
 			_tags.add( tag );
-
-			reader.setPointerIndex(index + tag.getTotalLength());
+			int tagLen = tag.getTotalLength();
+			if (tagLen <= 0) {
+				throw new IOException("Bad Img3 tag length: " + tagLen);
+			}
+			reader.setPointerIndex(index + tagLen);
 		}
 	}
 
