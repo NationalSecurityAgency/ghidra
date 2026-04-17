@@ -17,7 +17,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ghidratrace==12.1",
     "protobuf>=6.31.0",
 ]
 
