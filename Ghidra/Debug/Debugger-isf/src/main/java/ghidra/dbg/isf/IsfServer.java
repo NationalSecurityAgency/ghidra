@@ -16,8 +16,7 @@
 package ghidra.dbg.isf;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public class IsfServer extends Thread {
 
 	public void startServer() {
 		try {
-			server = new ServerSocket(port);
+			server = new ServerSocket(port, 50, InetAddress.getLoopbackAddress());
 			this.start();
 		}
 		catch (IOException e) {
