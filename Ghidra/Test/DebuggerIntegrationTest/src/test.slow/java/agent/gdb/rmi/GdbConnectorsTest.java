@@ -16,7 +16,7 @@
 package agent.gdb.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -31,8 +31,7 @@ import db.Transaction;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.gui.action.BySectionAutoMapSpec;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.AbstractTraceRmiLaunchOffer.EarlyTerminationException;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.*;
 import ghidra.debug.api.action.AutoMapSpec;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
 import ghidra.framework.Application;
@@ -83,8 +82,11 @@ public class GdbConnectorsTest extends AbstractRmiConnectorsTest {
 	@Test
 	public void testGdbQemuUser() throws Exception {
 		PathIsFile image = createArmElfImage();
-		program = AutoImporter.importByUsingBestGuess(image.path().toFile(), null, "/", this,
-			new MessageLog(), monitor).getPrimaryDomainObject();
+		program = ProgramLoader.builder()
+				.source(image.path().toFile())
+				.monitor(monitor)
+				.load()
+				.getPrimaryDomainObject(this);
 		programManager.openProgram(program);
 		try (LaunchResult result = doLaunch("gdb + qemu", Map.ofEntries(
 			Map.entry("arg:1", image),
