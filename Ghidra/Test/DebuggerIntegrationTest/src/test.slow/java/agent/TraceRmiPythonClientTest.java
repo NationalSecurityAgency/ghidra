@@ -340,6 +340,12 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
+	public void testTomlVersionConsistency() throws IOException {
+		List<String> toml = readToml("Debugger-rmi-trace");
+		assertVersionMatchesApplication(parseVersionFromToml(toml));
+	}
+
+	@Test
 	public void testConnect() throws Exception {
 		runThrowError(addr -> """
 				%s
