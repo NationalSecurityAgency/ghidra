@@ -72,6 +72,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	private NamespaceManager namespaceMgr;
 	private VariableStorageManagerDB variableStorageMgr;
 
+	private List<LibrarySymbol> libSymbolList; // unmodifiable; use getLibrarySymbolList() to obtain instance
+
 	private OldVariableStorageManagerDB oldVariableStorageMgr; // required for upgrade
 
 	private AddressMapImpl dynamicSymbolAddressMap;
@@ -181,6 +183,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				// to migrate old register variable addresses if previously upgraded from
 				// older than program version 10
 				processOldVariableAddresses(monitor);
+			}
+
+			if (currentRevision < ProgramDB.LIBRARY_ORDINAL_ASSIGNMENT_ADDED_VERSION) {
+				assignLibraryOrdinals();
 			}
 		}
 	}
@@ -663,9 +669,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		SymbolType symType = sym.getSymbolType();
 		try {
 			Address address = sym.getAddress();
-//				if (address.isVariableAddress()) {
-//					variableStorageMgr.deleteVariableStorage(address);
-//				}
 			String name = sym.getName();
 			boolean primary = sym.isPrimary();
 
@@ -674,7 +677,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 			adapter.removeSymbol(id);
 			cache.delete(id);
-			//sym.setInvalid(); // already invalidated by removeObj
 
 			// if any symbols still exist here, then
 			// make one of these remaining symbols 'primary'
@@ -734,11 +736,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	private SymbolDB getDynamicSymbol(Address memoryAddress) {
 		long symbolID = getDynamicSymbolID(memoryAddress);
 
-		// retrieve the symbol from the cache without validating or refreshing it. We know
-		// if it exists is should
+		// Retrieve the symbol from the cache without validating or refreshing it. 
 		CodeSymbol symbol = (CodeSymbol) cache.getRaw(symbolID);
 		if (symbol != null) {
-			// we know if we got here, the symbol is valid regardless of what it thinks
+			// We know if we got here the symbol is valid, so force it to be valid
 			symbol.setIsValid();
 			return symbol;
 		}
@@ -1378,8 +1379,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public LabelHistory[] getLabelHistory(Address addr) {
-		ArrayList<LabelHistory> list = new ArrayList<>();
-		try {
+		try (Closeable c = lock.read()) {
+			ArrayList<LabelHistory> list = new ArrayList<>();
 			RecordIterator iter = historyAdapter.getRecordsByAddress(addrMap.getKey(addr, false));
 			while (iter.hasNext()) {
 				DBRecord rec = iter.next();
@@ -1401,8 +1402,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public void invalidateCache(boolean all) {
-		variableStorageMgr.invalidateCache(all);
 		try (Closeable c = lock.write()) {
+			variableStorageMgr.invalidateCache(all);
+			libSymbolList = null;
 			cache.invalidate();
 			dynamicSymbolAddressMap.reconcile();
 		}
@@ -2739,7 +2741,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	/**
-	 * Create a Library symbol with the specified name and optional pathname
+	 * Create a Library symbol with the specified name and optional pathname.
+	 * The new Library symbol will be assigned the next available ordinal at the end of the
+	 * ordered Library symbol sequence.  Use {@link LibrarySymbol#setOrdinal(int)} to adjust
+	 * ordinal.
+	 * 
 	 * 
 	 * @param name library name
 	 * @param pathname project file path (may be null)
@@ -2757,19 +2763,162 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		try (Closeable c = lock.write()) {
 			DBRecord record = doCreateBasicSymbolRecord(name, null, Address.NO_ADDRESS,
 				SymbolType.LIBRARY, false, source, true);
-			LibrarySymbol.setRecordFields(record, pathname);
+			
+			List<LibrarySymbol> librarySymbolList = new ArrayList<>(getLibrarySymbolList());
+			int ordinal = librarySymbolList.size();
+			if (Library.UNKNOWN.equals(name)) { 
+				// UNKNOWN Library always assigned ordinal of 0
+				ordinal = 0;
+			}
+			
+			LibrarySymbol newLibSymbol = new LibrarySymbol(this, record);
+			LibrarySymbol.setRecordFields(record, ordinal, pathname);
 			adapter.updateSymbolRecord(record);
+			cache.add(newLibSymbol);
 
-			LibrarySymbol newSymbol = new LibrarySymbol(this, record);
-			cache.add(newSymbol);
-
-			symbolAdded(newSymbol);
-			return newSymbol;
+			librarySymbolList.add(ordinal, newLibSymbol);
+			assignLibraryOrdinals(librarySymbolList, true);
+			
+			symbolAdded(newLibSymbol);
+			return newLibSymbol;
 		}
 		catch (IOException e) {
 			program.dbError(e); // will not return
 			return null;
 		}
+	}
+
+	/**
+	 * {@return computed ordinal of the specified library symbol}
+	 * @param libSym library symbol
+	 */
+	int computeLibraryOrdinal(LibrarySymbol libSym) {
+		List<LibrarySymbol> list = getLibrarySymbolList();
+		for (int i = 0; i < list.size(); i++) {
+			LibrarySymbol s = list.get(i);
+			if (s == libSym) {
+				return i;
+			}
+		}
+		throw new AssertionError("Invalid symbol instance");
+	}
+
+	/**
+	 * @return an ordered unmodifiable list of Library symbols
+	 */
+	public List<LibrarySymbol> getLibrarySymbolList() {
+		List<LibrarySymbol> list = libSymbolList;
+		if (list == null) {
+			try (Closeable c = lock.read()) {
+				list = buildLibrarySymbolList();
+				libSymbolList = list;
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+		}
+		return list;
+	}
+
+	private List<LibrarySymbol> buildLibrarySymbolList() throws IOException {
+		List<LibrarySymbol> list = new ArrayList<>();
+		byte libraryTypeId = SymbolType.LIBRARY.getID();
+		RecordIterator iter = new QueryRecordIterator(adapter.getSymbols(),
+			rec -> libraryTypeId == rec
+					.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL));
+
+		// Assume records will be returned in order of symbol ID
+		long lastId = -1;
+		while (iter.hasNext()) {
+			LibrarySymbol libSym = (LibrarySymbol) getSymbol(iter.next());
+			long id = libSym.getID();
+			if (id <= lastId) {
+				throw new AssertionError("Unexpected symbol order");
+			}
+			list.add(libSym);
+		}
+		Collections.sort(list);
+		return Collections.unmodifiableList(list);
+	}
+
+	/**
+	 * Assign and store ordinals for all library symbols during upgrade
+	 */
+	private void assignLibraryOrdinals() {
+		List<LibrarySymbol> libSymList = new ArrayList<>(getLibrarySymbolList());
+		for (int i = 0; i < libSymList.size(); i++) {
+			LibrarySymbol libSym = libSymList.get(i);
+			if (Library.UNKNOWN.equals(libSym.getName())) {
+				// UNKNOWN Library always assigned ordinal of 0 but may have arbitrary
+				// placement in list prior to upgrade
+				if (i != 0) {
+					libSymList.remove(i);
+					libSymList.add(0, libSym);
+				}
+				break;
+			}
+		}
+		assignLibraryOrdinals(libSymList, false);
+	}
+	
+	/**
+	 * Update library symbol ordinal to reflect current placement within ordered list.
+	 * The cached {@code libSymbolList} will be updated to refer to the list instance provided.
+	 * @param list new library symbol ordered list
+	 * @param notify if true any library symbol ordinal change will generate change event for
+	 * that symbol.
+	 */
+	void assignLibraryOrdinals(List<LibrarySymbol> list, boolean notify) {
+		for (int i = 0; i < list.size(); i++) {
+			LibrarySymbol libSym = list.get(i);
+			libSym.doSetOrdinal(i, notify);
+		}
+		libSymbolList = list; // update cached list
+	}
+
+	/**
+	 * Adjust ordinals based upon the movement of an existing Library symbol.
+	 * <p>
+	 * NOTE: The caller is responsible for not displacing UNKNOWN Library if already exists
+	 * at ordinal 0.
+	 * 
+	 * @param libSym existing Library symbol
+	 * @param newOrdinal non-negative ordinal (max value will be limited)
+	 */
+	void adjustLibraryOrdinals(LibrarySymbol libSym, int newOrdinal) {
+		if (newOrdinal < 0) {
+			throw new IllegalArgumentException("Positive ordinal required");
+		}
+		List<LibrarySymbol> libSymList = new ArrayList<>(getLibrarySymbolList());
+		int listSize = libSymList.size();
+		if (newOrdinal >= listSize) {
+			newOrdinal = listSize - 1; // do not go beyond end of list
+		}
+
+		int oldOrdinal = libSym.getOrdinal();
+		if (oldOrdinal == newOrdinal) {
+			return;
+		}
+
+		LibrarySymbol s = libSymList.remove(oldOrdinal);
+		if (s != libSym) {
+			throw new AssertionError("Library symbol ordinal mismatch with ordered list");
+		}
+		libSymList.add(newOrdinal, libSym);
+		assignLibraryOrdinals(libSymList, true);
+	}
+
+	/**
+	 * {@return library symbol at the specified ordinal or null if ordinal is beyond end of list}
+	 * @param ordinal library symbol ordinal
+	 * @throws IndexOutOfBoundsException if a negative ordinal is specified
+	 */
+	LibrarySymbol getLibrarySymbolByOrdinal(int ordinal) throws IndexOutOfBoundsException {
+		List<LibrarySymbol> librarySymbolList = getLibrarySymbolList();
+		if (ordinal >= librarySymbolList.size()) {
+			return null;
+		}
+		return librarySymbolList.get(ordinal);
 	}
 
 	/**
@@ -2875,6 +3024,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		source = validateSource(source, name, address, symbolType);
 		name = validateName(name, source);
 
+		if ((symbolType == SymbolType.CLASS || symbolType == SymbolType.NAMESPACE) &&
+			Library.UNKNOWN.equals(name)) {
+			throw new InvalidInputException(Library.UNKNOWN + " is a reserved Library name");
+		}
+
 		if (checkForDuplicates) {
 			checkDuplicateSymbolName(address, name, parent, symbolType);
 		}
@@ -2904,6 +3058,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			throws IOException, InvalidInputException {
 		if (!addr.isExternalAddress()) {
 			throw new IllegalArgumentException("External address required");
+		}
+		if (!namespace.isExternal()) {
+			throw new IllegalArgumentException("External namespace required");
 		}
 		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
 			throw new IllegalArgumentException("Memory address required for external program");

@@ -120,8 +120,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 15-Sep-2025 - version 31   Code Mananger dropped Composites property map use
 	 * 19-Sep-2025 - version 32   Expanded number of SourceType values and record storage affecting
 	 *                            SymbolDB, FunctionDB and RefListFlagsV0
+	 * 14-Apr-2026 - version 33   Introduced Library symbol ordinal assignment.
 	 */
-	static final int DB_VERSION = 32;
+	static final int DB_VERSION = 33;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -142,6 +143,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public static final int COMPOUND_VARIABLE_STORAGE_ADDED_VERSION = 18;
 	public static final int AUTO_PARAMETERS_ADDED_VERSION = 19;
 	public static final int RELOCATION_STATUS_ADDED_VERSION = 26;
+	public static final int LIBRARY_ORDINAL_ASSIGNMENT_ADDED_VERSION = 33;
 
 	private static final String DATA_MAP_TABLE_NAME = "Program";
 
