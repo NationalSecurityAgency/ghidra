@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.table.FocusableEditor;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
@@ -163,7 +164,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 
 	private Component createStackOffsetEditor(VarnodeInfo varnode) {
 		offsetInput = new IntegerTextField();
-		offsetInput.setHexMode();
+		offsetInput.setFormat(IntegerFormat.HEX);
 		Address address = varnode.getAddress();
 		if (address != null) {
 			offsetInput.setValue(address.getOffset());

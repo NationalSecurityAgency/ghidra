@@ -358,15 +358,13 @@ public class RegisterPlugin extends ProgramPlugin {
 
 	@Override
 	protected void locationChanged(ProgramLocation loc) {
-		if (loc instanceof RegisterTransitionFieldLocation) {
-			RegisterTransitionFieldLocation regLoc = (RegisterTransitionFieldLocation) loc;
+		if (loc instanceof RegisterTransitionFieldLocation regLoc) {
 			Register reg = regLoc.getRegister();
 			if (reg != null) {
 				registerMgrProvider.setLocation(reg, regLoc.getAddress());
 			}
 		}
-		else if (loc instanceof RegisterFieldLocation) {
-			RegisterFieldLocation regLoc = (RegisterFieldLocation) loc;
+		else if (loc instanceof RegisterFieldLocation regLoc) {
 			Register reg = regLoc.getRegister();
 			if (reg != null) {
 				registerMgrProvider.setLocation(reg, regLoc.getAddress());

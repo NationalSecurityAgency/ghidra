@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.memory;
 
 import java.awt.*;
+import java.math.BigInteger;
 import java.util.List;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.app.plugin.core.memory.AddBlockModel.InitializedType;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.AddressInput;
@@ -474,16 +476,16 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		JPanel schemePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
 		schemeDestByteCountField = new IntegerTextField(4, 1);
-		schemeDestByteCountField.setAllowNegativeValues(false);
-		schemeDestByteCountField.setAllowsHexPrefix(false);
-		schemeDestByteCountField.setDecimalMode();
+		schemeDestByteCountField.setMinValue(BigInteger.ZERO);
+		schemeDestByteCountField.setUseNumberPrefix(false);
+		schemeDestByteCountField.setFormat(IntegerFormat.DEC);
 		schemeDestByteCountField.addChangeListener(ev -> schemeDestByteCountChanged());
 		schemeDestByteCountField.setAccessibleName("Mapping Ratio: Destination Size");
 
 		schemeSrcByteCountField = new IntegerTextField(4, 1);
-		schemeSrcByteCountField.setAllowNegativeValues(false);
-		schemeSrcByteCountField.setAllowsHexPrefix(false);
-		schemeSrcByteCountField.setDecimalMode();
+		schemeSrcByteCountField.setMinValue(BigInteger.ZERO);
+		schemeSrcByteCountField.setUseNumberPrefix(false);
+		schemeSrcByteCountField.setFormat(IntegerFormat.DEC);
 		schemeSrcByteCountField.addChangeListener(ev -> schemeSrcByteCountChanged());
 		schemeSrcByteCountField.setAccessibleName("Mapping Ratio: Source Size");
 

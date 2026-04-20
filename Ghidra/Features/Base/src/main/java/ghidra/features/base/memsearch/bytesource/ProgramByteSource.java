@@ -64,7 +64,7 @@ public class ProgramByteSource implements AddressableByteSource {
 		long offset = location.getByteAddress().subtract(location.getProgram().getImageBase());
 		return getProgram().getImageBase().add(offset);
 	}
-	
+
 	public Program getProgram() {
 		return memory.getProgram();
 	}

@@ -26,6 +26,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.framework.options.CustomOptionsEditor;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.PairLayout;
@@ -101,8 +102,8 @@ public class AddressFieldOptionsPropertyEditor extends PropertyEditorSupport
 		panel.add(label);
 
 		minDigitsField = new IntegerTextField(2);
-		minDigitsField.setAllowNegativeValues(false);
-		minDigitsField.setDecimalMode();
+		minDigitsField.setMinValue(BigInteger.ZERO);
+		minDigitsField.setFormat(IntegerFormat.DEC);
 		minDigitsField.setMaxValue(BigInteger.valueOf(32));
 		minDigitsField.getComponent().setToolTipText(MIN_HEX_DIGITS_TOOLTIP);
 
