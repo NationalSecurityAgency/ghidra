@@ -60,6 +60,15 @@ public abstract class AbstractRectangle2DQuery<
 	}
 
 	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>,
+		Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q intersectingEnclosed(
+				NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
+		Rectangle2D<X, Y, ?> full = rect.getSpace().getFull();
+		NS r1 = rect.immutable(full.getX1(), rect.getX2(), rect.getY1(), full.getY2());
+		NS r2 = rect.immutable(rect.getX1(), full.getX2(), full.getY1(), rect.getY2());
+		return factory.create(r1, r2, direction);
+	}
+
+	protected static <X, Y, NS extends Rectangle2D<X, Y, NS>,
 		Q extends AbstractRectangle2DQuery<X, Y, ?, NS, Q>> Q equalTo(
 				NS rect, Rectangle2DDirection direction, QueryFactory<NS, Q> factory) {
 		NS r1 = rect.immutable(rect.getX1(), rect.getX1(), rect.getY1(), rect.getY1());

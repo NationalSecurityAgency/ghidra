@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
@@ -31,17 +32,17 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.LockHold;
 
+@Internal
 public interface InternalTraceMemoryOperations extends TraceMemoryOperations {
 
-	static TraceMemoryState requireOne(
+	static TraceMemoryState requireOne(AddressRange range,
 			Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> states, Register register) {
-		if (states.isEmpty()) {
-			return TraceMemoryState.UNKNOWN;
-		}
-		if (states.size() != 1) {
+		TraceMemoryState state =
+			TraceMemoryOperations.oneState(range, states);
+		if (state == null) {
 			throw new IllegalStateException("More than one state is present in " + register);
 		}
-		return states.iterator().next().getValue();
+		return state;
 	}
 
 	/**
@@ -63,7 +64,7 @@ public interface InternalTraceMemoryOperations extends TraceMemoryOperations {
 	@Override
 	default TraceMemoryState getState(TracePlatform platform, long snap, Register register) {
 		AddressRange range = platform.getConventionalRegisterRange(getSpace(), register);
-		return requireOne(getStates(snap, range), register);
+		return requireOne(range, getStates(snap, range), register);
 	}
 
 	@Override

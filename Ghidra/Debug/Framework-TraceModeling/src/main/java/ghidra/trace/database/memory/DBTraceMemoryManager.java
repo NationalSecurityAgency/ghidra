@@ -347,11 +347,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		Lifespan between = from < to ? Lifespan.span(from + 1, to) : Lifespan.span(to + 1, from);
 		Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> result = new ArrayList<>();
 		for (DBTraceMemorySpace space : spaces.values()) {
-			AddressRange rng =
-				new AddressRangeImpl(space.space.getMinAddress(), space.space.getMaxAddress());
-			result.addAll(
-				space.stateMapSpace.reduce(TraceAddressSnapRangeQuery.enclosed(rng, between))
-						.entries());
+			result.addAll(space.stateMapSpace
+					.reduce(TraceAddressSnapRangeQuery.minWithin(between, space.space))
+					.entries());
 		}
 		return result;
 	}

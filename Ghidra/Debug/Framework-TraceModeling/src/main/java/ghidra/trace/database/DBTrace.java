@@ -74,6 +74,9 @@ import ghidra.util.task.TaskMonitor;
 // Applies to creation, and to setting end snap
 // Also to deleting a thread altogether. 
 public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, TraceChangeManager {
+
+	public final static int CHUNK_SIZE = 4096;
+
 	protected static final String TRACE_INFO = "Trace Information";
 	protected static final String NAME = "Name";
 	protected static final String DATE_CREATED = "Date Created";

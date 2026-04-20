@@ -424,7 +424,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				quantize(rng(addr, 10), 4096), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				quantize(rng(addr, 10), 4096), Lifespan.nowOn(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 

@@ -17,7 +17,7 @@ package agent.lldb.rmi;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -384,7 +384,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				quantize(rng(addr, 10), 4096), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				quantize(rng(addr, 10), 4096), Lifespan.nowOn(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
@@ -900,18 +900,17 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
 		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			assertEquals(
-				"""
-						Parent          Key    Span     Value           Type
-						Test.Objects[1] vaddr  [0,+inf) ram:0000dead    ADDRESS
-						Test.Objects[1] vbool  [0,+inf) True            BOOL
-						Test.Objects[1] vbyte  [0,+inf) 1               BYTE
-						Test.Objects[1] vchar  [0,+inf) 'A'             CHAR
-						Test.Objects[1] vint   [0,+inf) 3               INT
-						Test.Objects[1] vlong  [0,+inf) 4               LONG
-						Test.Objects[1] vobj   [0,+inf) Test.Objects[1] OBJECT
-						Test.Objects[1] vshort [0,+inf) 2               SHORT\
-						""",
+			assertEquals("""
+					Parent          Key    Span     Value           Type
+					Test.Objects[1] vaddr  [0,+inf) ram:0000dead    ADDRESS
+					Test.Objects[1] vbool  [0,+inf) True            BOOL
+					Test.Objects[1] vbyte  [0,+inf) 1               BYTE
+					Test.Objects[1] vchar  [0,+inf) 'A'             CHAR
+					Test.Objects[1] vint   [0,+inf) 3               INT
+					Test.Objects[1] vlong  [0,+inf) 4               LONG
+					Test.Objects[1] vobj   [0,+inf) Test.Objects[1] OBJECT
+					Test.Objects[1] vshort [0,+inf) 2               SHORT\
+					""",
 				extractOutSection(out, "---GetValues---"));
 		}
 	}
@@ -939,11 +938,10 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
 		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			assertTrue(extractOutSectionWithPrompt(out, "---GetValues---").contains(
-				"""
-				Parent          Key   Span     Value        Type
-				Test.Objects[1] vaddr [0,+inf) ram:0000dead ADDRESS\
-				"""));
+			assertTrue(extractOutSectionWithPrompt(out, "---GetValues---").contains("""
+					Parent          Key   Span     Value        Type
+					Test.Objects[1] vaddr [0,+inf) ram:0000dead ADDRESS\
+					"""));
 		}
 	}
 

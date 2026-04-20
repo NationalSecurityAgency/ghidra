@@ -56,6 +56,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.*;
@@ -926,11 +927,10 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		TraceMemoryManager memoryManager = open.trace.getMemoryManager();
 		AddressSetView readOnly =
 			memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite(snap));
-		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(snap),
-			s -> s == TraceMemoryState.KNOWN);
+		AddressSetView everKnown =
+			memoryManager.getAddressesWithState(Lifespan.since(snap), StatePredicate.IS_KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
-		AddressSetView known =
-			memoryManager.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known = memoryManager.getAddressesWithState(snap, StatePredicate.IS_KNOWN);
 		AddressSetView disassemblable = new AddressSet(new UnionAddressSetView(known, roEverKnown));
 
 		Address start = open.toAddress(req.getStart(), true);
