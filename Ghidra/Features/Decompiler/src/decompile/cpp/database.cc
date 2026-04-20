@@ -1585,7 +1585,7 @@ Symbol *Scope::addMapSym(Decoder &decoder)
     throw LowlevelError("Unknown symbol type");
   try {		// Protect against duplicate scope errors
     sym->decode(decoder);
-  } catch(RecovError &err) {
+  } catch(...) {
     delete sym;
     throw;
   }
@@ -2946,28 +2946,24 @@ Database::~Database(void)
 void Database::attachScope(Scope *newscope,Scope *parent)
 
 {
+  unique_ptr<Scope> uscope(newscope);
   if (parent == (Scope *)0) {
     if (globalscope != (Scope *)0)
       throw LowlevelError("Multiple global scopes");
-    if (newscope->name.size() != 0)
+    if (uscope->name.size() != 0)
       throw LowlevelError("Global scope does not have empty name");
-    globalscope = newscope;
+    globalscope = uscope.release();
     idmap[globalscope->uniqueId] = globalscope;
     return;
   }
-  if (newscope->name.size()==0)
+  if (uscope->name.size()==0)
     throw LowlevelError("Non-global scope has empty name");
-  pair<uint8,Scope *> value(newscope->uniqueId,newscope);
+  pair<uint8,Scope *> value(uscope->uniqueId,uscope.get());
   pair<ScopeMap::iterator,bool> res;
   res = idmap.insert(value);
-  if (res.second==false) {
-    ostringstream s;
-    s << "Duplicate scope id: ";
-    s << newscope->getFullName();
-    delete newscope;
-    throw RecovError(s.str());
-  }
-  parent->attachScope(newscope);
+  if (res.second==false)
+    throw RecovError("Duplicate scope id: " + uscope->getFullName());
+  parent->attachScope(uscope.release());
 }
 
 /// Give \b this database the chance to inform existing scopes of any change to the
@@ -3375,17 +3371,18 @@ void Database::decode(Decoder &decoder)
 void Database::decodeScope(Decoder &decoder,Scope *newScope)
 
 {
+  unique_ptr<Scope> uscope(newScope);
   uint4 elemId = decoder.openElement();
   if (elemId == ELEM_SCOPE) {
     Scope *parentScope = parseParentTag(decoder);
-    attachScope(newScope,parentScope);
+    attachScope(uscope.release(),parentScope);
     newScope->decode(decoder);
   }
   else {
-    newScope->decodeWrappingAttributes(decoder);
+    uscope->decodeWrappingAttributes(decoder);
     uint4 subId = decoder.openElement(ELEM_SCOPE);
     Scope *parentScope = parseParentTag(decoder);
-    attachScope(newScope,parentScope);
+    attachScope(uscope.release(),parentScope);
     newScope->decode(decoder);
     decoder.closeElement(subId);
   }

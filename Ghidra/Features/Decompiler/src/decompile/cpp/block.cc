@@ -1402,7 +1402,7 @@ void BlockGraph::decodeBody(Decoder &decoder)
 
 {
   BlockMap newresolver;
-  vector<FlowBlock *> tmplist;
+  vector<unique_ptr<FlowBlock> > tmplist;
 
   for(;;) {
     uint4 subId = decoder.peekElement();
@@ -1411,15 +1411,14 @@ void BlockGraph::decodeBody(Decoder &decoder)
     int4 newindex = decoder.readSignedInteger(ATTRIB_INDEX);
     FlowBlock *bl = newresolver.createBlock(decoder.readString(ATTRIB_TYPE));
     bl->index = newindex;	// Need to set index here for sort
-    tmplist.push_back(bl);
+    tmplist.push_back(unique_ptr<FlowBlock>(bl));
     decoder.closeElement(subId);
   }
   newresolver.sortList();
 
   for(int4 i=0;i<tmplist.size();++i) {
-    FlowBlock *bl = tmplist[i];
-    bl->decode(decoder,newresolver);
-    addBlock(bl);
+    tmplist[i]->decode(decoder,newresolver);
+    addBlock(tmplist[i].release());
   }
 }
 
@@ -1905,12 +1904,13 @@ BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs,bool hasEx
 
 {
   FlowBlock *rootbl = cs[0];
-  BlockSwitch *ret = new BlockSwitch(rootbl);
+  unique_ptr<BlockSwitch> uret( new BlockSwitch(rootbl) );
   const FlowBlock *leafbl = rootbl->getExitLeaf();
   if ((leafbl == (const FlowBlock *)0)||(leafbl->getType() != FlowBlock::t_copy))
     throw LowlevelError("Could not get switch leaf");
-  ret->grabCaseBasic(leafbl->subBlock(0),cs); // Must be called before the identifyInternal
-  identifyInternal(ret,cs);
+  uret->grabCaseBasic(leafbl->subBlock(0),cs); // Must be called before the identifyInternal
+  identifyInternal(uret.get(),cs);
+  BlockSwitch *ret = uret.release();
   addBlock(ret);
   if (hasExit)
     ret->forceOutputNum(1);	// If there is an exit, there should be exactly 1 out edge

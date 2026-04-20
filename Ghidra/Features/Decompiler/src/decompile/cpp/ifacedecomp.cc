@@ -1856,12 +1856,12 @@ void IfcProtooverride::execute(istream &s)
   PrototypePieces pieces;
   parse_protopieces(pieces,s,dcp->conf); // Parse the prototype from stream
 
-  FuncProto *newproto = new FuncProto();
+  unique_ptr<FuncProto> newproto(new FuncProto());
 
   // Make proto whose storage is internal, not backed by a real scope
   newproto->setInternal(pieces.model,dcp->conf->types->getTypeVoid());
   newproto->setPieces(pieces);
-  dcp->fd->getOverride().insertProtoOverride(callpoint,newproto);
+  dcp->fd->getOverride().insertProtoOverride(callpoint,newproto.release());
   dcp->fd->clear();		// Clear any analysis (this leaves overrides intact)
 }
 

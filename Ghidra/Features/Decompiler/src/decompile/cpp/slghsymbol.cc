@@ -232,7 +232,9 @@ void SymbolTable::decodeSymbolHeader(Decoder &decoder)
     sym = new SubtableSymbol();
   else
     throw SleighError("Bad symbol xml");
-  sym->decodeHeader(decoder);	// Restore basic elements of symbol
+  unique_ptr<SleighSymbol> usym(sym);
+  usym->decodeHeader(decoder);	// Restore basic elements of symbol
+  usym.release();
   symbollist[sym->id] = sym;	// Put the basic symbol in the table
   table[sym->scopeid]->addSymbol(sym); // to allow recursion
 }
@@ -1631,28 +1633,28 @@ void Constructor::decode(Decoder &decoder,SleighBase *trans)
     }
     else if (subel == sla::ELEM_CONTEXT_OP) {
       ContextOp *c_op = new ContextOp();
-      c_op->decode(decoder,trans);
       context.push_back(c_op);
+      c_op->decode(decoder,trans);
     }
     else if (subel == sla::ELEM_COMMIT) {
       ContextCommit *c_op = new ContextCommit();
-      c_op->decode(decoder,trans);
       context.push_back(c_op);
+      c_op->decode(decoder,trans);
     }
     else {
-      ConstructTpl *cur = new ConstructTpl();
+      unique_ptr<ConstructTpl> cur(new ConstructTpl());
       int4 sectionid = cur->decode(decoder);
       if (sectionid < 0) {
 	if (templ != (ConstructTpl *)0)
 	  throw LowlevelError("Duplicate main section");
-	templ = cur;
+	templ = cur.release();
       }
       else {
 	while(namedtempl.size() <= sectionid)
 	  namedtempl.push_back((ConstructTpl *)0);
 	if (namedtempl[sectionid] != (ConstructTpl *)0)
 	  throw LowlevelError("Duplicate named section");
-	namedtempl[sectionid] = cur;
+	namedtempl[sectionid] = cur.release();
       }
     }
     subel = decoder.peekElement();
@@ -2341,8 +2343,8 @@ void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub
     }
     else if (subel == sla::ELEM_DECISION) {
       DecisionNode *subnode = new DecisionNode();
-      subnode->decode(decoder,this,sub);
       children.push_back(subnode);
+      subnode->decode(decoder,this,sub);
     }
     subel = decoder.peekElement();
   }
