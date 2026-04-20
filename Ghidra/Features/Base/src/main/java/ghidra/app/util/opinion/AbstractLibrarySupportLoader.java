@@ -39,6 +39,7 @@ import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -100,6 +101,17 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	public static final String LOAD_ONLY_LIBRARIES_OPTION_NAME = "Only Load Libraries"; // hidden
 	static final boolean LOAD_ONLY_LIBRARIES_OPTION_DEFAULT = false;
+
+	/**
+	 * Gets a program property name to represent the ordered required library of the given index
+	 * 
+	 * @param libraryIndex The index of the required library
+	 * @return A program property name to represent the ordered required library of the given index
+	 */
+	public static String getRequiredLibraryProperty(int libraryIndex) {
+		return String.format("%s %s]", "Required Library [",
+			StringUtilities.pad("" + libraryIndex, ' ', 4));
+	}
 
 	/**
 	 * Loads bytes in a particular format into the given {@link Program}.

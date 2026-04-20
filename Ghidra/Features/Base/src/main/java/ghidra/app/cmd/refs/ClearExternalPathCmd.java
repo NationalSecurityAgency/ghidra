@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,37 +16,46 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
-import ghidra.util.exception.AssertException;
+import ghidra.program.model.symbol.ExternalManager;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Command to remove an external program name from the reference manager.
+ * Command to clear the external program path associated with an external Library.
  * 
  */
-public class ClearExternalNameCmd implements Command<Program> {
+public class ClearExternalPathCmd implements Command<Program> {
 
 	private String externalName;
 	private String status;
 	private boolean userDefined = true;
 
 	/**
-	 * Constructs a new command removing an external program name.
-	 * @param externalName the name of the external program name to be removed.
+	 * Constructs a new command for clearing the external program path associated with a
+	 * specified external Library.
+	 * @param externalName external Library name
 	 */
-	public ClearExternalNameCmd(String externalName) {
+	public ClearExternalPathCmd(String externalName) {
 		this.externalName = externalName;
 	}
 
 	@Override
 	public boolean applyTo(Program program) {
 		try {
-			program.getExternalManager().setExternalPath(externalName, null, userDefined);
+			// Avoid creating the Library if it does not already exist
+			ExternalManager externalManager = program.getExternalManager();
+			Library lib = externalManager.getExternalLibrary(externalName);
+			if (lib != null) {
+				externalManager.setExternalPath(externalName, null, userDefined);
+				return true;
+			}
+			status = "Library not found: " + externalName;
 		}
 		catch (InvalidInputException e) {
-			throw new AssertException(e);
+			status = e.getMessage();
 		}
-		return true;
+		return false;
 	}
 
 	@Override
@@ -56,7 +65,7 @@ public class ClearExternalNameCmd implements Command<Program> {
 
 	@Override
 	public String getName() {
-		return "Remove External Program Name";
+		return "Clear External Library Path";
 	}
 
 }

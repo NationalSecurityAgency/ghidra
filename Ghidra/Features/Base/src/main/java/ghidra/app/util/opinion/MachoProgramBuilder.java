@@ -57,7 +57,6 @@ import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -1298,7 +1297,7 @@ public class MachoProgramBuilder {
 					libraryPaths.add(libraryPath);
 					addLibrary(libraryPath);
 					props.setString(
-						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+						AbstractLibrarySupportLoader.getRequiredLibraryProperty(libraryIndex++),
 						libraryPath);
 				}
 			}
