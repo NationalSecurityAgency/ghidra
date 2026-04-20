@@ -23,7 +23,9 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Map.Entry;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import db.DBHandle;
@@ -36,6 +38,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.util.SystemUtilities;
@@ -336,17 +339,18 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			collectAsMap(memory.getMostRecentStates(2, b.range(0x2800, 0x9000))));
 
 		expected = new HashMap<>();
-		expected.put(b.srange(3, 0x4000, 0x4fff), TraceMemoryState.KNOWN);
-		expected.put(b.srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
-		expected.put(b.srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.at(3), 0x4000, 0x4800), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4801, 0x4fff), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x5000, 0x6000), TraceMemoryState.ERROR);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x6001, 0x7000), TraceMemoryState.KNOWN);
 		assertEquals(expected,
 			collectAsMap(memory.getMostRecentStates(3, b.range(0x2800, 0x9000))));
 
 		expected = new HashMap<>();
-		expected.put(b.srange(4, 0x3000, 0x4800), TraceMemoryState.KNOWN);
-		expected.put(b.srange(3, 0x4801, 0x4fff), TraceMemoryState.KNOWN);
-		expected.put(b.srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
-		expected.put(b.srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(4), 0x3000, 0x4800), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4801, 0x4fff), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x5000, 0x6000), TraceMemoryState.ERROR);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x6001, 0x7000), TraceMemoryState.KNOWN);
 		assertEquals(expected,
 			collectAsMap(memory.getMostRecentStates(4, b.range(0x2800, 0x9000))));
 		assertEquals(expected,
@@ -373,14 +377,14 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		expected = new AddressSet();
 		expected.add(b.range(0x3000, 0x3800));
 		expected.add(b.range(0x3c00, 0x4800));
-		result = memory.getAddressesWithState(4, set, state -> state == TraceMemoryState.KNOWN);
+		result = memory.getAddressesWithState(4, set, StatePredicate.IS_KNOWN);
 		assertEquals(expected, set.intersect(result));
 
 		expected = new AddressSet();
 		expected.add(b.range(0x4000, 0x4800));
 		expected.add(b.range(0x4c00, 0x4fff));
 		expected.add(b.range(0x6001, 0x6100));
-		result = memory.getAddressesWithState(3, set, state -> state == TraceMemoryState.KNOWN);
+		result = memory.getAddressesWithState(3, set, StatePredicate.IS_KNOWN);
 		assertEquals(expected, set.intersect(result));
 
 		// Test gaps
@@ -388,7 +392,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		expected.add(b.range(0x2800, 0x3800));
 		expected.add(b.range(0x3c00, 0x3fff));
 		expected.add(b.range(0x8000, 0x9000));
-		result = memory.getAddressesWithState(3, set, state -> true);
+		result = memory.getAddressesWithState(3, set, StatePredicate.IS_KNOWN_OR_ERROR);
 		assertEquals(expected, set.subtract(result));
 	}
 
@@ -402,9 +406,9 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 
 		expected = new HashMap<>();
-		expected.put(b.srange(3, 0x4000, 0x4fff), TraceMemoryState.KNOWN);
-		expected.put(b.srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
-		expected.put(b.srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4fff), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x5000, 0x6000), TraceMemoryState.ERROR);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x6001, 0x7000), TraceMemoryState.KNOWN);
 		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x8000))));
 	}
 
@@ -438,7 +442,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		// verify the corresponding change in state;
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = b.buf(-1, -2, -3, -4); // Verify zeros actually written
@@ -459,7 +463,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		// verify the corresponding change in state;
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
@@ -534,10 +538,10 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		assertEquals(expected, collectAsMap(memory.getStates(6, b.range(0x3000, 0x5000))));
 
 		expected = new HashMap<>();
-		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.span(3, 4), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 		expected = new HashMap<>();
-		expected.put(b.srange(5, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(5), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 		assertEquals(expected, collectAsMap(memory.getStates(5, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = b.buf(0, 0, 0, 0);
@@ -735,6 +739,16 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			b.buf(-1, -1, -1), true, TaskMonitor.DUMMY));
 	}
 
+	protected void dumpStates() {
+		System.err.println("STATES");
+		for (DBTraceMemorySpace space : memory.getActiveSpaces()) {
+			for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : space.stateMapSpace
+					.entries()) {
+				System.err.println("  " + entry);
+			}
+		}
+	}
+
 	@Test
 	public void testRemoveBytes() {
 		try (Transaction tx = b.startTransaction()) {
@@ -783,9 +797,9 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		// Check overall effect on state
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		expected.put(b.srange(2, 0x47fe, 0x47fe), TraceMemoryState.KNOWN);
-		expected.put(b.srange(4, 0x4800, 0x4803), TraceMemoryState.KNOWN);
-		expected.put(b.srange(3, 0x4804, 0x4805), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(2), 0x47fe, 0x47fe), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(4), 0x4800, 0x4803), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4804, 0x4805), TraceMemoryState.KNOWN);
 		assertEquals(expected,
 			collectAsMap(memory.getMostRecentStates(6, b.range(0x4700, 0x4900))));
 	}
@@ -814,7 +828,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 			ByteBuffer read = ByteBuffer.allocate(4);
@@ -838,7 +852,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 			tx.abort();
@@ -866,7 +880,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 		}
 		b.trace.undo();
@@ -894,7 +908,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 		}
 		b.trace.undo();
@@ -917,7 +931,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		assertEquals(1, getBufferRecordCount());
 
 		expected = new HashMap<>();
-		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		expected.put(b.srange(Lifespan.nowOn(3), 0x4000, 0x4003), TraceMemoryState.KNOWN);
 		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		read.position(0);
@@ -1003,6 +1017,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 	 * @throws Exception because
 	 */
 	@Test
+	@Ignore("Developer's desk")
 	public void testReplicateClassCastExceptionScenario() throws Exception {
 		final int TICKS = 100_000;
 

@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import db.DBRecord;
-import generic.util.FlattenedIterator;
 import generic.util.PeekableIterator;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -44,9 +43,9 @@ public abstract class AbstractConstraintsTree<
 	protected final DBCachedObjectStore<DR> dataStore;
 	protected final DBCachedObjectStore<NR> nodeStore;
 
-	protected final Map<Long, Collection<DR>> cachedDataChildren = Collections.synchronizedMap(
+	protected final Map<Long, List<DR>> cachedDataChildren = Collections.synchronizedMap(
 		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES));
-	protected final Map<Long, Collection<NR>> cachedNodeChildren = Collections.synchronizedMap(
+	protected final Map<Long, List<NR>> cachedNodeChildren = Collections.synchronizedMap(
 		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES));
 
 	protected NR root;
@@ -95,8 +94,8 @@ public abstract class AbstractConstraintsTree<
 	 * @return a collection of the children
 	 */
 	protected Collection<NR> getNodeChildrenOf(NR parent) {
-		return cachedNodeChildren.computeIfAbsent(parent.getKey(),
-			k -> new ArrayList<>(getNodeChildrenOf(k)));
+		return Collections.unmodifiableList(cachedNodeChildren.computeIfAbsent(parent.getKey(),
+			k -> new ArrayList<>(getNodeChildrenOf(k))));
 	}
 
 	/**
@@ -121,9 +120,9 @@ public abstract class AbstractConstraintsTree<
 	 * @param parent the parent node
 	 * @return a collection of the children
 	 */
-	protected Collection<DR> getDataChildrenOf(NR parent) {
-		return cachedDataChildren.computeIfAbsent(parent.getKey(),
-			k -> new ArrayList<>(getDataChildrenOf(k)));
+	protected List<DR> getDataChildrenOf(NR parent) {
+		return Collections.unmodifiableList(cachedDataChildren.computeIfAbsent(parent.getKey(),
+			k -> new ArrayList<>(getDataChildrenOf(k))));
 	}
 
 	/**
@@ -209,51 +208,34 @@ public abstract class AbstractConstraintsTree<
 		}
 
 		protected abstract VisitResult visitData(NR parent, DR d, boolean included);
+
+		protected Iterator<NR> iterateNodes(Stream<NR> nodes) {
+			return nodes.iterator();
+		}
+
+		protected Iterator<DR> iterateData(Stream<DR> data) {
+			return data.iterator();
+		}
 	}
 
 	protected VisitResult visit(Q query, TreeRecordVisitor visitor, boolean ordered) {
 		return visit(null, root, query, visitor, ordered);
 	}
 
-	protected VisitResult visit(NR parent, NR node, Q query, TreeRecordVisitor visitor,
-			boolean ordered) {
-		QueryInclusion inclusion =
-			query == null ? QueryInclusion.ALL : query.testNode(node.getShape());
-		VisitResult r = visitor.beginNode(parent, node, inclusion);
-		if (r != VisitResult.DESCEND) {
-			return r;
-		}
-		if (node.getType().isLeaf()) {
-			List<DR> data = new ArrayList<>(getDataChildrenOf(node));
-			if (query != null && ordered) {
-				data.sort(Comparator.comparing(DR::getBounds, query.getBoundsComparator()));
+	protected VisitResult visitLeaf(NR parent, NR node, Q query, TreeRecordVisitor visitor,
+			boolean ordered, QueryInclusion inclusion) {
+		Stream<DR> data = getDataChildrenOf(node).stream();
+		if (query != null) {
+			data = data.filter(d -> query.testData(d.getShape()));
+			if (ordered) {
+				data =
+					data.sorted(Comparator.comparing(DR::getBounds, query.getBoundsComparator()));
 			}
-			for (DR d : data) {
-				if (query != null && ordered && query.terminateEarlyData(d.getShape())) {
-					break;
-				}
-				boolean included = query == null || query.testData(d.getShape());
-				r = visitor.visitData(node, d, included);
-				if (r == VisitResult.ASCEND) {
-					return visitor.endNode(parent, node, inclusion);
-				}
-				if (r == VisitResult.TERMINATE) {
-					visitor.endNode(parent, node, inclusion);
-					return r;
-				}
-			}
-			return visitor.endNode(parent, node, inclusion);
 		}
-		assert node.getType().isDirectory();
-		List<NR> nodes = new ArrayList<>(getNodeChildrenOf(node));
-		if (query != null && ordered) {
-			nodes.sort(Comparator.comparing(NR::getBounds, query.getBoundsComparator()));
-		}
-		for (NR n : nodes) {
-			if (query != null && ordered && query.terminateEarlyNode(n.getShape())) {
-				break;
-			}
-			r = visit(node, n, query, visitor, ordered);
+		Iterator<DR> dit = visitor.iterateData(data);
+		while (dit.hasNext()) {
+			DR d = dit.next();
+			VisitResult r = visitor.visitData(node, d, true);
 			if (r == VisitResult.ASCEND) {
 				return visitor.endNode(parent, node, inclusion);
 			}
@@ -265,29 +247,66 @@ public abstract class AbstractConstraintsTree<
 		return visitor.endNode(parent, node, inclusion);
 	}
 
+	protected VisitResult visitDirectory(NR parent, NR node, Q query, TreeRecordVisitor visitor,
+			boolean ordered, QueryInclusion inclusion) {
+		Stream<NR> nodes = getNodeChildrenOf(node).stream();
+		if (query != null) {
+			nodes = nodes.filter(n -> query.testNode(n.getShape()) != QueryInclusion.NONE);
+			if (ordered) {
+				nodes =
+					nodes.sorted(Comparator.comparing(NR::getBounds, query.getBoundsComparator()));
+			}
+		}
+		Iterator<NR> nit = visitor.iterateNodes(nodes);
+		while (nit.hasNext()) {
+			NR n = nit.next();
+			VisitResult r = visit(node, n, query, visitor, ordered);
+			if (r == VisitResult.ASCEND) {
+				return visitor.endNode(parent, node, inclusion);
+			}
+			if (r == VisitResult.TERMINATE) {
+				visitor.endNode(parent, node, inclusion);
+				return r;
+			}
+		}
+		return visitor.endNode(parent, node, inclusion);
+	}
+
+	protected VisitResult visit(NR parent, NR node, Q query, TreeRecordVisitor visitor,
+			boolean ordered) {
+		QueryInclusion inclusion =
+			query == null ? QueryInclusion.ALL : query.testNode(node.getShape());
+		VisitResult r = visitor.beginNode(parent, node, inclusion);
+		if (r != VisitResult.DESCEND) {
+			return r;
+		}
+		if (node.getType().isLeaf()) {
+			return visitLeaf(parent, node, query, visitor, ordered, inclusion);
+		}
+		assert node.getType().isDirectory();
+		return visitDirectory(parent, node, query, visitor, ordered, inclusion);
+	}
+
 	protected Iterator<DR> iterator(Q query) {
 		return iterator(root, query);
 	}
 
-	protected Iterator<DR> iterator(NR node, Q query) {
+	protected Stream<DR> stream(NR node, Q query) {
 		if (node.getType().isLeaf()) {
-			List<DR> data = new ArrayList<>(node.getChildCount());
-			for (DR d : getDataChildrenOf(node)) {
-				if (query != null && !query.testData(d.getShape())) {
-					continue;
-				}
-				data.add(d);
+			Collection<DR> data = getDataChildrenOf(node);
+			if (query == null) {
+				return data.stream();
 			}
-			return data.iterator();
+			return data.stream().filter(d -> query.testData(d.getShape()));
 		}
-		List<NR> nodes = new ArrayList<>(node.getChildCount());
-		for (NR n : getNodeChildrenOf(node)) {
-			if (query != null && query.testNode(n.getShape()) == QueryInclusion.NONE) {
-				continue;
-			}
-			nodes.add(n);
-		}
-		return FlattenedIterator.start(nodes.iterator(), n -> iterator(n, query));
+		Collection<NR> nodes = getNodeChildrenOf(node);
+		Stream<NR> passing = query == null ? nodes.stream()
+				: nodes.stream().filter(n -> query.testNode(n.getShape()) != QueryInclusion.NONE);
+		return passing.flatMap(n -> stream(n, query));
+	}
+
+	protected Iterator<DR> iterator(NR node, Q query) {
+		return stream(node, query).iterator();
 	}
 
 	protected Iterator<DR> orderedIterator(Q query) {
@@ -574,7 +593,7 @@ public abstract class AbstractConstraintsTree<
 	}
 
 	protected <R> void doRemoveFromCachedChildren(long parentKey, R child,
-			Map<Long, Collection<R>> cache) {
+			Map<Long, List<R>> cache) {
 		Collection<R> children = cache.get(parentKey);
 		if (children == null) {
 			return;
@@ -585,7 +604,7 @@ public abstract class AbstractConstraintsTree<
 	}
 
 	protected <R> void doAddToCachedChildren(long parentKey, R child,
-			Map<Long, Collection<R>> cache) {
+			Map<Long, List<R>> cache) {
 		Collection<R> children = cache.get(parentKey);
 		if (children == null) {
 			return;
@@ -596,7 +615,7 @@ public abstract class AbstractConstraintsTree<
 	}
 
 	protected <R extends DBTreeRecord<?, ?>> void doSetParentKey(R child, long key,
-			Map<Long, Collection<R>> cache) {
+			Map<Long, List<R>> cache) {
 		doRemoveFromCachedChildren(child.getParentKey(), child, cache);
 		child.setParentKey(key);
 		doAddToCachedChildren(key, child, cache);
@@ -720,6 +739,16 @@ public abstract class AbstractConstraintsTree<
 					dirty.add(parent);
 				}
 				return VisitResult.NEXT;
+			}
+
+			@Override
+			protected Iterator<NR> iterateNodes(Stream<NR> nodes) {
+				return nodes.toList().iterator();
+			}
+
+			@Override
+			protected Iterator<DR> iterateData(Stream<DR> data) {
+				return data.toList().iterator();
 			}
 		}, false);
 	}
@@ -876,7 +905,7 @@ public abstract class AbstractConstraintsTree<
 	public void checkIntegrity() {
 		synchronized (cachedDataChildren) {
 			// Before we visit, integrity check that cache. Visiting will affect cache.
-			for (Entry<Long, Collection<DR>> ent : cachedDataChildren.entrySet()) {
+			for (Entry<Long, List<DR>> ent : cachedDataChildren.entrySet()) {
 				Set<DR> databasedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
 				// NOTE: Bypass the cache by using the variant with a key parameter
 				databasedChildren.addAll(getDataChildrenOf(ent.getKey()));
@@ -889,7 +918,7 @@ public abstract class AbstractConstraintsTree<
 			}
 		}
 		synchronized (cachedNodeChildren) {
-			for (Entry<Long, Collection<NR>> ent : cachedNodeChildren.entrySet()) {
+			for (Entry<Long, List<NR>> ent : cachedNodeChildren.entrySet()) {
 				Set<NR> databasedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
 				// NOTE: Bypass the cache by using the variant with a key parameter
 				databasedChildren.addAll(getNodeChildrenOf(ent.getKey()));

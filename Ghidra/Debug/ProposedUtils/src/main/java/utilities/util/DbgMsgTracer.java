@@ -44,7 +44,7 @@ public class DbgMsgTracer {
 	}
 
 	private void doMsg(Object obj, String message) {
-		Msg.info(obj, "%s %s".formatted(prefixStack(), message));
+		Msg.info(obj, "%s %s %s".formatted(Thread.currentThread(), prefixStack(), message));
 	}
 
 	public record CallRec(DbgMsgTracer tracer, Object obj, String name, long start)
@@ -53,7 +53,15 @@ public class DbgMsgTracer {
 		public void close() {
 			long stop = System.currentTimeMillis();
 			long elapsedMs = stop - start;
-			tracer.doMsg(obj, "%d: (EXITED) after %f s".formatted(stop, elapsedMs / 1000.0));
+			String extra;
+			if (elapsedMs > 100) {
+				extra = " (LONG)";
+			}
+			else {
+				extra = "";
+			}
+			tracer.doMsg(obj,
+				"%d: (EXITED) after %f s%s".formatted(stop, elapsedMs / 1000.0, extra));
 			CallRec popped = tracer.stack.pop();
 			assert popped == this;
 		}

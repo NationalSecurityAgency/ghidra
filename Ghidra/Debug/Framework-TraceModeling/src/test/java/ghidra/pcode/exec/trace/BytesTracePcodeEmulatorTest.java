@@ -33,8 +33,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
@@ -1087,6 +1086,29 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
 			assertEquals(BigInteger.valueOf(0xbeef), // r2 Affected
 				TraceSleighUtils.evaluate("r2", tb.trace, 1, thread, 0));
+		}
+	}
+
+	@Test
+	public void testReadUninit() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			initTrace(tb, """
+					r0 = 0x00600000;
+					*:8 r0 = 0x1122334455667788;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+
+			AddressSpace space = emu.getLanguage().getDefaultDataSpace();
+
+			// Cause a gap in "known-but-uninitialized"
+			assertArrayEquals(bytes(0x33, 0x44, 0x55, 0x66),
+				emu.getSharedState().getVar(space, 0x00600002, 4, false, Reason.EXECUTE_READ));
+			// Now validate the read across that gap
+			assertArrayEquals(bytes(0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88),
+				emu.getSharedState().getVar(space, 0x00600000, 8, false, Reason.EXECUTE_READ));
 		}
 	}
 }

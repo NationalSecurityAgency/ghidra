@@ -149,15 +149,21 @@ public abstract class AbstractConstraintsTreeSpatialMap<
 
 			public Object[] toArray() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					// Note, computing size requires a traversal. Bad idea, I think.
-					List<Entry<DS, T>> result = new ArrayList<>();
-					tree.visitAllData(query, new ToListConsumer<>(result) {
-						@Override
-						protected Entry<DS, T> transformed(DR t) {
+					/**
+					 * One one hand, traversing twice (one to compute the size, and again to
+					 * retrieve the elements) is not great. On the other, resizing the array list
+					 * many times is also not great. Which is worse? IDK. LATER: Take some
+					 * measurements with large traces.
+					 */
+					int size = AbstractConstraintsTreeSpatialMap.this.size();
+					Object[] a = new Object[size];
+					ToArrayConsumer<Object, DR, Object> consumer = new ToArrayConsumer<>(a) {
+						protected Object transformed(DR t) {
 							return t.asEntry();
-						}
-					}, false);
-					return result.toArray();
+						};
+					};
+					tree.visitAllData(query, consumer, false);
+					return a;
 				}
 			}
 

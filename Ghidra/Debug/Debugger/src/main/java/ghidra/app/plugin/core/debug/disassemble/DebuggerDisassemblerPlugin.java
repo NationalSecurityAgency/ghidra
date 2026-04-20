@@ -39,6 +39,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
@@ -159,11 +160,10 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		TraceMemoryManager memoryManager = trace.getMemoryManager();
 		AddressSetView readOnly =
 			memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite(ks));
-		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
-			s -> s == TraceMemoryState.KNOWN);
+		AddressSetView everKnown =
+			memoryManager.getAddressesWithState(Lifespan.since(ks), StatePredicate.IS_KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
-		AddressSetView known =
-			memoryManager.getAddressesWithState(ks, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known = memoryManager.getAddressesWithState(ks, StatePredicate.IS_KNOWN);
 		AddressSetView disassemblable = new UnionAddressSetView(known, roEverKnown);
 		return disassemblable;
 	}
