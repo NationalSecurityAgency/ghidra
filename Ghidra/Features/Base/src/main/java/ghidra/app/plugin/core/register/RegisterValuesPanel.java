@@ -83,6 +83,10 @@ class RegisterValuesPanel extends JPanel {
 
 	}
 
+	boolean hasSelectedRows() {
+		return table.getSelectedRowCount() > 0;
+	}
+
 	private void editRow(int row) {
 		RegisterValueRange range = model.values.get(row);
 		Address start = range.getStartAddress();
@@ -275,7 +279,7 @@ class RegisterValuesPanel extends JPanel {
 		}
 	}
 
-	void selectedRanges() {
+	void selectRanges() {
 		int[] rows = table.getSelectedRows();
 		AddressSet set = new AddressSet();
 		for (int element : rows) {

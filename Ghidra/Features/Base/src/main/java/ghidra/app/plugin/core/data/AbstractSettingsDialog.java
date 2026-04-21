@@ -33,6 +33,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.*;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.docking.settings.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.BigEndianDataConverter;
@@ -783,7 +784,8 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		}
 
 		private void updateHexMode() {
-			intHexModeMap.put(rowobject.definition.getName(), intTextField.isHexMode());
+			intHexModeMap.put(rowobject.definition.getName(),
+				intTextField.getFormat() == IntegerFormat.HEX);
 		}
 
 		private Number getNumber() {
@@ -854,14 +856,14 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			mode = NUMBER;
 			NumberSettingsDefinition def = (NumberSettingsDefinition) rowobject.definition;
 			if (def.isHexModePreferred() || isHexModeEnabled(def)) {
-				intTextField.setHexMode();
+				intTextField.setFormat(IntegerFormat.HEX);
 			}
 			else {
-				intTextField.setDecimalMode();
+				intTextField.setFormat(IntegerFormat.DEC);
 			}
 
 			intTextField.setMaxValue(def.getMaxValue());
-			intTextField.setAllowNegativeValues(def.allowNegativeValue());
+			intTextField.setMinValue(def.allowNegativeValue() ? null : BigInteger.ZERO);
 
 			if (value == null) {
 				intTextField.setValue(null);

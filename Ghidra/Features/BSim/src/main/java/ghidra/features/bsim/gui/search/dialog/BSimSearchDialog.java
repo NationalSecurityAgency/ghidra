@@ -127,8 +127,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 		maxResultsField = new IntegerTextField(10);
 		maxResultsField.setValue(100);
 		maxResultsField.setMinValue(BigInteger.ONE);
-		maxResultsField.setAllowNegativeValues(false);
-		maxResultsField.setAllowsHexPrefix(false);
+		maxResultsField.setUseNumberPrefix(false);
 		maxResultsField.setShowNumberMode(false);
 
 		JComponent maxResultsComponent = maxResultsField.getComponent();

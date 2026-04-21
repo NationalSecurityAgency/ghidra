@@ -18,6 +18,7 @@ package ghidra.app.util.importer.options;
 import java.awt.Component;
 
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.app.util.*;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.AddressFactory;
@@ -64,7 +65,7 @@ public class HexLongOption extends AbstractOption<HexLong> {
 		setValue(new HexLong(initialState));
 		IntegerTextField field = new IntegerTextField();
 		field.setValue(initialState);
-		field.setHexMode();
+		field.setFormat(IntegerFormat.HEX);
 		field.getComponent().setToolTipText(getDescription());
 		field.addChangeListener(e -> {
 			setValue(new HexLong(field.getLongValue()));

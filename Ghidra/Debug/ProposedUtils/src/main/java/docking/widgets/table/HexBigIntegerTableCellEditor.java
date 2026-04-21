@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 
 public class HexBigIntegerTableCellEditor extends AbstractCellEditor implements TableCellEditor {
 	protected IntegerTextField input;
@@ -48,11 +49,11 @@ public class HexBigIntegerTableCellEditor extends AbstractCellEditor implements 
 			int row, int column) {
 		input = new IntegerTextField();
 		input.getComponent().setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-		input.setAllowNegativeValues(true);
-		input.setHexMode();
-		input.setAllowsHexPrefix(false);
+		input.setMinValue(null);	// allow negative numbers
+		input.setFormat(IntegerFormat.HEX);
+		input.setUseNumberPrefix(false);
 		input.setShowNumberMode(true);
-		input.setHorizontalAlignment(JTextField.RIGHT);
+		input.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		if (value != null) {
 			input.setValue((BigInteger) value);
