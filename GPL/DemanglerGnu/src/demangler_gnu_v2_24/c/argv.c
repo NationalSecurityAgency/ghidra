@@ -84,7 +84,7 @@ dupargv (char **argv)
     {
       int len = strlen (argv[argc]);
       copy[argc] = (char *) xmalloc (len + 1);
-      strcpy (copy[argc], argv[argc]);
+      memcpy (copy[argc], argv[argc], len + 1);
     }
   copy[argc] = NULL;
   return copy;
