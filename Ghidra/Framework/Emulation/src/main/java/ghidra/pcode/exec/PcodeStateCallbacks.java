@@ -55,6 +55,9 @@ public interface PcodeStateCallbacks {
 	 * @return the address set
 	 */
 	static AddressSet rngSet(AddressSpace space, long offset, int length) {
+		if (length == 0) {
+			return new AddressSet();
+		}
 		Address min = space.getAddress(offset);
 		return new AddressSet(min, min.add(length - 1));
 	}
