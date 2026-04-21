@@ -169,7 +169,7 @@ public class LocalDirDebugInfoDProvider implements DebugFileStorage {
 
 	private File getBuildidDir(String buildId) throws IOException {
 		File dir = new File(rootDir, buildId);
-		if (rootDir.equals(dir.getParentFile())) {
+		if (!rootDir.equals(dir.getParentFile())) {
 			throw new IOException("Bad buildid value: " + buildId);
 		}
 		return dir;
