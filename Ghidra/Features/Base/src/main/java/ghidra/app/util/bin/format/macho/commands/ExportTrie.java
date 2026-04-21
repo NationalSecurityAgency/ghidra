@@ -89,9 +89,14 @@ public class ExportTrie {
 	 * @throws IOException if there was an IO-related error
 	 */
 	private void parseTrie() throws IOException {
+		Set<Integer> visited = new HashSet<>();
+		visited.add(0);
 		LinkedList<Node> remainingNodes = parseNode("", 0);
 		while(!remainingNodes.isEmpty()) {
 			Node parent = remainingNodes.removeFirst();
+			if (!visited.add(parent.offset())) {
+				continue; // skip already-visited offsets
+			}
 			LinkedList<Node> children = parseNode(parent.name, parent.offset);
 			for (Node child : children) {
 				remainingNodes.add(new Node(parent.name + child.name, child.offset));
