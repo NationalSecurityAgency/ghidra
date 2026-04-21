@@ -761,6 +761,9 @@ public enum TraceEmulationIntegration {
 				value)) {
 				return;
 			}
+			if (length == 0) {
+				return;
+			}
 			Address end = address.addWrap(length - 1);
 			if (address.compareTo(end) <= 0) {
 				written.add(address, end);

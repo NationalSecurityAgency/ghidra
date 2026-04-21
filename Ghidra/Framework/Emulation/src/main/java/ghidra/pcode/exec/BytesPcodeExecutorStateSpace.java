@@ -180,6 +180,9 @@ public class BytesPcodeExecutorStateSpace {
 	 * @return the uninitialized offset ranges
 	 */
 	protected AddressSetView computeUninitialized(long offset, int size) {
+		if (size == 0) {
+			return new AddressSet();
+		}
 		long max = offset + size - 1;
 		if (Long.compareUnsigned(max, space.getMaxAddress().getOffset()) <= 0 &&
 			Long.compareUnsigned(offset, max) <= 0) {
