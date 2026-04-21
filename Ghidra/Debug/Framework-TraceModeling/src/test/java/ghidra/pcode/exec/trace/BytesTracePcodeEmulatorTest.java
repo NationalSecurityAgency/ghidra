@@ -32,6 +32,7 @@ import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.TraceWriter;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -52,6 +53,74 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 	PcodeEmulator createEmulator(TracePlatform platform, Writer writer) {
 		return new PcodeEmulator(platform.getLanguage(), writer.callbacks());
+	}
+
+	@Test
+	public void testSetVarSize0() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			initTrace(tb, """
+					RIP = 0x00400000;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+
+			emu.getSharedState().setVar(tb.addr(0x00400000), 0, false, tb.arr());
+			TraceWriter tw = (TraceWriter) writer;
+			assertEquals(tb.set(), tw.memWritten);
+		}
+	}
+
+	@Test
+	public void testGetVarSize0Uninit() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			initTrace(tb, """
+					RIP = 0x00400000;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+			PcodeExecutorState<byte[]> state = emu.getSharedState();
+			Address addr = tb.addr(0x00400000);
+
+			byte[] result = state.getVar(addr, 0, false, Reason.EXECUTE_READ);
+			assertArrayEquals(new byte[0], result);
+
+			assertNull(state.getNextEntryInternal(addr.getAddressSpace(), 0));
+		}
+	}
+
+	@Test
+	public void testGetVarSize0Init() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			// Put some known data in a place likely to show in erroneous "uninitialized" set
+			initTrace(tb, """
+					RIP = 0x00400000;
+					*:8 RIP = 0xdeadbeefcafeface;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+			PcodeExecutorState<byte[]> state = emu.getSharedState();
+			Address addr = tb.addr(0x00400000);
+			state.setVar(addr, 4, false, tb.arr(1, 2, 3, 4));
+
+			var entry = state.getNextEntryInternal(addr.getAddressSpace(), 0);
+			assertEquals(0x00400000L, entry.getKey().longValue());
+			assertArrayEquals(tb.arr(1, 2, 3, 4), entry.getValue());
+			assertNull(state.getNextEntryInternal(addr.getAddressSpace(), 0x00400004));
+
+			byte[] result = state.getVar(addr, 0, false, Reason.EXECUTE_READ);
+			assertArrayEquals(tb.arr(), result);
+
+			entry = state.getNextEntryInternal(addr.getAddressSpace(), 0);
+			assertEquals(0x00400000L, entry.getKey().longValue());
+			assertArrayEquals(tb.arr(1, 2, 3, 4), entry.getValue());
+			assertNull(state.getNextEntryInternal(addr.getAddressSpace(), 0x00400004));
+		}
 	}
 
 	/**
