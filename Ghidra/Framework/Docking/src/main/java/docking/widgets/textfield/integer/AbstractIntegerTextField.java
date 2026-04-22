@@ -388,6 +388,9 @@ public class AbstractIntegerTextField {
 	}
 
 	private BigInteger parse(String text, IntegerFormat format) {
+		if (text.equals("0") || text.equals("-0")) {
+			return BigInteger.ZERO;
+		}
 		String prefix = format.getPrefix();
 		if (usePrefix && !prefix.isBlank()) {
 			if (text.startsWith(prefix)) {
