@@ -79,8 +79,7 @@ public interface TraceMemoryOperations {
 	 * 
 	 * @param range the range to check, usually that passed to
 	 *            {@link #getStates(long, AddressRange)}.
-	 * @param stateEntries the collection returned by {@link #getStates(long, AddressRange)}.
-	 * @param states
+	 * @param states the collection returned by {@link #getStates(long, AddressRange)}.
 	 * @return the uniform state, or null
 	 */
 	static TraceMemoryState oneState(AddressRange range,
