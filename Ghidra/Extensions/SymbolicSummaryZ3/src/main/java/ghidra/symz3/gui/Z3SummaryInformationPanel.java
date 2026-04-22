@@ -24,9 +24,7 @@ import java.util.stream.Stream;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import docking.widgets.table.DefaultEnumeratedColumnTableModel;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import docking.widgets.table.GTable;
+import docking.widgets.table.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.GColumnRenderer;

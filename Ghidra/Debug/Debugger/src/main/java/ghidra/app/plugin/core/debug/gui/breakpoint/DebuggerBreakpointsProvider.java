@@ -29,7 +29,6 @@ import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.menu.MultiActionDockingAction;
 import docking.widgets.table.*;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;

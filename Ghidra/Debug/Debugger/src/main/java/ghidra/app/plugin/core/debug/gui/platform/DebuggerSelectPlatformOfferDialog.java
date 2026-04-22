@@ -26,7 +26,6 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
 import ghidra.framework.plugintool.PluginTool;

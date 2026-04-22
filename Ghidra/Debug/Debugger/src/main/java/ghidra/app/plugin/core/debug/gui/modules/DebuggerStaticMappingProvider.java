@@ -30,7 +30,6 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.widgets.table.*;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -132,7 +131,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class MappingTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
+	protected static class MappingTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel<
 		StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
 
 		public MappingTableModel(PluginTool tool) {
