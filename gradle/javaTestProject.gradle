@@ -94,6 +94,33 @@ task pcodeTest (type: Test) { t ->
 	}		
 }
 
+task cspecTest (type: Test) { t ->	
+    description = "Runs cspec tests."
+    group = "cspecTest"	
+    testClassesDirs = files sourceSets.pcodeTest.output.classesDirs
+	classpath = sourceSets.pcodeTest.runtimeClasspath
+	
+	filter {
+        setIncludePatterns() // Clear default Ghidra test filters
+        // Tell JUnit to ONLY run tests located in the cspec package
+        includeTestsMatching "ghidra.test.processors.cspec.*"
+        
+        failOnNoMatchingTests = false
+    }
+	
+	// Enable if you want to force Gradle to launch a new JVM for each test.
+    forkEvery = 1	
+    	
+	initTestJVM(t, rootProject.ext.cspecTestRootDirName)
+	
+	doFirst {
+		startTestTimer(t)
+	}
+	doLast {
+		endTestTimer(t)
+	}		
+}
+
 rootProject.unitTestReport {
 	testResults.from(this.project.test)
 }
