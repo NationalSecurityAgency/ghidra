@@ -562,6 +562,8 @@ def ghidra_trace_putval(value: str, pages: bool = True, *, is_mi: bool,
 
     STATE.require_tx()
     val = gdb.parse_and_eval(value)
+    if val.address is None:
+        raise gdb.GdbError(f"Value '{value}' has no address")
     try:
         start = int(val.address)
     except gdb.error as e:
@@ -1066,7 +1068,7 @@ def ghidra_trace_put_inferiors(*, is_mi: bool, **kwargs) -> None:
         put_inferiors()
 
 
-def put_available() -> List[util.Available]:
+def put_available() -> None:
     trace = STATE.require_trace()
     availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
