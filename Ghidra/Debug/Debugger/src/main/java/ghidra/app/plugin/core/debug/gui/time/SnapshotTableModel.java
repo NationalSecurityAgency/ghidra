@@ -190,4 +190,15 @@ class SnapshotTableModel
 		}
 		removeObject(row);
 	}
+
+	public SnapshotRow getRow(long snap) {
+		if (currentTrace == null) {
+			return null;
+		}
+		TraceSnapshot snapshot = currentTrace.getTimeManager().getSnapshot(snap, false);
+		if (snapshot == null) {
+			return null;
+		}
+		return rowMap.get(snapshot);
+	}
 }

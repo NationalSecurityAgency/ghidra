@@ -330,6 +330,17 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		if (fire) {
 			snapshotTable.repaint();
 		}
+
+		SnapshotRow row = snapshotTableModel.getRow(coords.getViewSnap());
+		if (row == null) {
+			return;
+		}
+		int viewRow = snapshotFilterPanel.getViewRow(row);
+		if (viewRow == -1) {
+			return;
+		}
+		Rectangle rect = snapshotTable.getCellRect(viewRow, 0, true);
+		snapshotTable.scrollRectToVisible(rect);
 	}
 
 	public void setSelectedSnapshot(Long snap) {
@@ -344,12 +355,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 
-		if (snapshotTableModel.getTrace() == null) {
-			return;
-		}
-		TraceSnapshot snapshot =
-			snapshotTableModel.getTrace().getTimeManager().getSnapshot(snap, false);
-		SnapshotRow row = snapshotTableModel.rowMap.get(snapshot);
+		SnapshotRow row = snapshotTableModel.getRow(snap);
 		if (row == null) {
 			snapshotTable.clearSelection();
 			return;
