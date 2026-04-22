@@ -51,7 +51,7 @@ public abstract class AbstractIntegerTextFieldTest<T extends AbstractIntegerText
 
 	@After
 	public void tearDown() throws Exception {
-		frame.setVisible(false);
+		runSwing(() -> frame.dispose());
 	}
 
 	protected void setFormat(IntegerFormat format) {

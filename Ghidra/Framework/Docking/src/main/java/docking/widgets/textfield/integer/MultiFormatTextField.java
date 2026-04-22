@@ -30,7 +30,6 @@ import docking.DockingUtils;
 import docking.util.GraphicsUtils;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.Gui;
-import ghidra.util.Swing;
 import utility.function.Callback;
 
 /**
@@ -82,17 +81,17 @@ public class MultiFormatTextField extends JTextField {
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				Swing.runLater(() -> c.call());
+				c.call();
 			}
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				Swing.runLater(() -> c.call());
+				c.call();
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				Swing.runLater(() -> c.call());
+				c.call();
 			}
 		});
 	}
