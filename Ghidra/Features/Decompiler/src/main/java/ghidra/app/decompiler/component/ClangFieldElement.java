@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,12 @@ import ghidra.app.decompiler.ClangToken;
 public class ClangFieldElement extends AbstractTextFieldElement {
 
 	private final ClangToken token;
+	private ClangHighlightController hlController;
 
-	public ClangFieldElement(ClangToken token, AttributedString as, int col) {
+	public ClangFieldElement(ClangHighlightController hlController, ClangToken token,
+			AttributedString as, int col) {
 		super(as, 0, col);
+		this.hlController = hlController;
 		this.token = token;
 	}
 
@@ -39,7 +42,7 @@ public class ClangFieldElement extends AbstractTextFieldElement {
 
 	@Override
 	public void paint(JComponent c, Graphics g, int x, int y) {
-		Color highlightColor = token.getHighlight();
+		Color highlightColor = hlController.getCombinedColor(token);
 		if (highlightColor != null) {
 			g.setColor(highlightColor);
 			g.fillRect(x, y - getHeightAbove(), getStringWidth(),
@@ -63,12 +66,12 @@ public class ClangFieldElement extends AbstractTextFieldElement {
 		if (as == attributedString) {
 			return this;
 		}
-		return new ClangFieldElement(token, as, column + start);
+		return new ClangFieldElement(hlController, token, as, column + start);
 	}
 
 	@Override
 	public FieldElement replaceAll(char[] targets, char replacement) {
-		return new ClangFieldElement(token, attributedString.replaceAll(targets, replacement),
-			column);
+		AttributedString as = attributedString.replaceAll(targets, replacement);
+		return new ClangFieldElement(hlController, token, as, column);
 	}
 }

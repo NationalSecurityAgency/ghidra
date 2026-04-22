@@ -2048,7 +2048,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	private void assertCombinedHighlightColor(ClangToken token) {
 
 		Color combinedColor = getCombinedHighlightColor(token);
-		Color actual = token.getHighlight();
+		Color actual = getHighlight(provider, token);
 		assertEquals(combinedColor, actual);
 	}
 
@@ -2139,7 +2139,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		DecompilerController controller = provider.getController();
 		DecompilerPanel panel = controller.getDecompilerPanel();
 		Color hlColor = panel.getCurrentVariableHighlightColor();
-		assertEquals(hlColor, token.getHighlight());
+		Color actual = getHighlight(provider, token);
+		assertEquals(hlColor, actual);
 	}
 
 	private void rename(String newName) {
@@ -2265,7 +2266,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		// test the token under the cursor directly, as that may have a combined highlight applied
 		Color combinedColor = getCombinedHighlightColor(theProvider, cursorToken);
 		ColorMatcher cm = new ColorMatcher(color, combinedColor);
-		Color actual = cursorToken.getHighlight();
+		Color actual = getHighlight(theProvider, cursorToken);
 		assertTrue("Token is not highlighted: '" + cursorToken + "'" + "\n\texpected: " + cm +
 			"; found: " + toString(actual), cm.matches(actual));
 	}
@@ -2283,7 +2284,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		// test the token under the cursor directly, as that may have a combined highlight applied
 		Color combinedColor = getCombinedHighlightColor(token);
 		ColorMatcher cm = new ColorMatcher(color, combinedColor);
-		Color actual = token.getHighlight();
+		Color actual = getHighlight(provider, token);
 		String tokenString = token.toString() + " at line " + token.getLineParent().getLineNumber();
 		assertTrue("Token is not highlighted: '" + tokenString + "'" + "\n\texpected: " + cm +
 			"; found: " + toString(actual), cm.matches(actual));
@@ -2330,7 +2331,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 				continue;
 			}
 
-			Color actual = token.getHighlight();
+			Color actual = getHighlight(provider, token);
 			assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
 				"; found: " + toString(actual), cm.matches(actual));
 		}
@@ -2357,7 +2358,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 				continue;
 			}
 
-			Color actual = token.getHighlight();
+			Color actual = getHighlight(theProvider, token);
 			assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
 				"; found: " + toString(actual), cm.matches(actual));
 		}
@@ -2378,7 +2379,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertAllFieldsHighlighted(theProvider, name, cm, ignores);
 
 		// test the token under the cursor directly, as that may have a combined highlight applied
-		Color actual = token.getHighlight();
+		Color actual = getHighlight(theProvider, token);
 		assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
 			"; found: " + toString(actual), cm.matches(actual));
 	}
@@ -2394,7 +2395,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 				continue;
 			}
 
-			Color actual = otherToken.getHighlight();
+			Color actual = getHighlight(theProvider, otherToken);
 			assertTrue("Token is not highlighted: '" + otherToken + "'" + "\n\texpected: " +
 				colorMatcher + "; found: " + toString(actual), colorMatcher.matches(actual));
 		}
@@ -2411,7 +2412,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 				continue;
 			}
 
-			Color actual = otherToken.getHighlight();
+			Color actual = getHighlight(theProvider, otherToken);
 			Color combinedColor = getCombinedHighlightColor(otherToken);
 			ColorMatcher combinedColorMatcher = colorMatcher.with(combinedColor);
 			assertTrue(
@@ -2419,6 +2420,12 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 					combinedColorMatcher + "; found: " + toString(actual),
 				combinedColorMatcher.matches(actual));
 		}
+	}
+
+	private Color getHighlight(DecompilerProvider theProvider, ClangToken token) {
+		DecompilerPanel panel = theProvider.getController().getDecompilerPanel();
+		ClangHighlightController highlightController = panel.getHighlightController();
+		return highlightController.getCombinedColor(token);
 	}
 
 	private String toString(Color c) {
