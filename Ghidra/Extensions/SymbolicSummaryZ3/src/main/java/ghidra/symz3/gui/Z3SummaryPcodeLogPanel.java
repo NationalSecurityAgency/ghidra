@@ -23,9 +23,7 @@ import java.util.function.Function;
 
 import javax.swing.*;
 
-import docking.widgets.table.DefaultEnumeratedColumnProgramTableModel;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import docking.widgets.table.GTable;
+import docking.widgets.table.*;
 import generic.theme.GColor;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.util.pcode.*;

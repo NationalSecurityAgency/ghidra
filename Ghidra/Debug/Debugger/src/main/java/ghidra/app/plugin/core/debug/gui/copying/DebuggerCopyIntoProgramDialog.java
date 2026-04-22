@@ -29,7 +29,6 @@ import javax.swing.table.TableCellEditor;
 import db.Transaction;
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.Copier;
 import ghidra.app.services.*;
