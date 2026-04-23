@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryBlock;
 
 /**
@@ -30,10 +30,10 @@ public class DwarfDecodeContext {
 	private final Address addr;
 	private final MemoryBlock ehBlock;
 	private final Address functionEntryPoint;
+	private final long imageBaseAdjustment;
 
 	private Object decodedValue;
 	private int encodedLength;
-	private MemBuffer buffer;
 
 	/**
 	 * Constructs a Dwarf decode context.
@@ -95,31 +95,16 @@ public class DwarfDecodeContext {
 		this.addr = readAddr;
 		this.ehBlock = ehBlock;
 		this.functionEntryPoint = entryPoint;
+		this.imageBaseAdjustment = getImageBaseAdjustment(program);
 
 	}
 
-	/**
-	 * Constructs a Dwarf decode context.
-	 * @param buffer the memory buffer which provides the program and address of the encoded data 
-	 * @param length the length of the encoded data
-	 */
-	public DwarfDecodeContext(MemBuffer buffer, int length) {
-		this(buffer, length, null, null);
-	}
-
-	/**
-	 * Constructs a Dwarf decode context.
-	 * @param buf the memory buffer which provides the program and address of the encoded data 
-	 * @param length the length of the encoded data
-	 * @param ehBlock the exception handling memory block
-	 * @param entryPoint the function entry point
-	 */
-	public DwarfDecodeContext(MemBuffer buf, int length, MemoryBlock ehBlock, Address entryPoint) {
-		this.buffer = buf;
-		this.program = buffer.getMemory().getProgram();
-		this.addr = buffer.getAddress();
-		this.ehBlock = ehBlock;
-		this.functionEntryPoint = entryPoint;
+	private static long getImageBaseAdjustment(Program program) {
+		Long originalImageBase = ElfLoader.getElfOriginalImageBase(program);
+		if (originalImageBase != null) {
+			return program.getImageBase().getOffset() - originalImageBase;
+		}
+		return 0;
 	}
 
 	/**
@@ -179,5 +164,13 @@ public class DwarfDecodeContext {
 	 */
 	public Address getFunctionEntryPoint() {
 		return functionEntryPoint;
+	}
+
+	/**
+	 * {@return any adjustment needed to be applied to absolute addresses (because the program's
+	 * base address was modified during import)}
+	 */
+	public long getImageBaseAdjustment() {
+		return imageBaseAdjustment;
 	}
 }
