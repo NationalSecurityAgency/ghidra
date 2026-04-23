@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,12 @@ import org.apache.commons.collections4.map.LazyMap;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.ProgramDB;
+import ghidra.program.database.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.datastruct.Counter;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -44,7 +44,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	// Table mapping function tags to functions
 	private FunctionTagMappingAdapter functionTagMappingAdapter;
 
-	private DBObjectCache<FunctionTagDB> cache;
+	private DbCache<FunctionTagDB> cache;
 
 	private Map<FunctionTag, Counter> tagCountCache;
 
@@ -69,7 +69,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		functionTagAdapter = FunctionTagAdapter.getAdapter(handle, openMode, monitor);
 		functionTagMappingAdapter = FunctionTagMappingAdapter.getAdapter(handle, openMode, monitor);
 
-		cache = new DBObjectCache<>(100);
+		cache = new DbCache<>(new TagFactory(), lock, 100);
 	}
 
 	public void setProgram(Program program) {
@@ -82,57 +82,28 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	}
 
 	@Override
-	public FunctionTag getFunctionTag(String name) {
-		lock.acquire();
-
-		try {
+	public FunctionTagDB getFunctionTag(String name) {
+		try (Closeable c = lock.read()) {
 			DBRecord rec = functionTagAdapter.getRecord(name);
 			if (rec != null) {
-				return getFunctionTagFromCache(rec);
+				return cache.getCachedInstance(rec);
 			}
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-
 		return null;
 	}
 
 	@Override
 	public FunctionTag getFunctionTag(long id) {
-
-		lock.acquire();
-
-		try {
-			FunctionTag tag = cache.get(id);
-			if (tag != null) {
-				return tag;
-			}
-
-			DBRecord rec = functionTagAdapter.getRecord(id);
-			if (rec != null) {
-				return new FunctionTagDB(this, cache, rec);
-			}
-		}
-		catch (IOException e) {
-			dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-
-		return null;
+		return cache.getCachedInstance(id);
 	}
 
 	@Override
 	public boolean isTagAssigned(String name) {
 
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.read()) {
 			FunctionTag tag = getFunctionTag(name);
 			if (tag == null) {
 				return false;
@@ -142,9 +113,6 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 
 		return false;
 	}
@@ -152,18 +120,17 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	@Override
 	public FunctionTag createFunctionTag(String name, String comment) {
 
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.write()) {
 			// First make sure a tag doesn't already exist with this name. If it does,
 			// just return it.
-			FunctionTag tag = getFunctionTag(name);
+			FunctionTagDB tag = getFunctionTag(name);
 			if (tag != null) {
 				return tag;
 			}
 
 			DBRecord record = functionTagAdapter.createTagRecord(name, comment);
-			tag = getFunctionTagFromCache(record);
+			tag = new FunctionTagDB(this, record);
+			cache.add(tag);
 			fireTagCreatedNotification(ProgramEvent.FUNCTION_TAG_CREATED, tag);
 
 			return tag;
@@ -171,33 +138,23 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 
 		return null;
 	}
 
 	boolean isTagApplied(long functionId, long tagId) {
 
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.read()) {
 			return functionTagMappingAdapter.getRecord(functionId, tagId) != null;
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return false;
 	}
 
 	void applyFunctionTag(long functionId, long tagId) {
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.write()) {
 			FunctionTag tag = getFunctionTag(tagId);
 			if (tag == null) {
 				return; // shouldn't happen
@@ -208,9 +165,6 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -228,8 +182,6 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 	boolean removeFunctionTag(long functionId, long tagId) {
 
-		lock.acquire();
-
 		try {
 			FunctionTag tag = getFunctionTag(tagId);
 			if (tag == null) {
@@ -243,9 +195,6 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return false;
 	}
@@ -263,23 +212,18 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	@Override
 	public List<? extends FunctionTag> getAllFunctionTags() {
 
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.read()) {
 			List<FunctionTag> tags = new ArrayList<>();
 			RecordIterator records = functionTagAdapter.getRecords();
 			while (records.hasNext()) {
 				DBRecord record = records.next();
-				tags.add(getFunctionTagFromCache(record));
+				tags.add(cache.getCachedInstance(record));
 			}
 
 			return tags;
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return Collections.emptyList();
 	}
@@ -323,21 +267,6 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 */
 	private void fireTagDeletedNotification(ProgramEvent eventType, FunctionTag tag) {
 		program.tagChanged(tag, eventType, tag, null);
-	}
-
-	/**
-	 * Returns the cache object for the given Record. If the object is not in
-	 * the cache, a new cache object is created.
-	 *
-	 * @param tagRecord the tag record to retrieve
-	 * @return tag new cached tag object
-	 */
-	private FunctionTag getFunctionTagFromCache(DBRecord tagRecord) {
-		FunctionTagDB tag = cache.get(tagRecord);
-		if (tag == null) {
-			tag = new FunctionTagDB(this, cache, tagRecord);
-		}
-		return tag;
 	}
 
 	/**
@@ -386,7 +315,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 			DBRecord mappingRecord = functionRecords.next();
 			DBRecord tagRecord = functionTagAdapter
 					.getRecord(mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
-			tags.add(getFunctionTagFromCache(tagRecord));
+			tags.add(cache.getCachedInstance(tagRecord));
 		}
 		return tags;
 	}
@@ -398,8 +327,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 	@Override
 	public int getUseCount(FunctionTag tag) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (tagCountCache == null) {
 				buildTagCountCache();
 			}
@@ -409,9 +337,6 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		catch (IOException e) {
 			dbError(e);
 			return 0;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -426,4 +351,25 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		}
 		tagCountCache = map;
 	}
+
+	private class TagFactory implements DbFactory<FunctionTagDB> {
+
+		@Override
+		public FunctionTagDB instantiate(long dataTypeId) {
+			try {
+				DBRecord record = functionTagAdapter.getRecord(dataTypeId);
+				return record == null ? null : instantiate(record);
+			}
+			catch (IOException e) {
+				dbError(e);
+				return null;
+			}
+		}
+
+		@Override
+		public FunctionTagDB instantiate(DBRecord rec) {
+			return new FunctionTagDB(FunctionTagManagerDB.this, rec);
+		}
+	}
+
 }

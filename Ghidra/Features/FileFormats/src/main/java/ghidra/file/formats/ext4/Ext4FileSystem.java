@@ -40,6 +40,8 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 
 	public static final Charset EXT4_DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
+	private static final int MAX_SANE_INODE_COUNT = 30_000_000; // should handle 500gb disk images  
+
 	private int blockSize;
 	private ByteProvider provider;
 	private String volumeName;
@@ -58,24 +60,17 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 		this.volumeName = superBlock.getVolumeName();
 		this.uuid = NumericUtilities.convertBytesToString(superBlock.getS_uuid());
 
-		long blockCount = superBlock.getS_blocks_count();
-		int s_log_block_size = superBlock.getS_log_block_size();
-		this.blockSize = (int) Math.pow(2, (10 + s_log_block_size));
-
-		int groupSize = blockSize * superBlock.getS_blocks_per_group();
-		if (groupSize <= 0) {
-			throw new IOException("Invalid groupSize: " + groupSize);
-		}
-		int numGroups = (int) (blockCount / superBlock.getS_blocks_per_group());
-		if (blockCount % superBlock.getS_blocks_per_group() != 0) {
-			numGroups++;
+		this.blockSize = superBlock.getBlockSize();
+		long numGroups = superBlock.getNumGroups();
+		if (numGroups > Integer.MAX_VALUE - 1000 /*ensure we can alloc jvm array */) {
+			throw new IOException("Bad numgroups: " + numGroups);
 		}
 
 		int groupDescriptorOffset = blockSize + (superBlock.getS_first_data_block() * blockSize);
 		reader.setPointerIndex(groupDescriptorOffset);
 		monitor.initialize(numGroups);
 		monitor.setMessage("Reading inode tables");
-		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
+		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[(int) numGroups];
 		for (int i = 0; i < numGroups; i++) {
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, superBlock.is64Bit());
 			monitor.increment();
@@ -296,6 +291,10 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 
 	private Ext4Inode[] getInodes(BinaryReader reader, Ext4GroupDescriptor[] groupDescriptors,
 			TaskMonitor monitor) throws IOException, CancelledException {
+
+		if (superBlock.getS_inodes_count() > MAX_SANE_INODE_COUNT) {
+			throw new IOException("Inode number too big: " + superBlock.getS_inodes_count());
+		}
 
 		int inodeCount = superBlock.getS_inodes_count();
 		int inodesPerGroup = superBlock.getS_inodes_per_group();

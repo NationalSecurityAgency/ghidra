@@ -79,19 +79,19 @@ public abstract class ByteCache {
 		return new Page();
 	}
 
-	public boolean canCache(Address address, int len) {
+	public synchronized boolean canCache(Address address, int len) {
 		long cacheBufOff = address.getOffset() & ~OFFSET_MASK;
 		return cacheBufOff + len < pageCount * SIZE;
 	}
 
-	public byte read(Address address) throws MemoryAccessException {
+	public synchronized byte read(Address address) throws MemoryAccessException {
 		Address pageStart = address.getNewAddress(address.getOffset() & OFFSET_MASK);
 		Page page = ensurePageCached(pageStart, 1);
 		int cacheBufOff = (int) address.subtract(pageStart);
 		return page.bytes[cacheBufOff];
 	}
 
-	public int read(Address address, ByteBuffer buf) throws MemoryAccessException {
+	public synchronized int read(Address address, ByteBuffer buf) throws MemoryAccessException {
 		long startOff = address.getOffset();
 		long startPage = startOff & OFFSET_MASK;
 		int bufStart = buf.position();
@@ -108,7 +108,7 @@ public abstract class ByteCache {
 		return buf.position() - bufStart;
 	}
 
-	protected int choosePage(Address address, int len) {
+	private int choosePage(Address address, int len) {
 		for (int i = 0; i < pageCount; i++) {
 			Page page = pages[i];
 			if (page.contains(address, len)) {
@@ -135,21 +135,17 @@ public abstract class ByteCache {
 		if (chosen == 0) {
 			return pages[0];
 		}
-		synchronized (pages) {
-			Page temp = pages[chosen];
-			pages[chosen] = pages[0];
-			pages[0] = temp;
-			return temp;
-		}
+		Page temp = pages[chosen];
+		pages[chosen] = pages[0];
+		pages[0] = temp;
+		return temp;
 	}
 
 	protected abstract int doLoad(Address address, ByteBuffer buf) throws MemoryAccessException;
 
-	public void invalidate(AddressRange range) {
-		synchronized (pages) {
-			for (Page p : pages) {
-				p.invalidate(range);
-			}
+	public synchronized void invalidate(AddressRange range) {
+		for (Page p : pages) {
+			p.invalidate(range);
 		}
 	}
 }

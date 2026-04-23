@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,21 +19,20 @@ import java.io.IOException;
 import java.util.Objects;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.listing.FunctionTag;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Database object for {@link FunctionTagAdapter} objects. 
  */
-public class FunctionTagDB extends DatabaseObject implements FunctionTag {
+public class FunctionTagDB extends DbObject implements FunctionTag {
 
 	private FunctionTagManagerDB mgr;
 	private DBRecord record;
 
-	public FunctionTagDB(FunctionTagManagerDB mgr, DBObjectCache<FunctionTagDB> cache,
-			DBRecord record) {
-		super(cache, record.getKey());
+	public FunctionTagDB(FunctionTagManagerDB mgr, DBRecord record) {
+		super(record.getKey());
 		this.mgr = mgr;
 		this.record = record;
 	}
@@ -45,8 +44,7 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 
 	@Override
 	public void setComment(String comment) {
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 
 			if (comment == null) {
@@ -63,15 +61,11 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 		catch (IOException e) {
 			mgr.dbError(e);
 		}
-		finally {
-			mgr.lock.release();
-		}
 	}
 
 	@Override
 	public void setName(String name) {
-		mgr.lock.acquire();
-		try {
+		try (Closeable c = mgr.lock.write()) {
 			checkDeleted();
 
 			if (name == null) {
@@ -87,32 +81,21 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 		catch (IOException e) {
 			mgr.dbError(e);
 		}
-		finally {
-			mgr.lock.release();
-		}
 	}
 
 	@Override
 	public String getComment() {
-		mgr.lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = mgr.lock.read()) {
+			refreshIfNeeded();
 			return record.getString(FunctionTagAdapter.COMMENT_COL);
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 
 	@Override
 	public String getName() {
-		mgr.lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = mgr.lock.read()) {
+			refreshIfNeeded();
 			return record.getString(FunctionTagAdapter.NAME_COL);
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 
@@ -158,17 +141,13 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 
 	@Override
 	public void delete() {
-		mgr.lock.acquire();
-		try {
-			if (checkIsValid()) {
+		try (Closeable c = mgr.lock.write()) {
+			if (refreshIfNeeded()) {
 				mgr.doDeleteTag(this);
 			}
 		}
 		catch (IOException e) {
 			mgr.dbError(e);
-		}
-		finally {
-			mgr.lock.release();
 		}
 	}
 

@@ -369,19 +369,29 @@ public class BinaryLoader extends AbstractProgramLoader {
 		List<Option> list = new ArrayList<Option>();
 
 		if (loadIntoProgram) {
-			list.add(new Option(OPTION_NAME_IS_OVERLAY, isOverlay));
+			list.add(Option.newBoolean(OPTION_NAME_IS_OVERLAY)
+					.value(isOverlay)
+					.build());
 		}
 		else {
 			isOverlay = false;
 		}
-		list.add(new Option(OPTION_NAME_BLOCK_NAME, blockName, String.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-blockName"));
-		list.add(new Option(OPTION_NAME_BASE_ADDR, baseAddr, Address.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-baseAddr"));
-		list.add(new Option(OPTION_NAME_FILE_OFFSET, new HexLong(fileOffset), HexLong.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-fileOffset"));
-		list.add(new Option(OPTION_NAME_LEN, new HexLong(length), HexLong.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-length"));
+		list.add(Option.newString(OPTION_NAME_BLOCK_NAME)
+				.value(blockName)
+				.commandLineArgument(createArg("-blockName"))
+				.build());
+		list.add(Option.newAddress(OPTION_NAME_BASE_ADDR)
+				.value(baseAddr)
+				.commandLineArgument(createArg("-baseAddr"))
+				.build());
+		list.add(Option.newHexLong(OPTION_NAME_FILE_OFFSET)
+				.value(new HexLong(fileOffset))
+				.commandLineArgument(createArg("-fileOffset"))
+				.build());
+		list.add(Option.newHexLong(OPTION_NAME_LEN)
+				.value(new HexLong(length))
+				.commandLineArgument(createArg("-length"))
+				.build());
 
 		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram,
 			mirrorFsLayout));

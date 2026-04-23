@@ -355,13 +355,27 @@ public class CppExporter extends Exporter {
 	@Override
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(CREATE_HEADER_FILE, Boolean.valueOf(isCreateHeaderFile)));
-		list.add(new Option(CREATE_C_FILE, Boolean.valueOf(isCreateCFile)));
-		list.add(new Option(USE_CPP_STYLE_COMMENTS, Boolean.valueOf(isUseCppStyleComments)));
-		list.add(new Option(EMIT_TYPE_DEFINITONS, Boolean.valueOf(emitDataTypeDefinitions)));
-		list.add(new Option(EMIT_REFERENCED_GLOBALS, Boolean.valueOf(emitReferencedGlobals)));
-		list.add(new Option(FUNCTION_TAG_FILTERS, tagOptions));
-		list.add(new Option(FUNCTION_TAG_EXCLUDE, Boolean.valueOf(excludeMatchingTags)));
+		list.add(Option.newBoolean(CREATE_HEADER_FILE)
+				.value(isCreateHeaderFile)
+				.build());
+		list.add(Option.newBoolean(CREATE_C_FILE)
+				.value(isCreateCFile)
+				.build());
+		list.add(Option.newBoolean(USE_CPP_STYLE_COMMENTS)
+				.value(isUseCppStyleComments)
+				.build());
+		list.add(Option.newBoolean(EMIT_TYPE_DEFINITONS)
+				.value(emitDataTypeDefinitions)
+				.build());
+		list.add(Option.newBoolean(EMIT_REFERENCED_GLOBALS)
+				.value(emitReferencedGlobals)
+				.build());
+		list.add(Option.newString(FUNCTION_TAG_FILTERS)
+				.value(tagOptions)
+				.build());
+		list.add(Option.newBoolean(FUNCTION_TAG_EXCLUDE)
+				.value(excludeMatchingTags)
+				.build());
 		return list;
 	}
 

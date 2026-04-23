@@ -767,4 +767,9 @@ class OldLanguage implements Language {
 	public AddressSetView getRegisterAddresses() {
 		return registerMgr.getRegisterAddresses();
 	}
+
+	@Override
+	public OptionalInt getMaximumInstructionLength() {
+		return OptionalInt.empty();
+	}
 }

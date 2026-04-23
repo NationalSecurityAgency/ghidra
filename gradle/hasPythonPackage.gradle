@@ -24,21 +24,41 @@ eclipse.project {
 }
 
 ext.findPyDep = { name ->
-    File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
-    File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
-    if (inDeps.exists()) {
-        return inDeps
-    }
-    if (inRepo.exists()) {
-        return inRepo
-    }
-    println("Warning: Could not find '${name}' for ${project.name}")
-    return inDeps
+	File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
+	File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
+	if (inDeps.exists()) {
+		return inDeps
+	}
+	if (inRepo.exists()) {
+		return inRepo
+	}
+	println("Warning: Could not find '${name}' for ${project.name}")
+	return inDeps
 }
 
 task assemblePyPackage(type: Copy) {
 	from "src/main/py"
 	into "build/pypkg/"
+}
+
+task typeCheckPyPackage(type: Exec) {
+	dependsOn assemblePyPackage
+	inputs.files(assemblePyPackage)
+
+	doFirst {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+		file("build/pypkg/src").listFiles().each { pkg ->
+			if (pkg.isDirectory() && new File(pkg, "__init__.py").isFile()) {
+				args "-p", pkg.name
+			}
+		}
+	}
+
+	workingDir { file("build/pypkg/src") }
+	commandLine rootProject.PYTHON3
+	args "-m", "mypy"
 }
 
 task buildPyPackage {
@@ -95,12 +115,12 @@ ext.distributePyDep = { name ->
 		wheelFiles = new HashSet<>()
 		PYTHON_DEPS.put(project, wheelFiles)
 	}
-    File dep = findPyDep(name)
-    wheelFiles.add(dep)
-    def zipPath = getZipPath(project) 
-    rootProject.assembleDistribution {
-        into ("${zipPath}/pypkg/dist") {
-            from dep
-        }
-    }
+	File dep = findPyDep(name)
+	wheelFiles.add(dep)
+	def zipPath = getZipPath(project) 
+	rootProject.assembleDistribution {
+		into ("${zipPath}/pypkg/dist") {
+			from dep
+		}
+	}
 }

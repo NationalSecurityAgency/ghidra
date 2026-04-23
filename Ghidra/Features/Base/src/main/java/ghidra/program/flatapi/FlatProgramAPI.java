@@ -494,7 +494,18 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * @deprecated use {@link #createLabel(Address, String, boolean, SourceType)} instead. Deprecated in Ghidra 7.4
+	 * Creates a label at the specified address in the global namespace.
+	 * If makePrimary==true, then the new label is made primary.
+	 * If makeUnique==true, then if the name is a duplicate, the address
+	 * will be concatenated to name to make it unique.
+	 * @param address the address to create the symbol
+	 * @param name the name of the symbol
+	 * @param makePrimary true if the symbol should be made primary
+	 * @param makeUnique ignored
+	 * @param sourceType the source type.
+	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
+	 * @deprecated use {@link #createLabel(Address, String, boolean, SourceType)} instead
 	 */
 	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol createSymbol(Address address, String name, boolean makePrimary,
@@ -683,12 +694,13 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Finds the first occurrence of the byte array sequence that matches the given byte string,
+	 * Finds the first occurrence of the byte array sequence that matches the given byte regex,
 	 * starting from the address. If the start address is null, then the find will start
 	 * from the minimum address of the program.
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -698,13 +710,13 @@ public class FlatProgramAPI {
 	 *
 	 * @param start the address to start searching.  If null, then the start of the program
 	 *        will be used.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte pattern regex for which to search
 	 * @return the first address where the byte was found, or null if the bytes were not found
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String, int)
 	 */
-	public final Address findBytes(Address start, String byteString) {
-		Address[] matchingAddresses = findBytes(start, byteString, 1);
+	public final Address findBytes(Address start, String byteRegex) {
+		Address[] matchingAddresses = findBytes(start, byteRegex, 1);
 		if (matchingAddresses.length == 0) {
 			return null;
 		}
@@ -713,11 +725,12 @@ public class FlatProgramAPI {
 
 	/**
 	 * Finds the first {@code <matchLimit>} occurrences of the byte array sequence that matches
-	 * the given byte string, starting from the address. If the start address is null, then the
+	 * the given byte regex, starting from the address. If the start address is null, then the
 	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -727,23 +740,24 @@ public class FlatProgramAPI {
 	 *
 	 * @param start the address to start searching.  If null, then the start of the program
 	 *        will be used.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte pattern regex for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
-	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @return the start addresses that contain byte patterns that match the given byte regex
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 */
-	public final Address[] findBytes(Address start, String byteString, int matchLimit) {
-		return findBytes(start, byteString, matchLimit, 1);
+	public final Address[] findBytes(Address start, String byteRegex, int matchLimit) {
+		return findBytes(start, byteRegex, matchLimit, 1);
 	}
 
 	/**
 	 * Finds the first {@code <matchLimit>} occurrences of the byte array sequence that matches
-	 * the given byte string, starting from the address. If the start address is null, then the
+	 * the given byte regex, starting from the address. If the start address is null, then the
 	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -753,16 +767,16 @@ public class FlatProgramAPI {
 	 *
 	 * @param start the address to start searching.  If null, then the start of the program
 	 *        will be used.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte regex pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
 	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
 	 *    address boundary.
-	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @return the start addresses that contain byte patterns that match the given byte regex
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 */
-	public final Address[] findBytes(Address start, String byteString, int matchLimit,
+	public final Address[] findBytes(Address start, String byteRegex, int matchLimit,
 			int alignment) {
 
 		if (start == null) {
@@ -777,17 +791,18 @@ public class FlatProgramAPI {
 		AddressFactory factory = currentProgram.getAddressFactory();
 		AddressSet addressRange = factory.getAddressSet(start, memory.getMaxAddress());
 
-		Address[] bytes = findBytes(addressRange, byteString, matchLimit, alignment, false);
+		Address[] bytes = findBytes(addressRange, byteRegex, matchLimit, alignment, false);
 		return bytes;
 	}
 
 	/**
-	 * Finds a byte pattern within an addressSet.
+	 * Finds a byte regex pattern within an addressSet.
 	 *
 	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -796,16 +811,16 @@ public class FlatProgramAPI {
 	 * </pre>
 	 *
 	 * @param set the addressSet specifying which addresses to search.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte regex pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
 	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
 	 *    address boundary.
 	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 */
-	public final Address[] findBytes(AddressSetView set, String byteString, int matchLimit,
+	public final Address[] findBytes(AddressSetView set, String byteRegex, int matchLimit,
 			int alignment) {
 
 		if (matchLimit <= 0) {
@@ -813,7 +828,7 @@ public class FlatProgramAPI {
 		}
 
 		SearchSettings settings = new SearchSettings().withAlignment(alignment);
-		ByteMatcher<SearchData> matcher = new RegExByteMatcher(byteString, settings);
+		ByteMatcher<SearchData> matcher = new RegExByteMatcher(byteRegex, settings);
 		AddressableByteSource byteSource = new ProgramByteSource(currentProgram);
 		Memory memory = currentProgram.getMemory();
 		AddressSet intersection = memory.getLoadedAndInitializedAddressSet().intersect(set);
@@ -838,12 +853,13 @@ public class FlatProgramAPI {
 	 * blocks have been defined), is no longer supported. If this capability has value to anyone, 
 	 * please contact the Ghidra team and let us know.
 	 * <P>
-	 * Finds a byte pattern within an addressSet.
+	 * Finds a byte regex pattern within an addressSet.
 	 *
 	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -852,7 +868,7 @@ public class FlatProgramAPI {
 	 * </pre>
 	 *
 	 * @param set the addressSet specifying which addresses to search.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte regex pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
 	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
@@ -860,16 +876,16 @@ public class FlatProgramAPI {
 	 * @param searchAcrossAddressGaps This parameter is no longer supported and its value is
 	 * ignored. Previously, if true, match results were allowed to span non-continguous memory
 	 * ranges. 
-	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @return the start addresses that contain byte patterns that match the given byte regex
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 * 
 	 * @deprecated see description for details.
 	 */
 	@Deprecated(since = "11.3", forRemoval = true)
-	public final Address[] findBytes(AddressSetView set, String byteString, int matchLimit,
+	public final Address[] findBytes(AddressSetView set, String byteRegex, int matchLimit,
 			int alignment, boolean searchAcrossAddressGaps) {
-		return findBytes(set, byteString, matchLimit, alignment);
+		return findBytes(set, byteRegex, matchLimit, alignment);
 	}
 
 	/**

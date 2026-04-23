@@ -23,6 +23,7 @@ import java.lang.ProcessBuilder.Redirect;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.sun.jna.LastErrorException;
@@ -35,12 +36,12 @@ import ghidra.util.Msg;
 public class ConPtyTest extends AbstractPtyTest {
 	public static final int JOIN_TIMEOUT_MS = 3000;
 
-	public static final String CMD = DummyProc.which("cmd.exe");
-	public static final String GDB = DummyProc.which("gdb.exe");
-	public static final String NOTEPAD = DummyProc.which("notepad.exe");
+	public final String CMD = DummyProc.which("cmd.exe");
+	public final String GDB = DummyProc.which("gdb.exe");
+	public final String NOTEPAD = DummyProc.which("notepad.exe");
 
-	@Before
-	public void checkWindows() {
+	@BeforeClass
+	public static void checkWindows() {
 		assumeTrue(OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OPERATING_SYSTEM);
 	}
 

@@ -167,11 +167,15 @@ public class LocalDirDebugInfoDProvider implements DebugFileStorage {
 		return null;
 	}
 
-	private File getBuildidDir(String buildId) {
-		return new File(rootDir, buildId);
+	private File getBuildidDir(String buildId) throws IOException {
+		File dir = new File(rootDir, buildId);
+		if (!rootDir.equals(dir.getParentFile())) {
+			throw new IOException("Bad buildid value: " + buildId);
+		}
+		return dir;
 	}
 
-	private File getCachePath(ExternalDebugInfo id) {
+	private File getCachePath(ExternalDebugInfo id) throws IOException {
 		String suffix = "";
 		if (id.getObjectType() == ObjectType.SOURCE) {
 			suffix = "-" + escapePath(Objects.requireNonNullElse(id.getExtra(), ""));

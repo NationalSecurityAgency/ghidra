@@ -38,9 +38,9 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.symbol.ExternalManager;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
@@ -122,9 +122,15 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testExternal_names_dialog() {
-		showProvider(ExternalReferencesProvider.class);
-		captureProvider(ExternalReferencesProvider.class);
+	public void testExternal_names_dialog() throws InvalidInputException {
+		ExternalManager externalManager = program.getExternalManager();
+		program.withTransaction("Set Program Path", () -> {
+			externalManager.setExternalPath("USER32.DLL", "/libs/user32.dll", true);
+		});
+		ExternalReferencesProvider provider = showProvider(ExternalReferencesProvider.class);
+		JTable table = findComponent(provider.getComponent(), JTable.class);
+		selectRow(table, 0);
+		captureIsolatedProvider(ExternalReferencesProvider.class, 500, 500);
 	}
 
 	@Test

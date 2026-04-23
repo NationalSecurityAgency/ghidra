@@ -18,9 +18,9 @@ from dataclasses import dataclass
 import os
 import re
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 
 @dataclass(frozen=True)
@@ -45,6 +45,10 @@ def _compute_lldb_ver() -> LldbVersion:
 LLDB_VERSION = _compute_lldb_ver()
 if LLDB_VERSION.major < 18:
     import psutil
+    from psutil import Process
+else:
+    class Process(): # type: ignore # dummy when we're not importing psutil
+        pass
 
 GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for "
 
@@ -194,7 +198,7 @@ class AvailableInfoReader(object):
         command = info.GetExecutableFile()
         return Available(pid, name, command)
 
-    def get_availables(self) -> List[Available]:
+    def get_availables(self) -> Union[List[Available], Iterator[Process]]:
         availables = []
         platform = get_debugger().GetPlatformAtIndex(0)
         err = lldb.SBError()

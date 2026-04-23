@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.data;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
@@ -31,6 +33,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.*;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.docking.settings.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.BigEndianDataConverter;
@@ -66,7 +69,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 	 */
 	protected AbstractSettingsDialog(String title, SettingsDefinition[] settingDefinitions,
 			Settings originalSettings) {
-		super(title, true, false, true, false);
+		super(title, true, true, true, false);
 		this.settingsDefinitions = settingDefinitions;
 		settings = new SettingsImpl(originalSettings) {
 			@Override
@@ -143,6 +146,21 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		addButton(newApplyButton);
 
 		addCancelButton();
+
+		MouseAdapter listener = new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+
+				if (settingsTable.isEditing()) {
+					settingsTable.editingStopped(new ChangeEvent(this));
+				}
+			}
+		};
+
+		okButton.addMouseListener(listener);
+		newApplyButton.addMouseListener(listener);
+		cancelButton.addMouseListener(listener);
 	}
 
 	private String getHexModePropertyName(SettingsDefinition settingsDef) {
@@ -207,6 +225,21 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		settingsTable.setDefaultRenderer(Settings.class, new SettingsRenderer());
 		settingsTable.setDefaultEditor(Settings.class, new SettingsEditor());
 
+		settingsTable.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+
+				if (clickedUseDefaultWhileSelected(e)) {
+					setStatusText("'Use Default' can only be selected, not de-selected");
+					return;
+				}
+
+				clearStatusText();
+			}
+
+		});
+
 		JScrollPane scrollpane = new JScrollPane(settingsTable);
 		scrollpane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
@@ -224,6 +257,19 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		}
 		workPanel.getAccessibleContext().setAccessibleName("Settings");
 		return workPanel;
+	}
+
+	private boolean clickedUseDefaultWhileSelected(MouseEvent e) {
+
+		Point p = e.getPoint();
+		int col = settingsTable.columnAtPoint(p);
+		if (!settingsTableModel.isUseDefaultColumn(col)) {
+			return false;
+		}
+
+		int row = settingsTable.rowAtPoint(p);
+		Object value = settingsTable.getValueAt(row, col);
+		return (Boolean) value;
 	}
 
 	@Override
@@ -513,6 +559,10 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			return defaultSettings != null ? 3 : 2;
 		}
 
+		boolean isUseDefaultColumn(int col) {
+			return col == 2;
+		}
+
 		@Override
 		public String getColumnName(int col) {
 			switch (col) {
@@ -734,7 +784,8 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		}
 
 		private void updateHexMode() {
-			intHexModeMap.put(rowobject.definition.getName(), intTextField.isHexMode());
+			intHexModeMap.put(rowobject.definition.getName(),
+				intTextField.getFormat() == IntegerFormat.HEX);
 		}
 
 		private Number getNumber() {
@@ -805,14 +856,14 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			mode = NUMBER;
 			NumberSettingsDefinition def = (NumberSettingsDefinition) rowobject.definition;
 			if (def.isHexModePreferred() || isHexModeEnabled(def)) {
-				intTextField.setHexMode();
+				intTextField.setFormat(IntegerFormat.HEX);
 			}
 			else {
-				intTextField.setDecimalMode();
+				intTextField.setFormat(IntegerFormat.DEC);
 			}
 
 			intTextField.setMaxValue(def.getMaxValue());
-			intTextField.setAllowNegativeValues(def.allowNegativeValue());
+			intTextField.setMinValue(def.allowNegativeValue() ? null : BigInteger.ZERO);
 
 			if (value == null) {
 				intTextField.setValue(null);

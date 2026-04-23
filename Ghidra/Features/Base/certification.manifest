@@ -352,6 +352,7 @@ src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_description.ht
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_window.html||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/CommitDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeManager.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeTreeWithAssociations.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DisassociateDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/EditPaths.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FavoriteDts.png||GHIDRA||||END|
@@ -362,6 +363,7 @@ src/main/help/help/topics/DataTypeManagerPlugin/images/MergeErrorDialog.png||GHI
 src/main/help/help/topics/DataTypeManagerPlugin/images/PreviewWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/RevertDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/SearchResults.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/StructureMergeDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/UpdateDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/lockoverlay.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/help/help/topics/DataTypePreviewPlugin/DataTypePreviewPlugin.html||GHIDRA||||END|
@@ -980,7 +982,6 @@ src/main/resources/images/hoverOff.gif||GHIDRA||||END|
 src/main/resources/images/hoverOn.gif||GHIDRA||||END|
 src/main/resources/images/icon_link.gif||FAMFAMFAM Mini Icons - Public Domain|||famfamfam mini icon set|END|
 src/main/resources/images/imported_bookmark.gif||GHIDRA||||END|
-src/main/resources/images/katomic.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/key.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/kmessedwords.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/label.png||GHIDRA||||END|

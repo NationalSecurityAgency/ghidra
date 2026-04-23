@@ -54,8 +54,10 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
-		list.add(new Option(SHOW_LINE_NUMBERS_OPTION_NAME, SHOW_LINE_NUMBERS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-showDebugLineNumbers"));
+		list.add(Option.newBoolean(SHOW_LINE_NUMBERS_OPTION_NAME)
+				.value(SHOW_LINE_NUMBERS_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-showDebugLineNumbers"))
+				.build());
 		return list;
 	}
 

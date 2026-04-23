@@ -127,7 +127,7 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	 * <br>
 	 * Where:<br>
 	 *      m is the number of cross references <br>
-	 *      n is the number of off-cut cross references <br><br>
+	 *      n is the number of offcut cross references <br><br>
 	 */
 	private String getXRefHeaderString(CodeUnit cu) {
 		if (cu == null) {
@@ -135,20 +135,27 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 		}
 
 		List<Reference> xrefs = XReferenceUtils.getXReferences(cu, maxXRefs);
-		int xrefCount = xrefs.size();
+		int xRefCount = xrefs.size();
+
+		String xRefCountText = Integer.toString(xRefCount);
+		if (xRefCount == maxXRefs) {
+			xRefCountText += "+";
+		}
+
 		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs);
 		int offcutCount = offcuts.size();
 
-		if (offcutCount > 0) {
-			String modifier = "";
-			if (offcutCount == maxXRefs) {
-				modifier = "+";
-			}
-			return "XREF[" + xrefCount + "," + offcutCount + modifier + "]: ";
+		String offcutCountText = Integer.toString(offcutCount);
+		if (offcutCount == maxXRefs) {
+			offcutCountText += "+";
 		}
 
-		if (xrefCount > 0) {
-			return "XREF[" + xrefCount + "]: ";
+		if (offcutCount > 0) {
+			return "XREF[" + xRefCountText + "," + offcutCountText + "]: ";
+		}
+
+		if (xRefCount > 0) {
+			return "XREF[" + xRefCountText + "]: ";
 		}
 		return null;
 	}

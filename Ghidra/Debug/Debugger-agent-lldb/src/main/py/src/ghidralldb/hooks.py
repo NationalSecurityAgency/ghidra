@@ -18,7 +18,7 @@ import threading
 import time
 from typing import Any, Optional, Union
 
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import commands, util
 
@@ -113,10 +113,11 @@ class ProcessState(object):
         commands.put_processes()
         commands.put_threads()
 
-    def record_exited(self, exit_code):
+    def record_exited(self, exit_code: int):
         proc = util.get_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc.GetProcessID())
-        procobj = commands.STATE.trace.proxy_object_path(ipath)
+        trace = commands.STATE.require_trace()
+        procobj = trace.proxy_object_path(ipath)
         procobj.set_value('Exit Code', exit_code)
         procobj.set_value('State', 'TERMINATED')
 
@@ -511,6 +512,7 @@ def on_stop(event: lldb.SBEvent) -> bool:
             commands.put_threads()
             commands.put_frames()
             commands.activate()
+            commands.put_breakpoints()
     return True
 
 

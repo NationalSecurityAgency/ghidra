@@ -567,6 +567,10 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.2.0__
+* PyGhidra's `help()` override can now show `public/private/protected` on Ghidra Java fields and 
+  methods (available in Ghidra 12.2 and later).
+
 __3.1.0__
 * PyGhidra will now, by default, restore `sys.modules` to its prior state after a PyGhidra script is
   run (or the interactive interpreter is reset) so the next time a script is run, it freshly loads

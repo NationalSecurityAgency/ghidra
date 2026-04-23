@@ -21,7 +21,7 @@ import javax.swing.*;
 
 import org.junit.Test;
 
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 
 public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTest {
@@ -312,7 +312,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 	private DataTypeComponent addFlexDataType(Structure struct, DataType dataType, String name,
 			String comment) {
 		ArrayDataType a = new ArrayDataType(dataType, 0, 1);
-		if (struct instanceof DatabaseObject) {
+		if (struct instanceof DbObject) {
 			DataTypeManager dtm = struct.getDataTypeManager();
 			return dtm.withTransaction("Add Flex Array", () -> struct.add(a, name, comment));
 		}

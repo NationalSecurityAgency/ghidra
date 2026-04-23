@@ -109,16 +109,16 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	@Override
 	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
 		super.dataTypeChanged(dt, isAutoChange);
-//		dataTypeArchive.getCodeManager().invalidateCache(false);
-		// TODO
-		dataTypeArchive.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_CHANGED, isAutoChange,
-			null, dt);
+		// NOTE: During upgrades at time of instantiation dataTypeArchive will be null
+		if (dataTypeArchive != null) {
+			dataTypeArchive.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_CHANGED, isAutoChange,
+				null, dt);
+		}
 	}
 
 	@Override
 	protected void dataTypeAdded(DataType newDt, DataType originalDataType) {
 		super.dataTypeAdded(newDt, originalDataType);
-//		saveArchiveName(originalDataType);
 		dataTypeArchive.dataTypeAdded(getID(newDt), ProgramEvent.DATA_TYPE_ADDED, null, newDt);
 	}
 

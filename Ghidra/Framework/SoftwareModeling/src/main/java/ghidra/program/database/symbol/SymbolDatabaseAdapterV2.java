@@ -97,7 +97,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		if (key == AddressMap.INVALID_ADDRESS_KEY && !addr.equals(Address.NO_ADDRESS)) {
 			return Field.EMPTY_ARRAY;
 		}
-		return symbolTable.findRecords(new LongField(key), SYMBOL_ADDR_COL);
+		return symbolTable.findRecords(new LongField(key), V2_SYMBOL_ADDR_COL);
 	}
 
 	@Override
@@ -113,7 +113,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	@Override
 	RecordIterator getSymbolsByAddress(boolean forward) throws IOException {
 		KeyToRecordIterator it = new KeyToRecordIterator(symbolTable,
-			new AddressIndexPrimaryKeyIterator(symbolTable, SYMBOL_ADDR_COL, addrMap, forward));
+			new AddressIndexPrimaryKeyIterator(symbolTable, V2_SYMBOL_ADDR_COL, addrMap, forward));
 		return new V2ConvertedRecordIterator(it);
 	}
 
@@ -121,7 +121,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	RecordIterator getSymbolsByAddress(Address startAddr, boolean forward) throws IOException {
 		KeyToRecordIterator it =
 			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, startAddr, forward));
+				V2_SYMBOL_ADDR_COL, addrMap, startAddr, forward));
 		return new V2ConvertedRecordIterator(it);
 	}
 
@@ -139,7 +139,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	RecordIterator getSymbols(Address start, Address end, boolean forward) throws IOException {
 		KeyToRecordIterator it =
 			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, start, end, forward));
+				V2_SYMBOL_ADDR_COL, addrMap, start, end, forward));
 		return new V2ConvertedRecordIterator(it);
 	}
 
@@ -147,7 +147,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	RecordIterator getSymbols(AddressSetView set, boolean forward) throws IOException {
 		KeyToRecordIterator it =
 			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, set, forward));
+				V2_SYMBOL_ADDR_COL, addrMap, set, forward));
 		return new V2ConvertedRecordIterator(it);
 	}
 
@@ -155,7 +155,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	RecordIterator getPrimarySymbols(AddressSetView set, boolean forward) throws IOException {
 		KeyToRecordIterator it =
 			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, set, forward));
+				V2_SYMBOL_ADDR_COL, addrMap, set, forward));
 
 		return getPrimaryFilterRecordIterator(new V2ConvertedRecordIterator(it));
 	}
@@ -222,21 +222,21 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	@Override
 	RecordIterator getSymbolsByNamespace(long id) throws IOException {
 		LongField field = new LongField(id);
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_PARENT_ID_COL, field, field, true);
+		RecordIterator it = symbolTable.indexIterator(V2_SYMBOL_PARENT_ID_COL, field, field, true);
 		return new V2ConvertedRecordIterator(it);
 	}
 
 	@Override
 	RecordIterator getSymbolsByName(String name) throws IOException {
 		StringField field = new StringField(name);
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, field, field, true);
+		RecordIterator it = symbolTable.indexIterator(V2_SYMBOL_NAME_COL, field, field, true);
 		return new V2ConvertedRecordIterator(it);
 	}
 
 	@Override
 	RecordIterator scanSymbolsByName(String startName) throws IOException {
 		StringField field = new StringField(startName);
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, field, null, true);
+		RecordIterator it = symbolTable.indexIterator(V2_SYMBOL_NAME_COL, field, null, true);
 		return new V2ConvertedRecordIterator(it);
 	}
 
@@ -262,7 +262,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	Address getMaxSymbolAddress(AddressSpace space) throws IOException {
 		if (space.isMemorySpace()) {
 			AddressIndexKeyIterator addressKeyIterator = new AddressIndexKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, space.getMinAddress(), space.getMaxAddress(), false);
+				V2_SYMBOL_ADDR_COL, addrMap, space.getMinAddress(), space.getMaxAddress(), false);
 			if (addressKeyIterator.hasNext()) {
 				return addrMap.decodeAddress(addressKeyIterator.next());
 			}
@@ -270,7 +270,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		else {
 			LongField max = new LongField(addrMap.getKey(space.getMaxAddress(), false));
 			DBFieldIterator iterator =
-				symbolTable.indexFieldIterator(null, max, false, SYMBOL_ADDR_COL);
+				symbolTable.indexFieldIterator(null, max, false, V2_SYMBOL_ADDR_COL);
 			if (iterator.hasPrevious()) {
 				LongField val = (LongField) iterator.previous();
 				Address addr = addrMap.decodeAddress(val.getLongValue());

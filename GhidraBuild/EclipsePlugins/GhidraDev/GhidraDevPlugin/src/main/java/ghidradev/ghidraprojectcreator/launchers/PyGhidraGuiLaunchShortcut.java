@@ -20,7 +20,7 @@ import ghidradev.ghidraprojectcreator.utils.GhidraLaunchUtils;
 /**
  * The PyGhidra GUI launch shortcut actions.  
  * 
- * @see AbstractGhidraLaunchShortcut 
+ * @see AbstractPyGhidraLaunchShortcut 
  */
 public class PyGhidraGuiLaunchShortcut extends AbstractPyGhidraLaunchShortcut {
 
@@ -28,6 +28,6 @@ public class PyGhidraGuiLaunchShortcut extends AbstractPyGhidraLaunchShortcut {
 	 * Creates a new PyGhidra GUI launch shortcut.
 	 */
 	public PyGhidraGuiLaunchShortcut() {
-		super(GhidraLaunchUtils.PYGHIDRA_GUI_LAUNCH, " GUI");
+		super(GhidraLaunchUtils.PYGHIDRA_GUI_LAUNCH, " (PyGhidra)");
 	}
 }

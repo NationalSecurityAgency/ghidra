@@ -38,7 +38,6 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import generic.theme.GColor;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ProgramLocationActionContext;

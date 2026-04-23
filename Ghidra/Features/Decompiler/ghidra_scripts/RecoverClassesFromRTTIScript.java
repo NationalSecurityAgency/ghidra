@@ -215,6 +215,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				return;
 			}
 
+			nameVfunctions = true;
+
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
 				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);

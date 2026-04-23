@@ -109,7 +109,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * Whether to ensure the focused vertex is visible, scrolling if necessary the visualization in
 	 * order to center the selected vertex or the center of the set of selected vertices
 	 */
-	private boolean ensureVertexIsVisible = false;
+	private boolean ensureVertexIsVisible = true;
 
 	/**
 	 * Allows selection of various {@link LayoutAlgorithm} ('arrangements')
@@ -314,21 +314,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		new ToggleActionBuilder("Scroll To Selection", ACTION_OWNER)
 				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
 				.description("Ensure that the 'focused' vertex is visible")
-				.selected(true)
-				.onAction(context -> ensureVertexIsVisible =
-					((AbstractButton) context.getSourceObject()).isSelected())
+				.selected(ensureVertexIsVisible)
+				.onAction(context -> ensureVertexIsVisible = !ensureVertexIsVisible)
 				.buildAndInstallLocal(componentProvider);
-
-		this.ensureVertexIsVisible = true;  // since we initialized action to selected
 
 		// create a toggle for enabling 'free-form' selection: selection is inside of a traced
 		// shape instead of a rectangle
 		new ToggleActionBuilder("Free-Form Selection", ACTION_OWNER)
 				.toolBarIcon(DefaultDisplayGraphIcons.LASSO_ICON)
 				.description("Trace Free-Form Shape to select multiple vertices (CTRL-click-drag)")
-				.selected(false)
-				.onAction(context -> freeFormSelection =
-					((AbstractButton) context.getSourceObject()).isSelected())
+				.selected(freeFormSelection)
+				.onAction(context -> freeFormSelection = !freeFormSelection)
 				.buildAndInstallLocal(componentProvider);
 
 		// create an icon button to display the satellite view
@@ -349,8 +345,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		ToggleDockingAction lensToggle = new ToggleActionBuilder("View Magnifier", ACTION_OWNER)
 				.description("Show View Magnifier")
 				.toolBarIcon(DefaultDisplayGraphIcons.VIEW_MAGNIFIER_ICON)
-				.onAction(context -> magnifyViewSupport
-						.activate(((AbstractButton) context.getSourceObject()).isSelected()))
+				.onAction(context -> {
+					boolean isActive = magnifyViewSupport.isActive();
+					magnifyViewSupport.activate(!isActive);
+				})
 				.build();
 		magnifyViewSupport.addItemListener(
 			itemEvent -> lensToggle.setSelected(itemEvent.getStateChange() == ItemEvent.SELECTED));
@@ -749,9 +747,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void toggleSatellite(ActionContext context) {
-		boolean selected = ((AbstractButton) context.getSourceObject()).isSelected();
-		graphDisplayProvider.setDefaultSatelliteState(selected);
-		if (selected) {
+
+		boolean wasSelected = graphDisplayProvider.getDefaultSatelliteState();
+		boolean isSelected = !wasSelected;
+
+		graphDisplayProvider.setDefaultSatelliteState(isSelected);
+		if (isSelected) {
 			viewer.getComponent().add(satelliteViewer.getComponent());
 			satelliteViewer.scaleToLayout();
 		}

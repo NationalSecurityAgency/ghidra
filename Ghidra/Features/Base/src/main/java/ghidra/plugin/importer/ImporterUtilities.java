@@ -456,6 +456,7 @@ public class ImporterUtilities {
 			monitor.checkCancelled();
 			Object consumer = new Object();
 			DomainObject obj = loaded.getDomainObject(consumer);
+			DomainFile df = obj.getDomainFile();
 			try {
 				if (obj instanceof Program) {
 					if (programManager != null) {
@@ -464,11 +465,21 @@ public class ImporterUtilities {
 								: ProgramManager.OPEN_VISIBLE;
 						programManager.openProgram((Program) obj, openState);
 					}
-					importedFilesSet.add(obj.getDomainFile());
+				}
+				else {
+					// We imported a non-Program (i.e., a Trace or similar).
+					// Try to open it in the current tool (if not FrontEndTool).
+					if (!(pluginTool instanceof FrontEndTool)) {
+						boolean success = pluginTool.acceptDomainFiles(new DomainFile[] { df });
+						if (!success) {
+							importMessages = "Saved " + df +
+								", but failed to open it in the current tool.\n" + importMessages;
+						}
+					}
 				}
 				if (firstProgram) {
 					// currently we only show results for the imported program, not any libraries
-					displayResults(pluginTool, obj, obj.getDomainFile(), importMessages);
+					displayResults(pluginTool, obj, df, importMessages);
 
 					// Optionally echo loader message log to application.log
 					if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
@@ -476,6 +487,7 @@ public class ImporterUtilities {
 					}
 				}
 				firstProgram = false;
+				importedFilesSet.add(df);
 			}
 			finally {
 				obj.release(consumer);

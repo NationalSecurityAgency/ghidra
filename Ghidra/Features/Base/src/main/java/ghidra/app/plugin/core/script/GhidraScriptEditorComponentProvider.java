@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.script;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.io.*;
 
 import javax.swing.*;
@@ -250,8 +249,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				if (contextObject != GhidraScriptEditorComponentProvider.this) {
+				ComponentProvider contextProvider = context.getComponentProvider();
+				if (contextProvider != GhidraScriptEditorComponentProvider.this) {
 					return false;
 				}
 
@@ -633,11 +632,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	}
 
 	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return createContext(this);
-	}
-
-	@Override
 	public JComponent getComponent() {
 		return scrollPane;
 	}
@@ -645,6 +639,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
 	/**
 	 * Special JTextArea that knows how to properly handle it's key events.
 	 * See {@link #processKeyBinding(KeyStroke, KeyEvent, int, boolean)}

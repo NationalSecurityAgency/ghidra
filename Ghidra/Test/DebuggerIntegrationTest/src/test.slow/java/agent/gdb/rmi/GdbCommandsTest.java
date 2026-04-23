@@ -15,9 +15,10 @@
  */
 package agent.gdb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -247,13 +248,11 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE, target));
 		String importSection = extractOutSection(out, "---Import---");
-		assertTrue(importSection.contains(
-				"""
+		assertTrue(importSection.contains("""
 				Selected Ghidra language: x86:LE:32:default
 				Selected Ghidra compiler: %s""".formatted(PLAT.cSpec())));
 		String fileSection = extractOutSection(out, "---File---");
-		assertTrue(fileSection.contains(
-				"""
+		assertTrue(fileSection.contains("""
 				Selected Ghidra language: %s
 				Selected Ghidra compiler: %s""".formatted(PLAT.lang(), PLAT.cSpec())));
 		assertEquals("""
@@ -425,7 +424,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				quantize(rng(addr, 10), 4096), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				quantize(rng(addr, 10), 4096), Lifespan.nowOn(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
@@ -820,7 +819,6 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testGetObj() throws Exception {
-		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s

@@ -38,7 +38,6 @@ import docking.actions.PopupActionProvider;
 import docking.widgets.AbstractGCellRenderer;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import generic.theme.GColor;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -69,6 +68,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceEvents;
@@ -895,7 +895,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	BigInteger getRegisterValue(Register register) {
-		TraceMemorySpace regs = getRegisterMemorySpace(register.getAddressSpace(), false);
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
+		TraceMemorySpace regs = getRegisterMemorySpace(hostReg.getAddressSpace(), false);
 		if (regs == null) {
 			return BigInteger.ZERO;
 		}
@@ -971,7 +972,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	TraceData getRegisterData(Register register) {
-		TraceCodeSpace space = getRegisterCodeSpace(register.getAddressSpace(), false);
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
+		TraceCodeSpace space = getRegisterCodeSpace(hostReg.getAddressSpace(), false);
 		if (space == null) {
 			return null;
 		}
@@ -1058,8 +1060,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		AddressSetView guestRegs = platform.getLanguage().getRegisterAddresses();
 		AddressSetView hostRegs = platform.mapGuestToHost(guestRegs);
 		AddressSetView viewKnownMem = view.getViewport()
-				.unionedAddresses(snap -> mem.getAddressesWithState(snap, hostRegs,
-					state -> state == TraceMemoryState.KNOWN));
+				.unionedAddresses(
+					snap -> mem.getAddressesWithState(snap, hostRegs, StatePredicate.IS_KNOWN));
 		AddressSpace regSpace = platform.getAddressFactory().getRegisterSpace();
 		if (regSpace == null) {
 			viewKnown = new AddressSet(viewKnownMem);
@@ -1073,8 +1075,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		AddressSetView overlayRegs =
 			TraceRegisterUtils.getOverlaySet(regs.getAddressSpace(), hostRegs);
 		AddressSetView viewKnownRegs = view.getViewport()
-				.unionedAddresses(snap -> regs.getAddressesWithState(snap, overlayRegs,
-					state -> state == TraceMemoryState.KNOWN));
+				.unionedAddresses(
+					snap -> regs.getAddressesWithState(snap, overlayRegs, StatePredicate.IS_KNOWN));
 		viewKnown = viewKnownRegs.union(viewKnownMem);
 	}
 
@@ -1082,8 +1084,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (viewKnown == null) {
 			return false;
 		}
-		TraceMemorySpace regs = getRegisterMemorySpace(current, register.getAddressSpace(), false);
-		if (regs == null && register.getAddressSpace().isRegisterSpace()) {
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
+		TraceMemorySpace regs = getRegisterMemorySpace(current, hostReg.getAddressSpace(), false);
+		if (regs == null && hostReg.getAddressSpace().isRegisterSpace()) {
 			return false;
 		}
 		AddressRange range = current.getPlatform()
@@ -1102,10 +1105,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!isRegisterKnown(register)) {
 			return false;
 		}
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
 		TraceMemorySpace curSpace =
-			getRegisterMemorySpace(current, register.getAddressSpace(), false);
+			getRegisterMemorySpace(current, hostReg.getAddressSpace(), false);
 		TraceMemorySpace prevSpace =
-			getRegisterMemorySpace(previous, register.getAddressSpace(), false);
+			getRegisterMemorySpace(previous, hostReg.getAddressSpace(), false);
 		if (prevSpace == null) {
 			return false;
 		}

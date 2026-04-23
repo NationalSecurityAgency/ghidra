@@ -15,11 +15,29 @@
  */
 package ghidra.program.model.lang;
 
+import ghidra.app.util.PseudoInstruction;
 import ghidra.program.disassemble.Disassembler;
 
 public final class GhidraLanguagePropertyKeys {
 	private GhidraLanguagePropertyKeys() {
 	}
+
+	/**
+	 * MAXIMUM_INSTRUCTION_LENGTH specifies the maximum instruction length that a language
+	 * may produce, including any delay slots which may be present.  This value is used
+	 * by {@link PseudoInstruction} in support of Sleigh {@code inst_next2} processing.  If
+	 * not specified a computed estimate is used by each instruction parse.  If the
+	 * Sleigh {@code inst_next2} instruction is used with variable length instructions, it
+	 * is highly recommended that this property be specified.
+	 * 
+	 * NOTE: It is the language (i.e., {@code slaspec/pspec}) author who needs to manually 
+	 * compute this value carefully based upon the largest possible instruction size including 
+	 * any delay slot.  Ghidra will not validate this value.
+	 * 
+	 * NOTE: This property is currently only used by Ghidra when {@code inst_next2} is used 
+	 * within the correspond {@code slaspec}.
+	 */
+	public static final String MAXIMUM_INSTRUCTION_LENGTH = "maximumInstructionLength";
 
 	/**
 	 * CUSTOM_DISASSEMBLER_CLASS is a full class name for a language-specific

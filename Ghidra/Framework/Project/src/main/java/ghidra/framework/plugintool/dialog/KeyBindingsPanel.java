@@ -35,6 +35,7 @@ import docking.tool.util.DockingToolConstants;
 import docking.widgets.*;
 import docking.widgets.MultiLineLabel.VerticalAlignment;
 import docking.widgets.table.*;
+import generic.theme.GColor;
 import generic.theme.Gui;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -66,10 +67,10 @@ public class KeyBindingsPanel extends JPanel {
 	private KeyBindingsTableModel tableModel;
 	private ActionBindingListener actionBindingListener = new ActionBindingListener();
 	private ActionBindingPanel actionBindingPanel;
-	private GTableFilterPanel<DockingActionIf> tableFilterPanel;
+	private GTableFilterPanel<ActionBindingsDescriptor> tableFilterPanel;
 	private EmptyBorderButton helpButton;
 
-	private KeyBindings keyBindings;
+	private KeyBindingsModel keyBindings;
 	private boolean unappliedChanges;
 
 	private PluginTool tool;
@@ -82,7 +83,7 @@ public class KeyBindingsPanel extends JPanel {
 	public KeyBindingsPanel(PluginTool tool) {
 		this.tool = tool;
 
-		this.keyBindings = new KeyBindings(tool);
+		this.keyBindings = new KeyBindingsModel(tool);
 
 		createPanelComponents();
 
@@ -147,7 +148,7 @@ public class KeyBindingsPanel extends JPanel {
 		gettingStartedPanel = new JPanel();
 		activeActionPanel = createActiveActionPanel();
 
-		tableModel = new KeyBindingsTableModel(new ArrayList<>(keyBindings.getUniqueActions()));
+		tableModel = new KeyBindingsTableModel(new ArrayList<>(keyBindings.getActionBindings()));
 		actionTable = new GTable(tableModel);
 
 		JScrollPane actionsScroller = new JScrollPane(actionTable);
@@ -155,6 +156,8 @@ public class KeyBindingsPanel extends JPanel {
 		actionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		actionTable.setHTMLRenderingEnabled(true);
 		actionTable.getSelectionModel().addListSelectionListener(new TableSelectionListener());
+
+		actionTable.setDefaultRenderer(String.class, new KeyBindingsRenderer());
 
 		adjustTableColumns();
 
@@ -206,9 +209,9 @@ public class KeyBindingsPanel extends JPanel {
 		helpButton = new EmptyBorderButton(Icons.HELP_ICON);
 		helpButton.setEnabled(false);
 		helpButton.addActionListener(e -> {
-			DockingActionIf action = getSelectedAction();
+			ActionBindingsDescriptor binding = getSelectedBinding();
 			HelpService hs = Help.getHelpService();
-			hs.showHelp(action, false, KeyBindingsPanel.this);
+			hs.showHelp(binding, false, KeyBindingsPanel.this);
 		});
 
 		JPanel statusPanel = new JPanel();
@@ -372,7 +375,7 @@ public class KeyBindingsPanel extends JPanel {
 		unappliedChanges = changes;
 	}
 
-	private DockingActionIf getSelectedAction() {
+	private ActionBindingsDescriptor getSelectedBinding() {
 		if (actionTable.getSelectedRowCount() == 0) {
 			return null;
 		}
@@ -381,7 +384,7 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private String getSelectedActionName() {
-		DockingActionIf action = getSelectedAction();
+		ActionBindingsDescriptor action = getSelectedBinding();
 		if (action == null) {
 			return null;
 		}
@@ -457,21 +460,22 @@ public class KeyBindingsPanel extends JPanel {
 	private void updateKeyStroke(KeyStroke ks) {
 		clearInfoPanel();
 
-		DockingActionIf action = getSelectedAction();
-		if (action == null) {
+		ActionBindingsDescriptor binding = getSelectedBinding();
+		if (binding == null) {
 			statusLabel.setText(GETTING_STARTED_MESSAGE);
 			return;
 		}
 
+		DockingActionIf dockingAction = binding.getRepresentativeAction();
 		ToolActions toolActions = (ToolActions) tool.getToolActions();
-		String errorMessage = toolActions.validateActionKeyBinding(action, ks);
+		String errorMessage = toolActions.validateActionKeyBinding(dockingAction, ks);
 		if (errorMessage != null) {
 			actionBindingPanel.clearKeyStroke();
 			statusLabel.setText(errorMessage);
 			return;
 		}
 
-		String selectedActionName = action.getFullName();
+		String selectedActionName = binding.getFullName();
 		if (setActionKeyStroke(selectedActionName, ks)) {
 			showActionsMappedToKeyStroke(ks);
 			fireRowChanged();
@@ -483,13 +487,13 @@ public class KeyBindingsPanel extends JPanel {
 
 		clearInfoPanel();
 
-		DockingActionIf action = getSelectedAction();
-		if (action == null) {
+		ActionBindingsDescriptor binding = getSelectedBinding();
+		if (binding == null) {
 			statusLabel.setText(GETTING_STARTED_MESSAGE);
 			return;
 		}
 
-		String selectedActionName = action.getFullName();
+		String selectedActionName = binding.getFullName();
 		if (setMouseBinding(selectedActionName, mb)) {
 			fireRowChanged();
 			changesMade(true);
@@ -573,8 +577,8 @@ public class KeyBindingsPanel extends JPanel {
 
 			helpButton.setEnabled(false);
 
-			DockingActionIf action = getSelectedAction();
-			if (action == null) {
+			ActionBindingsDescriptor binding = getSelectedBinding();
+			if (binding == null) {
 				swapView(gettingStartedPanel);
 
 				statusLabel.setText(GETTING_STARTED_MESSAGE);
@@ -599,48 +603,64 @@ public class KeyBindingsPanel extends JPanel {
 			MouseBinding mb = keyBindings.getMouseBinding(fullActionName);
 			actionBindingPanel.setKeyBindingData(ks, mb);
 
-			String description = action.getDescription();
+			String description = binding.getDescription();
 			if (StringUtils.isBlank(description)) {
-				description = action.getName();
+				description = binding.getName();
 			}
 
 			// Not sure why we escape the html here. Probably just to be safe.
 			statusLabel.setText("<html>" + description);
-			helpButton.setToolTipText("Help for " + action.getName());
+			helpButton.setToolTipText("Help for " + binding.getName());
+		}
+	}
+
+	private static GColor COLOR_FG_UNREGISTERED =
+		new GColor("color.fg.options.keybindings.table.unregistered");
+	private static GColor COLOR_FG_UNREGISTERED_SELECTED_UNFOCUSED =
+		new GColor("color.fg.options.keybindings.table.unregistered.selected.unfocused");
+
+	private class KeyBindingsRenderer extends GTableCellRenderer {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			Component renderer = super.getTableCellRendererComponent(data);
+			ActionBindingsDescriptor action = (ActionBindingsDescriptor) data.getRowObject();
+			if (!action.isRegistered()) {
+
+				boolean selected = data.isSelected();
+				boolean focused = actionTable.isFocusOwner();
+				setForeground(COLOR_FG_UNREGISTERED);
+
+				if (!focused && selected) {
+					// Selected and not focused; light gray background on some LaFs.  Update the 
+					// foreground to stand out against that color.
+					setForeground(COLOR_FG_UNREGISTERED_SELECTED_UNFOCUSED);
+				}
+			}
+
+			return renderer;
 		}
 	}
 
 	private class KeyBindingsTableModel
-			extends GDynamicColumnTableModel<DockingActionIf, Object> {
+			extends GDynamicColumnTableModel<ActionBindingsDescriptor, Object> {
 
-		private List<DockingActionIf> actions;
+		private List<ActionBindingsDescriptor> actions;
 
-		public KeyBindingsTableModel(List<DockingActionIf> actions) {
+		public KeyBindingsTableModel(List<ActionBindingsDescriptor> actions) {
 			super(new ServiceProviderStub());
 			this.actions = actions;
 		}
 
 		@Override
-		protected TableColumnDescriptor<DockingActionIf> createTableColumnDescriptor() {
-			TableColumnDescriptor<DockingActionIf> descriptor = new TableColumnDescriptor<>();
+		protected TableColumnDescriptor<ActionBindingsDescriptor> createTableColumnDescriptor() {
+			TableColumnDescriptor<ActionBindingsDescriptor> descriptor =
+				new TableColumnDescriptor<>();
 			descriptor.addVisibleColumn("Action Name", String.class, a -> a.getName(), 1, true);
-			descriptor.addVisibleColumn("Key Binding", String.class, a -> {
-				String text = "";
-				String fullName = a.getFullName();
-				KeyStroke ks = keyBindings.getKeyStroke(fullName);
-				if (ks != null) {
-					text += KeyBindingUtils.parseKeyStroke(ks);
-				}
-
-				MouseBinding mb = keyBindings.getMouseBinding(fullName);
-				if (mb != null) {
-					text += " (" + mb.getDisplayText() + ")";
-				}
-
-				return text.trim();
-			});
+			descriptor.addVisibleColumn("Key Binding", String.class, a -> a.getBindingText());
 			descriptor.addVisibleColumn("Owner", String.class, a -> a.getOwnerDescription());
 			descriptor.addHiddenColumn("Description", String.class, a -> a.getDescription());
+			descriptor.addHiddenColumn("Registered?", Boolean.class, a -> a.isRegistered());
 			return descriptor;
 		}
 
@@ -650,7 +670,7 @@ public class KeyBindingsPanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getModelData() {
+		public List<ActionBindingsDescriptor> getModelData() {
 			return actions;
 		}
 

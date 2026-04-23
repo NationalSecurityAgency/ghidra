@@ -100,6 +100,11 @@ class LibraryDB implements Library {
 	}
 
 	@Override
+	public void setAssociatedProgramPath(String programPath) throws InvalidInputException {
+		symbol.setExternalLibraryPath(programPath);
+	}
+
+	@Override
 	public boolean isExternal() {
 		return true;
 	}

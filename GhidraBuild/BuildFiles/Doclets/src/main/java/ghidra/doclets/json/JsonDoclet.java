@@ -157,6 +157,7 @@ public class JsonDoclet implements Doclet {
 		classObj.addProperty("comment", getComment(docTrees.getDocCommentTree(classElement)));
 		classObj.addProperty("javadoc", getJavadoc(docTrees.getDocCommentTree(classElement)));
 		classObj.addProperty("static", classElement.getModifiers().contains(Modifier.STATIC));
+		classObj.addProperty("access", getAccessModifier(classElement));
 		addInterfaces(classElement, classObj);
 		addSuperClass(classElement, classObj);
 	}
@@ -220,6 +221,7 @@ public class JsonDoclet implements Doclet {
 			obj.addProperty("comment", getComment(docTrees.getDocCommentTree(el)));
 			obj.addProperty("javadoc", getJavadoc(docTrees.getDocCommentTree(el)));
 			obj.addProperty("static", el.getModifiers().contains(Modifier.STATIC));
+			obj.addProperty("access", getAccessModifier(el));
 
 			switch (el.getKind()) {
 				case FIELD:
@@ -441,6 +443,25 @@ public class JsonDoclet implements Doclet {
 	private String getJavadoc(DocCommentTree docCommentTree) {
 		if (docCommentTree != null) {
 			return docCommentTree.toString();
+		}
+		return "";
+	}
+
+	/**
+	 * {@return the access modifier for the given {@link Element}}
+	 * 
+	 * @param el The {@link Element} to get the access modifier of
+	 */
+	private String getAccessModifier(Element el) {
+		Set<Modifier> mods = el.getModifiers();
+		if (mods.contains(Modifier.PUBLIC)) {
+			return "public";
+		}
+		if (mods.contains(Modifier.PRIVATE)) {
+			return "private";
+		}
+		if (mods.contains(Modifier.PROTECTED)) {
+			return "protected";
 		}
 		return "";
 	}

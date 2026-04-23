@@ -14,8 +14,8 @@
     into a Ghidra distribution.  This allows users to create and share new plugins and scripts.
     Ghidra ships with some pre-built extensions that not installed by default. 
     </P>
-    <P>Ghidra Extensions can be installed and uninstalled at runtime, with the changes taking effect
-    when Ghidra is restarted. The extension installation dialog can
+    <P>Ghidra Extensions can be installed and uninstalled at runtime, <U>with the changes taking effect
+    when Ghidra is restarted</U>. The extension installation dialog can
     be opened by selecting the <B>Install Extensions</B> option on the project <B>File</B> menu.</P>
 
 	<BLOCKQUOTE>
@@ -32,11 +32,61 @@
     </BLOCKQUOTE>
      
 
+	<BLOCKQUOTE>
+	   <P>Installed extensions provide new functionality to Ghidra, such as Plugins, Analyzers and 
+		other Extension Points.   Non-plugin Extension Points will be automatically discovered and
+		loaded at startup.  This is <B>not</B> the case for Plugins.  Plugins must be manually 
+		enabled inside of the tool that is being used.  For example, when running the Code Browser,
+		use the <A href="help/topics/Tool/Configure_Tool.htm">
+			<B>File</B><IMG src="help/shared/arrow.gif" border="0"><B>Congfigure</B></A> menu to 
+		enable any plugins added by newly installed extensions.
+	   </P>
+	   
+	   <BLOCKQUOTE>
+	      <P><IMG src="help/shared/tip.png" alt="" border="0">The easiest way to find the plugins 
+			for a given extension is to use the table view of all known plugins.  To see all plugins
+		 	for an extension:</P>
+			<OL>
+				<LI>
+					Configure plugins via <B>File</B><IMG src="help/shared/arrow.gif" border="0">
+						<B>Congfigure</B>
+				</LI>
+				<LI>
+					Click the <img src="images/plugin.png" /> icon to show all plugins
+				</LI>
+				<LI>
+					If not already visible, add the <B>Module</B> table column via the right-click
+					menu of the table header.  (Extensions are modules.)
+				</LI>
+				<LI>
+					Sort on the <B>Module</B> table column
+				</LI>
+				<LI>
+					Optionally, you can type the name of the extension into the filter to hide other modules
+				</LI>
+			</OL>
+	   </BLOCKQUOTE>
+	   
+	</BLOCKQUOTE>
+	
+	
     <H2>Dialog Components</H2>
 
     <H3>Extensions Table</H3>
 
     <BLOCKQUOTE>
+		
+	<P>To install an extension, select the extension's checkbox.  To unininstall, deselect the 
+		checkbox.</P>
+		
+		
+		<BLOCKQUOTE>
+		   <P><IMG src="help/shared/note.png" alt="" border="0">If the checkbox is not editable, 
+			that means that means the extension is installed and canont be uninistalled.  This can
+			happen in development mode with extensions that live in source control.</P>
+		</BLOCKQUOTE>
+		
+		
       <P>The list of extensions is populated when the dialog is launched. To build the list, Ghidra
       looks in several locations:</P>
 

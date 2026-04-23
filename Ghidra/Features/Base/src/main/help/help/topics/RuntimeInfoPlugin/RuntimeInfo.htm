@@ -27,7 +27,8 @@
     <UL>
       <LI>
         <B>Version</B> - Ghidra, Operating System, and Java version information. Clicking the
-        <B><I>Copy</I></B> button will copy this information to the clipboard for easy transfer into a bug report.
+        <B><I>Copy</I></B> button will copy this information to the clipboard for easy transfer into
+		 a bug report.
       </LI>
       <LI>
         <B>Memory</B> - JVM memory usage.  Clicking the <B><I>Collect Garbage</I></B> button will 
@@ -47,7 +48,11 @@
         <B>Modules</B> - A list of discovered Ghidra Modules.
       </LI>
       <LI>
-        <B>Extension Points</B> - A list of discovered Ghidra Extension Points.
+        <B>Extension Points</B> - A list of discovered Ghidra Extension Points.<BR><BR>
+			Note: Extension Points differ from Extensions.  Extension Points are classes that Ghidra
+			will find at startup.  Extensions are additional Ghidra Modules that can be installed 
+			by the user. Further, Extensions may contain Extension Points. 
+			<BR><BR>
       </LI>
       <LI>
         <B>Classpath</B> - The ordered classpath for the active Ghidra application.

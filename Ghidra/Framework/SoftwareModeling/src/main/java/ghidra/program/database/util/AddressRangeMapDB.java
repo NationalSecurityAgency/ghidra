@@ -26,6 +26,7 @@ import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -137,18 +138,14 @@ public class AddressRangeMapDB implements DBListener {
 	 * @throws DuplicateNameException if there is already range map with that name
 	 */
 	public boolean setName(String newName) throws DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			String newTableName = RANGE_MAP_TABLE_PREFIX + newName;
 			if (rangeMapTable == null || rangeMapTable.setName(newTableName)) {
 				tableName = newTableName;
 				return true;
 			}
+			return false;
 		}
-		finally {
-			lock.release();
-		}
-		return false;
 	}
 
 	/**
@@ -185,8 +182,7 @@ public class AddressRangeMapDB implements DBListener {
 		if (localValue != null && localValue.first.contains(address)) {
 			return localValue.second;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (rangeMapTable == null) {
 				return null;
 			}
@@ -202,9 +198,6 @@ public class AddressRangeMapDB implements DBListener {
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -224,8 +217,7 @@ public class AddressRangeMapDB implements DBListener {
 			return;
 		}
 		AddressRange.checkValidRange(startAddress, endAddress);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (value == null && rangeMapTable == null) {
 				return;
 			}
@@ -239,9 +231,6 @@ public class AddressRangeMapDB implements DBListener {
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -261,8 +250,7 @@ public class AddressRangeMapDB implements DBListener {
 
 		DBHandle tmpDb = null;
 		AddressRangeMapDB tmpMap = null;
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (rangeMapTable == null) {
 				return;
 			}
@@ -304,7 +292,6 @@ public class AddressRangeMapDB implements DBListener {
 					// ignore
 				}
 			}
-			lock.release();
 		}
 	}
 
@@ -326,8 +313,7 @@ public class AddressRangeMapDB implements DBListener {
 		if (isEmpty()) {
 			return set;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (rangeMapTable == null) {
 				return set;
 			}
@@ -336,9 +322,6 @@ public class AddressRangeMapDB implements DBListener {
 				set.add(addressRange);
 			}
 			return set;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -353,12 +336,11 @@ public class AddressRangeMapDB implements DBListener {
 		if (isEmpty()) {
 			return set;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (rangeMapTable == null) {
 				return set;
 			}
-			
+
 			RecordIterator it = rangeMapTable.indexIterator(VALUE_COL, value, value, true);
 			while (it.hasNext()) {
 				DBRecord record = it.next();
@@ -368,9 +350,6 @@ public class AddressRangeMapDB implements DBListener {
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return set;
 	}
@@ -435,13 +414,9 @@ public class AddressRangeMapDB implements DBListener {
 
 	@Override
 	public void dbRestored(DBHandle dbh) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			clearCache();
 			findTable();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -453,13 +428,9 @@ public class AddressRangeMapDB implements DBListener {
 	@Override
 	public void tableDeleted(DBHandle dbh, Table table) {
 		if (table == rangeMapTable) {
-			lock.acquire();
-			try {
+			try (Closeable c = lock.write()) {
 				clearCache();
 				rangeMapTable = null;
-			}
-			finally {
-				lock.release();
 			}
 		}
 	}
@@ -475,8 +446,7 @@ public class AddressRangeMapDB implements DBListener {
 	 * Deletes the database table used to store this range map.
 	 */
 	public void dispose() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (rangeMapTable != null) {
 				try {
 					dbHandle.deleteTable(tableName);
@@ -488,9 +458,6 @@ public class AddressRangeMapDB implements DBListener {
 				rangeMapTable = null;
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -498,13 +465,9 @@ public class AddressRangeMapDB implements DBListener {
 	 * to invalidate our cache and possibly have a wrapping record again.
 	 */
 	public void invalidate() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			clearCache();
 			alreadyCheckedForWrappingRecord = false;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -520,8 +483,7 @@ public class AddressRangeMapDB implements DBListener {
 		if (localValue != null && localValue.first.contains(address)) {
 			return localValue.first;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			// look for a stored value range that contains that address
 			AddressRange range = findValueRangeContainingAddress(address);
 			if (range == null) {
@@ -533,9 +495,6 @@ public class AddressRangeMapDB implements DBListener {
 		catch (IOException e) {
 			dbError(e);
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 

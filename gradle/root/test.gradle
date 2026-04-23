@@ -62,6 +62,7 @@ if (!project.hasProperty('srcTreeName')) {
 
 project.ext.testRootDirName = "JunitTest_" + srcTreeName
 project.ext.pcodeTestRootDirName = "PCodeTest_" + srcTreeName
+project.ext.cspecTestRootDirName = "CSpecTest_" + srcTreeName
 
 project.ext.shareDir = System.properties.get('share.dir')
 if (project.ext.shareDir != null) {

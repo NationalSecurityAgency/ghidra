@@ -36,6 +36,7 @@ import javax.swing.text.JTextComponent;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.*;
 
 import docking.*;
@@ -351,19 +352,19 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		}
 
 		String title = dialog.getTitle();
-		boolean isSavePrompt = StringUtils.containsAny(title, "Changed", "Saved");
+		boolean isSavePrompt = Strings.CS.containsAny(title, "Changed", "Saved");
 		if (!isSavePrompt) {
 			throw new AssertionError("Unexpected dialog with title '" + title + "'; " +
 				"Expected a dialog alerting to program changes");
 		}
 
-		if (StringUtils.contains(title, "Program Changed")) {
+		if (Strings.CS.contains(title, "Program Changed")) {
 			// the program is read-only or not in a writable project
 			pressButtonByText(dialog, "Continue");
 			return;
 		}
 
-		if (StringUtils.contains(title, "Save Program?")) {
+		if (Strings.CS.contains(title, "Save Program?")) {
 			pressButtonByText(dialog, "Cancel");
 			return;
 		}
@@ -1283,6 +1284,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			ActionContext providerContext = provider.getActionContext(null);
 			if (providerContext != null) {
+				providerContext.setContextProvider(provider);
 				return providerContext;
 			}
 
@@ -1338,11 +1340,13 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			ActionContext newContext = provider.getActionContext(null);
 			if (newContext == null) {
+				actionContext.setContextProvider(provider);
 				return actionContext;
 			}
 
 			actionContext = newContext;
 			actionContext.setSourceObject(provider.getComponent());
+			actionContext.setContextProvider(provider);
 
 			return actionContext;
 		});
@@ -1366,6 +1370,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			ActionContext actionContext = provider.getActionContext(null);
 			if (actionContext != null) {
 				actionContext.setSourceObject(provider.getComponent());
+				actionContext.setContextProvider(provider);
 			}
 			return actionContext;
 		});
@@ -2183,7 +2188,17 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	}
 
 	public static boolean isEnabled(DockingActionIf action, ActionContextProvider contextProvider) {
-		return runSwing(() -> action.isEnabledForContext(contextProvider.getActionContext(null)));
+		return runSwing(() -> action.isEnabledForContext(createActionContext(contextProvider)));
+	}
+
+	public static ActionContext createActionContext(ActionContextProvider provider) {
+		return runSwing(() -> {
+			ActionContext context = provider.getActionContext(null);
+			if (context != null) {
+				context.setContextProvider(provider);
+			}
+			return context;
+		});
 	}
 
 	public static boolean isEnabled(AbstractButton button) {

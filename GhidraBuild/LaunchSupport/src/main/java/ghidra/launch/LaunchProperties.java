@@ -220,7 +220,7 @@ public class LaunchProperties {
 			String key = entry.getKey();
 			String value = entry.getValue();
 			try {
-				text = text.replaceAll("\\$\\{" + key + "\\}", value.replace("\\", "\\\\"));
+				text = text.replace("${" + key + "}", value);
 			}
 			catch (IllegalArgumentException e) {
 				String msg =

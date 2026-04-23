@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.map;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -115,7 +115,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 		@Override
 		protected void clearCache(boolean all) {
-			try (LockHold hold = LockHold.lock(rwLock.writeLock())) {
+			try (LockHold hold = LockHold.lock(lock.writeLock())) {
 				// TODO: Should each space have an invalidateCache method?
 				super.clearCache(all);
 				try {

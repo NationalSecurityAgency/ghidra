@@ -36,7 +36,7 @@ import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.CustomToStringCellRenderer;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import docking.widgets.table.EnumeratedTableColumn;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;

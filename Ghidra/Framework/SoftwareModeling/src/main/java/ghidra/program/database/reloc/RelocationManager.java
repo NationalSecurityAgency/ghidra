@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -145,8 +146,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	@Override
 	public Relocation add(Address addr, Status status, int type, long[] values, byte[] bytes,
 			String symbolName) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			byte flags = RelocationDBAdapter.getFlags(status, 0);
 			adapter.add(addr, flags, type, values, bytes, symbolName);
 			Relocation reloc = new Relocation(addr, status, type, values,
@@ -161,17 +161,13 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public Relocation add(Address addr, Status status, int type, long[] values, int byteLength,
 			String symbolName) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			byte flags = RelocationDBAdapter.getFlags(status, byteLength);
 			adapter.add(addr, flags, type, values, null, symbolName);
 			Relocation reloc = new Relocation(addr, status, type, values,
@@ -186,16 +182,12 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public boolean hasRelocation(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator it = adapter.iterator(addr);
 			if (!it.hasNext()) {
 				return false;
@@ -207,16 +199,12 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return false;
 	}
 
 	@Override
 	public List<Relocation> getRelocations(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			List<Relocation> list = null;
 			RecordIterator it = adapter.iterator(addr);
 			while (it.hasNext()) {
@@ -234,9 +222,6 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -258,23 +243,18 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	@Override
 	public Iterator<Relocation> getRelocations() {
 		RecordIterator ri = null;
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			ri = adapter.iterator();
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return new RelocationIterator(ri);
 	}
 
 	@Override
 	public Address getRelocationAddressAfter(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator it = adapter.iterator(addr);
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
@@ -287,24 +267,17 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public Iterator<Relocation> getRelocations(AddressSetView set) {
 		RecordIterator it = null;
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			it = adapter.iterator(set);
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return new RelocationIterator(it);
 	}
@@ -318,35 +291,29 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 
 		@Override
 		public boolean hasNext() {
-			if (it == null)
+			if (it == null) {
 				return false;
-			lock.acquire();
-			try {
+			}
+			try (Closeable c = lock.read()) {
 				return it.hasNext();
 			}
 			catch (IOException e) {
 				program.dbError(e);
-			}
-			finally {
-				lock.release();
 			}
 			return false;
 		}
 
 		@Override
 		public Relocation next() {
-			if (it == null)
+			if (it == null) {
 				return null;
-			lock.acquire();
-			try {
+			}
+			try (Closeable c = lock.read()) {
 				DBRecord r = it.next();
 				return getRelocation(r);
 			}
 			catch (IOException e) {
 				program.dbError(e);
-			}
-			finally {
-				lock.release();
 			}
 			return null;
 		}

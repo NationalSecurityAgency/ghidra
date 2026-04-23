@@ -95,6 +95,9 @@ public class BuildIdDebugFileProvider implements DebugFileProvider {
 		}
 		File bucketDir = new File(rootDir, buildId.substring(0, 2));
 		File file = new File(bucketDir, buildId.substring(2) + ".debug");
+		if (!rootDir.equals(bucketDir.getParentFile()) || !bucketDir.equals(file.getParentFile())) {
+			throw new IOException("Bad buildid: " + buildId);
+		}
 		return file.isFile() ? file : null;
 	}
 

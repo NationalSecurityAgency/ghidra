@@ -385,10 +385,13 @@ public enum TraceEmulationIntegration {
 				knownButUninit.getMinAddress(),
 				knownButUninit.getMaxAddress());
 			ByteBuffer buf = ByteBuffer.allocate((int) knownBound.getLength());
-			acc.getBytes(knownBound.getMinAddress(), buf);
+			Address knownMin = knownBound.getMinAddress();
+			acc.getBytes(knownMin, buf);
 			for (AddressRange range : knownButUninit) {
-				piece.setVarInternal(range.getAddressSpace(), range.getMinAddress().getOffset(),
-					(int) range.getLength(), buf.array());
+				byte[] sub = new byte[(int) range.getLength()];
+				Address rngMin = range.getMinAddress();
+				buf.get((int) rngMin.subtract(knownMin), sub);
+				piece.setVarInternal(range.getAddressSpace(), rngMin.getOffset(), sub.length, sub);
 				remains.delete(range);
 			}
 			return remains;
@@ -759,6 +762,9 @@ public enum TraceEmulationIntegration {
 					: memWritten;
 			if (handlerFor(piece).dataWritten(acc, written, thread, piece, address, length,
 				value)) {
+				return;
+			}
+			if (length == 0) {
 				return;
 			}
 			Address end = address.addWrap(length - 1);

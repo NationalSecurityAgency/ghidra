@@ -156,7 +156,7 @@ public class JdiCommands {
 	public void ghidraTraceListen(String address) {
 		// TODO: UNTESTED
 		state.requireNoClient();
-		String host = "0.0.0.0";
+		String host = "127.0.0.1";
 		int port = 0;
 		if (address != null) {
 			String[] parts = address.split(":");

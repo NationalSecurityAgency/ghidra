@@ -88,6 +88,27 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 		return false;
 	}
 
+	private void checkTokenIntegrity(byte[] token) throws LoginException {
+		if (token.length != TOKEN_SIZE) {
+			throw new FailedLoginException("Invalid Signature callback");
+		}
+
+		boolean isZeroToken = true;
+		for (byte b : token) {
+			if (b != 0) {
+				isZeroToken = false;
+				break;
+			}
+		}
+		if (isZeroToken) {
+			throw new FailedLoginException("Invalid Signature callback");
+		}
+
+		if (!TokenGenerator.isRecentToken(token, MAX_TOKEN_TIME)) {
+			throw new FailedLoginException("Stale Signature callback");
+		}
+	}
+
 	/*
 	 * @see ghidra.server.security.AuthenticationModule#authenticate(ghidra.server.UserManager, javax.security.auth.Subject, javax.security.auth.callback.Callback[])
 	 */
@@ -121,14 +142,12 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 		try {
 
 			byte[] token = sigCb.getToken();
-
-			if (!TokenGenerator.isRecentToken(token, MAX_TOKEN_TIME)) {
-				throw new FailedLoginException("Stale Signature callback");
-			}
+			checkTokenIntegrity(token);
 
 			boolean usingSelfSignedCert =
 				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			if (!DefaultKeyManagerFactory.isMySignature(usingSelfSignedCert ? null : authorities,
+			if (!DefaultKeyManagerFactory.isMySignature(
+				usingSelfSignedCert ? null : DefaultTrustManagerFactory.getTrustedIssuers(),
 				token, sigCb.getServerSignature())) {
 				throw new FailedLoginException("Invalid Signature callback");
 			}
@@ -141,14 +160,14 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 			DefaultTrustManagerFactory.validateClient(certChain, PKIUtils.RSA_TYPE);
 
 			byte[] sigBytes = sigCb.getSignature();
-			if (sigBytes != null) {
-
-				Signature sig = Signature.getInstance(certChain[0].getSigAlgName());
-				sig.initVerify(certChain[0]);
-				sig.update(token);
-				if (!sig.verify(sigBytes)) {
-					throw new FailedLoginException("Incorrect signature");
-				}
+			if (sigBytes == null) {
+				throw new FailedLoginException("Client signature required");
+			}
+			Signature sig = Signature.getInstance(certChain[0].getSigAlgName());
+			sig.initVerify(certChain[0]);
+			sig.update(token);
+			if (!sig.verify(sigBytes)) {
+				throw new FailedLoginException("Incorrect signature");
 			}
 
 			String dnUsername =

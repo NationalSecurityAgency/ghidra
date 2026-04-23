@@ -30,6 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -83,8 +84,7 @@ public abstract class VariableDB implements Variable {
 	@Override
 	public void setDataType(DataType type, VariableStorage newStorage, boolean force,
 			SourceType source) throws InvalidInputException, VariableSizeException {
-		functionMgr.lock.acquire();
-		try {
+		try (Closeable c = functionMgr.lock.write()) {
 			function.startUpdate();
 			function.checkDeleted();
 			if ((this instanceof Parameter) && !function.hasCustomVariableStorage()) {
@@ -109,15 +109,13 @@ public abstract class VariableDB implements Variable {
 		}
 		finally {
 			function.endUpdate();
-			functionMgr.lock.release();
 		}
 	}
 
 	@Override
 	public void setDataType(DataType type, boolean alignStack, boolean force, SourceType source)
 			throws InvalidInputException {
-		functionMgr.lock.acquire();
-		try {
+		try (Closeable c = functionMgr.lock.write()) {
 			function.startUpdate();
 			function.checkDeleted();
 			// VARDO: Is there concern about variable no longer be contained within function?
@@ -149,7 +147,6 @@ public abstract class VariableDB implements Variable {
 		}
 		finally {
 			function.endUpdate();
-			functionMgr.lock.release();
 		}
 	}
 

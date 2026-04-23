@@ -645,8 +645,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				.each(SYMBOL_REMOVED).call(this::processSymbolRemoved)
 				.each(EXTERNAL_ENTRY_ADDED, EXTERNAL_ENTRY_REMOVED)
 					.call(this::processExternalEntryChanged)
-				.any(EXTERNAL_PATH_CHANGED, EXTERNAL_NAME_ADDED, 
-					  EXTERNAL_NAME_REMOVED, EXTERNAL_NAME_CHANGED)
+				.any(EXTERNAL_NAME_ADDED, EXTERNAL_NAME_REMOVED, EXTERNAL_NAME_CHANGED)
 						// Rather than try to find each affected symbol, it is easier to just reload
 						// the tree.  This is infrequent enough that it should not be disruptive.
 						.call(this::reloadTree) 

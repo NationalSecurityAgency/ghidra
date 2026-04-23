@@ -496,15 +496,40 @@ public class DBTraceAddressSnapRangePropertyMapTree<T,
 				TraceAddressSnapRangeQuery::new);
 		}
 
-		public static TraceAddressSnapRangeQuery atSnap(long snap, AddressSpace space) {
-			return intersecting(new ImmutableTraceAddressSnapRange(space.getMinAddress(),
-				space.getMaxAddress(), snap, snap), null, TraceAddressSnapRangeQuery::new);
+		public static TraceAddressSnapRangeQuery minAt(Address address, long snap) {
+			return intersectingMinWithin(new AddressRangeImpl(address, address), Lifespan.at(snap));
+		}
+
+		public static TraceAddressSnapRangeQuery minAtSnap(long snap, AddressSpace space) {
+			return minWithin(Lifespan.at(snap), space);
+		}
+
+		public static TraceAddressSnapRangeQuery minWithin(Lifespan span, AddressSpace space) {
+			return intersectingMinWithin(
+				new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()), span);
+		}
+
+		public static TraceAddressSnapRangeQuery intersectingMinWithin(AddressRange range,
+				Lifespan span) {
+			AddressSpace space = range.getAddressSpace();
+			return new TraceAddressSnapRangeQuery(
+				new ImmutableTraceAddressSnapRange(space.getMinAddress(), range.getMaxAddress(),
+					span),
+				new ImmutableTraceAddressSnapRange(range.getMinAddress(), space.getMaxAddress(),
+					Lifespan.nowOnMaybeScratch(span.lmax())),
+				null);
 		}
 
 		public static TraceAddressSnapRangeQuery intersecting(Lifespan lifespan,
 				AddressSpace space) {
 			return intersecting(new ImmutableTraceAddressSnapRange(space.getMinAddress(),
 				space.getMaxAddress(), lifespan), null, TraceAddressSnapRangeQuery::new);
+		}
+
+		public static TraceAddressSnapRangeQuery intersectingEnclosed(AddressRange range,
+				Lifespan span) {
+			return intersectingEnclosed(new ImmutableTraceAddressSnapRange(range, span), null,
+				TraceAddressSnapRangeQuery::new);
 		}
 
 		/**
@@ -550,21 +575,23 @@ public class DBTraceAddressSnapRangePropertyMapTree<T,
 		}
 
 		public static TraceAddressSnapRangeQuery mostRecent(Address address, long snap) {
-			return intersecting(
-				new ImmutableTraceAddressSnapRange(address, address, Long.MIN_VALUE, snap),
-				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
-		}
-
-		public static TraceAddressSnapRangeQuery mostRecent(Address address, Lifespan span) {
-			return intersecting(
-				new ImmutableTraceAddressSnapRange(address, span),
-				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
+			return mostRecent(new AddressRangeImpl(address, address), Lifespan.since(snap));
 		}
 
 		public static TraceAddressSnapRangeQuery mostRecent(AddressRange range, Lifespan span) {
-			return intersecting(
-				new ImmutableTraceAddressSnapRange(range, span),
-				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
+			AddressSpace space = range.getAddressSpace();
+
+			TraceAddressSnapRange r1 = new ImmutableTraceAddressSnapRange(space.getMinAddress(),
+				range.getMaxAddress(), span);
+			Lifespan maxOn = Lifespan.nowOnMaybeScratch(span.lmax());
+			TraceAddressSnapRange r2 = new ImmutableTraceAddressSnapRange(range.getMinAddress(),
+				space.getMaxAddress(), maxOn);
+
+			return new TraceAddressSnapRangeQuery(r1, r2, Rectangle2DDirection.TOPMOST);
+		}
+
+		public static TraceAddressSnapRangeQuery leastRecent(AddressRange range, Lifespan span) {
+			return mostRecent(range, span).starting(Rectangle2DDirection.BOTTOMMOST);
 		}
 
 		public static TraceAddressSnapRangeQuery equalTo(TraceAddressSnapRange shape) {

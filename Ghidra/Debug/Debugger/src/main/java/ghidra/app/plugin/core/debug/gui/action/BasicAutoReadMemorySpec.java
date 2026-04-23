@@ -36,6 +36,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.util.MathUtilities;
 import ghidra.util.task.TaskMonitor;
 
@@ -65,7 +66,7 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			Target target = coordinates.getTarget();
 			TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 			AddressSetView alreadyKnown = mm.getAddressesWithState(coordinates.getSnap(), visible,
-				s -> s == TraceMemoryState.KNOWN || s == TraceMemoryState.ERROR);
+				StatePredicate.IS_KNOWN_OR_ERROR);
 			AddressSet toRead = visible.subtract(alreadyKnown);
 
 			if (toRead.isEmpty()) {
@@ -91,8 +92,8 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			Target target = coordinates.getTarget();
 			TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 			long snap = coordinates.getSnap();
-			AddressSetView alreadyKnown = mm.getAddressesWithState(snap, visible,
-				s -> s == TraceMemoryState.KNOWN || s == TraceMemoryState.ERROR);
+			AddressSetView alreadyKnown =
+				mm.getAddressesWithState(snap, visible, StatePredicate.IS_KNOWN_OR_ERROR);
 			AddressSet toRead = visible.subtract(alreadyKnown);
 
 			if (toRead.isEmpty()) {
@@ -171,8 +172,7 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			AddressSet toRead = new AddressSet(quantize(12, visible));
 			for (Lifespan span : coordinates.getView().getViewport().getOrderedSpans()) {
 				AddressSetView alreadyKnown =
-					mm.getAddressesWithState(span.lmin(), visible,
-						s -> s == TraceMemoryState.KNOWN);
+					mm.getAddressesWithState(span.lmin(), visible, StatePredicate.IS_KNOWN);
 				toRead.delete(alreadyKnown);
 				if (span.lmax() != span.lmin() || toRead.isEmpty()) {
 					break;

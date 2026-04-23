@@ -116,7 +116,7 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		JButton parseToFileButton = findButtonByText(dialog, "Parse to File...");
 		assertNotNull(parseToFileButton);
 
-		ActionContext context = dialog.getActionContext(null);
+		ActionContext context = createActionContext(dialog);
 		DockingActionIf saveAsAction = getAction(dialog, "Save Profile As");
 		assertTrue(saveAsAction.isEnabledForContext(context));
 
@@ -139,10 +139,12 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		addSourceFile("c:\\temp\\fred.h");
 
 		DockingActionIf saveAction = getAction(dialog, "Save Profile");
-		assertFalse(saveAction.isEnabledForContext(dialog.getActionContext(null)));
+		ActionContext context = createActionContext(dialog);
+		assertFalse(saveAction.isEnabledForContext(context));
 
 		DockingActionIf saveAsAction = getAction(dialog, "Save Profile As");
-		assertTrue(saveAsAction.isEnabledForContext(dialog.getActionContext(null)));
+		context = createActionContext(dialog);
+		assertTrue(saveAsAction.isEnabledForContext(context));
 	}
 
 	@Test

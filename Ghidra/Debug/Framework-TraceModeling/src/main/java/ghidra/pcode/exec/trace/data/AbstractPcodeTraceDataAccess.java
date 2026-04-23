@@ -23,6 +23,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.util.TraceRegisterUtils;
 
 /**
@@ -130,8 +131,7 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 
 		AddressSet hostSet = new AddressSet(toOverlay(hostRange));
 		for (long snap : viewport.getOrderedSnaps()) {
-			hostSet.delete(
-				ops.getAddressesWithState(snap, hostSet, s -> s == TraceMemoryState.KNOWN));
+			hostSet.delete(ops.getAddressesWithState(snap, hostSet, StatePredicate.IS_KNOWN));
 		}
 		return hostSet.isEmpty() ? TraceMemoryState.KNOWN : TraceMemoryState.UNKNOWN;
 	}
@@ -147,14 +147,14 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		AddressSet hostKnown = new AddressSet();
 		if (useFullSpans) {
 			for (Lifespan span : viewport.getOrderedSpans()) {
-				hostKnown.add(ops.getAddressesWithState(span, hostView,
-					st -> st != null && st != TraceMemoryState.UNKNOWN));
+				hostKnown.add(
+					ops.getAddressesWithState(span, hostView, StatePredicate.IS_KNOWN_OR_ERROR));
 			}
 		}
 		else {
 			for (long snap : viewport.getOrderedSnaps()) {
-				hostKnown.add(ops.getAddressesWithState(snap, hostView,
-					st -> st != null && st != TraceMemoryState.UNKNOWN));
+				hostKnown.add(
+					ops.getAddressesWithState(snap, hostView, StatePredicate.IS_KNOWN_OR_ERROR));
 			}
 		}
 		AddressSetView hostResult =

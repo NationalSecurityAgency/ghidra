@@ -28,7 +28,6 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.framework.OperatingSystem;
@@ -52,6 +51,8 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testExecuteCapture() throws Exception {
+		// NB: print returns no value on Windows
+		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 		try (LldbAndConnection conn = startAndConnectLldb()) {
 			RemoteMethod execute = conn.getMethod("execute");
 			assertEquals(false, execute.parameters().get("to_string").getDefaultValue());
@@ -572,12 +573,11 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				launch.invoke(Map.ofEntries(
 					Map.entry("process", proc),
-					Map.entry("file", getSpecimenRead())));
+					Map.entry("file", getSpecimenSpin())));
 
 				txPut(conn, "processes");
 
 				waitRunning(conn);
-				Thread.sleep(100); // Give it plenty of time to block on read
 
 				conn.execute("process interrupt");
 				txPut(conn, "processes");
@@ -585,7 +585,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				waitStopped(conn);
 
 				String out = conn.executeCapture("bt");
-				assertThat(out, containsString("read"));
+				assertThat(out, containsString("stop"));
 			}
 			conn.success();
 		}

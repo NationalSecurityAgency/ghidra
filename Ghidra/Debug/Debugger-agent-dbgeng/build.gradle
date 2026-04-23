@@ -41,6 +41,10 @@ tasks.assemblePyPackage {
 	}
 }
 
+tasks.typeCheckPyPackage {
+	environment("PYTHONPATH", project(":Debugger-rmi-trace").file("build/pypkg/src"))
+}
+
 task buildTlb(type: Exec) {
 
 	def tmpBatch = file("build/buildTlb.bat")

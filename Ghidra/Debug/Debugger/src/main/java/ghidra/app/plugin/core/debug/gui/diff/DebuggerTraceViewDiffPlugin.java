@@ -55,6 +55,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
@@ -539,8 +540,8 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 
 		TraceMemoryManager mm = trace.getMemoryManager();
 
-		AddressSetView known1 = mm.getAddressesWithState(snap1, s -> s == TraceMemoryState.KNOWN);
-		AddressSetView known2 = mm.getAddressesWithState(snap2, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known1 = mm.getAddressesWithState(snap1, StatePredicate.IS_KNOWN);
+		AddressSetView known2 = mm.getAddressesWithState(snap2, StatePredicate.IS_KNOWN);
 
 		//AddressSet knownEither = known1.union(known2);
 		AddressSet knownBoth = known1.intersect(known2); // Will need byte-by-byte examination

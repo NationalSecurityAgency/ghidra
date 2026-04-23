@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package docking.widgets.values;
 import javax.swing.JComponent;
 
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 
 /**
  * Value class for {@link Integer} Value with an option for display the value as decimal or hex. The 
@@ -69,10 +70,10 @@ public class IntValue extends AbstractValue<Integer> {
 	public JComponent getComponent() {
 		if (field == null) {
 			field = new IntegerTextField(20);
-			field.setAllowsHexPrefix(false);
+			field.setUseNumberPrefix(false);
 			field.setShowNumberMode(false);
 			if (displayAsHex) {
-				field.setHexMode();
+				field.setFormat(IntegerFormat.HEX);
 				field.setShowNumberMode(true);
 			}
 		}

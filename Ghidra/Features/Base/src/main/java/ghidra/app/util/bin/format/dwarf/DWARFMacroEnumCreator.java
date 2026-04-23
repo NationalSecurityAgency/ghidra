@@ -69,15 +69,20 @@ public class DWARFMacroEnumCreator {
 			monitor.increment();
 			monitor.setMessage("DWARF: Processing Macros for " + cu.getName());
 			Map<String, ExpressionValue> macrosToValues = new HashMap<>();
+			Set<Long> visitedHeaders = new HashSet<>();
 			createEnums(cu.getMacros(), macrosToValues, catPath, includeCommandLineDefines,
-				monitor);
+				monitor, visitedHeaders);
 		}
 	}
 
 	private void createEnums(DWARFMacroHeader macroHeader,
 			Map<String, ExpressionValue> macrosToValues, CategoryPath catPath,
-			boolean includeCommandLineDefines, TaskMonitor monitor)
+			boolean includeCommandLineDefines, TaskMonitor monitor,
+			Set<Long> visitedHeaders)
 			throws IOException, CancelledException {
+		if (!visitedHeaders.add(macroHeader.getEntriesStartOffset())) {
+			return;
+		}
 		DataTypeManager dtManager = dprog.getGhidraProgram().getDataTypeManager();
 		DWARFImportSummary importSummary = dprog.getImportSummary();
 		for (DWARFMacroInfoEntry macroEntry : macroHeader.getEntries()) {
@@ -119,7 +124,7 @@ public class DWARFMacroEnumCreator {
 					break;
 				case DWARFMacroImport importMacro:
 					createEnums(importMacro.getImportedMacroHeader(), macrosToValues,
-						catPath, includeCommandLineDefines, monitor);
+						catPath, includeCommandLineDefines, monitor, visitedHeaders);
 					break;
 				default:
 					break;

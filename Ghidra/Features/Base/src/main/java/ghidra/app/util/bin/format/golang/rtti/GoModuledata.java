@@ -414,7 +414,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 */
 	/* package */ static GoModuledata getFirstModuledata(GoRttiMapper context) throws IOException {
 		Program program = context.getProgram();
-		MemoryBlock memblk = context.getGoSection("go.module");
+		MemoryBlock memblk = context.getFirstGoSection("go.module", "go_module");
 		if (memblk != null) {
 			return context.readStructure(GoModuledata.class, memblk.getStart());
 		}

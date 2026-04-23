@@ -25,6 +25,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.LongPropertyMap;
 import ghidra.program.util.ChangeManager;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -75,8 +76,7 @@ public class LongPropertyMapDB extends PropertyMapDB<Long> implements LongProper
 
 	@Override
 	public void add(Address addr, long value) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			Long oldValue = null;
 			long addrKey = addrMap.getKey(addr, true);
@@ -98,9 +98,6 @@ public class LongPropertyMapDB extends PropertyMapDB<Long> implements LongProper
 		catch (IOException e) {
 			errHandler.dbError(e);
 
-		}
-		finally {
-			lock.release();
 		}
 	}
 

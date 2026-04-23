@@ -20,9 +20,8 @@ import java.util.Map.Entry;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.DBTraceCacheForContainingQueries;
+import ghidra.trace.database.*;
 import ghidra.trace.database.DBTraceCacheForContainingQueries.GetKey;
-import ghidra.trace.database.DBTraceCacheForSequenceQueries;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapAddressSetView;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
@@ -50,6 +49,7 @@ import ghidra.util.task.TaskMonitor;
 public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTraceCodeUnit<T>>
 		extends AbstractSingleDBTraceCodeUnitsView<T> {
 
+	protected final static int CHUNK_SIZE = DBTrace.CHUNK_SIZE;
 	protected final static int CACHE_MAX_REGIONS = 1000;
 	protected final static int CACHE_ADDRESS_BREADTH = 10000;
 	protected final static int CACHE_MAX_POINTS = 10000;
@@ -65,13 +65,13 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		}
 
 		@Override
-		protected void loadRangeCache(TraceAddressSnapRange range) {
+		protected synchronized void loadRangeCache(TraceAddressSnapRange range) {
 			rangeCache.addAll(
 				mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range)).entries());
 		}
 
 		@Override
-		protected T doGetContaining(GetKey key) {
+		protected synchronized T doGetContaining(GetKey key) {
 			ensureInCachedRange(key.snap, key.addr);
 			return getFirstInRangeCacheContaining(key);
 		}
@@ -87,14 +87,15 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		}
 
 		@Override
-		protected void loadCachedRegion(CachedRegion region) {
+		protected synchronized void loadCachedRegion(CachedRegion region) {
 			region.load(new ArrayList<>(
 				mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(region.min, region.max,
 					region.snap, region.snap)).entries()));
 		}
 
 		@Override
-		protected Entry<TraceAddressSnapRange, T> doFloorEntry(long snap, Address max) {
+		protected synchronized Entry<TraceAddressSnapRange, T> doFloorEntry(long snap,
+				Address max) {
 			Address spaceMin = space.space.getMinAddress();
 			return mapSpace
 					.reduce(TraceAddressSnapRangeQuery.intersecting(spaceMin, max, snap, snap)
@@ -103,7 +104,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		}
 
 		@Override
-		protected Entry<TraceAddressSnapRange, T> doCeilingEntry(long snap, Address min) {
+		protected synchronized Entry<TraceAddressSnapRange, T> doCeilingEntry(long snap,
+				Address min) {
 			Address spaceMax = space.space.getMaxAddress();
 			return mapSpace
 					.reduce(TraceAddressSnapRangeQuery.intersecting(min, spaceMax, snap, snap))
@@ -304,27 +306,35 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	/**
 	 * @see TraceBaseDefinedUnitsView#clear(Lifespan, AddressRange, boolean, TaskMonitor)
 	 */
-	public void clear(Lifespan span, AddressRange range, boolean clearContext,
-			TaskMonitor monitor) throws CancelledException {
+	public void clear(Lifespan span, AddressRange range, boolean clearContext, TaskMonitor monitor)
+			throws CancelledException {
 		long startSnap = span.lmin();
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			cacheForContaining.invalidate();
 			cacheForSequence.invalidate();
-			for (T unit : mapSpace.reduce(
-				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-				monitor.checkCancelled();
-				if (unit.getStartSnap() < startSnap) {
-					Lifespan oldSpan = unit.getLifespan();
-					if (clearContext) {
-						clearContext(Lifespan.span(span.lmin(), oldSpan.lmax()), unit.getRange());
+
+			var submap = mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span));
+			while (true) {
+				List<T> chunk = submap.values().stream().limit(CHUNK_SIZE).toList();
+				for (T unit : chunk) {
+					monitor.checkCancelled();
+					if (unit.getStartSnap() < startSnap) {
+						Lifespan oldSpan = unit.getLifespan();
+						if (clearContext) {
+							clearContext(Lifespan.span(span.lmin(), oldSpan.lmax()),
+								unit.getRange());
+						}
+						unit.setEndSnap(startSnap - 1);
 					}
-					unit.setEndSnap(startSnap - 1);
+					else {
+						if (clearContext) {
+							clearContext(unit.getLifespan(), unit.getRange());
+						}
+						unit.delete();
+					}
 				}
-				else {
-					if (clearContext) {
-						clearContext(unit.getLifespan(), unit.getRange());
-					}
-					unit.delete();
+				if (chunk.size() < CHUNK_SIZE) {
+					break;
 				}
 			}
 		}

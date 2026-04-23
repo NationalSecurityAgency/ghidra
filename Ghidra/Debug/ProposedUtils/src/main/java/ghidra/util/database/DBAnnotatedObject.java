@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 import db.DBRecord;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec;
 import ghidra.util.database.annot.DBAnnotatedObjectInfo;
@@ -116,7 +116,7 @@ import ghidra.util.database.annot.DBAnnotatedObjectInfo;
  * Note that there is no way to specify the primary key. For object stores, the primary key is
  * always the object id, and its type is always {@code long}.
  */
-public class DBAnnotatedObject extends DatabaseObject {
+public class DBAnnotatedObject extends DbObject {
 	private final DBCachedObjectStore<?> store;
 	private final DBCachedDomainObjectAdapter adapter;
 	private final List<DBFieldCodec<?, ?, ?>> codecs; // The codecs, ordered by field
@@ -131,7 +131,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected DBAnnotatedObject(DBCachedObjectStore<?> store, DBRecord record) {
-		super(store == null ? null : store.cache, record == null ? -1 : record.getKey());
+		super(record == null ? -1 : record.getKey());
 		this.store = store;
 		this.record = record;
 		if (store != null) {

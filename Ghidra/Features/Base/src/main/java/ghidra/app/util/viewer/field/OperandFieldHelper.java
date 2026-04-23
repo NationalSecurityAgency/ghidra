@@ -455,7 +455,6 @@ abstract class OperandFieldHelper extends FieldFactory {
 		if (separator != null) {
 			results.add(separator);
 		}
-
 		for (int opIndex = 0; opIndex < numOperands; opIndex++) {
 			OpInfo opInfo = new OpInfo(inst, opIndex);
 			addOperandElements(opInfo, results);

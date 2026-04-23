@@ -16,10 +16,10 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.GhidraClass;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Symbols that represent classes
@@ -31,11 +31,10 @@ public class ClassSymbol extends SymbolDB {
 	/**
 	 * Construct a Ghidra Class symbol from an existing symbol record
 	 * @param symbolMgr the symbol manager
-	 * @param cache symbol object cache
 	 * @param record the record associated with the symbol.
 	 */
-	ClassSymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, DBRecord record) {
-		super(symbolMgr, cache, Address.NO_ADDRESS, record);
+	ClassSymbol(SymbolManager symbolMgr, DBRecord record) {
+		super(symbolMgr, Address.NO_ADDRESS, record, record.getKey());
 	}
 
 	@Override
@@ -45,18 +44,14 @@ public class ClassSymbol extends SymbolDB {
 
 	@Override
 	public GhidraClass getObject() {
-		lock.acquire();
-		try {
-			if (!checkIsValid()) {
+		try (Closeable c = lock.read()) {
+			if (!refreshIfNeeded()) {
 				return null;
 			}
 			if (ghidraClass == null) {
 				ghidraClass = new GhidraClassDB(this, symbolMgr.getProgram().getNamespaceManager());
 			}
 			return ghidraClass;
-		}
-		finally {
-			lock.release();
 		}
 	}
 

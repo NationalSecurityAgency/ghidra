@@ -15,25 +15,24 @@
  */
 package ghidra.feature.vt.api.db;
 
-import static ghidra.feature.vt.api.db.VTMatchTagDBAdapter.ColumnDescription.TAG_NAME_COL;
+import static ghidra.feature.vt.api.db.VTMatchTagDBAdapter.ColumnDescription.*;
 
 import java.io.IOException;
 
 import db.DBRecord;
 import ghidra.feature.vt.api.main.VTMatchTag;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 
 /**
  * The database object for a user defined tag on a version tracking match.
  */
-public class VTMatchTagDB extends DatabaseObject implements VTMatchTag {
+public class VTMatchTagDB extends DbObject implements VTMatchTag {
 
 	private VTSessionDB sessionDB;
 	private DBRecord record;
 
-	VTMatchTagDB(VTSessionDB sessionDB, DBObjectCache<VTMatchTagDB> cache, DBRecord record) {
-		super(cache, record.getKey());
+	VTMatchTagDB(VTSessionDB sessionDB, DBRecord record) {
+		super(record.getKey());
 		this.sessionDB = sessionDB;
 		this.record = record;
 	}
@@ -75,7 +74,7 @@ public class VTMatchTagDB extends DatabaseObject implements VTMatchTag {
 	 * null if the match tag has been deleted.
 	 */
 	DBRecord getRecord() {
-		return checkIsValid() ? record : null;
+		return refreshIfNeeded() ? record : null;
 	}
 
 	@Override
