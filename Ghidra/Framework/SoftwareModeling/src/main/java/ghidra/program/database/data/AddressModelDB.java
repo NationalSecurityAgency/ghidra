@@ -21,7 +21,6 @@ import java.util.*;
 import db.DBRecord;
 import db.Field;
 import ghidra.docking.settings.Settings;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.SourceType;
@@ -33,10 +32,9 @@ class AddressModelDB extends DataTypeDB {//implements AddressModel {
 
 	private AddressModelDBAdapter addrModelAdapter;
 
-	AddressModelDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			AddressModelDBAdapter adapter, FunctionParameterAdapter paramAdapter,
-			DBRecord record) {
-		super(dataMgr, cache, record);
+	AddressModelDB(DataTypeManagerDB dataMgr, AddressModelDBAdapter adapter,
+			FunctionParameterAdapter paramAdapter, DBRecord record) {
+		super(dataMgr, record);
 		this.addrModelAdapter = adapter;
 	}
 
