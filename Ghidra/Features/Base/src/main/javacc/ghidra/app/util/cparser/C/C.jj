@@ -1880,9 +1880,9 @@ Declaration TypeQualifier(Declaration dec) : {}
       <RESTRICT> |
       <EXTENSION> |
       <STATIC> |
-      ( BasedSpec() ) |
       <PACKED> { dec.addQualifier(PACKED); } |
       <UNALIGNED> |
+      ( BasedSpec() ) |
       ( DeclSpec(dec) )
     )
     {
