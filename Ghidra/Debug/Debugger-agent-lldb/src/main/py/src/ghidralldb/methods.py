@@ -18,7 +18,7 @@ import re
 import sys
 from typing import Annotated, Any, Optional, Tuple
 
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from ghidratrace import sch
 from ghidratrace.client import (
