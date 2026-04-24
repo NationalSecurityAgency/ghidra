@@ -549,6 +549,9 @@ public:
     fail_callother = 4		///< Address formed by CALLOTHER
   };
 private:
+  static constexpr uint4 maxaddsub = 1;		///< Maximum ADDs or SUBs to normalize
+  static constexpr uint4 maxleftright = 1;	///< Maximum shifts to normalize
+  static constexpr uint4 maxext = 1;		///< Maximum extensions to normalize
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block
@@ -568,9 +571,7 @@ private:
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
   int4 defaultBlock;		///< The out-edge corresponding to the \e default switch destination (-1 = undefined)
   int4 lastBlock;		///< Block out-edge corresponding to last entry in the address table
-  uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
-  uint4 maxleftright;		///< Maximum shifts to normalize
-  uint4 maxext;			///< Maximum extensions to normalize
+  int4 recoverCount;		///< Number of times recovery attempted on \b this table
   uint4 displayFormat;		///< Display format for integer \e case values
   bool partialTable;		///< Set to \b true if \b this table is incomplete and needs additional recovery steps
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
@@ -598,14 +599,14 @@ public:
   const Address &getOpAddress(void) const { return opaddress; }	///< Get the address of the BRANCHIND for the switch
   PcodeOp *getIndirectOp(void) const { return indirect; }	///< Get the BRANCHIND PcodeOp
   void setIndirectOp(PcodeOp *ind) { opaddress = ind->getAddr(); indirect = ind; }	///< Set the BRANCHIND PcodeOp
-  void setNormMax(uint4 maddsub,uint4 mleftright,uint4 mext) {
-    maxaddsub = maddsub; maxleftright = mleftright; maxext = mext; }	///< Set the switch variable normalization model restrictions
   uint4 getDisplayFormat(void) const { return displayFormat; }		///< Get the display format for integer cases
   void setDisplayFormat(uint4 format) { displayFormat = format; }	///< Set the display format to use for integer case values
   void setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
+  int4 getRecoverCount(void) const { return recoverCount; }		///< Get number of times a recovery has been attempted
+  void incrementRecoveryCount(void) { recoverCount += 1; }		///< Record that another round of recovery is being attempted
   void setLastAsDefault(void);		///< Set the \e default jump-table target to be the last address in the table
   void setDefaultBlock(int4 bl) { defaultBlock = bl; }		///< Set out-edge of the switch destination considered to be \e default
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected

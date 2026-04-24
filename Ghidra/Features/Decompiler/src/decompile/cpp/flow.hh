@@ -138,7 +138,6 @@ private:
   void recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
   void truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode);  ///< Treat indirect jump as CALLIND/RETURN
-  static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
 public:
   FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q);	///< Constructor
   FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q,const FlowInfo *op2);	///< Cloning constructor
