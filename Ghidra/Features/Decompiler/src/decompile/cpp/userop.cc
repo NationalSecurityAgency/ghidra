@@ -490,7 +490,7 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
 void UserOpManage::registerOp(UserPcodeOp *op)
 
 {
-  unique_ptr<UserPcodeOp> uop(op);	// Take ownership
+  unique_ptr<UserPcodeOp> owner(op);	// Take ownership
   int4 ind = op->getIndex();
   if (ind < 0) throw LowlevelError("UserOp not assigned an index");
 
@@ -510,7 +510,7 @@ void UserOpManage::registerOp(UserPcodeOp *op)
     // We assume this registration customizes an existing userop
     delete useroplist[ind];		// Delete the old spec
   }
-  useroplist[ind] = uop.release();		// Index crossref
+  useroplist[ind] = owner.release();		// Index crossref
   useropmap[op->getName()] = op; // Name crossref
 
   SegmentOp *s_op = dynamic_cast<SegmentOp *>(op);

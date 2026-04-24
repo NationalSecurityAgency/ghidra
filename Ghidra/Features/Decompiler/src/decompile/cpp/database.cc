@@ -2946,24 +2946,24 @@ Database::~Database(void)
 void Database::attachScope(Scope *newscope,Scope *parent)
 
 {
-  unique_ptr<Scope> uscope(newscope);
+  unique_ptr<Scope> owner(newscope);
   if (parent == (Scope *)0) {
     if (globalscope != (Scope *)0)
       throw LowlevelError("Multiple global scopes");
-    if (uscope->name.size() != 0)
+    if (newscope->name.size() != 0)
       throw LowlevelError("Global scope does not have empty name");
-    globalscope = uscope.release();
+    globalscope = owner.release();
     idmap[globalscope->uniqueId] = globalscope;
     return;
   }
-  if (uscope->name.size()==0)
+  if (newscope->name.size()==0)
     throw LowlevelError("Non-global scope has empty name");
-  pair<uint8,Scope *> value(uscope->uniqueId,uscope.get());
+  pair<uint8,Scope *> value(newscope->uniqueId,newscope);
   pair<ScopeMap::iterator,bool> res;
   res = idmap.insert(value);
   if (res.second==false)
-    throw RecovError("Duplicate scope id: " + uscope->getFullName());
-  parent->attachScope(uscope.release());
+    throw RecovError("Duplicate scope id: " + newscope->getFullName());
+  parent->attachScope(owner.release());
 }
 
 /// Give \b this database the chance to inform existing scopes of any change to the
@@ -3371,18 +3371,18 @@ void Database::decode(Decoder &decoder)
 void Database::decodeScope(Decoder &decoder,Scope *newScope)
 
 {
-  unique_ptr<Scope> uscope(newScope);
+  unique_ptr<Scope> owner(newScope);
   uint4 elemId = decoder.openElement();
   if (elemId == ELEM_SCOPE) {
     Scope *parentScope = parseParentTag(decoder);
-    attachScope(uscope.release(),parentScope);
+    attachScope(owner.release(),parentScope);
     newScope->decode(decoder);
   }
   else {
-    uscope->decodeWrappingAttributes(decoder);
+    newScope->decodeWrappingAttributes(decoder);
     uint4 subId = decoder.openElement(ELEM_SCOPE);
     Scope *parentScope = parseParentTag(decoder);
-    attachScope(uscope.release(),parentScope);
+    attachScope(owner.release(),parentScope);
     newScope->decode(decoder);
     decoder.closeElement(subId);
   }

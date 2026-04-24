@@ -352,9 +352,9 @@ void AddrSpaceManager::setReverseJustified(AddrSpace *spc)
 void AddrSpaceManager::insertSpace(AddrSpace *spc)
 
 {
-  unique_ptr<AddrSpace> uspc;
+  unique_ptr<AddrSpace> owner;
   if (spc->refcount == 0)
-    uspc.reset(spc);		// Take ownership if this is the first reference
+    owner.reset(spc);		// Take ownership if this is the first reference
   switch(spc->getType()) {
   case IPTR_CONSTANT:
     if (spc->getName() != ConstantSpace::NAME)
@@ -419,7 +419,7 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
 
   baselist[spc->index] = spc;
-  uspc.release();
+  owner.release();
   spc->refcount += 1;
   assignShortcut(spc);
 }
@@ -1012,7 +1012,7 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
 void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
 
 {
-  int4 opcode;
+  OpCode opcode;
   int4 isize;
   VarnodeData outvar;
   VarnodeData invar[16];
@@ -1021,14 +1021,19 @@ void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_OP);
   isize = decoder.readSignedInteger(ATTRIB_SIZE);
   outptr = &outvar;
-  if (isize <= 16)
+  if (isize <= 16) {
+    if (isize < 0)
+      throw DecoderError("Bad <op> size attribute");
     opcode = PcodeOpRaw::decode(decoder, isize, invar, &outptr);
+    decoder.closeElement(elemId);
+    dump(addr,opcode,outptr,invar,isize);
+  }
   else {
     vector<VarnodeData> varStorage(isize,VarnodeData());
     opcode = PcodeOpRaw::decode(decoder, isize, varStorage.data(), &outptr);
+    decoder.closeElement(elemId);
+    dump(addr,opcode,outptr,varStorage.data(),isize);
   }
-  decoder.closeElement(elemId);
-  dump(addr,(OpCode)opcode,outptr,invar,isize);
 }
 
 } // End namespace ghidra

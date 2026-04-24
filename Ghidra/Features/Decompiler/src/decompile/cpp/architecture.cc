@@ -742,21 +742,21 @@ void Architecture::decodeDynamicRule(Decoder &decoder)
 ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
 {
-  unique_ptr<ProtoModel> umodel;
+  unique_ptr<ProtoModel> model;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_PROTOTYPE)
-    umodel.reset(new ProtoModel(this));
+    model.reset(new ProtoModel(this));
   else if (elemId == ELEM_RESOLVEPROTOTYPE)
-    umodel.reset(new ProtoModelMerged(this));
+    model.reset(new ProtoModelMerged(this));
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
-  umodel->decode(decoder);
+  model->decode(decoder);
   
-  ProtoModel *other = getModel(umodel->getName());
+  ProtoModel *other = getModel(model->getName());
   if (other != (ProtoModel *)0)
-    throw LowlevelError("Duplicate ProtoModel name: " + umodel->getName());
-  ProtoModel *res = umodel.release();
+    throw LowlevelError("Duplicate ProtoModel name: " + model->getName());
+  ProtoModel *res = model.release();
   protoModels[res->getName()] = res;
   return res;
 }

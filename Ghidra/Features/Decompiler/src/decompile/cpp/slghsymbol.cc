@@ -172,8 +172,16 @@ void SymbolTable::decode(Decoder &decoder,SleighBase *trans)
 
 {
   int4 el = decoder.openElement(sla::ELEM_SYMBOL_TABLE);
-  table.resize(decoder.readSignedInteger(sla::ATTRIB_SCOPESIZE), (SymbolScope *)0);
-  symbollist.resize(decoder.readSignedInteger(sla::ATTRIB_SYMBOLSIZE), (SleighSymbol *)0);
+  int8 tableSize = decoder.readSignedInteger(sla::ATTRIB_SCOPESIZE);
+  int8 symbolSize = decoder.readSignedInteger(sla::ATTRIB_SYMBOLSIZE);
+  if (tableSize < 0 || symbolSize < 0)
+    throw SleighError("Bad symbol table size");
+  if (tableSize > MAX_TABLES)
+    throw SleighError("Maximum scopes exceeded");
+  if (symbolSize > MAX_SYMBOLS)
+    throw SleighError("Maximum symbols exceeded");
+  table.resize(tableSize, (SymbolScope *)0);
+  symbollist.resize(symbolSize, (SleighSymbol *)0);
   for(int4 i=0;i<table.size();++i) { // Decode the scopes
     int4 subel = decoder.openElement(sla::ELEM_SCOPE);
     uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);

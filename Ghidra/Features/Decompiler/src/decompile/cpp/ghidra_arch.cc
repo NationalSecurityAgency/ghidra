@@ -47,14 +47,6 @@ ElementId ELEM_COMMAND_GETSTRINGDATA = ElementId("command_getstringdata",255);
 ElementId ELEM_COMMAND_GETTRACKEDREGISTERS = ElementId("command_gettrackedregisters",256);
 ElementId ELEM_COMMAND_GETUSEROPNAME = ElementId("command_getuseropname",257);
 
-/// Catch the signal so the OS doesn't pop up a dialog
-/// \param sig is the OS signal (should always be SIGSEGV)
-void ArchitectureGhidra::segvHandler(int4 sig)
-
-{
-  exit(1);	// Just die - prevents OS from popping-up a dialog
-}
-
 /// All communications between the Ghidra client and the decompiler are surrounded
 /// by alignment bursts. A burst is 1 or more zero bytes followed by
 /// an 0x01 byte, then followed by a code byte.
@@ -746,6 +738,8 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   if (type == 12) {
     uint1 *dblbuf = new uint1[size * 2];
     sin.read((char *)dblbuf,size*2);
+    if (sin.gcount() != size*2)
+      throw JavaError("alignment","Could not read expected number of bytes");
     for (int4 i=0; i < size; i++) {
       buf[i] = ((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A');
     }
