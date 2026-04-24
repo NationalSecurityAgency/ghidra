@@ -80,7 +80,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final VerticalLayoutPixelIndexMap pixmap = new VerticalLayoutPixelIndexMap();
 
 	private FieldHighlightFactory hlFactory;
-	private ClangHighlightController highlightController;
+	private ClangHighlightController highlightController =
+		ClangHighlightController.dummyIfNull(null);
 	private Map<String, DecompilerHighlighter> highlightersById = new HashMap<>();
 	private PendingHighlightUpdate pendingHighlightUpdate;
 	private SwingUpdateManager highlighCursorUpdater = new SwingUpdateManager(() -> {
