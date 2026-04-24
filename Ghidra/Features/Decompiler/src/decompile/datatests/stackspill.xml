@@ -1,0 +1,36 @@
+<decompilertest>
+<binaryimage arch="MIPS:LE:32:default:default">
+<!--
+   Example of a parameter that joins the stack with registers.
+-->
+<bytechunk space="ram" offset="0x4076c0" readonly="true">
+000000001000a28f0800e00321108200
+d0ffbd272c00bfaf640002241000a2af
+253880001e000624140005240a000424
+b01d100c000000002c00bf8f00000000
+0800e0033000bd27
+</bytechunk>
+<symbol space="ram" offset="0x4076c0" name="receive"/>
+<symbol space="ram" offset="0x4076c4" name="spill"/>
+<symbol space="ram" offset="0x4076d0" name="callspill"/>
+</binaryimage>
+<script>
+  <com>parse line struct foo { int4 field_a; int4 field_b; };</com>
+  <com>parse line extern void receive(int4 a,int4 b,int4 c,foo dvar);</com>
+  <com>parse line extern int4 spill(int4 a,int4 b,int4 c,foo d);</com>
+  <com>parse line extern void callspill(int4 val1,int4 val2);</com>
+  <com>lo fu spill</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu callspill</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="Stack spill #1" min="1" max="1">return a \+ d\.field_b;</stringmatch>
+<stringmatch name="Stack spill #2" min="1" max="1">foo dvar;</stringmatch>
+<stringmatch name="Stack spill #3" min="1" max="1">dvar\.field_b = 100;</stringmatch>
+<stringmatch name="Stack spill #4" min="1" max="1">dvar\.field_a = val1;</stringmatch>
+<stringmatch name="Stack spill #5" min="1" max="1">receive\(10,0x14,0x1e,dvar\);</stringmatch>
+<stringmatch name="Stack spill #6" min="0" max="0">in_stack</stringmatch>
+<stringmatch name="Stack spill #7" min="0" max="0">CONCAT</stringmatch>
+</decompilertest>
