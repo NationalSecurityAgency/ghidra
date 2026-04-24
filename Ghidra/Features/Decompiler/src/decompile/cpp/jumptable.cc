@@ -2403,9 +2403,7 @@ JumpTable::JumpTable(Address ad)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = -1;
-  maxaddsub = 1;
-  maxleftright = 1;
-  maxext = 1;
+  recoverCount = 0;
   displayFormat = 0;
   partialTable = false;
   collectloads = false;
@@ -2424,9 +2422,7 @@ JumpTable::JumpTable(const JumpTable *op2)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = op2->lastBlock;
-  maxaddsub = op2->maxaddsub;
-  maxleftright = op2->maxleftright;
-  maxext = op2->maxext;
+  recoverCount = op2->recoverCount;
   displayFormat = op2->displayFormat;
   partialTable = op2->partialTable;
   collectloads = op2->collectloads;
@@ -2771,8 +2767,9 @@ void JumpTable::clear(void)
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
+  recoverCount = 0;
   partialTable = false;
-  // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
+  // -opaddress- -maxtablesize- -collectloads- are permanent
 }
 
 /// The recovered addresses and case labels are encode to the stream.
@@ -2871,6 +2868,7 @@ bool JumpTable::checkForMultistage(Funcdata *fd)
   if (addresstable.size()!=1) return false;
   if (partialTable) return false;
   if (indirect == (PcodeOp *)0) return false;
+  if (recoverCount > 1) return false;
 
   if (fd->getOverride().queryMultistageJumptable(indirect->getAddr())) {
     partialTable = true;		// Mark that we need additional recovery

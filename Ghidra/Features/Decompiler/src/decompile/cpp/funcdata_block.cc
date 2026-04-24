@@ -491,6 +491,7 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
 JumpTable::RecoveryMode Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 
 {
+  jt->incrementRecoveryCount();
   if (!partial.isJumptableRecoveryOn()) {
     // Do full analysis on the table if we haven't before
     partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
