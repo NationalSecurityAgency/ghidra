@@ -915,6 +915,34 @@ void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
   addr = Address(newJoinRecord->unified.space,newJoinRecord->unified.offset);
 }
 
+/// If only 1 piece remains, the VarnodeData of that piece is returned.
+/// Otherwise a new JoinRecord is created and its unified VarnodeData is returned.
+/// \param join is the JoinRecord to strip
+/// \param index is the index of the piece to strip, which must be at the front or back
+/// \return the VarnodeData corresponding to the remaining piece(s)
+const VarnodeData &AddrSpaceManager::stripJoinPiece(JoinRecord *join,int4 index)
+
+{
+  int4 start,end;
+  if (index == 0) {
+    start = 1;
+    end = join->numPieces()-1;
+  }
+  else if (index == join->numPieces() - 1) {
+    start = 0;
+    end = join->numPieces()-2;
+  }
+  else
+    throw LowlevelError("Stripping middle piece from JoinRecord");
+  if (start == end)
+    return join->getPiece(start);
+  vector<VarnodeData> newPieces;
+  for(int4 i=start;i<=end;++i)
+    newPieces.push_back(join->getPiece(i));
+  JoinRecord *newJoinRecord = findAddJoin(newPieces, 0);
+  return newJoinRecord->unified;
+}
+
 /// The string \e must contain a hexadecimal offset.  The offset may be optionally prepended with "0x".
 /// The string may optionally start with the name of the address space to associate with the offset, followed
 /// by ':' to separate it from the offset.  If the name is not present, the default data space is assumed.
