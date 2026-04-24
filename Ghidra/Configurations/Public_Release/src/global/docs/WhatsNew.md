@@ -118,6 +118,11 @@ encoded form; thus, using the encoded form can also create bifurcation in the na
 
 ## Processors
 
+## Jython Extension
+Jython support is now delivered as a Ghidra Extension, which means an extra step is required to 
+install it. If you require Jython, simply go to `File -> Install Extensions` in the Ghidra
+Front End GUI and check "Jython". Restart Ghidra and Jython support will be enabled.
+
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
 [Change History](ChangeHistory.md) file.

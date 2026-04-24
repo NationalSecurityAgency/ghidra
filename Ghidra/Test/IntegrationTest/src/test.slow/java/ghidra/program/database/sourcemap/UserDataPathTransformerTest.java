@@ -22,7 +22,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.python.google.common.primitives.Longs;
+
+import com.google.common.primitives.Longs;
 
 import generic.test.AbstractGenericTest;
 import ghidra.framework.store.LockException;
