@@ -24,7 +24,8 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import org.python.google.common.primitives.Longs;
+
+import com.google.common.primitives.Longs;
 
 import ghidra.framework.store.LockException;
 import ghidra.util.SourceFileUtils;
