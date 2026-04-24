@@ -87,7 +87,7 @@ define pcodeop vfmadd231ps_fma ;
 
 # VFIXUPIMMSS 5-127 PAGE 1951 LINE 101587
 # WARNING: did not recognize VEX field 0 for "VFMADD231PS ymm1, ymm2, ymm3/m256"
-:VFMADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xB8; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+:VFMADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xB8; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
 {
 	local tmp:16 = vfmadd231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
 	ZmmReg1 = zext(tmp);
@@ -406,7 +406,7 @@ define pcodeop vfmsub231ps_fma ;
 
 # VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104394
 # WARNING: did not recognize VEX field 0 for "VFMSUB231PS ymm1, ymm2, ymm3/m256"
-:VFMSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xBA; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+:VFMSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xBA; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
 {
 	local tmp:16 = vfmsub231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
 	ZmmReg1 = zext(tmp);
@@ -545,7 +545,7 @@ define pcodeop vfnmadd231ps_fma ;
 
 # VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105462
 # WARNING: did not recognize VEX field 0 for "VFNMADD231PS ymm1, ymm2, ymm3/m256"
-:VFNMADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xBC; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+:VFNMADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xBC; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
 {
 	local tmp:16 = vfnmadd231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
 	ZmmReg1 = zext(tmp);
@@ -684,7 +684,7 @@ define pcodeop vfnmsub231ps_fma ;
 
 # VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106502
 # WARNING: did not recognize VEX field 0 for "VFNMSUB231PS ymm1, ymm2, ymm3/m256"
-:VFNMSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xBE; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+:VFNMSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xBE; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
 {
 	local tmp:16 = vfnmsub231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
 	ZmmReg1 = zext(tmp);
