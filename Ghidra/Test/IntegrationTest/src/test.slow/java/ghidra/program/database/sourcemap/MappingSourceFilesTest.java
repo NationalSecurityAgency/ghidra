@@ -22,7 +22,8 @@ import java.util.HexFormat;
 import java.util.List;
 
 import org.junit.Test;
-import org.python.google.common.primitives.Longs;
+
+import com.google.common.primitives.Longs;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
