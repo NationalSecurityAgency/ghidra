@@ -1937,9 +1937,10 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 				LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
 
 			for (Symbol s : symbolMgr.getSymbols(function.getID())) {
-				Address symbolAddress = s.getAddress();
-				Variable v = (Variable) s.getObject();
-				map.get(symbolAddress).add(v);
+				if (s instanceof Variable v) {
+					Address a = s.getAddress();
+					map.get(a).add(v);
+				}
 			}
 			return map;
 		}
