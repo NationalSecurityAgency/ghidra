@@ -46,6 +46,7 @@ dependencies {
 		p.plugins.withType(JavaPlugin) {
 			def projectPath = p.projectDir.path.replace(File.separator, "/")
 			if (projectPath.startsWith(ghidraPath) && (
+				projectPath.contains("/Extensions/") ||
 				projectPath.contains("/Framework/") ||
 				projectPath.contains("/Features/") ||
 				projectPath.contains("/Debug/") ||
