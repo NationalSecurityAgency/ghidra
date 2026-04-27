@@ -2234,6 +2234,10 @@ TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 Datatype *TypeOpPtradd::getInputLocal(const PcodeOp *op,int4 slot) const
 
 {
+  if (slot == 1) {
+    TypePointerOff *offptr = getPointerOffsetType(op);
+    if (offptr) return offptr;
+  }
   return tlst->getBase(op->getIn(slot)->getSize(),TYPE_INT);	// For type propagation, treat same as INT_ADD
 }
 
@@ -2246,6 +2250,8 @@ Datatype *TypeOpPtradd::getOutputLocal(const PcodeOp *op) const
 Datatype *TypeOpPtradd::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
 
 {
+  TypePointerOff *offptr = getPointerOffsetType(op);
+  if (offptr) return offptr->getPlain();
   return op->getIn(0)->getHighTypeReadFacing(op);		// Cast to the input data-type
 }
 
@@ -2280,6 +2286,16 @@ Datatype *TypeOpPtradd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   else
     newtype = TypeOpIntAdd::propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
+}
+
+TypePointerOff *TypeOpPtradd::getPointerOffsetType(const PcodeOp *op) {
+  Datatype *base = op->getIn(0)->getTypeReadFacing(op);
+  Datatype *off = op->getIn(1)->getTypeReadFacing(op);
+  if (!off->isPointerOff() || base->getMetatype() != TYPE_PTR) return nullptr;
+  TypePointer *baseptr = (TypePointer*)base;
+  TypePointerOff *offptr = (TypePointerOff*)off;
+  if (baseptr->getPtrTo() != offptr->getPtrFrom()) return nullptr;
+  return offptr;
 }
 
 void TypeOpPtradd::printRaw(ostream &s,const PcodeOp *op)
