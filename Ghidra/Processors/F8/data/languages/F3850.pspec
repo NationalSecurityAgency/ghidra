@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Fairchild F3850 CPU - Processor Specification (multi-chip F8 system)
+
+    The F3850 CPU is the multi-chip version of the F8 architecture.
+    It requires external PSU (F3851/F3856), SMI (F3853), or DMI (F3852)
+    for program memory and I/O.
+
+    Interrupt vectors are programmable via PSU registers (I/O ports $0C/$0D),
+    not hardware-fixed. Only RESET at $0000 is fixed.
+
+    Address registers are 16-bit (unlike single-chip 3870 family which is 12-bit).
+
+    Sources:
+    - F8 Guide to Programming (Fairchild, 1977) Section 8.2
+    - F8 User's Guide (Fairchild, Nov 1977) Table 1-3
+-->
+<processor_spec>
+
+    <programcounter register="PC0"/>
+
+    <volatile outputop="OUT" inputop="IN">
+        <range space="io" first="0x0" last="0xFF"/>
+    </volatile>
+
+    <default_symbols>
+        <!-- Reset vector - execution begins at address 0 (F8 Guide s.75) -->
+        <symbol name="RESET" address="ram:0x0000" entry="true"/>
+
+        <!-- CPU I/O ports (F3850 has only ports 0-1) -->
+        <symbol name="PORT0" address="io:0x00"/>
+        <symbol name="PORT1" address="io:0x01"/>
+    </default_symbols>
+
+</processor_spec>
