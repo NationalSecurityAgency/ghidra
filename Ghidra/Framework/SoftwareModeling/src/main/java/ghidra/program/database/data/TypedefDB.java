@@ -240,6 +240,12 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		}
 		TypeDef td = (TypeDef) dt;
 		validate(lock);
+		if (resolving) { // actively resolving children
+			if (dt.getUniversalID().equals(getUniversalID())) {
+				return true;
+			}
+			return DataTypeUtilities.equalsIgnoreConflict(getPathName(), dt.getPathName());
+		}
 
 		boolean autoNamed = isAutoNamed();
 		if (autoNamed != td.isAutoNamed()) {
@@ -258,8 +264,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			// treat this type as equivalent if existing type will be used
 			return true;
 		}
-
-		// TODO: add pointer-post-resolve logic with resolving bypass (similar to StructureDB components)
 
 		DataType dataType = getDataType();
 		DataType otherDataType = td.getDataType();
