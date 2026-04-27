@@ -210,8 +210,6 @@ class IfaceStatus {
   vector<string> history;	///< History of commands executed through this interface
   bool sorted;			///< Set to \b true if commands are sorted
   bool errorisdone;		///< Set to \b true if any error terminates the process
-  void restrictCom(vector<IfaceCommand *>::const_iterator &first,
-		   vector<IfaceCommand *>::const_iterator &last,vector<string> &input);
 
   /// \brief Read the next command line
   ///
@@ -245,6 +243,9 @@ public:
 		   const char *nm4 = (const char *)0,
 		   const char *nm5 = (const char *)0);
   IfaceData *getData(const string &nm) const;	///< Get data associated with a IfaceCommand module
+  void restrictCom(vector<IfaceCommand *>::const_iterator &first,
+		   vector<IfaceCommand *>::const_iterator &last,vector<string> &input);	///< Restrict the set of matching commands given input tokens
+  const vector<IfaceCommand *> &getCommandList(void) const { return comlist; }	///< Get the full list of registered commands
   bool runCommand(void);			///< Run the next command
   void getHistory(string &line,int4 i) const;	///< Get the i-th command line from history
   int4 getHistorySize(void) const { return history.size(); }	///< Get the number of command lines in history
@@ -293,6 +294,11 @@ public:
 };
 
 class IfcEcho : public IfaceBaseCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcHelp : public IfaceBaseCommand {
 public:
   virtual void execute(istream &s);
 };
