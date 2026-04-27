@@ -431,14 +431,24 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	 * @return first varnode within the ordered list of varnodes
 	 */
 	public Varnode getFirstVarnode() {
-		return (varnodes == null || varnodes.length == 0) ? null : varnodes[0];
+		Language language = programArch == null ? null : programArch.getLanguage();
+		if (language != null && !language.isBigEndian()) {
+			return (varnodes == null || varnodes.length == 0) ? null : varnodes[varnodes.length - 1];
+		} else {
+			return (varnodes == null || varnodes.length == 0) ? null : varnodes[0];
+		}
 	}
 
 	/**
 	 * @return last varnode within the ordered list of varnodes
 	 */
 	public Varnode getLastVarnode() {
-		return (varnodes == null || varnodes.length == 0) ? null : varnodes[varnodes.length - 1];
+		Language language = programArch == null ? null : programArch.getLanguage();
+		if (language != null && !language.isBigEndian()) {
+			return (varnodes == null || varnodes.length == 0) ? null : varnodes[0];
+		} else {
+			return (varnodes == null || varnodes.length == 0) ? null : varnodes[varnodes.length - 1];
+		}
 	}
 
 	/**
