@@ -5651,6 +5651,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleDivChain("analysis") );
 	actprop->addRule( new RuleSignNearMult("analysis") );
 	actprop->addRule( new RuleModOpt("analysis") );
+	actprop->addRule( new RuleModOpt2("analysis") );
 	actprop->addRule( new RuleSignMod2nOpt("analysis") );
 	actprop->addRule( new RuleSignMod2nOpt2("analysis") );
 	actprop->addRule( new RuleSignMod2Opt("analysis") );
