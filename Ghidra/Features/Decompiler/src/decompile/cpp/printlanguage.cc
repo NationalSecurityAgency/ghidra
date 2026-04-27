@@ -288,6 +288,8 @@ bool PrintLanguage::parentheses(const OpToken *op2)
   case OpToken::unary_prefix:
     if (topToken->precedence > op2->precedence) return true;
     if (topToken->precedence < op2->precedence) return false;
+    // Double unary prefix - add parentheses so we print -(-x) instead of --x
+    if (topToken == op2) return true;
     //    if (associative && (this == &op2)) return false;
     if ((op2->type==OpToken::unary_prefix)||(op2->type==OpToken::presurround)) return false;
     return true;
@@ -343,7 +345,7 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     break;
   case OpToken::postsurround:
     if (entry.visited==0) return;
-    if (entry.visited==1) {	// Front surround token 
+    if (entry.visited==1) {	// Front surround token
       emit->spaces(entry.tok->spacing,entry.tok->bump);
       entry.id2 = emit->openParen(entry.tok->print1);
       emit->spaces(0,entry.tok->bump);
@@ -354,7 +356,7 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     break;
   case OpToken::presurround:
     if (entry.visited==2) return;
-    if (entry.visited==0) {	// Front surround token 
+    if (entry.visited==0) {	// Front surround token
       entry.id2 = emit->openParen(entry.tok->print1);
     }
     else {			// Back surround token
@@ -787,7 +789,7 @@ int4 PrintLanguage::mostNaturalBase(uintb val)
       tmp >>= 4;
     }
   }
-  
+
   return (countdec > counthex) ? 10 : 16;
 }
 
