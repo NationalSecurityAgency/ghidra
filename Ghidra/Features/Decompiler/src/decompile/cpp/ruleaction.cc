@@ -7206,7 +7206,7 @@ int4 RuleAddUnsigned::applyOp(PcodeOp *op,Funcdata &data)
 
   if (!constvn->isConstant()) return 0;
   Datatype *dt = constvn->getTypeReadFacing(op);
-  if (dt->getMetatype() != TYPE_UINT) return 0;
+  if ((dt->getMetatype() != TYPE_UINT) && (dt->getMetatype() != TYPE_INT)) return 0;
   if (dt->isCharPrint()) return 0;	// Only change integer forms
   uintb val = constvn->getOffset();
   uintb mask = calc_mask(constvn->getSize());
