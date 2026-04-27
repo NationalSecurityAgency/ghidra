@@ -1,4 +1,4 @@
-/* ###
+#/* ###
  * IP: GHIDRA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -224,6 +224,8 @@ void SymbolTable::decodeSymbolHeader(Decoder &decoder)
     sym = new OperandSymbol();
   else if (el == sla::ELEM_START_SYM_HEAD)
     sym = new StartSymbol();
+  else if (el == sla::ELEM_OFFSET_SYM_HEAD)
+    sym = new OffsetSymbol();
   else if (el == sla::ELEM_END_SYM_HEAD)
     sym = new EndSymbol();
   else if (el == sla::ELEM_NEXT2_SYM_HEAD)
@@ -1135,6 +1137,71 @@ void StartSymbol::decode(Decoder &decoder,SleighBase *trans)
   patexp = new StartInstructionValue();
   patexp->layClaim();
   decoder.closeElement(sla::ELEM_START_SYM.getId());
+}
+
+OffsetSymbol::OffsetSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
+
+{
+  const_space = cspc;
+  patexp = new OffsetInstructionValue();
+  patexp->layClaim();
+}
+
+OffsetSymbol::~OffsetSymbol(void)
+
+{
+  if (patexp != (PatternExpression *)0)
+    PatternExpression::release(patexp);
+}
+
+VarnodeTpl *OffsetSymbol::getVarnode(void) const
+
+{ // Returns current operand offset as a constant
+  ConstTpl spc(const_space);
+  ConstTpl off(ConstTpl::j_offset);
+  ConstTpl sz_zero;
+  return new VarnodeTpl(spc,off,sz_zero);
+}
+
+void OffsetSymbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
+
+{
+  hand.space = walker.getCurSpace();
+  hand.offset_space = (AddrSpace *)0;
+  hand.offset_offset = walker.getAddr().getOffset(); // Get starting address of instruction
+  hand.size = hand.space->getAddrSize();
+}
+
+void OffsetSymbol::print(ostream &s,ParserWalker &walker) const
+
+{
+  intb val = (intb) walker.getAddr().getOffset();
+    s << "0x" << std::hex << val << std::dec;
+}
+
+void OffsetSymbol::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_OFFSET_SYM);
+  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
+  encoder.closeElement(sla::ELEM_OFFSET_SYM);
+}
+
+void OffsetSymbol::encodeHeader(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_OFFSET_SYM_HEAD);
+  SleighSymbol::encodeHeader(encoder);
+  encoder.closeElement(sla::ELEM_OFFSET_SYM_HEAD);
+}
+
+void OffsetSymbol::decode(Decoder &decoder,SleighBase *trans)
+
+{
+  const_space = trans->getConstantSpace();
+  patexp = new StartInstructionValue();
+  patexp->layClaim();
+  decoder.closeElement(sla::ELEM_OFFSET_SYM.getId());
 }
 
 EndSymbol::EndSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
