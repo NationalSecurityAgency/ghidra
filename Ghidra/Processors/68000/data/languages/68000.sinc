@@ -567,6 +567,17 @@ eaptr: (extw)			is mode=7 & regan=3; extw				[ pcmode=1; ] { export extw; }
 eaptr: (d16)".w"		is mode=7 & regan=0; d16				{ export *[const]:4 d16; }
 eaptr: (d32)".l"		is mode=7 & regan=1; d32				{ export *[const]:4 d32; }
 
+# Like eaptr but uses saved context (savmod2/regsan) for second EA position.
+# Used by CHK2/CMP2 which need the EA address (not value) but have an
+# extension word between the opword and EA extensions.
+e2ptr: (regsan)			is savmod2=2 & regsan					{ export regsan; }
+e2ptr: (d16,regsan)		is savmod2=5 & regsan; d16				{ local tmp = regsan+d16; export tmp; }
+e2ptr: (extw)			is savmod2=6; extw					[ pcmode=0; eanum=1; ] { build extw; export extw; }
+e2ptr: (d16,PC)			is PC & savmod2=7 & regsan=2; d16			{ tmp:4 = inst_start+2+d16; export tmp; }
+e2ptr: (extw)			is savmod2=7 & regsan=3; extw				[ pcmode=1; ] { build extw; export extw; }
+e2ptr: (d16)".w"		is savmod2=7 & regsan=0; d16				{ export *[const]:4 d16; }
+e2ptr: (d32)".l"		is savmod2=7 & regsan=1; d32				{ export *[const]:4 d32; }
+
 # Data register or predecrement addressing
 Ty: -(regan)	is rmbit=1 & regan		{ regan = regan-4; export *:4 regan; }
 Ty: regdn	is rmbit=0 & regdn		{ export regdn; }
@@ -714,6 +725,12 @@ macro subflags(op1,op2) {
  XF = CF;
 }
 
+# Like subflags but does not affect XF — for CMP/CMPA/CMPI/CMPM
+macro cmpflags(op1,op2) {
+ CF = op1 < op2;
+ VF = sborrow(op1,op2);
+}
+
 macro sub(op1,op2res) {
 	local var1 = op1;
 	local var2 = op2res;
@@ -732,7 +749,7 @@ macro subxflags(op1,op2) {
 }
 
 macro negxsubflags(op1) {
- CF = 0 s< op1;
+ CF = (op1 != 0);
  VF = sborrow(0,op1);
  XF = CF;
 }
@@ -824,11 +841,9 @@ macro arithmeticShiftRight(count, register, width) {
 macro logicalShiftLeft(count, register, width) {
 	local modcount = count & 63;
 	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
-	local msbBefore:4 = zext(register s< 0);
 	register = register << modcount;
 	resflags(register);
-	local msbAfter:4 = zext(register s< 0);
-	VF = (msbBefore ^ msbAfter) != 0;
+	VF = 0;
 	CF = (modcount != 0) * lbit;
 	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
 }
@@ -836,11 +851,9 @@ macro logicalShiftLeft(count, register, width) {
 macro logicalShiftRight(count, register, width) {
 	local modcount = count & 63;
 	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
-	local msbBefore:4 = zext(register s< 0);
 	register = register >> modcount;
 	resflags(register);
-	local msbAfter:4 = zext(register s< 0);
-	VF = (msbBefore ^ msbAfter) != 0;
+	VF = 0;
 	CF = (modcount != 0) * lbit;
 	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
 }
@@ -920,11 +933,11 @@ with : extGUARD=1 {
 
 
 :addx.b Tyb,Txb			is op=13 & op8=1 & op67=0 & op45=0 & Tyb & Txb
-					{ addxflags(Tyb,Txb); Txb=Tyb+Txb+zext(XF); extendedResultFlags(Txb); }
+					{ addxflags(Tyb,Txb); Txb=Tyb+Txb+zext(XF); XF=CF; extendedResultFlags(Txb); }
 :addx.w Tyw,Txw			is op=13 & op8=1 & op67=1 & op45=0 & Tyw & Txw
-					{ addxflags(Tyw,Txw); Txw=Tyw+Txw+zext(XF); extendedResultFlags(Txw); }
+					{ addxflags(Tyw,Txw); Txw=Tyw+Txw+zext(XF); XF=CF; extendedResultFlags(Txw); }
 :addx.l Ty,Tx			is op=13 & op8=1 & op67=2 & op45=0 & Ty & Tx
-					{ addxflags(Ty,Tx); Tx=Ty+Tx+zext(XF); extendedResultFlags(Tx); }
+					{ addxflags(Ty,Tx); Tx=Ty+Tx+zext(XF); XF=CF; extendedResultFlags(Tx); }
 
 :and.b eab,reg9dnb		is (op=12 & reg9dnb & op68=0 & $(DAT_ALTER_ADDR_MODES))... & eab	{ and(eab, reg9dnb); }
 :and.w eaw,reg9dnw		is (op=12 & reg9dnw & op68=1 & $(DAT_ALTER_ADDR_MODES))... & eaw	{ and(eaw, reg9dnw); }
@@ -1286,9 +1299,7 @@ define pcodeop callm;
 
 :chk.w eaw,reg9dnw		is (op=4 & reg9dnw & op68=6 & $(DAT_ALTER_ADDR_MODES))... & eaw {
 	build eaw;
-	local address:4 = zext(eaw);
-	local bound:2 = *:2 address;
-	local signed_bound:4 = sext(bound);
+	local signed_bound:4 = sext(eaw);
 	local signed_register:4 = sext(reg9dnw);
 
 	if ((signed_register s>= 0) && (signed_register s<= signed_bound)) goto inst_next;
@@ -1298,19 +1309,16 @@ define pcodeop callm;
 
 :chk.l eal,reg9dn		is (op=4 & reg9dn & op68=4 & $(DAT_ALTER_ADDR_MODES))... & eal {
 	build eal;
-	local address:4 = zext(eal);
-	local bound:4 = *:4 address;
-	local signed_bound:4 = sext(bound);
-	local signed_register:4 = sext(reg9dn);
+	local signed_bound:4 = eal;
+	local signed_register:4 = reg9dn;
 
 	if ((signed_register s>= 0) && (signed_register s<= signed_bound)) goto inst_next;
 	NF = signed_register s< 0;
 	__m68k_trap(6:1);
 }
 
-:chk2.b e2b,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2b [ savmod2=savmod1; regtsan=regtfan; ] {
-	build e2b;
-	local address:4 = zext(e2b);
+:chk2.b e2ptr,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2ptr [ savmod2=savmod1; regtsan=regtfan; ] {
+	local address = e2ptr;
 	local lower:1 = *:1 address;
 	local upper:1 = *:1 (address + 1);
 	local signed_lower:4 = sext(lower);
@@ -1323,9 +1331,8 @@ define pcodeop callm;
 	__m68k_trap(6:1);
 }
 
-:chk2.w e2w,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2w [ savmod2=savmod1; regtsan=regtfan; ] {
-	build e2w;
-	local address:4 = zext(e2w);
+:chk2.w e2ptr,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2ptr [ savmod2=savmod1; regtsan=regtfan; ] {
+	local address = e2ptr;
 	local lower:2 = *:2 address;
 	local upper:2 = *:2 (address + 2);
 	local signed_lower:4 = sext(lower);
@@ -1338,9 +1345,8 @@ define pcodeop callm;
 	__m68k_trap(6:1);
 }
 
-:chk2.l e2l,rreg		is opbig=4 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2l [ savmod2=savmod1; regtsan=regtfan; ] {
-	build e2l;
-	local address:4 = zext(e2l);
+:chk2.l e2ptr,rreg		is opbig=4 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2ptr [ savmod2=savmod1; regtsan=regtfan; ] {
+	local address = e2ptr;
 	local lower:4 = *:4 address;
 	local upper:4 = *:4 (address + 4);
 	local signed_lower:4 = sext(lower);
@@ -1353,9 +1359,8 @@ define pcodeop callm;
 	__m68k_trap(6:1);
 }
 
-:cmp2.b e2b,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=0; e2b [ savmod2=savmod1; regtsan=regtfan; ] {
-	build e2b;
-	local address:4 = zext(e2b);
+:cmp2.b e2ptr,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=0; e2ptr [ savmod2=savmod1; regtsan=regtfan; ] {
+	local address = e2ptr;
 	local lower:1 = *:1 address;
 	local upper:1 = *:1 (address + 1);
 	local signed_lower:4 = sext(lower);
@@ -1366,9 +1371,8 @@ define pcodeop callm;
 	CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
 }
 
-:cmp2.w e2w,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=0; e2w [ savmod2=savmod1; regtsan=regtfan; ] {
-	build e2w;
-	local address:4 = zext(e2w);
+:cmp2.w e2ptr,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=0; e2ptr [ savmod2=savmod1; regtsan=regtfan; ] {
+	local address = e2ptr;
 	local lower:2 = *:2 address;
 	local upper:2 = *:2 (address + 2);
 	local signed_lower:4 = sext(lower);
@@ -1379,9 +1383,8 @@ define pcodeop callm;
 	CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
 }
 
-:cmp2.l e2l,rreg		is opbig=4 & op67=3 &  $(CTL_ADDR_MODES); rreg & wl=0; e2l [ savmod2=savmod1; regtsan=regtfan; ] {
-	build e2l;
-	local address:4 = zext(e2l);
+:cmp2.l e2ptr,rreg		is opbig=4 & op67=3 &  $(CTL_ADDR_MODES); rreg & wl=0; e2ptr [ savmod2=savmod1; regtsan=regtfan; ] {
+	local address = e2ptr;
 	local lower:4 = *:4 address;
 	local upper:4 = *:4 (address + 4);
 	local signed_lower:4 = sext(lower);
@@ -1417,24 +1420,24 @@ cachetype: "both"		is op67=3							{ export 3:4; }
 :clr.w eaw			is (opbig=0x42 & op67=1 & $(DAT_ALTER_ADDR_MODES))... & eaw		{ eaw = 0; NF=0; ZF=1; VF=0; CF=0; }
 :clr.l eal			is (opbig=0x42 & op67=2 & $(DAT_ALTER_ADDR_MODES))... & eal		{ eal=0; NF=0; ZF=1; VF=0; CF=0; }
 
-:cmp.b eab,reg9dnb		is (op=11 & reg9dnb & op68=0)... & eab				{ o2:1=eab; subflags(reg9dnb,o2); local tmp =reg9dnb-o2; resflags(tmp); }
-:cmp.w eaw,reg9dnw		is (op=11 & reg9dnw & op68=1)... & eaw				{ o2:2=eaw; subflags(reg9dnw,o2); local tmp =reg9dnw-o2; resflags(tmp); }
-:cmp.l eal,reg9dn		is (op=11 & reg9dn & op68=2)... & eal				{ o2:4=eal; subflags(reg9dn,o2); local tmp =reg9dn-o2; resflags(tmp); }
+:cmp.b eab,reg9dnb		is (op=11 & reg9dnb & op68=0)... & eab				{ o2:1=eab; cmpflags(reg9dnb,o2); local tmp =reg9dnb-o2; resflags(tmp); }
+:cmp.w eaw,reg9dnw		is (op=11 & reg9dnw & op68=1)... & eaw				{ o2:2=eaw; cmpflags(reg9dnw,o2); local tmp =reg9dnw-o2; resflags(tmp); }
+:cmp.l eal,reg9dn		is (op=11 & reg9dn & op68=2)... & eal				{ o2:4=eal; cmpflags(reg9dn,o2); local tmp =reg9dn-o2; resflags(tmp); }
 
-:cmpa.w eaw,reg9an		is (op=11 & reg9an & op68=3)... & eaw				{ tmp1:4 = sext(eaw); subflags(reg9an,tmp1); local tmp =reg9an-tmp1; resflags(tmp); }
-:cmpa.l eal,reg9an		is (op=11 & reg9an & op68=7)... & eal				{ o2:4=eal; subflags(reg9an,o2); local tmp =reg9an-o2; resflags(tmp); }
+:cmpa.w eaw,reg9an		is (op=11 & reg9an & op68=3)... & eaw				{ tmp1:4 = sext(eaw); cmpflags(reg9an,tmp1); local tmp =reg9an-tmp1; resflags(tmp); }
+:cmpa.l eal,reg9an		is (op=11 & reg9an & op68=7)... & eal				{ o2:4=eal; cmpflags(reg9an,o2); local tmp =reg9an-o2; resflags(tmp); }
 
 
-:cmpi.b const8,e2b		is opbig=12 & op67=0 & savmod1 & regtfan & $(DAT_ALTER_ADDR_MODES); const8; e2b		[ savmod2=savmod1; regtsan=regtfan; ]	{ o2:1=e2b; subflags(o2,const8); local tmp =o2-const8; resflags(tmp); }
-:cmpi.w const16,e2w		is opbig=12 & op67=1 & savmod1 & regtfan & $(DAT_ALTER_ADDR_MODES); const16; e2w	[ savmod2=savmod1; regtsan=regtfan; ]	{ o2:2=e2w; subflags(o2,const16); local tmp =o2-const16; resflags(tmp);}
-:cmpi.l const32,e2l		is opbig=12 & op67=2 & savmod1 & regtfan & $(DAT_ALTER_ADDR_MODES); const32; e2l	[ savmod2=savmod1; regtsan=regtfan; ]	{ o2:4=e2l; subflags(o2,const32); local tmp =o2-const32; resflags(tmp);}
+:cmpi.b const8,e2b		is opbig=12 & op67=0 & savmod1 & regtfan & $(DAT_ALTER_ADDR_MODES); const8; e2b		[ savmod2=savmod1; regtsan=regtfan; ]	{ o2:1=e2b; cmpflags(o2,const8); local tmp =o2-const8; resflags(tmp); }
+:cmpi.w const16,e2w		is opbig=12 & op67=1 & savmod1 & regtfan & $(DAT_ALTER_ADDR_MODES); const16; e2w	[ savmod2=savmod1; regtsan=regtfan; ]	{ o2:2=e2w; cmpflags(o2,const16); local tmp =o2-const16; resflags(tmp);}
+:cmpi.l const32,e2l		is opbig=12 & op67=2 & savmod1 & regtfan & $(DAT_ALTER_ADDR_MODES); const32; e2l	[ savmod2=savmod1; regtsan=regtfan; ]	{ o2:4=e2l; cmpflags(o2,const32); local tmp =o2-const32; resflags(tmp);}
 
 :cmpm.b regPlus,reg9Plus	is op=11 & reg9Plus & op8=1 & op67=0 & op5=0 & op34=1 & regPlus	{ local tmp1=*:1 regPlus; regPlus=regPlus+1; local tmp2=*:1 reg9Plus; reg9Plus=reg9Plus+1;
-								subflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
+								cmpflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
 :cmpm.w regPlus,reg9Plus	is op=11 & reg9Plus & op8=1 & op67=1 & op5=0 & op34=1 & regPlus	{ local tmp1=*:2 regPlus; regPlus=regPlus+2; local tmp2=*:2 reg9Plus; reg9Plus=reg9Plus+2;
-								subflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
+								cmpflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
 :cmpm.l regPlus,reg9Plus	is op=11 & reg9Plus & op8=1 & op67=2 & op5=0 & op34=1 & regPlus { local tmp1=*:4 regPlus; regPlus=regPlus+4; local tmp2=*:4 reg9Plus; reg9Plus=reg9Plus+4;
-								 subflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
+								 cmpflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
 # cpBcc      # need to know specific copressors  use copcc1
 # cpDBcc     # use copcc2
 # cpGEN
@@ -1454,6 +1457,8 @@ cachetype: "both"		is op67=3							{ export 3:4; }
 	local div = divis s/ denom;
 	local rem = divis s% denom;
 	CF=0;
+	VF = (div s> 32767) || (div s< -32768);
+	if (VF) goto inst_next;
 	resflags(div);
 	reg9dn = (rem << 16) | (div & 0xffff);
 }
@@ -1465,6 +1470,8 @@ cachetype: "both"		is op67=3							{ export 3:4; }
 	local div = divis / denom;
 	local rem = divis % denom;
 	CF=0;
+	VF = (div > 0xffff);
+	if (VF) goto inst_next;
 	resflags(div);
 	reg9dn = (rem << 16) | (div & 0xffff);
 	}
@@ -1512,7 +1519,7 @@ subdiv: regdr:regdq		is regdq & regdr & divsz=0 & divsgn=1 {
 }
 
 subdiv: regdr:regdq		is regdq & regdr & divsz=1 & divsgn=1 {
-	divi:8 = (sext(regdr)<<32)|sext(regdq);
+	divi:8 = (sext(regdr)<<32)|zext(regdq);
 	denom:8=sext(glbdenom);
 	local quot=divi s/ denom;
 	local rem=divi s% denom;
@@ -1526,7 +1533,7 @@ subdiv: regdr:regdq		is regdq & regdr & divsz=1 & divsgn=1 {
 # divu.l  (when divsz = 1) is regdr concat regdq / el2 - > regdr and regdq
 # divul.l (when divsz = 0) is regdq / el2 -> regdr and regdq
 #
-:div^remyes^".l" e2l,subdiv	is opbig=0x4c & op67=1 & $(DAT_ALTER_ADDR_MODES); subdiv & remyes; e2l [ savmod2=savmod1; regtsan=regtfan;] { glbdenom=e2l; build subdiv; CF=0; resflags(subdiv);}
+:div^remyes^".l" e2l,subdiv	is opbig=0x4c & op67=1 & $(DAT_ALTER_ADDR_MODES); subdiv & remyes; e2l [ savmod2=savmod1; regtsan=regtfan;] { glbdenom=e2l; build subdiv; CF=0; VF=0; resflags(subdiv);}
 
 :eor.b reg9dnb,eab		is (op=11 & reg9dnb & op68=4 & $(DAT_ALTER_ADDR_MODES))... & eab			{ eor(reg9dnb, eab); }
 :eor.w reg9dnw,eaw		is (op=11 & reg9dnw & op68=5 & $(DAT_ALTER_ADDR_MODES))... & eaw			{ eor(reg9dnw, eaw); }
@@ -1968,7 +1975,13 @@ epw: (d16, regan) is regan; d16 { local tmp = regan + d16; export tmp; }
 mulsize: "s.l"			is divsgn=1						{ }
 mulsize: "u.l"			is divsgn=0						{ }
 
-submul: regdq			is regdq & divsgn=1 & divsz=0			{ regdq = glbdenom * regdq; resflags(regdq); CF=0; }
+submul: regdq			is regdq & divsgn=1 & divsz=0			{
+	local full:8 = sext(glbdenom) * sext(regdq);
+	regdq = full:4;
+	resflags(regdq);
+	VF = (full != sext(regdq));
+	CF=0;
+}
 submul: regdr-regdq		is regdq & divsgn=1 & divsz=1 & regdr	{
 	tmp1:8 = sext(glbdenom);
 	tmp2:8 = sext(regdq);
@@ -1979,7 +1992,13 @@ submul: regdr-regdq		is regdq & divsgn=1 & divsz=1 & regdr	{
 	CF=0;
 	VF=0;
 }
-submul: regdq			is regdq & divsgn=0 & divsz=0			{ regdq = glbdenom * regdq; resflags(regdq); CF=0; }
+submul: regdq			is regdq & divsgn=0 & divsz=0			{
+	local full:8 = zext(glbdenom) * zext(regdq);
+	regdq = full:4;
+	resflags(regdq);
+	VF = (full != zext(regdq));
+	CF=0;
+}
 submul: regdr-regdq		is regdq & divsgn=0 & divsz=1 & regdr	{
 	tmp1:8 = zext(glbdenom);
 	tmp2:8 = zext(regdq);
