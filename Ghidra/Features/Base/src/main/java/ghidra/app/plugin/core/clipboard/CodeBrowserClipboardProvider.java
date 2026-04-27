@@ -111,6 +111,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(PYTHON_BYTE_STRING_TYPE);
 		list.add(PYTHON_LIST_TYPE);
 		list.add(CPP_BYTE_ARRAY_TYPE);
+		list.add(RUST_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
 		list.add(ADDRESS_TEXT_WITH_OFFSET_TYPE);
 		list.add(BYTE_SOURCE_OFFSET_TYPE);
