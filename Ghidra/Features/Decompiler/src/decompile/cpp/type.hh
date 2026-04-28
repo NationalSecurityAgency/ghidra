@@ -234,7 +234,8 @@ public:
   bool needsResolution(void) const { return (flags & needs_resolution)!=0; }	///< Is \b this a union or a pointer to union
   bool hasWarning(void) const { return (flags & warning_issued)!=0; }	///< Has a \e warning been issued about \b this data-type
   bool hasBitfields(void) const { return (flags & has_bitfields)!=0; }	///< Return \b true if \b this contains/overlaps bitfields
-  uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
+  uint4 inheritForPointer(void) const { return (flags & (coretype|warning_issued)); }	///< Get properties pointers inherit
+  uint4 inheritForPartial(void) const { return (flags & warning_issued); }	///< Get properties \e partial data-types inherit
   uint4 getDisplayFormat(void) const;				///< Get the display format for constants with \b this data-type
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
   sub_metatype getSubMeta(void) const { return submeta; }	///< Get the \b sub-metatype
@@ -292,6 +293,11 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);	///< Find a previously resolved sub-type
   virtual int4 findCompatibleResolve(Datatype *ct) const;	///< Find a resolution compatible with the given data-type
   virtual const TypeField *resolveTruncation(int8 offset,PcodeOp *op,int4 slot,int8 &newoff);
+
+  /// \brief If \b this is a partial data-type, return the whole data-type
+  ///
+  /// \return the parent data-type or null if \b this is not a partial
+  virtual Datatype *getPartialBase(void) const { return (Datatype *)0; }
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderFormal(const Datatype &op) const;	///< Order \b this with \b op for selecting a formal high-level data-type
   void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
@@ -458,10 +464,10 @@ public:
   TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; spaceid=op.spaceid; truncate=op.truncate; }
   /// Construct from a size, pointed-to type, and wordsize
   TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,-1,TYPE_PTR) {
-    ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; calcSubmeta(); }
+    ptrto = pt; flags = ptrto->inheritForPointer(); wordsize=ws; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; calcSubmeta(); }
   /// Construct from a pointed-to type and an address space attribute
   TypePointer(Datatype *pt,AddrSpace *spc) : Datatype(spc->getAddrSize(), -1, TYPE_PTR) {
-    ptrto = pt; flags = ptrto->getInheritable(); spaceid=spc; wordsize=spc->getWordSize(); truncate=(TypePointer *)0; calcSubmeta(); }
+    ptrto = pt; flags = ptrto->inheritForPointer(); spaceid=spc; wordsize=spc->getWordSize(); truncate=(TypePointer *)0; calcSubmeta(); }
   Datatype *getPtrTo(void) const { return ptrto; }	///< Get the pointed-to Datatype
   uint4 getWordSize(void) const { return wordsize; }	///< Get the size of the addressable unit being pointed to
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get any address space associated with \b this pointer
@@ -652,6 +658,7 @@ public:
   virtual Datatype *clone(void) const { return new TypePartialEnum(*this); }
   virtual void encode(Encoder &encoder) const;
   virtual Datatype *getStripped(void) const { return stripped; }
+  virtual Datatype *getPartialBase(void) const { return parent; }
 };
 
 /// \brief A data-type that holds \e part of a TypeStruct or TypeArray
@@ -673,6 +680,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePartialStruct(*this); }
   virtual Datatype *getStripped(void) const { return stripped; }
+  virtual Datatype *getPartialBase(void) const { return container; }
 };
 
 /// \brief An internal data-type for holding information about a variable's relative position within a union data-type
@@ -705,6 +713,7 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   virtual const TypeField *resolveTruncation(int8 off,PcodeOp *op,int4 slot,int8 &newoff);
+  virtual Datatype *getPartialBase(void) const { return container; }
 };
 
 /// \brief Relative pointer: A pointer with a fixed offset into a specific structure or other data-type
@@ -814,19 +823,6 @@ public:
   virtual void encode(Encoder &encoder) const;
 };
 
-/// \brief A data-type associated with a \e warning string
-///
-/// The warning should be presented to the user whenever the data-type is used.  A warning is typically
-/// issued for ill-formed data-types that have been modified to facilitate decompiler analysis.
-class DatatypeWarning {
-  friend class TypeFactory;
-  Datatype *dataType;		///< Data-type associated with the warning
-  string warning;		///< An explanatory string which should be displayed to the user as a warning
-public:
-  DatatypeWarning(Datatype *dt,string warn) { dataType = dt; warning = warn; }	///< Constructor
-  const string &getWarning(void) const { return warning; }	///< Get the warning string
-};
-
 /// \brief Container class for all Datatype objects in an Architecture
 class TypeFactory {
   int4 sizeOfInt;		///< Size of the core "int" data-type
@@ -845,7 +841,7 @@ class TypeFactory {
   Datatype *typecache16;	///< Specially cached 16-byte float type
   Datatype *type_nochar;	///< Same dimensions as char but acts and displays as an INT
   Datatype *charcache[5];	///< Cached character data-types
-  list<DatatypeWarning> warnings;	///< Warnings for the user about data-types in \b this factory
+  map<Datatype *,string> warnings;	///< Warnings for the user about data-types in \b this factory.
   list<Datatype *> incompleteTypedef;	///< Incomplete data-types defined as a \e typedef
   Datatype *findNoName(Datatype &ct);	///< Find data-type (in this container) by function
   void insert(Datatype *newtype);	///< Insert pointer into the cross-reference sets
@@ -933,8 +929,7 @@ public:
   void parseEnumConfig(Decoder &decoder);		///< Parse the \<enum> tag
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
-  list<DatatypeWarning>::const_iterator beginWarnings(void) const { return warnings.begin(); }	///< Start of data-type warnings
-  list<DatatypeWarning>::const_iterator endWarnings(void) const { return warnings.end(); }	///< End of data-type warnings
+  string findWarning(Datatype *dt) const;		///< Find any warning corresponding to the given data-type
 #ifdef TYPEPROP_DEBUG
   static bool propagatedbg_on;		///< If \b true, display data-type propagation trace
 #endif

@@ -172,8 +172,6 @@ void Funcdata::stopProcessing(void)
 {
   flags |= processing_complete;
   obank.destroyDead();		// Free up anything in the dead list
-  if (!isJumptableRecoveryOn())
-    issueDatatypeWarnings();
 #ifdef CPUI_STATISTICS
   glb->stats->process(*this);
 #endif
@@ -472,13 +470,12 @@ void Funcdata::clearCallSpecs(void)
   qlst.clear();			// Delete list of pointers
 }
 
-void Funcdata::issueDatatypeWarnings(void)
+void Funcdata::issueDatatypeWarning(Datatype *dt)
 
 {
-  list<DatatypeWarning>::const_iterator iter;
-  for(iter=glb->types->beginWarnings();iter!=glb->types->endWarnings();++iter) {
-    warningHeader((*iter).getWarning());
-  }
+  string warn = glb->types->findWarning(dt);
+  if (warn.size() > 0)
+    warningHeader(warn);
 }
 
 FuncCallSpecs *Funcdata::getCallSpecs(const PcodeOp *op) const
