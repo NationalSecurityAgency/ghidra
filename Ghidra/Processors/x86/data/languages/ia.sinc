@@ -3260,16 +3260,20 @@ define pcodeop cpuid_brand_part3_info;
 
 :DAA            is vexMode=0 & bit64=0 & byte=0x27       { local oldAL = AL;
                            local oldCF = CF;
+                           CF = 0;
                            local car = ((AL & 0xf) > 9) | AF;
                            AL = AL + 6 * car;
                            AF = car;
+                           # CF set if car, but immediately overwritten by second if-else pair regardless
                            car = (oldAL > 0x99) | oldCF;
                            AL = AL + 0x60 * car;
                            CF = car;
                            resultflags(AL); }
 :DAS            is vexMode=0 & bit64=0 & byte=0x2f       { local oldAL = AL;
                            local oldCF = CF;
+                           CF = 0;
                            local car = ((AL & 0xf) > 9) | AF;
+                           CF = oldCF | (AL < 6); # borrow from AL - 6
                            AL = AL - 6 * car;
                            AF = car;
                            car = (oldAL > 0x99) | oldCF;
@@ -4801,17 +4805,26 @@ define pcodeop skinit;
 @endif
 
 :SYSENTER           is vexMode=0 & byte=0x0f; byte=0x34                     { sysenter(); }
-:SYSEXIT            is vexMode=0 & byte=0x0f; byte=0x35                     { sysexit();
+:SYSEXIT            is vexMode=0 & opsize=1 & byte=0x0f; byte=0x35                     { sysexit();
 @ifdef IA64
-                                                                  RSP=RCX; RIP=RDX; return [RIP];
+                                                                  RSP=zext(ECX); RIP=zext(EDX); return [RIP];
+@else
+                                                                  ESP=ECX; EIP=EDX; return [EIP];
 @endif
                                                                 }
 
-:SYSCALL            is vexMode=0 & byte=0x0f; byte=0x05                     {
 @ifdef IA64
-                                                                  RCX = inst_next; R11 = rflags;
+:SYSEXIT            is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x35                     { sysexit();
+                                                                  RSP=RCX; RIP=RDX; return [RIP];
+                                                                }
 @endif
+
+@ifdef IA64
+:SYSCALL            is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0x05                     {
+                                                                  RCX = inst_next; R11 = rflags;
                                                                   syscall(); }
+@endif
+
 
 # returning to 32bit mode loads ECX
 # returning to 64bit mode loads RCX
@@ -4876,42 +4889,43 @@ define pcodeop verw;
 
 #
 # Intel hardware assisted virtualization opcodes
+
+# All except VMCALL and VMFUNC generate invalid-opcode exceptions if executed in compatibility mode
 @ifdef IA64
 :INVEPT Reg64, m128  is $(LONGMODE_ON) & vexMode=0 & bit64=1 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x80; Reg64 ... & m128 { invept(Reg64, m128); }
-@endif
-:INVEPT Reg32, m128  is vexMode=0 & bit64=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x80; Reg32 ... & m128 { invept(Reg32, m128); }
-@ifdef IA64
 :INVVPID Reg64, m128 is $(LONGMODE_ON) & vexMode=0 & bit64=1 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x81; Reg64 ... & m128 { invvpid(Reg64, m128); }
-@endif
-:INVVPID Reg32, m128 is vexMode=0 & bit64=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x81; Reg32 ... & m128 { invvpid(Reg32, m128); }
-:VMCALL         is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc1                          { vmcall(); }
-:VMCLEAR m64    is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmclear(m64); }
-#TODO: invokes a VM function specified in EAX
-:VMFUNC EAX     is vexMode=0 & byte=0x0f; byte=0x01; byte=0xd4 & EAX                         { vmfunc(EAX); }
+:VMCLEAR m64    is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmclear(m64); }
 #TODO: this launches the VM managed by the current VMCS.  How is the VMCS expressed for the emulator?  For Ghidra analysis?
-:VMLAUNCH       is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc2                          { vmlaunch(); }
+:VMLAUNCH       is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0x01; byte=0xc2                          { vmlaunch(); }
 #TODO: this resumes the VM managed by the current VMCS.  How is the VMCS expressed for the emulator?  For Ghidra analysis?
-:VMRESUME       is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc3                          { vmresume(); }
+:VMRESUME       is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0x01; byte=0xc3                          { vmresume(); }
 #TODO: this loads the VMCS pointer from the m64 memory address and makes the VMCS pointer valid; how to express
 #  this for analysis and emulation?
-:VMPTRLD m64    is vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmptrld(m64); }
+:VMPTRLD m64    is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmptrld(m64); }
 #TODO: stores the current VMCS pointer into the specified 64-bit memory address; how to express this for analysis and emulation?
-#TODO:  note that the Intel manual does not specify m64 (which it does for VMPTRLD, yet it does state that "the operand
-#  of this instruction is always 64-bits and is always in memory".  Is it an error that the "Instruction" entry in the 
-#  box giving the definition does not specify m64?
+:VMPTRST m64    is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=7 ) ... & m64  { vmptrst(m64); }
+:VMREAD rm64, Reg64  is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x78; rm64 & Reg64 ...     { rm64 = vmread(Reg64); }
+:VMWRITE Reg64, rm64 is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x79; rm64 & Reg64 ...    { vmwrite(rm64,Reg64); }
+:VMXOFF         is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0x01; byte=0xc4                           { vmxoff(); }
+:VMXON m64      is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64  { vmxon(m64); }
+@else
+:INVEPT Reg32, m128  is vexMode=0 & bit64=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x80; Reg32 ... & m128 { invept(Reg32, m128); }
+:INVVPID Reg32, m128 is vexMode=0 & bit64=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x81; Reg32 ... & m128 { invvpid(Reg32, m128); }
+:VMCLEAR m64    is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmclear(m64); }
+:VMLAUNCH       is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc2                          { vmlaunch(); }
+:VMRESUME       is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc3                          { vmresume(); }
+:VMPTRLD m64    is vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmptrld(m64); }
 :VMPTRST m64    is vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=7 ) ... & m64  { vmptrst(m64); }
 :VMREAD rm32, Reg32  is $(PRE_NO) & vexMode=0 & opsize=1 & byte=0x0f; byte=0x78; rm32 & check_rm32_dest ... & Reg32 ...     { rm32 = vmread(Reg32); build check_rm32_dest; }
-@ifdef IA64
-:VMREAD rm64, Reg64  is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x78; rm64 & Reg64 ...     { rm64 = vmread(Reg64); }
-@endif
 :VMWRITE Reg32, rm32 is $(PRE_NO) & vexMode=0 & opsize=1 & byte=0x0f; byte=0x79; rm32 & Reg32 ... & check_Reg32_dest ...   { vmwrite(rm32,Reg32); build check_Reg32_dest; }
-@ifdef IA64
-:VMWRITE Reg64, rm64 is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x79; rm64 & Reg64 ...    { vmwrite(rm64,Reg64); }
-@endif
 :VMXOFF         is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc4                           { vmxoff(); }
-# NB: this opcode is incorrect in the 2005 edition of the Intel manual. Opcode below is taken from the 2008 version.
 :VMXON m64      is vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64  { vmxon(m64); }
+@endif
 
+:VMCALL         is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc1                          { vmcall(); }
+
+#TODO: invokes a VM function specified in EAX
+:VMFUNC EAX     is vexMode=0 & byte=0x0f; byte=0x01; byte=0xd4 & EAX                         { vmfunc(EAX); }
 #END of changes for VMX opcodes
 
 :WAIT           is vexMode=0 & byte=0x9b                        { }
@@ -5004,7 +5018,8 @@ define pcodeop xend;
 :XOR Reg64,rm64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x33; rm64 & Reg64 ...        { logicalflags(); Reg64 = Reg64 ^  rm64; resultflags(Reg64); }
 @endif
 
-:XGETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD0  { local sel = ECX; local tmp = XCR0 >> 32; EDX = tmp:4;  EAX = XCR0:4; }
+define pcodeop xinuse;
+:XGETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD0  { local test = (ECX == 1); local xiu:8 = xinuse(test); local tXCR0 = (zext(test) * XCR0) + (zext(!test) * (XCR0 & xiu)); local tmp = tXCR0 >> 32; EDX = tmp:4;  EAX = tXCR0:4; }
 :XSETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD1  { local sel = ECX; XCR0 = (zext(EDX) << 32) | zext(EAX); }
 
 define pcodeop xsave;
@@ -7154,8 +7169,15 @@ define pcodeop divps;
 define pcodeop lddqu;
 :LDDQU        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xF0; XmmReg ... & m128 { XmmReg = lddqu(XmmReg, m128); }
 
+maskMovDI: seg16^DI    is addrsize=0 & seg16 & DI              { tmp:$(SIZE) = segment(seg16,DI); export tmp; }
+maskMovDI: segWide^EDI is addrsize=1 & segWide & EDI              { tmp:$(SIZE) = zext(EDI); export tmp; }
+maskMovDI: segWide^EDI is addrsize=1 & segWide & highseg=1 & EDI  { tmp:$(SIZE) = segWide + zext(EDI); export tmp; }
+@ifdef IA64
+maskMovDI: segWide^RDI is $(LONGMODE_ON) & addrsize=2 & segWide & RDI                { tmp:$(SIZE) = RDI; export tmp; }
+maskMovDI: segWide^RDI is $(LONGMODE_ON) & addrsize=2 & segWide & highseg=1 & RDI    { tmp:$(SIZE) = segWide + RDI; export tmp; }
+@endif
 define pcodeop maskmovdqu;
-:MASKMOVDQU        XmmReg1, XmmReg2   is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xF7; XmmReg1 & XmmReg2		{ maskmovdqu(XmmReg1, XmmReg2); }
+:MASKMOVDQU        XmmReg1, XmmReg2   is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xF7 & maskMovDI; XmmReg1 & XmmReg2		{ maskmovdqu(XmmReg1, XmmReg2, maskMovDI); }
 
 define pcodeop maxpd;
 :MAXPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5F; XmmReg ... & m128 { XmmReg = maxpd(XmmReg, m128); }
@@ -10267,10 +10289,18 @@ define pcodeop crc32;
 define pcodeop pcmpestri;
 :PCMPESTRI XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; XmmReg ... & m128; imm8 { ECX = pcmpestri(XmmReg, m128, imm8:8, EAX, EDX); }
 :PCMPESTRI XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { ECX = pcmpestri(XmmReg1, XmmReg2, imm8:8, EAX, EDX); }
+@ifdef IA64
+:PCMPESTRI XmmReg, m128, imm8     is vexMode=0 & $(REX_W) & opsize=2 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; XmmReg ... & m128; imm8 { ECX = pcmpestri(XmmReg, m128, imm8:8, RAX, RDX); }
+:PCMPESTRI XmmReg1, XmmReg2, imm8 is vexMode=0 & $(REX_W) & opsize=2 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x61; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { ECX = pcmpestri(XmmReg1, XmmReg2, imm8:8, RAX, RDX); }
+@endif
 
 define pcodeop pcmpestrm;
 :PCMPESTRM XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; XmmReg ... & m128; imm8 { XMM0 = pcmpestrm(XmmReg, m128, imm8:8, EAX, EDX); }
 :PCMPESTRM XmmReg1, XmmReg2, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XMM0 = pcmpestrm(XmmReg1, XmmReg2, imm8:8, EAX, EDX); }
+@ifdef IA64
+:PCMPESTRM XmmReg, m128, imm8     is vexMode=0 & $(REX_W) & opsize=2 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; XmmReg ... & m128; imm8 { XMM0 = pcmpestrm(XmmReg, m128, imm8:8, RAX, RDX); }
+:PCMPESTRM XmmReg1, XmmReg2, imm8 is vexMode=0 & $(REX_W) & opsize=2 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x60; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XMM0 = pcmpestrm(XmmReg1, XmmReg2, imm8:8, RAX, RDX); }
+@endif
 
 define pcodeop pcmpistri;
 :PCMPISTRI XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x63; XmmReg ... & m128; imm8 { ECX = pcmpistri(XmmReg, m128, imm8:8); }
@@ -10472,7 +10502,7 @@ define pcodeop PackedSwapDWords;
 :PSWAPD mmxreg1, mmxreg2 is vexMode=0 & suffix3D=0xBB & mandover=0 & byte=0x0F; byte=0x0F; mmxmod = 3 & mmxreg1 & mmxreg2   { mmxreg1 = PackedSwapDWords(mmxreg1, mmxreg2); }
 
 define pcodeop MaskedMoveQWord;
-:MASKMOVQ            mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF7; mmxmod = 3 & mmxreg1 & mmxreg2		{ MaskedMoveQWord(mmxreg1, mmxreg2); }
+:MASKMOVQ            mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF7 & maskMovDI; mmxmod = 3 & mmxreg1 & mmxreg2		{ MaskedMoveQWord(mmxreg1, mmxreg2, maskMovDI); }
 
 
 ####
