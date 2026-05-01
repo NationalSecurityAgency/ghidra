@@ -58,6 +58,11 @@ public class EmptyVTSession implements VTSession {
 	}
 
 	@Override
+	public String getPath() {
+		return "None";
+	}
+
+	@Override
 	public Program getSourceProgram() {
 		return null;
 	}

@@ -27,7 +27,8 @@ import java.util.*;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.UniversalID;
 
 public class CompareGDTs extends GhidraScript {
@@ -35,8 +36,10 @@ public class CompareGDTs extends GhidraScript {
 	private File firstFile;
 	private File secondFile;
 	private File outputFile;
-	private FileDataTypeManager firstArchive;
-	private FileDataTypeManager secondArchive;
+	private FileDataTypeArchive archive1;
+	private FileDataTypeArchive archive2;
+	private DataTypeManager dtm1;
+	private DataTypeManager dtm2;
 	private PrintWriter printWriter;
 	boolean matchByName;
 	boolean checkPointers;
@@ -57,23 +60,24 @@ public class CompareGDTs extends GhidraScript {
 			}
 		}
 
-		firstArchive = openDataTypeArchive(firstFile, false);
-		if (firstArchive.getWarning() != ArchiveWarning.NONE) {
+		archive1 = openFileDataTypeArchive(firstFile, false);
+		if (archive1.getWarning() != ArchiveWarning.NONE) {
 			popup(
 				"An architecture language error occured while opening archive (see log for details)\n" +
 					firstFile.getPath());
 			return;
 		}
 
-		secondArchive = openDataTypeArchive(secondFile, false);
-		if (secondArchive.getWarning() != ArchiveWarning.NONE) {
+		archive2 = openFileDataTypeArchive(secondFile, false);
+		if (archive2.getWarning() != ArchiveWarning.NONE) {
 			popup(
 				"An architecture language error occured while opening archive (see log for details)\n" +
 					secondFile.getPath());
-			firstArchive.close();
+			archive1.release(this);
 			return;
 		}
-
+		dtm1 = archive1.getDataTypeManager();
+		dtm2 = archive2.getDataTypeManager();
 		matchByName = askYesNo("Match Data Types By Path Name?",
 			"Do you want to match data types by their path names (rather than by Universal ID)?");
 		checkPointers = askYesNo("Check Pointers?", "Do you want to check Pointers?");
@@ -85,8 +89,8 @@ public class CompareGDTs extends GhidraScript {
 		}
 		finally {
 			printWriter.close();
-			firstArchive.close();
-			secondArchive.close();
+			archive1.release(this);
+			archive2.release(this);
 		}
 	}
 
@@ -100,30 +104,30 @@ public class CompareGDTs extends GhidraScript {
 			secondFile.getAbsolutePath() + ".");
 
 		output("\nThe following data types are only in " + firstFile.getAbsolutePath() + ".");
-		long onlyInFirst = outputEachDataTypeOnlyInFirst(firstArchive, secondArchive);
+		long onlyInFirst = outputEachDataTypeOnlyInFirst(dtm1, dtm2);
 		output(onlyInFirst + " data types that were only in first archive.");
 
 		output("\nThe following data types are only in " + secondFile.getAbsolutePath() + ".");
-		long onlyInSecond = outputEachDataTypeOnlyInFirst(secondArchive, firstArchive);
+		long onlyInSecond = outputEachDataTypeOnlyInFirst(dtm2, dtm1);
 		output(onlyInSecond + " data types that were only in second archive.");
 
 		output("\nThe following are different kinds of data types.");
-		long differentKinds = outputWhereTypesDiffer(firstArchive, secondArchive);
+		long differentKinds = outputWhereTypesDiffer(dtm1, dtm2);
 		output(differentKinds + " data types had different types.");
 
 		output("\nThe following data types are defined differently.");
-		long differentDefinitions = outputWhereDefinitionsDiffer(firstArchive, secondArchive);
+		long differentDefinitions = outputWhereDefinitionsDiffer(dtm1, dtm2);
 		output(differentDefinitions + " data types had different definitions.");
 
 		output("\nThe following data types are different sizes");
-		long differentSizes = outputWhereSizesDiffer(firstArchive, secondArchive);
+		long differentSizes = outputWhereSizesDiffer(dtm1, dtm2);
 		output(differentSizes + " data types had different sizes.");
 
 		output("\n");
 	}
 
-	private long outputEachDataTypeOnlyInFirst(FileDataTypeManager dtmArchive1,
-			FileDataTypeManager dtmArchive2) {
+	private long outputEachDataTypeOnlyInFirst(DataTypeManager dtmArchive1,
+			DataTypeManager dtmArchive2) {
 
 		long missingCount = 0;
 		Iterator<DataType> allDataTypes = dtmArchive1.getAllDataTypes();
@@ -136,7 +140,7 @@ public class CompareGDTs extends GhidraScript {
 		return missingCount;
 	}
 
-	private boolean outputIfMissingDataType(DataType dataType, FileDataTypeManager dtmArchive) {
+	private boolean outputIfMissingDataType(DataType dataType, DataTypeManager dtmArchive) {
 
 		if (!checkPointers && dataType instanceof Pointer) {
 			return false;
@@ -155,7 +159,7 @@ public class CompareGDTs extends GhidraScript {
 		return false;
 	}
 
-	private DataType getMatchingDataType(DataType dataType, FileDataTypeManager dtmArchive) {
+	private DataType getMatchingDataType(DataType dataType, DataTypeManager dtmArchive) {
 
 		if (!matchByName) {
 			UniversalID universalID = dataType.getUniversalID();
@@ -172,17 +176,20 @@ public class CompareGDTs extends GhidraScript {
 
 		// find by name
 		List<DataType> list = new ArrayList<DataType>();
-		dtmArchive.findDataTypes(dataType.getName(), list );
+		dtmArchive.findDataTypes(dataType.getName(), list);
 		for (DataType dtc : list) {
-			if (dataType.getCategoryPath().getPath().toLowerCase().equals(dtc.getCategoryPath().getPath().toLowerCase())) {
+			if (dataType.getCategoryPath()
+					.getPath()
+					.toLowerCase()
+					.equals(dtc.getCategoryPath().getPath().toLowerCase())) {
 				return dtc;
 			}
 		}
 		return null;
 	}
 
-	private long outputWhereTypesDiffer(FileDataTypeManager dtmArchive1,
-			FileDataTypeManager dtmArchive2) {
+	private long outputWhereTypesDiffer(DataTypeManager dtmArchive1,
+			DataTypeManager dtmArchive2) {
 
 		long differCount = 0;
 		Iterator<DataType> allDataTypes = dtmArchive1.getAllDataTypes();
@@ -195,8 +202,8 @@ public class CompareGDTs extends GhidraScript {
 		return differCount;
 	}
 
-	private long outputWhereSizesDiffer(FileDataTypeManager dtmArchive1,
-			FileDataTypeManager dtmArchive2) {
+	private long outputWhereSizesDiffer(DataTypeManager dtmArchive1,
+			DataTypeManager dtmArchive2) {
 
 		long differCount = 0;
 		Iterator<DataType> allDataTypes = dtmArchive1.getAllDataTypes();
@@ -209,7 +216,7 @@ public class CompareGDTs extends GhidraScript {
 		return differCount;
 	}
 
-	private boolean outputIfDifferentTypes(DataType dataType, FileDataTypeManager dtmArchive) {
+	private boolean outputIfDifferentTypes(DataType dataType, DataTypeManager dtmArchive) {
 
 		if (!checkPointers && dataType instanceof Pointer) {
 			return false;
@@ -233,8 +240,8 @@ public class CompareGDTs extends GhidraScript {
 		return false;
 	}
 
-	private long outputWhereDefinitionsDiffer(FileDataTypeManager dtmArchive1,
-			FileDataTypeManager dtmArchive2) {
+	private long outputWhereDefinitionsDiffer(DataTypeManager dtmArchive1,
+			DataTypeManager dtmArchive2) {
 
 		long differCount = 0;
 		Iterator<DataType> allDataTypes = dtmArchive1.getAllDataTypes();
@@ -248,7 +255,7 @@ public class CompareGDTs extends GhidraScript {
 	}
 
 	private boolean outputIfDifferentDefinitions(DataType dataType,
-			FileDataTypeManager dtmArchive) {
+			DataTypeManager dtmArchive) {
 
 		if (!checkPointers && dataType instanceof Pointer) {
 			return false;
@@ -263,7 +270,7 @@ public class CompareGDTs extends GhidraScript {
 			Class<?> dtClass = dataType.getClass();
 			Class<?> sameNamedDtClass = matchingDataType.getClass();
 			if (dtClass == sameNamedDtClass) {
-				if (dataType instanceof Enum && (((Enum) dataType).getCount()==1)) {
+				if (dataType instanceof Enum && (((Enum) dataType).getCount() == 1)) {
 					// don't check single entry enums.  Size will vary, and they are extracted defines
 					return checkEnum((Enum) dataType, (Enum) matchingDataType);
 				}
@@ -283,18 +290,18 @@ public class CompareGDTs extends GhidraScript {
 			return true;
 		}
 		// Check that the name is the same
-		if (! e1.getNames()[0].equals(e2.getNames()[0])) {
+		if (!e1.getNames()[0].equals(e2.getNames()[0])) {
 			return true;
 		}
 		// Check the value is the same
 		if (e1.getValues()[0] != e2.getValues()[0]) {
 			return true;
-		}		
-		
+		}
+
 		return false;
 	}
 
-	private boolean outputIfDifferentSizes(DataType dataType, FileDataTypeManager dtmArchive) {
+	private boolean outputIfDifferentSizes(DataType dataType, DataTypeManager dtmArchive) {
 
 		if (!checkPointers && dataType instanceof Pointer) {
 			return false;
@@ -309,7 +316,7 @@ public class CompareGDTs extends GhidraScript {
 			Class<?> dtClass = dataType.getClass();
 			Class<?> sameNamedDtClass = matchingDataType.getClass();
 			if (dtClass == sameNamedDtClass) {
-				if (dataType instanceof Enum && (((Enum) dataType).getCount()==1)) {
+				if (dataType instanceof Enum && (((Enum) dataType).getCount() == 1)) {
 					// don't check single entry enums.  Size will vary, and they are extracted defines
 					return checkEnum((Enum) dataType, (Enum) matchingDataType);
 				}

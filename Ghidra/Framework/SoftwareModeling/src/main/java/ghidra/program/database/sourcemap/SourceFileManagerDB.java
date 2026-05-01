@@ -22,7 +22,7 @@ import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Database Manager for managing source files and source map information.
  */
-public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorHandler {
+public class SourceFileManagerDB implements SourceFileManager, ProgramDBModule, ErrorHandler {
 
 	private ProgramDB program;
 
@@ -69,12 +69,12 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// nothing to do
 	}

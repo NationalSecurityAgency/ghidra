@@ -138,7 +138,6 @@ class CategoryDB extends DbObject implements Category {
 			checkDeleted();
 			CategoryPath oldPath = getCategoryPath();
 			if (isRoot()) {
-				mgr.setName(newName);
 				return;
 			}
 			if (newName.equals(name)) {

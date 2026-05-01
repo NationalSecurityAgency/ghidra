@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Implementation of the Equate Table
  */
-public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
+public class EquateManager implements EquateTable, ErrorHandler, ProgramDBModule {
 
 	private AddressMap addrMap;
 	private DbCache<EquateRefDB> refCache;
@@ -95,12 +95,12 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}

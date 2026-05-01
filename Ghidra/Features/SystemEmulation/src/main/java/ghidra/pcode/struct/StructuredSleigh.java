@@ -34,6 +34,7 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.pcode.struct.DefaultVar.Check;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
@@ -1161,7 +1162,7 @@ public class StructuredSleigh {
 	// Used to determine statement binding, e.g., for "_break" and "_result"
 	final Deque<BlockStmt> stack = new LinkedList<>();
 	// Collects data types used in annotations and during code generation
-	final StandAloneDataTypeManager dtm;
+	final TransientDataTypeManager dtm;
 	private final List<DataTypeParser> dtSources = new ArrayList<>();
 
 	// The next "free" label
@@ -1191,7 +1192,7 @@ public class StructuredSleigh {
 	protected StructuredSleigh(CompilerSpec cs) {
 		this.language = (SleighLanguage) cs.getLanguage();
 		this.parser = SleighProgramCompiler.createParser(language);
-		this.dtm = new StandAloneDataTypeManager("/", cs.getDataOrganization());
+		this.dtm = new TransientDataTypeManager("/", cs.getDataOrganization());
 
 		addDataTypeSource(dtm);
 		addDataTypeSource(BuiltInDataTypeManager.getDataTypeManager());

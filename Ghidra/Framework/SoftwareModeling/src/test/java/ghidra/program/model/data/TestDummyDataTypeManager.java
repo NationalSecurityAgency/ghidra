@@ -18,10 +18,9 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import db.Transaction;
-import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.program.model.lang.PrototypeModel;
-import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -33,6 +32,12 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 
 	@Override
 	public UniversalID getUniversalID() {
+		// stub
+		return null;
+	}
+
+	@Override
+	public DataTypeStore getDataStore() {
 		// stub
 		return null;
 	}
@@ -225,12 +230,6 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException {
-		// stub
-
-	}
-
-	@Override
 	public Transaction openTransaction(String description) throws IllegalStateException {
 		throw new UnsupportedOperationException();
 	}
@@ -383,12 +382,6 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	public boolean updateSourceArchiveName(UniversalID sourceID, String name) {
 		// stub
 		return false;
-	}
-
-	@Override
-	public AddressMap getAddressMap() {
-		// stub
-		return null;
 	}
 
 	@Override

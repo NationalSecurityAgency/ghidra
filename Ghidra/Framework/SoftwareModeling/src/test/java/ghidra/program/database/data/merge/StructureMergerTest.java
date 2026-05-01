@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalIdGenerator;
 
@@ -30,7 +31,7 @@ public class StructureMergerTest extends AbstractGenericTest {
 	private DataType dwordDt;
 	private IntegerDataType intDt;
 	private DataType zeroArray;
-	private StandAloneDataTypeManager dtm;
+	private TransientDataTypeManager dtm;
 	private int txId;
 
 	@Before
@@ -40,13 +41,14 @@ public class StructureMergerTest extends AbstractGenericTest {
 		dwordDt = new DWordDataType();
 		intDt = new IntegerDataType();
 		zeroArray = new ArrayDataType(intDt, 0);
-		dtm = new StandAloneDataTypeManager("Test");
+		dtm = new TransientDataTypeManager("Test");
 		txId = dtm.startTransaction("Test");
 	}
 
 	@After
 	public void tearDown() {
 		dtm.endTransaction(txId, false);
+		dtm.close();
 	}
 
 	@Test

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,12 +24,15 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.*;
+import ghidra.app.plugin.core.datamgr.archive.InvalidArchive;
 import ghidra.app.plugin.core.datamgr.tree.InvalidArchiveNode;
 import ghidra.util.HTMLUtilities;
 
+/**
+ * Removes a SourceArchive from a program and removes any datatype associations to that source 
+ * archive.
+ */
 public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 
 	private DataTypeManagerPlugin plugin;
@@ -86,8 +89,8 @@ public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 			return;
 		}
 
-		Archive archive = invalidArchiveNode.getArchive();
-		DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
-		dataTypeManagerHandler.removeInvalidArchive((InvalidFileArchive) archive);
+		InvalidArchive archive = invalidArchiveNode.getInvalidArchive();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		archiveManager.removeInvalidArchiveFromProgram(archive);
 	}
 }

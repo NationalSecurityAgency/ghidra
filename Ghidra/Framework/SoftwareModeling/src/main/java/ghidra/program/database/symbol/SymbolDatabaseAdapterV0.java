@@ -79,7 +79,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	 * Stores local symbols information in a temporary database table because this version
 	 * is so old, we don't have enough information in the record to upgrade during the normal
 	 * upgrade time. So we store off the information and will complete this upgrade when
-	 * {@link SymbolManager#programReady(OpenMode, int, TaskMonitor)} is called
+	 * {@link SymbolManager#domainObjectReady(OpenMode, int, TaskMonitor)} is called
 	 * 
 	 * @param handle handle to temporary database
 	 * @param monitor the {@link TaskMonitor}

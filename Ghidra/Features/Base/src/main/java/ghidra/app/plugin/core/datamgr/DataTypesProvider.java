@@ -38,19 +38,18 @@ import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.datamgr.actions.*;
 import ghidra.app.plugin.core.datamgr.actions.associate.*;
-import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeUrl;
-import ghidra.framework.main.datatree.ArchiveProvider;
-import ghidra.framework.main.datatree.VersionControlDataTypeArchiveUndoCheckoutAction;
 import ghidra.framework.main.projectdata.actions.*;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResolutionPolicy;
-import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
@@ -172,12 +171,13 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		// File group
 		addLocalAction(new SaveArchiveAction(plugin)); // Archive
+		addLocalAction(new SaveArchiveAsAction(plugin));
 		addLocalAction(new CloseArchiveAction(plugin)); // Archive
 		addLocalAction(new RemoveInvalidArchiveFromProgramAction(plugin)); // Archive
 
 		// FileEdit group
-		addLocalAction(new LockArchiveAction(plugin)); // Archive
-		addLocalAction(new UnlockArchiveAction(plugin)); // Archive
+		addLocalAction(new OpenArchiveForEditingAction(plugin)); // Archive
+		addLocalAction(new CloseArchiveForEditingAction(plugin)); // Archive
 		addLocalAction(new UndoArchiveTransactionAction(plugin)); // Archive
 		addLocalAction(new RedoArchiveTransactionAction(plugin)); // Archive
 
@@ -247,20 +247,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 	private void addVersionControlActions() {
 
-		ArchiveProvider archiveProvider = () -> {
-			TreePath[] selectionPaths = archiveGTree.getSelectionPaths();
-			List<Archive> selectedArchives = new ArrayList<>();
-			for (TreePath path : selectionPaths) {
-				Object lastPathComponent = path.getLastPathComponent();
-				if (lastPathComponent instanceof ProjectArchiveNode) {
-					ProjectArchiveNode node = (ProjectArchiveNode) lastPathComponent;
-					ProjectArchive archive = (ProjectArchive) node.getArchive();
-					selectedArchives.add(archive);
-				}
-			}
-			return selectedArchives;
-		};
-
 		VersionControlAddAction addAction = new VersionControlAddAction(plugin);
 		addAction.setEnabled(false);
 
@@ -274,8 +260,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			new VersionControlCheckInAction(plugin, archiveGTree);
 		checkInAction.setEnabled(false);
 
-		VersionControlDataTypeArchiveUndoCheckoutAction undoCheckOutAction =
-			new VersionControlDataTypeArchiveUndoCheckoutAction(plugin, archiveProvider);
+		ArchiveUndoCheckoutTask undoCheckOutAction =
+			new ArchiveUndoCheckoutTask(plugin);
 		undoCheckOutAction.setEnabled(false);
 
 		VersionControlShowHistoryAction showHistoryAction =
@@ -572,35 +558,16 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	private static DataType updateDataType(CategoryPath path, String dataTypeName,
-			ArchiveNode archiveNode) {
-		DataTypeManager dataTypeManager = archiveNode.getArchive().getDataTypeManager();
+			PersistentDataTypeArchive archive) {
+		if (archive == null) {
+			return null;
+		}
+		DataTypeManager dataTypeManager = archive.getDataTypeManager();
 		Category category = dataTypeManager.getCategory(path);
 		return category.getDataType(dataTypeName);
 	}
 
-	private boolean getWriteLock(DataTypeManagerPlugin dataTypePlugin, ArchiveNode archiveNode) {
-		if (!isOkToLock()) {
-			return false;
-		}
-		GTree tree = dataTypePlugin.getProvider().getGTree();
-		GTreeState state = tree.getTreeState();
-		if (!ArchiveUtils.lockArchive((FileArchive) archiveNode.getArchive())) {
-			return false;
-		}
-		tree.restoreTreeState(state);
-
-		return true;
-	}
-
-	private boolean needsWriteLock(ArchiveNode archiveNode) {
-		if (archiveNode instanceof FileArchiveNode) {
-			FileArchiveNode fileArchiveNode = (FileArchiveNode) archiveNode;
-			return !fileArchiveNode.hasWriteLock();
-		}
-		return false;
-	}
-
-	private boolean isOkToLock() {
+	private boolean askToOpenArchiveForUpdate() {
 		return (OptionDialog.showYesNoDialog(archiveGTree, "Open Archive for Edit?",
 			"Archive file is not modifiable.\nDo you want to open for edit?") == OptionDialog.OPTION_ONE);
 	}
@@ -623,30 +590,55 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		dataType = DataTypeUtils.getBaseDataType(dataType);
 		CategoryPath path = dataType.getCategoryPath();
 		String dataTypeName = dataType.getName();
-		ArchiveNode archiveNode = dataTypeNode.getArchiveNode();
+		DataTypeStoreNode archiveNode = dataTypeNode.getArchiveNode();
 
-		if (archiveNode instanceof ProjectArchiveNode && !archiveNode.isModifiable()) {
-			ProjectArchiveNode projectArchive = (ProjectArchiveNode) archiveNode;
-			if (projectArchive.getDomainFile().isReadOnly()) {
-				Msg.showInfo(getClass(), archiveGTree, "Read-Only Archive",
-					"You may not edit data type within a read-only project archive.");
-			}
-			else {
-				Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
-					"You must checkout this archive before you may edit data types.");
-			}
+		if (isUnmodifiableProjectArchive(archiveNode)) {
 			return;
 		}
 
-		// must get write lock before we can edit
-		if (needsWriteLock(archiveNode)) {
-			if (!getWriteLock(plugin, archiveNode)) {
-				return;
+		if (archiveNode instanceof FileArchiveNode fileNode) {
+			FileDataTypeArchive archive = fileNode.getArchive();
+			if (!archive.isChangeable()) {
+				if (!askToOpenArchiveForUpdate()) {
+					return;
+				}
+				archive = openForUpdate(archive);
+				dataType = updateDataType(path, dataTypeName, archive);
 			}
-			dataType = updateDataType(path, dataTypeName, archiveNode);
+		}
+		if (dataType != null) {
+			plugin.getEditorManager().edit(dataType);
+		}
+	}
+
+	private FileDataTypeArchive openForUpdate(FileDataTypeArchive archive) {
+		GTree tree = plugin.getProvider().getGTree();
+		GTreeState state = tree.getTreeState();
+		archive = plugin.getArchiveManager().reopenFileArchive(archive, true);
+		tree.restoreTreeState(state);
+		return archive;
+	}
+
+	private boolean isUnmodifiableProjectArchive(DataTypeStoreNode archiveNode) {
+		if (!(archiveNode instanceof ProjectArchiveNode projectNode)) {
+			return false;
 		}
 
-		plugin.getEditorManager().edit(dataType);
+		if (archiveNode.isModifiable()) {
+			return false;
+		}
+		DomainFile domainFile = projectNode.getDomainFile();
+		DomainFile originalDomainFile = projectNode.getOriginalDomainFile();
+		if (domainFile.getVersion() == originalDomainFile.getLatestVersion() &&
+			originalDomainFile.canCheckout()) {
+			Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
+				"You must checkout this archive before you may edit data types.");
+		}
+		else {
+			Msg.showInfo(getClass(), archiveGTree, "Archive Opened Read-Only",
+				"You may not edit data type within a read-only project archive.");
+		}
+		return true;
 	}
 
 	void restore(SaveState saveState) {
@@ -692,55 +684,26 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return archiveGTree;
 	}
 
-	void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+	void domainObjectRestored(PersistentDataTypeArchive archive) {
 		if (archiveGTree == null) {
 			return; // nothing to update
 		}
-		if (domainObject instanceof Program) {
-			Program program = (Program) domainObject;
-			Program programInTree = plugin.getProgram(); // may be null
-			if (program == programInTree) {
-				DataTypeArchiveGTree gTree = getGTree();
-				ArchiveNode node = getProgramArchiveNode();
-				if (node != null) {
-					GTreeState state = gTree.getTreeState(node);
-					node.structureChanged();
-					gTree.restoreTreeState(state);
-				}
-			}
-		}
-		else if (domainObject instanceof DataTypeArchive) {
-			DataTypeArchive dataTypeArchive = (DataTypeArchive) domainObject;
-			DataTypeArchiveGTree gTree = getGTree();
-			ArchiveNode node = getDataTypeArchiveNode(dataTypeArchive);
-			if (node != null) {
-				GTreeState state = gTree.getTreeState(node);
-				node.structureChanged();
-				gTree.restoreTreeState(state);
-			}
+		DataTypeArchiveGTree gTree = getGTree();
+		ArchiveNode node = getDataTypeArchiveNode(archive);
+		if (node != null) {
+			GTreeState state = gTree.getTreeState(node);
+			node.structureChanged();
+			gTree.restoreTreeState(state);
 		}
 	}
 
-	private ProgramArchiveNode getProgramArchiveNode() {
+	private ArchiveNode getDataTypeArchiveNode(PersistentDataTypeArchive dataTypeArchive) {
 		GTreeNode rootNode = getGTree().getModelRoot();
 		List<GTreeNode> children = rootNode.getChildren();
 		for (GTreeNode node : children) {
-			if (node instanceof ProgramArchiveNode programNode) {
-				return programNode;
-			}
-		}
-		return null;
-	}
-
-	private ArchiveNode getDataTypeArchiveNode(DataTypeArchive dataTypeArchive) {
-		GTreeNode rootNode = getGTree().getModelRoot();
-		List<GTreeNode> children = rootNode.getChildren();
-		for (GTreeNode node : children) {
-			ArchiveNode archiveNode = (ArchiveNode) node;
-			Archive archive = archiveNode.getArchive();
-			if (archive instanceof ProjectArchive) {
-				ProjectArchive projectArchive = (ProjectArchive) archive;
-				if (projectArchive.getDataTypeManager() == dataTypeArchive.getDataTypeManager()) {
+			if (node instanceof ArchiveNode archiveNode) {
+				PersistentDataTypeArchive archive = archiveNode.getArchive();
+				if (archive == dataTypeArchive) {
 					return archiveNode;
 				}
 			}
@@ -774,7 +737,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		Category category = dataTypeManager.getCategory(dataType.getCategoryPath());
 		ArchiveRootNode rootNode = (ArchiveRootNode) gTree.getViewRoot();
-		ArchiveNode archiveNode = rootNode.getNodeForManager(dataTypeManager);
+		DataTypeStoreNode archiveNode = rootNode.getNodeForManager(dataTypeManager);
 		if (archiveNode == null) {
 			plugin.setStatus("Cannot find archive '" + dataTypeManager.getName() + "'.  It may " +
 				"be filtered out of view or may have been closed (Data Type Manager)");
@@ -824,7 +787,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		}
 
 		ArchiveRootNode rootNode = (ArchiveRootNode) gTree.getViewRoot();
-		ArchiveNode archiveNode = rootNode.getNodeForManager(dataTypeManager);
+		DataTypeStoreNode archiveNode = rootNode.getNodeForManager(dataTypeManager);
 		if (archiveNode == null) {
 			plugin.setStatus("Cannot find archive '" + dataTypeManager.getName() + "'.  It may " +
 				"be filtered out of view or may have been closed (Data Type Manager)");
@@ -924,8 +887,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	private void restoreProgramTreeState(ProgramArchiveNode programNode) {
-		ProgramArchive programArchive = (ProgramArchive) programNode.getArchive();
-		Program program = programArchive.getProgram();
+		Program program = programNode.getProgram();
 		long id = program.getUniqueProgramID();
 		TreePath selectedPath = programTreeState.get(id);
 		if (selectedPath == null) {
@@ -946,8 +908,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// of the program node, so only save the path if there is a single selection.  This will 
 		// be helpful in the case that the user was working with a single data type in the program.
 		//
-		ProgramArchive programArchive = (ProgramArchive) programNode.getArchive();
-		Program program = programArchive.getProgram();
+		Program program = programNode.getProgram();
 		long id = program.getUniqueProgramID();
 		GTreeState state = archiveGTree.getTreeState();
 		List<TreePath> paths = state.getSelectedPaths();
@@ -987,16 +948,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		clearDataTypePreview();
 	}
 
-	void archiveClosed(DataTypeManager dtm) {
-		dataTypeManagerChanged(dtm);
+	void archiveClosed(PersistentDataTypeArchive archive) {
+		archiveChanged(archive.getName());
 	}
 
-	void archiveChanged(Archive archive) {
-		DataTypeManager dtm = archive.getDataTypeManager();
-		dataTypeManagerChanged(dtm);
-	}
-
-	private void dataTypeManagerChanged(DataTypeManager dtm) {
+	void archiveChanged(String name) {
 
 		if (lastPreviewNode == null || !(lastPreviewNode instanceof DataTypeNode)) {
 			return;
@@ -1005,9 +961,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		DataTypeNode dtNode = (DataTypeNode) lastPreviewNode;
 		DataType dt = dtNode.getDataType();
 		DataTypeManager dtManager = dt.getDataTypeManager();
-
-		// note: compare using name; an equality check will fail if the manager is reloaded
-		if (dtm.getName().equals(dtManager.getName())) {
+		// notes: the archive name and the datatypeManager name are the same. If the archive
+		// changed because it was closed, then its datatype manager will be null. So just
+		// compare the datatype's manager's name with the archive's name.
+		if (name.equals(dtManager.getName())) {
 			lastPreviewNode = null;
 		}
 	}
@@ -1016,9 +973,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		ArchiveRootNode rootNode = (ArchiveRootNode) archiveGTree.getModelRoot();
 		List<GTreeNode> allChildren = rootNode.getChildren();
 		for (GTreeNode node : allChildren) {
-			ArchiveNode archiveNode = (ArchiveNode) node;
-			if (archiveNode.getArchive() instanceof ProgramArchive) {
-				archiveNode.nodeChanged();
+			if (node instanceof ProgramArchiveNode programNode) {
+				programNode.nodeChanged();
 				return;
 			}
 		}
@@ -1087,14 +1043,14 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private class ProgramNodeUpdateListener implements ArchiveRootNodeListener {
 
 		@Override
-		public void archiveNodeAdded(ArchiveNode node) {
+		public void archiveNodeAdded(DataTypeStoreNode node) {
 			if (node instanceof ProgramArchiveNode programNode) {
 				restoreProgramTreeState(programNode);
 			}
 		}
 
 		@Override
-		public void archiveNodeRemoved(ArchiveNode node) {
+		public void archiveNodeRemoved(DataTypeStoreNode node) {
 			if (node instanceof ProgramArchiveNode programNode) {
 				saveProgramTreeState(programNode);
 			}

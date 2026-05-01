@@ -34,13 +34,15 @@ import docking.widgets.list.GComboBoxCellRenderer;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.*;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask.ActionType;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.DataTypeStore;
+import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.task.TaskLauncher;
@@ -70,12 +72,12 @@ public class AssociateDataTypeAction extends DockingAction {
 		if (dtNodes.isEmpty()) {
 			return false;
 		}
-		Archive singleDTArchive = getSingleDTArchive(dtNodes);
+		DataTypeStore singleDataTypeStore = getSingleDataTypeStore(dtNodes);
 
 		// NOTE: We only support program-to-archive since other cases become rather complicated
-		// when considering dependencies that must get copied and how their associations shuold be 
+		// when considering dependencies that must get copied and how their associations should be 
 		// handled.
-		return singleDTArchive instanceof ProgramArchive;
+		return singleDataTypeStore instanceof Program;
 	}
 
 	private List<GTreeNode> getDataTypeNodes(DataTypesActionContext ctx) {
@@ -91,11 +93,11 @@ public class AssociateDataTypeAction extends DockingAction {
 		return !nodes.isEmpty();
 	}
 
-	private Archive getSingleDTArchive(List<GTreeNode> nodes) {
+	private DataTypeStore getSingleDataTypeStore(List<GTreeNode> nodes) {
 
-		Archive dtArchive = null;
+		DataTypeStore dtArchive = null;
 		for (GTreeNode node : nodes) {
-			Archive archive = findArchive(node);
+			DataTypeStore archive = findDataStore(node);
 			if (dtArchive == null) {
 				dtArchive = archive;
 				continue;
@@ -108,23 +110,21 @@ public class AssociateDataTypeAction extends DockingAction {
 		return dtArchive;
 	}
 
-	private static Archive findArchive(GTreeNode node) {
+	private static DataTypeStore findDataStore(GTreeNode node) {
 		while (node != null) {
-			if (node instanceof ArchiveNode) {
-				return ((ArchiveNode) node).getArchive();
+			if (node instanceof DataTypeStoreNode archiveNode) {
+				return archiveNode.getDataTypeStore();
 			}
 			node = node.getParent();
 		}
 		return null;
 	}
 
-	private List<Archive> getDestinationArchives(Archive excludedArchive) {
+	private List<PersistentDataTypeArchive> getDestinationArchives(DataTypeStore excluded) {
 
-		List<Archive> archives = plugin.getAllArchives();
-		List<Archive> destArchives = archives.stream()
-				.filter(a -> !(a instanceof ProgramArchive))
-				.filter(a -> !(a instanceof BuiltInArchive))
-				.filter(a -> !a.equals(excludedArchive))
+		List<PersistentDataTypeArchive> archives = plugin.getArchiveManager().getOpenArchives();
+		List<PersistentDataTypeArchive> destArchives = archives.stream()
+				.filter(a -> !a.equals(excluded))
 				.sorted((a1, a2) -> a1.getName().compareToIgnoreCase(a2.getName()))
 				.collect(Collectors.toList());
 
@@ -138,14 +138,14 @@ public class AssociateDataTypeAction extends DockingAction {
 		if (dtNodes.isEmpty()) {
 			return;
 		}
-		Archive dtArchive = getSingleDTArchive(dtNodes);
-		if (dtArchive == null) {
+		DataTypeStore dtStore = getSingleDataTypeStore(dtNodes);
+		if (dtStore == null) {
 			return;
 		}
 
-		if (!dtArchive.isModifiable()) {
+		if (!dtStore.isChangeable()) {
 			DataTypeUtils.showUnmodifiableArchiveErrorMessage(context.getSourceComponent(),
-				"Disassociate Failed", dtArchive.getDataTypeManager());
+				"Disassociate Failed", dtStore.getDataTypeManager());
 			return;
 		}
 
@@ -156,7 +156,7 @@ public class AssociateDataTypeAction extends DockingAction {
 			return;
 		}
 
-		List<Archive> archives = getDestinationArchives(dtArchive);
+		List<PersistentDataTypeArchive> archives = getDestinationArchives(dtStore);
 		if (archives.isEmpty()) {
 			Msg.showInfo(this, getProviderComponent(), "No Source Archives Open",
 				"No source archives open.  Please open the desired source archive.");
@@ -169,7 +169,7 @@ public class AssociateDataTypeAction extends DockingAction {
 			return;
 		}
 
-		Archive destinationArchive = dialog.getArchive();
+		PersistentDataTypeArchive destinationArchive = dialog.getArchive();
 		Category destinationCategory = dialog.getCategory();
 
 		DataTypeTreeCopyMoveTask task =
@@ -186,15 +186,15 @@ public class AssociateDataTypeAction extends DockingAction {
 	private class ChooseArchiveDialog extends DialogComponentProvider {
 
 		private Category category;
-		private Archive archive;
+		private PersistentDataTypeArchive archive;
 
 		// default to true to handle the case the user presses Escape or presses the x button
 		private boolean isCancelled = true;
 
-		private GhidraComboBox<Archive> archivesBox = new GhidraComboBox<>();
+		private GhidraComboBox<PersistentDataTypeArchive> archivesBox = new GhidraComboBox<>();
 		private JTextField categoryField = new JTextField(20);
 
-		ChooseArchiveDialog(List<Archive> archives) {
+		ChooseArchiveDialog(List<PersistentDataTypeArchive> archives) {
 			super("Choose New Source Archive", true);
 
 			addWorkPanel(buildWorkPanel());
@@ -211,12 +211,14 @@ public class AssociateDataTypeAction extends DockingAction {
 			archivesBox.setRenderer(new GComboBoxCellRenderer<>() {
 
 				@Override
-				public Component getListCellRendererComponent(JList<? extends Archive> list,
-						Archive value, int index, boolean isSelected, boolean cellHasFocus) {
+				public Component getListCellRendererComponent(
+						JList<? extends PersistentDataTypeArchive> list,
+						PersistentDataTypeArchive value, int index, boolean isSelected,
+						boolean cellHasFocus) {
 
 					JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value,
 						index, isSelected, cellHasFocus);
-					Archive a = value;
+					PersistentDataTypeArchive a = value;
 					renderer.setText(a.getName());
 					return renderer;
 				}
@@ -244,13 +246,13 @@ public class AssociateDataTypeAction extends DockingAction {
 
 			clearStatusText();
 
-			archive = (Archive) archivesBox.getSelectedItem();
+			archive = archivesBox.getSelectedItem();
 			if (archive == null) {
 				setStatusText("Please choose an archive");
 				return;
 			}
 
-			if (!archive.isModifiable()) {
+			if (!archive.isChangeable()) {
 				setStatusText(
 					"Archive is not modifiable. You must first open this archive for edit.");
 				return;
@@ -318,7 +320,7 @@ public class AssociateDataTypeAction extends DockingAction {
 			DockingWindowManager.showDialog(parent, this);
 		}
 
-		Archive getArchive() {
+		PersistentDataTypeArchive getArchive() {
 			return archive;
 		}
 

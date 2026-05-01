@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,48 +22,49 @@
 import java.io.File;
 
 import ghidra.app.script.GhidraScript;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.Category;
-import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 public class SynchronizeGDTCategoryPaths extends GhidraScript {
 
 	@Override
 	protected void run() throws Exception {
 
-		File firstFile = askFile("Select First GDT File", "Select 1st");
-		try (FileDataTypeManager firstArchive =
-			FileDataTypeManager.openFileArchive(firstFile, false)) {
-			if (hasWarning(firstArchive, firstFile)) {
+		FileDataTypeArchive archive1 = null;
+		FileDataTypeArchive archive2 = null;
+		try {
+			File file1 = askFile("Select First GDT File", "Select 1st");
+			archive1 = DataTypeArchiveFactory.openReadOnly(file1, this, TaskMonitor.DUMMY);
+			if (hasWarning(archive1, file1)) {
 				return;
 			}
+			File file2 = askFile("Select Second GDT File", "Select 2nd");
+			archive2 = DataTypeArchiveFactory.openReadOnly(file2, this, TaskMonitor.DUMMY);
+			if (hasWarning(archive2, file2)) {
+				return;
+			}
+			Category firstCategory = archive1.getDataTypeManager().getRootCategory();
+			Category secondCategory = archive2.getDataTypeManager().getRootCategory();
 
-			File secondFile = askFile("Select Second GDT File", "Select 2nd");
-			try (FileDataTypeManager secondArchive =
-				FileDataTypeManager.openFileArchive(secondFile, true)) {
-				if (hasWarning(secondArchive, secondFile)) {
-					return;
-				}
-
-				int transactionID =
-					secondArchive.startTransaction("Synchronize Category Path Names");
-				try {
-					Category firstCategory = firstArchive.getRootCategory();
-					Category secondCategory = secondArchive.getRootCategory();
-					synchronizeCategory(firstCategory, secondCategory);
-				}
-				finally {
-					secondArchive.endTransaction(transactionID, true);
-					secondArchive.save();
-					secondArchive.close();
-				}
+			archive2.withTransaction("Synchronized Category Path Names",
+				() -> synchronizeCategory(firstCategory, secondCategory));
+		}
+		finally {
+			if (archive1 != null) {
+				archive1.release(this);
+			}
+			if (archive2 != null) {
+				archive2.release(this);
 			}
 		}
 	}
 
-	private boolean hasWarning(FileDataTypeManager archive, File file) {
+	private boolean hasWarning(FileDataTypeArchive archive, File file) {
 		ArchiveWarning warning = archive.getWarning();
 		if (warning == ArchiveWarning.NONE) {
 			return false;

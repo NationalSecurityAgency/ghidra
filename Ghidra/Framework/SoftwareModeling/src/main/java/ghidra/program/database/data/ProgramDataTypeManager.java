@@ -25,21 +25,24 @@ import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.Options;
-import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramEvent;
-import ghidra.util.*;
+import ghidra.util.Lock;
+import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Class for managing data types in a program
  */
-public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implements ManagerDB {
+public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
+		implements ProgramDBModule {
 
 	private static final String OLD_DT_ARCHIVE_FILENAMES = "DataTypeArchiveFilenames"; // eliminated with Ghidra 4.3
 
@@ -65,11 +68,16 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 		upgrade = (openMode == OpenMode.UPGRADE);
 	}
 
+	@Override
+	public DataTypeStore getDataStore() {
+		return program;
+	}
+
 	/**
 	 * Save the current data organization to facilitate future change detection and 
 	 * upgrades.  This method must be invoked by {@link ProgramDB} during the final
 	 * stage of program creation (i.e., openMode == CREATE).
-	 * @throws IOException if failure occured while saving data organization.
+	 * @throws IOException if failure occurred while saving data organization.
 	 */
 	@Override
 	public void saveDataOrganization() throws IOException {
@@ -87,7 +95,7 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	public void setProgram(ProgramDB p) {
+	public void setDomainObject(ProgramDB p) {
 		this.program = p;
 		try {
 			setProgramArchitecture(p, p.getSymbolTable().getVariableStorageManager(), false,
@@ -121,7 +129,7 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (openMode == OpenMode.UPGRADE) {
 			doSourceArchiveUpdates(monitor);
@@ -143,17 +151,6 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	@Override
 	public String getName() {
 		return program.getName();
-	}
-
-	@Override
-	public void setName(String name) throws InvalidNameException {
-		if (name == null || name.length() == 0) {
-			throw new InvalidNameException("Name is invalid: " + name);
-		}
-
-		program.setName(name);
-		Category root = getRootCategory();
-		categoryRenamed(CategoryPath.ROOT, root);
 	}
 
 	@Override
@@ -316,20 +313,9 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	public DomainFile getDomainFile() {
-		return program.getDomainFile();
-	}
-
-	@Override
-	public String getDomainFileID() {
+	protected String getDomainFileID() {
 		DomainFile domainFile = program.getDomainFile(); // Can be null if it has never been saved.
 		return (domainFile != null) ? domainFile.getFileID() : null;
-	}
-
-	@Override
-	public String getPath() {
-		DomainFile domainFile = program.getDomainFile(); // Can be null if it has never been saved.
-		return (domainFile != null) ? domainFile.getPathname() : null;
 	}
 
 	@Override

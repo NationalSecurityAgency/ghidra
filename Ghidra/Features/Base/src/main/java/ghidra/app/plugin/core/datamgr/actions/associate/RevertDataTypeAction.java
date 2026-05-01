@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
@@ -60,8 +59,8 @@ public class RevertDataTypeAction extends DockingAction {
 
 		DataTypeNode dataTypeNode = (DataTypeNode) node;
 		DataType dataType = dataTypeNode.getDataType();
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
-		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(handler, dataType);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
 
 		switch (syncStatus) {
 			case UNKNOWN:
@@ -90,13 +89,13 @@ public class RevertDataTypeAction extends DockingAction {
 		DataTypeNode dataTypeNode = (DataTypeNode) node;
 		DataType dataType = dataTypeNode.getDataType();
 		DataTypeManager dtm = dataType.getDataTypeManager();
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		SourceArchive sourceArchive = dataType.getSourceArchive();
 		if (!dtm.isUpdatable()) {
 			DataTypeUtils.showUnmodifiableArchiveErrorMessage(gTree, "Revert Failed", dtm);
 			return;
 		}
-		DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		if (sourceDTM == null) {
 			Msg.showInfo(getClass(), gTree, "Revert Failed",
 				"Source Archive not open: " + sourceArchive.getName());
@@ -105,7 +104,8 @@ public class RevertDataTypeAction extends DockingAction {
 		plugin.revert(dataType);
 
 		// Source archive data type manager was already checked for null above.
-		DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, sourceArchive);
+		DataTypeSynchronizer synchronizer =
+			new DataTypeSynchronizer(archiveManager, dtm, sourceArchive);
 		synchronizer.reSyncOutOfSyncInTimeOnlyDataTypes();
 	}
 

@@ -38,8 +38,8 @@ public class DataTypeUtilitiesTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
-		dataTypeManager = new StandAloneDataTypeManager("Test");
-		dataTypeManager.startTransaction("Test");
+		dataTypeManager = new TransientDataTypeManager("Test");
+		txID = dataTypeManager.startTransaction("Test");
 	}
 
 	@After
@@ -47,6 +47,7 @@ public class DataTypeUtilitiesTest extends AbstractGenericTest {
 		if (txID != 0) {
 			dataTypeManager.endTransaction(txID, true);
 		}
+		dataTypeManager.close();
 	}
 
 	@Test

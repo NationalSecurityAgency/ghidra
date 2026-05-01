@@ -33,11 +33,13 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.actions.FindStructuresBySizeAction;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
+import ghidra.app.plugin.core.datamgr.archive.InvalidArchive;
+import ghidra.framework.model.DomainFolder;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.database.data.merge.StructureBuilder;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.util.UniversalID;
 import ghidra.util.table.GhidraTable;
 
@@ -104,7 +106,7 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testEditPaths() {
-		Preferences.setProperty(DataTypeManagerHandler.DATA_TYPE_ARCHIVE_PATH_KEY,
+		Preferences.setProperty(ArchiveManager.DATA_TYPE_ARCHIVE_PATH_KEY,
 			"/archives/subPath" + File.pathSeparator + "/otherArchives/subpath");
 		performAction("Edit Archive Paths", "DataTypeManagerPlugin", false);
 
@@ -306,7 +308,7 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		DataTypeManagerPlugin plugin = getPlugin(tool, DataTypeManagerPlugin.class);
 		List<DataTypeSyncInfo> list = new ArrayList<>();
 		Set<DataTypeSyncInfo> set = new HashSet<>();
-		StandAloneDataTypeManager sourceDtm = createChangedDatatypesFromArchive(list, set);
+		DataTypeManager sourceDtm = createChangedDatatypesFromArchive(list, set);
 
 		DataType dt1 = sourceDtm.getDataType("/MyDataType1");
 
@@ -343,19 +345,19 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 	private void removeInvalidArchives() {
 		DataTypeManagerPlugin plugin = env.getPlugin(DataTypeManagerPlugin.class);
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		@SuppressWarnings("unchecked")
-		Map<UniversalID, InvalidFileArchive> invalid =
-			(Map<UniversalID, InvalidFileArchive>) getInstanceField("invalidArchives", handler);
-		Collection<InvalidFileArchive> values = invalid.values();
-		for (InvalidFileArchive invalidFileArchive : values) {
-			removeArchive(handler, invalidFileArchive);
+		Map<UniversalID, InvalidArchive> invalid =
+			(Map<UniversalID, InvalidArchive>) getInstanceField("invalidArchives",
+				archiveManager);
+		Collection<InvalidArchive> values = invalid.values();
+		for (InvalidArchive invalidFileArchive : values) {
+			removeInvalidArchive(archiveManager, invalidFileArchive);
 		}
 	}
 
-	private void removeArchive(final DataTypeManagerHandler handler,
-			final InvalidFileArchive archive) {
-		runSwing(() -> handler.removeInvalidArchive(archive));
+	private void removeInvalidArchive(ArchiveManager archiveManager, InvalidArchive archive) {
+		runSwing(() -> archiveManager.closeInvalidArchive(archive));
 	}
 
 	private DataTypesProvider getVisibleProvider() {
@@ -370,18 +372,20 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		return null;// cannot get here
 	}
 
-	private StandAloneDataTypeManager createChangedDatatypesFromArchive(List<DataTypeSyncInfo> list,
+	private DataTypeManager createChangedDatatypesFromArchive(List<DataTypeSyncInfo> list,
 			Set<DataTypeSyncInfo> set) {
 		DataTypeManager dtm = program.getDataTypeManager();
 
-		StandAloneDataTypeManager sourceDtm = new StandAloneDataTypeManager("MyArhcive") {
-			@Override
-			public ArchiveType getType() {
-				// Need to not be the default TEMPORARY type so that the universal ID of our data 
-				// types will be maintained.  This is needed to associate the types.
-				return ArchiveType.FILE;
-			}
-		};
+		DomainFolder rootFolder = env.getGhidraProject().getRootFolder();
+		ProjectDataTypeArchive archive;
+		try {
+			archive = DataTypeArchiveFactory.createProjectArchive(rootFolder, "MyArchive", this);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		DataTypeManager sourceDtm = archive.getDataTypeManager();
+
 		StructureDataType sdt1 = new StructureDataType("MyDataType1", 0);
 		sdt1.add(new PointerDataType(new StringDataType()), "name", null);
 		sdt1.add(new IntegerDataType(), "age", null);

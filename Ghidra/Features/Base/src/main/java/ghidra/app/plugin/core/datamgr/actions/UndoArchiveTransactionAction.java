@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,11 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import java.io.IOException;
+
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.program.model.data.StandAloneDataTypeManager;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.util.Msg;
 
 public class UndoArchiveTransactionAction extends AbstractUndoRedoArchiveTransactionAction {
 
@@ -28,18 +31,24 @@ public class UndoArchiveTransactionAction extends AbstractUndoRedoArchiveTransac
 	}
 
 	@Override
-	protected boolean canExecute(StandAloneDataTypeManager dtm) {
-		return dtm.canUndo();
+	protected boolean canExecute(PersistentDataTypeArchive dta) {
+		return dta.canUndo();
 	}
 
 	@Override
-	protected String getNextName(StandAloneDataTypeManager dtm) {
-		return dtm.getUndoName();
+	protected String getNextName(PersistentDataTypeArchive dta) {
+		return dta.getUndoName();
 	}
 
 	@Override
-	protected void execute(StandAloneDataTypeManager dtm) {
-		dtm.undo();
+	protected void execute(PersistentDataTypeArchive dta) {
+		try {
+			dta.undo();
+		}
+		catch (IOException e) {
+			Msg.showError(this, null, "Archive Undo Failed",
+				"Failed to undo last transaction: " + dta.getName(), e);
+		}
 	}
 
 }

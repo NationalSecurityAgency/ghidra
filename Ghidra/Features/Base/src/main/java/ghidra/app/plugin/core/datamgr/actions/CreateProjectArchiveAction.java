@@ -22,9 +22,8 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.util.exception.CancelledException;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 
 public class CreateProjectArchiveAction extends DockingAction {
 	private final DataTypeManagerPlugin plugin;
@@ -40,17 +39,13 @@ public class CreateProjectArchiveAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		try {
-			Archive newArchive = plugin.getDataTypeManagerHandler().createProjectArchive();
-			DataTypeArchiveGTree gTree = plugin.getProvider().getGTree();
-			selectNewArchive(newArchive, gTree);
-		}
-		catch (CancelledException ce) {
-			plugin.getTool().setStatusInfo("Create project archive was cancelled.");
-		}
+		ProjectDataTypeArchive newArchive = plugin.getArchiveManager().createProjectArchive();
+		DataTypeArchiveGTree gTree = plugin.getProvider().getGTree();
+		selectNewArchive(newArchive, gTree);
 	}
 
-	private void selectNewArchive(final Archive archive, final DataTypeArchiveGTree gTree) {
+	private void selectNewArchive(ProjectDataTypeArchive archive,
+			final DataTypeArchiveGTree gTree) {
 
 		GTreeNode root = gTree.getViewRoot();
 		gTree.whenNodeIsReady(root, archive.getName(), archiveNode -> {

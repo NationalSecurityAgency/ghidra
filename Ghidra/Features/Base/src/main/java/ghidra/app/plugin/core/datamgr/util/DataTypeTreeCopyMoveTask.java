@@ -22,10 +22,10 @@ import java.util.regex.Pattern;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeState;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.ProgramArchive;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
+import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -51,8 +51,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	private DataTypeArchiveGTree gTree;
 	private Category destinationCategory;
 	private List<GTreeNode> copyMoveNodes;
-	private Archive sourceArchive;
-	private Archive destinationArchive;
+	private DataTypeStore sourceDataTypeStore;
+	private DataTypeStore destinationDataTypeStore;
 	private boolean promptToAssociateTypes = true;
 	private ActionType actionType;
 	private DataTypeConflictHandler conflictHandler;
@@ -66,11 +66,11 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	public DataTypeTreeCopyMoveTask(CategoryNode destinationNode, List<GTreeNode> droppedNodeList,
 			ActionType actionType, DataTypeArchiveGTree gTree,
 			DataTypeConflictHandler conflictHandler) {
-		this(findArchive(destinationNode), destinationNode.getCategory(), droppedNodeList,
+		this(findDataStore(destinationNode), destinationNode.getCategory(), droppedNodeList,
 			actionType, gTree, conflictHandler);
 	}
 
-	public DataTypeTreeCopyMoveTask(Archive destinationArchive, Category destinationCategory,
+	public DataTypeTreeCopyMoveTask(DataTypeStore destination, Category destinationCategory,
 			List<GTreeNode> droppedNodeList, ActionType actionType, DataTypeArchiveGTree gTree,
 			DataTypeConflictHandler conflictHandler) {
 		super("Drag/Drop", true, true, true);
@@ -79,16 +79,16 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		this.actionType = actionType;
 		this.gTree = gTree;
 		this.conflictHandler = conflictHandler;
-		this.destinationArchive = destinationArchive;
+		this.destinationDataTypeStore = destination;
 
 		GTreeNode firstNode = copyMoveNodes.get(0);
-		this.sourceArchive = findArchive(firstNode);
+		this.sourceDataTypeStore = findDataStore(firstNode);
 	}
 
-	private static Archive findArchive(GTreeNode node) {
+	private static DataTypeStore findDataStore(GTreeNode node) {
 		while (node != null) {
-			if (node instanceof ArchiveNode) {
-				return ((ArchiveNode) node).getArchive();
+			if (node instanceof DataTypeStoreNode archiveNode) {
+				return archiveNode.getDataTypeStore();
 			}
 			node = node.getParent();
 		}
@@ -178,7 +178,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	private boolean checkForDifferentSourceArchives() {
 
 		for (GTreeNode node : copyMoveNodes) {
-			if (sourceArchive != findArchive(node)) {
+			if (sourceDataTypeStore != findDataStore(node)) {
 				Msg.showError(this, gTree, "Copy Failed",
 					"All data types must be from the same archive!");
 				return true;
@@ -189,7 +189,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	}
 
 	private void doCopy(TaskMonitor monitor) {
-		DataTypeManager dtm = destinationArchive.getDataTypeManager();
+		DataTypeManager dtm = destinationDataTypeStore.getDataTypeManager();
 		int txId = dtm.startTransaction("Copy/Move Category/DataType");
 		try {
 			copyOrMoveNodesToCategory(monitor);
@@ -202,9 +202,9 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	private boolean needToCreateAssociation() {
 
 		// copying from the program archive into another archive
-		return sourceArchive != destinationArchive &&
-			!(destinationArchive instanceof ProgramArchive) &&
-			(sourceArchive instanceof ProgramArchive);
+		return sourceDataTypeStore != destinationDataTypeStore &&
+			!(destinationDataTypeStore instanceof Program) &&
+			(sourceDataTypeStore instanceof Program);
 	}
 
 	private void collapseArchives() {
@@ -223,8 +223,9 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 		monitor.initialize(copyMoveNodes.size());
 
-		SourceArchive destination = destinationArchive.getDataTypeManager().getLocalSourceArchive();
-		DataTypeManager dtm = sourceArchive.getDataTypeManager();
+		SourceArchive destination =
+			destinationDataTypeStore.getDataTypeManager().getLocalSourceArchive();
+		DataTypeManager dtm = sourceDataTypeStore.getDataTypeManager();
 		int txId = dtm.startTransaction("Associate Data Types");
 		try {
 			for (GTreeNode node : copyMoveNodes) {
@@ -348,7 +349,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 			monitor.setMessage("Adding " + node.getName());
 
 			// COPY is only allowed action if the source and destination archives are different.
-			if (actionType == ActionType.COPY || sourceArchive != destinationArchive) {
+			if (actionType == ActionType.COPY || sourceDataTypeStore != destinationDataTypeStore) {
 				copyNode(toCategory, node, monitor);
 			}
 			else {

@@ -46,7 +46,7 @@ import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.store.db.PackedDatabase;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.HelpLocation;
@@ -150,7 +150,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	void writeState(SaveState saveState) {
 		// Get the current state if the dialog has been displayed
 		if (!initialBuild) {
-			ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+			ComboBoxItem item = comboBox.getSelectedItem();
 
 			currentProfileName = item.file.getName();
 			userDefined = item.isUserDefined;
@@ -172,7 +172,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		if (initialBuild) {
 			return;
 		}
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 		if (item.isChanged) {
 			processItemChanged(item);
 		}
@@ -255,7 +255,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		});
 
 		tableListener = e -> {
-			ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+			ComboBoxItem item = comboBox.getSelectedItem();
 			item.isChanged = !initialBuild;
 			notifyContextChanged();
 		};
@@ -270,7 +270,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
 		parsePathTableListener = e -> {
-			ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+			ComboBoxItem item = comboBox.getSelectedItem();
 			item.isChanged = !initialBuild;
 			notifyContextChanged();
 			pathPanel.getTable().repaint();
@@ -485,7 +485,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	}
 
 	private void itemChanged() {
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 		if (item == null) {
 			return;
 		}
@@ -497,12 +497,12 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		saveAction = new DockingAction("Save Profile", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				save((ComboBoxItem) comboBox.getSelectedItem());
+				save(comboBox.getSelectedItem());
 			}
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+				ComboBoxItem item = comboBox.getSelectedItem();
 				return item.isChanged && item.isUserDefined;
 			}
 		};
@@ -516,7 +516,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		saveAsAction = new DockingAction("Save Profile As", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				saveAs((ComboBoxItem) comboBox.getSelectedItem());
+				saveAs(comboBox.getSelectedItem());
 			}
 
 			@Override
@@ -577,7 +577,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+				ComboBoxItem item = comboBox.getSelectedItem();
 				return item.isUserDefined;
 			}
 		};
@@ -590,7 +590,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	}
 
 	private void refresh() {
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 		if (item.isChanged) {
 			processItemChanged(item);
 		}
@@ -610,7 +610,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	private void clear() {
 		pathPanel.clear();
 		parseOptionsField.setText("");
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 		item.isChanged = true;
 	}
 
@@ -681,7 +681,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		}
 		tableModel.removeTableModelListener(tableListener);
 		parsePathTableModel.removeTableModelListener(parsePathTableListener);
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 		item.isChanged = false;
 
 		StringBuffer sb = new StringBuffer();
@@ -817,7 +817,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	}
 
 	private void delete() {
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 		if (item.isUserDefined) {
 			if (OptionDialog.showOptionDialog(getComponent(), "Delete Profile?",
 				"Are you sure you want to delete profile " + item.getName(), "Delete",
@@ -944,8 +944,8 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		}
 
 		String name = file.getName();
-		if (!file.getName().endsWith(FileDataTypeManager.SUFFIX)) {
-			file = new File(file.getParentFile(), name + FileDataTypeManager.SUFFIX);
+		if (!file.getName().endsWith(FileDataTypeArchive.SUFFIX)) {
+			file = new File(file.getParentFile(), name + FileDataTypeArchive.SUFFIX);
 		}
 
 		if (!file.exists()) {
@@ -1086,7 +1086,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	}
 
 	ComboBoxItem getCurrentItem() {
-		ComboBoxItem item = (ComboBoxItem) comboBox.getSelectedItem();
+		ComboBoxItem item = comboBox.getSelectedItem();
 
 		return item;
 	}

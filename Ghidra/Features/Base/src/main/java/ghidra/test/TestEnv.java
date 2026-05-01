@@ -52,7 +52,7 @@ import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
@@ -689,7 +689,7 @@ public class TestEnv {
 
 	public static ResourceFile findProvidedDataTypeArchive(String relativePathName) {
 		relativePathName = relativePathName.replace('\\', '/');
-		String suffix = FileDataTypeManager.SUFFIX;
+		String suffix = FileDataTypeArchive.SUFFIX;
 		if (!relativePathName.endsWith(suffix)) {
 			relativePathName = relativePathName + suffix;
 		}
@@ -729,7 +729,7 @@ public class TestEnv {
 		}
 
 		String baseName = relativePathName;
-		String suffix = FileDataTypeManager.SUFFIX;
+		String suffix = FileDataTypeArchive.SUFFIX;
 		if (relativePathName.toLowerCase().endsWith(suffix)) {
 			baseName = baseName.substring(0, baseName.length() - suffix.length());
 		}
@@ -1077,7 +1077,7 @@ public class TestEnv {
 		programManager.disposeOpenPrograms();
 
 		ProgramBuilder.disposeAllBuilders();
-		
+
 		if (gp.getProject() == null) {
 			throw new IllegalStateException("The TestEnv's GhidraProject has already been closed!");
 		}

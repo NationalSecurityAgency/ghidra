@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainObject;
 
 /**
  * Simple static class to keep track of transient domain file/domain objects.
@@ -61,7 +62,8 @@ public class TransientDataManager {
 	}
 
 	/**
-	 * Populates the given array list with all the transients.
+	 * Populates the given array list with all the transient ({@link DomainFileProxy}
+	 * currently in-use.
 	 * @param l the list populate with the transients
 	 */
 	public static void getTransients(List<DomainFile> l) {
@@ -74,7 +76,13 @@ public class TransientDataManager {
 	 */
 	public static void releaseFiles(Object consumer) {
 		for (DomainFileProxy df : set) {
-			df.release(consumer);
+			DomainObject dobj = df.getOpenedDomainObject(TransientDataManager.class);
+			if (dobj != null) {
+				if (dobj.getConsumerList().contains(consumer)) {
+					dobj.release(consumer);
+				}
+				dobj.release(TransientDataManager.class);
+			}
 		}
 	}
 }

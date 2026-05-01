@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,10 @@ import java.util.ArrayList;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.util.task.TaskMonitor;
 
 public class FileDataTypeManagerTest extends AbstractGenericTest {
 
@@ -43,33 +46,37 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCreateAndOpenArchive() {
-
-		FileDataTypeManager dtMgr = null;
+	public void testCreateAndOpenArchive() throws Exception {
+		FileDataTypeArchive archive = null;
+		DataTypeManager dtMgr = null;
 
 		try {
-			dtMgr = FileDataTypeManager.createFileArchive(testArchiveFile);
+			archive = DataTypeArchiveFactory.createFileArchive(testArchiveFile, this);
+			dtMgr = archive.getDataTypeManager();
 			assertTrue(dtMgr.isUpdatable());
 			DataType dt1, dt2;
 			int txId = dtMgr.startTransaction("Add Types");
 			try {
 				dt1 =
-					dtMgr.addDataType(new TypedefDataType("T1", ByteDataType.dataType), null).clone(
-						null);
+					dtMgr.addDataType(new TypedefDataType("T1", ByteDataType.dataType), null)
+							.clone(
+								null);
 				dt2 =
-					dtMgr.addDataType(new TypedefDataType("T2", ByteDataType.dataType), null).clone(
-						null);
+					dtMgr.addDataType(new TypedefDataType("T2", ByteDataType.dataType), null)
+							.clone(
+								null);
 			}
 			finally {
 				dtMgr.endTransaction(txId, true);
 			}
-			assertTrue(dtMgr.isChanged());
-			dtMgr.save();
-			dtMgr.close();
+			assertTrue(archive.isChanged());
+			archive.save(null, TaskMonitor.DUMMY);
+			archive.release(this);
 			dtMgr = null;
 
-			dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, false);
-			assertEquals(ArchiveWarning.NONE, dtMgr.getWarning());
+			archive = DataTypeArchiveFactory.openReadOnly(testArchiveFile, this, TaskMonitor.DUMMY);
+			dtMgr = archive.getDataTypeManager();
+			assertEquals(ArchiveWarning.NONE, archive.getWarning());
 			assertFalse(dtMgr.isUpdatable());
 
 			ArrayList<DataType> list = new ArrayList<>();
@@ -80,8 +87,11 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 
 				StringBuilder buffy = new StringBuilder();
 				for (DataType dt : list) {
-					buffy.append(dt.getName()).append(" - ").append(dt.getDescription()).append(
-						"\n");
+					buffy.append(dt.getName())
+							.append(" - ")
+							.append(dt.getDescription())
+							.append(
+								"\n");
 				}
 
 				Assert.fail(
@@ -92,76 +102,79 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 			assertTrue(dt1.isEquivalent(dtMgr.getDataType(CategoryPath.ROOT, "T1")));
 			assertTrue(dt2.isEquivalent(dtMgr.getDataType(CategoryPath.ROOT, "T2")));
 
-			dtMgr.close();
-			dtMgr = null;
+			archive.release(this);
+			archive = null;
 		}
 		catch (IOException e) {
 			failWithException("Unexpected exception", e);
 		}
 		finally {
-			if (dtMgr != null) {
-				dtMgr.close();
+			if (archive != null) {
+				archive.release(this);
 			}
 		}
 	}
 
 	@Test
-	public void testModifyArchive() {
+	public void testModifyArchive() throws Exception {
 
 		testCreateAndOpenArchive(); // establish archive
 
 		for (int i = 0; i < 10; i++) {
 
-			FileDataTypeManager dtMgr = null;
+			FileDataTypeArchive archive = null;
 			try {
-				dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, true);
-				assertEquals(ArchiveWarning.NONE, dtMgr.getWarning());
-				assertTrue("Archive not updateable, i=" + i, dtMgr.isUpdatable());
+				archive = DataTypeArchiveFactory.openForUpdate(testArchiveFile, true, this,
+					TaskMonitor.DUMMY);
+				assertEquals(ArchiveWarning.NONE, archive.getWarning());
+				assertTrue("Archive not updateable, i=" + i, archive.isChangeable());
 
-				int txId = dtMgr.startTransaction("Add Type");
+				int txId = archive.startTransaction("Add Type");
 				try {
-					dtMgr.addDataType(new TypedefDataType("X" + i, ByteDataType.dataType), null);
+					DataTypeManager dtm = archive.getDataTypeManager();
+					dtm.addDataType(new TypedefDataType("X" + i, ByteDataType.dataType), null);
 
 				}
 				finally {
-					dtMgr.endTransaction(txId, true);
+					archive.endTransaction(txId, true);
 				}
 
-				dtMgr.save();
-				dtMgr.close();
-				dtMgr = null;
+				archive.save(null, TaskMonitor.DUMMY);
+				archive.release(this);
+				archive = null;
 			}
 			catch (IOException e) {
 				Assert.fail("Unexpected Exception");
 			}
 			finally {
-				if (dtMgr != null) {
-					dtMgr.close();
+				if (archive != null) {
+					archive.release(this);
 				}
 			}
 
 		}
 
-		FileDataTypeManager dtMgr = null;
+		FileDataTypeArchive archive = null;
 
 		try {
-			dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, false);
-			assertEquals(ArchiveWarning.NONE, dtMgr.getWarning());
-			assertFalse(dtMgr.isUpdatable());
+			archive = DataTypeArchiveFactory.openReadOnly(testArchiveFile, this, TaskMonitor.DUMMY);
+			assertEquals(ArchiveWarning.NONE, archive.getWarning());
+			assertFalse(archive.isChangeable());
+			DataTypeManager dtm = archive.getDataTypeManager();
 
 			ArrayList<DataType> list = new ArrayList<>();
-			dtMgr.getAllDataTypes(list);
+			dtm.getAllDataTypes(list);
 			assertEquals(13, list.size());
 
-			dtMgr.close();
-			dtMgr = null;
+			archive.release(this);
+			archive = null;
 		}
 		catch (IOException e) {
 			Assert.fail("Unexpected Exception");
 		}
 		finally {
-			if (dtMgr != null) {
-				dtMgr.close();
+			if (archive != null) {
+				archive.release(this);
 			}
 		}
 

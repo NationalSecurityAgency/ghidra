@@ -34,43 +34,46 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.cparser.C.ParseException;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.util.task.TaskMonitor;
 
 public class CreateJNIGDTArchivesScript extends GhidraScript {
 
 	private File outputDirectory;
-	
+
 	// location of header files base directory
 	private static String headerFilePath = "/data/HeaderFiles";
 
 	@Override
 	protected void run() throws Exception {
 		outputDirectory = askDirectory("Select Directory for GDT files", "Select GDT Output Dir");
-		
+
 		parseGDT_Linux_JNI();
 
 		parseGDT_Windows_JNI();
 
 	}
 
-	private void parseHeaderFilesToGDT(DataTypeManager openTypes[], File outputDir, String gdtName, String languageID, String compiler, String[] filenames, String[] args)
+	private void parseHeaderFilesToGDT(DataTypeManager openTypes[], File outputDir, String gdtName,
+			String languageID, String compiler, String[] filenames, String[] args)
 			throws ParseException, ghidra.app.util.cparser.CPP.ParseException, IOException {
-		
+
 		String dataTypeFile = outputDir + File.separator + gdtName + ".gdt";
-		
+
 		File f = getArchiveFile(dataTypeFile);
-		
-		FileDataTypeManager dtMgr = CParserUtils.parseHeaderFiles(openTypes, filenames, null, args,
-			f.getAbsolutePath(), languageID, compiler, monitor);
-		
-		dtMgr.close();
+
+		FileDataTypeArchive archive = CParserUtils.parseHeaderFiles(filenames, null, args,
+			f.getAbsolutePath(), languageID, compiler, openTypes, this, monitor);
+
+		archive.release(this);
 	}
-	
+
 	/**
 	 * Turn string into a file, delete old archive/lock file if it exists
 	 * 
-	 * @param dataTypeFile
+	 * @param dataTypeFile the file containing the stored datatypes
 	 * 
 	 * @return file
 	 */
@@ -87,36 +90,34 @@ public class CreateJNIGDTArchivesScript extends GhidraScript {
 		return f;
 	}
 
-
-	public void parseGDT_Linux_JNI() throws Exception {	
+	public void parseGDT_Linux_JNI() throws Exception {
 		String filenames[] = {
-				"jni.h",
-				"jawt.h",
-				"jdwpTransport.h",
-				"jvmti.h",
-				"jvmticmlr.h",
-				"classfile_constants.h",
-		};
-		
-		String args[] = {
-				"-I"+headerFilePath+"/jni/linux",
-				"-I"+headerFilePath+"/jni/linux/linux",
-				"-D_X86_",
-				"-D__STDC__",
-				"-D_GNU_SOURCE",
-				"-D__WORDSIZE=64",
-				"-D__builtin_va_list=void *",
-				"-D__DO_NOT_DEFINE_COMPILE",
-				"-D_Complex",
-				"-D__NO_STRING_INLINES",
-				"-D__signed__",
-				"-D__extension__=",
-				"-D__GLIBC_HAVE_LONG_LONG=1",
-				"-D__need_sigset_t",
-				"-Daligned_u64=uint64_t",
+			"jni.h",
+			"jawt.h",
+			"jdwpTransport.h",
+			"jvmti.h",
+			"jvmticmlr.h",
+			"classfile_constants.h",
 		};
 
-		
+		String args[] = {
+			"-I" + headerFilePath + "/jni/linux",
+			"-I" + headerFilePath + "/jni/linux/linux",
+			"-D_X86_",
+			"-D__STDC__",
+			"-D_GNU_SOURCE",
+			"-D__WORDSIZE=64",
+			"-D__builtin_va_list=void *",
+			"-D__DO_NOT_DEFINE_COMPILE",
+			"-D_Complex",
+			"-D__NO_STRING_INLINES",
+			"-D__signed__",
+			"-D__extension__=",
+			"-D__GLIBC_HAVE_LONG_LONG=1",
+			"-D__need_sigset_t",
+			"-Daligned_u64=uint64_t",
+		};
+
 		// Using another archive while parsing will cause:
 		//  - a dependence on the other archive
 		//  - any missing data types while parsing are supplied if present from existingDTMgr
@@ -125,40 +126,45 @@ public class CreateJNIGDTArchivesScript extends GhidraScript {
 		//
 		// NOTE: This will only occur if the data type from the exisitngDTMgr is equivalent.
 		//
-		ResourceFile clib64ArchiveFile = DataTypeArchiveUtility.findArchiveFile("generic_clib_64.gdt");
-		File file = new File(clib64ArchiveFile.getAbsolutePath());
-		DataTypeManager existingDTMgr = FileDataTypeManager.openFileArchive(file, false);
+		ResourceFile clib64ArchiveFile =
+			DataTypeArchiveUtility.findArchiveFile("generic_clib_64.gdt");
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.openReadOnly(clib64ArchiveFile, this, TaskMonitor.DUMMY);
+
+		DataTypeManager existingDTMgr = archive.getDataTypeManager();
 		DataTypeManager openTypes[] = { existingDTMgr };
-		
-		parseHeaderFilesToGDT(openTypes, outputDirectory, "jni_linux", "x86:LE:64:default", "gcc", filenames, args);
+
+		parseHeaderFilesToGDT(openTypes, outputDirectory, "jni_linux", "x86:LE:64:default", "gcc",
+			filenames, args);
+		archive.release(this);
 	}
-	
-	public void parseGDT_Windows_JNI() throws Exception {	
+
+	public void parseGDT_Windows_JNI() throws Exception {
 		String filenames[] = {
-				"jni.h",
-				"jawt.h",
-				"jdwpTransport.h",
-				"jvmti.h",
-				"jvmticmlr.h",
-				"classfile_constants.h",
+			"jni.h",
+			"jawt.h",
+			"jdwpTransport.h",
+			"jvmti.h",
+			"jvmticmlr.h",
+			"classfile_constants.h",
 		};
-		
+
 		String args[] = {
-				"-I"+headerFilePath+"/jni/win32",
-				"-I"+headerFilePath+"/jni/win32/win32",
-				"-D_X86_",
-				"-D__STDC__",
-				"-D_GNU_SOURCE",
-				"-D__WORDSIZE=64",
-				"-D__builtin_va_list=void *",
-				"-D__DO_NOT_DEFINE_COMPILE",
-				"-D_Complex",
-				"-D__NO_STRING_INLINES",
-				"-D__signed__",
-				"-D__extension__=",
-				"-D__GLIBC_HAVE_LONG_LONG=1",
-				"-D__need_sigset_t",
-				"-Daligned_u64=uint64_t",
+			"-I" + headerFilePath + "/jni/win32",
+			"-I" + headerFilePath + "/jni/win32/win32",
+			"-D_X86_",
+			"-D__STDC__",
+			"-D_GNU_SOURCE",
+			"-D__WORDSIZE=64",
+			"-D__builtin_va_list=void *",
+			"-D__DO_NOT_DEFINE_COMPILE",
+			"-D_Complex",
+			"-D__NO_STRING_INLINES",
+			"-D__signed__",
+			"-D__extension__=",
+			"-D__GLIBC_HAVE_LONG_LONG=1",
+			"-D__need_sigset_t",
+			"-Daligned_u64=uint64_t",
 		};
 
 		// Using another archive while parsing will cause:
@@ -169,11 +175,17 @@ public class CreateJNIGDTArchivesScript extends GhidraScript {
 		//
 		// NOTE: This will only occur if the data type from the exisitngDTMgr is equivalent.
 		//
-		ResourceFile clib64ArchiveFile = DataTypeArchiveUtility.findArchiveFile("windows_vs12_64.gdt");
-		File file = new File(clib64ArchiveFile.getAbsolutePath());
-		DataTypeManager existingDTMgr = FileDataTypeManager.openFileArchive(file, false);
+
+		ResourceFile clib64ArchiveFile =
+			DataTypeArchiveUtility.findArchiveFile("windows_vs12_64.gdt");
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.openReadOnly(clib64ArchiveFile, this, TaskMonitor.DUMMY);
+
+		DataTypeManager existingDTMgr = archive.getDataTypeManager();
 		DataTypeManager openTypes[] = { existingDTMgr };
-		
-		parseHeaderFilesToGDT(openTypes, outputDirectory, "jni_windows", "x86:LE:64:default", "windows", filenames, args);
+
+		parseHeaderFilesToGDT(openTypes, outputDirectory, "jni_windows", "x86:LE:64:default",
+			"windows", filenames, args);
+		archive.release(this);
 	}
 }
