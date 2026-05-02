@@ -121,6 +121,8 @@ uintb ConstTpl::fix(const ParserWalker &walker) const
   switch(type) {
   case j_start:
     return walker.getAddr().getOffset(); // Fill in starting address placeholder with real address
+  case j_offset:
+    return walker.getAddr().getOffset(); // Fill in starting address placeholder with real address
   case j_next:
     return walker.getNaddr().getOffset(); // Fill in next address placeholder with real address
   case j_next2:
@@ -318,6 +320,10 @@ void ConstTpl::encode(Encoder &encoder) const
     encoder.openElement(sla::ELEM_CONST_START);
     encoder.closeElement(sla::ELEM_CONST_START);
     break;
+  case j_offset:
+    encoder.openElement(sla::ELEM_CONST_OFFSET);
+    encoder.closeElement(sla::ELEM_CONST_OFFSET);
+    break;
   case j_next:
     encoder.openElement(sla::ELEM_CONST_NEXT);
     encoder.closeElement(sla::ELEM_CONST_NEXT);
@@ -416,6 +422,9 @@ void ConstTpl::decode(Decoder &decoder)
   }
   else if (el == sla::ELEM_CONST_FLOWDEST_SIZE) {
     type = j_flowdest_size;
+  }
+  else if (el == sla::ELEM_CONST_OFFSET) {
+    type = j_offset;
   }
   else
     throw LowlevelError("Bad constant type");

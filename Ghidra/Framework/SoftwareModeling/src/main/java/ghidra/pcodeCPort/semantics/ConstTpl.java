@@ -50,7 +50,8 @@ public class ConstTpl {
 		j_flowref,
 		j_flowref_size,
 		j_flowdest,
-		j_flowdest_size
+		j_flowdest_size,
+		j_offset
 	}
 
 	public enum v_field {
@@ -268,6 +269,10 @@ public class ConstTpl {
 				encoder.openElement(ELEM_CONST_START);
 				encoder.closeElement(ELEM_CONST_START);
 				break;
+			case j_offset:
+				encoder.openElement(ELEM_CONST_OFFSET);
+				encoder.closeElement(ELEM_CONST_OFFSET);
+				break;
 			case j_next:
 				encoder.openElement(ELEM_CONST_NEXT);
 				encoder.closeElement(ELEM_CONST_NEXT);
@@ -312,5 +317,4 @@ public class ConstTpl {
 				break;
 		}
 	}
-
 }

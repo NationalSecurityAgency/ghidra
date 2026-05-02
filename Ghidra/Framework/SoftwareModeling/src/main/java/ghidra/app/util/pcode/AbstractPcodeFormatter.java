@@ -173,6 +173,9 @@ public abstract class AbstractPcodeFormatter<T, A extends Appender<T>>
 			if (offset.getType() == ConstTpl.J_START) {
 				appender.appendLabel("inst_start");
 			}
+			else if (offset.getType() == ConstTpl.J_OFFSET) {
+				appender.appendLabel("operand_offset");
+			}
 			else if (offset.getType() == ConstTpl.J_NEXT) {
 				appender.appendLabel("inst_next");
 			}

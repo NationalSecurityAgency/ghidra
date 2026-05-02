@@ -172,6 +172,10 @@ extern ElementId ELEM_CONST_FLOWREF;	///< SLA format element "const_flowref"
 extern ElementId ELEM_CONST_FLOWREF_SIZE;	///< SLA format element "const_flowref_size"
 extern ElementId ELEM_CONST_FLOWDEST;	///< SLA format element "const_flowdest"
 extern ElementId ELEM_CONST_FLOWDEST_SIZE;	///< SLA format element "const_flowdest_size"
+extern ElementId ELEM_OFFSET_EXP;	///< SLA format element "offset_exp"
+extern ElementId ELEM_OFFSET_SYM;	///< SLA format element "operand_offset_sym"
+extern ElementId ELEM_OFFSET_SYM_HEAD;	///< SLA format element "operand_offset_sym_head"
+extern ElementId ELEM_CONST_OFFSET;	///< SLA format element "offset_start"
 
 extern bool isSlaFormat(istream &s);	///< Verify a .sla file header at the current point of the given stream
 extern void writeSlaHeader(ostream &s);	///< Write a .sla file header to the given stream
