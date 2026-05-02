@@ -1,0 +1,94 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*****************************************************************************************
+ * This file is a "mix-in" gradle script that individual gradle projects should include
+ * to enable SpotBugs static analysis.
+ *	
+ * A gradle project can add SpotBugs analysis by including the following in its build.gradle
+ * file:
+ *
+ *     apply from: "$rootProject.projectDir/gradle/spotbugsProject.gradle"
+ *****************************************************************************************/
+
+// Buildscript block to resolve SpotBugs plugin
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'com.github.spotbugs.snom:spotbugs-gradle-plugin:5.2.5'
+    }
+}
+
+// Apply SpotBugs plugin
+apply plugin: 'com.github.spotbugs'
+
+dependencies {
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.13.0'
+}
+
+/*********************************************************************************
+ * SpotBugs Configuration
+ *********************************************************************************/
+spotbugs {
+    toolVersion = '4.8.3'
+    effort = 'max'
+    reportLevel = 'medium'
+    ignoreFailures = true  // Don't fail build on bugs, just report them
+    
+    excludeFilter = file("${rootProject.projectDir}/gradle/support/spotbugs.exclude.xml")
+}
+
+/*********************************************************************************
+ * SpotBugs Main Source Set Task
+ *********************************************************************************/
+tasks.named('spotbugsMain') {
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/main.html")
+        }
+        xml {
+            required = false
+            outputLocation = file("$buildDir/reports/spotbugs/main.xml")
+        }
+    }
+}
+
+/*********************************************************************************
+ * SpotBugs Test Source Set Task (optional, can be enabled if needed)
+ *********************************************************************************/
+tasks.named('spotbugsTest') {
+    enabled = false  // Disable by default to speed up analysis
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/test.html")
+        }
+    }
+}
+
+/*********************************************************************************
+ * Clean SpotBugs reports
+ *********************************************************************************/
+clean {
+    doFirst {
+        logger.debug("Deleting SpotBugs report directory: $buildDir/reports/spotbugs/")
+        file("$buildDir/reports/spotbugs/").deleteDir()
+    }
+}
+

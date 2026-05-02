@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    SpotBugs exclusion filter for Ghidra
+    
+    This file defines patterns to exclude from SpotBugs analysis.
+    Patterns can exclude specific bug types, classes, methods, or fields.
+    
+    Documentation: https://spotbugs.github.io/spotbugs/exclusion.html
+-->
+<FindBugsFilter>
+    <!--
+        Exclude generated code and third-party libraries
+    -->
+    <Match>
+        <Source name="~.*\.generated\..*"/>
+    </Match>
+    
+    <!--
+        Exclude test code from main analysis (test-specific bugs are less critical)
+    -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+    </Match>
+    <Match>
+        <Source name="~.*/test/.*"/>
+    </Match>
+    
+    <!--
+        Exclude known false positives or acceptable patterns
+        Add specific exclusions here as needed
+    -->
+    
+    <!--
+        Example: Exclude specific bug pattern in a specific class
+        <Match>
+            <Class name="com.example.SomeClass"/>
+            <Bug pattern="DM_STRING_CTOR"/>
+        </Match>
+    -->
+</FindBugsFilter>
+
+
