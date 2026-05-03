@@ -75,7 +75,8 @@ void LoadImageBfd::open(void)
 
 {
   if (thebfd != (bfd *)0) throw LowlevelError("BFD library did not initialize");
-  thebfd = bfd_openr(filename.c_str(),target.c_str());
+  const char *bfdtarget = target.empty() ? NULL : target.c_str();
+  thebfd = bfd_openr(filename.c_str(),bfdtarget);
   if (thebfd == (bfd *)0) {
     string errmsg="Unable to open image file: ";
     errmsg += filename;

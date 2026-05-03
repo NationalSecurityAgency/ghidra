@@ -72,6 +72,10 @@ void BfdArchitecture::buildLoader(DocumentStorage &store)
   collectSpecFiles(*errorstream);
   if (getTarget().find("binary")==0)
     ldr = new LoadImageBfd(getFilename(),"binary");
+  else if (getTarget().find(':')!=string::npos)
+    // The target is already a Sleigh language id. Let BFD auto-detect the
+    // object format from the file header.
+    ldr = new LoadImageBfd(getFilename(),"");
   else if (getTarget().find("default")==0)
     ldr = new LoadImageBfd(getFilename(),"default");
   else
