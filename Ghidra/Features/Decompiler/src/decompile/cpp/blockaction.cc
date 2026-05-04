@@ -2110,7 +2110,7 @@ void ConditionalJoin::clear(void)
 int4 ActionStructureTransform::apply(Funcdata &data)
 
 {
-  data.getStructure().finalTransform(data);
+  data.getStructure().finalTransform(data,allowOpMoves);
   return 0;
 }
 
@@ -2127,7 +2127,7 @@ int4 ActionNormalizeBranches::apply(Funcdata &data)
     if (cbranch == (PcodeOp *)0) continue;
     if (cbranch->code() != CPUI_CBRANCH) continue;
     fliplist.clear();
-    if (Funcdata::opFlipInPlaceTest(cbranch,fliplist) != 0)
+    if (Funcdata::opFlipInPlaceTest(cbranch,fliplist,true) != 0)
       continue;
     data.opFlipInPlaceExecute(fliplist);
     bb->flipInPlaceExecute();
@@ -2143,6 +2143,7 @@ int4 ActionPreferComplement::apply(Funcdata &data)
   BlockGraph &graph(data.getStructure());
   
   if (graph.getSize() == 0) return 0;
+  if (graph.hasFinalTransform()) return 0;
   vector<BlockGraph *> vec;
   vec.push_back(&graph);
   int4 pos = 0;
@@ -2159,7 +2160,7 @@ int4 ActionPreferComplement::apply(Funcdata &data)
 	continue;
       vec.push_back((BlockGraph *)childbl);
     }
-    if (curbl->preferComplement(data))
+    if (curbl->preferComplement(data,allowOpMods))
       count += 1;
   }
   data.clearDeadOps();		// Clear any ops deleted during this action

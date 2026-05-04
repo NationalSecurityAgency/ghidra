@@ -268,11 +268,12 @@ public:
 ///
 /// This is currently used to set up \e for loops via BlockWhileDo
 class ActionStructureTransform : public Action {
+  bool allowOpMoves;		///< Are p-code ops allowed to be moved by \b this action
 public:
-  ActionStructureTransform(const string &g) : Action(0,"structuretransform",g) {}	///< Constructor
+  ActionStructureTransform(const string &g,bool allowMoves) : Action(0,"structuretransform",g) { allowOpMoves = allowMoves; }	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionStructureTransform(getGroup());
+    return new ActionStructureTransform(getGroup(),allowOpMoves);
   }
   virtual int4 apply(Funcdata &data);
 };
@@ -298,11 +299,12 @@ public:
 /// This uses the preferComplement() method on structured FlowBlocks to choose between symmetric
 /// structurings, such as an if/else where the \b true and \b false blocks can be swapped.
 class ActionPreferComplement : public Action {
+  bool allowOpMods;		///< Are p-code ops allowed to be modified by \b this action
 public:
-  ActionPreferComplement(const string &g) : Action(0,"prefercomplement",g) {}	///< Constructor
+  ActionPreferComplement(const string &g,bool allowMods) : Action(0,"prefercomplement",g) { allowOpMods = allowMods; }	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionPreferComplement(getGroup());
+    return new ActionPreferComplement(getGroup(),allowOpMods);
   }
   virtual int4 apply(Funcdata &data);
 };
