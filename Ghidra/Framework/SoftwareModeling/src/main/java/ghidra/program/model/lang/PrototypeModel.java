@@ -285,7 +285,7 @@ public class PrototypeModel {
 	 */
 	public VariableStorage getNextArgLocation(Parameter[] params, DataType dataType,
 			Program program) {
-		return getArgLocation(params != null ? params.length : 0, params, dataType, program);
+		return getArgLocation(params != null ? params.length : 0, params, dataType, program, false);
 	}
 
 	/**
@@ -315,9 +315,46 @@ public class PrototypeModel {
 	 * @param program is the Program
 	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
+	 * @deprecated Use {@link #getArgLocation(int, Parameter[], DataType, Program, boolean)} 
+	 * instead.
 	 */
+	@Deprecated
 	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,
 			Program program) {
+		return getArgLocation(argIndex, params, dataType, program, false);
+	}
+
+	/**
+	 * Get the preferred parameter location for a specified index,
+	 * which will be added/inserted within the set of existing function params.
+	 * If existing parameters use custom storage, this method should not be used.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
+	 * zero-length datatype, or any subsequent parameter following such a parameter.
+	 * <br>
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
+	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
+	 * method.  Parameter storage allocation may be affected by the return datatype
+	 * specified (e.g., hidden return storage parameter).
+	 *  
+	 * @param argIndex is the index (0: return storage, 1..n: parameter storage)
+	 * @param params existing set parameters to which the parameter specified by
+	 * argIndex will be added/inserted be appended. Element-0 corresponds to the return
+	 * datatype. Parameter elements prior to the argIndex are required for an accurate 
+	 * storage determination to be made.  Any preceeding parameters not specified will be assumed 
+	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.  
+	 * A null params list will cause all preceeding params to be assumed in a similar fashion.
+	 * @param dataType dataType associated with next parameter location or null
+	 * for a default undefined type.
+	 * @param program is the Program
+	 * @param hasVarArgs if true, any assignment rules specific to varargs functions will be applied.
+	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
+	 * unable to determine suitable location
+	 */
+	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,
+			Program program, boolean hasVarArgs) {
 
 		if (dataType != null) {
 			dataType = dataType.clone(program.getDataTypeManager());
@@ -338,7 +375,7 @@ public class PrototypeModel {
 		}
 		arr[argIndex + 1] = dataType;
 
-		VariableStorage res[] = getStorageLocations(program, arr, false);
+		VariableStorage res[] = getStorageLocations(program, arr, false, hasVarArgs);
 		return res[res.length - 1];
 	}
 
@@ -378,12 +415,13 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given array of return/parameter datatypes.  The first array element
-	 * is the return datatype, which is followed by any input parameter datatypes in order.
-	 * If addAutoParams is true, pointer datatypes will automatically be inserted for "this" or "hidden return"
-	 * input parameters, if needed.  In this case, the dataTypes array should not include explicit entries for
-	 * these parameters.  If addAutoParams is false, the dataTypes array is assumed to already contain explicit
-	 * entries for any of these parameters.
+	 * Compute the variable storage for a given array of return/parameter datatypes.  
+	 * The first array element is the return datatype, which is followed by any input parameter 
+	 * datatypes in order. If addAutoParams is true, pointer datatypes will automatically be 
+	 * inserted for "this" or "hidden return"input parameters, if needed.  In this case, the 
+	 * dataTypes array should not include explicit entries for these parameters.  If addAutoParams 
+	 * is false, the dataTypes array is assumed to already contain explicit entries for any of 
+	 * these parameters.
 	 * <br>
 	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
 	 * or zero-length datatypes or any subsequent parameter following such a parameter.
@@ -395,30 +433,36 @@ public class PrototypeModel {
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
 	 * return storage. The returned array may also include additional auto-parameter storage 
 	 * locations. 
+	 * @deprecated Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
+	@Deprecated
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
 		return getStorageLocations(program, dataTypes, addAutoParams, false);
 	}
 
 	/**
-	 * Calculate input and output storage locations given a function prototype,
-	 * with optional variable-argument support.
-	 * <p>
-	 * This overload additionally sets {@link PrototypePieces#firstVarArgSlot} when
-	 * {@code isVarArgs} is true, enabling {@code VarargsFilter}-based calling-convention
-	 * rules (e.g. {@code <varargs/>} in a .cspec) to be applied correctly.
-	 *
+	 * Compute the variable storage for a given array of return/parameter datatypes.  
+	 * The first array element is the return datatype, which is followed by any input parameter 
+	 * datatypes in order. If addAutoParams is true, pointer datatypes will automatically be 
+	 * inserted for "this" or "hidden return"input parameters, if needed.  In this case, the 
+	 * dataTypes array should not include explicit entries for these parameters.  If addAutoParams 
+	 * is false, the dataTypes array is assumed to already contain explicit entries for any of 
+	 * these parameters.  
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
+	 * or zero-length datatypes or any subsequent parameter following such a parameter.
+	 * 
 	 * @param program is the Program
-	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
+	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
 	 * i.e., minimum array length is 1)
 	 * @param addAutoParams true if auto-parameter storage locations can be generated
-	 * @param isVarArgs true if the function takes variable arguments; when true, all
-	 * data-types supplied in {@code dataTypes} are treated as non-optional and the first
-	 * vararg slot is set to immediately follow the last supplied parameter
-	 * @return dynamic storage locations ordered by ordinal where first element corresponds to
-	 * return storage. The returned array may also include additional auto-parameter storage
-	 * locations.
+	 * @param isVarArgs If true, the last input parameter will be treated as the last fixed argument
+	 * of a varargs function (via {@link PrototypePieces#firstVarArgSlot}).
+	 * @return dynamic storage locations orders by ordinal where first element corresponds to
+	 * return storage. The returned array may also include additional auto-parameter storage 
+	 * locations. 
+	 * 
 	 */
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams, boolean isVarArgs) {

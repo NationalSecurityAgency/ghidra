@@ -53,6 +53,10 @@
           <convert_to_ptr/>
         </rule>
         <rule>
+          <datatype name="union" minsize="1"/>
+          <convert_to_ptr/>
+        </rule>
+        <rule>
           <datatype name="any" maxsize="4"/>
           <join stackspill="true"/>		
         </rule>
@@ -76,6 +80,10 @@
         </pentry>
         <rule>
           <datatype name="struct"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="union"/>
           <hidden_return/>
         </rule>
         <rule>

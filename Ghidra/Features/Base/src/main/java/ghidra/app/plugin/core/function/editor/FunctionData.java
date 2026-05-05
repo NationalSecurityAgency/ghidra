@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -189,10 +189,11 @@ class FunctionData extends FunctionDataView {
 
 	void setVarArgs(boolean enable) {
 		this.hasVarArgs = enable;
+		updateParameterAndReturnStorage();
 	}
 
 	/**
-	 * Update dynamic storage and auto-params when custom storage is disasbled.
+	 * Update dynamic storage and auto-params when custom storage is disabled.
 	 * Returns immediately if custom storage is enabled.
 	 */
 	void updateParameterAndReturnStorage() {
@@ -218,7 +219,8 @@ class FunctionData extends FunctionDataView {
 		}
 
 		VariableStorage[] paramStorage =
-			effectiveCallingConvention.getStorageLocations(getProgram(), dataTypes, true, hasVarArgs);
+			effectiveCallingConvention.getStorageLocations(getProgram(), dataTypes, true,
+				hasVarArgs);
 
 		returnInfo.setStorage(paramStorage[0]);
 
