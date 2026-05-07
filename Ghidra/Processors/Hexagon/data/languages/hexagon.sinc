@@ -5683,7 +5683,7 @@ define pcodeop ictagr;
 
 define pcodeop ictagw;
 
-:ictagw rs5,rt5 EndPacket	is iclass=5 & op2127=0x2e & op13=0 & op0007=0 & Rd5 & rs5 & rt5 & $(END_PACKET) {
+:ictagw rs5,rt5 EndPacket	is iclass=5 & op2127=0x2e & op13=0 & op0007=0 & rs5 & rt5 & $(END_PACKET) {
 	ictagw(rs5, rt5);
 	build EndPacket;
 }
