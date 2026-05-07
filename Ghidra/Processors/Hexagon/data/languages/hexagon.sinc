@@ -12225,7 +12225,7 @@ define pcodeop mpySatSub;
 #    1  1  1  0  1  1  0  0  1  1  0  s  s  s  s  s  P  P  +  t  t  t  t  t  0  0  0  d  d  d  d  d  
 
 :mpyu^":<<1" Rd5,Rs5HL06,Rt5HL05 EndPacket  is iclass=14 & op2127=0x66 & op13=0 & op7=0 & Rs5HL06 & Rt5HL05 & Rd5 & $(END_PACKET) {
-	Rd5 = zext(Rs5HL06) * zext(Rs5HL06);
+	Rd5 = zext(Rs5HL06) * zext(Rt5HL05);
 	Rd5 = Rd5 << 1;
 	build EndPacket;
 }
@@ -12451,7 +12451,7 @@ define pcodeop mpySatSub;
 #    1  1  1  0  0  1  1  0  1  1  0  s  s  s  s  s  P  P  +  t  t  t  t  t  0  0  0  x  x  x  x  x  
 
 :mpyu+=^":<<1" Rdd5,Rs5HL06,Rt5HL05 EndPacket  is iclass=14 & op2127=0x36 & op13=0 & op7=0 & Rs5HL06 & Rt5HL05 & Rdd5 & rdd5 & $(END_PACKET) {
-	tmp:8 = zext(Rs5HL06) * zext(Rs5HL06);
+	tmp:8 = zext(Rs5HL06) * zext(Rt5HL05);
 	Rdd5 = rdd5 + (tmp << 1);
 	build EndPacket;
 }
