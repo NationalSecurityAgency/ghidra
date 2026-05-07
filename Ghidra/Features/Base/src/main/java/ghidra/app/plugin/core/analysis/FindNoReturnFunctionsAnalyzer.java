@@ -89,7 +89,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	public FindNoReturnFunctionsAnalyzer(String name, String description,
 			AnalyzerType analyzerType) {
 		super(name, description, analyzerType);
-		setPriority(AnalysisPriority.DISASSEMBLY.after());
+		setPriority(AnalysisPriority.DISASSEMBLY.after().after());
 		setSupportsOneTimeAnalysis();
 	}
 
