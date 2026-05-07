@@ -1521,8 +1521,8 @@ define pcodeop vsub_VwVw_carryResult;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  1  1  0  -  -  0  -  -  0  1  1  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
 
-:assign Vd5,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x3 & op13=0x1 & op0507=0x7 & Vd5 & Vu_0812 & $(END_PACKET) [ cond=0; ] {
-	Vd5 = Vu_0812; # Vd5 handles unconditional commit 
+:assign Vd5,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x3 & op13=0x1 & op0507=0x7 & Vd5 & Vu_0812 & $(END_PACKET) [ cond=0; ] {
+	Vd5 = Vu_0812; # Vd5 handles unconditional commit
 	build EndPacket;
 }
 
@@ -1531,7 +1531,7 @@ define pcodeop vsub_VwVw_carryResult;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  1  1  0  -  -  0  -  -  -  0  1  P  P  0  u  u  u  u  u  1  1  0  d  d  d  d  d
 
-:assign Vd5tmp,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x1 & op13=0x0 & op0507=0x6 & Vd5tmp & Vu_0812 & $(END_PACKET) {
+:assign Vd5tmp,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x1 & op13=0x0 & op0507=0x6 & Vd5tmp & Vu_0812 & $(END_PACKET) {
    Vd5tmp = Vu_0812;
    build EndPacket;
 }
@@ -5818,7 +5818,7 @@ define pcodeop Vub_vasr_WuhVub_rnd_sat;
 
 define pcodeop Vsf_equals_Vqf32;
 
-:assign VdSF_0004,VuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x1 & op1617=0x0 & op13=0x1 & op0507=0x0 & VdSF_0004 & VuQF32_0812 & $(END_PACKET) {
+:assign VdSF_0004,VuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x4 & op13=0x1 & op0507=0x0 & VdSF_0004 & VuQF32_0812 & $(END_PACKET) {
    VdSF_0004 = Vsf_equals_Vqf32(VuQF32_0812);
    build EndPacket;
 }
@@ -5830,7 +5830,7 @@ define pcodeop Vsf_equals_Vqf32;
 
 define pcodeop Vhf_equals_Vqf16;
 
-:assign VdHF_0004,VuQF16_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x1 & op1617=0x0 & op13=0x1 & op0507=0x3 & VdHF_0004 & VuQF16_0812 & $(END_PACKET) {
+:assign VdHF_0004,VuQF16_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x4 & op13=0x1 & op0507=0x3 & VdHF_0004 & VuQF16_0812 & $(END_PACKET) {
    VdHF_0004 = Vhf_equals_Vqf16(VuQF16_0812);
    build EndPacket;
 }
@@ -5842,7 +5842,7 @@ define pcodeop Vhf_equals_Vqf16;
 
 define pcodeop Vhf_equals_Wqf32;
 
-:assign VdHF_0004,VuuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x1 & op1617=0x0 & op13=0x1 & op0507=0x6 & VdHF_0004 & VuuQF32_0812 & $(END_PACKET) {
+:assign VdHF_0004,VuuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x4 & op13=0x1 & op0507=0x6 & VdHF_0004 & VuuQF32_0812 & $(END_PACKET) {
    VdHF_0004 = Vhf_equals_Wqf32(VuuQF32_0812);
    build EndPacket;
 }
