@@ -11235,7 +11235,7 @@ define pcodeop memw_phys;
 
 define pcodeop min;
 
-:min Rd5,rs5,rt5 EndPacket  is iclass=13 & op2127=0x2d & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+:min Rd5,rt5,rs5 EndPacket  is iclass=13 & op2127=0x2d & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
 	Rd5 = min(rt5,rs5);
 	build EndPacket;
 }
@@ -11245,7 +11245,7 @@ define pcodeop min;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  1  0  1  s  s  s  s  s  P  P  +  t  t  t  t  t  1  1  0  d  d  d  d  d  
 
-:min Rdd5,rss5,rtt5 EndPacket  is iclass=13 & op2127=0x1d & op13=0 & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+:min Rdd5,rtt5,rss5 EndPacket  is iclass=13 & op2127=0x1d & op13=0 & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
 	Rdd5 = min(rtt5,rss5);
 	build EndPacket;
 }
@@ -11257,7 +11257,7 @@ define pcodeop min;
 
 define pcodeop minu;
 
-:minu Rd5,rs5,rt5 EndPacket  is iclass=13 & op2127=0x2d & op13=0 & op0507=4 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+:minu Rd5,rt5,rs5 EndPacket  is iclass=13 & op2127=0x2d & op13=0 & op0507=4 & rs5 & rt5 & Rd5 & $(END_PACKET) {
 	Rd5 = minu(rt5,rs5);
 	build EndPacket;
 }
@@ -11267,7 +11267,7 @@ define pcodeop minu;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  1  0  1  s  s  s  s  s  P  P  +  t  t  t  t  t  1  1  1  d  d  d  d  d  
 
-:minu Rdd5,rss5,rtt5 EndPacket  is iclass=13 & op2127=0x1d & op13=0 & op0507=7 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+:minu Rdd5,rtt5,rss5 EndPacket  is iclass=13 & op2127=0x1d & op13=0 & op0507=7 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
 	Rdd5 = minu(rtt5,rss5);
 	build EndPacket;
 }
