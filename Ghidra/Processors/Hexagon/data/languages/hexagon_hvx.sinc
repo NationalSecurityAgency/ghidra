@@ -40,6 +40,7 @@ VddUW_0004: Vdd5^".uw"  is Vdd5 { export Vdd5; }
 VddUH_0004: Vdd5^".uh"  is Vdd5 { export Vdd5; }
 VddUB_0004: Vdd5^".ub"	is Vdd5 { export Vdd5; }
 VddQF32_0004: Vdd5^".qf32"  is Vdd5 { export Vdd5; }
+VddSF_0004: Vdd5^".sf"  is Vdd5 { export Vdd5; }
 
 # source vector pair (0,4) - read-only use
 Vss_0004:vdd5  is vdd5 {
@@ -121,6 +122,9 @@ VdHF_0004: Vd5^".hf"	is Vd5 { export Vd5; }
 VdSF_0004: Vd5^".sf"	is Vd5 { export Vd5; }
 VdQF16_0004: Vd5^".qf16"  is Vd5 { export Vd5; }
 VdQF32_0004: Vd5^".qf32"  is Vd5 { export Vd5; }
+VdF8_0004: Vd5^".f8"  is Vd5 { export Vd5; }
+VdBF_0004: Vd5^".bf"  is Vd5 { export Vd5; }
+VdX_0004: Vd5^".x"  is Vd5 { export Vd5; }
 
 # source vector (0,4) - read-only use
 Vs_0004: vs5  is vs5 {
@@ -150,6 +154,9 @@ VuSF_0812: Vu_0812^".sf"	is Vu_0812 { export Vu_0812; }
 VuHF_0812: Vu_0812^".hf"	is Vu_0812 { export Vu_0812; }
 VuQF16_0812: Vu_0812^".qf16"  is Vu_0812 { export Vu_0812; }
 VuQF32_0812: Vu_0812^".qf32"  is Vu_0812 { export Vu_0812; }
+VuF8_0812: Vu_0812^".f8"  is Vu_0812 { export Vu_0812; }
+VuBF_0812: Vu_0812^".bf"  is Vu_0812 { export Vu_0812; }
+VuX_0812: Vu_0812^".x"  is Vu_0812 { export Vu_0812; }
 
 # source vector (16,20) - read-only use
 Vv_1620: vv5  is vv5 {
@@ -168,6 +175,8 @@ VvSF_1620: Vv_1620^".sf"  is Vv_1620 { export Vv_1620; }
 VvHF_1620: Vv_1620^".hf"  is Vv_1620 { export Vv_1620; }
 VvQF16_1620: Vv_1620^".qf16"  is Vv_1620 { export Vv_1620; }
 VvQF32_1620: Vv_1620^".qf32"  is Vv_1620 { export Vv_1620; }
+VvF8_1620: Vv_1620^".f8"  is Vv_1620 { export Vv_1620; }
+VvBF_1620: Vv_1620^".bf"  is Vv_1620 { export Vv_1620; }
 
 # source vector (19,23) - read-only use
 Vz_1923: vz5  is vz5 {
@@ -188,7 +197,8 @@ VzUH_1923: Vz_1923^".uh"  is Vz_1923 { export Vz_1923; }
 
 # source scalar register pair - read-only use - see rxx5 (used for lane naming only)
 RttH_1620: rxx5^".h"  	is rxx5 { tmp:8 = rxx5; export tmp; } 
-RttUH_1620: rxx5^".uh"  is rxx5 { tmp:8 = rxx5; export tmp; } 
+RttUH_1620: rxx5^".uh"  is rxx5 { tmp:8 = rxx5; export tmp; }
+RttUB_1620: rxx5^".ub"  is rxx5 { tmp:8 = rxx5; export tmp; }
 
 # source scalar register - read-only use - see rx5 (used for lane naming only)
 RtH_1620: rx5^".h"  	is rx5 { tmp:4 = rx5; export tmp; }
@@ -197,7 +207,42 @@ RtUH_1620: rx5^".uh"	is rx5 { tmp:4 = rx5; export tmp; }
 RtUB_1620: rx5^".ub"	is rx5 { tmp:4 = rx5; export tmp; }
 
 #
-# Vector Predicate operands 
+# V66 ZReg quad-vector operands (Vdddd / Vyyyy)
+#
+
+Zdddd_0004: "v3:0"		is op0004=0x00 { }
+Zdddd_0004: "v7:4"		is op0004=0x04 { }
+Zdddd_0004: "v11:8"		is op0004=0x08 { }
+Zdddd_0004: "v15:12"	is op0004=0x0c { }
+Zdddd_0004: "v19:16"	is op0004=0x10 { }
+Zdddd_0004: "v23:20"	is op0004=0x14 { }
+Zdddd_0004: "v27:24"	is op0004=0x18 { }
+Zdddd_0004: "v31:28"	is op0004=0x1c { }
+
+ZddddW_0004: Zdddd_0004^".w"	is Zdddd_0004 { }
+
+Zyyyy_0004: "v3:0"		is op0004=0x00 { }
+Zyyyy_0004: "v7:4"		is op0004=0x04 { }
+Zyyyy_0004: "v11:8"		is op0004=0x08 { }
+Zyyyy_0004: "v15:12"	is op0004=0x0c { }
+Zyyyy_0004: "v19:16"	is op0004=0x10 { }
+Zyyyy_0004: "v23:20"	is op0004=0x14 { }
+Zyyyy_0004: "v27:24"	is op0004=0x18 { }
+Zyyyy_0004: "v31:28"	is op0004=0x1c { }
+
+ZyyyyW_0004: Zyyyy_0004^".w"	is Zyyyy_0004 { }
+
+#
+# Rt8/Rx8 byte-subregister operands (18,16) - read-only use
+#
+
+Rt8B_1618: rt1618^".b"		is rt1618 { tmp:4 = rt1618; export tmp; }
+Rt8UB_1618: rt1618^".ub"	is rt1618 { tmp:4 = rt1618; export tmp; }
+Rx8B_pp_1618: rt1618^".b++"		is rt1618 { tmp:4 = rt1618; export tmp; }
+Rx8UB_pp_1618: rt1618^".ub++"	is rt1618 { tmp:4 = rt1618; export tmp; }
+
+#
+# Vector Predicate operands
 #
 
 # Corresponds to Qd4 in documentation (vector predicate destination Q0..Q3, handles unconditional commit)
