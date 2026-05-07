@@ -6628,3 +6628,31 @@ define pcodeop scatter_release;
 
 :vmpy^":<<1:rnd:sat" VdH_0004,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x61 & op13=0x0 & op0507=0x1 & VdH_0004 & VuH_0812 & VvH_1620 & $(END_PACKET) unimpl
 
+# (hvx,1) vrmpy  --  "Vdd.w = vrmpy(Vu.b, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  0  1  d  d  d  d  d
+
+:vrmpy VddW_0004,VuB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x5 & VddW_0004 & VuB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vxx.w += vrmpy(Vu.b, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  1  u  u  u  u  u  0  0  0  x  x  x  x  x
+
+:vrmpy+= VddW_0004,VuB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4d & op13=0x1 & op0507=0x0 & vss5 & VddW_0004 & VuB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vdd.uw = vrmpy(Vu.ub, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  0  0  d  d  d  d  d
+
+:vrmpy VddUW_0004,VuUB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x4 & VddUW_0004 & VuUB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vxx.uw += vrmpy(Vu.ub, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  1  u  u  u  u  u  1  1  1  x  x  x  x  x
+
+:vrmpy+= VddUW_0004,VuUB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4d & op13=0x1 & op0507=0x7 & vss5 & VddUW_0004 & VuUB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
