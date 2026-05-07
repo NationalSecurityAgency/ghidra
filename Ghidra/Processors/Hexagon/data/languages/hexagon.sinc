@@ -4035,7 +4035,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  1  0  1  0  0  i  s  s  s  s  s  P  P  i  i  i  i  i  i  i  i  i  1  0  0  d  d  
 
-:cmp.eq! Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x14 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
+:"!cmp.eq" Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x14 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 != Simm32_21_0513x);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4057,7 +4057,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  0  +  0  0  s  s  s  s  s  P  P  +  t  t  t  t  t  +  +  +  1  0  0  d  d  
 
-:cmp.eq! Pd2,rs5,rt5 EndPacket  is iclass=15 & op2127=0x10 & op13=0 & op0207=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+:"!cmp.eq" Pd2,rs5,rt5 EndPacket  is iclass=15 & op2127=0x10 & op13=0 & op0207=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 != rt5);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4090,7 +4090,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  1  0  1  0  1  i  s  s  s  s  s  P  P  i  i  i  i  i  i  i  i  i  1  0  0  d  d  
 
-:cmp.gt! Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x15 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
+:"!cmp.gt" Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x15 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 s<= Simm32_21_0513x);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4112,7 +4112,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  0  +  1  0  s  s  s  s  s  P  P  +  t  t  t  t  t  +  +  +  1  0  0  d  d  
 
-:cmp.gt! Pd2,rs5,rt5 EndPacket  is iclass=15 & op2127=0x12 & op13=0 & op0207=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+:"!cmp.gt" Pd2,rs5,rt5 EndPacket  is iclass=15 & op2127=0x12 & op13=0 & op0207=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 s<= rt5);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4145,7 +4145,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  1  0  1  1  0  0  s  s  s  s  s  P  P  i  i  i  i  i  i  i  i  i  1  0  0  d  d  
 
-:cmp.gtu! Pd2,rs5,Uimm32_0513x EndPacket  is iclass=7 & op2127=0x2c & op0204=4 & rs5 & Uimm32_0513x & Pd2 & $(END_PACKET) {
+:"!cmp.gtu" Pd2,rs5,Uimm32_0513x EndPacket  is iclass=7 & op2127=0x2c & op0204=4 & rs5 & Uimm32_0513x & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 <= Uimm32_0513x);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4167,7 +4167,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  0  +  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  +  +  +  1  0  0  d  d  
 
-:cmp.gtu! Pd2,rs5,rt5 EndPacket  is iclass=15 & op2127=0x13 & op0207=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+:"!cmp.gtu" Pd2,rs5,rt5 EndPacket  is iclass=15 & op2127=0x13 & op0207=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 <= rt5);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4200,7 +4200,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  0  1  1  +  1  1  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
-:cmp.eq! Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2127=0x1b & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
+:"!cmp.eq" Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2127=0x1b & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
 	# TODO: Verify output value - assuming 0/1 boolean
 	Rd5 = zext(rs5 != Simm32_0512x);
 	build EndPacket;
@@ -4221,7 +4221,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  1  0  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  +  +  +  d  d  d  d  d  
 
-:cmp.eq! Rd5,rs5,rt5 EndPacket  is iclass=15 & op2127=0x1b & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+:"!cmp.eq" Rd5,rs5,rt5 EndPacket  is iclass=15 & op2127=0x1b & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
 	Rd5 = zext(rs5 != rt5);
 	build EndPacket;
 }
