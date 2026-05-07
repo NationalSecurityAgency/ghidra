@@ -1853,7 +1853,7 @@ define pcodeop vcmp_gt_VuwVuw;
 
 define pcodeop vcmp_eqand_QVbVb;
 
-:vcmp.eq Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x0 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
+:vcmp.eq^"&=" Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x0 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
    Qd2 = vcmp_eqand_QVbVb(Qd2,VuB_0812,VvB_1620);
    build EndPacket;
 }
@@ -1865,7 +1865,7 @@ define pcodeop vcmp_eqand_QVbVb;
 
 define pcodeop vcmp_eqand_QVhVh;
 
-:vcmp.eq Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x1 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
+:vcmp.eq^"&=" Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x1 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
    Qd2 = vcmp_eqand_QVhVh(Qd2,VuH_0812,VvH_1620);
    build EndPacket;
 }
@@ -1877,7 +1877,7 @@ define pcodeop vcmp_eqand_QVhVh;
 
 define pcodeop vcmp_eqand_QVwVw;
 
-:vcmp.eq Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x2 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
+:vcmp.eq^"&=" Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x2 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
    Qd2 = vcmp_eqand_QVwVw(Qd2,VuW_0812,VvW_1620);
    build EndPacket;
 }
@@ -1889,7 +1889,7 @@ define pcodeop vcmp_eqand_QVwVw;
 
 define pcodeop vcmp_gtand_QVbVb;
 
-:vcmp.gt Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x4 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x4 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVbVb(Qd2,VuB_0812,VvB_1620);
    build EndPacket;
 }
@@ -1901,7 +1901,7 @@ define pcodeop vcmp_gtand_QVbVb;
 
 define pcodeop vcmp_gtand_QVhVh;
 
-:vcmp.gt Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x5 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x5 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVhVh(Qd2,VuH_0812,VvH_1620);
    build EndPacket;
 }
@@ -1913,7 +1913,7 @@ define pcodeop vcmp_gtand_QVhVh;
 
 define pcodeop vcmp_gtand_QVwVw;
 
-:vcmp.gt Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x6 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x6 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVwVw(Qd2,VuW_0812,VvW_1620);
    build EndPacket;
 }
@@ -1925,7 +1925,7 @@ define pcodeop vcmp_gtand_QVwVw;
 
 define pcodeop vcmp_gtand_QVubVub;
 
-:vcmp.gt Qd2,VuUB_0812,VvUB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x8 & Qd2 & VuUB_0812 & VvUB_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuUB_0812,VvUB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x8 & Qd2 & VuUB_0812 & VvUB_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVubVub(Qd2,VuUB_0812,VvUB_1620);
    build EndPacket;
 }
@@ -1937,7 +1937,7 @@ define pcodeop vcmp_gtand_QVubVub;
 
 define pcodeop vcmp_gtand_QVuhVuh;
 
-:vcmp.gt Qd2,VuUH_0812,VvUH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x9 & Qd2 & VuUH_0812 & VvUH_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuUH_0812,VvUH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x9 & Qd2 & VuUH_0812 & VvUH_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVuhVuh(Qd2,VuUH_0812,VvUH_1620);
    build EndPacket;
 }
@@ -1949,7 +1949,7 @@ define pcodeop vcmp_gtand_QVuhVuh;
 
 define pcodeop vcmp_gtand_QVuwVuw;
 
-:vcmp.gt Qd2,VuUW_0812,VvUW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0xa & Qd2 & VuUW_0812 & VvUW_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuUW_0812,VvUW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0xa & Qd2 & VuUW_0812 & VvUW_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVuwVuw(Qd2,VuUW_0812,VvUW_1620);
    build EndPacket;
 }
