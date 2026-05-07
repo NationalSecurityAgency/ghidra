@@ -248,6 +248,7 @@ public class PrototypeModel {
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
+	@Deprecated
 	public VariableStorage getReturnLocation(DataType dataType, Program program) {
 		DataType clone = dataType.clone(program.getDataTypeManager());
 		PrototypePieces proto = new PrototypePieces(this, clone);
@@ -270,7 +271,7 @@ public class PrototypeModel {
 	 * Warning: The use of this method with a null {@code params} argument, or incorrect
 	 * datatypes, is highly discouraged since it will produce inaccurate results.
 	 * It is recommended that a complete function signature be used in
-	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
+	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean, boolean)}
 	 * method.  Parameter storage allocation may be affected by the return datatype
 	 * specified (e.g., hidden return storage parameter).
 	 *  
@@ -282,10 +283,13 @@ public class PrototypeModel {
 	 * @param program is the Program
 	 * @return next parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
+	 * @deprecated This method does not apply any storage rules specific to varags functions.
+	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
+	@Deprecated
 	public VariableStorage getNextArgLocation(Parameter[] params, DataType dataType,
 			Program program) {
-		return getArgLocation(params != null ? params.length : 0, params, dataType, program, false);
+		return getArgLocation(params != null ? params.length : 0, params, dataType, program);
 	}
 
 	/**
@@ -315,47 +319,12 @@ public class PrototypeModel {
 	 * @param program is the Program
 	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
-	 * @deprecated Use {@link #getArgLocation(int, Parameter[], DataType, Program, boolean)} 
-	 * instead.
+	 * @deprecated This method does not apply any storage rules specific to varags functions. 
+	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
 	@Deprecated
 	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,
 			Program program) {
-		return getArgLocation(argIndex, params, dataType, program, false);
-	}
-
-	/**
-	 * Get the preferred parameter location for a specified index,
-	 * which will be added/inserted within the set of existing function params.
-	 * If existing parameters use custom storage, this method should not be used.
-	 * <br>
-	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
-	 * zero-length datatype, or any subsequent parameter following such a parameter.
-	 * <br>
-	 * Warning: The use of this method with a null {@code params} argument, or incorrect
-	 * datatypes, is highly discouraged since it will produce inaccurate results.
-	 * It is recommended that a complete function signature be used in
-	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
-	 * method.  Parameter storage allocation may be affected by the return datatype
-	 * specified (e.g., hidden return storage parameter).
-	 *  
-	 * @param argIndex is the index (0: return storage, 1..n: parameter storage)
-	 * @param params existing set parameters to which the parameter specified by
-	 * argIndex will be added/inserted be appended. Element-0 corresponds to the return
-	 * datatype. Parameter elements prior to the argIndex are required for an accurate 
-	 * storage determination to be made.  Any preceeding parameters not specified will be assumed 
-	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.  
-	 * A null params list will cause all preceeding params to be assumed in a similar fashion.
-	 * @param dataType dataType associated with next parameter location or null
-	 * for a default undefined type.
-	 * @param program is the Program
-	 * @param hasVarArgs if true, any assignment rules specific to varargs functions will be applied.
-	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
-	 * unable to determine suitable location
-	 */
-	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,
-			Program program, boolean hasVarArgs) {
-
 		if (dataType != null) {
 			dataType = dataType.clone(program.getDataTypeManager());
 			// Identify next arg index based upon number of storage varnodes 
@@ -375,7 +344,7 @@ public class PrototypeModel {
 		}
 		arr[argIndex + 1] = dataType;
 
-		VariableStorage res[] = getStorageLocations(program, arr, false, hasVarArgs);
+		VariableStorage res[] = getStorageLocations(program, arr, false, false);
 		return res[res.length - 1];
 	}
 
@@ -433,7 +402,8 @@ public class PrototypeModel {
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
 	 * return storage. The returned array may also include additional auto-parameter storage 
 	 * locations. 
-	 * @deprecated Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
+	 * @deprecated This method does not apply any storage rules specific to varags functions.
+	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
 	@Deprecated
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
