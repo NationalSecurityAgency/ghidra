@@ -3806,7 +3806,6 @@ define pcodeop barrier;
 	upper:4 = rtt5(4);
 	lower:4 = rtt5:4;
 	src:4 = rss5(4);
-	# TODO: unclear if comparison should be signed or unsigned
 	bool:1 = (src >= lower) && (src < upper);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -3821,7 +3820,6 @@ define pcodeop barrier;
 	upper:4 = rtt5(4);
 	lower:4 = rtt5:4;
 	src:4 = rss5:4;
-	# TODO: unclear if comparison should be signed or unsigned
 	bool:1 = (src >= lower) && (src < upper);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4213,7 +4211,6 @@ define pcodeop clip;
 #    0  1  1  1  0  0  1  1  +  1  0  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
 :cmp.eq Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2127=0x1a & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
-	# TODO: Verify output value - assuming 0/1 boolean
 	Rd5 = zext(rs5 == Simm32_0512x);
 	build EndPacket;
 }
@@ -4224,7 +4221,6 @@ define pcodeop clip;
 #    0  1  1  1  0  0  1  1  +  1  1  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
 :"!cmp.eq" Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2127=0x1b & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
-	# TODO: Verify output value - assuming 0/1 boolean
 	Rd5 = zext(rs5 != Simm32_0512x);
 	build EndPacket;
 }
@@ -5647,7 +5643,7 @@ define pcodeop getimask;
 #    0  1  0  1  0  0  1  0  1  0  1  s  s  s  s  s  P  P  +  +  +  +  +  +  +  +  +  +  +  +  +  +  
 
 :hintjr rs5 EndPacket	is iclass=5 & op2127=0x15 & op0013=0 & rs5 & $(END_PACKET) {
-	# TODO: appears in decomp compilation - not sure what it does
+	# branch hint - intentionally no-op
 	build EndPacket;
 }
 
@@ -14487,7 +14483,7 @@ macro valignb(d, s, t, align) {
 
 :vaslh Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x1a & op13=0 & op0507=4 & rss5 & rt5 & Rdd5 & $(END_PACKET)
 {
-	# TODO: should we assume positive shift amount to avoid conditional ?
+	# Rt is signed; sign of Rt selects shift direction per ISA
 	right:1 = rt5 s< 0;
 	h:2 = rss5[0,16];
 	Rdd5[0,16] = (zext(right) * (h s>> -rt5)) + (zext(!right) * (h << rt5));
@@ -14519,7 +14515,7 @@ macro valignb(d, s, t, align) {
 
 :vaslw Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x18 & op13=0 & op0507=4 & rss5 & rt5 & Rdd5 & $(END_PACKET)
 {
-	# TODO: should we assume positive shift amount to avoid conditional ?
+	# Rt is signed; sign of Rt selects shift direction per ISA
 	right:1 = rt5 s< 0;
 	w:4 = rss5[0,32];
 	Rdd5[0,32] = (zext(right) * (w s>> -rt5)) + (zext(!right) * (w << rt5));
@@ -14563,7 +14559,7 @@ macro valignb(d, s, t, align) {
 
 :vasrh Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x1a & op13=0 & op0507=0 & rss5 & rt5 & Rdd5 & $(END_PACKET)
 {
-	# TODO: should we assume positive shift amount to avoid conditional ?
+	# Rt is signed; sign of Rt selects shift direction per ISA
 	right:1 = rt5 s>= 0;
 	h:2 = rss5[0,16];
 	Rdd5[0,16] = (zext(right) * (h s>> -rt5)) + (zext(!right) * (h << rt5));
@@ -14624,7 +14620,7 @@ define pcodeop vasrhub_sat;
 
 :vasrw Rd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x28 & op13=0 & op0507=2 & rss5 & rt5 & Rd5 & $(END_PACKET)
 {
-	# TODO: should we assume positive shift amount to avoid conditional ?
+	# Rt is signed; sign of Rt selects shift direction per ISA
 	right:1 = rt5 s>= 0;
 	w:4 = rss5[0,32];
 	res:4 = (zext(right) * (w s>> -rt5)) + (zext(!right) * (w << rt5));
@@ -14654,7 +14650,7 @@ define pcodeop vasrhub_sat;
 
 :vasrw Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x18 & op13=0 & op0507=0 & rss5 & rt5 & Rdd5 & $(END_PACKET)
 {
-	# TODO: should we assume positive shift amount to avoid conditional ?
+	# Rt is signed; sign of Rt selects shift direction per ISA
 	right:1 = rt5 s>= 0;
 	w:4 = rss5[0,32];
 	Rdd5[0,32] = (zext(right) * (w s>> -rt5)) + (zext(!right) * (w << rt5));
