@@ -1,9 +1,10 @@
-# Qualcomm Hexagon HVX Instruction Set (V69)
+# Qualcomm Hexagon HVX Instruction Set (V60-V81)
 
 # NOTES:
-# - HVX implemntation based upon V69
-# - HVX hardware supports either 64-byte or 128-byte vector lengths 
-# - Vector register write are comitted immediately - we assume assembler enforces read-after-write 
+# - HVX decode covers V60-V81; V68 IEEE-FP, V73 BF16, V79 FP8/qfext, V81 qfloat,
+#   and V66 ZReg matrix families are decode-only stubs (unimpl pcode).
+# - HVX hardware supports either 64-byte or 128-byte vector lengths
+# - Vector register write are comitted immediately - we assume assembler enforces read-after-write
 #   hazzards for vector registers so we do not shadow writes.
 
 # UNDERSTANDING / ASSUMPTIONS:
