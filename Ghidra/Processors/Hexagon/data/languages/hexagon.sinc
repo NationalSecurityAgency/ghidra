@@ -4410,7 +4410,6 @@ define pcodeop clip;
 #    0  1  1  1  0  0  1  1  -  1  0  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
 :cmp.eq Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2427=0x3 & op2122=0x2 & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
-	# TODO: Verify output value - assuming 0/1 boolean
 	Rd5 = zext(rs5 == Simm32_0512x);
 	build EndPacket;
 }
@@ -4421,7 +4420,6 @@ define pcodeop clip;
 #    0  1  1  1  0  0  1  1  -  1  1  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
 :"!cmp.eq" Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2427=0x3 & op2122=0x3 & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
-	# TODO: Verify output value - assuming 0/1 boolean
 	Rd5 = zext(rs5 != Simm32_0512x);
 	build EndPacket;
 }
@@ -5866,7 +5864,7 @@ define pcodeop getimask;
 #    0  1  0  1  0  0  1  0  1  0  1  s  s  s  s  s  P  P  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
 
 :hintjr rs5 EndPacket	is iclass=5 & op2127=0x15 & rs5 & $(END_PACKET) {
-	# TODO: appears in decomp compilation - not sure what it does
+	# branch hint - intentionally no-op
 	build EndPacket;
 }
 
