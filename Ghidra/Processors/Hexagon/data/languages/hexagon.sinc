@@ -14395,10 +14395,8 @@ define pcodeop tlbw;
 #    1  1  0  0  0  1  1  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  d  d  d  d  d  
 
 :togglebit Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x1a & op0607=2 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	if (rt5 > 31) goto <end>;
 	mask:4 = 1 << rt5;
 	Rd5 = rs5 ^ mask;
-  <end>
 	build EndPacket;
 }
 
