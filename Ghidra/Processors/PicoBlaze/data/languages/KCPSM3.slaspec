@@ -63,19 +63,19 @@ with jcond: op12=1 {
     }
 }
 
-:"JUMP " jcond, jtgt is op13_17=0b11010 & jcond & jtgt {
+:JUMP jcond, jtgt is op13_17=0b11010 & jcond & jtgt {
     if(jcond == 0) goto <end>;
     goto [jtgt];
     <end>
 }
 # Unconditional
-:"JUMP " jtgt is op13_17=0b11010 & op12=0 & jtgt {
+:JUMP jtgt is op13_17=0b11010 & op12=0 & jtgt {
     goto [jtgt];
 }
 
 # CALL
 
-:"CALL " jcond, jtgt is op13_17=0b11000 & jcond & jtgt {
+:CALL jcond, jtgt is op13_17=0b11000 & jcond & jtgt {
     if(jcond == 0) goto <end>;
     local tmp:2 = inst_start;
     push(tmp);
@@ -83,7 +83,7 @@ with jcond: op12=1 {
     <end>
 }
 # Unconditional
-:"CALL " jtgt is op13_17=0b11000 & op12=0 & jtgt {
+:CALL jtgt is op13_17=0b11000 & op12=0 & jtgt {
     local tmp:2 = inst_start;
     push(tmp);
     call [jtgt];
@@ -91,7 +91,7 @@ with jcond: op12=1 {
 
 # RETURN
 
-:"RETURN " jcond  is op13_17=0b10101 & jcond & op0_9=0 {
+:RETURN jcond  is op13_17=0b10101 & jcond & op0_9=0 {
     if(jcond == 0) goto <end>;
         SP = (SP - 1) % 32;
         local tmp:2 = *[stack_buffer]:2 SP;
@@ -100,7 +100,7 @@ with jcond: op12=1 {
     <end>
 }
 # Unconditional
-:"RETURN" is op13_17=0b10101 & op12=0 & op0_9=0 {
+:RETURN is op13_17=0b10101 & op12=0 & op0_9=0 {
     SP = (SP - 1) % 32;
     local tmp:2 = *[stack_buffer]:2 SP;
     tmp = tmp + 3;
@@ -109,16 +109,18 @@ with jcond: op12=1 {
 
 # RETURNI
 
-:"RETURNI_ENABLE "  is op0_17=0b111000000000000001 {
+:RETURNI_ENABLE  is op0_17=0b111000000000000001 {
     SP = (SP - 1) % 32;
     local tmp:2 = *[stack_buffer]:2 SP;
+    tmp = tmp + 3;
     enable_interrupt();
     return [tmp];
 }
 
-:"RETURNI_DISABLE "  is op0_17=0b111000000000000000 {
+:RETURNI_DISABLE  is op0_17=0b111000000000000000 {
     SP = (SP - 1) % 32;
     local tmp:2 = *[stack_buffer]:2 SP;
+    tmp = tmp + 3;
     disable_interrupt();
     return [tmp];
 }
@@ -194,7 +196,7 @@ define pcodeop odd_parity;
     C = odd_parity(tmp);
 }
 
-:TEST reg8_11,reg4_7 is op12_17=0b010010 & reg8_11 & reg4_7 & op0_3=0b0000 {
+:TEST reg8_11,reg4_7 is op12_17=0b010011 & reg8_11 & reg4_7 & op0_3=0b0000 {
 	local tmp:1 = reg8_11 & reg4_7;
     Z = tmp == 0;
     C = odd_parity(tmp);
@@ -233,14 +235,14 @@ define pcodeop odd_parity;
 # SUB
 
 :SUB reg8_11,op0_7 is op12_17=0b011100 & reg8_11 & op0_7 {
-	reg8_11 = reg8_11 - op0_7;
     C = reg8_11 < op0_7;
+	reg8_11 = reg8_11 - op0_7;
     Z = reg8_11 == 0;
 }
 
 :SUB reg8_11,reg4_7 is op12_17=0b011100 & reg8_11 & reg4_7 & op0_3=0b0000 {
-	reg8_11 = reg8_11 - reg4_7;
     C = reg8_11 < reg4_7;
+	reg8_11 = reg8_11 - reg4_7;
     Z = reg8_11 == 0;
 }
 
@@ -296,8 +298,10 @@ define pcodeop odd_parity;
     Z = reg8_11 == 0;
 }
 :RR reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00001 & op0_2=0b100 {
-    C = reg8_11 & 1;
+    local new_c:1 = reg8_11 & 1;
     reg8_11 = (( C << 7) | ( reg8_11 >> 1));
+
+    C = new_c;
     Z = reg8_11 == 0;
 }
 
@@ -324,8 +328,9 @@ define pcodeop odd_parity;
     Z = reg8_11 == 0;
 }
 :RL reg8_11 is op12_17=0b100000 & reg8_11 & op3_7=0b00000 & op0_2=0b100 {
-    C = reg8_11 >> 7;
+    local new_c:1 = reg8_11 >> 7;
     reg8_11 = (( C ) | ( reg8_11 << 1));
+    C = new_c;
     Z = reg8_11 == 0;
 }
 

@@ -114,12 +114,12 @@ define pcodeop move_banks;
 }
 
 :SUB sX, sY is opc=0x18 & sX & sY & op0_3=0 {
-	C = scarry(sX, sY);
+	C = sborrow(sX, sY);
 	sX = sX - sY;
 	Z = sX == 0;
 }
 :SUB sX, kk is opc=0x19 & sX & kk {
-	C = scarry(sX, kk);
+	C = sborrow(sX, kk);
 	sX = sX - kk;
 	Z = sX == 0;
 }
@@ -166,12 +166,12 @@ define pcodeop odd_parity;
 :COMPARE sX, sY is opc=0x1C & sX & sY & op0_3=0 {
 	local tmp:1 = sX - sY;
     Z = (tmp == 0);
-    C = scarry(sX, sY);
+    C = sborrow(sX, sY);
 }
 :COMPARE sX, kk is opc=0x1D & sX & kk {
 	local tmp:1 = sX - kk;
     Z = (tmp == 0);
-    C = scarry(sX, kk);
+    C = sborrow(sX, kk);
 }
 
 :COMPARECY sX, sY is opc=0x1E & sX & sY & op0_3=0 {
@@ -209,8 +209,9 @@ define pcodeop odd_parity;
     Z = sX == 0;
 }
 :RL sX is opc=0x14 & sX & kk=0x02 {
-	C = sX >> 7;
+	local new_c:1 = sX >> 7;
     sX = (( C ) | ( sX << 1));
+    C = new_c;
     Z = sX == 0;
 }
 
@@ -236,8 +237,9 @@ define pcodeop odd_parity;
     Z = sX == 0;
 }
 :RR sX is opc=0x14 & sX & kk=0x0C {
-	C = sX & 1;
+	local new_c:1 = sX & 1;
     sX = (( C << 7) | ( sX >> 1));
+    C = new_c;
     Z = sX == 0;
 }
 
@@ -280,7 +282,7 @@ define pcodeop output;
 # Scratch pad memory
 
 :STORE sX, sY is opc=0x2E & sX & sY & op0_3=0 {
-	*[scratchpad]:1 sX = sY;
+	*[scratchpad]:1 sY = sX;
 }
 
 :STORE sX, kk is opc=0x2F & sX & kk {
@@ -359,7 +361,7 @@ jcond:"NC" is op14_16=0b111 { local a:1 = C == 0; export a; }
 	    call [a];
     <end>
 }
-:CALL@ (sX, sY) is opc=0x24 & sX & sY & op0_3=1 {
+:CALL@ (sX, sY) is opc=0x24 & sX & sY & op0_3=0 {
 	local tmp:2 = inst_start;
     push(tmp);
 	local tmp2:2 = zext(sY) | ((zext(sX) & 0xF) << 8);
