@@ -791,9 +791,17 @@ public class BinaryReader {
 	// String stuff
 	//--------------------------------------------------------------------------------------------
 	private byte[] readUntilNullTerm(long index, int charLen) throws IOException {
+		return this.readUntilNullTerm(index, charLen, -1);
+	}
+
+
+	private byte[] readUntilNullTerm(long index, int charLen, int maxLen) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		long curPos = index;
 		for (; Long.compareUnsigned(curPos, index) >= 0; curPos += charLen) {
+			if(maxLen > 0 && curPos - index >= maxLen) {
+				throw new EOFException("Max Length was reached");
+			}
 			// loop while we haven't wrapped the index value around to 0
 			if ((long) baos.size() + charLen >= MAX_SANE_BUFFER) {
 				// gracefully handle hitting the limit of the ByteArrayOutputStream before it fails
@@ -854,6 +862,19 @@ public class BinaryReader {
 	 */
 	public String readAsciiString(long index) throws IOException {
 		return readString(index, StandardCharsets.US_ASCII, 1);
+	}
+
+        /**
+         * Reads a null terminated US-ASCII string, starting at specified index, stopping at
+         * the first null character or if maxLen is reached.
+         *
+         * @param index starting position of the string
+         * @param maxLen number of bytes to read at most
+         * @return US-ASCII string, excluding the trailing null terminator character
+         * @throws IOException if error reading bytes or if after maxLen bytes a null character was not reached
+         */
+	public String readAsciiStringWithMaxLen(long index, int maxLen) throws IOException {
+		return readString(index, StandardCharsets.US_ASCII, 1, maxLen);
 	}
 
 	/**
@@ -968,7 +989,22 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readString(long index, Charset charset, int charLen) throws IOException {
-		byte[] bytes = readUntilNullTerm(index, charLen);
+		return this.readString(index, charset, charLen, -1);
+	}
+
+        /**
+         * Reads a null-terminated string starting at <code>index</code>, using a specific
+         * {@link Charset}.
+         *
+         * @param index where the string begins
+         * @param charset {@link Charset}, see {@link StandardCharsets}
+         * @param charLen number of bytes in each character
+         * @param maxLen number of bytes to read at most
+         * @return the string
+         * @exception IOException if an I/O error occurs or if after maxLen bytes a null character was not reached
+         */
+	public String readString(long index, Charset charset, int charLen, int maxLen) throws IOException {
+		byte[] bytes = readUntilNullTerm(index, charLen, maxLen);
 
 		String result = new String(bytes, charset);
 		return result;

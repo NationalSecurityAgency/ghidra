@@ -20,6 +20,8 @@ import java.io.IOException;
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.app.util.bin.format.pe.NTHeader;
+
 
 /**
  * A class to represent the COFF symbol data structure.
@@ -146,7 +148,7 @@ public class DebugCOFFSymbol implements StructConverter {
             int longVal = reader.readInt(index);
             index += BinaryReader.SIZEOF_INT;
             if (longVal > 0) {
-            	name = reader.readAsciiString(stringTableIndex + longVal);
+                name = reader.readAsciiStringWithMaxLen(stringTableIndex + longVal, NTHeader.MAX_SANE_SYMBOL_NAME_LENGTH);
             } 
         }
 
