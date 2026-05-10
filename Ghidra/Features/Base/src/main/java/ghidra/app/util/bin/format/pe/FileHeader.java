@@ -441,24 +441,26 @@ public class FileHeader implements StructConverter {
 
 		long stringTableOffset = getStringTableOffset();
 
-		for (int i = 0; i < numberOfSymbols; ++i) {
-			if (symbolTableOffset < 0 || symbolTableOffset >= reader.length()) {
-				Msg.error(this,
-					"Invalid symbol table file index: " + Integer.toHexString(symbolTableOffset));
-				break;
+		if (numberOfSymbols < NTHeader.MAX_SANE_COUNT) {
+			for (int i = 0; i < numberOfSymbols; ++i) {
+				if (symbolTableOffset < 0 || symbolTableOffset >= reader.length()) {
+					Msg.error(this,
+						"Invalid symbol table file index: " + Integer.toHexString(symbolTableOffset));
+					break;
+				}
+
+				DebugCOFFSymbol symbol =
+					new DebugCOFFSymbol(reader, symbolTableOffset, stringTableOffset);
+
+				int numberOfAuxSymbols = symbol.getNumberOfAuxSymbols();
+
+				symbolTableOffset += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
+				symbolTableOffset += DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL * numberOfAuxSymbols;
+
+				i += numberOfAuxSymbols > 0 ? numberOfAuxSymbols : 0;
+
+				symbols.add(symbol);
 			}
-
-			DebugCOFFSymbol symbol =
-				new DebugCOFFSymbol(reader, symbolTableOffset, stringTableOffset);
-
-			int numberOfAuxSymbols = symbol.getNumberOfAuxSymbols();
-
-			symbolTableOffset += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
-			symbolTableOffset += DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL * numberOfAuxSymbols;
-
-			i += numberOfAuxSymbols > 0 ? numberOfAuxSymbols : 0;
-
-			symbols.add(symbol);
 		}
 
 		reader.setPointerIndex(oldIndex);
