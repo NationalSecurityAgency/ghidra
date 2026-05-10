@@ -101,7 +101,7 @@ public class SymbolUtilities {
 	/**
 	 * Invalid characters for a symbol name.
 	 */
-	public final static char[] INVALIDCHARS = { ' ' };
+	public final static char[] INVALIDCHARS = { ' ', (char) 127 };
 
 	private static final Comparator<Symbol> CASE_INSENSITIVE_SYMBOL_NAME_COMPARATOR = (s1, s2) -> {
 		return s1.getName().compareToIgnoreCase(s2.getName());
