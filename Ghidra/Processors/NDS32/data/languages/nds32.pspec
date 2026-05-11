@@ -128,9 +128,9 @@
          <symbol name="fucpr"          address="csreg:0x228"      size="4" description="" />
          <symbol name="hsp_ctl"        address="csreg:0x230"      size="4" description="" />
          <symbol name="sp_bound"       address="csreg:0x231"      size="4" description="" />
-         <symbol name="sp_bound_priv"  address="csreg:0x230"      size="4" description="" />
-         <symbol name="sp_base"        address="csreg:0x230"      size="4" description="" />
-         <symbol name="sp_base_priv"   address="csreg:0x230"      size="4" description="" />
+         <symbol name="sp_bound_priv"  address="csreg:0x232"      size="4" description="" />
+         <symbol name="sp_base"        address="csreg:0x233"      size="4" description="" />
+         <symbol name="sp_base_priv"   address="csreg:0x234"      size="4" description="" />
 
          <symbol name="dma_cfg"        address="csreg:0x280"      size="4" description="" />
          <symbol name="dma_gcsw"       address="csreg:0x288"      size="4" description="" />
