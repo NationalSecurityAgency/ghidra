@@ -546,6 +546,17 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public AddressSetPropertyMap getAddressSetPropertyMap(String name);
 
 	/**
+	 * Get the names of every {@link AddressSetPropertyMap} currently
+	 * defined in this program.  Order is unspecified.  Default
+	 * implementation returns an empty array; the database-backed
+	 * implementation enumerates the persisted maps.
+	 * @return non-null array of map names (possibly empty)
+	 */
+	public default String[] getAddressSetPropertyMapNames() {
+		return new String[0];
+	}
+
+	/**
 	 * Get the property map with the given name.
 	 * @param name name of the property map
 	 * @return null if no property map exist with the given name

@@ -205,8 +205,9 @@ public class SymbolicPropogator {
 			}
 
 			Register reg = regVal.getRegister();
-			context.putValue(context.getRegisterVarnode(reg), context.createConstantVarnode(
-				regVal.getUnsignedValue().longValue(), reg.getMinimumByteSize()), false);
+			context.putInitialValue(context.getRegisterVarnode(reg),
+				context.createConstantVarnode(regVal.getUnsignedValue().longValue(),
+					reg.getMinimumByteSize()));
 		}
 		context.propogateResults(false);
 
@@ -429,7 +430,7 @@ public class SymbolicPropogator {
 		context.flowToAddress(Address.NO_ADDRESS, addr);
 		int spaceID = context.getAddressSpace(stackReg.getName(), stackReg.getBitLength());
 		Varnode vnode = context.createVarnode(0, spaceID, stackReg.getBitLength() / 8);
-		context.putValue(context.getRegisterVarnode(stackReg), vnode, false);
+		context.putInitialValue(context.getRegisterVarnode(stackReg), vnode);
 		context.propogateResults(false);
 		context.flowEnd(addr);
 	}
@@ -916,11 +917,11 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], evaluator);
 						if (val1 != null && val2 != null) {
 							suspectOffset = vContext.isSuspectConstant(val2);
-							
+
 							vt = vContext.getVarnode(in[0], val2, out.getSize(), evaluator);
-							
+
 							// TODO: may need to use DATA refType in some cases
-							
+
 							if (vt != null) {
 								addLoadStoreReference(vContext, instruction, ptype, vt, in[0], in[1],
 									RefType.READ, suspectOffset==false, monitor);
@@ -928,7 +929,12 @@ public class SymbolicPropogator {
 								memVal = vContext.getValue(vt, evaluator);
 							}
 						}
-						vContext.putValue(out, memVal, mustClearAll);
+						// Use the load-tagged variant so the destination register
+						// is not recorded as "set from a constant compute" - the
+						// symbolic stack tracking can hand back a constant-typed
+						// varnode for a stale slot, and attributing that constant
+						// back to this LOAD instruction is misleading.
+						vContext.putLoadedValue(out, memVal, mustClearAll);
 						break;
 
 					case PcodeOp.STORE:
