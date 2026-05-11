@@ -31,6 +31,11 @@ Dreg: gp is gp & regNum=29 { export gp; }
 Dreg: lp is lp & regNum=30 { export lp; }
 Dreg: sp is sp & regNum=31 { export sp; }
 
+macro Lmwai(reg) {
+	reg = *mult_addr;
+	mult_addr = mult_addr + 4;
+}
+
 macro Smwad(reg) {
     mult_addr = mult_addr - 4;
     *mult_addr = reg;
