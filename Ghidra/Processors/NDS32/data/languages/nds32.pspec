@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <processor_spec>
+  <properties>
+    <property key="pcodeInjectLibraryClass" value="ghidra.app.util.pcodeInject.PcodeInjectLibraryNDS32"/>
+    <property key="useropLibs" value="nds32"/>
+  </properties>
     <programcounter register="pc"/>
+
+  <!-- Default IFC_ON = 0 at every function entry so the decompiler's
+       const-prop has a known starting value for the IFC mode flag.
+       Functions reached only via ifcall* are upgraded to IFC_ON = 1
+       by NDS32IFCAnalyzer. -->
+  <context_data>
+    <tracked_set space="ram">
+      <set name="IFC_ON" val="0"/>
+    </tracked_set>
+  </context_data>
 
   <default_memory_blocks>
     <memory_block name="csr" start_address="csreg:0x0" length="0x8000" initialized="false"/>

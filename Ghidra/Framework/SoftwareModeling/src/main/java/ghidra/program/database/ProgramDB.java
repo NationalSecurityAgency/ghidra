@@ -2271,6 +2271,18 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
+	public String[] getAddressSetPropertyMapNames() {
+		try (Closeable c = lock.read()) {
+			// addrSetPropertyMap is the in-memory cache of maps that
+			// have been opened; the DB tables contain the persisted set.
+			Set<String> result = new LinkedHashSet<>(
+				AddressSetPropertyMapDB.getPropertyMapNames(this));
+			result.addAll(addrSetPropertyMap.keySet());
+			return result.toArray(new String[0]);
+		}
+	}
+
+	@Override
 	public void deleteAddressSetPropertyMap(String mapName) {
 		try (Closeable c = lock.write()) {
 			AddressSetPropertyMapDB pm = addrSetPropertyMap.remove(mapName);
