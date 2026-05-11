@@ -75,27 +75,28 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 	}
 
 	@Override
-	public String[] modify(String[] text, Program program) {
+	public String[] modify(String[] text, Program program, Address loc) {
 		if (program == null) { // this can happen during merge operations
 			return null;
 		}
 
 		Function func = null;
-		Variable var = null;
-		
 		switch (text.length) {
 		case 3:
 			func = getFunction(program, text[2]);
+			break;
 		case 2:
-			if (func == null) {
-				return null;
-			}
-			var = getVariable(func, getFilterGenerator(text[0]).apply(text[1]));
+			func = program.getFunctionManager().getFunctionContaining(loc);
 			break;
 		default:
 			return null;
 		}
 		
+		if (func == null) {
+			return null;
+		}
+		
+		final Variable var = getVariable(func, getFilterGenerator(text[0]).apply(text[1]));
 		if (var == null) {
 			return null;
 		}
