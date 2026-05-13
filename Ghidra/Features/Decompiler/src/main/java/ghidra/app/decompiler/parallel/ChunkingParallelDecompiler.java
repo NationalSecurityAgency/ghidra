@@ -15,6 +15,7 @@
  */
 package ghidra.app.decompiler.parallel;
 
+import generic.concurrent.GThreadPool;
 import generic.concurrent.QCallback;
 import generic.concurrent.QResult;
 import ghidra.app.util.DecompilerConcurrentQ;
@@ -33,11 +34,16 @@ import java.util.*;
 public class ChunkingParallelDecompiler<R> {
 
 	private DecompilerConcurrentQ<Function, R> queue;
+	private GThreadPool privateThreadPool;
 
 	ChunkingParallelDecompiler(QCallback<Function, R> callback, TaskMonitor monitor) {
-		queue =
-			new DecompilerConcurrentQ<Function, R>(callback, ParallelDecompiler.THREAD_POOL_NAME,
-				monitor);
+		queue = new DecompilerConcurrentQ<>(callback, ParallelDecompiler.THREAD_POOL_NAME, monitor);
+	}
+
+	ChunkingParallelDecompiler(QCallback<Function, R> callback, int maxDecompilerProcesses,
+			TaskMonitor monitor) {
+		privateThreadPool = ParallelDecompiler.createBoundedThreadPool(maxDecompilerProcesses);
+		queue = new DecompilerConcurrentQ<>(callback, privateThreadPool, true, monitor);
 	}
 
 	public List<R> decompileFunctions(List<Function> functions) throws InterruptedException,
@@ -57,5 +63,8 @@ public class ChunkingParallelDecompiler<R> {
 
 	public void dispose() {
 		queue.dispose();
+		if (privateThreadPool != null) {
+			privateThreadPool.shutdownNow();
+		}
 	}
 }

@@ -27,6 +27,9 @@ import ghidra.util.task.TaskMonitor;
 public class ParallelDecompiler {
 
 	static final String THREAD_POOL_NAME = "Parallel Decompiler";
+	static final String DECOMPILER_PROCESSES_PROPERTY = "ghidra.parallel.decompiler.processes";
+	static final String DECOMPILER_PROCESSES_ENV = "GHIDRA_PARALLEL_DECOMPILER_PROCESSES";
+	static final int DEFAULT_DECOMPILER_PROCESSES = 27;
 
 	/**
 	 * Decompile the given functions using multiple decompilers
@@ -51,6 +54,31 @@ public class ParallelDecompiler {
 	}
 
 	/**
+	 * Decompile the given functions using a bounded number of worker threads/decompiler processes.
+	 *
+	 * @param callback the callback to be called for each item that is processed
+	 * @param program the program
+	 * @param addresses the addresses restricting which functions to decompile
+	 * @param maxDecompilerProcesses the maximum number of concurrent decompiler workers
+	 * @param monitor the task monitor
+	 * @return the list of client results
+	 * @throws InterruptedException if interrupted
+	 * @throws Exception if any other exception occurs
+	 */
+	public static <R> List<R> decompileFunctions(QCallback<Function, R> callback, Program program,
+			AddressSetView addresses, int maxDecompilerProcesses, TaskMonitor monitor)
+			throws InterruptedException, Exception {
+
+		int functionCount = program.getFunctionManager().getFunctionCount();
+		Listing listing = program.getListing();
+		FunctionIterator iterator = listing.getFunctions(addresses, true);
+
+		List<R> results =
+			doDecompileFunctions(callback, iterator, functionCount, maxDecompilerProcesses, monitor);
+		return results;
+	}
+
+	/**
 	 * Decompile the given functions using multiple decompilers
 	 *
 	 * @param callback the callback to be called for each item that is processed
@@ -66,6 +94,26 @@ public class ParallelDecompiler {
 
 		List<R> results =
 			doDecompileFunctions(callback, functions.iterator(), functions.size(), monitor);
+		return results;
+	}
+
+	/**
+	 * Decompile the given functions using a bounded number of worker threads/decompiler processes.
+	 *
+	 * @param callback the callback to be called for each item that is processed
+	 * @param functions the functions to decompile
+	 * @param maxDecompilerProcesses the maximum number of concurrent decompiler workers
+	 * @param monitor the task monitor
+	 * @return the list of client results
+	 * @throws InterruptedException if interrupted
+	 * @throws Exception if any other exception occurs
+	 */
+	public static <R> List<R> decompileFunctions(QCallback<Function, R> callback,
+			Collection<Function> functions, int maxDecompilerProcesses, TaskMonitor monitor)
+			throws InterruptedException, Exception {
+
+		List<R> results = doDecompileFunctions(callback, functions.iterator(), functions.size(),
+			maxDecompilerProcesses, monitor);
 		return results;
 	}
 
@@ -89,23 +137,64 @@ public class ParallelDecompiler {
 			Iterator<Function> functions, Consumer<R> resultsConsumer, TaskMonitor monitor)
 			throws InterruptedException, Exception {
 
+		decompileFunctions(callback, program, functions, resultsConsumer,
+			getDefaultDecompilerProcessCount(), monitor);
+	}
+
+	/**
+	 * Decompile the given functions using a bounded number of worker threads/decompiler processes.
+	 * Results will be passed to the given consumer as they are produced.
+	 *
+	 * @param callback the callback to be called for each that is processed
+	 * @param program the program
+	 * @param functions the functions to decompile
+	 * @param resultsConsumer the consumer to which results will be passed
+	 * @param maxDecompilerProcesses the maximum number of concurrent decompiler workers
+	 * @param monitor the task monitor
+	 * @throws InterruptedException if interrupted
+	 * @throws Exception if any other exception occurs
+	 */
+	public static <R> void decompileFunctions(QCallback<Function, R> callback, Program program,
+			Iterator<Function> functions, Consumer<R> resultsConsumer, int maxDecompilerProcesses,
+			TaskMonitor monitor) throws InterruptedException, Exception {
+
 		int max = program.getFunctionManager().getFunctionCount();
 		boolean collectResults = false; // the client will process results as they arrive
-		GThreadPool threadPool = GThreadPool.getSharedThreadPool(THREAD_POOL_NAME);
+		GThreadPool threadPool = createBoundedThreadPool(maxDecompilerProcesses);
 		DecompilerConcurrentQ<Function, R> queue =
 			new DecompilerConcurrentQ<>(callback, threadPool, collectResults, monitor);
 
 		monitor.initialize(max);
-		queue.process(functions, resultsConsumer);
-		queue.waitUntilDone();
+		try {
+			queue.process(functions, resultsConsumer);
+			queue.waitUntilDone();
+		}
+		finally {
+			threadPool.shutdownNow();
+		}
 	}
 
 	private static <R> List<R> doDecompileFunctions(QCallback<Function, R> callback,
 			Iterator<Function> functions, int count, TaskMonitor monitor)
 			throws InterruptedException, Exception {
 
+		return doDecompileFunctions(callback, functions, count, getDefaultDecompilerProcessCount(),
+			monitor);
+	}
+
+	private static <R> List<R> doDecompileFunctions(QCallback<Function, R> callback,
+			Iterator<Function> functions, int count, int maxDecompilerProcesses, TaskMonitor monitor)
+			throws InterruptedException, Exception {
+
+		GThreadPool threadPool = createBoundedThreadPool(maxDecompilerProcesses);
 		DecompilerConcurrentQ<Function, R> queue =
-			new DecompilerConcurrentQ<>(callback, THREAD_POOL_NAME, monitor);
+			new DecompilerConcurrentQ<>(callback, threadPool, true, monitor);
+		return doDecompileFunctions(queue, functions, count, monitor, threadPool);
+	}
+
+	private static <R> List<R> doDecompileFunctions(DecompilerConcurrentQ<Function, R> queue,
+			Iterator<Function> functions, int count, TaskMonitor monitor, GThreadPool privateThreadPool)
+			throws InterruptedException, Exception {
 
 		monitor.initialize(count);
 
@@ -117,6 +206,9 @@ public class ParallelDecompiler {
 		}
 		finally {
 			queue.dispose();
+			if (privateThreadPool != null) {
+				privateThreadPool.shutdownNow();
+			}
 		}
 
 		List<R> results = new ArrayList<>();
@@ -125,6 +217,34 @@ public class ParallelDecompiler {
 		}
 
 		return results;
+	}
+
+	static GThreadPool createBoundedThreadPool(int maxDecompilerProcesses) {
+		if (maxDecompilerProcesses < 1) {
+			throw new IllegalArgumentException("maxDecompilerProcesses must be at least 1");
+		}
+
+		GThreadPool threadPool = GThreadPool.getPrivateThreadPool(THREAD_POOL_NAME);
+		threadPool.setMinThreadCount(0);
+		threadPool.setMaxThreadCount(maxDecompilerProcesses);
+		return threadPool;
+	}
+
+	static int getDefaultDecompilerProcessCount() {
+		String configured = System.getProperty(DECOMPILER_PROCESSES_PROPERTY);
+		if (configured == null || configured.isBlank()) {
+			configured = System.getenv(DECOMPILER_PROCESSES_ENV);
+		}
+		if (configured == null || configured.isBlank()) {
+			return DEFAULT_DECOMPILER_PROCESSES;
+		}
+		try {
+			int value = Integer.parseInt(configured.trim());
+			return Math.max(value, 1);
+		}
+		catch (NumberFormatException e) {
+			return DEFAULT_DECOMPILER_PROCESSES;
+		}
 	}
 
 	/**
@@ -142,7 +262,12 @@ public class ParallelDecompiler {
 	 */
 	public static <R> ChunkingParallelDecompiler<R> createChunkingParallelDecompiler(
 			QCallback<Function, R> callback, TaskMonitor monitor) {
-		return new ChunkingParallelDecompiler<>(callback, monitor);
+		return new ChunkingParallelDecompiler<>(callback, getDefaultDecompilerProcessCount(), monitor);
+	}
+
+	public static <R> ChunkingParallelDecompiler<R> createChunkingParallelDecompiler(
+			QCallback<Function, R> callback, int maxDecompilerProcesses, TaskMonitor monitor) {
+		return new ChunkingParallelDecompiler<>(callback, maxDecompilerProcesses, monitor);
 	}
 
 	private ParallelDecompiler() {
