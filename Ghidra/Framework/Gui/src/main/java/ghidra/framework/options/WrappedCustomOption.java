@@ -33,20 +33,28 @@ public class WrappedCustomOption implements WrappedOption {
 
 	@Override
 	public void readState(SaveState saveState) {
-		String customOptionClassName = saveState.getString("CUSTOM OPTION CLASS", null);
+		String className = saveState.getString("CUSTOM OPTION CLASS", null);
 		valid = false;
 		try {
-			Class<?> c = Class.forName(customOptionClassName);
-			value = (CustomOption) c.getConstructor().newInstance();
+
+			ClassLoader loader = getClass().getClassLoader();
+			Class<?> clazz = Class.forName(className, false, loader);
+			if (!CustomOption.class.isAssignableFrom(clazz)) {
+				Msg.error(this, "Can't create custom option instance; not a CustomOpiton: " +
+					className);
+				return;
+			}
+
+			value = (CustomOption) clazz.getConstructor().newInstance();
 			value.readState(saveState);
 			valid = true;
 		}
 		catch (ClassNotFoundException e) {
 			Msg.info(this,
-				"Custom option class '%s' does not exist".formatted(customOptionClassName));
+				"Custom option class '%s' does not exist".formatted(className));
 		}
 		catch (Exception e) {
-			Msg.error(this, "Can't create customOption instance for: " + customOptionClassName, e);
+			Msg.error(this, "Can't create custom option instance for: " + className, e);
 		}
 	}
 
