@@ -122,11 +122,6 @@ public class BookmarkDB extends DbObject implements Bookmark {
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord rec) {
 		if (rec == null) {
 			rec = mgr.getRecord(key);

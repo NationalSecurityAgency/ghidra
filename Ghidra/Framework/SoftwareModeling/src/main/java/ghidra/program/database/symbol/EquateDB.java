@@ -56,8 +56,10 @@ public class EquateDB extends DbObject implements Equate {
 	}
 
 	@Override
-	protected boolean refresh() {
-		DBRecord rec = equateMgr.getEquateRecord(key);
+	protected boolean refresh(DBRecord rec) {
+		if (rec == null) {
+			rec = equateMgr.getEquateRecord(key);
+		}
 		if (rec == null) {
 			return false;
 		}

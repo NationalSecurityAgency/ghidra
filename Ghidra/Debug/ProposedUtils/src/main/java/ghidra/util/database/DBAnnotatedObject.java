@@ -282,17 +282,6 @@ public class DBAnnotatedObject extends DbObject {
 	}
 
 	@Override
-	protected boolean refresh() {
-		try (LockHold hold = LockHold.lock(store.readLock())) {
-			return doRefresh(null);
-		}
-		catch (IOException e) {
-			adapter.dbError(e);
-			return false;
-		}
-	}
-
-	@Override
 	protected boolean refresh(DBRecord rec) {
 		try (LockHold hold = LockHold.lock(store.readLock())) {
 			return doRefresh(rec);

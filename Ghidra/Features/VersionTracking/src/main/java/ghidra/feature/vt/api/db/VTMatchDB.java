@@ -51,11 +51,6 @@ public class VTMatchDB extends DbObject implements VTMatch {
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord matchRecord) {
 		association = null;
 		if (matchRecord == null) {

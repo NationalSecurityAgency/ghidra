@@ -197,7 +197,7 @@ public abstract class DbObject {
 
 	/**
 	 * Internal method for performing a refresh on a database object. This method may be called
-	 * recursively, which is can detect and short circuit.
+	 * recursively, which it can detect and short circuit.
 	 * @param record a known valid record the object can use to refresh itself or null. If null
 	 * the object will have to do its own database retrieval of its record.
 	 */
@@ -258,20 +258,16 @@ public abstract class DbObject {
 	}
 
 	/**
-	 * Tells the object to refresh its state from the database.
-	 * 
-	 * @return true if the object was able to refresh itself. Return false if the object was
-	 *         deleted. Objects that extend this class must implement a refresh method. If an object
-	 *         can never refresh itself, then it should always return false.
-	 */
-	protected abstract boolean refresh();
-
-	/**
-	 * Tells the object to refresh its state from the database using the specified record if not
-	 * null. NOTE: The default implementation ignores the record and invokes refresh().
-	 * Implementations of this method must take care if multiple database tables are used since the
-	 * record supplied could correspond to another object. In some cases it may be best not to
-	 * override this method or ignore the record provided.
+	 * Tells the object to refresh its state from the database using the specified record if 
+	 * provided. The  record may be null and the object is generally expected to be able to 
+	 * retrieve its own record from the database as needed. Is is mostly passed as a parameter for
+	 * efficiency to keep an object from having to look up its record when the client already has
+	 * the record in hand such as when it is iterating over records.
+	 * <P>
+	 * This method generally should not be called directly as it provides no recursion protection. Instead,
+	 * most clients should call {@link #refreshIfNeeded()} instead which WILL provide recursion protection.
+	 * If clients must call this method, they either need to provided their own recursion protection or
+	 * be absolutely certain that recursive calls won't occur.
 	 * 
 	 * @param record valid record associated with object's key (optional, may be null to force
 	 *            record lookup or other refresh technique)
@@ -279,8 +275,6 @@ public abstract class DbObject {
 	 *         object was deleted. Objects that extend this class must implement a refresh method.
 	 *         If an object can never refresh itself, then it should always return false.
 	 */
-	protected boolean refresh(DBRecord record) {
-		return refresh();
-	}
+	protected abstract boolean refresh(DBRecord record);
 
 }

@@ -289,13 +289,16 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = compositeAdapter.getRecord(key);
+			if (rec == null) {
+				rec = compositeAdapter.getRecord(key);
+			}
 			if (rec != null) {
 				record = rec;
 				initialize();
-				return super.refresh();
+				completeRefresh();
+				return true;
 			}
 		}
 		catch (IOException e) {
