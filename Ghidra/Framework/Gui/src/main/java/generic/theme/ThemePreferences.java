@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,8 +47,15 @@ public class ThemePreferences {
 		else if (themeId.startsWith(DiscoverableGTheme.CLASS_PREFIX)) {
 			String className = themeId.substring(DiscoverableGTheme.CLASS_PREFIX.length());
 			try {
-				Class<?> forName = Class.forName(className);
-				return (GTheme) forName.getDeclaredConstructor().newInstance();
+				ClassLoader loader = getClass().getClassLoader();
+				Class<?> clazz = Class.forName(className, false, loader);
+				if (!GTheme.class.isAssignableFrom(clazz)) {
+					Msg.showError(GTheme.class, null, "Can't Load Previous Theme",
+						"Theme class name does not point to a GTheme instance: " + className);
+					return ThemeManager.getDefaultTheme();
+				}
+
+				return (GTheme) clazz.getDeclaredConstructor().newInstance();
 			}
 			catch (Exception e) {
 				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",
