@@ -20,11 +20,12 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift BuiltinTypeDescriptor structure
+ * Represents a Swift {@code BuiltinTypeDescriptor} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
@@ -57,45 +58,35 @@ public final class BuiltinTypeDescriptor extends SwiftTypeMetadataStructure {
 	}
 
 	/**
-	 * Gets the type name
-	 * 
-	 * @return The type name
+	 * {@return the type name}
 	 */
 	public String getTypeName() {
 		return typeName;
 	}
 
 	/**
-	 * Gets the size
-	 * 
-	 * @return The size
+	 * {@return the size}
 	 */
 	public int getSize() {
 		return size;
 	}
 
 	/**
-	 * Gets the alignment and flags
-	 * 
-	 * @return The alignment and flags
+	 * {@return the alignment and flags}
 	 */
 	public int getAlignmentAndFlags() {
 		return alignmentAndFlags;
 	}
 
 	/**
-	 * Gets the stride
-	 * 
-	 * @return The stride
+	 * {@return the stride}
 	 */
 	public int getStride() {
 		return stride;
 	}
 
 	/**
-	 * Gets the number of extra inhabitants
-	 * 
-	 * @return The number of extra inhabitants
+	 * {@return the number of extra inhabitants}
 	 */
 	public int getNumExtraInhabitants() {
 		return numExtraInhabitants;
@@ -113,13 +104,12 @@ public final class BuiltinTypeDescriptor extends SwiftTypeMetadataStructure {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
 		struct.add(SwiftUtils.PTR_STRING, "TypeName", "");
 		struct.add(DWORD, "Size", "");
 		struct.add(DWORD, "AlignmentAndFlags", "");
 		struct.add(DWORD, "Stride", "");
 		struct.add(DWORD, "NumExtraInhabitants", "");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

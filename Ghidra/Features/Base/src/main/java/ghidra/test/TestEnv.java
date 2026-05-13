@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
@@ -31,6 +31,7 @@ import docking.test.AbstractDockingTest;
 import docking.tool.ToolConstants;
 import generic.jar.ResourceFile;
 import generic.test.*;
+import generic.theme.ThemeManager;
 import ghidra.app.events.CloseProgramPluginEvent;
 import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -49,14 +50,14 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.ProgramUtilities;
-import ghidra.util.Msg;
-import ghidra.util.TaskUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
@@ -253,6 +254,7 @@ public class TestEnv {
 	private void dipsoseTestTools() {
 		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
+			tool = null;
 
 			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
@@ -438,6 +440,7 @@ public class TestEnv {
 	}
 
 	private PluginTool lazyTool() {
+
 		if (tool != null) {
 			return tool;
 		}
@@ -1073,6 +1076,8 @@ public class TestEnv {
 		privateWaitForSwingRunnables();
 		programManager.disposeOpenPrograms();
 
+		ProgramBuilder.disposeAllBuilders();
+		
 		if (gp.getProject() == null) {
 			throw new IllegalStateException("The TestEnv's GhidraProject has already been closed!");
 		}
@@ -1095,6 +1100,15 @@ public class TestEnv {
 		disposeAllSwingUpdateManagers();
 
 		deleteTestProject(projectName);
+
+		resetTheme();
+	}
+
+	private void resetTheme() {
+		Swing.runNow(() -> {
+			ThemeManager themeManager = ThemeManager.getInstance();
+			themeManager.restoreThemeValues();
+		});
 	}
 
 	private void deleteTestProject(String projectName) {

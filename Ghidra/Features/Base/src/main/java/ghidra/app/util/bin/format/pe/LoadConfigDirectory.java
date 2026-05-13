@@ -19,7 +19,9 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.pe.dvrt.ImageDynamicRelocationTable;
 import ghidra.program.model.data.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -74,9 +76,12 @@ public class LoadConfigDirectory implements StructConverter {
 	private long reserved3;
 
 	private boolean is64bit;
+	private ImageDynamicRelocationTable dvrt;
 
-	LoadConfigDirectory(BinaryReader reader, int index, OptionalHeader oh) throws IOException {
-		is64bit = oh.is64bit();
+	LoadConfigDirectory(BinaryReader reader, int index, NTHeader nt) throws IOException {
+		FileHeader fh = nt.getFileHeader();
+		OptionalHeader oh = nt.getOptionalHeader();
+		is64bit = nt.getOptionalHeader().is64bit();
 
 		long oldIndex = reader.getPointerIndex();
 		reader.setPointerIndex(index);
@@ -149,141 +154,137 @@ public class LoadConfigDirectory implements StructConverter {
 			reserved2 = reader.readNextInt();
 			reserved3 = readPointer(reader);
 		}
+		
+		if (dynamicValueRelocTableOffset != 0 && dynamicValueRelocTableSection != 0) {
+			SectionHeader section = fh.getSectionHeader(dynamicValueRelocTableSection - 1);
+			if (section != null) {
+				long fileOffset = section.getPointerToRawData() + dynamicValueRelocTableOffset;
+				long rva = section.getVirtualAddress() + dynamicValueRelocTableOffset;
+				dvrt = new ImageDynamicRelocationTable(reader.clone(fileOffset), rva, is64bit);
+			}
+			else {
+				Msg.error(this,
+					"Dynamic value relocation table specifies invalid section number: " +
+						dynamicValueRelocTableSection);
+			}
+		}
 
 		reader.setPointerIndex(oldIndex);
 	}
 
 	/**
-	 * Returns the size (in bytes) of this structure.
-	 *
-	 * @return the size (in bytes) of this structure
+	 * {@return the size (in bytes) of this structure}
 	 */
 	public int getSize() {
 		return size;
 	}
 
 	/**
-	 * Returns the critical section default time-out value.
-	 *
-	 * @return the critical section default time-out value
+	 * {@return the critical section default time-out value}
 	 */
 	public int getCriticalSectionDefaultTimeout() {
 		return criticalSectionDefaultTimeout;
 	}
 
 	/**
-	 * Gets the safe exception handler table.
-	 *
-	 * @return the safe exception handler table.
+	 * {@return the safe exception handler table}
 	 */
 	public long getSeHandlerTable() {
 		return seHandlerTable;
 	}
 
 	/**
-	 * Gets the safe exception handler table count.
-	 *
-	 * @return the safe exception handler table count.
+	 * {@return the safe exception handler table count}
 	 */
 	public long getSeHandlerCount() {
 		return seHandlerCount;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard {@link GuardFlags}.
-	 * 
-	 * @return The ControlFlowGuard {@link GuardFlags}.
+	 * {@return the ControlFlowGuard {@link GuardFlags}}
 	 */
 	public GuardFlags getCfgGuardFlags() {
 		return guardFlags;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard check function pointer address.
-	 * 
-	 * @return The ControlFlowGuard check function pointer address.  
-	 *   Could be 0 if ControlFlowGuard is not being used.
+	 * {@return the ControlFlowGuard check function pointer address (could be 0 if ControlFlowGuard
+	 * is not being used)}
 	 */
 	public long getCfgCheckFunctionPointer() {
 		return guardCfcCheckFunctionPointer;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard dispatch function pointer address.
-	 * 
-	 * @return The ControlFlowGuard dispatch function pointer address.  
-	 *   Could be 0 if ControlFlowGuard is not being used.
+	 * {@return the ControlFlowGuard dispatch function pointer address (could be 0 if 
+	 * ControlFlowGuard is not being used)}
 	 */
 	public long getCfgDispatchFunctionPointer() {
 		return guardCfDispatchFunctionPointer;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard function table pointer address.
-	 * 
-	 * @return The ControlFlowGuard function table function pointer address.  
-	 *   Could be 0 if ControlFlowGuard is not being used.
+	 * {@return the ControlFlowGuard function table function pointer address (could be 0 if 
+	 * ControlFlowGuard is not being used)}
 	 */
 	public long getCfgFunctionTablePointer() {
 		return guardCfFunctionTable;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard function count.
-	 * 
-	 * @return The ControlFlowGuard function count.  Could be 0 if ControlFlowGuard is 
-	 *   not being used.
+	 * {@return the ControlFlowGuard function count (could be 0 if ControlFlowGuard is not being 
+	 * used)}
 	 */
 	public long getCfgFunctionCount() {
 		return guardCfFunctionCount;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard IAT table pointer address.
-	 * 
-	 * @return The ControlFlowGuard IAT table function pointer address. Could be 0 if ControlFlowGuard is not being used
+	 * {@return the ControlFlowGuard IAT table function pointer address (could be 0 if 
+	 * ControlFlowGuard is not being used)}
 	 */
 	public long getGuardAddressIatTableTablePointer() {
 		return guardAddressTakenIatEntryTable;
 	}
 
 	/**
-	 * Gets the ControlFlowGuard IAT entries count.
-	 * 
-	 * @return The ControlFlowGuard IAT entries count.  Could be 0 if ControlFlowGuard is not being used
+	 * {@return the ControlFlowGuard IAT entries count (could be 0 if ControlFlowGuard is not being
+	 * used)}
 	 */
 	public long getGuardAddressIatTableCount() {
 		return guardAddressTakenIatEntryCount;
 	}
 
 	/**
-	 * Gets the ReturnFlowGuard failure routine address.
-	 * 
-	 * @return The ReturnFlowGuard failure routine address.
-	 *   Could be 0 if ReturnFlowGuard is not being used.
+	 * {@return the ReturnFlowGuard failure routine address (could be 0 if ReturnFlowGuard is not 
+	 * being used)}
 	 */
 	public long getRfgFailureRoutine() {
 		return guardRfFailureRoutine;
 	}
 
 	/**
-	 * Gets the ReturnFlowGuard failure routine function pointer address.
-	 * 
-	 * @return The ReturnFlowGuard failure routine function pointer address.
-	 *   Could be 0 if ReturnFlowGuard is not being used.
+	 * {@return the ReturnFlowGuard failure routine function pointer address (could be 0 if 
+	 * ReturnFlowGuard is not being used)}
 	 */
 	public long getRfgFailureRoutineFunctionPointer() {
 		return guardRfFailureRoutineFunctionPointer;
 	}
 
 	/**
-	 * Gets the ReturnFlowGuard verify stack pointer function pointer address.
-	 * 
-	 * @return The ReturnFlowGuard verify stack pointer function pointer address.
-	 *   Could be 0 if ReturnFlowGuard is not being used.
+	 * {@return the ReturnFlowGuard verify stack pointer function pointer address (could be 0 if 
+	 * ReturnFlowGuard is not being used)}
 	 */
 	public long getRfgVerifyStackPointerFunctionPointer() {
 		return guardRfVerifyStackPointerFunctionPointer;
+	}
+
+	/**
+	 * {@return the Dynamic Value Relocation Table (could be {@code null} if DVRT is not being 
+	 * used)}
+	 */
+	public ImageDynamicRelocationTable getDynamicRelocationTable() {
+		return dvrt;
 	}
 
 	@Override

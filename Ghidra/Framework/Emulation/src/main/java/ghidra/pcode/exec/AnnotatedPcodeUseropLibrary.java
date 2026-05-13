@@ -29,6 +29,7 @@ import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import utilities.util.AnnotationUtilities;
 
@@ -40,7 +41,7 @@ import utilities.util.AnnotationUtilities;
  *
  * @param <T> the type of data processed by the library
  */
-public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
+public abstract class AnnotatedPcodeUseropLibrary<T> extends DefaultPcodeUseropLibrary<T> {
 	private static final Map<Class<?>, Set<Method>> CACHE_BY_CLASS = new HashMap<>();
 
 	private static Set<Method> collectDefinitions(
@@ -91,6 +92,17 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			@Override
 			void setPos(AnnotatedPcodeUseropDefinition<?> opdef, int pos) {
 				opdef.posOut = pos;
+			}
+		},
+		OP(OpOp.class, PcodeOp.class) {
+			@Override
+			int getPos(AnnotatedPcodeUseropDefinition<?> opdef) {
+				return opdef.posOp;
+			}
+
+			@Override
+			void setPos(AnnotatedPcodeUseropDefinition<?> opdef, int pos) {
+				opdef.posOp = pos;
 			}
 		};
 
@@ -243,6 +255,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		private int posState = -1;
 		private int posLib = -1;
 		private int posOut = -1;
+		private int posOp = -1;
 
 		public AnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library, Type opType,
 				Lookup lookup, Method method, PcodeUserop annot) {
@@ -250,7 +263,13 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			this.method = method;
 			this.library = library;
 			try {
-				this.handle = lookup.unreflect(method).bindTo(library);
+				MethodHandle unbound = lookup.unreflect(method);
+				if (Modifier.isStatic(method.getModifiers())) {
+					this.handle = unbound;
+				}
+				else {
+					this.handle = lookup.unreflect(method).bindTo(library);
+				}
 			}
 			catch (IllegalAccessException e) {
 				throw new IllegalArgumentException(
@@ -290,7 +309,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 
 		@Override
 		public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-				Varnode outVar, List<Varnode> inVars) {
+				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 			validateInputs(inVars);
 
 			PcodeExecutorStatePiece<T, T> state = executor.getState();
@@ -307,6 +326,9 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			}
 			if (posOut != -1) {
 				args.set(posOut, outVar);
+			}
+			if (posOp != -1) {
+				args.set(posOp, op);
 			}
 			placeInputs(executor, args, inVars);
 
@@ -792,9 +814,16 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	public @interface OpOutput {
 	}
 
-	protected Map<String, PcodeUseropDefinition<T>> ops = new HashMap<>();
-	private Map<String, PcodeUseropDefinition<T>> unmodifiableOps =
-		Collections.unmodifiableMap(ops);
+	/**
+	 * An annotation to receive the CALLOTHER p-code op into a parameter
+	 * 
+	 * <p>
+	 * The annotated parameter must have type {@link PcodeOp}).
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface OpOp {
+	}
 
 	/**
 	 * Default constructor, usually invoked implicitly
@@ -830,10 +859,5 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 */
 	protected Lookup getMethodLookup() {
 		return MethodHandles.lookup();
-	}
-
-	@Override
-	public Map<String, PcodeUseropDefinition<T>> getUserops() {
-		return unmodifiableOps;
 	}
 }

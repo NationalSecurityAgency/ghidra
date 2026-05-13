@@ -124,7 +124,7 @@ public class VariableOffset {
 	private List<Object> getObjects(boolean showScalarAdjustment) {
 
 		DataType dt = variable.getDataType();
-		StringBuffer name = new StringBuffer(variable.getName());
+		StringBuilder name = new StringBuilder(variable.getName());
 
 		long scalarAdjustment = 0;
 		if (showScalarAdjustment && (replacedElement instanceof Scalar)) {

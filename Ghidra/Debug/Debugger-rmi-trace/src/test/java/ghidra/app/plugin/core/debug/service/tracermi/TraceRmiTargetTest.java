@@ -37,7 +37,12 @@ import ghidra.trace.model.thread.TraceThread;
 
 public class TraceRmiTargetTest extends AbstractGhidraHeadedDebuggerTest {
 
-	class MyTraceRmiConnection extends TestTraceRmiConnection {
+	@Test
+	public void testVersionConsistency() {
+		assertVersionMatchesApplication(TraceRmiHandler.VERSION);
+	}
+
+	static class MyTraceRmiConnection extends TestTraceRmiConnection {
 
 		@Override
 		protected DebuggerTraceManagerService getTraceManager() {

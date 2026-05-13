@@ -15,80 +15,98 @@
  */
 package ghidra.app.util.bin.format.swift.types;
 
+import java.io.IOException;
+import java.util.Arrays;
+
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.EnumDataType;
+import ghidra.util.exception.DuplicateNameException;
+
 /**
- * Swift ContextDescriptorKind values
+ * Swift {@code ContextDescriptorKind} values
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/MetadataValues.h">swift/ABI/MetadataValues.h</a> 
  */
-public class ContextDescriptorKind {
-
-	/**
-	 * The mask to apply to the {@link TargetContextDescriptor#getFlags() flags} to get the
-	 * {@link ContextDescriptorKind} value
-	 */
-	private static int KIND_MASK = 0x1f;
-
-	/**
-	 * Gets the {@link ContextDescriptorKind} value from the 
-	 * {@link TargetContextDescriptor#getFlags() flags}
-	 * 
-	 * @param flags The {@link TargetContextDescriptor#getFlags() flags} that contain the kind
-	 * @return The {@link ContextDescriptorKind} value
-	 */
-	public static int getKind(int flags) {
-		return flags & KIND_MASK;
-	}
-
-	//---------------------------------------------------------------------------------------------
-
+public enum ContextDescriptorKind implements StructConverter {
+	
 	/**
 	 * This context descriptor represents a module
 	 */
-	public static final int MODULE = 0;
+	Module(0),
 
 	/**
 	 * This context descriptor represents an extension
 	 */
-	public static final int EXTENSION = 1;
+	Extension(1),
 
 	/**
 	 * This context descriptor represents an anonymous possibly-generic context such as a function
 	 * body
 	 */
-	public static final int ANONYMOUS = 2;
+	Anonymous(2),
 
 	/**
 	 * This context descriptor represents a protocol context
 	 */
-	public static final int PROTOCOL = 3;
+	Protocol(3),
 
 	/**
 	 * This context descriptor represents an opaque type alias
 	 */
-	public static final int OPAQUE_TYPE = 4;
-
-	/**
-	 * First kind that represents a type of any sort
-	 */
-	public static final int TYPE_FIRST = 16;
+	OpaqueType(4),
 
 	/**
 	 * This context descriptor represents a class
 	 */
-	public static final int CLASS = TYPE_FIRST;
+	Class(16),
 
 	/**
 	 * This context descriptor represents a struct
 	 */
-	public static final int STRUCT = TYPE_FIRST + 1;
+	Struct(17),
 
 	/**
 	 * This context descriptor represents an enum
 	 */
-	public static final int ENUM = TYPE_FIRST + 2;
+	Enum(18);
+
+	private int value;
 
 	/**
-	 * Last kind that represents a type of any sort
+	 * Creates a new {@link ContextDescriptorKind}
+	 * 
+	 * @param value The kind value
 	 */
-	public static final int TYPE_LAST = 31;
+	private ContextDescriptorKind(int value) {
+		this.value = value;
+	}
+
+	/**
+	 * {@return the kind value}
+	 */
+	public int getValue() {
+		return value;
+	}
+
+	/**
+	 * {@return the {@link ContextDescriptorKind} with the given kind value, or {@code null} if it 
+	 * does not exist}
+	 * 
+	 * @param value The kind value to get the value of
+	 */
+	public static ContextDescriptorKind valueOf(int value) {
+		return Arrays.stream(values()).filter(e -> e.getValue() == value).findFirst().orElse(null);
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		EnumDataType dt = new EnumDataType(SwiftTypeMetadataStructure.CATEGORY_PATH,
+			ContextDescriptorKind.class.getSimpleName(), 1);
+		for (ContextDescriptorKind kind : values()) {
+			dt.add(kind.name(), kind.getValue());
+		}
+		return dt;
+	}
 }

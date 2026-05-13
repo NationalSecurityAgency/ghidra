@@ -294,7 +294,7 @@ public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegratio
 	private void setActivePanel(FunctionComparisonProvider provider,
 			CodeComparisonView comparisonProvider) {
 		runSwing(
-			() -> provider.getComponent().setCurrentTabbedComponent(comparisonProvider.getName()));
+			() -> provider.getComponent().setActiveView(comparisonProvider.getName()));
 		waitForSwing();
 	}
 

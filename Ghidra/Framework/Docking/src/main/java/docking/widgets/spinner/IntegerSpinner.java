@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,11 @@
  */
 package docking.widgets.spinner;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
@@ -29,12 +28,13 @@ import javax.swing.event.*;
 import docking.widgets.textfield.IntegerTextField;
 
 /**
- * Creates a component for editing Integer values using an {@link IntegerTextField} and a {@link JSpinner}.
+ * Creates a component for editing Integer values using an {@link IntegerTextField} and a
+ * {@link JSpinner}.
  */
 public class IntegerSpinner {
 
-	private final JSpinner spinner;
-	private final IntegerTextField integerTextField;
+	protected final JSpinner spinner;
+	protected final IntegerTextField integerTextField;
 
 	private List<ChangeListener> changeListeners = new ArrayList<>();
 
@@ -51,6 +51,7 @@ public class IntegerSpinner {
 	 * Creates a new IntegerSpinner using the given spinner model.
 	 *
 	 * @param spinnerModel the spinner model to use in the JSpinner.
+	 * @param columns number of columns to display in in the JTextField
 	 */
 	public IntegerSpinner(SpinnerNumberModel spinnerModel, int columns) {
 
@@ -66,6 +67,14 @@ public class IntegerSpinner {
 		spinner.setEditor(integerTextField.getComponent());
 
 		spinnerModel.addChangeListener(e -> {
+			Number newMaxNum = (Number) spinnerModel.getMaximum();
+			BigInteger newMax =
+				newMaxNum != null ? BigInteger.valueOf(newMaxNum.longValue()) : null;
+			BigInteger oldMax = integerTextField.getMaxValue();
+			if (newMax != null && !newMax.equals(oldMax) || (newMax == null && oldMax != null)) {
+				integerTextField.setMaxValue(newMax);
+			}
+
 			Number newVal = (Number) spinnerModel.getValue();
 			integerTextField.setValue(newVal.longValue());
 		});
@@ -120,7 +129,6 @@ public class IntegerSpinner {
 			}
 			spinnerModel.setValue(value.longValue());
 		});
-
 	}
 
 	/**

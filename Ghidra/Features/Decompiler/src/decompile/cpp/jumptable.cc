@@ -1030,6 +1030,21 @@ PcodeOp *PathMeld::getEarliestOp(int4 pos) const
   return (PcodeOp *)0;
 }
 
+/// Search for a Varnode in the common path, prior to the given point, defined by a LOAD operation.
+/// \param i is the given point in the path
+/// \return \b true if a LOAD is present
+bool PathMeld::isLoadInPath(int4 i) const
+
+{
+  while(i > 0) {
+    i -= 1;
+    Varnode *vn = commonVn[i];
+    if (!vn->isWritten()) continue;
+    if (vn->getDef()->code() == CPUI_LOAD) return true;
+  }
+  return false;
+}
+
 /// \brief Analyze CBRANCHs leading up to the given basic-block as a potential switch \e guard.
 ///
 /// In general there is only one path to the switch, and the given basic-block will
@@ -1180,8 +1195,10 @@ void JumpBasic::findSmallestNormal(uint4 matchsize)
     calcRange(pathMeld.getVarnode(i),rng);
     sz = rng.getSize();
     if (sz < maxsize) {
-      // Don't let a 1-byte switch variable get thru without a guard
-      if ((sz != 256)||(pathMeld.getVarnode(i)->getSize()!=1)) {
+      // Don't accept a 1-byte switch variable unless there is an explicit guard
+      // or a table lookup between the byte and the indirect jump.
+      // "goto *(#const + byteVar)" should not be interpreted as 256 case switch
+      if (sz != 256 || pathMeld.getVarnode(i)->getSize()!=1 || pathMeld.isLoadInPath(i)) {
 	varnodeIndex = i;
 	maxsize = sz;
 	jrange->setRange(rng);
@@ -2254,9 +2271,10 @@ void JumpTable::clearSavedModel(void)
 void JumpTable::recoverModel(Funcdata *fd)
 
 {
+  uint4 maxTableSize = fd->getArch()->max_jumptable_size;
   if (jmodel != (JumpModel *)0) {
     if (jmodel->isOverride()) {	// If preexisting model is override
-      jmodel->recoverModel(fd,indirect,0,glb->max_jumptable_size);
+      jmodel->recoverModel(fd,indirect,0,maxTableSize);
       return;
     }
     delete jmodel;		// Otherwise this is an old attempt we should remove
@@ -2267,18 +2285,18 @@ void JumpTable::recoverModel(Funcdata *fd)
     if (op->code() == CPUI_CALLOTHER) {
       JumpAssisted *jassisted = new JumpAssisted(this);
       jmodel = jassisted;
-      if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
+      if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
 	return;
     }
   }
   JumpBasic *jbasic = new JumpBasic(this);
   jmodel = jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
     return;
   jmodel = new JumpBasic2(this);
   ((JumpBasic2 *)jmodel)->initializeStart(jbasic->getPathMeld());
   delete jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
     return;
   delete jmodel;
   jmodel = (JumpModel *)0;
@@ -2375,21 +2393,18 @@ bool JumpTable::isReachable(PcodeOp *op)
   return true;
 }
 
-/// \param g is the Architecture the table exists within
 /// \param ad is the Address of the BRANCHIND \b this models
-JumpTable::JumpTable(Architecture *g,Address ad)
+JumpTable::JumpTable(Address ad)
   : opaddress(ad)
 {
-  glb = g;
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = -1;
-  maxaddsub = 1;
-  maxleftright = 1;
-  maxext = 1;
+  recoverCount = 0;
+  displayFormat = 0;
   partialTable = false;
   collectloads = false;
   defaultIsFolded = false;
@@ -2401,16 +2416,14 @@ JumpTable::JumpTable(Architecture *g,Address ad)
 JumpTable::JumpTable(const JumpTable *op2)
 
 {
-  glb = op2->glb;
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = op2->lastBlock;
-  maxaddsub = op2->maxaddsub;
-  maxleftright = op2->maxleftright;
-  maxext = op2->maxext;
+  recoverCount = op2->recoverCount;
+  displayFormat = op2->displayFormat;
   partialTable = op2->partialTable;
   collectloads = op2->collectloads;
   defaultIsFolded = false;
@@ -2726,7 +2739,7 @@ void JumpTable::recoverLabels(Funcdata *fd)
   }
   else {
     jmodel = new JumpModelTrivial(this);
-    jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size);
+    jmodel->recoverModel(fd,indirect,addresstable.size(),fd->getArch()->max_jumptable_size);
     jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);
@@ -2754,8 +2767,9 @@ void JumpTable::clear(void)
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
+  recoverCount = 0;
   partialTable = false;
-  // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
+  // -opaddress- -maxtablesize- -collectloads- are permanent
 }
 
 /// The recovered addresses and case labels are encode to the stream.
@@ -2768,6 +2782,8 @@ void JumpTable::encode(Encoder &encoder) const
     throw LowlevelError("Trying to save unrecovered jumptable");
 
   encoder.openElement(ELEM_JUMPTABLE);
+  if (displayFormat != 0)
+    encoder.writeUnsignedInteger(ATTRIB_FORMAT, displayFormat);
   opaddress.encode(encoder);
   for(int4 i=0;i<addresstable.size();++i) {
     encoder.openElement(ELEM_DEST);
@@ -2797,6 +2813,8 @@ void JumpTable::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLE);
+  if (decoder.getNextAttributeId() == ATTRIB_FORMAT)
+    displayFormat = decoder.readUnsignedInteger();
   opaddress = Address::decode( decoder );
   bool missedlabel = false;
   for(;;) {
@@ -2850,6 +2868,7 @@ bool JumpTable::checkForMultistage(Funcdata *fd)
   if (addresstable.size()!=1) return false;
   if (partialTable) return false;
   if (indirect == (PcodeOp *)0) return false;
+  if (recoverCount > 1) return false;
 
   if (fd->getOverride().queryMultistageJumptable(indirect->getAddr())) {
     partialTable = true;		// Mark that we need additional recovery

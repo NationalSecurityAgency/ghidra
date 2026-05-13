@@ -37,7 +37,7 @@ model {
 				all { 
 					def binutilsArtifactsDir = file("build/binutils/${targetPlatform.name}")
 					if ((toolChain in Gcc) || (toolChain in Clang)) {
-						cCompiler.args "-I${binutilsArtifactsDir}/include", "-I${binutilsArtifactsDir}/bfd",  "-I${binutilsArtifactsDir}/libsframe"
+						cCompiler.args "-I${binutilsArtifactsDir}/include", "-I${binutilsArtifactsDir}/bfd",  "-I${binutilsArtifactsDir}/libsframe", "-std=gnu17"
 						linker.args "-L${binutilsArtifactsDir}/lib", "-lopcodes", "-lbfd", "-lsframe", "-liberty", "-lz", "-ldl"
 					}
 				}

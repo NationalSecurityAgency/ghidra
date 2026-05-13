@@ -144,6 +144,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 				int index = readOnlyTab.indexOfComponent(dtp);
 				readOnlyTab.setTabComponentAt(index, new DockingTabRenderer(readOnlyTab, viewName,
 					viewName, e -> viewRemoved(dtp, getProjectURL(dtp), true)));
+				readOnlyTab.setTitleAt(index, viewName);
 				readOnlyViews.put(view, dtp);
 			}
 			catch (Exception e) {
@@ -232,6 +233,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 			int index = readOnlyTab.indexOfComponent(newPanel);
 			readOnlyTab.setTabComponentAt(index, new DockingTabRenderer(readOnlyTab, viewName,
 				viewName, e -> viewRemoved(newPanel, getProjectURL(newPanel), true)));
+			readOnlyTab.setTitleAt(index, viewName);
 			readOnlyTab.setSelectedIndex(0);
 			readOnlyViews.put(projectData.getProjectLocator(), newPanel);
 			setViewsVisible(true);

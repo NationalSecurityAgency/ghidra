@@ -35,8 +35,7 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
-import docking.DialogComponentProvider;
-import docking.KeyEntryPanel;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
@@ -468,7 +467,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseBinding newMouseBinding = setMouseBinding(actionName, actionOwner, modifiers, button);
 
 		int keyCode = KeyEvent.VK_Q;
-		modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		apply();
@@ -498,7 +497,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(defaultMouseBinding);
 
 		int keyCode = KeyEvent.VK_Q;
-		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		int modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		int button = 4;
@@ -560,7 +559,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertOptionsKeyStroke(tool, actionName, actionOwner, defaultKeyStroke);
 
 		int keyCode = KeyEvent.VK_Q;
-		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		int modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		apply();
@@ -587,7 +586,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertOptionsKeyStroke(frontEndTool, actionName, actionOwner, defaultKeyStroke);
 
 		int keyCode = KeyEvent.VK_Q;
-		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		int modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		apply();

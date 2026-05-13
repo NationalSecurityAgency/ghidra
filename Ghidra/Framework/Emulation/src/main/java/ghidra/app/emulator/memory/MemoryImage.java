@@ -15,23 +15,30 @@
  */
 package ghidra.app.emulator.memory;
 
+import ghidra.pcode.emu.PcodeEmulationCallbacks;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.memstate.*;
 import ghidra.program.model.address.AddressSpace;
 
 /**
  * A kind of MemoryBank which retrieves its data from an underlying LoadImage
  * <p>
- * Any bytes requested on the bank which lie in the LoadImage are retrieved from
- * the LoadImage.  Other addresses in the space are filled in with zero.
- * This bank cannot be written to.
+ * Any bytes requested on the bank which lie in the LoadImage are retrieved from the LoadImage.
+ * Other addresses in the space are filled in with zero. This bank cannot be written to.
+ * 
+ * @deprecated Please use {@link PcodeEmulator} instead. We generally expect the image to be
+ *             manually loaded into the emulator, though you can use {@link PcodeEmulationCallbacks}
+ *             to load an image lazily.
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public class MemoryImage extends MemoryBank {
 
 	private MemoryLoadImage loader; // The underlying LoadImage
 
 	/**
-	 * A MemoryImage needs everything a basic memory bank needs and is needs to know
-	 * the underlying LoadImage object to forward read requests to.
+	 * A MemoryImage needs everything a basic memory bank needs and is needs to know the underlying
+	 * LoadImage object to forward read requests to.
+	 * 
 	 * @param spc is the address space associated with the memory bank
 	 * @param isBigEndian
 	 * @param ps is the number of bytes in a page (must be power of 2)
@@ -45,9 +52,9 @@ public class MemoryImage extends MemoryBank {
 	}
 
 	/**
-	 * Retrieve an aligned page from the bank.  First an attempt is made to retrieve the
-	 * page from the LoadImage, which may do its own zero filling.  If the attempt fails, the
-	 * page is entirely filled in with zeros.
+	 * Retrieve an aligned page from the bank. First an attempt is made to retrieve the page from
+	 * the LoadImage, which may do its own zero filling. If the attempt fails, the page is entirely
+	 * filled in with zeros.
 	 */
 	@Override
 	public MemoryPage getPage(long addr) {

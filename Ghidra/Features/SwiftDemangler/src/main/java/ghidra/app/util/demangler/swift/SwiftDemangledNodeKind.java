@@ -56,6 +56,7 @@ public enum SwiftDemangledNodeKind {
 	LazyProtocolWitnessTableAccessor,
 	LocalDeclName,
 	MergedFunction,
+	MethodDescriptor,
 	ModifyAccessor,
 	Module,
 	ModuleDescriptor,

@@ -613,9 +613,9 @@ define token instr(32)
     ac          = (11,12)
     bp          = (11,12)
     bit10       = (10,10)
-    svrs_s0     = (10,10)
+    svrs_s0     = (11,11)
     spec2       = (9,10)
-    svrs_s1     = (9,9)
+    svrs_s1     = (10,10)
     spec3       = (8,10)
     simmed9     = (7,15)
     zero2       = (7,10)
@@ -919,9 +919,12 @@ DXuPos: pos             is lsb          [ pos = lsb + 32; ]             { tmp:1 
 DinsXSize: mysize         is msbd & lsb   [ mysize = msbd - lsb + 1 + 32; ] { tmp:1 = mysize; export tmp; }
 @endif
 
+define pcodeop setISAMode;
+
 macro JXWritePC(addr) {
 @ifdef ISA_VARIANT 
    ISAModeSwitch = (addr & 0x1) != 0;
+   setISAMode(ISAModeSwitch);
    tmp:$(REGSIZE) = -2;
    tmp = tmp & addr;
    pc = tmp;

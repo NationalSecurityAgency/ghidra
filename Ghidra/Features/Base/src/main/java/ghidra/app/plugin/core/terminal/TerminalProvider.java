@@ -235,7 +235,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Find")
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_F,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "find"))
 				.onAction(this::activatedFind)
 				.buildAndInstallLocal(this);
@@ -243,7 +243,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Find Next")
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_H,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_next"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindNext)
@@ -252,7 +252,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Find Previous")
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_G,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_previous"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindPrevious)
@@ -261,7 +261,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Select All")
 				.menuGroup("Select")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_A,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "select_all"))
 				.onAction(this::activatedSelectAll)
 				.buildAndInstallLocal(this);
@@ -269,21 +269,23 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Increase Font Size")
 				.menuGroup("View")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "increase_font_size"))
 				.onAction(this::activatedIncreaseFontSize)
 				.buildAndInstallLocal(this);
 		actionDecreaseSize = new ActionBuilder("Decrease Font Size", plugin.getName())
 				.menuPath("Decrease Font Size")
 				.menuGroup("View")
-				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK))
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS,
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "decrease_font_size"))
 				.onAction(this::activatedDecreaseFontSize)
 				.buildAndInstallLocal(this);
 		actionResetSize = new ActionBuilder("Reset Font Size", plugin.getName())
 				.menuPath("Reset Font Size")
 				.menuGroup("View")
-				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK))
+				.keyBinding(
+					KeyStroke.getKeyStroke(KeyEvent.VK_0, DockingUtils.CONTROL_KEY_MODIFIER_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "decrease_font_size"))
 				.onAction(this::activatedResetFontSize)
 				.buildAndInstallLocal(this);

@@ -20,7 +20,7 @@ import static java.util.function.Predicate.*;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.framework.main.ProgramaticUseOnly;
 import ghidra.framework.plugintool.util.*;

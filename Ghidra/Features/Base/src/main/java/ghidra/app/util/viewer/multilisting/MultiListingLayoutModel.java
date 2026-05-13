@@ -352,6 +352,21 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 			return models[modelID].copy();
 		}
 
+		@Override
+		public boolean isFunctionOpen(Address functionAddress) {
+			return models[modelID].isFunctionOpen(functionAddress);
+		}
+
+		@Override
+		public void setFunctionOpen(Address functionAddress, boolean b) {
+			models[modelID].setFunctionOpen(functionAddress, b);
+		}
+
+		@Override
+		public void setAllFunctionsOpen(boolean selected) {
+			models[modelID].setAllFunctionsOpen(selected);
+		}
+
 	}
 
 	@Override

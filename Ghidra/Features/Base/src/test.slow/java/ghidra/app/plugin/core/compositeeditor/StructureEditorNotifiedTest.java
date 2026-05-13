@@ -89,18 +89,98 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals(4, getLength(10));
 
 		programDTM.remove(complexStructure);
-		programDTM.getCategory(pgmRootCat.getCategoryPath())
-				.removeCategory("Temp", TaskMonitor.DUMMY);
 
 		DialogComponentProvider dlg = waitForDialogComponent("Close Structure Editor?");
 		pressButton(dlg.getComponent(), "No");
 		waitForSwing();
 
-		// complexStructure* gets removed and becomes BadDataType in this editor.
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
 		assertEquals("The original Structure has been deleted", model.getStatus());
+
+		// Verify pointer to edited composite remains valid within editor
+		dataType10 = getDataType(10);
+		assertEquals("complexStructure *", dataType10.getDisplayName());
 		assertEquals(4, getLength(10));
+		assertFalse(dataType10.isDeleted());
+
+		assertTrue(model.hasChanges());
+	}
+
+	@Test
+	public void testCategoryRemoved() throws Exception {
+
+		Category tempCat = modifyProgram(program, p -> {
+			Category tempCategory = pgmRootCat.createCategory("Temp");
+			tempCategory.moveDataType(complexStructure, DataTypeConflictHandler.DEFAULT_HANDLER);
+			return tempCategory;
+		});
+
+		init(complexStructure, tempCat);
+		int num = model.getNumComponents();
+		int len = model.getLength();
+		DataType dataType4 = getDataType(4);
+		assertEquals("simpleUnion", dataType4.getDisplayName());
+		assertEquals(8, getLength(4));
+
+		programDTM.getCategory(new CategoryPath("/aa")).removeCategory("bb", TaskMonitor.DUMMY);
+		waitForSwing();
+
+		// NOTE: No prompt when non-edited data types are removed - direct update imposed
+
+		assertEquals(num, model.getNumComponents());
+		assertEquals(len, model.getLength());
+		assertEquals("", model.getStatus());
+
+		// Verify pointer to edited composite remains valid within editor
+		dataType4 = getDataType(4);
+		assertEquals("-BAD-", dataType4.getDisplayName());
+		assertEquals(8, getLength(4));
+
+		assertFalse(model.hasChanges());
+	}
+
+	@Test
+	public void testModifiedCategoryRemoved() throws Exception {
+
+		Category tempCat = modifyProgram(program, p -> {
+			Category tempCategory = pgmRootCat.createCategory("Temp");
+			tempCategory.moveDataType(complexStructure, DataTypeConflictHandler.DEFAULT_HANDLER);
+			return tempCategory;
+		});
+
+		init(complexStructure, tempCat);
+
+		runSwingWithException(() -> {
+			model.insert(model.getNumComponents(), new ByteDataType(), 1);
+			model.insert(model.getNumComponents(), new PointerDataType(), 4);
+		});
+
+		waitForSwing();
+
+		int num = model.getNumComponents();
+		int len = model.getLength();
+		DataType dataType4 = getDataType(4);
+		assertEquals("simpleUnion", dataType4.getDisplayName());
+		assertEquals(8, getLength(4));
+
+		programDTM.getCategory(new CategoryPath("/aa")).removeCategory("bb", TaskMonitor.DUMMY);
+		waitForSwing();
+
+		DialogComponentProvider dlg = waitForDialogComponent("Reload Structure Editor?");
+		pressButton(dlg.getComponent(), "No");
+		waitForSwing();
+
+		assertEquals(num, model.getNumComponents());
+		assertEquals(len, model.getLength());
+		assertEquals("Removed sub-component data type \"/aa/bb/simpleUnion\"", model.getStatus());
+
+		// Verify pointer to edited composite remains valid within editor
+		dataType4 = getDataType(4);
+		assertEquals("-BAD-", dataType4.getDisplayName());
+		assertEquals(8, getLength(4));
+
+		assertTrue(model.hasChanges());
 	}
 
 	@Test
@@ -504,8 +584,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals(23, model.getNumComponents());
 		assertEquals(0x145, model.getLength());
 
-		runSwing(
-			() -> complexStructure.getDataTypeManager().remove(simpleUnion));
+		runSwing(() -> complexStructure.getDataTypeManager().remove(simpleUnion));
 		waitForSwing();
 		assertEquals(23, model.getNumComponents());
 		assertTrue(dt3.isEquivalent(getDataType(3)));
@@ -535,8 +614,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals(1, model.getNumComponents());
 		assertTrue(simpleStructure.isEquivalent(getDataType(0)));
 
-		runSwing(
-			() -> simpleStructure.getDataTypeManager().remove(simpleStructure));
+		runSwing(() -> simpleStructure.getDataTypeManager().remove(simpleStructure));
 		waitForSwing();
 
 		assertEquals(1, model.getNumComponents());// component becomes BadDataType

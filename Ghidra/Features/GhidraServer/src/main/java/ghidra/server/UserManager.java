@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 import generic.hash.HashUtilities;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.*;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -92,7 +92,8 @@ public class UserManager {
 		try {
 			readUserListIfNeeded();
 			clearExpiredPasswords();
-			log.info("User file contains " + userList.size() + " entries");
+			int size = userList.size();
+			log.info("User file contains " + size + (size == 1 ? "entry" : "entries"));
 		}
 		catch (FileNotFoundException e) {
 			log.error("Existing User file not found.");
@@ -756,14 +757,13 @@ public class UserManager {
 		Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9.\\-_/\\\\]*");
 
 	/**
-	 * Ensures a name only contains valid characters and meets length limitations.
+	 * Ensures a name only contains valid characters.
 	 * 
 	 * @param s name string
 	 * @return boolean true if valid name, false if not valid
 	 */
 	public static boolean isValidUserName(String s) {
-		return VALID_USERNAME_REGEX.matcher(s).matches() &&
-			s.length() <= NamingUtilities.MAX_NAME_LENGTH;
+		return VALID_USERNAME_REGEX.matcher(s).matches();
 	}
 
 }

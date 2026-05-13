@@ -22,6 +22,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.*;
 
 import docking.widgets.label.GLabel;
+import ghidra.app.plugin.core.debug.gui.timeoverview.TimeOverviewColorComponent;
 import ghidra.util.layout.PairLayout;
 
 /**
@@ -30,9 +31,12 @@ import ghidra.util.layout.PairLayout;
 public class TimeTypeOverviewLegendPanel extends JPanel {
 	private static Dimension COLOR_SIZE = new Dimension(15, 15);
 	private TimeTypeOverviewColorService colorService;
+	private TimeOverviewColorComponent overviewComponent;
 
-	public TimeTypeOverviewLegendPanel(TimeTypeOverviewColorService colorService) {
+	public TimeTypeOverviewLegendPanel(TimeTypeOverviewColorService colorService,
+			TimeOverviewColorComponent component) {
 		this.colorService = colorService;
+		this.overviewComponent = component;
 		setLayout(new PairLayout(4, 10));
 		setBorder(BorderFactory.createEmptyBorder(4, 20, 4, 30));
 		buildLegend();
@@ -67,6 +71,8 @@ public class TimeTypeOverviewLegendPanel extends JPanel {
 					Color newColor =
 						JColorChooser.showDialog(ColorPanel.this, "Select Color", getBackground());
 					colorService.setColor(type, newColor);
+					ColorPanel.this.repaint();
+					overviewComponent.refreshAll();
 				}
 			});
 		}

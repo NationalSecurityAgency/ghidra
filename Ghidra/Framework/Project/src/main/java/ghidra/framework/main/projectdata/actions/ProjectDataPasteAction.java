@@ -15,13 +15,13 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
-import java.awt.event.InputEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
@@ -39,7 +39,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 	public ProjectDataPasteAction(String owner, String group) {
 		super("Paste", owner);
 		setPopupMenuData(new MenuData(new String[] { "Paste" }, ICON, group));
-		setKeyBindingData(new KeyBindingData('V', InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(new KeyBindingData('V', DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHelpLocation(new HelpLocation("FrontEndPlugin", "Paste"));
 	}
 

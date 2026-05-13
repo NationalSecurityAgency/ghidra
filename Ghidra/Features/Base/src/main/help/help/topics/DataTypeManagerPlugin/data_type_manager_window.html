@@ -582,7 +582,7 @@
           </BLOCKQUOTE>
 
           
-          <H3><A name="Replace"></A>Replace Data Type...</H3>
+          <H3><A name="Replace"></A>Replace...</H3>
 
           <BLOCKQUOTE>
             <P>The <I><B>Replace...</B></I> action is used to 
@@ -590,7 +590,13 @@
             selected data type and all occurrences in the program.</P>
           </BLOCKQUOTE>
           
-          
+          <H3><A name="merge_datatypes"></A>Merge...</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I><B>Merge...</B></I> action is used to 
+            <A href="data_type_manager_description.htm#MergeDataType">merge</A> a
+            data type with another data type.</P>
+          </BLOCKQUOTE>          
 
 		<H3><A name="Collapse_All"></A>Collapse All</H3>
 
@@ -614,8 +620,10 @@
 
         <BLOCKQUOTE>
           <BLOCKQUOTE>
-          <P>Allows the user to associate the selected data type with a new source archive.  This  
-          can also be done by dragging one or more data types to a new source archive.
+          <P>Allows the user to associate the selected data type with a new source archive.  This action
+			copies the selected datatypes to a choosen archive and associates the datatypes with that
+			archive.  A similar result can also be achieved by dragging one or more data types to a new source archive.  This action
+		  only applies to non-Built-In datatypes selected within a Program's Data Type Manager.
 	See this page for more information on 
 	<a href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#source_archive">source archives</a>.
 		</P>
@@ -721,7 +729,18 @@
             </P>
           </BLOCKQUOTE>
           
-           <H3><A name="Find_Structures_By_Size"></A>Find Structures by Size</H3>
+		  
+		  <H3><A name="Find_Enums_By_Value"></A>Find Enums by Value</H3>
+
+		  <BLOCKQUOTE>          
+
+		    <P>This is similar to the <B>Find Data Types by Size</B> action except
+		    that it lets you specify one or more enum values (or value ranges) that will be used to 
+			show only enums that contain any of the specified values.</P>
+		  </BLOCKQUOTE>
+		  
+		  
+          <H3><A name="Find_Structures_By_Size"></A>Find Structures by Size</H3>
 
           <BLOCKQUOTE>
           
@@ -729,7 +748,7 @@
             that it filters results to show only Structures.</P>
           </BLOCKQUOTE>
           
-           <H3><A name="Find_Structures_By_Offset"></A>Find Structures by Offset</H3>
+          <H3><A name="Find_Structures_By_Offset"></A>Find Structures by Offset</H3>
 
           <BLOCKQUOTE>          
           

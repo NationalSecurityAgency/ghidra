@@ -61,7 +61,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = 300;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
 	/** Some snapshot likely to exceed the latest */
@@ -157,7 +157,6 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			pythonPath = Paths.get(DummyProc.which("python"));
 		}
 
-		pythonPath = new File("/C:/Python313/python.exe").toPath();
 		assertTrue(pythonPath.toFile().exists());
 		outFile = Files.createTempFile("pydbgout", null);
 		errFile = Files.createTempFile("pydbgerr", null);

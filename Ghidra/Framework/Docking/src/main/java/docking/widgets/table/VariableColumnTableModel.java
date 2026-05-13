@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ public interface VariableColumnTableModel extends TableModel {
 	 * type or is wraps another table model that is an instance of this type.  If the given 
 	 * model is not such an instance, then null is returned.
 	 * 
+	 * @param m the model 
 	 * @return the variable column model
 	 */
 	public static VariableColumnTableModel from(TableModel m) {
@@ -45,6 +46,7 @@ public interface VariableColumnTableModel extends TableModel {
 	 * Returns a value that is unique for a given table column.  This is different than getting
 	 * the display name, which may be shared by different columns.
 	 * @param column the index (in the model space) of the column for which to get the identifier
+	 * @return the identifier
 	 */
 	public String getUniqueIdentifier(int column);
 
@@ -56,7 +58,9 @@ public interface VariableColumnTableModel extends TableModel {
 	 * calling methods like {@link #getColumnName(int)}. 
 	 *  
 	 * @return Gets the count of the default columns for this model.
+	 * @deprecated no longer needed
 	 */
+	@Deprecated(forRemoval = true, since = "12.1")
 	public int getDefaultColumnCount();
 
 	/**

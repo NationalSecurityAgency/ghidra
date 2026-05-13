@@ -91,17 +91,23 @@ public class AbstractLisaTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Rule
 	public TestName name = new TestName();
-
+	private int pgmIndex;
+	
 	public AbstractLisaTest() {
-		init();
+		init(0);
+	}
+	
+	public AbstractLisaTest(int n) {
+		init(n);
 	}
 
 	protected String getProgramName() {
 		return "static-" + getClass().getCanonicalName() + "." + name.getMethodName();
 	}
-
-	public void init() {
+	
+	public void init(int n) {
 		try {
+			pgmIndex = n;
 			env = new TestEnv();
 			tool = env.getTool();
 			programManager = tool.getService(ProgramManager.class);
@@ -207,6 +213,235 @@ public class AbstractLisaTest extends AbstractGhidraHeadedIntegrationTest {
 		decompilerPanel = decompilerProvider.getDecompilerPanel();
 	}
 
+	private AssemblyBuffer getProgram(int index) throws Throwable {
+		return switch (index) {
+			case 7 -> getProgram_v7();
+			case 6 -> getProgram_v6();
+			case 5 -> getProgram_v5();
+			case 4 -> getProgram_v4();
+			case 3 -> getProgram_v3();
+			case 2 -> getProgram_v2();
+			case 1 -> getProgram_v1();
+			default -> getProgram_v0();
+		};
+	}
+	
+	protected AssemblyBuffer getProgram_v0() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("PUSH RBP");
+		buf.assemble("MOV RBP, RSP");
+		buf.assemble("MOV RAX, 0x4");
+		buf.assemble("SUB RAX, 0x5");
+		buf.assemble("MOV RDX, RAX");
+		buf.assemble("RET");
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v1() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RCX, 0x3");
+		buf.assemble("MOV RDX, 0x9");
+		buf.assemble("CMP ECX, EAX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JLE 0x%s".formatted(tgt0.add(5)));
+		buf.assemble("RET 0x8");
+		buf.assemble("SUB RAX, RCX");
+		buf.assemble("RET 0x8");
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v2() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RCX, 0x3");
+		buf.assemble("MOV RDX, 0x9");
+		buf.assemble("CMP ECX, EAX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JLE 0x%s".formatted(tgt0.add(5)));
+		buf.assemble("RET 0x8");
+		buf.assemble("SUB RAX, RCX");
+		buf.assemble("CMP EAX, EDX");
+		Address tgt1 = buf.getNext();
+		buf.assemble("JG 0x%s".formatted(tgt1.add(5)));  // RAX > 9
+		buf.assemble("RET 0x8");
+		buf.assemble("ADD RCX, 0x3");
+		buf.assemble("SUB RAX, RCX");
+		buf.assemble("RET 0x8");
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v3() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RAX, RAX");
+		buf.assemble("MOV RCX, 0x3");
+		buf.assemble("MOV RDX, 0x9");
+		buf.assemble("CMP ECX, EAX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JLE 0x%s".formatted(tgt0.add(11)));   // RAX >= 3
+		buf.assemble("SUB RAX, 0x5");   // RAX <= 3
+		buf.assemble("MOV RDX, RAX");   // RAX <= -2
+		Address tgt1 = buf.getNext();
+		buf.assemble("JMP 0x%s".formatted(tgt1.add(10)));
+		buf.assemble("CMP EAX, EDX");   // RAX >= 3
+		Address tgt2 = buf.getNext();
+		buf.assemble("JGE 0x%s".formatted(tgt2.add(10)));  // RAX >= 9
+		buf.assemble("ADD RCX, 0x5");   // 3 <= RAX < 9
+		buf.assemble("ADD RAX, 0x1F");  // RAX >= 3
+		buf.assemble("SAR RAX, 0x3");   // RAX >= -2
+		buf.assemble("AND RAX, -4");
+		buf.assemble("SUB RAX, 0x5");   
+		buf.assemble("SUB RAX, RCX");
+		buf.assemble("RET 0x8");
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v4() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RAX, RAX");
+		buf.assemble("MOV RCX, 0x2");
+		buf.assemble("MOV RDX, 0x8");
+		buf.assemble("CMP ECX, EAX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JL 0x%s".formatted(tgt0.add(11)));   // RAX > 4
+		buf.assemble("SUB RAX, 0x5");   // RAX <= 3
+		buf.assemble("MOV RDX, RAX");   // RAX <= -2
+		Address tgt1 = buf.getNext();
+		buf.assemble("JMP 0x%s".formatted(tgt1.add(10)));
+		buf.assemble("CMP EAX, EDX");   // RAX >= 4
+		Address tgt2 = buf.getNext();
+		buf.assemble("JG 0x%s".formatted(tgt2.add(10)));  // RAX > 8
+		buf.assemble("ADD RCX, 0x5");   // 3 <= RAX <= 8
+		buf.assemble("ADD RAX, 0x1F");
+		buf.assemble("SAR RAX, 0x3");
+		buf.assemble("AND RAX, -4");
+		buf.assemble("SUB RAX, 0x5");
+		buf.assemble("SUB RAX, RCX");
+		buf.assemble("RET 0x8");
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v5() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RAX, RAX");
+		buf.assemble("MOV RCX, 0x3");
+		buf.assemble("MOV RDX, 0x8");
+		buf.assemble("CMP ECX, EAX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JBE 0x%s".formatted(tgt0.add(11)));   // RAX >= 3
+		buf.assemble("SUB RAX, 0x5");   // RAX < 3
+		buf.assemble("MOV RDX, RAX");   // RAX < 8
+		Address tgt1 = buf.getNext();
+		buf.assemble("JMP 0x%s".formatted(tgt1.add(10)));
+		buf.assemble("CMP EAX, EDX");   // RAX >= 3
+		Address tgt2 = buf.getNext();
+		buf.assemble("JA 0x%s".formatted(tgt2.add(10)));  // RAX >= 9
+		buf.assemble("ADD RCX, 0x5");   // 3 <= RAX < 9
+		buf.assemble("ADD RAX, 0x1F");  // RAX >= 3
+		buf.assemble("SAR RAX, 0x3");   // RAX >= -2
+		buf.assemble("AND RAX, -4");
+		buf.assemble("SUB RAX, 0x5");
+		buf.assemble("SUB RAX, RCX");
+		buf.assemble("RET 0x8");
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v6() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RAX, RAX");
+		buf.assemble("MOV RCX, 0x3");
+		buf.assemble("MOV RDX, 0x8");
+		buf.assemble("MOV RBX, 0x6");
+		buf.assemble("CMP EAX, ECX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JLE 0x%s".formatted(tgt0.add(32)));
+		Address tgt1 = buf.getNext();
+		buf.assemble("CMP RAX, RDX");			// RAX >= 4
+		buf.assemble("JG 0x%s".formatted(tgt1.add(27)));
+		buf.assemble("CMP AX, BX"); 			// 8 >= RAX >= 4
+		Address tgt2 = buf.getNext();
+		buf.assemble("JGE 0x%s".formatted(tgt2.add(16)));
+		buf.assemble("ADD RCX, 0x1");			// 5 >= RAX >= 4
+		buf.assemble("CMP EAX, ECX");
+		Address tgt3 = buf.getNext();
+		buf.assemble("JA 0x%s".formatted(tgt3.add(5)));
+		buf.assemble("RET 0x8");				// RAX == 4
+		buf.assemble("RET 0x8");				// RAX == 5
+		buf.assemble("RET 0x8");				// 8 >= RAX >= 6
+		buf.assemble("RET 0x8");				// RAX >= 9
+		buf.assemble("SUB RCX, 0x3");			// 3 >= RAX
+		buf.assemble("CMP EAX, ECX");
+		Address tgt4 = buf.getNext();
+		buf.assemble("JL 0x%s".formatted(tgt4.add(5)));
+		buf.assemble("RET 0x8");				// 3 >= RAX >= 1
+		buf.assemble("CMP AX, BX"); 			// -1 >= RAX
+		Address tgt5 = buf.getNext();
+		buf.assemble("JBE 0x%s".formatted(tgt5.add(5)));
+		buf.assemble("RET 0x8");				//  bottom
+		buf.assemble("RET 0x8");				// -1 >= RAX
+		buf.assemble("RET 0x8");				// 
+		return buf;
+	}
+
+	protected AssemblyBuffer getProgram_v7() throws Throwable {
+		Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+		Address entry = addr(program, 0x00400000);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+		buf.assemble("MOV RAX, RAX");
+		buf.assemble("MOV RCX, -0x3");
+		buf.assemble("MOV RDX, -0x8");
+		buf.assemble("MOV RBX, -0x6");
+		buf.assemble("CMP ECX, EAX");
+		Address tgt0 = buf.getNext();
+		buf.assemble("JLE 0x%s".formatted(tgt0.add(32)));
+		Address tgt1 = buf.getNext();
+		buf.assemble("CMP RDX, RAX");			// RAX >= 4
+		buf.assemble("JG 0x%s".formatted(tgt1.add(27)));
+		buf.assemble("CMP BX, AX"); 			// 8 >= RAX >= 4
+		Address tgt2 = buf.getNext();
+		buf.assemble("JGE 0x%s".formatted(tgt2.add(16)));
+		buf.assemble("SUB RCX, 0x1");			// 5 >= RAX >= 4
+		buf.assemble("CMP ECX, EAX");
+		Address tgt3 = buf.getNext();
+		buf.assemble("JA 0x%s".formatted(tgt3.add(5)));
+		buf.assemble("RET 0x8");				// RAX == 4
+		buf.assemble("RET 0x8");				// RAX == 5
+		buf.assemble("RET 0x8");				// 8 >= RAX >= 6
+		buf.assemble("RET 0x8");				// RAX >= 9
+		buf.assemble("ADD RCX, 0x3");			// 3 >= RAX
+		buf.assemble("CMP ECX, EAX");
+		Address tgt4 = buf.getNext();
+		buf.assemble("JL 0x%s".formatted(tgt4.add(5)));
+		buf.assemble("RET 0x8");				// 3 >= RAX >= 1
+		buf.assemble("CMP BX, AX"); 			// -1 >= RAX
+		Address tgt5 = buf.getNext();
+		buf.assemble("JBE 0x%s".formatted(tgt5.add(5)));
+		buf.assemble("RET 0x8");				//  bottom
+		buf.assemble("RET 0x8");				// -1 >= RAX
+		buf.assemble("RET 0x8");				// 
+		return buf;
+	}
+
 	protected Function createSimpleProgramX86_64() throws Throwable {
 		createProgram("x86:LE:64:default", "gcc");
 		intoProject(program);
@@ -224,15 +459,7 @@ public class AbstractLisaTest extends AbstractGhidraHeadedIntegrationTest {
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
 
-			Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
-			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
-
-			buf.assemble("PUSH RBP");
-			buf.assemble("MOV RBP, RSP");
-			buf.assemble("MOV RAX, 0x4");
-			buf.assemble("SUB AX, 0x5");
-			buf.assemble("MOV RDX, RAX");
-			buf.assemble("RET");
+			AssemblyBuffer buf = getProgram(pgmIndex);
 			Address end = buf.getNext();
 
 			program.getMemory().setBytes(entry, buf.getBytes());

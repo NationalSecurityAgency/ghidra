@@ -27,6 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
+import docking.DockingUtils;
 import docking.widgets.table.GTable;
 import ghidra.framework.main.logviewer.event.*;
 import ghidra.framework.main.logviewer.event.FVEvent.EventType;
@@ -92,8 +93,9 @@ public class FVTable extends GTable
 
 		// Set the cell renderer that will set the background color of the row based
 		// on the log level.
-		getColumnModel().getColumn(FVTableModel.LEVEL_COL).setCellRenderer(
-			new LogLevelTableCellRenderer());
+		getColumnModel().getColumn(FVTableModel.LEVEL_COL)
+				.setCellRenderer(
+					new LogLevelTableCellRenderer());
 
 		// The selection listener is kicked off whenever the table selection has been changed. We
 		// need to know this so we can store the selection in the viewport utility.
@@ -282,7 +284,7 @@ public class FVTable extends GTable
 							return;
 						}
 						((FVTableModel) getModel()).removeRowsFromTop(chunk.linesInChunk);
-	
+
 						// Now slide the viewport back up to account for what we just read in.
 						viewportUtility.moveViewportUp(chunk.linesInChunk, false);
 					}
@@ -354,7 +356,7 @@ public class FVTable extends GTable
 							return;
 						}
 						((FVTableModel) getModel()).removeRowsFromTop(chunk.linesInChunk);
-	
+
 						// Now slide the viewport back up to account for what we just read in.
 						viewportUtility.moveViewportUp(chunk.linesInChunk, false);
 					}
@@ -413,7 +415,7 @@ public class FVTable extends GTable
 
 					// Now slide the viewport back up to account for what we just read in.
 					viewportUtility.moveViewportDown(lines.size(), false);
-	
+
 					if (model.getSize() > model.MAX_VISIBLE_CHUNKS) {
 						Chunk chunk = model.remove(model.getSize() - 1);
 						if (chunk == null) {
@@ -488,7 +490,7 @@ public class FVTable extends GTable
 
 					// Now slide the viewport back up to account for what we just read in.
 					viewportUtility.moveViewportDown(lines.size(), false);
-					
+
 					// And remove chunks if necessary.
 					if (model.getSize() > model.MAX_VISIBLE_CHUNKS) {
 						Chunk chunk = model.remove(model.getSize() - 1);
@@ -499,7 +501,6 @@ public class FVTable extends GTable
 					}
 				});
 
-				
 			}
 			catch (IOException e) {
 				Msg.error(this, "Error reading previous chunk of data", e);
@@ -545,8 +546,9 @@ public class FVTable extends GTable
 
 			else {
 				Pair filePosFirstRow = model.getFilePositionForRow(selectedRows[0]);
-				Pair filePosLastRow  = model.getFilePositionForRow(selectedRows[selectedRows.length - 1]);
-				
+				Pair filePosLastRow =
+					model.getFilePositionForRow(selectedRows[selectedRows.length - 1]);
+
 				if (filePosFirstRow == null || filePosLastRow == null) {
 					return;
 				}
@@ -625,7 +627,8 @@ public class FVTable extends GTable
 		am_table.put("PageUpSelection", new PageUpSelectionAction(eventListener));
 
 		// Set up a key binding for copying selected rows to the clipboard.
-		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), "copyText");
+		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, DockingUtils.CONTROL_KEY_MODIFIER_MASK),
+			"copyText");
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.META_DOWN_MASK), "copyText");
 		am_table.put("copyText", new AbstractAction() {
 
@@ -658,7 +661,8 @@ public class FVTable extends GTable
 		});
 
 		// Now create a binding for the CTRL-A, select all action.
-		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK, false),
+		im_table.put(
+			KeyStroke.getKeyStroke(KeyEvent.VK_A, DockingUtils.CONTROL_KEY_MODIFIER_MASK, false),
 			"SelectAll");
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.META_DOWN_MASK, false),
 			"SelectAll");

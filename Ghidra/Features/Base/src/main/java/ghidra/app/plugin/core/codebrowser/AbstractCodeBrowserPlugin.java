@@ -19,11 +19,9 @@ import java.awt.Color;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.*;
@@ -31,7 +29,6 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import generic.theme.GColor;
-import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramHighlightPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -72,24 +69,15 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	private static final GColor CURRENT_LINE_HIGHLIGHT_COLOR = new GColor("color.bg.currentline.listing");
 	//@formatter:on
 
-	// - Icon -
-	private static final Icon CURSOR_LOC_ICON =
-		new GIcon("icon.plugin.codebrowser.cursor.location");
 	protected final P connectedProvider;
 	protected List<P> disconnectedProviders = new ArrayList<>();
 	protected FormatManager formatMgr;
 	protected ViewManagerService viewManager;
-	private MarkerService markerService;
+
 	protected AddressSetView currentView = ImmutableAddressSet.EMPTY_SET;
 	protected Program currentProgram;
 	private boolean selectionChanging;
-	private MarkerSet currentSelectionMarkers;
-	private MarkerSet currentHighlightMarkers;
-	private MarkerSet currentCursorMarkers;
-	private ChangeListener markerChangeListener;
 
-	private Color cursorHighlightColor;
-	private boolean isHighlightCursorLine;
 	private ProgramDropProvider dndProvider;
 
 	public AbstractCodeBrowserPlugin(PluginTool tool) {
@@ -113,7 +101,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		initMiscellaneousOptions();
 		displayOptions.addOptionsChangeListener(this);
 		fieldOptions.addOptionsChangeListener(this);
-		markerChangeListener = new MarkerChangeListener(connectedProvider);
 	}
 
 	protected abstract P createProvider(FormatManager formatManager, boolean isConnected);
@@ -138,16 +125,14 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	private void viewUpdated() {
 		updateBackgroundColorModel();
-		setHighlight(connectedProvider.getHighlight());
-		setSelection(connectedProvider.getSelection());
+		connectedProvider.setHighlight(connectedProvider.getHighlight());
+		setConnectedProviderSelection(connectedProvider.getSelection());
 	}
 
 	@Override
 	protected void init() {
-		markerService = tool.getService(MarkerService.class);
-		if (markerService != null) {
-			markerService.addChangeListener(markerChangeListener);
-		}
+		MarkerService markerService = tool.getService(MarkerService.class);
+		setMarkerService(markerService);
 		updateBackgroundColorModel();
 
 		if (viewManager == null) {
@@ -161,20 +146,31 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 				provider.setClipboardService(clipboardService);
 			}
 		}
+
+		ListingMarginProviderService[] marginServices =
+			tool.getServices(ListingMarginProviderService.class);
+		for (ListingMarginProviderService marginService : marginServices) {
+			connectedProvider.addMarginService(marginService);
+		}
+
+		ListingOverviewProviderService[] overviewServices =
+			tool.getServices(ListingOverviewProviderService.class);
+		for (ListingOverviewProviderService service : overviewServices) {
+			connectedProvider.addOverviewService(service);
+		}
 	}
 
 	protected void updateBackgroundColorModel() {
-		ListingPanel listingPanel = connectedProvider.getListingPanel();
-		if (markerService != null) {
-			AddressIndexMap indexMap = connectedProvider.getListingPanel().getAddressIndexMap();
-			listingPanel.setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerService, indexMap));
-		}
-		else {
-			listingPanel.setBackgroundColorModel(null);
-		}
 
-		// Note: this should update all providers, not just the connected provider
+		updateBackgroundColorModel(connectedProvider);
+		for (CodeViewerProvider provider : disconnectedProviders) {
+			updateBackgroundColorModel(provider);
+		}
+	}
+
+	protected void updateBackgroundColorModel(CodeViewerProvider provider) {
+		ListingPanel listingPanel = provider.getListingPanel();
+		listingPanel.updateBackgroundColorModel();
 	}
 
 	@Override
@@ -182,20 +178,46 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		P newProvider = createProvider(formatMgr.createClone(), false);
 		newProvider.setClipboardService(tool.getService(ClipboardService.class));
 
+		ListingPanel listingPanel = newProvider.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
+		List<ListingPanel> listingPanels = List.of(listingPanel);
+		List<FieldPanel> fieldPanels = List.of(fieldPanel);
+		initPanelOptions(listingPanels, fieldPanels);
+
 		disconnectedProviders.add(newProvider);
 		if (dndProvider != null) {
 			newProvider.addProgramDropProvider(dndProvider);
 		}
-		tool.showComponentProvider(newProvider, true);
+
 		ListingHoverService[] hoverServices = tool.getServices(ListingHoverService.class);
 		for (ListingHoverService hoverService : hoverServices) {
-			newProvider.getListingPanel().addHoverService(hoverService);
+			listingPanel.addHoverService(hoverService);
 		}
+
+		ListingMarginProviderService[] marginServices =
+			tool.getServices(ListingMarginProviderService.class);
+		for (ListingMarginProviderService service : marginServices) {
+			newProvider.addMarginService(service);
+		}
+
+		ListingOverviewProviderService[] overviewServices =
+			tool.getServices(ListingOverviewProviderService.class);
+		for (ListingOverviewProviderService service : overviewServices) {
+			newProvider.addOverviewService(service);
+		}
+
+		MarkerService markerService = tool.getService(MarkerService.class);
+		listingPanel.setMarkerService(markerService);
+
+		updateBackgroundColorModel(newProvider);
+
+		tool.showComponentProvider(newProvider, true);
+
 		return newProvider;
 	}
 
-	protected void setHighlight(FieldSelection highlight) {
-		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
+	// this is for tool highlights coming in to the plugin
+	protected void setConnectedProviderHighlight(FieldSelection highlight) {
 
 		if (highlight != null && !highlight.isEmpty()) {
 			ListingPanel listingPanel = connectedProvider.getListingPanel();
@@ -204,17 +226,9 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 			firePluginEvent(
 				new ProgramHighlightPluginEvent(this.getName(), programHighlight, currentProgram));
-
-			if (highlightMarkers != null) {
-				highlightMarkers.clearAll();
-				highlightMarkers.add(programHighlight);
-			}
 		}
 		else {
 			connectedProvider.setHighlight(new ProgramSelection());
-			if (highlightMarkers != null) {
-				highlightMarkers.clearAll();
-			}
 		}
 	}
 
@@ -229,10 +243,11 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			viewManager = (ViewManagerService) service;
 			setView(viewManager.getCurrentView());
 		}
-		if (interfaceClass == MarkerService.class && markerService == null) {
-			markerService = tool.getService(MarkerService.class);
-			markerService.addChangeListener(markerChangeListener);
+		if (interfaceClass == MarkerService.class) {
+			MarkerService markerService = tool.getService(MarkerService.class);
+			setMarkerService(markerService);
 			updateBackgroundColorModel();
+
 			if (viewManager != null) {
 				viewUpdated();
 			}
@@ -248,6 +263,32 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 				otherPanel.addHoverService(hoverService);
 			}
 		}
+		if (interfaceClass == ListingMarginProviderService.class) {
+			ListingMarginProviderService marginService = (ListingMarginProviderService) service;
+			connectedProvider.addMarginService(marginService);
+
+			for (CodeViewerProvider provider : disconnectedProviders) {
+				provider.addMarginService(marginService);
+			}
+		}
+		if (interfaceClass == ListingOverviewProviderService.class) {
+			ListingOverviewProviderService overviewService =
+				(ListingOverviewProviderService) service;
+			connectedProvider.addOverviewService(overviewService);
+
+			for (CodeViewerProvider provider : disconnectedProviders) {
+				provider.addOverviewService(overviewService);
+			}
+		}
+	}
+
+	private void setMarkerService(MarkerService markerService) {
+		ListingPanel listingPanel = connectedProvider.getListingPanel();
+		listingPanel.setMarkerService(markerService);
+		for (CodeViewerProvider provider : disconnectedProviders) {
+			listingPanel = provider.getListingPanel();
+			listingPanel.setMarkerService(markerService);
+		}
 	}
 
 	@Override
@@ -256,42 +297,55 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			viewManager = null;
 			setView(currentProgram.getMemory());
 		}
-		if (service == markerService) {
-			markerService.removeChangeListener(markerChangeListener);
-			clearMarkers(currentProgram);
-			markerService = null;
+		if (interfaceClass == MarkerService.class) {
+			setMarkerService(null);
+			connectedProvider.clearMarkers(currentProgram);
 			updateBackgroundColorModel();
 		}
 		if (interfaceClass == ListingHoverService.class) {
 			ListingHoverService hoverService = (ListingHoverService) service;
-			connectedProvider.getListingPanel().removeHoverService(hoverService);
+			connectedProvider.removeHoverService(hoverService);
+
 			for (CodeViewerProvider provider : disconnectedProviders) {
-				provider.getListingPanel().removeHoverService(hoverService);
+				provider.removeHoverService(hoverService);
 			}
-			ListingPanel otherPanel = connectedProvider.getOtherPanel();
-			if (otherPanel != null) {
-				otherPanel.removeHoverService(hoverService);
+		}
+		if (interfaceClass == ListingMarginProviderService.class) {
+			ListingMarginProviderService marginService = (ListingMarginProviderService) service;
+			connectedProvider.removeMarginService(marginService);
+
+			for (CodeViewerProvider provider : disconnectedProviders) {
+				provider.removeMarginService(marginService);
+			}
+		}
+		if (interfaceClass == ListingOverviewProviderService.class) {
+			ListingOverviewProviderService overviewService =
+				(ListingOverviewProviderService) service;
+			connectedProvider.removeOverviewService(overviewService);
+
+			for (CodeViewerProvider provider : disconnectedProviders) {
+				provider.removeOverviewService(overviewService);
 			}
 		}
 	}
 
 	@Override
-	public void addOverviewProvider(OverviewProvider overviewProvider) {
+	public void addOverviewProvider(ListingOverviewProvider overviewProvider) {
 		connectedProvider.addOverviewProvider(overviewProvider);
 	}
 
 	@Override
-	public void addMarginProvider(MarginProvider marginProvider) {
+	public void addMarginProvider(ListingMarginProvider marginProvider) {
 		connectedProvider.addMarginProvider(marginProvider);
 	}
 
 	@Override
-	public void removeOverviewProvider(OverviewProvider overviewProvider) {
+	public void removeOverviewProvider(ListingOverviewProvider overviewProvider) {
 		connectedProvider.removeOverviewProvider(overviewProvider);
 	}
 
 	@Override
-	public void removeMarginProvider(MarginProvider marginProvider) {
+	public void removeMarginProvider(ListingMarginProvider marginProvider) {
 		connectedProvider.removeMarginProvider(marginProvider);
 	}
 
@@ -338,10 +392,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		connectedProvider.setHighlightProvider(highlightProvider, highlightProgram);
 	}
 
-	protected void updateHighlightProvider() {
-		connectedProvider.updateHighlightProvider();
-	}
-
 	@Override
 	public void setListingPanel(ListingPanel lp) {
 		connectedProvider.setOtherPanel(lp);
@@ -379,7 +429,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		if (currentProgram != null) {
 			currentProgram.removeListener(this);
 		}
-		clearMarkers(currentProgram);
+		connectedProvider.clearMarkers(currentProgram);
 		formatMgr.dispose();
 		removeProvider(connectedProvider);
 		for (CodeViewerProvider provider : disconnectedProviders) {
@@ -391,68 +441,94 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 
-		ListingPanel listingPanel = connectedProvider.getListingPanel();
-		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
+		if (!options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
+			return;
+		}
 
-			FieldPanel fieldPanel = listingPanel.getFieldPanel();
-			if (optionName.equals(GhidraOptions.OPTION_SELECTION_COLOR)) {
-				Color color = ((Color) newValue);
-				fieldPanel.setSelectionColor(color);
-				MarkerSet selectionMarkers = getSelectionMarkers(currentProgram);
-				if (selectionMarkers != null) {
-					selectionMarkers.setMarkerColor(color);
-				}
-				ListingPanel otherPanel = connectedProvider.getOtherPanel();
-				if (otherPanel != null) {
-					otherPanel.getFieldPanel().setSelectionColor(color);
-				}
-			}
-			else if (optionName.equals(GhidraOptions.OPTION_HIGHLIGHT_COLOR)) {
-				Color color = ((Color) newValue);
-				fieldPanel.setHighlightColor(color);
-				MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
-				if (highlightMarkers != null) {
-					highlightMarkers.setMarkerColor(color);
-				}
-			}
-			else if (optionName.equals(CURSOR_COLOR_OPTIONS_NAME)) {
-				Color color = ((Color) newValue);
-				fieldPanel.setFocusedCursorColor(color);
-			}
-			else if (optionName.equals(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME)) {
-				Color color = ((Color) newValue);
-				fieldPanel.setNonFocusCursorColor(color);
-			}
-			else if (optionName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)) {
-				cursorHighlightColor = (Color) newValue;
-				if (currentCursorMarkers != null) {
-					currentCursorMarkers.setMarkerColor(cursorHighlightColor);
-				}
-			}
-			else if (optionName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE)) {
-				isHighlightCursorLine = (Boolean) newValue;
-				if (currentCursorMarkers != null) {
-					currentCursorMarkers.setColoringBackground(isHighlightCursorLine);
-				}
-			}
-			else if (optionName.equals(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME)) {
-				fieldPanel.setHorizontalScrollingEnabled((Boolean) newValue);
-			}
+		List<ListingPanel> listingPanels = allListingPanels();
+		List<FieldPanel> fieldPanels = allFieldPanels();
+		if (optionName.equals(GhidraOptions.OPTION_SELECTION_COLOR)) {
+			Color color = ((Color) newValue);
+			onListingPanels(listingPanels, lp -> lp.setSelectionColor(color));
+		}
+		else if (optionName.equals(GhidraOptions.OPTION_HIGHLIGHT_COLOR)) {
+			Color color = ((Color) newValue);
+			onListingPanels(listingPanels, lp -> lp.setHighlightColor(color));
+		}
+		else if (optionName.equals(CURSOR_COLOR_OPTIONS_NAME)) {
+			Color color = ((Color) newValue);
+			onFieldPanels(fieldPanels, fp -> fp.setFocusedCursorColor(color));
+		}
+		else if (optionName.equals(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME)) {
+			Color color = ((Color) newValue);
+			onFieldPanels(fieldPanels, fp -> fp.setNonFocusCursorColor(color));
+		}
+		else if (optionName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)) {
+			Color color = (Color) newValue;
+			onListingPanels(listingPanels, lp -> lp.setCursorHighlightColor(color));
+		}
+		else if (optionName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE)) {
+			Boolean doHighlight = (Boolean) newValue;
+			onListingPanels(listingPanels, lp -> lp.setHighlightCursorLineEnabled(doHighlight));
+		}
+		else if (optionName.equals(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME)) {
+			Boolean doScroll = (Boolean) newValue;
+			onFieldPanels(fieldPanels, fp -> fp.setHorizontalScrollingEnabled(doScroll));
 		}
 	}
 
+	protected void onFieldPanels(List<FieldPanel> panels, Consumer<FieldPanel> c) {
+		for (FieldPanel fp : panels) {
+			c.accept(fp);
+		}
+	}
+
+	protected void onListingPanels(List<ListingPanel> listingPanels, Consumer<ListingPanel> c) {
+		for (ListingPanel lp : listingPanels) {
+			c.accept(lp);
+		}
+	}
+
+	private List<ListingPanel> allListingPanels() {
+
+		List<ListingPanel> results = new ArrayList<>();
+		results.add(connectedProvider.getListingPanel());
+
+		ListingPanel otherPanel = connectedProvider.getOtherPanel();
+		if (otherPanel != null) {
+			results.add(otherPanel);
+		}
+
+		for (CodeViewerProvider provider : disconnectedProviders) {
+			results.add(provider.getListingPanel());
+		}
+
+		return results;
+	}
+
+	private List<FieldPanel> allFieldPanels() {
+		List<FieldPanel> results = new ArrayList<>();
+
+		FieldPanel fieldPanel = connectedProvider.getListingPanel().getFieldPanel();
+		results.add(fieldPanel);
+
+		ListingPanel otherPanel = connectedProvider.getOtherPanel();
+		if (otherPanel != null) {
+			FieldPanel otherFieldPanel = otherPanel.getFieldPanel();
+			results.add(otherFieldPanel);
+		}
+
+		for (CodeViewerProvider provider : disconnectedProviders) {
+			fieldPanel = provider.getListingPanel().getFieldPanel();
+			results.add(fieldPanel);
+		}
+
+		return results;
+	}
+
 	@Override
-	public void selectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
+	public void broadcastSelectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
 		if (provider == connectedProvider) {
-			MarkerSet selectionMarkers = getSelectionMarkers(currentProgram);
-			if (selectionMarkers != null) {
-				selectionMarkers.clearAll();
-			}
-			if (selection != null) {
-				if (selectionMarkers != null) {
-					selectionMarkers.add(selection);
-				}
-			}
 			if (!selectionChanging) {
 				tool.firePluginEvent(new ProgramSelectionPluginEvent(getName(), selection,
 					connectedProvider.getProgram()));
@@ -460,88 +536,21 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		}
 	}
 
-	protected void setHighlight(ProgramSelection highlight) {
-		connectedProvider.setHighlight(highlight);
-	}
-
-	protected void setSelection(ProgramSelection sel) {
+	protected void setConnectedProviderSelection(ProgramSelection sel) {
 		selectionChanging = true;
 		connectedProvider.setSelection(sel);
 		selectionChanging = false;
 	}
 
-	protected void clearMarkers(Program program) {
-		if (markerService == null) {
-			return;
-		}
-
-		if (program == null) {
-			return; // can happen during dispose after a programDeactivated()
-		}
-
-		if (currentSelectionMarkers != null) {
-			markerService.removeMarker(currentSelectionMarkers, program);
-			currentSelectionMarkers = null;
-		}
-
-		if (currentHighlightMarkers != null) {
-			markerService.removeMarker(currentHighlightMarkers, program);
-			currentHighlightMarkers = null;
-		}
-
-		if (currentCursorMarkers != null) {
-			markerService.removeMarker(currentCursorMarkers, program);
-			currentCursorMarkers = null;
-		}
-	}
-
-	private MarkerSet getSelectionMarkers(Program program) {
-		if (markerService == null || program == null) {
-			return null;
-		}
-
-		// already created
-		if (currentSelectionMarkers != null) {
-			return currentSelectionMarkers;
-		}
-
-		FieldPanel fp = connectedProvider.getListingPanel().getFieldPanel();
-		currentSelectionMarkers = markerService.createAreaMarker("Selection", "Selection Display",
-			program, MarkerService.SELECTION_PRIORITY, false, true, false, fp.getSelectionColor());
-		return currentSelectionMarkers;
-	}
-
-	protected MarkerSet getHighlightMarkers(Program program) {
-		if (markerService == null || program == null) {
-			return null;
-		}
-
-		// already created
-		if (currentHighlightMarkers != null) {
-			return currentHighlightMarkers;
-		}
-
-		FieldPanel fp = connectedProvider.getListingPanel().getFieldPanel();
-		currentHighlightMarkers = markerService.createAreaMarker("Highlight", "Highlight Display ",
-			program, MarkerService.HIGHLIGHT_PRIORITY, false, true, false, fp.getHighlightColor());
-		return currentHighlightMarkers;
-	}
-
-	protected MarkerSet getCursorMarkers(Program program) {
-		if (markerService == null || program == null) {
-			return null;
-		}
-
-		// already created
-		if (currentCursorMarkers != null) {
-			return currentCursorMarkers;
-		}
-
-		currentCursorMarkers = markerService.createPointMarker("Cursor", "Cursor Location", program,
-			MarkerService.CURSOR_PRIORITY, true, true, isHighlightCursorLine, cursorHighlightColor,
-			CURSOR_LOC_ICON);
-
-		return currentCursorMarkers;
+	private void initMiscellaneousOptions() {
+		// make sure the following options are registered
+		HelpLocation helpLocation =
+			new HelpLocation("ShowInstructionInfoPlugin", "Processor_Manual_Options");
+		Options options = tool.getOptions(ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME);
+		options.registerOption(ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS,
+			OptionType.CUSTOM_TYPE,
+			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions(), helpLocation,
+			"Options for running manual viewer", () -> new ManualViewerCommandEditor());
 	}
 
 	private void initOptions(Options fieldOptions) {
@@ -572,50 +581,44 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			helpLocation, "Enables horizontal scrolling by holding the Shift key while " +
 				"using the mouse scroll wheel");
 
-		Color color = fieldOptions.getColor(GhidraOptions.OPTION_SELECTION_COLOR,
-			GhidraOptions.DEFAULT_SELECTION_COLOR);
-
-		FieldPanel fieldPanel = connectedProvider.getListingPanel().getFieldPanel();
-		fieldPanel.setSelectionColor(color);
-		MarkerSet selectionMarkers = getSelectionMarkers(currentProgram);
-		if (selectionMarkers != null) {
-			selectionMarkers.setMarkerColor(color);
-		}
-
-		color = fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
-			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR);
-		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
-		fieldPanel.setHighlightColor(color);
-		if (highlightMarkers != null) {
-			highlightMarkers.setMarkerColor(color);
-		}
-
-		color = fieldOptions.getColor(CURSOR_COLOR_OPTIONS_NAME, FOCUSED_CURSOR_COLOR);
-		fieldPanel.setFocusedCursorColor(color);
-
-		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME, UNFOCUSED_CURSOR_COLOR);
-		fieldPanel.setNonFocusCursorColor(color);
-
-		boolean horizontalScrollingEnabled =
-			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME, true);
-		fieldPanel.setHorizontalScrollingEnabled(horizontalScrollingEnabled);
-
-		cursorHighlightColor = fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
-			CURRENT_LINE_HIGHLIGHT_COLOR);
-
-		isHighlightCursorLine = fieldOptions.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true);
+		List<ListingPanel> listingPanels = allListingPanels();
+		List<FieldPanel> fieldPanels = allFieldPanels();
+		initPanelOptions(listingPanels, fieldPanels);
 	}
 
-	private void initMiscellaneousOptions() {
-		// make sure the following options are registered
-		HelpLocation helpLocation =
-			new HelpLocation("ShowInstructionInfoPlugin", "Processor_Manual_Options");
-		Options options = tool.getOptions(ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME);
-		options.registerOption(ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS,
-			OptionType.CUSTOM_TYPE,
-			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions(), helpLocation,
-			"Options for running manual viewer", () -> new ManualViewerCommandEditor());
+	private void initPanelOptions(List<ListingPanel> listingPanels, List<FieldPanel> fieldPanels) {
 
+		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
+
+		Color selectionColor = fieldOptions.getColor(GhidraOptions.OPTION_SELECTION_COLOR,
+			GhidraOptions.DEFAULT_SELECTION_COLOR);
+		onListingPanels(listingPanels, lp -> lp.setSelectionColor(selectionColor));
+
+		Color hlColor = fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
+			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR);
+		onListingPanels(listingPanels, lp -> lp.setHighlightColor(hlColor));
+
+		Color focusedCursorColor =
+			fieldOptions.getColor(CURSOR_COLOR_OPTIONS_NAME, FOCUSED_CURSOR_COLOR);
+		onFieldPanels(fieldPanels, fp -> fp.setFocusedCursorColor(focusedCursorColor));
+
+		Color unfocusedCursorColor =
+			fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME, UNFOCUSED_CURSOR_COLOR);
+		onFieldPanels(fieldPanels, fp -> fp.setNonFocusCursorColor(unfocusedCursorColor));
+
+		boolean scrollingEnabled =
+			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME, true);
+		onFieldPanels(fieldPanels, fp -> fp.setHorizontalScrollingEnabled(scrollingEnabled));
+
+		Color cursorHighlightColor =
+			fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
+				CURRENT_LINE_HIGHLIGHT_COLOR);
+		onListingPanels(listingPanels, lp -> lp.setCursorHighlightColor(cursorHighlightColor));
+
+		boolean isHighlightCursorLine =
+			fieldOptions.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true);
+		onListingPanels(listingPanels,
+			lp -> lp.setHighlightCursorLineEnabled(isHighlightCursorLine));
 	}
 
 	@Override
@@ -874,23 +877,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		removeProvider(codeViewerProvider);
 		if (!codeViewerProvider.isConnected()) {
 			disconnectedProviders.remove(codeViewerProvider);
-		}
-	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	static class MarkerChangeListener implements ChangeListener {
-		private FieldPanel fieldPanel;
-
-		MarkerChangeListener(CodeViewerProvider provider) {
-			this.fieldPanel = provider.getListingPanel().getFieldPanel();
-		}
-
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			fieldPanel.repaint();
 		}
 	}
 }

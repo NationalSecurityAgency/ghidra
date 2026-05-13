@@ -115,7 +115,9 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 * 
 	 * @return the library
 	 */
-	protected abstract PcodeUseropLibrary<T> createUseropLibrary();
+	protected PcodeUseropLibrary<T> createUseropLibrary() {
+		return PcodeUseropLibraryFactory.createUseropLibraryForLanguage(language, arithmetic);
+	}
 
 	@Override
 	public SleighLanguage getLanguage() {

@@ -321,6 +321,14 @@ class ExceptionContainer(TraceObject):
     pass
 
 
+class Event(TraceObject):
+    pass
+
+
+class Exception(TraceObject):
+    pass
+
+
 class ContinueOption(TraceObject):
     pass
 
@@ -863,6 +871,50 @@ def refresh_trace_events_custom(node: State,
     """Parse TTD objects generated from a LINQ command."""
     with commands.open_tracked_tx('Put Events (custom)'):
         commands.ghidra_trace_put_trace_events_custom(prefix, cmd)
+
+
+@REGISTRY.method(action='add_handler', display='Add Handler')
+def add_handler_breakpoint(node: BreakpointSpec, handler: str) -> None:
+    """
+    Add python handler
+    """
+    mat = PROC_BREAKBPT_PATTERN.fullmatch(node.path)
+    if mat is None:
+        raise TypeError(f"{node} is not {err_msg}")
+    bptnum = int(mat['breaknum'])
+    with commands.open_tracked_tx('Add Exception Handler'):
+        util.BPT_HANDLERS[bptnum] = handler
+        commands.ghidra_trace_put_breakpoints()
+
+
+@REGISTRY.method(action='add_handler', display='Add Handler')
+def add_handler_exception(node: Exception, handler: str) -> None:
+    """
+    Add python handler
+    """
+    mat = PROC_EXCEPTION_PATTERN.fullmatch(node.path)
+    if mat is None:
+        raise TypeError(f"{node} is not {err_msg}")
+    excnum = int(mat['excnum'])
+    with commands.open_tracked_tx('Add Exception Handler'):
+        exc_code = util.EXC_CODES[excnum]
+        util.EXC_HANDLERS[exc_code] = handler
+        commands.ghidra_trace_put_exceptions()
+
+
+# TODO?
+# @REGISTRY.method(action='add_handler', display='Add Handler')
+# def add_handler_event(node: Event, handler: str) -> None:
+#     """
+#     Add python handler
+#     """
+#     mat = PROC_EVENT_PATTERN.fullmatch(node.path)
+#     if mat is None:
+#         raise TypeError(f"{node} is not {err_msg}")
+#     evtnum = int(mat['eventnum'])
+#     with commands.open_tracked_tx('Add Event Handler'):
+#         util.EVT_HANDLERS[evtnum] = handler
+#         commands.ghidra_trace_put_events()
 
 
 def dbg():

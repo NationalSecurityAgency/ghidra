@@ -39,14 +39,15 @@ public enum DebuggerSearchRegionFactory {
 			return set;
 		}
 	},
-	VALID("Valid Addresses", """
-			Searches listed memory regions in the space.""") {
+	READABLE("Readable Addresses", """
+			Searches listed regions marked as readable in the space.""") {
 
 		@Override
 		AddressSetView getAddresses(AddressSpace space, Program program) {
 			AddressSet set = new AddressSet();
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
-				if (space == null || space == block.getStart().getAddressSpace()) {
+				if (block.isRead() &&
+					(space == null || space == block.getStart().getAddressSpace())) {
 					set.add(block.getAddressRange());
 				}
 			}
@@ -66,6 +67,21 @@ public enum DebuggerSearchRegionFactory {
 			AddressSet set = new AddressSet();
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (block.isWrite() &&
+					(space == null || space == block.getStart().getAddressSpace())) {
+					set.add(block.getAddressRange());
+				}
+			}
+			return set;
+		}
+	},
+	EXECUTABLE("Executable Addresses", """
+			Searches listed regions marked as executable in the space.""") {
+
+		@Override
+		AddressSetView getAddresses(AddressSpace space, Program program) {
+			AddressSet set = new AddressSet();
+			for (MemoryBlock block : program.getMemory().getBlocks()) {
+				if (block.isExecute() &&
 					(space == null || space == block.getStart().getAddressSpace())) {
 					set.add(block.getAddressRange());
 				}

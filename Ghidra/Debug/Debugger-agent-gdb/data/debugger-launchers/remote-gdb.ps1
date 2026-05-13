@@ -33,6 +33,7 @@
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:int=9999 "Port" "The host's listening port"
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 

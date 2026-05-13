@@ -30,6 +30,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 
@@ -167,7 +168,7 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 
 		@Override
 		public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-				Varnode outVar, List<Varnode> inVars) {
+				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 			syslib.syscall(executor, library);
 		}
 

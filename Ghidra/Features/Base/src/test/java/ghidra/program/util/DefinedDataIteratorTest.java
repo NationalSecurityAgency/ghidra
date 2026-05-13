@@ -49,7 +49,7 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 	@Before
 	public void setUp() throws Exception {
 
-		builder = new ToyProgramBuilder("DefinedDataIteratorTests", false);
+		builder = new ToyProgramBuilder();
 		program = builder.getProgram();
 		dtm = program.getDataTypeManager();
 
@@ -80,8 +80,8 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		builder.createString("0x10", "test1", StandardCharsets.UTF_8, true, stringDT);
 		builder.applyFixedLengthDataType("0x100", struct1DT, struct1DT.getLength());
 
-		List<Data> list = CollectionUtils.asList((Iterable<Data>)
-			DefinedDataIterator.byDataType(program, dt -> dt instanceof IntegerDataType));
+		List<Data> list = CollectionUtils.asList((Iterable<Data>) DefinedDataIterator
+				.byDataType(program, dt -> dt instanceof IntegerDataType));
 
 		assertTrue(list.get(0).getAddress().getOffset() == 0x0);
 		assertTrue(list.get(1).getAddress().getOffset() == 0x100);
@@ -137,8 +137,8 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		builder.applyFixedLengthDataType("0x20", intDT, intTD.getLength());
 
 		// iterating by data type ignores typedefs, so we should get all 3 ints
-		List<Data> list = CollectionUtils.asList((Iterable<Data>)
-			DefinedDataIterator.byDataType(program, dt -> dt instanceof IntegerDataType));
+		List<Data> list = CollectionUtils.asList((Iterable<Data>) DefinedDataIterator
+				.byDataType(program, dt -> dt instanceof IntegerDataType));
 
 		assertEquals(3, list.size());
 

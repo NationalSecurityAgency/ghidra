@@ -19,7 +19,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentPlaceholder;
 import docking.DockingWindowManager;

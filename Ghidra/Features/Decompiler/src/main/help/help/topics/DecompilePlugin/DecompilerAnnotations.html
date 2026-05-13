@@ -4,7 +4,7 @@
 <title>Program Annotations Affecting the Decompiler</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerConcepts.html" title="Decompiler Concepts">
@@ -706,6 +706,38 @@
           If more than one field is being accessed simultaneously, the Decompiler may try to split
 	  the access into logical pieces. See the description of the analysis option for
 	  <a class="link" href="DecompilerOptions.html#AnalysisSplitStruct">Splitting Structure Accesses</a>.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeBitField"></a>Bitfields</h5></div></div></div>
+	
+	<p>
+	  Bitfields are fully supported.  Bitfields are a special type of integer field, defined within a structure data-type,
+	  that does not respect byte boundaries.  A bitfield can be as small as a single bit, and multiple bitfields can be packed
+	  into a single byte or word of the structure. The Decompiler does not infer bitfields, but propagates them into
+	  the function from structures that explicitly define them.
+	</p>
+	<p>
+	  The Decompiler will attempt to display reads and writes to individual bitfields
+	  using the field's name and a standard structure access operator, like '.' or '-&gt;'.  This hides the
+	  longer sequence of byte-based operations that the underlying code is using to isolate the individual bitfield
+	  from its neighbors.
+	  </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      iVar1 = ptr-&gt;bit1;        //  iVar1 = ((*ptr) &gt;&gt; 3) &amp; 7
+	      struct1.bit1 = i;         //  struct1._0_1 = ((i &amp; 7) &lt;&lt; 3) | (struct1._0_1 &amp; 0xc7)
+	    </pre>
+	  </div>
+<p>
+	</p>
+	<p>
+	  If a code sequence sets multiple bitfields simultaneously, the Decompiler will display the sequence
+	  using multiple assignment statements, one for each bitfield affected.  If bitfields are read simultaneously, the
+	  Decompiler will display each bitfield as a separate element of the expression. If a code sequence does not seem to respect
+	  the boundaries of individual bitfields, the Decompiler will revert to using auto-generated, byte-based,
+	  field tokens to represent the sequence.
 	</p>
       </div>
       <div class="sect4">

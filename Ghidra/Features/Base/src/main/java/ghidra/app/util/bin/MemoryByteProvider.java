@@ -223,7 +223,7 @@ public class MemoryByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public long length() throws IOException {
+	public long length() {
 		if (isEmtpy) {
 			return 0;
 		}

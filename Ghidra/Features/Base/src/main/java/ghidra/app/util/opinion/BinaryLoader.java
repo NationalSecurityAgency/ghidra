@@ -27,7 +27,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
-import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 
@@ -94,12 +93,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 		long fileOffset = 0;
 		long origFileLength;
 		boolean isOverlay = false;
-		try {
-			origFileLength = provider.length();
-		}
-		catch (IOException e) {
-			return "Error determining length: " + e.getMessage();
-		}
+		origFileLength = provider.length();
 
 		for (Option option : options) {
 			String optName = option.getName();
@@ -352,13 +346,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		long fileOffset = 0;
-		long origFileLength = -1;
-		try {
-			origFileLength = provider.length();
-		}
-		catch (IOException e) {
-			Msg.warn(this, "Error determining length", e);
-		}
+		long origFileLength = provider.length();
 		long length = origFileLength;
 		boolean isOverlay = false;
 		String blockName = "";

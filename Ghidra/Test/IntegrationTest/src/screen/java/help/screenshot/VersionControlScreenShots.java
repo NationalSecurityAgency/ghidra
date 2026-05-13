@@ -96,6 +96,7 @@ public class VersionControlScreenShots extends GhidraScreenShotGenerator {
 
 		UndoActionDialog d = waitForDialogComponent(UndoActionDialog.class);
 		captureDialog(d);
+
 		close(d);
 	}
 

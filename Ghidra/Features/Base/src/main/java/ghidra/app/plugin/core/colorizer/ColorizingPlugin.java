@@ -21,7 +21,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ActionContext;
 import docking.action.DockingAction;

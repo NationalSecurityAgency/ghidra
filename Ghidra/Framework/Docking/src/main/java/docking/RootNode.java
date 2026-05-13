@@ -23,7 +23,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;

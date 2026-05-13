@@ -15,13 +15,15 @@
  */
 package ghidra.pcode.emu.jit.analysis;
 
-import static org.objectweb.asm.Opcodes.*;
-
 import java.util.*;
 
 import org.objectweb.asm.Opcodes;
 
 import ghidra.lifecycle.Unfinished;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.SimpleOpnd;
+import ghidra.pcode.emu.jit.gen.util.Types;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 
 /**
  * The p-code type of an operand.
@@ -34,6 +36,42 @@ import ghidra.lifecycle.Unfinished;
  * locals.
  */
 public interface JitType {
+
+	/**
+	 * Get the smallest type to which both of the given types can be converted without loss.
+	 * <p>
+	 * When the given types are a mix of integral and floating-point, this chooses an integral type
+	 * whose size is the greater of the two.
+	 * 
+	 * @param a the first type
+	 * @param b the second type
+	 * @return the uniform type
+	 */
+	static JitType unify(JitType a, JitType b) {
+		if (a == b) {
+			return a;
+		}
+		int size = Math.max(a.size(), b.size());
+		return JitTypeBehavior.INTEGER.type(size);
+	}
+
+	/**
+	 * Similar to {@link #unify(JitType, JitType)}, except that it takes the lesser size.
+	 * <p>
+	 * This is used when culling of unnecessary loads is desired and loss of precision is
+	 * acceptable.
+	 * 
+	 * @param a the first type
+	 * @param b the second type
+	 * @return the uniform type
+	 */
+	static JitType unifyLeast(JitType a, JitType b) {
+		if (a == b) {
+			return a;
+		}
+		int size = Math.min(a.size(), b.size());
+		return JitTypeBehavior.INTEGER.type(size);
+	}
 
 	/**
 	 * Compare two types by preference. The type with the more preferred behavior then smaller size
@@ -67,54 +105,88 @@ public interface JitType {
 	 * @see JitDataFlowUseropLibrary
 	 */
 	public static JitType forJavaType(Class<?> cls) {
-		if (cls == boolean.class) {
-			return IntJitType.I4;
+		return SimpleJitType.forJavaType(cls);
+	}
+
+	/**
+	 * A type comprising of legs, each of simple type
+	 * 
+	 * @param <T> the JVM type of each leg
+	 * @param <LT> the p-code type of each leg
+	 */
+	public interface LeggedJitType<T extends BPrim<?>, LT extends SimpleJitType<T, LT>>
+			extends JitType {
+
+		@Override
+		List<? extends LT> legTypesBE();
+
+		/**
+		 * Cast the given operand's legs as having this type's leg type.
+		 * <p>
+		 * This is (sadly) necessary because of the loss of type information in {@link Opnd} when it
+		 * has a legged type.
+		 * 
+		 * @param opnd the operand whose legs to cast
+		 * @return the legs in little-endian order.
+		 */
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		default List<SimpleOpnd<T, LT>> castLegsLE(Opnd<? extends LeggedJitType<?, ?>> opnd) {
+			return (List) opnd.legsLE();
 		}
-		if (cls == byte.class) {
-			return IntJitType.I1;
-		}
-		if (cls == short.class) {
-			return IntJitType.I2;
-		}
-		if (cls == int.class) {
-			return IntJitType.I4;
-		}
-		if (cls == long.class) {
-			return LongJitType.I8;
-		}
-		if (cls == float.class) {
-			return FloatJitType.F4;
-		}
-		if (cls == double.class) {
-			return DoubleJitType.F8;
-		}
-		throw new IllegalArgumentException();
 	}
 
 	/**
 	 * A p-code type that can be represented in a single JVM variable.
+	 * 
+	 * @param <T> the JVM type for this JIT type
+	 * @param <JT> this JIT type (recursive)
 	 */
-	public interface SimpleJitType extends JitType {
+	public interface SimpleJitType<T extends BPrim<?>, JT extends SimpleJitType<T, JT>>
+			extends LeggedJitType<T, JT> {
+
+		/**
+		 * Identify the p-code type that is exactly represented by the given JVM type.
+		 * 
+		 * <p>
+		 * This is used during Direct userop invocation to convert the arguments and return value.
+		 * 
+		 * @param cls the primitive class (not boxed)
+		 * @return the p-code type
+		 * @see JitDataFlowUseropLibrary
+		 */
+		@SuppressWarnings("unchecked")
+		public static <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> JT forJavaType(
+				Class<?> cls) {
+			if (cls == boolean.class) {
+				return (JT) IntJitType.I1;
+			}
+			if (cls == byte.class) {
+				return (JT) IntJitType.I1;
+			}
+			if (cls == short.class) {
+				return (JT) IntJitType.I2;
+			}
+			if (cls == int.class) {
+				return (JT) IntJitType.I4;
+			}
+			if (cls == long.class) {
+				return (JT) LongJitType.I8;
+			}
+			if (cls == float.class) {
+				return (JT) FloatJitType.F4;
+			}
+			if (cls == double.class) {
+				return (JT) DoubleJitType.F8;
+			}
+			throw new IllegalArgumentException();
+		}
+
 		/**
 		 * The JVM type of the variable that can represent a p-code variable of this type
 		 * 
-		 * @return the primitive class (not boxed)
+		 * @return the primitive type (not boxed)
 		 */
-		Class<?> javaType();
-
-		/**
-		 * The JVM opcode to load a local variable of this type onto the stack
-		 * 
-		 * @return the opcode
-		 */
-		int opcodeLoad();
-
-		/**
-		 * The JVM opcode to store a local variable of this type from the stack
-		 * 
-		 * @return the opcode
-		 */
-		int opcodeStore();
+		T bType();
 
 		/**
 		 * Re-apply the {@link JitTypeBehavior#INTEGER integer} behavior to this type
@@ -125,10 +197,10 @@ public interface JitType {
 		 * 
 		 * @return this type as an int
 		 */
-		SimpleJitType asInt();
+		SimpleJitType<?, ?> asInt();
 
 		@Override
-		SimpleJitType ext();
+		SimpleJitType<T, JT> ext();
 	}
 
 	/**
@@ -136,7 +208,7 @@ public interface JitType {
 	 * 
 	 * @param size the size in bytes
 	 */
-	public record IntJitType(int size) implements SimpleJitType {
+	public record IntJitType(int size) implements SimpleJitType<TInt, IntJitType> {
 		/** {@code int1}: a 1-byte integer */
 		public static final IntJitType I1 = new IntJitType(1);
 		/** {@code int2}: a 2-byte integer */
@@ -183,18 +255,8 @@ public interface JitType {
 		}
 
 		@Override
-		public Class<?> javaType() {
-			return int.class;
-		}
-
-		@Override
-		public int opcodeLoad() {
-			return ILOAD;
-		}
-
-		@Override
-		public int opcodeStore() {
-			return ISTORE;
+		public TInt bType() {
+			return Types.T_INT;
 		}
 
 		@Override
@@ -208,7 +270,12 @@ public interface JitType {
 		}
 
 		@Override
-		public List<IntJitType> legTypes() {
+		public List<IntJitType> legTypesBE() {
+			return List.of(this);
+		}
+
+		@Override
+		public List<IntJitType> legTypesLE() {
 			return List.of(this);
 		}
 	}
@@ -218,7 +285,7 @@ public interface JitType {
 	 * 
 	 * @param size the size in bytes
 	 */
-	public record LongJitType(int size) implements SimpleJitType {
+	public record LongJitType(int size) implements SimpleJitType<TLong, LongJitType> {
 		/** {@code int5}: a 5-byte integer */
 		public static final LongJitType I5 = new LongJitType(5);
 		/** {@code int6}: a 6-byte integer */
@@ -227,6 +294,12 @@ public interface JitType {
 		public static final LongJitType I7 = new LongJitType(7);
 		/** {@code int8}: a 8-byte integer */
 		public static final LongJitType I8 = new LongJitType(8);
+
+		// These are needed only as intermediates during conversion
+		public static final LongJitType I1 = new LongJitType(1);
+		public static final LongJitType I2 = new LongJitType(2);
+		public static final LongJitType I3 = new LongJitType(3);
+		public static final LongJitType I4 = new LongJitType(4);
 
 		/**
 		 * Get the type for an integer of the given size 5 through 8
@@ -241,6 +314,11 @@ public interface JitType {
 				case 6 -> I6;
 				case 7 -> I7;
 				case 8 -> I8;
+				// For intermediate conversion only
+				case 1 -> I1;
+				case 2 -> I2;
+				case 3 -> I3;
+				case 4 -> I4;
 				default -> throw new IllegalArgumentException("size:" + size);
 			};
 		}
@@ -265,18 +343,8 @@ public interface JitType {
 		}
 
 		@Override
-		public Class<?> javaType() {
-			return long.class;
-		}
-
-		@Override
-		public int opcodeLoad() {
-			return LLOAD;
-		}
-
-		@Override
-		public int opcodeStore() {
-			return LSTORE;
+		public TLong bType() {
+			return Types.T_LONG;
 		}
 
 		@Override
@@ -290,7 +358,12 @@ public interface JitType {
 		}
 
 		@Override
-		public List<LongJitType> legTypes() {
+		public List<LongJitType> legTypesBE() {
+			return List.of(this);
+		}
+
+		@Override
+		public List<LongJitType> legTypesLE() {
 			return List.of(this);
 		}
 	}
@@ -298,7 +371,7 @@ public interface JitType {
 	/**
 	 * The p-code type for floating-point of size 4, i.e., that fits in a JVM float.
 	 */
-	public enum FloatJitType implements SimpleJitType {
+	public enum FloatJitType implements SimpleJitType<TFloat, FloatJitType> {
 		/** {@code float4}: a 4-byte float */
 		F4;
 
@@ -318,18 +391,8 @@ public interface JitType {
 		}
 
 		@Override
-		public Class<?> javaType() {
-			return float.class;
-		}
-
-		@Override
-		public int opcodeLoad() {
-			return FLOAD;
-		}
-
-		@Override
-		public int opcodeStore() {
-			return FSTORE;
+		public TFloat bType() {
+			return Types.T_FLOAT;
 		}
 
 		@Override
@@ -343,7 +406,12 @@ public interface JitType {
 		}
 
 		@Override
-		public List<FloatJitType> legTypes() {
+		public List<FloatJitType> legTypesBE() {
+			return List.of(this);
+		}
+
+		@Override
+		public List<FloatJitType> legTypesLE() {
 			return List.of(this);
 		}
 	}
@@ -351,7 +419,7 @@ public interface JitType {
 	/**
 	 * The p-code type for floating-point of size 8, i.e., that fits in a JVM double.
 	 */
-	public enum DoubleJitType implements SimpleJitType {
+	public enum DoubleJitType implements SimpleJitType<TDouble, DoubleJitType> {
 		/** {@code float8}: a 8-byte float */
 		F8;
 
@@ -371,18 +439,8 @@ public interface JitType {
 		}
 
 		@Override
-		public Class<?> javaType() {
-			return double.class;
-		}
-
-		@Override
-		public int opcodeLoad() {
-			return DLOAD;
-		}
-
-		@Override
-		public int opcodeStore() {
-			return DSTORE;
+		public TDouble bType() {
+			return Types.T_DOUBLE;
 		}
 
 		@Override
@@ -396,7 +454,12 @@ public interface JitType {
 		}
 
 		@Override
-		public List<DoubleJitType> legTypes() {
+		public List<DoubleJitType> legTypesBE() {
+			return List.of(this);
+		}
+
+		@Override
+		public List<DoubleJitType> legTypesLE() {
 			return List.of(this);
 		}
 	}
@@ -410,9 +473,32 @@ public interface JitType {
 	 * no matter the language endianness.
 	 * 
 	 * @param size the size in bytes
+	 * @param legTypesBE the type of each leg, in big-endian order
+	 * @param legTypesLE the type of each leg, in little-endian order
 	 */
-	public record MpIntJitType(int size) implements JitType {
+	public record MpIntJitType(int size, List<IntJitType> legTypesBE, List<IntJitType> legTypesLE)
+			implements LeggedJitType<TInt, IntJitType> {
 		private static final Map<Integer, MpIntJitType> FOR_SIZES = new HashMap<>();
+
+		private static int legsAlloc(int size) {
+			return (size + Integer.BYTES - 1) / Integer.BYTES;
+		}
+
+		private static int partialSize(int size) {
+			return size % Integer.BYTES;
+		}
+
+		private static List<IntJitType> computeLegTypesBE(int size) {
+			IntJitType[] types = new IntJitType[legsAlloc(size)];
+			int i = 0;
+			if (partialSize(size) != 0) {
+				types[i++] = IntJitType.forSize(partialSize(size));
+			}
+			for (; i < types.length; i++) {
+				types[i] = IntJitType.I4;
+			}
+			return Arrays.asList(types);
+		}
 
 		/**
 		 * Get the type for an integer of the given size 9 or greater
@@ -423,6 +509,14 @@ public interface JitType {
 		 */
 		public static MpIntJitType forSize(int size) {
 			return FOR_SIZES.computeIfAbsent(size, MpIntJitType::new);
+		}
+
+		private MpIntJitType(int size, List<IntJitType> legTypesBE) {
+			this(size, legTypesBE, legTypesBE.reversed());
+		}
+
+		private MpIntJitType(int size) {
+			this(size, computeLegTypesBE(size));
 		}
 
 		@Override
@@ -441,7 +535,7 @@ public interface JitType {
 		 * @return the total number of legs
 		 */
 		public int legsAlloc() {
-			return (size + Integer.BYTES - 1) / Integer.BYTES;
+			return legsAlloc(size);
 		}
 
 		/**
@@ -459,20 +553,7 @@ public interface JitType {
 		 * @return the number of bytes in the partial leg, or 0 if all legs are whole
 		 */
 		public int partialSize() {
-			return size % Integer.BYTES;
-		}
-
-		@Override
-		public List<IntJitType> legTypes() {
-			IntJitType[] types = new IntJitType[legsAlloc()];
-			int i = 0;
-			if (partialSize() != 0) {
-				types[i++] = IntJitType.forSize(partialSize());
-			}
-			for (; i < types.length; i++) {
-				types[i] = IntJitType.I4;
-			}
-			return Arrays.asList(types);
+			return partialSize(size);
 		}
 
 		@Override
@@ -486,7 +567,7 @@ public interface JitType {
 	 * 
 	 * @param size the size in bytes
 	 */
-	public record MpFloatJitType(int size) implements JitType {
+	public record MpFloatJitType(int size) implements LeggedJitType<TInt, IntJitType> {
 		private static final Map<Integer, MpFloatJitType> FOR_SIZES = new HashMap<>();
 
 		/**
@@ -516,7 +597,12 @@ public interface JitType {
 		}
 
 		@Override
-		public List<SimpleJitType> legTypes() {
+		public List<IntJitType> legTypesBE() {
+			return Unfinished.TODO("MpFloat");
+		}
+
+		@Override
+		public List<IntJitType> legTypesLE() {
 			return Unfinished.TODO("MpFloat");
 		}
 	}
@@ -563,5 +649,16 @@ public interface JitType {
 	 * 
 	 * @return the list of types, each fitting in a JVM int, in big-endian order.
 	 */
-	List<? extends SimpleJitType> legTypes();
+	List<? extends SimpleJitType<?, ?>> legTypesBE();
+
+	/**
+	 * Get the p-code type that describes the part of the variable in each leg
+	 * 
+	 * <p>
+	 * Each whole leg will have the type {@link IntJitType#I4}, and the partial leg, if applicable,
+	 * will have its appropriate smaller integer type.
+	 * 
+	 * @return the list of types, each fitting in a JVM int, in little-endian order.
+	 */
+	List<? extends SimpleJitType<?, ?>> legTypesLE();
 }

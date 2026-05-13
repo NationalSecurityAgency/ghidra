@@ -15,12 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
 import ghidra.pcode.emu.jit.op.JitUnOp;
 
 /**
@@ -48,37 +43,5 @@ public interface UnOpGen<T extends JitUnOp> extends OpGen<T> {
 	 */
 	default Ext ext() {
 		return Ext.forSigned(isSigned());
-	}
-
-	/**
-	 * Emit code for the unary operator
-	 * 
-	 * <p>
-	 * At this point the operand is on the stack. After this returns, code to write the result from
-	 * the stack into the destination operand will be emitted.
-	 * 
-	 * @param gen the code generator
-	 * @param op the operator
-	 * @param block the block containing the operator
-	 * @param uType the actual type of the operand
-	 * @param rv the method visitor
-	 * @return the actual type of the result
-	 */
-	JitType generateUnOpRunCode(JitCodeGenerator gen, T op, JitBlock block, JitType uType,
-			MethodVisitor rv);
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * This default implementation emits code to load the operand, invokes
-	 * {@link #generateUnOpRunCode(JitCodeGenerator, JitUnOp, JitBlock, JitType, MethodVisitor)
-	 * gen-unop}, and finally emits code to write the destination operand.
-	 */
-	@Override
-	default void generateRunCode(JitCodeGenerator gen, T op, JitBlock block, MethodVisitor rv) {
-		JitType uType = gen.generateValReadCode(op.u(), op.uType(), ext());
-		JitType outType = generateUnOpRunCode(gen, op, block, uType, rv);
-		gen.generateVarWriteCode(op.out(), outType, ext());
 	}
 }

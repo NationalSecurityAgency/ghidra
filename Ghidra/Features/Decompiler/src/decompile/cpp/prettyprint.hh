@@ -273,10 +273,21 @@ public:
   /// possibly with additional markup.
   /// \param name is the character data for the identifier
   /// \param hl indicates how the identifier should be highlighted
-  /// \param ct is the data-type associated with the field
+  /// \param ct is the structured data-type containing the field
   /// \param off is the (byte) offset of the field within its structured data-type
   /// \param op is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op)=0;
+
+  /// \brief Emit an identifier for a bitfield within a structured data-type
+  ///
+  /// A string representing an individual component of a structured data-type is emitted,
+  /// possibly with additional markup.
+  /// \param name is the character data for the identifier
+  /// \param hl indicates how the identifier should be highlighted
+  /// \param ct is the structured data-type containing the field
+  /// \param id is an identifier for the field within its structured data-type
+  /// \param op is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
+  virtual void tagBitField(const string &name,syntax_highlight hl,const Datatype *ct,int4 id,const PcodeOp *op)=0;
 
   /// \brief Emit a comment string as part of the generated source code
   ///
@@ -527,6 +538,7 @@ public:
   virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
   virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct);
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
+  virtual void tagBitField(const string &name,syntax_highlight hl,const Datatype *ct,int4 id,const PcodeOp *op);
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value);
@@ -575,6 +587,8 @@ public:
   virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct) {
     *s << name; }
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op) {
+    *s << name; }
+  virtual void tagBitField(const string &name,syntax_highlight hl,const Datatype *ct,int4 id,const PcodeOp *op) {
     *s << name; }
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
     *s << name; }
@@ -642,6 +656,7 @@ public:
     fnam_t,		///< A function identifier
     type_t,		///< A data-type identifier
     field_t,		///< A field name for a structured data-type
+    bitfield_t,		///< A bitfield name in a structured data-type
     comm_t,		///< Part of a comment block
     label_t,		///< A code label
     case_t,		///< A case label
@@ -808,12 +823,23 @@ public:
   ///
   /// \param name is the character data for the identifier
   /// \param h indicates how the identifier should be highlighted
-  /// \param ct is the data-type associated with the field
+  /// \param ct is the structured data-type containing the field
   /// \param o is the (byte) offset of the field within its structured data-type
   /// \param inOp is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
   void tagField(const string &name,EmitMarkup::syntax_highlight h,const Datatype *ct,int4 o,const PcodeOp *inOp) {
     tok = name; size = tok.size();
     tagtype=field_t; delimtype=tokenstring; hl=h; ptr_second.ct=ct; off=(uintb)o; op=inOp; }
+
+  /// \brief Create an identifier for a bitfield within a structured data-type
+  ///
+  /// \param name is the character data for the identifier
+  /// \param h indicates how the identifier should be highlighted
+  /// \param ct is the structured data-type containing the field
+  /// \param id is an identifier for the field within its structured data-type
+  /// \param inOp is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
+  void tagBitField(const string &name,EmitMarkup::syntax_highlight h,const Datatype *ct,int4 id,const PcodeOp *inOp) {
+    tok = name; size = tok.size();
+    tagtype=bitfield_t; delimtype=tokenstring; hl=h; ptr_second.ct=ct; off=(uintb)id; op=inOp; }
 
   /// \brief Create a comment string in the generated source code
   ///
@@ -1088,6 +1114,7 @@ public:
   virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
   virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct);
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
+  virtual void tagBitField(const string &name,syntax_highlight hl,const Datatype *ct,int4 id,const PcodeOp *op);
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value);

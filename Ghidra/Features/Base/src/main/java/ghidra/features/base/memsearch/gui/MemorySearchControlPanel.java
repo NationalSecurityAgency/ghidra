@@ -39,8 +39,8 @@ import docking.widgets.list.GComboBoxCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.features.base.memsearch.combiner.Combiner;
 import ghidra.features.base.memsearch.format.SearchFormat;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
 import ghidra.features.base.memsearch.matcher.InvalidByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
@@ -54,10 +54,10 @@ import ghidra.util.timer.GTimerMonitor;
  */
 class MemorySearchControlPanel extends JPanel {
 	private MultiStateButton<Combiner> searchButton;
-	private GhidraComboBox<ByteMatcher> searchInputField;
+	private GhidraComboBox<UserInputByteMatcher> searchInputField;
 	private GDLabel hexSearchSequenceField;
 	private boolean hasResults;
-	private ByteMatcher currentMatcher = new InvalidByteMatcher("");
+	private UserInputByteMatcher currentMatcher = new InvalidByteMatcher("");
 	private SearchHistory searchHistory;
 	private SearchGuiModel model;
 	private JCheckBox selectionCheckbox;
@@ -145,7 +145,7 @@ class MemorySearchControlPanel extends JPanel {
 		String text = searchInputField.getText();
 		String convertedText = searchFormat.convertText(text, oldSettings, model.getSettings());
 		searchInputField.setText(convertedText);
-		ByteMatcher byteMatcher = searchFormat.parse(convertedText, model.getSettings());
+		UserInputByteMatcher byteMatcher = searchFormat.parse(convertedText, model.getSettings());
 		setByteMatcher(byteMatcher);
 	}
 
@@ -209,7 +209,7 @@ class MemorySearchControlPanel extends JPanel {
 					// our data model is ByteMatcher, not strings
 					return;
 				}
-				ByteMatcher matcher = (ByteMatcher) obj;
+				UserInputByteMatcher matcher = (UserInputByteMatcher) obj;
 				model.setSettings(matcher.getSettings());
 				super.setSelectedItem(obj);
 			}
@@ -286,7 +286,7 @@ class MemorySearchControlPanel extends JPanel {
 		return newFormat.convertText(text, oldSettings, newSettings);
 	}
 
-	private void setByteMatcher(ByteMatcher byteMatcher) {
+	private void setByteMatcher(UserInputByteMatcher byteMatcher) {
 		clearInputError();
 		currentMatcher = byteMatcher;
 		String text = currentMatcher.getDescription();
@@ -404,7 +404,7 @@ class MemorySearchControlPanel extends JPanel {
 	}
 
 	private void updateCombo() {
-		ByteMatcher[] historyArray = searchHistory.getHistoryAsArray();
+		UserInputByteMatcher[] historyArray = searchHistory.getHistoryAsArray();
 
 		searchInputField.setModel(new DefaultComboBoxModel<>(historyArray));
 	}
@@ -428,7 +428,7 @@ class MemorySearchControlPanel extends JPanel {
 			String afterOffset = currentText.substring(offs, currentText.length());
 			String proposedText = beforeOffset + str + afterOffset;
 
-			ByteMatcher byteMatcher = model.parse(proposedText);
+			UserInputByteMatcher byteMatcher = model.parse(proposedText);
 			if (!byteMatcher.isValidInput()) {
 				reportInputError(byteMatcher.getDescription());
 				return;
@@ -457,7 +457,7 @@ class MemorySearchControlPanel extends JPanel {
 				return;
 			}
 
-			ByteMatcher byteMatcher = model.parse(proposedResult);
+			UserInputByteMatcher byteMatcher = model.parse(proposedResult);
 			if (!byteMatcher.isValidInput()) {
 				reportInputError(byteMatcher.getDescription());
 				return;
@@ -503,14 +503,14 @@ class MemorySearchControlPanel extends JPanel {
 		searchInputField.setText(initialInput);
 	}
 
-	private class SearchHistoryRenderer extends GComboBoxCellRenderer<ByteMatcher> {
+	private class SearchHistoryRenderer extends GComboBoxCellRenderer<UserInputByteMatcher> {
 		{
 			setHTMLRenderingEnabled(true);
 		}
 
 		@Override
-		public Component getListCellRendererComponent(JList<? extends ByteMatcher> list,
-				ByteMatcher matcher, int index,
+		public Component getListCellRendererComponent(JList<? extends UserInputByteMatcher> list,
+				UserInputByteMatcher matcher, int index,
 				boolean isSelected, boolean cellHasFocus) {
 
 			super.getListCellRendererComponent(list, matcher, index, isSelected, cellHasFocus);

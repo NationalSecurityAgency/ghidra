@@ -164,13 +164,18 @@
 		          		<ul>
 		          			<li><b>Do Not Apply</b> - Do not apply markup to the destination program</li>
 		          			<li><b>Add</b> - Adds the function name from the source program to the one already 
-		          					at the address in the destination program.</li>
+		          					at the address in the destination program.  If the existing primary
+								    symbol is default, then no new label will not be added, but instead
+									the existing label will be replaced with the source name.</li>
 		          			<li><b>Add As Primary</b> - Adds the function name from the source program to 
 		          					the one already at the address in the destination program. Sets the 
 		          					primary label in the destination program to whatever label was the 
-		          					primary one in the source program.</li>
-		          			<li><b>Replace Always</b> - Always apply markup to from the source
-		          					program to the destination program.</li>
+		          					primary one in the source program.  </li>
+		          			<li><b>Replace Always</b> - Always use the source symbol name to replace
+		          					the destination symbol name.  The one exception is that if the 
+									source symbol is a default symbol, then the destination symbol 
+									name will be removed instead of being replaced with the source
+									symbol name.</li>
 		          			<li><b>Replace Default Only</b> - Only apply markup from the 
 		          					source program to the destination program when the label 
 		          					in the destination program is a default label.</li>
@@ -425,6 +430,40 @@
 			          </TD>
 			        </TR>				   
 			        
+					    
+			        <TR>
+			          <TD><b>Function Signature</b> : <br>
+			          		Specifies the default action to take when applying the function
+			          		signature of a match.
+			          </TD>
+
+			          <TD nowrap><tt>Replace When Same Parameter Count</tt>
+			          </TD>
+			        </TR>
+			        
+					
+					    
+			        <TR>
+			          <TD><b>Replace Namespace</b> : <br>
+			          		Specifies whether to apply the source function's namespace when applying
+							the function name.
+							
+							<P>
+							<B>Note: If the source uses the Global namespace, then the destination
+							   will not be updated when this option is on.  The Global namespace is
+							   considered the default namesapce.   The assumption is that if the 
+							   destination program has a non-Global namespace, then the existing
+							   destination namespace is preferred over the Global namespace.
+							</B>
+							</P>
+			          </TD>
+
+			          <TD nowrap><tt>True</tt>
+			          </TD>
+			        </TR>
+			        
+					
+					
 			        <TR>
 			          <TD><b>Inline</b> : <br>
 			          		Specifies the action to take for applying the inline flag when 
@@ -497,17 +536,7 @@
 			          <TD nowrap><tt>False</tt>
 			          </TD>
 			        </TR>	
-			        
-			        <TR>
-			          <TD><b>Function Signature</b> : <br>
-			          		Specifies the default action to take when applying the function
-			          		signature of a match.
-			          </TD>
-			
-			          <TD nowrap><tt>Replace When Same Parameter Count</tt>
-			          </TD>
-			        </TR>
-			        
+	
 			        <TR>
 			          <TD><b>Labels</b> : <br>
 			          		Specifies the default action to take when applying the label of a match.

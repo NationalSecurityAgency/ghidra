@@ -15,26 +15,36 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
+import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TLong;
 import ghidra.pcode.emu.jit.op.JitIntOrOp;
 
 /**
  * The generator for a {@link JitIntOrOp int_or}.
  * 
  * <p>
- * This uses the bitwise binary operator and emits {@link #IOR} or {@link #LOR} depending on the
- * type.
+ * This uses the bitwise binary operator and emits {@link Op#ior(Emitter) ior} or
+ * {@link Op#lor(Emitter) lor} depending on the type.
  */
-public enum IntOrOpGen implements BitwiseBinOpGen<JitIntOrOp> {
+public enum IntOrOpGen implements IntBitwiseBinOpGen<JitIntOrOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public int intOpcode() {
-		return IOR;
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return Op.ior(em);
 	}
 
 	@Override
-	public int longOpcode() {
-		return LOR;
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+		return Op.lor(em);
 	}
 }

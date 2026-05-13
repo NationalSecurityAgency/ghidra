@@ -109,9 +109,10 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param size the number of bytes to read (the size of the value)
 	 * @return the read value
 	 */
-	protected SymValueZ3 getUnique(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
+	protected SymValueZ3 getUnique(SymValueZ3 offset, int size, Reason reason,
+			PcodeStateCallbacks cb) {
 		S s = getForSpace(uniqueSpace, false);
-		return getFromSpace(s, offset, size, cb);
+		return getFromSpace(s, offset, size, reason, cb);
 	}
 
 	/**
@@ -143,10 +144,11 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param space the address space
 	 * @param offset the offset within the space
 	 * @param size the number of bytes to read (the size of the value)
+	 * @param reason the reason for reading
 	 * @param cb callbacks to receive emulation events
 	 * @return the read value
 	 */
-	protected abstract SymValueZ3 getFromSpace(S space, SymValueZ3 offset, int size,
+	protected abstract SymValueZ3 getFromSpace(S space, SymValueZ3 offset, int size, Reason reason,
 			PcodeStateCallbacks cb);
 
 	/**
@@ -229,7 +231,7 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 			}
 		}
 		if (space.isUniqueSpace()) {
-			return getUnique(offset, size, cb);
+			return getUnique(offset, size, reason, cb);
 		}
 		S s = getForSpace(space, false);
 		//Msg.info(this, "Now we likely have a space to get from: " + s);
@@ -237,7 +239,7 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 			return getFromNullSpace(size, cb);
 		}
 		//offset = quantizeOffset(space, offset);
-		return getFromSpace(s, offset, size, cb);
+		return getFromSpace(s, offset, size, reason, cb);
 	}
 
 	@Override

@@ -18,28 +18,33 @@ package docking.help;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.*;
-import java.io.File;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.URL;
-import java.util.Enumeration;
+import java.time.Duration;
+import java.util.*;
 
 import javax.help.*;
 import javax.help.search.SearchEngine;
 import javax.swing.*;
+import javax.swing.text.Document;
 
 import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
 import docking.widgets.FindDialog;
-import docking.widgets.TextComponentSearcher;
+import docking.widgets.SearchLocation;
+import docking.widgets.search.*;
 import generic.util.WindowUtilities;
 import ghidra.util.exception.AssertException;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.worker.Worker;
 
 /**
  * Enables the Find Dialog for searching through the current page of a help document.
  */
 class HelpViewSearcher {
 
-	private static final String DIALOG_TITLE_PREFIX = "Whole Word Search in ";
 	private static final String FIND_ACTION_NAME = "find.action";
 
 	private static KeyStroke FIND_KEYSTROKE =
@@ -59,24 +64,11 @@ class HelpViewSearcher {
 
 		JHelpContentViewer contentViewer = jHelp.getContentViewer();
 
-		contentViewer.addHelpModelListener(e -> {
-			URL url = e.getURL();
-			if (!isValidHelpURL(url)) {
-				// invalid file--don't enable searching for it
-				return;
-			}
-
-			String file = url.getFile();
-			int separatorIndex = file.lastIndexOf(File.separator);
-			file = file.substring(separatorIndex + 1);
-			findDialog.setTitle(DIALOG_TITLE_PREFIX + file);
-		});
-
 		// note: see HTMLEditorKit$LinkController.mouseMoved() for inspiration
 		htmlEditorPane = getHTMLEditorPane(contentViewer);
 
-		TextComponentSearcher searcher = new TextComponentSearcher(htmlEditorPane);
-		findDialog = new FindDialog(DIALOG_TITLE_PREFIX, searcher);
+		HtmlTextSearcher searcher = new HtmlTextSearcher(htmlEditorPane);
+		findDialog = new FindDialog("Help Find", searcher);
 
 		htmlEditorPane.addMouseListener(new MouseAdapter() {
 			@Override
@@ -91,14 +83,6 @@ class HelpViewSearcher {
 // if we ever need any highlight manipulation (currently done by BasicHelpContentViewUI)
 //		Highlighter highlighter = htmlEditorPane.getHighlighter();
 //		highlighter.addHighlight(0, 0, null)
-	}
-
-	private boolean isValidHelpURL(URL url) {
-		if (url == null) {
-			return false;
-		}
-		String file = url.getFile();
-		return new File(file).exists();
 	}
 
 	private void grabSearchEngine() {
@@ -190,6 +174,156 @@ class HelpViewSearcher {
 		public void actionPerformed(ActionEvent e) {
 			Window helpWindow = WindowUtilities.windowForComponent(htmlEditorPane);
 			DockingWindowManager.showDialog(helpWindow, findDialog);
+		}
+	}
+
+	private class HtmlTextSearcher extends TextComponentSearcher {
+
+		public HtmlTextSearcher(JEditorPane editorPane) {
+			super(editorPane);
+		}
+
+		@Override
+		protected HtmlSearchResults createSearchResults(
+				Worker worker, JEditorPane jEditorPane, String searchText,
+				TreeMap<Integer, TextComponentSearchLocation> matchesByPosition) {
+
+			HtmlSearchResults results = new HtmlSearchResults(worker, jEditorPane, searchText,
+				matchesByPosition);
+
+			TextHelpModel model = jHelp.getModel();
+			URL url = model.getCurrentURL();
+			results.setUrl(url);
+			return results;
+		}
+	}
+
+	private class HtmlSearchResults extends TextComponentSearchResults {
+
+		private PageLoadedListener pageLoadListener;
+		private URL searchUrl;
+
+		// we use the document length to know when our page is finished loading on a reload
+		private int fullDocumentLength;
+
+		private String name;
+
+		HtmlSearchResults(Worker worker, JEditorPane editorPane, String searchText,
+				TreeMap<Integer, TextComponentSearchLocation> matchesByPosition) {
+			super(worker, editorPane, searchText, matchesByPosition);
+
+			pageLoadListener = new PageLoadedListener(this);
+			editorPane.addPropertyChangeListener("page", pageLoadListener);
+
+			Document doc = editorPane.getDocument();
+			fullDocumentLength = doc.getLength();
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		protected boolean isInvalid(String otherSearchText) {
+			if (!isMyHelpPageShowing()) {
+				return true;
+			}
+			return super.isInvalid(otherSearchText);
+		}
+
+		private boolean isMyHelpPageShowing() {
+			TextHelpModel model = jHelp.getModel();
+			URL htmlViewerURL = model.getCurrentURL();
+			if (!Objects.equals(htmlViewerURL, searchUrl)) {
+				// the help does not have my page
+				return false;
+			}
+
+			// The document gets loaded asynchronously.  Use the length to know when it is finished
+			// loaded.  This will not work correctly when the lengths are the same between two 
+			// documents, but that should be a low occurrence event.
+			Document doc = editorPane.getDocument();
+			int currentLength = doc.getLength();
+			return fullDocumentLength == currentLength;
+		}
+
+		private void loadMyHelpPage(TaskMonitor m) {
+			if (isMyHelpPageShowing()) {
+				return; // no need to reload
+			}
+
+			// Trigger the URL of the results to load and then activate the results
+			jHelp.setCurrentURL(searchUrl);
+		}
+
+		/**
+		 * Start an asynchronous activation. When we activate, we have to tell the viewer to load a
+		 * new html page, which is asynchronous.    
+		 * @return the future
+		 */
+		@Override
+		protected ActivationJob createActivationJob() {
+
+			// start a new page load and then wait for it to finish
+			return (ActivationJob) super.createActivationJob()
+					.thenRun(this::loadMyHelpPage)
+					.thenWait(this::isMyHelpPageShowing, Duration.ofSeconds(3));
+		}
+
+		@Override
+		public void activate() {
+			//
+			// When we activate, a new page load may get triggered.  When that happens the caret 
+			// position will get moved by the help viewer.  We will put back the last active search
+			// location after the load has finished.
+			//
+			SearchLocation lastActiveLocation = getActiveLocation();
+			FindJob job = startActivation()
+					.thenRunSwing(() -> restoreLocation(lastActiveLocation));
+
+			runActivationJob((ActivationJob) job);
+		}
+
+		private void restoreLocation(SearchLocation lastActiveLocation) {
+			if (lastActiveLocation != null) {
+				setActiveLocation(null);
+				setActiveLocation(lastActiveLocation);
+			}
+		}
+
+		@Override
+		public void dispose() {
+			editorPane.removePropertyChangeListener("page", pageLoadListener);
+			super.dispose();
+		}
+
+		void setUrl(URL url) {
+			searchUrl = url;
+			name = getFilename(searchUrl);
+		}
+
+		private URL getUrl() {
+			return searchUrl;
+		}
+
+		private class PageLoadedListener implements PropertyChangeListener {
+
+			private HtmlSearchResults htmlResults;
+
+			PageLoadedListener(HtmlSearchResults htmlResults) {
+				this.htmlResults = htmlResults;
+			}
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+
+				URL newPage = (URL) evt.getNewValue();
+				if (!Objects.equals(newPage, htmlResults.getUrl())) {
+					htmlResults.deactivate();
+				}
+			}
+
 		}
 	}
 

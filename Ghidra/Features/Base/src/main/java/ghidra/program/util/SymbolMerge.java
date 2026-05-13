@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -259,7 +259,7 @@ class SymbolMerge {
 	 * parent namespace path. The primary symbol will be get set to the symbol that was primary in
 	 * the source program.
 	 *
-	 * @param address the program address where the symbols are being replaced.
+	 * @param fromAddress the program address where the symbols are being replaced.
 	 * This address should be derived from the "to" program.
 	 * @param conflictSymbolIDMap maps the symbol IDs in the "from" program to the symbol IDs
 	 * in the "to" program for any symbols (and their associated objects) that were created
@@ -267,33 +267,32 @@ class SymbolMerge {
 	 * (key = "from" program's symbol ID; value = "to" program's symbol ID)
 	 * @param monitor the task monitor for updating user progress and allowing cancelling.
 	 *
-	 * @return a map of symbols that were created as conflicts during the replace. These map symbols
-	 * in the source program to a symbol with another name due to a duplicate symbol problem.
-	 * (key = "from" program's symbol; value = "to" program's symbol)
-	 *
 	 * @throws CancelledException if the task monitor is cancelled.
 	 * @throws DuplicateNameException if the name space can't be resolved due
 	 * to a name conflict that can't be dealt with.
 	 * @throws InvalidInputException
 	 * the indicated address.
 	 */
-	void replaceSymbols(Address address, LongLongHashtable conflictSymbolIDMap, TaskMonitor monitor)
+	void replaceSymbols(Address fromAddress, LongLongHashtable conflictSymbolIDMap,
+			TaskMonitor monitor)
 			throws CancelledException, DuplicateNameException, InvalidInputException {
 
-		removeUniqueToSymbols(address, monitor);
-		replaceFunctionSymbol(address, address, conflictSymbolIDMap, monitor);
-		addFromSymbols(address, true, conflictSymbolIDMap, monitor);
+		Address toAddress = originToResultTranslator.getAddress(fromAddress);
 
-		replacePrimary(address, conflictSymbolIDMap);
+		removeUniqueToSymbols(toAddress, monitor);
+		replaceFunctionSymbol(fromAddress, toAddress, conflictSymbolIDMap, monitor);
+		addFromSymbols(fromAddress, true, conflictSymbolIDMap, monitor);
+
+		replacePrimary(fromAddress, conflictSymbolIDMap);
 
 		// Remove this address as an entry point if its not one in program2.
-		if (toSymbolTable.isExternalEntryPoint(address) &&
-			!fromSymbolTable.isExternalEntryPoint(address)) {
-			toSymbolTable.removeExternalEntryPoint(address);
+		if (toSymbolTable.isExternalEntryPoint(toAddress) &&
+			!fromSymbolTable.isExternalEntryPoint(fromAddress)) {
+			toSymbolTable.removeExternalEntryPoint(toAddress);
 		}
-		else if (fromSymbolTable.isExternalEntryPoint(address) &&
-			!toSymbolTable.isExternalEntryPoint(address)) {
-			toSymbolTable.addExternalEntryPoint(address);
+		else if (fromSymbolTable.isExternalEntryPoint(toAddress) &&
+			!toSymbolTable.isExternalEntryPoint(toAddress)) {
+			toSymbolTable.addExternalEntryPoint(toAddress);
 		}
 	}
 
@@ -304,15 +303,14 @@ class SymbolMerge {
 	 * not be removed at the address even if it is different. Otherwise, the
 	 * function would inadvertently get removed.
 	 *
-	 * @param address the program address where the symbols are being replaced.
+	 * @param toAddress the program address where the symbols are being replaced.
 	 * This address should be derived from the "to" program.
 	 * @param monitor the task monitor for updating user progress and allowing cancelling.
 	 *
 	 * @throws CancelledException if the task monitor is cancelled.
 	 */
-	private void removeUniqueToSymbols(Address fromAddress, TaskMonitor monitor)
+	private void removeUniqueToSymbols(Address toAddress, TaskMonitor monitor)
 			throws CancelledException {
-		Address toAddress = originToResultTranslator.getAddress(fromAddress);
 		Symbol[] toSymbols = toSymbolTable.getUserSymbols(toAddress);
 		for (Symbol toSymbol : toSymbols) {
 			Symbol fromSymbol = SimpleDiffUtility.getSymbol(toSymbol, fromProgram);
@@ -348,10 +346,6 @@ class SymbolMerge {
 	 * with conflict names.
 	 * (key = "from" program's symbol ID; value = "to" program's symbol ID)
 	 * @param monitor the task monitor for updating user progress and allowing cancelling.
-	 *
-	 * @return an array of <code>SymbolTranslators</code> for symbols that ended up with different
-	 * pathnames in the destination program than they had in the source program. These map symbols
-	 * in the source program to a symbol with another name due to a duplicate symbol problem.
 	 *
 	 * @throws CancelledException if the task monitor is canceled.
 	 * @throws DuplicateNameException if a symbol couldn't be added due
@@ -627,6 +621,7 @@ class SymbolMerge {
 	 * @param setting indicates whether to replace or merge the symbols.
 	 * @param replacePrimary true indicates that the primary symbol in the "to" program should be
 	 * set to the same symbol as was primary in the "from" program.
+	 * @param replaceFunction replace function if true
 	 * @param conflictSymbolIDMap maps the symbol IDs in the "from" program to the symbol IDs
 	 * in the "to" program for any symbols (and their associated objects) that were created
 	 * with conflict names.
@@ -714,7 +709,6 @@ class SymbolMerge {
 	 * with conflict names.
 	 * (key = "from" program's symbol ID; value = "to" program's symbol ID)
 	 * @param monitor the task monitor for notifying the user of this merge's progress.
-	 * @return the symbol now at the address in the toSymbolTable.
 	 *
 	 * @throws CancelledException if user cancels via the monitor.
 	 * @throws InvalidInputException if a symbol name from the second program isn't valid
@@ -743,16 +737,16 @@ class SymbolMerge {
 
 	/**
 	 *
-	 * @param address
+	 * @param fromAddress
 	 * This address should be derived from the "to" program.
 	 * @param conflictSymbolIDMap maps the symbol IDs in the "from" program to the symbol IDs
 	 * in the "to" program for any symbols (and their associated objects) that were created
 	 * with conflict names.
 	 * (key = "from" program's symbol ID; value = "to" program's symbol ID)
 	 */
-	private void replacePrimary(Address address, LongLongHashtable conflictSymbolIDMap) {
+	private void replacePrimary(Address fromAddress, LongLongHashtable conflictSymbolIDMap) {
 		// Set the primary symbol.
-		Symbol fromPrimary = fromSymbolTable.getPrimarySymbol(address);
+		Symbol fromPrimary = fromSymbolTable.getPrimarySymbol(fromAddress);
 		if (fromPrimary != null) {
 			Symbol newToPrimary = null;
 			try {

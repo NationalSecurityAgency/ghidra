@@ -15,35 +15,34 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitType.*;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.TDouble;
+import ghidra.pcode.emu.jit.gen.util.Types.TFloat;
 import ghidra.pcode.emu.jit.op.JitFloatNegOp;
 
 /**
  * The generator for a {@link JitFloatNegOp float_neg}.
  * 
  * <p>
- * This uses the unary operator generator and emits {@link #FNEG} or {@link #DNEG}.
+ * This uses the unary operator generator and emits {@link Op#fneg(Emitter) fneg} or
+ * {@link Op#dneg(Emitter) dneg}.
  */
-public enum FloatNegOpGen implements FloatUnOpGen<JitFloatNegOp> {
+public enum FloatNegOpGen implements FloatOpUnOpGen<JitFloatNegOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitFloatNegOp op, JitBlock block,
-			JitType uType, MethodVisitor rv) {
-		switch (uType) {
-			case FloatJitType t -> rv.visitInsn(FNEG);
-			case DoubleJitType t -> rv.visitInsn(DNEG);
-			case MpFloatJitType t -> TODO("MpFloat");
-			default -> throw new AssertionError();
-		}
-		return uType;
+	public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TFloat>>
+			opForFloat(Emitter<N0> em) {
+		return Op.fneg(em);
+	}
+
+	@Override
+	public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TDouble>>
+			opForDouble(Emitter<N0> em) {
+		return Op.dneg(em);
 	}
 }

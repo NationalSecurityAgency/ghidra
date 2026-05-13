@@ -111,6 +111,10 @@ public class GTreeModel implements TreeModel {
 
 	@Override
 	public void valueForPathChanged(TreePath path, Object newValue) {
+		if (path == null) {
+			// this can happen when we try to edit a node and it doesn't work due to filtering
+			return;
+		}
 		GTreeNode node = (GTreeNode) path.getLastPathComponent();
 		node.valueChanged(newValue);
 	}

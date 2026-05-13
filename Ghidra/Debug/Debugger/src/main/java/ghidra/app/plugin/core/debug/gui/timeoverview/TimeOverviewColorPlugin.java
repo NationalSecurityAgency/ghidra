@@ -221,8 +221,8 @@ public class TimeOverviewColorPlugin extends AbstractDebuggerPlugin {
 
 	private void uninstallOverview(TimeOverviewColorService overviewColorService) {
 		TimeOverviewColorComponent overviewComponent = activeServices.get(overviewColorService);
-		overviewComponent.uninstallActions();
 		listingService.removeOverviewProvider(overviewComponent);
+		overviewComponent.dispose();
 		activeServices.remove(overviewColorService);
 		overviewColorService.setTrace(null);
 	}

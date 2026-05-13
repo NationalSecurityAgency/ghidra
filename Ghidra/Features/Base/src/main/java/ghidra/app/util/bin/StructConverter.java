@@ -77,6 +77,10 @@ public interface StructConverter {
 	 * Reusable 64-bit image base offset datatype. 
 	 */
 	public final static DataType IBO64 = IBO64DataType.dataType;
+	/**
+	 * Reusable boolean data type.
+	 */
+	public final static DataType BOOL = BooleanDataType.dataType;
 
 	/**
 	 * Reusable Unsigned LEB128 dynamic length data type

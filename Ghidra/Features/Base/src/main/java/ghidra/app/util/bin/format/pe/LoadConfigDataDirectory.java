@@ -18,10 +18,12 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.dvrt.ImageDynamicRelocationTable;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -50,7 +52,8 @@ public class LoadConfigDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader nt) throws DuplicateNameException, CodeUnitInsertionException, IOException {
+			NTHeader nt) throws DuplicateNameException, CodeUnitInsertionException, IOException,
+			MemoryAccessException {
 
 
 		monitor.setMessage(program.getName()+": load config directory...");
@@ -64,6 +67,11 @@ public class LoadConfigDataDirectory extends DataDirectory {
 
 		markupSeHandler(program, isBinary, monitor, log, nt);
 		ControlFlowGuard.markup(lcd, program, log, nt);
+
+		ImageDynamicRelocationTable dvrt = lcd.getDynamicRelocationTable();
+		if (dvrt != null) {
+			dvrt.markup(program, isBinary, monitor, log, nt);
+		}
 	}
 
 	private void markupSeHandler(Program program, boolean isBinary, TaskMonitor monitor,
@@ -100,7 +108,7 @@ public class LoadConfigDataDirectory extends DataDirectory {
 			return false;
 		}
 
-		lcd = new LoadConfigDirectory(reader, ptr, ntHeader.getOptionalHeader());
+		lcd = new LoadConfigDirectory(reader, ptr, ntHeader);
         return true;
     }
 }

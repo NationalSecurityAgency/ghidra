@@ -18,6 +18,7 @@ package ghidra.pcode.emu;
 import java.util.List;
 
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
@@ -29,18 +30,18 @@ import ghidra.program.model.pcode.PcodeOp;
  * <p>
  * The two (currently) methods that do not implement a pure broadcast pattern are
  * {@link #handleMissingUserop(PcodeThread, PcodeOp, PcodeFrame, String, PcodeUseropLibrary)} and
- * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSetView)}. For a missing
- * userop, it will terminate after the first delegate returns {@code true}, in which case it also
- * returns {@code true}. If all delegates return {@code false}, then it returns {@code false}. For
- * an uninitialized read, each delegate's returned "still-uninitialized" set is passed to the
+ * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSetView, Reason)}. For a
+ * missing userop, it will terminate after the first delegate returns {@code true}, in which case it
+ * also returns {@code true}. If all delegates return {@code false}, then it returns {@code false}.
+ * For an uninitialized read, each delegate's returned "still-uninitialized" set is passed to the
  * subsequent delegate. The first delegate gets the set as passed into the composition. The set
  * returned by the composition is that returned by the last delegate. This terminates early when any
  * delegate returns the empty set.
  * 
  * <p>
  * One (currently) other method has a non-void return type:
- * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int)}. The
- * callback is broadcast as expected, and the return value is the max returned by the delegates.
+ * {@link #readUninitialized(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Reason)}.
+ * The callback is broadcast as expected, and the return value is the max returned by the delegates.
  * 
  * @param <T> the emulator's value domain
  */
@@ -207,8 +208,8 @@ public class ComposedPcodeEmulationCallbacks<T> implements PcodeEmulationCallbac
 	}
 
 	@Override
-	public <A, U> int readUninitialized(PcodeThread<T> thread,
-			PcodeExecutorStatePiece<A, U> piece, AddressSpace space, A offset, int length) {
+	public <A, U> int readUninitialized(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			AddressSpace space, A offset, int length, Reason reason) {
 		/**
 		 * NOTE: This could use some work. It's a bit onerous to specify arbitrary, possibly
 		 * disjoint, sets of offsets of type A. Can only be guaranteed to mean something if A is
@@ -218,7 +219,8 @@ public class ComposedPcodeEmulationCallbacks<T> implements PcodeEmulationCallbac
 		 */
 		int maxL = 0;
 		for (PcodeEmulationCallbacks<T> d : delegates) {
-			maxL = Math.max(maxL, d.readUninitialized(thread, piece, space, offset, length));
+			maxL =
+				Math.max(maxL, d.readUninitialized(thread, piece, space, offset, length, reason));
 			if (maxL == length) {
 				return maxL;
 			}
@@ -228,10 +230,10 @@ public class ComposedPcodeEmulationCallbacks<T> implements PcodeEmulationCallbac
 
 	@Override
 	public <A, U> AddressSetView readUninitialized(PcodeThread<T> thread,
-			PcodeExecutorStatePiece<A, U> piece, AddressSetView set) {
+			PcodeExecutorStatePiece<A, U> piece, AddressSetView set, Reason reason) {
 		AddressSetView remains = set;
 		for (PcodeEmulationCallbacks<T> d : delegates) {
-			remains = d.readUninitialized(thread, piece, remains);
+			remains = d.readUninitialized(thread, piece, remains, reason);
 			if (remains.isEmpty()) {
 				return remains;
 			}

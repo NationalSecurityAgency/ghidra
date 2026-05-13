@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,18 +23,19 @@ import org.junit.After;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import docking.widgets.FindDialogResultsProvider;
+import docking.widgets.SearchLocation;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.table.GTable;
+import docking.widgets.table.RowObjectFilterModel;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.actions.DecompilerSearchLocation;
-import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
-import ghidra.util.table.GhidraProgramTableModel;
-import ghidra.util.table.GhidraThreadedTablePanel;
+import util.CollectionUtils;
 
 public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 
@@ -306,20 +307,16 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 	}
 
 	private GTable getResultsTable() {
-		@SuppressWarnings("unchecked")
-		TableComponentProvider<DecompilerSearchLocation> tableProvider =
-			waitForComponentProvider(TableComponentProvider.class);
-		GhidraThreadedTablePanel<DecompilerSearchLocation> panel =
-			tableProvider.getThreadedTablePanel();
-		return panel.getTable();
+		FindDialogResultsProvider tableProvider =
+			waitForComponentProvider(FindDialogResultsProvider.class);
+		return tableProvider.getTable();
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<DecompilerSearchLocation> getResults(GTable table) {
-		@SuppressWarnings("unchecked")
-		GhidraProgramTableModel<DecompilerSearchLocation> model =
-			(GhidraProgramTableModel<DecompilerSearchLocation>) table.getModel();
-		waitForTableModel(model);
-		return model.getModelData();
+		RowObjectFilterModel<SearchLocation> model =
+			(RowObjectFilterModel<SearchLocation>) table.getModel();
+		return CollectionUtils.asList(model.getModelData(), DecompilerSearchLocation.class);
 	}
 
 	private void next() {
@@ -331,7 +328,7 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 	}
 
 	private void searchAll() {
-		pressButtonByText(findDialog, "Search All");
+		pressButtonByText(findDialog, "Find All");
 	}
 
 	private void assertSearchHit(int line, int column, int length) {
@@ -340,7 +337,7 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		assertCurrentLocation(line, column);
 
 		DecompilerPanel panel = getDecompilerPanel();
-		DecompilerSearchLocation searchResults = panel.getSearchResults();
+		DecompilerSearchLocation searchResults = panel.getActiveSearchLocation();
 		FieldLocation searchCursorLocation = searchResults.getFieldLocation();
 		int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
 		assertEquals("Search result is on the wrong line", line, searchLineNumber);

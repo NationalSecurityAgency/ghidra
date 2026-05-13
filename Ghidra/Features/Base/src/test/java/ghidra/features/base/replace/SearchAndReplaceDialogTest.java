@@ -48,7 +48,7 @@ public class SearchAndReplaceDialogTest extends AbstractGhidraHeadedIntegrationT
 
 		SearchAndReplacePlugin plugin = getPlugin(tool, SearchAndReplacePlugin.class);
 
-		ToyProgramBuilder builder = new ToyProgramBuilder("Test", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 		builder.createLabel("0x100", "myFooLabel");
 		builder.createLabel("0x200", "myBarLabel");
 		program = builder.getProgram();

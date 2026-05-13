@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.search;
 
+import docking.widgets.search.SearchLocationContext;
 import generic.json.Json;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Function;
@@ -28,14 +28,14 @@ public class TextMatch {
 
 	private Function function;
 	private AddressSet addresses;
-	private LocationReferenceContext context;
+	private SearchLocationContext context;
 	private int lineNumber;
 
 	private String searchText;
 	private boolean isMultiLine;
 
 	TextMatch(Function function, AddressSet addresses, int lineNumber, String searchText,
-			LocationReferenceContext context, boolean isMultiLine) {
+			SearchLocationContext context, boolean isMultiLine) {
 		this.function = function;
 		this.addresses = addresses;
 		this.lineNumber = lineNumber;
@@ -48,7 +48,7 @@ public class TextMatch {
 		return function;
 	}
 
-	public LocationReferenceContext getContext() {
+	public SearchLocationContext getContext() {
 		return context;
 	}
 

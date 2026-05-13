@@ -15,37 +15,34 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitType.*;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.TDouble;
+import ghidra.pcode.emu.jit.gen.util.Types.TFloat;
 import ghidra.pcode.emu.jit.op.JitFloatAddOp;
 
 /**
  * The generator for a {@link JitFloatAddOp float_add}.
  * 
  * <p>
- * This uses the binary operator generator and simply emits {@link #FADD} or {@link #DADD} depending
- * on the type.
+ * This uses the binary operator generator and simply emits {@link Op#fadd(Emitter) fadd} or
+ * {@link Op#dadd(Emitter) dadd} depending on the type.
  */
-public enum FloatAddOpGen implements FloatBinOpGen<JitFloatAddOp> {
+public enum FloatAddOpGen implements FloatOpBinOpGen<JitFloatAddOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitFloatAddOp op, JitBlock block,
-			JitType lType, JitType rType, MethodVisitor rv) {
-		assert rType == lType;
-		switch (lType) {
-			case FloatJitType t -> rv.visitInsn(FADD);
-			case DoubleJitType t -> rv.visitInsn(DADD);
-			case MpFloatJitType t -> TODO("MpFloat");
-			default -> throw new AssertionError();
-		}
-		return lType;
+	public <N2 extends Next, N1 extends Ent<N2, TFloat>, N0 extends Ent<N1, TFloat>> //
+			Emitter<Ent<N2, TFloat>> opForFloat(Emitter<N0> em) {
+		return Op.fadd(em);
+	}
+
+	@Override
+	public <N2 extends Next, N1 extends Ent<N2, TDouble>, N0 extends Ent<N1, TDouble>> //
+			Emitter<Ent<N2, TDouble>> opForDouble(Emitter<N0> em) {
+		return Op.dadd(em);
 	}
 }

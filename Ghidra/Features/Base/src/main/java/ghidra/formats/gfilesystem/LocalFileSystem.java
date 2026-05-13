@@ -187,6 +187,11 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		return getFileAttributes(f);
 	}
 
+	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		return FSUtilities.getFileType(new File(f.getPath()));
+	}
+
 	/**
 	 * Create a {@link FileAttributes} container with info about the specified local file.
 	 * 

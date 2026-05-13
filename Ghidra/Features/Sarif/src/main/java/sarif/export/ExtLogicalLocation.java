@@ -31,7 +31,7 @@ public class ExtLogicalLocation implements IsfObject {
 		this.kind = "variable";
 		this.decoratedName = op;
 		this.fullyQualifiedName = location + ":" + name;
-		this.uri = function.getProgram().getExecutablePath();
+		this.uri = function == null ? "UNKNOWN" : function.getProgram().getExecutablePath();
 	}
 
 	public String getName() {

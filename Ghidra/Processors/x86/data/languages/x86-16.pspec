@@ -5,6 +5,7 @@
 <processor_spec>
   <properties>
     <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
+    <property key="useropLibs" value="x86"/>
   </properties>
   <programcounter register="EIP"/>
   <segmented_address space="ram" type="protected"/>

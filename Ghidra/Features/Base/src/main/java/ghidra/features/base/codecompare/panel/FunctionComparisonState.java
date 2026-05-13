@@ -31,8 +31,11 @@ public class FunctionComparisonState {
 
 	private static final String PROVIDER_SAVE_STATE_NAME = "FunctionComparison";
 
+	// generic panel state that applies to the top-level panel, such as divider location
 	private SaveState panelState = new SaveState();
-	private CodeComparisonViewState comparisonState = new CodeComparisonViewState();
+
+	// view-specific state that is managed by each discovered view
+	private CodeComparisonViewState viewState = new CodeComparisonViewState();
 
 	private PluginTool tool;
 
@@ -55,7 +58,7 @@ public class FunctionComparisonState {
 	 * @return the state
 	 */
 	public CodeComparisonViewState getViewState() {
-		return comparisonState;
+		return viewState;
 	}
 
 	/**
@@ -67,7 +70,7 @@ public class FunctionComparisonState {
 
 	public void writeConfigState(SaveState saveState) {
 		saveState.putSaveState(PROVIDER_SAVE_STATE_NAME, panelState);
-		comparisonState.writeConfigState(saveState);
+		viewState.writeConfigState(saveState);
 	}
 
 	public void readConfigState(SaveState saveState) {
@@ -76,7 +79,7 @@ public class FunctionComparisonState {
 			panelState = restoredPanelState;
 		}
 
-		comparisonState.readConfigState(saveState);
+		viewState.readConfigState(saveState);
 		updateCallbacks.forEach(Callback::call);
 	}
 

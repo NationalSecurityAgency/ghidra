@@ -15,6 +15,7 @@
  */
 package ghidra.features.base.memsearch.gui;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.task.TaskMonitor;
@@ -32,7 +33,7 @@ public interface MemoryMatchTableLoader {
 	 * @param accumulator the accumulator to store results that will appear in the results table
 	 * @param monitor the task monitor
 	 */
-	public void loadResults(Accumulator<MemoryMatch> accumulator, TaskMonitor monitor);
+	public void loadResults(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor);
 
 	/**
 	 * Returns true if the search/loading did not fully complete. (Search limit reached, cancelled

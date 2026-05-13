@@ -16,7 +16,6 @@
 package ghidra.framework.data;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -183,22 +182,11 @@ public class GhidraFolder implements DomainFolder {
 		if (projectURL == null) {
 			return null;
 		}
-		try {
-			// Direct URL construction done so that ghidra protocol extension may be supported
-			String urlStr = projectURL.toExternalForm();
-			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
-				urlStr = urlStr.substring(0, urlStr.length() - 1);
-			}
-			String path = getPathname();
-			if (!path.endsWith(FileSystem.SEPARATOR)) {
-				path += FileSystem.SEPARATOR;
-			}
-			urlStr += path;
-			return new URL(urlStr);
+		String path = getPathname();
+		if (!path.endsWith(FileSystem.SEPARATOR)) {
+			path += FileSystem.SEPARATOR;
 		}
-		catch (MalformedURLException e) {
-			return null;
-		}
+		return GhidraURL.resolve(projectURL, path, null);
 	}
 
 	@Override

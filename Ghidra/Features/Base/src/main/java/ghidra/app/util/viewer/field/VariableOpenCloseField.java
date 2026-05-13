@@ -23,7 +23,6 @@ import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.Gui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.app.util.viewer.proxy.VariableProxy;
 import ghidra.program.model.address.Address;
@@ -32,7 +31,6 @@ import ghidra.program.model.address.Address;
  * FactoryField class for displaying the open/close field widget for function variables.
  */
 public class VariableOpenCloseField extends AbstractOpenCloseField {
-	private static final Font HIDDEN_FONT = Gui.getFont("font.listing.base.hidden.field");
 
 	/**
 	 * Constructor

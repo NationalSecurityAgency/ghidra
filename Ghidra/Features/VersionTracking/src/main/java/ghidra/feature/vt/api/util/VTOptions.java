@@ -15,7 +15,7 @@
  */
 package ghidra.feature.vt.api.util;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.framework.options.*;
 

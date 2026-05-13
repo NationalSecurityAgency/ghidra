@@ -274,7 +274,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	/**
 	 * @return version associated with this buffer file
 	 */
-	int getVersion() {
+	public int getVersion() {
 		return version;
 	}
 
@@ -284,7 +284,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	@Override
-	public void setVersionComment(String comment) throws IOException {
+	public void setVersionComment(String comment) {
 		this.comment = comment;
 	}
 

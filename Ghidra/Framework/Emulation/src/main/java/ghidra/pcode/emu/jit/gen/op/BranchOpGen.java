@@ -15,15 +15,21 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.JitPcodeThread;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.*;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
+import ghidra.pcode.emu.jit.gen.op.CBranchOpGen.ExtCBranchGen;
+import ghidra.pcode.emu.jit.gen.op.CBranchOpGen.IntCBranchGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.op.JitBranchOp;
 import ghidra.pcode.emu.jit.op.JitOp;
@@ -35,7 +41,7 @@ import ghidra.program.model.lang.RegisterValue;
  * 
  * <p>
  * With an {@link IntBranch} record, this simply looks up the label for the target block and emits a
- * block transition followed by a {@link #GOTO goto}.
+ * block transition followed by a {@link Op#goto_(Emitter) goto}.
  * 
  * <p>
  * With an {@link ExtBranch} record, this emits code to retire the target to the program counter,
@@ -56,13 +62,10 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 	 * @param block the block containing the op
 	 * @param rv the run method visitor
 	 */
-	static void generateRetireCode(JitCodeGenerator gen, Address exit, RegisterValue ctx,
-			JitBlock block, MethodVisitor rv) {
-		gen.generatePassageExit(block, () -> {
-			// [...]
-			rv.visitLdcInsn(exit.getOffset());
-			// [...,target:LONG]
-		}, ctx, rv);
+	static <THIS extends JitCompiledPassage> Emitter<Bot> genRetire(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, Address exit,
+			RegisterValue ctx, JitBlock block) {
+		return gen.genExit(em, localThis, block, PcGen.loadOffset(exit), ctx);
 	}
 
 	/**
@@ -76,20 +79,24 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 	 * @param block the block containing the op
 	 * @param rv the run method visitor
 	 */
-	static void generateExitCode(JitCodeGenerator gen, Address exit, JitBlock block,
-			MethodVisitor rv) {
-		generateRetireCode(gen, exit, null, block, rv);
-		rv.visitInsn(ACONST_NULL);
-		rv.visitInsn(ARETURN);
+	static <THIS extends JitCompiledPassage> Emitter<Dead> genExit(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, Address exit, JitBlock block) {
+		return em
+				.emit(BranchOpGen::genRetire, localThis, gen, exit, (RegisterValue) null, block)
+				.emit(Op::aconst_null, GenConsts.T_ENTRY_POINT)
+				.emit(Op::areturn, retReq);
 	}
 
 	/**
 	 * A branch code generator
 	 * 
+	 * @param <NR> the stack after the JVM branch bytecode (may be {@link Dead})
+	 * @param <NI> the stack before the JVM branch bytecode (cannot be {@link Dead})
 	 * @param <TB> the type of branch
 	 * @param <TO> the type of op
 	 */
-	static abstract class BranchGen<TB extends RBranch, TO extends JitOp> {
+	static abstract class BranchGen<NR, NI extends Next, TB extends RBranch, TO extends JitOp> {
 		/**
 		 * Get the target address of the branch
 		 * 
@@ -97,7 +104,7 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 		 * @param branch the branch
 		 * @return the target address
 		 */
-		abstract Address exit(JitCodeGenerator gen, TB branch);
+		abstract Address exit(JitCodeGenerator<?> gen, TB branch);
 
 		/**
 		 * Generate code for the branch in the case a context modification has not occurred.
@@ -111,8 +118,9 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 		 * @param block the block containing the op
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 */
-		abstract void generateCodeWithoutCtxmod(JitCodeGenerator gen, TO op, TB branch,
-				JitBlock block, MethodVisitor rv);
+		abstract <THIS extends JitCompiledPassage> Emitter<NR> genRunWithoutCtxmod(Emitter<NI> em,
+				Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
+				JitCodeGenerator<THIS> gen, TO op, TB branch, JitBlock block);
 
 		/**
 		 * Generate code for the branch in the case a context modification may have occurred.
@@ -127,8 +135,10 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 		 * @param block the block containing the op
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 */
-		abstract void generateCodeWithCtxmod(JitCodeGenerator gen, TO op, Address exit,
-				JitBlock block, MethodVisitor rv);
+		abstract <THIS extends JitCompiledPassage> Emitter<NR> genRunWithCtxmod(Emitter<NI> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, TO op, Address exit,
+				JitBlock block);
 
 		/**
 		 * Emit code that jumps or exits via a direct branch
@@ -139,95 +149,140 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 		 * @param block the block containing the op
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 */
-		void generateCode(JitCodeGenerator gen, TO op, TB branch, JitBlock block,
-				MethodVisitor rv) {
-			switch (branch.reach()) {
-				case WITH_CTXMOD -> generateCodeWithCtxmod(gen, op, exit(gen, branch), block, rv);
-				case WITHOUT_CTXMOD -> generateCodeWithoutCtxmod(gen, op, branch, block, rv);
+		abstract <THIS extends JitCompiledPassage> Emitter<NR> genRun(Emitter<NI> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, TO op, TB branch,
+				JitBlock block);
+	}
+
+	/**
+	 * An abstract branch code generator for unconditional branches.
+	 * 
+	 * @param <TB> the type of branch
+	 * @param <TO> the type of op
+	 */
+	abstract static class UBranchGen<TB extends RBranch, TO extends JitOp>
+			extends BranchGen<Dead, Bot, TB, TO> {
+		/**
+		 * Emit code that jumps or exits via a direct branch
+		 * 
+		 * @param gen the code generator
+		 * @param op the branch op
+		 * @param branch the branch from the op
+		 * @param block the block containing the op
+		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
+		 */
+		@Override
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRun(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, TO op, TB branch,
+				JitBlock block) {
+			return switch (branch.reach()) {
+				case WITH_CTXMOD -> genRunWithCtxmod(em, localThis, localCtxmod, retReq, gen, op,
+					exit(gen, branch), block);
+				case WITHOUT_CTXMOD -> genRunWithoutCtxmod(em, localThis, retReq, gen, op, branch,
+					block);
 				case MAYBE_CTXMOD -> {
-					Label withModctx = new Label();
-					RunFixedLocal.CTXMOD.generateLoadCode(rv);
-					rv.visitJumpInsn(IFNE, withModctx);
-					generateCodeWithoutCtxmod(gen, op, branch, block, rv);
-					rv.visitLabel(withModctx);
-					generateCodeWithCtxmod(gen, op, exit(gen, branch), block, rv);
+					var emIf = em
+							.emit(Op::iload, localCtxmod)
+							.emit(Op::ifne);
+					yield emIf.em()
+							.emit(this::genRunWithoutCtxmod, localThis, retReq, gen, op, branch,
+								block)
+							.emit(Lbl::placeDead, emIf.lbl())
+							// NB. genRun is already branching. No need for if-else construct.
+							.emit(this::genRunWithCtxmod, localThis, localCtxmod, retReq, gen, op,
+								exit(gen, branch), block);
 				}
-				default -> throw new AssertionError();
-			}
+			};
 		}
 	}
 
 	/**
 	 * A branch code generator for internal branches
+	 * 
+	 * @implNote We leave {@code TO:=}{@link JitOp} here, because we want {@link IntCBranchGen} to
+	 *           be able to delegate to this instance.
 	 */
-	static class IntBranchGen extends BranchGen<RIntBranch, JitOp> {
+	static class IntBranchGen extends UBranchGen<RIntBranch, JitOp> {
 		/** Singleton */
 		static final IntBranchGen INT = new IntBranchGen();
 
 		@Override
-		Address exit(JitCodeGenerator gen, RIntBranch branch) {
+		Address exit(JitCodeGenerator<?> gen, RIntBranch branch) {
 			return gen.getAddressForOp(branch.to());
 		}
 
 		@Override
-		void generateCodeWithoutCtxmod(JitCodeGenerator gen, JitOp op, RIntBranch branch,
-				JitBlock block, MethodVisitor rv) {
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithoutCtxmod(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
+				JitCodeGenerator<THIS> gen, JitOp op, RIntBranch branch, JitBlock block) {
 			JitBlock target = block.getTargetBlock(branch);
-			Label label = gen.labelForBlock(target);
-			VarGen.computeBlockTransition(gen, block, target).generate(rv);
-			rv.visitJumpInsn(GOTO, label);
+			Lbl<Bot> label = gen.labelForBlock(target);
+			return em
+					.emit(VarGen.computeBlockTransition(localThis, gen, block, target)::genFwd)
+					.emit(Op::goto_, label);
 		}
 
 		@Override
-		void generateCodeWithCtxmod(JitCodeGenerator gen, JitOp op, Address exit, JitBlock block,
-				MethodVisitor rv) {
-			generateExitCode(gen, exit, block, rv);
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithCtxmod(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitOp op, Address exit,
+				JitBlock block) {
+			return genExit(em, localThis, retReq, gen, exit, block);
 		}
 	}
 
 	/**
 	 * A branch code generator for external branches
+	 * 
+	 * @implNote We leave {@code TO:=}{@link JitOp} here, because we want {@link ExtCBranchGen} to
+	 *           be able to delegate to this instance.
 	 */
-	static class ExtBranchGen extends BranchGen<RExtBranch, JitOp> {
+	static class ExtBranchGen extends UBranchGen<RExtBranch, JitOp> {
 		/** Singleton */
 		static final ExtBranchGen EXT = new ExtBranchGen();
 
 		@Override
-		Address exit(JitCodeGenerator gen, RExtBranch branch) {
+		Address exit(JitCodeGenerator<?> gen, RExtBranch branch) {
 			return branch.to().address;
 		}
 
 		@Override
-		void generateCodeWithoutCtxmod(JitCodeGenerator gen, JitOp op, RExtBranch branch,
-				JitBlock block, MethodVisitor rv) {
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithoutCtxmod(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
+				JitCodeGenerator<THIS> gen, JitOp op, RExtBranch branch, JitBlock block) {
 			AddrCtx exit = branch.to();
 			FieldForExitSlot slotField = gen.requestFieldForExitSlot(exit);
-
-			generateRetireCode(gen, exit.address, exit.rvCtx, block, rv);
-
-			// []
-			slotField.generateLoadCode(gen, rv);
-			// [slot]
-			rv.visitMethodInsn(INVOKESTATIC, GenConsts.NAME_JIT_COMPILED_PASSAGE, "getChained",
-				GenConsts.MDESC_JIT_COMPILED_PASSAGE__GET_CHAINED, true);
-			// [chained:ENTRY]
-			rv.visitInsn(ARETURN);
+			return em
+					.emit(BranchOpGen::genRetire, localThis, gen, exit.address, exit.rvCtx, block)
+					.emit(slotField::genLoad, localThis, gen)
+					.emit(Op::invokestatic, GenConsts.T_JIT_COMPILED_PASSAGE, "getChained",
+						GenConsts.MDESC_JIT_COMPILED_PASSAGE__GET_CHAINED, true)
+					.step(Inv::takeArg)
+					.step(Inv::ret)
+					.emit(Op::areturn, retReq);
 		}
 
 		@Override
-		void generateCodeWithCtxmod(JitCodeGenerator gen, JitOp op, Address exit, JitBlock block,
-				MethodVisitor rv) {
-			generateExitCode(gen, exit, block, rv);
+		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithCtxmod(Emitter<Bot> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitOp op, Address exit,
+				JitBlock block) {
+			return genExit(em, localThis, retReq, gen, exit, block);
 		}
 	}
 
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitBranchOp op, JitBlock block,
-			MethodVisitor rv) {
-		switch (op.branch()) {
-			case RIntBranch ib -> IntBranchGen.INT.generateCode(gen, op, ib, block, rv);
-			case RExtBranch eb -> ExtBranchGen.EXT.generateCode(gen, op, eb, block, rv);
+	public <THIS extends JitCompiledPassage> DeadOpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitBranchOp op, JitBlock block, Scope scope) {
+		return new DeadOpResult(switch (op.branch()) {
+			case RIntBranch ib -> IntBranchGen.INT.genRun(em, localThis, localCtxmod, retReq, gen,
+				op, ib, block);
+			case RExtBranch eb -> ExtBranchGen.EXT.genRun(em, localThis, localCtxmod, retReq, gen,
+				op, eb, block);
 			default -> throw new AssertionError("Branch type confusion");
-		}
+		});
 	}
 }

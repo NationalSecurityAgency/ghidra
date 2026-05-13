@@ -42,31 +42,31 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
-	
+
 	private static final String NAME = "AARCH64 ELF PLT Thunks";
 	private static final String DESCRIPTION = "Create AARM64 ELF PLT thunk functions";
 	private static final String PROCESSOR_NAME = "AARCH64";
-	
+
 	private static final String PLT_THUNK_PATTERN_FILE = "aarch64-pltThunks.xml";
-	
+
 	private static boolean patternLoadFailed;
 	private static ArrayList<Pattern> leThunkPatterns;
 	private static int maxPatternLength;
-	
+
 	private Register x17Reg;
-	
+
 	public AARCH64PltThunkAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER); // assumes ELF Loader disassembled PLT section
 		setDefaultEnablement(true);
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS);
 	}
-	
+
 	@Override
 	public boolean canAnalyze(Program program) {
 		Language language = program.getLanguage();
 		// TODO: what about 32/64 hybrid case?
 		if (PROCESSOR_NAME.equals(language.getProcessor().toString()) &&
-				patternsLoaded(language.isBigEndian())) {
+			patternsLoaded(language.isBigEndian())) {
 			x17Reg = program.getRegister("x17");
 			return x17Reg != null;
 		}
@@ -80,13 +80,13 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 		if (leThunkPatterns != null) {
 			return true;
 		}
-		
+
 		try {
 			ResourceFile patternFile = Application.getModuleDataFile(PLT_THUNK_PATTERN_FILE);
-			
+
 			leThunkPatterns = new ArrayList<>();
 			Pattern.readPatterns(patternFile, leThunkPatterns, null);
-			
+
 			maxPatternLength = 0;
 			for (Pattern pattern : leThunkPatterns) {
 				int len = pattern.getSize();
@@ -97,70 +97,77 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 					maxPatternLength = len;
 				}
 			}
-			
-		} catch (FileNotFoundException e) {
-			Msg.error(AARCH64PltThunkAnalyzer.class, "AARCH64 resource file not found: " + PLT_THUNK_PATTERN_FILE);
-			patternLoadFailed = true;
-			return false;
-		} catch (SAXException | IOException e) {
-			Msg.error(AARCH64PltThunkAnalyzer.class, "Failed to parse byte pattern file: " + PLT_THUNK_PATTERN_FILE, e);
+
+		}
+		catch (FileNotFoundException e) {
+			Msg.error(AARCH64PltThunkAnalyzer.class,
+				"AARCH64 resource file not found: " + PLT_THUNK_PATTERN_FILE);
 			patternLoadFailed = true;
 			return false;
 		}
-		
+		catch (SAXException | IOException e) {
+			Msg.error(AARCH64PltThunkAnalyzer.class,
+				"Failed to parse byte pattern file: " + PLT_THUNK_PATTERN_FILE, e);
+			patternLoadFailed = true;
+			return false;
+		}
+
 		return true;
 	}
 
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-		
+
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(".plt");
 		if (block == null) {
 			return true;
 		}
-		
+
 		set = set.intersectRange(block.getStart(), block.getEnd());
 		set = removeFunctionBodies(program, set, monitor);
 		if (set.isEmpty()) {
 			return true;
 		}
 
-		SequenceSearchState sequenceSearchState = SequenceSearchState.buildStateMachine(
-				leThunkPatterns);
-		
+		BulkPatternSearcher<Pattern> searcher = new BulkPatternSearcher<>(leThunkPatterns);
+
 		monitor.setIndeterminate(true);
 		monitor.setProgress(0);
-		
-		ArrayList<Match> matches = new ArrayList<>();
-		
+
+		ArrayList<Match<Pattern>> matches = new ArrayList<>();
+
 		try {
 			for (AddressRange range : set.getAddressRanges()) {
-				
-				byte[] bytes = new byte[(int)range.getLength()];
+
+				byte[] bytes = new byte[(int) range.getLength()];
 				if (block.getBytes(range.getMinAddress(), bytes, 0, bytes.length) != bytes.length) {
 					log.appendMsg("Expected initialized .plt section block");
 					return false;
 				}
-				
+
 				matches.clear();
-				sequenceSearchState.apply(bytes, matches);
-				
-				for (Match match : matches) {
-					Address addr = range.getMinAddress().add(match.getMarkOffset());
-					analyzePltThunk(program, addr, match.getSequenceSize(), monitor);
+				searcher.search(bytes, matches);
+
+				for (Match<Pattern> match : matches) {
+					Pattern pattern = match.getPattern();
+					Address addr =
+						range.getMinAddress().add(match.getStart() + pattern.getMarkOffset());
+					analyzePltThunk(program, addr, match.getLength(), monitor);
 				}
-				
+
 			}
-		} catch (MemoryAccessException | AddressOutOfBoundsException e) {
+		}
+		catch (MemoryAccessException | AddressOutOfBoundsException e) {
 			log.appendMsg("Expected initialized .plt section block: " + e.getMessage());
 		}
-		
+
 		return true;
 	}
 
-	private AddressSetView removeFunctionBodies(Program program, AddressSetView set, TaskMonitor monitor) throws CancelledException {
+	private AddressSetView removeFunctionBodies(Program program, AddressSetView set,
+			TaskMonitor monitor) throws CancelledException {
 		if (set.isEmpty()) {
 			return set;
 		}
@@ -172,92 +179,102 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 		return set;
 	}
 
-	private void analyzePltThunk(Program program, Address entryAddr, int thunkSize, TaskMonitor monitor) 
+	private void analyzePltThunk(Program program, Address entryAddr, int thunkSize,
+			TaskMonitor monitor)
 			throws CancelledException {
-		
+
 		SymbolicPropogator symEval = new SymbolicPropogator(program, false);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);
-		
+
 		AddressSet thunkBody = new AddressSet(entryAddr, entryAddr.add(thunkSize - 1));
-		
+
 		ContextEvaluator eval = new ContextEvaluatorAdapter() {
 
 			@Override
 			public boolean followFalseConditionalBranches() {
 				return false; // should never happen - just in case
 			}
-			
+
 			@Override
-			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
+			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
+					Address address,
 					int size, DataType dataType, RefType refType) {
 				return true;
 			}
-			
+
 			@Override
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
-				
+
 				// We only handle indirect branch through x17 register
-				if (!"br".equals(instruction.getMnemonicString()) || !x17Reg.equals(instruction.getRegister(0))) {
+				if (!"br".equals(instruction.getMnemonicString()) ||
+					!x17Reg.equals(instruction.getRegister(0))) {
 					return true;
 				}
-				
+
 				// Change br flow to call-return
 				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-				
+
 				RegisterValue x17Value = context.getRegisterValue(x17Reg);
 				if (x17Value != null && x17Value.hasValue()) {
-					Address destAddr = entryAddr.getNewAddress(x17Value.getUnsignedValue().longValue());
-					Function thunkedFunction = createDestinationFunction(program, destAddr, instruction.getAddress(),
+					Address destAddr =
+						entryAddr.getNewAddress(x17Value.getUnsignedValue().longValue());
+					Function thunkedFunction =
+						createDestinationFunction(program, destAddr, instruction.getAddress(),
 							monitor);
 					if (thunkedFunction != null) {
-						CreateThunkFunctionCmd cmd = new CreateThunkFunctionCmd(entryAddr, thunkBody,
+						CreateThunkFunctionCmd cmd =
+							new CreateThunkFunctionCmd(entryAddr, thunkBody,
 								thunkedFunction.getEntryPoint());
 						cmd.applyTo(program);
 					}
 				}
-				
+
 				return true;
 			}
-			
+
 			@Override
 			public boolean allowAccess(VarnodeContext context, Address address) {
 				return true;
 			}
 		};
-		
+
 		symEval.flowConstants(entryAddr, thunkBody, eval, false, monitor);
 	}
 
-	private Function createDestinationFunction(Program program, Address addr, Address flowFromAddr, TaskMonitor monitor) {
+	private Function createDestinationFunction(Program program, Address addr, Address flowFromAddr,
+			TaskMonitor monitor) {
 
 		Listing listing = program.getListing();
 		BookmarkManager bookmarkMgr = program.getBookmarkManager();
-		
+
 		if (!program.getMemory().contains(addr)) {
-			bookmarkMgr.setBookmark(flowFromAddr, BookmarkType.ERROR, "Bad Reference", "No memory for PLT Thunk destination at " + addr);
+			bookmarkMgr.setBookmark(flowFromAddr, BookmarkType.ERROR, "Bad Reference",
+				"No memory for PLT Thunk destination at " + addr);
 			return null;
 		}
-		
+
 		Function function = listing.getFunctionAt(addr);
 		if (function != null) {
 			return function;
 		}
-		
+
 		CodeUnit cu = listing.getCodeUnitContaining(addr);
 		if (cu == null) {
 			throw new AssertException("expected code unit in memory");
 		}
 		if (!addr.equals(cu.getMinAddress())) {
-			bookmarkMgr.setBookmark(cu.getMinAddress(), BookmarkType.ERROR, "Code Unit Conflict", 
-					"Expected function entry at " + addr + " referenced by PLT Thunk at " + flowFromAddr);
+			bookmarkMgr.setBookmark(cu.getMinAddress(), BookmarkType.ERROR, "Code Unit Conflict",
+				"Expected function entry at " + addr + " referenced by PLT Thunk at " +
+					flowFromAddr);
 			return null;
 		}
 		if (cu instanceof Data) {
-			Data d = (Data)cu;
+			Data d = (Data) cu;
 			if (d.isDefined()) {
-				bookmarkMgr.setBookmark(addr, BookmarkType.ERROR, "Code Unit Conflict", "Expected function entry referenced by PLT Thunk at " + flowFromAddr);
+				bookmarkMgr.setBookmark(addr, BookmarkType.ERROR, "Code Unit Conflict",
+					"Expected function entry referenced by PLT Thunk at " + flowFromAddr);
 				return null;
 			}
 			DisassembleCommand cmd = new DisassembleCommand(addr, null, true);
@@ -265,7 +282,7 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 				return null;
 			}
 		}
-		
+
 		CreateFunctionCmd cmd = new CreateFunctionCmd(addr);
 		if (cmd.applyTo(program, monitor)) {
 			return cmd.getFunction();

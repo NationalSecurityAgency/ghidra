@@ -207,6 +207,14 @@ public class DecompilerController {
 		decompilerMgr.resetDecompiler();
 	}
 
+	/**
+	 * Adds the given data to the cache.  Meant for internal use only.
+	 * @param data the data
+	 */
+	public void addToCache(DecompileData data) {
+		updateCache(data);
+	}
+
 //==================================================================================================
 //  Methods call by the DecompilerManager
 //==================================================================================================

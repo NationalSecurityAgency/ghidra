@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
+import java.math.BigInteger;
+
 import ghidra.app.plugin.core.format.ByteBlock;
 import ghidra.app.plugin.core.format.ByteBlockAccessException;
-import ghidra.util.*;
-
-import java.math.BigInteger;
+import ghidra.util.DataConverter;
+import ghidra.util.LittleEndianDataConverter;
 
 /**
  * ByteBlock for a byte buffer read from a file.
@@ -44,10 +45,7 @@ class FileByteBlock implements ByteBlock {
 	@Override
 	public String getLocationRepresentation(BigInteger bigIndex) {
 		int index = bigIndex.intValue();
-		if (index < buf.length) {
-			return pad(Integer.toString(index), 8);
-		}
-		return null;
+		return index < buf.length ? "%08d".formatted(index) : null;
 	}
 
 	@Override
@@ -79,6 +77,18 @@ class FileByteBlock implements ByteBlock {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
 			return buf[index];
+		}
+		return 0;
+	}
+
+	@Override
+	public int getBytes(byte[] bytes, BigInteger bigIndex, int count)
+			throws ByteBlockAccessException {
+		int index = bigIndex.intValue();
+		if (index < buf.length) {
+			count = Math.min(count, buf.length - index);
+			System.arraycopy(buf, index, bytes, 0, count);
+			return count;
 		}
 		return 0;
 	}
@@ -213,15 +223,5 @@ class FileByteBlock implements ByteBlock {
 
 	byte[] getBytes() {
 		return buf;
-	}
-
-	private String pad(String str, int length) {
-		StringBuffer sb = new StringBuffer();
-		int nspaces = length - str.length();
-		for (int i = 0; i < nspaces; i++) {
-			sb.append(" ");
-		}
-		sb.append(str);
-		return sb.toString();
 	}
 }

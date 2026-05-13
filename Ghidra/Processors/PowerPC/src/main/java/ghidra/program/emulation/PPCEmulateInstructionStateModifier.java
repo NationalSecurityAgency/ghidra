@@ -24,6 +24,7 @@ import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.program.model.pcode.Varnode;
 
+@Deprecated(forRemoval = true, since = "12.1")
 public class PPCEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
 	public PPCEmulateInstructionStateModifier(Emulate emu) {

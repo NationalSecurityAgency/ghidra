@@ -55,7 +55,7 @@ def getAllHelpTasks() {
  */
 tasks.register('buildHelp') {
 
-	description 'Build all Ghidra help'
+	description = 'Build all Ghidra help'
 
 	dependsOn { getAllHelpTasks() }  // all 'buildHelpModule' tasks
 	dependsOn 'validateHelpTocFiles' // the validate TOC task to run after all help is built

@@ -23,6 +23,7 @@ import com.microsoft.z3.Context;
 import ghidra.pcode.emu.symz3.AbstractSymZ3OffsetPcodeExecutorStatePiece;
 import ghidra.pcode.emu.symz3.SymZ3RegisterMap;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -87,7 +88,7 @@ public class SymZ3RegisterSpace extends SymZ3Space {
 	}
 
 	@Override
-	public SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
+	public SymValueZ3 get(SymValueZ3 offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		Register r = getRegister(offset, size);
 		if (r == null) {
 			Msg.warn(this, "unable to get register with space: " + space.getSpaceID() +
@@ -95,7 +96,7 @@ public class SymZ3RegisterSpace extends SymZ3Space {
 			return null;
 		}
 		if (!rmap.hasValueForRegister(r)) {
-			cb.readUninitialized(piece, space, offset, size);
+			cb.readUninitialized(piece, space, offset, size, reason);
 		}
 		SymValueZ3 result = this.rmap.getRegister(r);
 		return result;

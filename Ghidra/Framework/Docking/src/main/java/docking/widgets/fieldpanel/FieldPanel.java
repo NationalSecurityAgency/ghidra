@@ -102,10 +102,11 @@ public class FieldPanel extends JPanel
 
 		// initialize the focus traversal keys to control Tab to free up the tab key for internal
 		// field panel use. This is the same behavior that text components use.
-		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK);
+		KeyStroke ks =
+			KeyStroke.getKeyStroke(KeyEvent.VK_TAB, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Set.of(ks));
 		ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK);
 		setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, Set.of(ks));
 
 		addKeyListener(new FieldPanelKeyAdapter());
@@ -927,6 +928,10 @@ public class FieldPanel extends JPanel
 
 	public boolean isStartDragOK() {
 		return !selectionHandler.isInProgress();
+	}
+
+	protected boolean isDragging() {
+		return mouseHandler.isDragging();
 	}
 
 	/**
@@ -1831,7 +1836,6 @@ public class FieldPanel extends JPanel
 		private int mouseDownY;
 		private boolean didDrag;
 		private int timerScrollAmount;
-		private FieldLocation timerPoint;
 
 		MouseHandler() {
 			scrollTimer = new Timer(100, this);
@@ -1845,13 +1849,15 @@ public class FieldPanel extends JPanel
 		public void actionPerformed(ActionEvent e) {
 			try {
 				scrollView(timerScrollAmount);
-				if (timerScrollAmount > 0) {
-					timerPoint.setIndex(layouts.get(layouts.size() - 1).getIndex());
+				FieldLocation selectToLocation = new FieldLocation();
+				if (timerScrollAmount >= 0) {
+					BigInteger lastIndex = layouts.get(layouts.size() - 1).getIndex();
+					selectToLocation.setIndex(lastIndex.add(BigInteger.ONE));
 				}
 				else {
-					timerPoint.setIndex(layouts.get(0).getIndex());
+					selectToLocation.setIndex(layouts.get(0).getIndex());
 				}
-				selectionHandler.updateSelectionSequence(timerPoint);
+				selectionHandler.updateSelectionSequence(selectToLocation);
 			}
 			catch (Exception ex) {
 				// don't care
@@ -1907,15 +1913,23 @@ public class FieldPanel extends JPanel
 			if (((Math.abs(x - mouseDownX) > 3) || (Math.abs(y - mouseDownY) > 3))) {
 				didDrag = true;
 				if (selectionHandler.isInProgress()) {
-					if (y < 0 || y > getHeight()) {
+					if (y < 0 || y >= getHeight()) {
 						timerScrollAmount = y < 0 ? y : y - getHeight();
-						timerPoint = new FieldLocation(cursorPosition);
 						scrollTimer.start();
 					}
 					else {
 						scrollTimer.stop();
 						cursorHandler.setCursorPos(x, y, null); // null means don't notify listeners
-						selectionHandler.updateSelectionSequence(cursorPosition);
+						FieldLocation selectionEnd = cursorPosition;
+						// if the mouse is to the right of the last field, make the selection 
+						// include the last field
+						Layout layout = getLayoutModel().getLayout(selectionEnd.getIndex());
+						int width = layout.getWidth();
+						if (x > width) {
+							selectionEnd =
+								new FieldLocation(selectionEnd.getIndex().add(BigInteger.ONE));
+						}
+						selectionHandler.updateSelectionSequence(selectionEnd);
 						repaint();
 					}
 				}
@@ -1938,7 +1952,13 @@ public class FieldPanel extends JPanel
 			else if (!selectionHandler.isInProgress()) {
 				selectionHandler.clearSelection();
 			}
+
 			selectionHandler.endSelectionSequence();
+			didDrag = false;
+		}
+
+		boolean isDragging() {
+			return didDrag;
 		}
 
 		/**
@@ -2188,11 +2208,7 @@ public class FieldPanel extends JPanel
 			currentField = null;
 			// delegate to the appropriate layout to do the work
 			Layout layout = findLayoutAt(y);
-			if (layout == null) {
-				x = 0;
-				y = 0;
-				layout = findLayoutAt(y);
-			}
+
 			if (layout != null) {
 				FieldLocation newCursorPosition = new FieldLocation();
 				lastX = layout.setCursor(newCursorPosition, x, y);

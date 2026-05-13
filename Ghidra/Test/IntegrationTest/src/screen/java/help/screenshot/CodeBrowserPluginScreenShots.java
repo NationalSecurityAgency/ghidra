@@ -39,7 +39,7 @@ import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.app.util.viewer.listingpanel.OverviewProvider;
+import ghidra.app.util.viewer.listingpanel.ListingOverviewProvider;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.CommentType;
 
@@ -265,10 +265,10 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testCaptureMarkerPopup() {
 		setToolSize(1400, 1200);
 		ListingPanel listingPanel = plugin.getListingPanel();
-		List<OverviewProvider> overviewProviders = listingPanel.getOverviewProviders();
+		List<ListingOverviewProvider> overviewProviders = listingPanel.getOverviewProviders();
 		assertEquals(1, overviewProviders.size());
 
-		OverviewProvider provider = overviewProviders.get(0);
+		ListingOverviewProvider provider = overviewProviders.get(0);
 		rightClick(provider.getComponent(), 1, 1);
 
 		captureMenu();

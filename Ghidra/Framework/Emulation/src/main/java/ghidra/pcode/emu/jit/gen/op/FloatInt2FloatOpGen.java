@@ -17,22 +17,27 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitFloatInt2FloatOp;
 
 /**
  * The generator for a {@link JitFloatInt2FloatOp float_int2float}.
  * 
  * <p>
- * This uses the unary operator generator and emits {@link #I2F}, {@link #I2D}, {@link #L2F}, or
- * {@link #L2D}.
+ * This uses the unary operator generator and emits {@link Op#i2f(Emitter) i2f},
+ * {@link Op#i2d(Emitter) i2d}, {@link Op#l2f(Emitter) l2f}, or {@link Op#l2d(Emitter) l2d}.
  */
-public enum FloatInt2FloatOpGen implements UnOpGen<JitFloatInt2FloatOp> {
+public enum FloatInt2FloatOpGen implements FloatConvertUnOpGen<JitFloatInt2FloatOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -41,30 +46,27 @@ public enum FloatInt2FloatOpGen implements UnOpGen<JitFloatInt2FloatOp> {
 		return false; // TODO: Is it signed? Test to figure it out.
 	}
 
-	private JitType gen(MethodVisitor rv, int opcode, JitType type) {
-		rv.visitInsn(opcode);
-		return type;
-	}
-
 	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitFloatInt2FloatOp op, JitBlock block,
-			JitType uType, MethodVisitor rv) {
-		JitType outType = op.type().resolve(gen.getTypeModel().typeOf(op.out()));
-		return switch (uType) {
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitFloatInt2FloatOp op, JitBlock block, Scope scope) {
+		JitType uType = gen.resolveType(op.u(), op.uType());
+		JitType outType = gen.resolveType(op.out(), op.type());
+		return new LiveOpResult(switch (uType) {
 			case IntJitType ut -> switch (outType) {
-				case FloatJitType ot -> gen(rv, I2F, ot);
-				case DoubleJitType ot -> gen(rv, I2D, ot);
-				case MpFloatJitType ot -> TODO("MpInt/Float");
+				case FloatJitType ot -> gen(em, localThis, gen, op, ut, ot, Op::i2f, scope);
+				case DoubleJitType ot -> gen(em, localThis, gen, op, ut, ot, Op::i2d, scope);
+				case MpFloatJitType ot -> TODO("MpFloat");
 				default -> throw new AssertionError();
 			};
 			case LongJitType ut -> switch (outType) {
-				case FloatJitType ot -> gen(rv, L2F, ot);
-				case DoubleJitType ot -> gen(rv, L2D, ot);
-				case MpFloatJitType ot -> TODO("MpInt/Float");
+				case FloatJitType ot -> gen(em, localThis, gen, op, ut, ot, Op::l2f, scope);
+				case DoubleJitType ot -> gen(em, localThis, gen, op, ut, ot, Op::l2d, scope);
+				case MpFloatJitType ot -> TODO("MpFloat");
 				default -> throw new AssertionError();
 			};
-			case MpIntJitType ut -> TODO("MpInt/Float");
+			case MpIntJitType ut -> TODO("MpInt->Float");
 			default -> throw new AssertionError();
-		};
+		});
 	}
 }

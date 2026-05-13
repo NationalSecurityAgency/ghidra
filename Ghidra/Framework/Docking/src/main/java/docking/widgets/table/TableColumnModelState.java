@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.List;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import org.jdom.*;
+import org.jdom2.*;
 
 import docking.DockingWindowManager;
 import ghidra.docking.settings.Settings;
@@ -470,29 +470,30 @@ public class TableColumnModelState implements SortListener {
 		if (preferenceKey != null) {
 			return preferenceKey;
 		}
-		TableModel tableModel = table.getModel();
 
-		int columnCount = getDefaultColumnCount();
-		StringBuffer buffer = new StringBuffer();
+		TableModel model = table.getModel();
+		int n = model.getColumnCount();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append(getTableModelName());
 		buffer.append(":");
-		for (int i = 0; i < columnCount; i++) {
-			String columnName = tableModel.getColumnName(i);
-			buffer.append(columnName).append(":");
+		for (int i = 0; i < n; i++) {
+			if (isDefaultColumn(i)) {
+				String columnName = model.getColumnName(i);
+				buffer.append(columnName).append(":");
+			}
 		}
 		return buffer.toString();
 	}
 
-	private int getDefaultColumnCount() {
-
+	private boolean isDefaultColumn(int col) {
 		TableModel tableModel = table.getUnwrappedTableModel();
 		if (tableModel instanceof VariableColumnTableModel) {
 			VariableColumnTableModel variableTableModel = (VariableColumnTableModel) tableModel;
 			// VariableColumnTableModels have default columns and 'found' columns.  We only want to
 			// create a key based upon the default columns
-			return variableTableModel.getDefaultColumnCount();
+			return variableTableModel.isDefaultColumn(col);
 		}
-		return tableModel.getColumnCount();
+		return true;
 	}
 
 	private void setDefaultColumnsVisible() {

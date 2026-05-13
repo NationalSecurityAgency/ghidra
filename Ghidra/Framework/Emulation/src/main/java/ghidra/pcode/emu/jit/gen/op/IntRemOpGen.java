@@ -15,26 +15,30 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
+import ghidra.pcode.emu.jit.gen.GenConsts;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitIntRemOp;
 
 /**
  * The generator for a {@link JitIntRemOp int_rem}.
  * 
  * <p>
- * This uses the binary operator generator and simply emits {@link #INVOKESTATIC} on
- * {@link Integer#remainderUnsigned(int, int)} or {@link Long#remainderUnsigned(long, long)}
+ * This uses the binary operator generator and simply emits
+ * {@link Op#invokestatic(Emitter, TRef, String, ghidra.pcode.emu.jit.gen.util.Methods.MthDesc, boolean)}
+ * on {@link Integer#remainderUnsigned(int, int)} or {@link Long#remainderUnsigned(long, long)}
  * depending on the type.
+ * <p>
+ * For multi-precision remainder, this emits code to invoke
+ * {@link JitCompiledPassage#mpIntDivide(int[], int[], int[])}, but selects what remains in the left
+ * operand as the result.
  */
-public enum IntRemOpGen implements IntBinOpGen<JitIntRemOp> {
+public enum IntRemOpGen implements IntOpBinOpGen<JitIntRemOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -43,31 +47,33 @@ public enum IntRemOpGen implements IntBinOpGen<JitIntRemOp> {
 		return false;
 	}
 
-	private void generateMpIntRem(JitCodeGenerator gen, MpIntJitType type, MethodVisitor mv) {
-		BinOpGen.generateMpDelegationToStaticMethod(gen, type, "mpIntDivide", mv, 1, TakeOut.LEFT);
+	@Override
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return em
+				.emit(Op::invokestatic, GenConsts.TR_INTEGER, "remainderUnsigned",
+					GenConsts.MDESC_$INT_BINOP, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
 	}
 
 	@Override
-	public JitType afterLeft(JitCodeGenerator gen, JitIntRemOp op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		return TypeConversions.forceUniform(gen, lType, rType, ext(), rv);
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+		return em
+				.emit(Op::invokestatic, GenConsts.TR_LONG, "remainderUnsigned",
+					GenConsts.MDESC_$LONG_BINOP, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
 	}
 
 	@Override
-	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntRemOp op, JitBlock block,
-			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniform(gen, rType, lType, rExt(), rv);
-		switch (rType) {
-			case IntJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "remainderUnsigned",
-				MDESC_$INT_BINOP, false);
-			case LongJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_LONG, "remainderUnsigned",
-				MDESC_$LONG_BINOP, false);
-			case MpIntJitType t when t.size() == lType.size() -> generateMpIntRem(gen, t, rv);
-			// FIXME: forceUniform shouldn't have to enforce the same size....
-			case MpIntJitType t -> throw new AssertionError("forceUniform didn't work?");
-			default -> throw new AssertionError();
-		}
-		// TODO: For MpInt case, we should use the outvar's size to cull operations.
-		return rType;
+	public <THIS extends JitCompiledPassage> Emitter<Bot> genRunMpInt(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitIntRemOp op,
+			MpIntJitType type, Scope scope) {
+		return genMpDelegationToStaticMethod(em, gen, localThis, type, "mpIntDivide", op, 1,
+			TakeOut.LEFT, scope);
 	}
 }

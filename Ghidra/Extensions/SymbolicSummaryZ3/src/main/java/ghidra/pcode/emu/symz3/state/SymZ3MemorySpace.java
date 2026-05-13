@@ -23,6 +23,7 @@ import com.microsoft.z3.Context;
 import ghidra.pcode.emu.symz3.AbstractSymZ3OffsetPcodeExecutorStatePiece;
 import ghidra.pcode.emu.symz3.SymZ3MemoryMap;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -53,9 +54,9 @@ public class SymZ3MemorySpace extends SymZ3Space {
 	}
 
 	@Override
-	public SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
+	public SymValueZ3 get(SymValueZ3 offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		if (!mmap.hasValueFor(offset, size)) {
-			cb.readUninitialized(piece, space, offset, size);
+			cb.readUninitialized(piece, space, offset, size, reason);
 		}
 		return mmap.load(offset, size, true, cb);
 	}

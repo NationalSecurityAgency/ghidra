@@ -2764,6 +2764,7 @@ bool SplitDatatype::splitLoad(PcodeOp *loadOp,Datatype *inType)
   if (copyOp != (PcodeOp *)0) {
     OpCode opc = copyOp->code();
     if (opc == CPUI_STORE) return false;	// Handled by RuleSplitStore
+    if (opc == CPUI_ZPULL || opc == CPUI_SPULL) return false;
     if (opc != CPUI_COPY)
       copyOp = (PcodeOp *)0;
   }

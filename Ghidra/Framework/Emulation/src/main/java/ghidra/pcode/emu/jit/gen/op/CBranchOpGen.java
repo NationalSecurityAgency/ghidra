@@ -15,23 +15,22 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.JitPassage.*;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.op.BranchOpGen.ExtBranchGen;
-import ghidra.pcode.emu.jit.gen.op.BranchOpGen.IntBranchGen;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.op.BranchOpGen.*;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
 import ghidra.pcode.emu.jit.op.JitCBranchOp;
-import ghidra.pcode.emu.jit.op.JitOp;
 import ghidra.pcode.emu.jit.var.JitFailVal;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.PcodeOp;
@@ -44,76 +43,138 @@ import ghidra.program.model.pcode.PcodeOp;
  * 
  * <p>
  * With an {@link IntBranch} record, this looks up the label for the target block and checks if a
- * transition is necessary. If one is necessary, it emits an {@link #IFEQ ifeq} with the transition
- * and {@link #GOTO goto} it guards. The {@code ifeq} skips to the fall-through case. If a
- * transition is not necessary, it simply emits an {@link #IFNE ifne} to the target label.
+ * transition is necessary. If one is necessary, it emits an {@link Op#ifeq(Emitter) ifeq} with the
+ * transition and {@link Op#goto_(Emitter) goto} it guards. The {@code ifeq} skips to the
+ * fall-through case. If a transition is not necessary, it simply emits an {@link Op#ifne(Emitter)
+ * ifne} to the target label.
  * 
  * <p>
  * With an {@link ExtBranch} record, this does the same as {@link BranchOpGen} but guarded by an
- * {@link #IFEQ ifeq} that skips to the fall-through case.
+ * {@link Op#ifeq(Emitter) ifeq} that skips to the fall-through case.
  */
 public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 	/** The generator singleton */
 	GEN;
 
 	/**
+	 * An abstract branch code generator for conditional branches.
+	 * 
+	 * @param <TB> the type of branch
+	 * @param <TO> the type of op
+	 */
+	abstract static class CBranchGen<TB extends RBranch, TO extends JitCBranchOp>
+			extends BranchGen<Bot, Ent<Bot, TInt>, TB, TO> {
+		@Override
+		<THIS extends JitCompiledPassage> Emitter<Bot> genRun(Emitter<Ent<Bot, TInt>> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, TO op, TB branch,
+				JitBlock block) {
+			return switch (branch.reach()) {
+				case WITH_CTXMOD -> genRunWithCtxmod(em, localThis, localCtxmod, retReq, gen, op,
+					exit(gen, branch), block);
+				case WITHOUT_CTXMOD -> genRunWithoutCtxmod(em, localThis, retReq, gen, op, branch,
+					block);
+				case MAYBE_CTXMOD -> {
+					var lblIf = em.emit(Op::iload, localCtxmod)
+							.emit(Op::ifne);
+					var lblGoto = lblIf.em()
+							.emit(this::genRunWithoutCtxmod, localThis, retReq, gen, op, branch,
+								block)
+							.emit(Op::goto_);
+					yield lblGoto.em()
+							.emit(Lbl::placeDead, lblIf.lbl())
+							.emit(this::genRunWithCtxmod, localThis, localCtxmod, retReq, gen, op,
+								exit(gen, branch), block)
+							.emit(Lbl::place, lblGoto.lbl());
+				}
+			};
+		}
+	}
+
+	/**
 	 * A branch code generator for internal conditional branches
 	 */
-	static class IntCBranchGen extends IntBranchGen {
+	static class IntCBranchGen extends CBranchGen<RIntBranch, JitCBranchOp> {
 		/** Singleton */
 		static final IntCBranchGen C_INT = new IntCBranchGen();
 
 		@Override
-		void generateCodeWithoutCtxmod(JitCodeGenerator gen, JitOp op, RIntBranch branch,
-				JitBlock block, MethodVisitor rv) {
-			JitBlock target = block.getTargetBlock(branch);
-			Label label = gen.labelForBlock(target);
-			BlockTransition transition = VarGen.computeBlockTransition(gen, block, target);
-			if (transition.needed()) {
-				Label fall = new Label();
-				rv.visitJumpInsn(IFEQ, fall);
-				transition.generate(rv);
-				rv.visitJumpInsn(GOTO, label);
-				rv.visitLabel(fall);
-			}
-			else {
-				rv.visitJumpInsn(IFNE, label);
-			}
+		Address exit(JitCodeGenerator<?> gen, RIntBranch branch) {
+			return IntBranchGen.INT.exit(gen, branch);
 		}
 
 		@Override
-		void generateCodeWithCtxmod(JitCodeGenerator gen, JitOp op, Address exit, JitBlock block,
-				MethodVisitor rv) {
-			Label fall = new Label();
-			rv.visitJumpInsn(IFEQ, fall);
-			super.generateCodeWithCtxmod(gen, op, exit, block, rv);
-			rv.visitLabel(fall);
+		<THIS extends JitCompiledPassage> Emitter<Bot> genRunWithoutCtxmod(
+				Emitter<Ent<Bot, TInt>> em, Local<TRef<THIS>> localThis,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitCBranchOp op,
+				RIntBranch branch, JitBlock block) {
+			JitBlock target = block.getTargetBlock(branch);
+			Lbl<Bot> label = gen.labelForBlock(target);
+			BlockTransition<THIS> transition =
+				VarGen.computeBlockTransition(localThis, gen, block, target);
+
+			if (!transition.needed()) {
+				return em
+						.emit(Op::ifne, label);
+			}
+			var lblFall = em
+					.emit(Op::ifeq);
+			return lblFall.em()
+					.emit(transition::genFwd)
+					.emit(Op::goto_, label)
+					.emit(Lbl::placeDead, lblFall.lbl());
+		}
+
+		@Override
+		<THIS extends JitCompiledPassage> Emitter<Bot> genRunWithCtxmod(Emitter<Ent<Bot, TInt>> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitCBranchOp op,
+				Address exit, JitBlock block) {
+			var lblFall = em
+					.emit(Op::ifeq);
+			return lblFall.em()
+					.emit(IntBranchGen.INT::genRunWithCtxmod, localThis, localCtxmod, retReq, gen,
+						op, exit, block)
+					.emit(Lbl::placeDead, lblFall.lbl());
 		}
 	}
 
 	/**
 	 * A branch code generator for external conditional branches
 	 */
-	static class ExtCBranchGen extends ExtBranchGen {
+	static class ExtCBranchGen extends CBranchGen<RExtBranch, JitCBranchOp> {
 		/** Singleton */
 		static final ExtCBranchGen C_EXT = new ExtCBranchGen();
 
 		@Override
-		void generateCodeWithoutCtxmod(JitCodeGenerator gen, JitOp op, RExtBranch branch,
-				JitBlock block, MethodVisitor rv) {
-			Label fall = new Label();
-			rv.visitJumpInsn(IFEQ, fall);
-			super.generateCodeWithoutCtxmod(gen, op, branch, block, rv);
-			rv.visitLabel(fall);
+		Address exit(JitCodeGenerator<?> gen, RExtBranch branch) {
+			return ExtBranchGen.EXT.exit(gen, branch);
 		}
 
 		@Override
-		void generateCodeWithCtxmod(JitCodeGenerator gen, JitOp op, Address exit, JitBlock block,
-				MethodVisitor rv) {
-			Label fall = new Label();
-			rv.visitJumpInsn(IFEQ, fall);
-			super.generateCodeWithCtxmod(gen, op, exit, block, rv);
-			rv.visitLabel(fall);
+		<THIS extends JitCompiledPassage> Emitter<Bot> genRunWithoutCtxmod(
+				Emitter<Ent<Bot, TInt>> em, Local<TRef<THIS>> localThis,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitCBranchOp op,
+				RExtBranch branch, JitBlock block) {
+			var lblFall = em
+					.emit(Op::ifeq);
+			return lblFall.em()
+					.emit(ExtBranchGen.EXT::genRunWithoutCtxmod, localThis, retReq, gen, op, branch,
+						block)
+					.emit(Lbl::placeDead, lblFall.lbl());
+		}
+
+		@Override
+		<THIS extends JitCompiledPassage> Emitter<Bot> genRunWithCtxmod(Emitter<Ent<Bot, TInt>> em,
+				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitCBranchOp op,
+				Address exit, JitBlock block) {
+			var lblFall = em
+					.emit(Op::ifeq);
+			return lblFall.em()
+					.emit(ExtBranchGen.EXT::genRunWithCtxmod, localThis, localCtxmod, retReq, gen,
+						op, exit, block)
+					.emit(Lbl::placeDead, lblFall.lbl());
 		}
 	}
 
@@ -135,24 +196,27 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 	 *           which will ensure we apply special handling here.
 	 */
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitCBranchOp op, JitBlock block,
-			MethodVisitor rv) {
+	public <THIS extends JitCompiledPassage> LiveOpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitCBranchOp op, JitBlock block, Scope scope) {
 		if (op.op() instanceof ExitPcodeOp && op.branch() instanceof RExtBranch eb) {
 			assert eb.reach() == Reachability.MAYBE_CTXMOD;
-			Label fall = new Label();
-			RunFixedLocal.CTXMOD.generateLoadCode(rv);
-			rv.visitJumpInsn(IFEQ, fall);
-			BranchOpGen.generateExitCode(gen, eb.to().address, block, rv);
-			rv.visitLabel(fall);
-			return;
+			var lblFall = em
+					.emit(Op::iload, localCtxmod)
+					.emit(Op::ifeq);
+			return new LiveOpResult(lblFall.em()
+					.emit(BranchOpGen::genExit, localThis, retReq, gen, eb.to().address, block)
+					.emit(Lbl::placeDead, lblFall.lbl()));
 		}
 
-		JitType cType = gen.generateValReadCode(op.cond(), op.condType(), Ext.ZERO);
-		TypeConversions.generateIntToBool(cType, rv);
-		switch (op.branch()) {
-			case RIntBranch ib -> IntCBranchGen.C_INT.generateCode(gen, op, ib, block, rv);
-			case RExtBranch eb -> ExtCBranchGen.C_EXT.generateCode(gen, op, eb, block, rv);
-			default -> throw new AssertionError("Branch type confusion");
-		}
+		var emBool = gen.genReadToBool(em, localThis, op.cond());
+
+		return new LiveOpResult(switch (op.branch()) {
+			case RIntBranch ib -> IntCBranchGen.C_INT.genRun(emBool, localThis, localCtxmod, retReq,
+				gen, op, ib, block);
+			case RExtBranch eb -> ExtCBranchGen.C_EXT.genRun(emBool, localThis, localCtxmod, retReq,
+				gen, op, eb, block);
+			default -> throw new AssertionError();
+		});
 	}
 }

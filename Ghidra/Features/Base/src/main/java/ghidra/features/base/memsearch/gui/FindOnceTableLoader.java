@@ -17,6 +17,7 @@ package ghidra.features.base.memsearch.gui;
 
 import java.util.List;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.program.model.address.Address;
@@ -29,15 +30,16 @@ import ghidra.util.task.TaskMonitor;
  */
 public class FindOnceTableLoader implements MemoryMatchTableLoader {
 
-	private MemorySearcher searcher;
+	private MemorySearcher<SearchData> searcher;
 	private Address address;
-	private List<MemoryMatch> previousResults;
+	private List<MemoryMatch<SearchData>> previousResults;
 	private MemorySearchResultsPanel panel;
-	private MemoryMatch match;
+	private MemoryMatch<SearchData> match;
 	private boolean forward;
 
-	public FindOnceTableLoader(MemorySearcher searcher, Address address,
-			List<MemoryMatch> previousResults, MemorySearchResultsPanel panel, boolean forward) {
+	public FindOnceTableLoader(MemorySearcher<SearchData> searcher, Address address,
+			List<MemoryMatch<SearchData>> previousResults, MemorySearchResultsPanel panel,
+			boolean forward) {
 		this.searcher = searcher;
 		this.address = address;
 		this.previousResults = previousResults;
@@ -46,13 +48,13 @@ public class FindOnceTableLoader implements MemoryMatchTableLoader {
 	}
 
 	@Override
-	public void loadResults(Accumulator<MemoryMatch> accumulator, TaskMonitor monitor) {
+	public void loadResults(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor) {
 		accumulator.addAll(previousResults);
 
 		match = searcher.findOnce(address, forward, monitor);
 
 		if (match != null) {
-			MemoryMatch existing = findExisingMatch(match.getAddress());
+			MemoryMatch<SearchData> existing = findExisingMatch(match.getAddress());
 			if (existing != null) {
 				existing.updateBytes(match.getBytes());
 			}
@@ -62,8 +64,8 @@ public class FindOnceTableLoader implements MemoryMatchTableLoader {
 		}
 	}
 
-	private MemoryMatch findExisingMatch(Address newMatchAddress) {
-		for (MemoryMatch memoryMatch : previousResults) {
+	private MemoryMatch<SearchData> findExisingMatch(Address newMatchAddress) {
+		for (MemoryMatch<SearchData> memoryMatch : previousResults) {
 			if (newMatchAddress.equals(memoryMatch.getAddress())) {
 				return memoryMatch;
 			}

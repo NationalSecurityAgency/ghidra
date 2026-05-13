@@ -19,10 +19,10 @@ add-lldb-init-args() {
 	args+=(-o "version")
 	args+=(-o "script import os, ghidralldb")
 	args+=(-o "script if not 'ghidralldb' in locals(): os._exit(253)")
-
 	if [ -n "$OPT_ARCH" ]; then
 		args+=(-o "settings set target.default-arch $OPT_ARCH")
 	fi
+	args+=($OPT_LLDB_ARGS)
 }
 
 add-lldb-image-and-args() {
@@ -40,6 +40,15 @@ add-lldb-image-and-args() {
 		local qargs
 		printf -v qargs '%q ' "$@"
 		args+=(-o "settings set -- target.run-args $qargs")
+	fi
+}
+
+add-lldb-pid() {
+	target_pid=$1
+	shift
+
+	if [ -n "$target_pid" ]; then
+		args+=(-o "process attach --pid '$target_pid'")
 	fi
 }
 
@@ -66,7 +75,15 @@ add-lldb-start-if-image() {
 	fi
 }
 
+add-lldb-extra-cmds() {
+	if [ -n "$OPT_EXTRA_CMDS" ]; then
+		args+=(-o "$OPT_EXTRA_CMDS")
+	fi
+}
+
 add-lldb-tail-args() {
+	args+=(-o "ghidra trace sync-enable")
+	args+=(-o "ghidra trace sync-synth-stopped")
 	true
 }
 
@@ -105,6 +122,26 @@ compute-lldb-platform-args() {
 	add-lldb-tail-args
 }
 
+compute-lldb-platform-args-attach() {
+	target_pid=$1
+	target_type=$2
+	target_url=$3
+	rmi_address=$4
+	shift
+	shift
+	shift
+	shift
+
+	args+=("$OPT_LLDB_PATH")
+	add-lldb-init-args
+	args+=(-o "platform select '$target_type'")
+	args+=(-o "platform connect '$target_url'")
+	add-lldb-pid "$target_pid"
+	add-lldb-connect-and-sync "$rmi_address"
+	add-lldb-extra-cmds
+	add-lldb-tail-args
+}
+
 compute-lldb-remote-args() {
 	target_image=$1
 	target_cx=$2
@@ -116,6 +153,21 @@ compute-lldb-remote-args() {
 	args+=(-o "$target_cx")
 	add-lldb-connect-and-sync "$rmi_address"
 	args+=(-o "ghidra trace sync-synth-stopped")
+	add-lldb-tail-args
+}
+
+compute-lldb-remote-args-attach() {
+	target_pid=$1
+	target_cx=$2
+	rmi_address=$3
+
+	args+=("$OPT_LLDB_PATH")
+	add-lldb-init-args
+	add-lldb-pid "$target_pid" ""
+	args+=(-o "$target_cx")
+	add-lldb-connect-and-sync "$rmi_address"
+	args+=(-o "ghidra trace sync-synth-stopped")
+	add-lldb-extra-cmds
 	add-lldb-tail-args
 }
 

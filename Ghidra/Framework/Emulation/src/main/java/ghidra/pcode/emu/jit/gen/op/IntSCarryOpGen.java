@@ -15,30 +15,28 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitIntSCarryOp;
 
 /**
  * The generator for a {@link JitIntSCarryOp int_scarry}.
- * 
  * <p>
- * This uses the binary operator generator and emits {@link #INVOKESTATIC} on
- * {@link JitCompiledPassage#sCarryIntRaw(int, int)} or
+ * This uses the binary operator generator and emits
+ * {@link Op#invokestatic(Emitter, TRef, String, ghidra.pcode.emu.jit.gen.util.Methods.MthDesc, boolean)
+ * invokestatic} on {@link JitCompiledPassage#sCarryIntRaw(int, int)} or
  * {@link JitCompiledPassage#sCarryLongRaw(long, long)} depending on the type. We must then emit a
  * shift and mask to extract the correct bit.
+ * <p>
+ * For multi-precision signed borrow, we delegate to
+ * {@link JitCompiledPassage#sCarryMpInt(int[], int[], int)}, which requires no follow-on bit
+ * extraction.
  */
-public enum IntSCarryOpGen implements IntBinOpGen<JitIntSCarryOp> {
+public enum IntSCarryOpGen implements IntPredBinOpGen<JitIntSCarryOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -47,56 +45,22 @@ public enum IntSCarryOpGen implements IntBinOpGen<JitIntSCarryOp> {
 		return true;
 	}
 
-	static IntJitType generateMpIntSCarry(JitCodeGenerator gen, MpIntJitType type,
-			String methodName, MethodVisitor mv) {
-		JitAllocationModel am = gen.getAllocationModel();
-		int legCount = type.legsAlloc();
-		try (
-				JvmTempAlloc tmpL = am.allocateTemp(mv, "tmpL", legCount);
-				JvmTempAlloc tmpR = am.allocateTemp(mv, "tmpR", legCount)) {
-			OpGen.generateMpLegsIntoTemp(tmpR, legCount, mv);
-			OpGen.generateMpLegsIntoTemp(tmpL, legCount, mv);
-
-			OpGen.generateMpLegsIntoArray(tmpL, legCount, legCount, mv);
-			OpGen.generateMpLegsIntoArray(tmpR, legCount, legCount, mv);
-			mv.visitLdcInsn((type.size() % Integer.BYTES) * Byte.SIZE - 1);
-
-			mv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, methodName,
-				MDESC_JIT_COMPILED_PASSAGE__S_CARRY_MP_INT, true);
-		}
-		return IntJitType.I4;
+	@Override
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return delegateIntFlagbit(em, type, "sCarryIntRaw");
 	}
 
 	@Override
-	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntSCarryOp op, JitBlock block,
-			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniform(gen, rType, lType, ext(), rv);
-		switch (rType) {
-			case IntJitType(int size) -> {
-				rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "sCarryIntRaw",
-					MDESC_JIT_COMPILED_PASSAGE__S_CARRY_INT_RAW, true);
-				rv.visitLdcInsn(size * Byte.SIZE - 1);
-				rv.visitInsn(ISHR);
-				// TODO: This mask may not be necessary
-				rv.visitLdcInsn(1);
-				rv.visitInsn(IAND);
-				return IntJitType.I1;
-			}
-			case LongJitType(int size) -> {
-				rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "sCarryLongRaw",
-					MDESC_JIT_COMPILED_PASSAGE__S_CARRY_LONG_RAW, true);
-				rv.visitLdcInsn(size * Byte.SIZE - 1);
-				rv.visitInsn(LSHR);
-				rv.visitInsn(L2I);
-				// TODO: This mask may not be necessary
-				rv.visitLdcInsn(1);
-				rv.visitInsn(IAND);
-				return IntJitType.I1;
-			}
-			case MpIntJitType t -> {
-				return generateMpIntSCarry(gen, t, "sCarryMpInt", rv);
-			}
-			default -> throw new AssertionError();
-		}
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TInt>> opForLong(Emitter<N0> em, LongJitType type) {
+		return delegateLongFlagbit(em, type, "sCarryLongRaw");
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage> Emitter<Ent<Bot, TInt>> genRunMpInt(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitIntSCarryOp op,
+			MpIntJitType type, Scope scope) {
+		return delegateMpIntFlagbit(em, localThis, gen, op, type, scope, "sCarryMpInt");
 	}
 }

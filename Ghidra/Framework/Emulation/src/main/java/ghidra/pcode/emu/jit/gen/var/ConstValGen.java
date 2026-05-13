@@ -15,14 +15,20 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.MethodVisitor;
+import java.math.BigInteger;
+
 import org.objectweb.asm.Opcodes;
 
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
-import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.OpndEm;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.var.JitConstVal;
 
 /**
@@ -37,28 +43,81 @@ public enum ConstValGen implements ValGen<JitConstVal> {
 	GEN;
 
 	@Override
-	public void generateValInitCode(JitCodeGenerator gen, JitConstVal v, MethodVisitor iv) {
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genValInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitConstVal v) {
+		return em;
 	}
 
 	@Override
-	public JitType generateValReadCode(JitCodeGenerator gen, JitConstVal v, JitTypeBehavior typeReq,
-			Ext ext, MethodVisitor rv) {
-		JitType type = typeReq.resolve(gen.getTypeModel().typeOf(v));
-		switch (type) {
-			case IntJitType t -> rv.visitLdcInsn(v.value().intValue());
-			case LongJitType t -> rv.visitLdcInsn(v.value().longValue());
-			case FloatJitType t -> rv.visitLdcInsn(Float.intBitsToFloat(v.value().intValue()));
-			case DoubleJitType t -> rv.visitLdcInsn(Double.longBitsToDouble(v.value().longValue()));
-			case MpIntJitType t -> {
-				// Push most significant first, so least is at top of stack
-				int count = t.legsAlloc();
-				for (int i = 0; i < count; i++) {
-					int leg = v.value().shiftRight(Integer.SIZE * (count - 1 - i)).intValue();
-					rv.visitLdcInsn(leg);
-				}
-			}
+	public <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N extends Next> Emitter<Ent<N, T>> genReadToStack(Emitter<N> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitConstVal v, JT type,
+				Ext ext) {
+		return switch (type) {
+			case IntJitType t -> em
+					.emit(Op::ldc__i, v.value().intValue())
+					.emit(ValGen::castBack, type, t);
+			case LongJitType t -> em
+					.emit(Op::ldc__l, v.value().longValue())
+					.emit(ValGen::castBack, type, t);
+			case FloatJitType t -> em
+					.emit(Op::ldc__f, Float.intBitsToFloat(v.value().intValue()))
+					.emit(ValGen::castBack, type, t);
+			case DoubleJitType t -> em
+					.emit(Op::ldc__d, Double.longBitsToDouble(v.value().longValue()))
+					.emit(ValGen::castBack, type, t);
 			default -> throw new AssertionError();
+		};
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> OpndEm<MpIntJitType, N> genReadToOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitConstVal v,
+			MpIntJitType type, Ext ext, Scope scope) {
+		return new OpndEm<>(Opnd.constOf(type, v.value()), em);
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>>
+			genReadLegToStack(Emitter<N> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitConstVal v, MpIntJitType type, int leg,
+					Ext ext) {
+		BigInteger value = v.value();
+		int legVal = value.shiftRight(leg * Integer.SIZE).intValue();
+		return em
+				.emit(Op::ldc__i, legVal);
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<int[]>>>
+			genReadToArray(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+					JitConstVal v, MpIntJitType type, Ext ext, Scope scope, int slack) {
+		int legCount = type.legsAlloc();
+		var ckArr = em
+				.emit(Op::ldc__i, legCount + slack)
+				.emit(Op::newarray, Types.T_INT);
+		BigInteger value = v.value();
+		for (int i = 0; i < legCount; i++) {
+			int leg = value.intValue();
+			if (leg != 0) {
+				ckArr = ckArr
+						.emit(Op::dup)
+						.emit(Op::ldc__i, i)
+						.emit(Op::ldc__i, leg)
+						.emit(Op::iastore);
+			}
 		}
-		return type;
+		return ckArr;
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadToBool(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitConstVal v) {
+		return em.emit(Op::ldc__i, v.value().equals(BigInteger.ZERO) ? 0 : 1);
+	}
+
+	@Override
+	public ValGen<JitConstVal> subpiece(int byteShift, int maxByteSize) {
+		throw new AssertionError("Sleigh compiler generated subpiece of a constant?");
 	}
 }

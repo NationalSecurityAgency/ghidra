@@ -268,6 +268,10 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 		}
 	}
 
+	/**
+	 * Called by the framework to dispose of this plugin and unregister for events and services. 
+	 * Subclasses should not override this method, but should instead override {@link #dispose()}.
+	 */
 	protected void cleanup() {
 		if (!disposed) {
 			Throwable thr = null;

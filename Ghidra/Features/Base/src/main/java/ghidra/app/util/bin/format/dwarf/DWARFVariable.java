@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf.expression.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -321,7 +320,7 @@ public class DWARFVariable {
 				return false;
 			}
 			if (res.getAddress().getOffset() == 0) {
-				if (diea.hasAttribute(DWARFAttribute.DW_AT_const_value)) {
+				if (diea.hasAttribute(DW_AT_const_value)) {
 					// skip without complaining global vars with a const value and bad location expression 
 					return false;
 				}

@@ -31,6 +31,7 @@ import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Register;
@@ -274,6 +275,22 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 		Register r0 = executor.getLanguage().getRegister("r0");
 		executeSleigh(executor, library, "r0 = __testop();");
 		assertRegVarnode(r0, library.outVar);
+	}
+
+	@Test
+	public void testStaticMethod() throws Exception {
+		var library = new TestUseropLibrary() {
+			@PcodeUserop
+			private static int __testop(int a, int b) {
+				return (int) Math.pow(a, b);
+			}
+		};
+
+		PcodeExecutor<byte[]> executor = createBytesExecutor();
+		Register r0 = executor.getLanguage().getRegister("r0");
+		executeSleigh(executor, library, "r0 = __testop(4:4, 5:4);");
+		assertEquals(1024, executor.getArithmetic()
+				.toLong(executor.getState().getVar(r0, Reason.INSPECT), Purpose.INSPECT));
 	}
 
 	@Test

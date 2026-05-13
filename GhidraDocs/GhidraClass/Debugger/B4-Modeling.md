@@ -555,13 +555,13 @@ public static class ExprSpace {
 		cb.dataWritten(piece, space.getAddress(offset), size, val);
 	}
 
-	public Expr get(long offset, int size, PcodeStateCallbacks cb) {
+	public Expr get(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		// TODO: Handle overlaps / offcut gets and sets
 		Expr expr = map.get(offset);
 		if (expr == null) {
 			byte[] aOffset =
 				piece.getAddressArithmetic().fromConst(offset, space.getPointerSize());
-			if (cb.readUninitialized(piece, space, aOffset, size) != 0) {
+			if (cb.readUninitialized(piece, space, aOffset, size, reason) != 0) {
 				return map.get(offset);
 			}
 		}
@@ -621,7 +621,7 @@ public static class ExprPcodeExecutorStatePiece
 	@Override
 	protected Expr getFromSpace(ExprSpace space, long offset, int size, Reason reason,
 			PcodeStateCallbacks cb) {
-		return space.get(offset, size, cb);
+		return space.get(offset, size, reason, cb);
 	}
 
 	@Override
@@ -889,6 +889,6 @@ Since string-based serialization may be a common case, we may eventually provide
 For now, we refer you to the implementations for the Taint-augmented emulator:
 
 * For memory state: [TaintFieldFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintFieldFactory.java)
-* For regsiter state: [TaintDebuggerRegisterColumnFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintDebuggerRegisterColumnFactory.java)
+* For register state: [TaintDebuggerRegisterColumnFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintDebuggerRegisterColumnFactory.java)
 
 Anything more than that would require completely custom providers, plugins, etc.

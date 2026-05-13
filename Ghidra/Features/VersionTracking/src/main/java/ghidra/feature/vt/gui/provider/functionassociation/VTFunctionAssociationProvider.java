@@ -375,7 +375,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		functionComparisonPanel = fcService.createComparisonViewer();
 
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonView.NAME);
+		functionComparisonPanel.setActiveView(ListingCodeComparisonView.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 
 		comparisonSplitPane =

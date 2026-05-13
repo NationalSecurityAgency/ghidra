@@ -15,11 +15,13 @@
  */
 package ghidra.lisa.gui;
 
+import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.lisa.pcode.analyses.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import it.unive.lisa.DefaultConfiguration;
 import it.unive.lisa.analysis.dataflow.*;
 import it.unive.lisa.analysis.heap.*;
@@ -42,7 +44,7 @@ import it.unive.lisa.interprocedural.context.*;
 /**
  * Parameters used to control LiSA
  */
-public class LisaOptions {
+public class LisaOptions implements OptionsChangeListener {
 
 	// ResourceManager may be able to pull these from a configuration.
 
@@ -58,6 +60,9 @@ public class LisaOptions {
 	public final static String OP_KEY_LISA_ANALYSIS_POST = "Post-State (vs Pre-)";
 	public final static String OP_KEY_LISA_ANALYSIS_SHOW_TOP = "Display 'top' values";
 	public final static String OP_KEY_LISA_ANALYSIS_SHOW_UNIQUE = "Display 'unique' values";
+	public final static String OP_KEY_LISA_ANALYSIS_USE_HIGH_PCODE = "Use high pcode (experimental)";
+	public final static String OP_KEY_LISA_ANALYSIS_SIMPLIFICATION_STYLE =
+		"Decompiler simplification style";
 	public final static String OP_KEY_LISA_ANALYSIS_CALL_DEPTH = "Compute CFGs to Depth";
 	public final static String OP_KEY_LISA_ANALYSIS_THRESH = "Threshhold";
 
@@ -80,15 +85,19 @@ public class LisaOptions {
 	public final static boolean DEFAULT_LISA_ANALYSIS_POST = false;
 	public final static boolean DEFAULT_LISA_ANALYSIS_SHOW_TOP = false;
 	public final static boolean DEFAULT_LISA_ANALYSIS_SHOW_UNIQUE = false;
-	public final static int DEFAULT_LISA_ANALYSIS_CALL_DEPTH = 0;
-	public final static int DEFAULT_LISA_ANALYSIS_THRESH = 5;
-
+	public final static boolean DEFAULT_LISA_ANALYSIS_USE_HIGH_PCODE = false;
+	public final static String DEFAULT_LISA_ANALYSIS_SIMPLIFICATION_STYLE = "normalize";
+	public final static int    DEFAULT_LISA_ANALYSIS_CALL_DEPTH = 0;
+	public final static int    DEFAULT_LISA_ANALYSIS_THRESH = 5;
+	
 	public final static String DEFAULT_LISA_ANALYSIS_OUTDIR = "";
 	public final static String DEFAULT_LISA_ANALYSIS_GRAPH = GraphOption.DEFAULT.optionString;
 	public final static boolean DEFAULT_LISA_ANALYSIS_SERIAL = false;
 
 	public final static String DEFAULT_LISA_TOP_REPRESENTATION = "#TOP#";
 	private static String suppress;  // Suppressed in results (typically #TOP#)
+
+	private LisaPlugin plugin;
 
 	private HeapDomainOption heapDomainOption;
 	private TypeDomainOption typeDomainOption;
@@ -106,6 +115,12 @@ public class LisaOptions {
 	private boolean postState;
 	private boolean showTop;
 	private boolean showUnique;
+	private boolean useHighPcode;
+	private String simplificationStyle;
+
+	public LisaOptions(LisaPlugin lisaPlugin) {
+		this.plugin = lisaPlugin;
+	}
 
 	public static enum HeapDomainOption {
 		HEAP_MONOLITHIC("Monolithic"),
@@ -166,9 +181,11 @@ public class LisaOptions {
 	public static enum ValueDomainOption {
 		VALUE_CONSTPROP("Numeric: ConstantPropagation"),
 		VALUE_INTERVAL("Numeric: Interval"),
+		VALUE_INTERVAL_LX86("Numeric: Interval (Low X86)"),
 		VALUE_POWERSET("Numeric: NonRedundantPowersetOfInterval"),
 		VALUE_PARITY("Numeric: Parity"),
 		VALUE_PENTAGON("Numeric: Pentagon"),
+		VALUE_PENTAGON_LX86("Numeric: Pentagon (Low X86)"),
 		VALUE_SIGN("Numeric: Sign"),
 		VALUE_UPPERBOUND("Numeric: UpperBound"),
 		DDATA_AVAILABLE("Dataflow: AvailableExpressions"),
@@ -197,7 +214,11 @@ public class LisaOptions {
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		public ValueDomain getDomain(Program program) {
 			suppress = DEFAULT_LISA_TOP_REPRESENTATION;
-			if (this == VALUE_INTERVAL || this == VALUE_POWERSET) {
+			if (this == VALUE_INTERVAL ||
+				this == VALUE_INTERVAL_LX86 ||
+				this == VALUE_PENTAGON ||
+				this == VALUE_PENTAGON_LX86 ||
+				this == VALUE_POWERSET) {
 				suppress = "[-Inf, +Inf]";
 			}
 			if (this == VALUE_UPPERBOUND) {
@@ -216,8 +237,10 @@ public class LisaOptions {
 				case VALUE_CONSTPROP -> new ValueEnvironment<>(
 					new PcodeByteBasedConstantPropagation(program.getLanguage()));
 				case VALUE_INTERVAL -> new ValueEnvironment<>(new PcodeInterval());
+				case VALUE_INTERVAL_LX86 -> new ValueEnvironment<>(new PcodeIntervalLowX86());
 				case VALUE_PARITY -> new ValueEnvironment<>(new PcodeParity());
 				case VALUE_PENTAGON -> new PcodePentagon();
+				case VALUE_PENTAGON_LX86 -> new PcodePentagonLowX86();
 				case VALUE_POWERSET -> new ValueEnvironment<>(
 					new PcodeNonRedundantPowersetOfInterval());
 				case VALUE_SIGN -> new ValueEnvironment<>(new PcodeSign());
@@ -461,6 +484,7 @@ public class LisaOptions {
 			"Call graph input");
 
 		grabFromToolAndProgram(ownerPlugin, opt, program);
+		opt.addOptionsChangeListener(this);
 	}
 
 	/**
@@ -490,8 +514,10 @@ public class LisaOptions {
 		callGraphOption = opt.getEnum(OP_KEY_LISA_ANALYSIS_CALL_GRAPH, CallGraphOption.RTA);
 		postState = opt.getBoolean(OP_KEY_LISA_ANALYSIS_POST, DEFAULT_LISA_ANALYSIS_POST);
 		showTop = opt.getBoolean(OP_KEY_LISA_ANALYSIS_SHOW_TOP, DEFAULT_LISA_ANALYSIS_SHOW_TOP);
-		showUnique =
-			opt.getBoolean(OP_KEY_LISA_ANALYSIS_SHOW_UNIQUE, DEFAULT_LISA_ANALYSIS_SHOW_UNIQUE);
+		showUnique = opt.getBoolean(OP_KEY_LISA_ANALYSIS_SHOW_UNIQUE, DEFAULT_LISA_ANALYSIS_SHOW_UNIQUE);
+		useHighPcode = opt.getBoolean(OP_KEY_LISA_ANALYSIS_USE_HIGH_PCODE, DEFAULT_LISA_ANALYSIS_USE_HIGH_PCODE);
+		simplificationStyle = opt.getString(OP_KEY_LISA_ANALYSIS_SIMPLIFICATION_STYLE,
+			DEFAULT_LISA_ANALYSIS_SIMPLIFICATION_STYLE);
 		cfgDepth = opt.getInt(OP_KEY_LISA_ANALYSIS_CALL_DEPTH, DEFAULT_LISA_ANALYSIS_CALL_DEPTH);
 		threshhold = opt.getInt(OP_KEY_LISA_ANALYSIS_THRESH, DEFAULT_LISA_ANALYSIS_THRESH);
 		outputDir = opt.getString(OP_KEY_LISA_ANALYSIS_OUTDIR, DEFAULT_LISA_ANALYSIS_OUTDIR);
@@ -612,6 +638,22 @@ public class LisaOptions {
 		this.showUnique = showUnique;
 	}
 
+	public boolean isHighPcode() {
+		return useHighPcode;
+	}
+
+	public void setHighPcode(boolean useHighPcode) {
+		this.useHighPcode = useHighPcode;
+	}
+
+	public String getSimplificationStyle() {
+		return simplificationStyle;
+	}
+
+	public void setSimplificationStyle(String style) {
+		this.simplificationStyle = style;
+	}
+
 	public GraphOption getGraphOption() {
 		return graphOption;
 	}
@@ -630,6 +672,14 @@ public class LisaOptions {
 
 	public static String getTopValue() {
 		return suppress;
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		if (optionName.equals(OP_KEY_LISA_ANALYSIS_USE_HIGH_PCODE)) {
+			plugin.clearCfgs(null);
+		}	
 	}
 
 }

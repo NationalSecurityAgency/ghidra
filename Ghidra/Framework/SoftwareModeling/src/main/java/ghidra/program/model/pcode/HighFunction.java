@@ -302,7 +302,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private void decodeJumpTableList(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_JUMPTABLELIST);
 		while (decoder.peekElement() != 0) {
-			JumpTable table = new JumpTable(entryPoint.getAddressSpace());
+			JumpTable table = new JumpTable();
 			table.decode(decoder);
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {

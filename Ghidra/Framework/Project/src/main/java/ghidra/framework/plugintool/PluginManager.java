@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.framework.main.UtilityPluginPackage;
 import ghidra.framework.model.DomainFile;

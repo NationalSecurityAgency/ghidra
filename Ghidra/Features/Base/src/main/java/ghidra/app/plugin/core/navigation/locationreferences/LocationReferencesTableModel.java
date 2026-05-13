@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextRenderer;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -34,6 +36,7 @@ import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 import ghidra.util.task.TaskMonitor;
+import utility.function.Callback;
 
 /**
  * A table model that shows the same contents as the {@link AddressPreviewTableModel}, but will
@@ -128,6 +131,12 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 	private class ContextTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
 
+		private static final String OFFCUT_STRING = "<< OFFCUT >>";
+		private static final Callback DUMMY_CALLBACK = () -> {
+			// dummy
+		};
+
+		private Comparator<LocationReference> comparator = new ContextComparator();
 		private ContextCellRenderer renderer = new ContextCellRenderer();
 
 		@Override
@@ -149,45 +158,31 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 		}
 
 		@Override
-		public GColumnRenderer<LocationReference> getColumnRenderer() {
-			return renderer;
-		}
-	}
-
-	private class ContextCellRenderer extends AbstractGhidraColumnRenderer<LocationReference> {
-
-		private static final String OFFCUT_STRING = "<< OFFCUT >>";
-
-		{
-			setHTMLRenderingEnabled(true);
+		public Comparator<LocationReference> getComparator() {
+			return comparator;
 		}
 
 		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
-			// initialize
-			super.getTableCellRendererComponent(data);
-
-			LocationReference rowObject = (LocationReference) data.getRowObject();
-			String refTypeString = getRefTypeString(rowObject, data.isSelected());
-			if (refTypeString != null) {
-				setText(refTypeString);
-				return this;
-			}
-
-			// when the row object does not represent an applied reference, then it may have context
-			LocationReferenceContext context = rowObject.getContext();
-			String text = context.getBoldMatchingText();
-			setText(text);
-			return this;
+		public GColumnRenderer<LocationReference> getColumnRenderer() {
+			return renderer;
 		}
 
-		private String getRefTypeString(LocationReference rowObject, boolean isSelected) {
+		private String getCellDisplayText(LocationReference rowObject) {
+			String refTypeString = getRefTypeString(rowObject, DUMMY_CALLBACK);
+			if (refTypeString != null) {
+				return refTypeString;
+			}
+
+			SearchLocationContext context = rowObject.getContext();
+			return context.getPlainText();
+		}
+
+		private String getRefTypeString(LocationReference rowObject, Callback offcutCallback) {
 			String refType = rowObject.getRefTypeString();
 			if (!StringUtils.isBlank(refType)) {
 				String trailingText = "";
 				if (rowObject.isOffcutReference()) {
-					setForeground(getErrorForegroundColor(isSelected));
+					offcutCallback.call();
 					trailingText = OFFCUT_STRING;
 				}
 				return refType + trailingText;
@@ -195,15 +190,93 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			return null;
 		}
 
-		@Override
-		public String getFilterString(LocationReference rowObject, Settings settings) {
-			String refTypeString = getRefTypeString(rowObject, false);
-			if (refTypeString != null) {
-				return refTypeString;
+		private class ContextComparator implements Comparator<LocationReference> {
+
+			@Override
+			public int compare(LocationReference lr1, LocationReference lr2) {
+
+				/*
+				 * Context text may be lines with leading line numbers or other text, such as the 
+				 * ref type (e.g., READ, WRITE, etc).   Further, the table's results may include 
+				 * some matches with line numbers and some without.
+				 */
+
+				// Use line numbers when both clients have them, as string integer comparisons do not 
+				// naturally sort by integer value.
+				SearchLocationContext c1 = lr1.getContext();
+				int l1 = c1.getLineNumber();
+				SearchLocationContext c2 = lr2.getContext();
+				int l2 = c2.getLineNumber();
+				int result = 0;
+				if (l1 >= 0 && l2 >= 0) {
+					result = Integer.compare(l1, l2);
+					if (result != 0) {
+						return result;
+					}
+				}
+
+				// Either both or not using line numbers or they have the same line number.  Sort by
+				// the string display value.
+				String t1 = getCellDisplayText(lr1);
+				String t2 = getCellDisplayText(lr2);
+				result = t1.compareTo(t2);
+				if (result != 0) {
+					return result;
+				}
+
+				// Same text; compare by address
+				Address a1 = lr1.getLocationOfUse();
+				Address a2 = lr2.getLocationOfUse();
+				return a1.compareTo(a2);
+			}
+		}
+
+		private class ContextCellRenderer extends AbstractGhidraColumnRenderer<LocationReference> {
+
+			private SearchLocationContextRenderer contextRenderer =
+				new SearchLocationContextRenderer() {
+					@Override
+					protected SearchLocationContext getContext(GTableCellRenderingData d) {
+						LocationReference lr = (LocationReference) d.getRowObject();
+						return lr.getContext();
+					}
+				};
+
+			ContextCellRenderer() {
+				setHTMLRenderingEnabled(true);
 			}
 
-			LocationReferenceContext context = rowObject.getContext();
-			return context.getPlainText();
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+				LocationReference rowObject = (LocationReference) data.getRowObject();
+				Callback offcutCallback = () -> {
+					boolean isSelected = data.isSelected();
+					setForeground(getErrorForegroundColor(isSelected));
+				};
+				String refTypeString = getRefTypeString(rowObject, offcutCallback);
+				if (refTypeString != null) {
+					super.getTableCellRendererComponent(data);
+					setText(refTypeString);
+					return this;
+				}
+
+				SearchLocationContext context = rowObject.getContext();
+				return contextRenderer.renderHtmlContext(data, context);
+			}
+
+			@Override
+			public String getFilterString(LocationReference rowObject, Settings settings) {
+				String refTypeString = getRefTypeString(rowObject, DUMMY_CALLBACK);
+				if (refTypeString != null) {
+					return refTypeString;
+				}
+
+				SearchLocationContext context = rowObject.getContext();
+				return context.getPlainText();
+			}
 		}
+
 	}
+
 }

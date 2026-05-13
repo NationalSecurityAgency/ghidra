@@ -17,11 +17,10 @@ package ghidra.features.base.memsearch.searcher;
 
 import java.util.function.Predicate;
 
-import ghidra.features.base.memsearch.bytesequence.*;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.matcher.ByteMatcher;
-import ghidra.features.base.memsearch.matcher.ByteMatcher.ByteMatch;
 import ghidra.program.model.address.*;
+import ghidra.util.bytesearch.*;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.task.TaskMonitor;
 
@@ -34,17 +33,19 @@ import ghidra.util.task.TaskMonitor;
  * then either call the {@link #findAll(Accumulator, TaskMonitor)} method or use it to incrementally
  * search using {@link #findNext(Address, TaskMonitor)}, 
  * {@link #findPrevious(Address, TaskMonitor)}, or {@link #findOnce(Address, boolean, TaskMonitor)}.
+ * @param <T> The client object type used to identify matching patterns
  */
 
-public class MemorySearcher {
+public class MemorySearcher<T> {
 	private static final int DEFAULT_CHUNK_SIZE = 16 * 1024;
 	private static final int OVERLAP_SIZE = 100;
-	private final AddressableByteSequence bytes1;
-	private final AddressableByteSequence bytes2;
-	private final ByteMatcher matcher;
+	private AddressableByteSequence preBytes;
+	private AddressableByteSequence mainBytes;
+	private AddressableByteSequence postBytes;
+	private final ByteMatcher<T> matcher;
 	private final int chunkSize;
 
-	private Predicate<MemoryMatch> filter = r -> true;
+	private Predicate<MemoryMatch<T>> filter = r -> true;
 	private final int searchLimit;
 	private final AddressSetView searchSet;
 
@@ -55,7 +56,7 @@ public class MemorySearcher {
 	 * @param addresses the address in the byte source to search
 	 * @param searchLimit the max number of hits before stopping
 	 */
-	public MemorySearcher(AddressableByteSource byteSource, ByteMatcher matcher,
+	public MemorySearcher(AddressableByteSource byteSource, ByteMatcher<T> matcher,
 			AddressSetView addresses, int searchLimit) {
 		this(byteSource, matcher, addresses, searchLimit, DEFAULT_CHUNK_SIZE);
 	}
@@ -68,15 +69,16 @@ public class MemorySearcher {
 	 * @param searchLimit the max number of hits before stopping
 	 * @param chunkSize the maximum number of bytes to feed to the matcher at any one time. 
 	 */
-	public MemorySearcher(AddressableByteSource byteSource, ByteMatcher matcher,
+	public MemorySearcher(AddressableByteSource byteSource, ByteMatcher<T> matcher,
 			AddressSetView addresses, int searchLimit, int chunkSize) {
 		this.matcher = matcher;
 		this.searchSet = addresses;
 		this.searchLimit = searchLimit;
 		this.chunkSize = chunkSize;
 
-		bytes1 = new AddressableByteSequence(byteSource, chunkSize);
-		bytes2 = new AddressableByteSequence(byteSource, chunkSize);
+		preBytes = new AddressableByteSequence(byteSource, chunkSize);
+		mainBytes = new AddressableByteSequence(byteSource, chunkSize);
+		postBytes = new AddressableByteSequence(byteSource, chunkSize);
 	}
 
 	/**
@@ -84,7 +86,7 @@ public class MemorySearcher {
 	 * criteria that is not captured in the byte matcher such as alignment and code unit type.
 	 * @param filter the predicate to use to filter search results
 	 */
-	public void setMatchFilter(Predicate<MemoryMatch> filter) {
+	public void setMatchFilter(Predicate<MemoryMatch<T>> filter) {
 		this.filter = filter;
 	}
 
@@ -97,7 +99,7 @@ public class MemorySearcher {
 	 * @param monitor the task monitor
 	 * @return true if the search completed searching through the entire address set.
 	 */
-	public boolean findAll(Accumulator<MemoryMatch> accumulator, TaskMonitor monitor) {
+	public boolean findAll(Accumulator<MemoryMatch<T>> accumulator, TaskMonitor monitor) {
 		monitor.initialize(searchSet.getNumAddresses(), "Searching...");
 
 		for (AddressRange range : searchSet.getAddressRanges()) {
@@ -116,7 +118,7 @@ public class MemorySearcher {
 	 * @param monitor the task monitor
 	 * @return the first match found or null if no match found.
 	 */
-	public MemoryMatch findOnce(Address start, boolean forward, TaskMonitor monitor) {
+	public MemoryMatch<T> findOnce(Address start, boolean forward, TaskMonitor monitor) {
 		if (forward) {
 			return findNext(start, monitor);
 		}
@@ -130,14 +132,14 @@ public class MemorySearcher {
 	 * @param monitor the task monitor
 	 * @return the first match found or null if no match found.
 	 */
-	public MemoryMatch findNext(Address start, TaskMonitor monitor) {
+	public MemoryMatch<T> findNext(Address start, TaskMonitor monitor) {
 
 		long numAddresses = searchSet.getNumAddresses() - searchSet.getAddressCountBefore(start);
 		monitor.initialize(numAddresses, "Searching....");
 
 		for (AddressRange range : searchSet.getAddressRanges(start, true)) {
 			range = range.intersectRange(start, range.getMaxAddress());
-			MemoryMatch match = findFirst(range, monitor);
+			MemoryMatch<T> match = findFirst(range, monitor);
 			if (match != null) {
 				return match;
 			}
@@ -155,12 +157,12 @@ public class MemorySearcher {
 	 * @param monitor the task monitor
 	 * @return the first match found or null if no match found.
 	 */
-	public MemoryMatch findPrevious(Address start, TaskMonitor monitor) {
+	public MemoryMatch<T> findPrevious(Address start, TaskMonitor monitor) {
 
 		monitor.initialize(searchSet.getAddressCountBefore(start) + 1, "Searching....");
 
 		for (AddressRange range : searchSet.getAddressRanges(start, false)) {
-			MemoryMatch match = findLast(range, start, monitor);
+			MemoryMatch<T> match = findLast(range, start, monitor);
 			if (match != null) {
 				return match;
 			}
@@ -171,41 +173,37 @@ public class MemorySearcher {
 		return null;
 	}
 
-	private MemoryMatch findFirst(AddressRange range, TaskMonitor monitor) {
-		AddressableByteSequence searchBytes = bytes1;
-		AddressableByteSequence extra = bytes2;
+	private MemoryMatch<T> findFirst(AddressRange range, TaskMonitor monitor) {
+		preBytes.clear();
+		mainBytes.clear();
+		postBytes.clear();
 
 		AddressRangeIterator it = new AddressRangeSplitter(range, chunkSize, true);
 		AddressRange first = it.next();
 
-		searchBytes.setRange(first);
+		mainBytes.setRange(first);
 		while (it.hasNext()) {
 			AddressRange next = it.next();
-			extra.setRange(next);
+			postBytes.setRange(next);
 
-			MemoryMatch match = findFirst(searchBytes, extra, monitor);
+			MemoryMatch<T> match = findFirst(monitor);
 			if (match != null) {
 				return match;
 			}
 			if (monitor.isCancelled()) {
 				break;
 			}
-
-			// Flip flop the byte buffers, making the extended buffer become primary and preparing
-			// the primary buffer to be used to read the next chunk. See the
-			// ExtendedByteSequence class for an explanation of this approach.
-			searchBytes = extra;
-			extra = searchBytes == bytes1 ? bytes2 : bytes1;
+			rotateBuffers();	// main becomes pre, post becomes main, and pre becomes post
 		}
 		// last segment, no extra bytes to overlap, so just search the primary buffer
-		extra.clear();
-		return findFirst(searchBytes, extra, monitor);
+		postBytes.clear();
+		return findFirst(monitor);
 	}
 
-	private MemoryMatch findLast(AddressRange range, Address start, TaskMonitor monitor) {
-		AddressableByteSequence searchBytes = bytes1;
-		AddressableByteSequence extra = bytes2;
-		extra.clear();
+	private MemoryMatch<T> findLast(AddressRange range, Address start, TaskMonitor monitor) {
+		preBytes.clear();
+		mainBytes.clear();
+		postBytes.clear();
 
 		if (range.contains(start)) {
 			Address min = range.getMinAddress();
@@ -213,40 +211,37 @@ public class MemorySearcher {
 			range = new AddressRangeImpl(min, start);
 			AddressRange remaining = new AddressRangeImpl(start.next(), max);
 			AddressRange extraRange = new AddressRangeSplitter(remaining, chunkSize, true).next();
-			extra.setRange(extraRange);
+			postBytes.setRange(extraRange);
 		}
 
 		AddressRangeIterator it = new AddressRangeSplitter(range, chunkSize, false);
+		mainBytes.setRange(it.next());
 
 		while (it.hasNext()) {
 			AddressRange next = it.next();
-			searchBytes.setRange(next);
-			MemoryMatch match = findLast(searchBytes, extra, monitor);
+			preBytes.setRange(next);
+			MemoryMatch<T> match = findLast(monitor);
 			if (match != null) {
 				return match;
 			}
 			if (monitor.isCancelled()) {
 				break;
 			}
-
-			// Flip flop the byte buffers, making the primary buffer the new extended buffer
-			// and refilling the primary buffer with new data going backwards.
-			extra = searchBytes;
-			searchBytes = extra == bytes1 ? bytes2 : bytes1;
+			rotateBuffersBackwards(); // main becomes post, pre becomes main, post becomes pre
 		}
-		return null;
+		preBytes.clear();
+		return findLast(monitor);
 	}
 
-	private MemoryMatch findFirst(AddressableByteSequence searchBytes, ByteSequence extra,
-			TaskMonitor monitor) {
+	private MemoryMatch<T> findFirst(TaskMonitor monitor) {
 
-		ExtendedByteSequence searchSequence =
-			new ExtendedByteSequence(searchBytes, extra, OVERLAP_SIZE);
+		ExtendedByteSequence sequence =
+			new ExtendedByteSequence(mainBytes, preBytes, postBytes, OVERLAP_SIZE);
 
-		for (ByteMatch byteMatch : matcher.match(searchSequence)) {
-			Address address = searchBytes.getAddress(byteMatch.start());
-			byte[] bytes = searchSequence.getBytes(byteMatch.start(), byteMatch.length());
-			MemoryMatch match = new MemoryMatch(address, bytes, byteMatch.matcher());
+		for (Match<T> byteMatch : matcher.match(sequence)) {
+			Address address = mainBytes.getAddress((int) byteMatch.getStart());
+			byte[] bytes = sequence.getBytes((int) byteMatch.getStart(), byteMatch.getLength());
+			MemoryMatch<T> match = new MemoryMatch<>(address, bytes, byteMatch.getPattern());
 			if (filter.test(match)) {
 				return match;
 			}
@@ -254,22 +249,22 @@ public class MemorySearcher {
 				break;
 			}
 		}
-		monitor.incrementProgress(searchBytes.getLength());
+		monitor.incrementProgress(mainBytes.getLength());
 		return null;
 	}
 
-	private MemoryMatch findLast(AddressableByteSequence searchBytes, ByteSequence extra,
-			TaskMonitor monitor) {
+	private MemoryMatch<T> findLast(TaskMonitor monitor) {
 
-		MemoryMatch last = null;
+		MemoryMatch<T> last = null;
 
 		ExtendedByteSequence searchSequence =
-			new ExtendedByteSequence(searchBytes, extra, OVERLAP_SIZE);
+			new ExtendedByteSequence(mainBytes, preBytes, postBytes, OVERLAP_SIZE);
 
-		for (ByteMatch byteMatch : matcher.match(searchSequence)) {
-			Address address = searchBytes.getAddress(byteMatch.start());
-			byte[] bytes = searchSequence.getBytes(byteMatch.start(), byteMatch.length());
-			MemoryMatch match = new MemoryMatch(address, bytes, byteMatch.matcher());
+		for (Match<T> byteMatch : matcher.match(searchSequence)) {
+			Address address = mainBytes.getAddress((int) byteMatch.getStart());
+			byte[] bytes =
+				searchSequence.getBytes((int) byteMatch.getStart(), byteMatch.getLength());
+			MemoryMatch<T> match = new MemoryMatch<>(address, bytes, byteMatch.getPattern());
 			if (filter.test(match)) {
 				last = match;
 			}
@@ -277,51 +272,65 @@ public class MemorySearcher {
 				return null;
 			}
 		}
-		monitor.incrementProgress(searchBytes.getLength());
+		monitor.incrementProgress(mainBytes.getLength());
 		return last;
 	}
 
-	private boolean findAll(Accumulator<MemoryMatch> accumulator, AddressRange range,
+	private boolean findAll(Accumulator<MemoryMatch<T>> accumulator, AddressRange range,
 			TaskMonitor monitor) {
-		AddressableByteSequence searchBytes = bytes1;
-		AddressableByteSequence extra = bytes2;
+		preBytes.clear();
+		mainBytes.clear();
+		postBytes.clear();
 
 		AddressRangeIterator it = new AddressRangeSplitter(range, chunkSize, true);
 		AddressRange first = it.next();
 
-		searchBytes.setRange(first);
+		mainBytes.setRange(first);
 		while (it.hasNext()) {
 			AddressRange next = it.next();
-			extra.setRange(next);
-			if (!findAll(accumulator, searchBytes, extra, monitor)) {
+			postBytes.setRange(next);
+			if (!findAllInBuffers(accumulator, monitor)) {
 				return false;
 			}
-			searchBytes = extra;
-			extra = searchBytes == bytes1 ? bytes2 : bytes1;
+			rotateBuffers();	// main becomes pre, post becomes main, and pre becomes post
 		}
-		extra.clear();
-		return findAll(accumulator, searchBytes, extra, monitor);
+		postBytes.clear();
+		return findAllInBuffers(accumulator, monitor);
 	}
 
-	private boolean findAll(Accumulator<MemoryMatch> accumulator,
-			AddressableByteSequence searchBytes, ByteSequence extra, TaskMonitor monitor) {
+	private void rotateBuffers() {
+		AddressableByteSequence tmp = preBytes;
+		preBytes = mainBytes;
+		mainBytes = postBytes;
+		postBytes = tmp;
+	}
+
+	private void rotateBuffersBackwards() {
+		// moving backwards through memory
+		AddressableByteSequence tmp = postBytes;
+		postBytes = mainBytes;
+		mainBytes = preBytes;
+		preBytes = tmp;
+	}
+
+	private boolean findAllInBuffers(Accumulator<MemoryMatch<T>> accumulator, TaskMonitor monitor) {
 
 		if (monitor.isCancelled()) {
 			return false;
 		}
 
 		ExtendedByteSequence searchSequence =
-			new ExtendedByteSequence(searchBytes, extra, OVERLAP_SIZE);
+			new ExtendedByteSequence(mainBytes, preBytes, postBytes, OVERLAP_SIZE);
 
-		for (ByteMatch byteMatch : matcher.match(searchSequence)) {
-			Address address = searchBytes.getAddress(byteMatch.start());
-			byte[] bytes = searchSequence.getBytes(byteMatch.start(), byteMatch.length());
-			MemoryMatch match = new MemoryMatch(address, bytes, byteMatch.matcher());
-			if (filter.test(match)) {
+		for (Match<T> match : matcher.match(searchSequence)) {
+			Address address = mainBytes.getAddress((int) match.getStart());
+			byte[] bytes = searchSequence.getBytes((int) match.getStart(), match.getLength());
+			MemoryMatch<T> memMatch = new MemoryMatch<>(address, bytes, match.getPattern());
+			if (filter.test(memMatch)) {
 				if (accumulator.size() >= searchLimit) {
 					return false;
 				}
-				accumulator.add(match);
+				accumulator.add(memMatch);
 			}
 			if (monitor.isCancelled()) {
 				return false;
@@ -331,7 +340,7 @@ public class MemorySearcher {
 		// Reset the monitor message, since clients may change the message (such as the 
 		// incremental table loader)
 		monitor.setMessage("Searching...");
-		monitor.incrementProgress(searchBytes.getLength());
+		monitor.incrementProgress(mainBytes.getLength());
 		return true;
 	}
 }

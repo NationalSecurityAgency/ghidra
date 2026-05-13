@@ -142,4 +142,19 @@ public class EmptyListingModel implements ListingModel {
 	public ListingModel copy() {
 		return new EmptyListingModel();
 	}
+
+	@Override
+	public boolean isFunctionOpen(Address functionAddress) {
+		return false;
+	}
+
+	@Override
+	public void setFunctionOpen(Address functionAddress, boolean b) {
+		// stub
+	}
+
+	@Override
+	public void setAllFunctionsOpen(boolean selected) {
+		// stub
+	}
 }

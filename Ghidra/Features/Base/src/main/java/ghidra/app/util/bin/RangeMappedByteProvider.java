@@ -129,7 +129,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public long length() throws IOException {
+	public long length() {
 		return length;
 	}
 

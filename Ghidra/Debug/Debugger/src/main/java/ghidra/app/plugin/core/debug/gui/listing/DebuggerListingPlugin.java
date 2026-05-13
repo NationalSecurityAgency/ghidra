@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ActionContext;
 import docking.action.MenuData;
@@ -197,7 +197,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void locationChanged(CodeViewerProvider provider, ProgramLocation location) {
+	public void broadcastLocationChanged(CodeViewerProvider provider, ProgramLocation location) {
 		// TODO: Fix cursor?
 		// Do not fire ProgramLocationPluginEvent.
 		if (provider == connectedProvider) {
@@ -206,7 +206,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void selectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
+	public void broadcastSelectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
 		if (provider != connectedProvider) {
 			return;
 		}
@@ -219,7 +219,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void highlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
+	public void broadcastHighlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
 		if (provider != connectedProvider) {
 			return;
 		}

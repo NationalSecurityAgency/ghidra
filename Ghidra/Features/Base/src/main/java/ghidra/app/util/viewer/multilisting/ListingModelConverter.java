@@ -212,4 +212,19 @@ public class ListingModelConverter implements ListingModel {
 		return new ListingModelConverter(primaryModel.copy(), model.copy());
 	}
 
+	@Override
+	public boolean isFunctionOpen(Address functionAddress) {
+		return model.isFunctionOpen(functionAddress);
+	}
+
+	@Override
+	public void setFunctionOpen(Address functionAddress, boolean b) {
+		model.setFunctionOpen(functionAddress, b);
+	}
+
+	@Override
+	public void setAllFunctionsOpen(boolean selected) {
+		model.setAllFunctionsOpen(selected);
+	}
+
 }

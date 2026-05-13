@@ -22,8 +22,8 @@ import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 

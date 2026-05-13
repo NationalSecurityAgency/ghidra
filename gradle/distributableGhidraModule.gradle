@@ -176,8 +176,6 @@ String getGlobalFilePathSubDirName(File file) {
 
 
 plugins.withType(JavaPlugin) {
-	// build up a java classpath for javadocs
-	rootProject.ghidraPath.from(sourceSets.main.compileClasspath)
 
 	rootProject.assembleSource {
 		from (this.project.zipSourceSubproject) {

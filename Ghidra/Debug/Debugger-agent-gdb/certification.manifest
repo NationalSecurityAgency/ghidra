@@ -6,6 +6,7 @@ data/scripts/fallback_info_proc_mappings.gdb||GHIDRA||||END|
 data/scripts/fallback_maintenance_info_sections.gdb||GHIDRA||||END|
 data/scripts/getpid-linux-i386.gdb||GHIDRA||||END|
 data/scripts/wine32_info_proc_mappings.gdb||GHIDRA||||END|
+data/support/gdbinit_template||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/gdb/gdb.html||GHIDRA||||END|
 src/main/help/help/topics/gdb/images/GdbLauncher.png||GHIDRA||||END|

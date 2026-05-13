@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 import docking.dnd.GenericDataFlavor;
 import docking.dnd.StringTransferable;
 import docking.widgets.OptionDialog;
+import docking.widgets.OptionDialogBuilder;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -41,6 +42,12 @@ import ghidra.util.task.TaskMonitor;
  *
  */
 public abstract class ByteCopier {
+
+	/**
+	 * Arbitrary number of selected bytes before we prompt the user for confirmation.  This can be 
+	 * changed as needed.s
+	 */
+	private static final long LARGE_SELECTION_COUNT = 1_000_000;
 
 	public static DataFlavor BYTE_STRING_FLAVOR = createByteStringLocalDataTypeFlavor();
 	public static DataFlavor BYTE_STRING_NO_SPACES_FLAVOR =
@@ -156,6 +163,8 @@ public abstract class ByteCopier {
 	protected ProgramSelection currentSelection;
 	protected ProgramLocation currentLocation;
 
+	private OptionDialog confirmLargeSelectionDialog;
+
 	protected ByteCopier() {
 		// limit construction
 	}
@@ -165,7 +174,35 @@ public abstract class ByteCopier {
 		if (addressSet == null || addressSet.isEmpty()) {
 			return new AddressSet(currentLocation.getAddress());
 		}
+
+		long size = addressSet.getNumAddresses();
+		if (skipLargeSelection(size)) {
+			return new AddressSet();
+		}
+
 		return currentSelection;
+	}
+
+	private boolean skipLargeSelection(long size) {
+
+		if (size < LARGE_SELECTION_COUNT) {
+			return false;
+		}
+
+		if (confirmLargeSelectionDialog == null) {
+			String message = """
+					You have copied %,d bytes.
+					Are you sure you wish to copy this many bytes?
+					""".formatted(size);
+			confirmLargeSelectionDialog = new OptionDialogBuilder("Copy Large Selection?", message)
+					.addOption("Continue")
+					.addCancel()
+					.addDontShowAgainOption()
+					.build();
+		}
+
+		int choice = confirmLargeSelectionDialog.show();
+		return choice == OptionDialog.CANCEL_OPTION;
 	}
 
 	protected Transferable copyBytes(AddressSetView addresses, boolean includeSpaces,

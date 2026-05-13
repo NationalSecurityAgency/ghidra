@@ -102,9 +102,10 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_CPOOLREF] = new TypeOpCpoolref(tlst);
   inst[CPUI_NEW] = new TypeOpNew(tlst);
   inst[CPUI_INSERT] = new TypeOpInsert(tlst);
-  inst[CPUI_EXTRACT] = new TypeOpExtract(tlst);
+  inst[CPUI_ZPULL] = new TypeOpZpull(tlst);
   inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
   inst[CPUI_LZCOUNT] = new TypeOpLzcount(tlst);
+  inst[CPUI_SPULL] = new TypeOpSpull(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -521,6 +522,7 @@ Datatype *TypeOpStore::getInputCast(const PcodeOp *op,int4 slot,const CastStrate
 
 {
   if (slot==0) return (Datatype *)0;
+  if (op->doesSpecialPrinting()) return (Datatype *)0;
   const Varnode *pointerVn = op->getIn(1);
   Datatype *pointerType = pointerVn->getHighTypeReadFacing(op);
   Datatype *pointedToType = pointerType;
@@ -2535,24 +2537,75 @@ TypeOpInsert::TypeOpInsert(TypeFactory *t)
 Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
 
 {
-  if (slot == 0)
+  if (slot <= 1)
     return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
   return TypeOpFunc::getInputLocal(op, slot);
 }
 
-TypeOpExtract::TypeOpExtract(TypeFactory *t)
-  : TypeOpFunc(t,CPUI_EXTRACT,"EXTRACT",TYPE_INT,TYPE_INT)
+Datatype *TypeOpInsert::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
+
+{
+  return (Datatype *)0;		// Never need casts
+}
+
+Datatype *TypeOpInsert::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
+
+{
+  return op->getOut()->getHighTypeDefFacing();
+}
+
+TypeOpZpull::TypeOpZpull(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_ZPULL,"ZPULL",TYPE_UINT,TYPE_INT)
 {
   opflags = PcodeOp::ternary;
-  behave = new OpBehavior(CPUI_EXTRACT,false);	// Dummy behavior
+  behave = new OpBehavior(CPUI_ZPULL,false);	// Dummy behavior
 }
 
-Datatype *TypeOpExtract::getInputLocal(const PcodeOp *op,int4 slot) const
+Datatype *TypeOpZpull::getInputLocal(const PcodeOp *op,int4 slot) const
 
 {
   if (slot == 0)
     return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
   return TypeOpFunc::getInputLocal(op, slot);
+}
+
+Datatype *TypeOpZpull::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
+
+{
+  return (Datatype *)0;		// Never need casts
+}
+
+Datatype *TypeOpZpull::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
+
+{
+  return op->getOut()->getHighTypeDefFacing();
+}
+
+TypeOpSpull::TypeOpSpull(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_SPULL,"SPULL",TYPE_INT,TYPE_INT)
+{
+  opflags = PcodeOp::ternary;
+  behave = new OpBehavior(CPUI_SPULL,false);	// Dummy behavior
+}
+
+Datatype *TypeOpSpull::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  if (slot == 0)
+    return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
+  return TypeOpFunc::getInputLocal(op, slot);
+}
+
+Datatype *TypeOpSpull::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
+
+{
+  return (Datatype *)0;		// Never need casts
+}
+
+Datatype *TypeOpSpull::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
+
+{
+  return op->getOut()->getHighTypeDefFacing();
 }
 
 TypeOpPopcount::TypeOpPopcount(TypeFactory *t)

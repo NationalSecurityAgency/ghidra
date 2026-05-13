@@ -17,48 +17,56 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitFloatFloat2FloatOp;
 
 /**
  * The generator for a {@link JitFloatFloat2FloatOp float_float2float}.
  * 
  * <p>
- * This uses the unary operator generator and emits {@link #F2D} or {@link #D2F}.
+ * This uses the unary operator generator and emits {@link Op#f2d(Emitter) f2d} or
+ * {@link Op#d2f(Emitter) d2f}.
  */
-public enum FloatFloat2FloatOpGen implements FloatUnOpGen<JitFloatFloat2FloatOp> {
+public enum FloatFloat2FloatOpGen implements FloatConvertUnOpGen<JitFloatFloat2FloatOp> {
 	/** The generator singleton */
 	GEN;
 
-	private JitType gen(MethodVisitor rv, int opcode, JitType type) {
-		rv.visitInsn(opcode);
-		return type;
+	@Override
+	public boolean isSigned() {
+		return false;
 	}
 
 	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitFloatFloat2FloatOp op,
-			JitBlock block, JitType uType, MethodVisitor rv) {
-		JitType outType = op.type().resolve(gen.getTypeModel().typeOf(op.out()));
-		return switch (uType) {
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitFloatFloat2FloatOp op, JitBlock block, Scope scope) {
+		JitType uType = gen.resolveType(op.u(), op.uType());
+		JitType outType = gen.resolveType(op.out(), op.type());
+		return new LiveOpResult(switch (uType) {
 			case FloatJitType ut -> switch (outType) {
-				case FloatJitType ot -> ot;
-				case DoubleJitType ot -> gen(rv, F2D, ot);
+				case FloatJitType ot -> em;
+				case DoubleJitType ot -> gen(em, localThis, gen, op, ut, ot, Op::f2d, scope);
 				case MpFloatJitType ot -> TODO("MpFloat");
 				default -> throw new AssertionError();
 			};
 			case DoubleJitType ut -> switch (outType) {
-				case FloatJitType ot -> gen(rv, D2F, ot);
-				case DoubleJitType ot -> ot;
+				case FloatJitType ot -> gen(em, localThis, gen, op, ut, ot, Op::d2f, scope);
+				case DoubleJitType ot -> em;
 				case MpFloatJitType ot -> TODO("MpFloat");
 				default -> throw new AssertionError();
 			};
 			case MpFloatJitType ot -> TODO("MpFloat");
 			default -> throw new AssertionError();
-		};
+		});
 	}
 }

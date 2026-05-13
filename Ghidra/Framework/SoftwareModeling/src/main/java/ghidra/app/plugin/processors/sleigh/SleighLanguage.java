@@ -70,6 +70,7 @@ public class SleighLanguage implements Language {
 	private int numSections = 0;					// Number of named sections for this language
 	private int alignment = 1;
 	private int defaultPointerWordSize = 1;		// Default wordsize to send down with pointer data-types
+	private OptionalInt maxInstructionLength = OptionalInt.empty();
 	private SleighLanguageDescription description;
 	private ParallelInstructionLanguageHelper parallelHelper;
 	private SourceFileIndexer indexer;  //used to provide source file info for constructors
@@ -129,7 +130,8 @@ public class SleighLanguage implements Language {
 
 		SleighLanguageValidator.validatePspecFile(langDescription.getSpecFile());
 
-		readInitialDescription();
+		readInitialDescription(); // process pspec file
+
 		// should addressFactory and registers initialization be done at
 		// construction time?
 		// for now we'll assume yes.
@@ -154,6 +156,13 @@ public class SleighLanguage implements Language {
 		instructProtoMap = new ConcurrentHashMap<>();
 
 		initParallelHelper();
+
+		int maxLength =
+			getPropertyAsInt(GhidraLanguagePropertyKeys.MAXIMUM_INSTRUCTION_LENGTH, -1);
+		if (maxLength > 0) {
+			maxInstructionLength = OptionalInt.of(maxLength);
+		}
+
 	}
 
 	private void buildVolatileSymbolAddresses() {
@@ -1179,6 +1188,11 @@ public class SleighLanguage implements Language {
 		catch (CompilerSpecNotFoundException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+
+	@Override
+	public OptionalInt getMaximumInstructionLength() {
+		return maxInstructionLength;
 	}
 
 	@Override

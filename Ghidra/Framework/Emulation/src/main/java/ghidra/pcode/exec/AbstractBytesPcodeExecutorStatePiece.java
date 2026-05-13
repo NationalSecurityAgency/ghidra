@@ -75,7 +75,7 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 				Address min = address.add(addressOffset);
 				AddressSet set = new AddressSet(min, min.add(buffer.remaining() - 1));
 				if (set.equals(
-					cb.readUninitialized(AbstractBytesPcodeExecutorStatePiece.this, set))) {
+					cb.readUninitialized(AbstractBytesPcodeExecutorStatePiece.this, set, reason))) {
 					return 0;
 				}
 				source = getForSpace(address.getAddressSpace(), false);

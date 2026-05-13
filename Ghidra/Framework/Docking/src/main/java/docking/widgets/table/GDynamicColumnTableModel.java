@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,9 +62,13 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	protected ServiceProvider serviceProvider;
 
 	private TableColumnDescriptor<ROW_TYPE> columnDescriptor;
-	protected List<DynamicTableColumn<ROW_TYPE, ?, ?>> tableColumns = new ArrayList<>();
-	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultTableColumns = new ArrayList<>();
 	protected Map<DynamicTableColumn<ROW_TYPE, ?, ?>, Settings> columnSettings = new HashMap<>();
+
+	/** All currently visible columns */
+	protected List<DynamicTableColumn<ROW_TYPE, ?, ?>> tableColumns = new ArrayList<>();
+
+	/** The initially visible columns before user changes or state restoring */
+	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultTableColumns = new ArrayList<>();
 
 	private boolean ignoreSettingChanges = false;
 
@@ -298,7 +302,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	protected void addTableColumns(Set<DynamicTableColumn<ROW_TYPE, ?, ?>> columns,
 			boolean isDefault) {
 		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : columns) {
-			doAddTableColumn(column, getDefaultTableColumns().size(), isDefault);
+			doAddTableColumn(column, -1, isDefault);
 		}
 		fireTableStructureChanged();
 	}
@@ -327,16 +331,30 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	private void doAddTableColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column, int index,
 			boolean isDefault) {
 
-		if (index < 0 || index > tableColumns.size()) {
-			index = getDefaultTableColumns().size();
+		int adjustedIndex = index;
+		if (adjustedIndex < 0 || adjustedIndex > tableColumns.size()) {
+			adjustedIndex = tableColumns.size();
 		}
 
-		tableColumns.add(index, column);
+		tableColumns.add(adjustedIndex, column);
 		columnSettings.put(column, new SettingsImpl(this, column));
-		if (isDefault) {
-			List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultColumns = getDefaultTableColumns();
-			defaultColumns.add(index, column);
+
+		if (!isDefault) {
+			return;
 		}
+
+		// Note: this method is typically called when 'tableColumns' and 'defaultTableColumns' have 
+		// the same columns.  But, that is not a requirement.   When they have the same columns, the
+		// insertion index is correct for both lists.  If they have different columns, then the 
+		// insertion index for the default columns may or may not be what the caller intended.  In
+		// practice, it should not matter where the column is inserted into the default columns, as
+		// that is only used to query whether a column is in the list or not.  If we ever need to 
+		// have accurate positioning in the default list when both lists are not equivalent, then we
+		// will have to add a new method or change this method to allow callers to dictate where the
+		// column should go in the default list.  For now, just add the column to the end.
+		adjustedIndex = defaultTableColumns.size();
+		List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultColumns = getDefaultTableColumns();
+		defaultColumns.add(adjustedIndex, column);
 	}
 
 	/**
@@ -470,7 +488,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		DATA_SOURCE dataSource = getDataSource();
 
 		@SuppressWarnings("unchecked")
-		// TODO: We are casting now, as in practice the type should never be different that
+		// Note: We are casting now, as in practice the type should never be different that
 		//       the declared type.  We want to remove entirely the 'dataSource' value and then
 		//       the templating will be simpler.
 		DynamicTableColumn<ROW_TYPE, ?, DATA_SOURCE> column =

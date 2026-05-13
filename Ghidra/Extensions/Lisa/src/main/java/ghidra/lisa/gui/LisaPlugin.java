@@ -96,7 +96,7 @@ public class LisaPlugin extends ProgramPlugin implements OptionsChangeListener, 
 
 	public LisaPlugin(PluginTool tool) {
 		super(tool);
-		setOptions(new LisaOptions());
+		setOptions(new LisaOptions(this));
 		createActions();
 	}
 
@@ -268,7 +268,7 @@ public class LisaPlugin extends ProgramPlugin implements OptionsChangeListener, 
 			return;
 		}
 		Msg.info(this, "Adding "+f);
-		CFG cfg = frontend.visitFunction(f, f.getEntryPoint());
+		CFG cfg = frontend.visitFunction(f, f.getEntryPoint(), options.isHighPcode());
 		cfgs.add(cfg);
 	}
 
@@ -278,6 +278,9 @@ public class LisaPlugin extends ProgramPlugin implements OptionsChangeListener, 
 		}
 		Set<Function> calledFunctions = f.getCalledFunctions(new DummyCancellableTaskMonitor());
 		for (Function func : calledFunctions) {
+			if (func.isThunk()) {
+				continue;
+			}
 			Address entryPoint = func.getEntryPoint();
 			if (entryPoint.getAddressSpace().equals(f.getEntryPoint().getAddressSpace())) {
 				addFunction(cfgs, func);
@@ -286,7 +289,7 @@ public class LisaPlugin extends ProgramPlugin implements OptionsChangeListener, 
 		}
 	}
 	
-	private void clearCfgs(ProgramLocationActionContext context) {
+	protected void clearCfgs(ProgramLocationActionContext context) {
 		initProgram();
 		frontend.clearTargets();
 	}
@@ -404,7 +407,7 @@ public class LisaPlugin extends ProgramPlugin implements OptionsChangeListener, 
 	}
 
 	private void initProgram() {
-		frontend = new PcodeFrontend();
+		frontend = new PcodeFrontend(this.getTool());
 	}
 	
 	@SuppressWarnings("unchecked")

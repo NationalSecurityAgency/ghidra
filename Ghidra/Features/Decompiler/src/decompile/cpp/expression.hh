@@ -134,6 +134,17 @@ public:
   const vector<AdditiveEdge *> &getSort(void) { return sorter; }	///< Get the sorted list of references
 };
 
+/// \brief A comparison operator for ordering terms in a sum
+///
+/// This is based on Varnode::termOrder which groups constants terms and
+/// ignores multiplicative coefficients.
+/// \param op1 is the first term to compare
+/// \param op2 is the second term
+/// \return \b true if the first term is less than the second
+inline bool TermOrder::additiveCompare(const AdditiveEdge *op1,const AdditiveEdge *op2) {
+  return (-1 == op1->getVarnode()->termOrder(op2->getVarnode()));
+}
+
 /// \brief Class for lightweight matching of two additive expressions
 ///
 /// Collect (up to 2) terms along with any constants and coefficients.
@@ -161,20 +172,67 @@ public:
   bool isEquivalent(const AddExpression &op2) const;	///< Determine if 2 expressions are equivalent
 };
 
-/// \brief A comparison operator for ordering terms in a sum
+/// \brief A container for an expression manipulating a bitfield
 ///
-/// This is based on Varnode::termOrder which groups constants terms and
-/// ignores multiplicative coefficients.
-/// \param op1 is the first term to compare
-/// \param op2 is the second term
-/// \return \b true if the first term is less than the second
-inline bool TermOrder::additiveCompare(const AdditiveEdge *op1,const AdditiveEdge *op2) {
-  return (-1 == op1->getVarnode()->termOrder(op2->getVarnode()));
-}
+/// The expression centers around either a CPUI_INSERT or a CPUI_EXTRACT op but encompasses multiple p-code ops
+/// that represent either a single read of or single write to a bitfield within a structure.  This class recovers
+/// the expected elements of the expression.  The method isValid() returns \b true if the expression has the
+/// expected form and can be interpreted as a single read or write.
+class BitFieldExpression {
+protected:
+  void getStructures(Datatype *dt,int4 initByteOff,int4 leastBitOff,bool isBigEndian);	///< Recover the structure(s) holding the bitfield
+public:
+  TypeStruct *theStruct;		///< Parent structure containing the bitfield
+  const TypeBitField *bitfield;		///< Formal bitfield description
+  int4 byteRangeOffset;			///< Offset of byte range into encompassStruct
+  int4 offsetToBitStruct;		///< Offset of structure containing bitfield in encompassStruct
+  const Varnode *recoverStructurePointer(const Varnode *vn,int4 offset);	///< Recover the Varnode holding the pointer to the parent structure
+  bool isValid(void) const { return (bitfield != (const TypeBitField *)0); }	///< Is \b this a valid bitfield expression
+  static const TypeBitField *getPullField(const PcodeOp *pull);	///< Get field description corresponding to given ZPULL or SPULL
+};
+
+/// \brief A write to a bitfield stored in an explicit Varnode
+///
+/// The INSERT output is expected to be a associated with a (partial) symbol and
+/// hold data-type information.
+class InsertExpression : public BitFieldExpression {
+public:
+  const PcodeOp *insertOp;		///< INSERT op
+  const Symbol *symbol;			///< Structure symbol represented by the INSERT output
+  InsertExpression(const PcodeOp *insert);	///< Construct from an INSERT
+  static uintb getRangeMask(const PcodeOp *insert);	///< Get a mask representing the INSERTed range of bits
+  static uintb getLSBMask(const PcodeOp *insert);	///< Get mask of least significant bits matching INSERT size
+};
+
+/// \brief A write to a bitfield through a STORE op
+///
+/// The INSERT output is expected to hold data-type info.  A final STORE must be
+/// present and a LOAD, recovering parts of the structure that are unaffected, may be present.
+class InsertStoreExpression : public BitFieldExpression {
+public:
+  const PcodeOp *insertOp;		///< INSERT op
+  const PcodeOp *loadOp;		///< LOAD op (may be null)
+  const Varnode *structPtr;		///< Varnode holding pointer to the parent structure
+  InsertStoreExpression(const PcodeOp *store);	///< Construct from a STORE
+};
+
+/// \brief A read of a bitfield via a ZPULL or SPULL operator
+///
+/// The first input to the operator must either be a (partial) symbol or be written by a LOAD.
+class PullExpression : public BitFieldExpression {
+public:
+  const PcodeOp *pullOp;		///< ZPULL or SPULL op
+  const Symbol *symbol;			///< Symbol holding the structure and bitfield (may be null)
+  const PcodeOp *loadOp;		///< LOAD reading bytes containing the bitfield (may be null)
+  const Varnode *structPtr;		///< Varnode holding pointer to the parent structure
+  PullExpression(const PcodeOp *pull);	///< Construct from a ZPULL or SPULL
+};
 
 extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);
 extern bool functionalEquality(Varnode *vn1,Varnode *vn2);
 extern bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth);
+extern Varnode *rootPointer(Varnode *vn,uintb &offset);
+extern bool pointerEquality(Varnode *vn1,Varnode *vn2);
 
 }  // End namespace ghidra
 #endif

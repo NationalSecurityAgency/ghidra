@@ -34,7 +34,7 @@ import ghidra.util.Msg;
 	packageName = CorePluginPackage.NAME,
 	shortDescription = "Listens for new GhidraURL's to launch using FrontEndTool's" +
 		" accept method",
-	description = "Polls the ghidraGo directory for any url files written by the " +
+	description = "Polls the ghidraGo directory for any URL files written by the " +
 		"GhidraGoSender and processes them in Ghidra",
 	eventsConsumed = {ProjectPluginEvent.class})
 //@formatter:on

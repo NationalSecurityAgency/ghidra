@@ -82,7 +82,7 @@ public class Omf51RecordFactory extends AbstractOmfRecordFactory {
 			case DebugItem:
 				yield new OmfUnsupportedRecord(reader, Omf51RecordTypes.class);
 			default:
-				yield new OmfUnknownRecord(reader);
+				yield new OmfUnknownRecord(reader, Omf51RecordTypes.class);
 		};
 
 		record.parseData();

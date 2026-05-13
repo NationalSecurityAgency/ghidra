@@ -28,10 +28,10 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import db.buffers.DataBuffer;
 import docking.*;
@@ -91,6 +91,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
+	private static final String USE_COMBINED_ALT_GRAPH_OPTION_NAME = "Use Combined Alt Keys";
 	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
 	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
 
@@ -129,7 +130,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	private DefaultLaunchMode defaultLaunchMode = DefaultLaunchMode.DEFAULT;
 
 	private ComponentProvider compProvider;
-	private LogComponentProvider logProvider;
+	private LogWindow logWindow;
 
 	private WindowListener windowListener;
 	private DockingAction configureToolAction;
@@ -169,8 +170,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public void dispose() {
 		super.dispose();
 
-		if (logProvider != null) {
-			logProvider.dispose();
+		if (logWindow != null) {
+			logWindow.dispose();
 		}
 		shutdown();
 	}
@@ -181,7 +182,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public boolean accept(URL url) {
-		if (!GhidraURL.isLocalProjectURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
+		if (!GhidraURL.isLocalURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
 			return false;
 		}
 		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, true, plugin)));
@@ -216,7 +217,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			return;
 		}
 
-		GhidraToolTemplate template = new GhidraToolTemplate((Element) root.getChildren().get(0),
+		GhidraToolTemplate template = new GhidraToolTemplate(root.getChildren().get(0),
 			TOOL_FILE.getAbsolutePath());
 		refresh(template);
 	}
@@ -255,8 +256,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		root.setAttribute(VERSION_ATTRIBUTE_NAME, version);
 		root.addContent(template.saveToXml());
 		try (OutputStream os = new FileOutputStream(TOOL_FILE)) {
-			org.jdom.Document doc = new org.jdom.Document(root);
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			org.jdom2.Document doc = new org.jdom2.Document(root);
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 		}
 		catch (IOException e) {
@@ -349,6 +350,10 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		options.registerOption(USE_ALERT_ANIMATION_OPTION_NAME, true, help,
 			"Signals that user notifications should be animated.  This makes notifications more " +
 				"distinguishable.");
+		options.registerOption(USE_COMBINED_ALT_GRAPH_OPTION_NAME, true, help,
+			"Signals to have both right and left Alt keys be usable for key bindings that use the " +
+				"Alt key.");
+
 		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
 			"Controls the display of tooltip popup windows.");
 		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false, help,
@@ -368,6 +373,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		boolean animationEnabled = options.getBoolean(USE_ALERT_ANIMATION_OPTION_NAME, true);
 		AnimationUtils.setAnimationEnabled(animationEnabled);
+
+		boolean combineAltKeys = options.getBoolean(USE_COMBINED_ALT_GRAPH_OPTION_NAME, true);
+		DockingUtils.setCombinedAltKeysEnabled(combineAltKeys);
 
 		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
 		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
@@ -395,6 +403,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		}
 		else if (USE_ALERT_ANIMATION_OPTION_NAME.equals(optionName)) {
 			AnimationUtils.setAnimationEnabled((Boolean) newValue);
+		}
+		else if (USE_COMBINED_ALT_GRAPH_OPTION_NAME.equals(optionName)) {
+			DockingUtils.setCombinedAltKeysEnabled((Boolean) newValue);
 		}
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
 			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
@@ -844,7 +855,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public boolean canCloseDomainFile(DomainFile df) {
-		PluginTool[] tools = getProject().getToolManager().getRunningTools();
+		Project project = getProject();
+		ToolManager toolManager = project.getToolManager();
+		PluginTool[] tools = toolManager.getRunningTools();
 		for (PluginTool tool : tools) {
 			DomainFile[] files = tool.getDomainFiles();
 			for (DomainFile domainFile : files) {
@@ -862,59 +875,62 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			return;// something odd is going on; can't find log file
 		}
 
-		if (logProvider == null) {
-			logProvider = new LogComponentProvider(this, logFile);
-			showDialog(logProvider);
+		if (logWindow == null) {
+			logWindow = new LogWindow(logFile);
+			JFrame toolFrame = getToolFrame();
+			Point center = WindowUtilities.centerOnComponent(toolFrame, logWindow);
+			logWindow.setLocation(center);
+			logWindow.setVisible(true);
 			return;
 		}
 
-		if (logProvider.isShowing()) {
-			logProvider.toFront();
-		}
-		else {
-			showDialog(logProvider, getToolFrame());
-		}
+		logWindow.setVisible(true);
+		logWindow.toFront();
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	private static class LogComponentProvider extends ReusableDialogComponentProvider {
+	private class LogWindow extends JFrame {
+
+		private static final Dimension DEFAULT_SIZE = new Dimension(600, 400);
 
 		private final File logFile;
-		private Dimension defaultSize = new Dimension(600, 400);
-
 		private FileWatcher watcher;
 
-		LogComponentProvider(PluginTool tool, File logFile) {
-			super("Ghidra User Log", false, false, false, false);
+		LogWindow(File logFile) {
+			setTitle("Ghidra User Log");
+
+			JFrame toolFrame = getToolFrame();
+			setIconImage(toolFrame.getIconImage());
 
 			this.logFile = logFile;
 
-			addWorkPanel(buildWorkPanel());
-		}
+			JPanel panel = buildWorkPanel();
+			getContentPane().add(panel);
 
-		/**
-		 * Need to override this method so we can stop the file watcher when the
-		 * dialog is closed.
-		 */
-		@Override
-		protected void dialogClosed() {
-			if (watcher != null) {
-				watcher.stop();
-			}
-		}
+			HelpService help = Help.getHelpService();
+			help.registerHelp(panel, new HelpLocation("FrontEndPlugin", "StatusWindow"));
 
-		/**
-		 * Need to override this method so we can stop the file watcher when the
-		 * dialog is closed.
-		 */
-		@Override
-		protected void dialogShown() {
-			if (watcher != null) {
-				watcher.start();
-			}
+			addWindowListener(new WindowAdapter() {
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+					if (watcher != null) {
+						watcher.stop();
+					}
+				}
+
+				@Override
+				public void windowActivated(WindowEvent e) {
+					if (watcher != null) {
+						watcher.start();
+					}
+				}
+			});
+
+			pack();
 		}
 
 		private JPanel buildWorkPanel() {
@@ -922,7 +938,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			JPanel panel = new JPanel(new BorderLayout()) {
 				@Override
 				public Dimension getPreferredSize() {
-					return defaultSize;
+					return DEFAULT_SIZE;
 				}
 			};
 

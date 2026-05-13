@@ -20,7 +20,9 @@ import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.*;
+import ghidra.framework.remote.GhidraObjectInputFilter;
 import ghidra.net.DefaultTrustManagerFactory;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
 public class HeadlessBSimApplicationConfiguration extends ApplicationConfiguration {
@@ -29,11 +31,20 @@ public class HeadlessBSimApplicationConfiguration extends ApplicationConfigurati
 	protected void initializeApplication() {
 		super.initializeApplication();
 
-		// Locate certs if found (must be done before module initialization)
-		locateCACertsFile();
+		try {
+			// Install client-side deserialization filters (data/*.serial.filter)
+			GhidraObjectInputFilter.configureClientSerialFilter();
 
-		monitor.setMessage("Performing module initialization...");
-		performModuleInitialization();
+			// Locate certs if found (must be done before module initialization)
+			locateCACertsFile();
+
+			monitor.setMessage("Performing module initialization...");
+			performModuleInitialization();
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Ghidra encountered a severe error during initialization", t);
+			System.exit(-1);
+		}
 
 		monitor.setMessage("Done initializing");
 	}

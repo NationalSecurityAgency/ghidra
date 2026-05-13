@@ -77,7 +77,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	public static void showAndImport(PluginTool tool, BatchInfo batchInfo, List<FSRL> initialFiles,
 			DomainFolder defaultFolder, ProgramManager programManager) {
 		BatchImportDialog dialog = new BatchImportDialog(batchInfo, defaultFolder, programManager);
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			if (initialFiles != null && !initialFiles.isEmpty()) {
 				dialog.addSources(initialFiles);
 			}
@@ -231,7 +231,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 			// NOTE: using invokeLater to avoid event handling issues where
 			// the spinner model gets updated several times (ie. multi-decrement when
 			// it should be just 1 dec) if we do anything modal.
-			SystemUtilities.runSwingLater(() -> {
+			Swing.runLater(() -> {
 				setMaxDepth(spinnerNumberModel.getNumber().intValue());
 			});
 		});

@@ -101,8 +101,9 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 	}
 
 	@Override
-	public void setComment(String comment) {
+	public DataTypeComponent setComment(String comment) {
 		// ignore - read-only
+		return this;
 	}
 
 	@Override
@@ -114,8 +115,9 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 	}
 
 	@Override
-	public void setFieldName(String fieldName) throws DuplicateNameException {
+	public DataTypeComponent setFieldName(String fieldName) {
 		// ignore - read-only
+		return this;
 	}
 
 	@Override

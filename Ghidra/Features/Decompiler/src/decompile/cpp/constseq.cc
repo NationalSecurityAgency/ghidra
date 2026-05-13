@@ -507,7 +507,7 @@ void HeapSequence::findDuplicateBases(vector<Varnode *> &duplist)
     if (!copyRoot->isWritten()) break;
     op = copyRoot->getDef();
     opc = op->code();
-    if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRSUB)
+    if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRADD)
       break;
   } while(op->getIn(1)->isConstant());
 
@@ -523,7 +523,7 @@ void HeapSequence::findDuplicateBases(vector<Varnode *> &duplist)
 	op = *iter;
 	++iter;
 	opc = op->code();
-	if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRSUB)
+	if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRADD)
 	  continue;
 	if (op->getIn(0) != vn || !op->getIn(1)->isConstant())
 	  continue;

@@ -18,6 +18,7 @@
 #include "double.hh"
 #include "subflow.hh"
 #include "constseq.hh"
+#include "bitfield.hh"
 
 namespace ghidra {
 
@@ -1503,9 +1504,37 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	  loadval->setSpacebasePlaceholder();
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
+	continue;
       }
-      else
-	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
+      if (spc->getType() == IPTR_JOIN) {
+	JoinRecord *join = data.getArch()->findJoin(off);
+	int4 index = -1;
+	if (join->getPiece(0).space->getType() == IPTR_SPACEBASE)
+	  index = 0;
+	else if (join->getPiece(join->numPieces()-1).space->getType() == IPTR_SPACEBASE)
+	  index = join->numPieces()-1;
+	if (index >= 0) {
+	  const VarnodeData &stack(join->getPiece(index));
+	  const VarnodeData &remain(data.getArch()->stripJoinPiece(join, index));
+	  Varnode *loadval = data.opStackLoad(stack.space,stack.offset,stack.size,op,(Varnode *)0,false);
+	  Varnode *remainval = data.newVarnode(remain.size, remain.space, remain.offset);
+	  PcodeOp *concatOp = data.newOp(2, op->getAddr());
+	  data.opSetOpcode(concatOp, CPUI_PIECE);
+	  if (index == 0) {
+	    data.opSetInput(concatOp,loadval,0);
+	    data.opSetInput(concatOp,remainval,1);
+	  }
+	  else {
+	    data.opSetInput(concatOp,remainval,0);
+	    data.opSetInput(concatOp,loadval,1);
+	  }
+	  Varnode *outvn = data.newUniqueOut(sz, concatOp);
+	  data.opInsertBefore(concatOp, op);
+	  data.opInsertInput(op,outvn,op->numInput());
+	  continue;
+	}
+      }
+      data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
   }
   if (spacebase != (AddrSpace *)0)	// If we need it, create the stackplaceholder
@@ -1540,7 +1569,7 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
     Datatype *outtype = outparam->getType();
     if (outtype->getMetatype() != TYPE_VOID) {
       int4 sz = outparam->getSize();
-      if (sz == 1 && outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
+      if (outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
 	data.opMarkCalculatedBool(callop);
       Address addr = outparam->getAddress();
       if (addr.getSpace()->getType() == IPTR_SPACEBASE) {
@@ -1974,9 +2003,21 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
     for(int4 j=0;j<numparam;++j) {
       ProtoParameter *param = fc->getParam(j);
       Address addr = param->getAddress();
-      if (addr.getSpace()->getType() != IPTR_SPACEBASE) continue;
-      uintb off = addr.getSpace()->wrapOffset(fc->getSpacebaseOffset() + addr.getOffset());
-      data.getScopeLocal()->markNotMapped(addr.getSpace(),off,param->getSize(),true);
+      spacetype tp = addr.getSpace()->getType();
+      if (tp == IPTR_SPACEBASE) {
+	uintb off = addr.getSpace()->wrapOffset(fc->getSpacebaseOffset() + addr.getOffset());
+	data.getScopeLocal()->markNotMapped(addr.getSpace(),off,param->getSize(),true);
+      }
+      else if (tp == IPTR_JOIN) {
+	JoinRecord *joinRec = data.getArch()->findJoin(addr.getOffset());
+	for(int4 k=0;k<joinRec->numPieces();++k) {
+	  const VarnodeData &vdata(joinRec->getPiece(k));
+	  if (vdata.space->getType() == IPTR_SPACEBASE) {
+	    uintb off = vdata.space->wrapOffset(fc->getSpacebaseOffset() + vdata.offset);
+	    data.getScopeLocal()->markNotMapped(vdata.space,off,vdata.size,true);
+	  }
+	}
+      }
     }
   }
 
@@ -2349,6 +2390,7 @@ int4 ActionDefaultParams::apply(Funcdata &data)
 void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
 
 {
+  if (op->doesSpecialPrinting()) return;
   Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
   int4 valsize = vn->getSize();
   if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
@@ -3062,6 +3104,11 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     return -1;
   }
   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
+  if (def->code() == CPUI_INSERT) {
+    PcodeOp *storeOp = def->getOut()->loneDescend();
+    if (storeOp == (PcodeOp *)0 || storeOp->code() != CPUI_STORE)
+      return -1;		// INSERT output is explicit unless it is immediately used by STORE
+  }
 
   if (def->code() == CPUI_PTRSUB) { // A dereference
     Varnode *basevn = def->getIn(0);
@@ -3703,6 +3750,9 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
       if (sz > sizeof(uintb)) {	// If there exists bits beyond the precision of the consume field
 	if (sa >= 8*sizeof(uintb))
 	  a = ~((uintb)0);	// Make sure we assume one bits where we shift in unrepresented bits
+	else if (sa == 0) {
+	  a = outc;
+	}
 	else
 	  a = (outc >> sa) ^ ( (~((uintb)0)) << (8*sizeof(uintb)-sa));
 	sz = 8*sz -sa;
@@ -3763,10 +3813,11 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     pushConsumed(b,op->getIn(2), worklist);
     pushConsumed(b,op->getIn(3), worklist);
     break;
-  case CPUI_EXTRACT:
+  case CPUI_ZPULL:
+  case CPUI_SPULL:
     a = 1;
     a <<= (int4)op->getIn(2)->getOffset();
-    a -= 1;	// Extract mask
+    a -= 1;	// Pull mask
     a &= outc;	// Consumed bits of mask
     a <<= (int4)op->getIn(1)->getOffset();
     pushConsumed(a,op->getIn(0),worklist);
@@ -5425,7 +5476,7 @@ void ActionDatabase::buildDefaultGroups(void)
 			    "deadcode", "typerecovery", "stackptrflow",
 			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
 			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
-			    "fixateglobals", "fixateproto", "constsequence",
+			    "fixateglobals", "fixateproto", "constsequence", "bitfields",
 			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
 			    "unreachable", "subvar", "floatprecision",
 			    "conditionalexe", "" };
@@ -5708,6 +5759,12 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RuleSplitStore("splitpointer") );
     actcleanup->addRule( new RuleStringCopy("constsequence"));
     actcleanup->addRule( new RuleStringStore("constsequence"));
+    actcleanup->addRule( new RuleBitFieldStore("bitfields"));
+    actcleanup->addRule( new RuleBitFieldOut("bitfields"));
+    actcleanup->addRule( new RuleBitFieldLoad("bitfields"));
+    actcleanup->addRule( new RuleBitFieldIn("bitfields"));
+    actcleanup->addRule( new RulePullAbsorb("bitfields"));
+    actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
   }
   act->addAction( actcleanup );
 

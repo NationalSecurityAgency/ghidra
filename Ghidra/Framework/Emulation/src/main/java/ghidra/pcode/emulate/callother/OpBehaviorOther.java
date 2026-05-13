@@ -19,6 +19,7 @@ import ghidra.pcode.emulate.Emulate;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
+@Deprecated(since = "12.1", forRemoval = true)
 public interface OpBehaviorOther {
 
 	/**

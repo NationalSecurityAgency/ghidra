@@ -19,12 +19,14 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.util.Date;
+import java.util.Objects;
 
 import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.widgets.OptionDialog;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.cmd.Command;
@@ -439,9 +441,8 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 			// replace that default type with a type that will force a record to be get created.
 			// We need a record to exist in order to set a comment or name.
 			DataType newtype = new Undefined1DataType();
-			DataTypeComponent newDtc =
-				struct.replaceAtOffset(dtc.getOffset(), newtype, 1, "tempName",
-					"Created by Edit Data Field action");
+			DataTypeComponent newDtc = struct.replaceAtOffset(dtc.getOffset(), newtype, 1,
+				"tempName", "Created by Edit Data Field action");
 
 			DataType oldDt = dtc.getDataType();
 			DataType editorDt = dataTypeEditor.getCellEditorValueAsDataType();
@@ -459,15 +460,28 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 				return true;
 			}
 
+			String newName = InternalDataTypeComponent.cleanupFieldName(getNewFieldName());
 			DataTypeComponent dtc = composite.getComponent(ordinal);
-			try {
-				dtc.setFieldName(getNewFieldName());
+			if (Objects.equals(newName, dtc.getDefaultFieldName())) {
+				newName = null;
+			}
+			if (Objects.equals(newName, dtc.getFieldName())) {
 				return true;
 			}
-			catch (DuplicateNameException e) {
-				statusMessage = "Duplicate field name";
-				return false;
+
+			if (newName != null && composite.findComponent(newName) != null) {
+
+				// Warn user and confirm rename when duplicate name is used
+				if (OptionDialog.OPTION_ONE != OptionDialog.showOptionDialog(getComponent(),
+					"Duplicate Field Name",
+					"Duplicate field name. Proceed with rename?",
+					"Rename!", OptionDialog.WARNING_MESSAGE)) {
+					return false;
+				}
 			}
+
+			dtc.setFieldName(newName);
+			return true;
 		}
 
 		private boolean updateComment() {
@@ -512,8 +526,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 				return;
 			}
 
-			DataTypeInstance dti =
-				DataTypeInstance.getDataTypeInstance(resolvedDt, -1, false);
+			DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(resolvedDt, -1, false);
 			DataType dataType = dti.getDataType();
 			int length = dti.getLength();
 			String fieldName = dtc.getFieldName();

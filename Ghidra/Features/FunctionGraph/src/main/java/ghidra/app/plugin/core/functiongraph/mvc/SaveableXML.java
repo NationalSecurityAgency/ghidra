@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.functiongraph.mvc;
 
 import java.io.*;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import ghidra.util.*;
 import ghidra.util.xml.GenericXMLOutputter;
@@ -48,7 +48,7 @@ public class SaveableXML extends PrivateSaveable {
 
 		Document document = new Document(element);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		XMLOutputter xmlOutputter = new GenericXMLOutputter();
+		XMLOutputter xmlOutputter = GenericXMLOutputter.getInstance();
 
 		try {
 			xmlOutputter.output(document, outputStream);

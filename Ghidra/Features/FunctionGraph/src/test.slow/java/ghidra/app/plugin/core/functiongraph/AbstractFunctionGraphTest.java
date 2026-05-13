@@ -401,7 +401,6 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	@After
 	public void tearDown() throws Exception {
 		waitForSwing();
-		env.closeTool(tool);
 		env.dispose();
 	}
 

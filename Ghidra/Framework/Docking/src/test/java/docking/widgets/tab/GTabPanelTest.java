@@ -42,6 +42,9 @@ public class GTabPanelTest extends AbstractDockingTest {
 			gTabPanel.addTab("Two");
 			gTabPanel.addTab("Three Three Three");
 
+			// prevent inconsistent behavior when testing by disabling focus change responses
+			gTabPanel.setIgnoreFocus(true);
+
 			JPanel panel = new JPanel();
 			panel.setLayout(new BorderLayout());
 			panel.add(gTabPanel, BorderLayout.NORTH);
@@ -202,19 +205,19 @@ public class GTabPanelTest extends AbstractDockingTest {
 		removeTab("One");
 		removeTab("Two");
 		removeTab("Three Three Three");
-		assertEquals("Test Tab Panel: No Tabs", gTabPanel.getAccessibleName());
+		assertEquals("Test Tab Panel: No Tabs", getAccessibleName());
 	}
 
 	@Test
 	public void testGetAccessibleNameNoTabSelected() {
 		setSelectedValue(null);
-		assertEquals("Test Tab Panel: No Selected Tab", gTabPanel.getAccessibleName());
+		assertEquals("Test Tab Panel: No Selected Tab", getAccessibleName());
 	}
 
 	@Test
 	public void testGetAccessiblNameTabSelected() {
 		setSelectedValue("Two");
-		assertEquals("Test Tab Panel: Two selected", gTabPanel.getAccessibleName());
+		assertEquals("Test Tab Panel: Two selected", getAccessibleName());
 	}
 
 	@Test
@@ -222,7 +225,7 @@ public class GTabPanelTest extends AbstractDockingTest {
 		setSelectedValue(null);
 		highlightNextTab(true);
 		assertEquals("Test Tab Panel: No Selected Tab: One highlighted",
-			gTabPanel.getAccessibleName());
+			getAccessibleName());
 	}
 
 	@Test
@@ -230,7 +233,7 @@ public class GTabPanelTest extends AbstractDockingTest {
 		setSelectedValue("One");
 		highlightNextTab(true);
 		assertEquals("Test Tab Panel: One selected: Two highlighted",
-			gTabPanel.getAccessibleName());
+			getAccessibleName());
 	}
 
 	@Test
@@ -242,6 +245,10 @@ public class GTabPanelTest extends AbstractDockingTest {
 		assertEquals("Two", getValue(0));
 		assertEquals("Three Three Three", getValue(1));
 		assertEquals("One", getValue(2));
+	}
+
+	private String getAccessibleName() {
+		return runSwing(() -> gTabPanel.getAccessibleName());
 	}
 
 	private void moveTab(String value, int newIndex) {

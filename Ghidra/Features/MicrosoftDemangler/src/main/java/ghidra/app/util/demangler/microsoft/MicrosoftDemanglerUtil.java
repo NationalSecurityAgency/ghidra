@@ -182,15 +182,11 @@ public class MicrosoftDemanglerUtil {
 		return result;
 	}
 
-	private static DemangledObject processObjectReserved(
-			MDObjectReserved objectReserved,
+	private static DemangledObject processObjectReserved(MDObjectReserved objectReserved,
 			String mangled, String demangledSource) {
 		DemangledObject object = null;
-		if (objectReserved.getClass().equals(MDObjectReserved.class)) {
-			//Testing if the class is not a derived class of MDObjectReserved;
-			// In other words, is it exactly a MDObjectReserved?
-			// If so, then return null, which will allow it to get processed
-			// outside of the demangler.
+		if (objectReserved instanceof MDObjectUnknownReserved) {
+			// Return null to allow it to get processed outside of demangler
 			return null;
 		}
 		if (objectReserved instanceof MDObjectBracket objectBracket) {

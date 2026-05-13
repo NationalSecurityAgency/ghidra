@@ -59,25 +59,16 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			set.add(b.addr(0x4000), b.addr(0x5000)); // NOP when set
 			memory.setState(0, set, TraceMemoryState.KNOWN);
 
-			// ERR
+			/**
+			 * NOTE: This is no longer an error, though still dubious. Probably, register edits
+			 * should always be done in an overlay, but I won't stop someone who tries directly on
+			 * the raw register space. I might just not know their use case.
+			 */
 			AddressSpace regs = b.trace.getBaseAddressFactory().getRegisterSpace();
-			try {
-				memory.setState(0, regs.getAddress(0x4000), TraceMemoryState.KNOWN);
-				fail();
-			}
-			catch (IllegalArgumentException e) {
-				// pass;
-			}
-
-			try {
-				memory.setState(0,
-					new AddressRangeImpl(regs.getAddress(0x4000), regs.getAddress(0x5000)),
-					TraceMemoryState.KNOWN);
-				fail();
-			}
-			catch (IllegalArgumentException e) {
-				// pass;
-			}
+			memory.setState(0, regs.getAddress(0x4000), TraceMemoryState.KNOWN);
+			memory.setState(0,
+				new AddressRangeImpl(regs.getAddress(0x4000), regs.getAddress(0x5000)),
+				TraceMemoryState.KNOWN);
 		}
 	}
 

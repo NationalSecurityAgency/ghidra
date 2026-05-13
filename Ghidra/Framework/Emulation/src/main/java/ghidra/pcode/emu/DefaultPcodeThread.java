@@ -374,8 +374,12 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public void assignContext(RegisterValue context) {
-		if (!context.getRegister().isProcessorContext()) {
+		if (context.getRegister().getBaseRegister() != contextreg) {
 			throw new IllegalArgumentException("context must be the contextreg value");
+		}
+		if (this.context == null) {
+			assert this.contextreg == Register.NO_CONTEXT;
+			return;
 		}
 		this.context = this.context.assign(context.getRegister(), context);
 	}
@@ -386,7 +390,14 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	}
 
 	protected final void writeContext(RegisterValue context) {
+		if (contextreg == Register.NO_CONTEXT && context == null) {
+			return;
+		}
 		assignContext(context);
+		if (this.context == null) {
+			assert this.contextreg == Register.NO_CONTEXT;
+			return;
+		}
 		state.setVar(contextreg, arithmetic.fromConst(
 			this.context.getUnsignedValueIgnoreMask(),
 			contextreg.getMinimumByteSize(), true));

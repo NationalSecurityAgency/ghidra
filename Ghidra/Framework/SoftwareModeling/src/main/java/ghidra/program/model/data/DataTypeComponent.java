@@ -16,7 +16,6 @@
 package ghidra.program.model.data;
 
 import ghidra.docking.settings.Settings;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * DataTypeComponents are holders for the dataTypes that make up composite (Structures
@@ -98,9 +97,14 @@ public interface DataTypeComponent {
 
 	/**
 	 * Sets the comment for the component.
+	 * <P>
+	 * NOTE: Since a datatype component instance is intended to be immutable a new component
+	 * instance is returned which will reflect the modified component.
+	 * 
 	 * @param comment this components comment or null to clear comment.
+	 * @return a new component instance which will reflect the change.
 	 */
-	public void setComment(String comment);
+	public DataTypeComponent setComment(String comment);
 
 	/**
 	 * Get this component's field name within its parent.
@@ -112,17 +116,17 @@ public interface DataTypeComponent {
 
 	/**
 	 * Sets the field name. If the field name is empty it will be set to null,
-	 * which is the default field name. An exception is thrown if one of the
-	 * parent's other components already has the specified field name.
+	 * which is the default field name. The field name may be sanitized to convert all whitespace
+	 * characters to an underscore.  If a name conflict occurs with another component, a one-up
+	 * number suffix will be added to avoid duplication.
+	 * <P>
+	 * NOTE: Since a datatype component instance is intended to be immutable a new component
+	 * instance is returned which will reflect the modified component.
 	 *
 	 * @param fieldName the new field name for this component.
-	 *
-	 * @throws DuplicateNameException This is actually never thrown anymore. All the other ways
-	 * of naming fields did not perform this check and it would cause quite a bit of churn to 
-	 * add that exception to all the other methods that affect field names. So to be consistent,
-	 * we no longer do the check in this method.
+	 * @return a new component instance which will reflect the change.
 	 */
-	public void setFieldName(String fieldName) throws DuplicateNameException;
+	public DataTypeComponent setFieldName(String fieldName);
 
 	/**
 	 * Returns a default field name for this component.  Used only if a field name is not set.

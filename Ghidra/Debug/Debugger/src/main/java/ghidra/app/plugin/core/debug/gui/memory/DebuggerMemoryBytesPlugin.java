@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.action.DockingAction;
 import ghidra.app.plugin.PluginCategoryNames;

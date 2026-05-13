@@ -236,6 +236,7 @@
                 <tocdef id="Translate Strings" sortgroup="c" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm">
                     <tocdef id="LibreTranslate" sortgroup="a" text="LibreTranslate"  target="help/topics/LibreTranslatePlugin/LibreTranslatePlugin.htm" />
                 </tocdef>
+                <tocdef id="Charsets" sortgroup="c1" text="Charsets"  target="help/topics/Charsets/Charsets.htm" />
                 <tocdef id="Save Image" sortgroup="d" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>
         

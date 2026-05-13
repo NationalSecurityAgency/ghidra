@@ -50,14 +50,13 @@ public abstract class VTBaseTestCase extends AbstractGenericTest {
 			}
 		};
 
-	private Program sourceProgram = new VTStubProgram(sourceDomainFile);
-	private Program destinationProgram = new VTStubProgram(destinationDomainFile);
+	protected final Program sourceProgram = new VTStubProgram(sourceDomainFile);
+	protected final Program destinationProgram = new VTStubProgram(destinationDomainFile);
+
 	private FunctionManager functionManager = new VTSTubFunctionManager();
 	private Listing listing = new VTStubListing();
 	private SymbolTable symbolTable = new VTStubSymbolTable();
 	private Memory memory = new VTStubMemory();
-
-	private AddressMap addressMap = new AddressMapTestDummy();
 
 	private static String[] randomTags = { "TAG1", "TAG2", "TAG3" };
 	private static GenericAddressSpace space =
@@ -192,7 +191,12 @@ public abstract class VTBaseTestCase extends AbstractGenericTest {
 
 	private class VTStubProgram extends StubProgram {
 
-		private DomainFile domainFile;
+		private final DomainFile domainFile;
+		private final AddressSpace defaultSpace =
+			new GenericAddressSpace("Test", 32, AddressSpace.TYPE_RAM, 3);
+		private final AddressFactory addrFactory =
+			new DefaultAddressFactory(new AddressSpace[] { defaultSpace }, defaultSpace);
+		private final AddressMap addressMap = new AddressMapTestDummy(this);
 
 		VTStubProgram(DomainFile domainFile) {
 			this.domainFile = domainFile;
@@ -240,7 +244,7 @@ public abstract class VTBaseTestCase extends AbstractGenericTest {
 
 		@Override
 		public AddressFactory getAddressFactory() {
-			return null;
+			return addrFactory;
 		}
 
 		@Override

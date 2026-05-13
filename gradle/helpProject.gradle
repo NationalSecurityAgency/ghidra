@@ -287,24 +287,22 @@ tasks.register('indexHelp', JavaExec) {
 // Task for building Markdown in src/global/docs to HTML
 //      - the files generated will be placed in a build directory usable during development mode
 tasks.register('buildGlobalMarkdown') {
-	group = "private"	
+	group = "private"
 	dependsOn ':MarkdownSupport:classes'
-	
+
 	FileTree markdownFiles = this.project.fileTree('src/global/docs') {
 		include '*.md'
 	}
-	
+
 	onlyIf ("There are no markdown files") { !markdownFiles.isEmpty() }
+
+	inputs.files markdownFiles
 	
-	inputs.files markdownFiles  
-	
-	def markdownProject = project(':MarkdownSupport')
-	
-	doFirst {
+	doLast {
 		markdownFiles.each { f ->
 			def htmlName = f.name[0..-3] + "html"
 			providers.javaexec {
-				classpath = markdownProject.sourceSets.main.runtimeClasspath
+				classpath = rootProject.files(rootProject.ext.markdownDeps)
 				mainClass = 'ghidra.markdown.MarkdownToHtml'
 				args f
 				args file("build/src/global/docs/${htmlName}")

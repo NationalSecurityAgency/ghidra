@@ -26,13 +26,12 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.objectweb.asm.MethodTooLargeException;
 
 import ghidra.pcode.emu.*;
-import ghidra.pcode.emu.PcodeMachine.AccessKind;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.decode.JitPassageDecoder;
-import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;

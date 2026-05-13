@@ -29,7 +29,11 @@ import generic.util.WindowUtilities;
 import ghidra.util.Swing;
 
 /**
- * Action that manages multiple {@link DockingAction}s mapped to a given key binding
+ * Action that manages multiple {@link DockingAction}s mapped to a given key binding.
+ * <P>
+ * Actions are ordered in a way that mimics how the {@link KeyBindingOverrideKeyEventDispatcher} 
+ * orders its event processing, lowest level components get precedence over higher-level actions,
+ * such as global actions.  See the javadoc of the dispatcher for more info.
  */
 public class MultipleKeyAction extends DockingKeyBindingAction {
 	private List<ActionData> actions = new ArrayList<>();
@@ -134,25 +138,41 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 		MultiExecutableAction multiAction = new MultiExecutableAction();
 
-		//
-		// 1) Prefer local actions for the active provider
-		//
-		getLocalContextActions(localContext, multiAction);
-		if (multiAction.isValid()) {
-			// At this point, we have local docking actions that may or may not be enabled. Exit 
-			// so that any component specific actions or global found below will not interfere with 
-			// the provider's local actions
-			return multiAction;
-		}
+		/*
+		 	Note on action ordering: order matters, as any action found first may prevent actions
+		 	found later from being executed, *even if the lower-level action is not enabled.  Having
+		 	disabled actions prevent higher-level actions from being executed helps us maintain 
+		 	consistent action execution behavior.   The downside of this is that if the user assigns
+		 	the same key binding to actions at 2 different levels, the lower priority action will
+		 	never get executed.  We currently have no way of supporting both actions in this 
+		 	scenario.  It is currently up to the user to avoid this.  The one exception we have to 
+		 	this rule is for ComponentBasedDockingActions.  These actions can optionally mark 
+		 	themselves as invalid for a given context, which then allows the action processing to 
+		 	go higher up the chain of actions.  This is currently done by hard-coding the action
+		 	behavior, with no means for the user to change it.   This solution seemed good enough 
+		 	for now.
+		 */
 
 		//
-		// 2) Check for actions local to the source component (e.g., GTable and GTree)
+		// 1) Check for actions local to the source component (e.g., GTable and GTree).  These are
+		// considered lower level actions that can be processed before the component provider.
 		//
 		getLocalComponentActions(localContext, multiAction);
 		if (multiAction.isValid()) {
 			// At this point, we have local component actions that may or may not be enabled. Exit
 			// so that any global actions found below will not interfere with these component 
 			// actions.
+			return multiAction;
+		}
+
+		//
+		// 2) Check for local actions for the active provider
+		//
+		getLocalContextActions(localContext, multiAction);
+		if (multiAction.isValid()) {
+			// At this point, we have local docking actions that may or may not be enabled. Exit 
+			// so that any component specific actions or global found below will not interfere with 
+			// the provider's local actions
 			return multiAction;
 		}
 
@@ -332,14 +352,13 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return multiAction;
 		}
 
-		//
-		// 1) Check for local actions
-		//
-		// Note: dialog key binding actions are proxy actions that get added to the tool as global
-		// actions.  Thus, there are no 'local' actions for the dialog.
+		/*
+		 	See the note in createNonDialogExecutableAction().
+		 */
 
 		//
-		// 2) Check for actions local to the source component (e.g., GTable and GTree)
+		// 1) Check for actions local to the source component (e.g., GTable and GTree).  These are
+		// considered lower level actions that can be processed before the component provider.
 		//
 		getLocalComponentActions(context, multiAction);
 		if (multiAction.isValid()) {
@@ -348,6 +367,12 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			// actions.
 			return multiAction;
 		}
+
+		//
+		// 2) Check for dialog local actions
+		//
+		// Note: dialog key binding actions are proxy actions that get added to the tool as global
+		// actions.  Thus, there are no 'local' actions for the dialog.
 
 		//
 		// 3) Check for global actions using the current context.  As noted above, at the time of 

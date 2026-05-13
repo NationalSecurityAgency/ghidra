@@ -863,8 +863,7 @@ public interface Listing {
 	public void renameTree(String oldName, String newName) throws DuplicateNameException;
 
 	/**
-	 * gets the total number of CodeUnits (Instructions, defined Data, and
-	 * undefined Data)
+	 * gets the total number of CodeUnits (Instructions and defined Data)
 	 *
 	 * @return the total number of CodeUnits in the listing.
 	 */

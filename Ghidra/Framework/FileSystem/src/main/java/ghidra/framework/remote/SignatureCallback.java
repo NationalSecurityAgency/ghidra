@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,40 +107,5 @@ public class SignatureCallback implements Callback, Serializable {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-//	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-//		
-//		out.defaultWriteObject();
-//		
-//		try {
-//			out.writeInt(certChain == null ? -1 : certChain.length);
-//			if (certChain != null) {
-//				for (int i = 0; i < certChain.length; i++) {
-//					out.writeObject(certChain[i].getEncoded());
-//				}
-//			}
-//		} catch (CertificateEncodingException e) {
-//			throw new IOException("Can not serialize certificate chain");
-//		}
-//	}
-//	
-// 	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-// 		
-// 		in.defaultReadObject();
-// 		
-// 		try {
-// 			int cnt = in.readInt();
-// 			if (cnt >= 0) {
-// 				CertificateFactory cf = CertificateFactory.getInstance("X509");
-// 				certChain = new X509Certificate[cnt];
-// 				for (int i = 0; i < cnt; i++) {
-// 					byte[] bytes = (byte[]) in.readObject();
-// 					certChain[i] = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(bytes));
-// 				}
-// 			}
-// 		} catch (CertificateException e) {
-// 			throw new IOException("Can not de-serialize certificate chain");
-// 		}
-// 	}
 
 }

@@ -74,11 +74,12 @@ public class CollapseAllDataAction extends ProgramLocationContextAction {
 
 	private void updatePopupMenuName(boolean hasSelection) {
 		if (hasSelection) {
-			getPopupMenuData().setMenuPath(new String[] { "Collapse All Data In Selection" });
+			getPopupMenuData()
+					.setMenuPath(new String[] { "Data", "Collapse All Data In Selection" });
 			setDescription("Closes all data recursively in the current selection.");
 		}
 		else {
-			getPopupMenuData().setMenuPath(new String[] { "Collapse All Data" });
+			getPopupMenuData().setMenuPath(new String[] { "Data", "Collapse All Data" });
 			setDescription(
 				"Closes all data recursively from the outer most component containing this location.");
 		}

@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A length-prefixed string {@link DataType} (max 64k bytes) with char size of 2 bytes,
  * {@link CharsetSettingsDefinition UTF-16} charset, unbounded
@@ -35,7 +37,7 @@ public class PascalUnicodeDataType extends AbstractStringDataType {
 			"P_UNI", // default label prefix
 			"pu", // default abbrev label prefix
 			"String (Pascal UTF-16 64k)", // description
-			CharsetInfo.UTF16, // charset
+			CharsetInfoManager.UTF16, // charset
 			ByteDataType.dataType, // replacement data type
 			StringLayoutEnum.PASCAL_64k, // StringLayoutEnum
 			dtm// data type manager

@@ -30,31 +30,35 @@ import ghidra.util.constraint.ProgramDecisionTree;
 public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 	private static int bufsize = 20;
 	private DummyMatchAction dummyaction;
-	private SequenceSearchState root;
+	private BulkPatternSearcher<Pattern> patternSearcher;
 	private Memory memory;
 	private byte[] bytebuffer;
-	ArrayList<Match> matchlist;
+	ArrayList<Match<Pattern>> matchlist;
 
-	private boolean functionMatchesPattern(byte[] buff, int numbytes) {
+	private boolean functionMatchesPattern(byte[] buff, int numBytes) {
 		matchlist.clear();
-		root.sequenceMatch(buff, numbytes, matchlist);
-		if (matchlist.size() > 0)
+		patternSearcher.matches(buff, numBytes, matchlist);
+		if (matchlist.size() > 0) {
 			return true;
+		}
 		return false;
 	}
 
 	private boolean detectThunk(Function func, CodeUnit cu) {
-		if (cu == null)
+		if (cu == null) {
 			return true;
-		if (cu instanceof Data)
+		}
+		if (cu instanceof Data) {
 			return true;
+		}
 		return false;
 	}
 
 	private void writeBytes(Writer w, byte[] buffer, int numbytes) throws IOException {
 		StringBuffer buf = new StringBuffer();
-		for (int i = 0; i < numbytes; ++i)
+		for (int i = 0; i < numbytes; ++i) {
 			buf.append(Integer.toHexString(buffer[i] & 0xff)).append(' ');
+		}
 		buf.append('\n');
 		w.write(buf.toString());
 	}
@@ -71,18 +75,20 @@ public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 		ProgramDecisionTree patternDecisionTree = Patterns.getPatternDecisionTree();
 		ResourceFile[] fileList = Patterns.findPatternFiles(currentProgram, patternDecisionTree);
 		ArrayList<Pattern> patternlist = new ArrayList<>();
-		for (int i = 0; i < fileList.length; ++i)
+		for (int i = 0; i < fileList.length; ++i) {
 			Pattern.readPostPatterns(fileList[i].getFile(true), patternlist, this);
+		}
 		FileWriter fileWriter = new FileWriter(file);
-		root = SequenceSearchState.buildStateMachine(patternlist);
+		patternSearcher = new BulkPatternSearcher<>(patternlist);
 
 		FunctionManager functionManager = currentProgram.getFunctionManager();
 		FunctionIterator iter = functionManager.getFunctions(true);
 		while (iter.hasNext()) {
 			Function func = iter.next();
 			CodeUnit cu = listing.getCodeUnitAt(func.getEntryPoint());
-			if (detectThunk(func, cu))
+			if (detectThunk(func, cu)) {
 				continue;
+			}
 			int numbytes = memory.getBytes(func.getEntryPoint(), bytebuffer);
 			if ((numbytes > 0) && (!functionMatchesPattern(bytebuffer, numbytes))) {
 				writeBytes(fileWriter, bytebuffer, numbytes);
@@ -98,8 +104,9 @@ public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 
 	@Override
 	public PostRule getPostRuleByName(String nm) {
-		if (nm.equals("align"))
+		if (nm.equals("align")) {
 			return new AlignRule();
+		}
 		return null;
 	}
 

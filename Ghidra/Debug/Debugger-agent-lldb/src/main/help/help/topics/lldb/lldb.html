@@ -38,7 +38,7 @@
     <UL style="list-style-type: none">
       <LI>
 <PRE>
-python3 -m pip install psutil protobuf==3.20.3
+python3 -m pip install protobuf>=3.20.3
 </PRE>
       </LI>
     </UL>
@@ -54,7 +54,7 @@ python3 -m pip install psutil protobuf==3.20.3
 <PRE>
 cd /path/to/ghidra_<EM>
 version</EM>/Ghidra/Debug
-python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-lldb/pypkg/dist psutil protobuf
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-lldb/pypkg/dist protobuf
 </PRE>
       </LI>
     </UL>
@@ -94,6 +94,9 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
       <LI><B><TT>lldb</TT> command</B>: This is the command or path to LLDB. We recommend version
       15 or later.</LI>
 
+	  <LI><B><TT>lldb</TT> cmd args</B>: Arguments passed directly to LLDB (versus the target).
+	  Note: these arguments may override user arguments passed to the cmd.</LI>
+	  
       <LI><B>Run command</B>: This is the LLDB command to actually launch the target. In most cases
       this should include "<TT>--stop-at-entry</TT>", since this will assure you an initial break
       and a chance to enable your breakpoints.</LI>
@@ -203,11 +206,17 @@ perl -i -pe 's/(?&lt;=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
     <P>This works the same as the <A href="help/topics/gdb/gdb.html#ssh">GDB via SSH</A> launcher,
     but runs <TT>lldb</TT> on a remote system via <TT>ssh</TT>.</P>
 
-    <H2><A name="android"></A>Android</H2>
+	<H2><A name="ssh-win"></A>Via SSH (to Windows cmd shell)</H2>
+
+	<P>	This works the same as the <A href="help/topics/gdb/gdb.html#ssh-win">GDB via SSH (to Windows cmd shell)</A> 
+		launcher, but runs <TT>lldb</TT> on a remote Windows system via <TT>ssh</TT>.
+	</P>
+	
+	<H2><A name="android"></A>Android</H2>
 
     <P>This has the same options as the <A href="#ssh">LLDB via SSH</A> launcher, which are
-    necessary for connecting to the Android debugger, but executes via the normal lldb
-    mechanism.</P>
+    necessary for connecting to the Android debugger, but uses <B>Device</B> in place of <B>Host</B>
+    (typically retrieved using 'adb devices').</P>
 
     <H3><A name="setup_ndk"></A>Setup for Android NDK</H3>
 
@@ -266,5 +275,13 @@ PS&gt; C:\path\to\android-ndk\...\python -m pip install ...
         ...</TT>.
       </LI>
     </OL>
+    
+    <H2><A name="android-attach"></A>Android (Attach)</H2>
+
+    <P>This has the same options as the <A href="#android">Andoid</A> launcher, but uses the 
+    target's <B>Process Id</B> instead of the executable <B>Image</B>.  <B>Additional commands</B> has been added 
+    to allow commands like 'process handle --pass true --stop false --notify false SIGSEGV'
+    to be saved and executed for each run.</P>
+
   </BODY>
 </HTML>

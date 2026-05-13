@@ -91,6 +91,13 @@ class Section:
 
 
 @dataclass(frozen=True)
+class Available:
+    pid: int
+    user: str
+    command: str
+
+
+@dataclass(frozen=True)
 class Module:
     name: str
     base: int
@@ -294,6 +301,54 @@ def _choose_region_info_reader() -> RegionInfoReader:
 
 
 REGION_INFO_READER = _choose_region_info_reader()
+
+
+AVAILABLES_CMD = 'info os processes'
+AVAILABLE_PATTERN = re.compile("\\s*" +
+                            "(?P<pid>[0-9]+)\\s+" +
+                            "(?P<user>[0-9,A-Z,a-z]+)\\s+" +
+                            "(?P<command>.*)")
+
+
+class AvailableInfoReader(object):
+    cmd = AVAILABLES_CMD
+    available_pattern = AVAILABLE_PATTERN
+
+    def available_from_line(self, line: str, max_addr: int) -> Optional[Available]:
+        mat = self.available_pattern.fullmatch(line)
+        if mat is None:
+            return None
+        pid = mat['pid']
+        user = mat['user']
+        command = mat['command']
+        return Available(pid, user, command)
+
+    def get_availables(self) -> List[Available]:
+        availables: List[Available] = []
+        try:
+            out = gdb.execute(self.cmd, to_string=True)
+            max_addr = compute_max_addr()
+        except:
+            return availables
+        for line in out.split('\n'):
+            a = self.available_from_line(line, max_addr)
+            if a is None:
+                continue
+            availables.append(a)
+        return availables
+
+    def have_changed(self, availables: List[Available]) -> Tuple[bool, Optional[List[Available]]]:
+        new_availables = self.get_availables()
+        if new_availables == availables and len(new_availables) > 0:
+            return False, None
+        return True, new_availables
+
+
+def _choose_available_info_reader() -> AvailableInfoReader:
+    return AvailableInfoReader()
+
+
+AVAILABLE_INFO_READER = _choose_available_info_reader()
 
 
 BREAK_LOCS_CMD = 'info break {}'

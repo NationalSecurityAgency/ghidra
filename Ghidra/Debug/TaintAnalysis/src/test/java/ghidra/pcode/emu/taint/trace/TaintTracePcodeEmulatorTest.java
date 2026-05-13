@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu.taint.trace;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -236,7 +235,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(makeTaintEntries(tb.trace, Lifespan.at(1), ram, Set.of(
 				0x00600000L, 0x00600001L, 0x00600002L, 0x00600003L,
 				0x00600004L, 0x00600005L, 0x00600006L, 0x00600007L),
-				"test_0"),
+				"test_0@(ram, 0x400000, 0, 0)"),
 				Set.copyOf(taintMap.getEntries(
 					Lifespan.at(1), tb.range(0x00600000, 0x00600007))));
 		}
@@ -366,7 +365,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(makeTaintEntries(tb.trace, Lifespan.at(1), ram, Set.of(
 				0x20000000L, 0x20000001L, 0x20000002L, 0x20000003L,
 				0x20000004L, 0x20000005L, 0x20000006L, 0x20000007L),
-				"test_0"),
+				"test_0@(ram, 0x400000, 0, 0)"),
 				Set.copyOf(taintMap.getEntries(
 					Lifespan.at(1), tb.range(0x20000000, 0x20000007))));
 		}

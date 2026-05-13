@@ -17,7 +17,6 @@ package ghidra.framework.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -27,7 +26,8 @@ import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.RepositoryItem;
-import ghidra.framework.store.*;
+import ghidra.framework.store.ItemCheckoutStatus;
+import ghidra.framework.store.Version;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.ReadOnlyException;
@@ -115,22 +115,6 @@ public class DomainFileProxy implements DomainFile {
 		return parentPath + DomainFolder.SEPARATOR + getName();
 	}
 
-	private URL getSharedFileURL(URL sharedProjectURL, String ref) {
-		try {
-			// Direct URL construction done so that ghidra protocol extension may be supported
-			String urlStr = sharedProjectURL.toExternalForm();
-			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
-				urlStr = urlStr.substring(0, urlStr.length() - 1);
-			}
-			urlStr += getPathname();
-			return new URL(urlStr);
-		}
-		catch (MalformedURLException e) {
-			// ignore
-		}
-		return null;
-	}
-
 	private URL getSharedFileURL(Properties properties, String ref) {
 		if (properties == null) {
 			return null;
@@ -183,7 +167,7 @@ public class DomainFileProxy implements DomainFile {
 		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
 			URL projectURL = projectLocation.getURL();
 			if (GhidraURL.isServerRepositoryURL(projectURL)) {
-				return getSharedFileURL(projectURL, ref);
+				return GhidraURL.resolve(projectURL, getPathname(), ref);
 			}
 			Properties properties =
 				DefaultProjectData.readProjectProperties(projectLocation.getProjectDir());

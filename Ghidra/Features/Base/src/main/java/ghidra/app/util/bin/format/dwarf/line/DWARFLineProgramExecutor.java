@@ -90,7 +90,7 @@ public final class DWARFLineProgramExecutor implements Closeable {
 	/**
 	 * Read the next instruction and executes it
 	 * 
-	 * @return 
+	 * @return next {@link DWARFLineProgramInstruction}
 	 * @throws IOException if an i/o error occurs
 	 */
 	public DWARFLineProgramInstruction step() throws IOException {

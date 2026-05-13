@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import db.DBHandle;
 import db.Transaction;

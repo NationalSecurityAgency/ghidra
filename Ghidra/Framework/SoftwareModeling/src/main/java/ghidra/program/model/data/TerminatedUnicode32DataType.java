@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A null-terminated UTF-32 string {@link DataType}.
  */
@@ -33,7 +35,7 @@ public class TerminatedUnicode32DataType extends AbstractStringDataType {
 			"UNI", // default label prefix
 			"u", // default abbrev label prefix
 			"String (Null Terminated UTF-32 Unicode)", // description
-			CharsetInfo.UTF32, // charset
+			CharsetInfoManager.UTF32, // charset
 			WideChar32DataType.dataType, // replacement data type
 			StringLayoutEnum.NULL_TERMINATED_UNBOUNDED, // StringLayoutEnum
 			dtm// data type manager

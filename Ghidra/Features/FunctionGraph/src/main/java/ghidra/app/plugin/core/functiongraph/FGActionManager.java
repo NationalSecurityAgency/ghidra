@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
@@ -784,7 +783,7 @@ public class FGActionManager {
 				}
 			};
 		selectAllAction
-				.setKeyBindingData(new KeyBindingData(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK));
+				.setKeyBindingData(new KeyBindingData(KeyEvent.VK_A, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		selectAllAction.setPopupMenuData(new MenuData(
 			new String[] { selectionMenuName, "Select All Code Units" }, popupSelectionGroup3));
 		selectAllAction

@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
@@ -42,25 +41,23 @@ public class DWARFLineInfoCommentScript extends GhidraScript {
 		}
 
 		DWARFImportOptions importOptions = new DWARFImportOptions();
-		try (DWARFProgram dprog = new DWARFProgram(currentProgram, importOptions, monitor, dsp)) {
+		try (DWARFProgram dprog = new DWARFProgram(currentProgram, importOptions, dsp)) {
 			dprog.init(monitor);
 			addSourceLineInfo(dprog);
 		}
 	}
 
 	private void addSourceLineInfo(DWARFProgram dprog) throws CancelledException, IOException {
-		BinaryReader reader = dprog.getDebugLineBR();
-		if (reader == null) {
+		if (!dprog.getDIEContainer().hasLineInfo()) {
 			return;
 		}
 		int count = 0;
-		monitor.initialize(reader.length(), "DWARF Source Line Info");
-		List<DWARFCompilationUnit> compUnits = dprog.getCompilationUnits();
-		for (DWARFCompilationUnit cu : compUnits) {
+		monitor.initialize(dprog.getDIEContainer().getLineDataSize(), "DWARF Source Line Info");
+		for (DWARFCompilationUnit cu : dprog.getDIEContainer().getCompilationUnits()) {
 			try {
 				monitor.checkCancelled();
 				monitor.setProgress(cu.getLine().getStartOffset());
-				List<SourceFileAddr> allSFA = cu.getLine().getAllSourceFileAddrInfo(cu, reader);
+				List<SourceFileAddr> allSFA = cu.getLine().getAllSourceFileAddrInfo(cu);
 				for (SourceFileAddr sfa : allSFA) {
 					Address addr = dprog.getCodeAddress(sfa.address());
 					DWARFUtil.appendComment(currentProgram, addr, CommentType.EOL, "",

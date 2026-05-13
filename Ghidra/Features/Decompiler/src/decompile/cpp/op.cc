@@ -474,6 +474,7 @@ uintb PcodeOp::collapse(bool &markedInput) const {
 /// The p-code op must be \e special, or an exception is thrown.  The operation is performed
 /// and if there is no evaluation error, the result is returned and \b evalError is set to \b false.
 /// \param in is an array of input values
+/// \param evalError passes back \b false if there is no evaluation error
 /// \return the result of applying \b this operation to the input values
 uintb PcodeOp::executeSimple(uintb *in,bool &evalError) const
 
@@ -732,8 +733,14 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
   case CPUI_INT_ADD:
     resmask = getIn(0)->getNZMask();
     if (resmask!=fullmask) {
-      resmask |= getIn(1)->getNZMask();
-      resmask |= (resmask<<1);	// Account for possible carries
+      uintb othermask = getIn(1)->getNZMask();
+      if ((othermask & resmask) == 0) {
+	resmask |= othermask;
+      }
+      else {
+	resmask |= othermask;
+	resmask |= (resmask << 1);	// Account for possible carries
+      }
       resmask &= fullmask;
     }
     break;

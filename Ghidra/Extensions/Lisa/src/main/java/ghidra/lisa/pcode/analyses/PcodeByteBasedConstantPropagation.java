@@ -9,6 +9,7 @@ import java.util.Objects;
 import ghidra.lisa.pcode.locations.PcodeLocation;
 import ghidra.lisa.pcode.statements.PcodeBinaryOperator;
 import ghidra.pcode.exec.BytesPcodeArithmetic;
+import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.RegisterValue;
@@ -152,6 +153,11 @@ public class PcodeByteBasedConstantPropagation
 
 		PcodeLocation ploc = (PcodeLocation) pp.getLocation();
 		PcodeOp op = ploc.op;
+		OpBehavior opBehavior = OpBehaviorFactory.getOpBehavior(op.getOpcode());
+		if (opBehavior instanceof SpecialOpBehavior) {
+			// TODO
+			return top();
+		}
 
 		byte[] bytes = arithmetic.unaryOp(op.getOpcode(), op.getOutput().getSize(),
 			op.getInput(0).getSize(), arg.getValue(op.getInput(0).getSize()));
@@ -183,6 +189,11 @@ public class PcodeByteBasedConstantPropagation
 
 		PcodeLocation ploc = (PcodeLocation) pp.getLocation();
 		PcodeOp op = ploc.op;
+		OpBehavior opBehavior = OpBehaviorFactory.getOpBehavior(op.getOpcode());
+		if (opBehavior instanceof SpecialOpBehavior) {
+			// TODO
+			return left;
+		}
 		if (left.isTop) {
 			return specialCaseLogic(op);
 		}

@@ -18,6 +18,7 @@ package ghidra.features.base.memsearch.combiner;
 import java.util.*;
 import java.util.function.BiFunction;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.program.model.address.Address;
 
@@ -35,10 +36,10 @@ public enum Combiner {
 	B_MINUS_A("B-A", Combiner::reverseSubtract);
 
 	private String name;
-	private BiFunction<List<MemoryMatch>, List<MemoryMatch>, Collection<MemoryMatch>> function;
+	private BiFunction<List<MemoryMatch<SearchData>>, List<MemoryMatch<SearchData>>, Collection<MemoryMatch<SearchData>>> function;
 
 	private Combiner(String name,
-			BiFunction<List<MemoryMatch>, List<MemoryMatch>, Collection<MemoryMatch>> function) {
+			BiFunction<List<MemoryMatch<SearchData>>, List<MemoryMatch<SearchData>>, Collection<MemoryMatch<SearchData>>> function) {
 		this.name = name;
 		this.function = function;
 	}
@@ -51,23 +52,25 @@ public enum Combiner {
 		return name;
 	}
 
-	public Collection<MemoryMatch> combine(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
+	public Collection<MemoryMatch<SearchData>> combine(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		return function.apply(matches1, matches2);
 	}
 
-	private static Collection<MemoryMatch> replace(List<MemoryMatch> matches1,
-			List<MemoryMatch> matches2) {
+	private static Collection<MemoryMatch<SearchData>> replace(
+			List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 
 		return matches2;
 	}
 
-	private static Collection<MemoryMatch> union(List<MemoryMatch> matches1,
-			List<MemoryMatch> matches2) {
+	private static Collection<MemoryMatch<SearchData>> union(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 
-		Map<Address, MemoryMatch> matches1Map = createMap(matches1);
-		for (MemoryMatch match2 : matches2) {
+		Map<Address, MemoryMatch<SearchData>> matches1Map = createMap(matches1);
+		for (MemoryMatch<SearchData> match2 : matches2) {
 			Address address = match2.getAddress();
-			MemoryMatch match1 = matches1Map.get(address);
+			MemoryMatch<SearchData> match1 = matches1Map.get(address);
 			if (match1 == null || match2.getLength() > match1.getLength()) {
 				matches1Map.put(address, match2);
 			}
@@ -75,50 +78,56 @@ public enum Combiner {
 		return matches1Map.values();
 	}
 
-	private static Collection<MemoryMatch> intersect(List<MemoryMatch> matches1,
-			List<MemoryMatch> matches2) {
+	private static Collection<MemoryMatch<SearchData>> intersect(
+			List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 
-		List<MemoryMatch> intersection = new ArrayList<>();
-		Map<Address, MemoryMatch> matches1Map = createMap(matches1);
+		List<MemoryMatch<SearchData>> intersection = new ArrayList<>();
+		Map<Address, MemoryMatch<SearchData>> matches1Map = createMap(matches1);
 
-		for (MemoryMatch match2 : matches2) {
+		for (MemoryMatch<SearchData> match2 : matches2) {
 			Address address = match2.getAddress();
-			MemoryMatch match1 = matches1Map.get(address);
+			MemoryMatch<SearchData> match1 = matches1Map.get(address);
 			if (match1 != null) {
-				MemoryMatch best = match2.getLength() > match1.getLength() ? match2 : match1;
+				MemoryMatch<SearchData> best =
+					match2.getLength() > match1.getLength() ? match2 : match1;
 				intersection.add(best);
 			}
 		}
 		return intersection;
 	}
 
-	private static List<MemoryMatch> xor(List<MemoryMatch> matches1, List<MemoryMatch> matches2) {
-		List<MemoryMatch> results = new ArrayList<>();
+	private static List<MemoryMatch<SearchData>> xor(List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
+		List<MemoryMatch<SearchData>> results = new ArrayList<>();
 		results.addAll(subtract(matches1, matches2));
 		results.addAll(subtract(matches2, matches1));
 		return results;
 	}
 
-	private static Collection<MemoryMatch> subtract(List<MemoryMatch> matches1,
-			List<MemoryMatch> matches2) {
+	private static Collection<MemoryMatch<SearchData>> subtract(
+			List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 
-		Map<Address, MemoryMatch> matches1Map = createMap(matches1);
+		Map<Address, MemoryMatch<SearchData>> matches1Map = createMap(matches1);
 
-		for (MemoryMatch match2 : matches2) {
+		for (MemoryMatch<SearchData> match2 : matches2) {
 			Address address = match2.getAddress();
 			matches1Map.remove(address);
 		}
 		return matches1Map.values();
 	}
 
-	private static Collection<MemoryMatch> reverseSubtract(List<MemoryMatch> matches1,
-			List<MemoryMatch> matches2) {
+	private static Collection<MemoryMatch<SearchData>> reverseSubtract(
+			List<MemoryMatch<SearchData>> matches1,
+			List<MemoryMatch<SearchData>> matches2) {
 		return subtract(matches2, matches1);
 	}
 
-	private static Map<Address, MemoryMatch> createMap(List<MemoryMatch> matches) {
-		Map<Address, MemoryMatch> map = new HashMap<>();
-		for (MemoryMatch result : matches) {
+	private static Map<Address, MemoryMatch<SearchData>> createMap(
+			List<MemoryMatch<SearchData>> matches) {
+		Map<Address, MemoryMatch<SearchData>> map = new HashMap<>();
+		for (MemoryMatch<SearchData> result : matches) {
 			map.put(result.getAddress(), result);
 		}
 		return map;

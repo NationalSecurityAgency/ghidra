@@ -17,7 +17,6 @@ package ghidra.feature.vt.api.db;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import db.*;
 import ghidra.app.util.task.OpenProgramRequest;
@@ -93,7 +92,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	private Program sourceProgram;
 	private Program destinationProgram;
-	private List<VTMatchSetDB> matchSets = new CopyOnWriteArrayList<>();
+	private Map<Long, VTMatchSetDB> matchSetMap = new HashMap<>();
 	private VTMatchSet manualMatchSet;
 	private VTMatchSet impliedMatchSet;
 
@@ -140,10 +139,12 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 			initializePrograms(sourceProgram, destinationProgram, true);
 
-			createMatchSet(new ManualMatchProgramCorrelator(sourceProgram, destinationProgram),
-				MANUAL_MATCH_SET_ID);
-			createMatchSet(new ImpliedMatchProgramCorrelator(sourceProgram, destinationProgram),
-				IMPLIED_MATCH_SET_ID);
+			manualMatchSet =
+				createMatchSet(new ManualMatchProgramCorrelator(sourceProgram, destinationProgram),
+					MANUAL_MATCH_SET_ID);
+			impliedMatchSet =
+				createMatchSet(new ImpliedMatchProgramCorrelator(sourceProgram, destinationProgram),
+					IMPLIED_MATCH_SET_ID);
 
 			updateVersion();
 		}
@@ -439,17 +440,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 			super.clearCache(all);
 			associationManager.invalidateCache();
 			tagCache.invalidate();
-
-			List<VTMatchSetDB> temp = new ArrayList<>();
-
-			for (VTMatchSetDB matchSet : matchSets) {
-				if (!matchSet.isInvalid()) {
-					matchSet.invalidateCache();
-					temp.add(matchSet);
-				}
-			}
-
-			matchSets.retainAll(temp);
+			reconcileCachedMatchSets();
 		}
 		finally {
 			lock.release();
@@ -471,8 +462,41 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 		RecordIterator recordIterator = matchSetTableAdapter.getRecords();
 		while (recordIterator.hasNext()) {
 			DBRecord record = recordIterator.next();
-			matchSets.add(
+			matchSetMap.put(record.getKey(),
 				VTMatchSetDB.getMatchSetDB(record, this, getDBHandle(), openMode, monitor, lock));
+		}
+	}
+
+	private void reconcileCachedMatchSets() {
+
+		try {
+			Set<Long> cachedKeySet = new HashSet<>(matchSetMap.keySet());
+
+			RecordIterator recordIterator = matchSetTableAdapter.getRecords();
+			while (recordIterator.hasNext()) {
+				DBRecord record = recordIterator.next();
+				long key = record.getKey();
+				if (cachedKeySet.remove(key)) {
+					// Invalidate cached MatchSet
+					matchSetMap.get(key).invalidateCache();
+				}
+				else {
+					// Add missing MatchSet to cache
+					matchSetMap.put(key, VTMatchSetDB.getMatchSetDB(record, this, getDBHandle(),
+						OpenMode.UPDATE, TaskMonitor.DUMMY, lock));
+				}
+			}
+
+			// Remove obsolete/invalid MatchSets whose record was not found
+			for (long key : cachedKeySet) {
+				matchSetMap.remove(key);
+			}
+		}
+		catch (VersionException e) {
+			throw new RuntimeException("Unexpected exception", e);
+		}
+		catch (IOException e) {
+			dbError(e);
 		}
 	}
 
@@ -503,7 +527,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 			DBRecord record = matchSetTableAdapter.createMatchSetRecord(id, correlator);
 			VTMatchSetDB matchSet =
 				VTMatchSetDB.createMatchSetDB(record, this, getDBHandle(), lock);
-			matchSets.add(matchSet);
+			matchSetMap.put(matchSet.getKey(), matchSet);
 			changeSetsModified = true; // signal endTransaction to clear undo stack
 
 			setObjectChanged(VTEvent.MATCH_SET_ADDED, matchSet, null, matchSet);
@@ -564,7 +588,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public List<VTMatchSet> getMatchSets() {
-		return new ArrayList<>(matchSets);
+		return new ArrayList<>(matchSetMap.values());
 	}
 
 	AddressSet getSourceAddressSet(DBRecord record) throws IOException {
@@ -625,11 +649,17 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public List<VTMatch> getMatches(VTAssociation association) {
-		List<VTMatch> matches = new ArrayList<>();
-		for (VTMatchSet matchSet : matchSets) {
-			matches.addAll(matchSet.getMatches(association));
+		try {
+			lock.acquire();
+			List<VTMatch> matches = new ArrayList<>();
+			for (VTMatchSet matchSet : matchSetMap.values()) {
+				matches.addAll(matchSet.getMatches(association));
+			}
+			return matches;
 		}
-		return matches;
+		finally {
+			lock.release();
+		}
 	}
 
 	/**
@@ -649,22 +679,34 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public VTMatchSet getManualMatchSet() {
-		if (manualMatchSet == null) {
-			manualMatchSet = findMatchSet(ManualMatchProgramCorrelator.class.getName());
+		try {
+			lock.acquire();
+			if (manualMatchSet == null) {
+				manualMatchSet = findMatchSet(ManualMatchProgramCorrelator.class.getName());
+			}
+			return manualMatchSet;
 		}
-		return manualMatchSet;
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
 	public VTMatchSet getImpliedMatchSet() {
-		if (impliedMatchSet == null) {
-			impliedMatchSet = findMatchSet(ImpliedMatchProgramCorrelator.class.getName());
+		try {
+			lock.acquire();
+			if (impliedMatchSet == null) {
+				impliedMatchSet = findMatchSet(ImpliedMatchProgramCorrelator.class.getName());
+			}
+			return impliedMatchSet;
 		}
-		return impliedMatchSet;
+		finally {
+			lock.release();
+		}
 	}
 
 	private VTMatchSet findMatchSet(String correlatorClassName) {
-		for (VTMatchSet matchSet : matchSets) {
+		for (VTMatchSet matchSet : matchSetMap.values()) {
 			VTProgramCorrelatorInfo info = matchSet.getProgramCorrelatorInfo();
 			String matchSetCorrelatorClassName = info.getCorrelatorClassName();
 			if (correlatorClassName.equals(matchSetCorrelatorClassName)) {
@@ -771,8 +813,8 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	}
 
 	public VTMatchTag getMatchTag(long key) {
-		lock.acquire();
 		try {
+			lock.acquire();
 			VTMatchTagDB matchTagDB = tagCache.get(key);
 			if (matchTagDB != null) {
 				return matchTagDB;

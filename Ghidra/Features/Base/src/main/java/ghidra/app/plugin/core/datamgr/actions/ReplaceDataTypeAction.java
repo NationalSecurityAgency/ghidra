@@ -48,16 +48,13 @@ public class ReplaceDataTypeAction extends DockingAction {
 		super("Replace", plugin.getName());
 
 		this.plugin = plugin;
-		setPopupMenuData(new MenuData(new String[] { "Replace..." }, "Edit"));
+		setPopupMenuData(new MenuData(new String[] { "Replace..." }, "EditAdvanced"));
 	}
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		if (node instanceof BuiltInArchiveNode) {
-			return false;
-		}
-		return (node != null);
+		return node instanceof DataTypeNode;
 	}
 
 	@Override

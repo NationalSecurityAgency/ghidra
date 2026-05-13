@@ -822,11 +822,7 @@ public class FunctionEditorModel {
 
 					for (ParamInfo paramInfo : functionData.getParameters()) {
 						Parameter param = function.getParameter(paramInfo.getOrdinal());
-						if (param != null) {
-							if (param.getSymbol().isDeleted()) {
-								// concurrent removal of param - must do full update
-								break;
-							}
+						if (param != null && !param.isAutoParameter()) {
 							param.setName(paramInfo.getName(), SourceType.USER_DEFINED);
 						}
 					}
@@ -860,11 +856,7 @@ public class FunctionEditorModel {
 						: FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
 				true, sigSource);
 		}
-		catch (DuplicateNameException e) {
-			Msg.showError(this, null, "Function Edit Error", e.getMessage());
-			return false;
-		}
-		catch (InvalidInputException e) {
+		catch (Exception e) {
 			Msg.showError(this, null, "Function Edit Error", e.getMessage());
 			return false;
 		}

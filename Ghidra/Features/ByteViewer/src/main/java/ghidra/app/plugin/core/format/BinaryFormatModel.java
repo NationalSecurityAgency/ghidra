@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.format;
 
-import ghidra.util.HelpLocation;
-
 import java.math.BigInteger;
+
+import ghidra.util.HelpLocation;
 
 /**
  * Converts byte values to binary representation.
  */
-public class BinaryFormatModel implements UniversalDataFormatModel {
+public class BinaryFormatModel implements UniversalDataFormatModel, MutableDataFormatModel {
 
 	private int symbolSize;
 	private static final String GOOD_CHARS = "01";
@@ -99,16 +99,8 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 			str = str.substring(str.length() - symbolSize);
 		}
 
-		return pad(str);
+		return DataFormatModel.pad(str, symbolSize);
 
-	}
-
-	/**
-	 * Returns true to allow values to be changed.
-	 */
-	@Override
-	public boolean isEditable() {
-		return (true);
 	}
 
 	/**
@@ -155,26 +147,6 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	}
 
 	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	@Override
-	public int getGroupSize() {
-		return 1;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException 
-	 */
-	@Override
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
-
-	/**
 	 * Get the number of characters separating units.
 	 */
 	@Override
@@ -182,38 +154,8 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 		return 1;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	@Override
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// *** private methods ***
-	/////////////////////////////////////////////////////////////////
-	private String pad(String value) {
-		StringBuffer sb = new StringBuffer();
-		int len = symbolSize - value.length();
-
-		for (int i = 0; i < len; i++) {
-			sb.append("0");
-		}
-		sb.append(value);
-		return (sb.toString());
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
-	 */
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Binary");
-	}
-
-	@Override
-	public void dispose() {
-		// nothing to do
 	}
 }

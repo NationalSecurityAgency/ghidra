@@ -43,9 +43,9 @@ function showUsage() {
 	exit 1
 }
 
-VMARGS_FROM_CALLER=		 # Passed in from the outer script as one long string, no spaces
-VMARGS_FROM_LAUNCH_SH=()	# Defined in this script, added to array
-VMARGS_FROM_LAUNCH_PROPS=() # Retrieved from LaunchSupport, added to array
+VMARGS_FROM_CALLER=          # Passed in from the outer script as one long string, no spaces
+VMARGS_FROM_LAUNCH_SH=()     # Defined in this script, added to array
+VMARGS_FROM_LAUNCH_PROPS=()  # Retrieved from LaunchSupport, added to array
 
 ARGS=()
 INDEX=0
@@ -104,14 +104,14 @@ fi
 if [ -f "${SUPPORT_DIR}/launch.properties" ]; then
 
 	# Production Environment
-	INSTALL_DIR="${SUPPORT_DIR}/.."
+	export INSTALL_DIR="${SUPPORT_DIR}/.."
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/lib/Utility.jar"
 	LS_CPATH="${SUPPORT_DIR}/LaunchSupport.jar"
 	DEBUG_LOG4J="${SUPPORT_DIR}/debug.log4j.xml"
 else
 
 	# Development Environment (Eclipse classes or "gradle jar")
-	INSTALL_DIR="${SUPPORT_DIR}/../../../.."
+	export INSTALL_DIR="${SUPPORT_DIR}/../../../.."
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/bin/main"
 	LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/bin/main"
 	if ! [ -d "${LS_CPATH}" ]; then
@@ -168,6 +168,15 @@ if [ ! $? -eq 0 ]; then
 	fi
 fi
 JAVA_CMD="${LS_JAVA_HOME}/bin/java"
+
+# Get the configurable environment variables from the launch properties
+# Only set them if they are currently unset or empty
+while IFS=$'\r\n' read -r line; do
+	IFS='=' read -r key value <<< "$line"
+	if [ -z ${!key} ]; then
+		export $key=$value
+	fi
+done < <("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -envvars)
 
 # Get the configurable VM arguments from the launch properties
 while IFS=$'\r\n' read -r line; do

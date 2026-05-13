@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
 
-/**
- * test for creating a new empty tool with the new front end
- */
 public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private final static String PROJECT_NAME1 = "DomainObjTests";
@@ -37,14 +34,6 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 
 	private Project project;
 	private String testDir;
-
-	/**
-	* Constructor
-	* @param arg0
-	*/
-	public CreateDomainObjectTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -65,10 +54,6 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 
 	}
 
-	/**
-	 * Test domain object.
-	 * @throws Exception
-	 */
 	@Test
 	public void testDomainObject() throws Exception {
 
@@ -136,18 +121,14 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		project.close();
 		project = ProjectTestUtils.getProject(testDir, PROJECT_NAME1);
 		Program prog = getProgram(project, "Prog2", this);
-		if (prog != null) {
-			Assert.fail("deleteObject failed");
-		}
+		assertNull("deleteObject failed", prog);
 
 		// test 7 = test create folder
 		createFolder(project, "Data");
 		project.close();
 		project = ProjectTestUtils.getProject(testDir, PROJECT_NAME1);
 		DomainFolder folder = getFolder(project, "Data");
-		if (folder == null) {
-			Assert.fail("Cannot create folder");
-		}
+		assertNotNull("Cannot create folder", folder);
 
 		// test 8 - test cannot create folder in root
 		// this is currently ok
@@ -158,9 +139,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		project.close();
 		project = ProjectTestUtils.getProject(testDir, PROJECT_NAME1);
 		folder = getFolder(project, "Data");
-		if (folder != null) {
-			Assert.fail("Cannot delete folder");
-		}
+		assertNull("Cannot delete folder", folder);
 
 		// test 10 - rename folder
 		createFolder(project, "Data");
@@ -168,9 +147,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		project.close();
 		project = ProjectTestUtils.getProject(testDir, PROJECT_NAME1);
 		folder = getFolder(project, "Data2");
-		if (folder == null) {
-			Assert.fail("Cannot create folder");
-		}
+		assertNotNull("Cannot create folder", folder);
 
 		// test 11 - test readOnly flag
 		createProgramReadOnly(project, "Prog1");

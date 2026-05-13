@@ -15,129 +15,22 @@
  */
 package ghidra.file.formats.sparseimage;
 
-import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
-
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.ByteProviderWrapper;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.AbstractSinglePayloadFileSystem;
+import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A pseudo filesystem that contains a single file that is the decompressed contents
  * of the sparse container file.
  */
 @FileSystemInfo(type = "simg", description = "Android Sparse Image (simg)", factory = SparseImageFileSystemFactory.class)
-public class SparseImageFileSystem implements GFileSystem {
+public class SparseImageFileSystem extends AbstractSinglePayloadFileSystem {
 
-	private final FSRLRoot fsFSRL;
-	private final FileSystemRefManager refManager = new FileSystemRefManager(this);
-	private final FileSystemService fsService;
 
-	private ByteProvider byteProvider;
-	private ByteProvider payloadProvider;
-	private SingleFileSystemIndexHelper fsIndexHelper;
-
-	public SparseImageFileSystem(FSRLRoot fsFSRL, ByteProvider byteProvider,
-			FileSystemService fsService,
-			TaskMonitor monitor) throws CancelledException, IOException {
-		this.fsFSRL = fsFSRL;
-		this.fsService = fsService;
-		this.byteProvider = byteProvider;
-
-		this.payloadProvider = getPayload(null, monitor);
-		FSRL containerFSRL = byteProvider.getFSRL();
-		String payloadName = containerFSRL.getName() + ".raw";
-		this.fsIndexHelper = new SingleFileSystemIndexHelper(this, fsFSRL, payloadName,
-			payloadProvider.length(), payloadProvider.getFSRL().getMD5());
-	}
-
-	@Override
-	public void close() throws IOException {
-		refManager.onClose();
-		fsIndexHelper.clear();
-		if (byteProvider != null) {
-			byteProvider.close();
-			byteProvider = null;
-		}
-		if (payloadProvider != null) {
-			payloadProvider.close();
-			payloadProvider = null;
-		}
-	}
-
-	@Override
-	public boolean isClosed() {
-		return fsIndexHelper.isClosed();
-	}
-
-	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
-
-	@Override
-	public GFile lookup(String path) {
-		return fsIndexHelper.lookup(path);
-	}
-
-	@Override
-	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
-		return fsIndexHelper.lookup(null, path, nameComp);
-	}
-
-	private ByteProvider getPayload(FSRL payloadFSRL, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		return fsService.getDerivedByteProviderPush(byteProvider.getFSRL(), payloadFSRL, "sparse",
-			-1, os -> {
-				SparseImageDecompressor sid = new SparseImageDecompressor(byteProvider, os);
-				sid.decompress(monitor);
-			}, monitor);
-	}
-
-	@Override
-	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		if (fsIndexHelper.isPayloadFile(file)) {
-			return new ByteProviderWrapper(payloadProvider, file.getFSRL());
-		}
-		return null;
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsIndexHelper.getListing(directory);
-	}
-
-	@Override
-	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
-		FileAttributes result = new FileAttributes();
-		if (fsIndexHelper.isPayloadFile(file)) {
-			try {
-				result.add(SIZE_ATTR, payloadProvider.length());
-				result.add(COMPRESSED_SIZE_ATTR, byteProvider.length());
-			}
-			catch (IOException e) {
-				// ignore and continue
-			}
-			result.add("MD5", fsIndexHelper.getPayloadFile().getFSRL().getMD5());
-		}
-		return result;
+	public SparseImageFileSystem(FSRLRoot fsFSRL, ByteProvider payloadProvider,
+			String payloadFilename, FileAttributes attrs) {
+		super(fsFSRL, payloadProvider, payloadFilename, attrs);
 	}
 }

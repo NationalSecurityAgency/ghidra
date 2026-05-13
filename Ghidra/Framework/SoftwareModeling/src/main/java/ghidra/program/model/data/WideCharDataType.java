@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.StringUtilities;
+import ghidra.util.charset.CharsetInfoManager;
 
 public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTypeWithCharset {
 	final static SettingsDefinition[] DEFAULT_WIDE_CHAR_SETTINGS = new SettingsDefinition[] {
@@ -186,9 +187,9 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	public String getCharsetName(Settings settings) {
 		switch (getLength()) {
 			case 2:
-				return CharsetInfo.UTF16;
+				return CharsetInfoManager.UTF16;
 			case 4:
-				return CharsetInfo.UTF32;
+				return CharsetInfoManager.UTF32;
 			default:
 				return StringDataInstance.DEFAULT_CHARSET_NAME;
 		}

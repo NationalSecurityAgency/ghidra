@@ -18,8 +18,10 @@ package ghidra.app.plugin.core.symtable;
 import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
@@ -27,8 +29,12 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.widgets.OptionDialog;
+import docking.widgets.OptionDialogBuilder;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.cmd.refs.RemoveReferenceCmd;
+import ghidra.app.context.ProgramSymbolActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -47,11 +53,13 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
-import ghidra.util.task.SwingUpdateManager;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 import ghidra.util.worker.Job;
 import ghidra.util.worker.Worker;
 import resources.Icons;
@@ -84,10 +92,6 @@ public class SymbolTablePlugin extends Plugin {
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
 
-	private DockingAction openRefsAction;
-	private DockingAction deleteAction;
-	private DockingAction makeSelectionAction;
-	private DockingAction setFilterAction;
 	private ToggleDockingAction referencesToAction;
 	private ToggleDockingAction instructionsFromAction;
 	private ToggleDockingAction dataFromAction;
@@ -143,9 +147,6 @@ public class SymbolTablePlugin extends Plugin {
 	public void dispose() {
 		super.dispose();
 		swingMgr.dispose();
-
-		deleteAction.dispose();
-		makeSelectionAction.dispose();
 
 		domainObjectWorker.dispose();
 		if (symProvider != null) {
@@ -345,13 +346,14 @@ public class SymbolTablePlugin extends Plugin {
 	private void createSymActions() {
 		String popupGroup = "1";
 
-		openRefsAction = new DockingAction("Symbol References", getName(), KeyBindingType.SHARED) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				refProvider.open();
-				refProvider.setCurrentSymbol(symProvider.getCurrentSymbol());
-			}
-		};
+		DockingAction openRefsAction =
+			new DockingAction("Symbol References", getName(), KeyBindingType.SHARED) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					refProvider.open();
+					refProvider.setCurrentSymbol(symProvider.getCurrentSymbol());
+				}
+			};
 		Icon icon = new GIcon("icon.plugin.symboltable.referencetable.provider");
 		openRefsAction.setPopupMenuData(
 			new MenuData(new String[] { "Symbol References" }, icon, popupGroup));
@@ -360,7 +362,7 @@ public class SymbolTablePlugin extends Plugin {
 		openRefsAction.setDescription("Display Symbol References");
 		tool.addLocalAction(symProvider, openRefsAction);
 
-		deleteAction = new DockingAction("Delete Symbols", getName()) {
+		DockingAction deleteAction = new DockingAction("Delete Symbols", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				symProvider.deleteSymbols();
@@ -385,18 +387,23 @@ public class SymbolTablePlugin extends Plugin {
 		deleteAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
 		deleteAction.setDescription("Delete Selected Symbols");
-		deleteAction.setEnabled(false);
 		tool.addLocalAction(symProvider, deleteAction);
 
 		DockingAction editExternalLocationAction = new EditExternalLocationAction(this);
 		tool.addLocalAction(symProvider, editExternalLocationAction);
 
-		makeSelectionAction = new MakeProgramSelectionAction(this, symProvider.getTable());
-		makeSelectionAction.getPopupMenuData().setMenuGroup(popupGroup);
+		MakeProgramSelectionAction symbolMakeSelectionAction =
+			new MakeProgramSelectionAction(this, symProvider.getTable());
+		symbolMakeSelectionAction.getPopupMenuData().setMenuGroup(popupGroup);
 
-		tool.addLocalAction(symProvider, makeSelectionAction);
+		MakeProgramSelectionAction refsMakeSelectionAction =
+			new MakeProgramSelectionAction(this, refProvider.getTable());
+		refsMakeSelectionAction.getPopupMenuData().setMenuGroup(popupGroup);
 
-		setFilterAction = new DockingAction("Set Filter", getName()) {
+		tool.addLocalAction(symProvider, symbolMakeSelectionAction);
+		tool.addLocalAction(refProvider, refsMakeSelectionAction);
+
+		DockingAction setFilterAction = new DockingAction("Set Filter", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				symProvider.setFilter();
@@ -438,6 +445,8 @@ public class SymbolTablePlugin extends Plugin {
 				}
 			};
 		selectionNavigationAction.getToolBarData().setToolBarGroup(navGroup);
+		selectionNavigationAction.setHelpLocation(new HelpLocation(getName(),
+			"Navigate_on_Row_Changes"));
 		tool.addLocalAction(symProvider, selectionNavigationAction);
 
 		String pinnedPopupGroup = "2"; // second group
@@ -450,6 +459,81 @@ public class SymbolTablePlugin extends Plugin {
 		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(this);
 		tableAction.getPopupMenuData().setMenuGroup(popupGroup);
 		tool.addLocalAction(symProvider, tableAction);
+
+		//@formatter:off
+		String bottomGroup = "ShowReferencesTo" + 1;
+		new ActionBuilder("Delete All References", getName())
+			.sharedKeyBinding()
+			.popupMenuIcon(Icons.DELETE_ICON)
+			.popupMenuPath("References", "Delete All")
+			.popupMenuGroup(bottomGroup)
+			.withContext(ProgramSymbolActionContext.class)
+			.enabledWhen(this::hasSymbolsSelected)
+			.onAction(this::deleteRefs)
+			.buildAndInstallLocal(symProvider);
+		//@formatter:on
+	}
+
+	private boolean hasSymbolsSelected(ProgramSymbolActionContext c) {
+		if (symProvider.isBusy()) {
+			return false;
+		}
+
+		Component source = c.getSourceComponent();
+		if (source != symProvider.getTable()) {
+			return false;
+		}
+
+		return c.getSymbolCount() != 0;
+	}
+
+	private void deleteRefs(ProgramSymbolActionContext c) {
+
+		int result = new OptionDialogBuilder("Delete References?",
+			"Delete all references to the selected symbol(s)?")
+					.addOption("Delete")
+					.addCancel()
+					.show(symProvider.getComponent());
+		if (result != OptionDialog.OPTION_ONE) {
+			return;
+		}
+
+		int n = c.getSymbolCount();
+		Iterable<Symbol> it = c.getSymbols();
+		TaskLauncher.launchModal("Deleting References", monitor -> {
+			try {
+				doDeleteRefs(it, n, monitor);
+			}
+			catch (CancelledException e) {
+				// don't care
+			}
+		});
+	}
+
+	private void doDeleteRefs(Iterable<Symbol> it, int n, TaskMonitor monitor)
+			throws CancelledException {
+
+		monitor.initialize(n, "Gathering references...");
+		List<RemoveReferenceCmd> commands = new ArrayList<>();
+		for (Symbol s : it) {
+			monitor.increment();
+			Reference[] refs = s.getReferences();
+			for (Reference ref : refs) {
+				RemoveReferenceCmd cmd = new RemoveReferenceCmd(ref);
+				commands.add(cmd);
+			}
+		}
+
+		monitor.initialize(n, "Deleting references...");
+
+		currentProgram.withTransaction("Deleting References", () -> {
+			for (RemoveReferenceCmd cmd : commands) {
+				monitor.increment();
+				if (!cmd.applyTo(currentProgram)) {
+					Msg.error(this, "Failed to delete reference: " + cmd.getStatusMsg());
+				}
+			}
+		});
 	}
 
 	private void createRefActions() {
@@ -525,26 +609,21 @@ public class SymbolTablePlugin extends Plugin {
 
 		//@formatter:off
 		toolbarGroup = "2";
-		String actionName = "Delete Reference";
-		new ActionBuilder(actionName, getName())
+		new ActionBuilder("Delete References", getName())
 			.sharedKeyBinding()
 			.toolBarIcon(Icons.DELETE_ICON)
 			.toolBarGroup(toolbarGroup)
+			.withContext(ReferenceTableContext.class)
 			.enabledWhen(c -> {
-				if (!(c instanceof ReferenceTableContext context)) {
-					return false;
-				}
-				
 				if (refProvider.isBusy()) {
 					return false;
 				}
 
-				List<Reference> refs = context.getSelectedReferences();
+				List<Reference> refs = c.getSelectedReferences();
 				return !refs.isEmpty(); 
 			})
 			.onAction(c -> {
-				ReferenceTableContext context = (ReferenceTableContext) c;
-				List<Reference> refs = context.getSelectedReferences();
+				List<Reference> refs = c.getSelectedReferences();
 				refProvider.deleteRows(refs);
 			})
 			.buildAndInstallLocal(refProvider);

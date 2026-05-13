@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.debug.gui.timeoverview;
 
 import java.awt.Color;
-import java.util.*;
+import java.util.List;
+import java.util.TreeSet;
 
 import docking.action.DockingActionIf;
 import ghidra.framework.plugintool.PluginTool;

@@ -74,7 +74,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	final AddrCtx at;
 
 	private PseudoInstruction instruction;
-	private NopPcodeOp termNop;
+	private final Map<PcodeFrame, NopPcodeOp> termNopsPerFrame = new HashMap<>();
 
 	private RegisterValue flow;
 	private final Map<Address, RegisterValue> futCtx = new HashMap<>();
@@ -225,6 +225,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	@Override
 	public void finish(PcodeFrame frame, PcodeUseropLibrary<Object> library) {
 		super.finish(frame, library);
+		NopPcodeOp termNop = termNopsPerFrame.remove(frame);
 		if (termNop != null) {
 			opsForThisStep.add(termNop);
 		}
@@ -319,9 +320,9 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 * {@inheritDoc}
 	 * 
 	 * <p>
-	 * This create an {@link IntBranch} record and collects it for this instruction step. The record
-	 * will first be used to check for fall through. Then, the passage decoder is notified, which
-	 * collects the records to later passage-wide control flow analysis.
+	 * This creates an {@link IntBranch} record and collects it for this instruction step. The
+	 * record will first be used to check for fall through. Then, the passage decoder is notified,
+	 * which collects the records for later passage-wide control flow analysis.
 	 * 
 	 * @see #checkFallthroughAndAccumulate(PcodeProgram)
 	 */
@@ -329,9 +330,8 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	protected void branchInternal(PcodeOp op, PcodeFrame frame, int relative) {
 		int tgtSeq = op.getSeqnum().getTime() + relative;
 		if (tgtSeq == frame.getCode().size()) {
-			if (termNop == null) {
-				termNop = new NopPcodeOp(at, tgtSeq);
-			}
+			NopPcodeOp termNop =
+				termNopsPerFrame.computeIfAbsent(frame, f -> new NopPcodeOp(at, tgtSeq));
 			branchesForThisStep.add(new SIntBranch(op, termNop, false));
 		}
 		else {
@@ -454,16 +454,6 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 * @return the reachability of the fall-through flow
 	 */
 	public Reachability checkFallthroughAndAccumulate(PcodeProgram from) {
-		if (instruction instanceof DecodeErrorInstruction) {
-			stride.opsForStride.addAll(opsForThisStep);
-			for (Branch branch : branchesForThisStep) {
-				switch (branch) {
-					case ErrBranch eb -> stride.passage.otherBranches.put(eb.from(), eb);
-					default -> throw new AssertionError();
-				}
-			}
-			return null;
-		}
 		if (opsForThisStep.isEmpty()) {
 			return Reachability.WITHOUT_CTXMOD;
 		}

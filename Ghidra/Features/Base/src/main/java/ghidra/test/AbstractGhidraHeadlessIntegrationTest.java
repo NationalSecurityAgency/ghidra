@@ -261,27 +261,27 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param <T> the return type
 	 * @param <E> the exception type
-	 * @param p the program
+	 * @param dobj the program or other domain object
 	 * @param s the code to execute
 	 * @return the supplier's return value
 	 * @see #modifyProgram(Program, ExceptionalCallback)
 	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
-	public static <T, E extends Exception> T tx(Program p, ExceptionalSupplier<T, E> s) {
-		int txId = p.startTransaction("Test - Function in Transaction");
+	public static <T, E extends Exception> T tx(DomainObject dobj, ExceptionalSupplier<T, E> s) {
+		int txId = dobj.startTransaction("Test - Function in Transaction");
 		boolean commit = true;
 		try {
 			T t = s.get();
-			p.flushEvents();
+			dobj.flushEvents();
 			waitForSwing();
 			return t;
 		}
 		catch (Exception e) {
 			commit = false;
-			failWithException("Exception modifying program '" + p.getName() + "'", e);
+			failWithException("Exception modifying program '" + dobj.getName() + "'", e);
 		}
 		finally {
-			p.endTransaction(txId, commit);
+			dobj.endTransaction(txId, commit);
 		}
 		return null;
 	}

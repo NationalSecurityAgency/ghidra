@@ -21,11 +21,10 @@ import ghidra.util.NumericUtilities;
 /**
  * DWARF attribute with binary bytes.
  */
-public class DWARFBlobAttribute extends DWARFAttributeValue {
+public class DWARFBlobAttribute implements DWARFAttributeValue {
 	private final byte[] bytes;
 
-	public DWARFBlobAttribute(byte[] bytes, DWARFAttributeDef<?> def) {
-		super(def);
+	public DWARFBlobAttribute(byte[] bytes) {
 		this.bytes = bytes;
 	}
 
@@ -38,13 +37,12 @@ public class DWARFBlobAttribute extends DWARFAttributeValue {
 	}
 
 	@Override
-	public String getValueString(DWARFCompilationUnit cu) {
-		return NumericUtilities.convertBytesToString(bytes, " ");
+	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
+		return "[%d]%s".formatted(bytes.length, NumericUtilities.convertBytesToString(bytes, " "));
 	}
 
 	@Override
 	public String toString() {
-		return "%s : %s = [%d]%s".formatted(getAttributeName(), getAttributeForm(), bytes.length,
-			NumericUtilities.convertBytesToString(bytes, " "));
+		return "[%d]%s".formatted(bytes.length, NumericUtilities.convertBytesToString(bytes, " "));
 	}
 }

@@ -166,9 +166,4 @@ public class PcodeEmulator extends AbstractPcodeMachine<byte[]> {
 		PcodeStateCallbacks scb = cb.wrapFor(thread);
 		return new BytesPcodeExecutorState(language, scb);
 	}
-
-	@Override
-	protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
-		return PcodeUseropLibrary.nil();
-	}
 }

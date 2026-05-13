@@ -185,20 +185,20 @@ def ghidra_trace_connect(address: Optional[str] = None) -> None:
         raise RuntimeError("port must be numeric")
 
 
-def ghidra_trace_listen(address: str = '0.0.0.0:0') -> None:
+def ghidra_trace_listen(address: str = '127.0.0.1:0') -> None:
     """Listen for Ghidra to connect for tracing.
 
     Takes an optional address for the host and port on which to listen.
     Either the form 'host:port' or just 'port'. If omitted, it will bind
-    to an ephemeral port on all interfaces. If only the port is given,
-    it will bind to that port on all interfaces. This command will block
-    until the connection is established.
+    to an ephemeral port on localhost. If only the port is given, it will
+    bind to that port on localhost. This command will block until the
+    connection is established.
     """
 
     STATE.require_no_client()
     parts = address.split(':')
     if len(parts) == 1:
-        host, port = '0.0.0.0', parts[0]
+        host, port = '127.0.0.1', parts[0]
     elif len(parts) == 2:
         host, port = parts
     else:
@@ -1068,6 +1068,10 @@ def put_single_breakpoint(bp, ibobj, nproc: int, ikeys: List[str]) -> None:
         tid = "%04x" % tid
     except exception.E_NOINTERFACE_Error:
         tid = "****"
+    try:
+        handler = util.BPT_HANDLERS[bp.GetId()]
+    except Exception:
+        handler = ""
 
     if bp.GetType()[0] == DbgEng.DEBUG_BREAKPOINT_DATA:
         width, prot = bp.GetDataParameters()
@@ -1103,6 +1107,8 @@ def put_single_breakpoint(bp, ibobj, nproc: int, ikeys: List[str]) -> None:
     brkobj.set_value('Flags', bp.GetFlags())
     if tid != None:
         brkobj.set_value('Match TID', tid)
+    if handler != None:
+        brkobj.set_value('Handler', handler)
     brkobj.set_value('Command', bp.GetCommand())
     brkobj.insert()
 
@@ -1341,6 +1347,8 @@ def put_threads(running: bool = False) -> None:
             tobj.set_value('TEB', hex(int(t[1])))
             tobj.set_value('Name', t[2])
         tobj.insert()
+        stackobj = trace.create_object(tpath+".Stack")
+        stackobj.insert()
     trace.proxy_object_path(THREADS_PATTERN.format(
         procnum=nproc)).retain_values(keys)
 
@@ -1518,8 +1526,8 @@ def put_exceptions() -> None:
 
 
 @util.dbg.eng_thread
-def put_single_exception(obj: TraceObject, objpath: str, 
-                         p: DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS, 
+def put_single_exception(obj: TraceObject, objpath: str,
+                         p: DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS,
                          offset: int, index: int, specific: bool) -> None:
     exc_name = "None"
     if specific is True:
@@ -1529,6 +1537,11 @@ def put_single_exception(obj: TraceObject, objpath: str,
     exc_cmd2 = util.GetExceptionFilterSecondCommand(
         offset + index, p.SecondCommandSize)
     exc_code = hex(p.ExceptionCode)
+    try:
+        util.EXC_CODES[index] = exc_code
+        handler = util.EXC_HANDLERS[exc_code]
+    except Exception:
+        handler = ""
     obj.set_value('Code', exc_code)
     trace = STATE.require_trace()
     contobj = trace.create_object(objpath+".Cont")
@@ -1543,6 +1556,8 @@ def put_single_exception(obj: TraceObject, objpath: str,
         obj.set_value('Cmd', exc_cmd)
     if exc_cmd2 is not None:
         obj.set_value('Cmd2', exc_cmd2)
+    if handler is not None:
+        obj.set_value('Handler', handler)
     obj.set_value('_display', "{} {} [{}]".format(index, exc_name, exc_code))
     obj.insert()
 

@@ -81,6 +81,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	private static final String THUNK_NAME_PREFIX = "[thunk]:";
 
+	private static final boolean CREATE_FLATTENED_CLASSES =
+		Boolean.getBoolean("ghidra.pdb.createFlattenedClasses");
+
 	//==============================================================================================
 
 	private static final String PDB_ANALYSIS_LOOKUP_STATE = "PDB_UNIVERSAL_ANALYSIS_STATE";
@@ -373,12 +376,27 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				processTypes();
 				processSymbols();
 				vxtManager.createTables(dataTypeManager, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+				doTempResearch();
 				break;
 			default:
 				throw new PdbException("PDB: Invalid Application Control: " +
 					applicatorOptions.getProcessingControl());
 		}
 		Msg.info(this, "PDB Types and Main Symbols Processing Terminated Normally");
+	}
+
+	private void doTempResearch() {
+		if (!CREATE_FLATTENED_CLASSES) {
+			return;
+		}
+		for (CppCompositeType cppType : classTypeByMsTypeNum.values()) {
+			if (cppType.getComposite() instanceof Structure s) {
+				Structure x = CppCompositeType.createFlattenedTemp(this, s);
+				if (x != null) {
+					resolve(x);
+				}
+			}
+		}
 	}
 
 	private void doDisassemblyWork() throws PdbException, CancelledException {
@@ -2226,12 +2244,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	void predefineClass(SymbolPath classPath) {
-		if (classPath == null) {
+	void predefineClass(SymbolPath symbolPath) {
+		if (symbolPath == null) {
 			return;
 		}
-		isClassByNamespace.put(classPath, true);
-		for (SymbolPath path = classPath.getParent(); path != null; path = path.getParent()) {
+		isClassByNamespace.put(symbolPath, true);
+		for (SymbolPath path = symbolPath.getParent(); path != null; path = path.getParent()) {
 			if (!isClassByNamespace.containsKey(path)) {
 				isClassByNamespace.put(path, false); // path is simple namespace
 			}

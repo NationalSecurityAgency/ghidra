@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import docking.action.DockingActionIf;
 import generic.theme.GColor;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
-import ghidra.app.util.viewer.listingpanel.OverviewProvider;
+import ghidra.app.util.viewer.listingpanel.ListingOverviewProvider;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -40,13 +40,13 @@ import help.Help;
  * Overview bar component. Uses color to indicate various address based properties for a program.
  * Uses an {@link OverviewColorService} to get the appropriate color for an address.
  */
-public class OverviewColorComponent extends JPanel implements OverviewProvider {
+public class OverviewColorComponent extends JPanel implements ListingOverviewProvider {
 	private static final Color DEFAULT_COLOR = new GColor("color.bg.plugin.overview.defalt");
 	private OverviewColorService service;
 	private Color[] colors = new Color[0];
 	private final SwingUpdateManager refreshUpdater =
 		new SwingUpdateManager(100, 15000, () -> doRefresh());
-	private AddressIndexMap map;
+	private AddressIndexMap addressMap;
 	private Navigatable navigatable;
 	private PluginTool tool;
 	private List<DockingActionIf> actions;
@@ -74,6 +74,12 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 		ToolTipManager.sharedInstance().registerComponent(this);
 		Help.getHelpService().registerHelp(this, service.getHelpLocation());
 		actions = service.getActions();
+	}
+
+	@Override
+	public void dispose() {
+		service = null;
+		ToolTipManager.sharedInstance().unregisterComponent(this);
 	}
 
 	/**
@@ -154,10 +160,10 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 	}
 
 	private void doRefresh() {
-		if (map == null) {
+		if (addressMap == null) {
 			return;
 		}
-		BigInteger indexCount = map.getIndexCount();
+		BigInteger indexCount = addressMap.getIndexCount();
 		if (indexCount.equals(BigInteger.ZERO)) {
 			Arrays.fill(colors, DEFAULT_COLOR);
 			repaint();
@@ -168,7 +174,7 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 		for (int i = 0; i < colors.length; i++) {
 			if (colors[i] == null) {
 				BigInteger index = indexCount.multiply(BigInteger.valueOf(i)).divide(bigTotal);
-				Address address = map.getAddress(index);
+				Address address = addressMap.getAddress(index);
 				colors[i] = service.getColor(address);
 			}
 		}
@@ -178,17 +184,17 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 	private Address getAddress(int pixelIndex) {
 		BigInteger bigHeight = BigInteger.valueOf(getOverviewPixelCount());
 		BigInteger bigPixelIndex = BigInteger.valueOf(pixelIndex);
-		BigInteger bigIndex = map.getIndexCount().multiply(bigPixelIndex).divide(bigHeight);
-		return map.getAddress(bigIndex);
+		BigInteger bigIndex = addressMap.getIndexCount().multiply(bigPixelIndex).divide(bigHeight);
+		return addressMap.getAddress(bigIndex);
 	}
 
 	private int getPixelIndex(Address address) {
-		BigInteger addressIndex = map.getIndex(address);
+		BigInteger addressIndex = addressMap.getIndex(address);
 		if (addressIndex == null) {
 			return -1;
 		}
 		BigInteger bigHeight = BigInteger.valueOf(getOverviewPixelCount());
-		BigInteger indexCount = map.getIndexCount();
+		BigInteger indexCount = addressMap.getIndexCount();
 		return addressIndex.multiply(bigHeight).divide(indexCount).intValue();
 	}
 
@@ -198,10 +204,10 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 	}
 
 	@Override
-	public void setProgram(Program program, AddressIndexMap map) {
-		this.map = map;
-		colors = new Color[getOverviewPixelCount()];
-		refreshUpdater.updateLater();
+	public void screenDataChanged(Program program, AddressIndexMap map) {
+		this.addressMap = map;
+		this.colors = new Color[getOverviewPixelCount()];
+		this.refreshUpdater.updateLater();
 	}
 
 	@Override
@@ -248,5 +254,4 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 	public PluginTool getTool() {
 		return tool;
 	}
-
 }

@@ -194,8 +194,8 @@ public enum DWARFExpressionOpCode {
 	DW_OP_convert(0xa8, U_LEB128),
 	DW_OP_reinterpret(0xa9, U_LEB128);
 
-	private static final int DW_OP_lo_user = 0xe0;
-	private static final int DW_OP_hi_user = 0xff;
+//	private static final int DW_OP_lo_user = 0xe0;
+//	private static final int DW_OP_hi_user = 0xff;
 
 	private final int opcode;
 	private final DWARFExpressionOperandType[] operandTypes;

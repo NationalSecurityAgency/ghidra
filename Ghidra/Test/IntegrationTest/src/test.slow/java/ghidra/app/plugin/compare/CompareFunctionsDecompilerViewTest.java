@@ -79,9 +79,9 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 		checkFunctions(provider, LEFT, fun1, fun1, fun2);
 		DecompilerCodeComparisonView comparisonProvider =
 			(DecompilerCodeComparisonView) provider
-					.getCodeComparisonView(DecompilerCodeComparisonView.NAME);
+					.getView(DecompilerCodeComparisonView.NAME);
 
-		waitForDecompiler(comparisonProvider);
+		waitForDecompiler(provider, comparisonProvider);
 		assertHasLines(comparisonProvider.getLeftPanel(), 28);
 		assertHasLines(comparisonProvider.getRightPanel(), 22);
 	}
@@ -102,9 +102,13 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 		assertEquals(lineCount, panel.getDecompilerPanel().getLines().size());
 	}
 
-	private void waitForDecompiler(DecompilerCodeComparisonView panel) {
+	private void waitForDecompiler(FunctionComparisonProvider provider,
+			DecompilerCodeComparisonView view) {
+
+		runSwing(() -> provider.setActiveView(view.getName()));
 		waitForSwing();
-		waitForCondition(() -> !panel.isBusy());
+
+		waitForCondition(() -> !view.isBusy());
 		waitForSwing();
 	}
 

@@ -4,6 +4,7 @@
   <properties>
     <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.MIPSEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="mips"/>
     <property key="assemblyRating:MIPS:BE:64:R6" value="PLATINUM"/>
   </properties>
   <programcounter register="pc"/>

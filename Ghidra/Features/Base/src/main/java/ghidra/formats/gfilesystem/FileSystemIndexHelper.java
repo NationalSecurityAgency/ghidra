@@ -270,6 +270,11 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		return fd != null ? fd.file : null;
 	}
 
+	public synchronized String getSymlinkPath(GFile file) {
+		FileData<METADATATYPE> fd = file == null ? rootDir : fileToEntryMap.get(file);
+		return fd != null ? fd.symlinkPath : null;
+	}
+
 	private FileData<METADATATYPE> getFileData(GFile f) throws IOException {
 		if (f == null) {
 			return rootDir;

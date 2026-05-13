@@ -20,6 +20,7 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.StringUtilities;
+import ghidra.util.charset.CharsetInfoManager;
 
 public class WideChar16DataType extends BuiltIn implements ArrayStringable, DataTypeWithCharset {
 
@@ -152,6 +153,6 @@ public class WideChar16DataType extends BuiltIn implements ArrayStringable, Data
 
 	@Override
 	public String getCharsetName(Settings settings) {
-		return CharsetInfo.UTF16;
+		return CharsetInfoManager.UTF16;
 	}
 }

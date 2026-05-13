@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,12 @@ package ghidra.framework.main.logviewer.ui;
 
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import docking.DockingUtils;
 import ghidra.framework.main.logviewer.event.*;
 import ghidra.framework.main.logviewer.event.FVEvent.EventType;
 import ghidra.framework.main.logviewer.model.*;
@@ -100,7 +100,6 @@ public class FVSlider extends JSlider
 		createKeyBindings(table, model, reader, eventListener);
 	}
 
-	
 	/**
 	 * Sets the value of the slider based on the given file position.
 	 * 
@@ -143,11 +142,7 @@ public class FVSlider extends JSlider
 			// Once we have that byte value, just set the slider to be the same.
 			//
 			int chunkRowStart = 0;
-			Iterator<Chunk> iter = model.iterator();
-
-			while (iter.hasNext()) {
-				Chunk chunk = iter.next();
-
+			for (Chunk chunk : model) {
 				// Figure out the starting row of the next chunk. If the row we want is less than
 				// that, then we know we've found the chunk that contains our row.
 				chunkRowStart += chunk.linesInChunk;
@@ -208,7 +203,7 @@ public class FVSlider extends JSlider
 
 			FVEvent tailOffEvt = new FVEvent(EventType.SCROLL_LOCK_ON, null);
 			eventListener.send(tailOffEvt);
-				
+
 			FVEvent sliderChangedEvt = new FVEvent(EventType.SLIDER_CHANGED, filePosition);
 			eventListener.send(sliderChangedEvt);
 
@@ -257,7 +252,7 @@ public class FVSlider extends JSlider
 	public void mouseExited(MouseEvent e) {
 		// do nothing
 	}
-	
+
 	/**
 	 * Returns the file position (long) for the given slider position (int). This is calculated by
 	 * computing the position of the slider as a percentage of its maximum, and applying the same
@@ -325,7 +320,7 @@ public class FVSlider extends JSlider
 	 */
 	private void createKeyBindings(FVTable table, ChunkModel model, ChunkReader reader,
 			FVEventListener eventListener) {
-		
+
 		// These key bindings are identical to the ones set in the FVTable class. These are 
 		// necessary for cases where the user hits a key that should manipulate the table, but 
 		// keyboard focus is on the slider.
@@ -343,37 +338,41 @@ public class FVSlider extends JSlider
 		am_table.put("Home", new HomeAction(eventListener));
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "End");
 		am_table.put("End", new EndAction(eventListener));
-		
+
 		// Recognize when the shift key has been pressed and released, so we know how to handle 
 		// selection.
-		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, InputEvent.SHIFT_DOWN_MASK, false), "ShiftPressed");
+		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, InputEvent.SHIFT_DOWN_MASK, false),
+			"ShiftPressed");
 		am_table.put("ShiftPressed", new AbstractAction() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				table.setShiftDown(true);	
-			}	
+				table.setShiftDown(true);
+			}
 		});
 		im_table.put(KeyStroke.getKeyStroke("released SHIFT"), "ShiftReleased");
 		am_table.put("ShiftReleased", new AbstractAction() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				table.setShiftDown(false);	
-			}	
+				table.setShiftDown(false);
+			}
 		});
-		
+
 		// Now create a binding for the CTRL-A, select all action.
-		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK, false), "SelectAll");
-		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.META_DOWN_MASK, false), "SelectAll");
+		im_table.put(
+			KeyStroke.getKeyStroke(KeyEvent.VK_A, DockingUtils.CONTROL_KEY_MODIFIER_MASK, false),
+			"SelectAll");
+		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.META_DOWN_MASK, false),
+			"SelectAll");
 		am_table.put("SelectAll", new AbstractAction() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
 					model.selectedByteStart = 0;
-					model.selectedByteEnd = reader.getFileSize()-1;
-					
+					model.selectedByteEnd = reader.getFileSize() - 1;
+
 					FVEvent copyEvt = new FVEvent(EventType.COPY_SELECTION, null);
 					eventListener.send(copyEvt);
 				}
@@ -383,5 +382,5 @@ public class FVSlider extends JSlider
 			}
 		});
 	}
-	
+
 }

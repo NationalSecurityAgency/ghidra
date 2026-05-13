@@ -95,7 +95,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 		currentProgress = value;
 		queue.progressChanged(id, item, currentProgress);
 	}
-	
+
 	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled()) {
@@ -105,6 +105,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public void setMessage(String message) {
+		lastMessage = message;
 		queue.progressMessageChanged(id, item, message);
 	}
 

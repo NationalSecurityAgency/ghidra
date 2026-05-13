@@ -16,6 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -809,7 +810,6 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testInvalidAnnotation_NoSuchSymbol() {
-
 		// valid annotation, invalid symbol
 		String data = "This is an annotated string {@symbol 01001001}";
 		FieldElement fieldElement =

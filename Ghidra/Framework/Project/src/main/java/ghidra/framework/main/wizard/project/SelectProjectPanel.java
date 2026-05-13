@@ -26,6 +26,7 @@ import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.preferences.Preferences;
@@ -46,7 +47,7 @@ public class SelectProjectPanel extends JPanel {
 	private static String PROJECT_EXTENSION = ProjectLocator.getProjectExtension().substring(1);
 
 	private JTextField projectNameField;
-	private JTextField directoryField;
+	private ElidingFilePathTextField directoryField;
 	private JButton browseButton;
 
 	private Callback statusChangedCallback;
@@ -98,7 +99,8 @@ public class SelectProjectPanel extends JPanel {
 
 	private JPanel createDirectoryPanel(DocumentListener listener) {
 		JPanel panel = new JPanel(new BorderLayout());
-		directoryField = new JTextField(10);
+		directoryField = new ElidingFilePathTextField();
+		directoryField.setColumns(10);
 		directoryField.getDocument().addDocumentListener(listener);
 		directoryField.setName("Project Directory");
 

@@ -765,6 +765,10 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	record WriteRegMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
+		static final WriteRegMatcher HAS_CONTAINER_NAME_VALUE = new WriteRegMatcher(4, List.of(
+			new TypeParamSpec("container", TraceRegisterContainer.class),
+			new TypeParamSpec("name", String.class),
+			new TypeParamSpec("value", byte[].class)));
 		static final WriteRegMatcher HAS_FRAME_NAME_VALUE = new WriteRegMatcher(3, List.of(
 			new TypeParamSpec("frame", TraceStackFrame.class),
 			new TypeParamSpec("name", String.class),
@@ -776,7 +780,8 @@ public class TraceRmiTarget extends AbstractTarget {
 		static final WriteRegMatcher HAS_REG_VALUE = new WriteRegMatcher(1, List.of(
 			new TypeParamSpec("register", TraceRegister.class),
 			new TypeParamSpec("value", byte[].class)));
-		static final List<WriteRegMatcher> ALL = matchers(HAS_FRAME_NAME_VALUE, HAS_REG_VALUE);
+		static final List<WriteRegMatcher> ALL = matchers(HAS_CONTAINER_NAME_VALUE,
+			HAS_FRAME_NAME_VALUE, HAS_THREAD_NAME_VALUE, HAS_REG_VALUE);
 	}
 
 	record BreakExecMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
@@ -1352,6 +1357,16 @@ public class TraceRmiTarget extends AbstractTarget {
 			TraceStackFrame frame = stack.getFrame(getSnap(), frameLevel, false);
 			return writeReg.method.invokeAsync(Map.ofEntries(
 				Map.entry(paramFrame.name(), frame.getObject()),
+				Map.entry(writeReg.params.get("name").name(), found.name()),
+				Map.entry(writeReg.params.get("value").name(), getBytes(value))))
+					.toCompletableFuture()
+					.thenApply(__ -> null);
+		}
+
+		RemoteParameter paramContainer = writeReg.params.get("container");
+		if (paramContainer != null) {
+			return writeReg.method.invokeAsync(Map.ofEntries(
+				Map.entry(paramContainer.name(), thread.getObject().findRegisterContainer(0)),
 				Map.entry(writeReg.params.get("name").name(), found.name()),
 				Map.entry(writeReg.params.get("value").name(), getBytes(value))))
 					.toCompletableFuture()

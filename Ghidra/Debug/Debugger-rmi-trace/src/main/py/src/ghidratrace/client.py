@@ -48,7 +48,7 @@ from .util import send_delimited, recv_delimited
 # Other places to change:
 # * every pyproject.toml file (incl. deps)
 # * TraceRmiHandler.VERSION
-VERSION = '12.0'
+VERSION = '12.1'
 
 
 E = TypeVar('E')

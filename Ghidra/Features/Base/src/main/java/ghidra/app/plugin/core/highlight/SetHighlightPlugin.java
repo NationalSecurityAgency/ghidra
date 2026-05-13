@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.highlight;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
@@ -101,7 +101,7 @@ public class SetHighlightPlugin extends Plugin {
 		setHighlightFromSelectionAction.setPopupMenuData(new MenuData(SET_HIGHLIGHT_POPUPPATH,
 			HIGHLIGHT_GROUP));
 		setHighlightFromSelectionAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_H,
-			InputEvent.CTRL_DOWN_MASK));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHighlightFromSelectionAction
 				.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(setHighlightFromSelectionAction);

@@ -35,6 +35,7 @@
 #@env QEMU_GDB:int=1234 "QEMU Port" "Port for gdb connection to qemu"
 #@env OPT_EXTRA_QEMU_ARGS:str="" "Extra qemu arguments" "Extra arguments to pass to qemu. Use with care."
 #@env OPT_GDB_PATH:file="gdb-multiarch" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 #@env OPT_EXTRA_TTY:bool=false "QEMU TTY" "Provide a separate terminal emulator for the target."

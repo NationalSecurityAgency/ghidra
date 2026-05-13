@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,33 +115,37 @@ public class MarkupItemImpl implements VTMarkupItem {
 
 	@Override
 	public VTMarkupType getMarkupType() {
-		return markupItemStorage.getMarkupType();
+		return markupType;
 	}
 
 	@Override
 	public VTMarkupItemStatus getStatus() {
 		validateDestinationCache();
 		VTMarkupItemStatus status = markupItemStorage.getStatus();
-		if (status == UNAPPLIED) {
-			if (!gettingStatus) {
-				try {
-					gettingStatus = true;
-					boolean conflictsWithOtherMarkup = getMarkupType().conflictsWithOtherMarkup(
-						this, getAssociation().getMarkupItems(TaskMonitor.DUMMY));
-					if (conflictsWithOtherMarkup) {
-						return CONFLICT;
-					}
-				}
-				catch (CancelledException e) {
-					// Shouldn't happen, but ignore if it does.
-				}
-				finally {
-					gettingStatus = false;
+		if (status != UNAPPLIED) {
+			return status;
+		}
+
+		if (!gettingStatus) {
+			try {
+				gettingStatus = true;
+				VTAssociation association = getAssociation();
+				Collection<VTMarkupItem> items = association.getMarkupItems(TaskMonitor.DUMMY);
+				boolean conflicts = markupType.conflictsWithOtherMarkup(this, items);
+				if (conflicts) {
+					return CONFLICT;
 				}
 			}
-			if (hasSameSourceDestinationValues()) {
-				return SAME;
+			catch (CancelledException e) {
+				// Shouldn't happen, but ignore if it does.
 			}
+			finally {
+				gettingStatus = false;
+			}
+		}
+
+		if (hasSameSourceDestinationValues()) {
+			return SAME;
 		}
 		return status;
 	}
@@ -196,15 +200,10 @@ public class MarkupItemImpl implements VTMarkupItem {
 				markupItemStorage.setApplyFailed("Can't apply without a valid destination");
 			fireMarkupItemStatusChanged(oldStatus, FAILED_APPLY);
 			throw new VersionTrackingApplyException(
-				"Cannot apply a markup item without first " + "setting the destination address");
+				"Cannot apply a markup item without first setting the destination address");
 		}
 
 		if (!canApply()) {
-			// TODO Should this throw an Exception instead?
-//			VTMarkupType itemMarkupType = item.getMarkupType();
-//			throw new VersionTrackingApplyException("Cannot apply " +
-//				itemMarkupType.getDisplayName() + " at " + item.getDestinationAddress().toString() +
-//				".");
 			return;
 		}
 

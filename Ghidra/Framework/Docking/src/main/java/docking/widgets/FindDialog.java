@@ -23,10 +23,14 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.ReusableDialogComponentProvider;
+import org.apache.commons.lang3.StringUtils;
+
+import docking.*;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
+import docking.widgets.search.FindDialogSearcher;
+import docking.widgets.search.SearchResults;
 import utility.function.Callback;
 
 /**
@@ -37,8 +41,12 @@ public class FindDialog extends ReusableDialogComponentProvider {
 	protected GhidraComboBox<String> comboBox;
 
 	protected FindDialogSearcher searcher;
+	protected SearchResults searchResults;
+
 	private JButton nextButton;
 	private JButton previousButton;
+	private JButton findAllButton;
+	private boolean isFindButtonApiDisabled;
 	private JRadioButton stringRadioButton;
 	private JRadioButton regexRadioButton;
 
@@ -49,7 +57,14 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		this.searcher = searcher;
 
 		addWorkPanel(buildMainPanel());
-		buildButtons();
+		buildFindButtons();
+
+		addDismissButton();
+	}
+
+	public void setFindAllEnabled(boolean enabled) {
+		isFindButtonApiDisabled = !enabled;
+		findAllButton.setEnabled(enabled);
 	}
 
 	@Override
@@ -62,7 +77,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		this.closedCallback = Callback.dummyIfNull(c);
 	}
 
-	private void buildButtons() {
+	protected void buildFindButtons() {
 		nextButton = new JButton("Next");
 		nextButton.setMnemonic('N');
 		nextButton.getAccessibleContext().setAccessibleName("Next");
@@ -76,7 +91,13 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		previousButton.addActionListener(ev -> doSearch(false));
 		addButton(previousButton);
 
-		addDismissButton();
+		findAllButton = new JButton("Find All");
+		findAllButton.setMnemonic('A');
+		findAllButton.getAccessibleContext().setAccessibleName("Find All");
+		findAllButton.addActionListener(ev -> doSearchAll());
+		addButton(findAllButton);
+
+		enableButtons(false);
 	}
 
 	private JPanel buildMainPanel() {
@@ -137,6 +158,10 @@ public class FindDialog extends ReusableDialogComponentProvider {
 	protected void enableButtons(boolean b) {
 		nextButton.setEnabled(b);
 		previousButton.setEnabled(b);
+
+		if (!isFindButtonApiDisabled) {
+			findAllButton.setEnabled(b);
+		}
 	}
 
 	private JPanel buildFormatPanel() {
@@ -147,13 +172,6 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		formatPanel.add(regexRadioButton);
 		formatPanel.getAccessibleContext().setAccessibleName("Format");
 		return formatPanel;
-	}
-
-	@Override
-	protected void dialogClosed() {
-		comboBox.setText("");
-		searcher.clearHighlights();
-		closedCallback.call();
 	}
 
 	public void next() {
@@ -168,7 +186,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		return regexRadioButton.isSelected();
 	}
 
-	private void doSearch(boolean forward) {
+	protected void doSearch(boolean forward) {
 
 		if (!nextButton.isEnabled()) {
 			return;  // don't search while disabled
@@ -179,14 +197,13 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		String searchText = comboBox.getText();
 
 		CursorPosition cursorPosition = searcher.getCursorPosition();
-		SearchLocation searchLocation =
-			searcher.search(searchText, cursorPosition, forward, useRegex);
+		searchResults = searcher.search(searchText, cursorPosition, forward, useRegex);
 
 		//
 		// First, just search in the current direction.
 		//
-		if (searchLocation != null) {
-			notifySearchHit(searchLocation);
+		if (searchResults != null) {
+			storeSearchText(searchText);
 			return;
 		}
 
@@ -203,9 +220,9 @@ public class FindDialog extends ReusableDialogComponentProvider {
 			cursorPosition = searcher.getEnd();
 		}
 
-		searchLocation = searcher.search(searchText, cursorPosition, forward, useRegex);
-		if (searchLocation != null) {
-			notifySearchHit(searchLocation);
+		searchResults = searcher.search(searchText, cursorPosition, forward, useRegex);
+		if (searchResults != null) {
+			storeSearchText(searchText);
 			notifyUser(wrapMessage);
 			return;
 		}
@@ -216,12 +233,6 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		// we will again find the previous match, if it exists.
 		//
 		notifyUser("Not found");
-	}
-
-	protected void notifySearchHit(SearchLocation location) {
-		searcher.setCursorPosition(location.getCursorPosition());
-		storeSearchText(location.getSearchText());
-		searcher.highlightSearchResults(location);
 	}
 
 	private void notifyUser(String message) {
@@ -236,9 +247,68 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		});
 	}
 
+	protected void doSearchAll() {
+
+		DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
+		if (dwm == null) {
+			return; // not sure this can happen
+		}
+
+		// Note: we do not save the SearchResults in this dialog.  They will be managed by the 
+		// provider we create below.  This is in contrast to a single search, which will results.
+		// Further, when this method closes this dialog, the dialog's current results are cleared.
+		String searchText = getSearchText();
+		SearchResults results = searcher.searchAll(searchText, useRegex());
+		if (results.isEmpty()) {
+			setStatus("No results found");
+			return;
+		}
+
+		// save off searches that find results so users can reuse them later
+		storeSearchText(getSearchText());
+
+		String resultsName = results.getName();
+		if (StringUtils.isBlank(resultsName)) {
+			resultsName = "";
+		}
+		else {
+			resultsName = "[%s]".formatted(resultsName);
+		}
+		String dialogTitle = getTitle();
+
+		// e.g., Help Find: 'text' [Foo.html]
+		String subTitle = ": '%s' %s".formatted(searchText, resultsName);
+		Tool tool = dwm.getTool();
+		FindDialogResultsProvider provider =
+			new FindDialogResultsProvider(tool, dialogTitle, subTitle, results);
+
+		// set the tab text to the short and descriptive search term
+		provider.setTabText("'%s'".formatted(searchText));
+
+		close();
+	}
+
+	@Override
+	public void toFront() {
+		super.toFront();
+		String text = comboBox.getText();
+		enableButtons(text.length() != 0);
+	}
+
 	@Override
 	protected void dialogShown() {
 		clearStatusText();
+	}
+
+	@Override
+	protected void dialogClosed() {
+		comboBox.setText("");
+
+		if (searchResults != null) {
+			searchResults.dispose();
+			searchResults = null;
+		}
+		closedCallback.call();
 	}
 
 	public FindDialogSearcher getSearcher() {
@@ -286,4 +356,5 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		// do this last since removing items may change the selected item
 		model.setSelectedItem(text);
 	}
+
 }

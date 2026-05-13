@@ -84,6 +84,7 @@ public class ConstraintFilterPanel extends JPanel {
 	private Component buildConstraintCombo() {
 		JPanel panel = new JPanel(new BorderLayout());
 		constraintComboBox = new GComboBox<>();
+		constraintComboBox.getAccessibleContext().setAccessibleName("Filter");
 		constraintComboBox.setRenderer(new ConstraintComboBoxCellRenderer());
 		constraintComboBox.addActionListener(constraintComboBoxListener);
 		panel.add(constraintComboBox, BorderLayout.CENTER);
@@ -119,6 +120,46 @@ public class ConstraintFilterPanel extends JPanel {
 		constraintComboBox.addActionListener(constraintComboBoxListener);
 	}
 
+	/**
+	 * Gets the column value for the given component.  The column value is relative to the dialog's
+	 * grid of components.  This returns -1 if the given component is not inside the component 
+	 * hierarchy of this filter panel.
+	 * 
+	 * @param component the component
+	 * @return the column
+	 * @see #getActiveComponent(int)
+	 */
+	int getActiveComponentColumn(Component component) {
+
+		// Note: we provide a combo for choosing a condition and a field for entering a value.
+		// The client of this class has a combo that is first in the row.  We will allow that parent
+		// widget to be column 0, so we will use column 1 and 2 for our widgets.
+		if (constraintComboBox == component) {
+			return 1;
+		}
+		else if (SwingUtilities.isDescendingFrom(component, inlineEditorPanel)) {
+			return 2;
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Gets the component for the given column value.
+	 * @param col the column value
+	 * @return the component
+	 * @see #getActiveComponentColumn(Component)
+	 */
+	Component getActiveComponent(int col) {
+		if (col == 1) {
+			return constraintComboBox;
+		}
+		else if (col == 2) {
+			return inlineEditorPanel;
+		}
+		return null;
+	}
+
 	private class ConstraintComboBoxCellRenderer
 			extends GComboBoxCellRenderer<ColumnConstraint<?>> {
 		@Override
@@ -126,4 +167,5 @@ public class ConstraintFilterPanel extends JPanel {
 			return value.getName();
 		}
 	}
+
 }

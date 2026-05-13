@@ -21,7 +21,7 @@ import java.util.*;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.options.OptionsService;
 import docking.options.editor.OptionsDialog;

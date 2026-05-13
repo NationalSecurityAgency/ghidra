@@ -36,6 +36,7 @@
 #@env OPT_GDBSERVER_PATH:str="gdbserver" "gdbserver command (remote)" "The path to gdbserver on the remote system. Omit the full path to resolve using the system PATH."
 #@env OPT_EXTRA_GDBSERVER_ARGS:str="" "Extra gdbserver arguments" "Extra arguments to pass to gdbserver. Use with care."
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 

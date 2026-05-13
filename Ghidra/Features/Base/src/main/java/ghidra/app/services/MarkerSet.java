@@ -18,12 +18,26 @@ package ghidra.app.services;
 import java.awt.Color;
 
 import ghidra.program.model.address.*;
+import ghidra.util.UniversalID;
 
 /**
  * Defines methods for working with a set of addresses that correspond to markers.
  * @see MarkerService
  */
 public interface MarkerSet extends Comparable<MarkerSet> {
+
+	/**
+	 * Sets an optional owner ID that signals when this marker set should be painted.  A null ID 
+	 * means that this marker set is global and should always be painted.  Otherwise, this marker 
+	 * set will be painted when its owner ID matches the owner ID being painted.
+	 * @param ownerId the ID
+	 */
+	public void setOwnerId(UniversalID ownerId);
+
+	/**
+	 * {@return the owner ID.  See #setOwner(UniversalID).}
+	 */
+	public UniversalID getOwnerId();
 
 	/**
 	 * Add a marker at the address
@@ -151,8 +165,9 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 	public void setMarkerColor(Color color);
 
 	/**
-	 * Set the marker manager listener to use for user interaction
-	 * with markers owned by this manager.
+	 * Set the marker set descriptor.  This allows clients to control tooltip text and program
+	 * location generation for individual markers on-the-fly.
+	 * 
 	 * @param markerDescriptor the descriptor
 	 */
 	public void setMarkerDescriptor(MarkerDescriptor markerDescriptor);

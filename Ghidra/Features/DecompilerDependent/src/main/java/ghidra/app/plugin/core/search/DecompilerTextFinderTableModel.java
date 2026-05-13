@@ -20,8 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextRenderer;
 import docking.widgets.table.*;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -30,7 +31,6 @@ import ghidra.program.model.listing.*;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraProgramTableModel;
-import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 import ghidra.util.table.field.FunctionNameTableColumn;
@@ -142,12 +142,12 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 	}
 
 	private class ContextTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<TextMatch, LocationReferenceContext> {
+			extends AbstractProgramBasedDynamicTableColumn<TextMatch, SearchLocationContext> {
 
 		private ContextCellRenderer renderer = new ContextCellRenderer();
 
 		@Override
-		public LocationReferenceContext getValue(TextMatch rowObject, Settings settings, Program p,
+		public SearchLocationContext getValue(TextMatch rowObject, Settings settings, Program p,
 				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getContext();
 		}
@@ -158,43 +158,33 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 		}
 
 		@Override
-		public GColumnRenderer<LocationReferenceContext> getColumnRenderer() {
+		public GColumnRenderer<SearchLocationContext> getColumnRenderer() {
 			return renderer;
 		}
 	}
 
 	private class ContextCellRenderer
-			extends AbstractGhidraColumnRenderer<LocationReferenceContext> {
+			extends SearchLocationContextRenderer {
 
-		{
-			// the context uses html
-			setHTMLRenderingEnabled(true);
+		@Override
+		protected SearchLocationContext getContext(GTableCellRenderingData d) {
+			TextMatch m = (TextMatch) d.getRowObject();
+			return m.getContext();
 		}
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-			// initialize
-			super.getTableCellRendererComponent(data);
-
 			TextMatch match = (TextMatch) data.getRowObject();
-			LocationReferenceContext context = match.getContext();
-			String text;
+			SearchLocationContext context = match.getContext();
 			if (match.isMultiLine()) {
 				// multi-line matches create visual noise when showing colors, as of much of the 
 				// entire line matches
-				text = context.getPlainText();
+				return renderPlainContext(data, context);
 			}
-			else {
-				text = context.getBoldMatchingText();
-			}
-			setText(text);
-			return this;
+
+			return renderHtmlContext(data, context);
 		}
 
-		@Override
-		public String getFilterString(LocationReferenceContext context, Settings settings) {
-			return context.getPlainText();
-		}
 	}
 }

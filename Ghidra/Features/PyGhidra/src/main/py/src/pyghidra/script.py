@@ -270,7 +270,7 @@ class PyGhidraScript(dict):
         finally:
             sys.argv = orig_argv
 
-            if Boolean.getBoolean("pyghidra.sys.modules.restore"):
+            if not Boolean.getBoolean("pyghidra.sys.modules.restore.disable"):
                 for k in list(set(sys.modules) - set(orig_modules)):
                     sys.modules.pop(k, None)
 

@@ -55,6 +55,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 	private CodeBrowserPlugin cb;
 	private Options fieldOptions;
 	private Program program;
+	private ProgramBuilder builder;
 
 	@Before
 	public void setUp() throws Exception {
@@ -73,7 +74,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._X86, this);
+		builder = new ProgramBuilder("notepad", ProgramBuilder._X86, this);
 		builder.createMemory(".text", "0x1001000", 0x6600);
 
 		// testOffcutReferencesToFunction_Indirect
@@ -219,11 +220,29 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testOffcutStringDynamicLabelReference() throws Exception {
 
-		// Note: for dynamic labels, we don't render the string based upon its offcut index, but
-		//       rather we just show the entire string.  Alternatively, if there is a label there,
-		//       we show that.  The label will show the string at its offcut location.
+		// Note: If the reference string has no defined label at the start, we display a default
+		// label which shows the string as though it started at the offcut location.
 		Address operandAddr = addr("01001000");
 		assertOperandText(operandAddr, "s_defgh_01001234+3");
+
+		//
+		// change the option and make sure the rendering updates
+		//
+		setBooleanOption(OptionsBasedDataTypeDisplayOptions.DISPLAY_ABBREVIATED_DEFAULT_LABELS,
+			true);
+		assertOperandText(operandAddr, "STR_01001234+3");
+	}
+
+	@Test
+	public void testOffcutStringDefinedLabelReference() throws Exception {
+
+		// Note: If the reference string has a defined label at the start, we display a default
+		// offcut label which shows the label at the start plus an offset amount.
+
+		builder.createLabel("0x1001234", "foo");
+		Address operandAddr = addr("01001000");
+
+		assertOperandText(operandAddr, "foo+3");
 
 		//
 		// change the option and make sure the rendering updates
@@ -280,6 +299,24 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("s_defgh", tf.getText());
 	}
 
+	@Test
+	public void testOffcutStringDynamicLabelReference_ShowOffcutInfoOptionOn() {
+		//
+		// Use options to hide the offcut info for a dynamic string reference.  By default the
+		// option is on (unless we change that).  This tests the 'off' condition.
+		//
+
+		ToolOptions options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
+		options.setBoolean(
+			GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Show Offcut Information",
+			true);
+
+		assertTrue(cb.goToField(addr("1001000"), OperandFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+
+		assertEquals("s_defgh_01001234+3", tf.getText());
+	}
+
 	/**
 	 * Tests that offcut references into arrays are painted as offsets into the array and not
 	 * as simply an offset from the min address.
@@ -296,10 +333,9 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 		Address arrayAddr = addr("01001888");
 		Command<Program> cmd = new CreateArrayCmd(arrayAddr, 3, structure, 12);
 		applyCmd(program, cmd);
-
 		String arrayName = "ArrayOfStructures";
-		cmd = new AddLabelCmd(arrayAddr, arrayName, SourceType.USER_DEFINED);
-		applyCmd(program, cmd);
+
+		builder.createLabel("0x1001888", arrayName);
 
 		String operandAddressString = "1006440";
 		Address operandAddr = addr(operandAddressString);

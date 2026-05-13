@@ -469,7 +469,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		RowColLocation startRowCol = commentElement.getDataLocationForCharacterIndex(0);
 		int encodedRow = startRowCol.row();
 		int encodedCol = startRowCol.col();
-		Annotation annotation = new Annotation(refAddrComment, program);
+		Annotation annotation = new Annotation(refAddrComment);
 		FieldElement addressElement =
 			new AnnotatedTextFieldElement(annotation, prefix, program, encodedRow, encodedCol);
 

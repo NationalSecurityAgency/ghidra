@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import ghidra.program.model.lang.Endian;
 import ghidra.util.StringUtilities;
+import ghidra.util.charset.CharsetInfoManager;
 import ghidra.util.exception.UsrException;
 
 /**
@@ -60,18 +61,18 @@ public class StringRenderParser {
 		private final boolean isFinal;
 		private final Set<Character> accepts;
 
-		private State(boolean isFinal) { // Implies this accepts any
+		State(boolean isFinal) { // Implies this accepts any
 			this.isFinal = isFinal;
 			this.accepts = null;
 		}
 
-		private State(boolean isFinal, String accepts) {
+		State(boolean isFinal, String accepts) {
 			this(isFinal, accepts.chars()
 					.mapToObj(i -> (char) i)
 					.collect(Collectors.toSet()));
 		}
 
-		private State(boolean isFinal, Set<Character> accepts) {
+		State(boolean isFinal, Set<Character> accepts) {
 			this.isFinal = isFinal;
 			this.accepts = Collections.unmodifiableSet(accepts);
 		}
@@ -140,8 +141,8 @@ public class StringRenderParser {
 
 	protected void initCharset(ByteBuffer out, String reprCharsetName) {
 		String charsetName = this.charsetName != null ? this.charsetName : reprCharsetName;
-		int charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		if (CharsetInfo.isBOMCharset(charsetName)) {
+		int charSize = CharsetInfoManager.getInstance().getCharsetCharSize(charsetName);
+		if (CharsetInfoManager.isBOMCharset(charsetName)) {
 			// Take care of the BOM ourselves, because it must be first, before any initial bytes
 			charsetName += endian.isBigEndian() ? "BE" : "LE";
 		}
@@ -175,19 +176,19 @@ public class StringRenderParser {
 			return State.PREFIX;
 		}
 		if (c == 'U') {
-			initCharset(out, CharsetInfo.UTF32);
+			initCharset(out, CharsetInfoManager.UTF32);
 			return State.UNIT;
 		}
-		initCharset(out, CharsetInfo.USASCII);
+		initCharset(out, CharsetInfoManager.USASCII);
 		return parseCharUnit(out, c);
 	}
 
 	protected State parseCharPrefix(ByteBuffer out, char c) {
 		if (c == '8') {
-			initCharset(out, CharsetInfo.UTF8);
+			initCharset(out, CharsetInfoManager.UTF8);
 			return State.UNIT;
 		}
-		initCharset(out, CharsetInfo.UTF16);
+		initCharset(out, CharsetInfoManager.UTF16);
 		return parseCharUnit(out, c);
 	}
 

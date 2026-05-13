@@ -28,7 +28,7 @@ import ghidra.app.util.bin.BinaryReader;
  * 
  */
 public class ResourceTable {
-    private short index;
+    private int index;
     private short alignmentShiftCount;
     private ResourceType [] types;
     private ResourceName [] names;
@@ -39,11 +39,11 @@ public class ResourceTable {
      * @param index  the byte index where the Resource Table begins,
      *               (this is relative to the beginning of the file
      */
-	ResourceTable(BinaryReader reader, short index) throws IOException {
+	ResourceTable(BinaryReader reader, int index) throws IOException {
         this.index = index;
 
         long oldIndex = reader.getPointerIndex();
-        reader.setPointerIndex(Short.toUnsignedInt(index));
+        reader.setPointerIndex(index);
 
         alignmentShiftCount = reader.readNextShort();
 
@@ -98,7 +98,7 @@ public class ResourceTable {
      * relative to the beginning of the file.
      * @return the byte index where the resource table begins
      */
-    public short getIndex() {
+    public int getIndex() {
         return index;
     }
 }

@@ -137,7 +137,7 @@ public class MDFunctionType extends MDType {
 		// output on underscore-based access-level types (from MDTypeInfoParser '_' prefix),
 		// specifically based5 variants.  This could possibly be put into the MDMangVS2015
 		//  demangler, but then we would probably need to describe the standard MDMang output
-		//  as "invalid," as based-on-basedptr is supposed to be invalid. 
+		//  as "invalid," as based-on-basedptr is supposed to be invalid.
 		StringBuilder conventionBuilder = new StringBuilder();
 		convention.insert(conventionBuilder);
 		if (based != null) {
@@ -179,6 +179,7 @@ public class MDFunctionType extends MDType {
 			}
 		}
 	}
+
 }
 
 /******************************************************************************/

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -452,7 +452,7 @@ public class SymbolUtilities {
 				}
 				long datOffset = address.subtract(data2.getMinAddress());
 				return (datOffset == 0 ? data2.getPathName()
-						: data2.getPathName() + PLUS + datOffset);
+						: data2.getPathName() + PLUS + getDiffString(datOffset));
 			}
 		}
 
@@ -483,18 +483,10 @@ public class SymbolUtilities {
 			DataTypeDisplayOptions.DEFAULT, offcutOffset);
 
 		//
-		// Strings take precedence
-		//
-		if (isString) {
-			// we draw strings with their real address instead of with an offset
-			return prefix + UNDERSCORE + getAddressString(address);
-		}
-
-		//
 		// If there is a label at the CodeUnit start, then we want to be based upon that, except
 		// in special cases, like String data
 		//
-		String offcutText = PLUS + Integer.toString(offcutOffset);
+		String offcutText = PLUS + getDiffString(offcutOffset);
 		Symbol symbol = data.getPrimarySymbol();
 		if (symbol != null && !symbol.isDynamic()) {
 			return symbol.getName() + offcutText;
@@ -541,7 +533,7 @@ public class SymbolUtilities {
 
 	private static String getDyanmicOffcutInstructionName(Instruction instruction,
 			Address codeUnitAddress, long diff) {
-		String offcutText = PLUS + Long.toString(diff);
+		String offcutText = PLUS + getDiffString(diff);
 
 		//
 		// If there is a label at the CodeUnit start, then we want to be based upon that, except
@@ -563,6 +555,17 @@ public class SymbolUtilities {
 		SegmentedAddress segmentedAddress = (SegmentedAddress) address;
 		SegmentedAddress codeUnitAddress = (SegmentedAddress) codeUnit.getAddress();
 		return segmentedAddress.normalize(codeUnitAddress.getSegment());
+	}
+
+	/**
+	 * Returns a string representing an address offset. If the offset is less than 10, it doesn't
+	 * add a prefix, otherwise the difference is shown in hex and includes the "0x" prefix.
+	 * @param diff the address difference
+	 * @return a string representing an offset from an address that is formated simply for small
+	 * values and in hex with a prefix for larger values.
+	 */
+	public static String getDiffString(long diff) {
+		return diff < 10 ? Long.toString(diff) : "0x" + Long.toString(diff, 16);
 	}
 
 	/**

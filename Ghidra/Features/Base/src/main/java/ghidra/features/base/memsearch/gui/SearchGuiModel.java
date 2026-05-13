@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import ghidra.features.base.memsearch.bytesource.SearchRegion;
 import ghidra.features.base.memsearch.combiner.Combiner;
 import ghidra.features.base.memsearch.format.SearchFormat;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 /**
  * Maintains the state of all the settings and controls for the memory search window.
@@ -133,7 +133,7 @@ public class SearchGuiModel {
 		notifySettingsChanged(oldSettings);
 	}
 
-	public ByteMatcher parse(String proposedText) {
+	public UserInputByteMatcher parse(String proposedText) {
 		return settings.getSearchFormat().parse(proposedText, settings);
 	}
 

@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCode.*;
 import static org.junit.Assert.*;
 
@@ -265,7 +265,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		DebugInfoEntry floatDIE = addFloat();
 		DebugInfoEntry struct1PtrDIE = addFwdPtr(1);
 		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
-		long formalParamDIEOffset = dwarfProg.getRelativeDIEOffset(2);
+		long formalParamDIEOffset = dieContainer.getRelativeDIEOffset(2);
 		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10)
 				.addRef(DW_AT_object_pointer, formalParamDIEOffset)
 				.setParent(struct1DIE)

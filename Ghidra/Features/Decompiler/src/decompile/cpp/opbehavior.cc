@@ -102,9 +102,10 @@ void OpBehavior::registerInstructions(vector<OpBehavior *> &inst,const Translate
   inst[CPUI_CPOOLREF] = new OpBehavior(CPUI_CPOOLREF,false,true);
   inst[CPUI_NEW] = new OpBehavior(CPUI_NEW,false,true);
   inst[CPUI_INSERT] = new OpBehavior(CPUI_INSERT,false);
-  inst[CPUI_EXTRACT] = new OpBehavior(CPUI_EXTRACT,false);
+  inst[CPUI_ZPULL] = new OpBehavior(CPUI_ZPULL,false);
   inst[CPUI_POPCOUNT] = new OpBehaviorPopcount();
   inst[CPUI_LZCOUNT] = new OpBehaviorLzcount();
+  inst[CPUI_SPULL] = new OpBehavior(CPUI_SPULL,false);
 }
 
 /// \param sizeout is the size of the output in bytes

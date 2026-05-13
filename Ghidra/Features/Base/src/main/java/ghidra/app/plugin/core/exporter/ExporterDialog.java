@@ -33,6 +33,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
 import ghidra.app.util.*;
 import ghidra.app.util.exporter.Exporter;
@@ -92,7 +93,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	/**
 	 * Show a new ExporterDialog for exporting an entire program.
 	 * The method {@link #hasNoApplicableExporter()} should be checked before showing the
-	 * dilaog.  If no exporters are available a popup error will be displayed and the exporter
+	 * dialog.  If no exporters are available a popup error will be displayed and the exporter
 	 * dialog will not be shown.
 	 *
 	 * @param tool the tool that launched this dialog.
@@ -105,7 +106,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	/**
 	 * Construct a new ExporterDialog for exporting a program, optionally only exported a
 	 * selected region.  The method {@link #hasNoApplicableExporter()} should be checked before 
-	 * showing the dilaog.  If no exporters are available a popup error will be displayed and the 
+	 * showing the dialog.  If no exporters are available a popup error will be displayed and the 
 	 * exporter dialog will not be shown.
 	 * The {@link #close()} method must always be invoked on the dialog instance even if it 
 	 * is never shown to ensure any {@link DomainObject} instance held is properly released.
@@ -129,7 +130,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	/**
 	 * Construct a new modal ExporterDialog for exporting a program, optionally only exported a
 	 * selected region.  The method {@link #hasNoApplicableExporter()} should be checked before 
-	 * showing the dilaog.  If no exporters are available a popup error will be displayed.
+	 * showing the dialog.  If no exporters are available a popup error will be displayed.
 	 * The {@link #close()} method must always be invoked on the dialog instance even if it 
 	 * is never shown to ensure any {@link DomainObject} instance held is properly released.
 	 *
@@ -275,7 +276,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	}
 
 	private Component buildFilePanel() {
-		filePathTextField = new JTextField();
+		filePathTextField = new ElidingFilePathTextField();
 		filePathTextField.setName("OUTPUT_FILE_TEXTFIELD");
 		filePathTextField.getAccessibleContext().setAccessibleName("Output File");
 		filePathTextField.setText(getFileName());
@@ -601,7 +602,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 				return;
 			}
 
-			// Program selection only relavent if isFrontEndPlugin() is false
+			// Program selection only relevant if isFrontEndPlugin() is false
 			ProgramSelection selection = getApplicableProgramSelection();
 			File outputFile = getSelectedOutputFile();
 

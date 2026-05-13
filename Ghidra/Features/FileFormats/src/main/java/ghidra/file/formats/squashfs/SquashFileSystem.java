@@ -311,6 +311,22 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 	}
 
 	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		SquashedFile squashedFile = fsIndex.getMetadata(f);
+		Object squashInfo = fsIndex.getRootDir().equals(f) ? superBlock
+				: squashedFile != null ? squashedFile.getInode() : null;
+		return switch (squashInfo) {
+			case SquashSuperBlock sb -> FileType.DIRECTORY;
+			case SquashBasicDirectoryInode dir -> FileType.DIRECTORY;
+			case SquashBasicFileInode fileInode -> fileInode.isDir()
+					? FileType.DIRECTORY
+					: FileType.FILE;
+			case SquashSymlinkInode symlinkInode -> FileType.SYMBOLIC_LINK;
+			default -> FileType.UNKNOWN;
+		};
+	}
+
+	@Override
 	public void close() throws IOException {
 		refManager.onClose();
 		fsIndex.clear();

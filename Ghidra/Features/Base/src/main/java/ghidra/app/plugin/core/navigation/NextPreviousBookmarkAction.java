@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
@@ -376,7 +377,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 
 	private KeyStroke getKeyStroke() {
 		return KeyStroke.getKeyStroke(KeyEvent.VK_B,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK);
 	}
 
 //==================================================================================================

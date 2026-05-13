@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,54 +17,55 @@ package db.buffers;
 
 import java.io.IOException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.server.RemoteObjectInvocationHandler;
-import java.util.NoSuchElementException;
 
 /**
  * <code>RemoteBufferFileHandle</code> facilitates access to a remote BufferFile
  * via RMI.
  * <p>
- * Methods from {@link BufferFileHandle} <b>must</b> be re-declared here 
+ * IMPORTANT: Methods from {@link BufferFileHandle} <b>must</b> be re-declared here 
  * so they may be properly marshalled for remote invocation via RMI.  
  * This became neccessary with an OpenJDK 11.0.6 change made to 
  * {@link RemoteObjectInvocationHandler}.  
  */
 public interface RemoteBufferFileHandle extends BufferFileHandle, Remote {
 	@Override
-	public boolean isReadOnly() throws IOException;
+	public boolean isReadOnly() throws RemoteException;
 
 	@Override
 	public boolean setReadOnly() throws IOException;
 
+	// NoSuchElementException will get wrapped within RemoteException
 	@Override
-	public int getParameter(String name) throws NoSuchElementException, IOException;
+	public int getParameter(String name) throws RemoteException;
 
 	@Override
-	public void setParameter(String name, int value) throws IOException;
+	public void setParameter(String name, int value) throws RemoteException;
 
 	@Override
-	public void clearParameters() throws IOException;
+	public void clearParameters() throws RemoteException;
 
 	@Override
-	public String[] getParameterNames() throws IOException;
+	public String[] getParameterNames() throws RemoteException;
 
 	@Override
-	public int getBufferSize() throws IOException;
+	public int getBufferSize() throws RemoteException;
 
 	@Override
-	public int getIndexCount() throws IOException;
+	public int getIndexCount() throws RemoteException;
 
 	@Override
-	public int[] getFreeIndexes() throws IOException;
+	public int[] getFreeIndexes() throws RemoteException;
 
 	@Override
-	public void setFreeIndexes(int[] indexes) throws IOException;
+	public void setFreeIndexes(int[] indexes) throws RemoteException;
 
 	@Override
 	public void close() throws IOException;
 
 	@Override
-	public boolean delete() throws IOException;
+	public boolean delete() throws RemoteException;
 
 	@Override
 	public DataBuffer get(int index) throws IOException;

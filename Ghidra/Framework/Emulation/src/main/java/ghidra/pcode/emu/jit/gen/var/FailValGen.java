@@ -15,12 +15,16 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.OpndEm;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.var.JitFailVal;
 
 /**
@@ -31,12 +35,48 @@ public enum FailValGen implements ValGen<JitFailVal> {
 	GEN;
 
 	@Override
-	public void generateValInitCode(JitCodeGenerator gen, JitFailVal v, MethodVisitor iv) {
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genValInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitFailVal v) {
+		return em;
 	}
 
 	@Override
-	public JitType generateValReadCode(JitCodeGenerator gen, JitFailVal v, JitTypeBehavior typeReq,
-			Ext ext, MethodVisitor rv) {
+	public <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N extends Next> Emitter<Ent<N, T>> genReadToStack(Emitter<N> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitFailVal v, JT type,
+				Ext ext) {
 		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> OpndEm<MpIntJitType, N> genReadToOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitFailVal v,
+			MpIntJitType type, Ext ext, Scope scope) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>>
+			genReadLegToStack(Emitter<N> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitFailVal v, MpIntJitType type, int leg, Ext ext) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<int[]>>>
+			genReadToArray(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+					JitFailVal v, MpIntJitType type, Ext ext, Scope scope, int slack) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadToBool(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitFailVal v) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public ValGen<JitFailVal> subpiece(int byteShift, int maxByteSize) {
+		return this;
 	}
 }

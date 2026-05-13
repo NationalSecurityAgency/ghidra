@@ -17,6 +17,7 @@ package ghidra.features.base.memsearch.gui;
 
 import java.util.List;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.task.TaskMonitor;
@@ -27,15 +28,15 @@ import ghidra.util.task.TaskMonitor;
  */
 public class RefreshResultsTableLoader implements MemoryMatchTableLoader {
 
-	private List<MemoryMatch> matches;
+	private List<MemoryMatch<SearchData>> matches;
 	private boolean hasResults;
 
-	public RefreshResultsTableLoader(List<MemoryMatch> matches) {
+	public RefreshResultsTableLoader(List<MemoryMatch<SearchData>> matches) {
 		this.matches = matches;
 	}
 
 	@Override
-	public void loadResults(Accumulator<MemoryMatch> accumulator, TaskMonitor monitor) {
+	public void loadResults(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor) {
 		accumulator.addAll(matches);
 		hasResults = !accumulator.isEmpty();
 	}

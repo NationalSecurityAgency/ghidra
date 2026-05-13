@@ -78,8 +78,8 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 	private Path outFile;
 	private Path errFile;
 
-	@Before
-	public void assertOS() {
+	@BeforeClass
+	public static void assertOS() {
 		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 	}
 

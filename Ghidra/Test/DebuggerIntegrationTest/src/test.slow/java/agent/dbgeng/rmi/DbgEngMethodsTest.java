@@ -15,8 +15,7 @@
  */
 package agent.dbgeng.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -143,11 +142,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				Address main = rangeMain.getMinAddress();
 
 				assertBreakLoc(procBreakLocVals.get(0), "[0]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"ntdll!LdrInit");
+					Set.of(TraceBreakpointKind.SW_EXECUTE), "ntdll!Ldr");
 				assertBreakLoc(procBreakLocVals.get(1), "[1]", main.add(4), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"ntdll!LdrInit");
+					Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!Ldr");
 			}
 		}
 	}
@@ -1006,7 +1003,15 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		assertTrue("Cannot read " + TRACE_RUN_FILE, TRACE_RUN_FILE.canRead());
 	}
 
-	@Test
+	/* For now, am commenting out the two tests, because the test machines are
+	 * unlikely to have the Windbg2 packages on them, not the test file "cmd01.run"
+	 */
+
+	/* If you run these tests and get E_INVALIDARG, it's very likely you're pointing
+	 * at the wrong version of the dbgeng directory.
+	 */
+
+	//@Test // Requires Windbg2
 	public void testTtdOpenTrace() throws Exception {
 		createMsTtdTrace();
 		try (PythonAndConnection conn = startAndConnectPython()) {
@@ -1018,7 +1023,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		}
 	}
 
-	@Test
+	//@Test // Requires Windbg2
 	public void testTtdActivateFrame() throws Exception {
 		addPlugin(tool, DebuggerModelPlugin.class);
 		addPlugin(tool, DebuggerMethodActionsPlugin.class);

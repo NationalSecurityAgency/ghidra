@@ -37,8 +37,7 @@ public class DWARFMacroScript extends GhidraScript {
 			return;
 		}
 
-		try (DWARFProgram dprog =
-			new DWARFProgram(currentProgram, new DWARFImportOptions(), monitor, dsp)) {
+		try (DWARFProgram dprog = new DWARFProgram(currentProgram, new DWARFImportOptions(), dsp)) {
 			dprog.init(monitor);
 			for (DWARFCompilationUnit cu : dprog.getCompilationUnits()) {
 				dumpMacros(cu.getMacros(), 0);

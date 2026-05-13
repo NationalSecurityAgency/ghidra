@@ -26,9 +26,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.XMLOutputter;
 
 import docking.ActionContext;
 import docking.DialogComponentProvider;
@@ -390,7 +390,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements ApplicationLeve
 
 			Document doc = new Document(root);
 			FileOutputStream out = new FileOutputStream(transFile);
-			XMLOutputter xml = new GenericXMLOutputter();
+			XMLOutputter xml = GenericXMLOutputter.getInstance();
 			xml.output(doc, out);
 			out.close();
 

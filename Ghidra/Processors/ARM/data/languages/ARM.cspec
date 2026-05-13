@@ -293,19 +293,20 @@
       <pentry minsize="1" maxsize="500" align="4">
         <addr offset="0" space="stack"/>
       </pentry>
-      </input>
-      <output killedbycall="true">
-        <pentry minsize="1" maxsize="4">
-          <register name="r0"/>
-        </pentry>
-      </output>
-      <unaffected>
-        <register name="sp"/>
-      </unaffected>
-    </prototype>
+    </input>
+    <output killedbycall="true">
+      <pentry minsize="1" maxsize="4">
+        <register name="r0"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="sp"/>
+    </unaffected>
+  </prototype>
   
   <callotherfixup targetop="setISAMode">
     <pcode incidentalcopy="true">
+      <input name="newTB"/>
       <!-- NOP -->
       <body><![CDATA[
         r0 = r0;
@@ -338,8 +339,7 @@
             
             r12 = lr + r3;
             
-            ISAModeSwitch = (r12 & 1) != 1;
-            TB = ISAModeSwitch;
+            TB = (r12 & 1) != 1;
             pc = r12 & 0xfffffffe;
             goto [pc];
       ]]></body>
@@ -356,8 +356,7 @@
             offset = *:1 (tmpptr + r0);
             lr = lr + 2 * zext(offset);
  
-            ISAModeSwitch = (lr & 1) != 0;
-            TB = ISAModeSwitch;
+            TB = (lr & 1) != 0;
             pc = lr & 0xfffffffe;
             goto [pc];
       ]]></body>
@@ -374,8 +373,7 @@
             offset = *:1 (tmpptr + r0);
             lr = lr + 2 * sext(offset);
  
-            ISAModeSwitch = (lr & 1) != 0;
-            TB = ISAModeSwitch;
+            TB = (lr & 1) != 0;
             pc = lr & 0xfffffffe;
             goto [pc];
       ]]></body>
@@ -393,8 +391,7 @@
             offset = *:2 (tmpptr + index);
             lr = lr + 2 * sext(offset);
  
-            ISAModeSwitch = (lr & 1) != 0;
-            TB = ISAModeSwitch;
+            TB = (lr & 1) != 0;
             pc = lr & 0xfffffffe;
             goto [pc];
       ]]></body>
@@ -412,8 +409,7 @@
             offset = *:2 (tmpptr + index);
             lr = lr + 2 * zext(offset);
  
-            ISAModeSwitch = (lr & 1) != 0;
-            TB = ISAModeSwitch;
+            TB = (lr & 1) != 0;
             pc = lr & 0xfffffffe;
             goto [pc];
       ]]></body>
@@ -432,8 +428,7 @@
             offset = offset * 4;
             lr = lr + offset;
  
-            ISAModeSwitch = (lr & 1) != 0;
-            TB = ISAModeSwitch;
+            TB = (lr & 1) != 0;
             pc = lr & 0xfffffffe;
             goto [pc];
       ]]></body>

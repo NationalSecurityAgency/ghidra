@@ -137,8 +137,6 @@
       <P><I><B>Enter Label</B></I></P>
 
       <BLOCKQUOTE>
-        <UL>
-          <LI>
             Text field for entering the name of the label. A combo box is included which allows
             selecting recently used label names. 
 
@@ -150,35 +148,36 @@
 </PRE>
             For example, the following string denotes a full namespace path that starts at the
             <B>Global</B> namespace and ends at the label name <TT>myLabel</TT>:<BR>
-             
-<PRE>
-    Global::foo::bar::myLabel
-       
-</PRE>
+		<PRE>
+		Global::foo::bar::myLabel
+		       
+		</PRE>
             The namespace in the <I>Namespace</I> combo box will be used as the parent namespace
             for the label name and any included namespaces. However, if the you provide a namespace
             path that starts with <B>Global</B>, then the value of the <I>Namespace</I> combo box
             will be ignored.
-          </LI>
-        </UL>
       </BLOCKQUOTE>
 
       <P><I><B>Namespace</B></I></P>
 
       <BLOCKQUOTE>
-        <UL>
-          <LI>The defining scope of the label. The available namespaces are based upon the current
-          address. When editing a label, the available namespaces are not necessarily those in the
-          namespace hierarchy in which the label is located, but rather are those based upon the
-          address of that label. The <B>Global</B> namespace is always included by default, as well
-          as the parent namespace of the current label, if one is being edited.</LI>
-        </UL>
+          <P>The containing namespace for the label or function. </P>
+          <P>The applicable namespaces are based upon the current address and symbol type. 
+          The namespace combobox
+          will initially be populated with the most obvious choices for that location, as well 
+          any recently chosen namespaces.</P> 
+          <P>Next to the combobox, there is a browse button which can be pressed to bring up the 
+          <A href="#NamespaceChooserDialog">Namespace Chooser Dialog</A>. From this chooser dialog,
+          any namespace in the program can be selected. However, not all namespaces are applicable
+          to all locations. For example, you can't put a function into another function's namespace.
+          If the namespace is not applicable to the current location, the selected namespace will
+          still appear in the namespace field, but you will get an error when the OK button is 
+          pressed.</P>
 
         <BLOCKQUOTE>
-          <P><IMG src="help/shared/note.png" alt="Note:">This field is disabled, if there is a
-          function with a default name at this address. The namespace will stay set to the parent
-          namespace of the function and the label name you enter will become the new function
-          name.<BR>
+          <P><IMG src="help/shared/note.png" alt="Note:">This field is disabled when the namespace
+          at that location can't be changed. For example, parameters and local variables can only
+          have the enclosing function as its namespace. <BR>
           </P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -186,38 +185,66 @@
       <P><I><B>Entry Point</B></I></P>
 
       <BLOCKQUOTE>
-        <UL>
-          <LI>Sets the entry point property for address associated with this label. Setting this
+        Sets the entry point property for address associated with this label. Setting this
           property on one symbol, changes it for all symbols at the same address.</LI>
-        </UL>
+        
       </BLOCKQUOTE>
 
       <P><I><B>Primary</B></I></P>
 
       <BLOCKQUOTE>
-        <UL>
-          <LI>Sets the primary property for this symbol. If there is only one symbol at this
+        Sets the primary property for this symbol. If there is only one symbol at this
           address, the checkbox will be selected and disabled, since it must be primary. Whenever
           the checkbox is selected, it will be disabled because the only way to make a symbol
           become non-primary is to select another symbol at the same address and make it primary.
           This ensures that there will always be one label that is primary. If there is a function
           at this address and you add a new label, the checkbox will be enabled such that if you
           select the checkbox, the function is renamed to the new label that you entered.&nbsp; The
-          function symbol must always be the primary symbol.</LI>
-        </UL>
+          function symbol must always be the primary symbol.
+        
       </BLOCKQUOTE>
        <P><I><B>Pinned</B></I></P>
       <BLOCKQUOTE>
-        <UL>
-          <LI>Sets the label to pinned.  A pinned label will not move if the image base is changed
+        Sets the label to pinned.  A pinned label will not move if the image base is changed
           or a memory block is moved.  A label that is not pinned, will move with the code
           or data if a memory block is moved or the image base is changed.  Also, a pinned
           label will not be removed if the memory block that contains it is removed.  Only code, 
-          data, or function labels may be pinned.</LI>
-        </UL>
+          data, or function labels may be pinned.
       </BLOCKQUOTE>
       
     </BLOCKQUOTE>
+	<H2><A name="NamespaceChooserDialog"></A>Namespace Chooser Dialog</H2>
+	<BLOCKQUOTE>
+	
+	      <P>The Namespace Chooser Dialog allows you to choose namespaces that have been defined
+	      in the current program. It presents a drop-down text field where you can begin typing
+	      the name of a namespace and a drop-down window will appear showing a list of 
+	      all namespaces that match the typed text.</P>
+	     
+
+      <P align="center"><IMG border="0" src="images/ChooseNamespace.png" alt=""><BR>
+       <I>Namespace Chooser Dialog</I></P>
+       
+       <P>There are several modes that determine how the typed text is used to match against all
+       program namespaces. The mode can be changed by pressing on the symbol(s) shown on the far
+       right of the text field.  You can also change the search mode using <B>Ctrl Down</B> and
+       <B>Ctrl Up</B> to change the mode forward and backward, respectively. Regardless of the mode,
+       the searches are not case sensitive.</P>
+       <P>These modes are:</P>
+       
+       <UL>
+       <LI><B>Starts With ^</B> - In this mode, the typed text will match all namespaces that
+       have a base name (not path) that starts with the typed text.</LI>
+       <LI><B>Contains <I>()</I></B> - In this mode, the typed text will match all namespaces that
+       have the typed text anywhere in its full namespace path. </LI>
+       <LI><B>Wildcard <I>*?</I></B> - In this mode, the typed text may contain wildcard characters
+       which will be used to create a pattern for matching against the full namespace path. The
+       wildcard char '*' will match 0 or more characters, while the wildcard char '?' will match any
+       single character. </LI>
+       </UL>
+       
+	</BLOCKQUOTE>
+
 
     <H2><A name="OperandLabelDialog"></A>Set Label Dialog</H2>
 

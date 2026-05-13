@@ -1,5 +1,5 @@
 # Getting Started with Ghidra
-The information provided in this document is effective as of Ghidra 12.0 and is subject to change 
+The information provided in this document is effective as of Ghidra 12.1 and is subject to change 
 with future releases.
 
 ## Table of Contents
@@ -55,9 +55,9 @@ a specific need.
   * Free long term support (LTS) versions of JDK 21 are provided by:
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
     * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
-* Python3 (3.9 to 3.13)
-  * Python 3.9 to 3.13 for [Debugger support](#debugger-notes)
-  * Python 3.9 to 3.13 for [PyGhidra support](#pyghidra-mode)
+* Python3 (3.9 to 3.14)
+  * Python 3.9 to 3.14 for [Debugger support](#debugger-notes)
+  * Python 3.9 to 3.14 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
     to install a suitable version of Python with pip support.
@@ -164,9 +164,8 @@ __NOTE:__ Do not extract Ghidra on top of an existing installation.
 The Debugger uses Python to connect to the host platform's native debuggers. This requires
 a [supported](#minimum-requirements) version of Python and some additional packages. These packages
 are included in the distribution, but you may still install them from PyPI if you prefer:
-* psutil
 * protobuf>=3.20.3
-* Pybag>=2.2.12 (for WinDbg support)
+* Pybag>=2.2.16 (for WinDbg support)
 
 Different native debuggers have varying requirements, so you do not necessarily have to install all
 of the above packages. Each connector will inform you of its specific requirements and where they
@@ -197,10 +196,10 @@ public Ghidra release includes native binaries for the following platforms:
 * Windows 10 or later, x86 64-bit
 * Windows 10 or later, ARM 64-bit (using x86 emulation)
 * Linux x86 64-bit
-* macOS x86 64-bit (may be omitted for some non-public builds)
-* macOS ARM 64-bit (may be omitted for some non-public builds)
 
 Ghidra supports running on the following additional platforms with user-built native binaries:
+* macOS x86 64-bit
+* macOS ARM 64-bit
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)
@@ -458,9 +457,10 @@ There are several ways you can get help with using Ghidra:
 * GUI icons may not render correctly in some configurations of Linux. Setting 
   `VMARGS=-Dsun.java2d.opengl` to `true` in `<GhidraInstallDir>/support/launch.properties` may fix 
   this issue.
-* Non-reparenting window managers such as Xmonad and Sway may render Ghidra windows as blank. This
-  is a known java issue (https://bugs.openjdk.org/browse/JDK-8058197) which can only be addressed
-  by setting the environment variable `_JAVA_AWT_WM_NONREPARENTING=1` prior to launching Ghidra.
+* Non-reparenting window managers such as XMonad and Sway may render Ghidra windows as blank. This
+  is a known java issue (https://bugs.openjdk.org/browse/JDK-8058197) which can be addressed by
+  uncommenting `#ENVVARS_LINUX=_JAVA_AWT_WM_NONREPARENTING=1` in 
+  `<GhidraInstallDir>/support/launch.properties`.
 
 ### macOS
 * Building new Ghidra module extensions on macOS (OS X) using a network drive (including a

@@ -1,22 +1,20 @@
 /* ###
- * IP: GHIDRA
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * IP: Apache License 2.0
+ */
+
+/*
+ * Ported and adapted from rustc-demangle (https://github.com/rust-lang/rustc-demangle),
+ * which is dual-licensed under Apache-2.0 and MIT. This implementation is
+ * derived from commit c5688cfec32d2bd00701836f12beb3560ee015b8 and adjusted
+ * for Ghidra’s Java runtime.
  */
 package ghidra.app.plugin.core.analysis.rust.demangler;
 
-import java.net.IDN;
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class that will demangle Rust symbols mangled according to the V0 format. This class
@@ -24,7 +22,15 @@ import java.util.*;
  * 
  * @see <a href="https://rust-lang.github.io/rfcs/2603-rust-symbol-name-mangling-v0.html">2603-rust-symbol-name-mangling-v0.html</a>
  */
-public class RustDemanglerV0 {
+public final class RustDemanglerV0 {
+
+	public static final String RECURSION_LIMIT_MESSAGE = "{recursion limit reached}";
+
+	public static final int MAX_DEPTH = 500;
+
+	private RustDemanglerV0() {
+		// utility class
+	}
 
 	/**
 	 * Demangles a symbol according to the format
@@ -32,904 +38,1407 @@ public class RustDemanglerV0 {
 	 * @return the demangled symbol name
 	 */
 	public static String demangle(String symbol) {
-		if (symbol.startsWith("_R")) {
-			symbol = symbol.substring(2);
-		}
-		else if (symbol.startsWith("R")) {
-			symbol = symbol.substring(1);
-		}
-		else if (symbol.startsWith("__R")) {
-			symbol = symbol.substring(3);
-		}
+		return demangleInternal(symbol, false);
+	}
 
-		if (!symbol.matches("\\A\\p{ASCII}*\\z")) {
+	/**
+	 * Demangles a Rust V0 mangled symbol using an alternate format that omits
+	 * hash/disambiguator suffixes.
+	 *
+	 * @param symbol the mangled symbol
+	 * @return the demangled representation without hash suffixes, or {@code null} if the input is not
+	 *         a valid V0-mangled symbol
+	 */
+	public static String demangleAlternate(String symbol) {
+		return demangleInternal(symbol, true);
+	}
+
+	private static String demangleInternal(String symbol, boolean alternate) {
+		if (symbol == null || symbol.isEmpty()) {
 			return null;
 		}
 
-		Symbol cursor = new Symbol(symbol);
-
-		return RustPath.parse(cursor).toString();
-	}
-}
-
-/**
- * A class that represents a symbol in the demangling process. It keeps track of
- * the current state of the symbol and implements various methods to assist with
- * demangling it.
- */
-class Symbol {
-	/** A list of backref objects */
-	Map<Integer, SymbolNode> backrefs = new HashMap<Integer, SymbolNode>();
-
-	/** The mangled symbol */
-	String mangled;
-
-	/** The current position in the mangled symbol */
-	int pos = 0;
-
-	/**
-	 * Creates a symbol object
-	 * @param mangled the mangled symbol name
-	 */
-	public Symbol(String mangled) {
-		this.mangled = mangled;
-	}
-
-	/**
-	 * Adds a backref to the list
-	 * @param index the index of the backref
-	 * @param value the backref object to add
-	 */
-	public void backrefAdd(int index, SymbolNode value) {
-		backrefs.put(Integer.valueOf(index), value);
-		index += 1;
-	}
-
-	/**
-	 * Gets the backref at a certain index
-	 * @param index the index of he backref to return
-	 * @return the backref object
-	 */
-	public String getBackref(int index) {
-		SymbolNode backref = backrefs.get(index);
-		if (backref != null) {
-			return backref.toString();
+		String inner = stripPrefix(symbol);
+		if (inner == null || inner.isEmpty()) {
+			return null;
 		}
 
-		return "{backref " + index + "}";
-	}
-
-	/**
-	 * Returns the number of the encoded backref
-	 * @return the number sting
-	 */
-	public String parseBackref() {
-		if (stripPrefix('B')) {
-			return parseBase62Number();
+		if (!isAscii(inner)) {
+			return null;
 		}
 
-		return null;
-	}
-
-	/**
-	 * Returns the remaining string to be demangled
-	 * @return the mangled string
-	 */
-	public String remaining() {
-		return mangled.substring(pos);
-	}
-
-	/**
-	 * Strips the first char of the mangled string if it's equal to the argument
-	 * @param c the char to strip
-	 * @return if the strip succeeded
-	 */
-	public boolean stripPrefix(char c) {
-		if (c == nextChar()) {
-			popChar();
-			return true;
+		if (!startsWithUpperPath(inner)) {
+			return null;
 		}
 
-		return false;
-	}
+		try {
+			Parser parser = new Parser(inner);
 
-	/**
-	 * Gets the next char in the mangled string
-	 * @return the next char
-	 */
-	public char nextChar() {
-		return mangled.charAt(pos);
-	}
-
-	/**
-	 * Gets the next int in the mangled string
-	 * @return the next int
-	 */
-	public int nextInt() {
-		return mangled.charAt(pos);
-	}
-
-	/**
-	 * Pops the next char in the mangled string
-	 * @return the next char
-	 */
-	public char popChar() {
-		char c = mangled.charAt(pos);
-		pos += 1;
-		return c;
-	}
-
-	/**
-	 * Parses the following numerical digits in the mangled sting
-	 * @return the parsed integer
-	 */
-	public int parseDigits() {
-		String num = "";
-
-		if (nextChar() == '0') {
-			return 0;
-		}
-
-		while (nextChar() >= '0' && nextChar() <= '9') {
-			num += popChar();
-		}
-
-		return Integer.parseInt(num);
-	}
-
-	/**
-	 * Parses the string until the passed char is reached
-	 * @param c the char to parse until
-	 * @return the parsed string
-	 */
-	public String parseUntil(char c) {
-		String data = "";
-
-		while (nextChar() != c) {
-			data += popChar();
-		}
-
-		return data;
-	}
-
-	/**
-	 * Subtracts one from the position in the mangled string
-	 */
-	public void backChar() {
-		pos -= 1;
-	}
-
-	/**
-	 * Parses the 
-	 * @param n number of characters
-	 * @return the parsed string
-	 */
-	public String parseString(int n) {
-		String s = mangled.substring(pos, pos + n);
-		pos += n;
-		return s;
-	}
-
-	/**
-	 * Returns if the end of the mangled string has been reached
-	 * @return if the end has been reached
-	 */
-	public boolean isEmpty() {
-		return mangled.length() <= pos;
-	}
-
-	/**
-	 * Parses the following base 62 number
-	 * @return the parsed num string
-	 */
-	public String parseBase62Number() {
-		String numString = parseUntil('_');
-		popChar();
-		return numString;
-	}
-}
-
-/**
- * A node to be used in symbol parsing
- */
-interface SymbolNode {
-	// Parent class
-}
-
-/**
- * A class to represent a nested path node
- */
-class RustPathNested implements SymbolNode {
-	SymbolNode parent;
-	RustIdentifier identifier;
-
-	public RustPathNested(SymbolNode parent, RustIdentifier identifier) {
-		this.parent = parent;
-		this.identifier = identifier;
-	}
-
-	@Override
-	public String toString() {
-		return parent.toString() + "::" + identifier.toString();
-	}
-}
-
-/**
- * A class to represent a string node
- */
-class RustString implements SymbolNode {
-	String data;
-
-	public RustString(String data) {
-		this.data = data;
-	}
-
-	@Override
-	public String toString() {
-		return data;
-	}
-}
-
-/** 
- * A class that will represent and parse a backref node
- */
-class RustBackref implements SymbolNode {
-	int backref;
-	Symbol s;
-
-	public RustBackref(int backref, Symbol s) {
-		this.backref = backref;
-		this.s = s;
-	}
-
-	@Override
-	public String toString() {
-		return s.getBackref(backref);
-	}
-}
-
-/**
- * A class to represent and parse a rust symbol path node
- */
-class RustPath implements SymbolNode {
-	SymbolNode child;
-
-	public RustPath(SymbolNode child) {
-		this.child = child;
-	}
-
-	public RustPath(String child) {
-		this.child = new RustString(child);
-	}
-
-	/**
-	 * Parses a rust path from a mangled symbol
-	 * @param s parse the rust path
-	 * @return the rust path object
-	 */
-	public static RustPath parse(Symbol s) {
-		int pos = s.pos - 1;
-
-		if (s.nextChar() == 'B') {
-			String backref = s.parseBackref();
-			int i = Integer.parseInt(backref, 16);
-			RustBackref b = new RustBackref(i, s);
-			RustPath path = new RustPath(b);
-			return path;
-		}
-
-		char c = s.popChar();
-		if (c == 'C') {
-			// Crate root?
-			RustIdentifier identifier = RustIdentifier.parse(s, new RustNamespace("crate"));
-			s.backrefAdd(pos, identifier);
-			return new RustPath(identifier.toString());
-		}
-		else if (c == 'M') {
-			RustImplPath implPath = RustImplPath.parse(s);
-			RustType type = RustType.parse(s);
-			RustPath path = new RustPath("<" + implPath + "::" + type + ">");
-
-			s.backrefAdd(pos, path);
-			return path;
-			// <impl-path> <type>
-			// <T> (inherent impl)
-		}
-		else if (c == 'X') {
-			RustImplPath.parse(s);
-			RustType type = RustType.parse(s);
-			RustPath parent = RustPath.parse(s);
-			RustPath path = new RustPath("<" + type + " as " + parent + ">");
-			s.backrefAdd(pos, path);
-			return path;
-			// <impl-path> <type> <data>
-			// <T as Trait> (trait impl)
-		}
-		else if (c == 'Y') {
-			RustType type = RustType.parse(s);
-			RustPath parent = RustPath.parse(s);
-
-			RustPath path = new RustPath("<" + type + " as " + parent + ">");
-			s.backrefAdd(pos, path);
-			return path;
-			// <type> <data>
-			// <T as Trait> (trait definition)
-		}
-		else if (c == 'N') {
-			RustNamespace namespace = RustNamespace.parse(s);
-			RustPath parent = RustPath.parse(s);
-			RustIdentifier id = RustIdentifier.parse(s, namespace);
-			RustPathNested nested = new RustPathNested(parent, id);
-
-			RustPath path = new RustPath(nested.toString());
-			s.backrefAdd(pos, path);
-			return path;
-		}
-		else if (c == 'I') {
-			RustPath parent = RustPath.parse(s);
-			RustGenericArgs args = RustGenericArgs.parse(s);
-
-			if (args == null) {
-				RustPath path = new RustPath(parent);
-				s.backrefAdd(pos, path);
-				return path;
+			try {
+				Parser afterFirst = Printer.dryRunParsePath(parser.copy(), false, alternate);
+				if (startsWithUpperPath(afterFirst)) {
+					Printer.dryRunParsePath(afterFirst, false, alternate);
+				}
 			}
-
-			RustPath path = new RustPath("" + parent + args);
-			s.backrefAdd(pos, path);
-			return path;
-		}
-		else if (c == 'B') {
-			s.backChar();
-			String b = s.parseBackref();
-			int i = Integer.parseInt(b, 16);
-			RustBackref br = new RustBackref(i, s);
-			return new RustPath(br);
-		}
-
-		return null;
-	}
-
-	@Override
-	public String toString() {
-		return child.toString();
-	}
-}
-
-/**
- * Parses and represents a rust symbol namespace node
- */
-class RustNamespace {
-	String data;
-
-	public RustNamespace(String data) {
-		this.data = data;
-	}
-
-	/**
-	 * Parses a rust namespace from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust path object
-	 */
-	public static RustNamespace parse(Symbol s) {
-		char c = s.popChar();
-
-		if (c == 'C') {
-			// closure
-			return new RustNamespace("{closure}");
-		}
-		else if (c == 'S') {
-			// shim
-			return new RustNamespace("{shim}");
-		}
-		else if (c >= 'A' && c <= 'Z') {
-			// other special namespaces
-			return new RustNamespace(String.valueOf(c));
-		}
-		else if (c >= 'a' && c <= 'z') {
-			// internal namespaces
-			return new RustNamespace(String.valueOf(c));
-		}
-
-		return null;
-	}
-
-	@Override
-	public String toString() {
-		return data;
-	}
-}
-
-/**
- * Parses and represents a rust symbol impl path node
- */
-class RustImplPath implements SymbolNode {
-	RustPath path;
-	RustString disambiguator;
-
-	public RustImplPath(RustPath path, RustString disambiguator) {
-		this.path = path;
-		this.disambiguator = disambiguator;
-	}
-
-	/**
-	 * Parses a impl rust path from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust impl path object
-	 */
-	public static RustImplPath parse(Symbol s) {
-		RustString disambiguator = null;
-		if (s.nextChar() == 's') {
-			disambiguator = RustIdentifier.parseDisambiguator(s);
-		}
-
-		RustPath path = RustPath.parse(s);
-
-		return new RustImplPath(path, disambiguator);
-	}
-
-	@Override
-	public String toString() {
-		String s = path.toString();
-
-		if (disambiguator != null && disambiguator.toString() != "") {
-			s += "::" + "[" + disambiguator.toString() + "]";
-		}
-
-		return s;
-	}
-}
-
-/**
- * Parses and represents an rust symbol identifier
- */
-class RustIdentifier implements SymbolNode {
-	String id;
-	RustNamespace namespace;
-	RustString disambiguator;
-
-	public RustIdentifier(RustNamespace namespace, String id, RustString disambiguator) {
-		this.id = id;
-		this.namespace = namespace;
-		this.disambiguator = disambiguator;
-	}
-
-	/**
-	 * Parses a rust identifier from a mangled symbol
-	 * @param s symbol to parse
-	 * @param namespace namespace of symbol
-	 * @return the rust identifier object
-	 */
-	public static RustIdentifier parse(Symbol s, RustNamespace namespace) {
-		RustString disambiguator = null;
-
-		if (s.nextChar() == 's') {
-			disambiguator = parseDisambiguator(s);
-		}
-
-		String id = parseUndisambiguatedIdentifier(s);
-		return new RustIdentifier(namespace, id, disambiguator);
-	}
-
-	/**
-	 * Parses a rust disambiguator from a mangled symbol
-	 * @param s symbol to parse
-	 * @return a string representing the disambiguator
-	 */
-	public static RustString parseDisambiguator(Symbol s) {
-		char c = s.popChar();
-		assert c == 's';
-		return new RustString(s.parseBase62Number());
-	}
-
-	/**
-	 * Parses a rust undisambiguated identifier from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the corresponding string object
-	 */
-	public static String parseUndisambiguatedIdentifier(Symbol s) {
-		boolean punycode = s.stripPrefix('u');
-		int num = s.parseDigits();
-
-		if (s.nextChar() == '_') {
-			s.popChar();
-		}
-
-		if (num == 0) {
-			char c = s.popChar();
-			return "{closure#" + c + "}";
-		}
-
-		String bytes = s.parseString(num);
-
-		if (punycode) {
-			return IDN.toASCII(bytes, IDN.ALLOW_UNASSIGNED);
-		}
-
-		return bytes;
-	}
-
-	@Override
-	public String toString() {
-		return id.toString();
-	}
-}
-
-/**
- * Parses and represents rust generic arguments
- */
-class RustGenericArgs implements SymbolNode {
-	ArrayList<RustGenericArg> args;
-
-	public RustGenericArgs(ArrayList<RustGenericArg> args) {
-		this.args = args;
-	}
-
-	/**
-	 * Parses generics arguments from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust generic arguments object
-	 */
-	public static RustGenericArgs parse(Symbol s) {
-		ArrayList<RustGenericArg> genericArgs = new ArrayList<RustGenericArg>();
-
-		while (s.nextChar() != 'E') {
-			RustGenericArg arg = RustGenericArg.parse(s);
-			if (arg == null) {
+			catch (ParseException e) {
+				if (e.isRecursedTooDeep()) {
+					return null;
+				}
 				return null;
 			}
 
-			genericArgs.add(arg);
+			Printer printer = new Printer(parser.copy(), new StringBuilder(), alternate);
+			printer.printPath(true);
+			String result = printer.finish();
+			String suffix = printer.remaining();
+			if (!suffix.isEmpty()) {
+				boolean keepSuffix = suffix.startsWith(".") && !suffix.startsWith(".llvm") &&
+					!suffix.startsWith("@@");
+				if (!keepSuffix) {
+					suffix = "";
+				}
+			}
+			return suffix.isEmpty() ? result : result + suffix;
 		}
-
-		s.popChar();
-
-		return new RustGenericArgs(genericArgs);
-	}
-
-	@Override
-	public String toString() {
-		String s = "";
-
-		for (RustGenericArg arg : args) {
-			s += arg.toString() + ", ";
+		catch (ParseException e) {
+			if (e.isRecursedTooDeep()) {
+				return e.message();
+			}
+			return null;
 		}
-
-		return "<" + s.substring(0, s.length() - 2) + ">";
-	}
-}
-
-/**
- * Parses and represents a generic argument node in a rust symbol
- */
-class RustGenericArg implements SymbolNode {
-	SymbolNode child;
-
-	public RustGenericArg(SymbolNode child) {
-		this.child = child;
 	}
 
 	/**
-	 * Parses a rust generic argument from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust generic argument object
+	 * Removes known rust prefixes
+	 * @param symbol the string substring
+	 * @return if the strip succeeded
 	 */
-	public static RustGenericArg parse(Symbol s) {
-		SymbolNode lifetime = RustLifetime.parse(s);
-		if (lifetime != null) {
-			return new RustGenericArg(lifetime);
+	private static String stripPrefix(String symbol) {
+		if (symbol.length() > 2 && symbol.startsWith("_R")) {
+			return symbol.substring(2);
+		}
+		if (symbol.length() > 1 && symbol.startsWith("R")) {
+			return symbol.substring(1);
+		}
+		if (symbol.length() > 3 && symbol.startsWith("__R")) {
+			return symbol.substring(3);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns true if every character in {@code text} is ASCII. Legacy demangler performed the
+	 * same check up-front before attempting to walk the grammar.
+	 */
+	private static boolean isAscii(String text) {
+		for (int i = 0; i < text.length(); i++) {
+			if (text.charAt(i) >= 0x80) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Rust v0 manglings always begin with a capital letter describing the top-level path kind.
+	 */
+	private static boolean startsWithUpperPath(String text) {
+		if (text == null || text.isEmpty()) {
+			return false;
+		}
+		char c = text.charAt(0);
+		return c >= 'A' && c <= 'Z';
+	}
+
+	private static boolean startsWithUpperPath(Parser parser) {
+		int peek = parser.peek();
+		return peek >= 'A' && peek <= 'Z';
+	}
+
+	private enum ParseErrorKind {
+		INVALID,
+		RECURSED_TOO_DEEP
+	}
+
+	private static final class ParseException extends Exception {
+		private static final long serialVersionUID = 1L;
+		final ParseErrorKind kind;
+
+		ParseException(ParseErrorKind kind) {
+			this.kind = kind;
 		}
 
-		if (s.nextChar() == 'K') {
-			s.popChar();
-			SymbolNode constant = RustConst.parse(s);
-			if (constant != null) {
-				return new RustGenericArg(constant);
+		boolean isRecursedTooDeep() {
+			return kind == ParseErrorKind.RECURSED_TOO_DEEP;
+		}
+
+		String message() {
+			return switch (kind) {
+				case RECURSED_TOO_DEEP -> RECURSION_LIMIT_MESSAGE;
+				case INVALID -> "{invalid syntax}";
+			};
+		}
+	}
+
+	/**
+	 * Stateful cursor used while walking the v0 grammar. The parser owns the original
+	 * mangled string, maintains the current offset, and keeps a recursion counter so we can
+	 * mirror rustc's depth limits when following backrefs.
+	 */
+	private static final class Parser {
+		private final String sym;
+		private int next;
+		private int depth;
+
+		Parser(String sym) {
+			this(sym, 0, 0);
+		}
+
+		Parser(String sym, int next, int depth) {
+			this.sym = sym;
+			this.next = next;
+			this.depth = depth;
+		}
+
+		Parser copy() {
+			return new Parser(sym, next, depth);
+		}
+
+		/**
+		 * Returns the remaining string to be demangled
+		 * @return the mangled string
+		 */
+		String remaining() {
+			return sym.substring(next);
+		}
+
+		/**
+		 * @return the next character without consuming it, or {@code -1} if the cursor is exhausted.
+		 */
+		int peek() {
+			if (next >= sym.length()) {
+				return -1;
+			}
+			return sym.charAt(next);
+		}
+
+		/**
+		 * Advances the cursor when the next character matches {@code expected}.
+		 * @param expected the expected character
+		 * @return true if advanced
+		 */
+		boolean eat(char expected) {
+			if (peek() == expected) {
+				next++;
+				return true;
+			}
+			return false;
+		}
+
+		/**
+		 * Consumes and returns the next character.
+		 * @return the next character
+		 * @throws ParseException if the cursor is past the end of the string
+		 */
+		char next() throws ParseException {
+			if (next >= sym.length()) {
+				throw new ParseException(ParseErrorKind.INVALID);
+			}
+			return sym.charAt(next++);
+		}
+
+		void pushDepth() throws ParseException {
+			depth++;
+			if (depth > MAX_DEPTH) {
+				throw new ParseException(ParseErrorKind.RECURSED_TOO_DEEP);
 			}
 		}
 
-		SymbolNode type = RustType.parse(s);
-		if (type != null) {
-			return new RustGenericArg(type);
+		void popDepth() {
+			depth--;
 		}
 
-		return null;
-	}
+		/**
+		 * Reads a sequence of hexadecimal digits terminated by {@code '_'} and exposes them as a
+		 * {@link HexNibbles} helper.
+		 * @return the hex nibbles
+		 * @throws ParseException if the expected format is not found
+		 */
+		HexNibbles hexNibbles() throws ParseException {
+			int start = next;
+			while (true) {
+				char c = next();
+				if (isHexDigit(c)) {
+					continue;
+				}
+				if (c == '_') {
+					break;
+				}
+				throw new ParseException(ParseErrorKind.INVALID);
+			}
+			return new HexNibbles(sym.substring(start, next - 1));
+		}
 
-	@Override
-	public String toString() {
-		return child.toString();
-	}
-}
+		/**
+		 * Parses a decimal digit character.
+		 * @return the digit
+		 * @throws ParseException if the next character is not a digit 
+		 */
+		int digit10() throws ParseException {
+			int p = peek();
+			if (p >= '0' && p <= '9') {
+				next++;
+				return p - '0';
+			}
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
 
-/**
- * Parses a rust lifetime from a mangled symbol
- */
-class RustLifetime implements SymbolNode {
-	String num;
+		/**
+		 * Parses the next base-62 digit.
+		 * @return the digit
+		 * @throws ParseException if the next character is not a digit 
+		 */
+		int digit62() throws ParseException {
+			int p = peek();
+			if (p >= '0' && p <= '9') {
+				next++;
+				return p - '0';
+			}
+			if (p >= 'a' && p <= 'z') {
+				next++;
+				return 10 + (p - 'a');
+			}
+			if (p >= 'A' && p <= 'Z') {
+				next++;
+				return 36 + (p - 'A');
+			}
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
 
-	public RustLifetime(String num) {
-		this.num = num;
+		/**
+		 * Reads a base-62 integer terminated by {@code '_'} and returns the decoded value.
+		 * @return the integer value
+		 * @throws ParseException if no integer value is found
+		 */
+		long integer62() throws ParseException {
+			if (eat('_')) {
+				return 0;
+			}
+
+			long value = 0;
+			while (!eat('_')) {
+				int digit = digit62();
+				value = multiplyAddBase62(value, digit);
+			}
+			return addExact(value, 1);
+		}
+
+		/**
+		 * Optionally consumes a base-62 integer prefixed by {@code tag} and returns the decoded value.
+		 * @param tag the tag prefix
+		 * @return the integer
+		 * @throws ParseException if the incorrect integer value is found 
+		 */
+		long optInteger62(char tag) throws ParseException {
+			if (!eat(tag)) {
+				return 0;
+			}
+			return addExact(integer62(), 1);
+		}
+
+		/**
+		 * Parses the optional `s` disambiguator used to render hash-like suffixes.
+		 * @return the integer value
+		 * @throws ParseException if the incorrect integer value is found 
+		 */
+		long disambiguator() throws ParseException {
+			return optInteger62('s');
+		}
+
+		/**
+		 * Reads the namespace designator that precedes nested paths.
+		 * @return the namespace designator
+		 * @throws ParseException if no valid designator is found
+		 */
+		Character namespace() throws ParseException {
+			char c = next();
+			if (c >= 'A' && c <= 'Z') {
+				return Character.valueOf(c);
+			}
+			if (c >= 'a' && c <= 'z') {
+				return null;
+			}
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
+
+		/**
+		 * Resolves a backreference, returning a new parser positioned at the referenced start.
+		 * @return the parser
+		 * @throws ParseException if an incorrect offset value is found 
+		 */
+		Parser backref() throws ParseException {
+			int start = next - 1;
+			long offset = integer62();
+			if (offset >= start) {
+				throw new ParseException(ParseErrorKind.INVALID);
+			}
+			Parser p = new Parser(sym, (int) offset, depth);
+			p.pushDepth();
+			return p;
+		}
+
+		/**
+		 * Parses an identifier, handling punycode (for non-ASCII) and optional disambiguator suffixes.
+		 * @return the identifier
+		 * @throws ParseException if the incorrect identifier values are found 
+		 */
+		Ident ident() throws ParseException {
+			boolean isPunycode = eat('u');
+			int len = digit10();
+			if (len != 0) {
+				while (true) {
+					int peek = peek();
+					if (peek < '0' || peek > '9') {
+						break;
+					}
+					next++;
+					len = multiplyExact(len, 10);
+					len = addExact(len, peek - '0');
+				}
+			}
+
+			eat('_');
+
+			if (len < 0 || next + len > sym.length()) {
+				throw new ParseException(ParseErrorKind.INVALID);
+			}
+			String raw = sym.substring(next, next + len);
+			next += len;
+
+			if (isPunycode) {
+				int sep = raw.lastIndexOf('_');
+				String ascii;
+				String punycode;
+				if (sep >= 0) {
+					ascii = raw.substring(0, sep);
+					punycode = raw.substring(sep + 1);
+				}
+				else {
+					ascii = "";
+					punycode = raw;
+				}
+				if (punycode.isEmpty()) {
+					throw new ParseException(ParseErrorKind.INVALID);
+				}
+				return new Ident(ascii, punycode);
+			}
+
+			return new Ident(raw, "");
+		}
 	}
 
 	/**
-	 * Parses a rust lifetime node from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust lifetime node
+	 * Pretty printer that mirrors the upstream rustc-demangle formatter. It consumes parsed
+	 * tokens by delegating back into {@link Parser} and emits either the normal or the
+	 * alternate (hash-stripped) textual form depending on the {@code alternate} flag.
 	 */
-	public static SymbolNode parse(Symbol s) {
-		if (s.nextChar() != 'L') {
-			return null;
+	private static final class Printer {
+		private Parser parser;
+		private StringBuilder out;
+		private int boundLifetimeDepth;
+		private final boolean alternate;
+
+		Printer(Parser parser, StringBuilder out, boolean alternate) {
+			this.parser = parser;
+			this.out = out;
+			this.boundLifetimeDepth = 0;
+			this.alternate = alternate;
 		}
 
-		s.popChar();
-
-		String num = s.parseBase62Number();
-		if (num != null) {
-			return new RustLifetime(num);
+		static Parser dryRunParsePath(Parser parser, boolean inValue, boolean alternate)
+				throws ParseException {
+			Printer printer = new Printer(parser, null, alternate);
+			printer.printPath(inValue);
+			return printer.parser.copy();
 		}
 
-		return null;
-	}
+		/**
+		 * @return the accumulated demangled output.
+		 */
+		String finish() {
+			return out == null ? "" : out.toString();
+		}
 
-	@Override
-	public String toString() {
-		return num;
-	}
-}
+		/**
+		 * @return any suffix that was not consumed during the primary parse (e.g. ".llvm" decorations).
+		 */
+		String remaining() {
+			return parser.remaining();
+		}
 
-/**
- * Parses and represents a rust symbol type node
- */
-class RustType implements SymbolNode {
-	String typeName;
-	RustPath path;
+		/**
+		 * Prints a v0 path grammar node. This mirrors the old implementation's {@code RustPath.parse}.
+		 * @param inValue true if in the middle of parsing a value
+		 * @throws ParseException if an invalid identifier is encountered
+		 */
+		void printPath(boolean inValue) throws ParseException {
+			parser.pushDepth();
 
-	public RustType(String typeName) {
-		this.typeName = typeName;
-	}
+			char tag = parser.next();
+			switch (tag) {
+				case 'C': { // crate root / plain identifier
+					long dis = parser.disambiguator();
+					Ident name = parser.ident();
+					print(name.render());
+					if (dis != 0 && !alternate) {
+						print('[');
+						printLowerHex(dis);
+						print(']');
+					}
+					break;
+				}
+				case 'N': { // nested path (module::item)
+					Character ns = parser.namespace();
+					printPath(inValue);
+					long dis = parser.disambiguator();
+					Ident name = parser.ident();
 
-	public RustType(RustPath path) {
-		this.path = path;
-	}
+					if (ns != null) {
+						print("::{");
+						switch (ns.charValue()) {
+							case 'C':
+								print("closure");
+								break;
+							case 'S':
+								print("shim");
+								break;
+							default:
+								print(ns.charValue());
+								break;
+						}
+						if (!name.isEmpty()) {
+							print(':');
+							print(name.render());
+						}
+						print('#');
+						print(dis);
+						print('}');
+					}
+					else if (!name.isEmpty()) {
+						print("::");
+						print(name.render());
+					}
+					break;
+				}
+				case 'M': // inherent impl path (<impl-path>::item)
+				case 'X': // trait impl path (<T as Trait>::item)
+				case 'Y': { // trait definition (<T as Trait>)
+					if (tag != 'Y') {
+						parser.disambiguator();
+						skippingPrinting(pr -> pr.printPath(false));
+					}
+					print('<');
+					printType();
+					if (tag != 'M') {
+						print(" as ");
+						printPath(false);
+					}
+					print('>');
+					break;
+				}
+				case 'I': { // path with generic arguments
+					printPath(inValue);
+					if (inValue) {
+						print("::");
+					}
+					print('<');
+					printSepList(pr -> pr.printGenericArg(), ", ");
+					print('>');
+					break;
+				}
+				case 'B': { // backreference into previously seen path
+					printBackref(pr -> pr.printPath(inValue));
+					break;
+				}
+				default:
+					throw new ParseException(ParseErrorKind.INVALID);
+			}
 
-	/**
-	 * Parses a rust type from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust type object
-	 */
-	public static RustType parse(Symbol s) {
-		char c = s.popChar();
+			parser.popDepth();
+		}
 
-		switch (c) {
-			case 'a':
-				return new RustType("i8");
-			case 'b':
-				return new RustType("bool");
-			case 'c':
-				return new RustType("char");
-			case 'd':
-				return new RustType("f64");
-			case 'e':
-				return new RustType("str");
-			case 'f':
-				return new RustType("f32");
-			case 'h':
-				return new RustType("u8");
-			case 'i':
-				return new RustType("isize");
-			case 'j':
-				return new RustType("usize");
-			case 'l':
-				return new RustType("i32");
-			case 'm':
-				return new RustType("u32");
-			case 'n':
-				return new RustType("i128");
-			case 'o':
-				return new RustType("u128");
-			case 's':
-				return new RustType("i16");
-			case 't':
-				return new RustType("u16");
-			case 'u':
-				return new RustType("()");
-			case 'v':
-				return new RustType("...");
-			case 'x':
-				return new RustType("i64");
-			case 'y':
-				return new RustType("u64");
-			case 'z':
-				return new RustType("!");
-			case 'p':
-				return new RustType("_");
-			default:
-				switch (c) {
-					case 'A': // Array sized
-						RustType rustType = RustType.parse(s);
-						RustConst constant = RustConst.parse(s);
-						return new RustType(
-							"[" + rustType.toString() + "; " + constant.toString() + "]");
-					case 'S': // Array unsized
-						SymbolNode symbolType = RustType.parse(s);
-						return new RustType("[" + symbolType.toString() + "]");
-					case 'T': // Tuple
-						ArrayList<String> types = new ArrayList<String>();
+		/** Prints a single generic argument (lifetime, const, or type). */
+		private void printGenericArg() throws ParseException {
+			if (parser.eat('L')) {
+				long lt = parser.integer62();
+				printLifetimeFromIndex(lt);
+			}
+			else if (parser.eat('K')) {
+				printConst(false);
+			}
+			else {
+				printType();
+			}
+		}
 
-						while (s.nextChar() != 'E') {
-							SymbolNode symbolNode = RustType.parse(s);
-							if (symbolNode != null) {
-								types.add(symbolNode.toString());
+		/** Prints a type node (the equivalent of legacy {@code RustType.parse}). */
+		private void printType() throws ParseException {
+			char tag = parser.next();
+			String basic = basicType(tag);
+			if (basic != null) {
+				print(basic);
+				return;
+			}
+
+			parser.pushDepth();
+
+			switch (tag) {
+				case 'R': // &T
+				case 'Q': { // &mut T
+					print('&');
+					if (parser.eat('L')) {
+						long lt = parser.integer62();
+						if (lt != 0) {
+							printLifetimeFromIndex(lt);
+							print(' ');
+						}
+					}
+					if (tag != 'R') {
+						print("mut ");
+					}
+					printType();
+					break;
+				}
+				case 'P': // *const T
+				case 'O': { // *mut T
+					print('*');
+					if (tag == 'P') {
+						print("const ");
+					}
+					else {
+						print("mut ");
+					}
+					printType();
+					break;
+				}
+				case 'A': // [T; N]
+				case 'S': { // [T]
+					print('[');
+					printType();
+					if (tag == 'A') {
+						print("; ");
+						printConst(true);
+					}
+					print(']');
+					break;
+				}
+				case 'T': { // tuple (T1, T2, ...)
+					print('(');
+					int count = printSepList(Printer::printType, ", ");
+					if (count == 1) {
+						print(',');
+					}
+					print(')');
+					break;
+				}
+				case 'F': { // fn(...) -> ...
+					inBinder(pr -> {
+						boolean isUnsafe = pr.parser.eat('U');
+						String abi = null;
+						if (pr.parser.eat('K')) {
+							if (pr.parser.eat('C')) {
+								abi = "C";
 							}
 							else {
-								return null; // null type in parse
+								Ident ident = pr.parser.ident();
+								if (!ident.punycode.isEmpty() || ident.ascii.isEmpty()) {
+									throw new ParseException(ParseErrorKind.INVALID);
+								}
+								abi = ident.ascii;
 							}
 						}
 
-						s.popChar();
-
-						String type = "(" + String.join(", ", types) + ")";
-						return new RustType(type);
-					case 'R': // &T
-						RustLifetime.parse(s);
-						SymbolNode type1 = RustType.parse(s);
-						return new RustType("&" + type1);
-					case 'Q': // &mut T
-						RustLifetime.parse(s);
-						SymbolNode type2 = RustType.parse(s);
-						return new RustType("&mut " + type2);
-					case 'P': // *const T
-						SymbolNode type3 = RustType.parse(s);
-						return new RustType("*const " + type3);
-					case 'O': // *mut T
-						SymbolNode type4 = RustType.parse(s);
-						return new RustType("*mut " + type4);
-					case 'F': // fn(...) -> ...
-						// TODO: FnSig type
-					case 'D': // dyn Trait<Assoc = X> + Send + 'a
-						String bounds = parseDynBounds(s);
-						RustLifetime.parse(s);
-						String data = "dyn Trait<Assoc = X>";
-
-						if (bounds != null) {
-							data += bounds;
+						if (isUnsafe) {
+							pr.print("unsafe ");
 						}
 
-						return new RustType(data);
-					case 'B':
-						s.backChar();
-						String b1 = s.parseBackref();
-						int b2 = Integer.parseInt(b1);
-						RustBackref b3 = new RustBackref(b2, s);
-						return new RustType(new RustPath(b3));
-					default:
-						s.backChar();
-						RustPath path = RustPath.parse(s);
-						return new RustType(path);
+						if (abi != null) {
+							pr.print("extern \"");
+							String[] parts = abi.split("_");
+							for (int i = 0; i < parts.length; i++) {
+								if (i != 0) {
+									pr.print('-');
+								}
+								pr.print(parts[i]);
+							}
+							pr.print("\" ");
+						}
+
+						pr.print("fn(");
+						pr.printSepList(Printer::printType, ", ");
+						pr.print(')');
+
+						if (!pr.parser.eat('u')) {
+							pr.print(" -> ");
+							pr.printType();
+						}
+					});
+					break;
 				}
+				case 'D': { // dyn Trait + bounds
+					print("dyn ");
+					inBinder(pr -> {
+						pr.printSepList(Printer::printDynTrait, " + ");
+					});
+					if (!parser.eat('L')) {
+						throw new ParseException(ParseErrorKind.INVALID);
+					}
+					long lt = parser.integer62();
+					if (lt != 0) {
+						print(" + ");
+						printLifetimeFromIndex(lt);
+					}
+					break;
+				}
+				case 'B': { // backref to previously printed type
+					printBackref(Printer::printType);
+					break;
+				}
+				case 'W': { // type with pattern (unstable internal form)
+					printType();
+					print(" is ");
+					printPat();
+					break;
+				}
+				default: {
+					parser.next--; // rewind for path parsing
+					printPath(false);
+					break;
+				}
+			}
+
+			parser.popDepth();
+		}
+
+		/**
+		 * Prints either a plain path or a path with `<...>` generics, returning whether the caller
+		 * should emit the closing `>` (needed for dyn-trait associated bindings).
+		 */
+		private boolean printPathMaybeOpenGenerics() throws ParseException {
+			if (parser.eat('B')) {
+				final boolean[] open = new boolean[] { false };
+				printBackref(pr -> open[0] = pr.printPathMaybeOpenGenerics());
+				return open[0];
+			}
+			if (parser.eat('I')) {
+				printPath(false);
+				print('<');
+				printSepList(Printer::printGenericArg, ", ");
+				return true;
+			}
+			printPath(false);
+			return false;
+		}
+
+		/**
+		 * Prints a single trait appearing inside a `dyn` object, including associated type bindings.
+		 */
+		private void printDynTrait() throws ParseException {
+			boolean open = printPathMaybeOpenGenerics();
+			while (parser.eat('p')) {
+				if (!open) {
+					print('<');
+					open = true;
+				}
+				else {
+					print(", ");
+				}
+				Ident name = parser.ident();
+				print(name.render());
+				print(" = ");
+				printType();
+			}
+			if (open) {
+				print('>');
+			}
+		}
+
+		/** Prints pattern fragments used by the unstable `is` syntax (range unions, etc.). */
+		private void printPat() throws ParseException {
+			char tag = parser.next();
+			switch (tag) {
+				case 'R':
+					printConst(false);
+					print("..=");
+					printConst(false);
+					break;
+				case 'O':
+					parser.pushDepth();
+					printPat();
+					while (!parser.eat('E')) {
+						print(" | ");
+						printPat();
+					}
+					parser.popDepth();
+					break;
+				case 'N':
+					print("!null");
+					break;
+				default:
+					throw new ParseException(ParseErrorKind.INVALID);
+			}
+		}
+
+		/** Prints a constant expression appearing either as a value or inside generics. */
+		private void printConst(boolean inValue) throws ParseException {
+			char tag = parser.next();
+			parser.pushDepth();
+
+			boolean openedBrace = false;
+			final boolean requireWrap = !inValue;
+
+			switch (tag) {
+				case 'p': // `_` placeholder
+					print('_');
+					break;
+				case 'h':
+				case 't':
+				case 'm':
+				case 'y':
+				case 'o':
+				case 'j': // unsigned integers
+					printConstUint(tag);
+					break;
+				case 'a':
+				case 's':
+				case 'l':
+				case 'x':
+				case 'n':
+				case 'i': // signed integers
+					if (parser.eat('n')) {
+						print('-');
+					}
+					printConstUint(tag);
+					break;
+				case 'b': { // bool
+					Long v = parser.hexNibbles().tryParseUInt();
+					if (v == null) {
+						throw new ParseException(ParseErrorKind.INVALID);
+					}
+					if (v == 0) {
+						print("false");
+					}
+					else if (v == 1) {
+						print("true");
+					}
+					else {
+						throw new ParseException(ParseErrorKind.INVALID);
+					}
+					break;
+				}
+				case 'c': { // char literal
+					Long value = parser.hexNibbles().tryParseUInt();
+					if (value == null || value < 0 || value > Character.MAX_CODE_POINT) {
+						throw new ParseException(ParseErrorKind.INVALID);
+					}
+					String data = new String(Character.toChars(value.intValue()));
+					printQuotedEscapedChars('\'', data);
+					break;
+				}
+				case 'e': { // str literal (stored as *"...")
+					if (requireWrap) {
+						openedBrace = true;
+						print('{');
+					}
+					print('*');
+					printConstStrLiteral();
+					break;
+				}
+				case 'R':
+				case 'Q': { // references in const position
+					if (tag == 'R' && parser.eat('e')) {
+						printConstStrLiteral(true);
+					}
+					else {
+						if (requireWrap) {
+							openedBrace = true;
+							print('{');
+						}
+						print('&');
+						if (tag != 'R') {
+							print("mut ");
+						}
+						printConst(true);
+					}
+					break;
+				}
+				case 'A': { // array literal
+					if (requireWrap) {
+						openedBrace = true;
+						print('{');
+					}
+					print('[');
+					printSepList(pr -> pr.printConst(true), ", ");
+					print(']');
+					break;
+				}
+				case 'T': { // tuple literal
+					if (requireWrap) {
+						openedBrace = true;
+						print('{');
+					}
+					print('(');
+					int count = printSepList(pr -> pr.printConst(true), ", ");
+					if (count == 1) {
+						print(',');
+					}
+					print(')');
+					break;
+				}
+				case 'V': { // enum/struct literal
+					if (requireWrap) {
+						openedBrace = true;
+						print('{');
+					}
+					printPath(true);
+					char variant = parser.next();
+					switch (variant) {
+						case 'U':
+							break;
+						case 'T':
+							print('(');
+							printSepList(pr -> pr.printConst(true), ", ");
+							print(')');
+							break;
+						case 'S':
+							print(" { ");
+							printSepList(pr -> {
+								pr.parser.disambiguator();
+								Ident name = pr.parser.ident();
+								pr.print(name.render());
+								pr.print(": ");
+								pr.printConst(true);
+							}, ", ");
+							print(" }");
+							break;
+						default:
+							throw new ParseException(ParseErrorKind.INVALID);
+					}
+					break;
+				}
+				case 'B': { // backref
+					printBackref(pr -> pr.printConst(inValue));
+					break;
+				}
+				default:
+					throw new ParseException(ParseErrorKind.INVALID);
+			}
+
+			if (openedBrace) {
+				print('}');
+			}
+
+			parser.popDepth();
+		}
+
+		/** Formats a hexadecimal string literal as either {@code "..."} or {@code *"..."}. */
+		private void printConstStrLiteral() throws ParseException {
+			printConstStrLiteral(false);
+		}
+
+		private void printConstStrLiteral(boolean bare) throws ParseException {
+			String decoded = parser.hexNibbles().tryParseStr();
+			if (decoded == null) {
+				throw new ParseException(ParseErrorKind.INVALID);
+			}
+			if (bare) {
+				printQuotedEscapedChars('"', decoded);
+			}
+			else {
+				printQuotedEscapedChars('"', decoded);
+			}
+		}
+
+		/** Emits an integer literal, appending the suffix when alternate formatting is disabled. */
+		private void printConstUint(char tyTag) throws ParseException {
+			HexNibbles hex = parser.hexNibbles();
+			Long value = hex.tryParseUInt();
+			if (value != null) {
+				print(value);
+			}
+			else {
+				print("0x");
+				print(hex.nibbles);
+			}
+			String ty = basicType(tyTag);
+			if (ty != null && !alternate) {
+				print(ty);
+			}
+		}
+
+		/** Replays a previously printed node referenced by a `B` backref tag. */
+		private void printBackref(PrinterConsumer consumer) throws ParseException {
+			Parser backref = parser.backref();
+			if (out == null) {
+				return;
+			}
+			Parser saved = parser;
+			parser = backref;
+			consumer.accept(this);
+			parser = saved;
+		}
+
+		/** Handles the {@code for<...>} binder that introduces late-bound lifetimes. */
+		private void inBinder(PrinterConsumer consumer) throws ParseException {
+			long count = parser.optInteger62('G');
+			if (out == null) {
+				consumer.accept(this);
+				return;
+			}
+			if (count > 0) {
+				print("for<");
+				for (int i = 0; i < count; i++) {
+					if (i != 0) {
+						print(", ");
+					}
+					boundLifetimeDepth++;
+					printLifetimeFromIndex(1);
+				}
+				print("> ");
+			}
+			consumer.accept(this);
+			boundLifetimeDepth -= (int) count;
+		}
+
+		/** Utility for comma-separated lists terminated by {@code 'E'}. */
+		private int printSepList(PrinterConsumer consumer, String sep) throws ParseException {
+			int count = 0;
+			while (!parser.eat('E')) {
+				if (count != 0) {
+					print(sep);
+				}
+				consumer.accept(this);
+				count++;
+			}
+			return count;
+		}
+
+		/** Converts the encoded lifetime index into a textual representation (e.g. {@code 'a}). */
+		private void printLifetimeFromIndex(long lt) throws ParseException {
+			if (out == null) {
+				return;
+			}
+			print('\'');
+			if (lt == 0) {
+				print('_');
+				return;
+			}
+			long depth = boundLifetimeDepth - lt;
+			if (depth < 0) {
+				throw new ParseException(ParseErrorKind.INVALID);
+			}
+			if (depth < 26) {
+				print((char) ('a' + depth));
+			}
+			else {
+				print('_');
+				print(depth);
+			}
+		}
+
+		/** Temporarily disables output while still consuming the parse tree (used for impl paths). */
+		private void skippingPrinting(PrinterConsumer consumer) throws ParseException {
+			StringBuilder original = out;
+			out = null;
+			consumer.accept(this);
+			out = original;
+		}
+
+		private void print(String text) {
+			if (out != null) {
+				out.append(text);
+			}
+		}
+
+		private void print(char c) {
+			if (out != null) {
+				out.append(c);
+			}
+		}
+
+		private void print(long value) {
+			if (out != null) {
+				out.append(value);
+			}
+		}
+
+		private void printLowerHex(long value) {
+			if (out != null) {
+				out.append(Long.toHexString(value));
+			}
+		}
+
+		private void printQuotedEscapedChars(char quote, String data) {
+			if (out == null) {
+				return;
+			}
+			out.append(quote);
+			data.codePoints().forEach(cp -> {
+				if ((quote == '\'' && cp == '"') || (quote == '"' && cp == '\'')) {
+					out.appendCodePoint(cp);
+					return;
+				}
+				switch (cp) {
+					case '\\':
+						out.append("\\\\");
+						break;
+					case '\n':
+						out.append("\\n");
+						break;
+					case '\r':
+						out.append("\\r");
+						break;
+					case '\t':
+						out.append("\\t");
+						break;
+					case '\0':
+						out.append("\\0");
+						break;
+					case '"':
+						if (quote == '"') {
+							out.append("\\\"");
+						}
+						else {
+							out.append('"');
+						}
+						break;
+					case '\'':
+						if (quote == '\'') {
+							out.append("\\'");
+						}
+						else {
+							out.append('\'');
+						}
+						break;
+					default:
+						if (cp < 0x20 || cp == 0x7f) {
+							out.append(String.format("\\x%02x", cp));
+						}
+						else {
+							out.appendCodePoint(cp);
+						}
+				}
+			});
+			out.append(quote);
+		}
+	}
+
+	@FunctionalInterface
+	private interface PrinterConsumer {
+		void accept(Printer printer) throws ParseException;
+	}
+
+	private static final class Ident {
+		private final String ascii;
+		private final String punycode;
+
+		Ident(String ascii, String punycode) {
+			this.ascii = ascii;
+			this.punycode = punycode;
+		}
+
+		boolean isEmpty() {
+			return ascii.isEmpty() && punycode.isEmpty();
+		}
+
+		String render() {
+			if (punycode.isEmpty()) {
+				return ascii;
+			}
+
+			List<Integer> decoded = decodePunycode();
+			if (decoded == null) {
+				StringBuilder builder = new StringBuilder("punycode{");
+				if (!ascii.isEmpty()) {
+					builder.append(ascii).append('-');
+				}
+				builder.append(punycode).append('}');
+				return builder.toString();
+			}
+
+			StringBuilder out = new StringBuilder();
+			for (int cp : decoded) {
+				out.appendCodePoint(cp);
+			}
+			return out.toString();
+		}
+
+		/**
+		 * Decodes the punycode payload used for non-ASCII identifiers. Returns {@code null} when the
+		 * sequence is malformed so callers can fall back to the `{punycode{...}}` representation.
+		 */
+		private List<Integer> decodePunycode() {
+			if (punycode.isEmpty()) {
+				return null;
+			}
+
+			List<Integer> output = new ArrayList<>();
+			ascii.codePoints().forEach(cp -> output.add(cp));
+
+			int base = 36;
+			int tMin = 1;
+			int tMax = 26;
+			int skew = 38;
+			int damp = 700;
+			int bias = 72;
+			long i = 0;
+			long n = 0x80;
+			int index = 0;
+
+			while (index < punycode.length()) {
+				long delta = 0;
+				long w = 1;
+				int k = base;
+				while (true) {
+					if (index >= punycode.length()) {
+						return null;
+					}
+					char c = punycode.charAt(index++);
+					int digit;
+					if (c >= 'a' && c <= 'z') {
+						digit = c - 'a';
+					}
+					else if (c >= '0' && c <= '9') {
+						digit = 26 + (c - '0');
+					}
+					else {
+						return null;
+					}
+
+					try {
+						delta = addExact(delta, multiplyExact(w, digit));
+					}
+					catch (ParseException e) {
+						return null;
+					}
+					int t = clamp(k - bias, tMin, tMax);
+					if (digit < t) {
+						break;
+					}
+					try {
+						w = multiplyExact(w, base - t);
+					}
+					catch (ParseException e) {
+						return null;
+					}
+					k += base;
+				}
+
+				int outLen = output.size() + 1;
+				try {
+					i = addExact(i, delta);
+					n = addExact(n, i / outLen);
+				}
+				catch (ParseException e) {
+					return null;
+				}
+				i %= outLen;
+
+				if (!Character.isValidCodePoint((int) n) || i > Integer.MAX_VALUE) {
+					return null;
+				}
+				output.add((int) i, (int) n);
+				i++;
+
+				delta /= damp;
+				damp = 2;
+				delta += delta / outLen;
+				int kAdjust = 0;
+				while (delta > ((base - tMin) * (long) tMax) / 2) {
+					delta /= (base - tMin);
+					kAdjust += base;
+				}
+				bias = kAdjust + (int) (((base - tMin + 1L) * delta) / (delta + skew));
+			}
+
+			return output;
+		}
+	}
+
+	private static final class HexNibbles {
+		private final String nibbles;
+
+		HexNibbles(String nibbles) {
+			this.nibbles = nibbles;
+		}
+
+		Long tryParseUInt() {
+			String trimmed = stripLeadingZeros(nibbles);
+			if (trimmed.length() > 16) {
+				return null;
+			}
+			long value = 0;
+			for (int i = 0; i < trimmed.length(); i++) {
+				int digit = hexValue(trimmed.charAt(i));
+				value = (value << 4) | digit;
+			}
+			return Long.valueOf(value);
+		}
+
+		String tryParseStr() {
+			if ((nibbles.length() & 1) != 0) {
+				return null;
+			}
+			byte[] bytes = new byte[nibbles.length() / 2];
+			for (int i = 0; i < bytes.length; i++) {
+				int hi = hexValue(nibbles.charAt(2 * i));
+				int lo = hexValue(nibbles.charAt(2 * i + 1));
+				bytes[i] = (byte) ((hi << 4) | lo);
+			}
+			try {
+				return StandardCharsets.UTF_8.newDecoder()
+						.decode(ByteBuffer.wrap(bytes))
+						.toString();
+			}
+			catch (CharacterCodingException e) {
+				return null;
+			}
 		}
 	}
 
 	/**
-	 * Parses a rust dyn bounds from a mangled symbol
-	 * @param s symbol to parse
-	 * @return a string representing the dyn bounds
+	 * Maps the single-character primitive tags to their textual forms (e.g. {@code 'a'} =&gt; {@code i8}).
+	 * The ordering matches the original implementation to ease diffing against upstream rustc-demangle.
 	 */
-	public static String parseDynBounds(Symbol s) {
-		ArrayList<String> traits = new ArrayList<String>();
-		@SuppressWarnings("unused")
-		String binder = parseBinder(s);
-
-		while (s.nextChar() != 'E') {
-			String trait = parseDynTrait(s);
-			traits.add(trait);
+	private static String basicType(char tag) {
+		switch (tag) {
+			case 'a':
+				return "i8";
+			case 'b':
+				return "bool";
+			case 'c':
+				return "char";
+			case 'd':
+				return "f64";
+			case 'e':
+				return "str";
+			case 'f':
+				return "f32";
+			case 'h':
+				return "u8";
+			case 'i':
+				return "isize";
+			case 'j':
+				return "usize";
+			case 'l':
+				return "i32";
+			case 'm':
+				return "u32";
+			case 'n':
+				return "i128";
+			case 'o':
+				return "u128";
+			case 'p':
+				return "_";
+			case 's':
+				return "i16";
+			case 't':
+				return "u16";
+			case 'u':
+				return "()";
+			case 'v':
+				return "...";
+			case 'x':
+				return "i64";
+			case 'y':
+				return "u64";
+			case 'z':
+				return "!";
+			default:
+				return null;
 		}
-
-		s.popChar();
-
-		return " + " + String.join(" + ", traits);
 	}
 
 	/**
-	 * Parses a rust dyn trait from a mangled symbol
-	 * @param s symbol to parse
-	 * @return a string representing the dyn trait
+	 * Utility used by the punycode decoder to mimic rustc's bias adjustment logic.
 	 */
-	public static String parseDynTrait(Symbol s) {
-		RustPath path = RustPath.parse(s);
-		@SuppressWarnings("unused")
-		String bindings = "";
-		while (s.nextChar() == 'p') {
-			String binding = parseDynTraitAssocBinding(s);
-			bindings += binding;
+	private static int clamp(int value, int min, int max) {
+		if (value < min) {
+			return min;
 		}
-
-		if (path == null) {
-			return "";
+		if (value > max) {
+			return max;
 		}
-
-		return path.toString();
+		return value;
 	}
 
 	/**
-	 * Parses a rust dyn trait associated binding from a mangled symbol
-	 * @param s symbol to parse
-	 * @return a string representing the dyn trait associated binding
+	 * Parses a single hexadecimal nibble character.
 	 */
-	public static String parseDynTraitAssocBinding(Symbol s) {
-		s.popChar();
-
-		RustIdentifier.parseUndisambiguatedIdentifier(s);
-		SymbolNode type = RustType.parse(s);
-
-		return "dyn " + type.toString();
-	}
-
-	/**
-	 * Parses a rust binding from a mangled symbol
-	 * @param s symbol to parse
-	 * @return a string representing the binding
-	 */
-	public static String parseBinder(Symbol s) {
-		if (s.nextChar() != 'G') {
-			return null;
+	private static int hexValue(char c) {
+		if (c >= '0' && c <= '9') {
+			return c - '0';
 		}
-
-		s.popChar();
-		return s.parseBase62Number();
-	}
-
-	@Override
-	public String toString() {
-		if (path != null) {
-			return path.toString();
+		if (c >= 'a' && c <= 'f') {
+			return 10 + (c - 'a');
 		}
-
-		return typeName;
-	}
-}
-
-/**
- * Parses and represents a rust symbol const node
- */
-class RustConst implements SymbolNode {
-	String name;
-
-	public RustConst(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * Parses a rust const from a mangled symbol
-	 * @param s symbol to parse
-	 * @return the rust const object
-	 */
-	public static RustConst parse(Symbol s) {
-		SymbolNode type = RustType.parse(s);
-		String constData = RustConst.parseConstData(s);
-
-		return new RustConst(constData + type.toString());
-	}
-
-	/**
-	 * Parses a rust const data from a mangled symbol
-	 * @param s symbol to parse
-	 * @return a string representing the const data
-	 */
-	public static String parseConstData(Symbol s) {
-		if (s.nextChar() == 'n') {
-			s.popChar();
+		if (c >= 'A' && c <= 'F') {
+			return 10 + (c - 'A');
 		}
-
-		String name = s.parseUntil('_');
-		s.popChar();
-
-		return name;
+		throw new IllegalArgumentException("invalid hex digit: " + c);
 	}
 
-	@Override
-	public String toString() {
-		return name;
+	private static String stripLeadingZeros(String value) {
+		int i = 0;
+		while (i < value.length() && value.charAt(i) == '0') {
+			i++;
+		}
+		return value.substring(i);
+	}
+
+	private static boolean isHexDigit(char c) {
+		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+	}
+
+	private static long multiplyExact(long a, long b) throws ParseException {
+		if (a == 0 || b == 0) {
+			return 0;
+		}
+		long result = a * b;
+		if (Long.divideUnsigned(result, a) != b) {
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
+		return result;
+	}
+
+	private static long multiplyAddBase62(long value, int digit) throws ParseException {
+		long mult = multiplyExact(value, 62);
+		return addExact(mult, digit);
+	}
+
+	private static int multiplyExact(int a, int b) throws ParseException {
+		try {
+			return Math.multiplyExact(a, b);
+		}
+		catch (ArithmeticException e) {
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
+	}
+
+	private static long addExact(long a, long b) throws ParseException {
+		long result = a + b;
+		if (Long.compareUnsigned(result, a) < 0) {
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
+		return result;
+	}
+
+	private static int addExact(int a, int b) throws ParseException {
+		try {
+			return Math.addExact(a, b);
+		}
+		catch (ArithmeticException e) {
+			throw new ParseException(ParseErrorKind.INVALID);
+		}
 	}
 }

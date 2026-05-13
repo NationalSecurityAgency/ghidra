@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,12 @@ import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.sys.EmuSyscallLibrary.EmuSyscallDefinition;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 
 /**
  * A system call that is defined by delegating to a p-code userop
@@ -56,6 +57,7 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 		return dtPointer;
 	}
 
+	protected final PcodeOp op; // fabricated for analyses that provide originating op info
 	protected final PcodeUseropDefinition<T> opdef;
 	protected final List<Varnode> inVars;
 	protected final Varnode outVar;
@@ -64,12 +66,13 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 	 * Construct a syscall definition
 	 * 
 	 * @see AnnotatedEmuSyscallUseropLibrary
+	 * @param number the opIndex assigned to this userop
 	 * @param opdef the wrapped userop definition
 	 * @param program the program, used for storage computation
 	 * @param convention the "syscall" calling convention
 	 * @param dtMachineWord the "pointer" data type
 	 */
-	public UseropEmuSyscallDefinition(PcodeUseropDefinition<T> opdef, Program program,
+	public UseropEmuSyscallDefinition(long number, PcodeUseropDefinition<T> opdef, Program program,
 			PrototypeModel convention, DataType dtMachineWord) {
 		this.opdef = opdef;
 
@@ -87,9 +90,16 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 
 		outVar = getSingleVnStorage(vss[0]);
 		inVars = Arrays.asList(new Varnode[inputCount]);
+		Varnode[] opIns = new Varnode[inputCount + 1];
+		opIns[0] = new Varnode(program.getAddressFactory().getConstantAddress(number), 4);
 		for (int i = 0; i < inputCount; i++) {
-			inVars.set(i, getSingleVnStorage(vss[i + 1]));
+			Varnode vnIn = getSingleVnStorage(vss[i + 1]);
+			inVars.set(i, vnIn);
+			opIns[i + 1] = vnIn;
 		}
+
+		op = new PcodeOp(new SequenceNumber(Address.NO_ADDRESS, 0), PcodeOp.CALLOTHER, opIns,
+			outVar);
 	}
 
 	/**
@@ -109,7 +119,7 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 	@Override
 	public void invoke(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library) {
 		try {
-			opdef.execute(executor, library, outVar, inVars);
+			opdef.execute(executor, library, op, outVar, inVars);
 		}
 		catch (PcodeExecutionException e) {
 			throw e;

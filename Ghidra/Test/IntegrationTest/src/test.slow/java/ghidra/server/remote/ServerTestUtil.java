@@ -528,8 +528,6 @@ public class ServerTestUtil {
 				Thread.sleep(200);
 				if (isServerRegistered(portFactory.getRMIRegistryPort()) &&
 					canConnect(portFactory.getRMISSLPort())) {
-					Msg.info(ServerTestUtil.class,
-						"Successfully verified Ghidra Server registration and SSL port availability");
 					success = true;
 					return;
 				}

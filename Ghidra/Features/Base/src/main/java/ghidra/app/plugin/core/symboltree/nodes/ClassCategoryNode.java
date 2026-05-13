@@ -146,17 +146,18 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		}
 
 		SymbolNode key = SymbolNode.createKeyNode(symbol, oldName, program);
-		Namespace parentNs = symbol.getParentNamespace();
-		if (parentNs == globalNamespace) {
-			// no need to search for the class in the tree; the class only lives at the top
-			GTreeNode symbolNode = findNode(this, key, false, monitor);
-			if (symbolNode != null) {
-				removeNode(symbolNode);
-			}
+
+		// See if the class lives on this Classes node. This can happen when the class is the child
+		// of a non-class namespace.
+		GTreeNode symbolNode = findNode(this, key, false, monitor);
+		if (symbolNode != null) {
+			removeNode(symbolNode);
 			return;
 		}
 
-		// set getAllClassNodes() for a description of the map
+		// We could not find the node. See if it is under another class node.
+		// (See getAllClassNodes() for a description of the map.)
+		Namespace parentNs = symbol.getParentNamespace();
 		Map<GTreeNode, List<Namespace>> classNodes = getAllClassNodes(symbol, parentNs, monitor);
 		removeSymbol(key, classNodes, monitor);
 	}
@@ -175,12 +176,12 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 			// parent for the given symbol
 			GTreeNode classNode = entry.getKey();
 			List<Namespace> parentPath = entry.getValue();
-			GTreeNode symbolParent =
-				getNamespaceNode(classNode, parentPath, false, monitor);
-			GTreeNode symbolNode = findNode(symbolParent, key, false, monitor);
-			if (symbolParent != null) {
-				symbolParent.removeNode(symbolNode);
+			GTreeNode symbolParent = getNamespaceNode(classNode, parentPath, false, monitor);
+			if (symbolParent == null) {
+				continue;
 			}
+			GTreeNode symbolNode = findNode(symbolParent, key, false, monitor);
+			symbolParent.removeNode(symbolNode);
 		}
 	}
 

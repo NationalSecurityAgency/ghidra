@@ -1011,6 +1011,10 @@ public class GTable extends JTable {
 		}
 	}
 
+	/**
+	 * Scrolls the selected row into the view center.  This call will not scroll if the selected row
+	 * is already in the view.
+	 */
 	public void scrollToSelectedRow() {
 		Container parent = getParent();
 		if (!(parent instanceof JViewport viewport)) {
@@ -1027,6 +1031,10 @@ public class GTable extends JTable {
 		int row = selectedRows[0];
 		Rectangle cellRect = getCellRect(row, 0, true);
 		Rectangle visibleRect = getVisibleRect();
+		if (visibleRect.contains(cellRect)) {
+			return;
+		}
+
 		cellRect.x = visibleRect.x; // use the view x to prevent side scrolling
 		cellRect.width = visibleRect.width;
 
@@ -1524,7 +1532,7 @@ public class GTable extends JTable {
 		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Activate_Filter"));
 		//@formatter:on
 
-		GTableAction toggleFilterAction = new GTableAction("Table/Tree Toggle Filter", owner) {
+		GTableAction hideFilterAction = new GTableAction("Table/Tree Hide Filter", owner) {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
@@ -1538,22 +1546,43 @@ public class GTable extends JTable {
 
 			@Override
 			public void actionPerformed(ActionContext context) {
+				GTable gTable = (GTable) context.getSourceComponent();
+				GTableFilterPanel<?> filterPanel = gTable.getTableFilterPanel();
+				filterPanel.close();
+			}
+
+			@Override
+			public boolean isValidComponentContext(ActionContext context) {
+				/*
+				 			Subtle Code Alert!
+				 	We use this method to signal that this action is only to be included in the key
+				 	binding processing when the filter is showing.  This is different than normal
+				 	docking actions in that normal actions are always valid, just enabled/disabled.
+				 	Returning false here prevents this action from interfering with key bindings 
+				 	further up the processing chain when the filter is not showing.
+				 */
+				if (!super.isValidComponentContext(context)) {
+					return false;
+				}
 
 				GTable gTable = (GTable) context.getSourceComponent();
 				GTableFilterPanel<?> filterPanel = gTable.getTableFilterPanel();
-				filterPanel.toggleVisibility();
+				if (filterPanel == null) {
+					return false;
+				}
+				return filterPanel.isShowing();
 			}
 		};
 		//@formatter:off
-		toggleFilterAction.setPopupMenuData(new MenuData(
-				new String[] { "Toggle Filter" },
+		hideFilterAction.setPopupMenuData(new MenuData(
+				new String[] { "Hide Filter" },
 				null /*icon*/,
 				actionMenuGroup,
 				NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)
 			)
 		);		
-		toggleFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
+		hideFilterAction.setHelpLocation(new HelpLocation("Trees", "Hide_Filter"));
 		//@formatter:on
 
 		toolActions.addGlobalAction(copyAction);
@@ -1563,7 +1592,7 @@ public class GTable extends JTable {
 		toolActions.addGlobalAction(exportColumnsAction);
 		toolActions.addGlobalAction(selectAllAction);
 		toolActions.addGlobalAction(activateFilterAction);
-		toolActions.addGlobalAction(toggleFilterAction);
+		toolActions.addGlobalAction(hideFilterAction);
 	}
 
 //==================================================================================================

@@ -92,7 +92,7 @@ public class TaintLabelsTableProvider extends ComponentProviderAdapter {
 			int unfilteredCount = model.getUnfilteredRowCount();
 			model.getDataFrame().dumpTableToDebug();
 
-			setSubTitle("" + rowCount + " items" +
+			setSubTitle("" + rowCount + " item" + (rowCount == 1 ? "" : "s") +
 				(rowCount != unfilteredCount ? " (of " + unfilteredCount + ")" : ""));
 			filterTable.repaint();
 		});

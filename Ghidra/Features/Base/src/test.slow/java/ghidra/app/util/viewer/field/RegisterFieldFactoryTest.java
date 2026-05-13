@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,10 +40,6 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 	private CodeBrowserPlugin cb;
 	private Program program;
 
-	public RegisterFieldFactoryTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -57,7 +53,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.createEmptyFunction(null, "1001000", 40, null);
 		builder.createReturnInstruction("1001000");
@@ -115,7 +111,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 			if (reg.isProcessorContext() || reg.hasChildren()) {
 				continue;
 			}
-				nonContextRegs.add(reg);
+			nonContextRegs.add(reg);
 		}
 		return nonContextRegs;
 	}

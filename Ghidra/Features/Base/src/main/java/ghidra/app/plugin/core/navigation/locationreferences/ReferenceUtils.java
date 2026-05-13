@@ -20,6 +20,7 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.app.services.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -343,7 +344,7 @@ public final class ReferenceUtils {
 
 		Consumer<DataTypeReference> callback = ref -> {
 
-			LocationReferenceContext context = ref.getContext();
+			SearchLocationContext context = ref.getContext();
 			LocationReference locationReference = new LocationReference(ref.getAddress(), context);
 			accumulator.add(locationReference);
 		};

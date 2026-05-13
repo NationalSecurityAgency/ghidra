@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+
+import org.jdom2.JDOMException;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
@@ -34,10 +35,17 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.exception.CancelledException;
@@ -48,8 +56,9 @@ import ghidra.util.task.TaskMonitor;
  * tool.
  * 
  * <p>
- * Your current tool had better be the "TraceBrowser"! The demonstration serves two purposes. 1) It
- * puts interesting data into the TraceBrowser and leaves some annotations as an exercise. 2) It
+ * Your current tool had better be the "Debugger" or the "Emulator" (or, at the very least
+ * must have the DebuggerTraceManagerServicePlugin configured). The demonstration serves two purposes. 1) It
+ * puts interesting data into the GUI and leaves some annotations as an exercise. 2) It
  * demonstrates how a decent portion the Trace API works.
  * 
  * <p>
@@ -90,27 +99,133 @@ import ghidra.util.task.TaskMonitor;
  * </ul>
  * 
  * <p>
- * After you've run this script, a trace should appear in the UI. Note that there is not yet a way
- * to save a trace in the UI. As an exercise, try adding data units to analyze the threads' stacks.
+ * After you've run this script, a trace should appear in the UI. As an exercise, try adding data 
+ * units to analyze the threads' stacks.
  * It may take some getting accustomed to, but the rules for laying down units should be very
  * similar to those in a Program. However, the Trace must take the applied units and decide how far
  * into the future they are effective. In general, it defaults to "from here on out." However, two
- * conditions may cause the trace to choose an ending tick: 1) The underlying bytes change sometime
- * in the future, and 2) There is an overlapping code unit sometime in the future.
+ * conditions may cause the trace to choose an ending snap: 1) The underlying bytes change sometime
+ * in the future, and 2) There is an conflicting code unit sometime in the future.
  * 
  * <p>
- * The trace chooses the latest tick possible preceding any byte change or existing code unit, so
+ * The trace chooses the latest snap possible preceding any byte change or existing code unit, so
  * that the unit's underlying bytes remain constant for its lifespan, and the unit does not overlap
  * any existing unit. This rule causes some odd behavior for null-terminated strings. I intend to
  * adjust this rule slightly for static data types wrt/ byte changes. For those, the placed unit
  * should be truncated as described above, however, another data unit of the same type can be placed
- * at the change. The same rule is then applied iteratively into the future until an overlapping
+ * at the change. The same rule is then applied iteratively into the future until an conflicting
  * unit is encountered, or there are no remaining byte changes.
  */
 public class PopulateDemoTrace extends GhidraScript {
 
+	// NB: This schema is a sample and probably overkill.  For instance, for a target with a single
+	//   process, the process container is arguably not necessary.  Similarly, nesting the registers within
+	//   stack frames is not necessary if by-frame enumeration is not supported.  For example, all of the
+	//   following are valid:
+	//   (for by-frame registers) Thread.Stack.Frames[].Registers
+	//   (for separate frames & registers) Thread.Stack + Thread.Registers
+	//   (for registers-only)  Thread.Registers
+	public static final String SAMPLE_CTX_XML = """
+			<context>
+			    <schema name='SampleSession' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='EventScope' />
+			        <attribute name='Processes' schema='ProcessContainer' />
+			    </schema>
+			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Process' />
+			    </schema>
+			    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='Aggregate' />
+			        <interface name='Process' />
+			        <interface name='ExecutionStateful' />
+			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Memory' schema='Memory' />
+			        <attribute name='Breakpoints' schema='BreakpointContainer' />
+			        <attribute name='State' schema='EXECUTION_STATE' />
+			        <attribute-alias from="_state" to="State" />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='Aggregate' />
+			        <interface name='Thread' />
+			        <attribute name='Stack' schema='Stack' />
+			    </schema>
+			    <schema name='Stack' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Frame' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='Aggregate' />
+			        <interface name='StackFrame' />
+			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='RegisterContainer' />
+			        <element schema='Register' />
+			    </schema>
+			    <schema name='Register' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='Register' />
+			    </schema>
+			    <schema name='Memory' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='Memory' />
+			        <element schema='MemoryRegion' />
+			    </schema>
+			    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='MemoryRegion' />
+			        <attribute name='Range' schema='RANGE' />
+			        <attribute-alias from='_range' to='Range' />
+			        <attribute name='R' schema='BOOL' />
+			        <attribute-alias from='_readable' to='R' />
+			        <attribute name='W' schema='BOOL' />
+			        <attribute-alias from='_writable' to='W' />
+			        <attribute name='X' schema='BOOL' />
+			        <attribute-alias from='_executable' to='X' />
+			    </schema>
+			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='BreakpointSpec' />
+			    </schema>
+			    <schema name='BreakpointSpec' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='BreakpointSpec' />
+			        <interface name='Togglable' />
+			        <element schema='BreakpointLoc' />
+			        <attribute name='Kinds' schema='STRING' />
+			        <attribute-alias from='_kinds' to='Kinds' />
+			        <attribute name='Expression' schema='STRING' />
+			        <attribute-alias from='_expr' to='Expression' />
+			        <attribute name='Enabled' schema='BOOL' />
+			        <attribute-alias from='_enabled' to='Enabled' />
+			    </schema>
+			    <schema name='BreakpointLoc' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='BreakpointLocation' />
+			        <attribute name='Range' schema='RANGE' />
+			        <attribute-alias from='_range' to='Range' />
+			    </schema>
+			</context>
+			""";
+	public static final SchemaContext SAMPLE_CTX;
+	public static final TraceObjectSchema SAMPLE_SESSION_SCHEMA;
+	static {
+		try {
+			SAMPLE_CTX = XmlSchemaContext.deserialize(SAMPLE_CTX_XML);
+		}
+		catch (JDOMException e) {
+			throw new AssertionError(e);
+		}
+		SAMPLE_SESSION_SCHEMA = SAMPLE_CTX.getSchema(new SchemaName("SampleSession"));
+	}
+
 	/**
-	 * The Memory APIs all use Java NIO ByteBuffer. While it has it can sometimes be annoying, it
+	 * The Memory APIs all use Java NIO ByteBuffer. While it can sometimes be annoying, it
 	 * provides most of the conveniences you'd need for packing arbitrary data into a memory buffer.
 	 * I'll allocate one here large enough to write a couple values at a time.
 	 */
@@ -188,15 +303,38 @@ public class PopulateDemoTrace extends GhidraScript {
 	}
 
 	/**
-	 * Set RIP at the given tick for the given space to the address of a given instruction
+	 * Set RIP at the given snap for the given space to the address of a given instruction
 	 * 
-	 * @param tick the tick
-	 * @param regs the register space for a given thread
+	 * @param snap the snap
+	 * @param thread the thread
 	 * @param ins the instructions
 	 */
-	protected void putRIP(long tick, TraceMemorySpace regs, Instruction ins) {
-		regs.setValue(tick,
-			new RegisterValue(reg("RIP"), ins.getAddress().getOffsetAsBigInteger()));
+	protected void putRIP(long snap, TraceThread thread, Instruction ins) {
+		putReg(snap, thread, "RIP", ins.getAddress().getOffset());
+	}
+
+	/**
+	 * Set the register value at the given snap for the given thread
+	 * 
+	 * @param snap the snap
+	 * @param thread the snap
+	 * @param regName the register name
+	 * @param regVal the register value
+	 */
+	protected void putReg(long snap, TraceThread thread, String regName, long regVal) {
+		ByteBuffer buffer = buf.clear().putLong(regVal).flip();
+		TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
+
+		// Note: putBytes ensures updated values in the Register panel, while
+		//  setAttribute (below) ensures updates values in the Model tree
+
+		Register r = reg(regName);
+		regs.putBytes(snap, r, buffer);
+
+		KeyPath pathSpec = KeyPath.parse(thread.getPath() + ".Stack[0].Registers");
+		TraceObjectManager objectManager = trace.getObjectManager();
+		TraceObject rs = objectManager.createObject(pathSpec);
+		rs.setAttribute(Lifespan.nowOn(snap), regName, Long.toHexString(regVal));
 	}
 
 	/**
@@ -204,7 +342,7 @@ public class PopulateDemoTrace extends GhidraScript {
 	 * 
 	 * This is a TODO item in the Trace database. Currently, the API allows a caller to modify bytes
 	 * in the middle of a code unit's lifespan. The intended rule is: If the modification is at the
-	 * unit's start tick, the behavior should be the same as Program (permit changes under static
+	 * unit's start snap, the behavior should be the same as Program (permit changes under static
 	 * data types only). If the modification is after, then the code unit's lifespan should be
 	 * truncated to allow the modification. Additionally, for static data types, a new unit should
 	 * be placed to fill out the old lifespan.
@@ -212,48 +350,46 @@ public class PopulateDemoTrace extends GhidraScript {
 	 * Because that TODO is not implemented yet, this method corrects the issue by implementing
 	 * effectively the same rule.
 	 * 
-	 * @param tick the tick where a register change may have occurred
+	 * @param snap the snap where a register change may have occurred
 	 * @param thread the thread whose registers to check/correct
 	 * @param reg the register to check/correct
 	 * @throws CodeUnitInsertionException shouldn't happen
 	 * @throws CancelledException shouldn't happen
 	 */
-	protected void placeRegUnitIfNeeded(long tick, TraceThread thread, Register reg)
+	protected void placeRegUnitIfNeeded(long snap, TraceThread thread, Register reg)
 			throws CodeUnitInsertionException, CancelledException {
-		// NOTE: This is compensating for a TODO in the memory and code managers
-
-		// TODO: Consider convenience methods TraceThread#getMemorySpace(boolean), etc
 		TraceMemorySpace mem =
 			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, true);
 		// First check if the value was set at all
-		if (mem.getState(tick, reg) != TraceMemoryState.KNOWN) {
+		if (mem.getState(snap, reg) != TraceMemoryState.KNOWN) {
 			return;
 		}
 		// The value may have been set, but not changed
-		RegisterValue oldValue = mem.getValue(tick - 1, reg);
-		RegisterValue newValue = mem.getValue(tick, reg);
+		RegisterValue oldValue = mem.getValue(snap - 1, reg);
+		RegisterValue newValue = mem.getValue(snap, reg);
 		if (Objects.equals(oldValue, newValue)) {
 			return;
 		}
 
-		TraceCodeSpace code = thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
-		code.definedUnits().clear(Lifespan.nowOn(tick), reg, TaskMonitor.DUMMY);
-		code.definedData().create(Lifespan.nowOn(tick), reg, PointerDataType.dataType);
+		TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
+		TracePlatform hostPlatform = trace.getPlatformManager().getHostPlatform();
+		code.definedUnits().clear(hostPlatform, Lifespan.nowOn(snap), reg, TaskMonitor.DUMMY);
+		code.definedData().create(Lifespan.nowOn(snap), reg, PointerDataType.dataType);
 	}
 
 	/**
 	 * Invoke the above method for the three registers I modify during this demonstration.
 	 * 
-	 * @param tick the tick where the registers may have changed
+	 * @param snap the snap where the registers may have changed
 	 * @param thread the thread to check/correct
 	 * @throws CodeUnitInsertionException shouldn't happen
 	 * @throws CancelledException shoudn't happen
 	 */
-	protected void placeRegUnits(long tick, TraceThread thread)
+	protected void placeRegUnits(long snap, TraceThread thread)
 			throws CodeUnitInsertionException, CancelledException {
-		placeRegUnitIfNeeded(tick, thread, reg("RIP"));
-		placeRegUnitIfNeeded(tick, thread, reg("RSP"));
-		placeRegUnitIfNeeded(tick, thread, reg("RBP"));
+		placeRegUnitIfNeeded(snap, thread, reg("RIP"));
+		placeRegUnitIfNeeded(snap, thread, reg("RSP"));
+		placeRegUnitIfNeeded(snap, thread, reg("RBP"));
 	}
 
 	@Override
@@ -266,6 +402,10 @@ public class PopulateDemoTrace extends GhidraScript {
 		defaultSpace = x86Lang.getAddressFactory().getDefaultAddressSpace();
 		cspec = x86Lang.getDefaultCompilerSpec();
 		trace = new DBTrace("Demo", cspec, this);
+		try (Transaction tx = trace.openTransaction("SetRoot")) {
+			TraceObjectManager om = trace.getObjectManager();
+			om.createRootObject(SAMPLE_SESSION_SCHEMA);
+		}
 
 		/**
 		 * Grab the memory manager and global namespace symbol for convenience
@@ -287,14 +427,14 @@ public class PopulateDemoTrace extends GhidraScript {
 		int pc2 = 0;
 
 		/**
-		 * For clarity, I will add each tick to the trace in its own transaction. The Transaction
+		 * For clarity, I will add each snap to the trace in its own transaction. The Transaction
 		 * class eases the syntax and reduces errors in starting and ending transactions.
 		 */
 		try (Transaction tx = trace.openTransaction("Populate First Snapshot")) {
 			/**
-			 * While not strictly required, each tick should be explicitly added to the database and
+			 * While not strictly required, each snap should be explicitly added to the database and
 			 * given a description. Some things may mis-behave if there does not exist at least one
-			 * tick.
+			 * snap.
 			 */
 			TraceSnapshot snapshot = trace.getTimeManager().createSnapshot("Launched");
 			long snap = snapshot.getKey();
@@ -307,23 +447,31 @@ public class PopulateDemoTrace extends GhidraScript {
 			 * These are represented using a Range object from Guava. While you may specify open or
 			 * closed ends, the range will be normalized to use closed ends. Also Long.MIN and
 			 * Long.MAX will be normalized to negative and positive infinity, respectively. In
-			 * general, observations should be given the range [currentTick..INF) meaning "from here
-			 * on out". Most annotations allow mutation of the end tick.
+			 * general, observations should be given the range [currentSnap..INF) meaning "from here
+			 * on out". Most annotations allow mutation of the end snap.
 			 * 
 			 * The trace database DOES permit recording and retrieving observations outside any
 			 * recorded region. However, when viewed as a Program, only the current regions are
 			 * presented as memory blocks. Thus, observations outside a region are not visible in
 			 * the UI.
 			 */
-			memory.addRegion(".text", Lifespan.nowOn(snap), rng(0x00400000, 0x00400fff),
+			memory.addRegion("Processes[0].Memory[.text]", Lifespan.nowOn(snap),
+				rng(0x00400000, 0x00400fff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			memory.addRegion("[STACK 1]", Lifespan.nowOn(snap), rng(0x00100000, 0x001effff),
+			memory.addRegion("Processes[0].Memory[STACK1]", Lifespan.nowOn(snap),
+				rng(0x00100000, 0x001effff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
 			/**
 			 * Create the main thread, assumed alive from here on out.
 			 */
-			thread1 = trace.getThreadManager().addThread("Thread 1", Lifespan.nowOn(snap));
+			thread1 =
+				trace.getThreadManager().addThread("Processes[0].Threads[1]", Lifespan.nowOn(snap));
+			KeyPath pathSpec = KeyPath.parse("Processes[0].Threads[1].Stack[0].Registers");
+			trace.getObjectManager()
+					.createObject(pathSpec)
+					.insert(Lifespan.ALL, ConflictResolution.DENY);
+
 			/**
 			 * Get a handle to the main thread's register values.
 			 * 
@@ -356,9 +504,9 @@ public class PopulateDemoTrace extends GhidraScript {
 
 			/**
 			 * Note the use of getProgramView as a means of using components intended for Program
-			 * with Trace. Such views typically have a fixed tick, however, you can also obtain a
-			 * view which can seek to a different tick. The variable-tick version is generally for
-			 * UI compatibility, whereas the fixed-tick version is generally for API compatibility.
+			 * with Trace. Such views typically have a fixed snap, however, you can also obtain a
+			 * view which can seek to a different snap. The variable-snap version is generally for
+			 * UI compatibility, whereas the fixed-snap version is generally for API compatibility.
 			 * Here we use it to apply the assembler.
 			 * 
 			 * This is the "main" function of the demonstration. it is imagined with a decent bit of
@@ -418,9 +566,8 @@ public class PopulateDemoTrace extends GhidraScript {
 			/**
 			 * "Launch" the program by initializing RIP and RSP of the main thread
 			 */
-			putRIP(snap, regs1, mainInstructions.get(pc1));
-			regs1.setValue(snap,
-				new RegisterValue(reg("RSP"), BigInteger.valueOf(STACK1_BOTTOM + stack1offset)));
+			putRIP(snap, thread1, mainInstructions.get(pc1));
+			putReg(snap, thread1, "RSP", STACK1_BOTTOM + stack1offset);
 
 			placeRegUnits(snap, thread1);
 		}
@@ -432,7 +579,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap = trace.getTimeManager().createSnapshot("Stepped: PUSH RBP").getKey();
 
 			stack1offset -= 8;
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
 			/**
 			 * This demonstrates recording a memory observation, i.e., writing to trace memory.
 			 * 
@@ -446,8 +593,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			 * Since register "memory" is just an extension of physical memory, the same API is
 			 * available for recording register observations.
 			 */
-			regs1.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK1_BOTTOM + stack1offset).flip());
+			putReg(snap, thread1, "RSP", STACK1_BOTTOM + stack1offset);
 
 			placeRegUnits(snap, thread1);
 		}
@@ -458,9 +604,8 @@ public class PopulateDemoTrace extends GhidraScript {
 		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap = trace.getTimeManager().createSnapshot("Stepped: MOV RBP,RSP").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
-			regs1.putBytes(snap, reg("RBP"),
-				buf.clear().putLong(STACK1_BOTTOM + stack1offset).flip());
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
+			putReg(snap, thread1, "RBP", STACK1_BOTTOM + stack1offset);
 
 			placeRegUnits(snap, thread1);
 		}
@@ -476,27 +621,29 @@ public class PopulateDemoTrace extends GhidraScript {
 					.createSnapshot("Stepped Thread 1: CALL clone -> Thread 2")
 					.getKey();
 
-			memory.addRegion("[STACK 2]", Lifespan.nowOn(snap), rng(0x00200000, 0x002effff),
+			memory.addRegion("Processes[0].Memory[STACK2]", Lifespan.nowOn(snap),
+				rng(0x00200000, 0x002effff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
-			thread2 = trace.getThreadManager().addThread("Thread 2", Lifespan.nowOn(snap));
+			thread2 =
+				trace.getThreadManager().addThread("Processes[0].Threads[2]", Lifespan.nowOn(snap));
+			KeyPath pathSpec = KeyPath.parse("Processes[0].Threads[2].Stack[0].Registers");
+			trace.getObjectManager()
+					.createObject(pathSpec)
+					.insert(Lifespan.ALL, ConflictResolution.DENY);
 			regs2 = memory.getMemoryRegisterSpace(thread2, true);
 
 			stack1offset -= 8;
-			regs1.putBytes(snap, reg("RIP"),
-				buf.clear().putLong(cloneLabel.getAddress().getOffset()).flip());
-			regs1.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK1_BOTTOM + stack1offset).flip());
-			regs1.putBytes(snap, reg("RAX"), buf.clear().putLong(0).flip());
+			putReg(snap, thread1, "RIP", cloneLabel.getAddress().getOffset());
+			putReg(snap, thread1, "RSP", STACK1_BOTTOM + stack1offset);
+			putReg(snap, thread1, "RAX", 0);
 			memory.putBytes(snap, addr(STACK1_BOTTOM + stack1offset),
 				buf.clear().putLong(mainInstructions.get(++pc1).getAddress().getOffset()).flip());
 
 			stack2offset -= 8;
-			regs2.putBytes(snap, reg("RIP"),
-				buf.clear().putLong(cloneLabel.getAddress().getOffset()).flip());
-			regs2.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK2_BOTTOM + stack2offset).flip());
-			regs2.putBytes(snap, reg("RAX"), buf.clear().putLong(1).flip());
+			putReg(snap, thread2, "RIP", cloneLabel.getAddress().getOffset());
+			putReg(snap, thread2, "RSP", STACK2_BOTTOM + stack2offset);
+			putReg(snap, thread2, "RAX", 1);
 			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset),
 				buf.clear()
 						.putLong(mainInstructions.get(pc2 = pc1).getAddress().getOffset())
@@ -514,9 +661,8 @@ public class PopulateDemoTrace extends GhidraScript {
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: RET from clone").getKey();
 
 			stack1offset += 8;
-			putRIP(snap, regs1, mainInstructions.get(pc1));
-			regs1.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK1_BOTTOM + stack1offset).flip());
+			putRIP(snap, thread1, mainInstructions.get(pc1));
+			putReg(snap, thread1, "RSP", STACK1_BOTTOM + stack1offset);
 
 			placeRegUnits(snap, thread1);
 		}
@@ -528,8 +674,8 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: TEST EAX,EAX").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
-			regs1.putBytes(snap, reg("ZF"), buf.clear().put((byte) 1).flip());
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
+			putReg(snap, thread1, "ZF", (byte) 1);
 
 			placeRegUnits(snap, thread1);
 		}
@@ -538,7 +684,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: JNZ child").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
 
 			placeRegUnits(snap, thread1);
 		}
@@ -551,9 +697,8 @@ public class PopulateDemoTrace extends GhidraScript {
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: RET from clone").getKey();
 
 			stack2offset += 8;
-			putRIP(snap, regs2, mainInstructions.get(pc2));
-			regs2.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK2_BOTTOM + stack2offset).flip());
+			putRIP(snap, thread2, mainInstructions.get(pc2));
+			putReg(snap, thread2, "RSP", STACK2_BOTTOM + stack2offset);
 
 			placeRegUnits(snap, thread2);
 		}
@@ -562,8 +707,8 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: TEST EAX,EAX").getKey();
 
-			putRIP(snap, regs2, mainInstructions.get(++pc2));
-			regs2.putBytes(snap, reg("ZF"), buf.clear().put((byte) 0).flip());
+			putRIP(snap, thread2, mainInstructions.get(++pc2));
+			putReg(snap, thread2, "ZF", (byte) 0);
 
 			placeRegUnits(snap, thread2);
 		}
@@ -572,7 +717,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: JNZ child").getKey();
 
-			putRIP(snap, regs2, mainInstructions.get(pc2 = 11));
+			putRIP(snap, thread2, mainInstructions.get(pc2 = 11));
 
 			placeRegUnits(snap, thread2);
 		}
@@ -585,9 +730,9 @@ public class PopulateDemoTrace extends GhidraScript {
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: SUB RSP,0x10").getKey();
 
 			stack1offset -= 0x10;
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
-			regs1.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK1_BOTTOM + stack1offset).flip());
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
+			putReg(snap, thread1, "RSP",
+				STACK1_BOTTOM + stack1offset);
 
 			placeRegUnits(snap, thread1);
 		}
@@ -596,7 +741,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(1)").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
 			memory.putBytes(snap, addr(STACK1_BOTTOM + stack1offset + 0),
 				buf.clear().putInt(0x6c6c6548).flip());
 
@@ -607,7 +752,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(2)").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
 			memory.putBytes(snap, addr(STACK1_BOTTOM + stack1offset + 4),
 				buf.clear().putInt(0x57202c6f).flip());
 
@@ -618,7 +763,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(3)").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
 			memory.putBytes(snap, addr(STACK1_BOTTOM + stack1offset + 8),
 				buf.clear().putInt(0x646c726f).flip());
 
@@ -629,7 +774,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(4)").getKey();
 
-			putRIP(snap, regs1, mainInstructions.get(++pc1));
+			putRIP(snap, thread1, mainInstructions.get(++pc1));
 			memory.putBytes(snap, addr(STACK1_BOTTOM + stack1offset + 0xc),
 				buf.clear().putShort((short) 0x21).flip());
 
@@ -644,9 +789,9 @@ public class PopulateDemoTrace extends GhidraScript {
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: SUB RSP,0x10").getKey();
 
 			stack2offset -= 0x10;
-			putRIP(snap, regs2, mainInstructions.get(++pc2));
-			regs2.putBytes(snap, reg("RSP"),
-				buf.clear().putLong(STACK2_BOTTOM + stack2offset).flip());
+			putRIP(snap, thread2, mainInstructions.get(++pc2));
+			putReg(snap, thread2, "RSP",
+				STACK2_BOTTOM + stack2offset);
 
 			placeRegUnits(snap, thread2);
 		}
@@ -655,7 +800,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: MOV...(1)").getKey();
 
-			putRIP(snap, regs2, mainInstructions.get(++pc2));
+			putRIP(snap, thread2, mainInstructions.get(++pc2));
 			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset + 0),
 				buf.clear().putInt(0x2c657942).flip());
 
@@ -666,7 +811,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: MOV...(2)").getKey();
 
-			putRIP(snap, regs2, mainInstructions.get(++pc2));
+			putRIP(snap, thread2, mainInstructions.get(++pc2));
 			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset + 4),
 				buf.clear().putInt(0x726f5720).flip());
 
@@ -677,7 +822,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: MOV...(3)").getKey();
 
-			putRIP(snap, regs2, mainInstructions.get(++pc2));
+			putRIP(snap, thread2, mainInstructions.get(++pc2));
 			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset + 8),
 				buf.clear().putInt(0x21646c).flip());
 

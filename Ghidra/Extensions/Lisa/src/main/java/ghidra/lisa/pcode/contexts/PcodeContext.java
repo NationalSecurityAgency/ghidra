@@ -40,10 +40,7 @@ public class PcodeContext {
 	}
 
 	public VarnodeContext basicExpr() {
-		if (op.getNumInputs() == 1) {
-			return new VarnodeContext(op.getInput(0));
-		}
-		return null;
+		return new VarnodeContext(op.getInput(0));
 	}
 
 	public int opcode() {

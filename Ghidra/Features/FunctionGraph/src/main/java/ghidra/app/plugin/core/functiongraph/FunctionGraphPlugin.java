@@ -19,7 +19,7 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DockingWindowManager;

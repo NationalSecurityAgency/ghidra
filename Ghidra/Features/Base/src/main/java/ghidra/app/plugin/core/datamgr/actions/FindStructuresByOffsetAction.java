@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,7 @@ public class FindStructuresByOffsetAction extends DockingAction {
 	public void actionPerformed(ActionContext context) {
 
 		NumberRangeInputDialog inputDialog = new NumberRangeInputDialog(NAME, "Offset(s)");
+		inputDialog.setHelpLocation(getHelpLocation());
 		if (!inputDialog.show()) {
 			return;
 		}
@@ -100,9 +101,9 @@ public class FindStructuresByOffsetAction extends DockingAction {
 					if (range.contains(structureOffset)) {
 						return true;
 					}
-					if (structureOffset > range.max) {
+					if (structureOffset < range.min) {
 						// ranges are ascending sorted order; the structure offset is already 
-						// bigger than this range, so no more ranges can match
+						// smaller than this range, so no more ranges can match
 						break;
 					}
 				}

@@ -25,6 +25,7 @@ import ghidra.framework.remote.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FileSystemListener;
 import ghidra.framework.store.local.*;
+import ghidra.server.remote.RemoteLoggingUtil;
 import ghidra.server.remote.RepositoryHandleImpl;
 import ghidra.server.store.RepositoryFile;
 import ghidra.server.store.RepositoryFolder;
@@ -327,9 +328,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * defined to the repository user manager.
 	 * @param currentUser user performing request
 	 * @return list of user names.
-	 * @throws IOException if an IO error occurs
 	 */
-	public String[] getServerUserList(String currentUser) throws IOException {
+	public String[] getServerUserList(String currentUser) {
 		if (UserManager.ANONYMOUS_USERNAME.equals(currentUser)) {
 			return new String[0];
 		}
@@ -779,7 +779,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			RepositoryFolder folder = getFolder(null, parentPath, false);
 			if (folder == null || folder.getFolder(folderName) == null) {
 				RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, folderName),
-					"ERROR! folder not found", null);
+					"ERROR! folder not found");
 				return;
 			}
 		}
@@ -788,7 +788,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 		catch (IOException e) {
 			RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, folderName),
-				"ERROR! " + e.getMessage(), null);
+				"ERROR! " + e.getMessage());
 		}
 
 		RepositoryChangeEvent event = new RepositoryChangeEvent(
@@ -808,7 +808,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			RepositoryFolder folder = getFolder(null, parentPath, false);
 			if (folder == null || folder.getFile(itemName) == null) {
 				RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, itemName),
-					"file not found", null);
+					"file not found");
 				return;
 			}
 		}
@@ -817,7 +817,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 		catch (IOException e) {
 			RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, itemName),
-				"ERROR! " + e.getMessage(), null);
+				"ERROR! " + e.getMessage());
 		}
 
 		RepositoryChangeEvent event = new RepositoryChangeEvent(
@@ -844,7 +844,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			throw new AssertException();
 		}
 		catch (IOException e) {
-			RepositoryManager.log(name, parentPath, "ERROR! " + e.getMessage(), null);
+			RepositoryManager.log(name, parentPath, "ERROR! " + e.getMessage());
 		}
 
 		RepositoryChangeEvent event = new RepositoryChangeEvent(
@@ -933,11 +933,10 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 		catch (IOException e) {
 			RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, itemName),
-				"ERROR! " + e.getMessage(), null);
+				"ERROR! " + e.getMessage());
 		}
 		if (syncErr) {
-			RepositoryManager.log(name, null, "ERROR! Repository instance may be out-of-sync",
-				null);
+			RepositoryManager.log(name, null, "ERROR! Repository instance may be out-of-sync");
 			return;
 		}
 
@@ -956,7 +955,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	@Override
 	public void log(String path, String msg, String user) {
-		RepositoryManager.log(name, path, msg, user);
+		RemoteLoggingUtil.log(name, path, msg, user, false);
 	}
 
 	static boolean markRepositoryForIndexMigration(File serverDir, String repositoryName,

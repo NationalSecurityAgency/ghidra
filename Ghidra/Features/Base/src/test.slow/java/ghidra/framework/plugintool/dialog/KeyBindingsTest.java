@@ -28,6 +28,7 @@ import javax.swing.table.*;
 
 import org.junit.*;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
@@ -152,8 +153,9 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// set a key binding on an action that does not have a key binding
 		selectRowForAction(action1);
 		JTextField keyField = getKeyField();
-		triggerActionKey(keyField, InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_X);
-		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
+		triggerActionKey(keyField, DockingUtils.CONTROL_KEY_MODIFIER_MASK, KeyEvent.VK_X);
+		KeyStroke ks =
+			KeyStroke.getKeyStroke(KeyEvent.VK_X, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		assertKeyFieldText(KeyBindingUtils.parseKeyStroke(ks));
 
 		apply();
@@ -176,8 +178,9 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSetKeyBinding3() throws Exception {
 
 		selectRowForAction(action1);
-		typeKeyStroke(InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_HOME);
-		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_DOWN_MASK);
+		typeKeyStroke(DockingUtils.CONTROL_KEY_MODIFIER_MASK, KeyEvent.VK_HOME);
+		KeyStroke ks =
+			KeyStroke.getKeyStroke(KeyEvent.VK_HOME, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		assertKeyFieldText(ks);
 
 		apply();
@@ -281,7 +284,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		setUpDialog();
 		selectRowForAction(action1);
 
-		KeyStroke validKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
+		KeyStroke validKeyStroke =
+			KeyStroke.getKeyStroke(KeyEvent.VK_X, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		typeKeyStroke(validKeyStroke);
 		assertKeyFieldText(validKeyStroke);
 

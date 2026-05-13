@@ -8,3 +8,4 @@ DebuggerRegisterColumnFactory
 DisassemblyInject
 EmulatorFactory
 LocationTrackingSpecFactory
+TimeOverviewColorService

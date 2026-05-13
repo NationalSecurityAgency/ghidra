@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import java.util.List;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.OffsetReference;
-import ghidra.util.NamingUtilities;
 
 /**
  * Interface that defines a block in memory.
@@ -118,7 +117,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public String getName();
 
 	/**
-	 * Set the name for this block (See {@link NamingUtilities#isValidName(String)} for naming
+	 * Set the name for this block (See {@link Memory#isValidMemoryBlockName(String)} for naming
 	 * rules). Specified name must not conflict with an address space name.
 	 * 
 	 * @param name the new name for this block.

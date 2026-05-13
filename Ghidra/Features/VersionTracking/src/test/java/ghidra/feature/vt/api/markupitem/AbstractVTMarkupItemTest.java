@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.test.*;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedIntegrationTest {
@@ -55,6 +56,10 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 		env = new TestEnv();
 		setErrorGUIEnabled(false);
 
+		resetPrograms();
+	}
+
+	protected void resetPrograms() throws Exception {
 		sourceBuilder = new ClassicSampleX86ProgramBuilder("notepadSrc", true, this);
 		sourceProgram = sourceBuilder.getProgram();
 
@@ -112,6 +117,8 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 	 */
 	protected abstract class TestDataProviderAndValidator {
 
+		protected ToolOptions options;
+
 		protected abstract Address getSourceMatchAddress();
 
 		protected abstract Address getDestinationMatchAddress();
@@ -134,6 +141,11 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 		 * @return the Apply Markup Options for the validator to use.
 		 */
 		protected ToolOptions getOptions() {
+
+			if (options != null) {
+				return options;
+			}
+
 			ToolOptions applyOptions = new ToolOptions(VERSION_TRACKING_OPTIONS_NAME);
 
 			applyOptions.setEnum(FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
@@ -165,8 +177,27 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 
 			applyOptions.setEnum(DATA_MATCH_DATA_TYPE,
 				ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+
+			options = applyOptions;
 			return applyOptions;
 		}
+	}
+
+	protected void doTestFindButCannotApplyMarkupItem_SameStatus(
+			TestDataProviderAndValidator validator) throws Exception {
+
+		VTSessionDB session = createNewSession();
+		VTMatch match = createMatchSetWithOneMatch(session, validator.getSourceMatchAddress(),
+			validator.getDestinationMatchAddress());
+		VTMarkupItem markupItem = validator.searchForMarkupItem(match);
+
+		List<VTMarkupItem> markupItems = new ArrayList<>();
+		Address destinationApplyAddress = validator.getDestinationApplyAddress();
+		markupItem.setDefaultDestinationAddress(destinationApplyAddress, TEST_ADDRESS_SOURCE);
+		markupItems.add(markupItem);
+
+		VTMarkupItemStatus status = markupItem.getStatus();
+		assertEquals(VTMarkupItemStatus.SAME, status);
 	}
 
 	protected void doTestFindAndApplyMarkupItem(TestDataProviderAndValidator validator)
@@ -308,7 +339,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 		// verify we cannot unapply before we have applied
 		//
 		List<VTMarkupItem> markupItems = new ArrayList<>();
-		Address destinationAddress = addr();
+		Address destinationAddress = addr(session.getDestinationProgram());
 		markupItem.setDefaultDestinationAddress(destinationAddress, TEST_ADDRESS_SOURCE);
 		markupItems.add(markupItem);
 
@@ -319,7 +350,10 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 		// verify that calling apply still leaves us in an unapplied state
 		//
 		task = new ApplyMarkupItemTask(session, markupItems, validator.getOptions());
+
+		setErrorsExpected(true);
 		runTask(session, task);
+		setErrorsExpected(false);
 
 		assertEquals("The markup item status was not correctly set",
 			VTMarkupItemStatus.FAILED_APPLY, markupItem.getStatus());
@@ -354,9 +388,8 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 
 	protected static VTMatch createMatchSetWithOneMatch(VTSessionDB db, Address sourceAddress,
 			Address destinationAddress) throws Exception {
-		int testTransactionID = 0;
-		try {
-			testTransactionID = db.startTransaction("Test Match Set Setup");
+
+		return tx(db, () -> {
 			VTMatchInfo matchInfo = createRandomMatch(sourceAddress, destinationAddress, db);
 			VTMatchSet matchSet = db.createMatchSet(
 				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
@@ -368,19 +401,22 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 			association.getMarkupItems(TaskMonitor.DUMMY);
 
 			return addedMatch;
-		}
-		finally {
-			db.endTransaction(testTransactionID, true);
-		}
+		});
+
 	}
 
-	private void runTask(VTSession session, VtTask task) {
+	protected void runTask(VTSession session, VtTask task) {
 		int id = session.startTransaction("test");
 		try {
 			task.run(TaskMonitor.DUMMY);
 		}
 		finally {
 			session.endTransaction(id, true);
+
+			if (task.hasErrors()) {
+				String errorDetails = task.getErrorDetails();
+				Msg.error(this, "Error applying task: " + errorDetails);
+			}
 		}
 
 	}

@@ -175,7 +175,7 @@ class ServerConnectTask extends Task {
 			gsh = (GhidraServerHandle) reg.lookup(GhidraServerHandle.BIND_NAME);
 
 			// Check interface compatibility with the minimum supported version
-			gsh.checkCompatibility(GhidraServerHandle.MINIMUM_INTERFACE_VERSION);
+			gsh.checkCompatibility(GhidraServerHandle.MIN_CLIENT_INTERFACE_VERSION);
 		}
 		catch (NotBoundException e) {
 			throw new IOException(e.getMessage());
@@ -420,29 +420,32 @@ class ServerConnectTask extends Task {
 		}
 	}
 
-	private static void checkServerBindNames(Registry reg) throws RemoteException {
+	private static void checkServerBindNames(Registry reg) throws IOException {
 
-		String requiredVersion = GhidraServerHandle.MIN_GHIDRA_VERSION;
+		String requiredVersion = GhidraServerHandle.GHIDRA_BIND_VERSION;
 		if (!Application.getApplicationVersion().startsWith(requiredVersion)) {
 			requiredVersion = requiredVersion + " - " + Application.getApplicationVersion();
 		}
+		requiredVersion += " (or possibly newer)";
 
 		String[] regList = reg.list();
-		RemoteException exc = null;
+		IOException exc = null;
 		int badVerCount = 0;
 
+		String version = null;
 		for (String name : regList) {
 			if (name.equals(GhidraServerHandle.BIND_NAME)) {
 				return; // found it
 			}
 			else if (name.startsWith(GhidraServerHandle.BIND_NAME_PREFIX)) {
-				String version = name.substring(GhidraServerHandle.BIND_NAME_PREFIX.length());
+				// NOTE: We only report one version even if server has multiple bindings
+				version = name.substring(GhidraServerHandle.BIND_NAME_PREFIX.length());
 				if (version.length() == 0) {
 					version = "4.3.x (or older)";
 				}
-				exc = new RemoteException(
-					"Incompatible Ghidra Server interface, detected interface version " + version +
-						",\nthis client requires server version " + requiredVersion);
+				exc = new IOException(
+					"Incompatible Ghidra Server - detected interface version " + version +
+						".\nThis client requires server version " + requiredVersion);
 				++badVerCount;
 			}
 		}
@@ -450,11 +453,11 @@ class ServerConnectTask extends Task {
 			if (badVerCount == 1) {
 				throw exc;
 			}
-			throw new RemoteException("Incompatible Ghidra Server interface, detected " +
-				badVerCount + " incompatible server versions" +
-				",\nthis client requires server version " + requiredVersion);
+			throw new IOException("Incompatible Ghidra Server - detected " +
+				badVerCount + " incompatible server versions." +
+				"\nThis client requires server version " + requiredVersion);
 		}
-		throw new RemoteException("Ghidra Server not found.");
+		throw new IOException("Ghidra Server not found.");
 	}
 
 }

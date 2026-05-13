@@ -106,6 +106,7 @@ src/main/resources/images/play.png||GHIDRA||||END|
 src/main/resources/images/preferences-system-windows.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/software-update-available.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/tag.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

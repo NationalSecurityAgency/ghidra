@@ -16,7 +16,6 @@
 package ghidra.framework.data;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -240,7 +239,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 	static boolean canShareLink(FolderItem linkFile) {
 		try {
 			String linkPath = getLinkPath(linkFile);
-			return !GhidraURL.isLocalGhidraURL(linkPath);
+			return !GhidraURL.isLocalURL(linkPath);
 		}
 		catch (IOException e) {
 			// ignore
@@ -304,11 +303,11 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 				ProjectData projectData = linkFile.getParent().getProjectData();
 				return GhidraURL.makeURL(projectData.getProjectLocator(), linkPath, null);
 			}
-			return new URL(linkPath);
+			return GhidraURL.toURL(linkPath);
 		}
-		catch (MalformedURLException | IllegalArgumentException e) {
+		catch (IllegalArgumentException e) {
 			// Bad URL from link path
-			throw new IOException("Failed to form URL from linkPath: " + linkPath, e);
+			throw new IOException("Failed to form valid URL from linkPath: " + linkPath, e);
 		}
 	}
 

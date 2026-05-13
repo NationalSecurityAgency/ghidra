@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,5 +47,17 @@ public class NavigatableActionContext extends ProgramLocationActionContext
 
 	public Navigatable getNavigatable() {
 		return navigatable;
+	}
+
+	/**
+	 * Overridden to signal that this navigatable's program may not be the same as the globally 
+	 * active program.  This is done to signal that this navigatable can supply default context.
+	 * 
+	 * @return false
+	 */
+	@Override
+	public boolean isActiveProgram() {
+		// signal that our program may be different than the active program
+		return navigatable.isConnected();
 	}
 }

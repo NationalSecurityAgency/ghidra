@@ -23,6 +23,8 @@ import java.util.regex.Pattern;
 import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.list.GListCellRenderer;
@@ -100,7 +102,7 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 
 	@Override
 	public List<DataType> getMatchingData(String searchText, SearchMode mode) {
-		if (searchText == null || searchText.length() == 0) {
+		if (StringUtils.isBlank(searchText)) {
 			// full list results not supported since the data may be too large for user interaction
 			return Collections.emptyList();
 		}
@@ -145,15 +147,17 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 		// another dtm.  In the second step, duplicate data types will be omitted from the
 		// final results, in favor of the data type that is already in the preferred dtm.
 		Set<UniversalID> preferredUids = new HashSet<>();
-		Set<Class<?>> preferredBuiltins = new HashSet<>();
+		Set<String> preferredBuiltinNames = new HashSet<>();
 		for (DataType dt : dtList) {
-			DataType baseDt = DataTypeUtilities.getBaseDataType(dt);
+			// only look at data types that are already in the preferred DTM
+			DataType baseDt = Objects.requireNonNullElse(DataTypeUtilities.getBaseDataType(dt), dt);
 			if (!isFromPreferredDtm(baseDt)) {
 				continue;
 			}
 
-			if (baseDt instanceof BuiltInDataType) {
-				preferredBuiltins.add(baseDt.getClass());
+			if (isBuiltinDataType(baseDt)) {
+				// add any builtin data types that are already in the pref DTM to this exclude list
+				preferredBuiltinNames.add(baseDt.getName());
 			}
 			else if (baseDt.getUniversalID() != null) {
 				preferredUids.add(baseDt.getUniversalID());
@@ -165,14 +169,14 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 			if (dt instanceof Array) {
 				continue;
 			}
-			DataType baseDt = DataTypeUtilities.getBaseDataType(dt);
+			DataType baseDt =
+				Objects.requireNonNullElse(DataTypeUtilities.getBaseDataType(dt), dt);
 			if (baseDt == null) {
 				continue;
 			}
 
 			if (preferredDtm != null && !isFromPreferredDtm(baseDt)) {
-				if (baseDt instanceof BuiltInDataType &&
-					preferredBuiltins.contains(baseDt.getClass())) {
+				if (isBuiltinDataType(baseDt) && preferredBuiltinNames.contains(baseDt.getName())) {
 					continue;
 				}
 				if (baseDt.getUniversalID() != null &&
@@ -200,6 +204,14 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 			return dtDtm == preferredDtm || dtDtm == altDtm;
 		}
 		return false;
+	}
+
+	private boolean isBuiltinDataType(DataType dt) {
+		// check for normal builtin data types, as well as any pointer (which will probably be a
+		// DataTypeDB that does not derive from Builtin) that does not point to anything.
+		// This ptr data type is equiv to the "pointer" built-in data type.  
+		return dt instanceof BuiltInDataType ||
+			(dt instanceof Pointer ptrDT && ptrDT.getDataType() == null);
 	}
 
 	@Override

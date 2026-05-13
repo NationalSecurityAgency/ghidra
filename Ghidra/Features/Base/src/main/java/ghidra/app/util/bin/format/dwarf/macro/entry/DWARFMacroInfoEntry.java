@@ -149,7 +149,8 @@ public class DWARFMacroInfoEntry {
 				if (i != 0) {
 					sb.append(", ");
 				}
-				sb.append(operandValues[i].getValueString(macroHeader.getCompilationUnit()));
+				sb.append(operandValues[i].getValueString(macroHeader.getCompilationUnit(),
+					operandDef(i)));
 			}
 		}
 

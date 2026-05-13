@@ -44,7 +44,7 @@ public class MDArrayBasicType extends MDModifierType {
 	}
 
 	@Override
-	protected void insertReferredType(StringBuilder builder) {
+	protected void insertReferredType(StringBuilder builder, boolean isArg) {
 		StringBuilder arrayBuilder = new StringBuilder();
 		arrayBuilder.append("[]");
 		MDType dt = this.refType;

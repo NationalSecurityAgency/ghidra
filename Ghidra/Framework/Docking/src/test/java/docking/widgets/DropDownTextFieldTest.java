@@ -19,13 +19,15 @@ import static org.junit.Assert.*;
 
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JList;
 import javax.swing.JWindow;
 
 import org.junit.Test;
 
+import docking.DockingUtils;
 import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 
 /**
@@ -639,7 +641,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		Point p = searchModeBounds.getLocation();
 
 		long when = System.currentTimeMillis();
-		int mods = useControlKey ? InputEvent.CTRL_DOWN_MASK : 0;
+		int mods = useControlKey ? DockingUtils.CONTROL_KEY_MODIFIER_MASK : 0;
 		int x = p.x + 3; // add some fudge
 		int y = p.y + 3; // add some fudge
 		int clickCount = 1;
@@ -650,11 +652,13 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 	}
 
 	private void toggleSearchModeViaKeyBinding() {
-		triggerKey(textField, InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_DOWN, KeyEvent.CHAR_UNDEFINED);
+		triggerKey(textField, DockingUtils.CONTROL_KEY_MODIFIER_MASK, KeyEvent.VK_DOWN,
+			KeyEvent.CHAR_UNDEFINED);
 	}
 
 	private void toggleSearchModeViaKeyBinding_Backwards() {
-		triggerKey(textField, InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_UP, KeyEvent.CHAR_UNDEFINED);
+		triggerKey(textField, DockingUtils.CONTROL_KEY_MODIFIER_MASK, KeyEvent.VK_UP,
+			KeyEvent.CHAR_UNDEFINED);
 	}
 
 	private void showMatchingList() {

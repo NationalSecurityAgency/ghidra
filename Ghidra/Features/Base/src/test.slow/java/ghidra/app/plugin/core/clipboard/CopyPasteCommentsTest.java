@@ -35,11 +35,8 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.field.*;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
@@ -48,7 +45,6 @@ import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractProgramBasedTest;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the plugin that deals with cut/paste comments and labels
@@ -57,8 +53,8 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 	private PluginTool toolOne;
 	private PluginTool toolTwo;
-	private ProgramDB programOne;
-	private ProgramDB programTwo;
+	private Program programOne;
+	private Program programTwo;
 	private ProgramManager pmOne;
 	private ProgramManager pmTwo;
 	private CodeBrowserPlugin cb;
@@ -106,33 +102,21 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		setupTool(toolTwo);
 		cb2 = getPlugin(toolTwo, CodeBrowserPlugin.class);
 
-		DomainFolder rootFolder = env.getProject().getProjectData().getRootFolder();
-
-		Program sdk = program;
-		final DomainFile df = rootFolder.createFile("sdk1", sdk, TaskMonitor.DUMMY);
-		programOne = (ProgramDB) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
-		env.release(sdk);
-
-		Program sdk2 = buildProgram("sdk2");
-		final DomainFile df2 = rootFolder.createFile("sdk2", sdk2, TaskMonitor.DUMMY);
-		programTwo = (ProgramDB) df2.getDomainObject(this, true, false, TaskMonitor.DUMMY);
-		env.release(sdk2);
+		programOne = program;
+		programTwo = buildProgram("sdk2");
 
 		setupProgramOne();
 		setupProgramTwo();
 
 		pmOne = toolOne.getService(ProgramManager.class);
 		runSwing(() -> {
-			pmOne.openProgram(df);
-			programOne = (ProgramDB) pmOne.getCurrentProgram();
+			pmOne.openProgram(programOne);
 		});
 
 		pmTwo = toolTwo.getService(ProgramManager.class);
 		runSwing(() -> {
-			pmTwo.openProgram(df2);
-			programTwo = (ProgramDB) pmTwo.getCurrentProgram();
+			pmTwo.openProgram(programTwo);
 		});
-
 	}
 
 	@Test

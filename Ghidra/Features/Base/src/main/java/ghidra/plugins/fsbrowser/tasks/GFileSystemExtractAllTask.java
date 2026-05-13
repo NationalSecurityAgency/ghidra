@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,6 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 		monitor.setMessage("Extracting all...");
 
 		try (RefdFile refdFile = FileSystemService.getInstance().getRefdFile(srcFSRL, monitor)) {
-			GFileSystem fs = refdFile.fsRef.getFilesystem();
 			GFile file = refdFile.file;
 			if (!file.isDirectory()) {
 				Msg.warn(this, "Extract All source not a directory!  " + file.getFSRL());
@@ -60,7 +59,7 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 			}
 
 			if (verifyRootOutputDir(file.getName())) {
-				startExtract(fs, file, monitor);
+				startExtract(refdFile.fsRef.getFilesystem(), file, monitor);
 			}
 		}
 		catch (CancelledException ce) {
@@ -69,9 +68,10 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 		catch (UnsupportedOperationException | IOException e) {
 			Msg.showError(this, parentComponent, "Error extracting file", e.getMessage());
 		}
-		Msg.info(this,
-			"Exported " + getTotalFilesExportedCount() + " files, " + getTotalDirsExportedCount() +
-				" directories, " + getTotalBytesExportedCount() + " bytes");
+		long files = getTotalFilesExportedCount();
+		long dirs = getTotalDirsExportedCount();
+		long bytes = getTotalBytesExportedCount();
+		Msg.info(this, "Number of files exported: " + files + ", number of directories: " + dirs + ", number of bytes: " + bytes);
 
 		long elapsed = System.currentTimeMillis() - start_ts;
 

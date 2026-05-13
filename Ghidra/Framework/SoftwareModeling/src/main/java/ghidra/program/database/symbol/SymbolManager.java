@@ -155,8 +155,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			throws IOException, CancelledException {
 
 		if (openMode == OpenMode.UPGRADE) {
-			processOldLocalSymbols(monitor);
-			processOldExternalEntryPoints(monitor);
+			processOldLocalSymbols(monitor); // migrate from temp table from V0 adapter upgrade
+			processOldExternalEntryPoints(monitor); // migrates from obsolete table: External Entries
 
 			if (currentRevision < ProgramDB.ADDED_VARIABLE_STORAGE_MANAGER_VERSION) {
 				// Eliminated namespace encoding within External address encoding
@@ -165,8 +165,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				// Migrate all other OldNamespaceAddresses used for variable symbols
 				processOldVariableAddresses(monitor);
 			}
+
 			if (currentRevision < ProgramDB.EXTERNAL_FUNCTIONS_ADDED_VERSION) {
-				// SymbolType.EXTERNAL eliminated with program revision 17
+				// SymbolType.EXTERNAL eliminated with program revision 17 (switch to LABEL)
 				processOldExternalTypes(monitor);
 			}
 

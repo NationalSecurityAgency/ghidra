@@ -268,7 +268,7 @@ public class SarifUtils {
 			}
 			addr = subparts[0];
 		}
-		return program.getAddressFactory().getAddress(addr);
+		return addr == null ? null : program.getAddressFactory().getAddress(addr);
 	}
 
 	public static List<Address> extractFQNameAddrPair(Program program, String fqname) {

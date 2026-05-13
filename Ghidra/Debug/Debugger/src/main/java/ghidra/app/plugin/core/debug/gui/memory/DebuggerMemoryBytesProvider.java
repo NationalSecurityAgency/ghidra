@@ -57,7 +57,6 @@ import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -325,8 +324,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	 * Override where edits are allowed and direct sets through the control service.
 	 */
 	class TargetByteBlock extends MemoryByteBlock {
-		protected TargetByteBlock(Program program, Memory memory, MemoryBlock block) {
-			super(program, memory, block);
+		protected TargetByteBlock(Program program, MemoryBlock block) {
+			super(program, block);
 		}
 
 		/**
@@ -390,8 +389,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 
 		@Override
-		protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
-			return new TargetByteBlock(program, memory, memBlock);
+		protected MemoryByteBlock newMemoryByteBlock(MemoryBlock memBlock) {
+			return new TargetByteBlock(program, memBlock);
 		}
 
 		@Override

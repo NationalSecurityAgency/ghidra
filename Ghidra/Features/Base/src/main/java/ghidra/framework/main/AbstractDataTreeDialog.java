@@ -193,6 +193,10 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		return nameField.getText();
 	}
 
+	public String getFolderText() {
+		return folderNameLabel.getText();
+	}
+
 	public void setNameText(String name) {
 		// We need to run this code in a task since the tree may already be processing other tasks
 		// that would override this setting when they are run.  But putting this task in the queue, 
@@ -246,87 +250,122 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		return domainFolder;
 	}
 
-	/**
-	 * TreeSelectionListener method that is called whenever the value of the selection changes.
-	 * @param e the event that characterizes the change.
-	 */
 	@Override
 	public void valueChanged(GTreeSelectionEvent e) {
 		clearStatusText();
 
 		if (type == CHOOSE_FOLDER) {
-			domainFolder = treePanel.getSelectedDomainFolder();
-			if (domainFolder != null) {
-				DomainFolder folderParent = domainFolder.getParent();
-				if (folderParent != null) {
-					folderNameLabel.setText(folderParent.getPathname());
-				}
-				else {
-					folderNameLabel.setText("    ");
-				}
-
-				nameField.setText(domainFolder.getName());
-			}
-			else {
-				domainFile = treePanel.getSelectedDomainFile();
-				if (domainFile != null) {
-					domainFolder = domainFile.getParent();
-					DomainFolder grandParent = domainFolder.getParent();
-					if (grandParent != null) {
-						folderNameLabel.setText(grandParent.getPathname());
-					}
-					else {
-						folderNameLabel.setText("");
-					}
-
-					nameField.setText(domainFolder.getName());
-				}
-				else {
-					domainFolder = project.getProjectData().getRootFolder();
-					folderNameLabel.setText(domainFolder.getPathname());
-					nameField.setText(domainFolder.getName());
-				}
-			}
+			updateFromTreeSelectionInFolderMode();
 		}
 		else {
-			domainFile = treePanel.getSelectedDomainFile();
-			if (domainFile != null) {
-				LinkFileInfo linkInfo = domainFile.getLinkInfo();
-				if (linkInfo != null && linkInfo.isFolderLink()) {
-					// Ensure we don't have a folder name conflict
-					if (domainFile.getParent().getFolder(domainFile.getName()) == null) {
-						domainFolder = linkInfo.getLinkedFolder();
-						domainFile = null;
-					}
-				}
-				else {
-					folderNameLabel.setText(domainFile.getParent().getPathname());
-					nameField.setText(domainFile.getName());
-					domainFolder = domainFile.getParent();
-				}
-			}
-
-			if (domainFile == null) {
-				if (domainFolder == null) {
-					domainFolder = treePanel.getSelectedDomainFolder();
-					if (domainFolder == null) {
-						domainFolder = project.getProjectData().getRootFolder();
-					}
-				}
-				folderNameLabel.setText(domainFolder.getPathname());
-				if (nameField.isEditable()) {
-					if (nameField.getText().length() > 0) {
-						nameField.selectAll();
-					}
-				}
-				else {
-					nameField.setText("");
-				}
-			}
+			updateFromTreeSelectionInFileMode();
 		}
 
 		String text = nameField.getText();
 		setOkEnabled((text != null) && !text.isEmpty());
+	}
+
+	private void updateFromTreeSelectionInFileMode() {
+		DomainFile newFile = treePanel.getSelectedDomainFile();
+		if (isFolderLink(newFile)) {
+			updateFromFolderLink(newFile);
+			return;
+		}
+
+		// not a folder link; see if we have a new file selected
+		if (newFile != null) {
+			domainFile = newFile;
+			domainFolder = domainFile.getParent();
+			String pathname = domainFolder.getPathname();
+			folderNameLabel.setText(pathname);
+			String filename = domainFile.getName();
+			nameField.setText(filename);
+			return;
+		}
+
+		// No selected domain file
+		domainFile = null;
+		domainFolder = getSelectedFolder();
+		String pathname = domainFolder.getPathname();
+		folderNameLabel.setText(pathname);
+		updateNameFieldTextForNoFileSelected();
+	}
+
+	private void updateNameFieldTextForNoFileSelected() {
+		if (!nameField.isEditable()) {
+			nameField.setText("");
+			return;
+		}
+
+		if (nameField.getText().length() > 0) {
+			nameField.selectAll();
+		}
+	}
+
+	private void updateFromFolderLink(DomainFile newFile) {
+
+		LinkFileInfo linkInfo = newFile.getLinkInfo();
+		DomainFolder folder = newFile.getParent();
+		String filename = newFile.getName();
+
+		// Ensure we don't have a folder name conflict
+		if (folder.getFolder(filename) == null) {
+			domainFolder = linkInfo.getLinkedFolder();
+			if (domainFolder == null) {
+				domainFolder = getSelectedFolder();
+			}
+
+			domainFile = null;
+			folderNameLabel.setText(domainFolder.getPathname());
+			updateNameFieldTextForNoFileSelected();
+			return;
+		}
+
+		domainFile = newFile;
+		folderNameLabel.setText(folder.getPathname());
+		nameField.setText(filename);
+		domainFolder = folder;
+	}
+
+	private boolean isFolderLink(DomainFile file) {
+		if (file == null) {
+			return false;
+		}
+		LinkFileInfo linkInfo = file.getLinkInfo();
+		return linkInfo != null && linkInfo.isFolderLink();
+	}
+
+	private void updateFromTreeSelectionInFolderMode() {
+
+		// The tree selection has changed and we are in FOLDER mode.  Update the folder selection
+		// based on type of node selected.
+		domainFolder = getSelectedFolder();
+		DomainFolder folderParent = domainFolder.getParent();
+		if (folderParent == null) {
+			folderParent = domainFolder; // root folder; no parent
+		}
+
+		folderNameLabel.setText(folderParent.getPathname());
+		nameField.setText(domainFolder.getName());
+
+	}
+
+	/**
+	 * Returns the selected folder, or the selected file's parent or the root folder.
+	 * @return the folder
+	 */
+	private DomainFolder getSelectedFolder() {
+		DomainFolder folder = treePanel.getSelectedDomainFolder();
+		if (folder != null) {
+			return folder;
+		}
+
+		DomainFile file = treePanel.getSelectedDomainFile();
+		if (file != null) {
+			return file.getParent();
+		}
+
+		return project.getProjectData().getRootFolder();
 	}
 
 	@Override

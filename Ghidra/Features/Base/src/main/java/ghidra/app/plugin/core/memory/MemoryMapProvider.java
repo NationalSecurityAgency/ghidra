@@ -25,6 +25,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
@@ -565,7 +566,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			setStatusText("");
 			if (!e.isPopupTrigger()) {
 				if ((e.getModifiersEx() &
-					(InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
+					(DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
 					navigateToAddress();
 				}
 			}

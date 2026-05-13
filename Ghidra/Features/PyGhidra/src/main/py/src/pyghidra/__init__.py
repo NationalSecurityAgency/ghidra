@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-__version__ = "3.0.2"
+__version__ = "3.1.0"
 
 # stub for documentation and typing
 # this is mostly to hide the function parameter

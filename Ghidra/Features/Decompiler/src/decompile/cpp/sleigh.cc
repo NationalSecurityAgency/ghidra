@@ -55,16 +55,16 @@ VarnodeData *PcodeCacher::expandPool(uint4 size)
   for(uint4 i=0;i<cursize;++i)
     newpool[i] = poolstart[i];	// Copy old data
   // Update references to the old pool
-  for(uint4 i=0;i<issued.size();++i) {
-    VarnodeData *outvar = issued[i].outvar;
+  for(deque<PcodeData>::iterator diter=issued.begin();diter!=issued.end();++diter) {
+    VarnodeData *outvar = (*diter).outvar;
     if (outvar != (VarnodeData *)0) {
       outvar = newpool + (outvar - poolstart);
-      issued[i].outvar = outvar;
+      (*diter).outvar = outvar;
     }
-    VarnodeData *invar = issued[i].invar;
+    VarnodeData *invar = (*diter).invar;
     if (invar != (VarnodeData *)0) {
       invar = newpool + (invar - poolstart);
-      issued[i].invar = invar;
+      (*diter).invar = invar;
     }
   }
   list<RelativeRecord>::iterator iter;
@@ -139,7 +139,7 @@ void PcodeCacher::resolveRelatives(void)
 void PcodeCacher::emit(const Address &addr,PcodeEmit *emt) const
 
 {
-  vector<PcodeData>::const_iterator iter;
+  deque<PcodeData>::const_iterator iter;
 
   for(iter=issued.begin();iter!=issued.end();++iter)
     emt->dump(addr,(*iter).opc,(*iter).outvar,(*iter).invar,(*iter).isize);

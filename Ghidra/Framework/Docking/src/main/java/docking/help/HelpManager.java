@@ -815,7 +815,12 @@ public class HelpManager implements HelpService {
 			}
 		}
 		else {
-			buffy.append("<NO HELP AVAILABLE>");
+			if (isExcludedFromHelp(helpObj)) {
+				buffy.append("<EXCLUDED FROM HELP>");
+			}
+			else {
+				buffy.append("<NO HELP AVAILABLE>");
+			}
 		}
 
 		return buffy.toString();

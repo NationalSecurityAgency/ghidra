@@ -18,8 +18,7 @@ package ghidra.features.base.codecompare.listing;
 import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -37,8 +36,8 @@ import ghidra.app.plugin.core.functioncompare.actions.*;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.*;
-import ghidra.features.base.codecompare.panel.CodeComparisonViewActionContext;
 import ghidra.features.base.codecompare.panel.CodeComparisonView;
+import ghidra.features.base.codecompare.panel.CodeComparisonViewActionContext;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -63,6 +62,7 @@ public class ListingCodeComparisonView
 		extends CodeComparisonView implements FormatModelListener, OptionsChangeListener {
 
 	public static final String NAME = "Listing View";
+	private static final String FORMAT_KEY = "FIELD_FORMAT";
 	private static final String DIFF_NAVIGATE_GROUP = "A2_DiffNavigate";
 
 	//@formatter:off
@@ -79,6 +79,8 @@ public class ListingCodeComparisonView
 		ALL, UNMATCHED, DIFF
 	}
 
+	private SaveState defaultSaveState;
+	private SaveState saveState;
 	private ListingCodeComparisonOptions comparisonOptions;
 
 	private Duo<ListingDisplay> displays;
@@ -112,6 +114,9 @@ public class ListingCodeComparisonView
 
 		listingDiff = buildListingDiff();
 		displays = buildListingDisplays();
+
+		buildDefaultSaveState();
+
 		buildPanel();
 		createActions();
 
@@ -137,6 +142,63 @@ public class ListingCodeComparisonView
 		rightDisplay.setProgramLocationListener((l, t) -> programLocationChanged(RIGHT, l, t));
 
 		return new Duo<>(leftDisplay, rightDisplay);
+	}
+
+	private void buildDefaultSaveState() {
+		SaveState ss = new SaveState();
+		saveFormat(ss);
+		defaultSaveState = ss;
+	}
+
+	@Override
+	public void setSaveState(SaveState ss) {
+
+		this.saveState = ss;
+
+		if (hasStateChanges()) {
+			loadFormat(ss);
+		}
+
+	}
+
+	private boolean hasStateChanges() {
+		if (!saveState.isEmpty()) {
+			return !equals(saveState, defaultSaveState);
+		}
+		return false;
+	}
+
+	private boolean equals(SaveState state1, SaveState state2) {
+		String s1 = state1.toString();
+		String s2 = state2.toString();
+		return Objects.equals(s1, s2);
+	}
+
+	private void changeRightToMatchLeftFormat(FieldFormatModel model) {
+		SaveState formatState = new SaveState();
+		displays.get(LEFT).getFormatManager().saveState(formatState);
+		displays.get(RIGHT).getFormatManager().readState(formatState);
+
+		saveFormat(saveState);
+		tool.setConfigChanged(true);
+	}
+
+	private void loadFormat(SaveState ss) {
+
+		SaveState formatState = ss.getSaveState(FORMAT_KEY);
+		if (formatState == null) {
+			return;
+		}
+
+		displays.get(LEFT).getFormatManager().readState(formatState);
+		displays.get(RIGHT).getFormatManager().readState(formatState);
+	}
+
+	private void saveFormat(SaveState ss) {
+		SaveState formatState = new SaveState();
+		FormatManager format = displays.get(LEFT).getFormatManager();
+		format.saveState(formatState);
+		ss.putSaveState(FORMAT_KEY, formatState);
 	}
 
 	@Override
@@ -332,8 +394,8 @@ public class ListingCodeComparisonView
 	public Object getContextObjectForMarginPanels(ListingPanel panel, MouseEvent event) {
 		Object source = event.getSource();
 		// Is event source a marker margin provider on the left side of the listing?
-		List<MarginProvider> marginProviders = panel.getMarginProviders();
-		for (MarginProvider marginProvider : marginProviders) {
+		List<ListingMarginProvider> marginProviders = panel.getMarginProviders();
+		for (ListingMarginProvider marginProvider : marginProviders) {
 			JComponent c = marginProvider.getComponent();
 			if (c == source) {
 				MarkerLocation loc = marginProvider.getMarkerLocation(event.getX(), event.getY());
@@ -344,8 +406,8 @@ public class ListingCodeComparisonView
 			}
 		}
 		// Is event source an overview provider on the right side of the listing?
-		List<OverviewProvider> overviewProviders = panel.getOverviewProviders();
-		for (OverviewProvider overviewProvider : overviewProviders) {
+		List<ListingOverviewProvider> overviewProviders = panel.getOverviewProviders();
+		for (ListingOverviewProvider overviewProvider : overviewProviders) {
 			JComponent c = overviewProvider.getComponent();
 			if (c == source) {
 				return source; // Return the overview provider that was clicked.
@@ -561,8 +623,8 @@ public class ListingCodeComparisonView
 
 	private Object getContextForMarginPanels(ListingPanel lp, MouseEvent event) {
 		Object source = event.getSource();
-		List<MarginProvider> marginProvidersForLP = lp.getMarginProviders();
-		for (MarginProvider marginProvider : marginProvidersForLP) {
+		List<ListingMarginProvider> marginProvidersForLP = lp.getMarginProviders();
+		for (ListingMarginProvider marginProvider : marginProvidersForLP) {
 			JComponent c = marginProvider.getComponent();
 			if (c == source) {
 				MarkerLocation loc = marginProvider.getMarkerLocation(event.getX(), event.getY());
@@ -572,8 +634,8 @@ public class ListingCodeComparisonView
 				return source;
 			}
 		}
-		List<OverviewProvider> overviewProvidersForLP = lp.getOverviewProviders();
-		for (OverviewProvider overviewProvider : overviewProvidersForLP) {
+		List<ListingOverviewProvider> overviewProvidersForLP = lp.getOverviewProviders();
+		for (ListingOverviewProvider overviewProvider : overviewProvidersForLP) {
 			JComponent c = overviewProvider.getComponent();
 			if (c == source) {
 				return source;
@@ -588,12 +650,6 @@ public class ListingCodeComparisonView
 		options.addOptionsChangeListener(this);
 		comparisonOptions.initializeOptions(options);
 		comparisonOptions.loadOptions(options);
-	}
-
-	private void changeRightToMatchLeftFormat(FieldFormatModel model) {
-		SaveState saveState = new SaveState();
-		displays.get(LEFT).getFormatManager().saveState(saveState);
-		displays.get(RIGHT).getFormatManager().readState(saveState);
 	}
 
 	private void updateProgramViews() {

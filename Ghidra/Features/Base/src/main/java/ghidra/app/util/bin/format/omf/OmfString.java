@@ -18,8 +18,7 @@ package ghidra.app.util.bin.format.omf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.PascalString255DataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -29,9 +28,10 @@ public class OmfString implements StructConverter {
 
 	private int length;
 	private String str;
+	private boolean big;
 
 	/**
-	 * Creates a new {@link OmfString}
+	 * Creates a new small {@link OmfString}
 	 * 
 	 * @param length The length of the string
 	 * @param str The string
@@ -39,6 +39,19 @@ public class OmfString implements StructConverter {
 	public OmfString(int length, String str) {
 		this.length = length;
 		this.str = str;
+	}
+
+	/**
+	 * Creates a new {@link OmfString}
+	 * 
+	 * @param length The length of the string
+	 * @param str The string
+	 * @param isBig True if this is a big string; otherwise, false
+	 */
+	public OmfString(int length, String str, boolean isBig) {
+		this.length = length;
+		this.str = str;
+		this.big = isBig;
 	}
 
 	/**
@@ -56,10 +69,17 @@ public class OmfString implements StructConverter {
 	}
 
 	/**
+	 * {@return whether or not this is a "big" string}
+	 */
+	public boolean isBig() {
+		return big;
+	}
+
+	/**
 	 * {@return the length (in bytes) of this data type}
 	 */
 	public int getDataTypeSize() {
-		return BYTE.getLength() + length;
+		return (big ? WORD.getLength() : BYTE.getLength()) + length;
 	}
 
 	@Override
@@ -73,6 +93,6 @@ public class OmfString implements StructConverter {
 			return BYTE;
 		}
 
-		return new PascalString255DataType();
+		return big ? new PascalStringDataType() : new PascalString255DataType();
 	}
 }

@@ -790,6 +790,7 @@ public:
   uint4 getGotoType(int4 i) const { return caseblocks[i].gototype; }	///< Get the edge type for the i-th \e case block
   bool isExit(int4 i) const { return caseblocks[i].isexit; }		///< Does the i-th \e case block exit the switch?
   const Datatype *getSwitchType(void) const;				///< Get the data-type of the switch variable
+  uint4 getDisplayFormat(void) const { return jump->getDisplayFormat(); }	///< Get any integer display format for cases
   virtual block_type getType(void) const { return t_switch; }
   virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);

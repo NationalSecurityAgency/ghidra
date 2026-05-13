@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import com.microsoft.z3.Context;
 
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.symz3.model.SymValueZ3;
 
@@ -36,7 +37,8 @@ import ghidra.symz3.model.SymValueZ3;
 public abstract class SymZ3Space {
 	public abstract void set(SymValueZ3 offset, int size, SymValueZ3 val, PcodeStateCallbacks cb);
 
-	public abstract SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb);
+	public abstract SymValueZ3 get(SymValueZ3 offset, int size, Reason reason,
+			PcodeStateCallbacks cb);
 
 	public abstract String printableSummary();
 

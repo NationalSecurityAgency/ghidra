@@ -22,6 +22,7 @@ import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import docking.DockingUtils;
 import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.framework.plugintool.PluginTool;
@@ -47,7 +48,7 @@ public class NextPreviousInstructionAction extends AbstractNextPreviousAction {
 
 	@Override
 	protected KeyStroke getKeyStroke() {
-		return KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK |
+		return KeyStroke.getKeyStroke(KeyEvent.VK_I, DockingUtils.CONTROL_KEY_MODIFIER_MASK |
 			InputEvent.ALT_DOWN_MASK);
 	}
 

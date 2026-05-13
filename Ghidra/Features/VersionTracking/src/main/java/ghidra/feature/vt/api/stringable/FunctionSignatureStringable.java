@@ -546,6 +546,11 @@ public class FunctionSignatureStringable extends Stringable {
 						useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
 								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 						true, signatureSource);
+
+			// Test to see if destination function is now in the same namespace as the source
+			// if so copy the class structure from source to destination if the update didn't 
+			copyClassStructure(newParams, toFunction, markupOptions);
+
 			if (forceApply) {
 				// must force signatureSource if precedence has been lowered
 				// TODO: Should any manual change in function signature force source to be USER_DEFINED instead ??
@@ -578,6 +583,195 @@ public class FunctionSignatureStringable extends Stringable {
 		return true;
 	}
 
+	/**
+	 * Method to determine if a copy is needed of the source class struct to the destination program
+	 * and if so, does the copy
+	 * @param newParams the params to apply to the destination program as determined by the apply
+	 * options
+	 * @param toFunction the destination function
+	 */
+	private void copyClassStructure(List<Parameter> newParams, Function toFunction,
+			ToolOptions markupOptions) {
+
+		// this is only meant to handle the case where there are auto this params
+		// existing other mechanisms handle custom storage case already
+		if (toFunction.hasCustomVariableStorage()) {
+			return;
+		}
+
+		VTMatchApplyChoices.ParameterDataTypeChoices parameterDataTypesChoice =
+			markupOptions.getEnum(VTOptionDefines.PARAMETER_DATA_TYPES,
+				DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES);
+
+		if (parameterDataTypesChoice == ParameterDataTypeChoices.EXCLUDE) {
+			return;
+		}
+
+		boolean onlyReplaceUndefineds =
+			(parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+
+		boolean replaceAlways = (parameterDataTypesChoice == ParameterDataTypeChoices.REPLACE);
+
+		// check to see if the resulting newParams after checking the markupOptions includes
+		// a this param and if so resolve the class data type in the destination program
+		// to make sure the class structure gets copied to the destination program
+
+		// if source function is not a thiscall then no class structure to copy
+		if (!callingConventionName.equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
+			return;
+		}
+		// if there are no new params to apply as determined by the options then nothing to copy
+		if (newParams.isEmpty()) {
+			return;
+		}
+
+		// if newParams does not have a this param to copy as determined by the apply options then
+		// no copy needed
+		if (!newParams.get(0).getName().equals("this")) {
+			return;
+		}
+
+		// get the this param for source and verify it is a pointer to a structure
+		ParameterInfo sourceParam1 = parameterInfos.get(0);
+		DataType sourceClassDataType = getPointedToDataType(sourceParam1.dataType);
+		if (sourceClassDataType == null) {
+			return;
+		}
+
+		if (!isStructure(sourceClassDataType)) {
+			return;
+		}
+
+		// get the pointed to data type for the new destination this param
+		// if it isn't a pointer to a data type then return
+		Parameter newDestinationParam1 = newParams.get(0);
+		DataType newDestinationClassDataType =
+			getPointedToDataType(newDestinationParam1.getDataType());
+		if (newDestinationClassDataType == null) {
+			return;
+		}
+
+		// if the new this param (ie what the calling method has determined what the new this
+		// param is supposed to be) is not a pointer to a structure then return because it
+		// doesn't think it should also be a class structure
+		if (!isStructure(newDestinationClassDataType)) {
+			return;
+		}
+
+		// if it gets this far then can probably assume both the new destination and source this 
+		// data types are pointers to class structures
+		// NOTE: at this time there is a use case where the calling method incorrectly assumes the
+		// newParam is the same class structure as the source one. However, that method did not
+		// check the FunctionName option to see if that option was to not replace the function
+		// name. So we need to have a check to see if the current function namespace is already 
+		// the same as the assumed new destination this structure name which would indicate that 
+		// the function already was in the same class and so we still need to do the resolve to make
+		// sure that the structure contents get resolved according to the parameter replace options
+		VTMatchApplyChoices.FunctionNameChoices functionNameChoice =
+			markupOptions.getEnum(VTOptionDefines.FUNCTION_NAME, DEFAULT_OPTION_FOR_FUNCTION_NAME);
+		String currentDestinationFunctionNamespaceName =
+			toFunction.getSymbol().getParentNamespace().getName();
+		String newDestinationClassName = newDestinationClassDataType.getName();
+		if (functionNameChoice == FunctionNameChoices.EXCLUDE &&
+			!currentDestinationFunctionNamespaceName.equals(newDestinationClassName)) {
+			return;
+		}
+
+		// now use the path to the source data type to try and get the same named structure 
+		// in the destination data type manager
+		ProgramBasedDataTypeManager destinationDataTypeManager =
+			toFunction.getProgram().getDataTypeManager();
+
+		String pathName = sourceClassDataType.getPathName();
+		DataType destinationDataTypeInDTM = destinationDataTypeManager.getDataType(pathName);
+
+		// only do the copy if the option is to replace always or if it is replace undefines and the
+		// destination structure is empty (ie undefined)
+		if (replaceAlways ||
+			destinationDataTypeInDTM == null ||
+			(destinationDataTypeInDTM.isNotYetDefined() && onlyReplaceUndefineds)) {
+
+			// since nothing above prevents the copy go ahead and copy the source class data type			
+
+			//needs to be the original dt to get the struct * not just the struct
+			destinationDataTypeManager.resolve(sourceParam1.dataType,
+				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+			// check to see if the resolve probably updated the function's auto this param datatype
+			// it might not have if there was a .conflict created during the resolve or if the
+			// source and destination data types were in different folders or if one program
+			// has the preferred root data type manager folder set and the other doesn't
+			// not sure there is a way to tell this info since I don't know which the decompiler will
+			// pick at this point because nothing has been applied yet
+			DataType destinationDataTypeConflict =
+				destinationDataTypeManager.getDataType(pathName + ".conflict");
+
+			if (destinationDataTypeConflict != null) {
+				Msg.debug(this, "The applied class structure " +
+					newDestinationClassDataType.getPathName() +
+					" was copied to the destination program but a .conflict was created due to there " +
+					"already being a non-empty structure with that same path and name.");
+			}
+
+			// get the original toFunction this param if there was one and get it's path
+			// if the new path is different then spit out warming too
+			if (toFunction.getParameterCount() == 0) {
+				return;
+			}
+
+			if (!toFunction.getParameter(0).getName().equals("this")) {
+				return;
+			}
+
+			DataType pointedToDataType =
+				getPointedToDataType(toFunction.getParameter(0).getDataType());
+			if (pointedToDataType == null) {
+				return;
+			}
+
+			if (!pointedToDataType.getName().equals(newDestinationClassName)) {
+				return;
+			}
+
+			if (pointedToDataType.getPathName().equals(pathName)) {
+				return; // already handled with conflict check above
+			}
+
+			Msg.debug(this,
+				"The applied class structure was copied to the same data type manager " +
+					"path as in the source program whichi is different than the path to the existing " +
+					"class structure. The decompiler will first check for one in the Preferred Class" +
+					"Root Folder (if one has been set) otherwise it will use the first one it finds.");
+		}
+
+	}
+
+	private boolean isStructure(DataType dataType) {
+
+		if (dataType instanceof Structure) {
+			return true;
+		}
+
+		if (dataType instanceof StructureDataType) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+	private DataType getPointedToDataType(DataType dataType) {
+
+		if (!(dataType instanceof PointerDataType)) {
+			return null;
+		}
+
+		PointerDataType pointerDataType = (PointerDataType) dataType;
+
+		return pointerDataType.getDataType();
+
+	}
+
 	private void applyInline(Function toFunction, boolean fromFunctionIsInline,
 			ToolOptions markupOptions) {
 		ReplaceChoices inlineChoice = markupOptions.getEnum(INLINE, DEFAULT_OPTION_FOR_INLINE);
@@ -604,10 +798,12 @@ public class FunctionSignatureStringable extends Stringable {
 			return returnParam; // Not replacing return type.
 		}
 		DataType toReturnType = toFunction.getReturnType();
+
 		DataType fromReturnType = returnInfo.dataType;
 		boolean isFromDefault = fromReturnType == DataType.DEFAULT;
 		boolean isToDefault = toReturnType == DataType.DEFAULT;
-		boolean isToUndefined = Undefined.isUndefined(toReturnType);
+		boolean isToUndefined = Undefined.isUndefined(getBaseDataType(toReturnType));
+
 		if (!forceApply && onlyReplaceUndefineds) {
 			if (!isToDefault && !isToUndefined) {
 				return returnParam; // can't do it because we should only replace undefined data types.
@@ -773,13 +969,28 @@ public class FunctionSignatureStringable extends Stringable {
 		return parameters;
 	}
 
+	/**
+	 * If the given data type is a pointer, get the "pointed to" data type
+	 * @param dataType the given data type
+	 * @return if not a pointer, just return the same dataType, if a pointer, return the 
+	 * "pointed to" data type
+	 */
+	private DataType getBaseDataType(DataType dataType) {
+
+		if (dataType instanceof Pointer) {
+			Pointer pointer = (Pointer) dataType;
+			dataType = pointer.getDataType();
+		}
+		return dataType;
+	}
+
 	private DataType getHighestPriorityDataType(DataType fromDataType, DataType toDataType,
 			boolean onlyReplaceUndefineds) {
 		// Priority from highest to lowest is Defined, Undefined with size, Default.
 		boolean fromIsDefault = fromDataType == DataType.DEFAULT;
 		boolean toIsDefault = toDataType == DataType.DEFAULT;
-		boolean fromIsUndefined = Undefined.isUndefined(fromDataType);
-		boolean toIsUndefined = Undefined.isUndefined(toDataType);
+		boolean fromIsUndefined = Undefined.isUndefined(getBaseDataType(fromDataType));
+		boolean toIsUndefined = Undefined.isUndefined(getBaseDataType(toDataType));
 		if (fromIsDefault) {
 			return toDataType;
 		}

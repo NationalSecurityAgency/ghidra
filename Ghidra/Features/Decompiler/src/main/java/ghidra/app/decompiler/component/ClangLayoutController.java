@@ -175,8 +175,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		FieldElement[] elements = createFieldElementsForLine(tokens);
 
 		int indent = line.getIndent() * indentWidth;
-		int updatedMaxWidth = maxWidth;
-		return new ClangTextField(tokens, elements, indent, line.getLineNumber(), updatedMaxWidth,
+		return new ClangTextField(tokens, elements, indent, line.getLineNumber(), maxWidth,
 			hlFactory);
 	}
 

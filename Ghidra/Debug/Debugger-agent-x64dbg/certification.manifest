@@ -1,0 +1,13 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+##MODULE IP: MIT
+Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/x64dbg/x64dbg.html||GHIDRA||||END|
+src/main/py/LICENSE||GHIDRA||||END|
+src/main/py/MANIFEST.in||GHIDRA||||END|
+src/main/py/README.md||GHIDRA||||END|
+src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidraxdbg/py.typed||GHIDRA||||END|
+src/main/py/src/ghidraxdbg/schema.xml||GHIDRA||||END|

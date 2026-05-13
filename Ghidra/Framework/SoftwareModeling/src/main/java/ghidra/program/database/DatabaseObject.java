@@ -102,7 +102,7 @@ public abstract class DatabaseObject {
 	 * @return true if this object is invalid and must be re-validated, else false if object state
 	 * is currently valid which may include a deleted state.
 	 */
-	protected boolean isInvalid() {
+	protected final boolean isInvalid() {
 		return !deleted && invalidateCount != getCurrentValidationCount();
 	}
 

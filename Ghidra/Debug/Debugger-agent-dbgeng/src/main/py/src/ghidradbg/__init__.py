@@ -18,7 +18,7 @@ try:
     import pybag
 except Exception as e:
     from ghidratrace.setuputils import prompt_and_mitigate_dependencies
-    prompt_and_mitigate_dependencies("<SELF>")
+    prompt_and_mitigate_dependencies(None)
 
 # NOTE: libraries must precede EVERYTHING, esp pybag and DbgMod
 from . import libraries, util, commands, methods, hooks

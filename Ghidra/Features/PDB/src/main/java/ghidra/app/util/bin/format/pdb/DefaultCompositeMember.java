@@ -1225,13 +1225,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			for (int i = 0; i < count; i++) {
 				DataTypeComponent component = composite.getComponent(i);
 				if (oldFieldName.equals(component.getFieldName())) {
-					try {
-						component.setFieldName(newFieldName);
-					}
-					catch (DuplicateNameException e) {
-						Msg.error(this, "Failed to rename temporary component name: " +
-							getDataTypeName() + "." + oldFieldName + " -> " + newFieldName);
-					}
+					component.setFieldName(newFieldName);
 					break;
 				}
 			}
@@ -1356,9 +1350,8 @@ public class DefaultCompositeMember extends CompositeMember {
 	 * @throws CancelledException if monitor is cancelled
 	 */
 	public static boolean applyDataTypeMembers(Composite composite, boolean packingDisabled,
-			boolean isClass, int preferredCompositeSize,
-			List<? extends PdbMember> members, Consumer<String> errorConsumer, TaskMonitor monitor)
-			throws CancelledException {
+			boolean isClass, int preferredCompositeSize, List<? extends PdbMember> members,
+			Consumer<String> errorConsumer, TaskMonitor monitor) throws CancelledException {
 
 		Composite editComposite = composite;
 

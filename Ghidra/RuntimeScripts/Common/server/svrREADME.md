@@ -265,8 +265,17 @@ Identifies the remote access hostname (FQDN) or IPv4 address which should be  us
 to access the server.  By default the host name reported by the operating system is resolved to an 
 IPv4 address, if this fails the local loopback address is used.  The server log will indicate the 
 remote access hostname at startup.  This option may be required when a server has multiple IP 
-interfaces, relies on a dynamic DNS or other network address translation for incoming connections. 
-This option establishes the property value for _java.rmi.server.hostname_.
+interfaces, running within a docker container, or relies on a dynamic DNS or other network address 
+translation for incoming connections.  This option establishes the property value for 
+_java.rmi.server.hostname_.  When this option specifies a hostname, and the _-Dghidra.keystore_ JVM 
+property has not been specified, it is generally required that the _-ipAlt_ option be included to 
+specify the IP Address which corresponds to the hostname.
+
+#### `-ipAlt <altName1>[;<altName2>,...]`
+Identifies additional addresses and hostnames (FQDN) that should be included as subject alternative 
+names when generating a self-signed server certificate.  Currently, a temporary self-signed server 
+certificate is generated whenever the _-Dghidra.keystore_ JVM property has not been specified.  
+NOTE: ';' must be used as separator for more than one altName.
 			
 #### `-i <#.#.#.#>`
 Forces the server to be bound to a specific IPv4 interface on the server. If specified and the `-ip`

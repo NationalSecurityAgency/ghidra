@@ -145,7 +145,7 @@
         <LI>Select the symbols in the Symbol Table (hold the &lt;Ctrl&gt; key down to add to the
         selection) to be deleted.</LI>
 
-        <LI>Right-mouse-click and select "Delete" from the popup menu, or click the <IMG src=
+        <LI>Right-mouse-click and select <B>Delete</B> from the popup menu, or click the <IMG src=
         "images/edit-delete.png"> button in the <I>Symbol Table</I> toolbar.</LI>
       </OL>
 
@@ -153,7 +153,10 @@
         <P><I><IMG src="help/shared/note.png"> Notes on deleting a symbol:</I></P>
 
         <OL>
-          <LI><I>You can only delete a default symbol when it has zero (0) references.</I></LI>
+          <LI><I>You can only delete a default symbol when it has zero (0) references.  Use the
+			<B>Delete All References</B> action (described below) to remove all references.  Once
+			all references to a default symbol are removed, the symbol will be removed.
+		  </I></LI>
 
           <LI><I>If you delete a user-defined symbol with references, then a default symbol will
           automatically be created and assigned those references.</I></LI>
@@ -163,6 +166,22 @@
         </OL>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
+	
+	
+	<H2><A name="Delete_All_References"></A>Deleting Symbol References</H2>
+
+	    <BLOCKQUOTE>
+	      <P>You can use the <I>Symbol Table</I> to delete all referencs for a given symbol(s).
+			
+	      <P>To delete symbol references:</P>
+
+	      <OL>
+	        <LI>Select the symbols in the Symbol Table (hold the &lt;Ctrl&gt; key down to add to the
+	        selection) to be deleted.</LI>
+
+	        <LI>Right-mouse-click and select <B>References-&gt;Delete All</B> from the popup menu.</LI>
+	      </OL>
+	    </BLOCKQUOTE>
 
 	
 	<H2><A name="Make_Selection"></A>Making a Selection <IMG src="Icons.MAKE_SELECTION_ICON"></H2>
@@ -190,12 +209,21 @@
 	
 	
 	<H2><A name="Navigate_on_Incoming_Location_Changes"></A>
-		Making a Selection <IMG src="Icons.MAKE_SELECTION_ICON"></H2>
+		 Navigate on Incoming Location Changes<IMG src="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON"></H2>
 
 	<BLOCKQUOTE>
 	  <P>When selected, the Symbol Table will select the row in the table that corresponds to the
 		symbol selected in the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>.
 	  </P>
+	</BLOCKQUOTE>
+	
+	<H2><A name="Navigate_on_Row_Changes"></A>
+		 Navigate on Table Row Changes<IMG src="Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON"></H2>
+
+	<BLOCKQUOTE>
+	  <P>When toggle on, table row selections in the Symbol Table cause the 
+		<A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> to go to the 
+		selected address.</P>
 	</BLOCKQUOTE>
 	
 	
@@ -619,8 +647,8 @@
     <P class="relatedtopic">Related Topics</P>
 
     <UL>
+	  <LI><A href="symbol_references.htm">Symbol References</A></LI>
       <LI><A href="help/topics/LabelMgrPlugin/Labels.htm">Labels</A></LI>
-
       <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm#Listing_Display">Listing
       Display Options</A></LI>
     </UL>

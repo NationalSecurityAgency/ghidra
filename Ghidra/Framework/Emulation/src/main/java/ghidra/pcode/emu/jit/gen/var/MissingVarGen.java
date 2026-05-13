@@ -16,16 +16,21 @@
 package ghidra.pcode.emu.jit.gen.var;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_ASSERTION_ERROR__$INIT;
-import static ghidra.pcode.emu.jit.gen.GenConsts.NAME_ASSERTION_ERROR;
-import static org.objectweb.asm.Opcodes.*;
+import static ghidra.pcode.emu.jit.gen.GenConsts.T_ASSERTION_ERROR;
 
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.OpndEm;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitPhiOp;
 import ghidra.pcode.emu.jit.var.JitMissingVar;
 
@@ -38,7 +43,7 @@ import ghidra.pcode.emu.jit.var.JitMissingVar;
  * up as an output, so we prohibit any attempt to generate code that writes to a missing variable.
  * However, we wait until run time to make that assertion about reads. In theory, it's possible the
  * generator will generate unreachable code that reads from a variable; however, that code is
- * unreachable. First how does this happen? Second, what if it does?
+ * unreachable. First, how does this happen? Second, what if it does?
  * 
  * <p>
  * To answer the first question, we note that the passage decoder should never decode any statically
@@ -57,31 +62,90 @@ public enum MissingVarGen implements VarGen<JitMissingVar> {
 	GEN;
 
 	@Override
-	public void generateValInitCode(JitCodeGenerator gen, JitMissingVar v, MethodVisitor iv) {
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genValInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitMissingVar v) {
+		return em;
+	}
+
+	private <N extends Next> Emitter<Dead> genThrow(Emitter<N> em, JitMissingVar v) {
+		return em
+				.emit(Op::new_, T_ASSERTION_ERROR)
+				.emit(Op::dup)
+				.emit(Op::ldc__a, "Tried to read " + v)
+				.emit(Op::invokespecial, T_ASSERTION_ERROR, "<init>", MDESC_ASSERTION_ERROR__$INIT,
+					false)
+				.step(Inv::takeRefArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(Op::athrow);
 	}
 
 	@Override
-	public JitType generateValReadCode(JitCodeGenerator gen, JitMissingVar v,
-			JitTypeBehavior typeReq, Ext ext, MethodVisitor rv) {
-		// [...]
-		rv.visitTypeInsn(NEW, NAME_ASSERTION_ERROR);
-		// [...,error:NEW]
-		rv.visitInsn(DUP);
-		// [...,error:NEW,error:NEW]
-		rv.visitLdcInsn("Tried to read " + v);
-		// [...,error:NEW,error:NEW,message]
-		rv.visitMethodInsn(INVOKESPECIAL, NAME_ASSERTION_ERROR, "<init>",
-			MDESC_ASSERTION_ERROR__$INIT, false);
-		// [...,error]
-		rv.visitInsn(ATHROW);
-		// [...]
-		JitType type = typeReq.resolve(gen.getTypeModel().typeOf(v));
-		return type;
+	public <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N extends Next> Emitter<Ent<N, T>> genReadToStack(Emitter<N> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitMissingVar v, JT type,
+				Ext ext) {
+		genThrow(em, v);
+		return null;
 	}
 
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitMissingVar v, JitType type, Ext ext,
-			MethodVisitor rv) {
+	public <THIS extends JitCompiledPassage, N extends Next> OpndEm<MpIntJitType, N> genReadToOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitMissingVar v,
+			MpIntJitType type, Ext ext, Scope scope) {
+		genThrow(em, v);
+		return null;
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>>
+			genReadLegToStack(Emitter<N> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitMissingVar v, MpIntJitType type, int leg,
+					Ext ext) {
+		genThrow(em, v);
+		return null;
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<int[]>>>
+			genReadToArray(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+					JitMissingVar v, MpIntJitType type, Ext ext, Scope scope, int slack) {
+		genThrow(em, v);
+		return null;
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N1 extends Next, N0 extends Ent<N1, T>> Emitter<N1> genWriteFromStack(Emitter<N0> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitMissingVar v, JT type,
+				Ext ext, Scope scope) {
 		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genWriteFromOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitMissingVar v,
+			Opnd<MpIntJitType> opnd, Ext ext, Scope scope) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N1 extends Next, N0 extends Ent<N1, TRef<int[]>>>
+			Emitter<N1> genWriteFromArray(Emitter<N0> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitMissingVar v, MpIntJitType type, Ext ext,
+					Scope scope) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadToBool(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+			JitMissingVar v) {
+		throw new AssertionError();
+	}
+
+	@Override
+	public ValGen<JitMissingVar> subpiece(int byteShift, int maxByteSize) {
+		return this;
 	}
 }

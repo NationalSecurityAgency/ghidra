@@ -21,7 +21,9 @@ import static org.objectweb.asm.Opcodes.*;
 import java.io.*;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.*;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.objectweb.asm.*;
 import org.objectweb.asm.util.TraceClassVisitor;
 
@@ -31,15 +33,24 @@ import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecuto
 import ghidra.pcode.emu.jit.JitCompiler.Diag;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
+import ghidra.pcode.emu.jit.alloc.JvmLocal;
 import ghidra.pcode.emu.jit.analysis.*;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.*;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
+import ghidra.pcode.emu.jit.analysis.JitType.*;
+import ghidra.pcode.emu.jit.gen.op.IntMultOpGen;
 import ghidra.pcode.emu.jit.gen.op.OpGen;
+import ghidra.pcode.emu.jit.gen.op.OpGen.*;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.OpndEm;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.ExitSlot;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.*;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.gen.var.ValGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
@@ -78,7 +89,7 @@ import ghidra.util.Msg;
  * target</li>
  * <li><b>{@code static }{@link AddressFactory}{@code  ADDRESS_FACTORY}</b> - The address factory of
  * the language</li>
- * <li><b>{@code static }{@link List}{@code <}{@link AddrCtx}{@code > ENTRIES}</b> - The lsit of
+ * <li><b>{@code static }{@link List}{@code <}{@link AddrCtx}{@code > ENTRIES}</b> - The list of
  * entry points</li>
  * <li><b>{@link JitPcodeThread}{@code  thread}</b> - The bound thread for this instance of the
  * compiled passage</li>
@@ -119,13 +130,13 @@ import ghidra.util.Msg;
  * structure is as follows:
  * 
  * <ol>
- * <li>Parameter declarations - {@code this} and {@code blockId}</li>
- * <li>Allocated local declarations - declares all locals allocated by
- * {@link JitAllocationModel}</li>
  * <li>Entry point dispatch - a large {@code switch} statement on the entry {@code blockId}</li>
  * <li>P-code translation - the block-by-block op-by-op translation of the p-code to bytecode</li>
  * <li>Exception handlers - exception handlers as requested by various elements of the p-code
  * translation</li>
+ * <li>Parameter declarations - {@code this} and {@code blockId}</li>
+ * <li>Allocated local declarations - declares all locals allocated by
+ * {@link JitAllocationModel}</li>
  * </ol>
  * 
  * <h4>Entry Point Dispatch</h4>
@@ -174,8 +185,9 @@ import ghidra.util.Msg;
  *           variable. TODO: It'd be nice to have a bytecode API that enforces stack structure using
  *           the compiler (somehow), but that's probably overkill. Also, I have yet to see what the
  *           official classfile API will bring.
+ * @param <THIS> the type of the generated passage
  */
-public class JitCodeGenerator {
+public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	/**
 	 * The key for a varnode, to ensure we control the definition of {@link Object#equals(Object)
 	 * equality}.
@@ -187,7 +199,23 @@ public class JitCodeGenerator {
 		 * @param vn the varnode
 		 */
 		public VarnodeKey(Varnode vn) {
-			this(vn.getSpace(), vn.getOffset(), vn.getSize());
+			this(vn == null ? 0 : vn.getSpace(), vn == null ? 0 : vn.getOffset(),
+				vn == null ? 0 : vn.getSize());
+		}
+	}
+
+	/**
+	 * The key for a p-code op, to ensure we control "equality"
+	 */
+	record PcodeOpKey(VarnodeKey out, int opcode, List<VarnodeKey> ins) {
+		/**
+		 * Extract/construct thhe key for a given op
+		 * 
+		 * @param op the p-code op
+		 */
+		public PcodeOpKey(PcodeOp op) {
+			this(new VarnodeKey(op.getOutput()), op.getOpcode(),
+				Stream.of(op.getInputs()).map(VarnodeKey::new).toList());
 		}
 	}
 
@@ -200,22 +228,23 @@ public class JitCodeGenerator {
 	final JitAllocationModel am;
 	final JitOpUseModel oum;
 
-	private final Map<JitBlock, Label> blockLabels = new HashMap<>();
+	private final Map<JitBlock, Lbl<Bot>> blockLabels = new HashMap<>();
+
 	private final Map<PcodeOp, ExceptionHandler> excHandlers = new LinkedHashMap<>();
+
 	private final Map<AddressSpace, FieldForSpaceIndirect> fieldsForSpaceIndirect = new HashMap<>();
 	private final Map<Address, FieldForArrDirect> fieldsForArrDirect = new HashMap<>();
 	private final Map<RegisterValue, FieldForContext> fieldsForContext = new HashMap<>();
 	private final Map<VarnodeKey, FieldForVarnode> fieldsForVarnode = new HashMap<>();
+	private final Map<PcodeOpKey, FieldForPcodeOp> fieldsForOp = new HashMap<>();
 	private final Map<String, FieldForUserop> fieldsForUserop = new HashMap<>();
 	private final Map<AddrCtx, FieldForExitSlot> fieldsForExitSlot = new HashMap<>();
 
 	final String nameThis;
+	final TRef<THIS> typeThis;
 
 	private final ClassWriter cw;
 	private final ClassVisitor cv;
-	private final MethodVisitor clinitMv;
-	private final MethodVisitor initMv;
-	private final MethodVisitor runMv;
 
 	/**
 	 * Construct a code generator for the given passage's target classfile
@@ -258,6 +287,7 @@ public class JitCodeGenerator {
 		this.nameThis = (pkgThis + "Passage$at_" + entry.address + "_" + entry.biCtx.toString(16))
 				.replace(":", "_")
 				.replace(" ", "_");
+		this.typeThis = Types.refExtends(JitCompiledPassage.class, "L" + nameThis + ";");
 
 		int flags = entry.address.getOffset() == JitCompiler.EXCLUDE_MAXS ? 0
 				: ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS;
@@ -273,41 +303,26 @@ public class JitCodeGenerator {
 			Type.getInternalName(JitCompiledPassage.class),
 		});
 
-		cv.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "LANGUAGE_ID", TDESC_STRING, null,
+		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_STRING, "LANGUAGE_ID",
 			context.getLanguage().getLanguageID().toString());
-		cv.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "LANGUAGE", TDESC_LANGUAGE, null, null);
-		cv.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "ADDRESS_FACTORY",
-			TDESC_ADDRESS_FACTORY, null, null);
-		cv.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "ENTRIES", TDESC_LIST,
-			TSIG_LIST_ADDRCTX, null);
+		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_LANGUAGE, "LANGUAGE");
+		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_ADDRESS_FACTORY, "ADDRESS_FACTORY");
+		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, new TypeLiteral<List<AddrCtx>>() {},
+			"ENTRIES");
+		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, T_JIT_PCODE_THREAD, "thread");
+		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, T_JIT_BYTES_PCODE_EXECUTOR_STATE, "state");
 
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, "thread", TDESC_JIT_PCODE_THREAD, null, null);
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, "state", TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE, null,
-			null);
-
-		clinitMv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, "<clinit>",
-			Type.getMethodDescriptor(Type.VOID_TYPE), null, null);
-
-		initMv = cv.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE,
-			Type.getType(JitPcodeThread.class)), null, null);
-		runMv = cv.visitMethod(ACC_PUBLIC, "run",
-			Type.getMethodDescriptor(Type.getType(EntryPoint.class), Type.INT_TYPE), null, null);
-
-		startStaticInitializer();
-		startConstructor();
-
-		MethodVisitor gtMv = cw.visitMethod(ACC_PUBLIC, "thread",
-			Type.getMethodDescriptor(Type.getType(JitPcodeThread.class)), null, null);
-		gtMv.visitCode();
-		// []
-		RunFixedLocal.THIS.generateLoadCode(gtMv);
-		// [this]
-		gtMv.visitFieldInsn(GETFIELD, nameThis, "thread", TDESC_JIT_PCODE_THREAD);
-		// [thread]
-		gtMv.visitInsn(ARETURN);
-		// []
-		gtMv.visitMaxs(20, 20);
-		gtMv.visitEnd();
+		var paramsThread = new Object() {
+			Local<TRef<THIS>> this_;
+		};
+		var retThread = Emitter.start(typeThis, cv, ACC_PUBLIC, "thread",
+			MthDesc.returns(T_JIT_PCODE_THREAD).build())
+				.param(Def::done, typeThis, l -> paramsThread.this_ = l);
+		retThread.em()
+				.emit(Op::aload, paramsThread.this_)
+				.emit(Op::getfield, typeThis, "thread", T_JIT_PCODE_THREAD)
+				.emit(Op::areturn, retThread.ret())
+				.emit(Misc::finish);
 	}
 
 	/**
@@ -364,23 +379,20 @@ public class JitCodeGenerator {
 	 * Additional {@link StaticFieldReq static fields} may be requested as the p-code translation is
 	 * emitted.
 	 */
-	protected void startStaticInitializer() {
-		clinitMv.visitCode();
-
-		// []
-		clinitMv.visitFieldInsn(GETSTATIC, nameThis, "LANGUAGE_ID", TDESC_STRING);
-		// [langID:STR]
-		clinitMv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "getLanguage",
-			MDESC_JIT_COMPILED_PASSAGE__GET_LANGUAGE, true);
-		// [language]
-		clinitMv.visitInsn(DUP);
-		// [language,language]
-		clinitMv.visitFieldInsn(PUTSTATIC, nameThis, "LANGUAGE", TDESC_LANGUAGE);
-		// [language]
-		clinitMv.visitMethodInsn(INVOKEINTERFACE, NAME_LANGUAGE, "getAddressFactory",
-			MDESC_LANGUAGE__GET_ADDRESS_FACTORY, true);
-		clinitMv.visitFieldInsn(PUTSTATIC, nameThis, "ADDRESS_FACTORY", TDESC_ADDRESS_FACTORY);
-		// []
+	protected Emitter<Bot> startClInitMethod(Emitter<Bot> em) {
+		return em
+				.emit(Op::getstatic, typeThis, "LANGUAGE_ID", T_STRING)
+				.emit(Op::invokestatic, T_JIT_COMPILED_PASSAGE, "getLanguage",
+					MDESC_JIT_COMPILED_PASSAGE__GET_LANGUAGE, true)
+				.step(Inv::takeArg)
+				.step(Inv::ret)
+				.emit(Op::dup)
+				.emit(Op::putstatic, typeThis, "LANGUAGE", T_LANGUAGE)
+				.emit(Op::invokeinterface, T_LANGUAGE, "getAddressFactory",
+					MDESC_LANGUAGE__GET_ADDRESS_FACTORY)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::putstatic, typeThis, "ADDRESS_FACTORY", T_ADDRESS_FACTORY);
 	}
 
 	/**
@@ -401,36 +413,26 @@ public class JitCodeGenerator {
 	 * Additional {@link InstanceFieldReq instance fields} may be requested as the p-code
 	 * translation is emitted.
 	 */
-	protected void startConstructor() {
-		initMv.visitCode();
-		// Object.super()
-		// []
-		InitFixedLocal.THIS.generateLoadCode(initMv);
-		// [this]
-		initMv.visitMethodInsn(INVOKESPECIAL, NAME_OBJECT, "<init>",
-			Type.getMethodDescriptor(Type.VOID_TYPE), false);
-		// []
-
-		// this.thread = thread
-		// []
-		InitFixedLocal.THIS.generateLoadCode(initMv);
-		// [this]
-		InitFixedLocal.THREAD.generateLoadCode(initMv);
-		// [this,thread]
-		initMv.visitFieldInsn(PUTFIELD, nameThis, "thread", TDESC_JIT_PCODE_THREAD);
-		// []
-
-		// this.state = thread.getState()
-		// []
-		InitFixedLocal.THIS.generateLoadCode(initMv);
-		// [this]
-		InitFixedLocal.THREAD.generateLoadCode(initMv);
-		// [this,thread]
-		initMv.visitMethodInsn(INVOKEVIRTUAL, NAME_JIT_PCODE_THREAD, "getState",
-			MDESC_JIT_PCODE_THREAD__GET_STATE, false);
-		// [this,state]
-		initMv.visitFieldInsn(PUTFIELD, nameThis, "state", TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE);
-		// []
+	protected Emitter<Bot> startInitMethod(Emitter<Bot> em, Local<TRef<THIS>> localThis,
+			Local<TRef<JitPcodeThread>> localThread) {
+		return em
+				// super();
+				.emit(Op::aload, localThis)
+				.emit(Op::invokespecial, T_OBJECT, "<init>", MDESC_OBJECT__$INIT, false)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				// this.thread = thread;
+				.emit(Op::aload, localThis)
+				.emit(Op::aload, localThread)
+				.emit(Op::putfield, typeThis, "thread", T_JIT_PCODE_THREAD)
+				// this.state = thread.getState();
+				.emit(Op::aload, localThis)
+				.emit(Op::aload, localThread)
+				.emit(Op::invokevirtual, T_JIT_PCODE_THREAD, "getState",
+					MDESC_JIT_PCODE_THREAD__GET_STATE, false)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::putfield, typeThis, "state", T_JIT_BYTES_PCODE_EXECUTOR_STATE);
 	}
 
 	/**
@@ -442,29 +444,33 @@ public class JitCodeGenerator {
 	 * {@code space} is encoded as an immediate or in the constant pool and is represented as
 	 * {@code spaceId}.
 	 * 
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
 	 * @param space the space to load at run time
-	 * @param iv the visitor for the class constructor
+	 * @return the emitter with ..., stateSpace
 	 */
-	protected void generateLoadJitStateSpace(AddressSpace space, MethodVisitor iv) {
-		/**
-		 * this.spaceInd_`space` =
-		 * this.state.getForSpace(ADDRESS_FACTORY.getAddressSpace(`space.getSpaceID()`);
-		 */
-		InitFixedLocal.THIS.generateLoadCode(initMv);
-		// [...,this]
-		iv.visitFieldInsn(GETFIELD, nameThis, "state",
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE);
-		// [...,state]
-		iv.visitFieldInsn(GETSTATIC, nameThis, "ADDRESS_FACTORY", TDESC_ADDRESS_FACTORY);
-		// [...,state,factory]
-		iv.visitLdcInsn(space.getSpaceID());
-		// [...,state,factory,spaceid]
-		iv.visitMethodInsn(INVOKEINTERFACE, NAME_ADDRESS_FACTORY, "getAddressSpace",
-			MDESC_ADDRESS_FACTORY__GET_ADDRESS_SPACE, true);
-		// [...,state,space]
-		iv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_BYTES_PCODE_EXECUTOR_STATE, "getForSpace",
-			MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE__GET_SPACE_FOR, true);
-		// [...,jitspace]
+	protected <N extends Next> Emitter<Ent<N, TRef<JitBytesPcodeExecutorStateSpace>>>
+			genLoadJitStateSpace(Emitter<N> em, Local<TRef<THIS>> localThis, AddressSpace space) {
+		return em
+				/**
+				 * return
+				 * this.state.getForSpace(ADDRESS_FACTORY.getAddressSpace(`space.getSpaceID()`);
+				 */
+				.emit(Op::aload, localThis)
+				.emit(Op::getfield, typeThis, "state", T_JIT_BYTES_PCODE_EXECUTOR_STATE)
+				.emit(Op::getstatic, typeThis, "ADDRESS_FACTORY", T_ADDRESS_FACTORY)
+				.emit(Op::ldc__i, space.getSpaceID())
+				.emit(Op::invokeinterface, T_ADDRESS_FACTORY, "getAddressSpace",
+					MDESC_ADDRESS_FACTORY__GET_ADDRESS_SPACE)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::invokeinterface, T_JIT_BYTES_PCODE_EXECUTOR_STATE, "getForSpace",
+					MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE__GET_SPACE_FOR)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret);
 	}
 
 	/**
@@ -476,7 +482,6 @@ public class JitCodeGenerator {
 	public FieldForSpaceIndirect requestFieldForSpaceIndirect(AddressSpace space) {
 		return fieldsForSpaceIndirect.computeIfAbsent(space, s -> {
 			FieldForSpaceIndirect f = new FieldForSpaceIndirect(s);
-			f.generateInitCode(this, cv, initMv);
 			return f;
 		});
 	}
@@ -490,7 +495,6 @@ public class JitCodeGenerator {
 	public FieldForArrDirect requestFieldForArrDirect(Address address) {
 		return fieldsForArrDirect.computeIfAbsent(address, a -> {
 			FieldForArrDirect f = new FieldForArrDirect(a);
-			f.generateInitCode(this, cv, initMv);
 			return f;
 		});
 	}
@@ -504,7 +508,6 @@ public class JitCodeGenerator {
 	protected FieldForContext requestStaticFieldForContext(RegisterValue ctx) {
 		return fieldsForContext.computeIfAbsent(ctx, c -> {
 			FieldForContext f = new FieldForContext(ctx);
-			f.generateClinitCode(this, cv, clinitMv);
 			return f;
 		});
 	}
@@ -518,9 +521,20 @@ public class JitCodeGenerator {
 	public FieldForVarnode requestStaticFieldForVarnode(Varnode vn) {
 		return fieldsForVarnode.computeIfAbsent(new VarnodeKey(vn), vk -> {
 			FieldForVarnode f = new FieldForVarnode(vn);
-			f.generateClinitCode(this, cv, clinitMv);
 			return f;
 		});
+	}
+
+	/**
+	 * Request a field for the given p-code op
+	 * <p>
+	 * This will request fields for each varnode for the op's operands
+	 * 
+	 * @param op the p-code op
+	 * @return the field request
+	 */
+	public FieldForPcodeOp requestStaticFieldForOp(PcodeOp op) {
+		return fieldsForOp.computeIfAbsent(new PcodeOpKey(op), ok -> new FieldForPcodeOp(this, op));
 	}
 
 	/**
@@ -529,10 +543,9 @@ public class JitCodeGenerator {
 	 * @param userop the userop
 	 * @return the field request
 	 */
-	public FieldForUserop requestFieldForUserop(PcodeUseropDefinition<?> userop) {
+	public FieldForUserop requestFieldForUserop(PcodeUseropDefinition<byte[]> userop) {
 		return fieldsForUserop.computeIfAbsent(userop.getName(), n -> {
 			FieldForUserop f = new FieldForUserop(userop);
-			f.generateInitCode(this, cv, initMv);
 			return f;
 		});
 	}
@@ -546,7 +559,6 @@ public class JitCodeGenerator {
 	public FieldForExitSlot requestFieldForExitSlot(AddrCtx target) {
 		return fieldsForExitSlot.computeIfAbsent(target, t -> {
 			FieldForExitSlot f = new FieldForExitSlot(t);
-			f.generateInitCode(this, cv, initMv);
 			return f;
 		});
 	}
@@ -557,8 +569,8 @@ public class JitCodeGenerator {
 	 * @param block the block
 	 * @return the label
 	 */
-	public Label labelForBlock(JitBlock block) {
-		return blockLabels.computeIfAbsent(block, b -> new Label());
+	public Lbl<Bot> labelForBlock(JitBlock block) {
+		return blockLabels.computeIfAbsent(block, b -> Lbl.create());
 	}
 
 	/**
@@ -577,74 +589,187 @@ public class JitCodeGenerator {
 	 * 
 	 * @param v the value from the use-def graph
 	 */
-	protected void generateValInitCode(JitVal v) {
-		ValGen.lookup(v).generateValInitCode(this, v, initMv);
+	protected <N extends Next> Emitter<N> genValInit(Emitter<N> em, Local<TRef<THIS>> localThis,
+			JitVal v) {
+		return ValGen.lookup(v).genValInit(em, localThis, this, v);
 	}
 
 	/**
-	 * Emit into the {@link JitCompiledPassage#run(int) run} method the bytecode to read the given
-	 * value onto the JVM stack.
+	 * Emit bytecode to read the given value onto the JVM stack.
 	 * 
 	 * <p>
 	 * Although the value may be assigned a type by the {@link JitTypeModel}, the type needed by a
-	 * given op might be different. This method accepts the {@link JitTypeBehavior} for the operand
-	 * and will ensure the value pushed onto the JVM stack is compatible with that type.
+	 * given op might be different.
 	 * 
-	 * @param v the value to read
-	 * @param typeReq the required type of the value
-	 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
-	 * @return the actual type of the value on the stack
+	 * @param <T> the required JVM type of the value
+	 * @param <JT> the required p-code type of the value
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (source) value to read
+	 * @param type the required p-code type of the value
+	 * @param ext the kind of extension to apply
+	 * @return the code visitor typed with the resulting stack, i.e., having pushed the value
 	 */
-	public JitType generateValReadCode(JitVal v, JitTypeBehavior typeReq, Ext ext) {
-		return ValGen.lookup(v).generateValReadCode(this, v, typeReq, ext, runMv);
+	public <T extends BPrim<?>, JT extends SimpleJitType<T, JT>, N extends Next> Emitter<Ent<N, T>>
+			genReadToStack(Emitter<N> em, Local<TRef<THIS>> localThis, JitVal v, JT type, Ext ext) {
+		return ValGen.lookup(v).genReadToStack(em, localThis, this, v, type, ext);
 	}
 
 	/**
-	 * Emit into the {@link JitCompiledPassage#run(int) run} method the bytecode to write the value
-	 * on the JVM stack into the given variable.
+	 * Emit bytecode to read the given value into a series of locals
+	 * 
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (source) value to read
+	 * @param type the required p-code type of the value
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generating temporary local storage
+	 * @return the operand containing the locals, and the emitter typed with the incoming stack
+	 */
+	public <N extends Next> OpndEm<MpIntJitType, N> genReadToOpnd(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitVal v, MpIntJitType type, Ext ext, Scope scope) {
+		return ValGen.lookup(v).genReadToOpnd(em, localThis, this, v, type, ext, scope);
+	}
+
+	/**
+	 * Emit bytecode to load one leg of a multi-precision value from the varnode onto the JVM stack.
+	 * 
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (source) value to read
+	 * @param type the p-code type of the complete multi-precision value
+	 * @param leg the index of the leg to load, 0 being least significant
+	 * @param ext the kind of extension to apply
+	 * @return the emitter typed with the resulting stack, i.e., having the int leg pushed onto it
+	 */
+	public <N extends Next> Emitter<Ent<N, TInt>> genReadLegToStack(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitVal v, MpIntJitType type, int leg, Ext ext) {
+		return ValGen.lookup(v).genReadLegToStack(em, localThis, this, v, type, leg, ext);
+	}
+
+	/**
+	 * Emit bytecode to load the varnode's value into an integer array in little-endian order,
+	 * pushing its ref onto the JVM stack.
+	 * <p>
+	 * Ideally, multi-precision integers should be loaded into a series of locals, i.e., using
+	 * {@link #genReadToOpnd(Emitter, Local, JitVal, MpIntJitType, Ext, Scope)}, but this may not
+	 * always be the best course of action. The first case is for userops, where it'd be onerous and
+	 * counter-intuitive for a user to receive a single varnode in several parameters. The
+	 * annotation system to sort that all out would also be atrocious and not easily made compatible
+	 * with non-JIT emulation. Instead, mp-int arguments are received via {@code int[]} parameters.
+	 * 
+	 * The second case is for more complicated p-code ops. One notable example is
+	 * {@link IntMultOpGen int_mult}. Theoretically, yes, we could emit all of the operations to
+	 * compute the product using long multiplication inline; however, for large operands, that would
+	 * produce an enormous number of bytecodes. Given the 64KB-per-method limit, we could quickly
+	 * squeeze ourselves out of efficient translation of lengthy passages. The {@code slack}
+	 * parameter is provided since some of these algorithms (e.g., division) need an extra leg as
+	 * scratch space. If we don't allocate it here, we force complexity into the implementation, as
+	 * it would need to provide its own locals or re-allocate and copy the array.
+	 * 
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (source) value to read
+	 * @param type the p-code type of the complete multi-precision value
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generating temporary local storage
+	 * @param slack the number of additional, more significant, elements to allocate in the array
+	 * @return the emitter typed with the resulting stack, i.e., having the ref pushed onto it
+	 */
+	public <N extends Next> Emitter<Ent<N, TRef<int[]>>> genReadToArray(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitVal v, MpIntJitType type, Ext ext, Scope scope,
+			int slack) {
+		return ValGen.lookup(v).genReadToArray(em, localThis, this, v, type, ext, scope, slack);
+	}
+
+	/**
+	 * Emit bytecode to load the varnode's value, interpreted as a boolean, as an integer onto the
+	 * JVM stack.
+	 * <p>
+	 * Any non-zero value is considered true, though ideally, slaspec authors should ensure all
+	 * booleans are 1) 1-byte ints, and 2) only ever take the value 0 (false) or 1 (true).
+	 * Nevertheless, we can't assume this guidance is followed. When we know a large (esp.
+	 * multi-precision) variable is being used as a boolean, we have some opportunity for
+	 * short-circuiting.
+	 * 
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (source) value to read
+	 * @return the emitter typed with the resulting stack, i.e., having the int boolean pushed onto
+	 *         it
+	 */
+	public <N extends Next> Emitter<Ent<N, TInt>> genReadToBool(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitVal v) {
+		return ValGen.lookup(v).genReadToBool(em, localThis, this, v);
+	}
+
+	/**
+	 * Emit bytecode to write the value on the JVM stack into the given variable.
 	 * 
 	 * <p>
 	 * Although the destination variable may be assigned a type by the {@link JitTypeModel}, the
 	 * type of the value on the stack may not match. This method needs to know that type so that, if
-	 * necessary, it can convert it to the appropriate JVM type for local variable that holds it.
+	 * necessary, it can convert it to the appropriate JVM type for the local variable that holds
+	 * it.
 	 * 
-	 * @param v the variable to write
-	 * @param type the actual type of the value on the stack
-	 * @param ext the kind of extension to apply when adjusting from varnode size to JVM size
+	 * @param <T> the JVM type of the value on the stack
+	 * @param <JT> the p-code type of the value on the stack
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack having the value on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (destination) variable to write
+	 * @param type the p-code type of the value on the stack
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generating temporary local storage
+	 * @return the emitter typed with the resulting stack, i.e., having popped the value
 	 */
-	public void generateVarWriteCode(JitVar v, JitType type, Ext ext) {
-		VarGen.lookup(v).generateVarWriteCode(this, v, type, ext, runMv);
+	public <T extends BPrim<?>, JT extends SimpleJitType<T, JT>, N1 extends Next,
+		N0 extends Ent<N1, T>> Emitter<N1> genWriteFromStack(Emitter<N0> em,
+				Local<TRef<THIS>> localThis, JitVar v, JT type, Ext ext, Scope scope) {
+		return VarGen.lookup(v).genWriteFromStack(em, localThis, this, v, type, ext, scope);
 	}
 
 	/**
-	 * Emit all the bytecode for the constructor
+	 * Emit bytecode to store a varnode's value from several locals.
 	 * 
-	 * <p>
-	 * Note that some elements of the p-code translation may request additional bytecodes to be
-	 * emitted, even after this method is finished. That code will be emitted at the time requested.
-	 * 
-	 * <p>
-	 * To ensure a reasonable order, for debugging's sake, we request fields (and their
-	 * initializations) for all the variables and values before iterating over the ops. This
-	 * ensures, e.g., locals are declared in order of address for the varnodes they hold. Similarly,
-	 * the pre-fetched byte arrays, whether for uniques, registers, or memory are initialized in
-	 * order of address. Were these requests not made, they'd still get requested by the op
-	 * generators, but the order would be less helpful.
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (destination) variable to write
+	 * @param opnd the operand whose locals contain the value to be stored
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generating temporary local storage
+	 * @return the emitter typed with the incoming stack
 	 */
-	protected void generateInitCode() {
-		for (JvmLocal local : am.allLocals()) {
-			local.generateInitCode(this, initMv);
-		}
-		for (JitVal v : dfm.allValuesSorted()) {
-			generateValInitCode(v);
-		}
-		for (PcodeOp op : context.getPassage().getCode()) {
-			JitOp jitOp = dfm.getJitOp(op);
-			if (!oum.isUsed(jitOp)) {
-				continue;
-			}
-			OpGen.lookup(jitOp).generateInitCode(this, jitOp, initMv);
-		}
+	public <N extends Next> Emitter<N> genWriteFromOpnd(Emitter<N> em, Local<TRef<THIS>> localThis,
+			JitVar v, Opnd<MpIntJitType> opnd, Ext ext, Scope scope) {
+		return VarGen.lookup(v).genWriteFromOpnd(em, localThis, this, v, opnd, ext, scope);
+	}
+
+	/**
+	 * Emit bytecode to store a varnode's value from an array of integer legs, in little endian
+	 * order
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack having the array ref on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param v the (destination) variable to write
+	 * @param type the p-code type of the value on the stack
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generating temporary local storage
+	 * @return the emitter typed with the resulting stack, i.e., having popped the array
+	 */
+	public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<N1> genWriteFromArray(
+			Emitter<N0> em, Local<TRef<THIS>> localThis, JitVar v, MpIntJitType type, Ext ext,
+			Scope scope) {
+		return VarGen.lookup(v).genWriteFromArray(em, localThis, this, v, type, ext, scope);
 	}
 
 	/**
@@ -663,40 +788,67 @@ public class JitCodeGenerator {
 	 * (ab)use a filename field to encode debug information. We can encode the op index into the
 	 * (integer) line number, although we have to add 1 to make it strictly positive.
 	 * 
+	 * @param em the emitter typed with the empty stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param localCtxmod a handle to the local holding {@code ctxmod}
+	 * @param retReq an indication of what must be returned by this
+	 *            {@link JitCompiledPassage#run(int)} method.
 	 * @param op the op
 	 * @param block the block containing the op
 	 * @param opIdx the index of the op within the whole passage
 	 */
-	protected void generateCodeForOp(PcodeOp op, JitBlock block, int opIdx) {
+	protected OpResult genOp(Emitter<Bot> em, Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
+			RetReq<TRef<EntryPoint>> retReq, PcodeOp op, JitBlock block, int opIdx) {
 		JitOp jitOp = dfm.getJitOp(op);
 		if (!oum.isUsed(jitOp)) {
-			return;
+			return new LiveOpResult(em);
 		}
-		Label lblLine = new Label();
-		runMv.visitLabel(lblLine);
-		runMv.visitLineNumber(opIdx, lblLine);
-		OpGen.lookup(jitOp).generateRunCode(this, jitOp, block, runMv);
+		try (SubScope scope = em.rootScope().sub()) {
+			return em
+					.emit(Misc::lineNumber, opIdx)
+					.emit(OpGen.lookup(jitOp)::genRun, localThis, localCtxmod, retReq, this, jitOp,
+						block, scope);
+		}
 	}
 
 	/**
 	 * Emit the bytecode translation for the ops in the given p-code block
 	 * 
 	 * <p>
-	 * This simply invoked {@link #generateCodeForOp(PcodeOp, JitBlock, int)} on each op in the
-	 * block and counts up the indices. Other per-block instrumentation is not included.
+	 * This simply invokes {@link #genOp(Emitter, Local, Local, RetReq, PcodeOp, JitBlock, int)} on
+	 * each op in the block and counts up the indices. Other per-block instrumentation is not
+	 * included.
 	 * 
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
+	 * @param localCtxmod a handle to {@code ctxmod}
+	 * @param retReq the required return type, in case an op needs to exit the passage
 	 * @param block the block
 	 * @param opIdx the index, within the whole passage, of the first op in the block
-	 * @return the index, within the whole passage, of the op immediately after the block
-	 * @see #generateCodeForBlock(JitBlock, int)
+	 * @return the result of block generation
+	 * @see #genBlock(OpResult, Local, Local, RetReq, JitBlock, int)
 	 */
-	protected int generateCodeForBlockOps(JitBlock block, int opIdx) {
+	protected GenBlockResult genBlockOps(Emitter<Bot> em, Local<TRef<THIS>> localThis,
+			Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq, JitBlock block, int opIdx) {
+		OpResult result = new LiveOpResult(em);
 		for (PcodeOp op : block.getCode()) {
-			generateCodeForOp(op, block, opIdx);
+			if (!(result instanceof LiveOpResult live)) {
+				throw new AssertionError("Control flow died mid-block");
+			}
+			result = genOp(live.em(), localThis, localCtxmod, retReq, op, block, opIdx);
 			opIdx++;
 		}
-		return opIdx;
+		return new GenBlockResult(opIdx, result);
 	}
+
+	/**
+	 * The result of generating code for a block of p-code ops
+	 * 
+	 * @param opIdx the index of the <em>next</em> op
+	 * @param opResult the result of op generation, indicating whether or not control flow can fall
+	 *            through
+	 */
+	record GenBlockResult(int opIdx, OpResult opResult) {}
 
 	/**
 	 * Emit the bytecode translation for the given p-code block
@@ -704,35 +856,53 @@ public class JitCodeGenerator {
 	 * <p>
 	 * This checks if the block needs a label, i.e., it is an entry or the target of a branch, and
 	 * then optionally emits an invocation of {@link JitCompiledPassage#count(int, int)}. Finally,
-	 * it emits the actual ops' translations via {@link #generateCodeForBlockOps(JitBlock, int)}.
+	 * it emits the actual ops' translations via
+	 * {@link #genBlockOps(Emitter, Local, Local, RetReq, JitBlock, int)}.
 	 * 
 	 * @param block the block
 	 * @param opIdx the index, within the whole passage, of the first op in the block
 	 * @return the index, within the whole passage, of the op immediately after the block
 	 */
-	protected int generateCodeForBlock(JitBlock block, int opIdx) {
+	protected GenBlockResult genBlock(OpResult prev, Local<TRef<THIS>> localThis,
+			Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq, JitBlock block, int opIdx) {
+		LiveOpResult live;
 		if (block.hasJumpTo() || getOpEntry(block.first()) != null) {
-			Label start = labelForBlock(block);
-			runMv.visitLabel(start);
+			live = new LiveOpResult(switch (prev) {
+				case DeadOpResult r -> r.em().emit(Lbl::placeDead, labelForBlock(block));
+				case LiveOpResult r -> r.em().emit(Lbl::place, labelForBlock(block));
+			});
+		}
+		else if (prev instanceof LiveOpResult r) {
+			live = r;
+		}
+		else {
+			Msg.warn(this, "No control flow into block " + block.start());
+			return new GenBlockResult(opIdx, prev);
+			//throw new AssertionError("No control flow into a block");
 		}
 
+		Emitter<Bot> em;
 		if (block.first() instanceof DecodedPcodeOp first &&
 			context.getConfiguration().emitCounters()) {
-			final Label tryStart = new Label();
-			final Label tryEnd = new Label();
-			runMv.visitTryCatchBlock(tryStart, tryEnd,
-				requestExceptionHandler(first, block).label(), NAME_THROWABLE);
+			ExceptionHandler handler = requestExceptionHandler(first, block);
 
-			runMv.visitLabel(tryStart);
-			RunFixedLocal.THIS.generateLoadCode(runMv);
-			runMv.visitLdcInsn(block.instructionCount());
-			runMv.visitLdcInsn(block.trailingOpCount());
-			runMv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "count",
-				MDESC_JIT_COMPILED_PASSAGE__COUNT, true);
-			runMv.visitLabel(tryEnd);
+			var tryCatch = Misc.tryCatch(live.em(), Lbl.create(), handler.lbl(), T_THROWABLE);
+			em = tryCatch.em()
+					.emit(Op::aload, localThis)
+					.emit(Op::ldc__i, block.instructionCount())
+					.emit(Op::ldc__i, block.trailingOpCount())
+					.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "count",
+						MDESC_JIT_COMPILED_PASSAGE__COUNT)
+					.step(Inv::takeArg)
+					.step(Inv::takeArg)
+					.step(Inv::takeObjRef)
+					.step(Inv::retVoid)
+					.emit(Lbl::place, tryCatch.end());
 		}
-
-		return generateCodeForBlockOps(block, opIdx);
+		else {
+			em = live.em();
+		}
+		return genBlockOps(em, localThis, localCtxmod, retReq, block, opIdx);
 	}
 
 	/**
@@ -741,28 +911,31 @@ public class JitCodeGenerator {
 	 * <p>
 	 * Note this does not load the identical address, but reconstructs it at run time.
 	 * 
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
 	 * @param address the address to load
-	 * @param mv the visitor for the method being generated
+	 * @return the emitter with ..., address
 	 */
-	protected void generateAddress(Address address, MethodVisitor mv) {
+	protected <N extends Next> Emitter<Ent<N, TRef<Address>>> genAddress(Emitter<N> em,
+			Address address) {
 		if (address == Address.NO_ADDRESS) {
-			mv.visitFieldInsn(GETSTATIC, NAME_ADDRESS, "NO_ADDRESS", TDESC_ADDRESS);
-			return;
+			return em
+					.emit(Op::getstatic, T_ADDRESS, "NO_ADDRESS", T_ADDRESS);
 		}
-
-		// []
-		mv.visitFieldInsn(GETSTATIC, nameThis, "ADDRESS_FACTORY", TDESC_ADDRESS_FACTORY);
-		// [factory]
-		mv.visitLdcInsn(address.getAddressSpace().getSpaceID());
-		// [factory,spaceid]
-		mv.visitMethodInsn(INVOKEINTERFACE, NAME_ADDRESS_FACTORY, "getAddressSpace",
-			MDESC_ADDRESS_FACTORY__GET_ADDRESS_SPACE, true);
-		// [space]
-		mv.visitLdcInsn(address.getOffset());
-		// [space,offset]
-		mv.visitMethodInsn(INVOKEINTERFACE, NAME_ADDRESS_SPACE, "getAddress",
-			MDESC_ADDRESS_SPACE__GET_ADDRESS, true);
-		// [addr]
+		return em
+				.emit(Op::getstatic, typeThis, "ADDRESS_FACTORY", T_ADDRESS_FACTORY)
+				.emit(Op::ldc__i, address.getAddressSpace().getSpaceID())
+				.emit(Op::invokeinterface, T_ADDRESS_FACTORY, "getAddressSpace",
+					MDESC_ADDRESS_FACTORY__GET_ADDRESS_SPACE)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::ldc__l, address.getOffset())
+				.emit(Op::invokeinterface, T_ADDRESS_SPACE, "getAddress",
+					MDESC_ADDRESS_SPACE__GET_ADDRESS)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret);
 	}
 
 	/**
@@ -784,27 +957,24 @@ public class JitCodeGenerator {
 	 * 
 	 * @param entry the entry point to add
 	 */
-	protected void generateStaticEntry(AddrCtx entry) {
+	protected Emitter<Bot> genStaticEntry(Emitter<Bot> em, AddrCtx entry) {
 		FieldForContext ctxField = requestStaticFieldForContext(entry.rvCtx);
-
-		// []
-		clinitMv.visitFieldInsn(GETSTATIC, nameThis, "ENTRIES", TDESC_LIST);
-		// [entries]
-		clinitMv.visitTypeInsn(NEW, NAME_ADDR_CTX);
-		// [entries,addrCtx:NEW]
-		clinitMv.visitInsn(DUP);
-		// [entries,addrCtx:NEW,addrCtx:NEW]
-		ctxField.generateLoadCode(this, clinitMv);
-		// [entries,addrCtx:NEW,addrCtx:NEW,ctx]
-		generateAddress(entry.address, clinitMv);
-		// [entries,addrCtx:NEW,addrCtx:NEW,ctx,addr]
-		clinitMv.visitMethodInsn(INVOKESPECIAL, NAME_ADDR_CTX, "<init>", MDESC_ADDR_CTX__$INIT,
-			false);
-		// [entries,addrCtx:NEW]
-		clinitMv.visitMethodInsn(INVOKEINTERFACE, NAME_LIST, "add", MDESC_LIST__ADD, true);
-		// [result:BOOL]
-		clinitMv.visitInsn(POP);
-		// []
+		return em
+				.emit(Op::getstatic, typeThis, "ENTRIES", T_LIST)
+				.emit(Op::new_, T_ADDR_CTX)
+				.emit(Op::dup)
+				.emit(ctxField::genLoad, this)
+				.emit(this::genAddress, entry.address)
+				.emit(Op::invokespecial, T_ADDR_CTX, "<init>", MDESC_ADDR_CTX__$INIT, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(Op::invokeinterface, T_LIST, "add", MDESC_LIST__ADD)
+				.step(Inv::takeRefArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::pop);
 	}
 
 	/**
@@ -815,24 +985,86 @@ public class JitCodeGenerator {
 	 * block representing a possible entry, it adds an element giving the address and contextreg
 	 * value for the first op of that block.
 	 */
-	protected void generateStaticEntries() {
-		// []
-		clinitMv.visitTypeInsn(NEW, NAME_ARRAY_LIST);
-		// [entries:NEW]
-		clinitMv.visitInsn(DUP);
-		// [entries:NEW,entries:NEW]
-		clinitMv.visitMethodInsn(INVOKESPECIAL, NAME_ARRAY_LIST, "<init>", MDESC_ARRAY_LIST__$INIT,
-			false);
-		// [entries:NEW]
-		clinitMv.visitFieldInsn(PUTSTATIC, nameThis, "ENTRIES", TDESC_LIST);
-		// []
+	protected Emitter<Bot> genStaticEntries(Emitter<Bot> em) {
+		em = em
+				.emit(Op::new_, T_ARRAY_LIST)
+				.emit(Op::dup)
+				.emit(Op::invokespecial, T_ARRAY_LIST, "<init>", MDESC_ARRAY_LIST__$INIT, false)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(Op::putstatic, typeThis, "ENTRIES", T_LIST);
 
 		for (JitBlock block : cfm.getBlocks()) {
 			AddrCtx entry = getOpEntry(block.first());
 			if (entry != null) {
-				generateStaticEntry(entry);
+				em = genStaticEntry(em, entry);
 			}
 		}
+		return em;
+	}
+
+	/**
+	 * Emit bytecode for the static initializer
+	 * <p>
+	 * Note that this method must be called after the bytecode for the run method is generated,
+	 * because that generator may request various static fields to be created and initialized. Those
+	 * requests are not known until the run-method generator has finished.
+	 * 
+	 * @param em the emitter
+	 * @return the emitter
+	 */
+	protected Emitter<Bot> genClInitMethod(Emitter<Bot> em) {
+		for (FieldForContext fCtx : fieldsForContext.values()) {
+			em = fCtx.genClInitCode(em, this, cv);
+		}
+		for (FieldForVarnode fVn : fieldsForVarnode.values()) {
+			em = fVn.genClInitCode(em, this, cv);
+		}
+		for (FieldForPcodeOp fOp : fieldsForOp.values()) {
+			em = fOp.genClInitCode(em, this, cv);
+		}
+		return em;
+	}
+
+	/**
+	 * Emit all the bytecode for the constructor
+	 * <p>
+	 * Note that this must be called after the bytecode for the run method is generated, because
+	 * that generator may request various instance fields to be created and initialized. Those
+	 * requests are not known until the run-method generator has finished.
+	 * <p>
+	 * To ensure a reasonable order, for debugging's sake, we request fields (and their
+	 * initializations) for all the variables and values before iterating over the ops. This
+	 * ensures, e.g., locals are declared in order of address for the varnodes they hold. Similarly,
+	 * the pre-fetched byte arrays, whether for uniques, registers, or memory are initialized in
+	 * order of address. Were these requests not made, they'd still get requested by the op
+	 * generators, but the order would be less helpful.
+	 */
+	protected Emitter<Bot> genInitMethod(Emitter<Bot> em, Local<TRef<THIS>> localThis) {
+		// NOTE: Ops don't need init. They'll invoke field requests as needed.
+
+		// Locals and values first, because they may request fields
+		for (JvmLocal<?, ?> local : am.allLocals()) {
+			em = local.genInit(em, this);
+		}
+		for (JitVal v : dfm.allValuesSorted()) {
+			em = genValInit(em, localThis, v);
+		}
+
+		for (FieldForArrDirect fArr : fieldsForArrDirect.values()) {
+			em = fArr.genInit(em, localThis, this, cv);
+		}
+		for (FieldForExitSlot fExit : fieldsForExitSlot.values()) {
+			em = fExit.genInit(em, localThis, this, cv);
+		}
+		for (FieldForSpaceIndirect fSpace : fieldsForSpaceIndirect.values()) {
+			em = fSpace.genInit(em, localThis, this, cv);
+		}
+		for (FieldForUserop fUserop : fieldsForUserop.values()) {
+			em = fUserop.genInit(em, localThis, this, cv);
+		}
+
+		return em;
 	}
 
 	/**
@@ -843,101 +1075,106 @@ public class JitCodeGenerator {
 	 * all the locals allocated by the {@link JitAllocationModel}. It then collects the list of
 	 * entries points and assigns a label to each. These are used when emitting the entry dispatch
 	 * code. Several of those labels may also be re-used when translating branch ops. We must
-	 * iterate over the blocks in the same order as {@link #generateStaticEntries()}, so that our
-	 * indices and its match. Thus, we emit a {@link Opcodes#TABLESWITCH tableswitch} where each
-	 * value maps to the blocks label identified in the same position of the {@code ENTRIES} field.
-	 * We also provide a default case that just throws an {@link IllegalArgumentException}. We do
-	 * not jump directly to the block's translation. Instead we emit a prologue for each block,
-	 * wherein we birth the variables that block expects to be live, and then jump to the
-	 * translation. Then, we emit the translation for each block using
-	 * {@link #generateCodeForBlock(JitBlock, int)}, placing transitions between those connected by
-	 * fall through using
-	 * {@link VarGen#computeBlockTransition(JitCodeGenerator, JitBlock, JitBlock)}. Finally, we emit
-	 * each requested exception handler using
-	 * {@link ExceptionHandler#generateRunCode(JitCodeGenerator, MethodVisitor)}.
+	 * iterate over the blocks in the same order as {@link #genStaticEntries(Emitter)}, so that our
+	 * indices and its match. Thus, we emit a {@link Op#tableswitch(Emitter, int, Lbl, List)
+	 * tableswitch} where each value maps to the blocks label identified in the same position of the
+	 * {@code ENTRIES} field. We also provide a default case that just throws an
+	 * {@link IllegalArgumentException}. We do not jump directly to the block's translation. Instead
+	 * we emit a prologue for each block, wherein we birth the variables that block expects to be
+	 * live, and then jump to the translation. Then, we emit the translation for each block using
+	 * {@link #genBlock(OpResult, Local, Local, RetReq, JitBlock, int)}, placing transitions between
+	 * those connected by fall through using
+	 * {@link VarGen#computeBlockTransition(Local, JitCodeGenerator, JitBlock, JitBlock)}. Finally,
+	 * we emit each requested exception handler using
+	 * {@link ExceptionHandler#genRun(Emitter, Local, JitCodeGenerator)}.
 	 */
-	protected void generateRunCode() {
-		runMv.visitCode();
-		final Label startLocals = new Label();
-		runMv.visitLabel(startLocals);
+	protected Emitter<Dead> genRunMethod(Emitter<Bot> em, Local<TRef<THIS>> localThis,
+			Local<TInt> localBlockId, RetReq<TRef<EntryPoint>> retReq) {
+
+		Local<TInt> localCtxmod = em.rootScope().decl(Types.T_INT, "ctxmod");
+		em = em
+				.emit(Op::ldc__i, 0)
+				.emit(Op::istore, localCtxmod);
+
+		am.allocate(em.rootScope());
+
+		Map<JitBlock, Lbl<Bot>> entries = new LinkedHashMap<>();
+		for (JitBlock block : cfm.getBlocks()) {
+			AddrCtx entry = getOpEntry(block.first());
+			if (entry != null) {
+				entries.put(block, Lbl.create());
+			}
+		}
+		Lbl<Bot> lblBadEntry = Lbl.create();
+
+		var dead = em
+				.emit(Op::iload, localBlockId)
+				.emit(Op::tableswitch, 0, lblBadEntry, List.copyOf(entries.values()));
+
+		for (Map.Entry<JitBlock, Lbl<Bot>> ent : entries.entrySet()) {
+			JitBlock block = ent.getKey();
+			dead = dead
+					.emit(Lbl::placeDead, ent.getValue())
+					.emit(VarGen.computeBlockTransition(localThis, this, null, block)::genFwd)
+					.emit(Op::goto_, labelForBlock(block));
+		}
+
+		dead = dead
+				.emit(Lbl::placeDead, lblBadEntry)
+				.emit(Op::new_, T_ILLEGAL_ARGUMENT_EXCEPTION)
+				.emit(Op::dup)
+				.emit(Op::ldc__a, "Bad entry blockId")
+				.emit(Op::invokespecial, T_ILLEGAL_ARGUMENT_EXCEPTION, "<init>",
+					MDESC_ILLEGAL_ARGUMENT_EXCEPTION__$INIT, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(Op::athrow);
 
 		/**
 		 * NB. opIdx starts at 1, because JVM will ignore "Line number 0"
 		 */
 		int opIdx = 1;
 
-		List<Label> entries = new ArrayList<>();
+		OpResult opResult = new DeadOpResult(dead);
 		for (JitBlock block : cfm.getBlocks()) {
-			AddrCtx entry = getOpEntry(block.first());
-			if (entry != null) {
-				Label lblEntry = new Label();
-				entries.add(lblEntry);
-			}
-		}
-
-		for (FixedLocal fixed : RunFixedLocal.ALL) {
-			fixed.generateInitCode(runMv, nameThis);
-		}
-
-		// []
-		RunFixedLocal.BLOCK_ID.generateLoadCode(runMv);
-		// [blockId]
-		Label lblBadEntry = new Label();
-		runMv.visitTableSwitchInsn(0, entries.size() - 1, lblBadEntry,
-			entries.toArray(Label[]::new));
-		// []
-
-		Iterator<Label> eit = entries.iterator();
-		for (JitBlock block : cfm.getBlocks()) {
-			AddrCtx entry = getOpEntry(block.first());
-			if (entry != null) {
-				Label lblEntry = eit.next();
-				runMv.visitLabel(lblEntry);
-				VarGen.computeBlockTransition(this, null, block).generate(runMv);
-				runMv.visitJumpInsn(GOTO, labelForBlock(block));
-			}
-		}
-		runMv.visitLabel(lblBadEntry);
-		// []
-		runMv.visitTypeInsn(NEW, NAME_ILLEGAL_ARGUMENT_EXCEPTION);
-		// [err:NEW]
-		runMv.visitInsn(DUP);
-		// [err:NEW,err:NEW]
-		runMv.visitLdcInsn("Bad entry blockId");
-		// [err:NEW,err:NEW,message]
-		runMv.visitMethodInsn(INVOKESPECIAL, NAME_ILLEGAL_ARGUMENT_EXCEPTION, "<init>",
-			MDESC_ILLEGAL_ARGUMENT_EXCEPTION__$INIT, false);
-		// [err]
-		runMv.visitInsn(ATHROW);
-		// []
-
-		for (JitBlock block : cfm.getBlocks()) {
-			opIdx = generateCodeForBlock(block, opIdx);
+			var blockResult = genBlock(opResult, localThis, localCtxmod, retReq, block, opIdx);
+			opIdx = blockResult.opIdx;
 			JitBlock fall = block.getFallFrom();
-			if (fall != null) {
-				VarGen.computeBlockTransition(this, block, fall).generate(runMv);
+
+			if (fall == null) {
+				if (!(blockResult.opResult instanceof DeadOpResult r)) {
+					throw new AssertionError("No fall-through, but control flow is live");
+				}
+				opResult = r;
+			}
+			else {
+				opResult = switch (blockResult.opResult) {
+					case LiveOpResult r -> new LiveOpResult(r.em()
+							.emit(VarGen.computeBlockTransition(localThis, this, block,
+								fall)::genFwd));
+					case DeadOpResult r -> {
+						/**
+						 * This can happen, e.g., if an undefined userop is invoked. LATER: Perhaps
+						 * have the control-flow analyzer consider this dead instead of
+						 * fall-through?
+						 */
+						Msg.warn(this, "Fall-through block resulted in dead control flow.");
+						yield r;
+					}
+				};
 			}
 		}
+		if (!(opResult instanceof DeadOpResult r)) {
+			throw new AssertionError("Final block left live control flow");
+		}
+		dead = r.em();
 
 		for (ExceptionHandler handler : excHandlers.values()) {
-			handler.generateRunCode(this, runMv);
+			dead = dead
+					.emit(handler::genRun, localThis, this);
 		}
-
-		final Label endLocals = new Label();
-		runMv.visitLabel(endLocals);
-
-		for (FixedLocal fixed : RunFixedLocal.ALL) {
-			fixed.generateDeclCode(runMv, nameThis, startLocals, endLocals);
-		}
-
-		for (JvmLocal local : am.allLocals()) {
-			local.generateDeclCode(this, startLocals, endLocals, runMv);
-		}
-		// TODO: This for loop doesn't actually do anything....
-		for (JitVal v : dfm.allValuesSorted()) {
-			VarHandler handler = am.getHandler(v);
-			handler.generateDeclCode(this, startLocals, endLocals, runMv);
-		}
+		return dead;
 	}
 
 	/**
@@ -987,31 +1224,43 @@ public class JitCodeGenerator {
 	 *           you might be able to examine it.
 	 */
 	protected byte[] generate() {
-		generateStaticEntries();
-		generateInitCode();
-		generateRunCode();
+		var paramsRun = new Object() {
+			Local<TRef<THIS>> this_;
+			Local<TInt> blockId;
+		};
+		var retRun = Emitter.start(typeThis, cv, ACC_PUBLIC, "run",
+			MthDesc.returns(T_ENTRY_POINT).param(Types.T_INT).build())
+				.param(Def::param, Types.T_INT, "blockId", l -> paramsRun.blockId = l)
+				.param(Def::done, typeThis, l -> paramsRun.this_ = l);
+		retRun.em()
+				.emit(this::genRunMethod, paramsRun.this_, paramsRun.blockId, retRun.ret())
+				.emit(Misc::finish);
 
-		clinitMv.visitInsn(RETURN);
-		clinitMv.visitMaxs(20, 20);
-		clinitMv.visitEnd();
+		// Run may make requests of Init and ClInit
+		var paramsInit = new Object() {
+			Local<TRef<THIS>> this_;
+			Local<TRef<JitPcodeThread>> thread;
+		};
+		var retInit = Emitter.start(typeThis, cv, ACC_PUBLIC, "<init>",
+			MthDesc.returns(Types.T_VOID).param(T_JIT_PCODE_THREAD).build())
+				.param(Def::param, T_JIT_PCODE_THREAD, "thread", l -> paramsInit.thread = l)
+				.param(Def::done, typeThis, l -> paramsInit.this_ = l);
+		retInit.em()
+				.emit(this::startInitMethod, paramsInit.this_, paramsInit.thread)
+				.emit(this::genInitMethod, paramsInit.this_)
+				.emit(Op::return_, retInit.ret())
+				.emit(Misc::finish);
 
-		initMv.visitInsn(RETURN);
-		initMv.visitMaxs(20, 20);
-		initMv.visitEnd();
-
-		try {
-			runMv.visitMaxs(20, 20);
-		}
-		catch (Exception e) {
-			if (JitCompiler.ENABLE_DIAGNOSTICS.contains(Diag.DUMP_CLASS)) {
-				// At least try to get bytecode out for diagnostics
-				runMv.visitEnd();
-				cv.visitEnd();
-				dumpBytecode(cw.toByteArray());
-			}
-			throw e;
-		}
-		runMv.visitEnd();
+		// Run and Init may make requests of ClInit
+		var retClInit = Emitter.start(cv, ACC_PUBLIC, "<clinit>",
+			MthDesc.returns(Types.T_VOID).build())
+				.param(Def::done);
+		retClInit.em()
+				.emit(this::startClInitMethod)
+				.emit(this::genClInitMethod)
+				.emit(this::genStaticEntries)
+				.emit(Op::return_, retClInit.ret())
+				.emit(Misc::finish);
 
 		cv.visitEnd();
 		if (JitCompiler.ENABLE_DIAGNOSTICS.contains(Diag.DUMP_CLASS)) {
@@ -1057,21 +1306,67 @@ public class JitCodeGenerator {
 		 * 
 		 * @see JitCompiledPassage#writeCounterAndContext(long, RegisterValue)
 		 */
-		WRITE(MDESC_JIT_COMPILED_PASSAGE__WRITE_COUNTER_AND_CONTEXT, "writeCounterAndContext"),
+		WRITE("writeCounterAndContext"),
 		/**
 		 * Retire into the emulator's counter/context, but not its machine state
 		 * 
 		 * @see JitCompiledPassage#setCounterAndContext(long, RegisterValue)
 		 */
-		SET(MDESC_JIT_COMPILED_PASSAGE__SET_COUNTER_AND_CONTEXT, "setCounterAndContext");
+		SET("setCounterAndContext");
 
-		private String mdesc;
 		private String mname;
 
-		private RetireMode(String mdesc, String mname) {
-			this.mdesc = mdesc;
+		private RetireMode(String mname) {
 			this.mname = mname;
 		}
+	}
+
+	/**
+	 * A mechanism to emit bytecode that loads a program counter
+	 */
+	public interface PcGen {
+		/**
+		 * Create a generator that loads a constant program counter value
+		 * 
+		 * @param address the program counter
+		 * @return the generator
+		 */
+		public static PcGen loadOffset(Address address) {
+			return new PcGen() {
+				@Override
+				public <N extends Next> Emitter<Ent<N, TLong>> gen(Emitter<N> em) {
+					return em.emit(Op::ldc__l, address.getOffset());
+				}
+			};
+		}
+
+		/**
+		 * Create a generator that loads a variable program counter
+		 * 
+		 * @param <THIS> the type of the generated passage
+		 * @param localThis a handle to the local holding the {@code this} reference
+		 * @param gen the code generator
+		 * @param target the value (probably a variable) to load to get the program counter
+		 * @return the generator
+		 */
+		public static <THIS extends JitCompiledPassage> PcGen loadTarget(
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitVal target) {
+			return new PcGen() {
+				@Override
+				public <N extends Next> Emitter<Ent<N, TLong>> gen(Emitter<N> em) {
+					return gen.genReadToStack(em, localThis, target, LongJitType.I8, Ext.ZERO);
+				}
+			};
+		}
+
+		/**
+		 * Emit bytecode to load a program counter
+		 * 
+		 * @param <N> the incoming stack
+		 * @param em the emitter typed with the incoming stack
+		 * @return the emitter typed with the resulting stack, i.e., having pushed the counter value
+		 */
+		<N extends Next> Emitter<Ent<N, TLong>> gen(Emitter<N> em);
 	}
 
 	/**
@@ -1085,30 +1380,31 @@ public class JitCodeGenerator {
 	 * had interpreted all the instructions just executed. This ensures that the emulator has the
 	 * correct seed when seeking its next entry point, which may require decoding a new passage.
 	 * 
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param pcGen a means to emit bytecode to load the counter (as a long) onto the JVM stack. For
 	 *            errors, this is the address of the op causing the error. For branches, this is the
 	 *            branch target, which may be loaded from a varnode for an indirect branch.
 	 * @param ctx the contextreg value. For errors, this is the decode context of the op causing the
 	 *            error. For branches, this is the decode context at the target.
 	 * @param mode whether to set the machine state, too
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
+	 * @return the emitter typed with the incoming stack
 	 */
-	public void generateRetirePcCtx(Runnable pcGen, RegisterValue ctx, RetireMode mode,
-			MethodVisitor rv) {
-		// []
-		RunFixedLocal.THIS.generateLoadCode(rv);
-		// [this]
-		pcGen.run();
-		// [this,pc:LONG]
-		if (ctx == null) { // TODO: Or if it's same as entry?
-			rv.visitInsn(ACONST_NULL);
-		}
-		else {
-			requestStaticFieldForContext(ctx).generateLoadCode(this, rv);
-		}
-		// [this,pc:LONG,ctx:RV]
-		rv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, mode.mname,
-			mode.mdesc, true);
+	public <N extends Next> Emitter<N> genRetirePcCtx(Emitter<N> em, Local<TRef<THIS>> localThis,
+			PcGen pcGen, RegisterValue ctx, RetireMode mode) {
+		return em
+				.emit(Op::aload, localThis)
+				.emit(pcGen::gen)
+				.emit(c -> ctx == null
+						? c.emit(Op::aconst_null, T_REGISTER_VALUE)
+						: c.emit(requestStaticFieldForContext(ctx)::genLoad, this))
+				.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, mode.mname,
+					MDESC_JIT_COMPILED_PASSAGE__SET_$OR_WRITE_COUNTER_AND_CONTEXT)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid);
 	}
 
 	/**
@@ -1119,17 +1415,19 @@ public class JitCodeGenerator {
 	 * context. It does not generate the actual {@link Opcodes#ARETURN areturn} or
 	 * {@link Opcodes#ATHROW athrow}, but everything required up to that point.
 	 * 
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param block the block containing the op at which we are exiting
-	 * @param pcGen as in
-	 *            {@link #generateRetirePcCtx(Runnable, RegisterValue, RetireMode, MethodVisitor)}
-	 * @param ctx as in
-	 *            {@link #generateRetirePcCtx(Runnable, RegisterValue, RetireMode, MethodVisitor)}
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
+	 * @param pcGen as in {@link #genRetirePcCtx(Emitter, Local, PcGen, RegisterValue, RetireMode)}
+	 * @param ctx as in {@link #genRetirePcCtx(Emitter, Local, PcGen, RegisterValue, RetireMode)}
+	 * @return the emitter with the incoming stack
 	 */
-	public void generatePassageExit(JitBlock block, Runnable pcGen, RegisterValue ctx,
-			MethodVisitor rv) {
-		VarGen.computeBlockTransition(this, block, null).generate(rv);
-		generateRetirePcCtx(pcGen, ctx, RetireMode.WRITE, rv);
+	public <N extends Next> Emitter<N> genExit(Emitter<N> em, Local<TRef<THIS>> localThis,
+			JitBlock block, PcGen pcGen, RegisterValue ctx) {
+		return em
+				.emit(VarGen.computeBlockTransition(localThis, this, block, null)::genFwd)
+				.emit(this::genRetirePcCtx, localThis, pcGen, ctx, RetireMode.WRITE);
 	}
 
 	/**
@@ -1188,5 +1486,16 @@ public class JitCodeGenerator {
 			mv.visitLabel(label);
 			mv.visitLineNumber(nextLine++, label);
 		}
+	}
+
+	/**
+	 * Resolve the type of the given value to the given behavior
+	 * 
+	 * @param val the value
+	 * @param type the behavior
+	 * @return the type
+	 */
+	public JitType resolveType(JitVal val, JitTypeBehavior type) {
+		return type.resolve(tm.typeOf(val));
 	}
 }

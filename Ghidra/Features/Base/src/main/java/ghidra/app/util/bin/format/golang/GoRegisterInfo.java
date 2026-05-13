@@ -123,7 +123,7 @@ public class GoRegisterInfo {
 
 			params.add(new ParameterImpl("dest", Parameter.UNASSIGNED_ORDINAL, voidPtr,
 				getStorageForReg(program, duffzeroDestParam, voidPtr.getLength()), true, program,
-				SourceType.ANALYSIS));
+				SourceType.IMPORTED));
 			if (duffzeroZeroParam != null && duffzeroZeroParamType != null) {
 				int regSize = duffzeroZeroParam.getMinimumByteSize();
 				DataType dt = switch (duffzeroZeroParamType) {
@@ -132,7 +132,7 @@ public class GoRegisterInfo {
 				};
 				params.add(new ParameterImpl("zeroValue", Parameter.UNASSIGNED_ORDINAL, dt,
 					getStorageForReg(program, duffzeroZeroParam, regSize), true, program,
-					SourceType.ANALYSIS));
+					SourceType.IMPORTED));
 			}
 
 			return params;

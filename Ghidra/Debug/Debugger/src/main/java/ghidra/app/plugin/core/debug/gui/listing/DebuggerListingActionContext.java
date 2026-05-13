@@ -55,4 +55,18 @@ public class DebuggerListingActionContext extends ListingActionContext
 
 		return super.hasSelection();
 	}
+
+	/**
+	 * Overridden to signal that this navigatable's program may not be the same as the globally 
+	 * active program.  This is done to signal that this navigatable can supply default context.
+	 * 
+	 * @return false
+	 */
+	@Override
+	public boolean isActiveProgram() {
+		// The active program for the debugger listing is the on in the  'main listing'.  We cannot
+		// use Navigatable.isConnected() here, since that always returns false for the debugger.
+		DebuggerListingProvider dlp = (DebuggerListingProvider) getComponentProvider();
+		return dlp.isMainListing();
+	}
 }

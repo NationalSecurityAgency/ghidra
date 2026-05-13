@@ -19,6 +19,8 @@ import java.io.Closeable;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +60,9 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 
 	private String shortDbName; // lazy: short DB Name 
 
+	private static String BAD_H2_CHARS = "';\"";
+	private static Pattern BAD_H2_CHARS_PATTERN = Pattern.compile(".*[" + BAD_H2_CHARS + "].*");
+
 	/**
 	 * Construct a new {@link BSimServerInfo} object
 	 * 
@@ -65,7 +70,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 	 * @param userinfo connection user info, {@code username[:password]}  (ignored for {@link DBType#file}).  
 	 *   If blank, {@link ClientUtil#getUserName()} is used.
 	 * @param host host name (ignored for {@link DBType#file})
-	 * @param port port number (ignored for {@link DBType#file})
+	 * @param port port number (ignored for {@link DBType#file}, -1 for default)
 	 * @param dbName name of database (simple database name except for {@link DBType#file}
 	 * which should reflect an absolute file path.  On Windows OS the path may start with a
 	 * drive letter.
@@ -118,7 +123,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 	 * 
 	 * @param dbType BSim DB type
 	 * @param host host name (ignored for {@link DBType#file})
-	 * @param port port number (ignored for {@link DBType#file})
+	 * @param port port number (ignored for {@link DBType#file}, -1 for default)
 	 * @param dbName name of database (simple database name except for {@link DBType#file}
 	 * which should reflect an absolute file path.  On Windows OS the path may start with a
 	 * drive letter.
@@ -196,13 +201,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 		}
 		path = urlDecode(checkURLField(path, "path"));
 		if (dbType == DBType.file) {
-			if (path.endsWith("/")) {
-				throw new IllegalArgumentException("Missing DB filepath in URL: " + url);
-			}
-			if (!path.endsWith(H2_FILE_EXTENSION)) {
-				path += H2_FILE_EXTENSION;
-			}
-			// TODO: handle Windows path with drive letter - need to remove leading '/'
+			path = cleanupFilename(path);
 		}
 		else if (path.contains("/")) {
 			throw new IllegalArgumentException("Invalid dbName in URL: " + path);
@@ -246,6 +245,12 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 
 	private static String cleanupFilename(String name) {
 		// transform dbName into acceptable H2 DB file path
+
+		Matcher m = BAD_H2_CHARS_PATTERN.matcher(name);
+		if (m.matches()) {
+			throw new IllegalArgumentException("Bad character in H2 database path. " +
+				"Disallowed characters: " + BAD_H2_CHARS);
+		}
 		String dbName = name.trim();
 		dbName = dbName.replace("\\", "/");
 		if ((!dbName.startsWith("/") && !isWindowsFilePath(dbName)) || dbName.endsWith("/")) {

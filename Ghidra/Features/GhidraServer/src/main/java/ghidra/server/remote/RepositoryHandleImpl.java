@@ -23,11 +23,11 @@ import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.Unreferenced;
 import java.util.*;
 
-import db.buffers.*;
+import db.buffers.LocalManagedBufferFile;
+import db.buffers.RemoteManagedBufferFileHandle;
 import ghidra.framework.remote.*;
 import ghidra.framework.store.*;
 import ghidra.server.Repository;
-import ghidra.server.RepositoryManager;
 import ghidra.server.store.RepositoryFile;
 import ghidra.server.store.RepositoryFolder;
 import ghidra.util.InvalidNameException;
@@ -41,10 +41,8 @@ import ghidra.util.exception.FileInUseException;
 public class RepositoryHandleImpl extends UnicastRemoteObject
 		implements RemoteRepositoryHandle, Unreferenced {
 
-//	private final RepositoryChangeEvent NULL_EVENT = new RepositoryChangeEvent(
-//		RepositoryChangeEvent.REP_NULL_EVENT, null, null, null, null);
-
 	private volatile boolean isValid = true;
+	private String repoName;
 	private boolean clientActive = true;
 	private String currentUser;
 	private Repository repository;
@@ -55,9 +53,9 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 
 	/**
 	 * Construct a repository handle for a specific user.
-	 * @param user
-	 * @param repository
-	 * @throws RemoteException
+	 * @param user user which corresponds to client
+	 * @param repository repository store to be wrapped
+	 * @throws RemoteException if failed to instantiate remote object
 	 */
 	RepositoryHandleImpl(String user, Repository repository) throws RemoteException {
 		super(ServerPortFactory.getRMISSLPort(), GhidraServer.getRMIClientSocketFactory(),
@@ -65,7 +63,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 		this.currentUser = user;
 		this.repository = repository;
 		this.syncObject = repository.getSyncObject();
-		RepositoryManager.log(repository.getName(), null, "generated handle", user);
+		this.repoName = repository.getName();
+		repository.log(null, "Generated handle", user);
 		repository.addHandle(this);
 	}
 
@@ -90,7 +89,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 				return;
 			}
 			terminateTransientCheckouts();
-			RepositoryManager.log(repository.getName(), null, "handle disposed", currentUser);
+			repository.log(null, "Handle disposed", currentUser);
 			if (eventQueue != null) {
 				synchronized (eventQueue) {
 					eventQueue.clear();
@@ -115,7 +114,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			return;
 		}
 		try {
-			repository.log(null, "Clearning " + transientCheckouts.size() + " transiet checkouts",
+			repository.log(null, "Clearing " + transientCheckouts.size() + " transiet checkouts",
 				currentUser);
 
 			ArrayList<String> pathnames = new ArrayList<>(transientCheckouts.keySet());
@@ -142,7 +141,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 				msg = e.toString();
 			}
 			msg = "Failed to cleanup transient checkouts - server restart may be required: " + msg;
-			RepositoryManager.log(repository.getName(), null, msg, currentUser);
+			repository.log(null, msg, currentUser);
 		}
 	}
 
@@ -171,7 +170,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 
 	/**
 	 * Post repository change events to the client.
-	 * @param event change event
+	 * @param events change events
 	 */
 	public void dispatchEvents(RepositoryChangeEvent[] events) {
 		synchronized (eventQueue) {
@@ -212,7 +211,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 				return;
 			}
 		}
-		RepositoryManager.log(repository.getName(), null, "not listening!", currentUser);
+		repository.log(null, "Not listening (may be sleeping)!", currentUser);
 		dispose();
 	}
 
@@ -255,7 +254,13 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public User[] getUserList() throws IOException {
 		synchronized (syncObject) {
 			validate();
-			return repository.getUserList(currentUser);
+			try {
+				return repository.getUserList(currentUser);
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName, null,
+					"Get repository user list", currentUser);
+			}
 		}
 	}
 
@@ -263,7 +268,12 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public boolean anonymousAccessAllowed() throws IOException {
 		synchronized (syncObject) {
 			validate();
-			return repository.anonymousAccessAllowed();
+			try {
+				return repository.anonymousAccessAllowed();
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName, null, null, currentUser);
+			}
 		}
 	}
 
@@ -271,7 +281,13 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public void setUserList(User[] users, boolean anonymousAccessAllowed) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.setUserList(currentUser, users, anonymousAccessAllowed);
+			try {
+				repository.setUserList(currentUser, users, anonymousAccessAllowed);
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName, null,
+					"Set repository user list", currentUser);
+			}
 		}
 	}
 
@@ -288,7 +304,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	}
 
 	@Override
-	public String[] getServerUserList() throws IOException {
+	public String[] getServerUserList() throws RemoteException {
 		synchronized (syncObject) {
 			validate();
 			return repository.getServerUserList(currentUser);
@@ -299,30 +315,45 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public String[] getSubfolderList(String folderPath) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFolder folder;
 			try {
-				folder = repository.getFolder(currentUser, folderPath, false);
+				RepositoryFolder folder;
+				try {
+					folder = repository.getFolder(currentUser, folderPath, false);
+				}
+				catch (InvalidNameException e) {
+					throw new AssertException();
+				}
+				if (folder == null) {
+					return new String[0];
+				}
+				RepositoryFolder[] subfolders = folder.getFolders();
+				String[] subfolderNames = new String[subfolders.length];
+				for (int i = 0; i < subfolders.length; i++) {
+					subfolderNames[i] = subfolders[i].getName();
+				}
+				return subfolderNames;
 			}
-			catch (InvalidNameException e) {
-				throw new AssertException();
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName, folderPath,
+					"Get subfolder list", currentUser);
 			}
-			if (folder == null) {
-				return new String[0];
-			}
-			RepositoryFolder[] subfolders = folder.getFolders();
-			String[] subfolderNames = new String[subfolders.length];
-			for (int i = 0; i < subfolders.length; i++) {
-				subfolderNames[i] = subfolders[i].getName();
-			}
-			return subfolderNames;
 		}
 	}
 
 	@Override
-	public int getItemCount() throws IOException {
+	public int getItemCount() throws UnsupportedOperationException, IOException {
 		synchronized (syncObject) {
 			validate();
-			return repository.getItemCount();
+			try {
+				return repository.getItemCount();
+			}
+			catch (UnsupportedOperationException uoe) {
+				throw uoe; // Not supported by MangledFileSystem
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName, null,
+					"Get item count", currentUser);
+			}
 		}
 	}
 
@@ -344,6 +375,10 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			}
 			catch (InvalidNameException e) {
 				throw new AssertException();
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName, folderPath,
+					"Get item list", currentUser);
 			}
 		}
 	}
@@ -387,13 +422,23 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			throws InvalidNameException, IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			RepositoryFolder folder = repository.getFolder(currentUser, parentPath, true);
-			if (folder == null) {
-				throw new IOException("Failed to create repository Folder " + parentPath);
+			try {
+				repository.validateWritePrivilege(currentUser);
+				RepositoryFolder folder = repository.getFolder(currentUser, parentPath, true);
+				if (folder == null) {
+					throw new IOException("Failed to create repository Folder " + parentPath);
+				}
+				folder.createTextDataFile(itemName, fileID, contentType, textData, comment,
+					currentUser);
 			}
-			folder.createTextDataFile(itemName, fileID, contentType, textData, comment,
-				currentUser);
+			catch (InvalidNameException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Create text item", currentUser);
+			}
 		}
 	}
 
@@ -403,14 +448,24 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			throws InvalidNameException, IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			RepositoryFolder folder = repository.getFolder(currentUser, parentPath, true);
-			if (folder == null) {
-				throw new IOException("Failed to create repository Folder " + parentPath);
+			try {
+				repository.validateWritePrivilege(currentUser);
+				RepositoryFolder folder = repository.getFolder(currentUser, parentPath, true);
+				if (folder == null) {
+					throw new IOException("Failed to create repository Folder " + parentPath);
+				}
+				LocalManagedBufferFile bf = folder.createDatabase(itemName, fileID, bufferSize,
+					contentType, currentUser, projectPath);
+				return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
 			}
-			LocalManagedBufferFile bf = folder.createDatabase(itemName, fileID, bufferSize,
-				contentType, currentUser, projectPath);
-			return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
+			catch (InvalidNameException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Create database item", currentUser);
+			}
 		}
 	}
 
@@ -419,12 +474,22 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			int minChangeDataVer) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				LocalManagedBufferFile bf = rf.openDatabase(version, minChangeDataVer, currentUser);
+				return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
 			}
-			LocalManagedBufferFile bf = rf.openDatabase(version, minChangeDataVer, currentUser);
-			return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
+			catch (FileNotFoundException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName) + "@" + version,
+					"Open database version", currentUser);
+			}
 		}
 	}
 
@@ -433,12 +498,22 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			long checkoutId) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				LocalManagedBufferFile bf = rf.openDatabase(checkoutId, currentUser);
+				return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
 			}
-			LocalManagedBufferFile bf = rf.openDatabase(checkoutId, currentUser);
-			return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
+			catch (FileNotFoundException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName) + ":0x" + Long.toHexString(checkoutId),
+					"Open database for checkin", currentUser);
+			}
 		}
 	}
 
@@ -446,11 +521,21 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public Version[] getVersions(String parentPath, String itemName) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				return rf.getVersions(currentUser);
 			}
-			return rf.getVersions(currentUser);
+			catch (FileNotFoundException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Get versions", currentUser);
+			}
 		}
 	}
 
@@ -458,11 +543,18 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public void deleteItem(String parentPath, String itemName, int version) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			checkFileInUse(parentPath, itemName);
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf != null) {
-				rf.delete(version, currentUser);
+			try {
+				repository.validateWritePrivilege(currentUser);
+				checkFileInUse(parentPath, itemName);
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf != null) {
+					rf.delete(version, currentUser);
+				}
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName) + "@" + version,
+					"Delete item version", currentUser);
 			}
 		}
 	}
@@ -472,13 +564,23 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			String newFolderName) throws InvalidNameException, IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			checkFolderInUse(oldParentPath, oldFolderName);
-			RepositoryFolder folder = repository.getFolder(currentUser,
-				oldParentPath + FileSystem.SEPARATOR + oldFolderName, false);
-			RepositoryFolder newParent = repository.getFolder(currentUser, newParentPath, true);
-			if (folder != null) {
-				folder.moveTo(newParent, newFolderName, currentUser);
+			try {
+				repository.validateWritePrivilege(currentUser);
+				checkFolderInUse(oldParentPath, oldFolderName);
+				RepositoryFolder folder = repository.getFolder(currentUser,
+					oldParentPath + FileSystem.SEPARATOR + oldFolderName, false);
+				RepositoryFolder newParent = repository.getFolder(currentUser, newParentPath, true);
+				if (folder != null) {
+					folder.moveTo(newParent, newFolderName, currentUser);
+				}
+			}
+			catch (InvalidNameException e) {
+				throw e;
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(oldParentPath, oldFolderName),
+					"Move folder to: " + getPathname(newParentPath, newFolderName), currentUser);
 			}
 		}
 	}
@@ -488,17 +590,27 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			String newItemName) throws InvalidNameException, IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			checkFileInUse(oldParentPath, oldItemName);
-			RepositoryFile rf = getFile(oldParentPath, oldItemName);
-			if (rf == null) {
-				throw new FileNotFoundException(oldItemName + " not found in repository");
+			try {
+				repository.validateWritePrivilege(currentUser);
+				checkFileInUse(oldParentPath, oldItemName);
+				RepositoryFile rf = getFile(oldParentPath, oldItemName);
+				if (rf == null) {
+					throw new FileNotFoundException(oldItemName + " not found in repository");
+				}
+				RepositoryFolder folder = repository.getFolder(currentUser, newParentPath, true);
+				if (folder == null) {
+					throw new IOException("Failed to create repository Folder " + newParentPath);
+				}
+				rf.moveTo(folder, newItemName, currentUser);
 			}
-			RepositoryFolder folder = repository.getFolder(currentUser, newParentPath, true);
-			if (folder == null) {
-				throw new IOException("Failed to create repository Folder " + newParentPath);
+			catch (InvalidNameException e) {
+				throw e;
 			}
-			rf.moveTo(folder, newItemName, currentUser);
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(oldParentPath, oldItemName),
+					"Move item to: " + getPathname(newParentPath, newItemName), currentUser);
+			}
 		}
 	}
 
@@ -558,17 +670,25 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			CheckoutType checkoutType, String projectPath) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				repository.validateWritePrivilege(currentUser);
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				ItemCheckoutStatus checkoutStatus =
+					rf.checkout(checkoutType, currentUser, projectPath);
+				if (checkoutStatus != null &&
+					checkoutStatus.getCheckoutType() == CheckoutType.TRANSIENT) {
+					addTransientCheckout(rf.getPathname(), checkoutStatus);
+				}
+				return checkoutStatus;
 			}
-			ItemCheckoutStatus checkoutStatus = rf.checkout(checkoutType, currentUser, projectPath);
-			if (checkoutStatus != null &&
-				checkoutStatus.getCheckoutType() == CheckoutType.TRANSIENT) {
-				addTransientCheckout(rf.getPathname(), checkoutStatus);
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Checkout item (" + checkoutType + ") to " + projectPath, currentUser);
 			}
-			return checkoutStatus;
 		}
 	}
 
@@ -577,10 +697,19 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			int checkoutVersion) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			repository.validateWritePrivilege(currentUser);
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf != null) {
-				rf.updateCheckoutVersion(checkoutId, checkoutVersion, currentUser);
+			try {
+				repository.validateWritePrivilege(currentUser);
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf != null) {
+					rf.updateCheckoutVersion(checkoutId, checkoutVersion, currentUser);
+				}
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Update checkout 0x" + Long.toHexString(checkoutId) + " to version " +
+						checkoutVersion,
+					currentUser);
 			}
 		}
 	}
@@ -590,10 +719,18 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			boolean notify) throws IOException {
 		synchronized (syncObject) {
 			validate(); // relax read-only restriction
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf != null) {
-				rf.terminateCheckout(checkoutId, currentUser, notify);
-				removeTransientCheckout(rf.getPathname(), checkoutId);
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf != null) {
+					rf.terminateCheckout(checkoutId, currentUser, notify);
+					removeTransientCheckout(rf.getPathname(), checkoutId);
+				}
+			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Terminate checkout 0x" + Long.toHexString(checkoutId),
+					currentUser);
 			}
 		}
 	}
@@ -603,11 +740,19 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				return rf.getCheckout(checkoutId, currentUser);
 			}
-			return rf.getCheckout(checkoutId, currentUser);
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Get checkout status 0x" + Long.toHexString(checkoutId),
+					currentUser);
+			}
 		}
 	}
 
@@ -616,11 +761,18 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				return rf.getCheckouts(currentUser);
 			}
-			return rf.getCheckouts(currentUser);
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Get checkout list", currentUser);
+			}
 		}
 	}
 
@@ -634,6 +786,10 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			catch (InvalidNameException e) {
 				throw new AssertException();
 			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					folderPath, "Check folder", currentUser);
+			}
 		}
 	}
 
@@ -641,14 +797,21 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public boolean fileExists(String parentPath, String itemName) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf;
 			try {
-				rf = getFile(parentPath, itemName);
+				RepositoryFile rf;
+				try {
+					rf = getFile(parentPath, itemName);
+				}
+				catch (FileNotFoundException e) {
+					return false;
+				}
+				return rf != null;
 			}
-			catch (FileNotFoundException e) {
-				return false;
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Check item", currentUser);
 			}
-			return rf != null;
 		}
 	}
 
@@ -667,6 +830,11 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 			catch (FileNotFoundException e) {
 				return 0;
 			}
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Get item length", currentUser);
+			}
 		}
 	}
 
@@ -674,11 +842,18 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public boolean hasCheckouts(String parentPath, String itemName) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				return rf.hasCheckouts();
 			}
-			return rf.hasCheckouts();
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Has checkouts", currentUser);
+			}
 		}
 	}
 
@@ -686,11 +861,18 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public boolean isCheckinActive(String parentPath, String itemName) throws IOException {
 		synchronized (syncObject) {
 			validate();
-			RepositoryFile rf = getFile(parentPath, itemName);
-			if (rf == null) {
-				throw new FileNotFoundException(itemName + " not found in repository");
+			try {
+				RepositoryFile rf = getFile(parentPath, itemName);
+				if (rf == null) {
+					throw new FileNotFoundException(itemName + " not found in repository");
+				}
+				return rf.isCheckinActive();
 			}
-			return rf.isCheckinActive();
+			catch (Throwable t) {
+				throw RemoteExceptionUtil.dispatchIOException(t, repoName,
+					getPathname(parentPath, itemName),
+					"Is checkin active", currentUser);
+			}
 		}
 	}
 

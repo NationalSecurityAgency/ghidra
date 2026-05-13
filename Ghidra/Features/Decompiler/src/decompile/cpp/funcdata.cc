@@ -615,7 +615,7 @@ void Funcdata::decodeJumpTable(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLELIST);
   while(decoder.peekElement() != 0) {
-    JumpTable *jt = new JumpTable(glb);
+    JumpTable *jt = new JumpTable();
     jt->decode(decoder);
     jumpvec.push_back(jt);
   }

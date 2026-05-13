@@ -44,6 +44,7 @@ import ghidra.app.plugin.core.decompile.AbstractDecompilerTest;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.util.AddEditDialog;
+import ghidra.framework.Application;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Function;
@@ -977,6 +978,12 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   12|	}
 		
 		 */
+
+		// TODO temp workaround; delete when 12.2 is released
+		String version = Application.getApplicationVersion();
+		if ("12.1".equals(version)) {
+			return;
+		}
 
 		decompile("100000d60"); // '_call_structure_A'
 

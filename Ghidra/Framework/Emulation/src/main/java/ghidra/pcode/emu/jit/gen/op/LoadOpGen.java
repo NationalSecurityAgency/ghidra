@@ -17,16 +17,25 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
+import ghidra.pcode.emu.jit.gen.FieldForSpaceIndirect;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.*;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.access.IntAccessGen;
+import ghidra.pcode.emu.jit.gen.access.LongAccessGen;
+import ghidra.pcode.emu.jit.gen.opnd.*;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.*;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitLoadOp;
 import ghidra.program.model.lang.Endian;
 
@@ -40,172 +49,255 @@ import ghidra.program.model.lang.Endian;
  * <p>
  * We request a field to pre-fetch the {@link JitBytesPcodeExecutorStateSpace space} and emit code
  * to load it onto the stack. We then emit code to load the offset onto the stack and convert it to
- * a JVM long, if necessary. The varnode size is loaded by emitting an {@link Opcodes#LDC ldc}, and
- * finally we emit an invocation of {@link JitBytesPcodeExecutorStateSpace#read(long, int)}. The
- * result is a byte array, so we finish by emitting the appropriate conversion and write the result
- * to the output operand.
+ * a JVM long, if necessary. The varnode size is loaded by emitting an
+ * {@link Op#ldc__i(Emitter, int) ldc}, and finally we emit an invocation of
+ * {@link JitBytesPcodeExecutorStateSpace#read(long, int)}. The result is a byte array, so we finish
+ * by emitting the appropriate conversion and write the result to the output operand.
  */
 public enum LoadOpGen implements OpGen<JitLoadOp> {
 	/** The generator singleton */
 	GEN;
 
-	@Override
-	public void generateInitCode(JitCodeGenerator gen, JitLoadOp op, MethodVisitor iv) {
-		gen.requestFieldForSpaceIndirect(op.space());
+	/**
+	 * Read an integer (often a leg) from a given byte array
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param access the access generator for integers (determines the byte order)
+	 * @param off the offset of the integer in the byte array
+	 * @param type the p-code type of the value to read
+	 * @return the emitter typed with the resulting stack, i.e., having popped the array ref and
+	 *         pushed the result.
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> Emitter<Ent<N1, TInt>>
+			genRunConvMpIntLeg(Emitter<N0> em, IntAccessGen access, int off, IntJitType type) {
+		return em
+				.emit(Op::ldc__i, off)
+				.emit(Op::invokestatic, T_JIT_COMPILED_PASSAGE, access.chooseReadName(type.size()),
+					MDESC_JIT_COMPILED_PASSAGE__READ_INTX, true)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
 	}
 
-	private void generateConvMpIntRunCodeLegBE(int off, int size, MethodVisitor rv,
-			boolean keepByteArr) {
-		// [...,bytearr]
-		if (keepByteArr) {
-			rv.visitInsn(DUP);
-			// [...,(bytearr),bytearr]
-		}
-		rv.visitLdcInsn(off);
-		rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE,
-			IntReadGen.BE.chooseName(size), MDESC_JIT_COMPILED_PASSAGE__READ_INTX, true);
-		// [...,(bytearr),legN]
-		if (keepByteArr) {
-			rv.visitInsn(SWAP);
-			// [...,legN,(bytearr)]
-		}
+	/**
+	 * Read an integer from a given byte array
+	 * <p>
+	 * The byte array ought to exactly fit the type of the value being read.
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param endian the byte order
+	 * @param type the p-code type of the value to read
+	 * @return the emitter typed with the resulting stack, i.e., having popped the array ref and
+	 *         pushed the result.
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> Emitter<Ent<N1, TInt>>
+			genRunConvInt(Emitter<N0> em, Endian endian, IntJitType type) {
+		return genRunConvMpIntLeg(em, IntAccessGen.forEndian(endian), 0, type);
 	}
 
-	private void generateConvMpIntRunCodeLegLE(int off, int size, MethodVisitor rv,
-			boolean keepByteArr) {
-		// [...,bytearr]
-		if (keepByteArr) {
-			rv.visitInsn(DUP);
-			// [...,(bytearr),bytearr]
-		}
-		rv.visitLdcInsn(off);
-		rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE,
-			IntReadGen.LE.chooseName(size), MDESC_JIT_COMPILED_PASSAGE__READ_INTX, true);
-		// [...,(bytearr),legN]
-		if (keepByteArr) {
-			rv.visitInsn(SWAP);
-			// [...,legN,(bytearr)]
-		}
+	/**
+	 * Read a long from a given byte array
+	 * <p>
+	 * The byte array ought to exactly fit the type of the value being read.
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param endian the byte order
+	 * @param type the p-code type of the value to read
+	 * @return the emitter typed with the resulting stack, i.e., having popped the array ref and
+	 *         pushed the result.
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> Emitter<Ent<N1, TLong>>
+			genRunConvLong(Emitter<N0> em, Endian endian, LongJitType type) {
+		LongAccessGen access = LongAccessGen.forEndian(endian);
+		return em
+				.emit(Op::ldc__i, 0)
+				.emit(Op::invokestatic, T_JIT_COMPILED_PASSAGE, access.chooseReadName(type.size()),
+					MDESC_JIT_COMPILED_PASSAGE__READ_LONGX, true)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
 	}
 
-	private void generateConvIntRunCode(Endian endian, IntJitType type, MethodVisitor rv) {
-		switch (endian) {
-			case BIG -> generateConvMpIntRunCodeLegBE(0, type.size(), rv, false);
-			case LITTLE -> generateConvMpIntRunCodeLegLE(0, type.size(), rv, false);
-		}
+	/**
+	 * Read a float from a given byte array
+	 * <p>
+	 * The byte array ought to exactly fit the type of the value being read.
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param endian the byte order
+	 * @param type the p-code type of the value to read
+	 * @return the emitter typed with the resulting stack, i.e., having popped the array ref and
+	 *         pushed the result.
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> Emitter<Ent<N1, TFloat>>
+			genRunConvFloat(Emitter<N0> em, Endian endian, FloatJitType type) {
+		return em
+				.emit(this::genRunConvInt, endian, IntJitType.I4)
+				.emit(IntToFloat.INSTANCE::convertStackToStack, IntJitType.I4, type, Ext.ZERO);
 	}
 
-	static String chooseReadLongName(Endian endian, int size) {
+	/**
+	 * Read a double from a given byte array
+	 * <p>
+	 * The byte array ought to exactly fit the type of the value being read.
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param endian the byte order
+	 * @param type the p-code type of the value to read
+	 * @return the emitter typed with the resulting stack, i.e., having popped the array ref and
+	 *         pushed the result.
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> Emitter<Ent<N1, TDouble>>
+			genRunConvDouble(Emitter<N0> em, Endian endian, DoubleJitType type) {
+		return em
+				.emit(this::genRunConvLong, endian, LongJitType.I8)
+				.emit(LongToDouble.INSTANCE::convertStackToStack, LongJitType.I4, type, Ext.ZERO);
+	}
+
+	/**
+	 * The implementation of {@link #genRunConvMpInt(Emitter, Endian, MpIntJitType, String, Scope)}
+	 * for big-endian order
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param type the p-code type of the value to read
+	 * @param name the name prefix for the generated locals
+	 * @param scope a scope for generating temporary local storage
+	 * @return the operand containing the locals, and the emitter typed with the resulting stack,
+	 *         i.e., having popped the array ref
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> OpndEm<MpIntJitType, N1>
+			genRunConvMpIntBE(Emitter<N0> em, MpIntJitType type, String name, Scope scope) {
+		Local<TRef<byte[]>> arr = scope.decl(Types.T_BYTE_ARR, "arr");
+		var emStored = em
+				.emit(Op::astore, arr);
+
+		List<SimpleOpnd<TInt, IntJitType>> legs = new ArrayList<>();
+		List<IntJitType> legTypes = type.legTypesLE();
+		int off = 0;
+		for (IntJitType lt : legTypes) {
+			var leg = emStored
+					.emit(Op::aload, arr)
+					.emit(this::genRunConvMpIntLeg, IntAccessGen.BE, off, lt)
+					.emit(Opnd::createInt, lt, "%s_off%d".formatted(name, off), scope);
+			emStored = leg.em();
+			legs.add(leg.opnd());
+			off += lt.size();
+		}
+		return new OpndEm<>(MpIntLocalOpnd.of(type, name, legs), emStored);
+	}
+
+	/**
+	 * The implementation of {@link #genRunConvMpInt(Emitter, Endian, MpIntJitType, String, Scope)}
+	 * for little-endian order
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param type the p-code type of the value to read
+	 * @param name the name prefix for the generated locals
+	 * @param scope a scope for generating temporary local storage
+	 * @return the operand containing the locals, and the emitter typed with the resulting stack,
+	 *         i.e., having popped the array ref
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> OpndEm<MpIntJitType, N1>
+			genRunConvMpIntLE(Emitter<N0> em, MpIntJitType type, String name, Scope scope) {
+		Local<TRef<byte[]>> arr = scope.decl(Types.T_BYTE_ARR, "arr");
+		var emStored = em
+				.emit(Op::astore, arr);
+
+		List<SimpleOpnd<TInt, IntJitType>> legs = new ArrayList<>();
+		List<IntJitType> legTypes = type.legTypesLE();
+		int off = type.size();
+		for (IntJitType lt : legTypes) {
+			off -= lt.size();
+			var leg = emStored
+					.emit(Op::aload, arr)
+					.emit(this::genRunConvMpIntLeg, IntAccessGen.LE, off, lt)
+					.emit(Opnd::createInt, lt, "%s_off%d".formatted(name, off), scope);
+			emStored = leg.em();
+			legs.add(leg.opnd());
+		}
+		return new OpndEm<>(MpIntLocalOpnd.of(type, name, legs), emStored);
+	}
+
+	/**
+	 * Read a multi-precision integer from a given byte array
+	 * <p>
+	 * The byte array ought to exactly fit the type of the value being read. The {@code endian}
+	 * parameter indicates the byte order in the source byte array. The resulting operand's legs are
+	 * always in little-endian order.
+	 * 
+	 * @param <N1> the tail of the incoming stack
+	 * @param <N0> the incoming stack with a ref to the byte array on top
+	 * @param em the emitter typed with the incoming stack
+	 * @param endian the byte order
+	 * @param type the p-code type of the value to read
+	 * @param name the name prefix for the generated locals
+	 * @param scope a scope for generating temporary local storage
+	 * @return the operand containing the locals, and the emitter typed with the resulting stack,
+	 *         i.e., having popped the array ref
+	 */
+	private <N1 extends Next, N0 extends Ent<N1, TRef<byte[]>>> OpndEm<MpIntJitType, N1>
+			genRunConvMpInt(Emitter<N0> em, Endian endian, MpIntJitType type, String name,
+					Scope scope) {
 		return switch (endian) {
-			case BIG -> LongReadGen.BE.chooseName(size);
-			case LITTLE -> LongReadGen.LE.chooseName(size);
+			case BIG -> genRunConvMpIntBE(em, type, name, scope);
+			case LITTLE -> genRunConvMpIntLE(em, type, name, scope);
 		};
 	}
 
-	private void generateConvLongRunCode(Endian endian, LongJitType type, MethodVisitor rv) {
-		// [...,bytearr]
-		rv.visitLdcInsn(0);
-		// [...,bytearr, offset=0]
-		rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE,
-			chooseReadLongName(endian, type.size()), MDESC_JIT_COMPILED_PASSAGE__READ_LONGX, true);
-		// [...,value]
-	}
-
-	private void generateConvFloatRunCode(Endian endian, FloatJitType type, MethodVisitor rv) {
-		// [...,bytearr]
-		generateConvIntRunCode(endian, IntJitType.I4, rv);
-		// [...,value:INT]
-		TypeConversions.generateIntToFloat(IntJitType.I4, type, rv);
-		// [...,value:FLOAT]
-	}
-
-	private void generateConvDoubleRunCode(Endian endian, DoubleJitType type, MethodVisitor rv) {
-		// [...,bytearr]
-		generateConvLongRunCode(endian, LongJitType.I8, rv);
-		// [...,value:LONG]
-		TypeConversions.generateLongToDouble(LongJitType.I8, type, rv);
-		// [...,value:DOUBLE]
-	}
-
-	private void generateConvMpIntRunCodeBE(MpIntJitType type, MethodVisitor rv) {
-		int countFull = type.legsWhole();
-		int remSize = type.partialSize();
-
-		int off = 0;
-		if (remSize > 0) {
-			// [...,bytearr]
-			generateConvMpIntRunCodeLegBE(off, remSize, rv, true);
-			// [...,legN,bytearr]
-			off += remSize;
-		}
-		for (int i = 0; i < countFull; i++) {
-			// [...,legN-1,bytearr]
-			generateConvMpIntRunCodeLegBE(off, Integer.BYTES, rv, true);
-			// [...,legN-1,legN,bytearr]
-			off += Integer.BYTES;
-		}
-		// [...,leg1,...,legN,bytearr]
-		rv.visitInsn(POP);
-		// [...,leg1,...,legN]
-	}
-
-	private void generateConvMpIntRunCodeLE(MpIntJitType type, MethodVisitor rv) {
-		int countFull = type.legsWhole();
-		int remSize = type.partialSize();
-
-		int off = type.size();
-		if (remSize > 0) {
-			off -= remSize;
-			// [...,bytearr]
-			generateConvMpIntRunCodeLegLE(off, remSize, rv, true);
-			// [...,legN,bytearr]
-		}
-		for (int i = 0; i < countFull; i++) {
-			off -= Integer.BYTES;
-			// [...,legN-1,bytearr]
-			generateConvMpIntRunCodeLegLE(off, Integer.BYTES, rv, true);
-			// [...,legN-1,legN,bytearr]
-		}
-		// [...,leg1,...,legN,bytearr]
-		rv.visitInsn(POP);
-		// [...,leg1,...,legN]
-	}
-
-	private void generateConvMpIntRunCode(Endian endian, MpIntJitType type,
-			MethodVisitor rv) {
-		switch (endian) {
-			case BIG -> generateConvMpIntRunCodeBE(type, rv);
-			case LITTLE -> generateConvMpIntRunCodeLE(type, rv);
-		}
-	}
-
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitLoadOp op, JitBlock block,
-			MethodVisitor rv) {
-		// [...]
-		gen.requestFieldForSpaceIndirect(op.space()).generateLoadCode(gen, rv);
-		// [...,space]
-		JitType offsetType = gen.generateValReadCode(op.offset(), op.offsetType(), Ext.ZERO);
-		// [...,space,offset:?INT/LONG]
-		TypeConversions.generateToLong(offsetType, LongJitType.I8, Ext.ZERO, rv);
-		// [...,space,offset:LONG]
-		rv.visitLdcInsn(op.out().size());
-		// [...,space,offset,size]
-		rv.visitMethodInsn(INVOKEVIRTUAL, NAME_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, "read",
-			MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE__READ, false);
-		// [...,bytearr]
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitLoadOp op, JitBlock block, Scope scope) {
+		FieldForSpaceIndirect field = gen.requestFieldForSpaceIndirect(op.space());
+
+		var emArr = em
+				.emit(field::genLoad, localThis, gen)
+				.emit(gen::genReadToStack, localThis, op.offset(), LongJitType.I8, Ext.ZERO)
+				.emit(Op::ldc__i, op.out().size())
+				.emit(Op::invokevirtual, T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, "read",
+					MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE__READ, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret);
+
 		Endian endian = gen.getAnalysisContext().getEndian();
-		JitType outType = gen.getTypeModel().typeOf(op.out());
-		switch (outType) {
-			case IntJitType iType -> generateConvIntRunCode(endian, iType, rv);
-			case LongJitType lType -> generateConvLongRunCode(endian, lType, rv);
-			case FloatJitType fType -> generateConvFloatRunCode(endian, fType, rv);
-			case DoubleJitType dType -> generateConvDoubleRunCode(endian, dType, rv);
-			case MpIntJitType mpType -> generateConvMpIntRunCode(endian, mpType, rv);
+		em = switch (gen.getTypeModel().typeOf(op.out())) {
+			case IntJitType t -> emArr
+					.emit(this::genRunConvInt, endian, t)
+					.emit(gen::genWriteFromStack, localThis, op.out(), t, Ext.ZERO, scope);
+			case LongJitType t -> emArr
+					.emit(this::genRunConvLong, endian, t)
+					.emit(gen::genWriteFromStack, localThis, op.out(), t, Ext.ZERO, scope);
+			case MpIntJitType t -> {
+				var result = emArr
+						.emit(this::genRunConvMpInt, endian, t, "load", scope);
+				yield result.em()
+						.emit(gen::genWriteFromOpnd, localThis, op.out(), result.opnd(), Ext.ZERO,
+							scope);
+			}
+			case FloatJitType t -> emArr
+					.emit(this::genRunConvFloat, endian, t)
+					.emit(gen::genWriteFromStack, localThis, op.out(), t, Ext.ZERO, scope);
+			case DoubleJitType t -> emArr
+					.emit(this::genRunConvDouble, endian, t)
+					.emit(gen::genWriteFromStack, localThis, op.out(), t, Ext.ZERO, scope);
 			default -> throw new AssertionError();
-		}
-		// [...,value]
-		gen.generateVarWriteCode(op.out(), outType, Ext.ZERO);
-		// [...]
+		};
+		return new LiveOpResult(em);
 	}
 }

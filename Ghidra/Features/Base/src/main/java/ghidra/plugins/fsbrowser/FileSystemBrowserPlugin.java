@@ -16,7 +16,6 @@
 package ghidra.plugins.fsbrowser;
 
 import java.awt.Component;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +23,7 @@ import java.util.*;
 
 import javax.swing.KeyStroke;
 
+import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
@@ -101,7 +101,8 @@ public class FileSystemBrowserPlugin extends Plugin
 				.enabledWhen(ac -> tool.getProject() != null)
 				.menuPath(ToolConstants.MENU_FILE, "Open File System...")
 				.menuGroup("Import", "z")
-				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK))
+				.keyBinding(
+					KeyStroke.getKeyStroke(KeyEvent.VK_I, DockingUtils.CONTROL_KEY_MODIFIER_MASK))
 				.onAction(ac -> doOpenFileSystem())
 				.buildAndInstall(tool);
 	}

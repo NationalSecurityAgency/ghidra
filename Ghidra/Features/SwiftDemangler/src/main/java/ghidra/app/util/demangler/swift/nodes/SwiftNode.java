@@ -87,6 +87,7 @@ public abstract class SwiftNode {
 			case LazyProtocolWitnessTableAccessor -> new SwiftLazyProtocolWitnessTableAccessorNode();
 			case LocalDeclName -> new SwiftLocalDeclNameNode();
 			case MergedFunction -> new SwiftGenericPassthroughNode();
+			case MethodDescriptor -> new SwiftGenericDescriptorNode();
 			case ModifyAccessor -> new SwiftModifyAccessorNode();
 			case Module -> new SwiftGenericTextNode();
 			case ModuleDescriptor -> new SwiftGenericDescriptorNode();

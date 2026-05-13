@@ -98,7 +98,11 @@ compute-ssh-args() {
 		sshargs+=($OPT_EXTRA_SSH_ARGS)
 	fi
 	sshargs+=("$OPT_HOST")
-	sshargs+=("TERM='$TERM' $qargs")
+	if [ "$OPT_OS_WINDOWS" ] && [ "$OPT_OS_WINDOWS" == true ]; then
+		sshargs+=("$@")
+	else 
+		sshargs+=("TERM='$TERM' $qargs")
+	fi
 }
 
 check-result-and-prompt-mitigation() {

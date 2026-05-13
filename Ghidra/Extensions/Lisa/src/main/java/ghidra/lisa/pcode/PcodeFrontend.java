@@ -17,6 +17,12 @@ package ghidra.lisa.pcode;
 
 import java.util.*;
 
+import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.lisa.gui.LisaOptions;
+import ghidra.lisa.pcode.contexts.HighUnitContext;
 import ghidra.lisa.pcode.contexts.UnitContext;
 import ghidra.lisa.pcode.locations.PcodeLocation;
 import ghidra.lisa.pcode.types.PcodeTypeSystem;
@@ -24,6 +30,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.util.task.TaskMonitor;
 import it.unive.lisa.program.Program;
 import it.unive.lisa.program.cfg.*;
 import it.unive.lisa.program.cfg.Parameter;
@@ -38,18 +46,34 @@ public class PcodeFrontend {
 
 	//private static final Logger log = LogManager.getLogger(PcodeFrontend.class);
 
+	private PluginTool tool;
+	private ToolOptions options;
 	private final Program program;
 	private Map<Address, Set<Statement>> nodeMap = new HashMap<>();
 	private Map<Address, CFG> targets = new HashMap<>();
 	private Set<CFG> cfgs = new HashSet<>();
 
-	public PcodeFrontend() {
+	// High Pcode-only
+	private final Map<Function, HighFunction> decompCache = new HashMap<>();
+	private String simplificationStyle;
+
+	public PcodeFrontend(PluginTool tool) {
+		this.tool = tool;
+		ToolOptions[] optionsList = tool.getOptions();
+		for (ToolOptions opt : optionsList) {
+			if (opt.getName().equals("Abstract Interpretation")) {
+				this.options = opt;
+				simplificationStyle =
+					options.getString(LisaOptions.OP_KEY_LISA_ANALYSIS_SIMPLIFICATION_STYLE,
+						LisaOptions.DEFAULT_LISA_ANALYSIS_SIMPLIFICATION_STYLE);
+			}
+		}
 		program = new Program(new PcodeFeatures(), new PcodeTypeSystem());
 	}
 
-	public Program doWork(Listing listing, Address startAddress) {
+	public Program doWork(Listing listing, Address startAddress, boolean useHighPcode) {
 
-		Program p = visitListing(listing, startAddress);
+		Program p = visitListing(listing, startAddress, useHighPcode);
 
 		Collection<CFG> baseline = p.getAllCFGs();
 		for (CFG cfg : cfgs) {
@@ -60,34 +84,63 @@ public class PcodeFrontend {
 		return p;
 	}
 
-	public Program visitListing(Listing listing, Address startAddress) {
+	public Program visitListing(Listing listing, Address startAddress, boolean useHighPcode) {
 		Program p = getProgram();
 		for (Function f : listing.getFunctions(startAddress, false)) {
-			CFG cfg = visitFunction(f, startAddress);
+			CFG cfg = visitFunction(f, startAddress, useHighPcode);
 			cfgs.add(cfg);
 		}
 		return p;
 	}
 
-	public CFG visitFunction(Function f, Address start) {
+	public CFG visitFunction(Function f, Address start, boolean useHighPcode) {
 		Program p = getProgram();
-		UnitContext ctx = new UnitContext(this, program, f, start);
+		UnitContext ctx = getUnitContext(f, start, useHighPcode);
 
 		CodeMemberDescriptor descr = mkDescriptor(ctx);
 		PcodeCodeMemberVisitor visitor =
 			new PcodeCodeMemberVisitor(descr, ctx.getListing());
 		CFG cfg = visitor.visitCodeMember(ctx);
-		targets.put(f.getEntryPoint(), cfg);
-		cfgs.add(cfg);
-
-		ctx.unit().addCodeMember(cfg);
-		p.addUnit(ctx.unit());
 		Collection<Statement> nodes = cfg.getNodes();
 		for (Statement statement : nodes) {
 			Address addr = toAddr(statement.getLocation());
 			nodeMap.computeIfAbsent(addr, a -> new HashSet<>()).add(statement);
 		}
+
+		targets.put(f.getEntryPoint(), cfg);
+		cfgs.add(cfg);
+
+		ctx.unit().addCodeMember(cfg);
+		p.addUnit(ctx.unit());
 		return cfg;
+	}
+
+	private UnitContext getUnitContext(Function f, Address start, boolean useHighPcode) {
+		if (useHighPcode) {
+			DecompInterface decomp = null;
+			try {
+				decomp = new DecompInterface();
+				decomp.toggleSyntaxTree(true);
+				decomp.setSimplificationStyle(simplificationStyle);
+
+				DecompileOptions opts = DecompilerUtils.getDecompileOptions(tool, f.getProgram());
+				decomp.setOptions(opts);
+
+				decomp.openProgram(f.getProgram());
+				DecompileResults results =
+					decomp.decompileFunction(f, opts.getDefaultTimeout(), TaskMonitor.DUMMY);
+				HighFunction hfunc = results.getHighFunction();
+				return new HighUnitContext(this, program, f, hfunc, start);
+			}
+			finally {
+				if (decomp != null) {
+					decomp.closeProgram();
+					decomp.dispose();
+				}
+			}
+		}
+
+		return new UnitContext(this, program, f, start);
 	}
 
 	private Address toAddr(CodeLocation location) {

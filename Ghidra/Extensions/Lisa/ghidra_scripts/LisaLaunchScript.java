@@ -43,8 +43,8 @@ public class LisaLaunchScript extends GhidraScript {
 			return;
 		}
 
-		PcodeFrontend frontend = new PcodeFrontend();
-		Program p = frontend.doWork(currentProgram.getListing(), currentAddress);
+		PcodeFrontend frontend = new PcodeFrontend(state.getTool());
+		Program p = frontend.doWork(currentProgram.getListing(), currentAddress, false);
 
 		DefaultConfiguration conf = new DefaultConfiguration();
 		conf.serializeResults = true;

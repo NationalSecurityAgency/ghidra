@@ -213,6 +213,20 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 		return name;
 	}
 
+	@Override
+	public void clear() {
+		if (propertyTable == null) {
+			return;
+		}
+		cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
+		try {
+			propertyTable.deleteAll();
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+	}
+
 	/**
 	 * Adjust the size of the underlying read cache.
 	 * @param size the size of the cache.
@@ -225,7 +239,6 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 		finally {
 			lock.release();
 		}
-
 	}
 
 	/**

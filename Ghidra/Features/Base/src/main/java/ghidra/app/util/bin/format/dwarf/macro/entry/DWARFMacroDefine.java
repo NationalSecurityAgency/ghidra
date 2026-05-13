@@ -86,8 +86,8 @@ public class DWARFMacroDefine extends DWARFMacroInfoEntry {
 
 	public DWARFMacroDefine(int lineNumber, String defineString, DWARFMacroHeader parent) {
 		super(DWARFMacroOpcode.DW_MACRO_define, parent);
-		operandValues[0] = new DWARFNumericAttribute(lineNumber, operandDef(0));
-		operandValues[1] = new DWARFStringAttribute(defineString, operandDef(1));
+		operandValues[0] = new DWARFNumericAttribute(lineNumber);
+		operandValues[1] = new DWARFStringAttribute(defineString);
 	}
 
 	public DWARFMacroDefine(DWARFMacroInfoEntry other) {

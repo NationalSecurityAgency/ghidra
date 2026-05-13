@@ -15,15 +15,18 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.InitFixedLocal;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.address.Address;
 
 /**
@@ -35,7 +38,7 @@ import ghidra.program.model.address.Address;
  * 
  * @param address the address contained by the page to pre-fetch
  */
-public record FieldForArrDirect(Address address) implements InstanceFieldReq {
+public record FieldForArrDirect(Address address) implements InstanceFieldReq<TRef<byte[]>> {
 	@Override
 	public String name() {
 		return "arrDir_%s_%x".formatted(address.getAddressSpace().getName(),
@@ -61,29 +64,27 @@ public record FieldForArrDirect(Address address) implements InstanceFieldReq {
 	 * </pre>
 	 */
 	@Override
-	public void generateInitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor iv) {
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, name(), TDESC_BYTE_ARR, null, null);
-
-		// [...]
-		InitFixedLocal.THIS.generateLoadCode(iv);
-		// [...,this]
-		gen.generateLoadJitStateSpace(address.getAddressSpace(), iv);
-		// [...,jitspace]
-		iv.visitLdcInsn(address.getOffset());
-		// [...,arr]
-		iv.visitMethodInsn(INVOKEVIRTUAL, NAME_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE,
-			"getDirect", MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE__GET_DIRECT, false);
-		iv.visitFieldInsn(PUTFIELD, gen.nameThis, name(), TDESC_BYTE_ARR);
-		// [...]
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv) {
+		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, Types.T_BYTE_ARR, name());
+		return em
+				.emit(Op::aload, localThis)
+				.emit(gen::genLoadJitStateSpace, localThis, address.getAddressSpace())
+				.emit(Op::ldc__l, address.getOffset())
+				.emit(Op::invokevirtual, GenConsts.T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE,
+					"getDirect", GenConsts.MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE__GET_DIRECT,
+					false)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::putfield, gen.typeThis, name(), Types.T_BYTE_ARR);
 	}
 
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		// [...]
-		RunFixedLocal.THIS.generateLoadCode(rv);
-		// [...,this]
-		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(),
-			TDESC_BYTE_ARR);
-		// [...,arr]
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<byte[]>>>
+			genLoad(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::getfield, gen.typeThis, name(), Types.T_BYTE_ARR);
 	}
 }

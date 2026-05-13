@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import db.*;
 import ghidra.framework.data.OpenMode;
-import ghidra.util.StringUtilities;
+import ghidra.program.model.data.InternalDataTypeComponent;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -61,19 +61,20 @@ abstract class ComponentDBAdapter {
 	 * @param length the total length of this component.
 	 * @param ordinal the component's ordinal.
 	 * @param offset the component's offset.
-	 * @param name the component's name.  This name will be subject to revision based upon 
-	 * {@link #cleanUpFieldName(String)} method use.
+	 * @param fieldName the component's name (may be null).  This method may sanitize the name
+	 * (see {@link InternalDataTypeComponent#cleanupFieldName(String)}) before storing.
+	 * {@link InternalDataTypeComponent#cleanupFieldName(String)} method use.
 	 * @param comment a comment about this component
 	 * @return the component data type record.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
 	abstract DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal,
-			int offset, String name, String comment) throws IOException;
+			int offset, String fieldName, String comment) throws IOException;
 
 	/**
 	 * Gets the record for the indicated component data type.
 	 * @param componentID the ID of the component data type to retrieve.
-	 * @return the component record
+	 * @return the component record or null if not found
 	 * @throws IOException if there is a problem accessing the database.
 	 */
 	abstract DBRecord getRecord(long componentID) throws IOException;
@@ -89,8 +90,8 @@ abstract class ComponentDBAdapter {
 	/**
 	 * Updates the component data type table with the provided record.
 	 * <p>
-	 * IMPORTANT: Any modification of field name should be subject to {@link #cleanUpFieldName(String)}
-	 * use first.
+	 * IMPORTANT: Any modification of field name should be subject to 
+	 * {@link InternalDataTypeComponent#cleanupFieldName(String)} use first.
 	 * 
 	 * @param record the new record
 	 * @throws IOException if there is a problem accessing the database.

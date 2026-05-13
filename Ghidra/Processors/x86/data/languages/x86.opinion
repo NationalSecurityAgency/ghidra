@@ -42,6 +42,12 @@
         <constraint primary="3"    processor="x86"      endian="little" size="32" />
         <constraint primary="62"   processor="x86"      endian="little" size="64"	variant="default" />
       </constraint>
+      <constraint compilerSpecID="swift">
+        <constraint primary="62" secondary="swift" processor="x86" endian="little" size="64" variant="default" />
+      </constraint>
+      <constraint compilerSpecID="golang">
+        <constraint primary="62" secondary="golang" processor="x86" endian="little" size="64" variant="default" />
+      </constraint>
     </constraint>
     <constraint loader="Module Definition (DEF)" compilerSpecID="windows">
         <constraint primary="0" processor="x86" endian="little" size="32" />

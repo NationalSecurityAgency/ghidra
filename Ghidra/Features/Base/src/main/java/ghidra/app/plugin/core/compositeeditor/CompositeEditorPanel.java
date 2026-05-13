@@ -1145,8 +1145,8 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 		@Override
 		public boolean stopCellEditing() {
 			try {
-				model.validateComponentName(table.getEditingRow(),
-					((JTextComponent) getComponent()).getText());
+				String newName = ((JTextComponent) getComponent()).getText();
+				model.validateComponentName(table.getEditingRow(), newName);
 				fireEditingStopped();
 				return true;
 			}

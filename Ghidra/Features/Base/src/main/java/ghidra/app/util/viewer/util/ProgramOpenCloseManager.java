@@ -22,8 +22,7 @@ import javax.swing.event.ChangeListener;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -33,30 +32,41 @@ import ghidra.util.task.TaskMonitor;
 public class ProgramOpenCloseManager {
 	private DataOpenCloseManager dataOpenCloseManager = new DataOpenCloseManager();
 	private List<ChangeListener> listeners = new ArrayList<>();
-	private AddressBasedOpenCloseManager variablesOpenCloseManager = new AddressBasedOpenCloseManager();
+	private OpenCloseManager variablesOpenCloseManager;
+	private OpenCloseManager functionsOpenCloseManager;
+
+	public ProgramOpenCloseManager(Program program) {
+
+		functionsOpenCloseManager = createFunctionsOpenCloseManager(program);
+
+		// open/close variables states are tool based so users can
+		// choose whether to see them by default. They can be opened or closed
+		// for specific functions in specific program, but this is not persisted for the program.
+		variablesOpenCloseManager = new InMemoryOpenCloseManager();
+	}
 
 	/**
 	 * Sets whether or not to display function variables at the given address.
-	 * @param functionAddress the address of the function
+	 * @param functionEntry the address of the function
 	 * @param open true to display function variables, false to to hide them
 	 */
-	public void setFunctionVariablesOpen(Address functionAddress, boolean open) {
+	public void setFunctionVariablesOpen(Address functionEntry, boolean open) {
 		if (open) {
-			variablesOpenCloseManager.open(functionAddress);
+			variablesOpenCloseManager.open(functionEntry);
 		}
 		else {
-			variablesOpenCloseManager.close(functionAddress);
+			variablesOpenCloseManager.close(functionEntry);
 		}
 		notifyListeners();
 	}
 
 	/**
 	 * Checks if the function variables are being shown at the given function address.
-	 * @param functionAddress the address of the function to check
+	 * @param functionEntry the address of the function to check
 	 * @return true if the variables are being displayed
 	 */
-	public boolean isFunctionVariablesOpen(Address functionAddress) {
-		return variablesOpenCloseManager.isOpen(functionAddress);
+	public boolean isFunctionVariablesOpen(Address functionEntry) {
+		return variablesOpenCloseManager.isOpen(functionEntry);
 	}
 
 	/**
@@ -74,8 +84,42 @@ public class ProgramOpenCloseManager {
 		notifyListeners();
 	}
 
-	public boolean isAllFunctionVariablesOpen() {
-		return variablesOpenCloseManager.isOpenByDefault();
+	/**
+	 * Returns true if the function at the given address is open.
+	 * @param functionEntry the function address to test if the function is open
+	 * @return true if the function at the given address is open
+	 */
+	public boolean isFunctionOpen(Address functionEntry) {
+		return functionsOpenCloseManager.isOpen(functionEntry);
+	}
+
+	/**
+	 * Sets the function at the given address to be open or closed.
+	 * @param functionEntry the address of the function to open or close
+	 * @param open true to open the function, false to close it
+	 */
+	public void setFunctionOpen(Address functionEntry, boolean open) {
+		if (open) {
+			functionsOpenCloseManager.open(functionEntry);
+		}
+		else {
+			functionsOpenCloseManager.close(functionEntry);
+		}
+		notifyListeners();
+	}
+
+	/**
+	 * Sets all functions to be open or closed.
+	 * @param open true to open all functions, false to close them
+	 */
+	public void setAllFunctionsOpen(boolean open) {
+		if (open) {
+			functionsOpenCloseManager.openAll();
+		}
+		else {
+			functionsOpenCloseManager.closeAll();
+		}
+		notifyListeners();
 	}
 
 	/**
@@ -163,5 +207,17 @@ public class ProgramOpenCloseManager {
 		for (ChangeListener l : listeners) {
 			l.stateChanged(null);
 		}
+	}
+
+	private OpenCloseManager createFunctionsOpenCloseManager(Program program) {
+		// We prefer to use a persistent open close manager, but that requires ProgramUserData.
+		// Currently not all implementations of Program support ProgramUserData, so if not, just
+		// use the in-memory OpenCloseManager which isn't persistent.
+		ProgramUserData programUserData = program.getProgramUserData();
+		if (programUserData != null) {
+			return new PersistentOpenCloseManager(programUserData, getClass().getSimpleName(),
+				"Function Open State");
+		}
+		return new InMemoryOpenCloseManager();
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,11 @@ import java.io.File;
 import javax.swing.*;
 
 import docking.ReusableDialogComponentProvider;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import generic.theme.Gui;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
@@ -58,7 +60,7 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	private JTextField projectNameField;
 
 	private String archivePathName;
-	private ProjectLocator restoreURL;
+	private ProjectLocator restoreLocator;
 
 	public RestoreDialog(ArchivePlugin plugin) {
 		super("Restore Project Archive");
@@ -79,12 +81,12 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 		// Create the individual components that make up the panel.
 		archiveLabel = new GDLabel(" Archive File ");
 		archiveLabel.getAccessibleContext().setAccessibleName("Archive File");
-		archiveField = new JTextField();
+		archiveField = new ElidingFilePathTextField();
 		archiveField.setColumns(NUM_TEXT_COLUMNS);
 		archiveField.setName("archiveField");
 		archiveField.getAccessibleContext().setAccessibleName("Archive");
 
-		archiveBrowse = new JButton(ArchivePlugin.DOT_DOT_DOT);
+		archiveBrowse = new BrowseButton();
 		archiveBrowse.setName("archiveButton");
 		archiveBrowse.getAccessibleContext().setAccessibleName("Archive");
 		archiveBrowse.addActionListener(new ActionListener() {
@@ -121,12 +123,12 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 
 		restoreLabel = new GDLabel(" Restore Directory ");
 		restoreLabel.getAccessibleContext().setAccessibleName("Restore Directory");
-		restoreField = new JTextField();
+		restoreField = new ElidingFilePathTextField();
 		restoreField.setName("restoreField");
 		restoreField.getAccessibleContext().setAccessibleName("Restore");
 		restoreField.setColumns(RestoreDialog.NUM_TEXT_COLUMNS);
 
-		restoreBrowse = new JButton(ArchivePlugin.DOT_DOT_DOT);
+		restoreBrowse = new BrowseButton();
 		restoreBrowse.setName("restoreButton");
 		restoreBrowse.getAccessibleContext().setAccessibleName("Restore Browse");
 		restoreBrowse.addActionListener(e -> {
@@ -244,14 +246,14 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	/**
 	 * Display this dialog.
 	 * @param pathName The pathname of the archive file containing the data to restore.
-	 * @param projectLocator The project URL of the location to which the restore archive will be
+	 * @param projectLocator The project locator of the location to which the restore archive will be
 	 *        extracted.
 	 *
 	 * @return true if the user submitted a valid value, false if user cancelled.
 	 */
 	public boolean showDialog(String pathName, ProjectLocator projectLocator) {
 		this.archivePathName = pathName;
-		this.restoreURL = projectLocator;
+		this.restoreLocator = projectLocator;
 		String projectName = projectNameField.getText();
 		if (projectName == null || projectName.equals("")) {
 			projectName = ArchivePlugin.getProjectName(pathName);
@@ -285,11 +287,11 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	}
 
 	/**
-	 * Get the URL for the restore directory.
-	 * @return the URL for the restore directory.
+	 * Get the project locator for the restore directory.
+	 * @return the project locator for the restore directory.
 	 */
 	ProjectLocator getRestoreURL() {
-		return restoreURL;
+		return restoreLocator;
 	}
 
 	/////////////////////////////////////////////
@@ -314,17 +316,24 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 			return false;
 		}
 		String restoreProjectName = projectNameField.getText().trim();
-		if (restoreProjectName == null || restoreProjectName.equals("") ||
-			!NamingUtilities.isValidName(restoreProjectName)) {
+		if (restoreProjectName == null || restoreProjectName.equals("")) {
 			setStatusText("Specify a valid project name.");
 			return false;
 		}
 
-		archivePathName = archiveName;
-		restoreURL = new ProjectLocator(restoreDir, restoreProjectName);
+		try {
+			NamingUtilities.checkProjectName(restoreProjectName);
+		}
+		catch (IllegalArgumentException e) {
+			setStatusText(e.getMessage());
+			return false;
+		}
 
-		File projFile = restoreURL.getMarkerFile();
-		File projDir = restoreURL.getProjectDir();
+		archivePathName = archiveName;
+		restoreLocator = new ProjectLocator(restoreDir, restoreProjectName);
+
+		File projFile = restoreLocator.getMarkerFile();
+		File projDir = restoreLocator.getProjectDir();
 		setStatusText("");
 		if (projFile.exists() || projDir.exists()) {
 			Msg.showInfo(getClass(), getComponent(), "Project Exists",
@@ -424,12 +433,6 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 			}
 
 			File file = selectedFile;
-			String chosenName = file.getName();
-			if (!NamingUtilities.isValidProjectName(chosenName)) {
-				Msg.showError(getClass(), null, "Invalid Archive Name",
-					chosenName + " is not a valid archive name");
-				continue;
-			}
 
 			Preferences.setProperty(ArchivePlugin.LAST_ARCHIVE_DIR, file.getParent());
 			pathname = file.getAbsolutePath();
@@ -450,8 +453,8 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	String chooseDirectory(String approveButtonText, String approveToolTip) {
 		GhidraFileChooser dirChooser = createDirectoryChooser();
 		dirChooser.setTitle("Restore a Ghidra Project - Directory");
-		if (restoreURL != null) {
-			dirChooser.setSelectedFile(new File(restoreURL.getLocation()));
+		if (restoreLocator != null) {
+			dirChooser.setSelectedFile(new File(restoreLocator.getLocation()));
 		}
 		dirChooser.setApproveButtonText(approveButtonText);
 		dirChooser.setApproveButtonToolTipText(approveToolTip);
