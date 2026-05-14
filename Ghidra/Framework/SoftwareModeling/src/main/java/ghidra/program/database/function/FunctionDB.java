@@ -815,7 +815,7 @@ public class FunctionDB extends DbObject implements Function {
 	 */
 	synchronized void endUpdate() {
 		if (--updateInProgressCount == 0 && updateRefreshRequired) {
-			refresh();
+			refresh(null);
 		}
 	}
 
@@ -921,11 +921,6 @@ public class FunctionDB extends DbObject implements Function {
 		finally {
 			endUpdate();
 		}
-	}
-
-	@Override
-	protected boolean refresh() {
-		return refresh(null);
 	}
 
 	@Override

@@ -194,10 +194,12 @@ public class ObjectCacheTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		@Override
-		protected boolean refresh() {
-			DBRecord refreshedRecord = database.get(record.getKey());
-			if (refreshedRecord != null) {
-				record = refreshedRecord;
+		protected boolean refresh(DBRecord rec) {
+			if (rec == null) {
+				rec = database.get(record.getKey());
+			}
+			if (rec != null) {
+				record = rec;
 				return true;
 			}
 			return false;
