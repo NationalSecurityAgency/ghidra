@@ -86,7 +86,7 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 		for (int i = 0; i < locs.length; i++) {
 			locs[i] = dtMachineWord;
 		}
-		VariableStorage[] vss = convention.getStorageLocations(program, locs, false);
+		VariableStorage[] vss = convention.getStorageLocations(program, locs, false, false);
 
 		outVar = getSingleVnStorage(vss[0]);
 		inVars = Arrays.asList(new Varnode[inputCount]);
