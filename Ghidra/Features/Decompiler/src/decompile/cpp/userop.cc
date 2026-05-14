@@ -595,6 +595,9 @@ void UserOpManage::decodeCallOtherFixup(Decoder &decoder,Architecture *glb)
     registerOp(op);
   } catch(LowlevelError &err) {
     delete op;
+    const string unknownUseropPrefix = "Unknown userop name in <callotherfixup>: ";
+    if (err.explain.rfind(unknownUseropPrefix, 0) == 0)
+      return;
     throw err;
   }
 }
