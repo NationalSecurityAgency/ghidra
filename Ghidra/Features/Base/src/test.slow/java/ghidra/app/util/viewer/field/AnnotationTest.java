@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
@@ -45,6 +45,7 @@ import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.UnsignedIntegerDataType;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.Function;
@@ -64,7 +65,6 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String OTHER_PROGRAM_NAME = "program2";
 
 	private Program program;
-	private Function test_func;
 
 	@Before
 	public void setUp() throws Exception {
@@ -87,8 +87,9 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createLabel("1001018", "mySym{0}"); // symbol with braces
 		builder.createLabel("1001022", "mySym\\{0\\}"); // symbol with braces escaped
 
-		test_func = builder.createEmptyFunction("test_func", "1002000", 0x10, VoidDataType.dataType);
-		builder.createLocalVariable(test_func, "test_var", UnsignedIntegerDataType.dataType, 10);
+		Function myFunction =
+			builder.createEmptyFunction("MyFunction", "1002000", 0x10, VoidDataType.dataType);
+		builder.createLocalVariable(myFunction, "myVariable", UnsignedIntegerDataType.dataType, 10);
 
 		return builder.getProgram();
 	}
@@ -742,44 +743,48 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testVariableAnnotation_Basic() {
-		String rawComment = "{@var test_var test_func}";
+		String rawComment = "{@variable Stack[0xa] MyFunction}";
 		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals("test_var", display);
+		assertEquals("myVariable", display);
 	}
 
 	@Test
 	public void testVariableAnnotation_BasicModify() {
-		String rawComment = "{@var test_var test_func}";
+		String rawComment = "{@variable myVariable MyFunction}";
 		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
-		assertEquals("{@var_hash a016221 01002000}", display);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
-	
+
 	@Test
 	public void testVariableAnnotation_BasicModify_NoFunction() {
-		String rawComment = "{@var test_var}";
-		String display = CommentUtils.fixupAnnotations(rawComment, program, test_func.getEntryPoint());
-		assertEquals("{@var_hash a016221 01002000}", display);
+		String rawComment = "{@variable myVariable}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
 
 	@Test
 	public void testLocalAnnotation_UserMarked() {
-		String rawComment = "{@var_hash a016221 test_func}";
+		String rawComment = "{@variable Stack[0xa] MyFunction}";
 		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals("test_var", display);
+		assertEquals("myVariable", display);
 	}
 
 	@Test
 	public void testLocalAnnotation_UserMarkedModify() {
-		String rawComment = "{@var_hash a016221 test_func}";
+		String rawComment = "{@variable Stack[0xa] MyFunction}";
 		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
-		assertEquals("{@var_hash a016221 01002000}", display);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
 
 	@Test
 	public void testLocalAnnotation_UserMarkedModify_NoFunction() {
-		String rawComment = "{@var_hash a016221}";
-		String display = CommentUtils.fixupAnnotations(rawComment, program, test_func.getEntryPoint());
-		assertEquals("{@var_hash a016221 01002000}", display);
+		String rawComment = "{@variable Stack[0xa]}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
 
 	@Test
@@ -966,6 +971,10 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing(); // let post-dialog processing happen		
 	}
 
+	private Address addr(String offset) {
+		AddressFactory af = program.getAddressFactory();
+		return af.getAddress(offset);
+	}
 //==================================================================================================
 // Fake/Spy Classes
 //==================================================================================================	

@@ -104,6 +104,11 @@
              Notes:
              
              <ul style="margin-left: 10px;">
+				<li>
+				    If you provide a symbol name and not an address, then you will need to
+				    fully-qualify the symbol name if it is not in the global namespace (e.g.,
+				    FunctionFoo::param1 to link to a specific function parameter).
+				</li>
 	            <li>
 		            If you specify a symbol name instead of an address, then the text of the comment
 		            will be changed to use the address of that symbol.
@@ -292,7 +297,7 @@
 
             <ul style="margin-left: 10px;">
               <li>
-                  This annotation will modify itself into the @var_hash format with a function
+                  This annotation will modify itself to use the variable and function
                   address to survive renaming of the variable and the function.
               </li>
             </ul>
@@ -302,7 +307,7 @@
 
             <TD valign="top" width="12%">
               <OL style="margin-left: 15px;">
-                <LI>variable/parameter name (@var) or hash identifier (@var_hash)</LI>
+                <LI>variable/parameter name (@variable) or hash identifier</LI>
                 <LI>[function name or address]<BR>
                 </LI>
               </OL>
@@ -311,10 +316,7 @@
             <TD valign="top" width="10%">
               <UL style="margin-left: 10px;">
                 <LI>@variable</LI>
-
                 <LI>@var</LI>
-
-                <LI>@var_hash</LI>
               </UL>
             </TD>
 
@@ -323,10 +325,6 @@
                 <LI>{@variable "i"}</LI>
 
                 <LI>{@var "argv" "main"}</LI>
-
-                <LI>{@var_hash 02a2a2a "main"}</LI>
-
-                <LI>{@var_hash 0101010 "1000002a"}<BR>
                 </LI>
               </UL>
             </TD>

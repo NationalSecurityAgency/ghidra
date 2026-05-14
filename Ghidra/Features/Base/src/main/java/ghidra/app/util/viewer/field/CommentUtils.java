@@ -50,10 +50,10 @@ public class CommentUtils {
 	 * 
 	 * @param rawCommentText the text to be updated
 	 * @param program the program associated with the comment
-	 * @param loc location of comment in program
+	 * @param addr address of comment in program
 	 * @return the updated string
 	 */
-	public static String fixupAnnotations(String rawCommentText, Program program, Address loc) {
+	public static String fixupAnnotations(String rawCommentText, Program program, Address addr) {
 
 		if (rawCommentText == null) {
 			return null;
@@ -67,7 +67,7 @@ public class CommentUtils {
 			String[] annotationParts = annotation.getAnnotationParts();
 			AnnotatedStringHandler handler = getAnnotationHandler(annotationParts);
 
-			String[] updatedParts = handler.modify(annotationParts, program, loc);
+			String[] updatedParts = handler.modify(annotationParts, program, addr);
 			if (updatedParts == null) {
 				return annotation; // nothing to change
 			}
@@ -164,8 +164,7 @@ public class CommentUtils {
 		text = StringUtilities.convertTabsToSpaces(text);
 
 		int column = 0;
-		List<CommentPart> parts =
-			doParseTextIntoParts(text, fixerUpper, program);
+		List<CommentPart> parts = doParseTextIntoParts(text, fixerUpper, program);
 		List<FieldElement> fields = new ArrayList<>();
 		for (CommentPart part : parts) {
 

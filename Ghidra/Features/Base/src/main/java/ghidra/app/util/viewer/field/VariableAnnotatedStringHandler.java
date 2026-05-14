@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.viewer.field;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
@@ -22,120 +25,36 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.Msg;
 
 /**
- * An annotated string handler that handles annotations that begin with
- * {@link #SUPPORTED_ANNOTATIONS}.  This class expects one string following the annotation
- * text that is the name of a script.
+ * Provides support for local function variable annotations.
+ * <p>
+ * This allows users to reference function variables in comments without having to change the 
+ * comment text when the variable is renamed.  Users can enter the annotation using the variable's
+ * name:
+ * <pre>
+ * 	{@variable local_8}
+ *		 		
+ *	 or
+ *		 		
+ *	{@variable coolVariable SomeFunction}
+ * </pre>
+ * The user annotation will be converted to use address information:
+ * <pre>
+ * 	{@variable Stack[0xa] FUN_1234eaea}
+ * </pre>
  */
 public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 
-	private static final String DEFAULT_ANO = "var";
-	private static final String HASH_ANO = DEFAULT_ANO + "_hash";
-	private static final String[] SUPPORTED_ANNOTATIONS = { "variable", DEFAULT_ANO, HASH_ANO };
-
-	private static final String INVALID_SYMBOL_TEXT =
-		"@" + DEFAULT_ANO + " annotation must have form: <var_sym> [<func_sym>]";
-
-
-	@Override
-	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
-			Program program) {
-		if (program == null) { // this can happen during merge operations
-			final StringBuilder buffer = new StringBuilder();
-			for (String string : text) {
-				buffer.append(string).append(" ");
-			}
-
-			return new AttributedString(buffer.toString(), Palette.LIGHT_GRAY,
-				prototypeString.getFontMetrics(0));
-		}
-
-		if (text.length != 3) {
-			if (text.length == 2) {
-				throw new AnnotationException("Function symbol is not optional when rendering.");
-			}
-			throw new AnnotationException(INVALID_SYMBOL_TEXT);
-		}
-
-		final Function func = getFunction(program, text[2]);
-		if (func == null) {
-			throw new AnnotationException("Could not find function matching \"" + text[2] + "\"");
-		}
-		final Variable var = getVariable(func, getFilterGenerator(text[0]).apply(text[1]));
-		if (var == null) {
-			throw new AnnotationException("Could not find variable in function \"" +
-					func.getName() + "\" matching \"" + text[1] + "\".");
-		}
-
-		return new AttributedString(var.getName(), prototypeString.getColor(0),
-				prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
-	}
-
-	@Override
-	public String[] modify(String[] text, Program program, Address loc) {
-		if (program == null) { // this can happen during merge operations
-			return null;
-		}
-
-		Function func = null;
-		switch (text.length) {
-		case 3:
-			func = getFunction(program, text[2]);
-			break;
-		case 2:
-			func = program.getFunctionManager().getFunctionContaining(loc);
-			break;
-		default:
-			return null;
-		}
-		
-		if (func == null) {
-			return null;
-		}
-		
-		final Variable var = getVariable(func, getFilterGenerator(text[0]).apply(text[1]));
-		if (var == null) {
-			return null;
-		}
-
-		return new String[] {
-				HASH_ANO,
-				Integer.toUnsignedString(var.hashCode(), 16),
-				func.getEntryPoint().toString()
-		};
-	}
+	private static final String[] SUPPORTED_ANNOTATIONS = { "variable", "var" };
 
 	@Override
 	public String[] getSupportedAnnotations() {
 		return SUPPORTED_ANNOTATIONS;
-	}
-
-	@Override
-	public boolean handleMouseClick(String[] annotationParts, Navigatable sourceNavigatable,
-			ServiceProvider serviceProvider) {
-		final Program program = sourceNavigatable.getProgram();
-
-		if (annotationParts.length != 3) {
-			return false;
-		}
-		final Function func = getFunction(program, annotationParts[2]);
-		if (func == null) {
-			return false;
-		}
-		final Variable var = getVariable(func, getFilterGenerator(annotationParts[0]).apply(annotationParts[1]));
-		if (var == null) {
-			return false;
-		}
-		Symbol sym = var.getSymbol();
-		if (sym == null) {
-			sym = func.getSymbol();
-		}
-
-		final GoToService goToService = serviceProvider.getService(GoToService.class);
-		return goToService.goTo(sym.getProgramLocation());
 	}
 
 	@Override
@@ -145,40 +64,71 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 
 	@Override
 	public String getPrototypeString() {
-		return "{@" + DEFAULT_ANO + " var_sym [func_sym]}";
+		return "{@variable variable_name}";
 	}
 
 	@Override
 	public String getPrototypeString(String displayText) {
-		return "{@" + DEFAULT_ANO + " " + displayText.trim() + "}";
+		return "{@variable " + displayText.trim() + "}";
 	}
 
-	private static Function getFunction(final Program program, final String name) {
-		final FunctionManager func_manager = program.getFunctionManager();
+	@Override
+	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
+			Program program) throws AnnotationException {
 
-		for (Symbol sym : NamespaceUtils.getSymbols(name, program)) {
-			final Function func = func_manager.getFunctionAt(sym.getAddress());
-			if (func != null) {
-				return func;
+		/*
+		 	We expect to be handed annotation text that was updated via a previous call to modify().
+		 	The annotation will be of the form {@variable variable_address function_address}
+		 */
+		if (text.length != 3) {
+			throw new AnnotationException(
+				"@variable annotation must have a variable address and a function name");
+		}
+
+		if (program == null) { // this can happen during merge operations
+			return createPlaceholderString(prototypeString, text);
+		}
+
+		String functionName = text[2];
+		Function function = getFunction(program, functionName);
+		if (function == null) {
+			throw new AnnotationException("Could not find function \"" + functionName + "\"");
+		}
+
+		String address = text[1];
+		Variable var = getVariable(function, address);
+		if (var == null) {
+			throw new AnnotationException("Could not find variable in function \"" +
+				functionName + "\" matching \"" + text[1] + "\".");
+		}
+
+		return new AttributedString(var.getName(), prototypeString.getColor(0),
+			prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
+	}
+
+	private AttributedString createPlaceholderString(AttributedString prototypeString,
+			String[] text) {
+		String joined = Arrays.stream(text).collect(Collectors.joining(" "));
+		return new AttributedString(joined, Palette.LIGHT_GRAY,
+			prototypeString.getFontMetrics(0));
+	}
+
+	private static Function getFunction(Program program, String name) {
+		FunctionManager manager = program.getFunctionManager();
+		for (Symbol s : NamespaceUtils.getSymbols(name, program)) {
+			Address addr = s.getAddress();
+			Function function = manager.getFunctionAt(addr);
+			if (function != null) {
+				return function;
 			}
 		}
 
 		// if we get here, then see if the value is an address
-		final Address addr = program.getAddressFactory().getAddress(name);
+		Address addr = program.getAddressFactory().getAddress(name);
 		if (addr != null) {
-			final Function func = func_manager.getFunctionAt(addr);
-			if (func != null) {
-				return func;
-			}
-		}
-
-		return null;
-	}
-
-	private static Variable getVariable(final Function func, JFunction<Variable, Boolean> name_filter) {
-		for (Variable var : func.getAllVariables()) {
-			if (name_filter.apply(var)) {
-				return var;
+			Function function = manager.getFunctionAt(addr);
+			if (function != null) {
+				return function;
 			}
 		}
 
@@ -186,32 +136,147 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 	}
 
 	/**
-	 * Get the correct filter generator for parsing the local variable.
-	 *
-	 * @param name the name of the annotation
-	 * @return the filter generator
+	 * Update the annotation to convert names to addresses.
+	 * @param text the array of annotation parts to modify
+	 * @param program the program
+	 * @param addr address of the annotation in the program
+	 * @return the modified array; null otherwise
 	 */
-	private static JFunction<String,JFunction<Variable, Boolean>> getFilterGenerator(final String name) {
-		switch (name) {
-		case HASH_ANO:
-			return VariableAnnotatedStringHandler::hashFilterGen;
-		default:
-			return VariableAnnotatedStringHandler::nameFilterGen;
+	@Override
+	public String[] modify(String[] text, Program program, Address addr) {
+		if (program == null) { // this can happen during merge operations
+			return null;
+		}
+
+		Function function = null;
+		switch (text.length) {
+			case 3:
+				function = getFunction(program, text[2]);
+				break;
+			case 2:
+				function = program.getFunctionManager().getFunctionContaining(addr);
+				break;
+			default:
+				return null;
+		}
+
+		if (function == null) {
+			return null;
+		}
+
+		String value = text[1]; // value is a variable name or address
+		VariableMatcher matcher = createVariableMatcher(program, value);
+		Variable var = findVariable(function, matcher);
+		if (var == null) {
+			return null;
+		}
+
+		return new String[] {
+			"variable",
+			var.getMinAddress().toString(),
+			function.getEntryPoint().toString()
+		};
+	}
+
+	private VariableMatcher createVariableMatcher(Program p, String value) {
+
+		Address addr = toAddress(p, value);
+		if (addr != null) {
+			return new AddressMatcher(addr);
+		}
+
+		return new NameMatcher(value);
+	}
+
+	@Override
+	public boolean handleMouseClick(String[] text, Navigatable sourceNavigatable,
+			ServiceProvider serviceProvider) {
+
+		/*
+		 	We expect to be handed annotation text that was updated via a previous call to modify().
+		 	The annotation will be of the form {@variable variable_address function_address}
+		 */
+		if (text.length != 3) {
+			return false;
+		}
+
+		Program program = sourceNavigatable.getProgram();
+		Function function = getFunction(program, text[2]);
+		if (function == null) {
+			return false;
+		}
+
+		String address = text[1];
+		Variable var = getVariable(function, address);
+		if (var == null) {
+			return false;
+		}
+
+		Symbol symbol = var.getSymbol();
+		if (symbol == null) {
+			symbol = function.getSymbol();
+		}
+
+		GoToService goToService = serviceProvider.getService(GoToService.class);
+		if (goToService == null) {
+			Msg.debug(this, "GoToService not installed");
+			return false;
+		}
+
+		return goToService.goTo(symbol.getProgramLocation());
+	}
+
+	private Variable getVariable(Function function, String addressString) {
+		Program p = function.getProgram();
+		Address addr = toAddress(p, addressString);
+		VariableMatcher matcher = new AddressMatcher(addr);
+		return findVariable(function, matcher);
+	}
+
+	private static Variable findVariable(Function function, VariableMatcher matcher) {
+		for (Variable var : function.getAllVariables()) {
+			if (matcher.matches(var)) {
+				return var;
+			}
+		}
+
+		return null;
+	}
+
+	private static Address toAddress(Program p, String s) {
+		AddressFactory af = p.getAddressFactory();
+		return af.getAddress(s);
+	}
+
+	private static interface VariableMatcher {
+		public boolean matches(Variable v);
+	}
+
+	private static class NameMatcher implements VariableMatcher {
+
+		private String name;
+
+		NameMatcher(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public boolean matches(Variable v) {
+			return v.getName().equals(name);
 		}
 	}
 
-	private static JFunction<Variable, Boolean> hashFilterGen(String s) {
-		try {
-			final int hash = Integer.parseUnsignedInt(s, 16);
-			return (x) -> x.hashCode() == hash;
-		} catch (NumberFormatException e) {
-			return (x) -> false;
+	private static class AddressMatcher implements VariableMatcher {
+
+		private Address addr;
+
+		AddressMatcher(Address addr) {
+			this.addr = addr;
+		}
+
+		@Override
+		public boolean matches(Variable v) {
+			return v.getMinAddress().equals(addr);
 		}
 	}
-
-	private static JFunction<Variable, Boolean> nameFilterGen(String s) {
-		return (x) -> x.getName().equals(s);
-	}
-
-	private interface JFunction<T, R> extends java.util.function.Function<T, R> {}
 }

@@ -16,8 +16,7 @@
 package ghidra.program.database.function;
 
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.Objects;
 
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.symbol.SymbolDB;
@@ -353,14 +352,13 @@ public abstract class VariableDB implements Variable {
 		}
 
 		Variable otherVar = (Variable) obj;
-
 		if (!isEquivalent(otherVar)) {
 			return false;
 		}
-		if (!StringUtils.equals(getName(), otherVar.getName())) {
+		if (!Objects.equals(getName(), otherVar.getName())) {
 			return false;
 		}
-		return StringUtils.equals(getComment(), otherVar.getComment());
+		return Objects.equals(getComment(), otherVar.getComment());
 	}
 
 	@Override
