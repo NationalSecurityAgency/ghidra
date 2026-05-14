@@ -89,7 +89,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	public FindNoReturnFunctionsAnalyzer(String name, String description,
 			AnalyzerType analyzerType) {
 		super(name, description, analyzerType);
-		setPriority(AnalysisPriority.DISASSEMBLY.after());
+		setPriority(AnalysisPriority.DISASSEMBLY.after().after());
 		setSupportsOneTimeAnalysis();
 	}
 
@@ -373,6 +373,13 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 			for (Address target : flows) {
 
+				// Skip targets that have a callfixup with fall-through semantics.
+				// A fall-through callfixup explicitly models the function's return
+				// behavior, so heuristic evidence should not override it.
+				if (hasCallFixupWithFallThrough(cp, target)) {
+					continue;
+				}
+
 				int count = 1;
 				ReferenceIterator refsTo = cp.getReferenceManager().getReferencesTo(target);
 				for (Reference reference : refsTo) {
@@ -419,6 +426,30 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 		}
 		return hadSuspiciousFunctions;
+	}
+
+	/**
+	 * Check if the function at the given address has a callfixup that falls through.
+	 * A fall-through callfixup explicitly models the function's return behavior
+	 * (e.g., Watcom's __CHK/__STK stack-check functions), so heuristic noreturn
+	 * detection should not override it.
+	 *
+	 * @param cp current program
+	 * @param target address of the potential noreturn function
+	 * @return true if the function has a callfixup with fall-through semantics
+	 */
+	private boolean hasCallFixupWithFallThrough(Program cp, Address target) {
+		Function func = cp.getFunctionManager().getFunctionAt(target);
+		if (func == null) {
+			return false;
+		}
+		String callFixup = func.getCallFixup();
+		if (callFixup == null || callFixup.isEmpty()) {
+			return false;
+		}
+		PcodeInjectLibrary lib = cp.getCompilerSpec().getPcodeInjectLibrary();
+		InjectPayload payload = lib.getPayload(InjectPayload.CALLFIXUP_TYPE, callFixup);
+		return payload != null && payload.isFallThru();
 	}
 
 	private boolean targetOnlyCallsNoReturn(Program cp, Address target, AddressSet noReturnSet)
