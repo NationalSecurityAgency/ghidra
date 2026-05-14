@@ -718,7 +718,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	public void terminateCheckout(String parentPath, String itemName, long checkoutId,
 			boolean notify) throws IOException {
 		synchronized (syncObject) {
-			validate(); // relax read-only restriction
+			validate();
 			try {
 				RepositoryFile rf = getFile(parentPath, itemName);
 				if (rf != null) {
