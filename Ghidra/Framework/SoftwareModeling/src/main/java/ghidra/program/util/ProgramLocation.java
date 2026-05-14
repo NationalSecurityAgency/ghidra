@@ -278,13 +278,21 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 			return null;
 		}
 
+		ClassLoader loader = ProgramLocation.class.getClassLoader();
 		try {
-			Class<?> locationClass = Class.forName(className);
+
+			Class<?> locationClass = Class.forName(className, false, loader);
 			if (locationClass.isInterface()) {
 				// This check is needed due to a refactoring that has changed a class into an 
 				// interface.  The class name may have been saved into the tool.  Upon restoring we
 				// may try to restore that class.  If that class is now an interface, the restore
 				// will not work.
+				return null;
+			}
+
+			if (!ProgramLocation.class.isAssignableFrom(locationClass)) {
+				Msg.error(ProgramLocation.class,
+					"Class is not a ProgramLocation: " + locationClass);
 				return null;
 			}
 
