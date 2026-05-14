@@ -76,6 +76,8 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	 */
 	public static final String VERSION = "12.2";
 
+	public static final int MAX_MSG_LENGTH = 1 << 16; // 64K should be plenty and not cause OOM
+
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
 			super("Mismatched versions: Front-end: %s, back-end: %s.".formatted(VERSION, remote));
@@ -417,7 +419,11 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	protected static void sendDelimited(OutputStream out, RootMessage msg, long dbgSeq)
 			throws IOException {
 		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
-		buf.putInt(msg.getSerializedSize());
+		int len = msg.getSerializedSize();
+		if (len > MAX_MSG_LENGTH) {
+			throw new TraceRmiError("Cannot send TraceRmi message with excessive length");
+		}
+		buf.putInt(len);
 		out.write(buf.array());
 		msg.writeTo(out);
 		out.flush();
@@ -442,6 +448,10 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			return null;
 		}
 		int len = ByteBuffer.wrap(lenBuf).getInt();
+		if (len > MAX_MSG_LENGTH) {
+			throw new TraceRmiError(
+				"Cannot receive TraceRmi message with excessive message length");
+		}
 		byte[] datBuf = recvAll(in, len);
 		if (datBuf == null) {
 			return null;
@@ -505,10 +515,10 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 
 	protected void negotiate() {
 		RootMessage req = receive();
-		RootMessage rep = dispatchNegotiate.handle(req);
 		if (req == null) {
 			throw new TraceRmiError("Could not receive negotiation request");
 		}
+		RootMessage rep = dispatchNegotiate.handle(req);
 		if (!send(rep)) {
 			throw new TraceRmiError("Could not respond during negotiation");
 		}
