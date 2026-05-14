@@ -112,9 +112,7 @@ public class GProperties {
 	 */
 	public GProperties(Element root) {
 		this(root.getName());
-		Iterator<?> iter = root.getChildren().iterator();
-		while (iter.hasNext()) {
-			Element elem = (Element) iter.next();
+		for (Element elem : root.getChildren()) {
 			processElement(elem);
 		}
 	}
@@ -298,7 +296,7 @@ public class GProperties {
 			}
 		}
 		else if (tag.equals(GPROPERTIES_TAG)) {
-			Element element = (Element) elem.getChildren().get(0);
+			Element element = elem.getChildren().get(0);
 			if (element != null) {
 				map.put(name, new GProperties(element));
 			}
@@ -435,10 +433,17 @@ public class GProperties {
 	}
 
 	Enum<?> getEnumValue(String enumClassName, String value) {
-		try {
-			Class<?> enumClass = Class.forName(enumClassName).asSubclass(Enum.class);
 
-			Method m = enumClass.getMethod("valueOf", new Class[] { String.class });
+		ClassLoader loader = getClass().getClassLoader();
+		try {
+			Class<?> clazz = Class.forName(enumClassName, false, loader);
+			if (!Enum.class.isAssignableFrom(clazz)) {
+				Msg.error(this, "Class is not an Enum: " + clazz);
+				return null;
+			}
+
+			// Note: calling valueOf() will trigger class initialization
+			Method m = clazz.getMethod("valueOf", new Class[] { String.class });
 			if (m != null) {
 				return (Enum<?>) m.invoke(null, new Object[] { value });
 			}
@@ -821,7 +826,7 @@ public class GProperties {
 	protected Element createElementFromElement(String internalKey, Element internalElement) {
 		Element newElement = createElement("XML", internalKey);
 
-		Element internalElementClone = (Element) internalElement.clone();
+		Element internalElementClone = internalElement.clone();
 		newElement.addContent(internalElementClone);
 
 		return newElement;

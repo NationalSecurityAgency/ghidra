@@ -130,11 +130,13 @@ public class GhidraToolTemplate implements ToolTemplate {
 	public void restoreFromXml(Element root) {
 		java.util.List<?> list = root.getChildren("SUPPORTED_DATA_TYPE");
 		java.util.List<Class<?>> dtList = new ArrayList<>();
+		ClassLoader loader = getClass().getClassLoader();
 		for (int i = 0; i < list.size(); ++i) {
 			Element elem = (Element) list.get(i);
 			String className = elem.getAttribute(CLASS_NAME_XML_NAME).getValue();
 			try {
-				dtList.add(Class.forName(className));
+				// no need to perform static initialization; clients only check isAssignableFrom()
+				dtList.add(Class.forName(className, false, loader));
 			}
 			catch (ClassNotFoundException e) {
 				Msg.warn(this, "Tool supported content class not found: " + className);
@@ -181,7 +183,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 		}
 		root.addContent(iconElem);
 
-		root.addContent((Element) (toolElement.clone()));
+		root.addContent((toolElement.clone()));
 
 		return root;
 	}
